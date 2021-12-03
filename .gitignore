@@ -1,5 +1,7 @@
 src/*.o
 src/*.ppu
 src/PlugInBareV70
+src/*.mod
+src/*.so
 __pycache__
 tests/tmp*
