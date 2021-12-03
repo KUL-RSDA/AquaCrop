@@ -1,3 +1,5 @@
+# Compiler options
+
 DEBUG = 0
 
 PC = fpc
@@ -17,27 +19,21 @@ else
 endif
 
 
+# Default target
+
 EXECUTABLE = PlugInBareV70
-SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
-      ClimProcessing.pas InitialSettings.pas StartUnit.pas \
-      DefaultCropSoil.pas RootUnit.pas Simul.pas \
-      interface_global.pas
-
-$(EXECUTABLE): $(SRC) $(FORTRANLIB)
-	$(PC) $(PCFLAGS) PlugInBareV70.dpr
-
-clean:
-	$(RM) $(wildcard *.o) $(wildcard *.ppu) $(EXECUTABLE)
+.DEFAULT_GOAL = $(EXECUTABLE)
 
 
+# Fortran-related targets
 
 FLIB = libaquacrop.so
 
-flib: global.o kinds.o
+$(FLIB): global.o
 	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
 
-fclean:
-	$(RM) $(wildcard *.mod) $(FLIB)
+fortranclean:
+	$(RM) $(wildcard *.mod) $(wildcard *.o) $(FLIB)
 
 global.o: global.f90 \
     kinds.o
@@ -45,3 +41,17 @@ global.o: global.f90 \
 
 kinds.o: kinds.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
+
+
+# Pascal-related targets
+
+SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
+      ClimProcessing.pas InitialSettings.pas StartUnit.pas \
+      DefaultCropSoil.pas RootUnit.pas Simul.pas \
+      interface_global.pas
+
+$(EXECUTABLE): $(SRC) $(FLIB)
+	$(PC) $(PCFLAGS) PlugInBareV70.dpr
+
+clean: fortranclean
+	$(RM) $(wildcard *.o) $(wildcard *.ppu) $(EXECUTABLE)
