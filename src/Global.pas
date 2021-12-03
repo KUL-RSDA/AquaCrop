@@ -2,7 +2,7 @@ unit Global;
 
 interface
 
-uses SysUtils;
+uses SysUtils, interface_global;
 
 
 Const max_No_compartments = 12;
@@ -965,12 +965,6 @@ Var Zini, Zr : double;
     VirtualDay, T0 : INTEGER;
 
 
-FUNCTION TimeRootFunction(t : double;
-                          ShapeFactor : ShortInt;
-                          tmax,t0 : double) : double;
-BEGIN
-TimeRootFunction := exp((10/ShapeFactor)*Ln((t-t0)/(tmax-t0)));
-END; (* TimeRootFunction *)
 
 FUNCTION ActualRootingDepthDays(DAP,L0,LZmax,L1234 : INTEGER;
                                 Zmin,Zmax : double) : double;

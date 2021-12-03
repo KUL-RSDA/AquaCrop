@@ -33,8 +33,15 @@ clean:
 
 FLIB = libaquacrop.so
 
-flib:
+flib: global.o kinds.o
 	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
 
 fclean:
 	$(RM) $(wildcard *.mod) $(FLIB)
+
+global.o: global.f90 \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+kinds.o: kinds.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
