@@ -1533,7 +1533,7 @@ VAR   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, mm1, mm2, Dx, limit, Dif, U
 
     PROCEDURE Mixing (Dif,mm1,mm2 : double;
                       VAR Salt1, Salt2, Depo1, Depo2 : double);
-    VAR EC1, EC2, ECmix (*, DifAdjusted *) : double;
+    VAR EC1, EC2, ECmix : double;
 
     BEGIN
     SaltSolutionDeposit(mm1,Salt1,Depo1);
@@ -2423,7 +2423,7 @@ PROCEDURE DetermineCCiGDD(CCxTotal,CCoTotal : double;
 Const CCdormant = 0.05;
 
 VAR pLeafLLAct , GDDCGCadjusted, GDDCDCadjusted, CCiSen, GDDtTemp,
-    CCxSF,CGCGDDSF,CCxSFCD,RatDGDD (*,SumGDDadj*) ,KsRED,CCibis : double;
+    CCxSF,CGCGDDSF,CCxSFCD,RatDGDD,KsRED,CCibis : double;
     GDDtFinalCCx : INTEGER;
     WithBeta : BOOLEAN;
     TheSenescenceON : BOOLEAN;
@@ -3286,7 +3286,7 @@ END; (* CalculateSoilEvaporationStage2 *)
 
 PROCEDURE calculate_transpiration(Tpot : double; VAR Tact : double);
 
-VAR (*theta_to_extract*) WtoExtract, theta_critical, alfa, (*sink*) sinkMM : double;
+VAR WtoExtract, theta_critical, alfa, sinkMM : double;
     compi, layeri, pre_layer : INTEGER;
     DeltaWC, InetThreshold : double;
     TpotMAX, RedFact, RedFactECsw : double;

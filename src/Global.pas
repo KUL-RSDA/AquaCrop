@@ -1634,19 +1634,6 @@ PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
 VAR compi,ic : INTEGER;
     Zi,Depth,DeltaV,DeltaFC,Xmax : double;
 
-
-    (* FUNCTION NoAdjustment(SoilClassi : ShortInt) : INTEGER;
-    BEGIN
-    CASE SoilClassi OF
-         1 : NoAdjustment := 1 ; // 1 = sandy soils
-         2 : NoAdjustment := 2 ; // 2 = loamy soils
-         3 : NoAdjustment := 1 ; // 3 = sandy clayey soils
-         4 : NoAdjustment := 2 ; // 4 = silty clayey soils
-        else NoAdjustment := 2;
-         end;
-    END;  *)
-
-
     FUNCTION NoAdjustment(FCvolPr : Double) : double;
     VAR pF : double;
     BEGIN
@@ -5267,7 +5254,7 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
 VAR f0,fx : TextFile;
     i,Runi : INTEGER;
     FileName,PathName,FullFileName : string;
-    Zrni,Zrxi,ZrSoili (*,ZrRestrict*) : double;
+    Zrni,Zrxi,ZrSoili : double;
     VersionNrCrop : double;
     TheNrSoilLayers : ShortInt;
     TheSoilLayer : rep_SoilLayer;
