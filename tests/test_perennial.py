@@ -92,3 +92,4 @@ def test_perennial():
         print('{0} checks = OK'.format(filename))
 
     os.chdir(cwd)
+    shutil.rmtree(work_dir)
