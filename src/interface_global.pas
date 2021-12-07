@@ -39,6 +39,9 @@ type
         END;
 
 
+function AquaCropVersion(FullNameXXFile : string) : double;
+         external 'aquacrop' name '__ac_global_MOD_aquacropversion';
+
 function TimeRootFunction(
             constref t : double;
             constref ShapeFactor : shortint;

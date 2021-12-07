@@ -542,7 +542,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
 
 
 FUNCTION FileExists (full_name : string) : BOOLEAN;
-FUNCTION AquaCropVersion(FullNameXXFile : string) : double;
 
 PROCEDURE ZrAdjustedToRestrictiveLayers(ZrIN : double;
                                         TheNrSoilLayers : ShortInt;
@@ -819,8 +818,6 @@ PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 implementation
 
 
-
-
 FUNCTION FileExists (full_name : string) : BOOLEAN;
 VAR f : textfile;
 BEGIN
@@ -831,19 +828,6 @@ Close(f);
 {$I+}
 FileExists := (IOResult = 0);
 END; (* FileExists *)
-
-
-FUNCTION AquaCropVersion(FullNameXXFile : string) : double;
-VAR f0 : TextFile;
-    VersionNr : double;
-BEGIN
-Assign(f0,FullNameXXFile);
-Reset(f0);
-READLN(f0);  // Description
-READLN(f0,VersionNr);  // AquaCrop version
-Close(f0);
-AquaCropVersion := VersionNr;
-END; (* AquaCropVersion *)
 
 
 PROCEDURE ZrAdjustedToRestrictiveLayers(ZrIN : double;

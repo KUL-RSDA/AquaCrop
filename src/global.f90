@@ -60,6 +60,24 @@ end type SoilLayerIndividual
 contains
 
 
+real(dp) function AquaCropVersion(FullNameXXFile)
+    character(len=*), intent(in) :: FullNameXXFile
+
+    integer :: fhandle
+    real(dp) :: VersionNr
+
+    open(newunit=fhandle, file=trim(FullNameXXFile), status='old', &
+         action='read')
+
+    read(fhandle, *)  ! Description
+    read(fhandle, *) VersionNr  ! AquaCrop version
+
+    close(fhandle)
+
+    AquaCropVersion = VersionNr
+end function AquaCropVersion
+
+
 subroutine set_layer_undef(LayerData)
     type(SoilLayerIndividual), intent(inout) :: LayerData
 
