@@ -7,8 +7,6 @@ uses SysUtils, interface_global;
 
 Const max_No_compartments = 12;
       max_SoilLayers = 5;
-      undef_double = -9.9;
-      undef_int = -9;
       Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
       ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
@@ -19,38 +17,11 @@ Const max_No_compartments = 12;
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
       CO2Ref = 369.41; // reference CO2 in ppm by volume for year 2000 for Mauna Loa (Hawaii, USA)
 
-TYPE rep_string25 = string[25]; (* Description SoilLayer *)
+TYPE
      repstring17 = string[17]; (* Date string *)
      rep_string3  = string[3];  (* Read/Write ProfFile *)
 
-
-TYPE rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
-
-     SoilLayerIndividual = Record
-        Description  : rep_string25;
-        Thickness    : double;   (* meter *)
-        SAT          : double;   (* Vol % at Saturation *)
-        FC           : double;   (* Vol % at Field Capacity *)
-        WP           : double;   (* Vol % at Wilting Point *)
-        tau          : double;   (* drainage factor 0 ... 1 *)
-        InfRate      : double;   (* Infiltration rate at saturation mm/day *)
-        Penetrability : ShortInt; (* root zone expansion rate in percentage*)
-        GravelMass    : ShortInt; (* mass percentage of gravel *)
-        GravelVol      : double; (* volume percentage of gravel *)
-        WaterContent : double;   (* mm *)
-        // salinity parameters (cells)
-        Macro        : ShortInt; (* Macropores : from Saturation to Macro [vol%] *)
-        SaltMobility : rep_salt; (* Mobility of salt in the various salt cellS  *)
-        SC           : ShortInt;  (* number of Saltcels between 0 and SC/(SC+2)*SAT vol% *)
-        SCP1         : ShortInt;  (* SC + 1   (1 extra Saltcel between SC/(SC+2)*SAT vol% and SAT)
-                                  THis last celL is twice as large as the other cels *)
-        UL           : double;  (* Upper Limit of SC salt cells = SC/(SC+2) * (SAT/100) in m3/m3 *)
-        Dx           : double; (* Size of SC salt cells [m3/m3] = UL/SC *)
-        // capilary rise parameters
-        SoilClass    : shortInt; // 1 = sandy, 2 = loamy, 3 = sandy clayey, 4 - silty clayey soils
-        CRa, CRb     : double; (* coefficients for Capillary Rise *)
-        END;
-
+TYPE 
      rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
 
      CompartmentIndividual = Record
@@ -1592,35 +1563,6 @@ REPEAT
   TotalDepthC := TotalDepthC + Compartment[NrCompartments].Thickness;
 UNTIL ((NrCompartments = max_No_compartments) OR (Abs(TotalDepthC - TotalDepthL) < 0.0001));
 END; (* DetermineNrandThicknessCompartments *)
-
-
-PROCEDURE set_layer_undef(VAR LayerData : SoilLayerIndividual);
-VAR i : INTEGER;
-BEGIN
-with LayerData DO
-   BEGIN
-   Description := '';
-   Thickness := undef_double;
-   SAT := undef_double;
-   FC := undef_double;
-   WP := undef_double;
-   tau := undef_double;
-   InfRate := undef_double;
-   Penetrability := undef_int;
-   GravelMass := undef_int;
-   GravelVol := undef_int;
-   Macro := undef_int;
-   UL := undef_double;
-   Dx := undef_double;
-   FOR i := 1 TO 11 DO SaltMobility[i] := undef_double; // maximum 11 salt cells
-   SoilClass := undef_int;
-   CRa := undef_int;
-   CRb := undef_int;
-   WaterContent := undef_double;
-   END;
-END; (* set_layer_undef *)
-
-
 
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
