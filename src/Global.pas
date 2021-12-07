@@ -6,7 +6,6 @@ uses SysUtils, interface_global;
 
 
 Const max_No_compartments = 12;
-      max_SoilLayers = 5;
       Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
       ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
@@ -22,8 +21,6 @@ TYPE
      rep_string3  = string[3];  (* Read/Write ProfFile *)
 
 TYPE 
-     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
-
      CompartmentIndividual = Record
          Thickness : double;  (* meter *)
          theta     : double;  (* m3/m3 *)
@@ -543,11 +540,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
 
 FUNCTION FileExists (full_name : string) : BOOLEAN;
 
-PROCEDURE ZrAdjustedToRestrictiveLayers(ZrIN : double;
-                                        TheNrSoilLayers : ShortInt;
-                                        TheLayer : rep_SoilLayer;
-                                        VAR ZrOUT : double);
-
 FUNCTION RootMaxInSoilProfile(ZmaxCrop : double;
                               TheNrSoilLayers : ShortInt;
                               TheSoilLayer : rep_SoilLayer) : single;
@@ -828,65 +820,6 @@ Close(f);
 {$I+}
 FileExists := (IOResult = 0);
 END; (* FileExists *)
-
-
-PROCEDURE ZrAdjustedToRestrictiveLayers(ZrIN : double;
-                                        TheNrSoilLayers : ShortInt;
-                                        TheLayer : rep_SoilLayer;
-                                        VAR ZrOUT : double);
-VAR Layi : ShortInt;
-    Zsoil, ZrAdj, ZrRemain, DeltaZ, ZrTest : double;
-    TheEnd : BOOLEAN;
-BEGIN
-ZrOUT := ZrIn;
-(*
-// Adjust ZminYear1 when Zmax <= ZminYear1 since calculation for reduction start at ZminYear1
-IF ROUND(ZrIN*1000) <= ROUND(CropZMinY1*1000) THEN
-   BEGIN
-   CropZMinY1 := 0.30;
-   IF ROUND(ZrIN*1000) <= ROUND(CropZMinY1*1000) THEN CropZMinY1 := ZrIN - 0.05;
-   END;
-
-// start at CropZMinY1
-layi := 1;
-Zsoil := TheLayer[layi].Thickness;
-WHILE ((ROUND(Zsoil*1000) <= ROUND(CropZMinY1*1000)) AND (layi < TheNrSoilLayers)) DO
-  BEGIN
-  layi := layi + 1;
-  Zsoil := Zsoil + TheLayer[layi].Thickness;
-  END;
-ZrAdj := CropZMinY1;
-ZrRemain := ZrIN - CropZMinY1;
-DeltaZ := Zsoil - CropZMinY1;   *)
-
-
-// initialize (layer 1)
-layi := 1;
-Zsoil := TheLayer[layi].Thickness;
-ZrAdj := 0;
-ZrRemain := ZrIN;
-DeltaZ := Zsoil;
-TheEnd := false;
-// check succesive layers
-REPEAT
-  ZrTest := ZrAdj + ZrRemain*(TheLayer[layi].Penetrability/100);
-  IF ((layi = TheNrSoilLayers)
-      OR (TheLayer[layi].Penetrability = 0) // no root expansion in layer
-      OR (ROUND(ZrTest*10000) <= ROUND(Zsoil*10000)))
-     THEN BEGIN
-          TheEnd := true;
-          ZrOUT := ZrTest;
-          END
-     ELSE BEGIN
-          ZrAdj := Zsoil;
-          ZrRemain := ZrRemain - (DeltaZ/(TheLayer[layi].Penetrability/100));
-          layi := layi + 1;
-          Zsoil := Zsoil + TheLayer[layi].Thickness;
-          DeltaZ := TheLayer[layi].Thickness;
-          END;
-UNTIL TheEnd;
-END; (* ZrAdjustedToRestrictiveLayers *)
-
 
 
 FUNCTION RootMaxInSoilProfile(ZmaxCrop : double;

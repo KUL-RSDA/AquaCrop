@@ -6,6 +6,7 @@ use ac_kinds, only: dp, &
 implicit none
 
 
+integer(int16), parameter :: max_SoilLayers = 5
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int16), parameter :: undef_int = -9
@@ -76,6 +77,66 @@ real(dp) function AquaCropVersion(FullNameXXFile)
 
     AquaCropVersion = VersionNr
 end function AquaCropVersion
+
+
+subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
+    real(dp), intent(in) :: ZrIN
+    integer(int8), intent(in) :: TheNrSoilLayers
+    type(SoilLayerIndividual), dimension(max_SoilLayers), intent(in) :: TheLayer
+    real(dp), intent(inout) :: ZrOUT
+
+    integer :: Layi
+    real(dp) :: Zsoil, ZrAdj, ZrRemain, DeltaZ, ZrTest
+    logical :: TheEnd
+
+    ZrOUT = ZrIn
+
+    ! // Adjust ZminYear1 when Zmax <= ZminYear1 since calculation for reduction start at ZminYear1
+    ! IF ROUND(ZrIN*1000) <= ROUND(CropZMinY1*1000) THEN
+    !     CropZMinY1 := 0.30;
+    !     IF ROUND(ZrIN*1000) <= ROUND(CropZMinY1*1000) THEN
+    !         CropZMinY1 := ZrIN - 0.05;
+    !     end if
+    ! end if
+    !
+    ! // start at CropZMinY1
+    ! layi := 1;
+    ! Zsoil := TheLayer[layi].Thickness;
+    ! WHILE ((ROUND(Zsoil*1000) <= ROUND(CropZMinY1*1000)) AND (layi < TheNrSoilLayers)) DO
+    !     layi := layi + 1;
+    !     Zsoil := Zsoil + TheLayer[layi].Thickness;
+    ! end do
+    ! ZrAdj := CropZMinY1;
+    ! ZrRemain := ZrIN - CropZMinY1;
+    ! DeltaZ := Zsoil - CropZMinY1;   *)
+
+    ! initialize (layer 1)
+    layi = 1
+    Zsoil = TheLayer(layi)%Thickness
+    ZrAdj = 0
+    ZrRemain = ZrIN
+    DeltaZ = Zsoil
+    TheEnd = .false.
+
+    ! check succesive layers
+    do while (.not. TheEnd)
+        ZrTest = ZrAdj + ZrRemain * (TheLayer(layi)%Penetrability/100._dp)
+
+        if ((layi == TheNrSoilLayers) &
+            .or. (TheLayer(layi)%Penetrability == 0) &
+            .or. (nint(ZrTest*10000) <= nint(Zsoil*10000))) then
+            ! no root expansion in layer
+            TheEnd = .true.
+            ZrOUT = ZrTest
+        else
+            ZrAdj = Zsoil
+            ZrRemain = ZrRemain - DeltaZ/(TheLayer(layi)%Penetrability/100._dp)
+            layi = layi + 1
+            Zsoil = Zsoil + TheLayer(layi)%Thickness
+            DeltaZ = TheLayer(layi)%Thickness
+        end if
+    end do
+end subroutine ZrAdjustedToRestrictiveLayers
 
 
 subroutine set_layer_undef(LayerData)

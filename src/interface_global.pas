@@ -5,6 +5,7 @@ interface
 
 
 const
+    max_SoilLayers = 5;
     undef_double = -9.9;
     undef_int = -9;
 
@@ -38,9 +39,17 @@ type
         CRa, CRb     : double; (* coefficients for Capillary Rise *)
         END;
 
+    rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
+
+procedure ZrAdjustedToRestrictiveLayers(ZrIN : double;
+                                        TheNrSoilLayers : ShortInt;
+                                        TheLayer : rep_SoilLayer;
+                                        var ZrOUT : double);
+         external 'aquacrop' name '__ac_global_MOD_zradjustedtorestrictivelayers';
 
 function TimeRootFunction(
             constref t : double;
