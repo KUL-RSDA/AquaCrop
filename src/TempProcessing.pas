@@ -2,7 +2,7 @@ unit TempProcessing;
 
 interface
 
-uses Global,SysUtils;
+uses Global, interface_global, SysUtils;
 
 PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
                                       VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);

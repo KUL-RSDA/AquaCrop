@@ -2,7 +2,7 @@ unit ClimProcessing;
 
 interface
 
-uses Global ;
+uses Global, interface_global;
 
 
 PROCEDURE GetMonthlyEToDataSet(DayNri : LongInt;

@@ -3,7 +3,7 @@ unit InitialSettings;
 interface
 
 
-uses Global, DefaultCropSoil;
+uses Global, interface_global, DefaultCropSoil;
 
 PROCEDURE InitializeSettings;
 
