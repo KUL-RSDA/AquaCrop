@@ -773,9 +773,6 @@ FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
                                   CCxCrop,FshapeWeed,fCCx : double;
                                   Yeari,MWeedAdj : ShortInt;
                                   VAR RCadj : ShortInt) : double;
-FUNCTION TimeToReachZroot(Zi,Zo,Zx : double;
-                          ShapeRootDeepening : ShortInt;
-                          Lo,LZxAdj : INTEGER) : double;
 FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
                                       GravelMassPercent : ShortInt) : double;
 FUNCTION GetWeedRC(TheDay : INTEGER;
@@ -5656,29 +5653,6 @@ CCmultiplierWeedAdjusted := fWeedi;
 END; (* CCmultiplierWeedAdjusted *)
 
 
-
-
-
-FUNCTION TimeToReachZroot(Zi,Zo,Zx : double;
-                          ShapeRootDeepening : ShortInt;
-                          Lo,LZxAdj : INTEGER) : double;
-VAR ti,T1 : double;
-BEGIN
-ti := undef_int;
-IF (ROUND(Zi*100) >= Round(Zx*100))
-   THEN ti := LZxAdj
-   ELSE BEGIN
-        IF ( ((Zo+0.0001) < Zx)
-         AND (LZxAdj > Lo/2)
-         AND (LZxAdj > 0)
-         AND (ShapeRootDeepening > 0)) THEN
-             BEGIN
-             T1 := exp((ShapeRootDeepening/10) * Ln((Zi-Zo)/(Zx-Zo)));
-             ti := T1 * (LZxAdj - Lo/2) + Lo/2;
-             END;
-        END;
-TimeToReachZroot := ti;
-END;  (* TimeToReachZroot *)
 
 
 FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
