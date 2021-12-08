@@ -176,4 +176,31 @@ real(dp) function TimeRootFunction(t, ShapeFactor, tmax, t0)
     TimeRootFunction = exp((10._dp / ShapeFactor) * log((t-t0) / (tmax-t0)))
 end function TimeRootFunction
 
+
+real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
+    real(dp), intent(in) :: Zi
+    real(dp), intent(in) :: Zo
+    real(dp), intent(in) :: Zx
+    integer(int8), intent(in) :: ShapeRootDeepening
+    integer(int16), intent(in) :: Lo
+    integer(int16), intent(in) :: LZxAdj
+
+    real(dp) :: ti, T1
+
+    ti = real(undef_int, kind=dp)
+
+    if (nint(Zi*100) >= nint(Zx*100)) then
+        ti = real(LZxAdj, kind=dp)
+    else
+        if (((Zo+0.0001_dp) < Zx) .and. (LZxAdj > Lo/2._dp) .and. (LZxAdj > 0) &
+            .and. (ShapeRootDeepening > 0)) then
+            T1 = exp((ShapeRootDeepening/10._dp) * log((Zi-Zo) / (Zx-Zo)))
+            ti = T1 * (LZxAdj - Lo/2._dp) + Lo/2._dp
+        end if
+    end if
+
+    TimeToReachZroot = ti
+end function TimeToReachZroot
+
+
 end module ac_global

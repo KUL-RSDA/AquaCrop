@@ -61,6 +61,12 @@ procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
          external 'aquacrop' name '__ac_global_MOD_set_layer_undef';
 
+function TimeToReachZroot(
+            constref Zi, Zo, Zx : double;
+            constref ShapeRootDeepening : shortint;
+            constref Lo, LZxAdj : integer) : double;
+         external 'aquacrop' name '__ac_global_MOD_timetoreachzroot';
+
 
 implementation
 
