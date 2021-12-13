@@ -41,6 +41,8 @@ type
 
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
 
+    rep_modeCycle = (GDDays, CalendarDays);
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -67,8 +69,58 @@ function TimeToReachZroot(
             constref Lo, LZxAdj : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_timetoreachzroot';
 
+function __GetWeedRC(
+            constref TheDay : integer;
+            constref GDDayi : double;
+            constref fCCx : double;
+            constref TempWeedRCinput : shortint;
+            constref TempWeedAdj : shortint;
+            var TempWeedDeltaRC : integer;
+            constref L12SF : integer;
+            constref TempL123 : integer;
+            constref GDDL12SF : integer;
+            constref TempGDDL123 : integer;
+            constref TheModeCycle : integer) : double;
+         external 'aquacrop' name '__ac_global_MOD_getweedrc';
+
+function GetWeedRC(
+            constref TheDay : integer;
+            constref GDDayi : double;
+            constref fCCx : double;
+            constref TempWeedRCinput : shortint;
+            constref TempWeedAdj : shortint;
+            var TempWeedDeltaRC : integer;
+            constref L12SF : integer;
+            constref TempL123 : integer;
+            constref GDDL12SF : integer;
+            constref TempGDDL123 : integer;
+            constref TheModeCycle : rep_modeCycle) : double;
+
 
 implementation
+
+
+function GetWeedRC(
+            constref TheDay : integer;
+            constref GDDayi : double;
+            constref fCCx : double;
+            constref TempWeedRCinput : shortint;
+            constref TempWeedAdj : shortint;
+            var TempWeedDeltaRC : integer;
+            constref L12SF : integer;
+            constref TempL123 : integer;
+            constref GDDL12SF : integer;
+            constref TempGDDL123 : integer;
+            constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle: integer;
+
+begin
+    int_modeCycle := ord(TheModeCycle);
+    GetWeedRC := __GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,
+                             TempWeedDeltaRC, L12SF, TempL123, GDDL12SF,
+                             TempGDDL123, int_modeCycle);
+end;
 
 
 initialization

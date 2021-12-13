@@ -2,7 +2,8 @@ module ac_global
 
 use ac_kinds, only: dp, &
                     int8, &
-                    int16
+                    int16, &
+                    intEnum
 implicit none
 
 
@@ -12,6 +13,10 @@ real(dp), parameter :: undef_double = -9.9_dp
 integer(int16), parameter :: undef_int = -9
     !! value for 'undefined' int16 variables
 
+integer(intEnum), parameter :: modeCycle_GDDDays = 0
+    !! index of GDDDays in modeCycle enumerated type
+integer(intEnum), parameter :: modeCycle_CalendarDays = 1
+    !! index of CalendarDays in modeCycle enumerated type
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -201,6 +206,84 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
 
     TimeToReachZroot = ti
 end function TimeToReachZroot
+
+
+real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
+                            TempWeedDeltaRC, L12SF, TempL123, GDDL12SF, &
+                            TempGDDL123, TheModeCycle)
+    integer(int16), intent(in) :: TheDay
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: fCCx
+    integer(int8), intent(in) :: TempWeedRCinput
+    integer(int8), intent(in) :: TempWeedAdj
+    integer(int16), intent(inout) :: TempWeedDeltaRC
+    integer(int16), intent(in) :: L12SF
+    integer(int16), intent(in) :: TempL123
+    integer(int16), intent(in) :: GDDL12SF
+    integer(int16), intent(in) :: TempGDDL123
+    integer(intEnum), intent(in) :: TheModeCycle
+
+    real(dp) :: WeedRCDayCalc
+
+    WeedRCDayCalc = TempWeedRCinput
+
+    if ((TempWeedRCinput > 0) .and. (TempWeedDeltaRC /= 0)) then
+        ! daily RC when increase/decline of RC in season (i.e. TempWeedDeltaRC <> 0)
+        ! adjust the slope of increase/decline of RC in case of self-thinning (i.e. fCCx < 1)
+        if ((TempWeedDeltaRC /= 0) .and. (fCCx < 0.999_dp)) then
+            ! only when self-thinning and there is increase/decline of RC
+            if (fCCx < 0.005_dp) then
+                TempWeedDeltaRC = 0
+            else
+                TempWeedDeltaRC = nint(TempWeedDeltaRC * exp( &
+                                       log(fCCx) * (1+TempWeedAdj/100._dp)), &
+                                       kind=int16)
+            end if
+        end if
+
+        ! calculate WeedRCDay by considering (adjusted) decline/increase of RC
+        if (TheModeCycle == modeCycle_CalendarDays) then
+            if (TheDay > L12SF) then
+                if (TheDay >= TempL123) then
+                    WeedRCDayCalc = TempWeedRCinput * (1 + &
+                                        TempWeedDeltaRC/100._dp)
+                else
+                    WeedRCDayCalc = TempWeedRCinput * (1 + &
+                                        (TempWeedDeltaRC/100._dp) &
+                                         * (TheDay-L12SF) / (TempL123-L12SF))
+                end if
+            end if
+        else
+            if (GDDayi > GDDL12SF) then
+                if (GDDayi > TempGDDL123) then
+                    WeedRCDayCalc = TempWeedRCinput * (1 + &
+                                        TempWeedDeltaRC/100._dp)
+                else
+                    WeedRCDayCalc = TempWeedRCinput * (1 + &
+                                        (TempWeedDeltaRC/100._dp) &
+                                         * (GDDayi-GDDL12SF) &
+                                         / (TempGDDL123-GDDL12SF))
+                end if
+            end if
+        end if
+
+        ! fine-tuning for over- or undershooting in case of self-thinning
+        if (fCCx < 0.999_dp) then
+            ! only for self-thinning
+            if ((fCCx < 1) .and. (fCCx > 0) .and. (WeedRCDayCalc > 98)) then
+                WeedRCDayCalc = 98._dp
+            end if
+            if (WeedRCDayCalc < 0) then
+                WeedRCDayCalc = 0._dp
+            end if
+            if (fCCx <= 0) then
+                WeedRCDayCalc = 100._dp
+            end if
+        end if
+    end if
+
+    GetWeedRC = WeedRCDayCalc
+end function GetWeedRC
 
 
 end module ac_global
