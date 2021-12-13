@@ -57,7 +57,6 @@ TYPE
      rep_int_array = ARRAY[1..4] OF INTEGER;
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
-     rep_modeCycle = (GDDays,CalendarDays);
      rep_planting = (Seed,Transplant,Regrowth);
 
      rep_Shapes = Record
@@ -775,11 +774,6 @@ FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
                                   VAR RCadj : ShortInt) : double;
 FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
                                       GravelMassPercent : ShortInt) : double;
-FUNCTION GetWeedRC(TheDay : INTEGER;
-                   GDDayi,fCCx : Double;
-                   TempWeedRCinput,TempWeedAdj : ShortInt;
-                   TempWeedDeltaRC,L12SF,TempL123,GDDL12SF,TempGDDL123 : Integer;
-                   TheModeCycle: rep_modeCycle) : Double;
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                Sown1stYear : BOOLEAN;
@@ -5668,56 +5662,6 @@ IF (GravelMassPercent > 0)
         END
    ELSE FromGravelMassToGravelVolume := 0.0;
 END; (* FromGravelMassToGravelVolume *)
-
-
-FUNCTION GetWeedRC(TheDay : INTEGER;
-                   GDDayi,fCCx : Double;
-                   TempWeedRCinput,TempWeedAdj : ShortInt;
-                   TempWeedDeltaRC,L12SF,TempL123,GDDL12SF,TempGDDL123 : Integer;
-                   TheModeCycle: rep_modeCycle) : Double;
-
-VAR WeedRCDayCalc : double;
-BEGIN
-WeedRCDayCalc := TempWeedRCinput;
-IF ((TempWeedRCinput > 0) AND (TempWeedDeltaRC <> 0)) THEN
-   BEGIN // daily RC when increase/decline of RC in season (i.e. TempWeedDeltaRC <> 0)
-   // adjust the slope of increase/decline of RC in case of self-thinning (i.e. fCCx < 1)
-   IF ((TempWeedDeltaRC <> 0) AND (fCCx < 0.999)) THEN 
-      BEGIN // only when self-thinning and there is increase/decline of RC
-      IF (fCCx < 0.005)
-         THEN TempWeedDeltaRC := 0
-         ELSE TempWeedDeltaRC := ROUND(TempWeedDeltaRC* Exp(ln(fCCx)*(1+TempWeedAdj/100)));
-      END;
-   // calculate WeedRCDay by considering (adjusted) decline/increase of RC
-   IF (TheModeCycle = CalendarDays)
-      THEN BEGIN
-           IF (TheDay > L12SF) THEN
-              BEGIN
-              IF (TheDay >= TempL123)
-                 THEN WeedRCDayCalc := TempWeedRCinput*(1 + TempWeedDeltaRC/100)
-                 ELSE WeedRCDayCalc := TempWeedRCinput*(1 +
-                       (TempWeedDeltaRC/100)*(TheDay-L12SF)/(TempL123-L12SF));
-              END;
-           END
-      ELSE BEGIN
-           IF (GDDayi > GDDL12SF) THEN
-              BEGIN
-              IF (GDDayi > TempGDDL123)
-                 THEN WeedRCDayCalc := TempWeedRCinput*(1 + TempWeedDeltaRC/100)
-                 ELSE WeedRCDayCalc := TempWeedRCinput*(1 +
-                        (TempWeedDeltaRC/100)*(GDDayi-GDDL12SF)/(TempGDDL123-GDDL12SF));
-              END;
-           END;
-   // fine-tuning for over- or undershooting in case of self-thinning
-   IF (fCCx < 0.999) THEN
-      BEGIN // only for self-thinning
-      IF ((fCCx < 1) AND (fCCx > 0) AND (WeedRCDayCalc > 98)) THEN WeedRCDayCalc := 98;
-      IF (WeedRCDayCalc < 0) THEN WeedRCDayCalc := 0;
-      IF (fCCx <= 0) THEN WeedRCDayCalc := 100;
-      END;
-   END;
-GetWeedRC := WeedRCDayCalc;
-END; (* GetWeedRC *)
 
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
