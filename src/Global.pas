@@ -772,8 +772,6 @@ FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
                                   CCxCrop,FshapeWeed,fCCx : double;
                                   Yeari,MWeedAdj : ShortInt;
                                   VAR RCadj : ShortInt) : double;
-FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
-                                      GravelMassPercent : ShortInt) : double;
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                Sown1stYear : BOOLEAN;
@@ -5645,23 +5643,6 @@ IF (ProcentWeedCover > 0) THEN
    END;
 CCmultiplierWeedAdjusted := fWeedi;
 END; (* CCmultiplierWeedAdjusted *)
-
-
-
-
-FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
-                                      GravelMassPercent : ShortInt) : double;
-Const MineralBD = 2.65; //Mg/m3
-VAR MatrixBD,SoilBD : double;
-BEGIN
-IF (GravelMassPercent > 0)
-   THEN BEGIN
-        MatrixBD := MineralBD * (1 - PorosityPercent/100);
-        SoilBD := 100/(GravelMassPercent/MineralBD + (100-GravelMassPercent)/MatrixBD);
-        FromGravelMassToGravelVolume := GravelMassPercent * (SoilBD/MineralBD);
-        END
-   ELSE FromGravelMassToGravelVolume := 0.0;
-END; (* FromGravelMassToGravelVolume *)
 
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
