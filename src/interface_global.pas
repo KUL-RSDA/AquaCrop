@@ -109,6 +109,9 @@ function GetWeedRC(
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
+function BMRange(constref HIadj : integer) : double;
+         external 'aquacrop' name '__ac_global_MOD_bmrange';
+
 implementation
 
 

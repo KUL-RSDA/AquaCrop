@@ -691,7 +691,6 @@ FUNCTION HarvestIndexDay(DAP  : LongInt;
                          VAR HIfinal : INTEGER)   : double;
 FUNCTION HImultiplier(RatioBM,RangeBM : double;
                       HIadj : ShortInt) : double;
-FUNCTION BMRange(HIadj : integer) : double;
 FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
                                  a : ShortInt;
                                  b : double) : double;
@@ -4074,17 +4073,6 @@ IF (RatioBM <= RIni)
                    THEN HImultiplier := 1 + (1+SIN(PI*(0.5+(RatioBM-RMax)/(REnd-RMax))))*(HIadj/200)
                    ELSE HImultiplier := 1;
 END; (* HImultiplier *)
-
-
-FUNCTION BMRange(HIadj : integer) : double;   // fraction
-VAR BMR : double;
-BEGIN
-IF HIadj <= 0
-   THEN BMR := 0
-   ELSE BMR := (LN(HIadj)/0.0562)/100;
-IF (BMR > 1) THEN BMR := 1;
-BMRange := BMR;
-END; (* BMRange *)
 
 
 FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
