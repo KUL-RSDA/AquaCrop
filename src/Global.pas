@@ -759,7 +759,6 @@ FUNCTION fAdjustedForCO2 (CO2i : double;
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
-FUNCTION MaxCRatDepth(ParamCRa,ParamCRb,Ksat,Zi,DepthGWT : double) : double;
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -770,8 +769,6 @@ FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
                                   CCxCrop,FshapeWeed,fCCx : double;
                                   Yeari,MWeedAdj : ShortInt;
                                   VAR RCadj : ShortInt) : double;
-FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
-                                      GravelMassPercent : ShortInt) : double;
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                Sown1stYear : BOOLEAN;
@@ -5353,24 +5350,6 @@ END; (* CheckForWaterTableInProfile *)
 
 
 
-FUNCTION MaxCRatDepth(ParamCRa,ParamCRb,Ksat,Zi,DepthGWT : double) : double;
-VAR CRmax : double;
-BEGIN
-CRmax := 0;
-IF ((Ksat > 0) AND (DepthGWT > 0) AND ((DepthGWT-Zi) < 4)) THEN
-   BEGIN
-   IF (Zi >= DepthGWT)
-      THEN CRmax := 99
-      ELSE BEGIN
-           CRmax := exp((ln(DepthGWT - Zi) - ParamCRb)/ParamCRa);
-           IF (CRmax > 99) THEN CRmax := 99;
-           END;
-   END;
-MaxCRatDepth := CRmax;
-END; (* MaxCRatDepth *)
-
-
-
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -5600,23 +5579,6 @@ IF (ProcentWeedCover > 0) THEN
    END;
 CCmultiplierWeedAdjusted := fWeedi;
 END; (* CCmultiplierWeedAdjusted *)
-
-
-
-
-FUNCTION FromGravelMassToGravelVolume(PorosityPercent : double;
-                                      GravelMassPercent : ShortInt) : double;
-Const MineralBD = 2.65; //Mg/m3
-VAR MatrixBD,SoilBD : double;
-BEGIN
-IF (GravelMassPercent > 0)
-   THEN BEGIN
-        MatrixBD := MineralBD * (1 - PorosityPercent/100);
-        SoilBD := 100/(GravelMassPercent/MineralBD + (100-GravelMassPercent)/MatrixBD);
-        FromGravelMassToGravelVolume := GravelMassPercent * (SoilBD/MineralBD);
-        END
-   ELSE FromGravelMassToGravelVolume := 0.0;
-END; (* FromGravelMassToGravelVolume *)
 
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
