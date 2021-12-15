@@ -285,5 +285,22 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+real(dp) function TauFromKsat(Ksat)
+    real(dp), intent(in) :: Ksat
+
+    integer(int16) :: TauTemp
+    if (Ksat == 0) then
+        TauFromKsat = 0
+    else
+        TauTemp = nint(100*0.0866*exp(0.35*log(Ksat)))
+        if (TauTemp < 0) then
+            TauTemp = 0
+        end if
+        if (TauTemp > 100) then
+            TauTemp = 100
+        end if
+        TauFromKsat = TauTemp/100.0_dp
+    end if
+end function TauFromKsat
 
 end module ac_global
