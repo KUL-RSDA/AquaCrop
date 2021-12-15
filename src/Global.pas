@@ -552,8 +552,6 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          VAR TpotVal, EpotVal : double);
 
 PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-FUNCTION DaysToReachCCwithGivenCGC(CCToReach,CCoVal,CCxVal,CGCVal : double;
-                                   L0 : INTEGER) : INTEGER;
 PROCEDURE TimeToMaxCanopySF(CCo,CGC,CCx : double;
                             L0,L12,L123,LToFlor,LFlor : INTEGER;
                             DeterminantCrop : BOOLEAN;
@@ -1021,23 +1019,6 @@ FOR i :=1 to NrCompartments DO
       + Compartment[i].theta*1000*Compartment[i].Thickness;
 END; (* GlobalZero *)
 
-
-
-FUNCTION DaysToReachCCwithGivenCGC(CCToReach,CCoVal,CCxVal,CGCVal : double;
-                                   L0 : INTEGER) : INTEGER;
-VAR L : Double;
-BEGIN
-IF ((CCoVal > CCToReach) OR (CCoVal >= CCxVal))
-   THEN L := 0
-   ELSE BEGIN
-        IF (CCToReach > (0.98*CCxVal)) THEN CCToReach := 0.98*CCxVal;
-        IF (CCToReach <= CCxVal/2)
-           THEN L := LN(CCToReach/CCoVal)/CGCVal
-           ELSE L := LN((0.25*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal;
-        //L := L + 0.50; // value is reached or exceeded
-        END;
-DaysToReachCCwithGivenCGC := L0 + ROUND(L);
-END; (* DaysToReachCCwithGivenCGC *)
 
 
 

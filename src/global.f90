@@ -308,6 +308,30 @@ real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
    MultiplierCCxSelfThinning = fCCx     
 end function MultiplierCCxSelfThinning
 
+integer(int16) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
+                                                        CGCVal, L0)
+    real(dp), intent(inout) :: CCToReach
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CGCVal
+    integer(int16), intent(in) :: L0
+
+    real(dp) :: L
+    if ((CCoVal > CCToReach) .or. (CCoVal >= CCxVal)) then
+      L = 0._dp
+    else
+        if (CCToReach > (0.98*CCxVal)) then
+          CCToReach = 0.98*CCxVal
+        end if
+        if (CCToReach <= CCxVal/2._dp) then
+           L = log(CCToReach/CCoVal)/CGCVal
+        else
+          L = log((0.25*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal
+        end if
+
+    end if
+    DaysToReachCCwithGivenCGC = L0 + nint(L, int16)
+end function DaysToReachCCwithGivenCGC
 
 
 
