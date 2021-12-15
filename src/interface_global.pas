@@ -69,6 +69,11 @@ function TimeToReachZroot(
             constref Lo, LZxAdj : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_timetoreachzroot';
 
+function FromGravelMassToGravelVolume(
+	    constref PorosityPercent : double;
+            constref GravelMassPercent : shortint) : double;
+         external 'aquacrop' name '__ac_global_MOD_fromgravelmasstogravelvolume';
+
 function __GetWeedRC(
             constref TheDay : integer;
             constref GDDayi : double;
