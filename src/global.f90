@@ -207,7 +207,6 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
     TimeToReachZroot = ti
 end function TimeToReachZroot
 
-!=========================================================
 real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
                                                GravelMassPercent)
     real(dp), intent(in)      :: PorosityPercent
@@ -215,7 +214,6 @@ real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
 
     real(dp), parameter ::  MineralBD = 2.65 !! Mg/m3
     real(dp) :: MatrixBD, SoilBD
-!----------------------------------------------------------
 
     if (GravelMassPercent > 0) then
         MatrixBD = MineralBD * (1._dp - PorosityPercent/100._dp)
@@ -225,9 +223,7 @@ real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
    else
        FromGravelMassToGravelVolume = 0.0_dp
    end if
-
 end function FromGravelMassToGravelVolume
-!=========================================================
 
 
 real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
