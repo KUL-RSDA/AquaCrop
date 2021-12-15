@@ -295,14 +295,14 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
 
     real(dp) :: CRmax
 
-    CRmax = 0
-    if ((Ksat > 0) .and. (DepthGWT > 0) .and. ((DepthGWT-Zi) < 4)) then
+    CRmax = 0._dp
+    if ((Ksat > 0._dp) .and. (DepthGWT > 0._dp) .and. ((DepthGWT-Zi) < 4._dp)) then
         if (Zi >= DepthGWT) then
-            CRmax = 99
+            CRmax = 99._dp
         else
             CRmax = exp((log(DepthGWT - Zi) - ParamCRb)/ParamCRa)
-            if (CRmax > 99) then
-                CRmax = 99
+            if (CRmax > 99._dp) then
+                CRmax = 99._dp
             end if
         end if
     end if
