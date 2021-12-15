@@ -285,5 +285,30 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
+    integer(int16), intent(in) :: Yeari
+    integer(int16), intent(in) :: Yearx
+    real(dp), intent(in) :: ShapeFactor
+
+    real(dp) :: fCCx, Year0
+    
+    fCCx = 1._dp
+    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor) /= 0)) then
+        Year0 = 1 + (Yearx-1) * exp(ShapeFactor*log(10._dp))
+        if (Yeari >= Year0) then
+          fCCx = 0._dp
+        else
+          fCCx = 0.9 + 0.1 * (1._dp - &
+                 exp((1._dp/ShapeFactor)*log(real((Yeari-1)/(Yearx-1),dp))))
+        end if
+        if (fCCx < 0._dp) then
+          fCCx = 0._dp
+        end if
+   end if
+   MultiplierCCxSelfThinning = fCCx     
+end function MultiplierCCxSelfThinning
+
+
+
 
 end module ac_global

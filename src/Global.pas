@@ -785,8 +785,7 @@ PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                VAR Zmin,TheSizePlant,TheCCini : double;
                                VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
 
-FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
+
 FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;
                                    ShapeFactor : double) : double;
 PROCEDURE NoCropCalendar;
@@ -5698,21 +5697,6 @@ IF (TheCycleMode = GDDays)
 END;  (* AdjustYearPerennials *)
 
 
-FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
-VAR fCCx,Year0 : double;
-BEGIN
-fCCx := 1;
-IF ((Yeari >= 2) AND (Yearx >= 2) AND (ROUND(100*ShapeFactor) <> 0)) THEN
-   BEGIN
-   Year0 := 1 + (Yearx-1) * exp(ShapeFactor*ln(10));
-   IF (Yeari >= Year0)
-      THEN fCCx := 0
-      ELSE fCCx := 0.9 + 0.1 * (1 - Exp((1/ShapeFactor)*LN((Yeari-1)/(Yearx-1))));
-   IF (fCCx < 0) THEN fCCx := 0;
-   END;
-MultiplierCCxSelfThinning := fCCx;
-END; (* MultiplierCCxSelfThinning *)
 
 
 FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;

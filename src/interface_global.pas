@@ -96,6 +96,11 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+function MultiplierCCxSelfThinning(
+	    constref Yeari : integer;
+	    constref Yearx : integer;
+            constref ShapeFactor : double) : double;
+	external 'aquacrop' name '__ac_global_MOD_multiplierccxselfthinning';
 
 implementation
 
