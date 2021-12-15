@@ -605,8 +605,6 @@ PROCEDURE DetermineSaltContent(ECe : double;
 
 PROCEDURE CompleteProfileDescription;
 PROCEDURE LoadProfile(FullName : string);
-PROCEDURE DeriveSmaxTopBottom(SxTopQ,SxBotQ : double;
-                              VAR SxTop,SxBot : double);
 
 PROCEDURE DetermineLengthGrowthStages(CCoVal,CCxVal,CDCVal : double;
                                       L0,TotalLength : INTEGER;
@@ -1967,49 +1965,6 @@ DetermineNrandThicknessCompartments;
 Close(f0);
 Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 END; // Loadprofile
-
-
-PROCEDURE DeriveSmaxTopBottom(SxTopQ,SxBotQ : double;
-                              VAR SxTop,SxBot : double);
-VAR x,V1,V2,V11,V22 : double;
-BEGIN
-V1 := SxTopQ;
-V2 := SxBotQ;
-IF (V1 = V2)
-   THEN BEGIN
-        SxTop := V1;
-        SxBot := V2;
-        END
-   ELSE BEGIN
-        IF (SxTopQ < SxBotQ)
-           THEN BEGIN
-                V1 := SxBotQ;
-                V2 := SxTopQ;
-                END;
-        x := 3 * V2/(V1-V2);
-        IF (x < 0.5)
-           THEN BEGIN
-                V11 := (4/3.5) * V1;
-                V22 := 0;
-                END
-           ELSE BEGIN
-                V11 := (x + 3.5) * V1/(x+3);
-                V22 := (x - 0.5) * V2/x;
-                END;
-        IF (SxTopQ > SxBotQ)
-           THEN BEGIN
-                SxTop := V11;
-                SxBot := V22;
-                END
-           ELSE BEGIN
-                SxTop := V22;
-                SxBot := V11;
-                END;
-        END;
-END; (* DeriveSmaxTopBottom *)
-
-
-
 
 
 PROCEDURE DetermineLengthGrowthStages(CCoVal,CCxVal,CDCVal : double;

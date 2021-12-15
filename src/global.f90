@@ -336,4 +336,39 @@ integer(int8) function NumberSoilClass(SatvolPro, FCvolPro, PWPvolPro, Ksatmm)
     end if
 end function NumberSoilClass
 
+subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
+    real(dp), intent(in) :: SxTopQ
+    real(dp), intent(in) :: SxBotQ
+    real(dp), intent(inout) :: SxTop
+    real(dp), intent(inout) :: SxBot
+
+    real(dp) :: x, V1, V2, V11, V22
+    V1 = SxTopQ
+    V2 = SxBotQ
+    if (V1 == V2) then
+        SxTop = V1
+        SxBot = V2
+    else
+        if (SxTopQ < SxBotQ) then
+            V1 = SxBotQ
+            V2 = SxTopQ
+        end if
+        x = 3.0_dp * V2/(V1-V2)
+        if (x < 0.5_dp) then
+            V11 = (4.0_dp/3.5_dp) * V1
+            V22 = 0.0_dp
+        else
+            V11 = (x + 3.5_dp) * V1/(x+3.0_dp)
+            V22 = (x - 0.5_dp) * V2/x
+        end if
+        if (SxTopQ > SxBotQ) then
+            SxTop = V11
+            SxBot = V22
+        else
+            SxTop = V22
+            SxBot = V11
+        end if
+    end if
+end subroutine DeriveSmaxTopBottom
+
 end module ac_global

@@ -106,6 +106,13 @@ function NumberSoilClass (
             constref Ksatmm : double) : shortint;
          external 'aquacrop' name '__ac_global_MOD_numbersoilclass';
 
+procedure DeriveSmaxTopBottom(
+            constref SxTopQ : double;
+            constref SxBotQ : double;
+            var SxTop : double;
+            var SxBot : double);
+         external 'aquacrop' name '__ac_global_MOD_derivesmaxtopbottom';
+
 implementation
 
 
