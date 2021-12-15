@@ -292,7 +292,7 @@ real(dp) function TauFromKsat(Ksat)
     if (Ksat == 0) then
         TauFromKsat = 0
     else
-        TauTemp = nint(100*0.0866*exp(0.35*log(Ksat)))
+        TauTemp = nint(100*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
         if (TauTemp < 0) then
             TauTemp = 0
         end if
