@@ -303,4 +303,37 @@ real(dp) function TauFromKsat(Ksat)
     end if
 end function TauFromKsat
 
+integer(int8) function NumberSoilClass(SatvolPro, FCvolPro, PWPvolPro, Ksatmm)
+    real(dp), intent(in) :: SatvolPro
+    real(dp), intent(in) :: FCvolPro
+    real(dp), intent(in) :: PWPvolPro
+    real(dp), intent(in) :: Ksatmm
+
+    if (SATvolPro <= 55) then
+        if (PWPvolPro >= 20) then
+            if ((SATvolPro >= 49) .and. (FCvolPro >= 40)) then
+                NumberSoilClass = 4  ! silty clayey soils
+            else
+                NumberSoilClass = 3  ! sandy clayey soils
+            end if
+        else
+            if (FCvolPro < 23) then
+                NumberSoilClass = 1 ! sandy soils
+            else
+                if ((PWPvolPro > 16) .and. (Ksatmm < 100)) then
+                    NumberSoilClass = 3 ! sandy clayey soils
+                else
+                    if ((PWPvolPro < 6) .and. (FCvolPro < 28) .and. (Ksatmm >750)) then
+                        NumberSoilClass = 1 ! sandy soils
+                    else
+                        NumberSoilClass = 2  ! loamy soils
+                    end if
+                end if
+            end if
+        end if
+    else
+        NumberSoilClass = 4 ! silty clayey soils
+    end if
+end function NumberSoilClass
+
 end module ac_global

@@ -587,7 +587,6 @@ PROCEDURE DetermineCNIandIII(CN2 : ShortInt;
                              VAR CN1,CN3 : ShortInt);
 PROCEDURE DetermineCN_default(Infiltr : double;
                               VAR CN2 : ShortInt);
-FUNCTION NumberSoilClass (SatvolPro,FCvolPro,PWPvolPro,Ksatmm : double) : ShortInt;
 PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
                                 KsatMM : double;
                                 VAR aParam, bParam : double);
@@ -1693,34 +1692,6 @@ IF (Infiltr > 864)
                    THEN CN2 := 72
                    ELSE CN2 := 77;
 END; (* DetermineCN_default *)
-
-
-FUNCTION NumberSoilClass (SatvolPro,FCvolPro,PWPvolPro,Ksatmm : double) : ShortInt;
-BEGIN
-IF (SATvolPro <= 55)
-   THEN BEGIN
-        IF (PWPvolPro >= 20)
-           THEN BEGIN
-                IF ((SATvolPro >= 49) AND (FCvolPro >= 40))
-                   THEN NumberSoilClass := 4  // silty clayey soils
-                   ELSE NumberSoilClass := 3  // sandy clayey soils
-                END
-           ELSE BEGIN
-                IF (FCvolPro < 23)
-                   THEN NumberSoilClass := 1 // sandy soils
-                   ELSE BEGIN
-                        IF ((PWPvolPro > 16) AND (Ksatmm < 100))
-                           THEN NumberSoilClass := 3 // sandy clayey soils
-                           ELSE BEGIN
-                                IF ((PWPvolPro < 6) AND (FCvolPro < 28) AND (Ksatmm >750))
-                                   THEN NumberSoilClass := 1 // sandy soils
-                                   ELSE NumberSoilClass := 2  // loamy soils
-                                END;
-                        END;
-                END;
-        END
-   ELSE NumberSoilClass := 4; // silty clayey soils
-END; (* NumberSoilClass *)
 
 
 PROCEDURE DetermineParametersCR(SoilClass : ShortInt;

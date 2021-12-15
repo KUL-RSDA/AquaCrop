@@ -99,6 +99,13 @@ function GetWeedRC(
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
+function NumberSoilClass (
+            constref SatvolPro : double;
+            constref FCvolPro : double;
+            constref PWPvolPro : double;
+            constref Ksatmm : double) : shortint;
+         external 'aquacrop' name '__ac_global_MOD_numbersoilclass';
+
 implementation
 
 
