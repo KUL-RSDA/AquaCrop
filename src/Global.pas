@@ -761,7 +761,6 @@ FUNCTION fAdjustedForCO2 (CO2i : double;
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
-FUNCTION MaxCRatDepth(ParamCRa,ParamCRb,Ksat,Zi,DepthGWT : double) : double;
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -5395,24 +5394,6 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
 END; (* CheckForWaterTableInProfile *)
 
-
-
-
-FUNCTION MaxCRatDepth(ParamCRa,ParamCRb,Ksat,Zi,DepthGWT : double) : double;
-VAR CRmax : double;
-BEGIN
-CRmax := 0;
-IF ((Ksat > 0) AND (DepthGWT > 0) AND ((DepthGWT-Zi) < 4)) THEN
-   BEGIN
-   IF (Zi >= DepthGWT)
-      THEN CRmax := 99
-      ELSE BEGIN
-           CRmax := exp((ln(DepthGWT - Zi) - ParamCRb)/ParamCRa);
-           IF (CRmax > 99) THEN CRmax := 99;
-           END;
-   END;
-MaxCRatDepth := CRmax;
-END; (* MaxCRatDepth *)
 
 
 

@@ -286,4 +286,29 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
 end function GetWeedRC
 
 
+real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
+    real(dp), intent(in) :: ParamCRa
+    real(dp), intent(in) :: ParamCRb
+    real(dp), intent(in) :: Ksat
+    real(dp), intent(in) :: Zi
+    real(dp), intent(in) :: DepthGWT
+
+    real(dp) :: CRmax
+
+    CRmax = 0
+    if ((Ksat > 0) .and. (DepthGWT > 0) .and. ((DepthGWT-Zi) < 4)) then
+        if (Zi >= DepthGWT) then
+            CRmax = 99
+        else
+            CRmax = exp((log(DepthGWT - Zi) - ParamCRb)/ParamCRa)
+            if (CRmax > 99) then
+                CRmax = 99
+            end if
+        end if
+    end if
+    MaxCRatDepth = CRmax
+    ! MaxCRatDepth 
+end function MaxCRatDepth
+
+
 end module ac_global
