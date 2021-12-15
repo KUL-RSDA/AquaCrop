@@ -69,6 +69,11 @@ function TimeToReachZroot(
             constref Lo, LZxAdj : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_timetoreachzroot';
 
+function CCatTime(
+            constref Dayi : INTEGER;
+            constref CCoIN, CGCIN, CCxIN : double)  : double;
+         external 'aquacrop' name '__ac_global_MOD_ccattime';
+
 function __GetWeedRC(
             constref TheDay : integer;
             constref GDDayi : double;

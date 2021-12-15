@@ -208,6 +208,22 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
 end function TimeToReachZroot
 
 
+real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
+    integer(int16), intent(in) :: Dayi
+    real(dp), intent(in) :: CCoIN
+    real(dp), intent(in) :: CGCIN
+    real(dp), intent(in) :: CCxIN
+
+    real(dp) :: CCi
+
+    CCi = CCoIN * exp(CGCIN * Dayi)
+    if (CCi > CCxIN/2._dp) then
+        CCi = CCxIN - 0.25 * (CCxIN/CCoIN) * CCxIN * exp(-CGCIN*Dayi)
+    end if
+    CCatTime = CCi
+end function CCatTime
+
+
 real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                             TempWeedDeltaRC, L12SF, TempL123, GDDL12SF, &
                             TempGDDL123, TheModeCycle)
