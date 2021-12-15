@@ -207,6 +207,24 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
     TimeToReachZroot = ti
 end function TimeToReachZroot
 
+real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
+                                               GravelMassPercent)
+    real(dp), intent(in)      :: PorosityPercent
+    integer(int8), intent(in) :: GravelMassPercent
+
+    real(dp), parameter ::  MineralBD = 2.65 !! Mg/m3
+    real(dp) :: MatrixBD, SoilBD
+
+    if (GravelMassPercent > 0) then
+        MatrixBD = MineralBD * (1._dp - PorosityPercent/100._dp)
+        SoilBD = 100._dp/(GravelMassPercent/MineralBD + &
+                          (100._dp-GravelMassPercent)/MatrixBD)
+        FromGravelMassToGravelVolume = GravelMassPercent * (SoilBD/MineralBD)
+   else
+       FromGravelMassToGravelVolume = 0.0_dp
+   end if
+end function FromGravelMassToGravelVolume
+
 
 real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                             TempWeedDeltaRC, L12SF, TempL123, GDDL12SF, &
@@ -386,5 +404,29 @@ real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
         end if
     end if
 end function SoilEvaporationReductionCoefficient
+
+real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
+    real(dp), intent(in) :: ParamCRa
+    real(dp), intent(in) :: ParamCRb
+    real(dp), intent(in) :: Ksat
+    real(dp), intent(in) :: Zi
+    real(dp), intent(in) :: DepthGWT
+
+    real(dp) :: CRmax
+
+    CRmax = 0._dp
+    if ((Ksat > 0._dp) .and. (DepthGWT > 0._dp) .and. ((DepthGWT-Zi) < 4._dp)) then
+        if (Zi >= DepthGWT) then
+            CRmax = 99._dp
+        else
+            CRmax = exp((log(DepthGWT - Zi) - ParamCRb)/ParamCRa)
+            if (CRmax > 99._dp) then
+                CRmax = 99._dp
+            end if
+        end if
+    end if
+    MaxCRatDepth = CRmax
+    ! MaxCRatDepth 
+end function MaxCRatDepth
 
 end module ac_global
