@@ -109,6 +109,12 @@ function GetWeedRC(
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
+function HImultiplier(
+            constref RatioBM : double;
+            constref RangeBM : double;
+            constref HIadj : ShortInt) : double;
+         external 'aquacrop' name '__ac_global_MOD_himultiplier';
+
 implementation
 
 

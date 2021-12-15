@@ -689,8 +689,6 @@ FUNCTION HarvestIndexDay(DAP  : LongInt;
                          TempPlanting : rep_Planting;
                          VAR PercentLagPhase : ShortInt;
                          VAR HIfinal : INTEGER)   : double;
-FUNCTION HImultiplier(RatioBM,RangeBM : double;
-                      HIadj : ShortInt) : double;
 FUNCTION BMRange(HIadj : integer) : double;
 FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
                                  a : ShortInt;
@@ -4056,24 +4054,6 @@ IF (t <= 0)
 HarvestIndexDay := HIday;
 
 END; (* HarvestIndexDay *)
-
-
-
-FUNCTION HImultiplier(RatioBM,RangeBM : double;
-                      HIadj : ShortInt) : double;
-VAR Rini,Rmax,Rend : double;
-BEGIN
-Rini := 1- RangeBM;
-REnd := 1;
-RMax := Rini + (2/3) * (REnd-Rini);
-IF (RatioBM <= RIni)
-   THEN HImultiplier := 1
-   ELSE IF (RatioBM <= RMax)
-           THEN HImultiplier := 1 + (1+SIN(PI*(1.5-(RatioBM-RIni)/(RMax-RIni))))*(HIadj/200)
-           ELSE IF (RatioBM <= REnd)
-                   THEN HImultiplier := 1 + (1+SIN(PI*(0.5+(RatioBM-RMax)/(REnd-RMax))))*(HIadj/200)
-                   ELSE HImultiplier := 1;
-END; (* HImultiplier *)
 
 
 FUNCTION BMRange(HIadj : integer) : double;   // fraction
