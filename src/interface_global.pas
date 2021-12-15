@@ -113,6 +113,11 @@ procedure DeriveSmaxTopBottom(
             var SxBot : double);
          external 'aquacrop' name '__ac_global_MOD_derivesmaxtopbottom';
 
+function SoilEvaporationReductionCoefficient(
+            constref Wrel : double;
+            constref EDecline : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_soilevaporationreductioncoefficient';
+
 implementation
 
 

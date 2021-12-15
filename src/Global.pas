@@ -670,7 +670,6 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
 
 
 
-FUNCTION SoilEvaporationReductionCoefficient(Wrel,EDecline : double) : double;
 FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
 PROCEDURE ReadSoilSettings;
 FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
@@ -3794,23 +3793,6 @@ CASE TypeDays OF
                                                CCo,CCx,CGC,CDC,SFRedCGC,SFRedCCx);
      end;
 END; (* CanopyCoverNoStressSF *)
-
-
-
-
-FUNCTION SoilEvaporationReductionCoefficient(Wrel,Edecline : double) : double;
-BEGIN
-IF (Wrel <= 0.00001)
-   THEN SoilEvaporationReductionCoefficient := 0.0
-   ELSE BEGIN
-        IF (Wrel >= 0.99999)
-           THEN SoilEvaporationReductionCoefficient := 1.0
-           ELSE SoilEvaporationReductionCoefficient :=
-                        (EXP(Edecline*Wrel) - 1)/(Exp(Edecline) - 1);
-        END;
-END; (* SoilEvaporationReductionCoefficient *)
-
-
 
 
 FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;

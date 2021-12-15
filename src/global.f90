@@ -371,4 +371,20 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
     end if
 end subroutine DeriveSmaxTopBottom
 
+real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
+    real(dp), intent(in) :: Wrel
+    real(dp), intent(in) :: Edecline
+
+    if (Wrel <= 0.00001_dp) then
+        SoilEvaporationReductionCoefficient = 0.0_dp
+    else
+        if (Wrel >= 0.99999_dp) then
+            SoilEvaporationReductionCoefficient = 1.0_dp
+        else
+            SoilEvaporationReductionCoefficient =&
+                (exp(Edecline*Wrel) - 1.0_dp)/(exp(Edecline) - 1.0_dp)
+        end if
+    end if
+end function SoilEvaporationReductionCoefficient
+
 end module ac_global
