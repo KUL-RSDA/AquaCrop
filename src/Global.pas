@@ -605,7 +605,6 @@ PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 
 PROCEDURE CompleteProfileDescription;
-FUNCTION TauFromKsat(Ksat : double) : double;
 PROCEDURE LoadProfile(FullName : string);
 PROCEDURE DeriveSmaxTopBottom(SxTopQ,SxBotQ : double;
                               VAR SxTop,SxBot : double);
@@ -1914,21 +1913,6 @@ FOR i:= (Soil.NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i])
 Simulation.ResetIniSWC := true; // soil water content and soil salinity
 specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent);
 END; (* CompleteProfileDescription *)
-
-
-FUNCTION TauFromKsat(Ksat : double) : double;
-VAR TauTemp : integer;
-BEGIN
-IF (Ksat = 0)
-   THEN TauFromKsat := 0
-   ELSE BEGIN
-        TauTemp := ROUND(100*0.0866*exp(0.35*Ln(Ksat)));
-        IF (TauTemp < 0) THEN TauTemp := 0;
-        IF (TauTemp > 100) THEN TauTemp := 100;
-        TauFromKsat := TauTemp/100;
-        END;
-END; (* TauFromKsat *)
-
 
 
 PROCEDURE LoadProfile(FullName : string);

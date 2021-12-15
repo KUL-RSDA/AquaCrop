@@ -106,6 +106,8 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+function TauFromKsat(constref Ksat : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
 implementation
 

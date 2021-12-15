@@ -303,6 +303,23 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+real(dp) function TauFromKsat(Ksat)
+    real(dp), intent(in) :: Ksat
+
+    integer(int16) :: TauTemp
+    if (Ksat == 0) then
+        TauFromKsat = 0
+    else
+        TauTemp = nint(100*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
+        if (TauTemp < 0) then
+            TauTemp = 0
+        end if
+        if (TauTemp > 100) then
+            TauTemp = 100
+        end if
+        TauFromKsat = TauTemp/100.0_dp
+    end if
+end function TauFromKsat
 
 real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     real(dp), intent(in) :: ParamCRa
