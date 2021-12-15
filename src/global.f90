@@ -307,10 +307,10 @@ real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
     integer(int16) :: TauTemp
-    if (Ksat == 0) then
+    if (Ksat == 0.0_dp) then
         TauFromKsat = 0
     else
-        TauTemp = nint(100*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
+        TauTemp = nint(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
         if (TauTemp < 0) then
             TauTemp = 0
         end if
@@ -327,21 +327,22 @@ integer(int8) function NumberSoilClass(SatvolPro, FCvolPro, PWPvolPro, Ksatmm)
     real(dp), intent(in) :: PWPvolPro
     real(dp), intent(in) :: Ksatmm
 
-    if (SATvolPro <= 55) then
-        if (PWPvolPro >= 20) then
-            if ((SATvolPro >= 49) .and. (FCvolPro >= 40)) then
+    if (SATvolPro <= 55.0_dp) then
+        if (PWPvolPro >= 20.0_dp) then
+            if ((SATvolPro >= 49.0_dp) .and. (FCvolPro >= 40.0_dp)) then
                 NumberSoilClass = 4  ! silty clayey soils
             else
                 NumberSoilClass = 3  ! sandy clayey soils
             end if
         else
-            if (FCvolPro < 23) then
+            if (FCvolPro < 23.0_dp) then
                 NumberSoilClass = 1 ! sandy soils
             else
-                if ((PWPvolPro > 16) .and. (Ksatmm < 100)) then
+                if ((PWPvolPro > 16.0_dp) .and. (Ksatmm < 100.0_dp)) then
                     NumberSoilClass = 3 ! sandy clayey soils
                 else
-                    if ((PWPvolPro < 6) .and. (FCvolPro < 28) .and. (Ksatmm >750)) then
+                    if ((PWPvolPro < 6.0_dp) .and. (FCvolPro < 28.0_dp) &
+                        .and. (Ksatmm >750.0_dp)) then
                         NumberSoilClass = 1 ! sandy soils
                     else
                         NumberSoilClass = 2  ! loamy soils
