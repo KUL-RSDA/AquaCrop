@@ -349,10 +349,11 @@ real(dp) function BMRange(HIadj)
     integer(int16), intent(in) :: HIadj
 
     real(dp) :: BMR
+
     if (HIadj <= 0) then
         BMR = 0.0_dp
     else
-        BMR = (log(dble(HIadj))/0.0562_dp)/100.0_dp
+        BMR = (log(real(HIadj, kind=dp))/0.0562_dp)/100.0_dp
     end if
     if (BMR > 1.0_dp) then
         BMR = 1.0_dp
