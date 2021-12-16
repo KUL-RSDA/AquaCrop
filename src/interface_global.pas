@@ -106,6 +106,10 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+function HarvestIndexGrowthCoefficient(
+        constref HImax,dHIdt : double) : double;
+        external 'aquacrop' name '__ac_global_MOD_harvestindexgrowthcoefficient';
+
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
@@ -143,6 +147,7 @@ begin
                              TempWeedDeltaRC, L12SF, TempL123, GDDL12SF,
                              TempGDDL123, int_modeCycle);
 end;
+
 
 
 initialization

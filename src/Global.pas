@@ -673,7 +673,6 @@ FUNCTION SoilEvaporationReductionCoefficient(Wrel,EDecline : double) : double;
 FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
 PROCEDURE ReadSoilSettings;
 FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
-FUNCTION HarvestIndexGrowthCoefficient(HImax,dHIdt : double) : double;
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
                                dHIdt,HIGC : double;
                                VAR tSwitch : INTEGER;
@@ -3902,26 +3901,6 @@ IF (CCx > 0) THEN
    END;
 LengthCanopyDecline := ND;
 END; (* LengthCanopyDecline *)
-
-
-
-FUNCTION HarvestIndexGrowthCoefficient(HImax,dHIdt : double) : double;
-CONST HIo = 1;
-VAR HIvar,HIGC,t : double;
-BEGIN
-IF (HImax > HIo)
-   THEN BEGIN
-        t := HImax/dHIdt;
-        HIGC := 0.001;
-        REPEAT
-          HIGC := HIGC + 0.001;
-          HIvar := (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t));
-        UNTIL (HIvar > 0.98*HImax);
-        IF (HIvar >= HImax) THEN HIGC := HIGC - 0.001;
-        END
-   ELSE HIGC := undef_int;
-HarvestIndexGrowthCoefficient := HIGC;
-END; (* HarvestIndexGrowthCoefficient *)
 
 
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;

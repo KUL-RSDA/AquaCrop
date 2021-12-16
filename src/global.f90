@@ -303,6 +303,35 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+
+real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
+    real(dp), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+
+    real(dp) :: HIo, HIvar, HIGC, t
+
+    HIo = 1
+
+    if (HImax > HIo) then
+        t = HImax/dHIdt
+        HIGC = 0.001_dp
+        HIGC = HIGC + 0.001_dp
+        HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
+        do while (HIvar <= (0.98_dp*HImax))
+            HIGC = HIGC + 0.001_dp
+            HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
+        end do
+
+        if (HIvar >= HImax) then
+            HIGC = HIGC - 0.001_dp
+        end if
+    else
+        HIGC = undef_int
+    end if
+    HarvestIndexGrowthCoefficient = HIGC
+
+end function HarvestIndexGrowthCoefficient
+
 real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
