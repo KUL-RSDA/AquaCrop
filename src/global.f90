@@ -352,6 +352,7 @@ real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
     integer(int8), intent(in) :: HIadj
 
     real(dp) :: Rini, Rmax, Rend
+
     Rini = 1.0_dp - RangeBM
     REnd = 1.0_dp
     RMax = Rini + (2.0_dp/3.0_dp) * (REnd-Rini)
