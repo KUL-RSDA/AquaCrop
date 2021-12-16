@@ -583,10 +583,6 @@ PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR Compartment : rep_Comp;
                              //InitialWC : rep_InitialWC;
                              VAR TotalWaterContent : rep_Content);
-PROCEDURE DetermineCNIandIII(CN2 : ShortInt;
-                             VAR CN1,CN3 : ShortInt);
-PROCEDURE DetermineCN_default(Infiltr : double;
-                              VAR CN2 : ShortInt);
 FUNCTION NumberSoilClass (SatvolPro,FCvolPro,PWPvolPro,Ksatmm : double) : ShortInt;
 PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
                                 KsatMM : double;
@@ -605,7 +601,6 @@ PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 
 PROCEDURE CompleteProfileDescription;
-FUNCTION TauFromKsat(Ksat : double) : double;
 PROCEDURE LoadProfile(FullName : string);
 PROCEDURE DeriveSmaxTopBottom(SxTopQ,SxBotQ : double;
                               VAR SxTop,SxBot : double);
@@ -760,7 +755,6 @@ FUNCTION fAdjustedForCO2 (CO2i : double;
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
-FUNCTION MaxCRatDepth(ParamCRa,ParamCRb,Ksat,Zi,DepthGWT : double) : double;
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -1655,44 +1649,6 @@ Simulation.DayAnaero := 0;
 END; (* specify_soil_layer *)
 
 
-PROCEDURE DetermineCNIandIII(CN2 : ShortInt;
-                             VAR CN1,CN3 : ShortInt);
-BEGIN
-(* for intitial abstration 0.2 S)
-CN1 := ROUND(-16.91 + 1.348 * CN2 - 0.01379 * CN2*CN2  + 0.0001172 * CN2*CN2*CN2);
-CN3 := ROUND(2.5838 + 1.9449 * CN2 - 0.014216 * CN2*CN2 + 0.000045829 * CN2*CN2*CN2); *)
-
-CN1 := ROUND(1.4*(exp(-14*ln(10))) + 0.507 * CN2 - 0.00374 * CN2*CN2 + 0.0000867 * CN2*CN2*CN2);
-CN3 := ROUND(5.6*(exp(-14*ln(10))) + 2.33 * CN2  - 0.0209 * CN2*CN2  + 0.000076 * CN2*CN2*CN2);
-IF (CN1 <= 0) THEN CN1 := 1
-              ELSE IF (CN1 > 100) THEN CN1 := 100;
-IF (CN3 <= 0) THEN CN3 := 1
-              ELSE IF (CN3 > 100) THEN CN3 := 100;
-IF (CN3 < CN2) THEN CN3 := CN2;
-END; (* DetermineCNIandIII *)
-
-
-PROCEDURE DetermineCN_default(Infiltr : double;
-                              VAR CN2 : ShortInt);
-BEGIN
-(* for intitial abstration 0.2 S)
-IF (Infiltr >= 250)
-   THEN CN2 := 65
-   ELSE IF (Infiltr >= 50)
-           THEN CN2 := 75
-           ELSE IF (Infiltr >= 10)
-                   THEN CN2 := 80
-                   ELSE CN2 := 85; *)
-IF (Infiltr > 864)
-   THEN CN2 := 46
-   ELSE IF (Infiltr >= 347)
-           THEN CN2 := 61
-           ELSE IF (Infiltr >= 36)
-                   THEN CN2 := 72
-                   ELSE CN2 := 77;
-END; (* DetermineCN_default *)
-
-
 FUNCTION NumberSoilClass (SatvolPro,FCvolPro,PWPvolPro,Ksatmm : double) : ShortInt;
 BEGIN
 IF (SATvolPro <= 55)
@@ -1914,21 +1870,6 @@ FOR i:= (Soil.NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i])
 Simulation.ResetIniSWC := true; // soil water content and soil salinity
 specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent);
 END; (* CompleteProfileDescription *)
-
-
-FUNCTION TauFromKsat(Ksat : double) : double;
-VAR TauTemp : integer;
-BEGIN
-IF (Ksat = 0)
-   THEN TauFromKsat := 0
-   ELSE BEGIN
-        TauTemp := ROUND(100*0.0866*exp(0.35*Ln(Ksat)));
-        IF (TauTemp < 0) THEN TauTemp := 0;
-        IF (TauTemp > 100) THEN TauTemp := 100;
-        TauFromKsat := TauTemp/100;
-        END;
-END; (* TauFromKsat *)
-
 
 
 PROCEDURE LoadProfile(FullName : string);
@@ -5372,24 +5313,6 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
 END; (* CheckForWaterTableInProfile *)
 
-
-
-
-FUNCTION MaxCRatDepth(ParamCRa,ParamCRb,Ksat,Zi,DepthGWT : double) : double;
-VAR CRmax : double;
-BEGIN
-CRmax := 0;
-IF ((Ksat > 0) AND (DepthGWT > 0) AND ((DepthGWT-Zi) < 4)) THEN
-   BEGIN
-   IF (Zi >= DepthGWT)
-      THEN CRmax := 99
-      ELSE BEGIN
-           CRmax := exp((ln(DepthGWT - Zi) - ParamCRb)/ParamCRa);
-           IF (CRmax > 99) THEN CRmax := 99;
-           END;
-   END;
-MaxCRatDepth := CRmax;
-END; (* MaxCRatDepth *)
 
 
 

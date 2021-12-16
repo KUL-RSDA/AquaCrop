@@ -303,6 +303,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+
 real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     real(dp), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -330,5 +331,85 @@ real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     HarvestIndexGrowthCoefficient = HIGC
 
 end function HarvestIndexGrowthCoefficient
+
+real(dp) function TauFromKsat(Ksat)
+    real(dp), intent(in) :: Ksat
+
+    integer(int16) :: TauTemp
+    if (Ksat == 0) then
+        TauFromKsat = 0
+    else
+        TauTemp = nint(100*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
+        if (TauTemp < 0) then
+            TauTemp = 0
+        end if
+        if (TauTemp > 100) then
+            TauTemp = 100
+        end if
+        TauFromKsat = TauTemp/100.0_dp
+    end if
+end function TauFromKsat
+
+real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
+    real(dp), intent(in) :: ParamCRa
+    real(dp), intent(in) :: ParamCRb
+    real(dp), intent(in) :: Ksat
+    real(dp), intent(in) :: Zi
+    real(dp), intent(in) :: DepthGWT
+
+    real(dp) :: CRmax
+
+    CRmax = 0._dp
+    if ((Ksat > 0._dp) .and. (DepthGWT > 0._dp) .and. ((DepthGWT-Zi) < 4._dp)) then
+        if (Zi >= DepthGWT) then
+            CRmax = 99._dp
+        else
+            CRmax = exp((log(DepthGWT - Zi) - ParamCRb)/ParamCRa)
+            if (CRmax > 99._dp) then
+                CRmax = 99._dp
+            end if
+        end if
+    end if
+    MaxCRatDepth = CRmax
+    ! MaxCRatDepth 
+end function MaxCRatDepth
+
+subroutine DetermineCNIandIII(CN2, CN1, CN3)
+    integer(int8), intent(in) :: CN2
+    integer(int8), intent(inout) :: CN1
+    integer(int8), intent(inout) :: CN3
+
+    CN1 = nint(1.4_dp*(exp(-14*log(10._dp))) + 0.507_dp * CN2 - 0.00374_dp * CN2*CN2 + 0.0000867_dp * CN2*CN2*CN2)
+    CN3 = nint(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp * CN2  - 0.0209_dp * CN2*CN2  + 0.000076_dp * CN2*CN2*CN2)
+    if (CN1 <= 0) then
+        CN1 = 1
+    elseif (CN1 > 100) then
+        CN1 = 100
+    end if
+    if (CN3 <= 0) then
+        CN3 = 1
+    elseif (CN3 > 100) then
+        CN3 = 100
+    end if
+    if (CN3 < CN2) then
+        CN3 = CN2
+    end if
+end subroutine DetermineCNIandIII
+
+subroutine DetermineCN_default(Infiltr, CN2)
+    real(dp), intent(in) :: Infiltr
+    integer(int8), intent(inout) :: CN2
+
+    if (Infiltr > 864) then
+        CN2 = 46
+    elseif (Infiltr >= 347) then
+        CN2 = 61
+    elseif (Infiltr >= 36) then
+        CN2 = 72
+    else
+        CN2 = 77
+    end if
+end subroutine DetermineCN_default
+
 
 end module ac_global

@@ -69,6 +69,11 @@ function TimeToReachZroot(
             constref Lo, LZxAdj : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_timetoreachzroot';
 
+function MaxCRatDepth(
+            constref ParamCRa, ParamCRb, Ksat : double;
+            constref Zi, DepthGWT : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_maxcratdepth';
+
 function FromGravelMassToGravelVolume(
 	    constref PorosityPercent : double;
             constref GravelMassPercent : shortint) : double;
@@ -105,6 +110,18 @@ function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;
         external 'aquacrop' name '__ac_global_MOD_harvestindexgrowthcoefficient';
 
+function TauFromKsat(constref Ksat : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_taufromksat';
+
+procedure DetermineCNIandIII(
+            constref CN2 : ShortInt;
+            var CN1,CN3 : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_determinecniandiii';
+
+procedure DetermineCN_default(
+            constref Infiltr : double;
+            var CN2 : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_determineCN_default';
 
 implementation
 
