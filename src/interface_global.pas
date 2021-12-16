@@ -113,6 +113,9 @@ function HarvestIndexGrowthCoefficient(
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
+function BMRange(constref HIadj : integer) : double;
+         external 'aquacrop' name '__ac_global_MOD_bmrange';
+
 function HImultiplier(
             constref RatioBM : double;
             constref RangeBM : double;
