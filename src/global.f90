@@ -12,6 +12,7 @@ real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int16), parameter :: undef_int = -9
     !! value for 'undefined' int16 variables
+real(dp), parameter :: PI = 3.1415926535_dp
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -459,6 +460,31 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     MaxCRatDepth = CRmax
     ! MaxCRatDepth 
 end function MaxCRatDepth
+
+real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
+    real(dp), intent(in) :: RatioBM
+    real(dp), intent(in) :: RangeBM
+    integer(int8), intent(in) :: HIadj
+
+    real(dp) :: Rini, Rmax, Rend
+
+    Rini = 1.0_dp - RangeBM
+    REnd = 1.0_dp
+    RMax = Rini + (2.0_dp/3.0_dp) * (REnd-Rini)
+    if (RatioBM <= RIni) then
+        HImultiplier = 1.0_dp
+    elseif (RatioBM <= RMax) then
+        HImultiplier = 1.0_dp&
+            + (1.0_dp + sin(PI*(1.5_dp-(RatioBM-RIni)/(RMax-RIni))))&
+            *(HIadj/200.0_dp)
+    elseif (RatioBM <= REnd) then
+        HImultiplier = 1.0_dp&
+            + (1.0_dp + sin(PI*(0.5_dp+(RatioBM-RMax)/(REnd-RMax))))&
+            *(HIadj/200.0_dp)
+    else
+        HImultiplier = 1.0_dp
+    end if
+end function HImultiplier
 
 subroutine DetermineCNIandIII(CN2, CN1, CN3)
     integer(int8), intent(in) :: CN2
