@@ -303,6 +303,35 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+
+real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
+    real(dp), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+
+    real(dp) :: HIo, HIvar, HIGC, t
+
+    HIo = 1
+
+    if (HImax > HIo) then
+        t = HImax/dHIdt
+        HIGC = 0.001_dp
+        HIGC = HIGC + 0.001_dp
+        HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
+        do while (HIvar <= (0.98_dp*HImax))
+            HIGC = HIGC + 0.001_dp
+            HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
+        end do
+
+        if (HIvar >= HImax) then
+            HIGC = HIGC - 0.001_dp
+        end if
+    else
+        HIGC = undef_int
+    end if
+    HarvestIndexGrowthCoefficient = HIGC
+
+end function HarvestIndexGrowthCoefficient
+
 real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
@@ -430,5 +459,42 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     MaxCRatDepth = CRmax
     ! MaxCRatDepth 
 end function MaxCRatDepth
+
+subroutine DetermineCNIandIII(CN2, CN1, CN3)
+    integer(int8), intent(in) :: CN2
+    integer(int8), intent(inout) :: CN1
+    integer(int8), intent(inout) :: CN3
+
+    CN1 = nint(1.4_dp*(exp(-14*log(10._dp))) + 0.507_dp * CN2 - 0.00374_dp * CN2*CN2 + 0.0000867_dp * CN2*CN2*CN2)
+    CN3 = nint(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp * CN2  - 0.0209_dp * CN2*CN2  + 0.000076_dp * CN2*CN2*CN2)
+    if (CN1 <= 0) then
+        CN1 = 1
+    elseif (CN1 > 100) then
+        CN1 = 100
+    end if
+    if (CN3 <= 0) then
+        CN3 = 1
+    elseif (CN3 > 100) then
+        CN3 = 100
+    end if
+    if (CN3 < CN2) then
+        CN3 = CN2
+    end if
+end subroutine DetermineCNIandIII
+
+subroutine DetermineCN_default(Infiltr, CN2)
+    real(dp), intent(in) :: Infiltr
+    integer(int8), intent(inout) :: CN2
+
+    if (Infiltr > 864) then
+        CN2 = 46
+    elseif (Infiltr >= 347) then
+        CN2 = 61
+    elseif (Infiltr >= 36) then
+        CN2 = 72
+    else
+        CN2 = 77
+    end if
+end subroutine DetermineCN_default
 
 end module ac_global
