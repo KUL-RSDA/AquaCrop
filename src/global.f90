@@ -314,7 +314,6 @@ real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     if (HImax > HIo) then
         t = HImax/dHIdt
         HIGC = 0.001_dp
-        HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
         HIGC = HIGC + 0.001_dp
         HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
         do while (HIvar <= (0.98_dp*HImax))
