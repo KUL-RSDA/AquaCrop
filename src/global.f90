@@ -362,9 +362,10 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
     real(dp), intent(inout) :: SxBot
 
     real(dp) :: x, V1, V2, V11, V22
+
     V1 = SxTopQ
     V2 = SxBotQ
-    if (V1 == V2) then
+    if (abs(V1 - V2) < 1e-12_dp) then
         SxTop = V1
         SxBot = V2
     else
