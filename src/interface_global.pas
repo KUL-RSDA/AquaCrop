@@ -113,6 +113,25 @@ function HarvestIndexGrowthCoefficient(
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
+function NumberSoilClass (
+            constref SatvolPro : double;
+            constref FCvolPro : double;
+            constref PWPvolPro : double;
+            constref Ksatmm : double) : shortint;
+         external 'aquacrop' name '__ac_global_MOD_numbersoilclass';
+
+procedure DeriveSmaxTopBottom(
+            constref SxTopQ : double;
+            constref SxBotQ : double;
+            var SxTop : double;
+            var SxBot : double);
+         external 'aquacrop' name '__ac_global_MOD_derivesmaxtopbottom';
+
+function SoilEvaporationReductionCoefficient(
+            constref Wrel : double;
+            constref EDecline : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_soilevaporationreductioncoefficient';
+
 procedure DetermineCNIandIII(
             constref CN2 : ShortInt;
             var CN1,CN3 : ShortInt);
