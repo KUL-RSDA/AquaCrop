@@ -304,14 +304,43 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+
+real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
+    real(dp), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+
+    real(dp) :: HIo, HIvar, HIGC, t
+
+    HIo = 1
+
+    if (HImax > HIo) then
+        t = HImax/dHIdt
+        HIGC = 0.001_dp
+        HIGC = HIGC + 0.001_dp
+        HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
+        do while (HIvar <= (0.98_dp*HImax))
+            HIGC = HIGC + 0.001_dp
+            HIvar = (HIo*HImax)/(HIo+(HImax-HIo)*exp(-HIGC*t))
+        end do
+
+        if (HIvar >= HImax) then
+            HIGC = HIGC - 0.001_dp
+        end if
+    else
+        HIGC = undef_int
+    end if
+    HarvestIndexGrowthCoefficient = HIGC
+
+end function HarvestIndexGrowthCoefficient
+
 real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
     integer(int16) :: TauTemp
-    if (Ksat == 0) then
+    if (Ksat == 0.0_dp) then
         TauFromKsat = 0
     else
-        TauTemp = nint(100*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
+        TauTemp = nint(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
         if (TauTemp < 0) then
             TauTemp = 0
         end if
@@ -321,6 +350,92 @@ real(dp) function TauFromKsat(Ksat)
         TauFromKsat = TauTemp/100.0_dp
     end if
 end function TauFromKsat
+
+integer(int8) function NumberSoilClass(SatvolPro, FCvolPro, PWPvolPro, Ksatmm)
+    real(dp), intent(in) :: SatvolPro
+    real(dp), intent(in) :: FCvolPro
+    real(dp), intent(in) :: PWPvolPro
+    real(dp), intent(in) :: Ksatmm
+
+    if (SATvolPro <= 55.0_dp) then
+        if (PWPvolPro >= 20.0_dp) then
+            if ((SATvolPro >= 49.0_dp) .and. (FCvolPro >= 40.0_dp)) then
+                NumberSoilClass = 4  ! silty clayey soils
+            else
+                NumberSoilClass = 3  ! sandy clayey soils
+            end if
+        else
+            if (FCvolPro < 23.0_dp) then
+                NumberSoilClass = 1 ! sandy soils
+            else
+                if ((PWPvolPro > 16.0_dp) .and. (Ksatmm < 100.0_dp)) then
+                    NumberSoilClass = 3 ! sandy clayey soils
+                else
+                    if ((PWPvolPro < 6.0_dp) .and. (FCvolPro < 28.0_dp) &
+                        .and. (Ksatmm >750.0_dp)) then
+                        NumberSoilClass = 1 ! sandy soils
+                    else
+                        NumberSoilClass = 2  ! loamy soils
+                    end if
+                end if
+            end if
+        end if
+    else
+        NumberSoilClass = 4 ! silty clayey soils
+    end if
+end function NumberSoilClass
+
+subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
+    real(dp), intent(in) :: SxTopQ
+    real(dp), intent(in) :: SxBotQ
+    real(dp), intent(inout) :: SxTop
+    real(dp), intent(inout) :: SxBot
+
+    real(dp) :: x, V1, V2, V11, V22
+
+    V1 = SxTopQ
+    V2 = SxBotQ
+    if (abs(V1 - V2) < 1e-12_dp) then
+        SxTop = V1
+        SxBot = V2
+    else
+        if (SxTopQ < SxBotQ) then
+            V1 = SxBotQ
+            V2 = SxTopQ
+        end if
+        x = 3.0_dp * V2/(V1-V2)
+        if (x < 0.5_dp) then
+            V11 = (4.0_dp/3.5_dp) * V1
+            V22 = 0.0_dp
+        else
+            V11 = (x + 3.5_dp) * V1/(x+3.0_dp)
+            V22 = (x - 0.5_dp) * V2/x
+        end if
+        if (SxTopQ > SxBotQ) then
+            SxTop = V11
+            SxBot = V22
+        else
+            SxTop = V22
+            SxBot = V11
+        end if
+    end if
+end subroutine DeriveSmaxTopBottom
+
+real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
+    real(dp), intent(in) :: Wrel
+    real(dp), intent(in) :: Edecline
+
+    if (Wrel <= 0.00001_dp) then
+        SoilEvaporationReductionCoefficient = 0.0_dp
+    else
+        if (Wrel >= 0.99999_dp) then
+            SoilEvaporationReductionCoefficient = 1.0_dp
+        else
+            SoilEvaporationReductionCoefficient =&
+                (exp(Edecline*Wrel) - 1.0_dp)/(exp(Edecline) - 1.0_dp)
+        end if
+    end if
+end function SoilEvaporationReductionCoefficient
 
 real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     real(dp), intent(in) :: ParamCRa
@@ -370,5 +485,42 @@ real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
         HImultiplier = 1.0_dp
     end if
 end function HImultiplier
+
+subroutine DetermineCNIandIII(CN2, CN1, CN3)
+    integer(int8), intent(in) :: CN2
+    integer(int8), intent(inout) :: CN1
+    integer(int8), intent(inout) :: CN3
+
+    CN1 = nint(1.4_dp*(exp(-14*log(10._dp))) + 0.507_dp * CN2 - 0.00374_dp * CN2*CN2 + 0.0000867_dp * CN2*CN2*CN2)
+    CN3 = nint(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp * CN2  - 0.0209_dp * CN2*CN2  + 0.000076_dp * CN2*CN2*CN2)
+    if (CN1 <= 0) then
+        CN1 = 1
+    elseif (CN1 > 100) then
+        CN1 = 100
+    end if
+    if (CN3 <= 0) then
+        CN3 = 1
+    elseif (CN3 > 100) then
+        CN3 = 100
+    end if
+    if (CN3 < CN2) then
+        CN3 = CN2
+    end if
+end subroutine DetermineCNIandIII
+
+subroutine DetermineCN_default(Infiltr, CN2)
+    real(dp), intent(in) :: Infiltr
+    integer(int8), intent(inout) :: CN2
+
+    if (Infiltr > 864) then
+        CN2 = 46
+    elseif (Infiltr >= 347) then
+        CN2 = 61
+    elseif (Infiltr >= 36) then
+        CN2 = 72
+    else
+        CN2 = 77
+    end if
+end subroutine DetermineCN_default
 
 end module ac_global
