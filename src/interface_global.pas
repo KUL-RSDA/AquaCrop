@@ -106,11 +106,50 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+function HarvestIndexGrowthCoefficient(
+        constref HImax,dHIdt : double) : double;
+        external 'aquacrop' name '__ac_global_MOD_harvestindexgrowthcoefficient';
+
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
 
 function BMRange(constref HIadj : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_bmrange';
+
+function HImultiplier(
+            constref RatioBM : double;
+            constref RangeBM : double;
+            constref HIadj : ShortInt) : double;
+         external 'aquacrop' name '__ac_global_MOD_himultiplier';
+
+function NumberSoilClass (
+            constref SatvolPro : double;
+            constref FCvolPro : double;
+            constref PWPvolPro : double;
+            constref Ksatmm : double) : shortint;
+         external 'aquacrop' name '__ac_global_MOD_numbersoilclass';
+
+procedure DeriveSmaxTopBottom(
+            constref SxTopQ : double;
+            constref SxBotQ : double;
+            var SxTop : double;
+            var SxBot : double);
+         external 'aquacrop' name '__ac_global_MOD_derivesmaxtopbottom';
+
+function SoilEvaporationReductionCoefficient(
+            constref Wrel : double;
+            constref EDecline : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_soilevaporationreductioncoefficient';
+
+procedure DetermineCNIandIII(
+            constref CN2 : ShortInt;
+            var CN1,CN3 : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_determinecniandiii';
+
+procedure DetermineCN_default(
+            constref Infiltr : double;
+            var CN2 : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_determineCN_default';
 
 implementation
 
@@ -136,6 +175,7 @@ begin
                              TempWeedDeltaRC, L12SF, TempL123, GDDL12SF,
                              TempGDDL123, int_modeCycle);
 end;
+
 
 
 initialization
