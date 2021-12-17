@@ -141,6 +141,11 @@ function SoilEvaporationReductionCoefficient(
             constref EDecline : double) : double;
          external 'aquacrop' name '__ac_global_MOD_soilevaporationreductioncoefficient';
 
+function CCatTime(
+            constref Dayi : integer;
+            constref CCoIN, CGCIN, CCxIN : double)  : double;
+         external 'aquacrop' name '__ac_global_MOD_ccattime';
+
 procedure DetermineCNIandIII(
             constref CN2 : ShortInt;
             var CN1,CN3 : ShortInt);

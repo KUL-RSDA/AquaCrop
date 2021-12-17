@@ -502,6 +502,21 @@ real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
     end if
 end function HImultiplier
 
+real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
+    integer(int16), intent(in) :: Dayi
+    real(dp), intent(in) :: CCoIN
+    real(dp), intent(in) :: CGCIN
+    real(dp), intent(in) :: CCxIN
+
+    real(dp) :: CCi
+
+    CCi = CCoIN * exp(CGCIN * Dayi)
+    if (CCi > CCxIN/2._dp) then
+        CCi = CCxIN - 0.25_dp * (CCxIN/CCoIN) * CCxIN * exp(-CGCIN*Dayi)
+    end if
+    CCatTime = CCi
+end function CCatTime
+
 subroutine DetermineCNIandIII(CN2, CN1, CN3)
     integer(int8), intent(in) :: CN2
     integer(int8), intent(inout) :: CN1
