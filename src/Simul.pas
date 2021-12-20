@@ -82,7 +82,7 @@ IF (((Crop.subkind = Grain) OR (Crop.subkind = Tuber))
   DayiAfterFlowering := VirtualTimeCC - Crop.DaysToFlowering;
   IF ((DaysYieldFormation > 0) AND (DayiAfterFlowering < (DaysYieldFormation/3)))
      THEN fSwitch := DayiAfterFlowering/(DaysYieldFormation/3);
-  WPi :=  WPi * (1 - (1-Crop.WPy/100)*fSwitch)  
+  WPi :=  WPi * (1 - (1-Crop.WPy/100)*fSwitch)
   END;
 // 3c - adjustment WPi for CO2
 IF ROUND(100*CO2i) <> ROUND(100*CO2Ref) THEN
@@ -218,7 +218,7 @@ VAR RatioBM,RBM,CCiPot,CCiMAX,HItimesTotal,
     END; (* YearWeighingFactor *)
 
 
-    
+
 
 BEGIN
 TESTVAL := undef_int;
@@ -620,7 +620,7 @@ IF (delta_theta <= 0)
                 ThetaX := SoilLayer[NrLayer].FC/100
                        + LN(1 + delta_theta * (EXP(SoilLayer[NrLayer].SAT/100 - SoilLayer[NrLayer].FC/100) - 1)
                        / (SoilLayer[NrLayer].tau * (SoilLayer[NrLayer].SAT/100 - SoilLayer[NrLayer].FC/100)));
-                IF (ThetaX < thetaAdjFC) THEN ThetaX := thetaAdjFC; 
+                IF (ThetaX < thetaAdjFC) THEN ThetaX := thetaAdjFC;
                 END
            ELSE ThetaX := SoilLayer[NrLayer].SAT/100 + 0.1;     (* to stop draining *)
 calculate_theta := ThetaX;
@@ -743,7 +743,7 @@ CASE control OF
                           END
                      ELSE SumWabal.ECropCycle := SumWabal.ECropCycle + Eact; // before germination
                   END;
-               SumWabal.CRsalt := SumWabal.CRsalt + CRsalt/100;   
+               SumWabal.CRsalt := SumWabal.CRsalt + CRsalt/100;
                SumWabal.SaltIn := SumWabal.SaltIn + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100;
                SumWabal.SaltOut := SumWabal.SaltOut +  Drain*ECdrain*Equiv/100;
                END;
@@ -831,7 +831,7 @@ FOR compi:=1 to NrCompartments DO
                             drainsum := drainsum +  delta_theta * 1000 * Compartment[compi].Thickness
                                         * (1 - SoilLayer[layeri].GravelVol/100);
                             // NEW
-                            
+
                             CheckDrainsum(layeri,drainsum,excess);
                             Compartment[compi].theta := theta_x - delta_theta;
                             END
@@ -871,9 +871,9 @@ FOR compi:=1 to NrCompartments DO
                             delta_theta := calculate_delta_theta(Compartment[compi].theta,(Compartment[compi].FCadj/100),layeri);
                             Compartment[compi].theta := SoilLayer[layeri].SAT/100 - delta_theta;
                             drain_comp := delta_theta * 1000 * Compartment[compi].Thickness
-                                          * (1 - SoilLayer[layeri].GravelVol/100); 
+                                          * (1 - SoilLayer[layeri].GravelVol/100);
                             drainmax := delta_theta * 1000 * pre_thick
-                                        * (1 - SoilLayer[layeri].GravelVol/100);  
+                                        * (1 - SoilLayer[layeri].GravelVol/100);
                             IF drainmax > excess THEN drainmax := excess;
                             excess := excess-drainmax;
                             drainsum := drainmax + drain_comp;
@@ -1630,7 +1630,7 @@ FOR compi := 1 TO NrCompartments DO
        FOR Ni := 1 TO (celi-1) DO
            BEGIN
            mm1 := Dx*1000*Compartment[compi].Thickness
-                  * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);                           
+                  * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
            IF (Ni < SoilLayer[Compartment[compi].Layer].SC)
               THEN mm2 := mm1
               ELSE IF (Theta > SAT)
@@ -1660,7 +1660,7 @@ FOR compi := 1 TO NrCompartments DO
                                          + Compartment[compi].Depo[celi] ;
                       Compartment[compi].Salt[celi] := 0;
                       mm1 := (Theta - limit)*1000*Compartment[compi].Thickness
-                             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100); 
+                             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
                       IF SaltOut > (SimulParam.SaltSolub * mm1)
                          THEN BEGIN
                               Compartment[compi].Depo[celi] := SaltOut - (SimulParam.SaltSolub * mm1);
@@ -1734,7 +1734,7 @@ FOR compi := 2 TO NrCompartments DO
 
 
 //6. Internal salt movement as a result of SubDrain
-//SubDrain part of non-effective rainfall (10-day & monthly input) 
+//SubDrain part of non-effective rainfall (10-day & monthly input)
 IF (SubDrain > 0) THEN
    BEGIN
    Zr := RootingDepth;
@@ -2139,7 +2139,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
         AdjustpLeafToETo(ETo,Crop.pLeafAct,pLeafLLAct);
         WithBeta := true;
         AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
-        
+
 
         //2. Canopy can still develop (stretched to tFinalCCx)
         IF (VirtualTimeCC < tFinalCCx)
@@ -2275,7 +2275,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                                  CCiActual := Crop.CCxAdjusted *
                                                    (1 - 0.05 * (exp(((VirtualTimeCC+Simulation.DelayedDays+1)-Crop.DaysToSenescence)
                                                                  *3.33* CDCadjusted/(Crop.CCxAdjusted + 2.29))-1));
-                                                 // CCiActual becomes CCibis, when canopy decline is more severe 
+                                                 // CCiActual becomes CCibis, when canopy decline is more severe
                                                  IF (CCibis < CCiActual) THEN CCiActual := CCibis;
                                                  END
                                             ELSE CCiActual := 0;
@@ -2674,7 +2674,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
         AdjustpLeafToETo(ETo,Crop.pLeafAct,pLeafLLAct);
         WithBeta := true;
         AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
-        
+
         //2. Canopy can still develop (stretched to GDDtFinalCCx)
         IF (SumGDDadjCC < GDDtFinalCCx)
            THEN BEGIN //Canopy can stil develop (stretched to GDDtFinalCCx)
@@ -2695,7 +2695,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                 IF (CCiActual > (1.25 * CCoTotal)) THEN Simulation.ProtectedSeedling := false;
                                 END
                            ELSE BEGIN
-                                CCiActual := Crop.CCoAdjusted*Exp(CGCGDDSF * GDDayi);         
+                                CCiActual := Crop.CCoAdjusted*Exp(CGCGDDSF * GDDayi);
                                 END;
                         END
                    //2.b CC > CCo
@@ -2816,7 +2816,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                                  CCiActual := Crop.CCxAdjusted *
                                                    (1 - 0.05 * (exp((SumGDDadjCC-Crop.GDDaysToSenescence)
                                                                  *3.33* GDDCDCadjusted/(Crop.CCxAdjusted + 2.29))-1));
-                                                 // CCiActual becomes CCibis, when canopy decline is more severe 
+                                                 // CCiActual becomes CCibis, when canopy decline is more severe
                                                  IF (CCibis < CCiActual) THEN CCiActual := CCibis;
                                                  END
                                             ELSE CCiActual := 0;
@@ -3360,7 +3360,7 @@ IF (IrriMode = Inet)
                                       * (RootingDepth - cumdepth)/RootingDepth
               ELSE SbotComp := Crop.SmaxBot*Simulation.SCor;
            Compartment[compi].Smax := ((StopComp + SbotComp)/2);
-           IF (Compartment[compi].Smax > 0.06) THEN Compartment[compi].Smax := 0.06; 
+           IF (Compartment[compi].Smax > 0.06) THEN Compartment[compi].Smax := 0.06;
         UNTIL (cumdepth >= RootingDepth) OR (compi = NrCompartments);
         FOR i := (compi + 1) TO NrCompartments DO Compartment[i].Smax := 0;
         END;
@@ -3483,7 +3483,7 @@ IF (Tpot > 0) THEN
 
            // 1.b anaerobic conditions in root zone (total root zone is considered)
            DetermineRootZoneAnaeroConditions(RootZoneWC.SAT,RootZoneWC.Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
-           TpotMAX := RedFact * TpotMax;  
+           TpotMAX := RedFact * TpotMax;
            END;
 
    // 2. extraction of TpotMax out of the compartments

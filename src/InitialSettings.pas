@@ -114,7 +114,7 @@ implementation
  Simulation.Bini := 0.000;
  Simulation.Zrini := undef_int;
 
- 
+
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  CropFile := 'DEFAULT.CRO';
