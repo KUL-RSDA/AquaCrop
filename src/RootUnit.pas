@@ -34,17 +34,17 @@ IF (ROUND(Ziprev) = undef_int)
    ELSE BEGIN
         // 1. maximum rooting depth (ZiMax) that could have been reached at time t
         // -- 1.1 Undo effect of restrictive soil layer(s)
-        IF (ROUND(Soil.RootMax*1000) < ROUND(Zmax*1000))
+        IF (ROUND(GetSoil().RootMax*1000) < ROUND(Zmax*1000))
            THEN BEGIN
-                Zlimit := Soil.RootMax;
-                Soil.RootMax := Zmax;
+                Zlimit := GetSoil().RootMax;
+                SetSoil_RootMax(Zmax);
                 END
            ELSE Zlimit := Zmax;
         // -- 1.2 Calculate ZiMax
         ZiMax := ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234,
                          SumGDD,Zmin,Zmax,ShapeFactor,TypeDays);
         // -- 1.3 Restore effect of restrive soil layer(s)
-        Soil.RootMax := Zlimit;
+        SetSoil_RootMax(Zlimit);
 
         // 2. increase (dZ) at time t
         ZiUnlimM1 := ActualRootingDepth((DAP-1),L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234,

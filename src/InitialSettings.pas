@@ -29,7 +29,7 @@ implementation
    IrriFwInSeason := 100; //Percentage of soil surface wetted by irrigation in crop season
    IrriFwOffSeason := 100; // Percentage of soil surface wetted by irrigation off-season
    END;
- // 1b. Soil.PAR - 6 parameters
+ // 1b. GetSoil().PAR - 6 parameters
  WITH SimulParam DO
    BEGIN
    RunoffDepth := 0.30; //considered depth (m) of soil profile for calculation of mean soil water content
@@ -101,10 +101,9 @@ implementation
  ResetDefaultSoil; // Reset the soil profile to its default values
  ProfFile := 'DEFAULT.SOL';
  ProfFilefull := CONCAT(PathNameSimul,ProfFile);
- // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
- // Crop. RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
+ // Crop. RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
  LoadProfile(ProfFilefull);
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -123,7 +122,7 @@ implementation
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
  // maximum rooting depth in given soil profile
- Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+ SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
  Crop.Day1 := SimulParam.CropDay1;
  CompleteCropDescription;

@@ -43,6 +43,14 @@ type
 
     rep_modeCycle = (GDDays, CalendarDays);
 
+    rep_soil = Record
+         REW            : ShortInt; (* Readily evaporable water mm *)
+         NrSoilLayers   : ShortInt;
+         CNvalue        : ShortInt;
+         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
+         end;
+
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -156,6 +164,25 @@ procedure DetermineCN_default(
             var CN2 : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_determineCN_default';
 
+
+// Getters and setters for global variables
+
+function GetSoil(): rep_soil;
+         external 'aquacrop' name '__ac_global_MOD_get_soil';
+
+procedure SetSoil_CNvalue(constref CNvalue : shortint);
+         external 'aquacrop' name '__ac_global_MOD_set_soil_cnvalue';
+
+procedure SetSoil_NrSoilLayers(constref NrSoilLayers : shortint);
+         external 'aquacrop' name '__ac_global_MOD_set_soil_nrsoillayers';
+
+procedure SetSoil_REW(constref REW : shortint);
+         external 'aquacrop' name '__ac_global_MOD_set_soil_rew';
+
+procedure SetSoil_RootMax(constref RootMax : single);
+         external 'aquacrop' name '__ac_global_MOD_set_soil_rootmax';
+
+
 implementation
 
 
@@ -180,7 +207,6 @@ begin
                              TempWeedDeltaRC, L12SF, TempL123, GDDL12SF,
                              TempGDDL123, int_modeCycle);
 end;
-
 
 
 initialization

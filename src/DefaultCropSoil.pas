@@ -111,10 +111,9 @@ END; (* ResetDefaultCrop *)
 PROCEDURE ResetDefaultSoil;
 BEGIN
 ProfDescription := 'deep loamy soil profile';
-Soil.CNvalue := 61; // for an initial abstraction of 0.05 S
-Soil.REW := 9;
-Soil.NrSoilLayers := 1;
-//Soil.Zlimit := undef_int;   // to be removed
+SetSoil_CNvalue(61); // for an initial abstraction of 0.05 S
+SetSoil_REW(9);
+SetSoil_NrSoilLayers(1);
 SoilLayer[1].Thickness := 4;
 SoilLayer[1].SAT := 50.0;
 SoilLayer[1].FC := 30.0;

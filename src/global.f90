@@ -3,7 +3,8 @@ module ac_global
 use ac_kinds, only: dp, &
                     int8, &
                     int16, &
-                    intEnum
+                    intEnum, &
+                    sp
 implicit none
 
 
@@ -62,6 +63,23 @@ type SoilLayerIndividual
     real(dp) :: CRa, CRb
         !! coefficients for Capillary Rise
 end type SoilLayerIndividual
+
+
+type rep_soil
+    integer(int8) :: REW
+        !! Readily evaporable water mm
+    integer(int8) :: NrSoilLayers
+        !! Undocumented
+    integer(int8) :: CNvalue
+        !! Undocumented
+    real(sp) :: RootMax
+        !! maximum rooting depth in soil profile for selected crop
+end type rep_soil
+
+
+! Global variables
+
+type(rep_soil) :: soil
 
 
 contains
@@ -548,5 +566,46 @@ subroutine DetermineCN_default(Infiltr, CN2)
         CN2 = 77
     end if
 end subroutine DetermineCN_default
+
+
+! Getters and setters for global variables
+
+type(rep_soil) function get_soil()
+    !! Getter for the "soil" global variable.
+
+    get_soil = soil
+end function get_soil
+
+
+subroutine set_soil_REW(REW)
+    !! Setter for the "soil" global variable.
+    integer(int8), intent(in) :: REW
+
+    soil%REW = REW
+end subroutine set_soil_REW
+
+
+subroutine set_soil_NrSoilLayers(NrSoilLayers)
+    !! Setter for the "soil" global variable.
+    integer(int8), intent(in) :: NrSoilLayers
+
+    soil%NrSoilLayers = NrSoilLayers
+end subroutine set_soil_NrSoilLayers
+
+
+subroutine set_soil_CNvalue(CNvalue)
+    !! Setter for the "soil" global variable.
+    integer(int8), intent(in) :: CNvalue
+
+    soil%CNvalue = CNvalue
+end subroutine set_soil_CNvalue
+
+
+subroutine set_soil_RootMax(RootMax)
+    !! Setter for the "soil" global variable.
+    real(sp), intent(in) :: RootMax
+
+    soil%RootMax = RootMax
+end subroutine set_soil_RootMax
 
 end module ac_global
