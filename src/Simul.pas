@@ -989,7 +989,7 @@ VAR EffecRain, ETcropMonth, RainMonth,
 BEGIN
 IF (Rain > 0) THEN
    BEGIN
-   // 1°. Effective Rainfall
+   // 1. Effective Rainfall
    EffecRain := (Rain-Runoff);
    Case SimulParam.EffectiveRain.Method OF
       Percentage : EffecRain := (SimulParam.EffectiveRain.PercentEffRain/100) * (Rain-Runoff);
@@ -1007,7 +1007,7 @@ IF (Rain > 0) THEN
    IF (EffecRain > (Rain-Runoff)) THEN EffecRain := (Rain-Runoff);
    SubDrain := (Rain-Runoff) - EffecRain;
 
-   //2°. Verify Possibility of SubDrain
+   //2. Verify Possibility of SubDrain
    IF (SubDrain > 0) THEN
      BEGIN
      DrainMax := SoilLayer[1].InfRate;

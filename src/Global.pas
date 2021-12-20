@@ -107,11 +107,11 @@ TYPE
          Length : rep_int_array; (* 1 .. 4 :  = the four growth stages  *)
          RootMin, RootMax : double;   // rooting depth in meter
          RootShape : ShortInt;     // 10 times the root of the root function
-         Tbase,                  //Base Temperature (°C)
-         Tupper       : double;  //Upper temperature threshold (°C)
-         Tcold,                   // Minimum air temperature below which pollination starts to fail (cold stress) (°C)
-         Theat        : ShortInt; // Maximum air temperature above which pollination starts to fail (heat stress) (°C)
-         GDtranspLow  : double; // Minimum growing degrees required for full crop transpiration (°C - day)
+         Tbase,                  //Base Temperature (degC)
+         Tupper       : double;  //Upper temperature threshold (degC)
+         Tcold,                   // Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+         Theat        : ShortInt; // Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+         GDtranspLow  : double; // Minimum growing degrees required for full crop transpiration (degC - day)
          SizeSeedling : double;  //Canopy cover per seedling (cm2)
          SizePlant    : double;  //Canopy cover of plant on 1st day (cm2) when regrowth 
          PlantingDens : LongInt; //number of plants per hectare
@@ -231,13 +231,13 @@ TYPE
          RunoffDepth : double; //considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
          CNcorrection : BOOLEAN; //correction Antecedent Moisture Class (On/Off)
          // Temperature parameters IN TEMPERATURE.PAR  - with Reset option
-         Tmin,Tmax   : double; // Default Minimum and maximum air temperature (°C) if no temperature file
+         Tmin,Tmax   : double; // Default Minimum and maximum air temperature (degC) if no temperature file
          GDDMethod   : ShortInt; // 1 for Method 1, 2 for Method 2, 3 for Method 3
          // General parameters IN GENERAL.PAR
          PercRAW     : INTEGER; //allowable percent RAW depletion for determination Inet
          CompDefThick: double; // Default thickness of soil compartments [m]
          CropDay1    : integer;  // First day after sowing/transplanting (DAP = 1)
-         Tbase,Tupper : double; // Default base and upper temperature (°C) assigned to crop
+         Tbase,Tupper : double; // Default base and upper temperature (degC) assigned to crop
          IrriFwInSeason  : ShortInt; // Percentage of soil surface wetted by irrigation in crop season
          IrriFwOffSeason : ShortInt; // Percentage of soil surface wetted by irrigation off-season
          // Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
@@ -411,7 +411,7 @@ TYPE
 	OnsetFirstDay,OnsetFirstMonth : INTEGER;
 	OnsetStartSearchDayNr, OnsetStopSearchDayNr : LongInt; //daynumber
 	OnsetLengthSearchPeriod : INTEGER; //days
-	OnsetThresholdValue : double; // °C or degree-days
+	OnsetThresholdValue : double; // degC or degree-days
 	OnsetPeriodValue : INTEGER; // number of successive days
 	OnsetOccurrence : ShortInt; // number of occurrences (1,2 or 3)
         GenerateEnd : BOOLEAN; // end is generate by air temperature criterion
@@ -420,7 +420,7 @@ TYPE
         ExtraYears : INTEGER; // number of years to add to the onset year
         EndStartSearchDayNr, EndStopSearchDayNr : LongInt; //daynumber
 	EndLengthSearchPeriod : INTEGER; //days
-	EndThresholdValue : double; // °C or degree-days
+	EndThresholdValue : double; // degC or degree-days
 	EndPeriodValue : INTEGER; // number of successive days
 	EndOccurrence : ShortInt; // number of occurrences (1,2 or 3)
         GeneratedDayNrOnset,GeneratedDayNrEnd : LongInt;
@@ -492,7 +492,7 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     SenStage       : INTEGER;
     DaySubmerged   : INTEGER;
     ETo, Epot, Tpot, Rain, Irrigation, Infiltrated, CRwater : double;   (* mm/day *)
-    Tmin, Tmax : double; (* °C *)
+    Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Runoff, Drain, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
     OutputName     : string;
@@ -1931,7 +1931,7 @@ BEGIN //DetermineLengthGrowthStages
 
 IF (Length123 < Length12) THEN Length123 := Length12;
 
-// 1° Initial and 2° Crop Development stage
+// 1. Initial and 2. Crop Development stage
       //CGC is given and Length12 is already adjusted to it
       //OR Length12 is given and CGC has to be determined
 IF ((CCoVal >= CCxVal) OR (Length12 <= L0))
@@ -1986,11 +1986,11 @@ IF (ThePlanting = Regrowth) THEN
    END;
 
 
-// 3° Mid season stage
+// 3. Mid season stage
 //StLength[3] := Length123 - Length12;
 StLength[3] := Length123 - L12Adj;
 
-// 4° Late season stage
+// 4. Late season stage
 StLength[4] := LengthCanopyDecline(CCxVal,CDCVal);
 
 // final adjustment
@@ -2240,9 +2240,9 @@ WITH Crop DO
     ELSE Crop.StressResponse.Calibrated := true;
 
   // temperature stress
-  READLN(f0,Tcold); //Minimum air temperature below which pollination starts to fail (cold stress) (°C)
-  READLN(f0,Theat); //Maximum air temperature above which pollination starts to fail (heat stress) (°C)
-  READLN(f0,GDtranspLow); //Minimum growing degrees required for full biomass production (°C - day)
+  READLN(f0,Tcold); //Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+  READLN(f0,Theat); //Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+  READLN(f0,GDtranspLow); //Minimum growing degrees required for full biomass production (degC - day)
 
   // salinity stress (Version 3.2 and higher)
   // -----  UPDATE salinity stress
@@ -2676,7 +2676,7 @@ IF (GenrateTheOnset = false)
         WRITELN(f,Month1Onset:6,'         : First Month for the time window (Restart of growth)');
         WRITELN(f,LengthOnset:6,'         : Length (days) of the time window (Restart of growth)');
         CASE CriterionNrOnset OF
-          12 : TempString := '       : Threshold for the Restart criterion: Average air temperature (°C)';
+          12 : TempString := '       : Threshold for the Restart criterion: Average air temperature (degC)';
           13 : TempString := '       : Threshold for the Restart criterion: Growing-degree days';
           end;
         WRITELN(f,ThresholdOnset:8:1,TempString);
@@ -2722,7 +2722,7 @@ IF (GenerateTheEnd = false)
         WRITELN(f,ExtraYearEnd:6,'         : Number of years to add to the Onset year');
         WRITELN(f,LengthEnd:6,'         : Length (days) of the time window (End of growth)');
         CASE CriterionNrEnd OF
-          62 : TempString := '       : Threshold for the End criterion: average air temperature (°C)';
+          62 : TempString := '       : Threshold for the End criterion: average air temperature (degC)';
           63 : TempString := '       : Threshold for the End criterion: Growing-degree days';
           end;
         WRITELN(f,ThresholdEnd:8:1,TempString);
@@ -2814,8 +2814,8 @@ WITH Crop DO
           END;
 
   // temperatures controlling crop development
-  WRITELN(f,Tbase:8:1,'       : Base temperature (°C) below which crop development does not progress');
-  WRITELN(f,Tupper:8:1,'       : Upper temperature (°C) above which crop development no longer increases with an increase in temperature');
+  WRITELN(f,Tbase:8:1,'       : Base temperature (degC) below which crop development does not progress');
+  WRITELN(f,Tupper:8:1,'       : Upper temperature (degC) above which crop development no longer increases with an increase in temperature');
 
   // required growing degree days to complete the crop cycle (is identical as to maturity)
   WRITELN(f,GDDaysToHarvest:6,'         : Total length of crop cycle in growing degree-days');
@@ -2853,13 +2853,13 @@ WITH Crop DO
   // temperature stress
   IF (Round(Tcold) = undef_int)
      THEN WRITELN(f,Tcold:6,'         : Cold (air temperature) stress affecting pollination - not considered')
-     ELSE WRITELN(f,Tcold:6,'         : Minimum air temperature below which pollination starts to fail (cold stress) (°C)');
+     ELSE WRITELN(f,Tcold:6,'         : Minimum air temperature below which pollination starts to fail (cold stress) (degC)');
   IF (Round(Theat) = undef_int)
      THEN WRITELN(f,Theat:6,'         : Heat (air temperature) stress affecting pollination - not considered')
-     ELSE WRITELN(f,Theat:6,'         : Maximum air temperature above which pollination starts to fail (heat stress) (°C)');
+     ELSE WRITELN(f,Theat:6,'         : Maximum air temperature above which pollination starts to fail (heat stress) (degC)');
   IF (Round(GDtranspLow) = undef_int)
      THEN WRITELN(f,GDtranspLow:8:1,'       : Cold (air temperature) stress on crop transpiration not considered')
-     ELSE WRITELN(f,GDtranspLow:8:1,'       : Minimum growing degrees required for full crop transpiration (°C - day)');
+     ELSE WRITELN(f,GDtranspLow:8:1,'       : Minimum growing degrees required for full crop transpiration (degC - day)');
 
  // salinity stress
   WRITELN(f,ECemin:6,'         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)');
@@ -3985,8 +3985,8 @@ Reset(f0);
 Readln(f0);
 WITH SimulParam DO
    BEGIN
-   Readln(f0,Tmin);   //Default minimum temperature (°C) if no temperature file is specified
-   Readln(f0,Tmax);   //Default maximum temperature (°C) if no temperature file is specified
+   Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
+   Readln(f0,Tmax);   //Default maximum temperature (degC) if no temperature file is specified
    Readln(f0,GDDMethod); //Default method for GDD calculations
    IF (GDDMethod > 3) THEN GDDMethod := 3;
    IF (GDDMethod < 1) THEN GDDMethod := 1;
@@ -5578,8 +5578,8 @@ IF FileExists(FullFileNameProgramParameters)
           READLN(f0,SimulParam.RootNrDF); // shape factor capillary rise factor
           SimulParam.IniAbstract := 5; // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
           // Temperature
-          Readln(f0,Tmin);   //Default minimum temperature (°C) if no temperature file is specified
-          Readln(f0,Tmax);   //Default maximum temperature (°C) if no temperature file is specified
+          Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
+          Readln(f0,Tmax);   //Default maximum temperature (degC) if no temperature file is specified
           Readln(f0,GDDMethod); //Default method for GDD calculations
           IF (GDDMethod > 3) THEN GDDMethod := 3;
           IF (GDDMethod < 1) THEN GDDMethod := 1;
