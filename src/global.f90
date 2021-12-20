@@ -8,15 +8,46 @@ implicit none
 
 
 integer(int16), parameter :: max_SoilLayers = 5
+integer(int16), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int16), parameter :: undef_int = -9
     !! value for 'undefined' int16 variables
 
+integer(int16) :: NrCompartments
+
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
     !! index of CalendarDays in modeCycle enumerated type
+
+type CompartmentIndividual
+    real(dp) :: Thickness
+        !! meter
+    real(dp) :: theta
+        !! m3/m3
+    real(dp) :: fluxout
+        !! mm/day
+    integer(int16) :: Layer
+        !! Undocumented
+    real(dp) :: Smax
+        !! Maximum root extraction m3/m3.day
+    real(dp) :: FCadj
+        !! Vol % at Field Capacity adjusted to Aquifer
+    integer(int16) :: DayAnaero
+        !! number of days under anaerobic conditions
+    real(dp) :: WFactor
+        !! weighting factor 0 ... 1
+        !! Importance of compartment in calculation of
+        !! - relative wetness (RUNOFF)
+        !! - evaporation process
+        !! - transpiration process *)
+    !! salinity factors
+    real(dp), dimension(11) :: Salt
+        !! salt content in solution in cells (g/m2)
+    real(dp), dimension(11) :: Depo
+        !! salt deposit in cells (g/m2)
+end type CompartmentIndividual
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -61,6 +92,7 @@ type SoilLayerIndividual
     real(dp) :: CRa, CRb
         !! coefficients for Capillary Rise
 end type SoilLayerIndividual
+
 
 
 contains
@@ -320,6 +352,30 @@ real(dp) function TauFromKsat(Ksat)
         TauFromKsat = TauTemp/100.0_dp
     end if
 end function TauFromKsat
+
+subroutine CheckForWaterTableInProfile(DepthGWTmeter, ProfileComp, WaterTableInProfile)
+    real(dp), intent(in) :: DepthGWTmeter
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(in):: ProfileComp
+    logical, intent(inout) :: WaterTableInProfile
+
+    real(dp) :: Ztot, Zi
+    integer(int16) :: compi
+    WaterTableInProfile = .false.
+    Ztot = 0
+    compi = 0
+    if (DepthGWTmeter >= 0) then
+            ! groundwater table is present
+            do while ((WaterTableInProfile .neqv. .true.) .or. (compi < NrCompartments))
+                compi = compi + 1 
+                Ztot = Ztot + ProfileComp(compi)%Thickness
+                Zi = Ztot - ProfileComp(compi)%Thickness/2._dp
+                if (Zi >= DepthGWTmeter) then
+                        WaterTableInProfile = .true.
+                end if
+            end do
+    end if
+! CheckForWaterTableInProfile
+end subroutine CheckForWaterTableInProfile
 
 real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     real(dp), intent(in) :: ParamCRa

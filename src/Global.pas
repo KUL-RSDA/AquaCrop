@@ -20,33 +20,12 @@ TYPE
      repstring17 = string[17]; (* Date string *)
      rep_string3  = string[3];  (* Read/Write ProfFile *)
 
-TYPE 
-     CompartmentIndividual = Record
-         Thickness : double;  (* meter *)
-         theta     : double;  (* m3/m3 *)
-         fluxout   : double;  (* mm/day *)
-         Layer     : INTEGER;
-         Smax      : double;  (* Maximum root extraction m3/m3.day *)
-         FCadj     : double;  (* Vol % at Field Capacity adjusted to Aquifer *)
-         DayAnaero : INTEGER; (* number of days under anaerobic conditions *)
-         WFactor   : double;  (* weighting factor 0 ... 1
-                               Importance of compartment in calculation of
-                               - relative wetness (RUNOFF)
-                               - evaporation process
-                               - transpiration process *)
-         // salinity factors
-         Salt      : rep_salt; // salt content in solution in cells (g/m2)
-         Depo      : rep_salt; // salt deposit in cells (g/m2)
-         END;
-
      rep_soil = Record
          REW            : ShortInt; (* Readily evaporable water mm *)
          NrSoilLayers   : ShortInt;
          CNvalue        : ShortInt;
          RootMax        : Single; // maximum rooting depth in soil profile for selected crop
          end;
-
-     rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
      rep_Content = Record  // total water (mm) or salt (Mg/ha) content
          BeginDay  : double; //at the beginning of the day
@@ -757,9 +736,6 @@ PROCEDURE AdjustSizeCompartments(CropZx : double);
 FUNCTION fAdjustedForCO2 (CO2i : double;
                           WPi : double;  // g/m2
                           PercentA : ShortInt) : double;
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -5355,28 +5331,6 @@ IF (CO2i <= CO2Ref)
 // 6. final adjustment
 fAdjustedForCO2 := 1 + fType*(fCO2-1);
 END; (* fAdjustedForCO2 *)
-
-
-
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
-Var Ztot, Zi : double;
-    compi : INTEGER;
-BEGIN
-WaterTableInProfile := false;
-Ztot := 0;
-compi := 0;
-IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
-   REPEAT
-   compi := compi + 1;
-   Ztot := Ztot + ProfileComp[compi].Thickness;
-   Zi := Ztot - ProfileComp[compi].Thickness/2;
-   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
-END; (* CheckForWaterTableInProfile *)
-
-
 
 
 PROCEDURE LoadGroundWater(FullName : string;
