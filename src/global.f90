@@ -208,6 +208,7 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
     TimeToReachZroot = ti
 end function TimeToReachZroot
 
+
 real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
                                                GravelMassPercent)
     real(dp), intent(in)      :: PorosityPercent
@@ -333,6 +334,7 @@ real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
 
 end function HarvestIndexGrowthCoefficient
 
+
 real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
@@ -351,6 +353,7 @@ real(dp) function TauFromKsat(Ksat)
         TauFromKsat = TauTemp/100.0_dp
     end if
 end function TauFromKsat
+
 
 integer(int8) function NumberSoilClass(SatvolPro, FCvolPro, PWPvolPro, Ksatmm)
     real(dp), intent(in) :: SatvolPro
@@ -385,6 +388,7 @@ integer(int8) function NumberSoilClass(SatvolPro, FCvolPro, PWPvolPro, Ksatmm)
         NumberSoilClass = 4 ! silty clayey soils
     end if
 end function NumberSoilClass
+
 
 subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
     real(dp), intent(in) :: SxTopQ
@@ -422,6 +426,7 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
     end if
 end subroutine DeriveSmaxTopBottom
 
+
 real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
     real(dp), intent(in) :: Wrel
     real(dp), intent(in) :: Edecline
@@ -437,6 +442,7 @@ real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
         end if
     end if
 end function SoilEvaporationReductionCoefficient
+
 
 real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     real(dp), intent(in) :: ParamCRa
@@ -462,6 +468,7 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     ! MaxCRatDepth 
 end function MaxCRatDepth
 
+
 real(dp) function BMRange(HIadj)
     integer(int16), intent(in) :: HIadj
 
@@ -477,6 +484,7 @@ real(dp) function BMRange(HIadj)
     end if
     BMRange = BMR
 end function BMRange
+
 
 real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
     real(dp), intent(in) :: RatioBM
@@ -503,6 +511,7 @@ real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
     end if
 end function HImultiplier
 
+
 real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     integer(int16), intent(in) :: Dayi
     real(dp), intent(in) :: CCoIN
@@ -518,6 +527,7 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     CCatTime = CCi
 end function CCatTime
 
+
 subroutine DetermineCNIandIII(CN2, CN1, CN3)
     integer(int8), intent(in) :: CN2
     integer(int8), intent(inout) :: CN1
@@ -525,7 +535,7 @@ subroutine DetermineCNIandIII(CN2, CN1, CN3)
 
     CN1 = nint(1.4_dp*(exp(-14*log(10._dp))) + 0.507_dp*CN2 &
                 - 0.00374_dp*CN2*CN2 + 0.0000867_dp*CN2*CN2*CN2, kind=int8)
-    CN3 = nint(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp*CN2  &
+    CN3 = nint(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp*CN2 &
                - 0.0209_dp*CN2*CN2 + 0.000076_dp*CN2*CN2*CN2, kind=int8)
 
     if (CN1 <= 0) then
@@ -542,6 +552,7 @@ subroutine DetermineCNIandIII(CN2, CN1, CN3)
         CN3 = CN2
     end if
 end subroutine DetermineCNIandIII
+
 
 subroutine DetermineCN_default(Infiltr, CN2)
     real(dp), intent(in) :: Infiltr
