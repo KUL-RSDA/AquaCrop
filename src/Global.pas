@@ -658,8 +658,6 @@ PROCEDURE SetClimData;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 FUNCTION DayString(DNr : LongInt) : repstring17;
-FUNCTION CCatTime(Dayi : INTEGER;
-                  CCoIN,CGCIN,CCxIN : double)  : double;
 FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
                                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
                                TypeDays : rep_modeCycle;
@@ -3629,21 +3627,6 @@ StrB := CONCAT(TRIM(strA),' ',Trim(NameMonth[monthi]),' ',Trim(strB));
 WHILE (Length(StrB) < 17) DO StrB := CONCAT(StrB,' ');
 DayString := StrB;
 END; (* DayString *)
-
-
-
-
-
-
-FUNCTION CCatTime(Dayi : INTEGER;
-                  CCoIN,CGCIN,CCxIN : double)  : double;
-VAR CCi : double;
-BEGIN
-CCi := CCoIN * EXP(CGCIN * Dayi);
-IF (CCi > CCxIN/2) THEN CCi := CCxIN - 0.25 * (CCxIN/CCoIN) * CCxIN * EXP(-CGCIN*Dayi);
-CCatTime := CCi;
-END; (* CCatTime *)
-
 
 
 FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
