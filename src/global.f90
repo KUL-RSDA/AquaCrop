@@ -337,7 +337,8 @@ real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
     integer(int16) :: TauTemp
-    if (Ksat == 0.0_dp) then
+
+    if (abs(Ksat) < epsilon(1._dp)) then
         TauFromKsat = 0
     else
         TauTemp = nint(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
