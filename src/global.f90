@@ -97,25 +97,6 @@ subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
 
     ZrOUT = ZrIn
 
-    ! // Adjust ZminYear1 when Zmax <= ZminYear1 since calculation for reduction start at ZminYear1
-    ! IF ROUND(ZrIN*1000) <= ROUND(CropZMinY1*1000) THEN
-    !     CropZMinY1 := 0.30;
-    !     IF ROUND(ZrIN*1000) <= ROUND(CropZMinY1*1000) THEN
-    !         CropZMinY1 := ZrIN - 0.05;
-    !     end if
-    ! end if
-    !
-    ! // start at CropZMinY1
-    ! layi := 1;
-    ! Zsoil := TheLayer[layi].Thickness;
-    ! WHILE ((ROUND(Zsoil*1000) <= ROUND(CropZMinY1*1000)) AND (layi < TheNrSoilLayers)) DO
-    !     layi := layi + 1;
-    !     Zsoil := Zsoil + TheLayer[layi].Thickness;
-    ! end do
-    ! ZrAdj := CropZMinY1;
-    ! ZrRemain := ZrIN - CropZMinY1;
-    ! DeltaZ := Zsoil - CropZMinY1;   *)
-
     ! initialize (layer 1)
     layi = 1
     Zsoil = TheLayer(layi)%Thickness
@@ -465,7 +446,6 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
         end if
     end if
     MaxCRatDepth = CRmax
-    ! MaxCRatDepth 
 end function MaxCRatDepth
 
 
