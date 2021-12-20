@@ -774,7 +774,7 @@ BEGIN (* calculate_drainage *)
 drainsum:=0;
 FOR compi:=1 to NrCompartments DO
     BEGIN
-(*   1ø. Calculate drainage of compartment
+(*   1. Calculate drainage of compartment
      ===================================== *)
        layeri := Compartment[compi].Layer;
        // IF Compartment[compi].theta > SoilLayer[layeri].FC/100
@@ -785,7 +785,7 @@ FOR compi:=1 to NrCompartments DO
                      * (1 - SoilLayer[layeri].GravelVol/100);
 
 
-(*   2ø. Check drainability
+(*   2. Check drainability
      ======================   *)
        excess := 0;
        pre_thick := 0;
@@ -796,7 +796,7 @@ FOR compi:=1 to NrCompartments DO
           ELSE drainability := false;
 
 
-(*   3ø. Drain compartment
+(*   3. Drain compartment
      =====================  *)
        IF drainability = true
        (* -----------------*)
@@ -884,8 +884,8 @@ FOR compi:=1 to NrCompartments DO
 
         Compartment[compi].fluxout := drainsum;
 
-
-(*   4ø. Redistribute excess
+
+(*   4. Redistribute excess
      =======================  *)
         IF excess > 0
         THEN BEGIN
@@ -911,7 +911,7 @@ Drain := drainsum;
 END; (* calculate_drainage *)
 
 
-
+
 PROCEDURE calculate_runoff(MaxDepth : double);
 VAR SUM, CNA, Shower, term, S : double;
     CN2, CN1, CN3 : ShortInt;
@@ -941,7 +941,7 @@ IF SUM < 0 THEN SUM := 0.0;
 IF SUM > 1 THEN SUM := 1.0;
 END; (*calculate_relative_wetness_topsoil*)
 
-
+
 BEGIN
 //CN2 := Soil.CNvalue;
 CN2 := ROUND(Soil.CNvalue * (100 + Management.CNcorrection)/100);
