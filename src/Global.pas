@@ -3679,16 +3679,6 @@ FUNCTION CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity : INTEGER;
 VAR CC,CCxAdj,GDDCDCadj : double;
 
 
-FUNCTION CCatGDD(GDDi : double;
-                 CCoIN,GDDCGCIN,CCxIN : double)  : double;
-VAR CCi : double;
-BEGIN
-CCi := CCoIN * EXP(GDDCGCIN * GDDi);
-IF (CCi > CCxIN/2) THEN CCi := CCxIN - 0.25 * (CCxIN/CCoIN) * CCxIN * EXP(-GDDCGCIN*GDDi);
-CCatGDD := CCi;
-END; (* CCatGDD *)
-
-
 BEGIN (* CanopyCoverNoStressGDDaysSF *)
 //SumGDD refers to the end of the day and Delayed days are not considered
 CC := 0.0;

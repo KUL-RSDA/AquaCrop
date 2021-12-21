@@ -549,4 +549,21 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+
+real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
+    real(dp), intent(in) :: GDDi
+    real(dp), intent(in) :: CCoIN
+    real(dp), intent(in) :: GDDCGCIN
+    real(dp), intent(in) :: CCxIN
+
+    real(dp) :: CCi
+
+    CCi = CCoIN * EXP(GDDCGCIN * GDDi)
+    if (CCi > CCxIN/2._dp) then
+        CCi = CCxIN - 0.25_dp * (CCxIN/CCoIN) * CCxIN * EXP(-GDDCGCIN*GDDi)
+    end if
+    CCatGDD = CCi
+end function CCatGDD
+
+
 end module ac_global
