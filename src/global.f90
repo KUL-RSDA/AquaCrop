@@ -3,7 +3,8 @@ module ac_global
 use ac_kinds, only: dp, &
                     int8, &
                     int16, &
-                    intEnum
+                    intEnum, &
+                    sp
 implicit none
 
 
@@ -13,6 +14,9 @@ real(dp), parameter :: undef_double = -9.9_dp
 integer(int16), parameter :: undef_int = -9
     !! value for 'undefined' int16 variables
 real(dp), parameter :: PI = 3.1415926535_dp
+real(dp), parameter :: CO2Ref = 369.41_dp; 
+    !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
+    !! (Hawaii,USA)
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -83,6 +87,40 @@ real(dp) function AquaCropVersion(FullNameXXFile)
 
     AquaCropVersion = VersionNr
 end function AquaCropVersion
+
+
+real(sp) function RootMaxInSoilProfile(ZmaxCrop, TheNrSoilLayers, TheSoilLayer)
+    real(dp), intent(in) :: ZmaxCrop
+    integer(int8), intent(in) :: TheNrSoilLayers
+    type(SoilLayerIndividual), dimension(max_SoilLayers), intent(in) :: &
+                                                                TheSoilLayer
+
+    real(dp) :: Zmax
+    real(dp) :: Zsoil
+    integer :: layi
+
+    Zmax = ZmaxCrop
+    Zsoil = 0._dp
+
+    layi = 0
+    do while ((layi < TheNrSoilLayers) .and. (Zmax > 0))
+        layi = layi + 1
+
+        if ((TheSoilLayer(layi)%Penetrability < 100) .and. &
+            (nint(Zsoil*1000) < nint(ZmaxCrop*1000))) then
+            Zmax = undef_int
+        end if
+
+        Zsoil = Zsoil + TheSoilLayer(layi)%Thickness
+    end do
+
+    if (Zmax < 0) then
+        call ZrAdjustedToRestrictiveLayers(ZmaxCrop, TheNrSoilLayers, &
+                                           TheSoilLayer, Zmax)
+    end if
+
+    RootMaxInSoilProfile = real(Zmax, kind=sp)
+end function RootMaxInSoilProfile
 
 
 subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
@@ -565,5 +603,81 @@ real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
     CCatGDD = CCi
 end function CCatGDD
 
+
+real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: WPi
+    integer(int8), intent(in) :: PercentA
+
+    real(dp) :: fW, fCO2Old, fType, fSink, fShape, CO2rel, fCO2adj, fCO2
+
+    ! 1. Correction for crop type: fType
+    if (WPi >= 40._dp) then
+        fType = 0._dp ! no correction for C4 crops
+    else
+        if (WPi <= 20._dp) then
+            fType = 1._dp ! full correction for C3 crops
+        else
+            fType = (40._dp-WPi)/(40._dp-20._dp)
+        end if
+    end if
+
+    ! 2. crop sink strength coefficient: fSink
+    fSink = PercentA/100._dp
+    if (fSink < 0._dp) then
+        fSink = 0._dp ! based on FACE expirements
+    end if
+    if (fSink > 1._dp) then
+        fSink = 1._dp ! theoretical adjustment
+    end if
+
+    ! 3. Correction coefficient for CO2: fCO2Old
+    fCO2Old = undef_int
+    if (CO2i <= 550._dp) then
+        ! 3.1 weighing factor for CO2
+        if (CO2i <= CO2Ref) then
+            fw = 0._dp
+        else
+            if (CO2i >= 550._dp) then
+                fW = 1._dp
+            else
+                fw = 1._dp - (550._dp - CO2i)/(550._dp - CO2Ref)
+            end if
+        end if
+        
+        ! 3.2 adjustment for CO2
+        fCO2Old = (CO2i/CO2Ref)/(1._dp+(CO2i-CO2Ref)*((1._dp-fW)*0.000138_dp&
+            + fW*(0.000138_dp*fSink + 0.001165_dp*(1._dp-fSink))))
+    end if
+
+    ! 4. Adjusted correction coefficient for CO2: fCO2adj
+    fCO2adj = undef_int
+    if (CO2i > CO2Ref) then
+        ! 4.1 Shape factor
+        fShape = -4.61824_dp - 3.43831_dp*fSink - 5.32587_dp*fSink*fSink
+        
+        ! 4.2 adjustment for CO2
+        if (CO2i >= 2000._dp) then
+            fCO2adj = 1.58_dp  ! maximum is reached
+        else
+            CO2rel = (CO2i-CO2Ref)/(2000._dp-CO2Ref)
+            fCO2adj = 1._dp + 0.58_dp * ((exp(CO2rel*fShape) - 1._dp)/&
+                (exp(fShape) - 1._dp))
+        end if
+    end if
+
+    ! 5. Selected adjusted coefficient for CO2: fCO2
+    if (CO2i <= CO2Ref) then
+        fCO2 = fCO2Old
+    else
+        fCO2 = fCO2adj
+        if ((CO2i <= 550._dp) .and. (fCO2Old < fCO2adj)) then
+            fCO2 = fCO2Old
+        end if
+    end if
+
+    ! 6. final adjustment
+    fAdjustedForCO2 = 1._dp + fType*(fCO2-1._dp)
+end function fAdjustedForCO2
 
 end module ac_global

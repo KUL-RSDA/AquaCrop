@@ -8,6 +8,7 @@ const
     max_SoilLayers = 5;
     undef_double = -9.9;
     undef_int = -9;
+    CO2Ref = 369.41;
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -46,6 +47,12 @@ type
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
+
+function RootMaxInSoilProfile(
+            constref ZmaxCrop : double;
+            constref TheNrSoilLayers : shortint;
+            constref TheSoilLayer : rep_SoilLayer) : single;
+         external 'aquacrop' name '__ac_global_MOD_rootmaxinsoilprofile';
 
 procedure ZrAdjustedToRestrictiveLayers(ZrIN : double;
                                         TheNrSoilLayers : ShortInt;
@@ -159,6 +166,11 @@ procedure DetermineCN_default(
 function CCatGDD(
             constref GDDi, CCoIN, GDDCGCIN, CCxIN : double)  : double;
          external 'aquacrop' name '__ac_global_MOD_ccatgdd';
+
+function fAdjustedForCO2 (
+            constref CO2i, WPi : double;
+            constref PercentA : ShortInt) : double;
+        external 'aquacrop' name '__ac_global_MOD_fadjustedforco2';
 
 implementation
 
