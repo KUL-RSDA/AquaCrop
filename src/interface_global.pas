@@ -8,33 +8,11 @@ const
     max_SoilLayers = 5;
     undef_double = -9.9;
     undef_int = -9;
-    max_No_compartments = 12;
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
-
-    CompartmentIndividual = Record
-         Thickness : double;  (* meter *)
-         theta     : double;  (* m3/m3 *)
-         fluxout   : double;  (* mm/day *)
-         Layer     : INTEGER;
-         Smax      : double;  (* Maximum root extraction m3/m3.day *)
-         FCadj     : double;  (* Vol % at Field Capacity adjusted to Aquifer *)
-         DayAnaero : INTEGER; (* number of days under anaerobic conditions *)
-         WFactor   : double;  (* weighting factor 0 ... 1
-                               Importance of compartment in calculation of
-                               - relative wetness (RUNOFF)
-                               - evaporation process
-                               - transpiration process *)
-         // salinity factors
-         Salt      : rep_salt; // salt content in solution in cells (g/m2)
-         Depo      : rep_salt; // salt deposit in cells (g/m2)
-         END;
-
-
-    rep_Comp = ARRAY[1..max_No_compartments] OF CompartmentIndividual; 
 
     SoilLayerIndividual = Record
         Description  : rep_string25;
@@ -140,12 +118,6 @@ function HarvestIndexGrowthCoefficient(
 
 function TauFromKsat(constref Ksat : double) : double;
          external 'aquacrop' name '__ac_global_MOD_taufromksat';
-
-procedure CheckForWaterTableInProfile(
-	    constref DepthGWTmeter : double;
-            constref ProfileComp : rep_Comp;
-            var WaterTableInProfile : BOOLEAN)
-	    external 'aquacrop'name '__ac_global_MOD_checkforwatertableinprofile';
 
 function BMRange(constref HIadj : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_bmrange';
