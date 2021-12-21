@@ -163,6 +163,10 @@ procedure DetermineCN_default(
             var CN2 : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_determineCN_default';
 
+function CCatGDD(
+            constref GDDi, CCoIN, GDDCGCIN, CCxIN : double)  : double;
+         external 'aquacrop' name '__ac_global_MOD_ccatgdd';
+
 function fAdjustedForCO2 (
             constref CO2i, WPi : double;
             constref PercentA : ShortInt) : double;

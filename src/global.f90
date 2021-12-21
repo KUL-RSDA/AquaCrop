@@ -587,6 +587,23 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+
+real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
+    real(dp), intent(in) :: GDDi
+    real(dp), intent(in) :: CCoIN
+    real(dp), intent(in) :: GDDCGCIN
+    real(dp), intent(in) :: CCxIN
+
+    real(dp) :: CCi
+
+    CCi = CCoIN * exp(GDDCGCIN * GDDi)
+    if (CCi > CCxIN/2._dp) then
+        CCi = CCxIN - 0.25_dp * (CCxIN/CCoIN) * CCxIN * exp(-GDDCGCIN*GDDi)
+    end if
+    CCatGDD = CCi
+end function CCatGDD
+
+
 real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
     real(dp), intent(in) :: CO2i
     real(dp), intent(in) :: WPi
