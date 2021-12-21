@@ -24,7 +24,7 @@ implementation
    NrCompartments := 12; //Number of soil compartments (maximum is 12) (not a program parameter)
    CompDefThick := 0.10; //Default thickness of soil compartments [m]
    CropDay1 := 81; //DayNumber of first day cropping period (1..365)
-   Tbase:= 10.0;  //Default base temperature (°C) below which no crop development
+   Tbase:= 10.0;  //Default base temperature (degC) below which no crop development
    Tupper:= 30.0; //Default upper temperature threshold for crop development
    IrriFwInSeason := 100; //Percentage of soil surface wetted by irrigation in crop season
    IrriFwOffSeason := 100; // Percentage of soil surface wetted by irrigation off-season
@@ -71,8 +71,8 @@ implementation
  // 1f. Temperature.PAR - 3 parameters
  WITH SimulParam DO
    BEGIN
-   Tmin := 12.0;   //Default minimum temperature (°C) if no temperature file is specified
-   Tmax := 28.0;   //Default maximum temperature (°C) if no temperature file is specified
+   Tmin := 12.0;   //Default minimum temperature (degC) if no temperature file is specified
+   Tmax := 28.0;   //Default maximum temperature (degC) if no temperature file is specified
    GDDMethod := 3; //Default method for GDD calculations
    END;
 
@@ -114,7 +114,7 @@ implementation
  Simulation.Bini := 0.000;
  Simulation.Zrini := undef_int;
 
- 
+
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  CropFile := 'DEFAULT.CRO';

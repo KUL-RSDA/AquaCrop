@@ -88,7 +88,7 @@ IF (ROUND(Ziprev) = undef_int)
                        dZ := dZ * KsAny(Wrel,pZexp,(1),Crop.KsShapeFactorStomata);
                        END;
                END;
-            END;          
+            END;
 
         // -- 3.3 correction for early senescence
         IF ((CCact <= 0) AND (CCpot > 50)) THEN dZ := 0;

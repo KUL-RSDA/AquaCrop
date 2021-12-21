@@ -264,8 +264,8 @@ VAR TheProjectFile,ListProjectsFile,NrString,TestFile : string;
               READLN(f0,SimulParam.RootNrDF); // shape factor capillary rise factor
               SimulParam.IniAbstract := 5; // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
               // Temperature
-              Readln(f0,Tmin);   //Default minimum temperature (°C) if no temperature file is specified
-              Readln(f0,Tmax);   //Default maximum temperature (°C) if no temperature file is specified
+              Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
+              Readln(f0,Tmax);   //Default maximum temperature (degC) if no temperature file is specified
               Readln(f0,GDDMethod); //Default method for GDD calculations
               IF (GDDMethod > 3) THEN GDDMethod := 3;
               IF (GDDMethod < 1) THEN GDDMethod := 1;

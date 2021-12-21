@@ -2554,16 +2554,16 @@ BEGIN (* FileManagement *)
 RepeatToDay := Simulation.ToDayNr;
 
 REPEAT
-(* 1°. Get ETo *)
+(* 1. Get ETo *)
 IF (EToFile = '(None)') THEN ETo := 5;
 
-(* 2°. Get Rain *)
+(* 2. Get Rain *)
 IF (RainFile = '(None)') THEN Rain := 0;
 
-(* 3°. Start mode *)
+(* 3. Start mode *)
 IF StartMode THEN StartMode := false;
 
-(* 4°. Get depth and quality of the groundwater*)
+(* 4. Get depth and quality of the groundwater*)
 IF (NOT SimulParam.ConstGwt) THEN
    BEGIN
    IF (DayNri > GwTable.DNr2) THEN GetGwtSet(DayNri,GwTable);
@@ -2572,11 +2572,11 @@ IF (NOT SimulParam.ConstGwt) THEN
    IF WaterTableInProfile THEN AdjustForWatertable;
    END;
 
-(* 5°. Get Irrigation *)
+(* 5. Get Irrigation *)
 Irrigation := 0;
 GetIrriParam;
 
-(* 6°. get virtual time for CC development *)
+(* 6. get virtual time for CC development *)
 SumGDDadjCC := undef_int;
 IF (Crop.DaysToCCini <> 0)
    THEN BEGIN // regrowth
@@ -2635,7 +2635,7 @@ IF (Crop.DaysToCCini <> 0)
         END;
 
 
-(* 7°. Rooting depth AND Inet day 1*)
+(* 7. Rooting depth AND Inet day 1*)
 IF (((Crop.ModeCycle = CalendarDays) AND ((DayNri-Crop.Day1+1) < Crop.DaysToHarvest))
               OR ((Crop.ModeCycle = GDDays) AND (Simulation.SumGDD < Crop.GDDaysToHarvest)))
    THEN BEGIN
@@ -2662,11 +2662,11 @@ IF ((RootingDepth > 0) AND (DayNri = Crop.Day1))
         IF (IrriMode = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
         END;
 
-(* 8°. Transfer of Assimilates  *)
+(* 8. Transfer of Assimilates  *)
 InitializeTransferAssimilates(NoMoreCrop,Bin,Bout,Transfer.ToMobilize,Transfer.Bmobilized,FracAssim,
                               Transfer.Store,Transfer.Mobilize);
 
-(* 9°. RUN Soil water balance and actual Canopy Cover *)
+(* 9. RUN Soil water balance and actual Canopy Cover *)
 BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayLastCut,StressTot.NrD,
               Tadj,GDDTadj,
               GDDayi,CGCref,GDDCGCref,CO2i,CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
@@ -2675,7 +2675,7 @@ BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayL
               StressSFadjNEW,Transfer.Store,Transfer.Mobilize,
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
 
-// consider Pre-irrigation (6°) if IrriMode = Inet
+// consider Pre-irrigation (6.) if IrriMode = Inet
 IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (IrriMode = Inet)) THEN
    BEGIN
    Irrigation := Irrigation + PreIrri;
@@ -2692,10 +2692,10 @@ IF (CCiActual > 0) THEN
    END;
 
 
-(* 10°. Potential biomass *)
+(* 10. Potential biomass *)
 DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotNoS,SumWaBal.BiomassUnlim);
 
-(* 11°. Biomass and yield *)
+(* 11. Biomass and yield *)
 IF ((RootingDepth > 0) AND (NoMoreCrop = false))
    THEN BEGIN
         DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
@@ -2728,7 +2728,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         TactWeedInfested := 0.0; // no crop
         END;
 
-(* 12°. Reset after RUN *)
+(* 12. Reset after RUN *)
 IF (PreDay = false) THEN PreviousDayNr := Simulation.FromDayNr - 1;
 PreDay := true;
 IF (DayNri >= Crop.Day1) THEN
@@ -2739,7 +2739,7 @@ IF (DayNri >= Crop.Day1) THEN
    END;
 IF (TargetTimeVal = 1) THEN IrriInterval := 0;
 
-(* 13°. Cuttings *)
+(* 13. Cuttings *)
 IF Management.Cuttings.Considered THEN
    BEGIN
    HarvestNow := false;
@@ -2824,7 +2824,7 @@ IF Management.Cuttings.Considered THEN
       END;
    END;
 
-(* 14°. Write results *)
+(* 14. Write results *)
 //14.a Summation
 SumETo := SumETo + ETo;
 SumGDD := SumGDD + GDDayi;
@@ -2873,7 +2873,7 @@ IF (OutputAggregate > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,WPi,fDaily);
 IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
 
-(* 15°. Prepare Next day *)
+(* 15. Prepare Next day *)
 //15.a Date
 DayNri := DayNri + 1;
 //15.b Irrigation
@@ -2906,7 +2906,7 @@ IF (DayNri <= Simulation.ToDayNr) THEN
 
 UNTIL ((DayNri-1) = RepeatToDay);  // END REPEAT
 
-(* 16°. Finalise *)
+(* 16. Finalise *)
 IF  ((DayNri-1) = Simulation.ToDayNr) THEN
     BEGIN
     // multiple cuttings

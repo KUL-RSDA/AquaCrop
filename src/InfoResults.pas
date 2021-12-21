@@ -7,7 +7,7 @@ uses Global, interface_global;
 PROCEDURE WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
                                     TheProjectType : repTypeProject;
                                     RangeMin,RangeMax : LongInt);
-                                      
+
 
 
 implementation
@@ -171,7 +171,7 @@ VAR fAssm : text;
     ObsAver,SimAver,PearsonCoeff,RMSE,NRMSE,NScoeff,IndexAg : double;
     ArrayObsSim : rep_ArrayObsSim;
     YearString : string;
-    
+
 BEGIN
 // 1. Open file for assessment
 Assign(fAssm,totalnameEvalStat);
