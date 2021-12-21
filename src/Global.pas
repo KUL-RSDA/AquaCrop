@@ -672,8 +672,7 @@ PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
 PROCEDURE GetCO2Description(CO2FileFull : string;
                             VAR CO2Description : string);
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
-FUNCTION DegreesDay(Tbase,Tupper,TDayMin,TDayMax : double;
-                    GDDSelectedMethod : ShortInt) : double;
+
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
                             GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
                             CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
@@ -4096,45 +4095,6 @@ IF ((FromYi = 1901) OR (ToYi = 1901))
         CO2ForSimulationPeriod := (CO2From+CO2To)/2;
         END;
 END; (* CO2ForSimulationPeriod *)
-
-
-
-FUNCTION DegreesDay(Tbase,Tupper,TDayMin,TDayMax : double;
-                    GDDSelectedMethod : ShortInt) : double;
-VAR TstarMax, TstarMin : double;
-    Tavg,DgrD : double;
-BEGIN
-CASE GDDSelectedMethod OF
-     1 : BEGIN  // Method 1. - No adjustemnt of Tmax, Tmin before calculation of Taverage
-         Tavg := (TDayMax+TDayMin)/2;
-         IF (Tavg > Tupper) THEN Tavg := Tupper;
-         IF (Tavg < Tbase) THEN Tavg := Tbase;
-         END;
-     2 : BEGIN  // Method 2. -  Adjustment for Tbase before calculation of Taverage
-         TstarMax := TDayMax;
-         IF (TDayMax < Tbase) THEN TstarMax := Tbase;
-         IF (TDayMax > Tupper) THEN TstarMax := Tupper;
-         TstarMin := TDayMin;
-         IF (TDayMin < Tbase) THEN TstarMin := Tbase;
-         IF (TDayMin > Tupper) THEN TstarMin := Tupper;
-         Tavg := (TstarMax+TstarMin)/2;
-         END;
-    else BEGIN // Method 3.
-         TstarMax := TDayMax;
-         IF (TDayMax < Tbase) THEN TstarMax := Tbase;
-         IF (TDayMax > Tupper) THEN TstarMax := Tupper;
-         TstarMin := TDayMin;
-         IF (TDayMin > Tupper) THEN TstarMin := Tupper;
-         Tavg := (TstarMax+TstarMin)/2;
-         IF (Tavg < Tbase) THEN Tavg := Tbase;
-         END;
-    end;
-DgrD :=  Tavg - Tbase;
-DegreesDay :=  DgrD;
-END; (* DegreesDay *)
-
-
-
 
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,

@@ -608,6 +608,70 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     CCatTime = CCi
 end function CCatTime
 
+real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    integer(int8), intent(in) :: GDDSelectedMethod
+
+    real(dp) :: TstarMax, TstarMin
+    real(dp) :: Tavg, DgrD
+
+    SELECT CASE (GDDSelectedMethod)
+    CASE (1)
+    ! Method 1. - No adjustemnt of Tmax, Tmin before calculation of Taverage
+    Tavg = (TDayMax+TDayMin)/2._dp
+    if (Tavg > Tupper) then
+        Tavg = Tupper
+    end if
+    if (Tavg < Tbase) then
+        Tavg = Tbase
+    end if
+
+    CASE (2)
+    ! Method 2. -  Adjustment for Tbase before calculation of Taverage
+    TstarMax = TDayMax
+    if (TDayMax < Tbase) then
+        TstarMax = Tbase
+    end if
+    if (TDayMax > Tupper) then
+        TstarMax = Tupper
+    end if
+    TstarMin = TDayMin
+    if (TDayMin < Tbase) then
+        TstarMin = Tbase
+    end if
+    if (TDayMin > Tupper) then
+        TstarMin = Tupper
+    end if
+    Tavg = (TstarMax+TstarMin)/2._dp
+
+    CASE DEFAULT
+    ! Method 3.
+    TstarMax = TDayMax
+    if (TDayMax < Tbase) then
+         TstarMax = Tbase
+    end if
+    if (TDayMax > Tupper) then
+        TstarMax = Tupper
+    end if
+    TstarMin = TDayMin
+    if (TDayMin > Tupper) then
+        TstarMin = Tupper
+    end if
+    Tavg = (TstarMax+TstarMin)/2._dp
+    if (Tavg < Tbase) then
+        Tavg = Tbase
+    end if
+    END SELECT
+
+    DgrD =  Tavg - Tbase
+    DegreesDay =  DgrD
+
+end function DegreesDay
+
+
 
 subroutine DetermineCNIandIII(CN2, CN1, CN3)
     integer(int8), intent(in) :: CN2

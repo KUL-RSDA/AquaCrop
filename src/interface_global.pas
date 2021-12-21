@@ -187,6 +187,11 @@ function CCatTime(
             constref CCoIN, CGCIN, CCxIN : double)  : double;
          external 'aquacrop' name '__ac_global_MOD_ccattime';
 
+function DegreesDay(
+            constref Tbase,Tupper,TDayMin,TDayMax : double;
+            constref GDDSelectedMethod : ShortInt) : double;
+         external 'aquacrop' name '__ac_global_MOD_degreesday';
+
 procedure DetermineCNIandIII(
             constref CN2 : ShortInt;
             var CN1,CN3 : ShortInt);
