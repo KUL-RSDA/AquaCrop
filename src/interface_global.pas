@@ -8,6 +8,7 @@ const
     max_SoilLayers = 5;
     undef_double = -9.9;
     undef_int = -9;
+    CO2Ref = 369.41;
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -161,6 +162,11 @@ procedure DetermineCN_default(
             constref Infiltr : double;
             var CN2 : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_determineCN_default';
+
+function fAdjustedForCO2 (
+            constref CO2i, WPi : double;
+            constref PercentA : ShortInt) : double;
+        external 'aquacrop' name '__ac_global_MOD_fadjustedforco2';
 
 implementation
 
