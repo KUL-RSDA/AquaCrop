@@ -539,10 +539,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
 
 FUNCTION FileExists (full_name : string) : BOOLEAN;
 
-FUNCTION RootMaxInSoilProfile(ZmaxCrop : double;
-                              TheNrSoilLayers : ShortInt;
-                              TheSoilLayer : rep_SoilLayer) : single;
-
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
                             SumGDD,Zmin,Zmax : double;
                             ShapeFactor : ShortInt;
@@ -794,29 +790,6 @@ Close(f);
 {$I+}
 FileExists := (IOResult = 0);
 END; (* FileExists *)
-
-
-FUNCTION RootMaxInSoilProfile(ZmaxCrop : double;
-                              TheNrSoilLayers : ShortInt;
-                              TheSoilLayer : rep_SoilLayer) : single;
-VAR Zmax : double;
-    Zsoil : double;
-    layi : ShortInt;
-BEGIN
-Zmax := ZmaxCrop;
-Zsoil := 0.0;
-layi := 0;
-WHILE ((layi < TheNrSoilLayers) AND (Zmax > 0)) DO
-  BEGIN
-  layi := layi + 1;
-  IF (TheSoilLayer[layi].Penetrability < 100) AND (ROUND(Zsoil*1000) < ROUND(ZmaxCrop*1000))
-     THEN Zmax := undef_int;
-  Zsoil := Zsoil + TheSoilLayer[layi].Thickness;
-  END;
-IF (Zmax < 0) THEN ZrAdjustedToRestrictiveLayers(ZmaxCrop,TheNrSoilLayers,TheSoilLayer,Zmax);
-RootMaxInSoilProfile := Zmax;
-END; (* RootMaxInSoilProfile *)
-
 
 
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
