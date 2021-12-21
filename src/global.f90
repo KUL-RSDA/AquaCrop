@@ -42,7 +42,7 @@ type CompartmentIndividual
         !! - relative wetness (RUNOFF)
         !! - evaporation process
         !! - transpiration process *)
-    !! salinity factors
+    ! salinity factors
     real(dp), dimension(11) :: Salt
         !! salt content in solution in cells (g/m2)
     real(dp), dimension(11) :: Depo
@@ -335,6 +335,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+
 real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
@@ -353,6 +354,7 @@ real(dp) function TauFromKsat(Ksat)
     end if
 end function TauFromKsat
 
+
 subroutine CheckForWaterTableInProfile(DepthGWTmeter, ProfileComp, WaterTableInProfile)
     real(dp), intent(in) :: DepthGWTmeter
     type(CompartmentIndividual), dimension(max_No_compartments), intent(in):: ProfileComp
@@ -360,22 +362,23 @@ subroutine CheckForWaterTableInProfile(DepthGWTmeter, ProfileComp, WaterTableInP
 
     real(dp) :: Ztot, Zi
     integer(int16) :: compi
+
     WaterTableInProfile = .false.
-    Ztot = 0
-    compi = 0
+    Ztot = 0._dp
+    compi = 0._dp
     if (DepthGWTmeter >= 0) then
-            ! groundwater table is present
-            do while ((WaterTableInProfile .neqv. .true.) .or. (compi < NrCompartments))
-                compi = compi + 1 
-                Ztot = Ztot + ProfileComp(compi)%Thickness
-                Zi = Ztot - ProfileComp(compi)%Thickness/2._dp
-                if (Zi >= DepthGWTmeter) then
-                        WaterTableInProfile = .true.
-                end if
-            end do
+        ! groundwater table is present
+        do while ((.not. WaterTableInProfile) .and. (compi < NrCompartments))
+            compi = compi + 1 
+            Ztot = Ztot + ProfileComp(compi)%Thickness
+            Zi = Ztot - ProfileComp(compi)%Thickness/2._dp
+            if (Zi >= DepthGWTmeter) then
+                WaterTableInProfile = .true.
+            end if
+        end do
     end if
-! CheckForWaterTableInProfile
 end subroutine CheckForWaterTableInProfile
+
 
 real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
     real(dp), intent(in) :: ParamCRa

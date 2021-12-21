@@ -5,8 +5,7 @@ interface
 uses SysUtils, interface_global;
 
 
-Const max_No_compartments = 12;
-      Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
+Const Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
       ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
       NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
