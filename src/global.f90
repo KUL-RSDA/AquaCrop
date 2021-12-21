@@ -560,7 +560,7 @@ real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
 
     CCi = CCoIN * EXP(GDDCGCIN * GDDi)
     if (CCi > CCxIN/2._dp) then
-        CCi = CCxIN - 0.25_dp * (CCxIN/CCoIN) * CCxIN * EXP(-GDDCGCIN*GDDi)
+        CCi = CCxIN - 0.25_dp * (CCxIN/CCoIN) * CCxIN * exp(-GDDCGCIN*GDDi)
     end if
     CCatGDD = CCi
 end function CCatGDD
