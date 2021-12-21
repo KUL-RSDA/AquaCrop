@@ -14,7 +14,6 @@ Const max_No_compartments = 12;
 
       DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
-      CO2Ref = 369.41; // reference CO2 in ppm by volume for year 2000 for Mauna Loa (Hawaii, USA)
 
 TYPE
      repstring17 = string[17]; (* Date string *)
@@ -737,9 +736,6 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
 PROCEDURE AdjustThetaInitial(PrevNrComp : ShortInt;
                              PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
 PROCEDURE AdjustSizeCompartments(CropZx : double);
-FUNCTION fAdjustedForCO2 (CO2i : double;
-                          WPi : double;  // g/m2
-                          PercentA : ShortInt) : double;
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
@@ -5056,74 +5052,6 @@ IF ((TotDepthC + 0.00001) < CropZx) THEN
 //5. Adjust soil water content and theta initial
 AdjustThetaInitial(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp);
 END; (* AdjustSizeCompartments *)
-
-
-FUNCTION fAdjustedForCO2 (CO2i : double;
-                          WPi : double;  // g/m2
-                          PercentA : ShortInt) : double;
-VAR fW,fCO2Old,fType,fSink,fShape,CO2rel,fCO2adj,fCO2 : double;
-
-BEGIN
-// 1. Correction for crop type: fType
-IF (WPi >= 40)
-   THEN fType := 0 // no correction for C4 crops
-   ELSE BEGIN
-        IF (WPi <= 20)
-           THEN fType := 1 // full correction for C3 crops
-           ELSE fType := (40-WPi)/(40-20);
-        END;
-
-// 2. crop sink strength coefficient: fSink
-fSink := PercentA/100;
-IF (fSink < 0) THEN fSink := 0; // based on FACE expirements
-IF (fSink > 1) THEN fSink := 1; // theoretical adjustment
-
-// 3. Correction coefficient for CO2: fCO2Old
-fCO2Old := undef_int;
-IF (CO2i <= 550) THEN
-   BEGIN
-   // 3.1 weighing factor for CO2
-   IF (CO2i <= CO2Ref)
-      THEN fw := 0
-      ELSE BEGIN
-           IF (CO2i >= 550)
-              THEN fW := 1
-              ELSE fw := 1 - (550 - CO2i)/(550 - CO2Ref);
-           END;
-
-   // 3.2 adjustment for CO2
-   fCO2Old := (CO2i/CO2Ref)/
-              (1+(CO2i-CO2Ref)*((1-fW)*0.000138 + fW*(0.000138*fSink + 0.001165*(1-fSink))));
-   END;
-
-// 4. Adjusted correction coefficient for CO2: fCO2adj
-fCO2adj := undef_int;
-IF (CO2i > CO2Ref) THEN
-   BEGIN
-   // 4.1 Shape factor
-   fShape := -4.61824 - 3.43831*fSink - 5.32587*fSink*fSink;
-
-   // 4.2 adjustment for CO2
-   IF (CO2i >= 2000)
-      THEN fCO2adj := 1.58  // maximum is reached
-      ELSE BEGIN
-           CO2rel := (CO2i-CO2Ref)/(2000-CO2Ref);
-           fCO2adj := 1 + 0.58 * ((exp(CO2rel*fShape) - 1)/(exp(fShape) - 1));
-           END;
-   END;
-
-// 5. Selected adjusted coefficient for CO2: fCO2
-IF (CO2i <= CO2Ref)
-   THEN fCO2 := fCO2Old
-   ELSE BEGIN
-        fCO2 := fCO2adj;
-        IF ((CO2i <= 550) AND (fCO2Old < fCO2adj)) THEN fCO2 := fCO2Old;
-        END;
-
-// 6. final adjustment
-fAdjustedForCO2 := 1 + fType*(fCO2-1);
-END; (* fAdjustedForCO2 *)
-
 
 
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
