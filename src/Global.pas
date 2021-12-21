@@ -740,8 +740,6 @@ PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
 
 FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
                                    ShapeFactor : double) : double;
-FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
 PROCEDURE NoCropCalendar;
 PROCEDURE LoadCropCalendar(FullName : string;
                            VAR GetOnset,GetOnsetTemp : BOOLEAN;
@@ -5263,23 +5261,6 @@ IF ((Yeari >= 2) AND (Yearx >= 2) AND (ROUND(100*ShapeFactor) <> 0)) THEN
    END;
 MultiplierCCxSelfThinning := fCCx;
 END; (* MultiplierCCxSelfThinning *)
-
-
-FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
-VAR fCCo,Year0 : double;
-BEGIN
-fCCo := 1;
-IF ((Yeari >= 1) AND (Yearx >= 2) AND (ROUND(100*ShapeFactor) <> 0)) THEN
-   BEGIN
-   Year0 := 1 + (Yearx-1) * exp(ShapeFactor*ln(10));
-   IF ((Yeari >= Year0) OR (Year0 <= 1))
-      THEN fCCo := 0
-      ELSE fCCo := 1 - (Yeari-1)/(Year0-1);
-   IF (fCCo < 0) THEN fCCo := 0;
-   END;
-MultiplierCCoSelfThinning := fCCo;
-END; (* MultiplierCCoSelfThinning *)
 
 
 PROCEDURE NoCropCalendar;

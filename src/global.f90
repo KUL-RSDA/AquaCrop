@@ -650,6 +650,29 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
+    integer(int16), intent(in) :: Yeari
+    integer(int16), intent(in) :: Yearx
+    real(dp), intent(in) :: ShapeFactor
+
+    real(dp) :: fCCo, Year0
+
+    fCCo = 1._dp
+    if ((Yeari >= 1) .and. (Yearx >= 2) .and. (nint(100*ShapeFactor) /= 0)) then
+        Year0 = 1._dp + (Yearx-1) * exp(ShapeFactor*log(10._dp))
+        if ((Yeari >= Year0) .or. (Year0 <= 1)) then
+            fCCo = 0._dp
+        else
+            fCCo = 1._dp - (Yeari-1)/(Year0-1._dp)
+        end if
+        if (fCCo < 0._dp) then
+            fCCo = 0._dp
+        end if
+    end if
+    MultiplierCCoSelfThinning = fCCo
+
+end function MultiplierCCoSelfThinning
+
 real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     real(dp), intent(in) :: Wrel
     real(dp), intent(inout) :: pULActual
