@@ -680,4 +680,17 @@ real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
     fAdjustedForCO2 = 1._dp + fType*(fCO2-1._dp)
 end function fAdjustedForCO2
 
+
+logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
+    integer(int16), intent(in) :: FromY
+    integer(int16), intent(in) :: FromD
+    integer(int16), intent(in) :: FromM
+    integer(int16), intent(in) :: ToD
+    integer(int16), intent(in) :: ToM
+
+    FullUndefinedRecord = ((FromY == 1901) .and. (FromD == 1)&
+        .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
+end function FullUndefinedRecord
+
+
 end module ac_global
