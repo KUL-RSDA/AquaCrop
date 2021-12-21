@@ -659,9 +659,6 @@ PROCEDURE ReadRainfallSettings;
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
-FUNCTION KsSalinity(SalinityResponsConsidered : BOOLEAN;
-                    ECeN,ECeX : ShortInt;
-                    ECeVAR,KsShapeSalinity : double) : double;
 FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
@@ -3866,39 +3863,6 @@ WITH SimulParam DO
    END;
 Close(f0);
 END; (* ReadTemperatureSettingsParameters *)
-
-
-
-FUNCTION KsSalinity(SalinityResponsConsidered : BOOLEAN;
-                    ECeN,ECeX : ShortInt;
-                    ECeVAR,KsShapeSalinity : double) : double;
-VAR M : double;
-BEGIN
-M := 1; // no correction applied
-IF (SalinityResponsConsidered = true) THEN
-//IF (((ROUND(ECeN) <> undef_int) AND (Round(ECeX) <> undef_int)) AND (ECeN < ECeX)) THEN
-   BEGIN
-   IF ((ECeVAR > ECeN) AND (ECeVar < ECeX))
-      THEN BEGIN  // within range for correction
-           IF ((ROUND(KsShapeSalinity*10) <> 0) AND (ROUND(KsShapeSalinity*10) <> 990))
-              THEN M := KsAny(ECeVar,ECeN,ECeX,KsShapeSalinity) // convex or concave
-              ELSE BEGIN
-                   IF (ROUND(KsShapeSalinity*10) = 0)
-                      THEN M := 1 - (ECeVAR-ECeN)/(ECeX-ECeN) // linear (KsShapeSalinity = 0)
-                      ELSE M := KsTemperature(ECeX,ECeN,ECeVAR); // logistic equation (KsShapeSalinity = 99)
-                   END;
-           END
-      ELSE BEGIN
-           IF (ECeVAR <= ECeN) THEN M := 1;  // no salinity stress
-           IF (ECeVar >= ECeX) THEN M := 0;  // full salinity stress
-           END;
-   END;
-IF (M > 1) THEN M := 1;
-IF (M < 0) THEN M := 0;
-KsSalinity := M;
-END; (* KsSalinity *)
-
-
 
 FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;

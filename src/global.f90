@@ -571,6 +571,56 @@ real(dp) function KsTemperature(T0, T1, Tin)
 end function KsTemperature
 
 
+real(dp) function KsSalinity(SalinityResponsConsidered, &
+                ECeN, ECeX, ECeVAR, KsShapeSalinity)
+    logical, intent(in) :: SalinityResponsConsidered
+    integer(int8), intent(in) :: ECeN
+    integer(int8), intent(in) :: ECeX
+    real(dp), intent(in) :: ECeVAR
+    real(dp), intent(in) :: KsShapeSalinity
+
+    real(dp) :: M, tmp_var
+
+    M = 1._dp ! no correction applied
+    if (SalinityResponsConsidered) then
+        ! IF (((ROUND(ECeN) <> undef_int) AND (Round(ECeX) <> undef_int)) AND
+        ! (ECeN < ECeX)) THEN
+        if ((ECeVAR > ECeN) .and. (ECeVar < ECeX)) then
+            ! within range for correction
+            if ((nint(KsShapeSalinity*10._dp) /= 0) .and. &
+                (nint(KsShapeSalinity*10) /= 990)) then
+                tmp_var = real(ECeN,8)
+                M = KsAny(ECeVar, tmp_var, real(ECeX,8), KsShapeSalinity) 
+                ! convex or concave
+            else
+                if (nint(KsShapeSalinity*10._dp) == 0) then
+                    M = 1._dp - (ECeVAR-ECeN)/(ECeX-ECeN) 
+                    ! linear (KsShapeSalinity = 0)
+                else
+                    M = KsTemperature(real(ECeX,8), real(ECeN,8), ECeVAR) 
+                    ! logistic equation (KsShapeSalinity = 99)
+                end if
+            end if
+        else
+            if (ECeVAR <= ECeN) then
+                M = 1._dp  ! no salinity stress
+            end if
+            if (ECeVar >= ECeX) then
+                M = 0._dp  ! full salinity stress
+            end if
+        end if
+    end if
+    if (M > 1) then
+        M = 1._dp
+    end if
+    if (M < 0) then
+        M = 0._dp
+    end if
+    KsSalinity = M
+
+end function KsSalinity
+
+
 real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
     real(dp), intent(in) :: Wrel
     real(dp), intent(in) :: Edecline
