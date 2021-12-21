@@ -740,9 +740,6 @@ PROCEDURE AdjustSizeCompartments(CropZx : double);
 FUNCTION fAdjustedForCO2 (CO2i : double;
                           WPi : double;  // g/m2
                           PercentA : ShortInt) : double;
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -5123,28 +5120,6 @@ IF (CO2i <= CO2Ref)
 // 6. final adjustment
 fAdjustedForCO2 := 1 + fType*(fCO2-1);
 END; (* fAdjustedForCO2 *)
-
-
-
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
-Var Ztot, Zi : double;
-    compi : INTEGER;
-BEGIN
-WaterTableInProfile := false;
-Ztot := 0;
-compi := 0;
-IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
-   REPEAT
-   compi := compi + 1;
-   Ztot := Ztot + ProfileComp[compi].Thickness;
-   Zi := Ztot - ProfileComp[compi].Thickness/2;
-   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
-END; (* CheckForWaterTableInProfile *)
-
-
 
 
 PROCEDURE LoadGroundWater(FullName : string;
