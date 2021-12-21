@@ -168,6 +168,11 @@ function fAdjustedForCO2 (
             constref PercentA : ShortInt) : double;
         external 'aquacrop' name '__ac_global_MOD_fadjustedforco2';
 
+function FullUndefinedRecord(
+            constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
+        external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
+
+
 implementation
 
 

@@ -648,7 +648,6 @@ PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE ResetSWCToFC;
 PROCEDURE AdjustSimPeriod;
 PROCEDURE AdjustOnsetSearchPeriod;
-FUNCTION FullUndefinedRecord(FromY,FromD,FromM,ToD,ToM : INTEGER) : BOOLEAN;
 PROCEDURE SetClimData;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
@@ -3224,18 +3223,6 @@ IF (ClimFile = '(None)')
            END;
         END;
 END; (* AdjustOnsetSearchPeriod *)
-
-
-
-
-
-FUNCTION FullUndefinedRecord(FromY,FromD,FromM,ToD,ToM : INTEGER) : BOOLEAN;
-BEGIN
-FullUndefinedRecord := ((FromY = 1901) AND (FromD = 1) AND (FromM = 1) AND (ToD = 31) AND (ToM = 12));
-END;
-
-
-
 
 
 PROCEDURE SetClimData;
