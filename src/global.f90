@@ -293,13 +293,13 @@ real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
     real(dp) :: fCCx, Year0
     
     fCCx = 1._dp
-    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor) /= 0)) then
-        Year0 = 1 + (Yearx-1) * exp(ShapeFactor*log(10._dp))
+    if ((Yeari >= 2._dp) .and. (Yearx >= 2._dp) .and. (nint(100._dp*ShapeFactor) /= 0._dp)) then
+        Year0 = 1._dp + (Yearx-1._dp) * exp(ShapeFactor*log(10._dp))
         if (Yeari >= Year0) then
           fCCx = 0._dp
         else
           fCCx = 0.9 + 0.1 * (1._dp - &
-                 exp((1._dp/ShapeFactor)*log(real((Yeari-1)/(Yearx-1),dp))))
+                 exp((1._dp/ShapeFactor)*log(real((Yeari-1._dp)/(Yearx-1._dp),dp))))
         end if
         if (fCCx < 0._dp) then
           fCCx = 0._dp
