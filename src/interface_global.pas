@@ -69,6 +69,12 @@ type
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
 
+function RootMaxInSoilProfile(
+            constref ZmaxCrop : double;
+            constref TheNrSoilLayers : shortint;
+            constref TheSoilLayer : rep_SoilLayer) : single;
+         external 'aquacrop' name '__ac_global_MOD_rootmaxinsoilprofile';
+
 procedure ZrAdjustedToRestrictiveLayers(ZrIN : double;
                                         TheNrSoilLayers : ShortInt;
                                         TheLayer : rep_SoilLayer;

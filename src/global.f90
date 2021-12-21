@@ -3,7 +3,8 @@ module ac_global
 use ac_kinds, only: dp, &
                     int8, &
                     int16, &
-                    intEnum
+                    intEnum, &
+                    sp
 implicit none
 
 
@@ -115,6 +116,40 @@ real(dp) function AquaCropVersion(FullNameXXFile)
 
     AquaCropVersion = VersionNr
 end function AquaCropVersion
+
+
+real(sp) function RootMaxInSoilProfile(ZmaxCrop, TheNrSoilLayers, TheSoilLayer)
+    real(dp), intent(in) :: ZmaxCrop
+    integer(int8), intent(in) :: TheNrSoilLayers
+    type(SoilLayerIndividual), dimension(max_SoilLayers), intent(in) :: &
+                                                                TheSoilLayer
+
+    real(dp) :: Zmax
+    real(dp) :: Zsoil
+    integer :: layi
+
+    Zmax = ZmaxCrop
+    Zsoil = 0._dp
+
+    layi = 0
+    do while ((layi < TheNrSoilLayers) .and. (Zmax > 0))
+        layi = layi + 1
+
+        if ((TheSoilLayer(layi)%Penetrability < 100) .and. &
+            (nint(Zsoil*1000) < nint(ZmaxCrop*1000))) then
+            Zmax = undef_int
+        end if
+
+        Zsoil = Zsoil + TheSoilLayer(layi)%Thickness
+    end do
+
+    if (Zmax < 0) then
+        call ZrAdjustedToRestrictiveLayers(ZmaxCrop, TheNrSoilLayers, &
+                                           TheSoilLayer, Zmax)
+    end if
+
+    RootMaxInSoilProfile = real(Zmax, kind=sp)
+end function RootMaxInSoilProfile
 
 
 subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)

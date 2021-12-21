@@ -5,7 +5,8 @@ interface
 uses SysUtils, interface_global;
 
 
-Const Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
+Const max_No_compartments = 12;
+      Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
       ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
       NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
@@ -19,6 +20,7 @@ TYPE
      repstring17 = string[17]; (* Date string *)
      rep_string3  = string[3];  (* Read/Write ProfFile *)
 
+TYPE
      CompartmentIndividual = Record
          Thickness : double;  (* meter *)
          theta     : double;  (* m3/m3 *)
@@ -43,6 +45,8 @@ TYPE
          CNvalue        : ShortInt;
          RootMax        : Single; // maximum rooting depth in soil profile for selected crop
          end;
+
+     rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
      rep_Content = Record  // total water (mm) or salt (Mg/ha) content
          BeginDay  : double; //at the beginning of the day
@@ -535,10 +539,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
 
 FUNCTION FileExists (full_name : string) : BOOLEAN;
 
-FUNCTION RootMaxInSoilProfile(ZmaxCrop : double;
-                              TheNrSoilLayers : ShortInt;
-                              TheSoilLayer : rep_SoilLayer) : single;
-
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
                             SumGDD,Zmin,Zmax : double;
                             ShapeFactor : ShortInt;
@@ -740,6 +740,9 @@ PROCEDURE AdjustSizeCompartments(CropZx : double);
 FUNCTION fAdjustedForCO2 (CO2i : double;
                           WPi : double;  // g/m2
                           PercentA : ShortInt) : double;
+PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
+                                     ProfileComp : rep_comp;
+                                     VAR WaterTableInProfile : BOOLEAN);
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -787,29 +790,6 @@ Close(f);
 {$I+}
 FileExists := (IOResult = 0);
 END; (* FileExists *)
-
-
-FUNCTION RootMaxInSoilProfile(ZmaxCrop : double;
-                              TheNrSoilLayers : ShortInt;
-                              TheSoilLayer : rep_SoilLayer) : single;
-VAR Zmax : double;
-    Zsoil : double;
-    layi : ShortInt;
-BEGIN
-Zmax := ZmaxCrop;
-Zsoil := 0.0;
-layi := 0;
-WHILE ((layi < TheNrSoilLayers) AND (Zmax > 0)) DO
-  BEGIN
-  layi := layi + 1;
-  IF (TheSoilLayer[layi].Penetrability < 100) AND (ROUND(Zsoil*1000) < ROUND(ZmaxCrop*1000))
-     THEN Zmax := undef_int;
-  Zsoil := Zsoil + TheSoilLayer[layi].Thickness;
-  END;
-IF (Zmax < 0) THEN ZrAdjustedToRestrictiveLayers(ZmaxCrop,TheNrSoilLayers,TheSoilLayer,Zmax);
-RootMaxInSoilProfile := Zmax;
-END; (* RootMaxInSoilProfile *)
-
 
 
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
@@ -5143,6 +5123,28 @@ IF (CO2i <= CO2Ref)
 // 6. final adjustment
 fAdjustedForCO2 := 1 + fType*(fCO2-1);
 END; (* fAdjustedForCO2 *)
+
+
+
+PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
+                                     ProfileComp : rep_comp;
+                                     VAR WaterTableInProfile : BOOLEAN);
+Var Ztot, Zi : double;
+    compi : INTEGER;
+BEGIN
+WaterTableInProfile := false;
+Ztot := 0;
+compi := 0;
+IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
+   REPEAT
+   compi := compi + 1;
+   Ztot := Ztot + ProfileComp[compi].Thickness;
+   Zi := Ztot - ProfileComp[compi].Thickness/2;
+   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
+   UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
+END; (* CheckForWaterTableInProfile *)
+
+
 
 
 PROCEDURE LoadGroundWater(FullName : string;
