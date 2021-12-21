@@ -173,6 +173,14 @@ function SoilEvaporationReductionCoefficient(
             constref EDecline : double) : double;
          external 'aquacrop' name '__ac_global_MOD_soilevaporationreductioncoefficient';
 
+function KsTemperature(
+            constref T0,T1,Tin : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_kstemperature';
+
+function GetKs(
+            constref T0,T1,Tin : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_getks';
+
 function MultiplierCCoSelfThinning(
             constref Yeari,Yearx : integer;
             constref ShapeFactor : double) : double;

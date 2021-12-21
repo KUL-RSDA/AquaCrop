@@ -659,7 +659,6 @@ PROCEDURE ReadRainfallSettings;
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
-FUNCTION KsTemperature(T0,T1,Tin : double) : double;
 FUNCTION KsSalinity(SalinityResponsConsidered : BOOLEAN;
                     ECeN,ECeX : ShortInt;
                     ECeVAR,KsShapeSalinity : double) : double;
@@ -3867,49 +3866,6 @@ WITH SimulParam DO
    END;
 Close(f0);
 END; (* ReadTemperatureSettingsParameters *)
-
-
-
-
-FUNCTION KsTemperature(T0,T1,Tin : double) : double;
-VAR M : double;
-    a : ShortInt;
-
-    FUNCTION GetKs(T0,T1,Tin : double) : double;
-    CONST Mo = 0.02;
-          Mx = 1;
-    VAR MRate,Ksi,Trel : double;
-    BEGIN
-    Trel := (Tin-T0)/(T1-T0);
-    // derive rate of increase (MRate)
-    MRate := (-1)*(Ln((Mo*Mx-0.98*Mo)/(0.98*(Mx-Mo))));
-    // get Ks from logistic equation
-    Ksi := (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel));
-    // adjust for Mo
-    Ksi := Ksi - Mo * (1 - Trel);
-    GetKs := Ksi;
-    END; (* GetKs *)
-
-BEGIN
-M := 1; // no correction applied (TO and/or T1 is undefined, or T0=T1)
-IF (((ROUND(T0) <> undef_int) AND (Round(T1) <> undef_int)) AND (T0 <> T1)) THEN
-   BEGIN
-   IF (T0 < T1)
-      THEN a := +1  // cold stress
-      ELSE a := -1; // heat stress
-   IF ((a*Tin > a*T0) AND (a*Tin < a*T1))  // within range for correction
-      THEN BEGIN
-           M := GetKs(T0,T1,Tin);
-           IF (M < 0) THEN M := 0;
-           IF (M > 1) THEN M := 1;
-           END
-      ELSE BEGIN
-           IF (a*Tin <= a*T0) THEN M := 0;
-           IF (a*Tin >= a*T1) THEN M := 1;
-           END;
-   END;
-KsTemperature := M;
-END; (* KsTemperature *)
 
 
 

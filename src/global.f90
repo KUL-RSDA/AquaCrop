@@ -17,6 +17,7 @@ real(dp), parameter :: PI = 3.1415926535_dp
 real(dp), parameter :: CO2Ref = 369.41_dp; 
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
+real(dp), parameter :: eps =10E-08
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -507,6 +508,67 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
         end if
     end if
 end subroutine DeriveSmaxTopBottom
+
+
+real(dp) function GetKs(T0, T1, Tin)
+    real(dp), intent(in) :: T0
+    real(dp), intent(in) :: T1
+    real(dp), intent(in) :: Tin
+
+    real(dp), parameter  :: Mo = 0.02
+    real(dp), parameter  :: Mx = 1.0
+
+    real(dp) :: MRate, Ksi, Trel
+
+    Trel = (Tin-T0)/(T1-T0)
+    ! derive rate of increase (MRate)
+    MRate = (-1._dp)*(log((Mo*Mx-0.98_dp*Mo)/(0.98_dp*(Mx-Mo))))
+    ! get Ks from logistic equation
+    Ksi = (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel))
+    ! adjust for Mo
+    Ksi = Ksi - Mo * (1._dp - Trel)
+    GetKs = Ksi
+
+end function GetKs
+
+real(dp) function KsTemperature(T0, T1, Tin)
+    real(dp), intent(in) :: T0
+    real(dp), intent(in) :: T1
+    real(dp), intent(in) :: Tin
+
+    real(dp) :: M
+    integer(int8) :: a
+
+    M = 1._dp ! no correction applied (TO and/or T1 is undefined, or T0=T1)
+    if (((nint(T0, int16) /= undef_int) .and. &
+         (nint(T1, int16) /= undef_int)) .and. abs(T0-T1)> eps) then
+        if (T0 < T1) then
+            a = +1  ! cold stress
+        else
+            a = -1 ! heat stress
+        end if
+        if ((a*Tin > a*T0) .and. (a*Tin < a*T1)) then 
+        ! within range for correction
+            M = GetKs(T0, T1, Tin)
+            if (M < 0) then
+                M = 0._dp
+            end if
+            if (M > 1) then
+                M = 1._dp
+            end if
+        else
+            if (a*Tin <= a*T0) then
+                M = 0._dp
+            end if
+            if (a*Tin >= a*T1) then
+                M = 1._dp
+            end if
+        end if
+    end if
+
+    KsTemperature = M
+
+end function KsTemperature
 
 
 real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
