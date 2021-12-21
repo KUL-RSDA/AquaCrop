@@ -64,6 +64,38 @@ type SoilLayerIndividual
         !! coefficients for Capillary Rise
 end type SoilLayerIndividual
 
+type rep_Shapes
+    integer(int8) :: Stress
+        !! Percentage soil fertility stress for calibration
+    real(dp) :: ShapeCGC
+        !! Shape factor for the response of Canopy Growth Coefficient to soil
+        !fertility stress
+    real(dp) :: ShapeCCX
+        !! Shape factor for the response of Maximum Canopy Cover to soil
+        !fertility stress
+    real(dp) :: ShapeWP
+        !! Shape factor for the response of Crop Water Producitity to soil
+        !fertility stress
+    real(dp) :: ShapeCDecline
+        !! Shape factor for the response of Decline of Canopy Cover to soil
+        !fertility stress
+    logical :: Calibrated
+        !! Undocumented
+end type rep_Shapes
+
+type rep_EffectStress
+    integer(int8) :: RedCGC
+        !! Reduction of CGC (%)
+    integer(int8) :: RedCCX
+        !! Reduction of CCx (%)
+    integer(int8) :: RedWP
+        !! Reduction of WP (%)
+    real(dp) :: CDecline
+        !! Average decrease of CCx in mid season (%/day)
+    integer(int8) :: RedKsSto
+        !! Reduction of KsSto (%)
+end type rep_EffectStress
+
 
 contains
 
@@ -187,6 +219,37 @@ subroutine set_layer_undef(LayerData)
     LayerData%CRb = undef_int
     LayerData%WaterContent = undef_double
 end subroutine set_layer_undef
+
+
+subroutine CropStressParametersSoilFertility(CropSResp, &
+                    StressLevel, StressOUT)
+    type(rep_Shapes), intent(in) :: CropSResp
+    integer(int8), intent(in)    :: StressLevel
+    type(rep_EffectStress), intent(inout) :: StressOUT
+
+    real(dp) :: Ksi, pULActual, pLLActual
+
+    pULActual = 0._dp
+    pLLActual = 1._dp
+
+    ! decline canopy growth coefficient (CGC)
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCGC)
+    StressOUT%RedCGC = nint((1._dp-Ksi)*100._dp, int8)
+    ! decline maximum canopy cover (CCx)
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCCX)
+    StressOUT%RedCCX = nint((1._dp-Ksi)*100._dp, int8)
+    ! decline crop water productivity (WP)
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeWP)
+    StressOUT%RedWP = nint((1._dp-Ksi)*100._dp, int8)
+    ! decline Canopy Cover (CDecline)
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCDecline)
+    StressOUT%CDecline = 1._dp - Ksi
+    ! inducing stomatal closure (KsSto) not applicable
+    Ksi = 1._dp
+    StressOUT%RedKsSto = nint((1._dp-Ksi)*100._dp, int8)
+    ! CropStressParametersSoilFertility 
+
+end subroutine CropStressParametersSoilFertility
 
 
 real(dp) function TimeRootFunction(t, ShapeFactor, tmax, t0)
@@ -583,5 +646,46 @@ subroutine DetermineCN_default(Infiltr, CN2)
         CN2 = 77
     end if
 end subroutine DetermineCN_default
+
+real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
+    real(dp), intent(in) :: Wrel
+    real(dp), intent(inout) :: pULActual
+    real(dp), intent(in) :: pLLActual
+    real(dp), intent(in) :: ShapeFactor
+
+    real(dp) :: pRelativeLLUL, KsVal
+    ! Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
+    !        FC .. UpperLimit ... LowerLimit .. WP
+    ! p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
+
+    if ((pLLActual - pULActual) < 0.0001_dp) then
+        pULActual = pLLActual - 0.0001_dp
+    end if
+
+    pRelativeLLUL = (Wrel - pULActual)/(pLLActual - pULActual)
+
+    if (pRelativeLLUL <= 0._dp) then
+        KsVal = 1._dp
+    elseif (pRelativeLLUL >= 1._dp) then
+        KsVal = 0._dp
+    else
+        if (nint(10*ShapeFactor) == 0) then ! straight line
+            KsVal = 1._dp - &
+            (Exp(pRelativeLLUL*0.01_dp)-1._dp)/(Exp(0.01_dp)-1._dp)
+        else
+            KsVal = 1._dp - &
+            (Exp(pRelativeLLUL*ShapeFactor)-1._dp)/(Exp(ShapeFactor)-1._dp)
+        end if
+        if (KsVal > 1._dp) then
+            KsVal = 1._dp
+        end if
+        if (KsVal < 0._dp) then
+            KsVal = 0._dp
+        end if
+    end if
+    KsAny = KsVal
+
+end function KsAny
+
 
 end module ac_global

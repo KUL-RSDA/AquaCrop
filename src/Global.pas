@@ -59,15 +59,6 @@ TYPE
      rep_pMethod = (NoCorrection,FAOCorrection);
      rep_planting = (Seed,Transplant,Regrowth);
 
-     rep_Shapes = Record
-         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
-         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
-         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
-         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
-         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
-         Calibrated      : BOOLEAN;
-         end;
-
      rep_Assimilates = Record
          On          : Boolean;
          Period      : INTEGER; (* Number of days at end of season during which assimilates are stored in root system *)
@@ -279,15 +270,6 @@ TYPE
          VolProc  : rep_IniComp;  //soil water content (vol%)
          SaltECe  : rep_IniComp; // ECe in dS/m
          AtFC     : BOOLEAN;     // If iniSWC is at FC
-         end;
-
-
-      rep_EffectStress = Record
-         RedCGC          : ShortInt; (* Reduction of CGC (%) *)
-         RedCCX          : ShortInt; (* Reduction of CCx (%) *)
-         RedWP           : ShortInt; (* Reduction of WP (%) *)
-         CDecline        : Double; (* Average decrease of CCx in mid season (%/day) *)
-         RedKsSto        : ShortInt; (* Reduction of KsSto (%) *)
          end;
 
      rep_storage = Record
@@ -558,9 +540,7 @@ PROCEDURE TimeToMaxCanopySF(CCo,CGC,CCx : double;
                             VAR ClassSF : ShortInt);
 PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
-PROCEDURE CropStressParametersSoilFertility(CropSResp : rep_Shapes;
-                                            StressLevel : ShortInt;
-                                            VAR StressOUT : rep_EffectStress);
+
 PROCEDURE NoIrrigation;
 PROCEDURE SplitStringInTwoParams(StringIN : string;
                                  VAR Par1,Par2 : double);
@@ -661,7 +641,6 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
 
 
 
-FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
 PROCEDURE ReadSoilSettings;
 FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
@@ -1036,31 +1015,6 @@ IF ((ClassSF = 0) OR ((RedCCx = 0) AND (RedCGC = 0)))
            END;
         END;
 END; (* TimeToMaxCanopySF *)
-
-
-
-PROCEDURE CropStressParametersSoilFertility(CropSResp : rep_Shapes;
-                                            StressLevel : ShortInt;
-                                            VAR StressOUT : rep_EffectStress);
-VAR Ksi : double;
-BEGIN
-// decline canopy growth coefficient (CGC)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeCGC);
-StressOUT.RedCGC := ROUND((1-Ksi)*100);
-// decline maximum canopy cover (CCx)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeCCX);
-StressOUT.RedCCX := ROUND((1-Ksi)*100);
-// decline crop water productivity (WP)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeWP);
-StressOUT.RedWP := ROUND((1-Ksi)*100);
-// decline Canopy Cover (CDecline)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeCDecline);
-StressOUT.CDecline := 1 - Ksi;
-// inducing stomatal closure (KsSto) not applicable
-Ksi := 1;
-StressOUT.RedKsSto := ROUND((1-Ksi)*100);
-END; (* CropStressParametersSoilFertility *)
-
 
 
 
@@ -3700,29 +3654,6 @@ CASE TypeDays OF
                                                CCo,CCx,CGC,CDC,SFRedCGC,SFRedCCx);
      end;
 END; (* CanopyCoverNoStressSF *)
-
-
-FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
-Var pRelativeLLUL,KsVal : double;
-BEGIN
-// Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
-//        FC .. UpperLimit ... LowerLimit .. WP
-// p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
-IF ((pLLActual - pULActual) < 0.0001) THEN pULActual := pLLActual - 0.0001;
-pRelativeLLUL := (Wrel - pULActual)/(pLLActual - pULActual);
-IF (pRelativeLLUL <= 0)
-   THEN KsVal := 1
-   ELSE IF (pRelativeLLUL >= 1)
-           THEN KsVal := 0
-           ELSE BEGIN
-                IF (ROUND(10*ShapeFactor) = 0) // straight line
-                   THEN KsVal := 1 - (Exp(pRelativeLLUL*0.01)-1)/(Exp(0.01)-1)
-                   ELSE KsVal := 1 - (Exp(pRelativeLLUL*ShapeFactor)-1)/(Exp(ShapeFactor)-1);
-                IF (KsVal > 1) THEN KsVal := 1;
-                IF (KsVal < 0) THEN KsVal := 0;
-                END;
-KsAny := KsVal;
-END; (* KsAny *)
 
 
 PROCEDURE ReadSoilSettings;
