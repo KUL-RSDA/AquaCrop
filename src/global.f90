@@ -868,10 +868,10 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     else
         if (nint(10*ShapeFactor) == 0) then ! straight line
             KsVal = 1._dp - &
-            (exp(pRelativeLLUL*0.01_dp)-1._dp)/(exp(0.01_dp)-1._dp)
+                    (exp(pRelativeLLUL*0.01_dp)-1._dp)/(exp(0.01_dp)-1._dp)
         else
             KsVal = 1._dp - &
-            (exp(pRelativeLLUL*ShapeFactor)-1._dp)/(exp(ShapeFactor)-1._dp)
+                    (exp(pRelativeLLUL*ShapeFactor)-1._dp)/(exp(ShapeFactor)-1._dp)
         end if
         if (KsVal > 1._dp) then
             KsVal = 1._dp
