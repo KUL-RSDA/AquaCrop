@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import time
 import pytest
+import numpy as np
 
 
 def test_perennial():
@@ -87,7 +88,15 @@ def test_perennial():
                 assert 'Output created on' in out_line, (i, ref_line, out_line)
                 assert 'Output created on' in ref_line, (i, ref_line, out_line)
             else:
-                assert ref_line == out_line, (i, ref_line, out_line)
+                try:
+                    assert ref_line == out_line, (i, ref_line, out_line)
+                except AssertionError:
+                    print('WARN: need item-by-item check (line {0})'.format(i))
+                    items_ref = ref_line.split()
+                    items_out = out_line.split()
+                    for item_ref, item_out in zip(items_ref, items_out):
+                        if item_ref != item_out:
+                            assert np.isclose(float(item_ref), float(item_out))
 
         print('{0} checks = OK'.format(filename))
 
