@@ -73,16 +73,16 @@ type rep_Shapes
         !! Percentage soil fertility stress for calibration
     real(dp) :: ShapeCGC
         !! Shape factor for the response of Canopy Growth Coefficient to soil
-        !fertility stress
+        !! fertility stress
     real(dp) :: ShapeCCX
         !! Shape factor for the response of Maximum Canopy Cover to soil
-        !fertility stress
+        !! fertility stress
     real(dp) :: ShapeWP
         !! Shape factor for the response of Crop Water Producitity to soil
-        !fertility stress
+        !! fertility stress
     real(dp) :: ShapeCDecline
         !! Shape factor for the response of Decline of Canopy Cover to soil
-        !fertility stress
+        !! fertility stress
     logical :: Calibrated
         !! Undocumented
 end type rep_Shapes
@@ -233,26 +233,27 @@ subroutine CropStressParametersSoilFertility(CropSResp, &
 
     real(dp) :: Ksi, pULActual, pLLActual
 
-    pULActual = 0._dp
     pLLActual = 1._dp
 
     ! decline canopy growth coefficient (CGC)
+    pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCGC)
     StressOUT%RedCGC = nint((1._dp-Ksi)*100._dp, int8)
     ! decline maximum canopy cover (CCx)
+    pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCCX)
     StressOUT%RedCCX = nint((1._dp-Ksi)*100._dp, int8)
     ! decline crop water productivity (WP)
+    pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeWP)
     StressOUT%RedWP = nint((1._dp-Ksi)*100._dp, int8)
     ! decline Canopy Cover (CDecline)
+    pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCDecline)
     StressOUT%CDecline = 1._dp - Ksi
     ! inducing stomatal closure (KsSto) not applicable
     Ksi = 1._dp
     StressOUT%RedKsSto = nint((1._dp-Ksi)*100._dp, int8)
-    ! CropStressParametersSoilFertility 
-
 end subroutine CropStressParametersSoilFertility
 
 
@@ -515,8 +516,8 @@ real(dp) function GetKs(T0, T1, Tin)
     real(dp), intent(in) :: T1
     real(dp), intent(in) :: Tin
 
-    real(dp), parameter  :: Mo = 0.02
-    real(dp), parameter  :: Mx = 1.0
+    real(dp), parameter  :: Mo = 0.02_dp
+    real(dp), parameter  :: Mx = 1.0_dp
 
     real(dp) :: MRate, Ksi, Trel
 
@@ -528,8 +529,8 @@ real(dp) function GetKs(T0, T1, Tin)
     ! adjust for Mo
     Ksi = Ksi - Mo * (1._dp - Trel)
     GetKs = Ksi
+ end function GetKs
 
-end function GetKs
 
 real(dp) function KsTemperature(T0, T1, Tin)
     real(dp), intent(in) :: T0
@@ -543,12 +544,12 @@ real(dp) function KsTemperature(T0, T1, Tin)
     if (((nint(T0, int16) /= undef_int) .and. &
          (nint(T1, int16) /= undef_int)) .and. abs(T0-T1)> eps) then
         if (T0 < T1) then
-            a = +1  ! cold stress
+            a =  1  ! cold stress
         else
             a = -1 ! heat stress
         end if
         if ((a*Tin > a*T0) .and. (a*Tin < a*T1)) then 
-        ! within range for correction
+           ! within range for correction
             M = GetKs(T0, T1, Tin)
             if (M < 0) then
                 M = 0._dp
@@ -565,9 +566,7 @@ real(dp) function KsTemperature(T0, T1, Tin)
             end if
         end if
     end if
-
     KsTemperature = M
-
 end function KsTemperature
 
 
@@ -583,21 +582,19 @@ real(dp) function KsSalinity(SalinityResponsConsidered, &
 
     M = 1._dp ! no correction applied
     if (SalinityResponsConsidered) then
-        ! IF (((ROUND(ECeN) <> undef_int) AND (Round(ECeX) <> undef_int)) AND
-        ! (ECeN < ECeX)) THEN
         if ((ECeVAR > ECeN) .and. (ECeVar < ECeX)) then
             ! within range for correction
             if ((nint(KsShapeSalinity*10._dp) /= 0) .and. &
                 (nint(KsShapeSalinity*10) /= 990)) then
                 tmp_var = real(ECeN,8)
-                M = KsAny(ECeVar, tmp_var, real(ECeX,8), KsShapeSalinity) 
+                M = KsAny(ECeVar, tmp_var, real(ECeX, kind=dp), KsShapeSalinity) 
                 ! convex or concave
             else
                 if (nint(KsShapeSalinity*10._dp) == 0) then
                     M = 1._dp - (ECeVAR-ECeN)/(ECeX-ECeN) 
                     ! linear (KsShapeSalinity = 0)
                 else
-                    M = KsTemperature(real(ECeX,8), real(ECeN,8), ECeVAR) 
+                    M = KsTemperature(real(ECeX, kind=dp), real(ECeN, kind=dp), ECeVAR) 
                     ! logistic equation (KsShapeSalinity = 99)
                 end if
             end if
@@ -617,7 +614,6 @@ real(dp) function KsSalinity(SalinityResponsConsidered, &
         M = 0._dp
     end if
     KsSalinity = M
-
 end function KsSalinity
 
 
@@ -730,57 +726,55 @@ real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
     real(dp) :: TstarMax, TstarMin
     real(dp) :: Tavg, DgrD
 
-    SELECT CASE (GDDSelectedMethod)
-    CASE (1)
-    ! Method 1. - No adjustemnt of Tmax, Tmin before calculation of Taverage
-    Tavg = (TDayMax+TDayMin)/2._dp
-    if (Tavg > Tupper) then
-        Tavg = Tupper
-    end if
-    if (Tavg < Tbase) then
-        Tavg = Tbase
-    end if
+    select case (GDDSelectedMethod)
+    case (1)
+        ! Method 1. - No adjustemnt of Tmax, Tmin before calculation of Taverage
+        Tavg = (TDayMax+TDayMin)/2._dp
+        if (Tavg > Tupper) then
+            Tavg = Tupper
+        end if
+        if (Tavg < Tbase) then
+            Tavg = Tbase
+        end if
 
-    CASE (2)
-    ! Method 2. -  Adjustment for Tbase before calculation of Taverage
-    TstarMax = TDayMax
-    if (TDayMax < Tbase) then
-        TstarMax = Tbase
-    end if
-    if (TDayMax > Tupper) then
-        TstarMax = Tupper
-    end if
-    TstarMin = TDayMin
-    if (TDayMin < Tbase) then
-        TstarMin = Tbase
-    end if
-    if (TDayMin > Tupper) then
-        TstarMin = Tupper
-    end if
-    Tavg = (TstarMax+TstarMin)/2._dp
+    case (2)
+        ! Method 2. -  Adjustment for Tbase before calculation of Taverage
+        TstarMax = TDayMax
+        if (TDayMax < Tbase) then
+            TstarMax = Tbase
+        end if
+        if (TDayMax > Tupper) then
+            TstarMax = Tupper
+        end if
+        TstarMin = TDayMin
+        if (TDayMin < Tbase) then
+            TstarMin = Tbase
+        end if
+        if (TDayMin > Tupper) then
+            TstarMin = Tupper
+        end if
+        Tavg = (TstarMax+TstarMin)/2._dp
 
-    CASE DEFAULT
-    ! Method 3.
-    TstarMax = TDayMax
-    if (TDayMax < Tbase) then
-         TstarMax = Tbase
-    end if
-    if (TDayMax > Tupper) then
-        TstarMax = Tupper
-    end if
-    TstarMin = TDayMin
-    if (TDayMin > Tupper) then
-        TstarMin = Tupper
-    end if
-    Tavg = (TstarMax+TstarMin)/2._dp
-    if (Tavg < Tbase) then
-        Tavg = Tbase
-    end if
-    END SELECT
-
+    case default
+       ! Method 3.
+        TstarMax = TDayMax
+        if (TDayMax < Tbase) then
+             TstarMax = Tbase
+        end if
+        if (TDayMax > Tupper) then
+            TstarMax = Tupper
+        end if
+        TstarMin = TDayMin
+        if (TDayMin > Tupper) then
+            TstarMin = Tupper
+        end if
+        Tavg = (TstarMax+TstarMin)/2._dp
+        if (Tavg < Tbase) then
+            Tavg = Tbase
+        end if
+    end select
     DgrD =  Tavg - Tbase
     DegreesDay =  DgrD
-
 end function DegreesDay
 
 
@@ -826,6 +820,7 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int16), intent(in) :: Yeari
     integer(int16), intent(in) :: Yearx
@@ -846,8 +841,8 @@ real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
         end if
     end if
     MultiplierCCoSelfThinning = fCCo
-
 end function MultiplierCCoSelfThinning
+
 
 real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     real(dp), intent(in) :: Wrel
@@ -873,10 +868,10 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     else
         if (nint(10*ShapeFactor) == 0) then ! straight line
             KsVal = 1._dp - &
-            (Exp(pRelativeLLUL*0.01_dp)-1._dp)/(Exp(0.01_dp)-1._dp)
+            (exp(pRelativeLLUL*0.01_dp)-1._dp)/(exp(0.01_dp)-1._dp)
         else
             KsVal = 1._dp - &
-            (Exp(pRelativeLLUL*ShapeFactor)-1._dp)/(Exp(ShapeFactor)-1._dp)
+            (exp(pRelativeLLUL*ShapeFactor)-1._dp)/(exp(ShapeFactor)-1._dp)
         end if
         if (KsVal > 1._dp) then
             KsVal = 1._dp
@@ -886,7 +881,6 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
         end if
     end if
     KsAny = KsVal
-
 end function KsAny
 
 real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
