@@ -177,10 +177,6 @@ function KsTemperature(
             constref T0,T1,Tin : double) : double;
          external 'aquacrop' name '__ac_global_MOD_kstemperature';
 
-function GetKs(
-            constref T0,T1,Tin : double) : double;
-         external 'aquacrop' name '__ac_global_MOD_getks';
-
 function KsSalinity(
             constref SalinityResponsConsidered : boolean;
             constref ECeN,ECeX : ShortInt;
