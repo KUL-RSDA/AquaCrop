@@ -58,15 +58,6 @@ TYPE
      rep_pMethod = (NoCorrection,FAOCorrection);
      rep_planting = (Seed,Transplant,Regrowth);
 
-     rep_Shapes = Record
-         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
-         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
-         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
-         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
-         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
-         Calibrated      : BOOLEAN;
-         end;
-
      rep_Assimilates = Record
          On          : Boolean;
          Period      : INTEGER; (* Number of days at end of season during which assimilates are stored in root system *)
@@ -278,15 +269,6 @@ TYPE
          VolProc  : rep_IniComp;  //soil water content (vol%)
          SaltECe  : rep_IniComp; // ECe in dS/m
          AtFC     : BOOLEAN;     // If iniSWC is at FC
-         end;
-
-
-      rep_EffectStress = Record
-         RedCGC          : ShortInt; (* Reduction of CGC (%) *)
-         RedCCX          : ShortInt; (* Reduction of CCx (%) *)
-         RedWP           : ShortInt; (* Reduction of WP (%) *)
-         CDecline        : Double; (* Average decrease of CCx in mid season (%/day) *)
-         RedKsSto        : ShortInt; (* Reduction of KsSto (%) *)
          end;
 
      rep_storage = Record
@@ -557,9 +539,7 @@ PROCEDURE TimeToMaxCanopySF(CCo,CGC,CCx : double;
                             VAR ClassSF : ShortInt);
 PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
-PROCEDURE CropStressParametersSoilFertility(CropSResp : rep_Shapes;
-                                            StressLevel : ShortInt;
-                                            VAR StressOUT : rep_EffectStress);
+
 PROCEDURE NoIrrigation;
 PROCEDURE SplitStringInTwoParams(StringIN : string;
                                  VAR Par1,Par2 : double);
@@ -659,7 +639,6 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
 
 
 
-FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
 PROCEDURE ReadSoilSettings;
 FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
@@ -680,10 +659,6 @@ PROCEDURE ReadRainfallSettings;
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
-FUNCTION KsTemperature(T0,T1,Tin : double) : double;
-FUNCTION KsSalinity(SalinityResponsConsidered : BOOLEAN;
-                    ECeN,ECeX : ShortInt;
-                    ECeVAR,KsShapeSalinity : double) : double;
 FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
@@ -693,8 +668,7 @@ PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
 PROCEDURE GetCO2Description(CO2FileFull : string;
                             VAR CO2Description : string);
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
-FUNCTION DegreesDay(Tbase,Tupper,TDayMin,TDayMax : double;
-                    GDDSelectedMethod : ShortInt) : double;
+
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
                             GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
                             CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
@@ -760,8 +734,6 @@ PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
 
 FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
-FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;
                                    ShapeFactor : double) : double;
 PROCEDURE NoCropCalendar;
 PROCEDURE LoadCropCalendar(FullName : string;
@@ -1031,31 +1003,6 @@ IF ((ClassSF = 0) OR ((RedCCx = 0) AND (RedCGC = 0)))
            END;
         END;
 END; (* TimeToMaxCanopySF *)
-
-
-
-PROCEDURE CropStressParametersSoilFertility(CropSResp : rep_Shapes;
-                                            StressLevel : ShortInt;
-                                            VAR StressOUT : rep_EffectStress);
-VAR Ksi : double;
-BEGIN
-// decline canopy growth coefficient (CGC)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeCGC);
-StressOUT.RedCGC := ROUND((1-Ksi)*100);
-// decline maximum canopy cover (CCx)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeCCX);
-StressOUT.RedCCX := ROUND((1-Ksi)*100);
-// decline crop water productivity (WP)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeWP);
-StressOUT.RedWP := ROUND((1-Ksi)*100);
-// decline Canopy Cover (CDecline)
-Ksi := KsAny((StressLevel/100),(0),(1),CropSResp.ShapeCDecline);
-StressOUT.CDecline := 1 - Ksi;
-// inducing stomatal closure (KsSto) not applicable
-Ksi := 1;
-StressOUT.RedKsSto := ROUND((1-Ksi)*100);
-END; (* CropStressParametersSoilFertility *)
-
 
 
 
@@ -3675,29 +3622,6 @@ CASE TypeDays OF
 END; (* CanopyCoverNoStressSF *)
 
 
-FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
-Var pRelativeLLUL,KsVal : double;
-BEGIN
-// Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
-//        FC .. UpperLimit ... LowerLimit .. WP
-// p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
-IF ((pLLActual - pULActual) < 0.0001) THEN pULActual := pLLActual - 0.0001;
-pRelativeLLUL := (Wrel - pULActual)/(pLLActual - pULActual);
-IF (pRelativeLLUL <= 0)
-   THEN KsVal := 1
-   ELSE IF (pRelativeLLUL >= 1)
-           THEN KsVal := 0
-           ELSE BEGIN
-                IF (ROUND(10*ShapeFactor) = 0) // straight line
-                   THEN KsVal := 1 - (Exp(pRelativeLLUL*0.01)-1)/(Exp(0.01)-1)
-                   ELSE KsVal := 1 - (Exp(pRelativeLLUL*ShapeFactor)-1)/(Exp(ShapeFactor)-1);
-                IF (KsVal > 1) THEN KsVal := 1;
-                IF (KsVal < 0) THEN KsVal := 0;
-                END;
-KsAny := KsVal;
-END; (* KsAny *)
-
-
 PROCEDURE ReadSoilSettings;
 VAR f : textfile;
     FullName : string;
@@ -3940,82 +3864,6 @@ WITH SimulParam DO
 Close(f0);
 END; (* ReadTemperatureSettingsParameters *)
 
-
-
-
-FUNCTION KsTemperature(T0,T1,Tin : double) : double;
-VAR M : double;
-    a : ShortInt;
-
-    FUNCTION GetKs(T0,T1,Tin : double) : double;
-    CONST Mo = 0.02;
-          Mx = 1;
-    VAR MRate,Ksi,Trel : double;
-    BEGIN
-    Trel := (Tin-T0)/(T1-T0);
-    // derive rate of increase (MRate)
-    MRate := (-1)*(Ln((Mo*Mx-0.98*Mo)/(0.98*(Mx-Mo))));
-    // get Ks from logistic equation
-    Ksi := (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel));
-    // adjust for Mo
-    Ksi := Ksi - Mo * (1 - Trel);
-    GetKs := Ksi;
-    END; (* GetKs *)
-
-BEGIN
-M := 1; // no correction applied (TO and/or T1 is undefined, or T0=T1)
-IF (((ROUND(T0) <> undef_int) AND (Round(T1) <> undef_int)) AND (T0 <> T1)) THEN
-   BEGIN
-   IF (T0 < T1)
-      THEN a := +1  // cold stress
-      ELSE a := -1; // heat stress
-   IF ((a*Tin > a*T0) AND (a*Tin < a*T1))  // within range for correction
-      THEN BEGIN
-           M := GetKs(T0,T1,Tin);
-           IF (M < 0) THEN M := 0;
-           IF (M > 1) THEN M := 1;
-           END
-      ELSE BEGIN
-           IF (a*Tin <= a*T0) THEN M := 0;
-           IF (a*Tin >= a*T1) THEN M := 1;
-           END;
-   END;
-KsTemperature := M;
-END; (* KsTemperature *)
-
-
-
-FUNCTION KsSalinity(SalinityResponsConsidered : BOOLEAN;
-                    ECeN,ECeX : ShortInt;
-                    ECeVAR,KsShapeSalinity : double) : double;
-VAR M : double;
-BEGIN
-M := 1; // no correction applied
-IF (SalinityResponsConsidered = true) THEN
-//IF (((ROUND(ECeN) <> undef_int) AND (Round(ECeX) <> undef_int)) AND (ECeN < ECeX)) THEN
-   BEGIN
-   IF ((ECeVAR > ECeN) AND (ECeVar < ECeX))
-      THEN BEGIN  // within range for correction
-           IF ((ROUND(KsShapeSalinity*10) <> 0) AND (ROUND(KsShapeSalinity*10) <> 990))
-              THEN M := KsAny(ECeVar,ECeN,ECeX,KsShapeSalinity) // convex or concave
-              ELSE BEGIN
-                   IF (ROUND(KsShapeSalinity*10) = 0)
-                      THEN M := 1 - (ECeVAR-ECeN)/(ECeX-ECeN) // linear (KsShapeSalinity = 0)
-                      ELSE M := KsTemperature(ECeX,ECeN,ECeVAR); // logistic equation (KsShapeSalinity = 99)
-                   END;
-           END
-      ELSE BEGIN
-           IF (ECeVAR <= ECeN) THEN M := 1;  // no salinity stress
-           IF (ECeVar >= ECeX) THEN M := 0;  // full salinity stress
-           END;
-   END;
-IF (M > 1) THEN M := 1;
-IF (M < 0) THEN M := 0;
-KsSalinity := M;
-END; (* KsSalinity *)
-
-
-
 FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
@@ -4167,45 +4015,6 @@ IF ((FromYi = 1901) OR (ToYi = 1901))
         CO2ForSimulationPeriod := (CO2From+CO2To)/2;
         END;
 END; (* CO2ForSimulationPeriod *)
-
-
-
-FUNCTION DegreesDay(Tbase,Tupper,TDayMin,TDayMax : double;
-                    GDDSelectedMethod : ShortInt) : double;
-VAR TstarMax, TstarMin : double;
-    Tavg,DgrD : double;
-BEGIN
-CASE GDDSelectedMethod OF
-     1 : BEGIN  // Method 1. - No adjustemnt of Tmax, Tmin before calculation of Taverage
-         Tavg := (TDayMax+TDayMin)/2;
-         IF (Tavg > Tupper) THEN Tavg := Tupper;
-         IF (Tavg < Tbase) THEN Tavg := Tbase;
-         END;
-     2 : BEGIN  // Method 2. -  Adjustment for Tbase before calculation of Taverage
-         TstarMax := TDayMax;
-         IF (TDayMax < Tbase) THEN TstarMax := Tbase;
-         IF (TDayMax > Tupper) THEN TstarMax := Tupper;
-         TstarMin := TDayMin;
-         IF (TDayMin < Tbase) THEN TstarMin := Tbase;
-         IF (TDayMin > Tupper) THEN TstarMin := Tupper;
-         Tavg := (TstarMax+TstarMin)/2;
-         END;
-    else BEGIN // Method 3.
-         TstarMax := TDayMax;
-         IF (TDayMax < Tbase) THEN TstarMax := Tbase;
-         IF (TDayMax > Tupper) THEN TstarMax := Tupper;
-         TstarMin := TDayMin;
-         IF (TDayMin > Tupper) THEN TstarMin := Tupper;
-         Tavg := (TstarMax+TstarMin)/2;
-         IF (Tavg < Tbase) THEN Tavg := Tbase;
-         END;
-    end;
-DgrD :=  Tavg - Tbase;
-DegreesDay :=  DgrD;
-END; (* DegreesDay *)
-
-
-
 
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -5332,23 +5141,6 @@ IF ((Yeari >= 2) AND (Yearx >= 2) AND (ROUND(100*ShapeFactor) <> 0)) THEN
    END;
 MultiplierCCxSelfThinning := fCCx;
 END; (* MultiplierCCxSelfThinning *)
-
-
-FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
-VAR fCCo,Year0 : double;
-BEGIN
-fCCo := 1;
-IF ((Yeari >= 1) AND (Yearx >= 2) AND (ROUND(100*ShapeFactor) <> 0)) THEN
-   BEGIN
-   Year0 := 1 + (Yearx-1) * exp(ShapeFactor*ln(10));
-   IF ((Yeari >= Year0) OR (Year0 <= 1))
-      THEN fCCo := 0
-      ELSE fCCo := 1 - (Yeari-1)/(Year0-1);
-   IF (fCCo < 0) THEN fCCo := 0;
-   END;
-MultiplierCCoSelfThinning := fCCo;
-END; (* MultiplierCCoSelfThinning *)
 
 
 PROCEDURE NoCropCalendar;

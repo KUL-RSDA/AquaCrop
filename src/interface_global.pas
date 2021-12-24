@@ -44,6 +44,23 @@ type
 
     rep_modeCycle = (GDDays, CalendarDays);
 
+    rep_EffectStress = Record
+         RedCGC          : ShortInt; (* Reduction of CGC (%) *)
+         RedCCX          : ShortInt; (* Reduction of CCx (%) *)
+         RedWP           : ShortInt; (* Reduction of WP (%) *)
+         CDecline        : Double; (* Average decrease of CCx in mid season (%/day) *)
+         RedKsSto        : ShortInt; (* Reduction of KsSto (%) *)
+         end;
+
+    rep_Shapes = Record
+         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
+         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
+         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
+         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
+         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
+         Calibrated      : BOOLEAN;
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -69,6 +86,8 @@ function TimeRootFunction(
 procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
          external 'aquacrop' name '__ac_global_MOD_set_layer_undef';
+
+
 
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;
@@ -143,15 +162,45 @@ procedure DeriveSmaxTopBottom(
             var SxBot : double);
          external 'aquacrop' name '__ac_global_MOD_derivesmaxtopbottom';
 
+procedure CropStressParametersSoilFertility(
+            constref CropSResp : rep_Shapes;
+            constref StressLevel : ShortInt;
+            var StressOUT : rep_EffectStress);
+         external 'aquacrop' name '__ac_global_MOD_cropstressparameterssoilfertility';
+
 function SoilEvaporationReductionCoefficient(
             constref Wrel : double;
             constref EDecline : double) : double;
          external 'aquacrop' name '__ac_global_MOD_soilevaporationreductioncoefficient';
 
+function KsTemperature(
+            constref T0,T1,Tin : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_kstemperature';
+
+function KsSalinity(
+            constref SalinityResponsConsidered : boolean;
+            constref ECeN,ECeX : ShortInt;
+            constref ECeVAR,KsShapeSalinity : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_kssalinity';
+
+function MultiplierCCoSelfThinning(
+            constref Yeari,Yearx : integer;
+            constref ShapeFactor : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_multiplierccoselfthinning';
+
+function KsAny(
+            constref Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_ksany';
+
 function CCatTime(
             constref Dayi : integer;
             constref CCoIN, CGCIN, CCxIN : double)  : double;
          external 'aquacrop' name '__ac_global_MOD_ccattime';
+
+function DegreesDay(
+            constref Tbase,Tupper,TDayMin,TDayMax : double;
+            constref GDDSelectedMethod : ShortInt) : double;
+         external 'aquacrop' name '__ac_global_MOD_degreesday';
 
 procedure DetermineCNIandIII(
             constref CN2 : ShortInt;

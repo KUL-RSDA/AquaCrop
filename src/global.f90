@@ -17,6 +17,7 @@ real(dp), parameter :: PI = 3.1415926535_dp
 real(dp), parameter :: CO2Ref = 369.41_dp; 
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
+real(dp), parameter :: eps =10E-08
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -66,6 +67,38 @@ type SoilLayerIndividual
     real(dp) :: CRa, CRb
         !! coefficients for Capillary Rise
 end type SoilLayerIndividual
+
+type rep_Shapes
+    integer(int8) :: Stress
+        !! Percentage soil fertility stress for calibration
+    real(dp) :: ShapeCGC
+        !! Shape factor for the response of Canopy Growth Coefficient to soil
+        !! fertility stress
+    real(dp) :: ShapeCCX
+        !! Shape factor for the response of Maximum Canopy Cover to soil
+        !! fertility stress
+    real(dp) :: ShapeWP
+        !! Shape factor for the response of Crop Water Producitity to soil
+        !! fertility stress
+    real(dp) :: ShapeCDecline
+        !! Shape factor for the response of Decline of Canopy Cover to soil
+        !! fertility stress
+    logical :: Calibrated
+        !! Undocumented
+end type rep_Shapes
+
+type rep_EffectStress
+    integer(int8) :: RedCGC
+        !! Reduction of CGC (%)
+    integer(int8) :: RedCCX
+        !! Reduction of CCx (%)
+    integer(int8) :: RedWP
+        !! Reduction of WP (%)
+    real(dp) :: CDecline
+        !! Average decrease of CCx in mid season (%/day)
+    integer(int8) :: RedKsSto
+        !! Reduction of KsSto (%)
+end type rep_EffectStress
 
 
 contains
@@ -190,6 +223,38 @@ subroutine set_layer_undef(LayerData)
     LayerData%CRb = undef_int
     LayerData%WaterContent = undef_double
 end subroutine set_layer_undef
+
+
+subroutine CropStressParametersSoilFertility(CropSResp, &
+                    StressLevel, StressOUT)
+    type(rep_Shapes), intent(in) :: CropSResp
+    integer(int8), intent(in)    :: StressLevel
+    type(rep_EffectStress), intent(inout) :: StressOUT
+
+    real(dp) :: Ksi, pULActual, pLLActual
+
+    pLLActual = 1._dp
+
+    ! decline canopy growth coefficient (CGC)
+    pULActual = 0._dp
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCGC)
+    StressOUT%RedCGC = nint((1._dp-Ksi)*100._dp, int8)
+    ! decline maximum canopy cover (CCx)
+    pULActual = 0._dp
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCCX)
+    StressOUT%RedCCX = nint((1._dp-Ksi)*100._dp, int8)
+    ! decline crop water productivity (WP)
+    pULActual = 0._dp
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeWP)
+    StressOUT%RedWP = nint((1._dp-Ksi)*100._dp, int8)
+    ! decline Canopy Cover (CDecline)
+    pULActual = 0._dp
+    Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCDecline)
+    StressOUT%CDecline = 1._dp - Ksi
+    ! inducing stomatal closure (KsSto) not applicable
+    Ksi = 1._dp
+    StressOUT%RedKsSto = nint((1._dp-Ksi)*100._dp, int8)
+end subroutine CropStressParametersSoilFertility
 
 
 real(dp) function TimeRootFunction(t, ShapeFactor, tmax, t0)
@@ -446,6 +511,133 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
 end subroutine DeriveSmaxTopBottom
 
 
+real(dp) function GetKs(T0, T1, Tin)
+    real(dp), intent(in) :: T0
+    real(dp), intent(in) :: T1
+    real(dp), intent(in) :: Tin
+
+    real(dp), parameter  :: Mo = 0.02_dp
+    real(dp), parameter  :: Mx = 1.0_dp
+
+    real(dp) :: MRate, Ksi, Trel
+
+    Trel = (Tin-T0)/(T1-T0)
+    ! derive rate of increase (MRate)
+    MRate = (-1._dp)*(log((Mo*Mx-0.98_dp*Mo)/(0.98_dp*(Mx-Mo))))
+    ! get Ks from logistic equation
+    Ksi = (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel))
+    ! adjust for Mo
+    Ksi = Ksi - Mo * (1._dp - Trel)
+    GetKs = Ksi
+ end function GetKs
+
+
+real(dp) function KsTemperature(T0, T1, Tin)
+    real(dp), intent(in) :: T0
+    real(dp), intent(in) :: T1
+    real(dp), intent(in) :: Tin
+
+    real(dp) :: M
+    integer(int8) :: a
+
+    M = 1._dp ! no correction applied (TO and/or T1 is undefined, or T0=T1)
+    if (((nint(T0, int16) /= undef_int) .and. &
+         (nint(T1, int16) /= undef_int)) .and. abs(T0-T1)> eps) then
+        if (T0 < T1) then
+            a =  1  ! cold stress
+        else
+            a = -1 ! heat stress
+        end if
+        if ((a*Tin > a*T0) .and. (a*Tin < a*T1)) then 
+           ! within range for correction
+            M = GetKs(T0, T1, Tin)
+            if (M < 0) then
+                M = 0._dp
+            end if
+            if (M > 1) then
+                M = 1._dp
+            end if
+        else
+            if (a*Tin <= a*T0) then
+                M = 0._dp
+            end if
+            if (a*Tin >= a*T1) then
+                M = 1._dp
+            end if
+        end if
+    end if
+    KsTemperature = M
+
+    contains
+    real(dp) function GetKs(T0, T1, Tin)
+        real(dp), intent(in) :: T0
+        real(dp), intent(in) :: T1
+        real(dp), intent(in) :: Tin
+
+        real(dp), parameter  :: Mo = 0.02_dp
+        real(dp), parameter  :: Mx = 1.0_dp
+
+        real(dp) :: MRate, Ksi, Trel
+
+        Trel = (Tin-T0)/(T1-T0)
+        ! derive rate of increase (MRate)
+        MRate = (-1._dp)*(log((Mo*Mx-0.98_dp*Mo)/(0.98_dp*(Mx-Mo))))
+        ! get Ks from logistic equation
+        Ksi = (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel))
+        ! adjust for Mo
+        Ksi = Ksi - Mo * (1._dp - Trel)
+        GetKs = Ksi
+     end function GetKs
+end function KsTemperature
+
+
+real(dp) function KsSalinity(SalinityResponsConsidered, &
+                ECeN, ECeX, ECeVAR, KsShapeSalinity)
+    logical, intent(in) :: SalinityResponsConsidered
+    integer(int8), intent(in) :: ECeN
+    integer(int8), intent(in) :: ECeX
+    real(dp), intent(in) :: ECeVAR
+    real(dp), intent(in) :: KsShapeSalinity
+
+    real(dp) :: M, tmp_var
+
+    M = 1._dp ! no correction applied
+    if (SalinityResponsConsidered) then
+        if ((ECeVAR > ECeN) .and. (ECeVar < ECeX)) then
+            ! within range for correction
+            if ((nint(KsShapeSalinity*10._dp) /= 0) .and. &
+                (nint(KsShapeSalinity*10) /= 990)) then
+                tmp_var = real(ECeN, kind=dp)
+                M = KsAny(ECeVar, tmp_var, real(ECeX, kind=dp), KsShapeSalinity) 
+                ! convex or concave
+            else
+                if (nint(KsShapeSalinity*10._dp) == 0) then
+                    M = 1._dp - (ECeVAR-ECeN)/(ECeX-ECeN) 
+                    ! linear (KsShapeSalinity = 0)
+                else
+                    M = KsTemperature(real(ECeX, kind=dp), real(ECeN, kind=dp), ECeVAR) 
+                    ! logistic equation (KsShapeSalinity = 99)
+                end if
+            end if
+        else
+            if (ECeVAR <= ECeN) then
+                M = 1._dp  ! no salinity stress
+            end if
+            if (ECeVar >= ECeX) then
+                M = 0._dp  ! full salinity stress
+            end if
+        end if
+    end if
+    if (M > 1) then
+        M = 1._dp
+    end if
+    if (M < 0) then
+        M = 0._dp
+    end if
+    KsSalinity = M
+end function KsSalinity
+
+
 real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
     real(dp), intent(in) :: Wrel
     real(dp), intent(in) :: Edecline
@@ -545,6 +737,68 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     CCatTime = CCi
 end function CCatTime
 
+real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    integer(int8), intent(in) :: GDDSelectedMethod
+
+    real(dp) :: TstarMax, TstarMin
+    real(dp) :: Tavg, DgrD
+
+    select case (GDDSelectedMethod)
+    case (1)
+        ! Method 1. - No adjustemnt of Tmax, Tmin before calculation of Taverage
+        Tavg = (TDayMax+TDayMin)/2._dp
+        if (Tavg > Tupper) then
+            Tavg = Tupper
+        end if
+        if (Tavg < Tbase) then
+            Tavg = Tbase
+        end if
+
+    case (2)
+        ! Method 2. -  Adjustment for Tbase before calculation of Taverage
+        TstarMax = TDayMax
+        if (TDayMax < Tbase) then
+            TstarMax = Tbase
+        end if
+        if (TDayMax > Tupper) then
+            TstarMax = Tupper
+        end if
+        TstarMin = TDayMin
+        if (TDayMin < Tbase) then
+            TstarMin = Tbase
+        end if
+        if (TDayMin > Tupper) then
+            TstarMin = Tupper
+        end if
+        Tavg = (TstarMax+TstarMin)/2._dp
+
+    case default
+       ! Method 3.
+        TstarMax = TDayMax
+        if (TDayMax < Tbase) then
+             TstarMax = Tbase
+        end if
+        if (TDayMax > Tupper) then
+            TstarMax = Tupper
+        end if
+        TstarMin = TDayMin
+        if (TDayMin > Tupper) then
+            TstarMin = Tupper
+        end if
+        Tavg = (TstarMax+TstarMin)/2._dp
+        if (Tavg < Tbase) then
+            Tavg = Tbase
+        end if
+    end select
+    DgrD =  Tavg - Tbase
+    DegreesDay =  DgrD
+end function DegreesDay
+
+
 
 subroutine DetermineCNIandIII(CN2, CN1, CN3)
     integer(int8), intent(in) :: CN2
@@ -587,6 +841,68 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+
+real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
+    integer(int16), intent(in) :: Yeari
+    integer(int16), intent(in) :: Yearx
+    real(dp), intent(in) :: ShapeFactor
+
+    real(dp) :: fCCo, Year0
+
+    fCCo = 1._dp
+    if ((Yeari >= 1) .and. (Yearx >= 2) .and. (nint(100*ShapeFactor) /= 0)) then
+        Year0 = 1._dp + (Yearx-1) * exp(ShapeFactor*log(10._dp))
+        if ((Yeari >= Year0) .or. (Year0 <= 1)) then
+            fCCo = 0._dp
+        else
+            fCCo = 1._dp - (Yeari-1)/(Year0-1._dp)
+        end if
+        if (fCCo < 0._dp) then
+            fCCo = 0._dp
+        end if
+    end if
+    MultiplierCCoSelfThinning = fCCo
+end function MultiplierCCoSelfThinning
+
+
+real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
+    real(dp), intent(in) :: Wrel
+    real(dp), intent(inout) :: pULActual
+    real(dp), intent(in) :: pLLActual
+    real(dp), intent(in) :: ShapeFactor
+
+    real(dp) :: pRelativeLLUL, KsVal
+    ! Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
+    !        FC .. UpperLimit ... LowerLimit .. WP
+    ! p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
+
+    if ((pLLActual - pULActual) < 0.0001_dp) then
+        pULActual = pLLActual - 0.0001_dp
+    end if
+
+    pRelativeLLUL = (Wrel - pULActual)/(pLLActual - pULActual)
+
+    if (pRelativeLLUL <= 0._dp) then
+        KsVal = 1._dp
+    elseif (pRelativeLLUL >= 1._dp) then
+        KsVal = 0._dp
+    else
+        if (nint(10*ShapeFactor) == 0) then ! straight line
+            KsVal = 1._dp - &
+                    (exp(pRelativeLLUL*0.01_dp)-1._dp)/(exp(0.01_dp)-1._dp)
+        else
+            KsVal = 1._dp - &
+                    (exp(pRelativeLLUL*ShapeFactor)-1._dp)/(exp(ShapeFactor)-1._dp)
+        end if
+        if (KsVal > 1._dp) then
+            KsVal = 1._dp
+        end if
+        if (KsVal < 0._dp) then
+            KsVal = 0._dp
+        end if
+    end if
+    KsAny = KsVal
+end function KsAny
 
 real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
     real(dp), intent(in) :: GDDi
