@@ -607,15 +607,15 @@ real(dp) function KsSalinity(SalinityResponsConsidered, &
             ! within range for correction
             if ((nint(KsShapeSalinity*10._dp) /= 0) .and. &
                 (nint(KsShapeSalinity*10) /= 990)) then
-                tmp_var = real(ECeN, kind = dp)
-                M = KsAny(ECeVar, tmp_var, real(ECeX, kind = dp), KsShapeSalinity) 
+                tmp_var = real(ECeN, kind=dp)
+                M = KsAny(ECeVar, tmp_var, real(ECeX, kind=dp), KsShapeSalinity) 
                 ! convex or concave
             else
                 if (nint(KsShapeSalinity*10._dp) == 0) then
                     M = 1._dp - (ECeVAR-ECeN)/(ECeX-ECeN) 
                     ! linear (KsShapeSalinity = 0)
                 else
-                    M = KsTemperature(real(ECeX, kind = dp), real(ECeN, kind = dp), ECeVAR) 
+                    M = KsTemperature(real(ECeX, kind=dp), real(ECeN, kind=dp), ECeVAR) 
                     ! logistic equation (KsShapeSalinity = 99)
                 end if
             end if
