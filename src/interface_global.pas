@@ -132,6 +132,12 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+function CCmultiplierWeed(
+            constref ProcentWeedCover : shortint;
+            constref CCxCrop : double;
+            constref FshapeWeed : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_ccmultiplierweed';
+
 function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;
         external 'aquacrop' name '__ac_global_MOD_harvestindexgrowthcoefficient';
