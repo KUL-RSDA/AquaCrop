@@ -2,17 +2,17 @@ module ac_global
 
 use ac_kinds, only: dp, &
                     int8, &
-                    int16, &
+                    int32, &
                     intEnum, &
                     sp
 implicit none
 
 
-integer(int16), parameter :: max_SoilLayers = 5
+integer(int32), parameter :: max_SoilLayers = 5
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
-integer(int16), parameter :: undef_int = -9
-    !! value for 'undefined' int16 variables
+integer(int32), parameter :: undef_int = -9
+    !! value for 'undefined' int32 variables
 real(dp), parameter :: PI = 3.1415926535_dp
 real(dp), parameter :: CO2Ref = 369.41_dp; 
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
@@ -200,7 +200,7 @@ end subroutine ZrAdjustedToRestrictiveLayers
 subroutine set_layer_undef(LayerData)
     type(SoilLayerIndividual), intent(inout) :: LayerData
 
-    integer(int16) :: i
+    integer(int32) :: i
 
     LayerData%Description = ''
     LayerData%Thickness = undef_double
@@ -272,8 +272,8 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
     real(dp), intent(in) :: Zo
     real(dp), intent(in) :: Zx
     integer(int8), intent(in) :: ShapeRootDeepening
-    integer(int16), intent(in) :: Lo
-    integer(int16), intent(in) :: LZxAdj
+    integer(int32), intent(in) :: Lo
+    integer(int32), intent(in) :: LZxAdj
 
     real(dp) :: ti, T1
 
@@ -315,16 +315,16 @@ end function FromGravelMassToGravelVolume
 real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                             TempWeedDeltaRC, L12SF, TempL123, GDDL12SF, &
                             TempGDDL123, TheModeCycle)
-    integer(int16), intent(in) :: TheDay
+    integer(int32), intent(in) :: TheDay
     real(dp), intent(in) :: GDDayi
     real(dp), intent(in) :: fCCx
     integer(int8), intent(in) :: TempWeedRCinput
     integer(int8), intent(in) :: TempWeedAdj
-    integer(int16), intent(inout) :: TempWeedDeltaRC
-    integer(int16), intent(in) :: L12SF
-    integer(int16), intent(in) :: TempL123
-    integer(int16), intent(in) :: GDDL12SF
-    integer(int16), intent(in) :: TempGDDL123
+    integer(int32), intent(inout) :: TempWeedDeltaRC
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: TempL123
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: TempGDDL123
     integer(intEnum), intent(in) :: TheModeCycle
 
     real(dp) :: WeedRCDayCalc
@@ -341,7 +341,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
             else
                 TempWeedDeltaRC = nint(TempWeedDeltaRC * exp( &
                                        log(fCCx) * (1+TempWeedAdj/100._dp)), &
-                                       kind=int16)
+                                       kind=int32)
             end if
         end if
 
@@ -422,12 +422,12 @@ end function HarvestIndexGrowthCoefficient
 real(dp) function TauFromKsat(Ksat)
     real(dp), intent(in) :: Ksat
 
-    integer(int16) :: TauTemp
+    integer(int32) :: TauTemp
 
     if (abs(Ksat) < epsilon(1._dp)) then
         TauFromKsat = 0
     else
-        TauTemp = nint(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int16)
+        TauTemp = nint(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int32)
         if (TauTemp < 0) then
             TauTemp = 0
         end if
@@ -541,8 +541,8 @@ real(dp) function KsTemperature(T0, T1, Tin)
     integer(int8) :: a
 
     M = 1._dp ! no correction applied (TO and/or T1 is undefined, or T0=T1)
-    if (((nint(T0, int16) /= undef_int) .and. &
-         (nint(T1, int16) /= undef_int)) .and. abs(T0-T1)> eps) then
+    if (((nint(T0, kind=int32) /= undef_int) .and. &
+         (nint(T1, kind=int32) /= undef_int)) .and. abs(T0-T1)> eps) then
         if (T0 < T1) then
             a =  1  ! cold stress
         else
@@ -680,7 +680,7 @@ end function MaxCRatDepth
 
 
 real(dp) function BMRange(HIadj)
-    integer(int16), intent(in) :: HIadj
+    integer(int32), intent(in) :: HIadj
 
     real(dp) :: BMR
 
@@ -723,7 +723,7 @@ end function HImultiplier
 
 
 real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
-    integer(int16), intent(in) :: Dayi
+    integer(int32), intent(in) :: Dayi
     real(dp), intent(in) :: CCoIN
     real(dp), intent(in) :: CGCIN
     real(dp), intent(in) :: CCxIN
@@ -843,8 +843,8 @@ end subroutine DetermineCN_default
 
 
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
-    integer(int16), intent(in) :: Yeari
-    integer(int16), intent(in) :: Yearx
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(in) :: Yearx
     real(dp), intent(in) :: ShapeFactor
 
     real(dp) :: fCCo, Year0
@@ -998,11 +998,11 @@ end function fAdjustedForCO2
 
 
 logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
-    integer(int16), intent(in) :: FromY
-    integer(int16), intent(in) :: FromD
-    integer(int16), intent(in) :: FromM
-    integer(int16), intent(in) :: ToD
-    integer(int16), intent(in) :: ToM
+    integer(int32), intent(in) :: FromY
+    integer(int32), intent(in) :: FromD
+    integer(int32), intent(in) :: FromM
+    integer(int32), intent(in) :: ToD
+    integer(int32), intent(in) :: ToM
 
     FullUndefinedRecord = ((FromY == 1901) .and. (FromD == 1)&
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
