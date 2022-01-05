@@ -5,6 +5,8 @@ use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     sp
+use iso_fortran_env, only: iostat_end
+
 implicit none
 
 
@@ -1030,16 +1032,18 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
         read(fhandle, *, iostat=rc) ! Files Run 1
     end do
 
-    do while (rc == 0)
+    read_loop : do
         i = 0
-        do while (i < (NrFileLines+5)) 
+        do while (i < (NrFileLines+5))
             read(fhandle, *, iostat=rc)
+            if (rc == iostat_end) exit read_loop
             i = i + 1
         end do
+
         if (i == (NrFileLines+5)) then
             NrRuns = NrRuns + 1
         end if
-    end do
+    end do read_loop
     close(fhandle)
 end subroutine GetNumberSimulationRuns
 
