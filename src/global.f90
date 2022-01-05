@@ -3,6 +3,7 @@ module ac_global
 use ac_kinds, only: dp, &
                     int8, &
                     int16, &
+                    int32, &
                     intEnum
 implicit none
 
@@ -286,20 +287,21 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
 end function GetWeedRC
 
 real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
-    integer(int16), intent(in) :: Yeari
-    integer(int16), intent(in) :: Yearx
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(in) :: Yearx
     real(dp), intent(in) :: ShapeFactor
 
     real(dp) :: fCCx, Year0
     
     fCCx = 1
-    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor, int16) /= 0)) then
+    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor, &
+                                                    int32) /= 0)) then
         Year0 = 1._dp + (Yearx-1._dp) * exp(ShapeFactor*log(10._dp))
         if (Yeari >= Year0) then
             fCCx = 0
         else
-            fCCx = 0.9_dp + 0.1_dp * (1._dp - &
-                exp((1._dp/ShapeFactor)*log(real((Yeari-1._dp)/(Yearx-1._dp),dp))))
+            fCCx = 0.9_dp + 0.1_dp * (1._dp - exp((1._dp/ShapeFactor) &
+                        *log(real((Yeari-1._dp)/(Yearx-1._dp),dp))))
         end if
         if (fCCx < 0) then
             fCCx = 0
@@ -308,13 +310,13 @@ real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
     MultiplierCCxSelfThinning = fCCx     
 end function MultiplierCCxSelfThinning
 
-integer(int16) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
-                                                        CGCVal, L0)
+integer(int32) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, &
+                                                        CCxVal, CGCVal, L0)
     real(dp), intent(inout) :: CCToReach
     real(dp), intent(in) :: CCoVal
     real(dp), intent(in) :: CCxVal
     real(dp), intent(in) :: CGCVal
-    integer(int16), intent(in) :: L0
+    integer(int32), intent(in) :: L0
 
     real(dp) :: L
     if ((CCoVal > CCToReach) .or. (CCoVal >= CCxVal)) then
@@ -330,22 +332,22 @@ integer(int16) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
         end if
 
     end if
-    DaysToReachCCwithGivenCGC = L0 + nint(L, int16)
+    DaysToReachCCwithGivenCGC = L0 + nint(L, int32)
 end function DaysToReachCCwithGivenCGC
 
-integer(int16) function LengthCanopyDecline(CCx, CDC)
+integer(int32) function LengthCanopyDecline(CCx, CDC)
     real(dp), intent(in) :: CCx
     real(dp), intent(in) :: CDC
 
-    integer(int16) :: ND
+    integer(int32) :: ND
 
     ND = 0
     if (CCx > 0) then
         if (CDC <= epsilon(1._dp)) then
             ND = undef_int
         else
-            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05_dp &
-                    ) + 0.50_dp), int16)  ! + 0.50 to guarantee that CC is zero
+            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05 &
+                     ) + 0.50_dp), int32)  ! + 0.50 to guarantee that CC is zero
         end if
 
     end if
