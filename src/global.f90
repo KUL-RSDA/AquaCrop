@@ -679,6 +679,30 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
 end function MaxCRatDepth
 
 
+real(dp) function CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
+    integer(int8), intent(in) :: ProcentWeedCover
+    real(dp), intent(in) :: CCxCrop
+    real(dp), intent(in) :: FshapeWeed
+
+    real(dp) :: fWeed
+
+    if ((ProcentWeedCover > 0) .and. (CCxCrop < 0.9999_dp) .and. (CCxCrop > 0.001_dp)) then
+        if (ProcentWeedCover == 100) then
+            fWeed = 1._dp/CCxCrop
+        else
+            fWeed = 1._dp - (1._dp - 1._dp/CCxCrop) * &
+              (exp(FshapeWeed*ProcentWeedCover/100._dp) - 1._dp)/(exp(FshapeWeed) - 1._dp)
+            if (fWeed > (1._dp/CCxCrop)) then
+                fWeed = 1._dp/CCxCrop
+            end if
+        end if
+    else
+        fWeed = 1._dp
+    end if
+    CCmultiplierWeed = fWeed
+end function CCmultiplierWeed
+
+
 real(dp) function BMRange(HIadj)
     integer(int32), intent(in) :: HIadj
 
