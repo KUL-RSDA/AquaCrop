@@ -292,20 +292,20 @@ real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
 
     real(dp) :: fCCx, Year0
     
-    fCCx = 1._dp
-    if ((Yeari >= 2._dp) .and. (Yearx >= 2._dp) .and. (nint(100._dp*ShapeFactor) /= 0._dp)) then
+    fCCx = 1
+    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor, int16) /= 0)) then
         Year0 = 1._dp + (Yearx-1._dp) * exp(ShapeFactor*log(10._dp))
         if (Yeari >= Year0) then
-          fCCx = 0._dp
+            fCCx = 0
         else
-          fCCx = 0.9 + 0.1 * (1._dp - &
-                 exp((1._dp/ShapeFactor)*log(real((Yeari-1._dp)/(Yearx-1._dp),dp))))
+            fCCx = 0.9_dp + 0.1_dp * (1._dp - &
+                exp((1._dp/ShapeFactor)*log(real((Yeari-1._dp)/(Yearx-1._dp),dp))))
         end if
-        if (fCCx < 0._dp) then
-          fCCx = 0._dp
+        if (fCCx < 0) then
+            fCCx = 0
         end if
-   end if
-   MultiplierCCxSelfThinning = fCCx     
+    end if
+    MultiplierCCxSelfThinning = fCCx     
 end function MultiplierCCxSelfThinning
 
 integer(int16) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
@@ -318,20 +318,39 @@ integer(int16) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
 
     real(dp) :: L
     if ((CCoVal > CCToReach) .or. (CCoVal >= CCxVal)) then
-      L = 0._dp
+        L = 0
     else
-        if (CCToReach > (0.98*CCxVal)) then
-          CCToReach = 0.98*CCxVal
+        if (CCToReach > (0.98_dp*CCxVal)) then
+            CCToReach = 0.98_dp*CCxVal
         end if
         if (CCToReach <= CCxVal/2._dp) then
-           L = log(CCToReach/CCoVal)/CGCVal
+            L = log(CCToReach/CCoVal)/CGCVal
         else
-          L = log((0.25*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal
+            L = log((0.25_dp*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal
         end if
 
     end if
     DaysToReachCCwithGivenCGC = L0 + nint(L, int16)
 end function DaysToReachCCwithGivenCGC
+
+integer(int16) function LengthCanopyDecline(CCx, CDC)
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CDC
+
+    integer(int16) :: ND
+
+    ND = 0
+    if (CCx > 0) then
+        if (CDC <= epsilon(1._dp)) then
+            ND = undef_int
+        else
+            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05_dp &
+                    ) + 0.50_dp), int16)  ! + 0.50 to guarantee that CC is zero
+        end if
+
+    end if
+    LengthCanopyDecline = ND
+end function LengthCanopyDecline
 
 
 

@@ -675,7 +675,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
 FUNCTION SoilEvaporationReductionCoefficient(Wrel,EDecline : double) : double;
 FUNCTION KsAny(Wrel,pULActual,pLLActual,ShapeFactor : double) : double;
 PROCEDURE ReadSoilSettings;
-FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
+
 FUNCTION HarvestIndexGrowthCoefficient(HImax,dHIdt : double) : double;
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
                                dHIdt,HIGC : double;
@@ -3930,19 +3930,6 @@ END; (* ReadSoilSettings *)
 
 
 
-FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
-VAR ND : integer;
-BEGIN
-ND := 0;
-IF (CCx > 0) THEN
-   BEGIN
-   IF (CDC <= 0)
-      THEN ND := undef_int
-      //ELSE ND :=  ROUND(CCx/CDC * Ln(1+1/0.05) + 0.50); // + 0.50 to guarantee that CC is zero
-      ELSE ND :=  ROUND( ((CCx+2.29)/(CDC*3.33)) * Ln(1+1/0.05) + 0.50); // + 0.50 to guarantee that CC is zero
-   END;
-LengthCanopyDecline := ND;
-END; (* LengthCanopyDecline *)
 
 
 

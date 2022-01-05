@@ -100,7 +100,7 @@ function MultiplierCCxSelfThinning(
 	    constref Yeari : integer;
 	    constref Yearx : integer;
             constref ShapeFactor : double) : double;
-	external 'aquacrop' name '__ac_global_MOD_multiplierccxselfthinning';
+         external 'aquacrop' name '__ac_global_MOD_multiplierccxselfthinning';
 
 function DaysToReachCCwithGivenCGC(
 	   constref CCToReach : double;
@@ -108,8 +108,12 @@ function DaysToReachCCwithGivenCGC(
 	   constref CCxVal : double;
 	   constref CGCVal : double;
            constref L0 : integer) : integer;
-        external 'aquacrop' name '__ac_global_MOD_daystoreachccwithgivencgc';
+         external 'aquacrop' name '__ac_global_MOD_daystoreachccwithgivencgc';
 
+function LengthCanopyDecline(
+           constref CCx : double;
+           constref CDC : double) : integer;
+         external 'aquacrop' name '__ac_global_MOD_lengthcanopydecline';
 
 implementation
 
