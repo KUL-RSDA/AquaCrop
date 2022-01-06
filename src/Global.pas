@@ -717,8 +717,6 @@ PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
-FUNCTION CCmultiplierWeed(ProcentWeedCover : ShortInt;
-                          CCxCrop,FshapeWeed : double) : double;
 FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
                                   CCxCrop,FshapeWeed,fCCx : double;
                                   Yeari,MWeedAdj : ShortInt;
@@ -4987,25 +4985,6 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
-
-
-FUNCTION CCmultiplierWeed(ProcentWeedCover : ShortInt;
-                          CCxCrop,FshapeWeed : double) : double;
-VAR fWeed : double;
-BEGIN
-IF ((ProcentWeedCover > 0) AND (CCxCrop < 0.9999) AND (CCxCrop > 0.001))
-   THEN BEGIN
-        IF (ProcentWeedCover = 100)
-           THEN fWeed := 1/CCxCrop
-           ELSE BEGIN
-                fWeed := 1 - (1 - 1/CCxCrop) * (exp(FshapeWeed*ProcentWeedCover/100) - 1)/(exp(FshapeWeed) - 1);
-                IF (fWeed > (1/CCxCrop)) THEN fWeed := 1/CCxCrop;
-                END;
-        END
-   ELSE fWeed := 1;
-CCmultiplierWeed := fWeed;
-END;  (* CCmultiplierWeed*)
-
 
 
 FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;

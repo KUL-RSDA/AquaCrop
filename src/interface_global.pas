@@ -135,6 +135,7 @@ function GetWeedRC(
             constref TheModeCycle : rep_modeCycle) : double;
 
 
+
 function MultiplierCCxSelfThinning(
             constref Yeari : integer;
             constref Yearx : integer;
@@ -153,6 +154,13 @@ function LengthCanopyDecline(
            constref CCx : double;
            constref CDC : double) : integer;
         external 'aquacrop' name '__ac_global_MOD_lengthcanopydecline';
+
+function CCmultiplierWeed(
+            constref ProcentWeedCover : shortint;
+            constref CCxCrop : double;
+            constref FshapeWeed : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_ccmultiplierweed';
+
 
 function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;
