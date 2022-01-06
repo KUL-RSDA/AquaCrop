@@ -225,6 +225,11 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+        external 'aquacrop' name '__ac_global_MOD_splitstringintwoparams';
+
 
 implementation
 
