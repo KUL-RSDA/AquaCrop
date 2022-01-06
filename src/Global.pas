@@ -640,9 +640,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
 PROCEDURE ReadSoilSettings;
 
 
-FUNCTION HarvestIndexGrowthCoefficient(HImax,dHIdt : double) : double;
 
-FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
 
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
                                dHIdt,HIGC : double;
@@ -738,10 +736,8 @@ PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
 
 
 
-FUNCTION MultiplierCCoSelfThinning(Yeari,Yearx : INTEGER;
 
-FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
+
 PROCEDURE NoCropCalendar;
 PROCEDURE LoadCropCalendar(FullName : string;
                            VAR GetOnset,GetOnsetTemp : BOOLEAN;

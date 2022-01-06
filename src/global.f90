@@ -2,7 +2,6 @@ module ac_global
 
 use ac_kinds, only: dp, &
                     int8, &
-                    int16, &
                     int32, &
                     intEnum, &
                     sp
@@ -405,7 +404,7 @@ real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
             fCCx = 0
         else
             fCCx = 0.9_dp + 0.1_dp * (1._dp - exp((1._dp/ShapeFactor) &
-                        *log(real((Yeari-1._dp)/(Yearx-1._dp),dp))))
+                        *log((Yeari-1._dp)/(Yearx-1._dp))))
         end if
         if (fCCx < 0) then
             fCCx = 0
@@ -450,7 +449,7 @@ integer(int32) function LengthCanopyDecline(CCx, CDC)
         if (CDC <= epsilon(1._dp)) then
             ND = undef_int
         else
-            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05 &
+            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05_dp &
                      ) + 0.50_dp), int32)  ! + 0.50 to guarantee that CC is zero
         end if
 
