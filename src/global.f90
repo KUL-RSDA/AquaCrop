@@ -389,6 +389,75 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(in) :: Yearx
+    real(dp), intent(in) :: ShapeFactor
+
+    real(dp) :: fCCx, Year0
+    
+    fCCx = 1
+    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor, &
+                                                    int32) /= 0)) then
+        Year0 = 1._dp + (Yearx-1._dp) * exp(ShapeFactor*log(10._dp))
+        if (Yeari >= Year0) then
+            fCCx = 0
+        else
+            fCCx = 0.9_dp + 0.1_dp * (1._dp - exp((1._dp/ShapeFactor) &
+                        *log((Yeari-1._dp)/(Yearx-1._dp))))
+        end if
+        if (fCCx < 0) then
+            fCCx = 0
+        end if
+    end if
+    MultiplierCCxSelfThinning = fCCx     
+end function MultiplierCCxSelfThinning
+
+integer(int32) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, &
+                                                        CCxVal, CGCVal, L0)
+    real(dp), intent(inout) :: CCToReach
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CGCVal
+    integer(int32), intent(in) :: L0
+
+    real(dp) :: L
+    if ((CCoVal > CCToReach) .or. (CCoVal >= CCxVal)) then
+        L = 0
+    else
+        if (CCToReach > (0.98_dp*CCxVal)) then
+            CCToReach = 0.98_dp*CCxVal
+        end if
+        if (CCToReach <= CCxVal/2._dp) then
+            L = log(CCToReach/CCoVal)/CGCVal
+        else
+            L = log((0.25_dp*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal
+        end if
+
+    end if
+    DaysToReachCCwithGivenCGC = L0 + nint(L, int32)
+end function DaysToReachCCwithGivenCGC
+
+integer(int32) function LengthCanopyDecline(CCx, CDC)
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CDC
+
+    integer(int32) :: ND
+
+    ND = 0
+    if (CCx > 0) then
+        if (CDC <= epsilon(1._dp)) then
+            ND = undef_int
+        else
+            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05_dp &
+                     ) + 0.50_dp), int32)  ! + 0.50 to guarantee that CC is zero
+        end if
+
+    end if
+    LengthCanopyDecline = ND
+end function LengthCanopyDecline
+
+
 
 real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     real(dp), intent(in) :: HImax

@@ -64,12 +64,14 @@ type
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
+         
 
 function RootMaxInSoilProfile(
             constref ZmaxCrop : double;
             constref TheNrSoilLayers : shortint;
             constref TheSoilLayer : rep_SoilLayer) : single;
          external 'aquacrop' name '__ac_global_MOD_rootmaxinsoilprofile';
+
 
 procedure ZrAdjustedToRestrictiveLayers(ZrIN : double;
                                         TheNrSoilLayers : ShortInt;
@@ -118,7 +120,7 @@ function __GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : integer) : double;
          external 'aquacrop' name '__ac_global_MOD_getweedrc';
-
+		
 function GetWeedRC(
             constref TheDay : integer;
             constref GDDayi : double;
@@ -132,11 +134,33 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+
+
+function MultiplierCCxSelfThinning(
+            constref Yeari : integer;
+            constref Yearx : integer;
+            constref ShapeFactor : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_multiplierccxselfthinning';
+
+function DaysToReachCCwithGivenCGC(
+           constref CCToReach : double;
+           constref CCoVal : double;
+           constref CCxVal : double;
+           constref CGCVal : double;
+           constref L0 : integer) : integer;
+        external 'aquacrop' name '__ac_global_MOD_daystoreachccwithgivencgc';
+
+function LengthCanopyDecline(
+           constref CCx : double;
+           constref CDC : double) : integer;
+        external 'aquacrop' name '__ac_global_MOD_lengthcanopydecline';
+
 function CCmultiplierWeed(
             constref ProcentWeedCover : shortint;
             constref CCxCrop : double;
             constref FshapeWeed : double) : double;
          external 'aquacrop' name '__ac_global_MOD_ccmultiplierweed';
+
 
 function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;

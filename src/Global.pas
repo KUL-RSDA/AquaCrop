@@ -529,8 +529,6 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          VAR TpotVal, EpotVal : double);
 
 PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-FUNCTION DaysToReachCCwithGivenCGC(CCToReach,CCoVal,CCxVal,CGCVal : double;
-                                   L0 : INTEGER) : INTEGER;
 PROCEDURE TimeToMaxCanopySF(CCo,CGC,CCx : double;
                             L0,L12,L123,LToFlor,LFlor : INTEGER;
                             DeterminantCrop : BOOLEAN;
@@ -640,7 +638,10 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
 
 
 PROCEDURE ReadSoilSettings;
-FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
+
+
+
+
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
                                dHIdt,HIGC : double;
                                VAR tSwitch : INTEGER;
@@ -731,8 +732,10 @@ PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                VAR Zmin,TheSizePlant,TheCCini : double;
                                VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
 
-FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
+
+
+
+
 PROCEDURE NoCropCalendar;
 PROCEDURE LoadCropCalendar(FullName : string;
                            VAR GetOnset,GetOnsetTemp : BOOLEAN;
@@ -943,23 +946,6 @@ FOR i :=1 to NrCompartments DO
       + Compartment[i].theta*1000*Compartment[i].Thickness;
 END; (* GlobalZero *)
 
-
-
-FUNCTION DaysToReachCCwithGivenCGC(CCToReach,CCoVal,CCxVal,CGCVal : double;
-                                   L0 : INTEGER) : INTEGER;
-VAR L : Double;
-BEGIN
-IF ((CCoVal > CCToReach) OR (CCoVal >= CCxVal))
-   THEN L := 0
-   ELSE BEGIN
-        IF (CCToReach > (0.98*CCxVal)) THEN CCToReach := 0.98*CCxVal;
-        IF (CCToReach <= CCxVal/2)
-           THEN L := LN(CCToReach/CCoVal)/CGCVal
-           ELSE L := LN((0.25*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal;
-        //L := L + 0.50; // value is reached or exceeded
-        END;
-DaysToReachCCwithGivenCGC := L0 + ROUND(L);
-END; (* DaysToReachCCwithGivenCGC *)
 
 
 
@@ -3644,19 +3630,6 @@ END; (* ReadSoilSettings *)
 
 
 
-FUNCTION LengthCanopyDecline(CCx,CDC : double) : INTEGER;
-VAR ND : integer;
-BEGIN
-ND := 0;
-IF (CCx > 0) THEN
-   BEGIN
-   IF (CDC <= 0)
-      THEN ND := undef_int
-      //ELSE ND :=  ROUND(CCx/CDC * Ln(1+1/0.05) + 0.50); // + 0.50 to guarantee that CC is zero
-      ELSE ND :=  ROUND( ((CCx+2.29)/(CDC*3.33)) * Ln(1+1/0.05) + 0.50); // + 0.50 to guarantee that CC is zero
-   END;
-LengthCanopyDecline := ND;
-END; (* LengthCanopyDecline *)
 
 
 PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
@@ -5105,21 +5078,6 @@ IF (TheCycleMode = GDDays)
 END;  (* AdjustYearPerennials *)
 
 
-FUNCTION MultiplierCCxSelfThinning(Yeari,Yearx : INTEGER;
-                                   ShapeFactor : double) : double;
-VAR fCCx,Year0 : double;
-BEGIN
-fCCx := 1;
-IF ((Yeari >= 2) AND (Yearx >= 2) AND (ROUND(100*ShapeFactor) <> 0)) THEN
-   BEGIN
-   Year0 := 1 + (Yearx-1) * exp(ShapeFactor*ln(10));
-   IF (Yeari >= Year0)
-      THEN fCCx := 0
-      ELSE fCCx := 0.9 + 0.1 * (1 - Exp((1/ShapeFactor)*LN((Yeari-1)/(Yearx-1))));
-   IF (fCCx < 0) THEN fCCx := 0;
-   END;
-MultiplierCCxSelfThinning := fCCx;
-END; (* MultiplierCCxSelfThinning *)
 
 
 PROCEDURE NoCropCalendar;
