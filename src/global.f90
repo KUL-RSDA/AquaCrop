@@ -24,6 +24,15 @@ integer(intEnum), parameter :: modeCycle_GDDDays = 0
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
     !! index of CalendarDays in modeCycle enumerated type
 
+integer(intEnum), parameter :: plant_seed = 0
+    !! index of seed in planting enumerated type
+integer(intEnum), parameter :: plant_transplant = 1
+    !! index of transplant in planting enumerated type
+integer(intEnum), parameter :: plant_regrowth= 2
+    !! index of regrowth in planting enumerated type
+
+
+
 type SoilLayerIndividual
     character(len=25) :: Description
         !! Undocumented
@@ -388,6 +397,40 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
 
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
+
+integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
+                          TheSizeSeedling, TheSizePlant, TheCropCCx, TheCropCGC)
+    integer(intEnum), intent(in) :: ThePlantingType
+    integer(int32), intent(in) :: TheCropPlantingDens
+    real(dp), intent(in) :: TheSizeSeedling
+    real(dp), intent(in) :: TheSizePlant
+    real(dp), intent(in) :: TheCropCCx
+    real(dp), intent(in) :: TheCropCGC
+
+
+    integer(int32) :: ElapsedTime
+    real(dp) :: TheCropCCo
+    real(dp) :: TheCropCCini
+
+    if ((ThePlantingType == plant_seed) .or. (ThePlantingType == plant_transplant) &
+                                   .or. (TheSizeSeedling >= TheSizePlant)) then
+        ElapsedTime = 0
+    else
+        TheCropCCo = (TheCropPlantingDens/10000._dp) * (TheSizeSeedling/10000._dp)
+        TheCropCCini = (TheCropPlantingDens/10000._dp) * (TheSizePlant/10000._dp)
+        if (TheCropCCini >= (0.98_dp*TheCropCCx)) then
+            ElapsedTime = undef_int
+        else
+            if (TheCropCCini <= TheCropCCx/2) then
+                ElapsedTime = nint((log(TheCropCCini/TheCropCCo))/TheCropCGC)
+            else
+                ElapsedTime = (-1)* nint((log(((TheCropCCx-TheCropCCini)* &
+                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC)
+            end if
+        end if
+    end if
+    TimeToCCini = ElapsedTime
+end function TimeToCCini
 
 real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari
