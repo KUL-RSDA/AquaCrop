@@ -263,7 +263,7 @@ procedure GetNumberSimulationRuns_wrap(
             constref TempFileNameFull : PChar;
             constref strlen : integer;
             var NrRuns : integer);
-        external 'aquacrop' name '__ac_global_MOD_getnumbersimulationruns_wrap';
+        external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
 
 
 implementation

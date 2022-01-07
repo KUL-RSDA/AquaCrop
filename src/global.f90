@@ -1140,38 +1140,4 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     close(fhandle)
 end subroutine GetNumberSimulationRuns
 
-
-function pointer2string(c_pointer, strlen) result(string)
-    !! Returns a Fortran string from a C-pointer plus the string length.
-    use, intrinsic :: iso_c_binding, only: c_ptr, c_f_pointer
-    type(c_ptr), intent(in) :: c_pointer
-        !! C-style pointer
-    integer(int32), intent(in) :: strlen
-        !! Length of the string
-    character(len=strlen) :: string
-
-    character, pointer, dimension(:) :: f_pointer
-    integer :: i
-
-    call c_f_pointer(c_pointer, f_pointer, [strlen])
-
-    do i = 1, strlen
-        string(i:i) = f_pointer(i)
-    end do
-end function pointer2string
-
-
-subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
-    !! Wrapper for GetNumberSimulationRuns for foreign languages.
-    use, intrinsic :: iso_c_binding, only: c_ptr
-    type(c_ptr), intent(in) :: TempFileNameFull
-    integer(int32), intent(in) :: strlen
-    integer(int32), intent(out) :: NrRuns
-
-    character(len=strlen) :: string
-
-    string = pointer2string(TempFileNameFull, strlen)
-    call GetNumberSimulationRuns(string, NrRuns)
-end subroutine GetNumberSimulationRuns_wrap
-
 end module ac_global
