@@ -5,6 +5,8 @@ use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     sp
+use iso_fortran_env, only: iostat_end
+
 implicit none
 
 
@@ -1143,6 +1145,79 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
     FullUndefinedRecord = ((FromY == 1901) .and. (FromD == 1)&
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
+
+
+subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
+    integer(int32), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+    real(dp), intent(in) :: HIGC
+    integer(int32), intent(inout) :: tSwitch
+    real(dp), intent(inout) :: HIGClinear
+
+    real(dp) :: HIi, HiM1, HIfinal
+    integer(int32) :: tmax, ti
+    integer(int32), parameter :: HIo = 1
+
+    tmax = nint(HImax/dHIdt, kind=int32)
+    ti = 0
+    HiM1 = HIo
+    if (tmax > 0) then
+        loop: do
+            ti = ti + 1
+            HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti))
+            HIfinal = HIi + (tmax - ti)*(HIi-HIM1)
+            HIM1 = HIi
+            if ((HIfinal > HImax) .or. (ti >= tmax)) exit loop
+        end do loop 
+        tSwitch = ti - 1
+    else
+        tSwitch = 0
+    end if
+    if (tSwitch > 0) then
+        HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
+    else
+        HIi = 0
+    end if
+    HIGClinear = (HImax-HIi)/(tmax-tSwitch)
+end subroutine GetDaySwitchToLinear
+
+subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
+    character(len=*), intent(in) :: TempFileNameFull
+    integer(int32), intent(inout) :: NrRuns
+
+    integer :: fhandle
+    integer(int32) :: NrFileLines, rc, i
+
+    NrRuns = 1
+
+    open(newunit=fhandle, file=trim(TempFileNameFull), status='old', &
+         action='read', iostat=rc)
+    read(fhandle, *, iostat=rc)  ! Description
+    read(fhandle, *, iostat=rc)  ! AquaCrop version Nr
+
+    do i = 1, 5 
+        read(fhandle, *, iostat=rc) ! Type year and Simulation and Cropping period Run 1
+    end do
+
+    NrFileLines = 42 ! Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
+    do i = 1, NrFileLines 
+        read(fhandle, *, iostat=rc) ! Files Run 1
+    end do
+
+    read_loop: do
+        i = 0
+        do while (i < (NrFileLines+5))
+            read(fhandle, *, iostat=rc)
+            if (rc == iostat_end) exit read_loop
+            i = i + 1
+        end do
+
+        if (i == (NrFileLines+5)) then
+            NrRuns = NrRuns + 1
+        end if
+    end do read_loop
+    close(fhandle)
+end subroutine GetNumberSimulationRuns
 
 
 end module ac_global

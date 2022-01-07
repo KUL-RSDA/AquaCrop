@@ -274,6 +274,24 @@ function FullUndefinedRecord(
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
 
+procedure GetDaySwitchToLinear(
+               constref HImax : integer;
+               constref dHIdt,HIGC : double;
+               var tSwitch : INTEGER;
+               var HIGClinear : double);
+        external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
+
+procedure GetNumberSimulationRuns(
+            constref TempFileNameFull : string;
+            var NrRuns : integer);
+
+procedure GetNumberSimulationRuns_wrap(
+            constref TempFileNameFull : PChar;
+            constref strlen : integer;
+            var NrRuns : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
+
+
 implementation
 
 
@@ -309,11 +327,26 @@ function TimeToCCini(
 VAR 
     int_planting: integer;
 
+
 begin
     int_planting := ord(ThePlantingType); 
     TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
                                  TheSizePlant, TheCropCCx, TheCropCGC);
 end;
+
+procedure GetNumberSimulationRuns(
+            constref TempFileNameFull : string;
+            var NrRuns : integer);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TempFileNameFull);
+    strlen := Length(TempFileNameFull);
+    GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
+end;
+
 
 initialization
 
