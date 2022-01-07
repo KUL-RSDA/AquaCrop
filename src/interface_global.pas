@@ -44,6 +44,8 @@ type
 
     rep_modeCycle = (GDDays, CalendarDays);
 
+    rep_planting = (Seed,Transplant,Regrowth);
+
     rep_EffectStress = Record
          RedCGC          : ShortInt; (* Reduction of CGC (%) *)
          RedCCX          : ShortInt; (* Reduction of CCx (%) *)
@@ -134,6 +136,22 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
+function __TimeToCCini(
+            constref ThePlantingType : integer;
+            constref TheCropPlantingDens : integer;
+            constref TheSizeSeedling : double;
+            constref TheSizePlant : double;
+            constref TheCropCCx : double;
+            constref TheCropCGC : double) : Integer;
+        external 'aquacrop' name '__ac_global_MOD_timetoccini';
+
+function TimeToCCini(
+            constref ThePlantingType : rep_planting;
+            constref TheCropPlantingDens : integer;
+            constref TheSizeSeedling : double;
+            constref TheSizePlant : double;
+            constref TheCropCCx : double;
+            constref TheCropCGC : double) : Integer;
 
 
 function MultiplierCCxSelfThinning(
@@ -261,6 +279,24 @@ procedure GetCO2Description(
         external 'aquacrop' name '__ac_global_MOD_getco2description';
 
 
+procedure GetDaySwitchToLinear(
+               constref HImax : integer;
+               constref dHIdt,HIGC : double;
+               var tSwitch : INTEGER;
+               var HIGClinear : double);
+        external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
+
+procedure GetNumberSimulationRuns(
+            constref TempFileNameFull : string;
+            var NrRuns : integer);
+
+procedure GetNumberSimulationRuns_wrap(
+            constref TempFileNameFull : PChar;
+            constref strlen : integer;
+            var NrRuns : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
+
+
 implementation
 
 
@@ -286,6 +322,35 @@ begin
                              TempGDDL123, int_modeCycle);
 end;
 
+function TimeToCCini(
+            constref ThePlantingType : rep_planting;
+            constref TheCropPlantingDens : integer;
+            constref TheSizeSeedling : double;
+            constref TheSizePlant : double;
+            constref TheCropCCx : double;
+            constref TheCropCGC : double) : Integer;
+VAR 
+    int_planting: integer;
+
+
+begin
+    int_planting := ord(ThePlantingType); 
+    TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
+                                 TheSizePlant, TheCropCCx, TheCropCGC);
+end;
+
+procedure GetNumberSimulationRuns(
+            constref TempFileNameFull : string;
+            var NrRuns : integer);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TempFileNameFull);
+    strlen := Length(TempFileNameFull);
+    GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
+end;
 
 
 initialization

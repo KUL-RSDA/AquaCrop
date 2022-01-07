@@ -56,7 +56,7 @@ TYPE
      rep_int_array = ARRAY[1..4] OF INTEGER;
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
-     rep_planting = (Seed,Transplant,Regrowth);
+     
 
      rep_Assimilates = Record
          On          : Boolean;
@@ -593,9 +593,7 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    SFCDecline,fWeed : Double;
                                    TheModeCycle : rep_modeCycle) : double;
 
-FUNCTION TimeToCCini(ThePlantingType : rep_planting;
-                     TheCropPlantingDens : LongInt;
-                     TheSizeSeedling,TheSizePlant,TheCropCCx,TheCropCGC : double) : Integer;
+
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
 Function LeapYear(Year : INTEGER) : BOOLEAN;
@@ -635,17 +633,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
                                TypeDays : rep_modeCycle;
                                SFRedCGC,SFRedCCx : ShortInt) : double;
 
-
-
 PROCEDURE ReadSoilSettings;
-
-
-
-
-PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
-                               dHIdt,HIGC : double;
-                               VAR tSwitch : INTEGER;
-                               VAR HIGClinear : double);
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;
@@ -696,8 +684,6 @@ PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
 PROCEDURE LoadProjectDescription(FullNameProjectFile : string;
                                  VAR DescriptionOfProject : string);
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
-PROCEDURE GetNumberSimulationRuns(TempFileNameFull : string;
-                                  VAR NrRuns : INTEGER);
 PROCEDURE CheckFilesInProject(TempFullFilename : string;
                               Runi : INTEGER;
                               VAR AllOK : BOOLEAN);
@@ -1959,30 +1945,6 @@ IF (TempDaysToCCini <> 0)
 CCiniTotalFromTimeToCCini := TempCCini;
 END; (* CCiniTotalFromTimeToCCini *)
 
-
-
-
-FUNCTION TimeToCCini(ThePlantingType : rep_planting;
-                     TheCropPlantingDens : LongInt;
-                     TheSizeSeedling,TheSizePlant,TheCropCCx,TheCropCGC : double) : Integer;
-VAR ElapsedTime : INTEGER;
-    TheCropCCo,TheCropCCini : double;
-BEGIN
-IF ((ThePlantingType = Seed) OR (ThePlantingType = Transplant) OR (TheSizeSeedling >= TheSizePlant))
-   THEN ElapsedTime := 0
-   ELSE BEGIN
-        TheCropCCo := (TheCropPlantingDens/10000) * (TheSizeSeedling/10000);
-        TheCropCCini := (TheCropPlantingDens/10000) * (TheSizePlant/10000);
-        IF (TheCropCCini >= (0.98*TheCropCCx))
-           THEN ElapsedTime := undef_int
-           ELSE BEGIN
-                IF (TheCropCCini <= TheCropCCx/2)
-                   THEN ElapsedTime := ROUND((Ln(TheCropCCini/TheCropCCo))/TheCropCGC)
-                   ELSE ElapsedTime := (-1)* ROUND((Ln(((TheCropCCx-TheCropCCini)*TheCropCCo)/(0.25*TheCropCCx*TheCropCCx)))/TheCropCGC);
-                END;
-        END;
-TimeToCCini := ElapsedTime;
-END; (* TimeToCCini *)
 
 
 PROCEDURE CompleteCropDescription;
@@ -3626,39 +3588,6 @@ Close(f);
 END; (* ReadSoilSettings *)
 
 
-
-
-
-
-PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
-                               dHIdt,HIGC : double;
-                               VAR tSwitch : INTEGER;
-                               VAR HIGClinear : double);
-CONST HIo = 1;
-VAR HIi,HiM1,HIfinal : double;
-    tmax,ti : INTEGER;
-BEGIN
-tmax := ROUND(HImax/dHIdt);
-ti := 0;
-HiM1 := HIo;
-IF (tmax > 0)
-   THEN BEGIN
-        REPEAT
-          ti := ti + 1;
-          HIi := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti));
-          HIfinal := HIi + (tmax - ti)*(HIi-HIM1);
-          HIM1 := HIi;
-        UNTIL ((HIfinal > HImax) OR (ti >= tmax));
-        tSwitch := ti - 1;
-        END
-   ELSE tSwitch := 0;
-IF (tSwitch > 0)
-   THEN HIi := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
-   ELSE HIi := 0;
-HIGClinear := (HImax-HIi)/(tmax-tSwitch);
-END; (* GetDaySwitchToLinear *)
-
-
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;
@@ -4491,37 +4420,6 @@ i := Length(TempString);
 Delete(TempString,(i-3),(4));
 OutputName := TempString;
 END; (* ComposeOutputFileName *)
-
-
-PROCEDURE GetNumberSimulationRuns(TempFileNameFull : string;
-                                  VAR NrRuns : INTEGER);
-VAR f0 : TextFile;
-    i : ShortInt;
-    NrFileLines : ShortInt;
-
-BEGIN
-NrRuns := 1;
-Assign(f0,TempFileNameFull);
-Reset(f0);
-READLN(f0);  // Description
-READLN(f0);  // AquaCrop version Nr
-FOR i := 1 TO 5 DO READLN(f0); // Type year and Simulation and Cropping period Run 1
-NrFileLines := 42; // Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
-For i := 1 TO NrFileLines DO READLN(f0); // Files Run 1
-
-REPEAT
-i := 0;
-WHILE (NOT Eof(f0) AND (i < (NrFileLines+5))) DO
-  BEGIN
-  READLN(f0);
-  i := i + 1;
-  END;
-IF (i = (NrFileLines+5)) THEN NrRuns := NrRuns + 1;
-UNTIL Eof(f0);
-
-Close(f0);
-END; (* GetNumberSimulationRuns *)
-
 
 
 PROCEDURE CheckFilesInProject(TempFullFilename : string;

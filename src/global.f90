@@ -5,6 +5,8 @@ use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     sp
+use iso_fortran_env, only: iostat_end
+
 implicit none
 
 
@@ -23,6 +25,15 @@ integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
     !! index of CalendarDays in modeCycle enumerated type
+
+integer(intEnum), parameter :: plant_seed = 0
+    !! index of seed in planting enumerated type
+integer(intEnum), parameter :: plant_transplant = 1
+    !! index of transplant in planting enumerated type
+integer(intEnum), parameter :: plant_regrowth= 2
+    !! index of regrowth in planting enumerated type
+
+
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -388,6 +399,40 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
 
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
+
+integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
+                          TheSizeSeedling, TheSizePlant, TheCropCCx, TheCropCGC)
+    integer(intEnum), intent(in) :: ThePlantingType
+    integer(int32), intent(in) :: TheCropPlantingDens
+    real(dp), intent(in) :: TheSizeSeedling
+    real(dp), intent(in) :: TheSizePlant
+    real(dp), intent(in) :: TheCropCCx
+    real(dp), intent(in) :: TheCropCGC
+
+
+    integer(int32) :: ElapsedTime
+    real(dp) :: TheCropCCo
+    real(dp) :: TheCropCCini
+
+    if ((ThePlantingType == plant_seed) .or. (ThePlantingType == plant_transplant) &
+                                   .or. (TheSizeSeedling >= TheSizePlant)) then
+        ElapsedTime = 0
+    else
+        TheCropCCo = (TheCropPlantingDens/10000._dp) * (TheSizeSeedling/10000._dp)
+        TheCropCCini = (TheCropPlantingDens/10000._dp) * (TheSizePlant/10000._dp)
+        if (TheCropCCini >= (0.98_dp*TheCropCCx)) then
+            ElapsedTime = undef_int
+        else
+            if (TheCropCCini <= TheCropCCx/2) then
+                ElapsedTime = nint(((log(TheCropCCini/TheCropCCo))/TheCropCGC), kind=int32)
+            else
+                ElapsedTime = (-1)* nint(((log(((TheCropCCx-TheCropCCini)* &
+                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC), kind=int32)
+            end if
+        end if
+    end if
+    TimeToCCini = ElapsedTime
+end function TimeToCCini
 
 real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari
@@ -1117,6 +1162,79 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
 end subroutine GetCO2Description 
+
+
+subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
+    integer(int32), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+    real(dp), intent(in) :: HIGC
+    integer(int32), intent(inout) :: tSwitch
+    real(dp), intent(inout) :: HIGClinear
+
+    real(dp) :: HIi, HiM1, HIfinal
+    integer(int32) :: tmax, ti
+    integer(int32), parameter :: HIo = 1
+
+    tmax = nint(HImax/dHIdt, kind=int32)
+    ti = 0
+    HiM1 = HIo
+    if (tmax > 0) then
+        loop: do
+            ti = ti + 1
+            HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti))
+            HIfinal = HIi + (tmax - ti)*(HIi-HIM1)
+            HIM1 = HIi
+            if ((HIfinal > HImax) .or. (ti >= tmax)) exit loop
+        end do loop 
+        tSwitch = ti - 1
+    else
+        tSwitch = 0
+    end if
+    if (tSwitch > 0) then
+        HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
+    else
+        HIi = 0
+    end if
+    HIGClinear = (HImax-HIi)/(tmax-tSwitch)
+end subroutine GetDaySwitchToLinear
+
+subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
+    character(len=*), intent(in) :: TempFileNameFull
+    integer(int32), intent(inout) :: NrRuns
+
+    integer :: fhandle
+    integer(int32) :: NrFileLines, rc, i
+
+    NrRuns = 1
+
+    open(newunit=fhandle, file=trim(TempFileNameFull), status='old', &
+         action='read', iostat=rc)
+    read(fhandle, *, iostat=rc)  ! Description
+    read(fhandle, *, iostat=rc)  ! AquaCrop version Nr
+
+    do i = 1, 5 
+        read(fhandle, *, iostat=rc) ! Type year and Simulation and Cropping period Run 1
+    end do
+
+    NrFileLines = 42 ! Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
+    do i = 1, NrFileLines 
+        read(fhandle, *, iostat=rc) ! Files Run 1
+    end do
+
+    read_loop: do
+        i = 0
+        do while (i < (NrFileLines+5))
+            read(fhandle, *, iostat=rc)
+            if (rc == iostat_end) exit read_loop
+            i = i + 1
+        end do
+
+        if (i == (NrFileLines+5)) then
+            NrRuns = NrRuns + 1
+        end if
+    end do read_loop
+    close(fhandle)
+end subroutine GetNumberSimulationRuns
 
 
 end module ac_global
