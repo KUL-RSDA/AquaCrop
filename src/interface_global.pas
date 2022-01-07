@@ -265,6 +265,16 @@ procedure GetNumberSimulationRuns_wrap(
             var NrRuns : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
 
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+
+procedure SplitStringInTwoParams_wrap(
+            constref StringIN : PChar;
+            constref strlen : integer;
+            var Par1,Par2 : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_splitstringintwoparams_wrap';
+
 
 implementation
 
@@ -303,6 +313,19 @@ begin;
     p := PChar(TempFileNameFull);
     strlen := Length(TempFileNameFull);
     GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
+end;
+
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(StringIN);
+    strlen := Length(StringIN);
+    SplitStringInTwoParams_wrap(p, strlen, Par1, Par2);
 end;
 
 

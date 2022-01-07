@@ -2,8 +2,8 @@ module ac_interface_global
 
 use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_ptr
-use ac_global, only: GetNumberSimulationRuns
-use ac_kinds, only: int32
+use ac_global, only: GetNumberSimulationRuns, SplitStringInTwoParams
+use ac_kinds, only: int32, dp
 implicit none
 
 
@@ -40,5 +40,18 @@ subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     string = pointer2string(TempFileNameFull, strlen)
     call GetNumberSimulationRuns(string, NrRuns)
 end subroutine GetNumberSimulationRuns_wrap
+
+subroutine SplitStringInTwoParams_wrap(StringIN, strlen, Par1, Par2)
+    !! Wrapper for [[ac_global:SplitStringInTwoParams]] for foreign languages.
+    type(c_ptr), intent(in) :: StringIN
+    integer(int32), intent(in) :: strlen
+    real(dp), intent(inout) :: Par1
+    real(dp), intent(inout) :: Par2
+
+    character(len=strlen) :: string
+
+    string = pointer2string(StringIN, strlen)
+    call SplitStringInTwoParams(string, Par1, Par2)
+end subroutine SplitStringInTwoParams_wrap
 
 end module ac_interface_global
