@@ -276,7 +276,11 @@ function FullUndefinedRecord(
 procedure GetCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
-        external 'aquacrop' name '__ac_global_MOD_getco2description';
+
+procedure GetCO2Description(
+            constref CO2FileFull : PChar;
+            var CO2Description : string);
+        external 'aquacrop' name '__ac_global_MOD_getco2description_wrap';
 
 
 procedure GetDaySwitchToLinear(
@@ -350,6 +354,20 @@ begin;
     p := PChar(TempFileNameFull);
     strlen := Length(TempFileNameFull);
     GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
+end;
+
+
+procedure GetCO2Description(
+            constref CO2FileFull : string;
+            var CO2Description : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(CO2FileFull);
+    strlen := Length(CO2FileFull);
+    GetCO2Description_wrap(p, strlen, CO2Description);
 end;
 
 

@@ -1151,7 +1151,6 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(inout) :: CO2Description
 
     integer :: fhandle
-    character
 
     open(newunit=fhandle, file=trim(CO2FileFull), status='old', &
         action='read')
