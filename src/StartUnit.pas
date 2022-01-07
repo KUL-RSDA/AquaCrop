@@ -7,7 +7,7 @@ PROCEDURE StartTheProgram;
 
 implementation
 
-USES SysUtils,Global,InitialSettings,Run;
+USES SysUtils,Global,interface_global,InitialSettings,Run;
 
 VAR fProjects : textFile;
 
