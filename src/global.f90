@@ -1102,4 +1102,38 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
+subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
+    integer(int32), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+    real(dp), intent(in) :: HIGC
+    integer(int32), intent(inout) :: tSwitch
+    real(dp), intent(inout) :: HIGClinear
+
+    real(dp) :: HIi, HiM1, HIfinal
+    integer(int32) :: tmax, ti, HIo
+
+    HIo = 1
+    tmax = nint(HImax/dHIdt)
+    ti = 0
+    HiM1 = HIo
+    if (tmax > 0) then
+        loop : do
+            ti = ti + 1
+            HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti))
+            HIfinal = HIi + (tmax - ti)*(HIi-HIM1)
+            HIM1 = HIi
+            if ((HIfinal > HImax) .or. (ti >= tmax)) exit loop
+        end do loop 
+        tSwitch = ti - 1
+    else
+        tSwitch = 0
+    end if
+    if (tSwitch > 0) then
+        HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
+    else
+        HIi = 0
+    end if
+    HIGClinear = (HImax-HIi)/(tmax-tSwitch)
+end subroutine GetDaySwitchToLinear
+
 end module ac_global

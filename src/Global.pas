@@ -635,17 +635,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
                                TypeDays : rep_modeCycle;
                                SFRedCGC,SFRedCCx : ShortInt) : double;
 
-
-
 PROCEDURE ReadSoilSettings;
-
-
-
-
-PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
-                               dHIdt,HIGC : double;
-                               VAR tSwitch : INTEGER;
-                               VAR HIGClinear : double);
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;
