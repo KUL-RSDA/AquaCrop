@@ -56,7 +56,7 @@ TYPE
      rep_int_array = ARRAY[1..4] OF INTEGER;
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
-     rep_planting = (Seed,Transplant,Regrowth);
+     
 
      rep_Assimilates = Record
          On          : Boolean;
@@ -591,9 +591,7 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    SFCDecline,fWeed : Double;
                                    TheModeCycle : rep_modeCycle) : double;
 
-FUNCTION TimeToCCini(ThePlantingType : rep_planting;
-                     TheCropPlantingDens : LongInt;
-                     TheSizeSeedling,TheSizePlant,TheCropCCx,TheCropCGC : double) : Integer;
+
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
 Function LeapYear(Year : INTEGER) : BOOLEAN;
@@ -633,17 +631,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
                                TypeDays : rep_modeCycle;
                                SFRedCGC,SFRedCCx : ShortInt) : double;
 
-
-
 PROCEDURE ReadSoilSettings;
-
-
-
-
-PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
-                               dHIdt,HIGC : double;
-                               VAR tSwitch : INTEGER;
-                               VAR HIGClinear : double);
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;
@@ -1921,30 +1909,6 @@ IF (TempDaysToCCini <> 0)
 CCiniTotalFromTimeToCCini := TempCCini;
 END; (* CCiniTotalFromTimeToCCini *)
 
-
-
-
-FUNCTION TimeToCCini(ThePlantingType : rep_planting;
-                     TheCropPlantingDens : LongInt;
-                     TheSizeSeedling,TheSizePlant,TheCropCCx,TheCropCGC : double) : Integer;
-VAR ElapsedTime : INTEGER;
-    TheCropCCo,TheCropCCini : double;
-BEGIN
-IF ((ThePlantingType = Seed) OR (ThePlantingType = Transplant) OR (TheSizeSeedling >= TheSizePlant))
-   THEN ElapsedTime := 0
-   ELSE BEGIN
-        TheCropCCo := (TheCropPlantingDens/10000) * (TheSizeSeedling/10000);
-        TheCropCCini := (TheCropPlantingDens/10000) * (TheSizePlant/10000);
-        IF (TheCropCCini >= (0.98*TheCropCCx))
-           THEN ElapsedTime := undef_int
-           ELSE BEGIN
-                IF (TheCropCCini <= TheCropCCx/2)
-                   THEN ElapsedTime := ROUND((Ln(TheCropCCini/TheCropCCo))/TheCropCGC)
-                   ELSE ElapsedTime := (-1)* ROUND((Ln(((TheCropCCx-TheCropCCini)*TheCropCCo)/(0.25*TheCropCCx*TheCropCCx)))/TheCropCGC);
-                END;
-        END;
-TimeToCCini := ElapsedTime;
-END; (* TimeToCCini *)
 
 
 PROCEDURE CompleteCropDescription;
@@ -3586,39 +3550,6 @@ READLN(f,SimulParam.IniAbstract); // Percentage of S for initial abstraction for
 SimulParam.IniAbstract := 5; // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
 Close(f);
 END; (* ReadSoilSettings *)
-
-
-
-
-
-
-PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
-                               dHIdt,HIGC : double;
-                               VAR tSwitch : INTEGER;
-                               VAR HIGClinear : double);
-CONST HIo = 1;
-VAR HIi,HiM1,HIfinal : double;
-    tmax,ti : INTEGER;
-BEGIN
-tmax := ROUND(HImax/dHIdt);
-ti := 0;
-HiM1 := HIo;
-IF (tmax > 0)
-   THEN BEGIN
-        REPEAT
-          ti := ti + 1;
-          HIi := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti));
-          HIfinal := HIi + (tmax - ti)*(HIi-HIM1);
-          HIM1 := HIi;
-        UNTIL ((HIfinal > HImax) OR (ti >= tmax));
-        tSwitch := ti - 1;
-        END
-   ELSE tSwitch := 0;
-IF (tSwitch > 0)
-   THEN HIi := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
-   ELSE HIi := 0;
-HIGClinear := (HImax-HIi)/(tmax-tSwitch);
-END; (* GetDaySwitchToLinear *)
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
