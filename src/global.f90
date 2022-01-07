@@ -1101,5 +1101,22 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
 
+subroutine GetCO2Description(CO2FileFull, CO2Description)
+    character(len=*), intent(in) :: CO2FileFull
+    character(len=*), intent(inout) :: CO2Description
+
+    integer :: fhandle
+    character
+
+    open(newunit=fhandle, file=trim(CO2FileFull), status='old', &
+        action='read')
+    read(fhandle, *) CO2Description
+    close(fhandle)
+    if (CO2File == 'MaunaLoa%CO2') then
+        ! since this is an AquaCrop file, the Description is determined by AquaCrop
+        CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
+    end if
+end subroutine GetCO2Description 
+
 
 end module ac_global

@@ -666,8 +666,6 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
 
 PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
                                        VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
-PROCEDURE GetCO2Description(CO2FileFull : string;
-                            VAR CO2Description : string);
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -3909,24 +3907,6 @@ IF (RootingDepth >= Crop.RootMin)
         ZrKsSalt := undef_int;
         END;
 END;  (* DetermineRootZoneSaltContent *)
-
-
-
-PROCEDURE GetCO2Description(CO2FileFull : string;
-                            VAR CO2Description : string);
-VAR f0 : textfile;
-BEGIN
-Assign(f0,CO2FileFull);
-Reset(f0);
-Readln(f0,CO2Description);
-Close(f0);
-IF (CO2File = 'MaunaLoa.CO2') THEN
-   BEGIN
-   // since this is an AquaCrop file, the Description is determined by AquaCrop
-   CO2Description := 'Default atmospheric CO2 concentration from 1902 to 2099';
-   END;
-END; (* GetCO2Description *)
-
 
 
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;

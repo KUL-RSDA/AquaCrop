@@ -255,6 +255,11 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+procedure GetCO2Description(
+            constref CO2FileFull : string;
+            var CO2Description : string);
+        external 'aquacrop' name '__ac_global_MOD_getco2description';
+
 
 implementation
 
