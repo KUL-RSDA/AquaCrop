@@ -422,10 +422,10 @@ integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
             ElapsedTime = undef_int
         else
             if (TheCropCCini <= TheCropCCx/2) then
-                ElapsedTime = nint((log(TheCropCCini/TheCropCCo))/TheCropCGC)
+                ElapsedTime = nint(((log(TheCropCCini/TheCropCCo))/TheCropCGC), kind=int32)
             else
-                ElapsedTime = (-1)* nint((log(((TheCropCCx-TheCropCCini)* &
-                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC)
+                ElapsedTime = (-1)* nint(((log(((TheCropCCx-TheCropCCini)* &
+                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC), kind=int32)
             end if
         end if
     end if
