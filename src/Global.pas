@@ -3618,39 +3618,6 @@ Close(f);
 END; (* ReadSoilSettings *)
 
 
-
-
-
-
-PROCEDURE GetDaySwitchToLinear(HImax : INTEGER;
-                               dHIdt,HIGC : double;
-                               VAR tSwitch : INTEGER;
-                               VAR HIGClinear : double);
-CONST HIo = 1;
-VAR HIi,HiM1,HIfinal : double;
-    tmax,ti : INTEGER;
-BEGIN
-tmax := ROUND(HImax/dHIdt);
-ti := 0;
-HiM1 := HIo;
-IF (tmax > 0)
-   THEN BEGIN
-        REPEAT
-          ti := ti + 1;
-          HIi := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti));
-          HIfinal := HIi + (tmax - ti)*(HIi-HIM1);
-          HIM1 := HIi;
-        UNTIL ((HIfinal > HImax) OR (ti >= tmax));
-        tSwitch := ti - 1;
-        END
-   ELSE tSwitch := 0;
-IF (tSwitch > 0)
-   THEN HIi := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
-   ELSE HIi := 0;
-HIGClinear := (HImax-HIi)/(tmax-tSwitch);
-END; (* GetDaySwitchToLinear *)
-
-
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;

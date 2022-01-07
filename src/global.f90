@@ -1110,14 +1110,14 @@ subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     real(dp), intent(inout) :: HIGClinear
 
     real(dp) :: HIi, HiM1, HIfinal
-    integer(int32) :: tmax, ti, HIo
+    integer(int32) :: tmax, ti
+    integer(int32), parameter :: HIo = 1
 
-    HIo = 1
-    tmax = nint(HImax/dHIdt)
+    tmax = nint(HImax/dHIdt, kind=int32)
     ti = 0
     HiM1 = HIo
     if (tmax > 0) then
-        loop : do
+        loop: do
             ti = ti + 1
             HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti))
             HIfinal = HIi + (tmax - ti)*(HIi-HIM1)
