@@ -56,7 +56,7 @@ TYPE
      rep_int_array = ARRAY[1..4] OF INTEGER;
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
-     rep_planting = (Seed,Transplant,Regrowth);
+     
 
      rep_Assimilates = Record
          On          : Boolean;
@@ -593,9 +593,7 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    SFCDecline,fWeed : Double;
                                    TheModeCycle : rep_modeCycle) : double;
 
-FUNCTION TimeToCCini(ThePlantingType : rep_planting;
-                     TheCropPlantingDens : LongInt;
-                     TheSizeSeedling,TheSizePlant,TheCropCCx,TheCropCGC : double) : Integer;
+
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
 Function LeapYear(Year : INTEGER) : BOOLEAN;
@@ -1949,30 +1947,6 @@ IF (TempDaysToCCini <> 0)
 CCiniTotalFromTimeToCCini := TempCCini;
 END; (* CCiniTotalFromTimeToCCini *)
 
-
-
-
-FUNCTION TimeToCCini(ThePlantingType : rep_planting;
-                     TheCropPlantingDens : LongInt;
-                     TheSizeSeedling,TheSizePlant,TheCropCCx,TheCropCGC : double) : Integer;
-VAR ElapsedTime : INTEGER;
-    TheCropCCo,TheCropCCini : double;
-BEGIN
-IF ((ThePlantingType = Seed) OR (ThePlantingType = Transplant) OR (TheSizeSeedling >= TheSizePlant))
-   THEN ElapsedTime := 0
-   ELSE BEGIN
-        TheCropCCo := (TheCropPlantingDens/10000) * (TheSizeSeedling/10000);
-        TheCropCCini := (TheCropPlantingDens/10000) * (TheSizePlant/10000);
-        IF (TheCropCCini >= (0.98*TheCropCCx))
-           THEN ElapsedTime := undef_int
-           ELSE BEGIN
-                IF (TheCropCCini <= TheCropCCx/2)
-                   THEN ElapsedTime := ROUND((Ln(TheCropCCini/TheCropCCo))/TheCropCGC)
-                   ELSE ElapsedTime := (-1)* ROUND((Ln(((TheCropCCx-TheCropCCini)*TheCropCCo)/(0.25*TheCropCCx*TheCropCCx)))/TheCropCGC);
-                END;
-        END;
-TimeToCCini := ElapsedTime;
-END; (* TimeToCCini *)
 
 
 PROCEDURE CompleteCropDescription;
