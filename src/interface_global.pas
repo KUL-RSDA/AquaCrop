@@ -134,8 +134,6 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
-
-
 function MultiplierCCxSelfThinning(
             constref Yeari : integer;
             constref Yearx : integer;
@@ -255,6 +253,23 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+function __CCiNoWaterStressSF(
+            constref Dayi,L0,L12SF,L123,L1234 : integer;
+            constref GDDL0,GDDL12SF,GDDL123,GDDL1234  : integer;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+            constref SFRedCGC,SFRedCCx : ShortInt;
+            constref SFCDecline : double;
+            constref TheModeCycle : integer) : double;
+        external 'aquacrop' name '__ac_global_MOD_ccinowaterstresssf';
+
+function CCiNoWaterStressSF(
+            constref Dayi,L0,L12SF,L123,L1234 : integer;
+            constref GDDL0,GDDL12SF,GDDL123,GDDL1234  : integer;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+            constref SFRedCGC,SFRedCCx : ShortInt;
+            constref SFCDecline : double;
+            constref TheModeCycle : rep_modeCycle) : double;
+
 
 implementation
 
@@ -279,6 +294,23 @@ begin
     GetWeedRC := __GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,
                              TempWeedDeltaRC, L12SF, TempL123, GDDL12SF,
                              TempGDDL123, int_modeCycle);
+end;
+
+function CCiNoWaterStressSF(
+            constref Dayi,L0,L12SF,L123,L1234 : integer;
+            constref GDDL0,GDDL12SF,GDDL123,GDDL1234  : integer;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+            constref SFRedCGC,SFRedCCx : ShortInt;
+            constref SFCDecline : double;
+            constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle: integer;
+
+begin
+    int_modeCycle := ord(TheModeCycle)
+    CCiNoWaterStressSF := __CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,
+    GDDL12SF, GDDL123, GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,
+    SumGDD, RatDGDD, SFRedCGC, SFRedCCx, SFCDecline, int_TheModeCycle);
 end;
 
 

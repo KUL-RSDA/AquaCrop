@@ -669,13 +669,6 @@ PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
 PROCEDURE GetCO2Description(CO2FileFull : string;
                             VAR CO2Description : string);
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
-
-FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
-                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
-                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
-                            SFRedCGC,SFRedCCx : ShortInt;
-                            SFCDecline : Double;
-                            TheModeCycle : rep_modeCycle) : double;
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
                             CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,
@@ -3986,90 +3979,6 @@ IF ((FromYi = 1901) OR (ToYi = 1901))
         CO2ForSimulationPeriod := (CO2From+CO2To)/2;
         END;
 END; (* CO2ForSimulationPeriod *)
-
-
-FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
-                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
-                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
-                            SFRedCGC,SFRedCCx : ShortInt;
-                            SFCDecline : Double;
-                            TheModeCycle : rep_modeCycle) : double;
-
-VAR CCi,CCibis,CCxAdj,CDCadj,GDDCDCadj : double;
-
-BEGIN
-// Calculate CCi
-CCi := CanopyCoverNoStressSF(Dayi,L0,L123,L1234,GDDL0,GDDL123,GDDL1234,
-                             CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD,TheModeCycle,
-                             SFRedCGC,SFRedCCX);
-
-// Consider CDecline for limited soil fertiltiy
-//IF ((Dayi > L12SF) AND (SFCDecline > 0.000001))
-IF ((Dayi > L12SF) AND (SFCDecline > 0.000001) AND (L12SF < L123))
-   THEN BEGIN
-        IF (Dayi < L123)
-           THEN BEGIN
-                IF (TheModeCycle = CalendarDays)
-                   THEN CCi := CCi - (SFCDecline/100) * exp(2*Ln(Dayi-L12SF))/(L123-L12SF)
-                   ELSE BEGIN
-                        IF ((SumGDD > GDDL12SF) AND (GDDL123 > GDDL12SF)) THEN
-                        CCi := CCi - (RatDGDD*SFCDecline/100)
-                              * exp(2*Ln(SumGDD-GDDL12SF))/(GDDL123-GDDL12SF);
-                        END;
-                IF (CCi < 0) THEN CCi := 0;
-                END
-           ELSE BEGIN
-                IF (TheModeCycle = CalendarDays)
-                   THEN BEGIN
-                        CCi := CCatTime((L123-L0),CCo,(CGC*(1-SFRedCGC/100)),((1-SFRedCCX/100)*CCx));
-                        // CCibis is CC in late season when Canopy decline continues
-                        CCibis := CCi  - (SFCDecline/100) * (exp(2*Ln(Dayi-L12SF))/(L123-L12SF));
-                        IF (CCibis < 0)
-                           THEN CCi := 0
-                           ELSE CCi := CCi  - ((SFCDecline/100) * (L123-L12SF));
-                        IF (CCi < 0.001)
-                         THEN CCi := 0
-                         ELSE BEGIN
-                              CCxAdj := CCi; // is CCx at start of late season, adjusted for canopy decline with soil fertility stress
-                              CDCadj := CDC * (CCxAdj + 2.29)/(CCx + 2.29);
-                              IF (Dayi < (L123 + LengthCanopyDecline(CCxAdj,CDCadj)))
-                                 THEN BEGIN
-                                      CCi := CCxAdj * (1 - 0.05*(exp((Dayi-L123)*3.33*CDCadj/(CCxAdj+2.29))-1));
-                                      IF (CCibis < CCi) THEN CCi := CCibis; // accept smallest Canopy Cover
-                                      END
-                                 ELSE CCi := 0;
-                              END;
-                        END
-                   ELSE BEGIN
-                        CCi := CCatTime((GDDL123-GDDL0),CCo,(GDDCGC*(1-SFRedCGC/100)),((1-SFRedCCX/100)*CCx));
-                        // CCibis is CC in late season when Canopy decline continues
-                        IF ((SumGDD > GDDL12SF) AND (GDDL123 > GDDL12SF))
-                           THEN CCibis := CCi  -
-                               (RatDGDD*SFCDecline/100) * (exp(2*Ln(SumGDD-GDDL12SF))/(GDDL123-GDDL12SF))
-                           ELSE CCibis := CCi;
-                        IF (CCibis < 0)
-                           THEN CCi := 0
-                           ELSE CCi := CCi - ((RatDGDD*SFCDecline/100) * (GDDL123-GDDL12SF));
-                        IF (CCi < 0.001)
-                           THEN CCi := 0
-                           ELSE BEGIN
-                                CCxAdj := CCi; // is CCx at start of late season, adjusted for canopy decline with soil fertility stress
-                                GDDCDCadj := GDDCDC * (CCxAdj + 2.29)/(CCx + 2.29);
-                                IF (SumGDD < (GDDL123 + LengthCanopyDecline(CCxAdj,GDDCDCadj)))
-                                   THEN BEGIN
-                                        CCi := CCxAdj * (1 - 0.05*(exp((SumGDD-GDDL123)*3.33*GDDCDCadj/(CCxAdj+2.29))-1));
-                                        IF (CCibis < CCi) THEN CCi := CCibis; // accept smallest Canopy Cover
-                                        END
-                                   ELSE CCi := 0;
-                                END;
-                        END;
-                IF (CCi < 0) THEN CCi := 0;
-                END;
-        END;
-
-CCiNoWaterStressSF := CCi;
-END; (* CCiNoWaterStressSF *)
-
 
 
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
