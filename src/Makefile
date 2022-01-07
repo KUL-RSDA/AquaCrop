@@ -29,13 +29,19 @@ EXECUTABLE = PlugInBareV70
 
 FLIB = libaquacrop.so
 
-$(FLIB): global.o
+$(FLIB): global.o \
+    interface_global.o
 	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
 
 fortranclean:
 	$(RM) $(wildcard *.mod) $(wildcard *.o) $(FLIB)
 
 global.o: global.f90 \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_global.o: interface_global.f90 \
+    global.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
