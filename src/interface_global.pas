@@ -255,6 +255,11 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+procedure GetNumberSimulationRuns(
+            constref TempFileNameFull : string;
+            var NrRuns : integer);
+        external 'aquacrop' name '__ac_global_MOD_getnumbersimulationruns';
+
 
 implementation
 
