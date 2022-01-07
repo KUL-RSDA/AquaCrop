@@ -1111,15 +1111,17 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     integer :: fhandle
     integer(int32) :: NrFileLines, rc, i
 
-
     NrRuns = 1
+
     open(newunit=fhandle, file=trim(TempFileNameFull), status='old', &
-        action='read', iostat=rc)
+         action='read', iostat=rc)
     read(fhandle, *, iostat=rc)  ! Description
     read(fhandle, *, iostat=rc)  ! AquaCrop version Nr
+
     do i = 1, 5 
         read(fhandle, *, iostat=rc) ! Type year and Simulation and Cropping period Run 1
     end do
+
     NrFileLines = 42 ! Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
     do i = 1, NrFileLines 
         read(fhandle, *, iostat=rc) ! Files Run 1
