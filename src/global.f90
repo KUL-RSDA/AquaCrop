@@ -1149,8 +1149,8 @@ subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
     real(dp), intent(inout) :: Par2
 
     integer(int32) :: LengthS, i, Parami
-    character(len=1) :: CharA
-    character(len=25) :: StringNumber
+    character :: CharA
+    character(len=255) :: StringNumber
 
     LengthS = len(StringIN)
     i = 0
@@ -1158,7 +1158,7 @@ subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
     ! divide the line in parameters
     do while ((i < LengthS) .and. (Parami < 2)) 
         i = i + 1
-        CharA = StringIN(i)
+        CharA = StringIN(i:i)
         if (ichar(CharA) > 32) then
             ! next Parameter
             Parami = Parami + 1
@@ -1167,7 +1167,7 @@ subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
                 StringNumber = trim(StringNumber) // CharA
                 i = i + 1
                 if (i <= LengthS) then
-                    CharA = StringIN(i)
+                    CharA = StringIN(i:i)
                 end if
             end do
             if (Parami == 1) then
@@ -1181,6 +1181,50 @@ subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
         ! end of line
     end do
 end subroutine SplitStringInTwoParams
+
+
+subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
+    character(len=*), intent(in) :: StringIN
+    real(dp), intent(inout) :: Par1
+    real(dp), intent(inout) :: Par2
+    real(dp), intent(inout) :: Par3
+
+    integer(int32) :: LengthS, i, Parami
+    character :: CharA
+    character(len=255) :: StringNumber
+
+    LengthS = len(StringIN)
+    i = 0
+    Parami = 0
+    ! divide the line in parameters
+    do while ((i < LengthS) .and. (Parami < 3)) 
+        i = i + 1
+        CharA = StringIN(i:i)
+        if (ichar(CharA) > 32) then
+            ! next Parameter
+            Parami = Parami + 1
+            StringNumber = ''
+            do while ((ichar(CharA) > 32) .and. (i <= LengthS))
+                StringNumber = trim(StringNumber) // CharA
+                i = i + 1
+                if (i <= LengthS) then
+                    CharA = StringIN(i:i)
+                end if
+            end do
+            if (Parami == 1) then
+                read(StringNumber, *) Par1
+            end if
+            if (Parami == 2) then
+                read(StringNumber, *) Par2
+            end if
+            if (Parami == 3) then
+                read(StringNumber, *) Par3
+            end if
+            ! next Parameter
+        end if
+        ! end of line
+    end do
+end subroutine SplitStringInThreeParams
 
 
 end module ac_global

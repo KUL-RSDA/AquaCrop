@@ -275,6 +275,17 @@ procedure SplitStringInTwoParams_wrap(
             var Par1,Par2 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringintwoparams_wrap';
 
+procedure SplitStringInThreeParams(
+            constref StringIN : string;
+            var Par1,Par2, Par3 : double);
+
+procedure SplitStringInThreeParams_wrap(
+            constref StringIN : PChar;
+            constref strlen : integer;
+            var Par1,Par2,Par3 : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
+
+
 
 implementation
 
@@ -326,6 +337,19 @@ begin;
     p := PChar(StringIN);
     strlen := Length(StringIN);
     SplitStringInTwoParams_wrap(p, strlen, Par1, Par2);
+end;
+
+procedure SplitStringInThreeParams(
+            constref StringIN : string;
+            var Par1,Par2,Par3 : double);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(StringIN);
+    strlen := Length(StringIN);
+    SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
 
