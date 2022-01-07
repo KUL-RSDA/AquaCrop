@@ -2,6 +2,7 @@ module ac_global
 
 use ac_kinds, only: dp, &
                     int8, &
+                    int16, &
                     int32, &
                     intEnum, &
                     sp
@@ -9,6 +10,7 @@ implicit none
 
 
 integer(int32), parameter :: max_SoilLayers = 5
+integer(int16), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -99,6 +101,102 @@ type rep_EffectStress
     integer(int8) :: RedKsSto
         !! Reduction of KsSto (%)
 end type rep_EffectStress
+
+
+type rep_IniSWC 
+    logical :: AtDepths
+        !! at specific depths or for specific layers
+    integer(int8) :: NrLoc
+        !! number of depths or layers considered
+    real(dp), dimension(max_No_compartments) :: Loc
+        !! depth or layer thickness [m]
+    real(dp), dimension(max_No_compartments) :: VolProc
+        !! soil water content (vol%)
+    real(dp), dimension(max_No_compartments) :: SaltECe
+        !! ECe in dS/m
+    logical :: AtFC
+        !! If iniSWC is at FC
+end type rep_IniSWC 
+
+
+type rep_storage 
+    real(dp) :: Btotal
+        !! assimilates (ton/ha) stored in root systemn by CropString in Storage-Season
+    character(len=255) :: CropString
+        !! full name of crop file which stores Btotal during Storage-Season
+    integer(int8) :: Season
+        !! season in which Btotal is stored
+end type rep_storage 
+
+
+type rep_sim 
+    integer(int16) :: FromDayNr, ToDayNr
+        !! daynumber
+    type(rep_IniSWC) :: IniSWC
+    real(dp), dimension(max_No_compartments) :: ThetaIni
+    real(dp), dimension(max_No_compartments) :: ECeIni
+        !! dS/m
+    real(dp) :: SurfaceStorageIni
+    real(dp) :: ECStorageIni
+    real(dp) :: CCini
+    real(dp) :: Bini
+    real(dp) :: Zrini
+    logical :: LinkCropToSimPeriod
+    logical :: ResetIniSWC
+        !! soil water and salts
+    integer(int16) :: InitialStep
+    logical :: EvapLimitON
+        !! soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover
+    real(dp) :: EvapWCsurf
+        !! remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]
+    integer(int8) :: EvapStartStg2
+        !! % extra to define upper limit of soil water content at start of stage 2 [100 .. 0]
+    real(dp) :: EvapZ
+        !! actual soil depth (m) for water extraction by evaporation  [EvapZmin/100 .. EvapZmax/100]
+    integer(int16) :: HIfinal
+        !! final Harvest Index might be smaller than HImax due to early canopy decline
+    integer(int16) :: DelayedDays
+        !! delayed days since sowing/planting due to water stress (crop cannot germinate)
+    logical :: Germinate
+        !! germinate is false when crop cannot germinate due to water stress
+    real(dp) :: SumEToStress
+        !! Sum ETo during stress period to delay canopy senescence
+    real(dp) :: SumGDD
+        !! Sum of Growing Degree-days
+    real(dp) :: SumGDDfromDay1
+        !! Sum of Growing Degree-days since Crop.Day1
+    real(sp) :: SCor
+        !! correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
+    logical :: MultipleRun
+        !! Project with a sequence of simulation runs
+    integer(int16) :: NrRuns
+    logical :: MultipleRunWithKeepSWC
+        !! Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
+    real(dp) :: MultipleRunConstZrx
+        !! Maximum rooting depth for multiple projects with KeepSWC
+    real(dp) :: IrriECw
+        !! quality of irrigation water (dS/m)
+    integer(int8) :: DayAnaero
+        !! number of days under anaerobic conditions
+    type(rep_EffectStress) :: EffectStress
+        !! effect of soil fertility and salinity stress on CC, WP and KsSto
+    logical :: SalinityConsidered
+    logical :: ProtectedSeedling
+        !! IF protected (before CC = 1.25 CC0), seedling triggering of early senescence is switched off
+    logical :: SWCtopSoilConsidered
+        !! Top soil is relative wetter than root zone and determines water stresses
+    integer(int16) :: LengthCuttingInterval
+        !! Default length of cutting interval (days)
+    integer(int8) :: YearSeason
+        !! year number for perennials (1 = 1st year, 2, 3, 4, max = 127)
+    integer(int8) :: RCadj
+        !! adjusted relative cover of weeds with self thinning for perennials
+    type(rep_storage) :: Storage
+    integer(int16) :: YearStartCropCycle
+        !! calendar year in which crop cycle starts
+    integer(int16) :: CropDay1Previous
+        !! previous daynumber at the start of teh crop cycle
+end type rep_sim 
 
 
 contains
@@ -1103,8 +1201,8 @@ end function FullUndefinedRecord
 
 
 real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
-    GDDL12SF, GDDL123, GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
-    SumGDD, RatDGDD, SFRedCGC, SFRedCCx, SFCDecline, TheModeCycle)
+        GDDL12SF, GDDL123, GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
+        SumGDD, RatDGDD, SFRedCGC, SFRedCCx, SFCDecline, TheModeCycle)
     integer(int32), intent(in) :: Dayi
     integer(int32), intent(in) :: L0
     integer(int32), intent(in) :: L12SF
@@ -1131,8 +1229,8 @@ real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
 
     ! Calculate CCi
     CCi = CanopyCoverNoStressSF(Dayi, L0, L123, L1234, GDDL0, GDDL123,&
-        GDDL1234,CCo, CCx, CGC, CDC, GDDCGC, GDDCDC, SumGDD, TheModeCycle,&
-        SFRedCGC, SFRedCCX)
+            GDDL1234,CCo, CCx, CGC, CDC, GDDCGC, GDDCDC, SumGDD,&
+            TheModeCycle, SFRedCGC, SFRedCCX)
 
     ! Consider CDecline for limited soil fertiltiy
     if ((Dayi > L12SF) .and. (SFCDecline > 0.000001_dp) .and. &
@@ -1162,13 +1260,12 @@ real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
                 else
                     CCi = CCi  - ((SFCDecline/100._dp) * (L123-L12SF))
                 end if
-                if (CCi < 0.001) then
+                if (CCi < 0.001_dp) then
                     CCi = 0._dp
                 else
                     CCxAdj = CCi ! is CCx at start of late season, adjusted for canopy decline with soil fertility stress
                     CDCadj = CDC * (CCxAdj + 2.29_dp)/(CCx + 2.29_dp)
-                    if (Dayi < (L123 + LengthCanopyDecline(CCxAdj, CDCadj)))&
-                        then
+                    if (Dayi < (L123 + LengthCanopyDecline(CCxAdj, CDCadj))) then
                         CCi = CCxAdj * (1._dp - 0.05_dp*(exp((Dayi-&
                             L123)*3.33_dp*CDCadj/(CCxAdj+2.29_dp))-1._dp))
                         if (CCibis < CCi) then
@@ -1195,16 +1292,16 @@ real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
                     CCi = CCi - ((RatDGDD*SFCDecline/100._dp) * &
                     (GDDL123-GDDL12SF))
                 end if
-                if (CCi < 0.001) then
+                if (CCi < 0.001_dp) then
                     CCi = 0._dp
                 else
                     CCxAdj = CCi ! is CCx at start of late season, adjusted for canopy decline with soil fertility stress
                     GDDCDCadj = GDDCDC * (CCxAdj + 2.29_dp)/(CCx + 2.29_dp)
                     if (SumGDD < (GDDL123 + LengthCanopyDecline(CCxAdj,&
                         GDDCDCadj))) then
-                        CCi = CCxAdj * (1._dp - 0.05_dp*(exp((SumGDD-&
-                            GDDL123)*3.33_dp*GDDCDCadj/(CCxAdj+2.29_dp))-&
-                            1._dp))
+                        CCi = CCxAdj * (1._dp - 0.05_dp &
+                            * (exp((SumGDD - GDDL123)*3.33_dp &
+                                *GDDCDCadj/(CCxAdj+2.29_dp)) - 1._dp))
                         if (CCibis < CCi) then
                             CCi = CCibis ! accept smallest Canopy Cover
                         end if
@@ -1220,5 +1317,153 @@ real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
     end if
     CCiNoWaterStressSF = CCi
 end function CCiNoWaterStressSF
+
+real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, LMaturity, GDDL0, &
+        GDDL123, GDDLMaturity, CCo, CCx, CGC, CDC, GDDCGC, GDDCDC, SumGDD, &
+        TypeDays, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LMaturity
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: SumGDD
+    integer(intEnum), intent(in) :: TypeDays
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    if (TypeDays == TheModeCycle_GDDDays) then
+        CanopyCoverNoStressSF = CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, &
+                                    GDDLMaturity, SumGDD, CCo, CCx, GDDCGC, &
+                                    GDDCDC, SFRedCGC, SFRedCCx)
+    else
+        CanopyCoverNoStressSF = CanopyCoverNoStressDaysSF(DAP, L0, L123, &
+                                    LMaturity, CCo, CCx, CGC, CDC, &
+                                    SFRedCGC, SFRedCCx)
+    end if
+end function CanopyCoverNoStressSF
+
+
+real(dp) function CanopyCoverNoStressDaysSF(DAP, L0, L123, LMaturity, &
+        CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LMaturity
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CDC
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    real(dp) :: CC, CCxAdj, CDCadj
+    integer(int32) :: t
+
+    ! CanopyCoverNoStressDaysSF 
+    CC = 0.0_dp
+    t = DAP - Simulation%DelayedDays
+    ! CC refers to canopy cover at the end of the day
+
+    if ((t >= 1) .and. (t <= LMaturity) .and. (CCo > 0._dp)) then
+        if (t <= L0) then ! before germination or recovering of transplant
+            CC = 0._dp
+        else
+            if (t < L123) then ! Canopy development and Mid-season stage
+                CC = CCatTime((t-L0), CCo, ((1-SFRedCGC/100)*CGC), &
+                        ((1-SFRedCCx/100._dp)*CCx))
+            else
+                ! Late-season stage  (t <= LMaturity)
+                if (CCx < 0.001_dp) then
+                    CC = 0._dp
+                else
+                    CCxAdj = CCatTime((L123-L0), CCo, &
+                                    ((1._dp-SFRedCGC/100._dp)*CGC), &
+                                    ((1._dp-SFRedCCx/100._dp)*CCx))
+                    CDCadj = CDC*(CCxAdj+2.29_dp)/(CCx+2.29_dp)
+                    if (CCxAdj < 0.001_dp) then
+                        CC = 0._dp
+                    else
+                        CC = CCxAdj * (1 - 0.05 &
+                            * (exp((t-L123)*3.33*CDCAdj/ &
+                                (CCxAdj+2.29))-1))
+                    end if
+                end if
+            end if
+        end if
+    end if
+    if (CC > 1._dp) then
+        CC = 1._dp
+    end if
+    if (CC < 0._dp) then
+        CC = 0._dp
+    end if
+    CanopyCoverNoStressDaysSF = CC
+end function CanopyCoverNoStressDaysSF
+
+
+real(dp) function CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, &
+        GDDLMaturity, SumGDD, CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, &
+        SFRedCCx)
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    real(dp) :: CC, CCxAdj, GDDCDCadj
+
+    ! SumGDD refers to the end of the day and Delayed days are not considered
+    CC = 0.0_dp
+    if ((SumGDD > 0._dp) .and. (nint(SumGDD, int32) <= GDDLMaturity) &
+        .and. (CCo > 0._dp)) then
+        if (SumGDD <= GDDL0) then ! before germination or recovering of transplant
+            CC = 0._dp
+        else
+            if (SumGDD < GDDL123) then ! Canopy development and Mid-season stage
+                CC = CCatGDD((SumGDD-GDDL0), CCo, &
+                        ((1._dp-SFRedCGC/100._dp)*GDDCGC), &
+                        ((1._dp-SFRedCCx/100._dp)*CCx))
+            else
+                ! Late-season stage  (SumGDD <= GDDLMaturity)
+                if (CCx < 0.001_dp) then
+                    CC = 0._dp
+                else
+                    CCxAdj = CCatGDD((GDDL123-GDDL0), CCo, &
+                                ((1._dp-SFRedCGC/100._dp)*GDDCGC), &
+                                ((1._dp-SFRedCCx/100._dp)*CCx))
+                    GDDCDCadj = GDDCDC*(CCxadj+2.29_dp)/(CCx+2.29_dp)
+                    if (CCxAdj < 0.001_dp) then
+                        CC = 0._dp
+                    else
+                        CC = CCxAdj * (1._dp - 0.05_dp &
+                            * (exp((SumGDD-GDDL123)*3.33_dp*GDDCDCadj/ &
+                            (CCxAdj+2.29))-1))
+                    end if
+                end if
+            end if
+        end if
+    end if
+    if (CC > 1._dp) then
+        CC = 1._dp
+    end if
+    if (CC < 0._dp) then
+        CC = 0._dp
+    end if
+    CanopyCoverNoStressGDDaysSF = CC
+end function CanopyCoverNoStressGDDaysSF
+
 
 end module ac_global

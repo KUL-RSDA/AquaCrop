@@ -261,67 +261,6 @@ TYPE
          NrObs       : INTEGER; // number of observations
          End;
 
-     rep_IniComp =  ARRAY[1.. max_No_compartments] of double;
-     rep_IniSWC = RECORD
-         AtDepths : BOOLEAN;    // at specific depths or for specific layers
-         NrLoc    : ShortInt;   // number of depths or layers considered
-         Loc      : rep_IniComp;  //depth or layer thickness [m]
-         VolProc  : rep_IniComp;  //soil water content (vol%)
-         SaltECe  : rep_IniComp; // ECe in dS/m
-         AtFC     : BOOLEAN;     // If iniSWC is at FC
-         end;
-
-     rep_storage = Record
-         Btotal     : double; (* assimilates (ton/ha) stored in root systemn by CropString in Storage-Season *)
-         CropString : string; (* full name of crop file which stores Btotal during Storage-Season *)
-         Season     : ShortInt;(* season in which Btotal is stored *)
-         end;
-
-     rep_sim = Record
-         FromDayNr, ToDayNr : LongInt; //daynumber
-         IniSWC    : rep_IniSWC;
-         ThetaIni,
-         ECeIni    : rep_IniComp; // dS/m
-         SurfaceStorageIni,
-         ECStorageIni       : double;
-         CCini,
-         Bini,
-         Zrini       : double;
-         LinkCropToSimPeriod,
-         ResetIniSWC : BOOLEAN; // soil water and salts
-         InitialStep : INTEGER;
-         EvapLimitON : BOOLEAN; // soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover
-         EvapWCsurf : double; // remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]
-         EvapStartStg2 : ShortInt; // % extra to define upper limit of soil water content at start of stage 2 [100 .. 0]
-         EvapZ  : double; // actual soil depth (m) for water extraction by evaporation  [EvapZmin/100 .. EvapZmax/100]
-         HIfinal : INTEGER; //final Harvest Index might be smaller than HImax due to early canopy decline
-         DelayedDays : INTEGER; //delayed days since sowing/planting due to water stress (crop cannot germinate)
-         Germinate   : BOOLEAN; // germinate is false when crop cannot germinate due to water stress
-         SumEToStress : double; // Sum ETo during stress period to delay canopy senescence
-         SumGDD : double; // Sum of Growing Degree-days
-         SumGDDfromDay1 : double; // Sum of Growing Degree-days since Crop.Day1
-         SCor : single; // correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
-         MultipleRun : BOOLEAN; // Project with a sequence of simulation runs
-         NrRuns : INTEGER;
-         MultipleRunWithKeepSWC : BOOLEAN; // Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
-         MultipleRunConstZrx : double; // Maximum rooting depth for multiple projects with KeepSWC
-         IrriECw : double; //quality of irrigation water (dS/m)
-         DayAnaero : ShortInt; (* number of days under anaerobic conditions *)
-         EffectStress : rep_EffectStress;  // effect of soil fertility and salinity stress on CC, WP and KsSto
-         SalinityConsidered : BOOLEAN;
-
-         ProtectedSeedling : BOOLEAN; // IF protected (before CC = 1.25 CC0), seedling triggering of early senescence is switched off
-         SWCtopSoilConsidered : BOOLEAN; // Top soil is relative wetter than root zone and determines water stresses
-
-         LengthCuttingInterval : INTEGER; // Default length of cutting interval (days)
-
-         YearSeason : ShortInt; // year number for perennials (1 = 1st year, 2, 3, 4, max = 127)
-         RCadj : ShortInt; // adjusted relative cover of weeds with self thinning for perennials
-         Storage : rep_storage;
-
-         YearStartCropCycle : INTEGER; // calendar year in which crop cycle starts
-         CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
-         End;
 
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
@@ -630,13 +569,6 @@ PROCEDURE SetClimData;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 FUNCTION DayString(DNr : LongInt) : repstring17;
-FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                               CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                               TypeDays : rep_modeCycle;
-                               SFRedCGC,SFRedCCx : ShortInt) : double;
-
-
-
 PROCEDURE ReadSoilSettings;
 
 
