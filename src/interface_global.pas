@@ -258,7 +258,12 @@ function FullUndefinedRecord(
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
             var NrRuns : integer);
-        external 'aquacrop' name '__ac_global_MOD_getnumbersimulationruns';
+
+procedure GetNumberSimulationRuns_wrap(
+            constref TempFileNameFull : PChar;
+            constref strlen : integer;
+            var NrRuns : integer);
+        external 'aquacrop' name '__ac_global_MOD_getnumbersimulationruns_wrap';
 
 
 implementation
@@ -286,6 +291,19 @@ begin
                              TempGDDL123, int_modeCycle);
 end;
 
+
+procedure GetNumberSimulationRuns(
+            constref TempFileNameFull : string;
+            var NrRuns : integer);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TempFileNameFull);
+    strlen := Length(TempFileNameFull);
+    GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
+end;
 
 
 initialization
