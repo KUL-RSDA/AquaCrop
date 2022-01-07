@@ -255,6 +255,14 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+
+procedure GetDaySwitchToLinear(
+               constref HImax : integer;
+               constref dHIdt,HIGC : double;
+               var tSwitch : INTEGER;
+               var HIGClinear : double);
+        external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
+
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
             var NrRuns : integer);

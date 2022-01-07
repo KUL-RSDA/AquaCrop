@@ -1104,6 +1104,40 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
+subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
+    integer(int32), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+    real(dp), intent(in) :: HIGC
+    integer(int32), intent(inout) :: tSwitch
+    real(dp), intent(inout) :: HIGClinear
+
+    real(dp) :: HIi, HiM1, HIfinal
+    integer(int32) :: tmax, ti
+    integer(int32), parameter :: HIo = 1
+
+    tmax = nint(HImax/dHIdt, kind=int32)
+    ti = 0
+    HiM1 = HIo
+    if (tmax > 0) then
+        loop: do
+            ti = ti + 1
+            HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti))
+            HIfinal = HIi + (tmax - ti)*(HIi-HIM1)
+            HIM1 = HIi
+            if ((HIfinal > HImax) .or. (ti >= tmax)) exit loop
+        end do loop 
+        tSwitch = ti - 1
+    else
+        tSwitch = 0
+    end if
+    if (tSwitch > 0) then
+        HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
+    else
+        HIi = 0
+    end if
+    HIGClinear = (HImax-HIi)/(tmax-tSwitch)
+end subroutine GetDaySwitchToLinear
+
 subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     character(len=*), intent(in) :: TempFileNameFull
     integer(int32), intent(inout) :: NrRuns
@@ -1127,7 +1161,7 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
         read(fhandle, *, iostat=rc) ! Files Run 1
     end do
 
-    read_loop : do
+    read_loop: do
         i = 0
         do while (i < (NrFileLines+5))
             read(fhandle, *, iostat=rc)
@@ -1141,5 +1175,6 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     end do read_loop
     close(fhandle)
 end subroutine GetNumberSimulationRuns
+
 
 end module ac_global
