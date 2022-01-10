@@ -3484,42 +3484,6 @@ CanopyCoverNoStressDaysSF := CC;
 END; (* CanopyCoverNoStressDaysSF *)
 
 
-FUNCTION CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                                     SumGDD,CCo,CCx,GDDCGC,GDDCDC : double;
-                                     SFRedCGC,SFRedCCx : ShortInt) : double;
-VAR CC,CCxAdj,GDDCDCadj : double;
-
-
-BEGIN (* CanopyCoverNoStressGDDaysSF *)
-//SumGDD refers to the end of the day and Delayed days are not considered
-CC := 0.0;
-IF ((SumGDD > 0) AND (ROUND(SumGDD) <= GDDLMaturity) AND (CCo > 0)) THEN
-   BEGIN
-   IF (SumGDD <= GDDL0) // before germination or recovering of transplant
-      THEN CC := 0
-      ELSE BEGIN
-           IF (SumGDD < GDDL123) // Canopy development and Mid-season stage
-              THEN CC := CCatGDD((SumGDD-GDDL0),CCo,((1-SFRedCGC/100)*GDDCGC),((1-SFRedCCx/100)*CCx))
-              ELSE BEGIN // Late-season stage  (SumGDD <= GDDLMaturity)
-                   IF (CCx < 0.001)
-                      THEN CC := 0
-                      ELSE BEGIN
-                           CCxAdj := CCatGDD((GDDL123-GDDL0),CCo,((1-SFRedCGC/100)*GDDCGC),((1-SFRedCCx/100)*CCx));
-                           GDDCDCadj := GDDCDC*(CCxadj+2.29)/(CCx+2.29);
-                           IF (CCxAdj < 0.001)
-                              THEN CC := 0
-                              //ELSE CC := CCxAdj * (1 - 0.05*(exp((SumGDD-GDDL123)*GDDCDC*3.33*((CCxadj+2.29)/(CCx+2.29))/(CCxAdj+2.29))-1));
-                              ELSE CC := CCxAdj * (1 - 0.05*(exp((SumGDD-GDDL123)*3.33*GDDCDCadj/(CCxAdj+2.29))-1));
-                           END;
-                   END;
-           END;
-   END;
-IF (CC > 1) THEN CC := 1;
-IF (CC < 0) THEN CC := 0;
-CanopyCoverNoStressGDDaysSF := CC;
-END; (* CanopyCoverNoStressGDDaysSF *)
-
-
 BEGIN (* CanopyCoverNoStressSF *)
 CASE TypeDays OF
      GDDays : CanopyCoverNoStressSF := CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity,
