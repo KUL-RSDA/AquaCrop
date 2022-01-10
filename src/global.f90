@@ -885,7 +885,21 @@ subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
     integer(int32), intent(in) :: Yeari
     integer(int32), intent(inout) :: DayNr
 
-    DayNr = (Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp
+    DayNr = trunc((Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp)
+    
+    contains
+    
+    function trunc(x) result(y)
+    
+        real(dp), intent(in) :: x
+        integer(int32) :: y
+    
+        if (x > 0) then
+            y = floor(x,kind=int32)
+        else
+            y = ceiling(x,kind=int32)
+        end if
+    end function trunc
 end subroutine DetermineDayNr
 
 
@@ -895,17 +909,31 @@ subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
     integer(int32), intent(inout) :: Monthi
     integer(int32), intent(inout) :: Yeari
 
-real(dp) :: SumDayMonth
+    real(dp) :: SumDayMonth
 
-Yeari = (DayNr-0.05_dp)/365.25_dp
-SumDayMonth = (DayNr - Yeari*365.25_dp)
-Yeari = 1901 + Yeari
-Monthi = 1
+    Yeari = trunc((DayNr-0.05_dp)/365.25_dp)
+    SumDayMonth = (DayNr - Yeari*365.25_dp)
+    Yeari = 1901 + Yeari
+    Monthi = 1
 
-do while ((SumDayMonth > ElapsedDays(Monthi+1)) .and. (Monthi < 12)) 
-    Monthi = Monthi + 1
-end do
-Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp)
+    do while ((SumDayMonth > ElapsedDays(Monthi+1)) .and. (Monthi < 12)) 
+        Monthi = Monthi + 1
+    end do
+    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp)
+
+    contains
+    
+    function trunc(x) result(y)
+    
+        real(dp), intent(in) :: x
+        integer(int32) :: y
+    
+        if (x > 0) then
+            y = floor(x,kind=int32)
+        else
+            y = ceiling(x,kind=int32)
+        end if
+    end function trunc
 end subroutine DetermineDate
 
 
