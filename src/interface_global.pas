@@ -264,6 +264,12 @@ function CCatGDD(
             constref GDDi, CCoIN, GDDCGCIN, CCxIN : double)  : double;
          external 'aquacrop' name '__ac_global_MOD_ccatgdd';
 
+function CanopyCoverNoStressGDDaysSF(
+            constref GDDL0,GDDL123,GDDLMaturity : integer;
+            constref SumGDD,CCo,CCx,GDDCGC,GDDCDC : double;
+            constref SFRedCGC,SFRedCCx : shortint) : double;
+         external 'aquacrop' name '__ac_global_MOD_canopycovernostressgddayssf';
+
 function fAdjustedForCO2 (
             constref CO2i, WPi : double;
             constref PercentA : ShortInt) : double;
