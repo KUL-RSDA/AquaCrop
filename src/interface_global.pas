@@ -355,14 +355,14 @@ begin;
 end;
 
 function FileExists(constref full_name : string) : boolean;
-var
+var 
     p : PChar;
     strlen : integer;
 
 begin;
     p := PChar(full_name);
     strlen := Length(full_name);
-    FileExists_wrap(p, strlen);
+    FileExists := FileExists_wrap(p, strlen);
 end;
 
 
