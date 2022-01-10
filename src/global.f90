@@ -1058,6 +1058,58 @@ real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
 end function CCatGDD
 
 
+real(dp) function CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, GDDLMaturity, SumGDD, &
+        CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    real(dp) :: CC, CCxAdj, GDDCDCadj
+
+! SumGDD refers to the end of the day and Delayed days are not considered
+CC = 0._dp
+if ((SumGDD > 0._dp) .and. (nint(SumGDD, kind=int32) <= GDDLMaturity) .and. (CCo > 0._dp)) then
+    if (SumGDD <= GDDL0) then ! before germination or recovering of transplant
+        CC = 0._dp
+    else
+        if (SumGDD < GDDL123) then ! Canopy development and Mid-season stage
+            CC = CCatGDD(real((SumGDD-GDDL0),dp), CCo, ((1._dp-SFRedCGC/100._dp)*GDDCGC), & 
+              ((1._dp-SFRedCCx/100._dp)*CCx))
+        else
+            ! Late-season stage  (SumGDD <= GDDLMaturity)
+            if (CCx < 0.001_dp) then
+                CC = 0._dp
+            else
+                CCxAdj = CCatGDD(real(GDDL123-GDDL0,dp), CCo, ((1_dp-SFRedCGC/100._dp)*GDDCGC), &
+                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                GDDCDCadj = GDDCDC*(CCxadj+2.29_dp)/(CCx+2.29_dp)
+                if (CCxAdj < 0.001_dp) then
+                    CC = 0._dp
+                else
+                    CC = CCxAdj * (1._dp - 0.05_dp*(exp((SumGDD-GDDL123)*3.33_dp*GDDCDCadj/&
+                      (CCxAdj+2.29_dp))-1._dp))
+                end if
+            end if
+        end if
+    end if
+end if
+if (CC > 1._dp) then
+    CC = 1._dp
+end if
+if (CC < 0._dp) then
+    CC = 0._dp
+end if
+CanopyCoverNoStressGDDaysSF = CC
+end function CanopyCoverNoStressGDDaysSF
+
+
 real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
     real(dp), intent(in) :: CO2i
     real(dp), intent(in) :: WPi
