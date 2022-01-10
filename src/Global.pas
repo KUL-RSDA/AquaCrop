@@ -517,9 +517,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-
-FUNCTION FileExists (full_name : string) : BOOLEAN;
-
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
                             SumGDD,Zmin,Zmax : double;
                             ShapeFactor : ShortInt;
@@ -732,18 +729,6 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
 implementation
-
-
-FUNCTION FileExists (full_name : string) : BOOLEAN;
-VAR f : textfile;
-BEGIN
-{$I-}
-Assign(f, full_name);
-Reset(f);
-Close(f);
-{$I+}
-FileExists := (IOResult = 0);
-END; (* FileExists *)
 
 
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;

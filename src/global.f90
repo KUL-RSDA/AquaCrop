@@ -1220,4 +1220,12 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
 end subroutine GetNumberSimulationRuns
 
 
+logical function FileExists(full_name)
+    character(len=*), intent(in) :: full_name
+
+    inquire(file=trim(full_name), exist=FileExists)
+    print *, FileExists, trim(full_name)
+end function FileExists 
+
+
 end module ac_global

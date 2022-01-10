@@ -2,7 +2,8 @@ module ac_interface_global
 
 use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_ptr
-use ac_global, only: GetNumberSimulationRuns
+use ac_global, only: GetNumberSimulationRuns, &
+                     FileExists
 use ac_kinds, only: int32
 implicit none
 
@@ -40,5 +41,18 @@ subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     string = pointer2string(TempFileNameFull, strlen)
     call GetNumberSimulationRuns(string, NrRuns)
 end subroutine GetNumberSimulationRuns_wrap
+
+
+logical function FileExists_wrap(full_name, strlen)
+    !! Wrapper for [[ac_global:FileExists]] for foreign languages.
+    type(c_ptr), intent(in) :: full_name
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(full_name, strlen)
+    FileExists_wrap = FileExists(string)
+end function FileExists_wrap
+
 
 end module ac_interface_global
