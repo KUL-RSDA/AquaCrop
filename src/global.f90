@@ -118,6 +118,17 @@ end type rep_EffectStress
 
 contains
 
+function trunc(x) result(y)
+    
+    real(dp), intent(in) :: x
+    integer(int32) :: y
+    
+    if (x > 0) then
+        y = floor(x,kind=int32)
+    else
+        y = ceiling(x,kind=int32)
+    end if
+end function trunc
 
 real(dp) function AquaCropVersion(FullNameXXFile)
     character(len=*), intent(in) :: FullNameXXFile
@@ -887,19 +898,6 @@ subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
 
     DayNr = trunc((Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp)
     
-    contains
-    
-    function trunc(x) result(y)
-    
-        real(dp), intent(in) :: x
-        integer(int32) :: y
-    
-        if (x > 0) then
-            y = floor(x,kind=int32)
-        else
-            y = ceiling(x,kind=int32)
-        end if
-    end function trunc
 end subroutine DetermineDayNr
 
 
@@ -920,20 +918,6 @@ subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
         Monthi = Monthi + 1
     end do
     Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp)
-
-    contains
-    
-    function trunc(x) result(y)
-    
-        real(dp), intent(in) :: x
-        integer(int32) :: y
-    
-        if (x > 0) then
-            y = floor(x,kind=int32)
-        else
-            y = ceiling(x,kind=int32)
-        end if
-    end function trunc
 end subroutine DetermineDate
 
 
