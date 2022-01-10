@@ -98,6 +98,11 @@ procedure DetermineDayNr(
             var DayNr : longint);
          external 'aquacrop' name '__ac_global_MOD_determinedaynr';
 
+PROCEDURE DetermineDate(
+            constref DayNr : longint;
+            var Dayi,Monthi,Yeari : integer);
+         external 'aquacrop' name '__ac_global_MOD_determinedate';
+                        
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;
             constref ShapeRootDeepening : shortint;

@@ -595,8 +595,6 @@ PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
 Function LeapYear(Year : INTEGER) : BOOLEAN;
 
-PROCEDURE DetermineDate(DayNr : Longint;
-                        VAR Dayi,Monthi,Yeari : INTEGER);
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
@@ -2288,22 +2286,6 @@ BEGIN
 LeapYear := false;
 IF (FRAC(Year/4) <= 0.01 ) THEN LeapYear := true;
 END; (* LeapYear *)
-
-
-PROCEDURE DetermineDate(DayNr : Longint;
-                        VAR Dayi,Monthi,Yeari : INTEGER);
-VAR SumDayMonth : double;
-BEGIN
-Yeari := TRUNC((DayNr-0.05)/365.25);
-SumDayMonth := (DayNr - Yeari*365.25);
-Yeari := 1901 + Yeari;
-Monthi := 1;
-WHILE ((SumDayMonth > ElapsedDays[Monthi+1]) AND (Monthi < 12))
-       DO Monthi := Monthi + 1;
-Dayi := ROUND(SumDayMonth - ElapsedDays[Monthi] + 0.25 + 0.06);
-END; (* DetermineDate *)
-
-
 
 
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
