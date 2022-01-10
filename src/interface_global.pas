@@ -9,6 +9,8 @@ const
     undef_double = -9.9;
     undef_int = -9;
     CO2Ref = 369.41;
+    ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
+                                                212.25,243.25,273.25,304.25,334.25);
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -91,7 +93,10 @@ procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
          external 'aquacrop' name '__ac_global_MOD_set_layer_undef';
 
-
+procedure DetermineDayNr(
+            constref Dayi,Monthi,Yeari : integer;
+            var DayNr : longint);
+         external 'aquacrop' name '__ac_global_MOD_determinedaynr';
 
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;

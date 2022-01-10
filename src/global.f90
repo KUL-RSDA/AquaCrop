@@ -20,6 +20,10 @@ real(dp), parameter :: CO2Ref = 369.41_dp;
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
 real(dp), parameter :: eps =10E-08
+real(dp), dimension(12), parameter :: ElapsedDays = [0._dp,31._dp,59.25_dp, &
+                                                    90.25_dp,120.25_dp,151.25_dp,&
+                                                    181.25_dp,212.25_dp,243.25_dp,&
+                                                    273.25_dp,304.25_dp,334.25_dp]
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -503,7 +507,6 @@ integer(int32) function LengthCanopyDecline(CCx, CDC)
 end function LengthCanopyDecline
 
 
-
 real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     real(dp), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -874,6 +877,17 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     end if
     CCatTime = CCi
 end function CCatTime
+
+
+subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
+    integer(int32), intent(in) :: Dayi
+    integer(int32), intent(in) :: Monthi
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(inout) :: DayNr
+
+    DayNr = (Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp
+end subroutine DetermineDayNr
+
 
 real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
     real(dp), intent(in) :: Tbase
