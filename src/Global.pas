@@ -536,8 +536,6 @@ PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
 
 PROCEDURE NoIrrigation;
-PROCEDURE SplitStringInTwoParams(StringIN : string;
-                                 VAR Par1,Par2 : double);
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
@@ -675,8 +673,6 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
                                         LocDepth,LocVolPr,LocECdS : rep_IniComp;
                                         NrComp : INTEGER;
                                         VAR Comp : rep_Comp);
-PROCEDURE SplitStringInThreeParams(StringIN : string;
-                            VAR Par1,Par2,Par3 : double);
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double;
                                 VAR IniSWCRead : rep_IniSWC);
@@ -1115,40 +1111,6 @@ BEGIN
  IrriECw.PreSeason := 0.0; //dS/m
  IrriECw.PostSeason := 0.0; //dS/m
 END; (* NoIrrigation *)
-
-
-
-
-PROCEDURE SplitStringInTwoParams(StringIN : string;
-                                 VAR Par1,Par2 : double);
-VAR LengthS,i,Parami : INTEGER;
-    CharA : Char;
-    StringNumber : ShortString;
-
-BEGIN
-LengthS := Length(StringIN);
-i := 0;
-Parami := 0;
-// divide the line in parameters
-WHILE ((i < LengthS) AND (Parami < 2)) DO
-   BEGIN
-   i := i + 1;
-   CharA := StringIN[i];
-   IF (CharA > #32) THEN
-      BEGIN // next Parameter
-      Parami := Parami + 1;
-      StringNumber := '';
-      WHILE ((CharA > #32) AND (i <= LengthS)) DO
-         BEGIN
-         StringNumber := CONCAT(StringNumber,CharA);
-         i := i + 1;
-         IF (i <= LengthS) THEN CharA := StringIN[i];
-         END;
-      IF (Parami = 1) THEN Par1 := StrToFloat(StringNumber);
-      IF (Parami = 2) THEN Par2 := StrToFloat(StringNumber);
-      END; // next Parameter
-   END; // end of line
-END; (* SplitStringInTwoParams *)
 
 
 PROCEDURE NoManagementOffSeason;
@@ -4318,42 +4280,6 @@ For Compi := 1 TO NrComp DO // from (10*VolSat*dZ * EC) to ECe and distribution 
     DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
     END;
 END; (* TranslateIniPointsToSWProfile *)
-
-
-
-PROCEDURE SplitStringInThreeParams(StringIN : string;
-                            VAR Par1,Par2,Par3 : double);
-VAR LengthS,i,Parami : INTEGER;
-    CharA : Char;
-    StringNumber : ShortString;
-
-BEGIN
-LengthS := Length(StringIN);
-i := 0;
-Parami := 0;
-// divide the line in parameters
-WHILE ((i < LengthS) AND (Parami < 3)) DO
-   BEGIN
-   i := i + 1;
-   CharA := StringIN[i];
-   IF (CharA > #32) THEN
-      BEGIN // next Parameter
-      Parami := Parami + 1;
-      StringNumber := '';
-      WHILE ((CharA > #32) AND (i <= LengthS)) DO
-         BEGIN
-         StringNumber := CONCAT(StringNumber,CharA);
-         i := i + 1;
-         IF (i <= LengthS) THEN CharA := StringIN[i];
-         END;
-      IF (Parami = 1) THEN Par1 := StrToFloat(StringNumber);
-      IF (Parami = 2) THEN Par2 := StrToFloat(StringNumber);
-      IF (Parami = 3) THEN Par3 := StrToFloat(StringNumber);
-      END; // next Parameter
-   END; // end of line
-END; (* SplitStringInThreeParams *)
-
-
 
 
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;

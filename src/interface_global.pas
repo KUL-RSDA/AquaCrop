@@ -298,6 +298,26 @@ function FileExists_wrap(
             constref strlen : integer) : boolean;
         external 'aquacrop' name '__ac_interface_global_MOD_fileexists_wrap';
 
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+
+procedure SplitStringInTwoParams_wrap(
+            constref StringIN : PChar;
+            constref strlen : integer;
+            var Par1,Par2 : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_splitstringintwoparams_wrap';
+
+procedure SplitStringInThreeParams(
+            constref StringIN : string;
+            var Par1,Par2, Par3 : double);
+
+procedure SplitStringInThreeParams_wrap(
+            constref StringIN : PChar;
+            constref strlen : integer;
+            var Par1,Par2,Par3 : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
+
 
 implementation
 
@@ -358,11 +378,35 @@ function FileExists(constref full_name : string) : boolean;
 var 
     p : PChar;
     strlen : integer;
-
 begin;
     p := PChar(full_name);
     strlen := Length(full_name);
     FileExists := FileExists_wrap(p, strlen);
+
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+var
+    p : PChar;
+    strlen : integer;
+    
+begin;
+    p := PChar(StringIN);
+    strlen := Length(StringIN);
+    SplitStringInTwoParams_wrap(p, strlen, Par1, Par2);
+end;
+
+procedure SplitStringInThreeParams(
+            constref StringIN : string;
+            var Par1,Par2,Par3 : double);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(StringIN);
+    strlen := Length(StringIN);
+    SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
 
