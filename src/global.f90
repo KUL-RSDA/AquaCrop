@@ -916,7 +916,7 @@ subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
     Monthi = 1
 
     do while (Monthi < 12)
-        if (SumDayMonth > ElapsedDays(Monthi+1)) exit
+        if (SumDayMonth <= ElapsedDays(Monthi+1)) exit
         Monthi = Monthi + 1
     end do
     Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp, kind=int32)
