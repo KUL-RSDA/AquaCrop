@@ -297,6 +297,13 @@ procedure GetNumberSimulationRuns_wrap(
             var NrRuns : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
 
+function FileExists(constref full_name : string) : boolean;
+
+function FileExists_wrap(
+            constref full_name : string;
+            constref strlen : integer) : boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_fileexists_wrap';
+
 procedure SplitStringInTwoParams(
             constref StringIN : string;
             var Par1,Par2 : double);
@@ -316,7 +323,6 @@ procedure SplitStringInThreeParams_wrap(
             constref strlen : integer;
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
-
 
 
 implementation
@@ -372,6 +378,16 @@ begin;
     p := PChar(TempFileNameFull);
     strlen := Length(TempFileNameFull);
     GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
+end;
+
+function FileExists(constref full_name : string) : boolean;
+var 
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(full_name);
+    strlen := Length(full_name);
+    FileExists := FileExists_wrap(p, strlen);
 end;
 
 procedure SplitStringInTwoParams(

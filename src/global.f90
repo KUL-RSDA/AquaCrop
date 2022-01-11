@@ -1272,6 +1272,13 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
 end subroutine GetNumberSimulationRuns
 
 
+logical function FileExists(full_name)
+    character(len=*), intent(in) :: full_name
+
+    inquire(file=trim(full_name), exist=FileExists)
+end function FileExists 
+
+
 subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
     character(len=*), intent(in) :: StringIN
     real(dp), intent(inout) :: Par1
