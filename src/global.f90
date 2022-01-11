@@ -119,14 +119,15 @@ end type rep_EffectStress
 contains
 
 function trunc(x) result(y)
-    
+    !! Returns the integer part of x, which is always smaller than (or equal to) x
+    !! in absolute value.
     real(dp), intent(in) :: x
     integer(int32) :: y
     
     if (x > 0) then
-        y = floor(x,kind=int32)
+        y = floor(x, kind=int32)
     else
-        y = ceiling(x,kind=int32)
+        y = ceiling(x, kind=int32)
     end if
 end function trunc
 
@@ -914,10 +915,11 @@ subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
     Yeari = 1901 + Yeari
     Monthi = 1
 
-    do while ((SumDayMonth > ElapsedDays(Monthi+1)) .and. (Monthi < 12)) 
+    do while (Monthi < 12)
+        if (SumDayMonth > ElapsedDays(Monthi+1)) exit
         Monthi = Monthi + 1
     end do
-    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp)
+    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp, kind=int32)
 end subroutine DetermineDate
 
 
