@@ -382,6 +382,7 @@ begin;
     p := PChar(full_name);
     strlen := Length(full_name);
     FileExists := FileExists_wrap(p, strlen);
+end;
 
 procedure SplitStringInTwoParams(
             constref StringIN : string;
@@ -389,7 +390,7 @@ procedure SplitStringInTwoParams(
 var
     p : PChar;
     strlen : integer;
-    
+
 begin;
     p := PChar(StringIN);
     strlen := Length(StringIN);
