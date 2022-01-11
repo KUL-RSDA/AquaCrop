@@ -1156,7 +1156,7 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
         action='read')
     read(fhandle, *) CO2Description
     close(fhandle)
-    if (CO2File == 'MaunaLoa%CO2') then
+    if (trim(GetCO2File()) == 'MaunaLoa%CO2') then
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
@@ -1234,6 +1234,14 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     end do read_loop
     close(fhandle)
 end subroutine GetNumberSimulationRuns
+
+function get_CO2File() result(CO2File)
+    !! "CO2File" global variable
+
+    character(len=255) :: CO2File
+
+    get_CO2File = CO2File
+end function get_CO2File
 
 
 end module ac_global
