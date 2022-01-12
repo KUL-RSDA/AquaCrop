@@ -1157,7 +1157,7 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
     integer :: fhandle
 
     open(newunit=fhandle, file=trim(CO2FileFull), status='old', &
-        action='read')
+         action='read')
     read(fhandle, *) CO2Description
     close(fhandle)
 

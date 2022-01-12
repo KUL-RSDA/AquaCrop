@@ -5,7 +5,9 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_null_char, &
                                        c_ptr
 use ac_global, only: GetCO2Description, &
-                     GetNumberSimulationRuns
+                     GetCO2File, &
+                     GetNumberSimulationRuns, &
+                     SetCO2File
 use ac_kinds, only: int32
 implicit none
 
@@ -69,23 +71,24 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
     call GetCO2Description(string, CO2Description)
 end subroutine GetCO2Description_wrap
 
-!! NOT SURE !!
-function GetCO2File_wrap(StringIN) result(c_pointer)
+
+function GetCO2File_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCO2File]] for foreign languages.
-    character(len=*), intent(in) :: StringIN
-    type(c_ptr), intent(out) :: c_pointer
+    type(c_ptr) :: c_pointer
 
-    c_pointer = string2pointer(StringIN)
-end subroutine GetCO2File_wrap
+    c_pointer = string2pointer(GetCO2File())
+end function GetCO2File_wrap
 
 
-subroutine SetCO2File_wrap(StringIN)
+subroutine SetCO2File_wrap(CO2File, strlen)
     !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
-    character(len=*), intent(in) :: StringIN
-    type(c_ptr), intent(out) :: str
+    type(c_ptr), intent(in) :: CO2File
+    integer(int32), intent(in) :: strlen
 
-    c_pointer = string2pointer(StringIN)
+    character(len=strlen) :: string
+
+    string = pointer2string(CO2File, strlen)
+    call SetCO2File(string)
 end subroutine SetCO2File_wrap
-
 
 end module ac_interface_global
