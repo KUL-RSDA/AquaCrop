@@ -30,7 +30,8 @@ EXECUTABLE = PlugInBareV70
 FLIB = libaquacrop.so
 
 $(FLIB): global.o \
-    interface_global.o
+    interface_global.o \
+    interface_tempprocessing.o
 	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
 
 fortranclean:
@@ -45,7 +46,17 @@ interface_global.o: interface_global.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+interface_tempprocessing.o: interface_tempprocessing.f90 \
+    tempprocessing.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 kinds.o: kinds.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+tempprocessing.o: tempprocessing.f90 \
+    global.o \
+    kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 
@@ -54,7 +65,7 @@ kinds.o: kinds.f90
 SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
       ClimProcessing.pas InitialSettings.pas StartUnit.pas \
       DefaultCropSoil.pas RootUnit.pas Simul.pas \
-      interface_global.pas
+      interface_global.pas interface_tempprocessing.pas
 
 $(EXECUTABLE): $(SRC) $(FLIB)
 	$(PC) $(PCFLAGS) PlugInBareV70.dpr
