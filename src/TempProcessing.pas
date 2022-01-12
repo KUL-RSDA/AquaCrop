@@ -2,7 +2,7 @@ unit TempProcessing;
 
 interface
 
-uses Global, interface_global, SysUtils;
+uses Global, interface_global, SysUtils, interface_tempprocessing;
 
 PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
                                       VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
@@ -161,16 +161,6 @@ IF (Mfile > 12) THEN
    YFile := Yfile + 1;
    END;
 END; (* AdjustDecadeMONTHandYEAR *)
-
-
-
-PROCEDURE AdjustMONTHandYEAR(VAR Mfile,Yfile : INTEGER);
-BEGIN
-Mfile := Mfile - 12;
-YFile := Yfile + 1;
-END; (* AdjustMONTHandYEAR *)
-
-
 
 
 PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
