@@ -112,6 +112,9 @@ type rep_EffectStress
 end type rep_EffectStress
 
 
+character(len=:), allocatable :: CO2File
+
+
 contains
 
 
@@ -1146,6 +1149,7 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
 
+
 subroutine GetCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(in) :: CO2FileFull
     character(len=*), intent(inout) :: CO2Description
@@ -1156,6 +1160,7 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
         action='read')
     read(fhandle, *) CO2Description
     close(fhandle)
+
     if (trim(GetCO2File()) == 'MaunaLoa%CO2') then
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
@@ -1238,24 +1243,19 @@ end subroutine GetNumberSimulationRuns
 
 !! Global variables section !!
 
-function get_CO2File() result(filename)
-    !! "CO2File" global variable
+function GetCO2File() result(str)
+    !! Getter for the "CO2File" global variable.
+    character(len=len(CO2File)) :: str
 
-    character(len=*) :: CO2File
-
-    filename = CO2File
-end function get_CO2File
+    str = CO2File
+end function GetCO2File
 
 
 subroutine SetCO2File(str)
+    !! Setter for the "CO2File" global variable.
     character(len=*), intent(in) :: str
 
-    integer :: str_len
-
-    if (allocated(CO2File)) deallocate(CO2File)
-    str_len = len_trim(str)
-    allocate(CO2File(str_len))
-    CO2File(1:str_len) = str(1:str_len)
+    CO2File = str
 end subroutine SetCO2File
 
 
