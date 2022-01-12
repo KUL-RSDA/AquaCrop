@@ -678,9 +678,6 @@ PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
 PROCEDURE LoadProjectDescription(FullNameProjectFile : string;
                                  VAR DescriptionOfProject : string);
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
-PROCEDURE CheckFilesInProject(TempFullFilename : string;
-                              Runi : INTEGER;
-                              VAR AllOK : BOOLEAN);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -4306,56 +4303,6 @@ i := Length(TempString);
 Delete(TempString,(i-3),(4));
 OutputName := TempString;
 END; (* ComposeOutputFileName *)
-
-
-PROCEDURE CheckFilesInProject(TempFullFilename : string;
-                              Runi : INTEGER;
-                              VAR AllOK : BOOLEAN);
-VAR f0 : TextFile;
-    TempFileName,TempPathName,TempFullName : string;
-    i,TotalFiles : ShortInt;
-
-BEGIN
-AllOK := true;
-Assign(f0,TempFullFilename);
-Reset(f0);
-READLN(f0); // Description
-READLN(f0);  // AquaCrop version Nr
-
-// Prepare
-IF (Runi > 1) THEN
-   BEGIN
-   FOR i := 1 TO 5 DO READLN(f0); // Type year and Simulation and Cropping period of run 1
-   FOR i := 1 TO 42 DO Readln(f0); // files previous runs
-   END;
-
-// Type Year and Simulation and Cropping period of the run
-FOR i := 1 TO 5 DO READLN(f0);
-
-// Check the 14 files
-i := 1;
-TotalFiles := 14;
-WHILE (AllOK AND (i <= TotalFiles)) DO
-   BEGIN
-   READLN(f0); // Info
-   READLN(f0,TempFileName);  // FileName
-   IF (Trim(TempFileName) = '(None)')
-      THEN READLN(f0)
-      ELSE BEGIN
-           IF ((i = (TotalFiles-2)) AND (Trim(TempFileName) = 'KeepSWC')) // file initial conditions
-              THEN READLN(f0) // Keep initial SWC
-              ELSE BEGIN
-                   READLN(f0,TempPathName);  //PathName
-                   TempFullName := CONCAT(Trim(TempPathName),Trim(TempFileName));
-                   IF (FileExists(TempFullName) = false) THEN AllOK := false;
-                   END;
-           END;
-   i := i + 1;
-   END;
-Close(f0);
-END; (* CheckFilesInProject *)
-
-
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;

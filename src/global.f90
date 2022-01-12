@@ -1370,7 +1370,62 @@ logical function LeapYear(Year)
     if ((Year/4._dp) <= 0.01 ) then
         LeapYear = .true.
     end if
-end function LeapYear 
+end function LeapYear
+
+
+subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
+    character(len=*), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    integer :: fhandle
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
+    integer(int8) :: i, TotalFiles
+
+    AllOK = .true.
+    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
+        action='read')
+    read(fhandle, *) ! Description
+    read(fhandle, *)  ! AquaCrop version Nr
+
+    ! Prepare
+    if (Runi > 1) then
+        do i = 1, 5 
+            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
+        end do
+        do i = 1, 42 
+            read(fhandle, *) ! files previous runs
+        end do
+    end do
+
+    ! Type Year and Simulation and Cropping period of the run
+    do i = 1, 5 
+        read(fhandle, *)
+    end do
+
+    ! Check the 14 files
+    i = 1
+    TotalFiles = 14
+    do while (AllOK .and. (i <= TotalFiles)) 
+        read(fhandle, *) ! Info
+        read(fhandle, *) TempFileName  ! FileName
+        if (trim(TempFileName) = '(None)') then
+            read(fhandle, *)
+        else
+            if ((i = (TotalFiles-2)) .and. (trim(TempFileName) = 'KeepSWC')) then ! file initial conditions
+                read(fhandle, *) ! Keep initial SWC
+            else
+                read(fhandle, *) TempPathName  ! PathName
+                TempFullName = trim(TempPathName) // trim(TempFileName))
+                if (FileExists(TempFullName) == .false.) then
+                    AllOK = .false.
+                end if
+            end if
+        end if
+        i = i + 1
+    end if
+    close(fhandle)
+end subroutine CheckFilesInProject
 
 
 end module ac_global

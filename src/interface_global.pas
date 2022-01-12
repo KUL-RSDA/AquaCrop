@@ -327,6 +327,17 @@ procedure SplitStringInThreeParams_wrap(
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
+procedure CheckFilesInProject(
+            constref TempFullFilename : string;
+            constref Runi : integer;
+            var AllOK : boolean);
+
+procedure CheckFilesInProject_wrap(
+            constref StringIN : PChar;
+            constref Runi : integer;
+            constref strlen : integer;
+            var AllOK : boolean);
+
 
 implementation
 

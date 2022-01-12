@@ -5504,49 +5504,49 @@ OutputName = TempString
 
 
 subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
-    character(len=STRING_LENGTH), intent(in) :: TempFullFilename
+    character(len=*), intent(in) :: TempFullFilename
     integer(int32), intent(in) :: Runi
     logical, intent(inout) :: AllOK
 
-    type(TextFile) :: f0
-    character(len=STRING_LENGTH) :: TempFileName, TempPathName, TempFullName
+    integer :: fhandle
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
     integer(int8) :: i, TotalFiles
 
     AllOK = .true.
-    Assign(f0, TempFullFilename)
-    Reset(f0)
-    READLN(f0) ! Description
-    READLN(f0)  ! AquaCrop version Nr
+    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
+        action='read')
+    read(fhandle, *) ! Description
+    read(fhandle, *)  ! AquaCrop version Nr
 
     ! Prepare
     if (Runi > 1) then
         do i = 1, 5 
-            READLN(f0) ! Type year and Simulation and Cropping period of run 1
+            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
         end do
         do i = 1, 42 
-            READLN(f0) ! files previous runs
+            read(fhandle, *) ! files previous runs
         end do
     end do
 
     ! Type Year and Simulation and Cropping period of the run
     do i = 1, 5 
-        READLN(f0)
+        read(fhandle, *)
     end do
 
     ! Check the 14 files
     i = 1
     TotalFiles = 14
     do while (AllOK .and. (i <= TotalFiles)) 
-        READLN(f0) ! Info
-        READLN(f0, TempFileName)  ! FileName
-        if (Trim(TempFileName) = '(None)') then
-            READLN(f0)
+        read(fhandle, *) ! Info
+        read(fhandle, *) TempFileName  ! FileName
+        if (trim(TempFileName) = '(None)') then
+            read(fhandle, *)
         else
-            if ((i = (TotalFiles-2)) .and. (Trim(TempFileName) = 'KeepSWC')) then ! file initial conditions
-                READLN(f0) ! Keep initial SWC
+            if ((i = (TotalFiles-2)) .and. (trim(TempFileName) = 'KeepSWC')) then ! file initial conditions
+                read(fhandle, *) ! Keep initial SWC
             else
-                READLN(f0, TempPathName)  ! PathName
-                TempFullName = CONCAT(Trim(TempPathName), Trim(TempFileName))
+                read(fhandle, *) TempPathName  ! PathName
+                TempFullName = trim(TempPathName) // trim(TempFileName))
                 if (FileExists(TempFullName) == .false.) then
                     AllOK = .false.
                 end if
@@ -5554,7 +5554,7 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
         end if
         i = i + 1
     end if
-    Close(f0)
+    Close(fhandle)
 end subroutine CheckFilesInProject
 
 
