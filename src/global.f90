@@ -1110,6 +1110,33 @@ real(dp) function CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, GDDLMaturity, SumG
 end function CanopyCoverNoStressGDDaysSF
 
 
+real(dp) function HIadjWStressAtFlowering(KsVeg, KsSto, a, b)
+    real(dp), intent(in) :: KsVeg
+    real(dp), intent(in) :: KsSto
+    integer(int8), intent(in) :: a
+    real(dp), intent(in) :: b
+
+    if (a == undef_int) then
+        if (nint(b, kind=int32) == undef_int) then
+            HIadjWStressAtFlowering = 1._dp
+        elseif (KsSto > 0.001_dp) then
+            HIadjWStressAtFlowering = (Exp(0.10_dp*log(KsSto))) * (1._dp-(1._dp-KsSto)/b)
+        else
+            HIadjWStressAtFlowering = 0.0_dp
+        end if
+    else
+        if (nint(b, kind=int32) == undef_int) then
+            HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a)
+        elseif (KsSto > 0.001_dp) then
+            HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a) * (Exp(0.10_dp*log(KsSto))) &
+              * (1._dp-(1._dp-KsSto)/b)
+        else
+            HIadjWStressAtFlowering = 0._dp
+        end if
+    end if
+end function HIadjWStressAtFlowering
+
+
 real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
     real(dp), intent(in) :: CO2i
     real(dp), intent(in) :: WPi

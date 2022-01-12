@@ -636,9 +636,6 @@ FUNCTION HarvestIndexDay(DAP  : LongInt;
                          TempPlanting : rep_Planting;
                          VAR PercentLagPhase : ShortInt;
                          VAR HIfinal : INTEGER)   : double;
-FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
-                                 a : ShortInt;
-                                 b : double) : double;
 PROCEDURE ReadRainfallSettings;
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
@@ -3562,31 +3559,6 @@ IF (t <= 0)
 HarvestIndexDay := HIday;
 
 END; (* HarvestIndexDay *)
-
-FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
-                                 a : ShortInt;
-                                 b : double) : double;
-BEGIN
-IF (a = undef_int)
-   THEN BEGIN
-        IF (ROUND(b) = undef_int)
-           THEN HIadjWStressAtFlowering := 1
-           ELSE IF (KsSto > 0.001)
-                   THEN HIadjWStressAtFlowering := (Exp(0.10*Ln(KsSto))) * (1-(1-KsSto)/b)
-                   ELSE HIadjWStressAtFlowering := 0;
-        END
-   ELSE BEGIN
-        IF (ROUND(b) = undef_int)
-           THEN HIadjWStressAtFlowering := (1 + (1-KsVeg)/a)
-           ELSE IF (KsSto > 0.001)
-                   THEN HIadjWStressAtFlowering := (1 + (1-KsVeg)/a) * (Exp(0.10*Ln(KsSto))) * (1-(1-KsSto)/b)
-                   ELSE HIadjWStressAtFlowering := 0;
-        END;
-END; (* HIadjWStressAtFlowering *)
-
-
-
-
 
 
 PROCEDURE ReadRainfallSettings;
