@@ -1160,7 +1160,7 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
-end subroutine GetCO2Description 
+end subroutine GetCO2Description
 
 
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
@@ -1235,13 +1235,28 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     close(fhandle)
 end subroutine GetNumberSimulationRuns
 
-function get_CO2File() result(CO2File)
+
+!! Global variables section !!
+
+function get_CO2File() result(filename)
     !! "CO2File" global variable
 
-    character(len=255) :: CO2File
+    character(len=*) :: CO2File
 
-    get_CO2File = CO2File
+    filename = CO2File
 end function get_CO2File
+
+
+subroutine SetCO2File(str)
+    character(len=*), intent(in) :: str
+
+    integer :: str_len
+
+    if (allocated(CO2File)) deallocate(CO2File)
+    str_len = len_trim(str)
+    allocate(CO2File(str_len))
+    CO2File(1:str_len) = str(1:str_len)
+end subroutine SetCO2File
 
 
 end module ac_global

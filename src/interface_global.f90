@@ -44,7 +44,7 @@ end subroutine GetNumberSimulationRuns_wrap
 
 subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
     !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
-    type(c_ptr), intent(in) :: COI2FileFull
+    type(c_ptr), intent(in) :: CO2FileFull
     integer(int32), intent(in) :: strlen
     character(len=*), intent(inout) :: CO2Description
 
@@ -53,5 +53,6 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
     string = pointer2string(CO2FileFull, strlen)
     call GetNumberSimulationRuns(string, CO2Description)
 end subroutine GetCO2Description_wrap
+
 
 end module ac_interface_global
