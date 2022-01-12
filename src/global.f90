@@ -118,6 +118,7 @@ end type rep_EffectStress
 
 contains
 
+
 function trunc(x) result(y)
     !! Returns the integer part of x, which is always smaller than (or equal to) x
     !! in absolute value.
@@ -130,6 +131,7 @@ function trunc(x) result(y)
         y = ceiling(x, kind=int32)
     end if
 end function trunc
+
 
 real(dp) function AquaCropVersion(FullNameXXFile)
     character(len=*), intent(in) :: FullNameXXFile
