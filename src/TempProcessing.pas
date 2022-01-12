@@ -151,18 +151,6 @@ PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
 implementation
 
 
-PROCEDURE AdjustDecadeMONTHandYEAR(VAR DecFile,Mfile,Yfile : INTEGER);
-BEGIN
-DecFile := 1;
-Mfile := Mfile + 1;
-IF (Mfile > 12) THEN
-   BEGIN
-   Mfile := 1;
-   YFile := Yfile + 1;
-   END;
-END; (* AdjustDecadeMONTHandYEAR *)
-
-
 PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
                                       VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
 
