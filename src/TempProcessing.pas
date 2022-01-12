@@ -1321,12 +1321,12 @@ IF (RainFile = '(None)')
 // 1.4 CO2
 READLN(f0); // Info CO2
 READLN(f0,TempString);  //CO2File
-CO2File := Trim(TempString);
-IF (CO2File = '(None)')
+SetCO2File(Trim(TempString));
+IF (GetCO2File() = '(None)')
    THEN READLN(f0)  //PathCO2File
    ELSE BEGIN
         READLN(f0,TempString);  //PathCO2File
-        CO2FileFull := CONCAT(Trim(TempString),CO2File);
+        CO2FileFull := CONCAT(Trim(TempString),GetCO2File());
         GetCO2Description(CO2FileFull,CO2Description);
         END;
 SetClimData;
