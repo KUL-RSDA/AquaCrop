@@ -2,6 +2,8 @@ unit interface_tempprocessing;
 
 interface
 
+uses Global, interface_global;
+
 
 PROCEDURE AdjustMONTHandYEAR(
             VAR Mfile,Yfile : INTEGER);
