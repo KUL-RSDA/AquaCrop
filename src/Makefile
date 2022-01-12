@@ -31,11 +31,22 @@ FLIB = libaquacrop.so
 
 $(FLIB): global.o \
     interface_global.o \
-    interface_tempprocessing.o
+    interface_tempprocessing.o \
+    interface_climprocessing.o \
+    interface_initialsettings.o \
+    interface_run.o \
+    interface_startunit.o \
+    interface_defaultcropsoil.o \
+    interface_inforesults.o \
+    interface_rootunit.o \
+    interface_simul.o  
 	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
 
 fortranclean:
 	$(RM) $(wildcard *.mod) $(wildcard *.o) $(FLIB)
+
+kinds.o: kinds.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
 
 global.o: global.f90 \
     kinds.o
@@ -46,18 +57,100 @@ interface_global.o: interface_global.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+tempprocessing.o: tempprocessing.f90 \
+    global.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 interface_tempprocessing.o: interface_tempprocessing.f90 \
     tempprocessing.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-kinds.o: kinds.f90
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-tempprocessing.o: tempprocessing.f90 \
+climprocessing.o: climprocessing.f90 \
     global.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_climprocessing.o: interface_climprocessing.f90 \
+    climprocessing.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+initialsettings.o: initialsettings.f90 \
+    global.o \
+    defaultcropsoil.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_initialsettings.o: interface_initialsettings.f90 \
+    initialsettings.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+run.o: run.f90 \
+    global.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_run.o: interface_run.f90 \
+    run.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+startunit.o: startunit.f90 \
+    global.o \
+    initialsettings.o \
+    run.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_startunit.o: interface_startunit.f90 \
+    startunit.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+defaultcropsoil.o: defaultcropsoil.f90 \
+    global.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_defaultcropsoil.o: interface_defaultcropsoil.f90 \
+    defaultcropsoil.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+inforesults.o: inforesults.f90 \
+    global.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_inforesults.o: interface_inforesults.f90 \
+    inforesults.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+rootunit.o: rootunit.f90 \
+    global.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_rootunit.o: interface_rootunit.f90 \
+    rootunit.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+simul.o: simul.f90 \
+    global.o \
+    tempprocessing.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+interface_simul.o: interface_simul.f90 \
+    simul.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 
 
 # Pascal-related targets
@@ -65,7 +158,10 @@ tempprocessing.o: tempprocessing.f90 \
 SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
       ClimProcessing.pas InitialSettings.pas StartUnit.pas \
       DefaultCropSoil.pas RootUnit.pas Simul.pas \
-      interface_global.pas interface_tempprocessing.pas
+      interface_global.pas interface_tempprocessing.pas \
+      interface_climprocessing.pas interface_initialsettings.pas \
+      interface_run.pas interface_startunit.pas interface_defaultcropsoil.pas \
+      interface_inforesults.pas interface_rootunit.pas interface_simul.pas
 
 $(EXECUTABLE): $(SRC) $(FLIB)
 	$(PC) $(PCFLAGS) PlugInBareV70.dpr
