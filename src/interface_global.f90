@@ -1,8 +1,11 @@
 module ac_interface_global
 
 use, intrinsic :: iso_c_binding, only: c_f_pointer, &
+                                       c_loc, &
+                                       c_null_char, &
                                        c_ptr
-use ac_global, only: GetNumberSimulationRuns
+use ac_global, only: GetCO2Description, &
+                     GetNumberSimulationRuns
 use ac_kinds, only: int32
 implicit none
 
@@ -29,6 +32,18 @@ function pointer2string(c_pointer, strlen) result(string)
 end function pointer2string
 
 
+function string2pointer(string) result(c_pointer)
+    !! Returns a C-pointer from a Fortran string.
+    character(len=*), intent(in) :: string
+    type(c_ptr) :: c_pointer
+
+    character(len=:), allocatable, target :: f_string
+
+    f_string = string // c_null_char
+    c_pointer = c_loc(f_string)
+end function string2pointer
+
+
 subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
     type(c_ptr), intent(in) :: TempFileNameFull
@@ -53,6 +68,5 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
     string = pointer2string(CO2FileFull, strlen)
     call GetNumberSimulationRuns(string, CO2Description)
 end subroutine GetCO2Description_wrap
-
 
 end module ac_interface_global
