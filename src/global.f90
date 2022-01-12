@@ -20,6 +20,10 @@ real(dp), parameter :: CO2Ref = 369.41_dp;
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
 real(dp), parameter :: eps =10E-08
+real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
+                                                    90.25_dp, 120.25_dp, 151.25_dp, &
+                                                    181.25_dp, 212.25_dp, 243.25_dp, &
+                                                    273.25_dp, 304.25_dp, 334.25_dp]
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -113,6 +117,20 @@ end type rep_EffectStress
 
 
 contains
+
+
+function trunc(x) result(y)
+    !! Returns the integer part of x, which is always smaller than (or equal to) x
+    !! in absolute value.
+    real(dp), intent(in) :: x
+    integer(int32) :: y
+    
+    if (x > 0) then
+        y = floor(x, kind=int32)
+    else
+        y = ceiling(x, kind=int32)
+    end if
+end function trunc
 
 
 real(dp) function AquaCropVersion(FullNameXXFile)
@@ -503,7 +521,6 @@ integer(int32) function LengthCanopyDecline(CCx, CDC)
 end function LengthCanopyDecline
 
 
-
 real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     real(dp), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -874,6 +891,39 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     end if
     CCatTime = CCi
 end function CCatTime
+
+
+subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
+    integer(int32), intent(in) :: Dayi
+    integer(int32), intent(in) :: Monthi
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(inout) :: DayNr
+
+    DayNr = trunc((Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp)
+    
+end subroutine DetermineDayNr
+
+
+subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
+    integer(int32), intent(in) :: DayNr
+    integer(int32), intent(inout) :: Dayi
+    integer(int32), intent(inout) :: Monthi
+    integer(int32), intent(inout) :: Yeari
+
+    real(dp) :: SumDayMonth
+
+    Yeari = trunc((DayNr-0.05_dp)/365.25_dp)
+    SumDayMonth = (DayNr - Yeari*365.25_dp)
+    Yeari = 1901 + Yeari
+    Monthi = 1
+
+    do while (Monthi < 12)
+        if (SumDayMonth <= ElapsedDays(Monthi+1)) exit
+        Monthi = Monthi + 1
+    end do
+    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp, kind=int32)
+end subroutine DetermineDate
+
 
 real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
     real(dp), intent(in) :: Tbase
