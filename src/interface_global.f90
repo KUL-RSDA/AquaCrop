@@ -66,7 +66,7 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
     character(len=strlen) :: string
 
     string = pointer2string(CO2FileFull, strlen)
-    call GetNumberSimulationRuns(string, CO2Description)
+    call GetCO2Description(string, CO2Description)
 end subroutine GetCO2Description_wrap
 
 end module ac_interface_global
