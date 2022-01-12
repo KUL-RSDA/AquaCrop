@@ -591,7 +591,6 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
 
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
-Function LeapYear(Year : INTEGER) : BOOLEAN;
 PROCEDURE DetermineDayNr(Dayi,Monthi,Yeari : INTEGER;
                          VAR DayNr : Longint);
 PROCEDURE DetermineDate(DayNr : Longint;
@@ -2268,14 +2267,6 @@ IF (Crop.ModeCycle = GDDays)
         END;
 
 END; // LoadCrop
-
-
-Function LeapYear(Year : INTEGER) : BOOLEAN;
-BEGIN
-LeapYear := false;
-IF (FRAC(Year/4) <= 0.01 ) THEN LeapYear := true;
-END; (* LeapYear *)
-
 
 
 PROCEDURE DetermineDayNr(Dayi,Monthi,Yeari : INTEGER;

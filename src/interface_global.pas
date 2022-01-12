@@ -324,6 +324,9 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
+function LeapYear(constref Year : integer) : boolean;
+        external 'aquacrop' name '__ac_global_MOD_leapyear';
+
 
 implementation
 

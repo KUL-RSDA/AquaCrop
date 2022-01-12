@@ -1363,4 +1363,14 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams
 
 
+logical function LeapYear(Year)
+    integer(int32), intent(in) :: Year
+
+    LeapYear = .false.
+    if ((Year/4._dp) <= 0.01 ) then
+        LeapYear = .true.
+    end if
+end function LeapYear 
+
+
 end module ac_global
