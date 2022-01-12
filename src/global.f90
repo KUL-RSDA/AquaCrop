@@ -642,27 +642,6 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
 end subroutine DeriveSmaxTopBottom
 
 
-real(dp) function GetKs(T0, T1, Tin)
-    real(dp), intent(in) :: T0
-    real(dp), intent(in) :: T1
-    real(dp), intent(in) :: Tin
-
-    real(dp), parameter  :: Mo = 0.02_dp
-    real(dp), parameter  :: Mx = 1.0_dp
-
-    real(dp) :: MRate, Ksi, Trel
-
-    Trel = (Tin-T0)/(T1-T0)
-    ! derive rate of increase (MRate)
-    MRate = (-1._dp)*(log((Mo*Mx-0.98_dp*Mo)/(0.98_dp*(Mx-Mo))))
-    ! get Ks from logistic equation
-    Ksi = (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel))
-    ! adjust for Mo
-    Ksi = Ksi - Mo * (1._dp - Trel)
-    GetKs = Ksi
- end function GetKs
-
-
 real(dp) function KsTemperature(T0, T1, Tin)
     real(dp), intent(in) :: T0
     real(dp), intent(in) :: T1
