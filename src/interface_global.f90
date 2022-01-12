@@ -5,7 +5,8 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
 use ac_global, only: GetNumberSimulationRuns, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
-                     FileExists
+                     FileExists, &
+                     CheckFilesInProject
 use ac_kinds, only: dp, &
                     int32
 implicit none
@@ -84,5 +85,19 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     string = pointer2string(StringIN, strlen)
     call SplitStringInThreeParams(string, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
+
+subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
+    !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
+    type(c_ptr), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TempFullFilename, strlen)
+    call CheckFilesInProject(string, Runi, AllOK)
+end subroutine CheckFilesInProject_wrap
+
 
 end module ac_interface_global

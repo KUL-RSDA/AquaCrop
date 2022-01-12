@@ -333,10 +333,11 @@ procedure CheckFilesInProject(
             var AllOK : boolean);
 
 procedure CheckFilesInProject_wrap(
-            constref StringIN : PChar;
-            constref Runi : integer;
+            constref TempFullFilename : PChar;
             constref strlen : integer;
+            constref Runi : integer;
             var AllOK : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
 
 
 implementation
@@ -430,6 +431,20 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+
+procedure CheckFilesInProject(
+            constref TempFullFilename : string;
+            constref Runi : integer;
+            var AllOK : boolean);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TempFullFilename);
+    strlen := Length(TempFullFilename);
+    CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
+end;
 
 initialization
 

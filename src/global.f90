@@ -1379,9 +1379,9 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     logical, intent(inout) :: AllOK
 
     integer :: fhandle
-    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
-    integer(int8) :: i, TotalFiles
-
+    character(len=255) :: TempFileName, TempPathName, TempFullName
+    integer(int32) :: i, TotalFiles
+ 
     AllOK = .true.
     open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
         action='read')
@@ -1396,7 +1396,7 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
         do i = 1, 42 
             read(fhandle, *) ! files previous runs
         end do
-    end do
+    end if
 
     ! Type Year and Simulation and Cropping period of the run
     do i = 1, 5 
@@ -1406,24 +1406,24 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     ! Check the 14 files
     i = 1
     TotalFiles = 14
-    do while (AllOK .and. (i <= TotalFiles)) 
+    do while (AllOK .and. (i <= TotalFiles))
         read(fhandle, *) ! Info
         read(fhandle, *) TempFileName  ! FileName
-        if (trim(TempFileName) = '(None)') then
+        if (trim(TempFileName) == '(None)') then
             read(fhandle, *)
         else
-            if ((i = (TotalFiles-2)) .and. (trim(TempFileName) = 'KeepSWC')) then ! file initial conditions
+            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
                 read(fhandle, *) ! Keep initial SWC
             else
                 read(fhandle, *) TempPathName  ! PathName
-                TempFullName = trim(TempPathName) // trim(TempFileName))
-                if (FileExists(TempFullName) == .false.) then
+                TempFullName = trim(TempPathName) // trim(TempFileName)
+                if (FileExists(TempFullName) .eqv. .false.) then
                     AllOK = .false.
                 end if
             end if
         end if
         i = i + 1
-    end if
+    end do
     close(fhandle)
 end subroutine CheckFilesInProject
 
