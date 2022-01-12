@@ -290,9 +290,11 @@ procedure GetDaySwitchToLinear(
                var HIGClinear : double);
         external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
 
+
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
             var NrRuns : integer);
+
 
 procedure GetNumberSimulationRuns_wrap(
             constref TempFileNameFull : PChar;
@@ -300,9 +302,13 @@ procedure GetNumberSimulationRuns_wrap(
             var NrRuns : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
 
-function GetCO2File(): string;
-        external 'aquacrop' name '__ac_global_MOD_get_co2file';
 
+function GetCO2File(): string;
+        external 'aquacrop' name '__ac_global_MOD_getco2file';
+
+
+procedure SetCO2File(constref str : string);
+        external 'aquacrop' name '__ac_global_MOD_setco2file';
 
 
 implementation

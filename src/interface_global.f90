@@ -69,4 +69,23 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
     call GetCO2Description(string, CO2Description)
 end subroutine GetCO2Description_wrap
 
+!! NOT SURE !!
+function GetCO2File_wrap(StringIN) result(c_pointer)
+    !! Wrapper for [[ac_global:GetCO2File]] for foreign languages.
+    character(len=*), intent(in) :: StringIN
+    type(c_ptr), intent(out) :: c_pointer
+
+    c_pointer = string2pointer(StringIN)
+end subroutine GetCO2File_wrap
+
+
+subroutine SetCO2File_wrap(StringIN)
+    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    character(len=*), intent(in) :: StringIN
+    type(c_ptr), intent(out) :: str
+
+    c_pointer = string2pointer(StringIN)
+end subroutine SetCO2File_wrap
+
+
 end module ac_interface_global
