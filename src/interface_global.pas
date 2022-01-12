@@ -314,6 +314,12 @@ function FileExists_wrap(
             constref strlen : integer) : boolean;
         external 'aquacrop' name '__ac_interface_global_MOD_fileexists_wrap';
 
+function HIadjWStressAtFlowering(
+            constref KsVeg,KsSto : double;
+            constref a : ShortInt;
+            constref b : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_hiadjwstressatflowering';
+
 procedure SplitStringInTwoParams(
             constref StringIN : string;
             var Par1,Par2 : double);
