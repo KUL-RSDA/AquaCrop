@@ -1,9 +1,7 @@
 module ac_simul
 
-use ac_kinds, only:  dp, &
-                    int8, &
-                    int32, &
-                    sp
+use ac_kinds, only:  dp
+
 implicit none
 
 
@@ -18,7 +16,6 @@ real(dp) function GetCDCadjustedNoStressNew(CCx, CDC, CCxAdjusted)
 
     real(dp) :: CDCadjusted
 
-    ! CDCadjusted := CDC * (CCxadjusted/CCx);
     CDCadjusted = CDC * ((CCxadjusted+2.29_dp)/(CCx+2.29_dp))
     GetCDCadjustedNoStressNew = CDCadjusted
     
