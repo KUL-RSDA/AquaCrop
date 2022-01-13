@@ -2,7 +2,7 @@ unit DefaultCropSoil;
 
 interface
 
-uses Global, interface_global;
+uses Global, interface_global, interfact_defaultcropsoil;
 
 PROCEDURE ResetDefaultCrop;
 PROCEDURE ResetDefaultSoil;
