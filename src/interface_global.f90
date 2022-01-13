@@ -39,7 +39,7 @@ function string2pointer(string) result(c_pointer)
     character(len=*), intent(in) :: string
     type(c_ptr) :: c_pointer
 
-    character(len=:), allocatable, target :: f_string
+    character(len=:), allocatable, target, save :: f_string
 
     f_string = string // c_null_char
     c_pointer = c_loc(f_string)
