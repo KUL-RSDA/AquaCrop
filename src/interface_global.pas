@@ -9,6 +9,8 @@ const
     undef_double = -9.9;
     undef_int = -9;
     CO2Ref = 369.41;
+    ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
+                                                212.25,243.25,273.25,304.25,334.25);
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -41,6 +43,8 @@ type
         END;
 
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
+    
+    rep_int_array = ARRAY[1..4] OF INTEGER;
 
     rep_modeCycle = (GDDays, CalendarDays);
 
@@ -91,8 +95,16 @@ procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
          external 'aquacrop' name '__ac_global_MOD_set_layer_undef';
 
+procedure DetermineDayNr(
+            constref Dayi,Monthi,Yeari : integer;
+            var DayNr : longint);
+         external 'aquacrop' name '__ac_global_MOD_determinedaynr';
 
-
+PROCEDURE DetermineDate(
+            constref DayNr : longint;
+            var Dayi,Monthi,Yeari : integer);
+         external 'aquacrop' name '__ac_global_MOD_determinedate';
+                        
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;
             constref ShapeRootDeepening : shortint;
@@ -152,6 +164,35 @@ function TimeToCCini(
             constref TheSizePlant : double;
             constref TheCropCCx : double;
             constref TheCropCGC : double) : Integer;
+
+procedure __DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : integer;
+            constref CGCgiven : boolean;
+            constref TheDaysToCCini : integer;
+            constref ThePlanting : integer;
+            VAR Length123 : integer;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
+        external 'aquacrop' name '__ac_global_MOD_determinelengthgrowthstages';
+
+procedure DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : INTEGER;
+            constref CGCgiven : BOOLEAN;
+            constref TheDaysToCCini : INTEGER;
+            constref ThePlanting : rep_planting;
+            VAR Length123 : INTEGER;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
 
 
 function MultiplierCCxSelfThinning(
@@ -264,6 +305,12 @@ function CCatGDD(
             constref GDDi, CCoIN, GDDCGCIN, CCxIN : double)  : double;
          external 'aquacrop' name '__ac_global_MOD_ccatgdd';
 
+function CanopyCoverNoStressGDDaysSF(
+            constref GDDL0,GDDL123,GDDLMaturity : integer;
+            constref SumGDD,CCo,CCx,GDDCGC,GDDCDC : double;
+            constref SFRedCGC,SFRedCCx : shortint) : double;
+         external 'aquacrop' name '__ac_global_MOD_canopycovernostressgddayssf';
+
 function fAdjustedForCO2 (
             constref CO2i, WPi : double;
             constref PercentA : ShortInt) : double;
@@ -291,11 +338,9 @@ procedure GetDaySwitchToLinear(
                var HIGClinear : double);
         external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
 
-
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
             var NrRuns : integer);
-
 
 procedure GetNumberSimulationRuns_wrap(
             constref TempFileNameFull : PChar;
@@ -314,6 +359,39 @@ procedure SetCO2File_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
+
+function FileExists(constref full_name : string) : boolean;
+
+function FileExists_wrap(
+            constref full_name : string;
+            constref strlen : integer) : boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_fileexists_wrap';
+
+function HIadjWStressAtFlowering(
+            constref KsVeg,KsSto : double;
+            constref a : ShortInt;
+            constref b : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_hiadjwstressatflowering';
+
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+
+procedure SplitStringInTwoParams_wrap(
+            constref StringIN : PChar;
+            constref strlen : integer;
+            var Par1,Par2 : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_splitstringintwoparams_wrap';
+
+procedure SplitStringInThreeParams(
+            constref StringIN : string;
+            var Par1,Par2, Par3 : double);
+
+procedure SplitStringInThreeParams_wrap(
+            constref StringIN : PChar;
+            constref strlen : integer;
+            var Par1,Par2,Par3 : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
 
 implementation
@@ -358,6 +436,42 @@ begin
                                  TheSizePlant, TheCropCCx, TheCropCGC);
 end;
 
+
+
+
+procedure DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : integer;
+            constref CGCgiven : boolean;
+            constref TheDaysToCCini : integer;
+            constref ThePlanting : rep_planting;
+            VAR Length123 : integer;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
+
+VAR 
+    int_planting: integer;
+
+
+begin
+    int_planting := ord(ThePlanting);
+    __DetermineLengthGrowthStages(CCoVal,CCxVal,
+                                            CDCVal,L0,
+                                            TotalLength,
+                                            CGCgiven,
+                                            TheDaysToCCini,
+                                            int_planting,
+                                            Length123,
+                                            StLength,
+                                            Length12,
+                                                    CGCVal);
+end;
+
+
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
             var NrRuns : integer);
@@ -371,6 +485,41 @@ begin;
     GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
 end;
 
+function FileExists(constref full_name : string) : boolean;
+var 
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(full_name);
+    strlen := Length(full_name);
+    FileExists := FileExists_wrap(p, strlen);
+end;
+
+procedure SplitStringInTwoParams(
+            constref StringIN : string;
+            var Par1,Par2 : double);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(StringIN);
+    strlen := Length(StringIN);
+    SplitStringInTwoParams_wrap(p, strlen, Par1, Par2);
+end;
+
+procedure SplitStringInThreeParams(
+            constref StringIN : string;
+            var Par1,Par2,Par3 : double);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(StringIN);
+    strlen := Length(StringIN);
+    SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
+end;
 
 procedure GetCO2Description(
             constref CO2FileFull : string;

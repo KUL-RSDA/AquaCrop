@@ -4,11 +4,16 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: GetCO2Description, &
+use ac_global, only: GetNumberSimulationRuns, &
+                     SplitStringInTwoParams, &
+                     SplitStringInThreeParams, &
+                     FileExists, &
+                     GetCO2Description, &
                      GetCO2File, &
-                     GetNumberSimulationRuns, &
                      SetCO2File
-use ac_kinds, only: int32
+use ac_kinds, only: dp, &
+                    int32
+
 implicit none
 
 
@@ -59,6 +64,47 @@ subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
 end subroutine GetNumberSimulationRuns_wrap
 
 
+logical function FileExists_wrap(full_name, strlen)
+    !! Wrapper for [[ac_global:FileExists]] for foreign languages.
+    type(c_ptr), intent(in) :: full_name
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(full_name, strlen)
+    FileExists_wrap = FileExists(string)
+end function FileExists_wrap
+
+
+subroutine SplitStringInTwoParams_wrap(StringIN, strlen, Par1, Par2)
+    !! Wrapper for [[ac_global:SplitStringInTwoParams]] for foreign languages.
+    type(c_ptr), intent(in) :: StringIN
+    integer(int32), intent(in) :: strlen
+    real(dp), intent(inout) :: Par1
+    real(dp), intent(inout) :: Par2
+
+    character(len=strlen) :: string
+
+    string = pointer2string(StringIN, strlen)
+    call SplitStringInTwoParams(string, Par1, Par2)
+end subroutine SplitStringInTwoParams_wrap
+
+
+subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
+    !! Wrapper for [[ac_global:SplitStringInTwoParams]] for foreign languages.
+    type(c_ptr), intent(in) :: StringIN
+    integer(int32), intent(in) :: strlen
+    real(dp), intent(inout) :: Par1
+    real(dp), intent(inout) :: Par2
+    real(dp), intent(inout) :: Par3
+
+    character(len=strlen) :: string
+
+    string = pointer2string(StringIN, strlen)
+    call SplitStringInThreeParams(string, Par1, Par2, Par3)
+end subroutine SplitStringInThreeParams_wrap
+
+
 subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
             strlen2)
     !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
@@ -94,5 +140,6 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     string = pointer2string(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
+
 
 end module ac_interface_global

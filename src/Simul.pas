@@ -2,7 +2,7 @@ unit Simul;
 
 interface
 
-uses Global, interface_global, Math, TempProcessing;
+uses Global, interface_global, Math, TempProcessing, interface_tempprocessing, interface_simul;
 
 PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
                                     SumGDDadjCC,CO2i,GDDayi : double;
@@ -1980,18 +1980,6 @@ IF (CGCadjusted > 0.000001) // CGC can be adjusted
         END;
 
 END; (* DetermineCGCadjusted *)
-
-
-
-
-FUNCTION GetCDCadjustedNoStressNew(CCx,CDC,CCxAdjusted : double) : double;
-VAR CDCadjusted : double;
-BEGIN
-//CDCadjusted := CDC * (CCxadjusted/CCx);
-CDCadjusted := CDC * ((CCxadjusted+2.29)/(CCx+2.29));
-GetCDCadjustedNoStressNew := CDCadjusted;
-END; (* GetCDCadjustedNoStressNew *)
-
 
 
 PROCEDURE DetermineCDCadjustedWaterStress(VAR CDCadjusted,KsSen : double);

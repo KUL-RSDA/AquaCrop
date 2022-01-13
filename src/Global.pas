@@ -7,8 +7,7 @@ uses SysUtils, interface_global;
 
 Const max_No_compartments = 12;
       Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
-      ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
-                                                212.25,243.25,273.25,304.25,334.25);
+
       NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
           'May','June','July','August','September','October','November','December');
 
@@ -53,7 +52,6 @@ TYPE
          ErrorDay  : double; //error on WaterContent or SaltContent over the day
          END;
 
-     rep_int_array = ARRAY[1..4] OF INTEGER;
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
      
@@ -517,9 +515,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-
-FUNCTION FileExists (full_name : string) : BOOLEAN;
-
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
                             SumGDD,Zmin,Zmax : double;
                             ShapeFactor : ShortInt;
@@ -539,8 +534,6 @@ PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
 
 PROCEDURE NoIrrigation;
-PROCEDURE SplitStringInTwoParams(StringIN : string;
-                                 VAR Par1,Par2 : double);
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
@@ -576,15 +569,6 @@ PROCEDURE DetermineSaltContent(ECe : double;
 PROCEDURE CompleteProfileDescription;
 PROCEDURE LoadProfile(FullName : string);
 
-PROCEDURE DetermineLengthGrowthStages(CCoVal,CCxVal,CDCVal : double;
-                                      L0,TotalLength : INTEGER;
-                                      CGCgiven : BOOLEAN;
-                                      TheDaysToCCini : INTEGER;
-                                      ThePlanting : rep_planting;
-                                      VAR Length123 : INTEGER;
-                                      VAR StLength : rep_int_array;
-                                      VAR Length12 : integer;
-                                      VAR CGCVal : double);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
@@ -597,10 +581,7 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
 Function LeapYear(Year : INTEGER) : BOOLEAN;
-PROCEDURE DetermineDayNr(Dayi,Monthi,Yeari : INTEGER;
-                         VAR DayNr : Longint);
-PROCEDURE DetermineDate(DayNr : Longint;
-                        VAR Dayi,Monthi,Yeari : INTEGER);
+
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
@@ -641,9 +622,6 @@ FUNCTION HarvestIndexDay(DAP  : LongInt;
                          TempPlanting : rep_Planting;
                          VAR PercentLagPhase : ShortInt;
                          VAR HIfinal : INTEGER)   : double;
-FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
-                                 a : ShortInt;
-                                 b : double) : double;
 PROCEDURE ReadRainfallSettings;
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
@@ -676,8 +654,6 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
                                         LocDepth,LocVolPr,LocECdS : rep_IniComp;
                                         NrComp : INTEGER;
                                         VAR Comp : rep_Comp);
-PROCEDURE SplitStringInThreeParams(StringIN : string;
-                            VAR Par1,Par2,Par3 : double);
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double;
                                 VAR IniSWCRead : rep_IniSWC);
@@ -730,18 +706,6 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
 implementation
-
-
-FUNCTION FileExists (full_name : string) : BOOLEAN;
-VAR f : textfile;
-BEGIN
-{$I-}
-Assign(f, full_name);
-Reset(f);
-Close(f);
-{$I+}
-FileExists := (IOResult = 0);
-END; (* FileExists *)
 
 
 FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
@@ -1128,40 +1092,6 @@ BEGIN
  IrriECw.PreSeason := 0.0; //dS/m
  IrriECw.PostSeason := 0.0; //dS/m
 END; (* NoIrrigation *)
-
-
-
-
-PROCEDURE SplitStringInTwoParams(StringIN : string;
-                                 VAR Par1,Par2 : double);
-VAR LengthS,i,Parami : INTEGER;
-    CharA : Char;
-    StringNumber : ShortString;
-
-BEGIN
-LengthS := Length(StringIN);
-i := 0;
-Parami := 0;
-// divide the line in parameters
-WHILE ((i < LengthS) AND (Parami < 2)) DO
-   BEGIN
-   i := i + 1;
-   CharA := StringIN[i];
-   IF (CharA > #32) THEN
-      BEGIN // next Parameter
-      Parami := Parami + 1;
-      StringNumber := '';
-      WHILE ((CharA > #32) AND (i <= LengthS)) DO
-         BEGIN
-         StringNumber := CONCAT(StringNumber,CharA);
-         i := i + 1;
-         IF (i <= LengthS) THEN CharA := StringIN[i];
-         END;
-      IF (Parami = 1) THEN Par1 := StrToFloat(StringNumber);
-      IF (Parami = 2) THEN Par2 := StrToFloat(StringNumber);
-      END; // next Parameter
-   END; // end of line
-END; (* SplitStringInTwoParams *)
 
 
 PROCEDURE NoManagementOffSeason;
@@ -1798,110 +1728,6 @@ Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 END; // Loadprofile
 
 
-PROCEDURE DetermineLengthGrowthStages(CCoVal,CCxVal,CDCVal : double;
-                                      L0,TotalLength : INTEGER;
-                                      CGCgiven : BOOLEAN;
-                                      TheDaysToCCini : INTEGER;
-                                      ThePlanting : rep_planting;
-                                      VAR Length123 : INTEGER;
-                                      VAR StLength : rep_int_array;
-                                      VAR Length12 : integer;
-                                      VAR CGCVal : double);
-VAR CCToReach : double;
-    L12Adj : INTEGER;
-
-BEGIN //DetermineLengthGrowthStages
-
-IF (Length123 < Length12) THEN Length123 := Length12;
-
-// 1. Initial and 2. Crop Development stage
-      //CGC is given and Length12 is already adjusted to it
-      //OR Length12 is given and CGC has to be determined
-IF ((CCoVal >= CCxVal) OR (Length12 <= L0))
-   THEN BEGIN
-        Length12 := 0;
-        StLength[1] := 0;
-        StLength[2] := 0;
-        CGCVal := Undef_int;
-        END
-   ELSE BEGIN
-        IF (NOT CGCgiven) //Length12 is given and CGC has to be determined
-           THEN BEGIN
-                CGCVal := Ln((0.25*CCxVal/CCoVal)/(1-0.98))/(Length12-L0);
-                // Check if CGC < maximum value (0.40) and adjust Length12 if required
-                IF CGCVal > 0.40 THEN
-                   BEGIN
-                   CGCVal := 0.40;
-                   Length12 := DaysToReachCCwithGivenCGC((0.98*CCxVal),CCoVal,CCxVal,CGCVal,L0);
-                   IF (Length123 < Length12) THEN Length123 := Length12;
-                   END;
-                END;
-        //find StLength[1]
-        CCToReach := 0.10;
-        StLength[1] := DaysToReachCCwithGivenCGC(CCToReach,CCoVal,CCxVal,CGCVal,L0);
-        //find StLength[2]
-        StLength[2] := Length12 - StLength[1];
-        END;
-L12Adj := Length12;
-
-// adjust Initial and Crop Development stage, in case crop starts as regrowth
-IF (ThePlanting = Regrowth) THEN
-   BEGIN
-   IF (TheDaystoCCini = undef_int)
-      THEN BEGIN // maximum canopy cover is already reached at start season
-           L12Adj := 0;
-           StLength[1] := 0;
-           StLength[2] := 0;
-           END
-      ELSE BEGIN
-           IF (TheDaystoCCini = 0)
-              THEN BEGIN // start at germination
-                   L12Adj := Length12 - L0;
-                   StLength[1] := StLength[1] - L0;
-                   END
-              ELSE BEGIN // start after germination
-                   L12Adj := Length12 - (L0 + TheDaysToCCini);
-                   StLength[1] := StLength[1] - (L0 + TheDaysToCCini);
-                   END;
-           IF (StLength[1] < 0) THEN StLength[1] := 0;
-           StLength[2] := L12Adj - StLength[1];
-           END;
-   END;
-
-
-// 3. Mid season stage
-//StLength[3] := Length123 - Length12;
-StLength[3] := Length123 - L12Adj;
-
-// 4. Late season stage
-StLength[4] := LengthCanopyDecline(CCxVal,CDCVal);
-
-// final adjustment
-IF (StLength[1] > TotalLength)
-   THEN BEGIN
-        StLength[1] := TotalLength;
-        StLength[2] := 0;
-        StLength[3] := 0;
-        StLength[4] := 0;
-        END
-   ELSE BEGIN
-        IF ((StLength[1]+StLength[2]) > TotalLength)
-           THEN BEGIN
-                StLength[2] := TotalLength - StLength[1];
-                StLength[3] := 0;
-                StLength[4] := 0;
-                END
-           ELSE BEGIN
-                IF ((StLength[1]+StLength[2]+StLength[3]) > TotalLength)
-                   THEN BEGIN
-                        StLength[3] := TotalLength - StLength[1] - StLength[2];
-                        StLength[4] := 0;
-                        END
-                   ELSE IF ((StLength[1]+StLength[2]+StLength[3]+StLength[4]) > TotalLength)
-                           THEN StLength[4] := TotalLength - StLength[1] - StLength[2] - StLength[3];
-                END;
-        END;
-END; (* DetermineLengthGrowthStages *)
 
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
@@ -2326,30 +2152,6 @@ BEGIN
 LeapYear := false;
 IF (FRAC(Year/4) <= 0.01 ) THEN LeapYear := true;
 END; (* LeapYear *)
-
-
-
-PROCEDURE DetermineDayNr(Dayi,Monthi,Yeari : INTEGER;
-                         VAR DayNr : Longint);
-BEGIN
-DayNr := TRUNC((Yeari - 1901)*365.25 + ElapsedDays[Monthi] + Dayi + 0.05);
-END; (* DetermineDayNr *)
-
-
-PROCEDURE DetermineDate(DayNr : Longint;
-                        VAR Dayi,Monthi,Yeari : INTEGER);
-VAR SumDayMonth : double;
-BEGIN
-Yeari := TRUNC((DayNr-0.05)/365.25);
-SumDayMonth := (DayNr - Yeari*365.25);
-Yeari := 1901 + Yeari;
-Monthi := 1;
-WHILE ((SumDayMonth > ElapsedDays[Monthi+1]) AND (Monthi < 12))
-       DO Monthi := Monthi + 1;
-Dayi := ROUND(SumDayMonth - ElapsedDays[Monthi] + 0.25 + 0.06);
-END; (* DetermineDate *)
-
-
 
 
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
@@ -3521,42 +3323,6 @@ CanopyCoverNoStressDaysSF := CC;
 END; (* CanopyCoverNoStressDaysSF *)
 
 
-FUNCTION CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                                     SumGDD,CCo,CCx,GDDCGC,GDDCDC : double;
-                                     SFRedCGC,SFRedCCx : ShortInt) : double;
-VAR CC,CCxAdj,GDDCDCadj : double;
-
-
-BEGIN (* CanopyCoverNoStressGDDaysSF *)
-//SumGDD refers to the end of the day and Delayed days are not considered
-CC := 0.0;
-IF ((SumGDD > 0) AND (ROUND(SumGDD) <= GDDLMaturity) AND (CCo > 0)) THEN
-   BEGIN
-   IF (SumGDD <= GDDL0) // before germination or recovering of transplant
-      THEN CC := 0
-      ELSE BEGIN
-           IF (SumGDD < GDDL123) // Canopy development and Mid-season stage
-              THEN CC := CCatGDD((SumGDD-GDDL0),CCo,((1-SFRedCGC/100)*GDDCGC),((1-SFRedCCx/100)*CCx))
-              ELSE BEGIN // Late-season stage  (SumGDD <= GDDLMaturity)
-                   IF (CCx < 0.001)
-                      THEN CC := 0
-                      ELSE BEGIN
-                           CCxAdj := CCatGDD((GDDL123-GDDL0),CCo,((1-SFRedCGC/100)*GDDCGC),((1-SFRedCCx/100)*CCx));
-                           GDDCDCadj := GDDCDC*(CCxadj+2.29)/(CCx+2.29);
-                           IF (CCxAdj < 0.001)
-                              THEN CC := 0
-                              //ELSE CC := CCxAdj * (1 - 0.05*(exp((SumGDD-GDDL123)*GDDCDC*3.33*((CCxadj+2.29)/(CCx+2.29))/(CCxAdj+2.29))-1));
-                              ELSE CC := CCxAdj * (1 - 0.05*(exp((SumGDD-GDDL123)*3.33*GDDCDCadj/(CCxAdj+2.29))-1));
-                           END;
-                   END;
-           END;
-   END;
-IF (CC > 1) THEN CC := 1;
-IF (CC < 0) THEN CC := 0;
-CanopyCoverNoStressGDDaysSF := CC;
-END; (* CanopyCoverNoStressGDDaysSF *)
-
-
 BEGIN (* CanopyCoverNoStressSF *)
 CASE TypeDays OF
      GDDays : CanopyCoverNoStressSF := CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity,
@@ -3650,31 +3416,6 @@ IF (t <= 0)
 HarvestIndexDay := HIday;
 
 END; (* HarvestIndexDay *)
-
-FUNCTION HIadjWStressAtFlowering(KsVeg,KsSto : double;
-                                 a : ShortInt;
-                                 b : double) : double;
-BEGIN
-IF (a = undef_int)
-   THEN BEGIN
-        IF (ROUND(b) = undef_int)
-           THEN HIadjWStressAtFlowering := 1
-           ELSE IF (KsSto > 0.001)
-                   THEN HIadjWStressAtFlowering := (Exp(0.10*Ln(KsSto))) * (1-(1-KsSto)/b)
-                   ELSE HIadjWStressAtFlowering := 0;
-        END
-   ELSE BEGIN
-        IF (ROUND(b) = undef_int)
-           THEN HIadjWStressAtFlowering := (1 + (1-KsVeg)/a)
-           ELSE IF (KsSto > 0.001)
-                   THEN HIadjWStressAtFlowering := (1 + (1-KsVeg)/a) * (Exp(0.10*Ln(KsSto))) * (1-(1-KsSto)/b)
-                   ELSE HIadjWStressAtFlowering := 0;
-        END;
-END; (* HIadjWStressAtFlowering *)
-
-
-
-
 
 
 PROCEDURE ReadRainfallSettings;
@@ -4314,42 +4055,6 @@ For Compi := 1 TO NrComp DO // from (10*VolSat*dZ * EC) to ECe and distribution 
     DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
     END;
 END; (* TranslateIniPointsToSWProfile *)
-
-
-
-PROCEDURE SplitStringInThreeParams(StringIN : string;
-                            VAR Par1,Par2,Par3 : double);
-VAR LengthS,i,Parami : INTEGER;
-    CharA : Char;
-    StringNumber : ShortString;
-
-BEGIN
-LengthS := Length(StringIN);
-i := 0;
-Parami := 0;
-// divide the line in parameters
-WHILE ((i < LengthS) AND (Parami < 3)) DO
-   BEGIN
-   i := i + 1;
-   CharA := StringIN[i];
-   IF (CharA > #32) THEN
-      BEGIN // next Parameter
-      Parami := Parami + 1;
-      StringNumber := '';
-      WHILE ((CharA > #32) AND (i <= LengthS)) DO
-         BEGIN
-         StringNumber := CONCAT(StringNumber,CharA);
-         i := i + 1;
-         IF (i <= LengthS) THEN CharA := StringIN[i];
-         END;
-      IF (Parami = 1) THEN Par1 := StrToFloat(StringNumber);
-      IF (Parami = 2) THEN Par2 := StrToFloat(StringNumber);
-      IF (Parami = 3) THEN Par3 := StrToFloat(StringNumber);
-      END; // next Parameter
-   END; // end of line
-END; (* SplitStringInThreeParams *)
-
-
 
 
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
