@@ -2,7 +2,7 @@ unit ClimProcessing;
 
 interface
 
-uses Global, interface_global;
+uses Global, interface_global, interface_climprocessing;
 
 
 PROCEDURE GetMonthlyEToDataSet(DayNri : LongInt;
@@ -358,16 +358,6 @@ IF (NOT OK3) THEN
    END;
 Close(fETo);
 END; (* GetSetofThree *)
-
-
-PROCEDURE GetParameters(C1,C2,C3 : double;
-                        VAR UL,LL,Mid : double);
-BEGIN
-UL := (C1+C2)/2;
-LL := (C2+C3)/2;
-Mid := 2*C2 - (UL+LL)/2;
-// --previous decade-->/UL/....... Mid ......../LL/<--next decade--
-END; (* GetParameters *)
 
 
 BEGIN (* GetDecadeEToDataSet *)
