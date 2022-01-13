@@ -5,6 +5,8 @@ use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     sp
+use iso_fortran_env, only: iostat_end
+
 implicit none
 
 
@@ -18,6 +20,10 @@ real(dp), parameter :: CO2Ref = 369.41_dp;
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
 real(dp), parameter :: eps =10E-08
+real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
+                                                    90.25_dp, 120.25_dp, 151.25_dp, &
+                                                    181.25_dp, 212.25_dp, 243.25_dp, &
+                                                    273.25_dp, 304.25_dp, 334.25_dp]
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -111,6 +117,20 @@ end type rep_EffectStress
 
 
 contains
+
+
+function trunc(x) result(y)
+    !! Returns the integer part of x, which is always smaller than (or equal to) x
+    !! in absolute value.
+    real(dp), intent(in) :: x
+    integer(int32) :: y
+    
+    if (x > 0) then
+        y = floor(x, kind=int32)
+    else
+        y = ceiling(x, kind=int32)
+    end if
+end function trunc
 
 
 real(dp) function AquaCropVersion(FullNameXXFile)
@@ -612,7 +632,6 @@ integer(int32) function LengthCanopyDecline(CCx, CDC)
 end function LengthCanopyDecline
 
 
-
 real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
     real(dp), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -732,27 +751,6 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
         end if
     end if
 end subroutine DeriveSmaxTopBottom
-
-
-real(dp) function GetKs(T0, T1, Tin)
-    real(dp), intent(in) :: T0
-    real(dp), intent(in) :: T1
-    real(dp), intent(in) :: Tin
-
-    real(dp), parameter  :: Mo = 0.02_dp
-    real(dp), parameter  :: Mx = 1.0_dp
-
-    real(dp) :: MRate, Ksi, Trel
-
-    Trel = (Tin-T0)/(T1-T0)
-    ! derive rate of increase (MRate)
-    MRate = (-1._dp)*(log((Mo*Mx-0.98_dp*Mo)/(0.98_dp*(Mx-Mo))))
-    ! get Ks from logistic equation
-    Ksi = (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel))
-    ! adjust for Mo
-    Ksi = Ksi - Mo * (1._dp - Trel)
-    GetKs = Ksi
- end function GetKs
 
 
 real(dp) function KsTemperature(T0, T1, Tin)
@@ -984,6 +982,39 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     CCatTime = CCi
 end function CCatTime
 
+
+subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
+    integer(int32), intent(in) :: Dayi
+    integer(int32), intent(in) :: Monthi
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(inout) :: DayNr
+
+    DayNr = trunc((Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp)
+    
+end subroutine DetermineDayNr
+
+
+subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
+    integer(int32), intent(in) :: DayNr
+    integer(int32), intent(inout) :: Dayi
+    integer(int32), intent(inout) :: Monthi
+    integer(int32), intent(inout) :: Yeari
+
+    real(dp) :: SumDayMonth
+
+    Yeari = trunc((DayNr-0.05_dp)/365.25_dp)
+    SumDayMonth = (DayNr - Yeari*365.25_dp)
+    Yeari = 1901 + Yeari
+    Monthi = 1
+
+    do while (Monthi < 12)
+        if (SumDayMonth <= ElapsedDays(Monthi+1)) exit
+        Monthi = Monthi + 1
+    end do
+    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp, kind=int32)
+end subroutine DetermineDate
+
+
 real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
@@ -1167,6 +1198,85 @@ real(dp) function CCatGDD(GDDi, CCoIN, GDDCGCIN, CCxIN)
 end function CCatGDD
 
 
+real(dp) function CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, GDDLMaturity, SumGDD, &
+        CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    real(dp) :: CC, CCxAdj, GDDCDCadj
+
+    ! SumGDD refers to the end of the day and Delayed days are not considered
+    CC = 0._dp
+    if ((SumGDD > 0._dp) .and. (nint(SumGDD, kind=int32) <= GDDLMaturity) .and. (CCo > 0._dp)) then
+        if (SumGDD <= GDDL0) then ! before germination or recovering of transplant
+            CC = 0._dp
+        else
+            if (SumGDD < GDDL123) then ! Canopy development and Mid-season stage
+                CC = CCatGDD(real((SumGDD-GDDL0),dp), CCo, ((1._dp-SFRedCGC/100._dp)*GDDCGC), & 
+                  ((1._dp-SFRedCCx/100._dp)*CCx))
+            else
+                ! Late-season stage  (SumGDD <= GDDLMaturity)
+                if (CCx < 0.001_dp) then
+                    CC = 0._dp
+                else
+                    CCxAdj = CCatGDD(real(GDDL123-GDDL0,dp), CCo, ((1_dp-SFRedCGC/100._dp)*GDDCGC), &
+                      ((1._dp-SFRedCCx/100._dp)*CCx))
+                    GDDCDCadj = GDDCDC*(CCxadj+2.29_dp)/(CCx+2.29_dp)
+                    if (CCxAdj < 0.001_dp) then
+                        CC = 0._dp
+                    else
+                        CC = CCxAdj * (1._dp - 0.05_dp*(exp((SumGDD-GDDL123)*3.33_dp*GDDCDCadj/&
+                          (CCxAdj+2.29_dp))-1._dp))
+                    end if
+                end if
+            end if
+        end if
+    end if
+    if (CC > 1._dp) then
+        CC = 1._dp
+    end if
+    if (CC < 0._dp) then
+        CC = 0._dp
+    end if
+    CanopyCoverNoStressGDDaysSF = CC
+end function CanopyCoverNoStressGDDaysSF
+
+
+real(dp) function HIadjWStressAtFlowering(KsVeg, KsSto, a, b)
+    real(dp), intent(in) :: KsVeg
+    real(dp), intent(in) :: KsSto
+    integer(int8), intent(in) :: a
+    real(dp), intent(in) :: b
+
+    if (a == undef_int) then
+        if (nint(b, kind=int32) == undef_int) then
+            HIadjWStressAtFlowering = 1._dp
+        elseif (KsSto > 0.001_dp) then
+            HIadjWStressAtFlowering = (exp(0.10_dp*log(KsSto))) * (1._dp-(1._dp-KsSto)/b)
+        else
+            HIadjWStressAtFlowering = 0.0_dp
+        end if
+    else
+        if (nint(b, kind=int32) == undef_int) then
+            HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a)
+        elseif (KsSto > 0.001_dp) then
+            HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a) * (exp(0.10_dp*log(KsSto))) &
+              * (1._dp-(1._dp-KsSto)/b)
+        else
+            HIadjWStressAtFlowering = 0._dp
+        end if
+    end if
+end function HIadjWStressAtFlowering
+
+
 real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
     real(dp), intent(in) :: CO2i
     real(dp), intent(in) :: WPi
@@ -1254,6 +1364,170 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
     FullUndefinedRecord = ((FromY == 1901) .and. (FromD == 1)&
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
+
+
+subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
+    integer(int32), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+    real(dp), intent(in) :: HIGC
+    integer(int32), intent(inout) :: tSwitch
+    real(dp), intent(inout) :: HIGClinear
+
+    real(dp) :: HIi, HiM1, HIfinal
+    integer(int32) :: tmax, ti
+    integer(int32), parameter :: HIo = 1
+
+    tmax = nint(HImax/dHIdt, kind=int32)
+    ti = 0
+    HiM1 = HIo
+    if (tmax > 0) then
+        loop: do
+            ti = ti + 1
+            HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*ti))
+            HIfinal = HIi + (tmax - ti)*(HIi-HIM1)
+            HIM1 = HIi
+            if ((HIfinal > HImax) .or. (ti >= tmax)) exit loop
+        end do loop 
+        tSwitch = ti - 1
+    else
+        tSwitch = 0
+    end if
+    if (tSwitch > 0) then
+        HIi = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
+    else
+        HIi = 0
+    end if
+    HIGClinear = (HImax-HIi)/(tmax-tSwitch)
+end subroutine GetDaySwitchToLinear
+
+subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
+    character(len=*), intent(in) :: TempFileNameFull
+    integer(int32), intent(inout) :: NrRuns
+
+    integer :: fhandle
+    integer(int32) :: NrFileLines, rc, i
+
+    NrRuns = 1
+
+    open(newunit=fhandle, file=trim(TempFileNameFull), status='old', &
+         action='read', iostat=rc)
+    read(fhandle, *, iostat=rc)  ! Description
+    read(fhandle, *, iostat=rc)  ! AquaCrop version Nr
+
+    do i = 1, 5 
+        read(fhandle, *, iostat=rc) ! Type year and Simulation and Cropping period Run 1
+    end do
+
+    NrFileLines = 42 ! Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
+    do i = 1, NrFileLines 
+        read(fhandle, *, iostat=rc) ! Files Run 1
+    end do
+
+    read_loop: do
+        i = 0
+        do while (i < (NrFileLines+5))
+            read(fhandle, *, iostat=rc)
+            if (rc == iostat_end) exit read_loop
+            i = i + 1
+        end do
+
+        if (i == (NrFileLines+5)) then
+            NrRuns = NrRuns + 1
+        end if
+    end do read_loop
+    close(fhandle)
+end subroutine GetNumberSimulationRuns
+
+
+logical function FileExists(full_name)
+    character(len=*), intent(in) :: full_name
+
+    inquire(file=trim(full_name), exist=FileExists)
+end function FileExists 
+
+
+subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
+    character(len=*), intent(in) :: StringIN
+    real(dp), intent(inout) :: Par1
+    real(dp), intent(inout) :: Par2
+
+    integer(int32) :: LengthS, i, Parami
+    character :: CharA
+    character(len=255) :: StringNumber
+
+    LengthS = len(StringIN)
+    i = 0
+    Parami = 0
+    ! divide the line in parameters
+    do while ((i < LengthS) .and. (Parami < 2)) 
+        i = i + 1
+        CharA = StringIN(i:i)
+        if (ichar(CharA) > 32) then
+            ! next Parameter
+            Parami = Parami + 1
+            StringNumber = ''
+            do while ((ichar(CharA) > 32) .and. (i <= LengthS))
+                StringNumber = trim(StringNumber) // CharA
+                i = i + 1
+                if (i <= LengthS) then
+                    CharA = StringIN(i:i)
+                end if
+            end do
+            if (Parami == 1) then
+                read(StringNumber, *) Par1
+            end if
+            if (Parami == 2) then
+                read(StringNumber, *) Par2
+            end if
+            ! next Parameter
+        end if
+        ! end of line
+    end do
+end subroutine SplitStringInTwoParams
+
+
+subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
+    character(len=*), intent(in) :: StringIN
+    real(dp), intent(inout) :: Par1
+    real(dp), intent(inout) :: Par2
+    real(dp), intent(inout) :: Par3
+
+    integer(int32) :: LengthS, i, Parami
+    character :: CharA
+    character(len=255) :: StringNumber
+
+    LengthS = len(StringIN)
+    i = 0
+    Parami = 0
+    ! divide the line in parameters
+    do while ((i < LengthS) .and. (Parami < 3)) 
+        i = i + 1
+        CharA = StringIN(i:i)
+        if (ichar(CharA) > 32) then
+            ! next Parameter
+            Parami = Parami + 1
+            StringNumber = ''
+            do while ((ichar(CharA) > 32) .and. (i <= LengthS))
+                StringNumber = trim(StringNumber) // CharA
+                i = i + 1
+                if (i <= LengthS) then
+                    CharA = StringIN(i:i)
+                end if
+            end do
+            if (Parami == 1) then
+                read(StringNumber, *) Par1
+            end if
+            if (Parami == 2) then
+                read(StringNumber, *) Par2
+            end if
+            if (Parami == 3) then
+                read(StringNumber, *) Par3
+            end if
+            ! next Parameter
+        end if
+        ! end of line
+    end do
+end subroutine SplitStringInThreeParams
 
 
 end module ac_global
