@@ -21,10 +21,10 @@ subroutine GetInterpolationParameters(C1, C2, C3, X1, X2, X3, aOver3, bOver2, c)
     real(dp), intent(inout) :: bOver2
     real(dp), intent(inout) :: c
 
-! n1=n2=n3=30 --> better parabola
-aOver3 = (C1-2*C2+C3)/(6*30*30*30)
-bOver2 = (-6*C1+9*C2-3*C3)/(6*30*30)
-c = (11*C1-7*C2+2*C3)/(6*30)
+    ! n1=n2=n3=30 --> better parabola
+    aOver3 = (C1-2*C2+C3)/(6*30*30*30)
+    bOver2 = (-6*C1+9*C2-3*C3)/(6*30*30)
+    c = (11*C1-7*C2+2*C3)/(6*30)
 
 end subroutine GetInterpolationParameters
 
