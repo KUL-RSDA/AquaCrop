@@ -116,6 +116,9 @@ type rep_EffectStress
 end type rep_EffectStress
 
 
+character(len=:), allocatable :: CO2File
+
+
 contains
 
 
@@ -1255,6 +1258,24 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
+subroutine GetCO2Description(CO2FileFull, CO2Description)
+    character(len=*), intent(in) :: CO2FileFull
+    character(len=*), intent(inout) :: CO2Description
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(CO2FileFull), status='old', &
+         action='read')
+    read(fhandle, *) CO2Description
+    close(fhandle)
+
+    if (trim(GetCO2File()) == 'MaunaLoa.CO2') then
+        ! since this is an AquaCrop file, the Description is determined by AquaCrop
+        CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
+    end if
+end subroutine GetCO2Description
+
+
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     integer(int32), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -1326,7 +1347,6 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     end do read_loop
     close(fhandle)
 end subroutine GetNumberSimulationRuns
-
 
 logical function FileExists(full_name)
     character(len=*), intent(in) :: full_name
@@ -1417,6 +1437,23 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
         ! end of line
     end do
 end subroutine SplitStringInThreeParams
+
+!! Global variables section !!
+
+function GetCO2File() result(str)
+    !! Getter for the "CO2File" global variable.
+    character(len=len(CO2File)) :: str
+
+    str = CO2File
+end function GetCO2File
+
+
+subroutine SetCO2File(str)
+    !! Setter for the "CO2File" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2File = str
+end subroutine SetCO2File
 
 
 end module ac_global

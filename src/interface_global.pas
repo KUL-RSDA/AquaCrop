@@ -289,6 +289,16 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+procedure GetCO2Description(
+            constref CO2FileFull : string;
+            var CO2Description : string);
+
+procedure GetCO2Description_wrap(
+            constref CO2FileFull : PChar;
+            constref strlen1 : integer;
+            var CO2Description : PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
 
 procedure GetDaySwitchToLinear(
                constref HImax : integer;
@@ -306,6 +316,18 @@ procedure GetNumberSimulationRuns_wrap(
             constref strlen : integer;
             var NrRuns : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
+
+function GetCO2File(): string;
+
+function GetCO2File_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2file_wrap';
+
+procedure SetCO2File(constref str : string);
+
+procedure SetCO2File_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
 
 function FileExists(constref full_name : string) : boolean;
 
@@ -433,6 +455,43 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+procedure GetCO2Description(
+            constref CO2FileFull : string;
+            var CO2Description : string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(CO2FileFull);
+    p2 := PChar(CO2Description);
+    strlen1 := Length(CO2FileFull);
+    strlen2 := Length(CO2Description);
+    GetCO2Description_wrap(p1, strlen1, p2, strlen2);
+    CO2Description := AnsiString(p2);
+end;
+
+
+function GetCO2File(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2File_wrap();
+    GetCO2File := StrPas(p);
+end;
+
+
+procedure SetCO2File(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2File_wrap(p, strlen);
+end;
 
 initialization
 

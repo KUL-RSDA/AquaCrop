@@ -438,7 +438,7 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,EToFile,RainFile,TemperatureFile,CO2File,
+    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,EToFile,RainFile,TemperatureFile,
     IrriFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,EToFilefull,RainFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
@@ -595,7 +595,7 @@ Function LeapYear(Year : INTEGER) : BOOLEAN;
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File : string);
+                      VAR TempFile,EToFile,RainFile,CO2File_str: string);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -642,8 +642,6 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
 
 PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
                                        VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
-PROCEDURE GetCO2Description(CO2FileFull : string;
-                            VAR CO2Description : string);
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -2328,7 +2326,7 @@ END; (* CompleteClimateDescription *)
 
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File : string);
+                      VAR TempFile,EToFile,RainFile,CO2File_str : string);
 VAR f0 : TextFile;
 BEGIN
 Assign(f0,FullName);
@@ -2338,7 +2336,8 @@ READLN(f0); // AquaCrop Version
 READLN(f0,TempFile);
 READLN(f0,EToFile);
 READLN(f0,RainFile);
-READLN(f0,CO2File);
+READLN(f0,CO2File_str);
+SetCO2File(CO2File_str);
 Close(f0);
 END; (* LoadClimate *)
 
@@ -3693,24 +3692,6 @@ IF (RootingDepth >= Crop.RootMin)
         ZrKsSalt := undef_int;
         END;
 END;  (* DetermineRootZoneSaltContent *)
-
-
-
-PROCEDURE GetCO2Description(CO2FileFull : string;
-                            VAR CO2Description : string);
-VAR f0 : textfile;
-BEGIN
-Assign(f0,CO2FileFull);
-Reset(f0);
-Readln(f0,CO2Description);
-Close(f0);
-IF (CO2File = 'MaunaLoa.CO2') THEN
-   BEGIN
-   // since this is an AquaCrop file, the Description is determined by AquaCrop
-   CO2Description := 'Default atmospheric CO2 concentration from 1902 to 2099';
-   END;
-END; (* GetCO2Description *)
-
 
 
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
