@@ -1417,7 +1417,7 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     TotalFiles = 14
     do while (AllOK .and. (i <= TotalFiles))
         read(fhandle, *) ! Info
-        read(fhandle, *) TempFileName  ! FileName
+        read(fhandle, *) buffer  ! FileName
         TempFileName = trim(buffer)
         if (trim(TempFileName) == '(None)') then
             read(fhandle, *)
