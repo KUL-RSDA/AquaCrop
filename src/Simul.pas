@@ -1982,18 +1982,6 @@ IF (CGCadjusted > 0.000001) // CGC can be adjusted
 END; (* DetermineCGCadjusted *)
 
 
-
-
-FUNCTION GetCDCadjustedNoStressNew(CCx,CDC,CCxAdjusted : double) : double;
-VAR CDCadjusted : double;
-BEGIN
-//CDCadjusted := CDC * (CCxadjusted/CCx);
-CDCadjusted := CDC * ((CCxadjusted+2.29)/(CCx+2.29));
-GetCDCadjustedNoStressNew := CDCadjusted;
-END; (* GetCDCadjustedNoStressNew *)
-
-
-
 PROCEDURE DetermineCDCadjustedWaterStress(VAR CDCadjusted,KsSen : double);
 VAR Wrelative : double;
     //KsSen : double;

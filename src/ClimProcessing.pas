@@ -24,7 +24,7 @@ VAR Dayi,Monthi,Yeari,DayN : INTEGER;
     DNR : LongInt;
     X1,X2,X3,t1,t2 : INTEGER;
     C1,C2,C3 : Double;
-    aOver3,bOver2,c : extended;
+    aOver3,bOver2,c : double;
 
 
 PROCEDURE GetSetofThreeMonths(Monthi,Yeari : INTEGER;
@@ -187,16 +187,6 @@ IF (NOT OK3) THEN
 
 Close(fETo);
 END; (* GetSetofThreeMonths *)
-
-
-PROCEDURE GetInterpolationParameters(C1,C2,C3 : double;
-                                     X1,X2,X3 : INTEGER;
-                                     VAR aOver3,bOver2,c : extended);
-BEGIN //n1=n2=n3=30 --> better parabola
-aOver3 := (C1-2*C2+C3)/(6*30*30*30);
-bOver2 := (-6*C1+9*C2-3*C3)/(6*30*30);
-c := (11*C1-7*C2+2*C3)/(6*30);
-END; (* GetInterpolationParameters *)
 
 
 BEGIN (* GetMonthlyEToDataSet *)
