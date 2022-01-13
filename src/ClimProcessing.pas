@@ -2,7 +2,7 @@ unit ClimProcessing;
 
 interface
 
-uses Global, interface_global;
+uses Global, interface_global, interface_climprocessing;
 
 
 PROCEDURE GetMonthlyEToDataSet(DayNri : LongInt;
@@ -16,31 +16,6 @@ PROCEDURE GetMonthlyRainDataSet(DayNri : LongInt;
 
 
 implementation
-
-
-
-PROCEDURE AdjustDecadeMONTHandYEAR(VAR DecFile,Mfile,Yfile : INTEGER);
-BEGIN
-DecFile := 1;
-Mfile := Mfile + 1;
-IF (Mfile > 12) THEN
-   BEGIN
-   Mfile := 1;
-   YFile := Yfile + 1;
-   END;
-END; (* AdjustDecadeMONTHandYEAR *)
-
-
-
-PROCEDURE AdjustMONTHandYEAR(VAR Mfile,Yfile : INTEGER);
-BEGIN
-Mfile := Mfile - 12;
-YFile := Yfile + 1;
-END; (* AdjustMONTHandYEAR *)
-
-
-
-
 
 
 PROCEDURE GetMonthlyEToDataSet(DayNri : LongInt;
