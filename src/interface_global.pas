@@ -280,8 +280,8 @@ procedure GetCO2Description(
 procedure GetCO2Description_wrap(
             constref CO2FileFull : PChar;
             constref strlen1 : integer;
-            constref strlen2 : integer;
-            var CO2Description : PChar);
+            var CO2Description : PChar;
+            constref strlen2 : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
 
 procedure GetDaySwitchToLinear(
