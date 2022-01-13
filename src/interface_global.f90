@@ -59,16 +59,20 @@ subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
 end subroutine GetNumberSimulationRuns_wrap
 
 
-subroutine GetCO2Description_wrap(CO2FileFull, strlen, CO2Description)
+subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
+            strlen2)
     !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
     type(c_ptr), intent(in) :: CO2FileFull
-    integer(int32), intent(in) :: strlen
-    character(len=*), intent(inout) :: CO2Description
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: CO2Description
+    integer(int32), intent(in) :: strlen2
 
-    character(len=strlen) :: string
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
 
-    string = pointer2string(CO2FileFull, strlen)
-    call GetCO2Description(string, CO2Description)
+    string1 = pointer2string(CO2FileFull, strlen1)
+    string2 = pointer2string(CO2Description, strlen2)
+    call GetCO2Description(string1, string2)
 end subroutine GetCO2Description_wrap
 
 

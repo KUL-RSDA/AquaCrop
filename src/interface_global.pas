@@ -279,7 +279,8 @@ procedure GetCO2Description(
 
 procedure GetCO2Description_wrap(
             constref CO2FileFull : PChar;
-            constref strlen : integer;
+            constref strlen1 : integer;
+            constref strlen2 : integer;
             var CO2Description : PChar);
         external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
 
@@ -376,12 +377,14 @@ procedure GetCO2Description(
             var CO2Description : string);
 var
     p1, p2 : PChar;
-    strlen : integer;
+    strlen1, strlen2 : integer;
 
 begin;
     p1 := PChar(CO2FileFull);
-    strlen := Length(CO2FileFull);
-    GetCO2Description_wrap(p1, strlen, p2);
+    p2 := PChar(CO2Description);
+    strlen1 := Length(CO2FileFull);
+    strlen2 := Length(CO2Description);
+    GetCO2Description_wrap(p1, strlen1, p2, strlen2);
     CO2Description := AnsiString(p2);
 end;
 
