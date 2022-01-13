@@ -43,6 +43,8 @@ type
         END;
 
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
+    
+    rep_int_array = ARRAY[1..4] OF INTEGER;
 
     rep_modeCycle = (GDDays, CalendarDays);
 
@@ -145,6 +147,35 @@ function GetWeedRC(
             constref GDDL12SF : integer;
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
+
+procedure __DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : integer;
+            constref CGCgiven : boolean;
+            constref TheDaysToCCini : integer;
+            constref ThePlanting : integer;
+            VAR Length123 : integer;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
+        external 'aquacrop' name '__ac_global_MOD_determinelengthgrowthstages';
+
+procedure DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : INTEGER;
+            constref CGCgiven : BOOLEAN;
+            constref TheDaysToCCini : INTEGER;
+            constref ThePlanting : rep_planting;
+            VAR Length123 : INTEGER;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
 
 function __TimeToCCini(
             constref ThePlantingType : integer;
@@ -403,6 +434,38 @@ begin
     int_planting := ord(ThePlantingType); 
     TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
                                  TheSizePlant, TheCropCCx, TheCropCGC);
+end;
+
+procedure DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : integer;
+            constref CGCgiven : boolean;
+            constref TheDaysToCCini : integer;
+            constref ThePlanting : rep_planting;
+            VAR Length123 : integer;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
+
+VAR 
+    int_planting: integer;
+
+
+begin
+    int_planting := ord(ThePlanting);
+    __DetermineLengthGrowthStages(CCoVal,CCxVal,
+                                            CDCVal,L0,
+                                            TotalLength,
+                                            CGCgiven,
+                                            TheDaysToCCini,
+                                            int_planting,
+                                            Length123,
+                                            StLength,
+                                            Length12,
+                                                    CGCVal);
 end;
 
 
