@@ -1367,9 +1367,16 @@ logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
     LeapYear = .false.
-    if ((Year/4._dp) <= 0.01 ) then
+    if (frac(Year/4._dp) <= 0.01_dp ) then
         LeapYear = .true.
     end if
+
+    contains
+    real(dp) function frac(val)
+        real(dp), intent(in) :: val
+
+        frac = val - floor(val)
+    end function frac 
 end function LeapYear
 
 
@@ -1379,7 +1386,7 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     logical, intent(inout) :: AllOK
 
     integer :: fhandle
-    character(len=255) :: TempFileName, TempPathName, TempFullName
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
     integer(int32) :: i, TotalFiles
  
     AllOK = .true.
