@@ -2,7 +2,7 @@ unit Simul;
 
 interface
 
-uses Global, interface_global, Math, TempProcessing, interface_tempprocessing;
+uses Global, interface_global, Math, TempProcessing, interface_tempprocessing, interface_simul;
 
 PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
                                     SumGDDadjCC,CO2i,GDDayi : double;

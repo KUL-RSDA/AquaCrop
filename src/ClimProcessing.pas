@@ -335,16 +335,6 @@ Close(fETo);
 END; (* GetSetofThree *)
 
 
-PROCEDURE GetParameters(C1,C2,C3 : double;
-                        VAR UL,LL,Mid : double);
-BEGIN
-UL := (C1+C2)/2;
-LL := (C2+C3)/2;
-Mid := 2*C2 - (UL+LL)/2;
-// --previous decade-->/UL/....... Mid ......../LL/<--next decade--
-END; (* GetParameters *)
-
-
 BEGIN (* GetDecadeEToDataSet *)
 DetermineDate(DayNri,Dayi,Monthi,Yeari);
 IF (Dayi > 20)
