@@ -1367,11 +1367,12 @@ logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
     LeapYear = .false.
-    if (frac(Year/4._dp) <= 0.01_dp ) then
+    if (frac(Year/4._dp) <= 0.01_dp) then
         LeapYear = .true.
     end if
 
     contains
+
     real(dp) function frac(val)
         real(dp), intent(in) :: val
 
@@ -1387,14 +1388,15 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
 
     integer :: fhandle
     character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
+    character(len=1024) :: buffer
     integer(int32) :: i, TotalFiles
- 
+  
     AllOK = .true.
     open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
         action='read')
     read(fhandle, *) ! Description
     read(fhandle, *)  ! AquaCrop version Nr
-
+    
     ! Prepare
     if (Runi > 1) then
         do i = 1, 5 
@@ -1416,15 +1418,17 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     do while (AllOK .and. (i <= TotalFiles))
         read(fhandle, *) ! Info
         read(fhandle, *) TempFileName  ! FileName
+        TempFileName = trim(buffer)
         if (trim(TempFileName) == '(None)') then
             read(fhandle, *)
         else
             if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
                 read(fhandle, *) ! Keep initial SWC
             else
-                read(fhandle, *) TempPathName  ! PathName
+                read(fhandle, *) buffer ! PathName
+                TempPathName = trim(buffer)
                 TempFullName = trim(TempPathName) // trim(TempFileName)
-                if (FileExists(TempFullName) .eqv. .false.) then
+                if (FileExists(trim(TempFullName)) .eqv. .false.) then
                     AllOK = .false.
                 end if
             end if
