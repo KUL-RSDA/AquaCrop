@@ -2,7 +2,7 @@ unit RootUnit;
 
 interface
 
-uses Global, interface_global;
+uses Global, interface_global, interface_rootunit;
 
 FUNCTION AdjustedRootingDepth(CCAct,CCpot,Tpot,Tact,StressLeaf : double;
                               StressSenescence : double;
