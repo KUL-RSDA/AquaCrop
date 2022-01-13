@@ -418,6 +418,117 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, &
+                                        CGCgiven, TheDaysToCCini, ThePlanting, &
+                                         Length123, StLength, Length12, CGCVal)
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CDCVal
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: TotalLength
+    logical, intent(in) :: CGCgiven
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(intEnum), intent(in) :: ThePlanting
+    integer(int32), intent(inout) :: Length123
+    integer(int32), dimension(4), intent(inout) :: StLength
+    integer(int32), intent(inout) :: Length12
+    real(dp), intent(inout) :: CGCVal
+
+    real(dp) :: CCxVal_scaled
+    real(dp) :: CCToReach
+    integer(int32) :: L12Adj
+
+    ! DetermineLengthGrowthStages
+
+    if (Length123 < Length12) then
+        Length123 = Length12
+    end if
+
+    ! 1. Initial and 2. Crop Development stage
+    ! CGC is given and Length12 is already adjusted to it
+    ! OR Length12 is given and CGC has to be determined
+    if ((CCoVal >= CCxVal) .or. (Length12 <= L0)) then
+        Length12 = 0
+        StLength(1) = 0
+        StLength(2) = 0
+        CGCVal = Undef_int
+    else
+        if (.not. CGCgiven) then ! Length12 is given and CGC has to be determined
+            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))/(Length12-L0)), kind=dp)
+            ! Check if CGC < maximum value (0.40) and adjust Length12 if required
+            if (CGCVal > 0.40_dp) then
+                CGCVal = 0.40_dp
+                CCxVal_scaled = 0.98_dp*CCxVal
+                Length12 = DaysToReachCCwithGivenCGC(CCxVal_scaled , CCoVal, &
+                                                             CCxVal, CGCVal, L0)
+                if (Length123 < Length12) then
+                    Length123 = Length12
+                end if
+            end if
+        end if
+        ! find StLength[1]
+        CCToReach = 0.10_dp
+        StLength(1) = DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
+                                                                    CGCVal, L0)
+        ! find StLength[2]
+        StLength(2) = Length12 - StLength(1)
+    end if
+    L12Adj = Length12
+
+    ! adjust Initial and Crop Development stage, in case crop starts as regrowth
+    if (ThePlanting == plant_regrowth) then
+        if (TheDaystoCCini == undef_int) then
+            ! maximum canopy cover is already reached at start season
+            L12Adj = 0
+            StLength(1) = 0
+            StLength(2) = 0
+        else
+            if (TheDaystoCCini == 0) then
+                ! start at germination
+                L12Adj = Length12 - L0
+                StLength(1) = StLength(1) - L0
+            else
+                ! start after germination
+                L12Adj = Length12 - (L0 + TheDaysToCCini)
+                StLength(1) = StLength(1) - (L0 + TheDaysToCCini)
+            end if
+            if (StLength(1) < 0) then
+                StLength(1) = 0
+            end if
+            StLength(2) = L12Adj - StLength(1)
+        end if
+    end if
+
+    ! 3. Mid season stage
+    StLength(3) = Length123 - L12Adj
+
+    ! 4. Late season stage
+    StLength(4) = LengthCanopyDecline(CCxVal, CDCVal)
+
+    ! final adjustment
+    if (StLength(1) > TotalLength) then
+        StLength(1) = TotalLength
+        StLength(2) = 0
+        StLength(3) = 0
+        StLength(4) = 0
+    else
+        if ((StLength(1)+StLength(2)) > TotalLength) then
+            StLength(2) = TotalLength - StLength(1)
+            StLength(3) = 0
+            StLength(4) = 0
+        else
+            if ((StLength(1)+StLength(2)+StLength(3)) > TotalLength) then
+                StLength(3) = TotalLength - StLength(1) - StLength(2)
+                StLength(4) = 0
+            elseif ((StLength(1)+StLength(2)+StLength(3)+StLength(4)) > &
+                                                              TotalLength) then
+                StLength(4) = TotalLength - StLength(1) - StLength(2) - StLength(3)
+            end if
+        end if
+    end if
+
+end subroutine DetermineLengthGrowthStages
+
 integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
                           TheSizeSeedling, TheSizePlant, TheCropCCx, TheCropCGC)
     integer(intEnum), intent(in) :: ThePlantingType
