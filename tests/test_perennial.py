@@ -44,7 +44,16 @@ def test_perennial():
     shutil.copytree(os.path.join(input_dir, 'SIMUL'),
                     os.path.join(work_dir, 'SIMUL'))
 
-    # Fill in the template values in the PRM file
+    # Enclose all directory paths of the PRM file in quotes
+    # For this to work properly, we first need to replace any DOS-style
+    # line endings to UNIX-style line endings
+    cmd = 'sed -i "s/\r//" {0}'.format(prm_file_out)
+    os.system(cmd)
+    cmd = 'sed -i -e \'s@__INPUTDIR__.*@\"&\"@\' {0}'.format(prm_file_out)
+    os.system(cmd)
+    cmd = 'sed -i -e \'s@__OUTPUTDIR__.*@\"&\"@\' {0}'.format(prm_file_out)
+    os.system(cmd)
+    # Now fill in the template paths
     cmd = 'sed -i "s@__INPUTDIR__@{0}@g" {1}'.format(input_dir, prm_file_out)
     os.system(cmd)
     cmd = 'sed -i "s@__OUTPUTDIR__@{0}@g" {1}'.format(work_dir, prm_file_out)

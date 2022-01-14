@@ -4336,6 +4336,7 @@ FOR i := 1 TO 27 DO READLN(f0); // Climate (5x3 = 15),Calendar (3),Crop (3), Irr
 READLN(f0); // info Soil file
 READLN(f0,FileName);
 READLN(f0,PathName);
+PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
 FullFileName := CONCAT(Trim(PathName),Trim(FileName));
 LoadProfile(FullFileName);
 TheNrSoilLayers := Soil.NrSoilLayers;
@@ -4387,6 +4388,7 @@ IF (RunWithKeepSWC = true) THEN
      READLN(f0); // Crop file title
      READLN(f0,FileName);
      READLN(f0,PathName);
+     PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
      FullFileName := CONCAT(Trim(PathName),Trim(FileName));
      Assign(fx,FullFileName);
      Reset(fx);
