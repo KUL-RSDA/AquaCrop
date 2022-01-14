@@ -1313,15 +1313,15 @@ AdjustOnsetSearchPeriod; // Set initial StartSearch and StopSearchDayNr
 // 2. Calendar
 READLN(f0); // Info calendar
 READLN(f0,TempString);  //CalendarFile
-CalendarFile := Trim(TempString);
-IF (CalendarFile = '(None)')
+SetCalendarFile(Trim(TempString));
+IF (GetCalendarFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathCalendarFile
         CalendarDescription := 'No calendar for the Seeding/Planting year';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
-        CalendarFilefull := CONCAT(Trim(TempString),CalendarFile);
+        CalendarFilefull := CONCAT(Trim(TempString),GetCalendarFile());
         GetFileDescription(CalendarFilefull,CalendarDescription);
         END;
 
@@ -1329,9 +1329,9 @@ IF (CalendarFile = '(None)')
 Simulation.LinkCropToSimPeriod := true;
 READLN(f0); // Info Crop
 READLN(f0,TempString);  //CropFile
-CropFile := Trim(TempString);
+SetCropFile(Trim(TempString));
 READLN(f0,TempString);  //PathCropFile
-CropFilefull := CONCAT(Trim(TempString),CropFile);
+CropFilefull := CONCAT(Trim(TempString),GetCropFile());
 LoadCrop(CropFilefull);
 
 // Adjust crop parameters of Perennials
