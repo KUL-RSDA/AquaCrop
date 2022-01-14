@@ -441,8 +441,6 @@ subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, 
     real(dp) :: CCToReach
     integer(int32) :: L12Adj
 
-    ! DetermineLengthGrowthStages
-
     if (Length123 < Length12) then
         Length123 = Length12
     end if
