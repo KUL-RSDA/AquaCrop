@@ -20,6 +20,10 @@ real(dp), parameter :: CO2Ref = 369.41_dp;
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
 real(dp), parameter :: eps =10E-08
+real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
+                                                    90.25_dp, 120.25_dp, 151.25_dp, &
+                                                    181.25_dp, 212.25_dp, 243.25_dp, &
+                                                    273.25_dp, 304.25_dp, 334.25_dp]
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -112,7 +116,33 @@ type rep_EffectStress
 end type rep_EffectStress
 
 
+type rep_IrriECw 
+    real(dp) :: PreSeason
+        !! Undocumented
+    real(dp) :: PostSeason
+        !! Undocumented
+end type rep_IrriECw 
+
+
+character(len=:), allocatable :: CO2File
+type(rep_IrriECw) :: IrriECw
+
+
 contains
+
+
+function trunc(x) result(y)
+    !! Returns the integer part of x, which is always smaller than (or equal to) x
+    !! in absolute value.
+    real(dp), intent(in) :: x
+    integer(int32) :: y
+    
+    if (x > 0) then
+        y = floor(x, kind=int32)
+    else
+        y = ceiling(x, kind=int32)
+    end if
+end function trunc
 
 
 real(dp) function AquaCropVersion(FullNameXXFile)
@@ -400,6 +430,116 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
 
+subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, &
+                                        CGCgiven, TheDaysToCCini, ThePlanting, &
+                                         Length123, StLength, Length12, CGCVal)
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CDCVal
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: TotalLength
+    logical, intent(in) :: CGCgiven
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(intEnum), intent(in) :: ThePlanting
+    integer(int32), intent(inout) :: Length123
+    integer(int32), dimension(4), intent(inout) :: StLength
+    integer(int32), intent(inout) :: Length12
+    real(dp), intent(inout) :: CGCVal
+
+    real(dp) :: CCxVal_scaled
+    real(dp) :: CCToReach
+    integer(int32) :: L12Adj
+
+    if (Length123 < Length12) then
+        Length123 = Length12
+    end if
+
+    ! 1. Initial and 2. Crop Development stage
+    ! CGC is given and Length12 is already adjusted to it
+    ! OR Length12 is given and CGC has to be determined
+    if ((CCoVal >= CCxVal) .or. (Length12 <= L0)) then
+        Length12 = 0
+        StLength(1) = 0
+        StLength(2) = 0
+        CGCVal = Undef_int
+    else
+        if (.not. CGCgiven) then ! Length12 is given and CGC has to be determined
+            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))/(Length12-L0)), kind=dp)
+            ! Check if CGC < maximum value (0.40) and adjust Length12 if required
+            if (CGCVal > 0.40_dp) then
+                CGCVal = 0.40_dp
+                CCxVal_scaled = 0.98_dp*CCxVal
+                Length12 = DaysToReachCCwithGivenCGC(CCxVal_scaled , CCoVal, &
+                                                             CCxVal, CGCVal, L0)
+                if (Length123 < Length12) then
+                    Length123 = Length12
+                end if
+            end if
+        end if
+        ! find StLength[1]
+        CCToReach = 0.10_dp
+        StLength(1) = DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
+                                                                    CGCVal, L0)
+        ! find StLength[2]
+        StLength(2) = Length12 - StLength(1)
+    end if
+    L12Adj = Length12
+
+    ! adjust Initial and Crop Development stage, in case crop starts as regrowth
+    if (ThePlanting == plant_regrowth) then
+        if (TheDaystoCCini == undef_int) then
+            ! maximum canopy cover is already reached at start season
+            L12Adj = 0
+            StLength(1) = 0
+            StLength(2) = 0
+        else
+            if (TheDaystoCCini == 0) then
+                ! start at germination
+                L12Adj = Length12 - L0
+                StLength(1) = StLength(1) - L0
+            else
+                ! start after germination
+                L12Adj = Length12 - (L0 + TheDaysToCCini)
+                StLength(1) = StLength(1) - (L0 + TheDaysToCCini)
+            end if
+            if (StLength(1) < 0) then
+                StLength(1) = 0
+            end if
+            StLength(2) = L12Adj - StLength(1)
+        end if
+    end if
+
+    ! 3. Mid season stage
+    StLength(3) = Length123 - L12Adj
+
+    ! 4. Late season stage
+    StLength(4) = LengthCanopyDecline(CCxVal, CDCVal)
+
+    ! final adjustment
+    if (StLength(1) > TotalLength) then
+        StLength(1) = TotalLength
+        StLength(2) = 0
+        StLength(3) = 0
+        StLength(4) = 0
+    else
+        if ((StLength(1)+StLength(2)) > TotalLength) then
+            StLength(2) = TotalLength - StLength(1)
+            StLength(3) = 0
+            StLength(4) = 0
+        else
+            if ((StLength(1)+StLength(2)+StLength(3)) > TotalLength) then
+                StLength(3) = TotalLength - StLength(1) - StLength(2)
+                StLength(4) = 0
+            elseif ((StLength(1)+StLength(2)+StLength(3)+StLength(4)) > &
+                                                              TotalLength) then
+                StLength(4) = TotalLength - StLength(1) - StLength(2) - StLength(3)
+            end if
+        end if
+    end if
+
+end subroutine DetermineLengthGrowthStages
+
+
 integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
                           TheSizeSeedling, TheSizePlant, TheCropCCx, TheCropCGC)
     integer(intEnum), intent(in) :: ThePlantingType
@@ -501,7 +641,6 @@ integer(int32) function LengthCanopyDecline(CCx, CDC)
     end if
     LengthCanopyDecline = ND
 end function LengthCanopyDecline
-
 
 
 real(dp) function HarvestIndexGrowthCoefficient(HImax, dHIdt)
@@ -623,27 +762,6 @@ subroutine DeriveSmaxTopBottom(SxTopQ, SxBotQ, SxTop, SxBot)
         end if
     end if
 end subroutine DeriveSmaxTopBottom
-
-
-real(dp) function GetKs(T0, T1, Tin)
-    real(dp), intent(in) :: T0
-    real(dp), intent(in) :: T1
-    real(dp), intent(in) :: Tin
-
-    real(dp), parameter  :: Mo = 0.02_dp
-    real(dp), parameter  :: Mx = 1.0_dp
-
-    real(dp) :: MRate, Ksi, Trel
-
-    Trel = (Tin-T0)/(T1-T0)
-    ! derive rate of increase (MRate)
-    MRate = (-1._dp)*(log((Mo*Mx-0.98_dp*Mo)/(0.98_dp*(Mx-Mo))))
-    ! get Ks from logistic equation
-    Ksi = (Mo*Mx)/(Mo+(Mx-Mo)*exp(-MRate*Trel))
-    ! adjust for Mo
-    Ksi = Ksi - Mo * (1._dp - Trel)
-    GetKs = Ksi
- end function GetKs
 
 
 real(dp) function KsTemperature(T0, T1, Tin)
@@ -874,6 +992,39 @@ real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     end if
     CCatTime = CCi
 end function CCatTime
+
+
+subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
+    integer(int32), intent(in) :: Dayi
+    integer(int32), intent(in) :: Monthi
+    integer(int32), intent(in) :: Yeari
+    integer(int32), intent(inout) :: DayNr
+
+    DayNr = trunc((Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp)
+    
+end subroutine DetermineDayNr
+
+
+subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
+    integer(int32), intent(in) :: DayNr
+    integer(int32), intent(inout) :: Dayi
+    integer(int32), intent(inout) :: Monthi
+    integer(int32), intent(inout) :: Yeari
+
+    real(dp) :: SumDayMonth
+
+    Yeari = trunc((DayNr-0.05_dp)/365.25_dp)
+    SumDayMonth = (DayNr - Yeari*365.25_dp)
+    Yeari = 1901 + Yeari
+    Monthi = 1
+
+    do while (Monthi < 12)
+        if (SumDayMonth <= ElapsedDays(Monthi+1)) exit
+        Monthi = Monthi + 1
+    end do
+    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp, kind=int32)
+end subroutine DetermineDate
+
 
 real(dp) function DegreesDay(Tbase, Tupper, TDayMin, TDayMax, GDDSelectedMethod)
     real(dp), intent(in) :: Tbase
@@ -1110,6 +1261,33 @@ real(dp) function CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, GDDLMaturity, SumG
 end function CanopyCoverNoStressGDDaysSF
 
 
+real(dp) function HIadjWStressAtFlowering(KsVeg, KsSto, a, b)
+    real(dp), intent(in) :: KsVeg
+    real(dp), intent(in) :: KsSto
+    integer(int8), intent(in) :: a
+    real(dp), intent(in) :: b
+
+    if (a == undef_int) then
+        if (nint(b, kind=int32) == undef_int) then
+            HIadjWStressAtFlowering = 1._dp
+        elseif (KsSto > 0.001_dp) then
+            HIadjWStressAtFlowering = (exp(0.10_dp*log(KsSto))) * (1._dp-(1._dp-KsSto)/b)
+        else
+            HIadjWStressAtFlowering = 0.0_dp
+        end if
+    else
+        if (nint(b, kind=int32) == undef_int) then
+            HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a)
+        elseif (KsSto > 0.001_dp) then
+            HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a) * (exp(0.10_dp*log(KsSto))) &
+              * (1._dp-(1._dp-KsSto)/b)
+        else
+            HIadjWStressAtFlowering = 0._dp
+        end if
+    end if
+end function HIadjWStressAtFlowering
+
+
 real(dp) function fAdjustedForCO2(CO2i, WPi, PercentA)
     real(dp), intent(in) :: CO2i
     real(dp), intent(in) :: WPi
@@ -1199,6 +1377,24 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
+subroutine GetCO2Description(CO2FileFull, CO2Description)
+    character(len=*), intent(in) :: CO2FileFull
+    character(len=*), intent(inout) :: CO2Description
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(CO2FileFull), status='old', &
+         action='read')
+    read(fhandle, *) CO2Description
+    close(fhandle)
+
+    if (trim(GetCO2File()) == 'MaunaLoa.CO2') then
+        ! since this is an AquaCrop file, the Description is determined by AquaCrop
+        CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
+    end if
+end subroutine GetCO2Description
+
+
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     integer(int32), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -1270,7 +1466,6 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     end do read_loop
     close(fhandle)
 end subroutine GetNumberSimulationRuns
-
 
 logical function FileExists(full_name)
     character(len=*), intent(in) :: full_name
@@ -1361,6 +1556,43 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
         ! end of line
     end do
 end subroutine SplitStringInThreeParams
+
+!! Global variables section !!
+
+function GetCO2File() result(str)
+    !! Getter for the "CO2File" global variable.
+    character(len=len(CO2File)) :: str
+
+    str = CO2File
+end function GetCO2File
+
+
+subroutine SetCO2File(str)
+    !! Setter for the "CO2File" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2File = str
+end subroutine SetCO2File
+
+type(rep_IrriECw) function GetIrriECw()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw = IrriECw
+end function GetIrriECw
+
+subroutine SetIrriECw_PreSeason(PreSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PreSeason
+
+    IrriECw%PreSeason = PreSeason
+end subroutine SetIrriECw_PreSeason
+
+subroutine SetIrriECw_PostSeason(PostSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PostSeason
+
+    IrriECw%PostSeason = PostSeason
+end subroutine SetIrriECw_PostSeason
 
 
 logical function LeapYear(Year)

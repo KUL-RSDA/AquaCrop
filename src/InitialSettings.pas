@@ -3,7 +3,7 @@ unit InitialSettings;
 interface
 
 
-uses Global, interface_global, DefaultCropSoil;
+uses Global, interface_global, DefaultCropSoil, interface_defaultcropsoil, interface_initialsettings;
 
 PROCEDURE InitializeSettings;
 
@@ -178,8 +178,8 @@ implementation
    END;
 
  // 5.4 CO2
- CO2File := 'MaunaLoa.CO2';
- CO2FileFull := CONCAT(PathNameSimul,CO2File);
+ SetCO2File('MaunaLoa.CO2');
+ CO2FileFull := CONCAT(PathNameSimul,GetCO2File());
  GetCO2Description(CO2FileFull,CO2Description);
 
  // 5.5 Climate file

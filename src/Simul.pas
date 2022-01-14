@@ -2,7 +2,7 @@ unit Simul;
 
 interface
 
-uses Global, interface_global, Math, TempProcessing;
+uses Global, interface_global, Math, TempProcessing, interface_tempprocessing, interface_simul;
 
 PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
                                     SumGDDadjCC,CO2i,GDDayi : double;
@@ -698,10 +698,10 @@ CASE control OF
 
                // quality of irrigation water
                IF (dayi < Crop.Day1)
-                  THEN ECw := IrriECw.PreSeason
+                  THEN ECw := GetIrriECw().PreSeason
                   ELSE BEGIN
                        ECw := Simulation.IrriECw;;
-                       IF (dayi > Crop.DayN) THEN ECw := IrriECw.PostSeason;
+                       IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
                        END;
 
                FOR compi :=1 to NrCompartments DO
@@ -1116,10 +1116,10 @@ IF (Sum > 0)
   THEN BEGIN
        // quality of irrigation water
        IF (dayi < Crop.Day1)
-          THEN ECw := IrriECw.PreSeason
+          THEN ECw := GetIrriECw().PreSeason
           ELSE BEGIN
                ECw := Simulation.IrriECw;
-               IF (dayi > Crop.DayN) THEN ECw := IrriECw.PostSeason;
+               IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
                END;
        // quality of stored surface water
        ECstorage := (ECstorage*SurfaceStorage + ECw*Irrigation)/Sum;
@@ -1590,10 +1590,10 @@ mmIN := InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage;
 
 // quality of irrigation water
 IF (dayi < Crop.Day1)
-   THEN ECw := IrriECw.PreSeason
+   THEN ECw := GetIrriECw().PreSeason
    ELSE BEGIN
         ECw := Simulation.IrriECw;
-        IF (dayi > Crop.DayN) THEN ECw := IrriECw.PostSeason;
+        IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
         END;
 
 // initialise salt balance
@@ -1980,18 +1980,6 @@ IF (CGCadjusted > 0.000001) // CGC can be adjusted
         END;
 
 END; (* DetermineCGCadjusted *)
-
-
-
-
-FUNCTION GetCDCadjustedNoStressNew(CCx,CDC,CCxAdjusted : double) : double;
-VAR CDCadjusted : double;
-BEGIN
-//CDCadjusted := CDC * (CCxadjusted/CCx);
-CDCadjusted := CDC * ((CCxadjusted+2.29)/(CCx+2.29));
-GetCDCadjustedNoStressNew := CDCadjusted;
-END; (* GetCDCadjustedNoStressNew *)
-
 
 
 PROCEDURE DetermineCDCadjustedWaterStress(VAR CDCadjusted,KsSen : double);

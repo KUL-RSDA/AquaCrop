@@ -2,7 +2,7 @@ unit InfoResults;
 
 interface
 
-uses Global, interface_global;
+uses Global, interface_global, interface_inforesults;
 
 PROCEDURE WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
                                     TheProjectType : repTypeProject;

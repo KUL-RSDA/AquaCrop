@@ -2,7 +2,7 @@ unit TempProcessing;
 
 interface
 
-uses Global, interface_global, SysUtils;
+uses Global, interface_global, SysUtils, interface_tempprocessing;
 
 PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
                                       VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
@@ -149,28 +149,6 @@ PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
 
 
 implementation
-
-
-PROCEDURE AdjustDecadeMONTHandYEAR(VAR DecFile,Mfile,Yfile : INTEGER);
-BEGIN
-DecFile := 1;
-Mfile := Mfile + 1;
-IF (Mfile > 12) THEN
-   BEGIN
-   Mfile := 1;
-   YFile := Yfile + 1;
-   END;
-END; (* AdjustDecadeMONTHandYEAR *)
-
-
-
-PROCEDURE AdjustMONTHandYEAR(VAR Mfile,Yfile : INTEGER);
-BEGIN
-Mfile := Mfile - 12;
-YFile := Yfile + 1;
-END; (* AdjustMONTHandYEAR *)
-
-
 
 
 PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
@@ -1327,13 +1305,13 @@ IF (RainFile = '(None)')
 // 1.4 CO2
 READLN(f0); // Info CO2
 READLN(f0,TempString);  //CO2File
-CO2File := Trim(TempString);
-IF (CO2File = '(None)')
+SetCO2File(Trim(TempString));
+IF (GetCO2File() = '(None)')
    THEN READLN(f0)  //PathCO2File
    ELSE BEGIN
         READLN(f0,TempString);  //PathCO2File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CO2FileFull := CONCAT(Trim(TempString),CO2File);
+        CO2FileFull := CONCAT(Trim(TempString),GetCO2File());
         GetCO2Description(CO2FileFull,CO2Description);
         END;
 SetClimData;
