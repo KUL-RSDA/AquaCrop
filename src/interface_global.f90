@@ -10,7 +10,9 @@ use ac_global, only: GetNumberSimulationRuns, &
                      FileExists, &
                      GetCO2Description, &
                      GetCO2File, &
-                     SetCO2File
+                     SetCO2File, &
+                     GetProfFile, &
+                     SetProfFile
 use ac_kinds, only: dp, &
                     int32
 
@@ -140,6 +142,27 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     string = pointer2string(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
+
+
+function GetProfFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfFile())
+end function GetProfFile_wrap
+
+
+subroutine SetProfFile_wrap(ProfFile, strlen)
+    !! Wrapper for [[ac_global:SetProfFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfFile, strlen)
+    call SetProfFile(string)
+end subroutine SetProfFile_wrap
+
 
 
 end module ac_interface_global

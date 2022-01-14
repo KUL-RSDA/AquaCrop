@@ -116,6 +116,7 @@ type rep_EffectStress
 end type rep_EffectStress
 
 
+character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: CO2File
 
 
@@ -1454,6 +1455,22 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+
+function GetProfFile() result(str)
+    !! Getter for the "ProfFile" global variable.
+    character(len=len(ProfFile)) :: str
+
+    str = ProfFile
+end function GetProfFile
+
+
+subroutine SetProfFile(str)
+    !! Setter for the "ProfFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFile = str
+end subroutine SetProfFile
 
 
 end module ac_global
