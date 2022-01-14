@@ -116,7 +116,16 @@ type rep_EffectStress
 end type rep_EffectStress
 
 
+type rep_IrriECw 
+    real(dp) :: PreSeason
+        !! Undocumented
+    real(dp) :: PostSeason
+        !! Undocumented
+end type rep_IrriECw 
+
+
 character(len=:), allocatable :: CO2File
+type(rep_IrriECw) :: IrriECw
 
 
 contains
@@ -1564,6 +1573,26 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+type(rep_IrriECw) function GetIrriECw()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw = IrriECw
+end function GetIrriECw
+
+subroutine SetIrriECw_PreSeason(PreSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PreSeason
+
+    IrriECw%PreSeason = PreSeason
+end subroutine SetIrriECw_PreSeason
+
+subroutine SetIrriECw_PostSeason(PostSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PostSeason
+
+    IrriECw%PostSeason = PostSeason
+end subroutine SetIrriECw_PostSeason
 
 
 end module ac_global

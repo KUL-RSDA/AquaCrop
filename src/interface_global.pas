@@ -67,6 +67,11 @@ type
          Calibrated      : BOOLEAN;
          end;
 
+     rep_IrriECw = Record
+         PreSeason  : double;
+         PostSeason : double;
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -392,6 +397,15 @@ procedure SplitStringInThreeParams_wrap(
             constref strlen : integer;
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
+
+function GetIrriECw(): rep_IrriECw;
+        external 'aquacrop' name '__ac_global_MOD_getirriecw';
+
+procedure SetIrriECw_PreSeason(constref PreSeason : double);
+        external 'aquacrop' name '__ac_global_MOD_setirriecw_preseason';
+
+procedure SetIrriECw_PostSeason(constref PostSeason : double);
+        external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
 
 implementation
