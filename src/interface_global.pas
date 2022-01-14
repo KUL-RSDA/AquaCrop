@@ -148,7 +148,7 @@ function GetWeedRC(
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
 
-procedure __DetermineLengthGrowthStages(
+procedure DetermineLengthGrowthStages_wrap(
             constref CCoVal : double;
             constref CCxVal : double;
             constref CDCVal : double;
@@ -161,7 +161,7 @@ procedure __DetermineLengthGrowthStages(
             VAR StLength : rep_int_array;
             VAR Length12 : integer;
             VAR CGCVal : double);
-        external 'aquacrop' name '__ac_global_MOD_determinelengthgrowthstages';
+        external 'aquacrop' name '__ac_interface_global_MOD_determinelengthgrowthstages_wrap';
 
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
@@ -451,12 +451,11 @@ procedure DetermineLengthGrowthStages(
             VAR CGCVal : double);
 
 VAR 
-    int_planting: integer;
-
+    int_planting : integer;
 
 begin
     int_planting := ord(ThePlanting);
-    __DetermineLengthGrowthStages(CCoVal,CCxVal,
+    DetermineLengthGrowthStages_wrap(CCoVal,CCxVal,
                                             CDCVal,L0,
                                             TotalLength,
                                             CGCgiven,
@@ -465,7 +464,7 @@ begin
                                             Length123,
                                             StLength,
                                             Length12,
-                                                    CGCVal);
+                                            CGCVal);
 end;
 
 
