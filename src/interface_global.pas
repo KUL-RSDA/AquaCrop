@@ -578,7 +578,7 @@ var
 
 begin;
     p := GetCO2File_wrap();
-    GetCO2File := StrPas(p);
+    GetCO2File := AnsiString(p);
 end;
 
 
@@ -600,7 +600,7 @@ var
 
 begin;
     p := GetCalendarFile_wrap();
-    GetCalendarFile := StrPas(p);
+    GetCalendarFile := AnsiString(p);
 end;
 
 
@@ -622,7 +622,7 @@ var
 
 begin;
     p := GetCropFile_wrap();
-    GetCropFile := StrPas(p);
+    GetCropFile := AnsiString(p);
 end;
 
 
