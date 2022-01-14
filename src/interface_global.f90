@@ -4,18 +4,20 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: GetNumberSimulationRuns, &
-                     SplitStringInTwoParams, &
-                     SplitStringInThreeParams, &
+use ac_global, only: DetermineLengthGrowthStages, &
                      FileExists, &
                      GetCO2Description, &
                      GetCO2File, &
-                     SetCO2File, &
+                     GetNumberSimulationRuns, &
                      GetProfFile, &
+                     SetCO2File, &
                      SetProfFile
-use ac_kinds, only: dp, &
-                    int32
+                     SplitStringInTwoParams, &
+                     SplitStringInThreeParams
 
+use ac_kinds, only: dp, &
+                    int32, &
+                    intEnum
 implicit none
 
 
@@ -122,6 +124,31 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
     string2 = pointer2string(CO2Description, strlen2)
     call GetCO2Description(string1, string2)
 end subroutine GetCO2Description_wrap
+
+
+subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
+                        TotalLength, CGCgiven, TheDaysToCCini, ThePlanting, &
+                        Length123, StLength, Length12, CGCVal)
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CDCVal
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: TotalLength
+    logical(1), intent(in) :: CGCgiven
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(intEnum), intent(in) :: ThePlanting
+    integer(int32), intent(inout) :: Length123
+    integer(int32), dimension(4), intent(inout) :: StLength
+    integer(int32), intent(inout) :: Length12
+    real(dp), intent(inout) :: CGCVal
+
+    logical :: CGCgiven_f
+
+    CGCgiven_f = CGCgiven
+    call DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, &
+                                     CGCgiven_f, TheDaysToCCini, ThePlanting, &
+                                     Length123, StLength, Length12, CGCVal)
+end subroutine DetermineLengthGrowthStages_wrap
 
 
 function GetCO2File_wrap() result(c_pointer)
