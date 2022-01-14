@@ -324,11 +324,6 @@ TYPE
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
-     rep_IrriECw = Record
-         PreSeason  : double;
-         PostSeason : double;
-         end;
-
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
@@ -452,7 +447,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Simulation     : rep_sim;
     IrriMode       : rep_IrriMode;
     IrriMethod     : rep_IrriMethod;
-    IrriECw        : rep_IrriECw;
     GenerateTimeMode : rep_GenerateTimeMode;
     GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
@@ -1088,8 +1082,8 @@ BEGIN
      IrriAfterSeason[Nri].DayNr := 0;
      IrriAfterSeason[Nri].Param := 0;
      END;
- IrriECw.PreSeason := 0.0; //dS/m
- IrriECw.PostSeason := 0.0; //dS/m
+ SetIrriECw_PreSeason(0.0); //dS/m
+ SetIrriECw_PostSeason(0.0); //dS/m
 END; (* NoIrrigation *)
 
 
@@ -1105,13 +1099,13 @@ WITH Management DO
    EffectMulchOffS := 50;
    // off-season irrigation
    SimulParam.IrriFwOffSeason := 100;
-   IrriECw.PreSeason := 0.0; // dS/m
+   SetIrriECw_PreSeason(0.0); // dS/m
    FOR Nri := 1 TO 5 DO
        BEGIN
        IrriBeforeSeason[Nri].DayNr := 0;
        IrriBeforeSeason[Nri].Param := 0;
        END;
-   IrriECw.PostSeason := 0.0; // dS/m
+   SetIrriECw_PostSeason(0.0); // dS/m
    FOR Nri := 1 TO 5 DO
        BEGIN
        IrriAfterSeason[Nri].DayNr := 0;
@@ -1128,6 +1122,8 @@ VAR f0 : TextFile;
     ParamString : string;
     Par1,Par2 : double;
     VersionNr : double;
+    PreSeason_in : double;
+    PostSeason_in : double;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -1150,12 +1146,18 @@ FOR Nri := 1 TO 5 DO
     END;
 READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
-   THEN IrriECw.PreSeason := 0.0
-   ELSE READLN(f0,IrriECw.PreSeason);
+   THEN SetIrriECw_PreSeason(0.0)
+   ELSE BEGIN
+    READLN(f0,PreSeason_in);
+    SetIrriECw_PreSeason(PreSeason_in);
+    END;
 READLN(f0,NrEvents2); //number of irrigation events AFTER growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality AFTER growing period
-   THEN IrriECw.PostSeason := 0.0
-   ELSE READLN(f0,IrriECw.PostSeason);
+   THEN SetIrriECw_PostSeason(0.0)
+   ELSE BEGIN
+    READLN(f0,PostSeason_in);
+    SetIrriECw_PostSeason(PostSeason_in);
+    END;
 READLN(f0,SimulParam.IrriFwOffSeason); // percentage of soil surface wetted
 // irrigation events - get events before and after season
 IF (NrEvents1 > 0) OR (NrEvents2 > 0) THEN FOR Nri := 1 TO 3 DO READLN(f0); // title
@@ -1175,9 +1177,6 @@ IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing per
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-
 
 
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
