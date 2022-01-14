@@ -81,11 +81,9 @@ type
          ZtopThresh : double; // soil water content [mm] at Threshold for stomatal closure in top soil
          end;
 
-     rep_RootZoneSalt = Record
-         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
-         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
-         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
-         KsSalt : double;   // stress coefficient for salinity
+     rep_IrriECw = Record
+         PreSeason  : double;
+         PostSeason : double;
          end;
 
 
@@ -449,6 +447,16 @@ procedure SetRootZoneWC_ZtopWP(constref ZtopWP : double);
 
 procedure SetRootZoneWC_ZtopThresh(constref ZtopThresh : double);
         external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopthresh';
+
+function GetIrriECw(): rep_IrriECw;
+        external 'aquacrop' name '__ac_global_MOD_getirriecw';
+
+procedure SetIrriECw_PreSeason(constref PreSeason : double);
+        external 'aquacrop' name '__ac_global_MOD_setirriecw_preseason';
+
+procedure SetIrriECw_PostSeason(constref PostSeason : double);
+        external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
+        
 
 implementation
 

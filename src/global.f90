@@ -145,8 +145,18 @@ type rep_RootZoneWC
 end type rep_RootZoneWC 
 
 
+type rep_IrriECw 
+    real(dp) :: PreSeason
+        !! Undocumented
+    real(dp) :: PostSeason
+        !! Undocumented
+end type rep_IrriECw 
+
+
 character(len=:), allocatable :: CO2File
+type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
+
 
 
 contains
@@ -1676,6 +1686,27 @@ subroutine SetRootZoneWC_ZtopThresh(ZtopThresh)
 
     RootZoneWC%ZtopThresh = ZtopThresh
 end subroutine SetRootZoneWC_ZtopThresh
+
+type(rep_IrriECw) function GetIrriECw()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw = IrriECw
+end function GetIrriECw
+
+subroutine SetIrriECw_PreSeason(PreSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PreSeason
+
+    IrriECw%PreSeason = PreSeason
+end subroutine SetIrriECw_PreSeason
+
+subroutine SetIrriECw_PostSeason(PostSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PostSeason
+
+    IrriECw%PostSeason = PostSeason
+end subroutine SetIrriECw_PostSeason
+
 
 
 end module ac_global
