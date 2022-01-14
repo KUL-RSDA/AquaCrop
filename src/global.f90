@@ -125,6 +125,7 @@ end type rep_IrriECw
 
 
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: IrriFile
 type(rep_IrriECw) :: IrriECw
 
 
@@ -1395,6 +1396,19 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
 end subroutine GetCO2Description
 
 
+subroutine GetIrriDescription(IrriFileFull, IrriDescription)
+    character(len=*), intent(in) :: IrriFileFull
+    character(len=*), intent(inout) :: IrriDescription
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(IrriFileFull), status='old', &
+         action='read')
+    read(fhandle, *) IrriDescription
+    close(fhandle)
+end subroutine GetIrriDescription
+
+
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     integer(int32), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -1573,6 +1587,23 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+
+function GetIrriFile() result(str)
+    !! Getter for the "IrriFile" global variable.
+    character(len=len(IrriFile)) :: str
+
+    str = IrriFile
+end function GetIrriFile
+
+
+subroutine SetIrriFile(str)
+    !! Setter for the "IrriFile" global variable.
+    character(len=*), intent(in) :: str
+
+    IrriFile = str
+end subroutine SetIrriFile
+
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.

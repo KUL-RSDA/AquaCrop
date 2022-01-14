@@ -10,6 +10,9 @@ use ac_global, only: DetermineLengthGrowthStages, &
                      GetCO2File, &
                      GetNumberSimulationRuns, &
                      SetCO2File, &
+                     GetIrriDescription, &
+                     GetIrriFile, &
+                     SetIrriFile, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      FileExists, &
@@ -180,5 +183,43 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     string = pointer2string(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
+
+
+subroutine GetIrriDescription_wrap(IrriFileFull, strlen1, IrriDescription, &
+            strlen2)
+    !! Wrapper for [[ac_global:GetIrriDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFileFull
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: IrriDescription
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(IrriFileFull, strlen1)
+    string2 = pointer2string(IrriDescription, strlen2)
+    call GetIrriDescription(string1, string2)
+end subroutine GetIrriDescription_wrap
+
+
+function GetIrriFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetIrriFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetIrriFile())
+end function GetIrriFile_wrap
+
+
+subroutine SetIrriFile_wrap(IrriFile, strlen)
+    !! Wrapper for [[ac_global:SetIrriFile]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriFile, strlen)
+    call SetIrriFile(string)
+end subroutine SetIrriFile_wrap
+
 
 end module ac_interface_global

@@ -199,8 +199,8 @@ implementation
  AdjustSimPeriod;
 
  // 6. irrigation
- IrriFile := '(None)';
- IrriFilefull := IrriFile;  (* no file *)
+ SetIrriFile('(None)');
+ IrriFilefull := GetIrriFile();  (* no file *)
  NoIrrigation;
 
  // 7. Off-season

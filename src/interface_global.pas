@@ -336,6 +336,17 @@ procedure GetCO2Description_wrap(
             constref strlen2 : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
 
+procedure GetIrriDescription(
+            constref IrriFileFull : string;
+            var IrriDescription : string);
+
+procedure GetIrriDescription_wrap(
+            constref IrriFileFull : PChar;
+            constref strlen1 : integer;
+            var IrriDescription : PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getirridescription_wrap';
+
 procedure GetDaySwitchToLinear(
                constref HImax : integer;
                constref dHIdt,HIGC : double;
@@ -364,6 +375,18 @@ procedure SetCO2File_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
+
+function GetIrriFile(): string;
+
+function GetIrriFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getirrifile_wrap';
+
+procedure SetIrriFile(constref str : string);
+
+procedure SetIrriFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setirrifile_wrap';
 
 function FileExists(constref full_name : string) : boolean;
 
@@ -596,6 +619,44 @@ begin;
     p := PChar(TempFullFilename);
     strlen := Length(TempFullFilename);
     CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
+end;
+
+procedure GetIrriDescription(
+            constref IrriFileFull : string;
+            var IrriDescription : string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(IrriFileFull);
+    p2 := PChar(IrriDescription);
+    strlen1 := Length(IrriFileFull);
+    strlen2 := Length(IrriDescription);
+    GetIrriDescription_wrap(p1, strlen1, p2, strlen2);
+    IrriDescription := AnsiString(p2);
+end;
+
+
+function GetIrriFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetIrriFile_wrap();
+    GetIrriFile := StrPas(p);
+end;
+
+
+procedure SetIrriFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetIrriFile_wrap(p, strlen);
 end;
 
 initialization
