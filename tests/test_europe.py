@@ -63,7 +63,16 @@ def test_europe(row, col, use_irrigation):
     prm_file_out = os.path.join(pixel_dir, 'LIST', prm_name)
     shutil.copyfile(prm_file_inp, prm_file_out)
 
-    # Fill in the template values
+    # Enclose all directory paths of the PRM file in quotes
+    # For this to work properly, we first need to replace any DOS-style
+    # line endings to UNIX-style line endings
+    cmd = 'sed -i "s/\r//" {0}'.format(prm_file_out)
+    os.system(cmd)
+    cmd = 'sed -i -e \'s@__INPUTDIR__.*@\"&\"@\' {0}'.format(prm_file_out)
+    os.system(cmd)
+    cmd = 'sed -i -e \'s@__OUTPUTDIR__.*@\"&\"@\' {0}'.format(prm_file_out)
+    os.system(cmd)
+    # Now fill in the template paths
     cmd = 'sed -i "s@__INPUTDIR__@{0}@g" {1}'.format(input_dir, prm_file_out)
     os.system(cmd)
     cmd = 'sed -i "s@__OUTPUTDIR__@{0}@g" {1}'.format(output_dir, prm_file_out)

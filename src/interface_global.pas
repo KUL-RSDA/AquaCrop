@@ -398,6 +398,21 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
+function LeapYear(constref Year : integer) : boolean;
+        external 'aquacrop' name '__ac_global_MOD_leapyear';
+
+procedure CheckFilesInProject(
+            constref TempFullFilename : string;
+            constref Runi : integer;
+            var AllOK : boolean);
+
+procedure CheckFilesInProject_wrap(
+            constref TempFullFilename : PChar;
+            constref strlen : integer;
+            constref Runi : integer;
+            var AllOK : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
+
 function GetIrriECw(): rep_IrriECw;
         external 'aquacrop' name '__ac_global_MOD_getirriecw';
 
@@ -567,6 +582,20 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2File_wrap(p, strlen);
+end;
+
+procedure CheckFilesInProject(
+            constref TempFullFilename : string;
+            constref Runi : integer;
+            var AllOK : boolean);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TempFullFilename);
+    strlen := Length(TempFullFilename);
+    CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
 end;
 
 initialization

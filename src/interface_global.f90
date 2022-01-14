@@ -11,7 +11,9 @@ use ac_global, only: DetermineLengthGrowthStages, &
                      GetNumberSimulationRuns, &
                      SetCO2File, &
                      SplitStringInTwoParams, &
-                     SplitStringInThreeParams
+                     SplitStringInThreeParams, &
+                     FileExists, &
+                     CheckFilesInProject
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -105,6 +107,18 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     call SplitStringInThreeParams(string, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
 
+subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
+    !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
+    type(c_ptr), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TempFullFilename, strlen)
+    call CheckFilesInProject(string, Runi, AllOK)
+end subroutine CheckFilesInProject_wrap
 
 subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
             strlen2)
@@ -166,6 +180,5 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     string = pointer2string(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
-
 
 end module ac_interface_global
