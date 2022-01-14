@@ -394,8 +394,8 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
       // 2.3 Relative water content for that day
       DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
       IF (Simulation.SWCtopSoilConsidered = true) // top soil is relative wetter than total root zone
-         THEN Wrel := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP) // top soil
-         ELSE Wrel := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
+         THEN Wrel := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
+         ELSE Wrel := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 
       // 2.4 Failure of Pollination during flowering (alfaMax in percentage)
       IF (Crop.Subkind = grain) // - only valid for fruit/grain crops (flowers)
@@ -1048,15 +1048,15 @@ VAR ZrWC,RAWi : double;
 BEGIN
 // total root zone is considered
 DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-ZrWC := RootZoneWC.Actual - Epot - Tpot + Rain - Runoff - SubDrain;
+ZrWC := GetRootZoneWC().Actual - Epot - Tpot + Rain - Runoff - SubDrain;
 IF (GenerateTimeMode = AllDepl) THEN
-   IF ((RootZoneWC.FC - ZrWC) >= TargetTimeVal)
+   IF ((GetRootZoneWC().FC - ZrWC) >= TargetTimeVal)
       THEN TargetTimeVal := 1
       ELSE TargetTimeVal := 0;
 IF (GenerateTimeMode = AllRAW) THEN
    BEGIN
-   RAWi := TargetTimeVal/100 * (RootZoneWC.FC - RootZoneWC.Thresh);
-   IF ((RootZoneWC.FC - ZrWC) >= RAWi)
+   RAWi := TargetTimeVal/100 * (GetRootZoneWC().FC - GetRootZoneWC().Thresh);
+   IF ((GetRootZoneWC().FC - ZrWC) >= RAWi)
       THEN TargetTimeVal := 1
       ELSE TargetTimeVal := 0;
    END;
@@ -1065,7 +1065,7 @@ IF (TargetTimeVal = 1)
         IF (GenerateDepthMode = FixDepth)
            THEN Irrigation := TargetDepthVal
            ELSE BEGIN
-                Irrigation := (RootZoneWC.FC - ZrWc) + TargetDepthVal;
+                Irrigation := (GetRootZoneWC().FC - ZrWc) + TargetDepthVal;
                 IF (Irrigation < 0) THEN Irrigation := 0;
                 END;
         END
@@ -1873,8 +1873,8 @@ BEGIN
 // total root zone is considered
 Zroot := Crop.RootMin;
 DetermineRootZoneWC(Zroot,Simulation.SWCtopSoilConsidered);
-WCGermination := RootZoneWC.WP + (RootZoneWC.FC - RootZoneWC.WP) * (SimulParam.TAWGermination/100);
-IF (RootZoneWC.Actual < WCGermination)
+WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (SimulParam.TAWGermination/100);
+IF (GetRootZoneWC().Actual < WCGermination)
    THEN BEGIN
         Simulation.DelayedDays := Simulation.DelayedDays + 1;
         Simulation.SumGDD := 0;
@@ -1912,16 +1912,16 @@ BEGIN
 // determine FC and PWP
 IF (Simulation.SWCtopSoilConsidered = true)
    THEN BEGIN // top soil is relative wetter than total root zone
-        SWCeffectiveRootZone := RootZoneWC.ZtopAct;
-        Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP);
-        FCeffectiveRootZone := RootZoneWC.ZtopFC;
-        WPeffectiveRootZone := RootZoneWC.ZtopWP;
+        SWCeffectiveRootZone := GetRootZoneWC().ZtopAct;
+        Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP);
+        FCeffectiveRootZone := GetRootZoneWC().ZtopFC;
+        WPeffectiveRootZone := GetRootZoneWC().ZtopWP;
         END
    ELSE BEGIN // total rootzone is wetter than top soil
-        SWCeffectiveRootZone := RootZoneWC.Actual;
-        Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP);
-        FCeffectiveRootZone := RootZoneWC.FC;
-        WPeffectiveRootZone := RootZoneWC.WP;
+        SWCeffectiveRootZone := GetRootZoneWC().Actual;
+        Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP);
+        FCeffectiveRootZone := GetRootZoneWC().FC;
+        WPeffectiveRootZone := GetRootZoneWC().WP;
         END;
 
 // Canopy stress and effect of soil water stress on CGC
@@ -1992,8 +1992,8 @@ VAR Wrelative : double;
 BEGIN
 pSenLL := 0.999; //WP
 IF (Simulation.SWCtopSoilConsidered = true) // top soil is relative wetter than total root zone
-   THEN Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP) // top soil
-   ELSE Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
+   THEN Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
+   ELSE Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 WithBeta := false;
 AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,pSenAct);
 IF (Wrelative <= pSenAct)
@@ -2284,13 +2284,13 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                 KsRED := 1;  // effect of soil salinity on the threshold for senescence
                 IF (Simulation.SWCtopSoilConsidered = true)
                    THEN BEGIN // top soil is relative wetter than total root zone
-                           IF ((RootZoneWC.ZtopAct < (RootZoneWC.ZtopFC - Crop.pSenAct*KsRED*(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP)))
+                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
                            AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
                         END
                    ELSE BEGIN
-                        IF ((RootZoneWC.Actual < (RootZoneWC.FC - Crop.pSenAct*KsRED*(RootZoneWC.FC - RootZoneWC.WP)))
+                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
                             AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
@@ -2428,16 +2428,16 @@ BEGIN
 // determine FC and PWP
 IF (Simulation.SWCtopSoilConsidered = true)
    THEN BEGIN // top soil is relative wetter than total root zone
-        SWCeffectiveRootZone := RootZoneWC.ZtopAct;
-        Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP); // top soil
-        FCeffectiveRootZone := RootZoneWC.ZtopFC;
-        WPeffectiveRootZone := RootZoneWC.ZtopWP;
+        SWCeffectiveRootZone := GetRootZoneWC().ZtopAct;
+        Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP); // top soil
+        FCeffectiveRootZone := GetRootZoneWC().ZtopFC;
+        WPeffectiveRootZone := GetRootZoneWC().ZtopWP;
         END
    ELSE BEGIN
-        SWCeffectiveRootZone := RootZoneWC.Actual;
-        Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
-        FCeffectiveRootZone := RootZoneWC.FC;
-        WPeffectiveRootZone := RootZoneWC.WP;
+        SWCeffectiveRootZone := GetRootZoneWC().Actual;
+        Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
+        FCeffectiveRootZone := GetRootZoneWC().FC;
+        WPeffectiveRootZone := GetRootZoneWC().WP;
         END;
 
 // Canopy stress and effect of water stress on CGCGDD
@@ -2562,8 +2562,8 @@ VAR Wrelative : double;
 BEGIN
 pSenLL := 0.999; //WP
 IF (Simulation.SWCtopSoilConsidered = true) // top soil is relative wetter than total root zone
-   THEN Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP) // top soil
-   ELSE Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
+   THEN Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
+   ELSE Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 
 WithBeta := false;
 AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,pSenAct);
@@ -2824,13 +2824,13 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                 KsRED := 1; // effect of soil salinity on the threshold for senescence
                 IF (Simulation.SWCtopSoilConsidered = true)
                    THEN BEGIN // top soil is relative wetter than total root zone
-                           IF ((RootZoneWC.ZtopAct < (RootZoneWC.ZtopFC - Crop.pSenAct*KsRED*(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP)))
+                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
                            AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
                         END
                    ELSE BEGIN
-                        IF ((RootZoneWC.Actual < (RootZoneWC.FC - Crop.pSenAct*KsRED*(RootZoneWC.FC - RootZoneWC.WP)))
+                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
                            AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
@@ -3426,21 +3426,21 @@ IF (Tpot > 0) THEN
            DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
 
            // --- 1. Effect of water stress and ECe (total rootzone)
-           WrelSalt := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
+           WrelSalt := (GetRootZoneWC().FC-GetRootZoneWC().Actual)/(GetRootZoneWC().FC-GetRootZoneWC().WP);
 
            // --- 2. Effect of water stress
            pStomatLLAct := 1;
            IF (Simulation.SWCtopSoilConsidered = true)
               THEN BEGIN // top soil is relative wetter than total root zone
-                   IF (RootZoneWC.ZtopAct < (0.999 * RootZoneWC.ZtopThresh))
+                   IF (GetRootZoneWC().ZtopAct < (0.999 * GetRootZoneWC().ZtopThresh))
                       THEN BEGIN
-                           Wrel := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP);
+                           Wrel := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP);
                            RedFact := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
                            END
                       ELSE RedFact := (1 - Simulation.EffectStress.RedKsSto/100);
                    END
               ELSE BEGIN // total root zone
-                   IF (RootZoneWC.Actual < (0.999 * RootZoneWC.Thresh))
+                   IF (GetRootZoneWC().Actual < (0.999 * GetRootZoneWC().Thresh))
                       THEN BEGIN
                            // THE 3 LINES BELOW GIVE THE CORRECT WAY
                               //Wrel := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
@@ -3450,7 +3450,7 @@ IF (Tpot > 0) THEN
                               //RedFact := 1 - (RootZoneWC.Thresh - RootZoneWC.Actual)/(RootZoneWC.Thresh - RootZoneWC.WP);
                               //IF (RedFact < 0) THEN RedFact := 0;
                            // These lines are the new way following the old procedure (but adjusted for soil salinity)
-                           Wrel := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
+                           Wrel := (GetRootZoneWC().FC-GetRootZoneWC().Actual)/(GetRootZoneWC().FC-GetRootZoneWC().WP);
                            RedFact := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
                            END
                       ELSE RedFact := (1 - Simulation.EffectStress.RedKsSto/100);
@@ -3470,7 +3470,7 @@ IF (Tpot > 0) THEN
            TpotMAX := RedFactECsw * Tpot;
 
            // 1.b anaerobic conditions in root zone (total root zone is considered)
-           DetermineRootZoneAnaeroConditions(RootZoneWC.SAT,RootZoneWC.Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
+           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
            TpotMAX := RedFact * TpotMax;
            END;
 
@@ -3544,8 +3544,8 @@ IF (Tpot > 0) THEN
    IF (IrriMode = Inet) THEN
      BEGIN // total root zone is considered
      DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-     InetThreshold := RootZoneWC.FC - SimulParam.PercRAW/100*(RootZoneWC.FC - RootZoneWC.Thresh);
-     IF (RootZoneWC.Actual < InetThreshold) THEN
+     InetThreshold := GetRootZoneWC().FC - SimulParam.PercRAW/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
+     IF (GetRootZoneWC().Actual < InetThreshold) THEN
         BEGIN
         pre_layer := 0;
         FOR compi := 1 TO NrCompartments DO

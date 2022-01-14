@@ -115,8 +115,38 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
+type rep_RootZoneWC 
+    real(dp) :: Actual
+        !! actual soil water content in rootzone [mm]
+    real(dp) :: FC
+        !! soil water content [mm] in rootzone at FC
+    real(dp) :: WP
+        !! soil water content [mm] in rootzone at WP
+    real(dp) :: SAT
+        !! soil water content [mm] in rootzone at Sat
+    real(dp) :: Leaf
+        !! soil water content [mm] in rootzone at upper Threshold for leaf
+        !! expansion
+    real(dp) :: Thresh
+        !! soil water content [mm] in rootzone at Threshold for stomatal
+        !! closure
+    real(dp) :: Sen
+        !! soil water content [mm] in rootzone at Threshold for canopy
+        !! senescence
+    real(dp) :: ZtopAct
+        !! actual soil water content [mm] in top soil (= top compartment)
+    real(dp) :: ZtopFC
+        !! soil water content [mm] at FC in top soil (= top compartment)
+    real(dp) :: ZtopWP
+        !! soil water content [mm] at WP in top soil (= top compartment)
+    real(dp) :: ZtopThresh
+        !! soil water content [mm] at Threshold for stomatal closure in top
+        !! soil
+end type rep_RootZoneWC 
+
 
 character(len=:), allocatable :: CO2File
+type(rep_RootZoneWC) :: RootZoneWC
 
 
 contains
@@ -1557,13 +1587,95 @@ function GetCO2File() result(str)
     str = CO2File
 end function GetCO2File
 
-
 subroutine SetCO2File(str)
     !! Setter for the "CO2File" global variable.
     character(len=*), intent(in) :: str
 
     CO2File = str
 end subroutine SetCO2File
+
+type(rep_RootZoneWC) function GetRootZoneWC()
+    !! Getter for the "RootZoneWC" global variable.
+
+    GetRootZoneWC = RootZoneWC
+end function GetRootZoneWC
+
+subroutine SetRootZoneWC_Actual(Actual)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: Actual
+
+    RootZoneWC%Actual = Actual
+end subroutine SetRootZoneWC_Actual
+
+subroutine SetRootZoneWC_FC(FC)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: FC
+
+    RootZoneWC%FC = FC
+end subroutine SetRootZoneWC_FC
+
+subroutine SetRootZoneWC_WP(WP)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: WP
+
+    RootZoneWC%WP = WP
+end subroutine SetRootZoneWC_WP
+
+subroutine SetRootZoneWC_SAT(SAT)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: SAT
+
+    RootZoneWC%SAT = SAT
+end subroutine SetRootZoneWC_SAT
+
+subroutine SetRootZoneWC_Leaf(Leaf)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: Leaf
+
+    RootZoneWC%Leaf = Leaf
+end subroutine SetRootZoneWC_Leaf
+
+subroutine SetRootZoneWC_Thresh(Thresh)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: Thresh
+
+    RootZoneWC%Thresh = Thresh
+end subroutine SetRootZoneWC_Thresh
+
+subroutine SetRootZoneWC_Sen(Sen)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: Sen
+
+    RootZoneWC%Sen = Sen
+end subroutine SetRootZoneWC_Sen
+
+subroutine SetRootZoneWC_ZtopAct(ZtopAct)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: ZtopAct
+
+    RootZoneWC%ZtopAct = ZtopAct
+end subroutine SetRootZoneWC_ZtopAct
+
+subroutine SetRootZoneWC_ZtopFC(ZtopFC)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: ZtopFC
+
+    RootZoneWC%ZtopFC = ZtopFC
+end subroutine SetRootZoneWC_ZtopFC
+
+subroutine SetRootZoneWC_ZtopWP(ZtopWP)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: ZtopWP
+
+    RootZoneWC%ZtopWP = ZtopWP
+end subroutine SetRootZoneWC_ZtopWP
+
+subroutine SetRootZoneWC_ZtopThresh(ZtopThresh)
+    !! Setter for the "RootZoneWC" global variable.
+    real(dp), intent(in) :: ZtopThresh
+
+    RootZoneWC%ZtopThresh = ZtopThresh
+end subroutine SetRootZoneWC_ZtopThresh
 
 
 end module ac_global

@@ -2125,29 +2125,29 @@ IF Out3Prof THEN
    BEGIN
    WRITE(fDaily,TotalWaterContent.EndDay:10:1);
    IF (RootingDepth <= 0)
-      THEN RootZoneWC.Actual := undef_double
+      THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
            IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
               THEN DetermineRootZoneWC(Crop.RootMax,Simulation.SWCtopSoilConsidered)
               ELSE DetermineRootZoneWC(Soil.RootMax,Simulation.SWCtopSoilConsidered);
            END;
-   WRITE(fDaily,RootZoneWC.actual:9:1,RootingDepth:8:2);
+   WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
    IF (RootingDepth <= 0)
       THEN BEGIN
-           RootZoneWC.Actual := undef_double;
-           RootZoneWC.FC := undef_double;
-           RootZoneWC.WP := undef_double;
-           RootZoneWC.SAT := undef_double;
-           RootZoneWC.Thresh := undef_double;
-           RootZoneWC.Leaf := undef_double;
-           RootZoneWC.Sen := undef_double;
+           SetRootZoneWC_Actual(undef_double);
+           SetRootZoneWC_FC(undef_double);
+           SetRootZoneWC_WP(undef_double);
+           SetRootZoneWC_SAT(undef_double);
+           SetRootZoneWC_Thresh(undef_double);
+           SetRootZoneWC_Leaf(undef_double);
+           SetRootZoneWC_Sen(undef_double);
            END
       ELSE DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-   WRITE(fDaily,RootZoneWC.actual:8:1,RootZoneWC.SAT:10:1,RootZoneWC.FC:10:1,RootZoneWC.Leaf:10:1,
-      RootZoneWC.Thresh:10:1,RootZoneWC.Sen:10:1);
+   WRITE(fDaily,GetRootZoneWC().actual:8:1,GetRootZoneWC().SAT:10:1,GetRootZoneWC().FC:10:1,GetRootZoneWC().Leaf:10:1,
+      GetRootZoneWC().Thresh:10:1,GetRootZoneWC().Sen:10:1);
    IF ((Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,RootZoneWC.WP:10:1)
-      ELSE WRITELN(fDaily,RootZoneWC.WP:10:1);
+      THEN WRITE(fDaily,GetRootZoneWC().WP:10:1)
+      ELSE WRITELN(fDaily,GetRootZoneWC().WP:10:1);
    END;
    
 // 4. Profile/Root zone - soil salinity
@@ -2161,7 +2161,7 @@ IF Out4Salt THEN
            RootZoneSalt.ECsw := undef_int;
            RootZoneSalt.KsSalt := 1;
            END
-      ELSE SaltVal := (RootZoneWC.SAT*RootZoneSalt.ECe*Equiv)/100;
+      ELSE SaltVal := (GetRootZoneWC().SAT*RootZoneSalt.ECe*Equiv)/100;
    IF (ZiAqua = undef_int)
       THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
                  (100*(1-RootZoneSalt.KsSalt)):7:0,undef_double:8:2)
