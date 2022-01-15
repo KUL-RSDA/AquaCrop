@@ -143,6 +143,18 @@ type(rep_clim)  :: TemperatureRecord
 
 character(len=:), allocatable :: TemperatureFile, TemperatureFileFull
 
+type rep_IrriECw 
+    real(dp) :: PreSeason
+        !! Undocumented
+    real(dp) :: PostSeason
+        !! Undocumented
+end type rep_IrriECw 
+
+
+character(len=:), allocatable :: CO2File
+type(rep_IrriECw) :: IrriECw
+
+
 contains
 
 
@@ -444,6 +456,116 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
 
     GetWeedRC = WeedRCDayCalc
 end function GetWeedRC
+
+subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, &
+                                        CGCgiven, TheDaysToCCini, ThePlanting, &
+                                         Length123, StLength, Length12, CGCVal)
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CDCVal
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: TotalLength
+    logical, intent(in) :: CGCgiven
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(intEnum), intent(in) :: ThePlanting
+    integer(int32), intent(inout) :: Length123
+    integer(int32), dimension(4), intent(inout) :: StLength
+    integer(int32), intent(inout) :: Length12
+    real(dp), intent(inout) :: CGCVal
+
+    real(dp) :: CCxVal_scaled
+    real(dp) :: CCToReach
+    integer(int32) :: L12Adj
+
+    if (Length123 < Length12) then
+        Length123 = Length12
+    end if
+
+    ! 1. Initial and 2. Crop Development stage
+    ! CGC is given and Length12 is already adjusted to it
+    ! OR Length12 is given and CGC has to be determined
+    if ((CCoVal >= CCxVal) .or. (Length12 <= L0)) then
+        Length12 = 0
+        StLength(1) = 0
+        StLength(2) = 0
+        CGCVal = Undef_int
+    else
+        if (.not. CGCgiven) then ! Length12 is given and CGC has to be determined
+            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))/(Length12-L0)), kind=dp)
+            ! Check if CGC < maximum value (0.40) and adjust Length12 if required
+            if (CGCVal > 0.40_dp) then
+                CGCVal = 0.40_dp
+                CCxVal_scaled = 0.98_dp*CCxVal
+                Length12 = DaysToReachCCwithGivenCGC(CCxVal_scaled , CCoVal, &
+                                                             CCxVal, CGCVal, L0)
+                if (Length123 < Length12) then
+                    Length123 = Length12
+                end if
+            end if
+        end if
+        ! find StLength[1]
+        CCToReach = 0.10_dp
+        StLength(1) = DaysToReachCCwithGivenCGC(CCToReach, CCoVal, CCxVal, &
+                                                                    CGCVal, L0)
+        ! find StLength[2]
+        StLength(2) = Length12 - StLength(1)
+    end if
+    L12Adj = Length12
+
+    ! adjust Initial and Crop Development stage, in case crop starts as regrowth
+    if (ThePlanting == plant_regrowth) then
+        if (TheDaystoCCini == undef_int) then
+            ! maximum canopy cover is already reached at start season
+            L12Adj = 0
+            StLength(1) = 0
+            StLength(2) = 0
+        else
+            if (TheDaystoCCini == 0) then
+                ! start at germination
+                L12Adj = Length12 - L0
+                StLength(1) = StLength(1) - L0
+            else
+                ! start after germination
+                L12Adj = Length12 - (L0 + TheDaysToCCini)
+                StLength(1) = StLength(1) - (L0 + TheDaysToCCini)
+            end if
+            if (StLength(1) < 0) then
+                StLength(1) = 0
+            end if
+            StLength(2) = L12Adj - StLength(1)
+        end if
+    end if
+
+    ! 3. Mid season stage
+    StLength(3) = Length123 - L12Adj
+
+    ! 4. Late season stage
+    StLength(4) = LengthCanopyDecline(CCxVal, CDCVal)
+
+    ! final adjustment
+    if (StLength(1) > TotalLength) then
+        StLength(1) = TotalLength
+        StLength(2) = 0
+        StLength(3) = 0
+        StLength(4) = 0
+    else
+        if ((StLength(1)+StLength(2)) > TotalLength) then
+            StLength(2) = TotalLength - StLength(1)
+            StLength(3) = 0
+            StLength(4) = 0
+        else
+            if ((StLength(1)+StLength(2)+StLength(3)) > TotalLength) then
+                StLength(3) = TotalLength - StLength(1) - StLength(2)
+                StLength(4) = 0
+            elseif ((StLength(1)+StLength(2)+StLength(3)+StLength(4)) > &
+                                                              TotalLength) then
+                StLength(4) = TotalLength - StLength(1) - StLength(2) - StLength(3)
+            end if
+        end if
+    end if
+
+end subroutine DetermineLengthGrowthStages
+
 
 integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
                           TheSizeSeedling, TheSizePlant, TheCropCCx, TheCropCGC)
@@ -1282,6 +1404,24 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
+subroutine GetCO2Description(CO2FileFull, CO2Description)
+    character(len=*), intent(in) :: CO2FileFull
+    character(len=*), intent(inout) :: CO2Description
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(CO2FileFull), status='old', &
+         action='read')
+    read(fhandle, *) CO2Description
+    close(fhandle)
+
+    if (trim(GetCO2File()) == 'MaunaLoa.CO2') then
+        ! since this is an AquaCrop file, the Description is determined by AquaCrop
+        CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
+    end if
+end subroutine GetCO2Description
+
+
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     integer(int32), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -1353,7 +1493,6 @@ subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
     end do read_loop
     close(fhandle)
 end subroutine GetNumberSimulationRuns
-
 
 logical function FileExists(full_name)
     character(len=*), intent(in) :: full_name
@@ -1444,6 +1583,119 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
         ! end of line
     end do
 end subroutine SplitStringInThreeParams
+
+!! Global variables section !!
+
+function GetCO2File() result(str)
+    !! Getter for the "CO2File" global variable.
+    character(len=len(CO2File)) :: str
+
+    str = CO2File
+end function GetCO2File
+
+
+subroutine SetCO2File(str)
+    !! Setter for the "CO2File" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2File = str
+end subroutine SetCO2File
+
+type(rep_IrriECw) function GetIrriECw()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw = IrriECw
+end function GetIrriECw
+
+subroutine SetIrriECw_PreSeason(PreSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PreSeason
+
+    IrriECw%PreSeason = PreSeason
+end subroutine SetIrriECw_PreSeason
+
+subroutine SetIrriECw_PostSeason(PostSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PostSeason
+
+    IrriECw%PostSeason = PostSeason
+end subroutine SetIrriECw_PostSeason
+
+
+logical function LeapYear(Year)
+    integer(int32), intent(in) :: Year
+
+    LeapYear = .false.
+    if (frac(Year/4._dp) <= 0.01_dp) then
+        LeapYear = .true.
+    end if
+
+    contains
+
+    real(dp) function frac(val)
+        real(dp), intent(in) :: val
+
+        frac = val - floor(val)
+    end function frac 
+end function LeapYear
+
+
+subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
+    character(len=*), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    integer :: fhandle
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
+    character(len=1024) :: buffer
+    integer(int32) :: i, TotalFiles
+  
+    AllOK = .true.
+    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
+        action='read')
+    read(fhandle, *) ! Description
+    read(fhandle, *)  ! AquaCrop version Nr
+    
+    ! Prepare
+    if (Runi > 1) then
+        do i = 1, 5 
+            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
+        end do
+        do i = 1, 42 
+            read(fhandle, *) ! files previous runs
+        end do
+    end if
+
+    ! Type Year and Simulation and Cropping period of the run
+    do i = 1, 5 
+        read(fhandle, *)
+    end do
+
+    ! Check the 14 files
+    i = 1
+    TotalFiles = 14
+    do while (AllOK .and. (i <= TotalFiles))
+        read(fhandle, *) ! Info
+        read(fhandle, *) buffer  ! FileName
+        TempFileName = trim(buffer)
+        if (trim(TempFileName) == '(None)') then
+            read(fhandle, *)
+        else
+            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
+                read(fhandle, *) ! Keep initial SWC
+            else
+                read(fhandle, *) buffer ! PathName
+                TempPathName = trim(buffer)
+                TempFullName = trim(TempPathName) // trim(TempFileName)
+                if (FileExists(trim(TempFullName)) .eqv. .false.) then
+                    AllOK = .false.
+                end if
+            end if
+        end if
+        i = i + 1
+    end do
+    close(fhandle)
+end subroutine CheckFilesInProject
 
 
 logical function LeapYear(Year)

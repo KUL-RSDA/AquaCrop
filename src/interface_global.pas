@@ -44,6 +44,8 @@ type
         END;
 
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
+    
+    rep_int_array = ARRAY[1..4] OF INTEGER;
 
     rep_modeCycle = (GDDays, CalendarDays);
 
@@ -82,6 +84,11 @@ type
          Param : Double;
          end;
      rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
+
+     rep_IrriECw = Record
+         PreSeason  : double;
+         PostSeason : double;
+         end;
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -163,6 +170,35 @@ function GetWeedRC(
             constref GDDL12SF : integer;
             constref TempGDDL123 : integer;
             constref TheModeCycle : rep_modeCycle) : double;
+
+procedure DetermineLengthGrowthStages_wrap(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : integer;
+            constref CGCgiven : boolean;
+            constref TheDaysToCCini : integer;
+            constref ThePlanting : integer;
+            VAR Length123 : integer;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
+        external 'aquacrop' name '__ac_interface_global_MOD_determinelengthgrowthstages_wrap';
+
+procedure DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : INTEGER;
+            constref CGCgiven : BOOLEAN;
+            constref TheDaysToCCini : INTEGER;
+            constref ThePlanting : rep_planting;
+            VAR Length123 : INTEGER;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
 
 function __TimeToCCini(
             constref ThePlantingType : integer;
@@ -307,6 +343,16 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
+procedure GetCO2Description(
+            constref CO2FileFull : string;
+            var CO2Description : string);
+
+procedure GetCO2Description_wrap(
+            constref CO2FileFull : PChar;
+            constref strlen1 : integer;
+            var CO2Description : PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
 
 procedure GetDaySwitchToLinear(
                constref HImax : integer;
@@ -324,6 +370,18 @@ procedure GetNumberSimulationRuns_wrap(
             constref strlen : integer;
             var NrRuns : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
+
+function GetCO2File(): string;
+
+function GetCO2File_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2file_wrap';
+
+procedure SetCO2File(constref str : string);
+
+procedure SetCO2File_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
 
 function FileExists(constref full_name : string) : boolean;
 
@@ -424,6 +482,27 @@ procedure SetTemperatureFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefilefull_wrap';
 
+procedure CheckFilesInProject(
+            constref TempFullFilename : string;
+            constref Runi : integer;
+            var AllOK : boolean);
+
+procedure CheckFilesInProject_wrap(
+            constref TempFullFilename : PChar;
+            constref strlen : integer;
+            constref Runi : integer;
+            var AllOK : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
+
+function GetIrriECw(): rep_IrriECw;
+        external 'aquacrop' name '__ac_global_MOD_getirriecw';
+
+procedure SetIrriECw_PreSeason(constref PreSeason : double);
+        external 'aquacrop' name '__ac_global_MOD_setirriecw_preseason';
+
+procedure SetIrriECw_PostSeason(constref PostSeason : double);
+        external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
+
 
 implementation
 
@@ -466,6 +545,38 @@ begin
     TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
                                  TheSizePlant, TheCropCCx, TheCropCGC);
 end;
+
+procedure DetermineLengthGrowthStages(
+            constref CCoVal : double;
+            constref CCxVal : double;
+            constref CDCVal : double;
+            constref L0 : integer;
+            constref TotalLength : integer;
+            constref CGCgiven : boolean;
+            constref TheDaysToCCini : integer;
+            constref ThePlanting : rep_planting;
+            VAR Length123 : integer;
+            VAR StLength : rep_int_array;
+            VAR Length12 : integer;
+            VAR CGCVal : double);
+
+VAR 
+    int_planting : integer;
+
+begin
+    int_planting := ord(ThePlanting);
+    DetermineLengthGrowthStages_wrap(CCoVal,CCxVal,
+                                            CDCVal,L0,
+                                            TotalLength,
+                                            CGCgiven,
+                                            TheDaysToCCini,
+                                            int_planting,
+                                            Length123,
+                                            StLength,
+                                            Length12,
+                                            CGCVal);
+end;
+
 
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
@@ -559,6 +670,57 @@ begin;
 end;
 
 
+procedure GetCO2Description(
+            constref CO2FileFull : string;
+            var CO2Description : string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(CO2FileFull);
+    p2 := PChar(CO2Description);
+    strlen1 := Length(CO2FileFull);
+    strlen2 := Length(CO2Description);
+    GetCO2Description_wrap(p1, strlen1, p2, strlen2);
+    CO2Description := AnsiString(p2);
+end;
+
+
+function GetCO2File(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2File_wrap();
+    GetCO2File := StrPas(p);
+end;
+
+
+procedure SetCO2File(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2File_wrap(p, strlen);
+end;
+
+procedure CheckFilesInProject(
+            constref TempFullFilename : string;
+            constref Runi : integer;
+            var AllOK : boolean);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TempFullFilename);
+    strlen := Length(TempFullFilename);
+    CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
+end;
 
 
 initialization

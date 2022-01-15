@@ -2,7 +2,7 @@ unit ClimProcessing;
 
 interface
 
-uses Global, interface_global;
+uses Global, interface_global, interface_climprocessing;
 
 
 PROCEDURE GetMonthlyEToDataSet(DayNri : LongInt;
@@ -18,38 +18,13 @@ PROCEDURE GetMonthlyRainDataSet(DayNri : LongInt;
 implementation
 
 
-
-PROCEDURE AdjustDecadeMONTHandYEAR(VAR DecFile,Mfile,Yfile : INTEGER);
-BEGIN
-DecFile := 1;
-Mfile := Mfile + 1;
-IF (Mfile > 12) THEN
-   BEGIN
-   Mfile := 1;
-   YFile := Yfile + 1;
-   END;
-END; (* AdjustDecadeMONTHandYEAR *)
-
-
-
-PROCEDURE AdjustMONTHandYEAR(VAR Mfile,Yfile : INTEGER);
-BEGIN
-Mfile := Mfile - 12;
-YFile := Yfile + 1;
-END; (* AdjustMONTHandYEAR *)
-
-
-
-
-
-
 PROCEDURE GetMonthlyEToDataSet(DayNri : LongInt;
                                VAR EToDataSet : rep_SimulationEventsDbl);
 VAR Dayi,Monthi,Yeari,DayN : INTEGER;
     DNR : LongInt;
     X1,X2,X3,t1,t2 : INTEGER;
     C1,C2,C3 : Double;
-    aOver3,bOver2,c : extended;
+    aOver3,bOver2,c : double;
 
 
 PROCEDURE GetSetofThreeMonths(Monthi,Yeari : INTEGER;
@@ -214,16 +189,6 @@ Close(fETo);
 END; (* GetSetofThreeMonths *)
 
 
-PROCEDURE GetInterpolationParameters(C1,C2,C3 : double;
-                                     X1,X2,X3 : INTEGER;
-                                     VAR aOver3,bOver2,c : extended);
-BEGIN //n1=n2=n3=30 --> better parabola
-aOver3 := (C1-2*C2+C3)/(6*30*30*30);
-bOver2 := (-6*C1+9*C2-3*C3)/(6*30*30);
-c := (11*C1-7*C2+2*C3)/(6*30);
-END; (* GetInterpolationParameters *)
-
-
 BEGIN (* GetMonthlyEToDataSet *)
 DetermineDate(DayNri,Dayi,Monthi,Yeari);
 GetSetofThreeMonths(Monthi,Yeari,C1,C2,C3,X1,X2,X3,t1);
@@ -358,16 +323,6 @@ IF (NOT OK3) THEN
    END;
 Close(fETo);
 END; (* GetSetofThree *)
-
-
-PROCEDURE GetParameters(C1,C2,C3 : double;
-                        VAR UL,LL,Mid : double);
-BEGIN
-UL := (C1+C2)/2;
-LL := (C2+C3)/2;
-Mid := 2*C2 - (UL+LL)/2;
-// --previous decade-->/UL/....... Mid ......../LL/<--next decade--
-END; (* GetParameters *)
 
 
 BEGIN (* GetDecadeEToDataSet *)

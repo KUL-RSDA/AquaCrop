@@ -4,16 +4,24 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: GetNumberSimulationRuns, &
+use ac_global, only: DetermineLengthGrowthStages, &
+                     FileExists, &
+                     GetCO2Description, &
+                     GetCO2File, &
+                     GetNumberSimulationRuns, &
+                     SetCO2File, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      FileExists, &
                      GetTemperatureFile, &
                      GetTemperatureFilefull, &
                      SetTemperatureFile, &
-                     SetTemperatureFilefull
+                     SetTemperatureFilefull, &
+                     CheckFilesInProject
+
 use ac_kinds, only: dp, &
-                    int32
+                    int32, &
+                    intEnum
 implicit none
 
 
@@ -48,6 +56,18 @@ function string2pointer(string) result(c_pointer)
     f_string = string // c_null_char
     c_pointer = c_loc(f_string)
 end function string2pointer
+
+function string2pointer(string) result(c_pointer)
+    !! Returns a C-pointer from a Fortran string.
+    character(len=*), intent(in) :: string
+    type(c_ptr) :: c_pointer
+
+    character(len=:), allocatable, target, save :: f_string
+
+    f_string = string // c_null_char
+    c_pointer = c_loc(f_string)
+end function string2pointer
+
 
 subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
@@ -87,6 +107,7 @@ subroutine SplitStringInTwoParams_wrap(StringIN, strlen, Par1, Par2)
     call SplitStringInTwoParams(string, Par1, Par2)
 end subroutine SplitStringInTwoParams_wrap
 
+
 subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     !! Wrapper for [[ac_global:SplitStringInTwoParams]] for foreign languages.
     type(c_ptr), intent(in) :: StringIN
@@ -100,6 +121,7 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     string = pointer2string(StringIN, strlen)
     call SplitStringInThreeParams(string, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
+
 
 function GetTemperatureFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetTemperatureFile]] for foreign languages.
@@ -134,10 +156,84 @@ subroutine SetTemperatureFilefull_wrap(TemperatureFilefull, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-
+    
     string = pointer2string(TemperatureFilefull, strlen)
     call SetTemperatureFilefull(string)
 end subroutine SetTemperatureFilefull_wrap
 
+
+subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
+    !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
+    type(c_ptr), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TempFullFilename, strlen)
+    call CheckFilesInProject(string, Runi, AllOK)
+end subroutine CheckFilesInProject_wrap
+
+subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
+            strlen2)
+    !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
+    type(c_ptr), intent(in) :: CO2FileFull
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: CO2Description
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(CO2FileFull, strlen1)
+    string2 = pointer2string(CO2Description, strlen2)
+    call GetCO2Description(string1, string2)
+end subroutine GetCO2Description_wrap
+
+
+subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
+                        TotalLength, CGCgiven, TheDaysToCCini, ThePlanting, &
+                        Length123, StLength, Length12, CGCVal)
+    real(dp), intent(in) :: CCoVal
+    real(dp), intent(in) :: CCxVal
+    real(dp), intent(in) :: CDCVal
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: TotalLength
+    logical(1), intent(in) :: CGCgiven
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(intEnum), intent(in) :: ThePlanting
+    integer(int32), intent(inout) :: Length123
+    integer(int32), dimension(4), intent(inout) :: StLength
+    integer(int32), intent(inout) :: Length12
+    real(dp), intent(inout) :: CGCVal
+
+    logical :: CGCgiven_f
+
+    CGCgiven_f = CGCgiven
+    call DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, &
+                                     CGCgiven_f, TheDaysToCCini, ThePlanting, &
+                                     Length123, StLength, Length12, CGCVal)
+end subroutine DetermineLengthGrowthStages_wrap
+
+
+function GetCO2File_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCO2File]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCO2File())
+end function GetCO2File_wrap
+
+
+subroutine SetCO2File_wrap(CO2File, strlen)
+    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    type(c_ptr), intent(in) :: CO2File
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CO2File, strlen)
+    call SetCO2File(string)
+end subroutine SetCO2File_wrap
 
 end module ac_interface_global

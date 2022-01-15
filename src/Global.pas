@@ -51,7 +51,6 @@ TYPE
          ErrorDay  : double; //error on WaterContent or SaltContent over the day
          END;
 
-     rep_int_array = ARRAY[1..4] OF INTEGER;
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
      
@@ -314,11 +313,6 @@ TYPE
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
-     rep_IrriECw = Record
-         PreSeason  : double;
-         PostSeason : double;
-         end;
-
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
@@ -422,7 +416,8 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,EToFile,RainFile,CO2File,
+    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,EToFile,RainFile,
+    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,EToFile,RainFile,
     IrriFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,EToFilefull,RainFileFull,CO2FileFull,
     IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
@@ -436,7 +431,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Simulation     : rep_sim;
     IrriMode       : rep_IrriMode;
     IrriMethod     : rep_IrriMethod;
-    IrriECw        : rep_IrriECw;
     GenerateTimeMode : rep_GenerateTimeMode;
     GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
@@ -553,16 +547,6 @@ PROCEDURE DetermineSaltContent(ECe : double;
 PROCEDURE CompleteProfileDescription;
 PROCEDURE LoadProfile(FullName : string);
 
-PROCEDURE DetermineLengthGrowthStages(CCoVal,CCxVal,CDCVal : double;
-                                      L0,TotalLength : INTEGER;
-                                      CGCgiven : BOOLEAN;
-                                      TheDaysToCCini : INTEGER;
-                                      ThePlanting : rep_planting;
-                                      VAR Length123 : INTEGER;
-                                      VAR StLength : rep_int_array;
-                                      VAR Length12 : integer;
-                                      VAR CGCVal : double);
-
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
                                    CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
@@ -577,7 +561,7 @@ PROCEDURE LoadCrop (FullName : string);
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File : string);
+                      VAR TempFile,EToFile,RainFile,CO2File_str: string);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -624,8 +608,6 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
 
 PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
                                        VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
-PROCEDURE GetCO2Description(CO2FileFull : string;
-                            VAR CO2Description : string);
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -654,9 +636,6 @@ PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
 PROCEDURE LoadProjectDescription(FullNameProjectFile : string;
                                  VAR DescriptionOfProject : string);
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
-PROCEDURE CheckFilesInProject(TempFullFilename : string;
-                              Runi : INTEGER;
-                              VAR AllOK : BOOLEAN);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -1083,8 +1062,8 @@ BEGIN
      IrriAfterSeason[Nri].DayNr := 0;
      IrriAfterSeason[Nri].Param := 0;
      END;
- IrriECw.PreSeason := 0.0; //dS/m
- IrriECw.PostSeason := 0.0; //dS/m
+ SetIrriECw_PreSeason(0.0); //dS/m
+ SetIrriECw_PostSeason(0.0); //dS/m
 END; (* NoIrrigation *)
 
 
@@ -1100,13 +1079,13 @@ WITH Management DO
    EffectMulchOffS := 50;
    // off-season irrigation
    SimulParam.IrriFwOffSeason := 100;
-   IrriECw.PreSeason := 0.0; // dS/m
+   SetIrriECw_PreSeason(0.0); // dS/m
    FOR Nri := 1 TO 5 DO
        BEGIN
        IrriBeforeSeason[Nri].DayNr := 0;
        IrriBeforeSeason[Nri].Param := 0;
        END;
-   IrriECw.PostSeason := 0.0; // dS/m
+   SetIrriECw_PostSeason(0.0); // dS/m
    FOR Nri := 1 TO 5 DO
        BEGIN
        IrriAfterSeason[Nri].DayNr := 0;
@@ -1123,6 +1102,8 @@ VAR f0 : TextFile;
     ParamString : string;
     Par1,Par2 : double;
     VersionNr : double;
+    PreSeason_in : double;
+    PostSeason_in : double;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -1145,12 +1126,18 @@ FOR Nri := 1 TO 5 DO
     END;
 READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
-   THEN IrriECw.PreSeason := 0.0
-   ELSE READLN(f0,IrriECw.PreSeason);
+   THEN SetIrriECw_PreSeason(0.0)
+   ELSE BEGIN
+    READLN(f0,PreSeason_in);
+    SetIrriECw_PreSeason(PreSeason_in);
+    END;
 READLN(f0,NrEvents2); //number of irrigation events AFTER growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality AFTER growing period
-   THEN IrriECw.PostSeason := 0.0
-   ELSE READLN(f0,IrriECw.PostSeason);
+   THEN SetIrriECw_PostSeason(0.0)
+   ELSE BEGIN
+    READLN(f0,PostSeason_in);
+    SetIrriECw_PostSeason(PostSeason_in);
+    END;
 READLN(f0,SimulParam.IrriFwOffSeason); // percentage of soil surface wetted
 // irrigation events - get events before and after season
 IF (NrEvents1 > 0) OR (NrEvents2 > 0) THEN FOR Nri := 1 TO 3 DO READLN(f0); // title
@@ -1170,9 +1157,6 @@ IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing per
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-
 
 
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
@@ -1722,112 +1706,6 @@ Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 END; // Loadprofile
 
 
-PROCEDURE DetermineLengthGrowthStages(CCoVal,CCxVal,CDCVal : double;
-                                      L0,TotalLength : INTEGER;
-                                      CGCgiven : BOOLEAN;
-                                      TheDaysToCCini : INTEGER;
-                                      ThePlanting : rep_planting;
-                                      VAR Length123 : INTEGER;
-                                      VAR StLength : rep_int_array;
-                                      VAR Length12 : integer;
-                                      VAR CGCVal : double);
-VAR CCToReach : double;
-    L12Adj : INTEGER;
-
-BEGIN //DetermineLengthGrowthStages
-
-IF (Length123 < Length12) THEN Length123 := Length12;
-
-// 1. Initial and 2. Crop Development stage
-      //CGC is given and Length12 is already adjusted to it
-      //OR Length12 is given and CGC has to be determined
-IF ((CCoVal >= CCxVal) OR (Length12 <= L0))
-   THEN BEGIN
-        Length12 := 0;
-        StLength[1] := 0;
-        StLength[2] := 0;
-        CGCVal := Undef_int;
-        END
-   ELSE BEGIN
-        IF (NOT CGCgiven) //Length12 is given and CGC has to be determined
-           THEN BEGIN
-                CGCVal := Ln((0.25*CCxVal/CCoVal)/(1-0.98))/(Length12-L0);
-                // Check if CGC < maximum value (0.40) and adjust Length12 if required
-                IF CGCVal > 0.40 THEN
-                   BEGIN
-                   CGCVal := 0.40;
-                   Length12 := DaysToReachCCwithGivenCGC((0.98*CCxVal),CCoVal,CCxVal,CGCVal,L0);
-                   IF (Length123 < Length12) THEN Length123 := Length12;
-                   END;
-                END;
-        //find StLength[1]
-        CCToReach := 0.10;
-        StLength[1] := DaysToReachCCwithGivenCGC(CCToReach,CCoVal,CCxVal,CGCVal,L0);
-        //find StLength[2]
-        StLength[2] := Length12 - StLength[1];
-        END;
-L12Adj := Length12;
-
-// adjust Initial and Crop Development stage, in case crop starts as regrowth
-IF (ThePlanting = Regrowth) THEN
-   BEGIN
-   IF (TheDaystoCCini = undef_int)
-      THEN BEGIN // maximum canopy cover is already reached at start season
-           L12Adj := 0;
-           StLength[1] := 0;
-           StLength[2] := 0;
-           END
-      ELSE BEGIN
-           IF (TheDaystoCCini = 0)
-              THEN BEGIN // start at germination
-                   L12Adj := Length12 - L0;
-                   StLength[1] := StLength[1] - L0;
-                   END
-              ELSE BEGIN // start after germination
-                   L12Adj := Length12 - (L0 + TheDaysToCCini);
-                   StLength[1] := StLength[1] - (L0 + TheDaysToCCini);
-                   END;
-           IF (StLength[1] < 0) THEN StLength[1] := 0;
-           StLength[2] := L12Adj - StLength[1];
-           END;
-   END;
-
-
-// 3. Mid season stage
-//StLength[3] := Length123 - Length12;
-StLength[3] := Length123 - L12Adj;
-
-// 4. Late season stage
-StLength[4] := LengthCanopyDecline(CCxVal,CDCVal);
-
-// final adjustment
-IF (StLength[1] > TotalLength)
-   THEN BEGIN
-        StLength[1] := TotalLength;
-        StLength[2] := 0;
-        StLength[3] := 0;
-        StLength[4] := 0;
-        END
-   ELSE BEGIN
-        IF ((StLength[1]+StLength[2]) > TotalLength)
-           THEN BEGIN
-                StLength[2] := TotalLength - StLength[1];
-                StLength[3] := 0;
-                StLength[4] := 0;
-                END
-           ELSE BEGIN
-                IF ((StLength[1]+StLength[2]+StLength[3]) > TotalLength)
-                   THEN BEGIN
-                        StLength[3] := TotalLength - StLength[1] - StLength[2];
-                        StLength[4] := 0;
-                        END
-                   ELSE IF ((StLength[1]+StLength[2]+StLength[3]+StLength[4]) > TotalLength)
-                           THEN StLength[4] := TotalLength - StLength[1] - StLength[2] - StLength[3];
-                END;
-        END;
-END; (* DetermineLengthGrowthStages *)
-
-
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
                                    CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
@@ -2303,7 +2181,7 @@ END; (* CompleteClimateDescription *)
 
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File : string);
+                      VAR TempFile,EToFile,RainFile,CO2File_str : string);
 VAR f0 : TextFile;
 BEGIN
 Assign(f0,FullName);
@@ -2313,7 +2191,8 @@ READLN(f0); // AquaCrop Version
 READLN(f0,TempFile);
 READLN(f0,EToFile);
 READLN(f0,RainFile);
-READLN(f0,CO2File);
+READLN(f0,CO2File_str);
+SetCO2File(CO2File_str);
 Close(f0);
 END; (* LoadClimate *)
 
@@ -3670,24 +3549,6 @@ IF (RootingDepth >= Crop.RootMin)
 END;  (* DetermineRootZoneSaltContent *)
 
 
-
-PROCEDURE GetCO2Description(CO2FileFull : string;
-                            VAR CO2Description : string);
-VAR f0 : textfile;
-BEGIN
-Assign(f0,CO2FileFull);
-Reset(f0);
-Readln(f0,CO2Description);
-Close(f0);
-IF (CO2File = 'MaunaLoa.CO2') THEN
-   BEGIN
-   // since this is an AquaCrop file, the Description is determined by AquaCrop
-   CO2Description := 'Default atmospheric CO2 concentration from 1902 to 2099';
-   END;
-END; (* GetCO2Description *)
-
-
-
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 VAR i,Dayi,Monthi,FromYi,ToYi : INTEGER;
     f0 : textfile;
@@ -4235,56 +4096,6 @@ Delete(TempString,(i-3),(4));
 OutputName := TempString;
 END; (* ComposeOutputFileName *)
 
-
-PROCEDURE CheckFilesInProject(TempFullFilename : string;
-                              Runi : INTEGER;
-                              VAR AllOK : BOOLEAN);
-VAR f0 : TextFile;
-    TempFileName,TempPathName,TempFullName : string;
-    i,TotalFiles : ShortInt;
-
-BEGIN
-AllOK := true;
-Assign(f0,TempFullFilename);
-Reset(f0);
-READLN(f0); // Description
-READLN(f0);  // AquaCrop version Nr
-
-// Prepare
-IF (Runi > 1) THEN
-   BEGIN
-   FOR i := 1 TO 5 DO READLN(f0); // Type year and Simulation and Cropping period of run 1
-   FOR i := 1 TO 42 DO Readln(f0); // files previous runs
-   END;
-
-// Type Year and Simulation and Cropping period of the run
-FOR i := 1 TO 5 DO READLN(f0);
-
-// Check the 14 files
-i := 1;
-TotalFiles := 14;
-WHILE (AllOK AND (i <= TotalFiles)) DO
-   BEGIN
-   READLN(f0); // Info
-   READLN(f0,TempFileName);  // FileName
-   IF (Trim(TempFileName) = '(None)')
-      THEN READLN(f0)
-      ELSE BEGIN
-           IF ((i = (TotalFiles-2)) AND (Trim(TempFileName) = 'KeepSWC')) // file initial conditions
-              THEN READLN(f0) // Keep initial SWC
-              ELSE BEGIN
-                   READLN(f0,TempPathName);  //PathName
-                   TempFullName := CONCAT(Trim(TempPathName),Trim(TempFileName));
-                   IF (FileExists(TempFullName) = false) THEN AllOK := false;
-                   END;
-           END;
-   i := i + 1;
-   END;
-Close(f0);
-END; (* CheckFilesInProject *)
-
-
-
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -4317,6 +4128,7 @@ FOR i := 1 TO 27 DO READLN(f0); // Climate (5x3 = 15),Calendar (3),Crop (3), Irr
 READLN(f0); // info Soil file
 READLN(f0,FileName);
 READLN(f0,PathName);
+PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
 FullFileName := CONCAT(Trim(PathName),Trim(FileName));
 LoadProfile(FullFileName);
 TheNrSoilLayers := Soil.NrSoilLayers;
@@ -4368,6 +4180,7 @@ IF (RunWithKeepSWC = true) THEN
      READLN(f0); // Crop file title
      READLN(f0,FileName);
      READLN(f0,PathName);
+     PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
      FullFileName := CONCAT(Trim(PathName),Trim(FileName));
      Assign(fx,FullFileName);
      Reset(fx);
