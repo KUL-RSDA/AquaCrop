@@ -99,8 +99,8 @@ implementation
 
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
- ProfFile := 'DEFAULT.SOL';
- ProfFilefull := CONCAT(PathNameSimul,ProfFile);
+ SetProfFile('DEFAULT.SOL');
+ ProfFilefull := CONCAT(PathNameSimul,GetProfFile());
  // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)

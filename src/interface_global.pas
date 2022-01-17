@@ -422,6 +422,18 @@ procedure SetCropFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcropfile_wrap';
 
+function GetProfFile(): string;
+
+function GetProfFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getproffile_wrap';
+
+procedure SetProfFile(constref str : string);
+
+procedure SetProfFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setproffile_wrap';
+
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
@@ -586,7 +598,6 @@ begin;
     CO2Description := AnsiString(p2);
 end;
 
-
 function GetCO2File(): string;
 var
     p : PChar;
@@ -606,6 +617,26 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2File_wrap(p, strlen);
+end;
+
+function GetProfFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetProfFile_wrap();
+    GetProfFile := StrPas(p);
+end;
+
+procedure SetProfFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetProfFile_wrap(p, strlen);
 end;
 
 procedure CheckFilesInProject(

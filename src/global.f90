@@ -126,6 +126,7 @@ end type rep_IrriECw
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
 
 
@@ -1558,7 +1559,6 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
     end do
 end subroutine SplitStringInThreeParams
 
-
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
@@ -1679,6 +1679,7 @@ subroutine SetCropFile(str)
     CropFile = str
 end subroutine SetCropFile
 
+
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.
 
@@ -1698,6 +1699,22 @@ subroutine SetIrriECw_PostSeason(PostSeason)
 
     IrriECw%PostSeason = PostSeason
 end subroutine SetIrriECw_PostSeason
+
+
+function GetProfFile() result(str)
+    !! Getter for the "ProfFile" global variable.
+    character(len=len(ProfFile)) :: str
+
+    str = ProfFile
+end function GetProfFile
+
+
+subroutine SetProfFile(str)
+    !! Setter for the "ProfFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFile = str
+end subroutine SetProfFile
 
 
 end module ac_global
