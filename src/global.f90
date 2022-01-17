@@ -115,7 +115,6 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
-
 type rep_IrriECw 
     real(dp) :: PreSeason
         !! Undocumented
@@ -124,7 +123,9 @@ type rep_IrriECw
 end type rep_IrriECw 
 
 
+character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
 
@@ -1649,6 +1650,35 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+function GetCalendarFile() result(str)
+    !! Getter for the "CalendarFile" global variable.
+    character(len=len(CalendarFile)) :: str
+
+    str = CalendarFile
+end function GetCalendarFile
+
+subroutine SetCalendarFile(str)
+    !! Setter for the "CalendarFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarFile = str
+end subroutine SetCalendarFile
+
+function GetCropFile() result(str)
+    !! Getter for the "CropFile" global variable.
+    character(len=len(CropFile)) :: str
+
+    str = CropFile
+end function GetCropFile
+
+subroutine SetCropFile(str)
+    !! Setter for the "CropFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CropFile = str
+end subroutine SetCropFile
+
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.

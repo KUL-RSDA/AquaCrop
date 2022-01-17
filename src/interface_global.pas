@@ -398,6 +398,30 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
+function GetCalendarFile(): string;
+
+function GetCalendarFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcalendarfile_wrap';
+
+procedure SetCalendarFile(constref str : string);
+
+procedure SetCalendarFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcalendarfile_wrap';
+
+function GetCropFile(): string;
+
+function GetCropFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcropfile_wrap';
+
+procedure SetCropFile(constref str : string);
+
+procedure SetCropFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcropfile_wrap';
+
 function GetProfFile(): string;
 
 function GetProfFile_wrap(): PChar;
@@ -580,7 +604,7 @@ var
 
 begin;
     p := GetCO2File_wrap();
-    GetCO2File := StrPas(p);
+    GetCO2File := AnsiString(p);
 end;
 
 
@@ -628,6 +652,50 @@ begin;
     strlen := Length(TempFullFilename);
     CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
 end;
+
+
+function GetCalendarFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCalendarFile_wrap();
+    GetCalendarFile := AnsiString(p);
+end;
+
+
+procedure SetCalendarFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCalendarFile_wrap(p, strlen);
+end;
+
+
+function GetCropFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCropFile_wrap();
+    GetCropFile := AnsiString(p);
+end;
+
+
+procedure SetCropFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCropFile_wrap(p, strlen);
+end;
+
 
 initialization
 
