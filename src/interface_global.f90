@@ -4,16 +4,17 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: DetermineLengthGrowthStages, &
+use ac_global, only: CheckFilesInProject, &
+                     DetermineLengthGrowthStages, &
                      FileExists, &
                      GetCO2Description, &
                      GetCO2File, &
                      GetNumberSimulationRuns, &
+                     GetProfFile, &
                      SetCO2File, &
+                     SetProfFile, &
                      SplitStringInTwoParams, &
-                     SplitStringInThreeParams, &
-                     FileExists, &
-                     CheckFilesInProject
+                     SplitStringInThreeParams
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -180,5 +181,25 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     string = pointer2string(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
+
+
+function GetProfFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfFile())
+end function GetProfFile_wrap
+
+
+subroutine SetProfFile_wrap(ProfFile, strlen)
+    !! Wrapper for [[ac_global:SetProfFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfFile, strlen)
+    call SetProfFile(string)
+end subroutine SetProfFile_wrap
 
 end module ac_interface_global

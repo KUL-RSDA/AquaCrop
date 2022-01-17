@@ -1413,10 +1413,10 @@ IF (ManFile = '(None)')
 // 6. Soil Profile
 READLN(f0); // Info Soil
 READLN(f0,TempString);  //ProfFile
-ProfFile := Trim(TempString);
+SetProfFile(Trim(TempString));
 READLN(f0,TempString);  //PathProfFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-ProfFilefull := CONCAT(Trim(TempString),ProfFile);
+ProfFilefull := CONCAT(Trim(TempString),GetProfFile());
 // The load of profile is delayed to check if soil water profile need to be reset (see 8.)
 
 // 7. Groundwater
