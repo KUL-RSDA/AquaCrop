@@ -18,7 +18,11 @@ use ac_global, only: CheckFilesInProject, &
                      SetCropFile, &
                      SetProfFile, &
                      SplitStringInTwoParams, &
-                     SplitStringInThreeParams
+                     SplitStringInThreeParams, &
+                     GetTemperatureFile, &
+                     GetTemperatureFilefull, &
+                     SetTemperatureFile, &
+                     SetTemperatureFilefull
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -239,5 +243,44 @@ subroutine SetProfFile_wrap(ProfFile, strlen)
     string = pointer2string(ProfFile, strlen)
     call SetProfFile(string)
 end subroutine SetProfFile_wrap
+
+
+function GetTemperatureFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureFile())
+end function GetTemperatureFile_wrap
+
+
+subroutine SetTemperatureFile_wrap(TemperatureFile, strlen)
+    !! Wrapper for [[ac_global:TemperatureFile]] for foreign languages.
+    type(c_ptr), intent(in) :: TemperatureFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureFile, strlen)
+    call SetTemperatureFile(string)
+end subroutine SetTemperatureFile_wrap
+
+function GetTemperatureFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureFilefull())
+end function GetTemperatureFilefull_wrap
+
+
+subroutine SetTemperatureFilefull_wrap(TemperatureFilefull, strlen)
+    !! Wrapper for [[ac_global:TemperatureFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: TemperatureFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureFilefull, strlen)
+    call SetTemperatureFilefull(string)
+end subroutine SetTemperatureFilefull_wrap
 
 end module ac_interface_global

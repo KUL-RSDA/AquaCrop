@@ -11,6 +11,7 @@ const
     CO2Ref = 369.41;
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
+    DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -50,6 +51,17 @@ type
 
     rep_planting = (Seed,Transplant,Regrowth);
 
+    rep_datatype = (Daily,Decadely, Monthly);
+
+    rep_clim = Record
+         DataType    : rep_datatype;
+         FromD,FromM,FromY : INTEGER; //D = day or decade, Y=1901 is not linked to specific year
+         ToD,ToM,ToY : INTEGER;
+         FromDayNr, ToDayNr : LongInt; //daynumber
+         FromString, ToString : String;
+         NrObs       : INTEGER; // number of observations
+         end;
+
     rep_EffectStress = Record
          RedCGC          : ShortInt; (* Reduction of CGC (%) *)
          RedCCX          : ShortInt; (* Reduction of CCx (%) *)
@@ -71,6 +83,12 @@ type
          PreSeason  : double;
          PostSeason : double;
          end;
+
+    rep_DayEventDbl = Record
+         DayNr : Integer;
+         Param : Double;
+         end;
+     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -398,6 +416,9 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
+function LeapYear(constref Year : integer) : boolean;
+        external 'aquacrop' name '__ac_global_MOD_leapyear';
+
 function GetCalendarFile(): string;
 
 function GetCalendarFile_wrap(): PChar;
@@ -434,9 +455,6 @@ procedure SetProfFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setproffile_wrap';
 
-function LeapYear(constref Year : integer) : boolean;
-        external 'aquacrop' name '__ac_global_MOD_leapyear';
-
 procedure CheckFilesInProject(
             constref TempFullFilename : string;
             constref Runi : integer;
@@ -457,6 +475,79 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
+
+function GetTemperatureRecord(): rep_clim;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord';
+
+procedure SetTemperatureRecord_DataType_wrap(constref DataType : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype_wrap';
+
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+
+procedure SetTemperatureRecord_FromD(constref FromD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromd';
+
+procedure SetTemperatureRecord_FromM(constref FromM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromm';
+
+procedure SetTemperatureRecord_FromY(constref FromY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromy';
+
+procedure SetTemperatureRecord_ToD(constref ToD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tod';
+
+procedure SetTemperatureRecord_ToM(constref ToM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tom';
+
+procedure SetTemperatureRecord_ToY(constref ToY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_toy';
+
+procedure SetTemperatureRecord_FromDayNr(constref FromDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromdaynr';
+
+procedure SetTemperatureRecord_ToDayNr(constref ToDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_todaynr';
+
+procedure SetTemperatureRecord_NrObs(constref NrObs : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_nrobs';
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+
+procedure SetTemperatureRecord_FromString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_fromstring_wrap';
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+
+procedure SetTemperatureRecord_ToString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
+
+function GetTemperatureFile(): string;
+
+function GetTemperatureFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturefile_wrap';
+
+procedure SetTemperatureFile(constref str : string);
+
+procedure SetTemperatureFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefile_wrap';
+
+function GetTemperatureFilefull(): string;
+
+function GetTemperatureFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturefilefull_wrap';
+
+procedure SetTemperatureFilefull(constref str : string);
+
+procedure SetTemperatureFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefilefull_wrap';
 
 
 implementation
@@ -582,6 +673,15 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+var
+   int_datatype : integer;
+
+begin;
+   int_datatype := ord(DataType);
+   SetTemperatureRecord_DataType_wrap(int_datatype); 
+end;
+
 procedure GetCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
@@ -597,6 +697,8 @@ begin;
     GetCO2Description_wrap(p1, strlen1, p2, strlen2);
     CO2Description := AnsiString(p2);
 end;
+
+
 
 function GetCO2File(): string;
 var
@@ -625,7 +727,7 @@ var
 
 begin;
     p := GetProfFile_wrap();
-    GetProfFile := StrPas(p);
+    GetProfFile := AnsiString(p);
 end;
 
 procedure SetProfFile(constref str : string);
@@ -694,6 +796,71 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCropFile_wrap(p, strlen);
+end;
+
+
+function GetTemperatureFile(): string;
+var
+     p : PChar;
+
+begin;
+     p := GetTemperatureFile_wrap();
+     GetTemperatureFile := AnsiString(p);
+end;
+
+
+procedure SetTemperatureFile(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureFile_wrap(p, strlen);
+end;
+
+function GetTemperatureFilefull(): string;
+var
+     p : PChar;
+
+begin;
+     p := GetTemperatureFilefull_wrap();
+     GetTemperatureFilefull := AnsiString(p);
+end;
+
+
+procedure SetTemperatureFilefull(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureFilefull_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureRecord_FromString_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureRecord_ToString_wrap(p, strlen);
 end;
 
 
