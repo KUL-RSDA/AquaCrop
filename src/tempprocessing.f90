@@ -2,8 +2,14 @@ module ac_tempprocessing
 
 use ac_kinds,  only: int32, dp
 
-use ac_global !, only: DetermineDayNr, &
-              !       DetermineDate
+use ac_global , only: DaysinMonth, &
+                      TemperatureRecord, &
+                      TemperatureFile, &
+                      TemperatureFileFull, &
+                      rep_DayEventDbl, &
+                      DetermineDayNr, &
+                      DetermineDate, &
+                      LeapYear
 
 
 implicit none
@@ -80,15 +86,15 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     call GetParameters(C1Min, C2Min, C3Min, ULMin, LLMin, MidMin)
     do Nri = 1, ni
         TMinDataSet(Nri)%DayNr = DNR+Nri-1
-        if (Nri <= (ni/2+0.01)) then
-            TMinDataSet(Nri)%Param = (2*ULMin + &
-                          (MidMin-ULMin)*(2*Nri-1)/(ni/2))/2_dp
+        if (Nri <= (ni/2._dp+0.01_dp)) then
+            TMinDataSet(Nri)%Param = (2._dp*ULMin + &
+                          (MidMin-ULMin)*(2._dp*Nri-1._dp)/(ni/2._dp))/2._dp
         else
-            if (((ni == 11) .or. (ni == 9)) .and. (Nri < (ni+1.01)/2_dp)) then
+            if (((ni == 11) .or. (ni == 9)) .and. (Nri < (ni+1.01_dp)/2._dp)) then
                 TminDataSet(Nri)%Param = MidMin
             else
-                TminDataSet(Nri)%Param = (2_dp*MidMin + &
-                          (LLMin-MidMin)*(2_dp*Nri-(ni+1))/(ni/2_dp))/2_dp
+                TminDataSet(Nri)%Param = (2._dp*MidMin + &
+                          (LLMin-MidMin)*(2._dp*Nri-(ni+1))/(ni/2._dp))/2._dp
             end if
         end if
     end do
@@ -96,148 +102,58 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     call GetParameters(C1Max, C2Max, C3Max, ULMax, LLMax, MidMax)
     do Nri = 1, ni
         TMaxDataSet(Nri)%DayNr = DNR+Nri-1
-        if (Nri <= (ni/2+0.01)) then
-            TMaxDataSet(Nri)%Param = (2*ULMax + &
-                          (MidMax-ULMax)*(2*Nri-1)/(ni/2))/2_dp
+        if (Nri <= (ni/2._dp+0.01_dp)) then
+            TMaxDataSet(Nri)%Param = (2._dp*ULMax + &
+                          (MidMax-ULMax)*(2._dp*Nri-1)/(ni/2._dp))/2._dp
         else
-            if (((ni == 11) .or. (ni == 9)) .and. (Nri < (ni+1.01)/2_dp)) then
+            if (((ni == 11) .or. (ni == 9)) .and. (Nri < (ni+1.01_dp)/2._dp)) then
                  TmaxDataSet(Nri)%Param = MidMax
             else
-                TmaxDataSet(Nri)%Param = (2_dp*MidMax + &
-                          (LLMax-MidMax)*(2_dp*Nri-(ni+1))/(ni/2))/2_dp
+                TmaxDataSet(Nri)%Param = (2._dp*MidMax + &
+                          (LLMax-MidMax)*(2._dp*Nri-(ni+1))/(ni/2._dp))/2._dp
             end if
         end if
     end do
 
     do Nri = (ni+1), 31
         TminDataSet(Nri)%DayNr = DNR+ni-1
-        TminDataSet(Nri)%Param = 0_dp
+        TminDataSet(Nri)%Param = 0._dp
         TmaxDataSet(Nri)%DayNr = DNR+ni-1
-        TmaxDataSet(Nri)%Param = 0_dp
+        TmaxDataSet(Nri)%Param = 0._dp
     end do
 
-contains
+    contains
 
-subroutine GetSetofThree(DayN, Deci, Monthi, Yeari, &
-                 C1Min, C1Max, C2Min, C2Max, C3Min, C3Max)
-    integer(int32), intent(in) :: DayN
-    integer(int32), intent(in) :: Deci
-    integer(int32), intent(in) :: Monthi
-    integer(int32), intent(in) :: Yeari
-    real(dp), intent(inout) :: C1Min
-    real(dp), intent(inout) :: C1Max
-    real(dp), intent(inout) :: C2Min
-    real(dp), intent(inout) :: C2Max
-    real(dp), intent(inout) :: C3Min
-    real(dp), intent(inout) :: C3Max
+    subroutine GetSetofThree(DayN, Deci, Monthi, Yeari, &
+                     C1Min, C1Max, C2Min, C2Max, C3Min, C3Max)
+        integer(int32), intent(in) :: DayN
+        integer(int32), intent(in) :: Deci
+        integer(int32), intent(in) :: Monthi
+        integer(int32), intent(in) :: Yeari
+        real(dp), intent(inout) :: C1Min
+        real(dp), intent(inout) :: C1Max
+        real(dp), intent(inout) :: C2Min
+        real(dp), intent(inout) :: C2Max
+        real(dp), intent(inout) :: C3Min
+        real(dp), intent(inout) :: C3Max
 
-    integer(int32) :: fhandle
-    integer(int32) :: DecFile, Mfile, Yfile, Nri, Obsi, rc
-    logical :: OK3
-    character(len=255) :: StringREAD
+        integer(int32) :: fhandle
+        integer(int32) :: DecFile, Mfile, Yfile, Nri, Obsi, rc
+        logical :: OK3
+        character(len=255) :: StringREAD
 
-    !! 1 = previous decade, 2 = Actual decade, 3 = Next decade;
-    open(newunit=fhandle, file=trim(TemperatureFilefull), &
-                 status='old', action='read', iostat=rc)
-    read(fhandle, *, iostat=rc) ! description
-    read(fhandle, *, iostat=rc) ! time step
-    read(fhandle, *, iostat=rc) ! day
-    read(fhandle, *, iostat=rc) ! month
-    read(fhandle, *, iostat=rc) ! year
-    read(fhandle, *, iostat=rc)
-    read(fhandle, *, iostat=rc)
-    read(fhandle, *, iostat=rc)
+        !! 1 = previous decade, 2 = Actual decade, 3 = Next decade;
+        open(newunit=fhandle, file=trim(TemperatureFilefull), &
+                     status='old', action='read', iostat=rc)
+        read(fhandle, *, iostat=rc) ! description
+        read(fhandle, *, iostat=rc) ! time step
+        read(fhandle, *, iostat=rc) ! day
+        read(fhandle, *, iostat=rc) ! month
+        read(fhandle, *, iostat=rc) ! year
+        read(fhandle, *, iostat=rc)
+        read(fhandle, *, iostat=rc)
+        read(fhandle, *, iostat=rc)
 
-    if (TemperatureRecord%FromD > 20) then
-        DecFile = 3
-    elseif (TemperatureRecord%FromD > 10) then
-        DecFile = 2
-    else
-        DecFile = 1
-    end if
-    Mfile = TemperatureRecord%FromM
-    if (TemperatureRecord%FromY == 1901) then
-        Yfile = Yeari
-    else
-        Yfile = TemperatureRecord%FromY
-    end if
-    OK3 = .false.
-
-    if (TemperatureRecord%NrObs <= 2) then
-        read(fhandle, iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-        select case (TemperatureRecord%NrObs)
-        case (1)
-            C2Min = C1Min
-            C2Max = C2Max
-            C3Min = C1Min
-            C3Max = C1Max
-        case (2)
-            DecFile = DecFile + 1
-            if (DecFile > 3) then
-                call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
-            end if
-            read(fhandle, iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
-            if (Deci == DecFile) then
-                C2Min = C3Min
-                C2Max = C3Max
-                C3Min = C2Min+(C2Min-C1Min)/4_dp
-                C3Max = C2Max+(C2Max-C1Max)/4_dp
-            else
-                C2Min = C1Min
-                C2Max = C1Max
-                C1Min = C2Min + (C2Min-C3Min)/4_dp
-                C1Max = C2Max + (C2Max-C3Max)/4_dp
-            end if
-        end select
-        OK3 = .true.
-    end if
-
-   if ((.not. OK3) .and. ((Deci == DecFile) .and. (Monthi == Mfile) &
-        .and. (Yeari == Yfile))) then
-        read(fhandle, iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-        C2Min = C1Min
-        C2Max = C1Max
-        read(fhandle, iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
-        C1Min = C2Min + (C2Min-C3Min)/4_dp
-        C1Max = C2Max + (C2Max-C3Max)/4_dp
-        OK3 = .true.
-    end if
-
-    if ((.not. OK3) .and. ((DayN == TemperatureRecord%ToD) &
-        .and. (Monthi == TemperatureRecord%ToM))) then
-        if ((TemperatureRecord%FromY == 1901) .or. &
-            (Yeari == TemperatureRecord%ToY)) then
-            do Nri = 1, (TemperatureRecord%NrObs-2)
-                 read(fhandle, *, iostat=rc)
-            end do
-            read(fhandle, iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-            read(fhandle, iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
-            C3Min = C2Min+(C2Min-C1Min)/4_dp
-            C3Max = C2Max+(C2Max-C1Max)/4_dp
-            OK3 = .true.
-        end if
-    end if
-
-    if (.not. OK3) then
-        Obsi = 1
-        do while (.not. OK3)
-            if ((Deci == DecFile) .and. (Monthi == Mfile) &
-                .and. (Yeari == Yfile)) then
-                OK3 = .true.
-            else
-                DecFile = DecFile + 1
-                if (DecFile > 3) then
-                    call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
-                end if
-                Obsi = Obsi + 1
-            end if
-        end do
         if (TemperatureRecord%FromD > 20) then
             DecFile = 3
         elseif (TemperatureRecord%FromD > 10) then
@@ -245,32 +161,122 @@ subroutine GetSetofThree(DayN, Deci, Monthi, Yeari, &
         else
             DecFile = 1
         end if
-        do Nri = 1, (Obsi-2)
-            read(fhandle, *, iostat=rc)
-        end do
-        read(fhandle, iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-        read(fhandle, iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
-        read(fhandle, iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
-    end if
-    close(fhandle)
-end subroutine GetSetofThree
+        Mfile = TemperatureRecord%FromM
+        if (TemperatureRecord%FromY == 1901) then
+            Yfile = Yeari
+        else
+            Yfile = TemperatureRecord%FromY
+        end if
+        OK3 = .false.
 
-subroutine GetParameters(C1, C2, C3, UL, LL, Mid)
-    real(dp), intent(in) :: C1
-    real(dp), intent(in) :: C2
-    real(dp), intent(in) :: C3
-    real(dp), intent(inout) :: UL
-    real(dp), intent(inout) :: LL
-    real(dp), intent(inout) :: Mid
+        if (TemperatureRecord%NrObs <= 2) then
+            read(fhandle, iostat=rc) StringREAD
+            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
+            select case (TemperatureRecord%NrObs)
+            case (1)
+                C2Min = C1Min
+                C2Max = C2Max
+                C3Min = C1Min
+                C3Max = C1Max
+            case (2)
+                DecFile = DecFile + 1
+                if (DecFile > 3) then
+                    call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
+                end if
+                read(fhandle, iostat=rc) StringREAD
+                call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
+                if (Deci == DecFile) then
+                    C2Min = C3Min
+                    C2Max = C3Max
+                    C3Min = C2Min+(C2Min-C1Min)/4._dp
+                    C3Max = C2Max+(C2Max-C1Max)/4._dp
+                else
+                    C2Min = C1Min
+                    C2Max = C1Max
+                    C1Min = C2Min + (C2Min-C3Min)/4._dp
+                    C1Max = C2Max + (C2Max-C3Max)/4._dp
+                end if
+            end select
+            OK3 = .true.
+        end if
 
-    UL = (C1+C2)/2_dp
-    LL = (C2+C3)/2_dp
-    Mid = 2_dp*C2 - (UL+LL)/2_dp
-    ! --previous decade-->/UL/....... Mid ......../LL/<--next decade--
-end subroutine GetParameters
+       if ((.not. OK3) .and. ((Deci == DecFile) .and. (Monthi == Mfile) &
+            .and. (Yeari == Yfile))) then
+            read(fhandle, iostat=rc) StringREAD
+            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
+            C2Min = C1Min
+            C2Max = C1Max
+            read(fhandle, iostat=rc) StringREAD
+            call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
+            C1Min = C2Min + (C2Min-C3Min)/4._dp
+            C1Max = C2Max + (C2Max-C3Max)/4._dp
+            OK3 = .true.
+        end if
+
+        if ((.not. OK3) .and. ((DayN == TemperatureRecord%ToD) &
+             .and. (Monthi == TemperatureRecord%ToM))) then
+            if ((TemperatureRecord%FromY == 1901) .or. &
+                (Yeari == TemperatureRecord%ToY)) then
+                do Nri = 1, (TemperatureRecord%NrObs-2)
+                     read(fhandle, *, iostat=rc)
+                end do
+                read(fhandle, iostat=rc) StringREAD
+                call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
+                read(fhandle, iostat=rc) StringREAD
+                call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
+                C3Min = C2Min+(C2Min-C1Min)/4._dp
+                C3Max = C2Max+(C2Max-C1Max)/4._dp
+                OK3 = .true.
+            end if
+        end if
+
+        if (.not. OK3) then
+            Obsi = 1
+            do while (.not. OK3)
+                if ((Deci == DecFile) .and. (Monthi == Mfile) &
+                    .and. (Yeari == Yfile)) then
+                    OK3 = .true.
+                else
+                    DecFile = DecFile + 1
+                    if (DecFile > 3) then
+                        call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
+                    end if
+                    Obsi = Obsi + 1
+                end if
+            end do
+            if (TemperatureRecord%FromD > 20) then
+                DecFile = 3
+            elseif (TemperatureRecord%FromD > 10) then
+                DecFile = 2
+            else
+                DecFile = 1
+            end if
+            do Nri = 1, (Obsi-2)
+                read(fhandle, *, iostat=rc)
+            end do
+            read(fhandle, iostat=rc) StringREAD
+            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
+            read(fhandle, iostat=rc) StringREAD
+            call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
+            read(fhandle, iostat=rc) StringREAD
+            call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
+        end if
+        close(fhandle)
+    end subroutine GetSetofThree
+
+    subroutine GetParameters(C1, C2, C3, UL, LL, Mid)
+        real(dp), intent(in) :: C1
+        real(dp), intent(in) :: C2
+        real(dp), intent(in) :: C3
+        real(dp), intent(inout) :: UL
+        real(dp), intent(inout) :: LL
+        real(dp), intent(inout) :: Mid
+
+        UL = (C1+C2)/2._dp
+        LL = (C2+C3)/2._dp
+        Mid = 2._dp*C2 - (UL+LL)/2._dp
+        ! --previous decade-->/UL/....... Mid ......../LL/<--next decade--
+    end subroutine GetParameters
 
 end subroutine GetDecadeTemperatureDataSet
 
@@ -316,11 +322,11 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     do Dayi = (DayN+1), 31
         TminDataSet(Dayi)%DayNr = DNR+DayN-1
         TmaxDataSet(Dayi)%DayNr = DNR+DayN-1
-        TminDataSet(Dayi)%Param = 0_dp
-        TmaxDataSet(Dayi)%Param = 0_dp
+        TminDataSet(Dayi)%Param = 0._dp
+        TmaxDataSet(Dayi)%Param = 0._dp
     end do
 
-contains
+    contains
 
     subroutine GetSetofThreeMonths(Monthi, Yeari, &
             C1Min, C2Min, C3Min, C1Max, C2Max, C3Max, X1, X2, X3, t1)
@@ -423,7 +429,7 @@ contains
         if ((.not. OK3) .and. ((Monthi == Mfile) .and. (Yeari == Yfile))) then
             t1 = 0
             call ReadMonth(Mfile, Yfile, n1, C1Min, C1Max, fhandle, rc)
-             X1 = n1
+            X1 = n1
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
@@ -545,9 +551,9 @@ contains
         real(dp), intent(inout) :: c
 
         ! n1=n2=n3=30 --> better parabola
-        aOver3 = (C1-2*C2+C3)/(6*30*30*30)
-        bOver2 = (-6*C1+9*C2-3*C3)/(6*30*30)
-        c = (11*C1-7*C2+2*C3)/(6*30)
+        aOver3 = (C1-2._dp*C2+C3)/(6._dp*30._dp*30._dp*30._dp)
+        bOver2 = (-6._dp*C1+9._dp*C2-3._dp*C3)/(6._dp*30._dp*30._dp)
+        c = (11._dp*C1-7._dp*C2+2._dp*C3)/(6._dp*30._dp)
     end subroutine GetInterpolationParameters
 
 end subroutine GetMonthlyTemperatureDataSet

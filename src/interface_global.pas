@@ -476,12 +476,13 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
-
 function GetTemperatureRecord(): rep_clim;
          external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord';
 
+procedure SetTemperatureRecord_DataType_wrap(constref DataType : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype_wrap';
+
 procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
-         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype';
 
 procedure SetTemperatureRecord_FromD(constref FromD : integer);
          external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromd';
@@ -510,11 +511,19 @@ procedure SetTemperatureRecord_ToDayNr(constref ToDayNr : integer);
 procedure SetTemperatureRecord_NrObs(constref NrObs : integer);
          external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_nrobs';
 
-procedure SetTemperatureRecord_FromString(constref FromString : string);
-         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromstring';
+procedure SetTemperatureRecord_FromString(constref str : string);
 
-procedure SetTemperatureRecord_ToString(constref ToString : string);
-         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tostring';
+procedure SetTemperatureRecord_FromString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_fromstring_wrap';
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+
+procedure SetTemperatureRecord_ToString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
 function GetTemperatureFile(): string;
 
@@ -664,6 +673,15 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+var
+   int_datatype : integer;
+
+begin;
+   int_datatype := ord(DataType);
+   SetTemperatureRecord_DataType_wrap(int_datatype); 
+end;
+
 procedure GetCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
@@ -679,6 +697,8 @@ begin;
     GetCO2Description_wrap(p1, strlen1, p2, strlen2);
     CO2Description := AnsiString(p2);
 end;
+
+
 
 function GetCO2File(): string;
 var
@@ -820,6 +840,29 @@ begin;
      strlen := Length(str);
      SetTemperatureFilefull_wrap(p, strlen);
 end;
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureRecord_FromString_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureRecord_ToString_wrap(p, strlen);
+end;
+
 
 initialization
 

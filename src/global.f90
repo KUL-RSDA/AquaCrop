@@ -39,7 +39,12 @@ integer(intEnum), parameter :: plant_transplant = 1
 integer(intEnum), parameter :: plant_regrowth= 2
     !! index of regrowth in planting enumerated type
 
-
+integer(intEnum), parameter :: datatype_daily = 0
+    !! index of daily in datatype enumerated type
+integer(intEnum), parameter :: datatype_decadely = 1
+    !! index of decadely in datatype enumerated type
+integer(intEnum), parameter :: datatype_monthly= 2
+    !! index of monthly in datatype enumerated type
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -133,7 +138,7 @@ type rep_clim
         !! Undocumented
     integer(int32) :: FromDayNr, ToDayNr
         !! daynumber
-    character(len=500) :: FromString, ToString
+    character(len=:), allocatable :: FromString, ToString
         !! Undocumented, note GDL: randomly chose 500
     integer(int32) :: NrObs
         !! number of observations
@@ -1776,7 +1781,48 @@ end subroutine SetTemperatureFilefull
 type(rep_clim) function GetTemperatureRecord()
     !! Getter for the "TemperatureRecord" global variable.
 
+!!    GetTemperatureRecord = TemperatureRecord
+!!    GetTemperatureRecord().DataType = TemperatureRecord.DataType 
+!!    GetTemperatureRecord().FromD    = TemperatureRecord.FromD
+!!    GetTemperatureRecord().FromM    = TemperatureRecord.FromM
+!!    GetTemperatureRecord().FromY    = TemperatureRecord.FromY
+!!    GetTemperatureRecord().ToD      = TemperatureRecord.ToD
+!!    GetTemperatureRecord().ToM      = TemperatureRecord.ToM
+!!    GetTemperatureRecord().ToY      = TemperatureRecord.ToY
+!!    GetTemperatureRecord().ToDayNr  = TemperatureRecord.ToDayNr
+!!    GetTemperatureRecord().FromDayNr= TemperatureRecord.FromDayNr
+!!    GetTemperatureRecord().NrObs    = TemperatureRecord.NrObs
+!!    GetTemperatureRecord().FromString = TemperatureRecord.FromString
+!!    GetTemperatureRecord().ToString   = TemperatureRecord.ToString
+
+!!    TemperatureRecord%DataType = TemperatureRecord.DataType
+!!    TemperatureRecord%FromD    = TemperatureRecord.FromD
+!!    TemperatureRecord%FromM    = TemperatureRecord.FromM
+!!    TemperatureRecord%FromY    = TemperatureRecord.FromY
+!!    TemperatureRecord%ToD      = TemperatureRecord.ToD
+!!    TemperatureRecord%ToM      = TemperatureRecord.ToM
+!!    TemperatureRecord%ToY      = TemperatureRecord.ToY
+!!    TemperatureRecord%ToDayNr  = TemperatureRecord.ToDayNr
+!!    TemperatureRecord%FromDayNr= TemperatureRecord.FromDayNr
+!!    TemperatureRecord%NrObs    = TemperatureRecord.NrObs
+!!    TemperatureRecord%FromString = TemperatureRecord.FromString
+!!    TemperatureRecord%ToString   = TemperatureRecord.ToString
+
+!!    SetTemperatureRecord_DataType(TemperatureRecord.DataType)
+!!    SetTemperatureRecord_FromD(TemperatureRecord.FromD)
+!!    SetTemperatureRecord_FromM(TemperatureRecord.FromM)
+!!    SetTemperatureRecord_FromY(TemperatureRecord.FromY)
+!!    SetTemperatureRecord_ToD(TemperatureRecord.ToD)
+!!    SetTemperatureRecord_ToM(TemperatureRecord.ToM)
+!!    SetTemperatureRecord_ToY(TemperatureRecord.ToY)
+!!    SetTemperatureRecord_ToDayNr(TemperatureRecord.ToDayNr)
+!!    SetTemperatureRecord_FromDayNr(TemperatureRecord.FromDayNr)
+!!    SetTemperatureRecord_NrObs(TemperatureRecord.NrObs)
+!!    SetTemperatureRecord_FromString(TemperatureRecord.FromString)
+!!    SetTemperatureRecord_ToString(TemperatureRecord.ToString)
+
     GetTemperatureRecord = TemperatureRecord
+
 end function GetTemperatureRecord
 
 subroutine SetTemperatureRecord_DataType(DataType)
@@ -1851,14 +1897,14 @@ end subroutine SetTemperatureRecord_NrObs
 
 subroutine SetTemperatureRecord_ToString(ToString)
     !! Setter for the "TemperatureRecord" global variable.
-    character(len=500), intent(in) :: ToString
+    character(len=*), intent(in) :: ToString
 
     TemperatureRecord%ToString = ToString
 end subroutine SetTemperatureRecord_ToString
 
 subroutine SetTemperatureRecord_FromString(FromString)
     !! Setter for the "TemperatureRecord" global variable.
-    character(len=500), intent(in) :: FromString
+    character(len=*), intent(in) :: FromString
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
