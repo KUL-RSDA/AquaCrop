@@ -72,6 +72,13 @@ type
          PostSeason : double;
          end;
 
+     rep_CropFileSet = Record
+         DaysFromSenescenceToEnd : integer;
+         DaysToHarvest      : integer;  //given or calculated from GDD
+         GDDaysFromSenescenceToEnd : integer;
+         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -105,7 +112,7 @@ procedure DetermineDayNr(
             var DayNr : longint);
          external 'aquacrop' name '__ac_global_MOD_determinedaynr';
 
-PROCEDURE DetermineDate(
+procedure DetermineDate(
             constref DayNr : longint;
             var Dayi,Monthi,Yeari : integer);
          external 'aquacrop' name '__ac_global_MOD_determinedate';
@@ -457,6 +464,22 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
+
+function GetCropFileSet(): rep_CropFileSet;
+        external 'aquacrop' name '__ac_global_MOD_getcropfileset';
+
+procedure SetCropFileSet_DaysFromSenescenceToEnd(constref DaysFromSenescenceToEnd : double);
+        external 'aquacrop' name '__ac_global_MOD_setcropfileset_daysfromsenescencetoend';
+
+procedure SetCropFileSet_DaysToHarvest(constref DaysToHarvest : double);
+        external 'aquacrop' name '__ac_global_MOD_setcropfileset_daystoharvest';
+
+procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescenceToEnd : double);
+        external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaysfromsenescencetoend';
+
+procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
+        external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
+
 
 
 implementation
