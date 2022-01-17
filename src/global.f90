@@ -144,7 +144,6 @@ type rep_RootZoneWC
         !! soil
 end type rep_RootZoneWC 
 
-
 type rep_IrriECw 
     real(dp) :: PreSeason
         !! Undocumented
@@ -153,7 +152,10 @@ type rep_IrriECw
 end type rep_IrriECw 
 
 
+character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
 
@@ -1588,6 +1590,81 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
     end do
 end subroutine SplitStringInThreeParams
 
+logical function LeapYear(Year)
+    integer(int32), intent(in) :: Year
+
+    LeapYear = .false.
+    if (frac(Year/4._dp) <= 0.01_dp) then
+        LeapYear = .true.
+    end if
+
+    contains
+
+    real(dp) function frac(val)
+        real(dp), intent(in) :: val
+
+        frac = val - floor(val)
+    end function frac 
+end function LeapYear
+
+
+subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
+    character(len=*), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    integer :: fhandle
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
+    character(len=1024) :: buffer
+    integer(int32) :: i, TotalFiles
+  
+    AllOK = .true.
+    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
+        action='read')
+    read(fhandle, *) ! Description
+    read(fhandle, *)  ! AquaCrop version Nr
+    
+    ! Prepare
+    if (Runi > 1) then
+        do i = 1, 5 
+            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
+        end do
+        do i = 1, 42 
+            read(fhandle, *) ! files previous runs
+        end do
+    end if
+
+    ! Type Year and Simulation and Cropping period of the run
+    do i = 1, 5 
+        read(fhandle, *)
+    end do
+
+    ! Check the 14 files
+    i = 1
+    TotalFiles = 14
+    do while (AllOK .and. (i <= TotalFiles))
+        read(fhandle, *) ! Info
+        read(fhandle, *) buffer  ! FileName
+        TempFileName = trim(buffer)
+        if (trim(TempFileName) == '(None)') then
+            read(fhandle, *)
+        else
+            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
+                read(fhandle, *) ! Keep initial SWC
+            else
+                read(fhandle, *) buffer ! PathName
+                TempPathName = trim(buffer)
+                TempFullName = trim(TempPathName) // trim(TempFileName)
+                if (FileExists(trim(TempFullName)) .eqv. .false.) then
+                    AllOK = .false.
+                end if
+            end if
+        end if
+        i = i + 1
+    end do
+    close(fhandle)
+end subroutine CheckFilesInProject
+
 !! Global variables section !!
 
 function GetCO2File() result(str)
@@ -1687,6 +1764,34 @@ subroutine SetRootZoneWC_ZtopThresh(ZtopThresh)
     RootZoneWC%ZtopThresh = ZtopThresh
 end subroutine SetRootZoneWC_ZtopThresh
 
+function GetCalendarFile() result(str)
+    !! Getter for the "CalendarFile" global variable.
+    character(len=len(CalendarFile)) :: str
+
+    str = CalendarFile
+end function GetCalendarFile
+
+subroutine SetCalendarFile(str)
+    !! Setter for the "CalendarFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarFile = str
+end subroutine SetCalendarFile
+
+function GetCropFile() result(str)
+    !! Getter for the "CropFile" global variable.
+    character(len=len(CropFile)) :: str
+
+    str = CropFile
+end function GetCropFile
+
+subroutine SetCropFile(str)
+    !! Setter for the "CropFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CropFile = str
+end subroutine SetCropFile
+
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.
 
@@ -1707,6 +1812,19 @@ subroutine SetIrriECw_PostSeason(PostSeason)
     IrriECw%PostSeason = PostSeason
 end subroutine SetIrriECw_PostSeason
 
+function GetProfFile() result(str)
+    !! Getter for the "ProfFile" global variable.
+    character(len=len(ProfFile)) :: str
+
+    str = ProfFile
+end function GetProfFile
+
+subroutine SetProfFile(str)
+    !! Setter for the "ProfFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFile = str
+end subroutine SetProfFile
 
 
 end module ac_global
