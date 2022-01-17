@@ -4,19 +4,24 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: DetermineLengthGrowthStages, &
+use ac_global, only: CheckFilesInProject, &
+                     DetermineLengthGrowthStages, &
                      FileExists, &
+                     GetCalendarFile, &
                      GetCO2Description, &
                      GetCO2File, &
-                     GetNumberSimulationRuns, &
-                     SetCO2File, &
+                     GetCropFile, &
                      GetIrriDescription, &
                      GetIrriFile, &
+                     GetNumberSimulationRuns, &
+                     GetProfFile, &
+                     SetCO2File, &
+                     SetCalendarFile, &
+                     SetCropFile, &
                      SetIrriFile, &
+                     SetProfFile, &
                      SplitStringInTwoParams, &
-                     SplitStringInThreeParams, &
-                     FileExists, &
-                     CheckFilesInProject
+                     SplitStringInThreeParams
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -221,5 +226,59 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
     call SetIrriFile(string)
 end subroutine SetIrriFile_wrap
 
+    
+function GetCalendarFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCalendarFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCalendarFile())
+end function GetCalendarFile_wrap
+
+subroutine SetCalendarFile_wrap(CalendarFile, strlen)
+    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    type(c_ptr), intent(in) :: CalendarFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CalendarFile, strlen)
+    call SetCalendarFile(string)
+end subroutine SetCalendarFile_wrap
+
+function GetCropFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCropFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCropFile())
+end function GetCropFile_wrap
+
+subroutine SetCropFile_wrap(CropFile, strlen)
+    !! Wrapper for [[ac_global:SetCropFile]] for foreign languages.
+    type(c_ptr), intent(in) :: CropFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CropFile, strlen)
+    call SetCropFile(string)
+end subroutine SetCropFile_wrap
+
+function GetProfFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfFile())
+end function GetProfFile_wrap
+
+subroutine SetProfFile_wrap(ProfFile, strlen)
+    !! Wrapper for [[ac_global:SetProfFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfFile, strlen)
+    call SetProfFile(string)
+end subroutine SetProfFile_wrap
 
 end module ac_interface_global

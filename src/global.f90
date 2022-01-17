@@ -115,7 +115,6 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
-
 type rep_IrriECw 
     real(dp) :: PreSeason
         !! Undocumented
@@ -124,8 +123,11 @@ type rep_IrriECw
 end type rep_IrriECw 
 
 
+character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
+character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
 
 
@@ -1573,22 +1575,6 @@ end subroutine SplitStringInThreeParams
 
 !! Global variables section !!
 
-function GetCO2File() result(str)
-    !! Getter for the "CO2File" global variable.
-    character(len=len(CO2File)) :: str
-
-    str = CO2File
-end function GetCO2File
-
-
-subroutine SetCO2File(str)
-    !! Setter for the "CO2File" global variable.
-    character(len=*), intent(in) :: str
-
-    CO2File = str
-end subroutine SetCO2File
-
-
 function GetIrriFile() result(str)
     !! Getter for the "IrriFile" global variable.
     character(len=len(IrriFile)) :: str
@@ -1603,27 +1589,6 @@ subroutine SetIrriFile(str)
 
     IrriFile = str
 end subroutine SetIrriFile
-
-
-type(rep_IrriECw) function GetIrriECw()
-    !! Getter for the "IrriECw" global variable.
-
-    GetIrriECw = IrriECw
-end function GetIrriECw
-
-subroutine SetIrriECw_PreSeason(PreSeason)
-    !! Setter for the "soil" global variable.
-    real(dp), intent(in) :: PreSeason
-
-    IrriECw%PreSeason = PreSeason
-end subroutine SetIrriECw_PreSeason
-
-subroutine SetIrriECw_PostSeason(PostSeason)
-    !! Setter for the "soil" global variable.
-    real(dp), intent(in) :: PostSeason
-
-    IrriECw%PostSeason = PostSeason
-end subroutine SetIrriECw_PostSeason
 
 
 logical function LeapYear(Year)
@@ -1700,6 +1665,88 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     end do
     close(fhandle)
 end subroutine CheckFilesInProject
+
+!! Global variables section !!
+
+function GetCO2File() result(str)
+    !! Getter for the "CO2File" global variable.
+    character(len=len(CO2File)) :: str
+
+    str = CO2File
+end function GetCO2File
+
+
+subroutine SetCO2File(str)
+    !! Setter for the "CO2File" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2File = str
+end subroutine SetCO2File
+
+function GetCalendarFile() result(str)
+    !! Getter for the "CalendarFile" global variable.
+    character(len=len(CalendarFile)) :: str
+
+    str = CalendarFile
+end function GetCalendarFile
+
+subroutine SetCalendarFile(str)
+    !! Setter for the "CalendarFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarFile = str
+end subroutine SetCalendarFile
+
+function GetCropFile() result(str)
+    !! Getter for the "CropFile" global variable.
+    character(len=len(CropFile)) :: str
+
+    str = CropFile
+end function GetCropFile
+
+subroutine SetCropFile(str)
+    !! Setter for the "CropFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CropFile = str
+end subroutine SetCropFile
+
+
+type(rep_IrriECw) function GetIrriECw()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw = IrriECw
+end function GetIrriECw
+
+subroutine SetIrriECw_PreSeason(PreSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PreSeason
+
+    IrriECw%PreSeason = PreSeason
+end subroutine SetIrriECw_PreSeason
+
+subroutine SetIrriECw_PostSeason(PostSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PostSeason
+
+    IrriECw%PostSeason = PostSeason
+end subroutine SetIrriECw_PostSeason
+
+
+function GetProfFile() result(str)
+    !! Getter for the "ProfFile" global variable.
+    character(len=len(ProfFile)) :: str
+
+    str = ProfFile
+end function GetProfFile
+
+
+subroutine SetProfFile(str)
+    !! Setter for the "ProfFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFile = str
+end subroutine SetProfFile
 
 
 end module ac_global
