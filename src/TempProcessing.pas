@@ -1196,7 +1196,6 @@ VAR f0,fClim : TextFile;
     TotDepth : double;
     VersionNr : double;
 
-
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
     VAR f0 : textfile;
@@ -1208,7 +1207,8 @@ VAR f0,fClim : TextFile;
     END; (* GetFileDescription *)
 
 BEGIN
-Assign(f0,NameFileFull);
+TempString := StringReplace(NameFileFull, '"', '', [rfReplaceAll]);
+Assign(f0,TempString);
 Reset(f0);
 READLN(f0); //Description
 READLN(f0,VersionNr);  // AquaCrop version Nr
@@ -1229,6 +1229,7 @@ READLN(f0,Crop.DayN); //Last day of cropping period
 // 1. Climate
 READLN(f0); // Info Climate
 READLN(f0,TempString);  //ClimateFile
+TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
 ClimateFile := Trim(TempString);
 IF (ClimateFile = '(None)')
    THEN BEGIN
@@ -1237,11 +1238,13 @@ IF (ClimateFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         ClimateFileFull := CONCAT(Trim(TempString),ClimateFile);
         Assign(fClim,ClimateFileFull);
         Reset(fClim);
         // 1.0 Description
         READLN(fClim,TempString);
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         ClimateDescription := Trim(TempString);
         Close(fClim);
         END;
@@ -1260,6 +1263,7 @@ IF (TemperatureFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         TemperatureFileFull := CONCAT(Trim(TempString),Trim(TemperatureFile));
         LoadClim(TemperatureFilefull,TemperatureDescription,TemperatureRecord);
         CompleteClimateDescription(TemperatureRecord);
@@ -1276,6 +1280,7 @@ IF (EToFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         EToFilefull := CONCAT(Trim(TempString),EToFile);
         LoadClim(EToFilefull,EToDescription,EToRecord);
         CompleteClimateDescription(EToRecord);
@@ -1292,6 +1297,7 @@ IF (RainFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         RainFileFull := CONCAT(Trim(TempString),RainFile);
         LoadClim(RainFilefull,RainDescription,RainRecord);
         CompleteClimateDescription(RainRecord);
@@ -1304,6 +1310,7 @@ IF (GetCO2File() = '(None)')
    THEN READLN(f0)  //PathCO2File
    ELSE BEGIN
         READLN(f0,TempString);  //PathCO2File
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         CO2FileFull := CONCAT(Trim(TempString),GetCO2File());
         GetCO2Description(CO2FileFull,CO2Description);
         END;
@@ -1321,6 +1328,7 @@ IF (CalendarFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         CalendarFilefull := CONCAT(Trim(TempString),CalendarFile);
         GetFileDescription(CalendarFilefull,CalendarDescription);
         END;
@@ -1331,6 +1339,7 @@ READLN(f0); // Info Crop
 READLN(f0,TempString);  //CropFile
 CropFile := Trim(TempString);
 READLN(f0,TempString);  //PathCropFile
+TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
 CropFilefull := CONCAT(Trim(TempString),CropFile);
 LoadCrop(CropFilefull);
 
@@ -1374,6 +1383,7 @@ IF (IrriFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         IrriFilefull := CONCAT(Trim(TempString),IrriFile);
         LoadIrriScheduleInfo(IrriFilefull);
         END;
@@ -1390,6 +1400,7 @@ IF (ManFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathManFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         ManFileFull := CONCAT(Trim(TempString),ManFile);
         LoadManagement(ManFilefull);
         // reset canopy development to soil fertility
@@ -1404,6 +1415,7 @@ READLN(f0); // Info Soil
 READLN(f0,TempString);  //ProfFile
 SetProfFile(Trim(TempString));
 READLN(f0,TempString);  //PathProfFile
+TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
 ProfFilefull := CONCAT(Trim(TempString),GetProfFile());
 // The load of profile is delayed to check if soil water profile need to be reset (see 8.)
 
@@ -1419,6 +1431,7 @@ IF (GroundWaterFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathGroundWaterFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         GroundWaterFilefull := CONCAT(Trim(TempString),GroundWaterFile);
         // Loading the groundwater is done after loading the soil profile (see 9.)
         END;
@@ -1474,6 +1487,7 @@ IF (Trim(TempString) = 'KeepSWC')
                 END
            ELSE BEGIN
                 READLN(f0,TempString);  //PathSWCIniFile
+                TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
                 SWCiniFileFull := CONCAT(Trim(TempString),SWCIniFile);
                 LoadInitialConditions(SWCiniFileFull,SurfaceStorage,Simulation.IniSWC);
                 END;
@@ -1525,6 +1539,7 @@ IF (OffSeasonFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathOffSeasonFile
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         OffSeasonFileFull := CONCAT(Trim(TempString),OffSeasonFile);
         LoadOffSeason(OffSeasonFilefull);
         END;
@@ -1541,6 +1556,7 @@ IF (ObservationsFile = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //Path Field data File
+        TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         ObservationsFileFull := CONCAT(Trim(TempString),ObservationsFile);
         GetFileDescription(ObservationsFileFull,ObservationsDescription);
         END;
