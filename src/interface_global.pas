@@ -384,6 +384,7 @@ procedure SetRainFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setrainfile_wrap';
 
+
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -621,6 +622,8 @@ begin;
     strlen := Length(str);
     SetRainFile_wrap(p, strlen);
 end;
+
+
 
 initialization
 

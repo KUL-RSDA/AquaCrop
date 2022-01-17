@@ -1248,7 +1248,7 @@ IF (ClimateFile = '(None)')
 // 1.1 Temperature
 READLN(f0); // Info Temperature
 READLN(f0,TempString);  //TemperatureFile
-TemperatureFile := Trim(TempString);
+TemperatureFile:= Trim(TempString);
 IF (TemperatureFile = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile

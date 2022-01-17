@@ -584,7 +584,7 @@ Function LeapYear(Year : INTEGER) : BOOLEAN;
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File_str: string);
+                      VAR TempFile,EToFile,RainFile,CO2File: string);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -2209,7 +2209,7 @@ END; (* CompleteClimateDescription *)
 
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File_str : string);
+                      VAR TempFile,EToFile,RainFile,CO2File : string);
 VAR f0 : TextFile;
 BEGIN
 Assign(f0,FullName);
@@ -2219,8 +2219,7 @@ READLN(f0); // AquaCrop Version
 READLN(f0,TempFile);
 READLN(f0,EToFile);
 READLN(f0,RainFile);
-READLN(f0,CO2File_str);
-SetCO2File(CO2File_str);
+READLN(f0,CO2File);
 Close(f0);
 END; (* LoadClimate *)
 
