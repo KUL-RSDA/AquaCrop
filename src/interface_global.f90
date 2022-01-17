@@ -4,7 +4,8 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: DetermineLengthGrowthStages, &
+use ac_global, only: CheckFilesInProject, &
+                     DetermineLengthGrowthStages, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCO2Description, &
@@ -16,7 +17,6 @@ use ac_global, only: DetermineLengthGrowthStages, &
                      SetCropFile, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
-
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -110,6 +110,18 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     call SplitStringInThreeParams(string, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
 
+subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
+    !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
+    type(c_ptr), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TempFullFilename, strlen)
+    call CheckFilesInProject(string, Runi, AllOK)
+end subroutine CheckFilesInProject_wrap
 
 subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
             strlen2)
@@ -211,6 +223,5 @@ subroutine SetCropFile_wrap(CropFile, strlen)
     string = pointer2string(CropFile, strlen)
     call SetCropFile(string)
 end subroutine SetCropFile_wrap
-
 
 end module ac_interface_global
