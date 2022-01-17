@@ -11,7 +11,7 @@ use ac_global, only: DetermineLengthGrowthStages, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      SetCO2File, &
-                     SetProfFile
+                     SetProfFile, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 
