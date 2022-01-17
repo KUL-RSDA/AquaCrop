@@ -1373,18 +1373,18 @@ AdjustSimPeriod;
 // 4. Irrigation
 READLN(f0); // Info Irrigation
 READLN(f0,TempString);  //IrriFile
-IrriFile := Trim(TempString);
-IF (IrriFile = '(None)')
+SetIrriFile(Trim(TempString));
+IF (GetIrriFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathIrriFile
-        IrriFileFull := IrriFile;
+        IrriFileFull := GetIrriFile();
         NoIrrigation;
         //IrriDescription := 'Rainfed cropping';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        IrriFilefull := CONCAT(Trim(TempString),IrriFile);
+        IrriFilefull := CONCAT(Trim(TempString),GetIrriFile());
         LoadIrriScheduleInfo(IrriFilefull);
         END;
 

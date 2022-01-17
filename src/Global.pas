@@ -432,8 +432,7 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    ClimateFile,ClimFile,EToFile,RainFile,TemperatureFile, IrriFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
-
+    ClimateFile,ClimFile,EToFile,RainFile,TemperatureFile, ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,EToFilefull,RainFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
     GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
