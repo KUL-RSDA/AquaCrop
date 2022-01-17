@@ -739,6 +739,7 @@ VAR f0,fClim : TextFile;
     i,Runi : ShortInt;
     TotDepth : double;
     VersionNr : double;
+    temperature_record : rep_clim;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -809,8 +810,10 @@ IF (GetTemperatureFile() = '(None)')
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetTemperatureFileFull(CONCAT(Trim(TempString),Trim(GetTemperatureFile())));
-        LoadClim(GetTemperatureFilefull(),TemperatureDescription,GetTemperatureRecord());
-        CompleteClimateDescription(GetTemperatureRecord());
+        temperature_record := GetTemperatureRecord();
+        LoadClim(GetTemperatureFilefull(),TemperatureDescription,temperature_record);
+        CompleteClimateDescription(temperature_record);
+        SetTemperatureRecord(temperature_record);
         END;
 // 1.2 ETo
 READLN(f0); // Info ETo
