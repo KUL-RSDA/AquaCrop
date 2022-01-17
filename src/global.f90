@@ -122,6 +122,17 @@ type rep_IrriECw
         !! Undocumented
 end type rep_IrriECw 
 
+type rep_CropFileSet 
+    integer(int32) :: DaysFromSenescenceToEnd
+        !! Undocumented
+    integer(int32) :: DaysToHarvest
+        !! given or calculated from GDD
+    integer(int32) :: GDDaysFromSenescenceToEnd
+        !! Undocumented
+    integer(int32) :: GDDaysToHarvest
+        !! given or calculated from Calendar Days
+end type rep_CropFileSet 
+
 
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
@@ -129,6 +140,7 @@ character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
+type(rep_CropFileSet) :: CropFileSet
 
 
 contains
@@ -1740,13 +1752,46 @@ function GetProfFile() result(str)
     str = ProfFile
 end function GetProfFile
 
-
 subroutine SetProfFile(str)
     !! Setter for the "ProfFile" global variable.
     character(len=*), intent(in) :: str
 
     ProfFile = str
 end subroutine SetProfFile
+
+type(rep_CropFileSet) function GetCropFileSet()
+    !! Getter for the "CropFileSet" global variable.
+
+    GetCropFileSet = CropFileSet
+end function GetCropFileSet
+
+subroutine SetCropFileSet_DaysFromSenescenceToEnd(DaysFromSenescenceToEnd)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: DaysFromSenescenceToEnd
+
+    CropFileSet%DaysFromSenescenceToEnd = DaysFromSenescenceToEnd
+end subroutine SetCropFileSet_DaysFromSenescenceToEnd
+
+subroutine SetCropFileSet_DaysToHarvest(DaysToHarvest)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: DaysToHarvest
+
+    CropFileSet%DaysToHarvest = DaysToHarvest
+end subroutine SetCropFileSet_DaysToHarvest
+
+subroutine SetCropFileSet_GDDaysFromSenescenceToEnd(GDDaysFromSenescenceToEnd)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: GDDaysFromSenescenceToEnd
+
+    CropFileSet%GDDaysFromSenescenceToEnd = GDDaysFromSenescenceToEnd
+end subroutine SetCropFileSet_GDDaysFromSenescenceToEnd
+
+subroutine SetCropFileSet_GDDaysToHarvest(GDDaysToHarvest)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: GDDaysToHarvest
+
+    CropFileSet%GDDaysToHarvest = GDDaysToHarvest
+end subroutine SetCropFileSet_GDDaysToHarvest
 
 
 end module ac_global

@@ -152,13 +152,6 @@ TYPE
          Assimilates        : rep_Assimilates;
          END;
 
-     rep_CropFileSet = Record
-         DaysFromSenescenceToEnd : integer;
-         DaysToHarvest      : integer;  //given or calculated from GDD
-         GDDaysFromSenescenceToEnd : integer;
-         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
-         END;
-
      rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
      rep_Cuttings = Record
          Considered : BOOLEAN;
@@ -493,8 +486,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     RootZoneSalt   : rep_RootZoneSalt;
     ZiAqua         : Integer;  // Depth of Groundwater table below soil surface in centimeter
     ECiAqua        : double; //  EC of the groundwater table in dS/m
-
-    CropFileSet    : rep_CropFileSet;
     PerennialPeriod : rep_PerennialPeriod;
 
 
@@ -2122,16 +2113,16 @@ Close(f0);
 Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 
 // copy to CropFileSet
-CropFileSet.DaysFromSenescenceToEnd := Crop.DaysToHarvest - Crop.DaysToSenescence;
-CropFileSet.DaysToHarvest := Crop.DaysToHarvest;
+SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
+SetCropFileSet_DaysToHarvest(Crop.DaysToHarvest);
 IF (Crop.ModeCycle = GDDays)
    THEN BEGIN
-        CropFileSet.GDDaysFromSenescenceToEnd := Crop.GDDaysToHarvest - Crop.GDDaysToSenescence;
-        CropFileSet.GDDaysToHarvest := Crop.GDDaysToHarvest;
+        SetCropFileSet_GDDaysFromSenescenceToEnd(Crop.GDDaysToHarvest - Crop.GDDaysToSenescence);
+        SetCropFileSet_GDDaysToHarvest(Crop.GDDaysToHarvest);
         END
    ELSE BEGIN
-        CropFileSet.GDDaysFromSenescenceToEnd := undef_int;
-        CropFileSet.GDDaysToHarvest := undef_int;
+        SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int);
+        SetCropFileSet_GDDaysToHarvest(undef_int);
         END;
 
 END; // LoadCrop
@@ -2704,10 +2695,10 @@ Close(f);
 Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 
 // copy to CropFileSet
-CropFileSet.DaysFromSenescenceToEnd := Crop.DaysToHarvest - Crop.DaysToSenescence;
-CropFileSet.DaysToHarvest := Crop.DaysToHarvest;
-CropFileSet.GDDaysFromSenescenceToEnd := Crop.GDDaysToHarvest - Crop.GDDaysToSenescence;
-CropFileSet.GDDaysToHarvest := Crop.GDDaysToHarvest;
+SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
+SetCropFileSet_DaysToHarvest(Crop.DaysToHarvest);
+SetCropFileSet_GDDaysFromSenescenceToEnd(Crop.GDDaysToHarvest - Crop.GDDaysToSenescence);
+SetCropFileSet_GDDaysToHarvest(Crop.GDDaysToHarvest);
 END; (* SaveCrop *)
 
 

@@ -1353,7 +1353,7 @@ IF (Crop.subkind = Forage) THEN
                      Crop.DaysToCCini,Crop.GDDaysToCCini);
    // adjust length of season
    Crop.DaysToHarvest := Crop.DayN - Crop.Day1 + 1;
-   AdjustCropFileParameters(CropFileSet,(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
+   AdjustCropFileParameters(GetCropFileSet(),(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
                                     Crop.GDDaysToSenescence,Crop.GDDaysToHarvest);
    END;
