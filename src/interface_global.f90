@@ -233,6 +233,7 @@ subroutine SetProfFile_wrap(ProfFile, strlen)
     !! Wrapper for [[ac_global:SetProfFile]] for foreign languages.
     type(c_ptr), intent(in) :: ProfFile
     integer(int32), intent(in) :: strlen
+
     character(len=strlen) :: string
 
     string = pointer2string(ProfFile, strlen)
