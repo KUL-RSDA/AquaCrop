@@ -684,7 +684,7 @@ VAR totalname,totalnameOUT : string;
     RunningDay : LongInt;
 BEGIN
 // 1. ETo file
-IF (EToFile <> '(None)')
+IF (GetEToFile() <> '(None)')
    THEN BEGIN
         totalname := EToFilefull;
         IF FileExists(totalname)
@@ -948,7 +948,7 @@ VAR totalname : string;
     i : LongInt;
 BEGIN
 // ETo file
-IF (EToFile <> '(None)') THEN
+IF (GetEToFile <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'EToData.SIM');
    Assign(fEToSIM,totalname);
@@ -2555,7 +2555,7 @@ RepeatToDay := Simulation.ToDayNr;
 
 REPEAT
 (* 1. Get ETo *)
-IF (EToFile = '(None)') THEN ETo := 5;
+IF (GetEToFile() = '(None)') THEN ETo := 5;
 
 (* 2. Get Rain *)
 IF (RainFile = '(None)') THEN Rain := 0;
@@ -2888,7 +2888,7 @@ IF (Simulation.SumEToStress >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= Simulation.ToDayNr) THEN
    BEGIN
-   IF (EToFile <> '(None)') THEN READLN(fEToSIM,ETo);
+   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
    IF (RainFile <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (TemperatureFile = '(None)')
       THEN BEGIN
@@ -2978,7 +2978,7 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
     BEGIN
-    IF (EToFile <> '(None)') THEN Close(fEToSIM);
+    IF (GetEToFile <> '(None)') THEN Close(fEToSIM);
     IF (RainFile <> '(None)') THEN Close(fRainSIM);
     IF (TemperatureFile <> '(None)') THEN Close(fTempSIM);
     END; (* CloseClimateFiles *)

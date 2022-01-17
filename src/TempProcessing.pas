@@ -1266,17 +1266,17 @@ IF (TemperatureFile = '(None)')
         END;
 // 1.2 ETo
 READLN(f0); // Info ETo
-READLN(f0,TempString);  //EToFile
-EToFile := Trim(TempString);
-IF (EToFile = '(None)')
+READLN(f0,TempString);  //GetEToFile()
+SetEToFile(Trim(TempString));
+IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
-        EToFilefull := EToFile;  (* no file *)
+        EToFilefull := GetEToFile();  (* no file *)
         EToDescription := 'Specify ETo data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
-        EToFilefull := CONCAT(Trim(TempString),EToFile);
+        EToFilefull := CONCAT(Trim(TempString),GetEToFile());
         LoadClim(EToFilefull,EToDescription,EToRecord);
         CompleteClimateDescription(EToRecord);
         END;

@@ -152,8 +152,8 @@ implementation
    END;
 
  // 5.2 ETo
- EToFile := '(None)';
- EToFilefull := EToFile;  (* no file *)
+ SetEToFile('(None)');
+ EToFilefull := GetEToFile();  (* no file *)
  EToDescription := '';
  WITH EToRecord DO
    BEGIN

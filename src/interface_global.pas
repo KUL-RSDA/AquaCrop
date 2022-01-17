@@ -360,6 +360,18 @@ procedure SetCO2File_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
 
+function GetEToFile(): string;
+
+function GetEToFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getetofile_wrap';
+
+procedure SetEToFile(constref str : string);
+
+procedure SetEToFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setetofile_wrap';
+
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -553,6 +565,28 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2File_wrap(p, strlen);
+end;
+
+
+function GetEToFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetEToFile_wrap();
+    GetEToFile := StrPas(p);
+end;
+
+
+procedure SetEToFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetEToFile_wrap(p, strlen);
 end;
 
 initialization

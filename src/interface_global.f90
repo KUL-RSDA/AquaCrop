@@ -10,6 +10,8 @@ use ac_global, only: DetermineLengthGrowthStages, &
                      GetCO2File, &
                      GetNumberSimulationRuns, &
                      SetCO2File, &
+                     GetEToFile, &
+                     SetEToFile, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -166,6 +168,26 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     string = pointer2string(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
+
+
+function GetEToFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToFile())
+end function GetEToFile_wrap
+
+
+subroutine SetEToFile_wrap(EToFile, strlen)
+    !! Wrapper for [[ac_global:SetEToFile]] for foreign languages.
+    type(c_ptr), intent(in) :: EToFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(EToFile, strlen)
+    call SetEToFile(string)
+end subroutine SetEToFile_wrap
 
 
 end module ac_interface_global
