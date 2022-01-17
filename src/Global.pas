@@ -437,7 +437,7 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,RainFile,TemperatureFile,
+    ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,TemperatureFile,
     IrriFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,EToFilefull,RainFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
@@ -584,7 +584,7 @@ Function LeapYear(Year : INTEGER) : BOOLEAN;
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile_str,RainFile,CO2File_str: string);
+                      VAR TempFile,EToFile,RainFile,CO2File_str: string);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -2209,7 +2209,7 @@ END; (* CompleteClimateDescription *)
 
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
-                      VAR TempFile,EToFile_str,RainFile,CO2File_str : string);
+                      VAR TempFile,EToFile,RainFile,CO2File_str : string);
 VAR f0 : TextFile;
 BEGIN
 Assign(f0,FullName);
@@ -2217,8 +2217,7 @@ Reset(f0);
 READLN(f0,CLimateDescription);
 READLN(f0); // AquaCrop Version
 READLN(f0,TempFile);
-READLN(f0,EToFile_str);
-SetEToFile(EToFile_str);
+READLN(f0,EToFile);
 READLN(f0,RainFile);
 READLN(f0,CO2File_str);
 SetCO2File(CO2File_str);
@@ -2925,7 +2924,7 @@ ClimRecord.NrObs := 999; //(heeft geen belang)
                          // IF 365 (= full undefined year)
 
 //Part A - ETo and Rain files --> ClimFile
-IF ((GetEToFile() = '(None)') AND (RainFile = '(None)'))
+IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
    THEN BEGIN
         ClimFile := '(None)';
         ClimDescription := 'Specify Climatic data when Running AquaCrop';
@@ -2951,7 +2950,7 @@ IF ((GetEToFile() = '(None)') AND (RainFile = '(None)'))
            IF FullUndefinedRecord(RainRecord.FromY,RainRecord.FromD,RainRecord.FromM,RainRecord.ToD,RainRecord.ToM)
               THEN NrObs := 365;
            END;
-        IF (RainFile = '(None)') THEN
+        IF (GetRainFile() = '(None)') THEN
            WITH ClimRecord DO
            BEGIN
            FromY := EToRecord.FromY;
@@ -2963,7 +2962,7 @@ IF ((GetEToFile() = '(None)') AND (RainFile = '(None)'))
               THEN NrObs := 365;
            END;
 
-        IF ((GetEToFile() <> '(None)') AND (RainFile <> '(None)')) THEN
+        IF ((GetEToFile() <> '(None)') AND (GetRainFile() <> '(None)')) THEN
            BEGIN
            SetARecord := EToRecord;
            SetBRecord := RainRecord;

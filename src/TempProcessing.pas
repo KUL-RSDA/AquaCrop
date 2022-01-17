@@ -1282,17 +1282,17 @@ IF (GetEToFile() = '(None)')
         END;
 // 1.3 Rain
 READLN(f0); // Info Rain
-READLN(f0,TempString);  //RainFile
-RainFile := Trim(TempString);
-IF (RainFile = '(None)')
+READLN(f0,TempString);  //GetRainFile()
+SetRainFile(Trim(TempString));
+IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
-        RainFilefull := RainFile;  (* no file *)
+        RainFilefull := GetRainFile();  (* no file *)
         RainDescription := 'Specify Rain data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
-        RainFileFull := CONCAT(Trim(TempString),RainFile);
+        RainFileFull := CONCAT(Trim(TempString),GetRainFile());
         LoadClim(RainFilefull,RainDescription,RainRecord);
         CompleteClimateDescription(RainRecord);
         END;

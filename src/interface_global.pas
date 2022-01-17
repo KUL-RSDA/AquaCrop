@@ -372,6 +372,18 @@ procedure SetEToFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setetofile_wrap';
 
+function GetRainFile(): string;
+
+function GetRainFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getrainfile_wrap';
+
+procedure SetRainFile(constref str : string);
+
+procedure SetRainFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setrainfile_wrap';
+
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -574,7 +586,7 @@ var
 
 begin;
     p := GetEToFile_wrap();
-    GetEToFile := StrPas(p);
+    GetEToFile := AnsiString(p);
 end;
 
 
@@ -587,6 +599,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetEToFile_wrap(p, strlen);
+end;
+
+function GetRainFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetRainFile_wrap();
+    GetRainFile := AnsiString(p);
+end;
+
+
+procedure SetRainFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetRainFile_wrap(p, strlen);
 end;
 
 initialization

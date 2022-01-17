@@ -12,6 +12,8 @@ use ac_global, only: DetermineLengthGrowthStages, &
                      SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
+                     GetRainFile, &
+                     setRainFile, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -188,6 +190,25 @@ subroutine SetEToFile_wrap(EToFile, strlen)
     string = pointer2string(EToFile, strlen)
     call SetEToFile(string)
 end subroutine SetEToFile_wrap
+
+function GetRainFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainFile())
+end function GetRainFile_wrap
+
+
+subroutine SetRainFile_wrap(RainFile, strlen)
+    !! Wrapper for [[ac_global:SetRainFile]] for foreign languages.
+    type(c_ptr), intent(in) :: RainFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(RainFile, strlen)
+    call SetRainFile(string)
+end subroutine SetRainFile_wrap
 
 
 end module ac_interface_global

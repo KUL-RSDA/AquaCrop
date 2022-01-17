@@ -115,6 +115,7 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
+character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: CO2File
 
@@ -1581,5 +1582,20 @@ subroutine SetEToFile(str)
     EToFile = str
 end subroutine SetEToFile
 
+
+function GetRainFile() result(str)
+    !! Getter for the "RainFile" global variable.
+    character(len=len(RainFile)) :: str
+
+    str = RainFile
+end function GetRainFile
+
+
+subroutine SetRainFile(str)
+    !! Setter for the "RainFile" global variable.
+    character(len=*), intent(in) :: str
+
+    RainFile = str
+end subroutine SetRainFile
 
 end module ac_global

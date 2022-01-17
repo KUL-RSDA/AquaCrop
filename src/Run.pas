@@ -767,7 +767,7 @@ IF (GetEToFile() <> '(None)')
                 END;
         END;
 // 2. Rain File
-IF (RainFile <> '(None)')
+IF (GetRainFile() <> '(None)')
    THEN BEGIN
         totalname := RainFilefull;
         IF FileExists(totalname)
@@ -961,7 +961,7 @@ IF (GetEToFile <> '(None)') THEN
            END;
    END;
 // Rain file
-IF (RainFile <> '(None)') THEN
+IF (GetRainFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'RainData.SIM');
    Assign(fRainSIM,totalname);
@@ -2558,7 +2558,7 @@ REPEAT
 IF (GetEToFile() = '(None)') THEN ETo := 5;
 
 (* 2. Get Rain *)
-IF (RainFile = '(None)') THEN Rain := 0;
+IF (GetRainFile() = '(None)') THEN Rain := 0;
 
 (* 3. Start mode *)
 IF StartMode THEN StartMode := false;
@@ -2889,7 +2889,7 @@ IF (Simulation.SumEToStress >= 0.1) THEN DayLastCut := DayNri;
 IF (DayNri <= Simulation.ToDayNr) THEN
    BEGIN
    IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
-   IF (RainFile <> '(None)') THEN READLN(fRainSIM,Rain);
+   IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (TemperatureFile = '(None)')
       THEN BEGIN
            Tmin := SimulParam.Tmin;
@@ -2979,7 +2979,7 @@ VAR NrRun : ShortInt;
     PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
     BEGIN
     IF (GetEToFile <> '(None)') THEN Close(fEToSIM);
-    IF (RainFile <> '(None)') THEN Close(fRainSIM);
+    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
     IF (TemperatureFile <> '(None)') THEN Close(fTempSIM);
     END; (* CloseClimateFiles *)
 
