@@ -24,6 +24,8 @@ real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
                                                     90.25_dp, 120.25_dp, 151.25_dp, &
                                                     181.25_dp, 212.25_dp, 243.25_dp, &
                                                     273.25_dp, 304.25_dp, 334.25_dp]
+integer(int32), dimension (12), parameter :: DaysInMonth = [31,28,31,30,31,30, &
+                                                            31,31,30,31,30,31]
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -115,6 +117,31 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
+type rep_clim
+    integer(intEnum) :: DataType
+        !! Undocumented, note GDL: original code was "type(rep_datatype)"
+    integer(int32) :: FromD, FromM, FromY
+        !! D = day or decade, Y=1901 is not linked to specific year
+    integer(int32) :: ToD, ToM, ToY
+        !! Undocumented
+    integer(int32) :: FromDayNr, ToDayNr
+        !! daynumber
+    character(len=500) :: FromString, ToString
+        !! Undocumented, note GDL: randomly chose 500
+    integer(int32) :: NrObs
+        !! number of observations
+end type rep_clim
+
+type rep_DayEventDbl
+    integer(int32) :: DayNr
+        !! Undocumented
+    real(dp) :: Param
+        !! Undocumented
+end type rep_DayEventDbl
+
+type(rep_clim)  :: TemperatureRecord
+
+character(len=:), allocatable :: TemperatureFile, TemperatureFileFull
 
 type rep_IrriECw 
     real(dp) :: PreSeason
@@ -1685,6 +1712,143 @@ subroutine SetProfFile(str)
 
     ProfFile = str
 end subroutine SetProfFile
+
+
+logical function LeapYear(Year)
+    integer(int32), intent(in) :: Year
+
+    LeapYear = .false.
+    if (frac(Year/4._dp) <= 0.01_dp) then
+        LeapYear = .true.
+    end if
+
+    contains
+
+    real(dp) function frac(val)
+        real(dp), intent(in) :: val
+
+        frac = val - floor(val)
+    end function frac 
+end function LeapYear
+
+
+function GetTemperatureFile() result(str)
+    !! Getter for the "TemperatureFile" global variable.
+    character(len=len(TemperatureFile)) :: str
+
+    str = TemperatureFile
+end function GetTemperatureFile
+
+subroutine SetTemperatureFile(str)
+    !! Setter for the "TemperatureFile" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureFile = str
+end subroutine SetTemperatureFile
+
+function GetTemperatureFilefull() result(str)
+    !! Getter for the "TemperatureFilefull" global variable.
+    character(len=len(TemperatureFilefull)) :: str
+
+    str = TemperatureFilefull
+end function GetTemperatureFilefull
+
+subroutine SetTemperatureFilefull(str)
+    !! Setter for the "TemperatureFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureFilefull = str
+end subroutine SetTemperatureFilefull
+
+type(rep_clim) function GetTemperatureRecord()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord = TemperatureRecord
+end function GetTemperatureRecord
+
+subroutine SetTemperatureRecord_DataType(DataType)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    TemperatureRecord%DataType = DataType
+end subroutine SetTemperatureRecord_DataType
+
+subroutine SetTemperatureRecord_FromD(FromD)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    TemperatureRecord%FromD = FromD
+end subroutine SetTemperatureRecord_FromD
+
+subroutine SetTemperatureRecord_FromM(FromM)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    TemperatureRecord%FromM = FromM
+end subroutine SetTemperatureRecord_FromM
+
+subroutine SetTemperatureRecord_FromY(FromY)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    TemperatureRecord%FromD = FromY
+end subroutine SetTemperatureRecord_FromY
+
+subroutine SetTemperatureRecord_ToD(ToD)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    TemperatureRecord%ToD = ToD
+end subroutine SetTemperatureRecord_ToD
+
+subroutine SetTemperatureRecord_ToM(ToM)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    TemperatureRecord%ToM = ToM
+end subroutine SetTemperatureRecord_ToM
+
+subroutine SetTemperatureRecord_TOY(ToY)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    TemperatureRecord%ToD = ToY
+end subroutine SetTemperatureRecord_ToY
+
+subroutine SetTemperatureRecord_ToDayNr(ToDayNr)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    TemperatureRecord%ToDayNr = ToDayNr
+end subroutine SetTemperatureRecord_ToDayNr
+
+subroutine SetTemperatureRecord_FromDayNr(FromDayNr)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    TemperatureRecord%FromDayNr = FromDayNr
+end subroutine SetTemperatureRecord_FromDayNr
+
+subroutine SetTemperatureRecord_NrObs(NrObs)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    TemperatureRecord%ToDayNr = NrObs
+end subroutine SetTemperatureRecord_NrObs
+
+subroutine SetTemperatureRecord_ToString(ToString)
+    !! Setter for the "TemperatureRecord" global variable.
+    character(len=500), intent(in) :: ToString
+
+    TemperatureRecord%ToString = ToString
+end subroutine SetTemperatureRecord_ToString
+
+subroutine SetTemperatureRecord_FromString(FromString)
+    !! Setter for the "TemperatureRecord" global variable.
+    character(len=500), intent(in) :: FromString
+
+    TemperatureRecord%FromString = FromString
+end subroutine SetTemperatureRecord_FromString
 
 
 end module ac_global
