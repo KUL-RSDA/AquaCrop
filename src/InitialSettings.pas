@@ -99,8 +99,8 @@ implementation
 
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
- ProfFile := 'DEFAULT.SOL';
- ProfFilefull := CONCAT(PathNameSimul,ProfFile);
+ SetProfFile('DEFAULT.SOL');
+ ProfFilefull := CONCAT(PathNameSimul,GetProfFile());
  // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
@@ -117,8 +117,8 @@ implementation
 
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
- CropFile := 'DEFAULT.CRO';
- CropFilefull := CONCAT(PathNameSimul,CropFile);
+ SetCropFile('DEFAULT.CRO');
+ CropFilefull := CONCAT(PathNameSimul,GetCropFile());
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
@@ -199,8 +199,8 @@ implementation
  AdjustSimPeriod;
 
  // 6. irrigation
- IrriFile := '(None)';
- IrriFilefull := IrriFile;  (* no file *)
+ SetIrriFile('(None)');
+ IrriFilefull := GetIrriFile();  (* no file *)
  NoIrrigation;
 
  // 7. Off-season

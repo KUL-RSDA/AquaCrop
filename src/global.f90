@@ -115,9 +115,36 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
+
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: EToFile
+
+type rep_IrriECw 
+    real(dp) :: PreSeason
+        !! Undocumented
+    real(dp) :: PostSeason
+        !! Undocumented
+end type rep_IrriECw 
+
+type rep_CropFileSet 
+    integer(int32) :: DaysFromSenescenceToEnd
+        !! Undocumented
+    integer(int32) :: DaysToHarvest
+        !! given or calculated from GDD
+    integer(int32) :: GDDaysFromSenescenceToEnd
+        !! Undocumented
+    integer(int32) :: GDDaysToHarvest
+        !! given or calculated from Calendar Days
+end type rep_CropFileSet 
+
+
+character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: IrriFile
+character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: ProfFile
+type(rep_IrriECw) :: IrriECw
+type(rep_CropFileSet) :: CropFileSet
 
 
 contains
@@ -1387,6 +1414,19 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
 end subroutine GetCO2Description
 
 
+subroutine GetIrriDescription(IrriFileFull, IrriDescription)
+    character(len=*), intent(in) :: IrriFileFull
+    character(len=*), intent(inout) :: IrriDescription
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(IrriFileFull), status='old', &
+         action='read')
+    read(fhandle, *) IrriDescription
+    close(fhandle)
+end subroutine GetIrriDescription
+
+
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     integer(int32), intent(in) :: HImax
     real(dp), intent(in) :: dHIdt
@@ -1551,6 +1591,99 @@ end subroutine SplitStringInThreeParams
 
 !! Global variables section !!
 
+function GetIrriFile() result(str)
+    !! Getter for the "IrriFile" global variable.
+    character(len=len(IrriFile)) :: str
+
+    str = IrriFile
+end function GetIrriFile
+
+
+subroutine SetIrriFile(str)
+    !! Setter for the "IrriFile" global variable.
+    character(len=*), intent(in) :: str
+
+    IrriFile = str
+end subroutine SetIrriFile
+
+
+logical function LeapYear(Year)
+    integer(int32), intent(in) :: Year
+
+    LeapYear = .false.
+    if (frac(Year/4._dp) <= 0.01_dp) then
+        LeapYear = .true.
+    end if
+
+    contains
+
+    real(dp) function frac(val)
+        real(dp), intent(in) :: val
+
+        frac = val - floor(val)
+    end function frac 
+end function LeapYear
+
+
+subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
+    character(len=*), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    integer :: fhandle
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
+    character(len=1024) :: buffer
+    integer(int32) :: i, TotalFiles
+  
+    AllOK = .true.
+    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
+        action='read')
+    read(fhandle, *) ! Description
+    read(fhandle, *)  ! AquaCrop version Nr
+    
+    ! Prepare
+    if (Runi > 1) then
+        do i = 1, 5 
+            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
+        end do
+        do i = 1, 42 
+            read(fhandle, *) ! files previous runs
+        end do
+    end if
+
+    ! Type Year and Simulation and Cropping period of the run
+    do i = 1, 5 
+        read(fhandle, *)
+    end do
+
+    ! Check the 14 files
+    i = 1
+    TotalFiles = 14
+    do while (AllOK .and. (i <= TotalFiles))
+        read(fhandle, *) ! Info
+        read(fhandle, *) buffer  ! FileName
+        TempFileName = trim(buffer)
+        if (trim(TempFileName) == '(None)') then
+            read(fhandle, *)
+        else
+            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
+                read(fhandle, *) ! Keep initial SWC
+            else
+                read(fhandle, *) buffer ! PathName
+                TempPathName = trim(buffer)
+                TempFullName = trim(TempPathName) // trim(TempFileName)
+                if (FileExists(trim(TempFullName)) .eqv. .false.) then
+                    AllOK = .false.
+                end if
+            end if
+        end if
+        i = i + 1
+    end do
+    close(fhandle)
+end subroutine CheckFilesInProject
+
+!! Global variables section !!
+
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.
     character(len=len(CO2File)) :: str
@@ -1565,6 +1698,104 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+function GetCalendarFile() result(str)
+    !! Getter for the "CalendarFile" global variable.
+    character(len=len(CalendarFile)) :: str
+
+    str = CalendarFile
+end function GetCalendarFile
+
+subroutine SetCalendarFile(str)
+    !! Setter for the "CalendarFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarFile = str
+end subroutine SetCalendarFile
+
+function GetCropFile() result(str)
+    !! Getter for the "CropFile" global variable.
+    character(len=len(CropFile)) :: str
+
+    str = CropFile
+end function GetCropFile
+
+subroutine SetCropFile(str)
+    !! Setter for the "CropFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CropFile = str
+end subroutine SetCropFile
+
+
+type(rep_IrriECw) function GetIrriECw()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw = IrriECw
+end function GetIrriECw
+
+subroutine SetIrriECw_PreSeason(PreSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PreSeason
+
+    IrriECw%PreSeason = PreSeason
+end subroutine SetIrriECw_PreSeason
+
+subroutine SetIrriECw_PostSeason(PostSeason)
+    !! Setter for the "soil" global variable.
+    real(dp), intent(in) :: PostSeason
+
+    IrriECw%PostSeason = PostSeason
+end subroutine SetIrriECw_PostSeason
+
+
+function GetProfFile() result(str)
+    !! Getter for the "ProfFile" global variable.
+    character(len=len(ProfFile)) :: str
+
+    str = ProfFile
+end function GetProfFile
+
+subroutine SetProfFile(str)
+    !! Setter for the "ProfFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFile = str
+end subroutine SetProfFile
+
+type(rep_CropFileSet) function GetCropFileSet()
+    !! Getter for the "CropFileSet" global variable.
+
+    GetCropFileSet = CropFileSet
+end function GetCropFileSet
+
+subroutine SetCropFileSet_DaysFromSenescenceToEnd(DaysFromSenescenceToEnd)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: DaysFromSenescenceToEnd
+
+    CropFileSet%DaysFromSenescenceToEnd = DaysFromSenescenceToEnd
+end subroutine SetCropFileSet_DaysFromSenescenceToEnd
+
+subroutine SetCropFileSet_DaysToHarvest(DaysToHarvest)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: DaysToHarvest
+
+    CropFileSet%DaysToHarvest = DaysToHarvest
+end subroutine SetCropFileSet_DaysToHarvest
+
+subroutine SetCropFileSet_GDDaysFromSenescenceToEnd(GDDaysFromSenescenceToEnd)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: GDDaysFromSenescenceToEnd
+
+    CropFileSet%GDDaysFromSenescenceToEnd = GDDaysFromSenescenceToEnd
+end subroutine SetCropFileSet_GDDaysFromSenescenceToEnd
+
+subroutine SetCropFileSet_GDDaysToHarvest(GDDaysToHarvest)
+    !! Setter for the "CropFileSet" global variable.
+    integer(int32), intent(in) :: GDDaysToHarvest
+
+    CropFileSet%GDDaysToHarvest = GDDaysToHarvest
+end subroutine SetCropFileSet_GDDaysToHarvest
 
 
 function GetEToFile() result(str)

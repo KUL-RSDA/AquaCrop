@@ -152,13 +152,6 @@ TYPE
          Assimilates        : rep_Assimilates;
          END;
 
-     rep_CropFileSet = Record
-         DaysFromSenescenceToEnd : integer;
-         DaysToHarvest      : integer;  //given or calculated from GDD
-         GDDaysFromSenescenceToEnd : integer;
-         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
-         END;
-
      rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
      rep_Cuttings = Record
          Considered : BOOLEAN;
@@ -324,11 +317,6 @@ TYPE
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
-     rep_IrriECw = Record
-         PreSeason  : double;
-         PostSeason : double;
-         end;
-
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
@@ -439,6 +427,7 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     DataPath,ObsPath : BOOLEAN;
     ProfFile,CalendarFile,CropFile,ClimateFile,ClimFile,TemperatureFile,
     IrriFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
+    ClimateFile,ClimFile,EToFile,RainFile,TemperatureFile, ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,EToFilefull,RainFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
     GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
@@ -452,7 +441,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Simulation     : rep_sim;
     IrriMode       : rep_IrriMode;
     IrriMethod     : rep_IrriMethod;
-    IrriECw        : rep_IrriECw;
     GenerateTimeMode : rep_GenerateTimeMode;
     GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
@@ -500,8 +488,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     RootZoneSalt   : rep_RootZoneSalt;
     ZiAqua         : Integer;  // Depth of Groundwater table below soil surface in centimeter
     ECiAqua        : double; //  EC of the groundwater table in dS/m
-
-    CropFileSet    : rep_CropFileSet;
     PerennialPeriod : rep_PerennialPeriod;
 
 
@@ -579,8 +565,6 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
 
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
-Function LeapYear(Year : INTEGER) : BOOLEAN;
-
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClimate(FullName : string;
                       VAR ClimateDescription : string;
@@ -659,9 +643,6 @@ PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
 PROCEDURE LoadProjectDescription(FullNameProjectFile : string;
                                  VAR DescriptionOfProject : string);
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
-PROCEDURE CheckFilesInProject(TempFullFilename : string;
-                              Runi : INTEGER;
-                              VAR AllOK : BOOLEAN);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -1088,8 +1069,8 @@ BEGIN
      IrriAfterSeason[Nri].DayNr := 0;
      IrriAfterSeason[Nri].Param := 0;
      END;
- IrriECw.PreSeason := 0.0; //dS/m
- IrriECw.PostSeason := 0.0; //dS/m
+ SetIrriECw_PreSeason(0.0); //dS/m
+ SetIrriECw_PostSeason(0.0); //dS/m
 END; (* NoIrrigation *)
 
 
@@ -1105,13 +1086,13 @@ WITH Management DO
    EffectMulchOffS := 50;
    // off-season irrigation
    SimulParam.IrriFwOffSeason := 100;
-   IrriECw.PreSeason := 0.0; // dS/m
+   SetIrriECw_PreSeason(0.0); // dS/m
    FOR Nri := 1 TO 5 DO
        BEGIN
        IrriBeforeSeason[Nri].DayNr := 0;
        IrriBeforeSeason[Nri].Param := 0;
        END;
-   IrriECw.PostSeason := 0.0; // dS/m
+   SetIrriECw_PostSeason(0.0); // dS/m
    FOR Nri := 1 TO 5 DO
        BEGIN
        IrriAfterSeason[Nri].DayNr := 0;
@@ -1128,6 +1109,8 @@ VAR f0 : TextFile;
     ParamString : string;
     Par1,Par2 : double;
     VersionNr : double;
+    PreSeason_in : double;
+    PostSeason_in : double;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -1150,12 +1133,18 @@ FOR Nri := 1 TO 5 DO
     END;
 READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
-   THEN IrriECw.PreSeason := 0.0
-   ELSE READLN(f0,IrriECw.PreSeason);
+   THEN SetIrriECw_PreSeason(0.0)
+   ELSE BEGIN
+    READLN(f0,PreSeason_in);
+    SetIrriECw_PreSeason(PreSeason_in);
+    END;
 READLN(f0,NrEvents2); //number of irrigation events AFTER growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality AFTER growing period
-   THEN IrriECw.PostSeason := 0.0
-   ELSE READLN(f0,IrriECw.PostSeason);
+   THEN SetIrriECw_PostSeason(0.0)
+   ELSE BEGIN
+    READLN(f0,PostSeason_in);
+    SetIrriECw_PostSeason(PostSeason_in);
+    END;
 READLN(f0,SimulParam.IrriFwOffSeason); // percentage of soil surface wetted
 // irrigation events - get events before and after season
 IF (NrEvents1 > 0) OR (NrEvents2 > 0) THEN FOR Nri := 1 TO 3 DO READLN(f0); // title
@@ -1175,9 +1164,6 @@ IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing per
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-
 
 
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
@@ -2129,26 +2115,19 @@ Close(f0);
 Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 
 // copy to CropFileSet
-CropFileSet.DaysFromSenescenceToEnd := Crop.DaysToHarvest - Crop.DaysToSenescence;
-CropFileSet.DaysToHarvest := Crop.DaysToHarvest;
+SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
+SetCropFileSet_DaysToHarvest(Crop.DaysToHarvest);
 IF (Crop.ModeCycle = GDDays)
    THEN BEGIN
-        CropFileSet.GDDaysFromSenescenceToEnd := Crop.GDDaysToHarvest - Crop.GDDaysToSenescence;
-        CropFileSet.GDDaysToHarvest := Crop.GDDaysToHarvest;
+        SetCropFileSet_GDDaysFromSenescenceToEnd(Crop.GDDaysToHarvest - Crop.GDDaysToSenescence);
+        SetCropFileSet_GDDaysToHarvest(Crop.GDDaysToHarvest);
         END
    ELSE BEGIN
-        CropFileSet.GDDaysFromSenescenceToEnd := undef_int;
-        CropFileSet.GDDaysToHarvest := undef_int;
+        SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int);
+        SetCropFileSet_GDDaysToHarvest(undef_int);
         END;
 
 END; // LoadCrop
-
-
-Function LeapYear(Year : INTEGER) : BOOLEAN;
-BEGIN
-LeapYear := false;
-IF (FRAC(Year/4) <= 0.01 ) THEN LeapYear := true;
-END; (* LeapYear *)
 
 
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
@@ -2717,10 +2696,10 @@ Close(f);
 Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
 
 // copy to CropFileSet
-CropFileSet.DaysFromSenescenceToEnd := Crop.DaysToHarvest - Crop.DaysToSenescence;
-CropFileSet.DaysToHarvest := Crop.DaysToHarvest;
-CropFileSet.GDDaysFromSenescenceToEnd := Crop.GDDaysToHarvest - Crop.GDDaysToSenescence;
-CropFileSet.GDDaysToHarvest := Crop.GDDaysToHarvest;
+SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
+SetCropFileSet_DaysToHarvest(Crop.DaysToHarvest);
+SetCropFileSet_GDDaysFromSenescenceToEnd(Crop.GDDaysToHarvest - Crop.GDDaysToSenescence);
+SetCropFileSet_GDDaysToHarvest(Crop.GDDaysToHarvest);
 END; (* SaveCrop *)
 
 
@@ -4123,56 +4102,6 @@ Delete(TempString,(i-3),(4));
 OutputName := TempString;
 END; (* ComposeOutputFileName *)
 
-
-PROCEDURE CheckFilesInProject(TempFullFilename : string;
-                              Runi : INTEGER;
-                              VAR AllOK : BOOLEAN);
-VAR f0 : TextFile;
-    TempFileName,TempPathName,TempFullName : string;
-    i,TotalFiles : ShortInt;
-
-BEGIN
-AllOK := true;
-Assign(f0,TempFullFilename);
-Reset(f0);
-READLN(f0); // Description
-READLN(f0);  // AquaCrop version Nr
-
-// Prepare
-IF (Runi > 1) THEN
-   BEGIN
-   FOR i := 1 TO 5 DO READLN(f0); // Type year and Simulation and Cropping period of run 1
-   FOR i := 1 TO 42 DO Readln(f0); // files previous runs
-   END;
-
-// Type Year and Simulation and Cropping period of the run
-FOR i := 1 TO 5 DO READLN(f0);
-
-// Check the 14 files
-i := 1;
-TotalFiles := 14;
-WHILE (AllOK AND (i <= TotalFiles)) DO
-   BEGIN
-   READLN(f0); // Info
-   READLN(f0,TempFileName);  // FileName
-   IF (Trim(TempFileName) = '(None)')
-      THEN READLN(f0)
-      ELSE BEGIN
-           IF ((i = (TotalFiles-2)) AND (Trim(TempFileName) = 'KeepSWC')) // file initial conditions
-              THEN READLN(f0) // Keep initial SWC
-              ELSE BEGIN
-                   READLN(f0,TempPathName);  //PathName
-                   TempFullName := CONCAT(Trim(TempPathName),Trim(TempFileName));
-                   IF (FileExists(TempFullName) = false) THEN AllOK := false;
-                   END;
-           END;
-   i := i + 1;
-   END;
-Close(f0);
-END; (* CheckFilesInProject *)
-
-
-
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -4205,6 +4134,7 @@ FOR i := 1 TO 27 DO READLN(f0); // Climate (5x3 = 15),Calendar (3),Crop (3), Irr
 READLN(f0); // info Soil file
 READLN(f0,FileName);
 READLN(f0,PathName);
+PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
 FullFileName := CONCAT(Trim(PathName),Trim(FileName));
 LoadProfile(FullFileName);
 TheNrSoilLayers := Soil.NrSoilLayers;
@@ -4256,6 +4186,7 @@ IF (RunWithKeepSWC = true) THEN
      READLN(f0); // Crop file title
      READLN(f0,FileName);
      READLN(f0,PathName);
+     PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
      FullFileName := CONCAT(Trim(PathName),Trim(FileName));
      Assign(fx,FullFileName);
      Reset(fx);
@@ -4662,8 +4593,8 @@ END;  (* AdjustYearPerennials *)
 
 PROCEDURE NoCropCalendar;
 BEGIN
-CalendarFile := '(None)';
-CalendarFileFull := CalendarFile;  (* no file *)
+SetCalendarFile('(None)');
+CalendarFileFull := GetCalendarFile();  (* no file *)
 CalendarDescription := '';
 Onset.GenerateOn := false;
 Onset.GenerateTempOn := false;
