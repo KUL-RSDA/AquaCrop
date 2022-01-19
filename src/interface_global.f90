@@ -245,7 +245,7 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+
     string = pointer2string(IrriFile, strlen)
     call SetIrriFile(string)
 end subroutine SetIrriFile_wrap
