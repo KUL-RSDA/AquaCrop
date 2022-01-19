@@ -242,7 +242,6 @@ end function GetIrriFile_wrap
 subroutine SetIrriFile_wrap(IrriFile, strlen)
     !! Wrapper for [[ac_global:SetIrriFile]] for foreign languages.
     type(c_ptr), intent(in) :: IrriFile
-
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
@@ -266,7 +265,7 @@ subroutine SetRainFile_wrap(RainFile, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+ 
     string = pointer2string(RainFile, strlen)
     call SetRainFile(string)
 end subroutine SetRainFile_wrap

@@ -1298,9 +1298,8 @@ IF (GetRainFile() = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
-        RainFileFull := CONCAT(Trim(TempString),GetRainFile());
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        RainFileFull := CONCAT(Trim(TempString),RainFile);
+        RainFileFull := CONCAT(Trim(TempString),GetRainFile());
         LoadClim(RainFilefull,RainDescription,RainRecord);
         CompleteClimateDescription(RainRecord);
         END;
