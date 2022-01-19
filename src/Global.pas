@@ -159,36 +159,6 @@ TYPE
          GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
          END;
 
-     rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
-     rep_Cuttings = Record
-         Considered : BOOLEAN;
-         CCcut      : Integer; // Canopy cover (%) after cutting
-         CGCPlus    : Integer; // Increase (percentage) of CGC after cutting
-         Day1       : Integer; // first day after time window for generating cuttings (1 = start crop cycle)
-         NrDays     : Integer; // number of days of time window for generate cuttings (-9 is whole crop cycle)
-         Generate   : Boolean; // ture: generate cuttings; false : schedule for cuttings
-         Criterion  : rep_TimeCuttings; // time criterion for generating cuttings
-         HarvestEnd : BOOLEAN; // final harvest at crop maturity
-         FirstDayNr : LongInt; // first dayNr of list of specified cutting events (-9 = onset growing cycle)
-         end;
-
-     rep_Manag = Record
-         Mulch           : ShortInt; (* percent soil cover by mulch in growing period *)
-         SoilCoverBefore : ShortInt; (* percent soil cover by mulch before growing period *)
-         SoilCoverAfter  : ShortInt; (* percent soil cover by mulch after growing period *)
-         EffectMulchOffS : ShortInt; (* effect Mulch on evaporation before and after growing period *)
-         EffectMulchInS  : ShortInt; (* effect Mulch on evaporation in growing period *)
-         FertilityStress : ShortInt;
-         BundHeight      : double; // meter;
-         RunoffOn        : BOOLEAN;  (* surface runoff *)
-         CNcorrection    : INTEGER; // percent increase/decrease of CN
-         WeedRC          : ShortInt; (* Relative weed cover in percentage at canopy closure *)
-         WeedDeltaRC     : INTEGER; (* Increase/Decrease of Relative weed cover in percentage during mid season*)
-         WeedShape       : Double; (* Shape factor for crop canopy suppression*)
-         WeedAdj         : ShortInt; (* replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials *)
-         Cuttings        : rep_Cuttings; // Multiple cuttings
-         end;
-
      rep_EffectiveRainMethod = (Full,USDA,Percentage);
      rep_MonthInteger = ARRAY[1..12] OF INTEGER;
 

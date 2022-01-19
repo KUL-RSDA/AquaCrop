@@ -37,7 +37,18 @@ integer(intEnum), parameter :: plant_transplant = 1
 integer(intEnum), parameter :: plant_regrowth= 2
     !! index of regrowth in planting enumerated type
 
-
+integer(intEnum), parameter :: TimeCuttings_NA = 0
+    !! index of NA in TimeCuttings enumerated type
+integer(intEnum), parameter :: TimeCuttings_IntDay = 1
+    !! index of IntDay in TimeCuttings enumerated type
+integer(intEnum), parameter :: TimeCuttings_IntGDD = 2
+    !! index of IntGDD in TimeCuttings enumerated type
+integer(intEnum), parameter :: TimeCuttings_DryB = 3
+    !! index of DryB in TimeCuttings enumerated type
+integer(intEnum), parameter :: TimeCuttings_DryY = 4
+    !! index of DryY in TimeCuttings enumerated type
+integer(intEnum), parameter :: TimeCuttings_FreshY= 5
+    !! index of FreshY in TimeCuttings enumerated type
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -122,12 +133,67 @@ type rep_IrriECw
         !! Undocumented
 end type rep_IrriECw 
 
+rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY)
+type rep_Cuttings 
+    logical :: Considered
+        !! Undocumented
+    integer(int32) :: CCcut
+        !! Canopy cover (%) after cutting
+    integer(int32) :: CGCPlus
+        !! Increase (percentage) of CGC after cutting
+    integer(int32) :: Day1
+        !! first day after time window for generating cuttings (1 = start crop cycle)
+    integer(int32) :: NrDays
+        !! number of days of time window for generate cuttings (-9 is whole crop cycle)
+    logical :: Generate
+        !! ture: generate cuttings; false : schedule for cuttings
+    type(rep_TimeCuttings) :: Criterion
+        !! time criterion for generating cuttings
+    logical :: HarvestEnd
+        !! final harvest at crop maturity
+    integer(int32) :: FirstDayNr
+        !! first dayNr of list of specified cutting events (-9 = onset growing cycle)
+end type rep_Cuttings 
+
+
+type rep_Manag 
+    integer(int8) :: Mulch
+        !! percent soil cover by mulch in growing period
+    integer(int8) :: SoilCoverBefore
+        !! percent soil cover by mulch before growing period
+    integer(int8) :: SoilCoverAfter
+        !! percent soil cover by mulch after growing period
+    integer(int8) :: EffectMulchOffS
+        !! effect Mulch on evaporation before and after growing period
+    integer(int8) :: EffectMulchInS
+        !! effect Mulch on evaporation in growing period
+    integer(int8) :: FertilityStress
+        !! Undocumented
+    real(dp) :: BundHeight
+        !! meter;
+    logical :: RunoffOn
+        !! surface runoff
+    integer(int32) :: CNcorrection
+        !! percent increase/decrease of CN
+    integer(int8) :: WeedRC
+        !! Relative weed cover in percentage at canopy closure
+    integer(int32) :: WeedDeltaRC
+        !! Increase/Decrease of Relative weed cover in percentage during mid season
+    real(dp) :: WeedShape
+        !! Shape factor for crop canopy suppression
+    integer(int8) :: WeedAdj
+        !! replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials
+    type(rep_Cuttings) :: Cuttings
+        !! Multiple cuttings
+end type rep_Manag 
+
 
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
+type(rep_Manag) :: Management
 
 
 contains
@@ -1716,5 +1782,108 @@ subroutine SetProfFile(str)
     ProfFile = str
 end subroutine SetProfFile
 
+type(rep_Manag) function GetManagement()
+    !! Getter for the "Management" global variable.
+
+    GetManagement = Management
+end function GetManagement
+
+subroutine SetManagement_Mulch(Mulch)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: Mulch
+
+    Management%Mulch = Mulch
+end subroutine SetManagement_Mulch
+
+subroutine SetManagement_SoilCoverBefore(SoilCoverBefore)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: SoilCoverBefore
+
+    Management%SoilCoverBefore = SoilCoverBefore
+end subroutine SetManagement_SoilCoverBefore
+
+subroutine SetManagement_SoilCoverAfter(SoilCoverAfter)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: SoilCoverAfter
+
+    Management%SoilCoverAfter = SoilCoverAfter
+end subroutine SetManagement_SoilCoverAfter
+
+subroutine SetManagement_EffectsMulchOffS(EffectsMulchOffS)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: EffectsMulchOffS
+
+    Management%EffectsMulchOffS = EffectsMulchOffS
+end subroutine SetManagement_EffectsMulchOffS
+
+subroutine SetManagement_EffectsMulchInS(EffectsMulchInS)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: EffectsMulchInS
+
+    Management%EffectsMulchInS = EffectsMulchInS
+end subroutine SetManagement_EffectsMulchInS
+
+subroutine SetManagement_FertilityStress(FertilityStress)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: FertilityStress
+
+    Management%FertilityStress = FertilityStress
+end subroutine SetManagement_FertilityStress
+
+subroutine SetManagement_BundHeight(BundHeight)
+    !! Setter for the "Management" global variable.
+    real(dp), intent(in) :: BundHeight
+
+    Management%BundHeight = BundHeight
+end subroutine SetManagement_BundHeight
+
+subroutine SetManagement_RunoffOn(RunoffOn)
+    !! Setter for the "Management" global variable.
+    logical, intent(in) :: RunoffOn
+
+    Management%RunoffOn = RunoffOn
+end subroutine SetManagement_RunoffOn
+
+subroutine SetManagement_CNcorrection(CNcorrection)
+    !! Setter for the "Management" global variable.
+    integer(int32), intent(in) :: CNcorrection
+
+    Management%CNcorrection = CNcorrection
+end subroutine SetManagement_CNcorrection
+
+subroutine SetManagement_WeedRC(WeedRC)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: WeedRC
+
+    Management%WeedRC = WeedRC
+end subroutine SetManagement_WeedRC
+
+subroutine SetManagement_WeedDeltaRC(WeedDeltaRC)
+    !! Setter for the "Management" global variable.
+    integer(int32), intent(in) :: WeedDeltaRC
+
+    Management%WeedDeltaRC = WeedDeltaRC
+end subroutine SetManagement_WeedDeltaRC
+
+subroutine SetManagement_WeedShape(WeedShape)
+    !! Setter for the "Management" global variable.
+    real(dp), intent(in) :: WeedShape
+
+    Management%WeedShape = WeedShape
+end subroutine SetManagement_WeedShape
+
+subroutine SetManagement_WeedAdj(WeedAdj)
+    !! Setter for the "Management" global variable.
+    integer(int8), intent(in) :: WeedAdj
+
+    Management%WeedAdj = WeedAdj
+end subroutine SetManagement_WeedAdj
+
+subroutine SetManagement_Cuttings(Cuttings)
+    !! Setter for the "Management" global variable.
+    integer(inEnum), intent(in) :: Cuttings
+
+    Management%Cuttings = Cuttings
+end subroutine SetManagement_Cuttings
 
 end module ac_global
