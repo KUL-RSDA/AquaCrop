@@ -948,7 +948,7 @@ VAR totalname : string;
     i : LongInt;
 BEGIN
 // ETo file
-IF (GetEToFile <> '(None)') THEN
+IF (GetEToFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'EToData.SIM');
    Assign(fEToSIM,totalname);
@@ -2978,7 +2978,7 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
     BEGIN
-    IF (GetEToFile <> '(None)') THEN Close(fEToSIM);
+    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
     IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
     IF (TemperatureFile <> '(None)') THEN Close(fTempSIM);
     END; (* CloseClimateFiles *)
