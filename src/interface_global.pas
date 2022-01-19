@@ -67,6 +67,20 @@ type
          Calibrated      : BOOLEAN;
          end;
 
+     rep_RootZoneWC = Record
+         Actual : double; // actual soil water content in rootzone [mm]
+         FC     : double; //  soil water content [mm] in rootzone at FC
+         WP     : double; // soil water content [mm] in rootzone at WP
+         SAT    : double; // soil water content [mm] in rootzone at Sat
+         Leaf   : double; // soil water content [mm] in rootzone at upper Threshold for leaf expansion
+         Thresh : double; // soil water content [mm] in rootzone at Threshold for stomatal closure
+         Sen    : double; // soil water content [mm] in rootzone at Threshold for canopy senescence
+         ZtopAct : double;  // actual soil water content [mm] in top soil (= top compartment)
+         ZtopFC  : double;  // soil water content [mm] at FC in top soil (= top compartment)
+         ZtopWP  : double;  // soil water content [mm] at WP in top soil (= top compartment)
+         ZtopThresh : double; // soil water content [mm] at Threshold for stomatal closure in top soil
+         end;
+
      rep_IrriECw = Record
          PreSeason  : double;
          PostSeason : double;
@@ -454,6 +468,42 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
+function GetRootZoneWC(): rep_RootZoneWC;
+        external 'aquacrop' name '__ac_global_MOD_getrootzonewc';
+
+procedure SetRootZoneWC_Actual(constref Actual : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_actual';
+
+procedure SetRootZoneWC_FC(constref FC : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_fc';
+
+procedure SetRootZoneWC_WP(constref WP : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_wp';
+
+procedure SetRootZoneWC_SAT(constref SAT : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_sat';
+
+procedure SetRootZoneWC_Leaf(constref Leaf : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_leaf';
+
+procedure SetRootZoneWC_Thresh(constref Thresh : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_thresh';
+
+procedure SetRootZoneWC_Sen(constref Sen : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_sen';
+
+procedure SetRootZoneWC_ZtopAct(constref ZtopAct : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopact';
+
+procedure SetRootZoneWC_ZtopFC(constref ZtopFC : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopfc';
+
+procedure SetRootZoneWC_ZtopWP(constref ZtopWP : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopwp';
+
+procedure SetRootZoneWC_ZtopThresh(constref ZtopThresh : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopthresh';
+
 function GetCalendarFile(): string;
 
 function GetCalendarFile_wrap(): PChar;
@@ -528,7 +578,6 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
-
 
 
 implementation
