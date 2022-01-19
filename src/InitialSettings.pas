@@ -166,7 +166,7 @@ implementation
 
  // 5.3 Rain
  SetRainFile('(None)');
- RainFilefull := GetRainFile();  (* no file *)
+ SetRainFilefull(GetRainFile());  (* no file *)
  RainDescription := '';
  WITH RainRecord DO
    BEGIN
