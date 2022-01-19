@@ -410,6 +410,19 @@ procedure SetEToFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setetofile_wrap';
 
+function GetEToFileFull(): string;
+
+function GetEToFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getetofilefull_wrap';
+
+procedure SetEToFileFull(constref str : string);
+
+procedure SetEToFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setetofilefull_wrap';
+
+
 function GetRainFile(): string;
 
 function GetRainFile_wrap(): PChar;
@@ -761,6 +774,28 @@ begin;
     strlen := Length(str);
     SetEToFile_wrap(p, strlen);
 end;
+
+function GetEToFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetEToFileFull_wrap();
+    GetEToFileFull := AnsiString(p);
+end;
+
+
+procedure SetEToFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetEToFileFull_wrap(p, strlen);
+end;
+
 
 function GetProfFile(): string;
 var

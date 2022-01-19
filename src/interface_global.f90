@@ -18,6 +18,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
+                     GetEToFileFull, &
+                     SetEToFileFull, &
                      GetRainFile, &
                      setRainFile, &
                      SetCalendarFile, &
@@ -213,6 +215,25 @@ subroutine SetEToFile_wrap(EToFile, strlen)
     string = pointer2string(EToFile, strlen)
     call SetEToFile(string)
 end subroutine SetEToFile_wrap
+
+function GetEToFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToFileFull())
+end function GetEToFileFull_wrap
+
+
+subroutine SetEToFileFull_wrap(EToFileFull, strlen)
+    !! Wrapper for [[ac_global:SetEToFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: EToFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(EToFileFull, strlen)
+    call SetEToFileFull(string)
+end subroutine SetEToFileFull_wrap
 
 subroutine GetIrriDescription_wrap(IrriFileFull, strlen1, IrriDescription, &
             strlen2)

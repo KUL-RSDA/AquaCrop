@@ -1275,14 +1275,14 @@ SetEToFile(Trim(TempString));
 IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
-        EToFilefull := GetEToFile();  (* no file *)
+        SetEToFilefull(GetEToFile());  (* no file *)
         EToDescription := 'Specify ETo data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        EToFilefull := CONCAT(Trim(TempString),GetEToFile());
-        LoadClim(EToFilefull,EToDescription,EToRecord);
+        SetEToFilefull(CONCAT(Trim(TempString),GetEToFile()));
+        LoadClim(GetEToFilefull(),EToDescription,EToRecord);
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain

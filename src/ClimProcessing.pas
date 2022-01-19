@@ -48,7 +48,7 @@ VAR fETo : textfile;
 
 BEGIN
 //1. Prepare record
-Assign(fETo,EToFilefull);
+Assign(fETo,GetEToFilefull());
 Reset(fETo);
 READLN(fETo); // description
 READLN(fETo); // time step
@@ -236,7 +236,7 @@ VAR fETo : textfile;
 
 // 1 = previous decade, 2 = Actual decade, 3 = Next decade;
 BEGIN
-Assign(fETo,EToFilefull);
+Assign(fETo,GetEToFilefull());
 Reset(fETo);
 READLN(fETo); // description
 READLN(fETo); // time step
