@@ -1270,7 +1270,7 @@ IF (TemperatureFile = '(None)')
         END;
 // 1.2 ETo
 READLN(f0); // Info ETo
-READLN(f0,TempString);  //GetEToFile()
+READLN(f0,TempString);  //EToFile
 SetEToFile(Trim(TempString));
 IF (GetEToFile() = '(None)')
    THEN BEGIN
@@ -1280,15 +1280,14 @@ IF (GetEToFile() = '(None)')
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
-        EToFilefull := CONCAT(Trim(TempString),GetEToFile());
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        EToFilefull := CONCAT(Trim(TempString),EToFile);
+        EToFilefull := CONCAT(Trim(TempString),GetEToFile());
         LoadClim(EToFilefull,EToDescription,EToRecord);
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain
 READLN(f0); // Info Rain
-READLN(f0,TempString);  //GetRainFile()
+READLN(f0,TempString);  //RainFile
 SetRainFile(Trim(TempString));
 IF (GetRainFile() = '(None)')
    THEN BEGIN
