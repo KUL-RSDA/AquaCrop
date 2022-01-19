@@ -164,11 +164,13 @@ end type rep_CropFileSet
 
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: EToFile
+character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
+
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
@@ -1919,6 +1921,22 @@ subroutine SetEToFile(str)
 
     EToFile = str
 end subroutine SetEToFile
+
+
+function GetEToFileFull() result(str)
+    !! Getter for the "EToFileFull" global variable.
+    character(len=len(EToFileFull)) :: str
+
+    str = EToFileFull
+end function GetEToFileFull
+
+
+subroutine SetEToFileFull(str)
+    !! Setter for the "EToFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    EToFileFull = str
+end subroutine SetEToFileFull
 
 
 function GetRainFile() result(str)

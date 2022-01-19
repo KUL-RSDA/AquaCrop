@@ -686,7 +686,7 @@ BEGIN
 // 1. ETo file
 IF (GetEToFile() <> '(None)')
    THEN BEGIN
-        totalname := EToFilefull;
+        totalname := GetEToFilefull();
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
