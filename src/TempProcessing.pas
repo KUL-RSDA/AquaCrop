@@ -1353,7 +1353,7 @@ IF (Crop.subkind = Forage) THEN
                      Crop.DaysToCCini,Crop.GDDaysToCCini);
    // adjust length of season
    Crop.DaysToHarvest := Crop.DayN - Crop.Day1 + 1;
-   AdjustCropFileParameters(CropFileSet,(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
+   AdjustCropFileParameters(GetCropFileSet(),(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
                                     Crop.GDDaysToSenescence,Crop.GDDaysToHarvest);
    END;
@@ -1373,18 +1373,18 @@ AdjustSimPeriod;
 // 4. Irrigation
 READLN(f0); // Info Irrigation
 READLN(f0,TempString);  //IrriFile
-IrriFile := Trim(TempString);
-IF (IrriFile = '(None)')
+SetIrriFile(Trim(TempString));
+IF (GetIrriFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathIrriFile
-        IrriFileFull := IrriFile;
+        IrriFileFull := GetIrriFile();
         NoIrrigation;
         //IrriDescription := 'Rainfed cropping';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        IrriFilefull := CONCAT(Trim(TempString),IrriFile);
+        IrriFilefull := CONCAT(Trim(TempString),GetIrriFile());
         LoadIrriScheduleInfo(IrriFilefull);
         END;
 
