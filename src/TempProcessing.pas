@@ -1251,7 +1251,7 @@ IF (ClimateFile = '(None)')
 // 1.1 Temperature
 READLN(f0); // Info Temperature
 READLN(f0,TempString);  //TemperatureFile
-TemperatureFile := Trim(TempString);
+TemperatureFile:= Trim(TempString);
 IF (TemperatureFile = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
@@ -1259,7 +1259,7 @@ IF (TemperatureFile = '(None)')
         Str(SimulParam.Tmin:8:1,TempString1);
         Str(SimulParam.Tmax:8:1,TempString2);
         TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' Â°C');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
@@ -1271,34 +1271,34 @@ IF (TemperatureFile = '(None)')
 // 1.2 ETo
 READLN(f0); // Info ETo
 READLN(f0,TempString);  //EToFile
-EToFile := Trim(TempString);
-IF (EToFile = '(None)')
+SetEToFile(Trim(TempString));
+IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
-        EToFilefull := EToFile;  (* no file *)
+        EToFilefull := GetEToFile();  (* no file *)
         EToDescription := 'Specify ETo data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        EToFilefull := CONCAT(Trim(TempString),EToFile);
+        EToFilefull := CONCAT(Trim(TempString),GetEToFile());
         LoadClim(EToFilefull,EToDescription,EToRecord);
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain
 READLN(f0); // Info Rain
 READLN(f0,TempString);  //RainFile
-RainFile := Trim(TempString);
-IF (RainFile = '(None)')
+SetRainFile(Trim(TempString));
+IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
-        RainFilefull := RainFile;  (* no file *)
+        RainFilefull := GetRainFile();  (* no file *)
         RainDescription := 'Specify Rain data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        RainFileFull := CONCAT(Trim(TempString),RainFile);
+        RainFileFull := CONCAT(Trim(TempString),GetRainFile());
         LoadClim(RainFilefull,RainDescription,RainRecord);
         CompleteClimateDescription(RainRecord);
         END;

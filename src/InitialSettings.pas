@@ -152,8 +152,8 @@ implementation
    END;
 
  // 5.2 ETo
- EToFile := '(None)';
- EToFilefull := EToFile;  (* no file *)
+ SetEToFile('(None)');
+ EToFilefull := GetEToFile();  (* no file *)
  EToDescription := '';
  WITH EToRecord DO
    BEGIN
@@ -165,8 +165,8 @@ implementation
    END;
 
  // 5.3 Rain
- RainFile := '(None)';
- RainFilefull := RainFile;  (* no file *)
+ SetRainFile('(None)');
+ RainFilefull := GetRainFile();  (* no file *)
  RainDescription := '';
  WITH RainRecord DO
    BEGIN

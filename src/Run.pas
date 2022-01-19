@@ -684,7 +684,7 @@ VAR totalname,totalnameOUT : string;
     RunningDay : LongInt;
 BEGIN
 // 1. ETo file
-IF (EToFile <> '(None)')
+IF (GetEToFile() <> '(None)')
    THEN BEGIN
         totalname := EToFilefull;
         IF FileExists(totalname)
@@ -767,7 +767,7 @@ IF (EToFile <> '(None)')
                 END;
         END;
 // 2. Rain File
-IF (RainFile <> '(None)')
+IF (GetRainFile() <> '(None)')
    THEN BEGIN
         totalname := RainFilefull;
         IF FileExists(totalname)
@@ -948,7 +948,7 @@ VAR totalname : string;
     i : LongInt;
 BEGIN
 // ETo file
-IF (EToFile <> '(None)') THEN
+IF (GetEToFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'EToData.SIM');
    Assign(fEToSIM,totalname);
@@ -961,7 +961,7 @@ IF (EToFile <> '(None)') THEN
            END;
    END;
 // Rain file
-IF (RainFile <> '(None)') THEN
+IF (GetRainFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'RainData.SIM');
    Assign(fRainSIM,totalname);
@@ -2555,10 +2555,10 @@ RepeatToDay := Simulation.ToDayNr;
 
 REPEAT
 (* 1. Get ETo *)
-IF (EToFile = '(None)') THEN ETo := 5;
+IF (GetEToFile() = '(None)') THEN ETo := 5;
 
 (* 2. Get Rain *)
-IF (RainFile = '(None)') THEN Rain := 0;
+IF (GetRainFile() = '(None)') THEN Rain := 0;
 
 (* 3. Start mode *)
 IF StartMode THEN StartMode := false;
@@ -2888,8 +2888,8 @@ IF (Simulation.SumEToStress >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= Simulation.ToDayNr) THEN
    BEGIN
-   IF (EToFile <> '(None)') THEN READLN(fEToSIM,ETo);
-   IF (RainFile <> '(None)') THEN READLN(fRainSIM,Rain);
+   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
+   IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (TemperatureFile = '(None)')
       THEN BEGIN
            Tmin := SimulParam.Tmin;
@@ -2978,8 +2978,8 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
     BEGIN
-    IF (EToFile <> '(None)') THEN Close(fEToSIM);
-    IF (RainFile <> '(None)') THEN Close(fRainSIM);
+    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
+    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
     IF (TemperatureFile <> '(None)') THEN Close(fTempSIM);
     END; (* CloseClimateFiles *)
 

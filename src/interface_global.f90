@@ -16,6 +16,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      SetCO2File, &
+                     GetEToFile, &
+                     SetEToFile, &
+                     GetRainFile, &
+                     setRainFile, &
                      SetCalendarFile, &
                      SetCropFile, &
                      SetIrriFile, &
@@ -190,6 +194,26 @@ subroutine SetCO2File_wrap(CO2File, strlen)
 end subroutine SetCO2File_wrap
 
 
+
+function GetEToFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToFile())
+end function GetEToFile_wrap
+
+
+subroutine SetEToFile_wrap(EToFile, strlen)
+    !! Wrapper for [[ac_global:SetEToFile]] for foreign languages.
+    type(c_ptr), intent(in) :: EToFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(EToFile, strlen)
+    call SetEToFile(string)
+end subroutine SetEToFile_wrap
+
 subroutine GetIrriDescription_wrap(IrriFileFull, strlen1, IrriDescription, &
             strlen2)
     !! Wrapper for [[ac_global:GetIrriDescription]] for foreign languages.
@@ -225,6 +249,26 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
     string = pointer2string(IrriFile, strlen)
     call SetIrriFile(string)
 end subroutine SetIrriFile_wrap
+
+
+function GetRainFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainFile())
+end function GetRainFile_wrap
+
+
+subroutine SetRainFile_wrap(RainFile, strlen)
+    !! Wrapper for [[ac_global:SetRainFile]] for foreign languages.
+    type(c_ptr), intent(in) :: RainFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+ 
+    string = pointer2string(RainFile, strlen)
+    call SetRainFile(string)
+end subroutine SetRainFile_wrap
 
     
 function GetCalendarFile_wrap() result(c_pointer)
@@ -280,5 +324,6 @@ subroutine SetProfFile_wrap(ProfFile, strlen)
     string = pointer2string(ProfFile, strlen)
     call SetProfFile(string)
 end subroutine SetProfFile_wrap
+
 
 end module ac_interface_global

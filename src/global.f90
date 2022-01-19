@@ -162,7 +162,8 @@ type rep_CropFileSet
         !! given or calculated from Calendar Days
 end type rep_CropFileSet 
 
-
+character(len=:), allocatable :: RainFile
+character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
@@ -1902,6 +1903,40 @@ subroutine SetCropFileSet_GDDaysToHarvest(GDDaysToHarvest)
 
     CropFileSet%GDDaysToHarvest = GDDaysToHarvest
 end subroutine SetCropFileSet_GDDaysToHarvest
+
+
+function GetEToFile() result(str)
+    !! Getter for the "EToFile" global variable.
+    character(len=len(EToFile)) :: str
+
+    str = EToFile
+end function GetEToFile
+
+
+subroutine SetEToFile(str)
+    !! Setter for the "EToFile" global variable.
+    character(len=*), intent(in) :: str
+
+    EToFile = str
+end subroutine SetEToFile
+
+
+function GetRainFile() result(str)
+    !! Getter for the "RainFile" global variable.
+    character(len=len(RainFile)) :: str
+
+    str = RainFile
+end function GetRainFile
+
+
+subroutine SetRainFile(str)
+    !! Setter for the "RainFile" global variable.
+    character(len=*), intent(in) :: str
+
+    RainFile = str
+end subroutine SetRainFile
+
+
 
 
 end module ac_global
