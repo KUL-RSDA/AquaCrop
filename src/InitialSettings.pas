@@ -193,7 +193,7 @@ implementation
 (* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
  AdjustCropYearToClimFile(Crop.Day1,Crop.DayN);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
- IF ((ClimFile <> '(None)') AND (ClimRecord.FromY = 1901)
+ IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
 (* adjusting simulation period *)
  AdjustSimPeriod;
