@@ -860,7 +860,7 @@ var
 
 begin;
     p := GetProfFilefull_wrap();
-    GetProfFilefull := StrPas(p);
+    GetProfFilefull := AnsiString(p);
 end;
 
 procedure SetProfFilefull(constref str : string);
@@ -880,7 +880,7 @@ var
 
 begin;
     p := GetManFile_wrap();
-    GetManFile := StrPas(p);
+    GetManFile := AnsiString(p);
 end;
 
 procedure SetManFile(constref str : string);
@@ -900,7 +900,7 @@ var
 
 begin;
     p := GetManFilefull_wrap();
-    GetManFilefull := StrPas(p);
+    GetManFilefull := AnsiString(p);
 end;
 
 procedure SetManFilefull(constref str : string);
