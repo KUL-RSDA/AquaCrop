@@ -624,6 +624,54 @@ procedure SetManFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setmanfilefull_wrap';
 
+function GetOffSeasonFile(): string;
+
+function GetOffSeasonFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getoffseasonfile_wrap';
+
+procedure SetOffSeasonFile(constref str : string);
+
+procedure SetOffSeasonFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setoffseasonfile_wrap';
+
+function GetOffSeasonFilefull(): string;
+
+function GetOffSeasonFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getoffseasonfilefull_wrap';
+
+procedure SetOffSeasonFilefull(constref str : string);
+
+procedure SetOffSeasonFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setoffseasonfilefull_wrap';
+
+function GetGroundWaterFile(): string;
+
+function GetGroundWaterFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getgroundwaterfile_wrap';
+
+procedure SetGroundWaterFile(constref str : string);
+
+procedure SetGroundWaterFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterfile_wrap';
+
+function GetGroundWaterFilefull(): string;
+
+function GetGroundWaterFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getgroundwaterfilefull_wrap';
+
+procedure SetGroundWaterFilefull(constref str : string);
+
+procedure SetGroundWaterFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterfilefull_wrap';
+
 
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
@@ -948,6 +996,89 @@ begin;
     strlen := Length(str);
     SetManFilefull_wrap(p, strlen);
 end;
+
+function GetOffSeasonFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetOffSeasonFile_wrap();
+    GetOffSeasonFile := AnsiString(p);
+end;
+
+procedure SetOffSeasonFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetOffSeasonFile_wrap(p, strlen);
+end;
+
+function GetOffSeasonFilefull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetOffSeasonFilefull_wrap();
+    GetOffSeasonFilefull := AnsiString(p);
+end;
+
+procedure SetOffSeasonFilefull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetOffSeasonFilefull_wrap(p, strlen);
+end;
+
+
+function GetGroundWaterFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetGroundWaterFile_wrap();
+    GetGroundWaterFile := AnsiString(p);
+end;
+
+procedure SetGroundWaterFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetGroundWaterFile_wrap(p, strlen);
+end;
+
+function GetGroundWaterFilefull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetGroundWaterFilefull_wrap();
+    GetGroundWaterFilefull := AnsiString(p);
+end;
+
+procedure SetGroundWaterFilefull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetGroundWaterFilefull_wrap(p, strlen);
+end;
+
+
 
 procedure CheckFilesInProject(
             constref TempFullFilename : string;

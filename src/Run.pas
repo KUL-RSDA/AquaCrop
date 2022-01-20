@@ -477,8 +477,8 @@ VAR f0 : TextFile;
     TheEnd : BOOLEAN;
 BEGIN
 // FileNameFull
-IF (GroundWaterFile <> '(None)')
-   THEN FileNameFull := GroundWaterFileFull
+IF (GetGroundWaterFile() <> '(None)')
+   THEN FileNameFull := GetGroundWaterFileFull()
    ELSE FileNameFull := CONCAT(PathNameProg,'GroundWater.AqC');
 
 // Get DayNr1Gwt

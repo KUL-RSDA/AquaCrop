@@ -20,6 +20,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetProfFilefull, &
                      GetManFile, &
                      GetManFilefull, &
+                     GetOffSeasonFile, &
+                     GetOffSeasonFilefull, &
+                     GetGroundWaterFile, &
+                     GetGroundWaterFilefull, &
                      SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
@@ -38,6 +42,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetProfFilefull, &
                      SetManFile, &
                      SetManFilefull, &
+                     SetOffSeasonFile, &
+                     SetOffSeasonFilefull, &
+                     SetGroundWaterFile, &
+                     SetGroundWaterFilefull, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -472,6 +480,81 @@ subroutine SetManFilefull_wrap(ManFilefull, strlen)
     string = pointer2string(ManFilefull, strlen)
     call SetManFilefull(string)
 end subroutine SetManFilefull_wrap
+
+function GetOffSeasonFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonFile())
+end function GetOffSeasonFile_wrap
+
+subroutine SetOffSeasonFile_wrap(OffSeasonFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonFile, strlen)
+    call SetOffSeasonFile(string)
+end subroutine SetOffSeasonFile_wrap
+
+
+function GetOffSeasonFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonFilefull())
+end function GetOffSeasonFilefull_wrap
+
+subroutine SetOffSeasonFilefull_wrap(OffSeasonFilefull, strlen)
+    !! Wrapper for [[ac_global:SetOffSeasonFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonFilefull, strlen)
+    call SetOffSeasonFilefull(string)
+end subroutine SetOffSeasonFilefull_wrap
+
+
+function GetGroundWaterFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundWaterFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundWaterFile())
+end function GetGroundWaterFile_wrap
+
+subroutine SetGroundWaterFile_wrap(GroundWaterFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundWaterFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundWaterFile, strlen)
+    call SetGroundWaterFile(string)
+end subroutine SetGroundWaterFile_wrap
+
+
+function GetGroundWaterFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundWaterFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundWaterFilefull())
+end function GetGroundWaterFilefull_wrap
+
+subroutine SetGroundWaterFilefull_wrap(GroundWaterFilefull, strlen)
+    !! Wrapper for [[ac_global:SetGroundWaterFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundWaterFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundWaterFilefull, strlen)
+    call SetGroundWaterFilefull(string)
+end subroutine SetGroundWaterFilefull_wrap
 
 
 end module ac_interface_global
