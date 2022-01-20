@@ -133,7 +133,6 @@ type rep_IrriECw
         !! Undocumented
 end type rep_IrriECw 
 
-rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY)
 type rep_Cuttings 
     logical :: Considered
         !! Undocumented
@@ -147,7 +146,7 @@ type rep_Cuttings
         !! number of days of time window for generate cuttings (-9 is whole crop cycle)
     logical :: Generate
         !! ture: generate cuttings; false : schedule for cuttings
-    type(rep_TimeCuttings) :: Criterion
+    integer(intEnum) :: Criterion
         !! time criterion for generating cuttings
     logical :: HarvestEnd
         !! final harvest at crop maturity
@@ -194,6 +193,7 @@ character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
+type(rep_Cuttings) :: Cuttings
 
 
 contains
@@ -1709,7 +1709,6 @@ function GetCO2File() result(str)
     str = CO2File
 end function GetCO2File
 
-
 subroutine SetCO2File(str)
     !! Setter for the "CO2File" global variable.
     character(len=*), intent(in) :: str
@@ -1782,11 +1781,92 @@ subroutine SetProfFile(str)
     ProfFile = str
 end subroutine SetProfFile
 
-type(rep_Manag) function GetManagement()
+
+! Management Getters and Setters !
+
+integer(int8) function GetManagement_Mulch()
     !! Getter for the "Management" global variable.
 
-    GetManagement = Management
-end function GetManagement
+    GetManagement_Mulch = Management%Mulch
+end function GetManagement_Mulch
+
+integer(int8) function GetManagement_SoilCoverBefore()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_SoilCoverBefore = Management%SoilCoverBefore
+end function GetManagement_SoilCoverBefore
+
+integer(int8) function GetManagement_SoilCoverAfter()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_SoilCoverAfter = Management%SoilCoverAfter
+end function GetManagement_SoilCoverAfter
+
+integer(int8) function GetManagement_EffectMulchOffS()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_EffectMulchOffS = Management%EffectMulchOffS
+end function GetManagement_EffectMulchOffS
+
+integer(int8) function GetManagement_EffectMulchInS()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_EffectMulchInS = Management%EffectMulchInS
+end function GetManagement_EffectMulchInS
+
+integer(int8) function GetManagement_FertilityStress()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_FertilityStress = Management%FertilityStress
+end function GetManagement_FertilityStress
+
+real(dp) function GetManagement_BundHeight()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_BundHeight = Management%BundHeight
+end function GetManagement_BundHeight
+
+logical function GetManagement_RunoffOn()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_RunoffOn = Management%RunoffOn
+end function GetManagement_RunoffOn
+
+integer(int32) function GetManagement_CNcorrection()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_CNcorrection = Management%CNcorrection
+end function GetManagement_CNcorrection
+
+integer(int8) function GetManagement_WeedRC()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_WeedRC = Management%WeedRC
+end function GetManagement_WeedRC
+
+integer(int32) function GetManagement_WeedDeltaRC()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_WeedDeltaRC = Management%WeedDeltaRC
+end function GetManagement_WeedDeltaRC
+
+real(dp) function GetManagement_WeedShape()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_WeedShape = Management%WeedShape
+end function GetManagement_WeedShape
+
+integer(int8) function GetManagement_WeedAdj()
+    !! Getter for the "Management" global variable.
+
+    GetManagement_WeedAdj = Management%WeedAdj
+end function GetManagement_WeedAdj
+
+type(rep_Cuttings) function GetManagement_Cuttings()
+    !! Setter for the "Management" global variable.
+
+    GetManagement_Cuttings = Management%Cuttings
+end function GetManagement_Cuttings
 
 subroutine SetManagement_Mulch(Mulch)
     !! Setter for the "Management" global variable.
@@ -1809,19 +1889,19 @@ subroutine SetManagement_SoilCoverAfter(SoilCoverAfter)
     Management%SoilCoverAfter = SoilCoverAfter
 end subroutine SetManagement_SoilCoverAfter
 
-subroutine SetManagement_EffectsMulchOffS(EffectsMulchOffS)
+subroutine SetManagement_EffectMulchOffS(EffectMulchOffS)
     !! Setter for the "Management" global variable.
-    integer(int8), intent(in) :: EffectsMulchOffS
+    integer(int8), intent(in) :: EffectMulchOffS
 
-    Management%EffectsMulchOffS = EffectsMulchOffS
-end subroutine SetManagement_EffectsMulchOffS
+    Management%EffectMulchOffS = EffectMulchOffS
+end subroutine SetManagement_EffectMulchOffS
 
-subroutine SetManagement_EffectsMulchInS(EffectsMulchInS)
+subroutine SetManagement_EffectMulchInS(EffectMulchInS)
     !! Setter for the "Management" global variable.
-    integer(int8), intent(in) :: EffectsMulchInS
+    integer(int8), intent(in) :: EffectMulchInS
 
-    Management%EffectsMulchInS = EffectsMulchInS
-end subroutine SetManagement_EffectsMulchInS
+    Management%EffectMulchInS = EffectMulchInS
+end subroutine SetManagement_EffectMulchInS
 
 subroutine SetManagement_FertilityStress(FertilityStress)
     !! Setter for the "Management" global variable.
@@ -1881,9 +1961,130 @@ end subroutine SetManagement_WeedAdj
 
 subroutine SetManagement_Cuttings(Cuttings)
     !! Setter for the "Management" global variable.
-    integer(inEnum), intent(in) :: Cuttings
+    type(rep_Cuttings), intent(in) :: Cuttings
 
     Management%Cuttings = Cuttings
 end subroutine SetManagement_Cuttings
+
+
+! Cutting Getters and Setters !
+
+logical function GetManagement_Cuttings_Considered()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_Considered = Cuttings%Considered
+end function GetManagement_Cuttings_Considered
+
+integer(int32) function GetManagement_Cuttings_CCcut()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_CCcut = Cuttings%CCcut
+end function GetManagement_Cuttings_CCcut
+
+integer(int32) function GetManagement_Cuttings_CGCPlus()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_CGCPlus = Cuttings%CGCPlus
+end function GetManagement_Cuttings_CGCPlus
+
+integer(int32) function GetManagement_Cuttings_Day1()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_Day1 = Cuttings%Day1
+end function GetManagement_Cuttings_Day1
+
+integer(int32) function GetManagement_Cuttings_NrDays()
+    !! Setter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_NrDays = Cuttings%NrDays
+end function GetManagement_Cuttings_NrDays
+
+logical function GetManagement_Cuttings_Generate()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_Generate = Cuttings%Generate
+end function GetManagement_Cuttings_Generate
+
+integer(intEnum) function GetManagement_Cuttings_Criterion()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_Criterion = Cuttings%Criterion
+end function GetManagement_Cuttings_Criterion
+
+logical function GetManagement_Cuttings_HarvestEnd()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_HarvestEnd = Cuttings%HarvestEnd
+end function GetManagement_Cuttings_HarvestEnd
+
+integer(int32) function GetManagement_Cuttings_FirstDayNr()
+    !! Getter for the "Cuttings" global variable.
+
+    GetManagement_Cuttings_FirstDayNr = Cuttings%FirstDayNr
+end function GetManagement_Cuttings_FirstDayNr
+
+subroutine SetManagement_Cuttings_Considered(Considered)
+    !! Setter for the "Cuttings" global variable.
+    logical, intent(in) :: Considered
+
+    Cuttings%Considered = Considered
+end subroutine SetManagement_Cuttings_Considered
+
+subroutine SetManagement_Cuttings_CCcut(CCcut)
+    !! Setter for the "Cuttings" global variable.
+    integer(int32), intent(in) :: CCcut
+
+    Cuttings%CCcut = CCcut
+end subroutine SetManagement_Cuttings_CCcut
+
+subroutine SetManagement_Cuttings_CGCPlus(CGCPlus)
+    !! Setter for the "Cuttings" global variable.
+    integer(int32), intent(in) :: CGCPlus
+
+    Cuttings%CGCPlus = CGCPlus
+end subroutine SetManagement_Cuttings_CGCPlus
+
+subroutine SetManagement_Cuttings_Day1(Day1)
+    !! Setter for the "Cuttings" global variable.
+    integer(int32), intent(in) :: Day1
+
+    Cuttings%Day1 = Day1
+end subroutine SetManagement_Cuttings_Day1
+
+subroutine SetManagement_Cuttings_NrDays(NrDays)
+    !! Setter for the "Cuttings" global variable.
+    integer(int32), intent(in) :: NrDays
+
+    Cuttings%NrDays = NrDays
+end subroutine SetManagement_Cuttings_NrDays
+
+subroutine SetManagement_Cuttings_Generate(Generate)
+    !! Setter for the "Cuttings" global variable.
+    logical, intent(in) :: Generate
+
+    Cuttings%Generate = Generate
+end subroutine SetManagement_Cuttings_Generate
+
+subroutine SetManagement_Cuttings_Criterion(Criterion)
+    !! Setter for the "Cuttings" global variable.
+    integer(intEnum), intent(in) :: Criterion
+
+    Cuttings%Criterion = Criterion
+end subroutine SetManagement_Cuttings_Criterion
+
+subroutine SetManagement_Cuttings_HarvestEnd(HarvestEnd)
+    !! Setter for the "Cuttings" global variable.
+    logical, intent(in) :: HarvestEnd
+
+    Cuttings%HarvestEnd = HarvestEnd
+end subroutine SetManagement_Cuttings_HarvestEnd
+
+subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
+    !! Setter for the "Cuttings" global variable.
+    integer(int32), intent(in) :: FirstDayNr
+
+    Cuttings%FirstDayNr = FirstDayNr
+end subroutine SetManagement_Cuttings_FirstDayNr
+
 
 end module ac_global

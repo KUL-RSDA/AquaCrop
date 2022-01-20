@@ -488,6 +488,146 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
+function GetManagement_Cuttings_Considered(): boolean;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_considered';
+
+function GetManagement_Cuttings_CGCPlus(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cgcplus';
+
+function GetManagement_Cuttings_CCcut(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cccut';
+
+function GetManagement_Cuttings_Day1(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_day1';
+
+function GetManagement_Cuttings_NrDays(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_nrdays';
+
+function GetManagement_Cuttings_Generate(): boolean;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_generate';
+
+function __GetManagement_Cuttings_Criterion(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_criterion';
+
+function GetManagement_Cuttings_Criterion(): rep_TimeCuttings;
+
+function GetManagement_Cuttings_HarvestEnd(): boolean;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_harvestend';
+
+function GetManagement_Cuttings_FirstDayNr(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_firstdaynr';
+
+procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_considered';
+
+procedure SetManagement_Cuttings_CCcut(constref CCcut : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cccut';
+
+procedure SetManagement_Cuttings_CGCPlus(constref CGCPlus : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cgcplus';
+
+procedure SetManagement_Cuttings_Day1(constref Day1 : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_day1';
+
+procedure SetManagement_Cuttings_NrDays(constref NrDays : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_nrdays';
+
+procedure SetManagement_Cuttings_Generate(constref Generate : boolean);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_generate';
+
+procedure __SetManagement_Cuttings_Criterion(constref Criterion : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_criterion';
+
+procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings);
+
+procedure SetManagement_Cuttings_HarvestEnd(constref HarvestEnd : boolean);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_harvestend';
+
+procedure SetManagement_Cuttings_FirstDayNr(constref FirstDayNr : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_firstdaynr';
+
+function GetManagement_Mulch(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_mulch';
+
+function GetManagement_SoilCoverBefore(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_soilcoverbefore';
+
+function GetManagement_SoilCoverAfter(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_soilcoverafter';
+
+function GetManagement_EffectMulchOffS(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_effectmulchoffs';
+
+function GetManagement_EffectMulchInS(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_effectmulchins';
+
+function GetManagement_FertilityStress(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_fertilitystress';
+
+function GetManagement_BundHeight(): double;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_bundheight';
+
+function GetManagement_RunoffOn(): boolean;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_runoffon';
+
+function GetManagement_CNcorrection(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cncorrection';
+
+function GetManagement_WeedRC(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedrc';
+
+function GetManagement_WeedDeltaRC(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weeddeltarc';
+
+function GetManagement_WeedShape(): double;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedshape';
+
+function GetManagement_WeedAdj(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedadj';
+
+function GetManagement_Cuttings(): rep_Cuttings;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings';
+
+procedure SetManagement_Mulch(constref Mulch : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_mulch';
+
+procedure SetManagement_SoilCoverBefore(constref Mulch : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_soilcoverbefore';
+
+procedure SetManagement_SoilCoverAfter(constref After : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_soilcoverafter';
+
+procedure SetManagement_EffectMulchOffS(constref EffectMulchOffS : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_effectmulchoffs';
+
+procedure SetManagement_EffectMulchInS(constref EffectMulchInS : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_effectmulchins';
+
+procedure SetManagement_FertilityStress(constref FertilityStress : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_fertilitystress';
+
+procedure SetManagement_BundHeight(constref BundHeight : double);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_bundheight';
+
+procedure SetManagement_RunOffOn(constref RunOffOn : boolean);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_runoffon';
+
+procedure SetManagement_CNcorrection(constref CNcorrection : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cncorrection';
+
+procedure SetManagement_WeedRC(constref WeedRC : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedrc';
+
+procedure SetManagement_WeedDeltaRC(constref WeedDeltaRC : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weeddeltarc';
+
+procedure SetManagement_WeedShape(constref WeedShape : double);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedshape';
+
+procedure SetManagement_WeedAdj(constref WeedAdj : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedadj';
+
+
 
 implementation
 
@@ -560,6 +700,24 @@ begin
                                             StLength,
                                             Length12,
                                             CGCVal);
+end;
+
+function GetManagement_Cuttings_Criterion() : rep_timecuttings;
+var
+    int_timecuttings : integer;
+
+begin;
+    int_timecuttings := __GetManagement_Cuttings_Criterion();
+    GetManagement_Cuttings_Criterion := rep_timecuttings(int_timecuttings);
+end;
+
+procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings); 
+var
+    int_timecuttings : integer;
+
+begin;
+    int_timecuttings := ord(Criterion);
+    __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
 
@@ -655,7 +813,7 @@ var
 
 begin;
     p := GetProfFile_wrap();
-    GetProfFile := StrPas(p);
+    GetProfFile := AnsiString(p);
 end;
 
 procedure SetProfFile(constref str : string);
