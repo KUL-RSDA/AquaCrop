@@ -170,6 +170,7 @@ character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
+character(len=:), allocatable :: ProfFilefull
 
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
@@ -1871,6 +1872,20 @@ subroutine SetProfFile(str)
 
     ProfFile = str
 end subroutine SetProfFile
+
+function GetProfFilefull() result(str)
+    !! Getter for the "ProfFilefull" global variable.
+    character(len=len(ProfFilefull)) :: str
+
+    str = ProfFilefull
+end function GetProfFilefull
+
+subroutine SetProfFilefull(str)
+    !! Setter for the "ProfFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFilefull = str
+end subroutine SetProfFilefull
 
 type(rep_CropFileSet) function GetCropFileSet()
     !! Getter for the "CropFileSet" global variable.

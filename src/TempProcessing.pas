@@ -1416,7 +1416,7 @@ READLN(f0,TempString);  //ProfFile
 SetProfFile(Trim(TempString));
 READLN(f0,TempString);  //PathProfFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-ProfFilefull := CONCAT(Trim(TempString),GetProfFile());
+SetProfFilefull(CONCAT(Trim(TempString),GetProfFile()));
 // The load of profile is delayed to check if soil water profile need to be reset (see 8.)
 
 // 7. Groundwater
@@ -1455,7 +1455,7 @@ IF (Trim(TempString) = 'KeepSWC')
         END
    ELSE BEGIN
         // start with load and complete profile description (see 5.) which reset SWC to FC by default
-        LoadProfile(ProfFilefull);
+        LoadProfile(GetProfFilefull());
         CompleteProfileDescription;
 
         //Adjust size of compartments if required

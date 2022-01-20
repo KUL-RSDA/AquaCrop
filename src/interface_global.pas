@@ -553,6 +553,18 @@ procedure SetProfFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setproffile_wrap';
 
+function GetProfFilefull(): string;
+
+function GetProfFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getproffilefull_wrap';
+
+procedure SetProfFilefull(constref str : string);
+
+procedure SetProfFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setproffilefull_wrap';
+
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
@@ -815,6 +827,26 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetProfFile_wrap(p, strlen);
+end;
+
+function GetProfFilefull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetProfFilefull_wrap();
+    GetProfFilefull := StrPas(p);
+end;
+
+procedure SetProfFilefull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetProfFilefull_wrap(p, strlen);
 end;
 
 procedure CheckFilesInProject(
