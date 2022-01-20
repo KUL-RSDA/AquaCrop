@@ -209,14 +209,14 @@ implementation
  NoManagementOffSeason;
 
  // 8. Project and Multiple Project file
- ProjectFile := '(None)';
- ProjectFileFull := ProjectFile;
+ SetProjectFile('(None)');
+ ProjectFileFull := GetProjectFile();
  ProjectDescription := 'No specific project';
  Simulation.MultipleRun := false; // No sequence of simulation runs in the project
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
- MultipleProjectFile := ProjectFile;
+ MultipleProjectFile := GetProjectFile();
  MultipleProjectFileFull := ProjectFileFull;
  MultipleProjectDescription := ProjectDescription;
 

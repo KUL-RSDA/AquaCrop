@@ -338,8 +338,8 @@ IF (NrProjects > 0) THEN
                CASE TheProjectType OF
                     TypePRO : BEGIN
                               // 2. Assign single project file
-                              ProjectFile := TheProjectFile;
-                              ProjectFileFull := CONCAT(PathNameList,ProjectFile);
+                              SetProjectFile(TheProjectFile);
+                              ProjectFileFull := CONCAT(PathNameList,GetProjectFile());
                               //3. Check if Environment and Simulation Files exist
                               CanSelect := true;
                               CheckFilesInProject(ProjectFileFull,(1),CanSelect);
@@ -347,9 +347,9 @@ IF (NrProjects > 0) THEN
                               IF CanSelect THEN
                                  BEGIN
                                  ProjectDescription := 'undefined';
-                                 ComposeFileForProgramParameters(ProjectFile,FullFileNameProgramParameters);
+                                 ComposeFileForProgramParameters(GetProjectFile(),FullFileNameProgramParameters);
                                  LoadProgramParametersProjectPlugIn(FullFileNameProgramParameters,ProgramParametersAvailable);
-                                 ComposeOutputFileName(ProjectFile);
+                                 ComposeOutputFileName(GetProjectFile());
                                  END;
                               END;
                     TypePRM : BEGIN

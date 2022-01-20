@@ -181,6 +181,7 @@ character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
+character(len=:), allocatable :: ProjectFile
 
 
 type(rep_IrriECw) :: IrriECw
@@ -1689,6 +1690,20 @@ subroutine SetSWCiniFile(str)
     
     SWCiniFile = str
 end subroutine SetSWCiniFile
+
+function GetProjectFile() result(str)
+    !! Getter for the "ProjectFile" global variable.
+    character(len=len(ProjectFile)) :: str
+    
+    str = ProjectFile
+end function GetProjectFile
+
+subroutine SetProjectFile(str)
+    !! Setter for the "ProjectFile" global variable.
+    character(len=*), intent(in) :: str
+    
+    ProjectFile = str
+end subroutine SetProjectFile
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year

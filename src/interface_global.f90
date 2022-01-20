@@ -16,6 +16,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimateFile, &
                      GetClimFile, &
                      GetSWCiniFile, &
+                     GetProjectFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      GetProfFilefull, &
@@ -39,7 +40,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetIrriFile, &
                      SetClimateFile, &
                      SetClimFile, &
-                     setSWCinifile, &
+                     setSWCiniFile, &
+                     SetProjectFile, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
@@ -353,6 +355,25 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
     call SetSWCiniFile(string)
 end subroutine SetSWCiniFile_wrap
 
+
+function GetProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetProjectFile())
+end function GetProjectFile_wrap
+
+
+subroutine SetProjectFile_wrap(ProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectFile, strlen)
+    call SetProjectFile(string)
+end subroutine SetProjectFile_wrap
 
 
 function GetRainFile_wrap() result(c_pointer)
