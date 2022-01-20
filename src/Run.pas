@@ -1270,14 +1270,14 @@ PROCEDURE OpenHarvestInfo(VAR fCuts : text);
 VAR totalname : string;
     i : ShortInt;
 BEGIN
-IF (ManFile <> '(None)')
-   THEN totalname := ManFileFull
+IF (getManFile() <> '(None)')
+   THEN totalname := GetManFileFull()
    ELSE totalname := CONCAT(PathNameSimul,'Cuttings.AqC');
 Assign(fCuts,totalname);
 Reset(fCuts);
 READLN(fCuts); // description
 READLN(fCuts); // AquaCrop version
-IF (ManFile <> '(None)') THEN For i:= 1 to 10 DO READLN(fCuts); // management info
+IF (GetManFile() <> '(None)') THEN For i:= 1 to 10 DO READLN(fCuts); // management info
 FOR i := 1 TO 12 DO READLN(fCuts);  // cuttings info (already loaded)
 GetNextHarvest;
 END; (* OpenHarvestInfo *)

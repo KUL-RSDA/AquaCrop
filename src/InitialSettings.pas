@@ -100,12 +100,12 @@ implementation
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
- ProfFilefull := CONCAT(PathNameSimul,GetProfFile());
+ SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
  // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
  // Crop. RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
- LoadProfile(ProfFilefull);
+ LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
 
@@ -131,8 +131,8 @@ implementation
  NoCropCalendar;
 
  // 4. Field Management
- ManFile := '(None)';
- ManFilefull := ManFile;  (* no file *)
+ SetManFile('(None)');
+ SetManFilefull(GetManFile());  (* no file *)
  NoManagement;
 
  // 5. Climate

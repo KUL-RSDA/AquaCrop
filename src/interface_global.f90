@@ -17,6 +17,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
+                     GetProfFilefull, &
+                     GetManFile, &
+                     GetManFilefull, &
                      SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
@@ -32,6 +35,9 @@ use ac_global, only: CheckFilesInProject, &
                      SetClimateFile, &
                      SetClimFile, &
                      SetProfFile, &
+                     SetProfFilefull, &
+                     SetManFile, &
+                     SetManFilefull, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -410,6 +416,62 @@ subroutine SetProfFile_wrap(ProfFile, strlen)
     string = pointer2string(ProfFile, strlen)
     call SetProfFile(string)
 end subroutine SetProfFile_wrap
+
+
+function GetProfFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfFilefull())
+end function GetProfFilefull_wrap
+
+subroutine SetProfFilefull_wrap(ProfFilefull, strlen)
+    !! Wrapper for [[ac_global:SetProfFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfFilefull, strlen)
+    call SetProfFilefull(string)
+end subroutine SetProfFilefull_wrap
+
+function GetManFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFile())
+end function GetManFile_wrap
+
+subroutine SetManFile_wrap(ManFile, strlen)
+    !! Wrapper for [[ac_global:SetManFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManFile, strlen)
+    call SetManFile(string)
+end subroutine SetManFile_wrap
+
+
+function GetManFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFilefull())
+end function GetManFilefull_wrap
+
+subroutine SetManFilefull_wrap(ManFilefull, strlen)
+    !! Wrapper for [[ac_global:SetManFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManFilefull, strlen)
+    call SetManFilefull(string)
+end subroutine SetManFilefull_wrap
 
 
 end module ac_interface_global

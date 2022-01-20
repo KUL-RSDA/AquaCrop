@@ -171,8 +171,12 @@ character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
+character(len=:), allocatable :: ProfFilefull
+character(len=:), allocatable :: ManFile
+character(len=:), allocatable :: ManFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimFile
+
 
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
@@ -1903,6 +1907,48 @@ subroutine SetProfFile(str)
 
     ProfFile = str
 end subroutine SetProfFile
+
+function GetProfFilefull() result(str)
+    !! Getter for the "ProfFilefull" global variable.
+    character(len=len(ProfFilefull)) :: str
+
+    str = ProfFilefull
+end function GetProfFilefull
+
+subroutine SetProfFilefull(str)
+    !! Setter for the "ProfFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfFilefull = str
+end subroutine SetProfFilefull
+
+function GetManFile() result(str)
+    !! Getter for the "ManFile" global variable.
+    character(len=len(ManFile)) :: str
+
+    str = ManFile
+end function GetManFile
+
+subroutine SetManFile(str)
+    !! Setter for the "ManFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ManFile = str
+end subroutine SetManFile
+
+function GetManFilefull() result(str)
+    !! Getter for the "ManFilefull" global variable.
+    character(len=len(ManFilefull)) :: str
+
+    str = ManFilefull
+end function GetManFilefull
+
+subroutine SetManFilefull(str)
+    !! Setter for the "ManFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    ManFilefull = str
+end subroutine SetManFilefull
 
 type(rep_CropFileSet) function GetCropFileSet()
     !! Getter for the "CropFileSet" global variable.

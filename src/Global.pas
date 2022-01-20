@@ -411,9 +411,9 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    TemperatureFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
-    ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,RainFileFull,TemperatureFileFull,CO2FileFull,
-    IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
+    TemperatureFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
+    CalendarFileFull,CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
+    IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
     GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
     TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
@@ -4112,7 +4112,7 @@ FOR i := 1 TO 5 DO READLN(f0); // Type Year, and Simulation and Cropping period 
 
 //3. Look for restrictive soil layer
 //restricted to run 1 since with KeepSWC, the soil file has to be common between runs
-PreviousProfFilefull := ProfFilefull; // keep name soil file (to restore after check)
+PreviousProfFilefull := GetProfFilefull(); // keep name soil file (to restore after check)
 FOR i := 1 TO 27 DO READLN(f0); // Climate (5x3 = 15),Calendar (3),Crop (3), Irri (3) and Field (3) file
 READLN(f0); // info Soil file
 READLN(f0,FileName);
@@ -4195,8 +4195,8 @@ IF (RunWithKeepSWC = true) THEN
 Close(f0);
 
 //6. Reload existing soil file
-ProfFilefull := PreviousProfFilefull;
-LoadProfile(ProfFilefull);
+SetProfFilefull(PreviousProfFilefull);
+LoadProfile(GetProfFilefull());
 END; (* CheckForKeepSWC *)
 
 
