@@ -163,6 +163,7 @@ type rep_CropFileSet
 end type rep_CropFileSet 
 
 character(len=:), allocatable :: RainFile
+character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: CalendarFile
@@ -1969,6 +1970,21 @@ subroutine SetRainFile(str)
     RainFile = str
 end subroutine SetRainFile
 
+
+function GetRainFileFull() result(str)
+    !! Getter for the "RainFileFull" global variable.
+    character(len=len(RainFileFull)) :: str
+
+    str = RainFileFull
+end function GetRainFileFull
+
+
+subroutine SetRainFileFull(str)
+    !! Setter for the "RainFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    RainFileFull = str
+end subroutine SetRainFileFull
 
 
 
