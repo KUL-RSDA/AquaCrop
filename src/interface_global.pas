@@ -482,6 +482,19 @@ procedure SetClimFile_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimfile_wrap';
+           
+function GetSWCiniFile(): string;
+
+function GetSWCiniFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getswcinifile_wrap';
+
+procedure SetSWCiniFile(constref str : string);
+
+procedure SetSWCiniFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';      
+        
         
 function FileExists(constref full_name : string) : boolean;
 
@@ -1173,6 +1186,28 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetClimFile_wrap(p, strlen);
+end;
+
+
+function GetSWCiniFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetSWCiniFile_wrap();
+    GetSWCiniFile := AnsiString(p);
+end;
+
+
+procedure SetSWCiniFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetSWCiniFile_wrap(p, strlen);
 end;
 
 

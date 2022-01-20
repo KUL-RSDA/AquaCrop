@@ -1449,7 +1449,7 @@ READLN(f0,TempString);  //SWCIniFile
 IF (Trim(TempString) = 'KeepSWC')
    THEN BEGIN
         // No load of soil file (which reset thickness compartments and Soil water content to FC)
-        SWCIniFile := 'KeepSWC';
+        SetSWCIniFile('KeepSWC');
         SWCIniDescription := 'Keep soil water profile of previous run';
         READLN(f0);  //PathSWCIniFile
         END
@@ -1478,17 +1478,17 @@ IF (Trim(TempString) = 'KeepSWC')
                    END;
                 END;
 
-        SWCIniFile := Trim(TempString);
-        IF (SWCIniFile = '(None)')
+        SetSWCIniFile(Trim(TempString));
+        IF (GetSWCIniFile() = '(None)')
            THEN BEGIN
                 READLN(f0);  //PathSWCIniFile
-                SWCiniFileFull := SWCiniFile; (* no file *)
+                SWCiniFileFull := GetSWCiniFile(); (* no file *)
                 SWCiniDescription := 'Soil water profile at Field Capacity';
                 END
            ELSE BEGIN
                 READLN(f0,TempString);  //PathSWCIniFile
                 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-                SWCiniFileFull := CONCAT(Trim(TempString),SWCIniFile);
+                SWCiniFileFull := CONCAT(Trim(TempString),GetSWCIniFile());
                 LoadInitialConditions(SWCiniFileFull,SurfaceStorage,Simulation.IniSWC);
                 END;
         CASE Simulation.IniSWC.AtDepths OF
@@ -1525,7 +1525,7 @@ IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the g
         END;
 CalculateAdjustedFC((ZiAqua/100),Compartment);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
-IF (Simulation.IniSWC.AtFC AND (SWCIniFile <> 'KeepSWC')) THEN ResetSWCToFC;
+IF (Simulation.IniSWC.AtFC AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
 
 // 11. Off-season conditions
 READLN(f0); // Info Off-season conditions
