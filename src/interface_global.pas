@@ -124,6 +124,13 @@ type
          Cuttings        : rep_Cuttings; // Multiple cuttings
          end;
 
+     rep_RootZoneSalt = Record
+         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
+         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
+         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
+         KsSalt : double;   // stress coefficient for salinity
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';

@@ -301,13 +301,6 @@ TYPE
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
-     rep_RootZoneSalt = Record
-         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
-         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
-         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
-         KsSalt : double;   // stress coefficient for salinity
-         end;
-
      repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
      repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
 
@@ -437,7 +430,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
     CRsalt         : double; // gram/m2
-    RootZoneSalt   : rep_RootZoneSalt;
     ZiAqua         : Integer;  // Depth of Groundwater table below soil surface in centimeter
     ECiAqua        : double; //  EC of the groundwater table in dS/m
     PerennialPeriod : rep_PerennialPeriod;

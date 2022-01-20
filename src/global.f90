@@ -224,7 +224,18 @@ type rep_Manag
         !! replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials
     type(rep_Cuttings) :: Cuttings
         !! Multiple cuttings
-end type rep_Manag 
+end type rep_Manag
+
+type rep_RootZoneSalt 
+    real(dp) :: ECe
+        !! Electrical conductivity of the saturated soil-paste extract (dS/m)
+    real(dp) :: ECsw
+        !! Electrical conductivity of the soil water (dS/m)
+    real(dp) :: ECswFC
+        !! Electrical conductivity of the soil water at Field Capacity(dS/m)
+    real(dp) :: KsSalt
+        !! stress coefficient for salinity
+end type rep_RootZoneSalt
 
 
 character(len=:), allocatable :: RainFile
@@ -254,6 +265,7 @@ type(rep_Manag) :: Management
 type(rep_Cuttings) :: Cuttings
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
+type(rep_RootZoneSalt) :: RootZoneSalt
 
 
 contains
@@ -2516,6 +2528,21 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
 
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
+
+type(rep_RootZoneSalt) function GetRootZoneSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt= RootZoneSalt
+end function GetRootZoneSalt
+
+subroutine SetRootZoneSalt_ECe(ECe)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: ECe
+
+    RootZoneSalt%ECe = ECe
+end subroutine SetRootZoneSalt_ECe
+
+!!continue for other variables, also put functions in interface, and adapt in all code
 
 
 end module ac_global
