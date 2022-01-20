@@ -840,7 +840,7 @@ var
 
 begin;
     p := GetProfFile_wrap();
-    GetProfFile := StrPas(p);
+    GetProfFile := AnsiString(p);
 end;
 
 procedure SetProfFile(constref str : string);
