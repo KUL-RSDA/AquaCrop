@@ -411,7 +411,7 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    TemperatureFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
+    TemperatureFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     CalendarFileFull,CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
     GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
@@ -1349,8 +1349,8 @@ END; (* DesignateSoilLayerToCompartments *)
 PROCEDURE DeclareInitialCondAtFCandNoSalt;
 VAR layeri,compi,celli : INTEGER;
 BEGIN
-SWCiniFile := '(None)';
-SWCiniFileFull := SWCiniFile; (* no file *)
+SetSWCiniFile('(None)');
+SWCiniFileFull := GetSWCiniFile(); (* no file *)
 SWCiniDescription := 'Soil water profile at Field Capacity';
 Simulation.IniSWC.AtDepths := false;
 Simulation.IniSWC.NrLoc := Soil.NrSoilLayers;
