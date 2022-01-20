@@ -13,6 +13,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetCropFile, &
                      GetIrriDescription, &
                      GetIrriFile, &
+                     GetClimateFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      SetCO2File, &
@@ -25,6 +26,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetCalendarFile, &
                      SetCropFile, &
                      SetIrriFile, &
+                     SetClimateFile, &
                      SetProfFile, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
@@ -270,6 +272,26 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
     string = pointer2string(IrriFile, strlen)
     call SetIrriFile(string)
 end subroutine SetIrriFile_wrap
+
+
+function GetClimateFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimateFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimateFile())
+end function GetClimateFile_wrap
+
+
+subroutine SetClimateFile_wrap(ClimateFile, strlen)
+    !! Wrapper for [[ac_global:SetClimateFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimateFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimateFile, strlen)
+    call SetClimateFile(string)
+end subroutine SetClimateFile_wrap
 
 
 function GetRainFile_wrap() result(c_pointer)
