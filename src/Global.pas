@@ -877,7 +877,8 @@ ManDescription := 'No specific field management';
 SetManagement_Mulch(0);
 SetManagement_EffectMulchInS(50);
 // soil fertility
-SetManagement_FertilityStress(0); CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+SetManagement_FertilityStress(0);
+CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
 // soil bunds
 SetManagement_BundHeight(0);
 Simulation.SurfaceStorageIni := 0.0;
@@ -922,7 +923,8 @@ READLN(f0,TempShortInt);
 SetManagement_EffectMulchInS(TempShortInt);
 // soil fertility
 READLN(f0,TempShortInt); // effect is crop specific
-SetManagement_FertilityStress(TempShortInt); CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+SetManagement_FertilityStress(TempShortInt);
+CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
 // soil bunds
 READLN(f0,TempDouble);
 SetManagement_BundHeight(TempDouble);
@@ -935,8 +937,10 @@ IF (i = 1)
    ELSE SetManagement_RunoffON(true);   // surface runoff is not prevented
 IF (ROUND(VersionNr*10) < 50) // UPDATE required for CN adjustment
    THEN SetManagement_CNcorrection(0)
-   ELSE READLN(f0,TempInt); // project increase/decrease of CN
+   ELSE BEGIN
+     READLN(f0,TempInt); // project increase/decrease of CN
      SetManagement_CNcorrection(TempInt);
+     END;
 // weed infestation
 IF (ROUND(VersionNr*10) < 50)  // UPDATE required for Version 3.0, 3.1 and 4.0
    THEN BEGIN
@@ -949,15 +953,19 @@ IF (ROUND(VersionNr*10) < 50)  // UPDATE required for Version 3.0, 3.1 and 4.0
         SetManagement_WeedRC(TempShortInt);
         IF (ROUND(VersionNr*10) < 51)
            THEN SetManagement_WeedDeltaRC(0)
-           ELSE READLN(f0,TempInt);
+           ELSE BEGIN
+             READLN(f0,TempInt);
              SetManagement_WeedDeltaRC(TempInt);
+             END;
         READLN(f0,TempDouble); //shape factor of the CC expansion fucntion in a weed infested field
-          SetManagement_WeedShape(TempDouble)
+          SetManagement_WeedShape(TempDouble);
         END;
 IF (ROUND(VersionNr*10) < 70)  // UPDATE required for versions below 7
    THEN SetManagement_WeedAdj(100) // replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials
-   ELSE READLN(f0,TempShortInt);
+   ELSE BEGIN
+     READLN(f0,TempShortInt);
      SetManagement_WeedAdj(TempShortInt);
+     END;
   // multiple cuttings
 IF (ROUND(VersionNr*10) >= 70)  // UPDATE required for multiple cuttings
    THEN BEGIN
