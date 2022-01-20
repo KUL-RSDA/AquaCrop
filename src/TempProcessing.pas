@@ -1361,11 +1361,11 @@ IF (Crop.subkind = Forage) THEN
 AdjustCalendarCrop(Crop.Day1);
 CompleteCropDescription;
 //Onset.Off := true;
-IF (GetClimFile = '(None)')
+IF (GetClimFile() = '(None)')
    THEN AdjustCropYearToClimFile(Crop.Day1,Crop.DayN) // adjusting Crop.Day1 and Crop.DayN to ClimFile
    ELSE Crop.DayN := Crop.Day1 + Crop.DaysToHarvest - 1;
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
-IF ((GetClimFile <> '(None)') AND (ClimRecord.FromY = 1901)
+IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
 (* adjusting simulation period *)
 AdjustSimPeriod;
