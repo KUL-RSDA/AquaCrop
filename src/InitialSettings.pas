@@ -216,7 +216,7 @@ implementation
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
- MultipleProjectFile := GetProjectFile();
+ SetMultipleProjectFile(GetProjectFile());
  MultipleProjectFileFull := ProjectFileFull;
  MultipleProjectDescription := ProjectDescription;
 

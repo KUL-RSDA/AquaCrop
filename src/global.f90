@@ -182,7 +182,7 @@ character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: ProjectFile
-
+character(len=:), allocatable :: MultipleProjectFile
 
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
@@ -1704,6 +1704,20 @@ subroutine SetProjectFile(str)
     
     ProjectFile = str
 end subroutine SetProjectFile
+
+function GetMultipleProjectFile() result(str)
+    !! Getter for the "MultipleProjectFile" global variable.
+    character(len=len(MultipleProjectFile)) :: str
+    
+    str = MultipleProjectFile
+end function GetMultipleProjectFile
+
+subroutine SetMultipleProjectFile(str)
+    !! Setter for the "MultipleProjectFile" global variable.
+    character(len=*), intent(in) :: str
+    
+    MultipleProjectFile = str
+end subroutine SetMultipleProjectFile
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year

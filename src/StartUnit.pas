@@ -354,8 +354,8 @@ IF (NrProjects > 0) THEN
                               END;
                     TypePRM : BEGIN
                               // 2. Assign multiple project file
-                              MultipleProjectFile := TheProjectFile;
-                              MultipleProjectFileFull := CONCAT(PathNameList,MultipleProjectFile);
+                              SetMultipleProjectFile(TheProjectFile);
+                              MultipleProjectFileFull := CONCAT(PathNameList,GetMultipleProjectFile());
                               //2bis. Get number of Simulation Runs
                               GetNumberSimulationRuns(MultipleProjectFileFull,TotalSimRuns);
                               //3. Check if Environment and Simulation Files exist for all runs
@@ -370,9 +370,9 @@ IF (NrProjects > 0) THEN
                               IF CanSelect THEN
                                  BEGIN
                                  MultipleProjectDescription := 'undefined';
-                                 ComposeFileForProgramParameters(MultipleProjectFile,FullFileNameProgramParameters);
+                                 ComposeFileForProgramParameters(GetMultipleProjectFile(),FullFileNameProgramParameters);
                                  LoadProgramParametersProjectPlugIn(FullFileNameProgramParameters,ProgramParametersAvailable);
-                                 ComposeOutputFileName(MultipleProjectFile);
+                                 ComposeOutputFileName(GetMultipleProjectFile());
                                  Simulation.MultipleRun := true;
                                  Simulation.NrRuns := TotalSimRuns;
                                  CheckForKeepSWC(MultipleProjectFileFull,Simulation.NrRuns,Simulation.MultipleRunWithKeepSWC,Simulation.MultipleRunConstZrx);

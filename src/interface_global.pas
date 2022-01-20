@@ -506,6 +506,18 @@ procedure SetProjectFile_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setprojectfile_wrap';
+
+function GetMultipleProjectFile(): string;
+
+function GetMultipleProjectFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmultipleprojectfile_wrap';
+
+procedure SetMultipleProjectFile(constref str : string);
+
+procedure SetMultipleProjectFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfile_wrap';
                 
 function FileExists(constref full_name : string) : boolean;
 
@@ -1240,6 +1252,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetProjectFile_wrap(p, strlen);
+end;
+
+function GetMultipleProjectFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetMultipleProjectFile_wrap();
+    GetMultipleProjectFile := AnsiString(p);
+end;
+
+
+procedure SetMultipleProjectFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetMultipleProjectFile_wrap(p, strlen);
 end;
 
 function GetRainFile(): string;
