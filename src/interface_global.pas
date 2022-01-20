@@ -435,6 +435,18 @@ procedure SetRainFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setrainfile_wrap';
 
+function GetRainFileFull(): string;
+
+function GetRainFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getrainfilefull_wrap';
+
+procedure SetRainFileFull(constref str : string);
+
+procedure SetRainFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setrainfilefull_wrap';
+
 function GetIrriFile(): string;
 
 function GetIrriFile_wrap(): PChar;
@@ -447,6 +459,17 @@ procedure SetIrriFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setirrifile_wrap';
 
+function GetClimateFile(): string;
+
+function GetClimateFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getclimatefile_wrap';
+
+procedure SetClimateFile(constref str : string);
+
+procedure SetClimateFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setclimatefile_wrap';
 
 function FileExists(constref full_name : string) : boolean;
 
@@ -967,6 +990,28 @@ begin;
 end;
 
 
+function GetClimateFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetClimateFile_wrap();
+    GetClimateFile := AnsiString(p);
+end;
+
+
+procedure SetClimateFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetClimateFile_wrap(p, strlen);
+end;
+
+
 function GetRainFile(): string;
 var
     p : PChar;
@@ -986,6 +1031,27 @@ begin;
     strlen := Length(str);
     SetRainFile_wrap(p, strlen);
 end;
+
+function GetRainFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetRainFileFull_wrap();
+    GetRainFileFull := AnsiString(p);
+end;
+
+procedure SetRainFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetRainFileFull_wrap(p, strlen);
+end;
+
 
 
 function GetCalendarFile(): string;

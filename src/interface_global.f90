@@ -13,6 +13,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetCropFile, &
                      GetIrriDescription, &
                      GetIrriFile, &
+                     GetClimateFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      GetProfFilefull, &
@@ -25,9 +26,12 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToFileFull, &
                      GetRainFile, &
                      setRainFile, &
+                     GetRainFileFull, &
+                     setRainFileFull, &
                      SetCalendarFile, &
                      SetCropFile, &
                      SetIrriFile, &
+                     SetClimateFile, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
@@ -278,6 +282,26 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
 end subroutine SetIrriFile_wrap
 
 
+function GetClimateFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimateFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimateFile())
+end function GetClimateFile_wrap
+
+
+subroutine SetClimateFile_wrap(ClimateFile, strlen)
+    !! Wrapper for [[ac_global:SetClimateFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimateFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimateFile, strlen)
+    call SetClimateFile(string)
+end subroutine SetClimateFile_wrap
+
+
 function GetRainFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -296,6 +320,25 @@ subroutine SetRainFile_wrap(RainFile, strlen)
     string = pointer2string(RainFile, strlen)
     call SetRainFile(string)
 end subroutine SetRainFile_wrap
+
+function GetRainFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainFileFull())
+end function GetRainFileFull_wrap
+
+
+subroutine SetRainFileFull_wrap(RainFileFull, strlen)
+    !! Wrapper for [[ac_global:SetRainFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: RainFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+ 
+    string = pointer2string(RainFileFull, strlen)
+    call SetRainFileFull(string)
+end subroutine SetRainFileFull_wrap
 
     
 function GetCalendarFile_wrap() result(c_pointer)

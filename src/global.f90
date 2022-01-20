@@ -163,6 +163,7 @@ type rep_CropFileSet
 end type rep_CropFileSet 
 
 character(len=:), allocatable :: RainFile
+character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: CalendarFile
@@ -173,6 +174,8 @@ character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
+character(len=:), allocatable :: ClimateFile
+
 
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
@@ -1639,6 +1642,20 @@ subroutine SetIrriFile(str)
 end subroutine SetIrriFile
 
 
+function GetClimateFile() result(str)
+    !! Getter for the "ClimateFile" global variable.
+    character(len=len(ClimateFile)) :: str
+    
+    str = ClimateFile
+end function GetClimateFile
+
+subroutine SetClimateFile(str)
+    !! Setter for the "ClimateFile" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateFile = str
+end subroutine SetClimateFile
+
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
@@ -1999,6 +2016,21 @@ subroutine SetRainFile(str)
     RainFile = str
 end subroutine SetRainFile
 
+
+function GetRainFileFull() result(str)
+    !! Getter for the "RainFileFull" global variable.
+    character(len=len(RainFileFull)) :: str
+
+    str = RainFileFull
+end function GetRainFileFull
+
+
+subroutine SetRainFileFull(str)
+    !! Setter for the "RainFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    RainFileFull = str
+end subroutine SetRainFileFull
 
 
 

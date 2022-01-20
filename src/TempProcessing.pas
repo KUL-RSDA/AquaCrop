@@ -1230,16 +1230,16 @@ READLN(f0,Crop.DayN); //Last day of cropping period
 READLN(f0); // Info Climate
 READLN(f0,TempString);  //ClimateFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-ClimateFile := Trim(TempString);
-IF (ClimateFile = '(None)')
+SetClimateFile(Trim(TempString));
+IF (GetClimateFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathClimateFile
-        ClimateFileFull := ClimateFile;
+        ClimateFileFull := GetClimateFile();
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateFileFull := CONCAT(Trim(TempString),ClimateFile);
+        ClimateFileFull := CONCAT(Trim(TempString),GetClimateFile());
         Assign(fClim,ClimateFileFull);
         Reset(fClim);
         // 1.0 Description
@@ -1292,14 +1292,14 @@ SetRainFile(Trim(TempString));
 IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
-        RainFilefull := GetRainFile();  (* no file *)
+        SetRainFilefull(GetRainFile());  (* no file *)
         RainDescription := 'Specify Rain data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        RainFileFull := CONCAT(Trim(TempString),GetRainFile());
-        LoadClim(RainFilefull,RainDescription,RainRecord);
+        SetRainFileFull(CONCAT(Trim(TempString),GetRainFile()));
+        LoadClim(GetRainFilefull(),RainDescription,RainRecord);
         CompleteClimateDescription(RainRecord);
         END;
 // 1.4 CO2

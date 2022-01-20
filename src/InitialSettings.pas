@@ -166,7 +166,7 @@ implementation
 
  // 5.3 Rain
  SetRainFile('(None)');
- RainFilefull := GetRainFile();  (* no file *)
+ SetRainFilefull(GetRainFile());  (* no file *)
  RainDescription := '';
  WITH RainRecord DO
    BEGIN
@@ -183,8 +183,8 @@ implementation
  GetCO2Description(CO2FileFull,CO2Description);
 
  // 5.5 Climate file
- ClimateFile := '(None)';
- ClimateFileFull := ClimateFile;
+ SetClimateFile('(None)');
+ ClimateFileFull := GetClimateFile();
  ClimateDescription := '';
 
  // 5.6 Set Climate and Simulation Period

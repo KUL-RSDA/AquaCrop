@@ -769,7 +769,7 @@ IF (GetEToFile() <> '(None)')
 // 2. Rain File
 IF (GetRainFile() <> '(None)')
    THEN BEGIN
-        totalname := RainFilefull;
+        totalname := GetRainFilefull();
         IF FileExists(totalname)
         THEN BEGIN
              // open file and find first day of simulation period

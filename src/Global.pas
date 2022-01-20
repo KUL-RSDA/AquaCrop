@@ -249,7 +249,7 @@ TYPE
          ToD,ToM,ToY : INTEGER;
          FromDayNr, ToDayNr : LongInt; //daynumber
          FromString, ToString : String;
-         NrObs       : INTEGER; // number of observations
+         NrObs       : INTEGER; // number of observationsf
          End;
 
      rep_IniComp =  ARRAY[1.. max_No_compartments] of double;
@@ -411,8 +411,8 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    ClimateFile,ClimFile,TemperatureFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
-    CalendarFileFull,CropFilefull, ClimateFileFull,RainFileFull,TemperatureFileFull,CO2FileFull,
+    ClimFile,TemperatureFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
+    ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,RainFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
     GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
