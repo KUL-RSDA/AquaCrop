@@ -1391,18 +1391,18 @@ IF (GetIrriFile() = '(None)')
 // 5. Field Management
 READLN(f0); // Info Field Management
 READLN(f0,TempString);  //ManFile
-ManFile := Trim(TempString);
-IF (ManFile = '(None)')
+SetManFile(Trim(TempString));
+IF (GetManFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathManFile
-        ManFileFull := ManFile;
+        SetManFileFull(GetManFile());
         ManDescription := 'No specific field management';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathManFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ManFileFull := CONCAT(Trim(TempString),ManFile);
-        LoadManagement(ManFilefull);
+        SetManFileFull(CONCAT(Trim(TempString),GetManFile()));
+        LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
         TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
                           Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,

@@ -16,6 +16,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      GetProfFilefull, &
+                     GetManFile, &
+                     GetManFilefull, &
                      SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
@@ -28,6 +30,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetIrriFile, &
                      SetProfFile, &
                      SetProfFilefull, &
+                     SetManFile, &
+                     SetManFilefull, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -366,6 +370,43 @@ subroutine SetProfFilefull_wrap(ProfFilefull, strlen)
     string = pointer2string(ProfFilefull, strlen)
     call SetProfFilefull(string)
 end subroutine SetProfFilefull_wrap
+
+function GetManFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFile())
+end function GetManFile_wrap
+
+subroutine SetManFile_wrap(ManFile, strlen)
+    !! Wrapper for [[ac_global:SetManFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManFile, strlen)
+    call SetManFile(string)
+end subroutine SetManFile_wrap
+
+
+function GetManFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFilefull())
+end function GetManFilefull_wrap
+
+subroutine SetManFilefull_wrap(ManFilefull, strlen)
+    !! Wrapper for [[ac_global:SetManFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManFilefull, strlen)
+    call SetManFilefull(string)
+end subroutine SetManFilefull_wrap
 
 
 end module ac_interface_global

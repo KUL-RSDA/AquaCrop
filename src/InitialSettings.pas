@@ -131,8 +131,8 @@ implementation
  NoCropCalendar;
 
  // 4. Field Management
- ManFile := '(None)';
- ManFilefull := ManFile;  (* no file *)
+ SetManFile('(None)');
+ SetManFilefull(GetManFile());  (* no file *)
  NoManagement;
 
  // 5. Climate

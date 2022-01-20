@@ -565,6 +565,31 @@ procedure SetProfFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setproffilefull_wrap';
 
+function GetManFile(): string;
+
+function GetManFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanfile_wrap';
+
+procedure SetManFile(constref str : string);
+
+procedure SetManFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanfile_wrap';
+
+function GetManFilefull(): string;
+
+function GetManFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanfilefull_wrap';
+
+procedure SetManFilefull(constref str : string);
+
+procedure SetManFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanfilefull_wrap';
+
+
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
@@ -847,6 +872,46 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetProfFilefull_wrap(p, strlen);
+end;
+
+function GetManFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetManFile_wrap();
+    GetManFile := StrPas(p);
+end;
+
+procedure SetManFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetManFile_wrap(p, strlen);
+end;
+
+function GetManFilefull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetManFilefull_wrap();
+    GetManFilefull := StrPas(p);
+end;
+
+procedure SetManFilefull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetManFilefull_wrap(p, strlen);
 end;
 
 procedure CheckFilesInProject(
