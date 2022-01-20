@@ -1422,17 +1422,17 @@ SetProfFilefull(CONCAT(Trim(TempString),GetProfFile()));
 // 7. Groundwater
 READLN(f0); // Info Groundwater
 READLN(f0,TempString);  //GroundWaterFile
-GroundWaterFile := Trim(TempString);
-IF (GroundWaterFile = '(None)')
+SetGroundWaterFile(Trim(TempString));
+IF (GetGroundWaterFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathGroundWaterFile
-        GroundWaterFilefull := GroundWaterFile;
+        SetGroundWaterFilefull(GetGroundWaterFile());
         GroundWaterDescription := 'no shallow groundwater table';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathGroundWaterFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        GroundWaterFilefull := CONCAT(Trim(TempString),GroundWaterFile);
+        SetGroundWaterFilefull(CONCAT(Trim(TempString),GetGroundWaterFile()));
         // Loading the groundwater is done after loading the soil profile (see 9.)
         END;
 
@@ -1516,8 +1516,8 @@ IF (Trim(TempString) = 'KeepSWC')
         END;
 
 // 10. load the groundwater file if it exists (only possible for Version 4.0 and higher)
-IF ((ROUND(10*VersionNr) >= 40) AND (GroundWaterFile <> '(None)')) // the groundwater file is only available in Version 4.0 or higher
-   THEN LoadGroundWater(GroundWaterFilefull,Simulation.FromDayNr,ZiAqua,ECiAqua)
+IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the groundwater file is only available in Version 4.0 or higher
+   THEN LoadGroundWater(GetGroundWaterFilefull(),Simulation.FromDayNr,ZiAqua,ECiAqua)
    ELSE BEGIN
         ZiAqua := undef_int;
         ECiAqua := undef_int;
@@ -1530,18 +1530,18 @@ IF (Simulation.IniSWC.AtFC AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC
 // 11. Off-season conditions
 READLN(f0); // Info Off-season conditions
 READLN(f0,TempString);  //OffSeasonFile
-OffSeasonFile := Trim(TempString);
-IF (OffSeasonFile = '(None)')
+SetOffSeasonFile(Trim(TempString));
+IF (GetOffSeasonFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathOffSeasonFile
-        OffSeasonFileFull := OffSeasonFile;
+        SetOffSeasonFileFull(GetOffSeasonFile());
         OffSeasonDescription := 'No specific off-season conditions';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathOffSeasonFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        OffSeasonFileFull := CONCAT(Trim(TempString),OffSeasonFile);
-        LoadOffSeason(OffSeasonFilefull);
+        SetOffSeasonFileFull(CONCAT(Trim(TempString),GetOffSeasonFile()));
+        LoadOffSeason(GetOffSeasonFilefull());
         END;
 
 // 12. Field data

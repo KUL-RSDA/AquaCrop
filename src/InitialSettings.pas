@@ -90,8 +90,8 @@ implementation
  If (SimulParam.CropDay1 < 1) THEN SimulParam.CropDay1 := 1;
 
  // 2a. Ground water table
- GroundWaterFile := '(None)';
- GroundWaterFilefull := GroundWaterFile;  (* no file *)
+ SetGroundWaterFile('(None)');
+ SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
  GroundWaterDescription := 'no shallow groundwater table';
  ZiAqua := undef_int;
  ECiAqua := undef_int;
@@ -204,8 +204,8 @@ implementation
  NoIrrigation;
 
  // 7. Off-season
- OffSeasonFile := '(None)';
- OffSeasonFileFull := OffSeasonFile;
+ SetOffSeasonFile('(None)');
+ SetOffSeasonFileFull(getOffSeasonFile());
  NoManagementOffSeason;
 
  // 8. Project and Multiple Project file

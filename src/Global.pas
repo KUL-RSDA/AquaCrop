@@ -411,10 +411,10 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    TemperatureFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
+    TemperatureFile,ProjectFile,MultipleProjectFile,ObservationsFile : string;
     CalendarFileFull,CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
-    IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
-    GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
+    IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    ObservationsFileFull,FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
     TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription,ObservationsDescription : string;
@@ -2842,9 +2842,9 @@ CASE Simulation.LinkCropToSimPeriod OF
 // adjust initial depth and quality of the groundwater when required
 IF ((NOT SimulParam.ConstGwt) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THEN
    BEGIN
-   IF (GroundWaterFile = '(None)')
+   IF (GetGroundWaterFile() = '(None)')
        THEN FullFileName := CONCAT(PathNameProg,'GroundWater.AqC')
-       ELSE FullFileName := GroundWaterFileFull;
+       ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
    LoadGroundWater(FullFileName,Simulation.FromDayNr,ZiAqua,ECiAqua);
    CalculateAdjustedFC((ZiAqua/100),Compartment);
