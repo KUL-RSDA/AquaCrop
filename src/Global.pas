@@ -411,7 +411,7 @@ TYPE
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
-    ClimFile,TemperatureFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
+    TemperatureFile,ManFile,SWCiniFile,ProjectFile,MultipleProjectFile,OffSeasonFile,GroundWaterFile,ObservationsFile : string;
     ProfFilefull, CalendarFileFull,CropFilefull, ClimateFileFull,RainFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,ManFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,OffSeasonFileFull,
     GroundWaterFileFull,ObservationsFileFull,FullFileNameProgramParameters : string;
@@ -2711,7 +2711,7 @@ PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 BEGIN
 SimDay1 := CropDay1;
-IF (ClimFile <> '(None)') THEN
+IF (GetClimFile <> '(None)') THEN
    BEGIN
    (*
    IF SimDay1 < ClimRecord.FromDayNr THEN SimDay1 := ClimRecord.FromDayNr;
@@ -2734,7 +2734,7 @@ VAR dayi,monthi,yeari : INTEGER;
     temp_str : string;
 BEGIN
 DetermineDate(CDay1,dayi,monthi,yeari);
-IF (ClimFile = '(None)')
+IF (GetClimFile = '(None)')
    THEN yeari := 1901  // yeari = 1901 if undefined year
    ELSE yeari := ClimRecord.FromY; // yeari = 1901 if undefined year
    (*
@@ -2813,7 +2813,7 @@ CASE Simulation.LinkCropToSimPeriod OF
             IF (Crop.Day1 = Simulation.FromDayNr)
                THEN Simulation.ToDayNr := Crop.DayN
                ELSE Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
-            IF (ClimFile <> '(None)') THEN
+            IF (GetClimFile <> '(None)') THEN
                BEGIN
                IF (Simulation.ToDayNr > ClimRecord.ToDayNr) THEN
                    Simulation.ToDayNr := ClimRecord.ToDayNr;
@@ -2823,14 +2823,14 @@ CASE Simulation.LinkCropToSimPeriod OF
             END;
     false : BEGIN
             (*
-            IF ((ClimFile <> '(None)') AND (Simulation.FromDayNr < ClimRecord.FromDayNr)) THEN
+            IF ((GetClimFile <> '(None)') AND (Simulation.FromDayNr < ClimRecord.FromDayNr)) THEN
                BEGIN
                Simulation.FromDayNr := ClimRecord.FromDayNr;
                Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
                END; *)
             IF (Simulation.FromDayNr > Crop.Day1) THEN Simulation.FromDayNr := Crop.Day1;
             Simulation.ToDayNr := Crop.DayN;
-            IF ((ClimFile <> '(None)') AND
+            IF ((GetClimFile <> '(None)') AND
                 ((Simulation.FromDayNr <= ClimRecord.FromDayNr) OR (Simulation.FromDayNr >= ClimRecord.ToDayNr))) THEN
                BEGIN
                Simulation.FromDayNr := ClimRecord.FromDayNr;
@@ -2856,7 +2856,7 @@ END; (* AdjustSimPeriod *)
 
 PROCEDURE AdjustOnsetSearchPeriod;
 BEGIN
-IF (ClimFile = '(None)')
+IF (GetClimFile = '(None)')
    THEN BEGIN
         Onset.StartSearchDayNr := 1;
         Onset.StopSearchDayNr := Onset.StartSearchDayNr + Onset.LengthSearchPeriod - 1;
@@ -2887,7 +2887,7 @@ ClimRecord.NrObs := 999; //(heeft geen belang)
 //Part A - ETo and Rain files --> ClimFile
 IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
    THEN BEGIN
-        ClimFile := '(None)';
+        SetClimFile('(None)');
         ClimDescription := 'Specify Climatic data when Running AquaCrop';
         WITH ClimRecord DO
           BEGIN
@@ -2898,7 +2898,7 @@ IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
           END;
         END
    ELSE BEGIN
-        ClimFile := 'EToRainTempFile';
+        SetClimFile('EToRainTempFile');
         ClimDescription := 'Read ETo/RAIN/TEMP data set';
         IF (GetEToFile() = '(None)') THEN
            WITH ClimRecord DO
@@ -2994,7 +2994,7 @@ IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
                         END;
                 IF (ToDayNr < FromDayNr) THEN
                         BEGIN
-                        ClimFile := '(None)';
+                        SetClimFile('(None)');
                         ClimDescription := 'ETo data set <--NO OVERLAP--> RAIN data set';
                         NrObs := 0;
                         FromY := 1901;
@@ -3010,9 +3010,9 @@ IF (TemperatureFile = '(None)')
         // no adjustments are required
         END
    ELSE BEGIN
-        IF (ClimFile = '(None)')
+        IF (GetClimFile = '(None)')
            THEN BEGIN
-                ClimFile := 'EToRainTempFile';
+                SetClimFile('EToRainTempFile');
                 ClimDescription := 'Read ETo/RAIN/TEMP data set';
                 WITH ClimRecord DO
                      BEGIN
@@ -3099,7 +3099,7 @@ IF (TemperatureFile = '(None)')
                         END;
                    IF (ToDayNr < FromDayNr) THEN
                         BEGIN
-                        ClimFile := '(None)';
+                        SetClimFile('(None)');
                         ClimDescription := 'Clim data <--NO OVERLAP--> TEMPERATURE data';
                         NrObs := 0;
                         FromY := 1901;
@@ -3225,7 +3225,7 @@ FUNCTION DayString(DNr : LongInt) : repstring17;
 VAR dayi,monthi,yeari : INTEGER;
     strA, strB : string;
 BEGIN
-IF (ClimFile = '(None)') THEN WHILE (DNr > 365) DO DNr := DNr - 365;
+IF (GetClimFile = '(None)') THEN WHILE (DNr > 365) DO DNr := DNr - 365;
 DetermineDate(DNr,dayi,monthi,yeari);
 Str(dayi:2,strA);
 IF (ClimRecord.FromY = 1901)
