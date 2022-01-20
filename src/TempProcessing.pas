@@ -1231,16 +1231,16 @@ READLN(f0,Crop.DayN); //Last day of cropping period
 READLN(f0); // Info Climate
 READLN(f0,TempString);  //ClimateFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-ClimateFile := Trim(TempString);
-IF (ClimateFile = '(None)')
+SetClimateFile(Trim(TempString));
+IF (GetClimateFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathClimateFile
-        ClimateFileFull := ClimateFile;
+        ClimateFileFull := GetClimateFile();
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateFileFull := CONCAT(Trim(TempString),ClimateFile);
+        ClimateFileFull := CONCAT(Trim(TempString),GetClimateFile());
         Assign(fClim,ClimateFileFull);
         Reset(fClim);
         // 1.0 Description
@@ -1252,7 +1252,7 @@ IF (ClimateFile = '(None)')
 // 1.1 Temperature
 READLN(f0); // Info Temperature
 READLN(f0,TempString);  //TemperatureFile
-TemperatureFile := Trim(TempString);
+TemperatureFile:= Trim(TempString);
 IF (TemperatureFile = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
@@ -1260,7 +1260,7 @@ IF (TemperatureFile = '(None)')
         Str(SimulParam.Tmin:8:1,TempString1);
         Str(SimulParam.Tmax:8:1,TempString2);
         TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' Â°C');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
@@ -1272,35 +1272,35 @@ IF (TemperatureFile = '(None)')
 // 1.2 ETo
 READLN(f0); // Info ETo
 READLN(f0,TempString);  //EToFile
-EToFile := Trim(TempString);
-IF (EToFile = '(None)')
+SetEToFile(Trim(TempString));
+IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
-        EToFilefull := EToFile;  (* no file *)
+        SetEToFilefull(GetEToFile());  (* no file *)
         EToDescription := 'Specify ETo data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        EToFilefull := CONCAT(Trim(TempString),EToFile);
-        LoadClim(EToFilefull,EToDescription,EToRecord);
+        SetEToFilefull(CONCAT(Trim(TempString),GetEToFile()));
+        LoadClim(GetEToFilefull(),EToDescription,EToRecord);
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain
 READLN(f0); // Info Rain
 READLN(f0,TempString);  //RainFile
-RainFile := Trim(TempString);
-IF (RainFile = '(None)')
+SetRainFile(Trim(TempString));
+IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
-        RainFilefull := RainFile;  (* no file *)
+        SetRainFilefull(GetRainFile());  (* no file *)
         RainDescription := 'Specify Rain data when Running AquaCrop';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        RainFileFull := CONCAT(Trim(TempString),RainFile);
-        LoadClim(RainFilefull,RainDescription,RainRecord);
+        SetRainFileFull(CONCAT(Trim(TempString),GetRainFile()));
+        LoadClim(GetRainFilefull(),RainDescription,RainRecord);
         CompleteClimateDescription(RainRecord);
         END;
 // 1.4 CO2
@@ -1354,7 +1354,7 @@ IF (Crop.subkind = Forage) THEN
                      Crop.DaysToCCini,Crop.GDDaysToCCini);
    // adjust length of season
    Crop.DaysToHarvest := Crop.DayN - Crop.Day1 + 1;
-   AdjustCropFileParameters(CropFileSet,(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
+   AdjustCropFileParameters(GetCropFileSet(),(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
                                     Crop.GDDaysToSenescence,Crop.GDDaysToHarvest);
    END;
@@ -1362,11 +1362,11 @@ IF (Crop.subkind = Forage) THEN
 AdjustCalendarCrop(Crop.Day1);
 CompleteCropDescription;
 //Onset.Off := true;
-IF (ClimFile = '(None)')
+IF (GetClimFile() = '(None)')
    THEN AdjustCropYearToClimFile(Crop.Day1,Crop.DayN) // adjusting Crop.Day1 and Crop.DayN to ClimFile
    ELSE Crop.DayN := Crop.Day1 + Crop.DaysToHarvest - 1;
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
-IF ((ClimFile <> '(None)') AND (ClimRecord.FromY = 1901)
+IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
 (* adjusting simulation period *)
 AdjustSimPeriod;
@@ -1374,36 +1374,36 @@ AdjustSimPeriod;
 // 4. Irrigation
 READLN(f0); // Info Irrigation
 READLN(f0,TempString);  //IrriFile
-IrriFile := Trim(TempString);
-IF (IrriFile = '(None)')
+SetIrriFile(Trim(TempString));
+IF (GetIrriFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathIrriFile
-        IrriFileFull := IrriFile;
+        IrriFileFull := GetIrriFile();
         NoIrrigation;
         //IrriDescription := 'Rainfed cropping';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        IrriFilefull := CONCAT(Trim(TempString),IrriFile);
+        IrriFilefull := CONCAT(Trim(TempString),GetIrriFile());
         LoadIrriScheduleInfo(IrriFilefull);
         END;
 
 // 5. Field Management
 READLN(f0); // Info Field Management
 READLN(f0,TempString);  //ManFile
-ManFile := Trim(TempString);
-IF (ManFile = '(None)')
+SetManFile(Trim(TempString));
+IF (GetManFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathManFile
-        ManFileFull := ManFile;
+        SetManFileFull(GetManFile());
         ManDescription := 'No specific field management';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathManFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ManFileFull := CONCAT(Trim(TempString),ManFile);
-        LoadManagement(ManFilefull);
+        SetManFileFull(CONCAT(Trim(TempString),GetManFile()));
+        LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
         FertStress := GetManagement_FertilityStress();
         TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
@@ -1419,7 +1419,7 @@ READLN(f0,TempString);  //ProfFile
 SetProfFile(Trim(TempString));
 READLN(f0,TempString);  //PathProfFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-ProfFilefull := CONCAT(Trim(TempString),GetProfFile());
+SetProfFilefull(CONCAT(Trim(TempString),GetProfFile()));
 // The load of profile is delayed to check if soil water profile need to be reset (see 8.)
 
 // 7. Groundwater
@@ -1452,13 +1452,13 @@ READLN(f0,TempString);  //SWCIniFile
 IF (Trim(TempString) = 'KeepSWC')
    THEN BEGIN
         // No load of soil file (which reset thickness compartments and Soil water content to FC)
-        SWCIniFile := 'KeepSWC';
+        SetSWCIniFile('KeepSWC');
         SWCIniDescription := 'Keep soil water profile of previous run';
         READLN(f0);  //PathSWCIniFile
         END
    ELSE BEGIN
         // start with load and complete profile description (see 5.) which reset SWC to FC by default
-        LoadProfile(ProfFilefull);
+        LoadProfile(GetProfFilefull());
         CompleteProfileDescription;
 
         //Adjust size of compartments if required
@@ -1481,17 +1481,17 @@ IF (Trim(TempString) = 'KeepSWC')
                    END;
                 END;
 
-        SWCIniFile := Trim(TempString);
-        IF (SWCIniFile = '(None)')
+        SetSWCIniFile(Trim(TempString));
+        IF (GetSWCIniFile() = '(None)')
            THEN BEGIN
                 READLN(f0);  //PathSWCIniFile
-                SWCiniFileFull := SWCiniFile; (* no file *)
+                SWCiniFileFull := GetSWCiniFile(); (* no file *)
                 SWCiniDescription := 'Soil water profile at Field Capacity';
                 END
            ELSE BEGIN
                 READLN(f0,TempString);  //PathSWCIniFile
                 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-                SWCiniFileFull := CONCAT(Trim(TempString),SWCIniFile);
+                SWCiniFileFull := CONCAT(Trim(TempString),GetSWCIniFile());
                 LoadInitialConditions(SWCiniFileFull,SurfaceStorage,Simulation.IniSWC);
                 END;
         CASE Simulation.IniSWC.AtDepths OF
@@ -1528,7 +1528,7 @@ IF ((ROUND(10*VersionNr) >= 40) AND (GroundWaterFile <> '(None)')) // the ground
         END;
 CalculateAdjustedFC((ZiAqua/100),Compartment);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
-IF (Simulation.IniSWC.AtFC AND (SWCIniFile <> 'KeepSWC')) THEN ResetSWCToFC;
+IF (Simulation.IniSWC.AtFC AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
 
 // 11. Off-season conditions
 READLN(f0); // Info Off-season conditions

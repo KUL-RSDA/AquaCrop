@@ -126,8 +126,8 @@ SoilLayer[1].GravelVol := 0;
 SoilLayer[1].Description := 'Loamy soil horizon';
 SoilLayer[1].SoilClass := NumberSoilClass(SoilLayer[1].SAT,SoilLayer[1].FC,SoilLayer[1].WP,SoilLayer[1].InfRate);
 DetermineParametersCR(SoilLayer[1].SoilClass,SoilLayer[1].InfRate,SoilLayer[1].CRa,SoilLayer[1].CRb);
-ProfFilefull := CONCAT(PathNameSimul,'DEFAULT.SOL');
-SaveProfile(ProfFilefull);
+SetProfFilefull(CONCAT(PathNameSimul,'DEFAULT.SOL'));
+SaveProfile(GetProfFilefull());
 END; (* ResetDefaultSoil *)
 
 

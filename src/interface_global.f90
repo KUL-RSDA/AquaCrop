@@ -11,12 +11,35 @@ use ac_global, only: CheckFilesInProject, &
                      GetCO2Description, &
                      GetCO2File, &
                      GetCropFile, &
+                     GetIrriDescription, &
+                     GetIrriFile, &
+                     GetClimateFile, &
+                     GetClimFile, &
+                     GetSWCiniFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
+                     GetProfFilefull, &
+                     GetManFile, &
+                     GetManFilefull, &
                      SetCO2File, &
+                     GetEToFile, &
+                     SetEToFile, &
+                     GetEToFileFull, &
+                     SetEToFileFull, &
+                     GetRainFile, &
+                     setRainFile, &
+                     GetRainFileFull, &
+                     setRainFileFull, &
                      SetCalendarFile, &
                      SetCropFile, &
+                     SetIrriFile, &
+                     SetClimateFile, &
+                     SetClimFile, &
+                     setSWCinifile, &
                      SetProfFile, &
+                     SetProfFilefull, &
+                     SetManFile, &
+                     SetManFilefull, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -186,6 +209,183 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
 
+
+
+function GetEToFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToFile())
+end function GetEToFile_wrap
+
+
+subroutine SetEToFile_wrap(EToFile, strlen)
+    !! Wrapper for [[ac_global:SetEToFile]] for foreign languages.
+    type(c_ptr), intent(in) :: EToFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(EToFile, strlen)
+    call SetEToFile(string)
+end subroutine SetEToFile_wrap
+
+function GetEToFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToFileFull())
+end function GetEToFileFull_wrap
+
+
+subroutine SetEToFileFull_wrap(EToFileFull, strlen)
+    !! Wrapper for [[ac_global:SetEToFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: EToFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(EToFileFull, strlen)
+    call SetEToFileFull(string)
+end subroutine SetEToFileFull_wrap
+
+subroutine GetIrriDescription_wrap(IrriFileFull, strlen1, IrriDescription, &
+            strlen2)
+    !! Wrapper for [[ac_global:GetIrriDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFileFull
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: IrriDescription
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(IrriFileFull, strlen1)
+    string2 = pointer2string(IrriDescription, strlen2)
+    call GetIrriDescription(string1, string2)
+end subroutine GetIrriDescription_wrap
+
+
+function GetIrriFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetIrriFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetIrriFile())
+end function GetIrriFile_wrap
+
+
+subroutine SetIrriFile_wrap(IrriFile, strlen)
+    !! Wrapper for [[ac_global:SetIrriFile]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriFile, strlen)
+    call SetIrriFile(string)
+end subroutine SetIrriFile_wrap
+
+
+function GetClimateFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimateFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimateFile())
+end function GetClimateFile_wrap
+
+
+subroutine SetClimateFile_wrap(ClimateFile, strlen)
+    !! Wrapper for [[ac_global:SetClimateFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimateFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimateFile, strlen)
+    call SetClimateFile(string)
+end subroutine SetClimateFile_wrap
+
+
+function GetClimFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimFile())
+end function GetClimFile_wrap
+
+
+subroutine SetClimFile_wrap(ClimFile, strlen)
+    !! Wrapper for [[ac_global:SetClimFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimFile, strlen)
+    call SetClimFile(string)
+end subroutine SetClimFile_wrap
+
+
+function GetSWCiniFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetSWCiniFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetSWCiniFile())
+end function GetSWCiniFile_wrap
+
+
+subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
+    !! Wrapper for [[ac_global:SetSWCiniFile]] for foreign languages.
+    type(c_ptr), intent(in) :: SWCiniFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniFile, strlen)
+    call SetSWCiniFile(string)
+end subroutine SetSWCiniFile_wrap
+
+
+
+function GetRainFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainFile())
+end function GetRainFile_wrap
+
+
+subroutine SetRainFile_wrap(RainFile, strlen)
+    !! Wrapper for [[ac_global:SetRainFile]] for foreign languages.
+    type(c_ptr), intent(in) :: RainFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+ 
+    string = pointer2string(RainFile, strlen)
+    call SetRainFile(string)
+end subroutine SetRainFile_wrap
+
+function GetRainFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainFileFull())
+end function GetRainFileFull_wrap
+
+
+subroutine SetRainFileFull_wrap(RainFileFull, strlen)
+    !! Wrapper for [[ac_global:SetRainFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: RainFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+ 
+    string = pointer2string(RainFileFull, strlen)
+    call SetRainFileFull(string)
+end subroutine SetRainFileFull_wrap
+
+    
 function GetCalendarFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCalendarFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -239,5 +439,62 @@ subroutine SetProfFile_wrap(ProfFile, strlen)
     string = pointer2string(ProfFile, strlen)
     call SetProfFile(string)
 end subroutine SetProfFile_wrap
+
+
+function GetProfFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfFilefull())
+end function GetProfFilefull_wrap
+
+subroutine SetProfFilefull_wrap(ProfFilefull, strlen)
+    !! Wrapper for [[ac_global:SetProfFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfFilefull, strlen)
+    call SetProfFilefull(string)
+end subroutine SetProfFilefull_wrap
+
+function GetManFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFile())
+end function GetManFile_wrap
+
+subroutine SetManFile_wrap(ManFile, strlen)
+    !! Wrapper for [[ac_global:SetManFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManFile, strlen)
+    call SetManFile(string)
+end subroutine SetManFile_wrap
+
+
+function GetManFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFilefull())
+end function GetManFilefull_wrap
+
+subroutine SetManFilefull_wrap(ManFilefull, strlen)
+    !! Wrapper for [[ac_global:SetManFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManFilefull, strlen)
+    call SetManFilefull(string)
+end subroutine SetManFilefull_wrap
+
 
 end module ac_interface_global
