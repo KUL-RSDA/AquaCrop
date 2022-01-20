@@ -1230,16 +1230,16 @@ READLN(f0,Crop.DayN); //Last day of cropping period
 READLN(f0); // Info Climate
 READLN(f0,TempString);  //ClimateFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-ClimateFile := Trim(TempString);
-IF (ClimateFile = '(None)')
+SetClimateFile(Trim(TempString));
+IF (GetClimateFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathClimateFile
-        ClimateFileFull := ClimateFile;
+        ClimateFileFull := GetClimateFile();
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateFileFull := CONCAT(Trim(TempString),ClimateFile);
+        ClimateFileFull := CONCAT(Trim(TempString),GetClimateFile());
         Assign(fClim,ClimateFileFull);
         Reset(fClim);
         // 1.0 Description

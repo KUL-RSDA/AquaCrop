@@ -171,6 +171,7 @@ character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
+character(len=:), allocatable :: ClimateFile
 
 type(rep_IrriECw) :: IrriECw
 type(rep_RootZoneWC) :: RootZoneWC
@@ -1636,6 +1637,20 @@ subroutine SetIrriFile(str)
     IrriFile = str
 end subroutine SetIrriFile
 
+
+function GetClimateFile() result(str)
+    !! Getter for the "ClimateFile" global variable.
+    character(len=len(ClimateFile)) :: str
+    
+    str = ClimateFile
+end function GetClimateFile
+
+subroutine SetClimateFile(str)
+    !! Setter for the "ClimateFile" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateFile = str
+end subroutine SetClimateFile
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
