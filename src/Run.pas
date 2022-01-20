@@ -1336,7 +1336,7 @@ IF WaterTableInProfile THEN AdjustForWatertable;
 IF (NOT SimulParam.ConstGwt) THEN GetGwtSet(Simulation.FromDayNr,GwTable);
 
 // 1.2 Check if FromDayNr simulation needs to be adjusted from previous run if Keep initial SWC
-IF ((SWCIniFile = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
+IF ((GetSWCIniFile() = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
    BEGIN  // assign the adjusted DayNr defined in previous run
    IF (NextSimFromDayNr <= Crop.Day1) THEN Simulation.FromDayNr := NextSimFromDayNr;
    END;
