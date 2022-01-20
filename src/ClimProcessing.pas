@@ -419,7 +419,7 @@ IF (Day1 > 20)
                 END;
 
 // 2. Load datafile
-Assign(fRain,RainFilefull);
+Assign(fRain,GetRainFilefull());
 Reset(fRain);
 READLN(fRain); // description
 READLN(fRain); // time step
@@ -488,7 +488,7 @@ VAR fRain : textfile;
 
 BEGIN
 //1. Prepare record
-Assign(fRain,RainFilefull);
+Assign(fRain,GetRainFilefull());
 Reset(fRain);
 READLN(fRain); // description
 READLN(fRain); // time step
