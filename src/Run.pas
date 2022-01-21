@@ -1325,6 +1325,7 @@ VAR VAL100 : double;
 
     Day1,Month1,Year1 : INTEGER;
     FertStress : shortint;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
     
 BEGIN
 //1. Adjustments at start
@@ -1753,8 +1754,16 @@ IF (GetManagement_BundHeight() < 0.01) THEN
    END;
 IF (RootingDepth > 0) THEN // salinity in root zone
    BEGIN
-   DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
-   StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
+   ECe_temp := GetRootZoneSalt().ECe;
+   ECsw_temp := GetRootZoneSalt().ECsw;
+   ECswFC_temp := GetRootZoneSalt().ECswFC;
+   KsSalt_temp := GetRootZoneSalt().KsSalt;
+   DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+   SetRootZoneSalt_ECe(ECe_temp);
+   SetRootZoneSalt_ECsw(ECsw_temp);
+   SetRootZoneSalt_ECswFC(ECswFC_temp);
+   SetRootZoneSalt_KsSalt(KsSalt_temp);
+   StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
    END;
 // Harvest Index
 Simulation.HIfinal := Crop.HI;
@@ -2071,9 +2080,9 @@ IF Out2Crop THEN
       THEN StrSto := undef_int
       ELSE StrSto := ROUND(100 *(1 - Tact/Tpot));
    //3. Salinity stress
-   IF (RootZoneSalt.KsSalt < 0)
+   IF (GetRootZoneSalt().KsSalt < 0)
       THEN StrSalt := undef_int
-      ELSE StrSalt := ROUND(100 * (1 - RootZoneSalt.KsSalt));
+      ELSE StrSalt := ROUND(100 * (1 - GetRootZoneSalt().KsSalt));
    //4. Air temperature stress
    IF (CCiActual <= 0.0000001)
       THEN KsTr := 1
@@ -2157,16 +2166,16 @@ IF Out4Salt THEN
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
-           RootZoneSalt.ECe := undef_int;
-           RootZoneSalt.ECsw := undef_int;
-           RootZoneSalt.KsSalt := 1;
+           SetRootZoneSalt_ECe(undef_int);
+           SetRootZoneSalt_ECsw(undef_int);
+           SetRootZoneSalt_KsSalt(1);
            END
-      ELSE SaltVal := (GetRootZoneWC().SAT*RootZoneSalt.ECe*Equiv)/100;
+      ELSE SaltVal := (GetRootZoneWC().SAT*GetRootZoneSalt().ECe*Equiv)/100;
    IF (ZiAqua = undef_int)
-      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
-                 (100*(1-RootZoneSalt.KsSalt)):7:0,undef_double:8:2)
-      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
-                 (100*(1-RootZoneSalt.KsSalt)):7:0,(ZiAqua/100):8:2);
+      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,undef_double:8:2)
+      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,(ZiAqua/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,ECiAqua:8:2)
       ELSE WRITELN(fDaily,ECiAqua:8:2);
@@ -2295,6 +2304,7 @@ VAR RepeatToDay : LongInt;
     HarvestNow : BOOLEAN;
     VirtualTimeCC,DayInSeason : INTEGER;
     SumGDDadjCC,RatDGDD : double;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
 
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
@@ -2705,8 +2715,16 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
            ELSE KsTr := KsTemperature((0),Crop.GDtranspLow,GDDayi);
         StressTot.Temp := ((StressTot.NrD - 1)*StressTot.Temp + 100*(1-KsTr))/StressTot.NrD;
         // soil salinity stress
-        DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
-        StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
+        ECe_temp := GetRootZoneSalt().ECe;
+        ECsw_temp := GetRootZoneSalt().ECsw;
+        ECswFC_temp := GetRootZoneSalt().ECswFC;
+        KsSalt_temp := GetRootZoneSalt().KsSalt;
+        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        SetRootZoneSalt_ECe(ECe_temp);
+        SetRootZoneSalt_ECsw(ECsw_temp);
+        SetRootZoneSalt_ECswFC(ECswFC_temp);
+        SetRootZoneSalt_KsSalt(KsSalt_temp);
+        StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
         // Biomass and yield
         DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,

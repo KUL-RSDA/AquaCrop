@@ -2542,7 +2542,26 @@ subroutine SetRootZoneSalt_ECe(ECe)
     RootZoneSalt%ECe = ECe
 end subroutine SetRootZoneSalt_ECe
 
-!!continue for other variables, also put functions in interface, and adapt in all code
+subroutine SetRootZoneSalt_ECsw(ECsw)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: ECsw
+
+    RootZoneSalt%ECsw = ECsw
+end subroutine SetRootZoneSalt_ECsw
+
+subroutine SetRootZoneSalt_ECswFC(ECswFC)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: ECswFC
+
+    RootZoneSalt%ECswFC = ECswFC
+end subroutine SetRootZoneSalt_ECswFC
+
+subroutine SetRootZoneSalt_KsSalt(KsSalt)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: KsSalt
+
+    RootZoneSalt%KsSalt = KsSalt
+end subroutine SetRootZoneSalt_KsSalt
 
 
 end module ac_global

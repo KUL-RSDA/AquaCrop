@@ -925,6 +925,21 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
 
+function GetRootZoneSalt(): rep_RootZoneSalt;
+        external 'aquacrop' name '__ac_global_MOD_getrootzonesalt';
+
+procedure SetRootZoneSalt_ECe(constref ECe : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ece';
+
+procedure SetRootZoneSalt_ECsw(constref ECsw : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecsw';
+
+procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecswfc';
+
+procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
+
 
 implementation
 
