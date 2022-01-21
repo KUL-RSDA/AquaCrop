@@ -73,15 +73,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetGroundWaterFile, &
                      SetGroundWaterFilefull, &
                      SplitStringInTwoParams, &
-                     SplitStringInThreeParams, &
-                     GetTemperatureFile, &
-                     GetTemperatureFilefull, &
-                     SetTemperatureFile, &
-                     SetTemperatureFilefull, &
-                     SetTemperatureRecord_FromString, &
-                     GetTemperatureRecord_FromString, &
-                     SetTemperatureRecord_ToString, &
-                     GetTemperatureRecord_ToString
+                     SplitStringInThreeParams
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -574,85 +566,262 @@ subroutine SetProfFile_wrap(ProfFile, strlen)
 end subroutine SetProfFile_wrap
 
 
-function GetTemperatureFile_wrap() result(c_pointer)
-    !! Wrapper for [[ac_global:GetTemperatureFile]] for foreign languages.
+function GetProfFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfFilefull]] for foreign languages.
     type(c_ptr) :: c_pointer
 
-    c_pointer = string2pointer(GetTemperatureFile())
-end function GetTemperatureFile_wrap
+    c_pointer = string2pointer(GetProfFilefull())
+end function GetProfFilefull_wrap
 
-
-subroutine SetTemperatureFile_wrap(TemperatureFile, strlen)
-    !! Wrapper for [[ac_global:TemperatureFile]] for foreign languages.
-    type(c_ptr), intent(in) :: TemperatureFile
+subroutine SetProfFilefull_wrap(ProfFilefull, strlen)
+    !! Wrapper for [[ac_global:SetProfFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfFilefull
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
 
-    string = pointer2string(TemperatureFile, strlen)
-    call SetTemperatureFile(string)
-end subroutine SetTemperatureFile_wrap
+    string = pointer2string(ProfFilefull, strlen)
+    call SetProfFilefull(string)
+end subroutine SetProfFilefull_wrap
 
-function GetTemperatureFilefull_wrap() result(c_pointer)
-    !! Wrapper for [[ac_global:GetTemperatureFilefull]] for foreign languages.
+function GetManFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFile]] for foreign languages.
     type(c_ptr) :: c_pointer
 
-    c_pointer = string2pointer(GetTemperatureFilefull())
-end function GetTemperatureFilefull_wrap
+    c_pointer = string2pointer(GetManFile())
+end function GetManFile_wrap
 
-
-subroutine SetTemperatureFilefull_wrap(TemperatureFilefull, strlen)
-    !! Wrapper for [[ac_global:TemperatureFilefull]] for foreign languages.
-    type(c_ptr), intent(in) :: TemperatureFilefull
+subroutine SetManFile_wrap(ManFile, strlen)
+    !! Wrapper for [[ac_global:SetManFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFile
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
 
-    string = pointer2string(TemperatureFilefull, strlen)
-    call SetTemperatureFilefull(string)
-end subroutine SetTemperatureFilefull_wrap
+    string = pointer2string(ManFile, strlen)
+    call SetManFile(string)
+end subroutine SetManFile_wrap
 
-subroutine SetTemperatureRecord_ToString_wrap(&
-                     TemperatureRecord_ToString, strlen)
-    !! Wrapper for [[ac_global:TemperatureRecord_ToString]] for foreign
-    !languages.
-    type(c_ptr), intent(in) :: TemperatureRecord_ToString
+
+function GetManFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManFilefull())
+end function GetManFilefull_wrap
+
+subroutine SetManFilefull_wrap(ManFilefull, strlen)
+    !! Wrapper for [[ac_global:SetManFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ManFilefull
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
 
-    string = pointer2string(TemperatureRecord_ToString, strlen)
-    call SetTemperatureRecord_ToString(string)
-end subroutine SetTemperatureRecord_ToString_wrap
+    string = pointer2string(ManFilefull, strlen)
+    call SetManFilefull(string)
+end subroutine SetManFilefull_wrap
 
-function GetTemperatureRecord_ToString_wrap() result(c_pointer)
-    !! Wrapper for [[ac_global:GetTemperatureRecord_ToString]] for foreign
-    !languages.
+function GetManagement_Cuttings_Considered_wrap() result(Considered_f)
+
+    logical(1) :: Considered_f
+
+    Considered_f = GetManagement_Cuttings_Considered()
+end function GetManagement_Cuttings_Considered_wrap
+
+
+function GetManagement_Cuttings_Generate_wrap() result(Generate_f)
+
+    logical(1) :: Generate_f
+
+    Generate_f = GetManagement_Cuttings_Generate()
+end function GetManagement_Cuttings_Generate_wrap
+
+
+function GetManagement_Cuttings_HarvestEnd_wrap() result(HarvestEnd_f)
+
+    logical(1) :: HarvestEnd_f
+
+    HarvestEnd_f = GetManagement_Cuttings_HarvestEnd()
+end function GetManagement_Cuttings_HarvestEnd_wrap
+
+
+subroutine SetManagement_Cuttings_Considered_wrap(Considered)
+    logical(1), intent(in) :: Considered
+
+    logical :: Considered_f
+
+    Considered_f = Considered
+    call SetManagement_Cuttings_Considered(Considered_f)    
+end subroutine SetManagement_Cuttings_Considered_wrap
+
+
+subroutine SetManagement_Cuttings_Generate_wrap(Generate)
+    logical(1), intent(in) :: Generate
+
+    logical :: Generate_f
+
+    Generate_f = Generate
+    call SetManagement_Cuttings_Generate(Generate_f)    
+end subroutine SetManagement_Cuttings_Generate_wrap
+
+
+subroutine SetManagement_Cuttings_HarvestEnd_wrap(HarvestEnd)
+    logical(1), intent(in) :: HarvestEnd
+
+    logical :: HarvestEnd_f
+
+    HarvestEnd_f = HarvestEnd
+    call SetManagement_Cuttings_HarvestEnd(HarvestEnd_f)    
+end subroutine SetManagement_Cuttings_HarvestEnd_wrap
+
+
+function GetManagement_RunoffOn_wrap() result(RunoffOn_f)
+
+    logical(1) :: RunoffOn_f
+
+    RunoffOn_f = GetManagement_RunoffOn()
+end function GetManagement_RunoffOn_wrap
+
+
+subroutine SetManagement_RunoffOn_wrap(RunoffOn)
+    logical(1), intent(in) :: RunoffOn
+
+    logical :: RunoffOn_f
+
+    RunoffOn_f = RunoffOn
+    call SetManagement_RunoffOn(RunoffOn_f)    
+end subroutine SetManagement_RunoffOn_wrap
+
+
+function GetOffSeasonFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
     type(c_ptr) :: c_pointer
 
-    c_pointer = string2pointer(GetTemperatureRecord_ToString())
-end function GetTemperatureRecord_ToString_wrap
+    c_pointer = string2pointer(GetOffSeasonFile())
+end function GetOffSeasonFile_wrap
 
-subroutine SetTemperatureRecord_FromString_wrap(&
-                     TemperatureRecord_FromString, strlen)
-    !! Wrapper for [[ac_global:TemperatureRecord_FromString]] for foreign
-    !languages.
-    type(c_ptr), intent(in) :: TemperatureRecord_FromString
-
+subroutine SetOffSeasonFile_wrap(OffSeasonFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonFile
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
 
-    string = pointer2string(TemperatureRecord_FromString, strlen)
-    call SetTemperatureRecord_FromString(string)
-end subroutine SetTemperatureRecord_FromString_wrap
+    string = pointer2string(OffSeasonFile, strlen)
+    call SetOffSeasonFile(string)
+end subroutine SetOffSeasonFile_wrap
 
-function GetTemperatureRecord_FromString_wrap() result(c_pointer)
-    !! Wrapper for [[ac_global:GetTemperatureRecord_FromString]] for foreign
-    !languages.
+
+function GetOffSeasonFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonFilefull]] for foreign languages.
     type(c_ptr) :: c_pointer
 
-    c_pointer = string2pointer(GetTemperatureRecord_FromString())
-end function GetTemperatureRecord_FromString_wrap
+    c_pointer = string2pointer(GetOffSeasonFilefull())
+end function GetOffSeasonFilefull_wrap
+
+subroutine SetOffSeasonFilefull_wrap(OffSeasonFilefull, strlen)
+    !! Wrapper for [[ac_global:SetOffSeasonFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonFilefull, strlen)
+    call SetOffSeasonFilefull(string)
+end subroutine SetOffSeasonFilefull_wrap
+
+function GetObservationsFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsFile())
+end function GetObservationsFile_wrap
+
+subroutine SetObservationsFile_wrap(ObservationsFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsFile, strlen)
+    call SetObservationsFile(string)
+end subroutine SetObservationsFile_wrap
+
+
+function GetObservationsFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsFilefull())
+end function GetObservationsFilefull_wrap
+
+subroutine SetObservationsFilefull_wrap(ObservationsFilefull, strlen)
+    !! Wrapper for [[ac_global:SetObservationsFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsFilefull, strlen)
+    call SetObservationsFilefull(string)
+end subroutine SetObservationsFilefull_wrap
+
+function GetObservationsDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsDescription())
+end function GetObservationsDescription_wrap
+
+subroutine SetObservationsDescription_wrap(ObservationsDescription, strlen)
+    !! Wrapper for [[ac_global:SetObservationsDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsDescription, strlen)
+    call SetObservationsDescription(string)
+end subroutine SetObservationsDescription_wrap
+
+
+function GetGroundWaterFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundWaterFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundWaterFile())
+end function GetGroundWaterFile_wrap
+
+subroutine SetGroundWaterFile_wrap(GroundWaterFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundWaterFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundWaterFile, strlen)
+    call SetGroundWaterFile(string)
+end subroutine SetGroundWaterFile_wrap
+
+
+function GetGroundWaterFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundWaterFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundWaterFilefull())
+end function GetGroundWaterFilefull_wrap
+
+subroutine SetGroundWaterFilefull_wrap(GroundWaterFilefull, strlen)
+    !! Wrapper for [[ac_global:SetGroundWaterFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundWaterFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundWaterFilefull, strlen)
+    call SetGroundWaterFilefull(string)
+end subroutine SetGroundWaterFilefull_wrap
+
 
 end module ac_interface_global

@@ -137,19 +137,19 @@ implementation
 
  // 5. Climate
  // 5.1 Temperature
- SetTemperatureFile('(None)');
- SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
+ TemperatureFile := '(None)';
+ TemperatureFilefull := TemperatureFile;  (* no file *)
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
  TemperatureDescription := '';
- // WITH TemperatureRecord DO
- //  BEGIN
- SetTemperatureRecord_DataType(Daily);
- SetTemperatureRecord_NrObs(0);
- SetTemperatureRecord_FromString('any date');
- SetTemperatureRecord_ToString('any date');
- SetTemperatureRecord_FromY(1901);
- //  END;
+ WITH TemperatureRecord DO
+   BEGIN
+   DataType := Daily;
+   NrObs := 0;
+   FromString := 'any date';
+   ToString := 'any date';
+   FromY := 1901;
+   END;
 
  // 5.2 ETo
  SetEToFile('(None)');
