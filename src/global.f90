@@ -239,23 +239,42 @@ type rep_sum
 end type rep_sum 
 
 
+type rep_RootZoneSalt 
+    real(dp) :: ECe
+        !! Electrical conductivity of the saturated soil-paste extract (dS/m)
+    real(dp) :: ECsw
+        !! Electrical conductivity of the soil water (dS/m)
+    real(dp) :: ECswFC
+        !! Electrical conductivity of the soil water at Field Capacity(dS/m)
+    real(dp) :: KsSalt
+        !! stress coefficient for salinity
+end type rep_RootZoneSalt
+
+
+
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: CalendarFile
+character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: CropFileFull
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
+character(len=:), allocatable :: ObservationsFile
+character(len=:), allocatable :: ObservationsFilefull
+character(len=:), allocatable :: ObservationsDescription
 character(len=:), allocatable :: OffSeasonFile
 character(len=:), allocatable :: OffSeasonFilefull
 character(len=:), allocatable :: GroundWaterFile
 character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
+character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: ProjectFile
@@ -267,6 +286,7 @@ type(rep_Cuttings) :: Cuttings
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
+type(rep_RootZoneSalt) :: RootZoneSalt
 
 
 contains
@@ -1743,6 +1763,20 @@ subroutine SetClimateFile(str)
     ClimateFile = str
 end subroutine SetClimateFile
 
+function GetClimateFileFull() result(str)
+    !! Getter for the "ClimateFileFull" global variable.
+    character(len=len(ClimateFileFull)) :: str
+    
+    str = ClimateFileFull
+end function GetClimateFileFull
+
+subroutine SetClimateFileFull(str)
+    !! Setter for the "ClimateFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateFileFull = str
+end subroutine SetClimateFileFull
+
 function GetClimFile() result(str)
     !! Getter for the "ClimFile" global variable.
     character(len=len(ClimFile)) :: str
@@ -1987,6 +2021,20 @@ subroutine SetCalendarFile(str)
     CalendarFile = str
 end subroutine SetCalendarFile
 
+function GetCalendarFileFull() result(str)
+    !! Getter for the "CalendarFileFull" global variable.
+    character(len=len(CalendarFileFull)) :: str
+
+    str = CalendarFileFull
+end function GetCalendarFileFull
+
+subroutine SetCalendarFileFull(str)
+    !! Setter for the "CalendarFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarFileFull = str
+end subroutine SetCalendarFileFull
+
 function GetCropFile() result(str)
     !! Getter for the "CropFile" global variable.
     character(len=len(CropFile)) :: str
@@ -2000,6 +2048,20 @@ subroutine SetCropFile(str)
 
     CropFile = str
 end subroutine SetCropFile
+
+function GetCropFileFull() result(str)
+    !! Getter for the "CropFile" global variable.
+    character(len=len(CropFileFull)) :: str
+
+    str = CropFileFull
+end function GetCropFileFull
+
+subroutine SetCropFileFull(str)
+    !! Setter for the "CropFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CropFileFull = str
+end subroutine SetCropFileFull
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.
@@ -2104,6 +2166,48 @@ subroutine SetOffSeasonFilefull(str)
 
     OffSeasonFilefull = str
 end subroutine SetOffSeasonFilefull
+
+function GetObservationsFile() result(str)
+    !! Getter for the "ObservationsFile" global variable.
+    character(len=len(ObservationsFile)) :: str
+
+    str = ObservationsFile
+end function GetObservationsFile
+
+subroutine SetObservationsFile(str)
+    !! Setter for the "ObservationsFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ObservationsFile = str
+end subroutine SetObservationsFile
+
+function GetObservationsFilefull() result(str)
+    !! Getter for the "ObservationsFilefull" global variable.
+    character(len=len(ObservationsFilefull)) :: str
+
+    str = ObservationsFilefull
+end function GetObservationsFilefull
+
+subroutine SetObservationsFilefull(str)
+    !! Setter for the "ObservationsFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    ObservationsFilefull = str
+end subroutine SetObservationsFilefull
+
+function GetObservationsDescription() result(str)
+    !! Getter for the "ObservationsDescription" global variable.
+    character(len=len(ObservationsDescription)) :: str
+
+    str = ObservationsDescription
+end function GetObservationsDescription
+
+subroutine SetObservationsDescription(str)
+    !! Setter for the "ObservationsDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ObservationsDescription = str
+end subroutine SetObservationsDescription
 
 function GetGroundWaterFile() result(str)
     !! Getter for the "GroundWaterFile" global variable.
@@ -2530,6 +2634,7 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
 
+
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.
 
@@ -2790,6 +2895,40 @@ subroutine SetSumWaBal_CRSalt(CRSalt)
     SumWaBal%CRSalt = CRSalt
 end subroutine SetSumWaBal_CRSalt
 
+
+type(rep_RootZoneSalt) function GetRootZoneSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt = RootZoneSalt
+end function GetRootZoneSalt
+
+subroutine SetRootZoneSalt_ECe(ECe)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: ECe
+
+    RootZoneSalt%ECe = ECe
+end subroutine SetRootZoneSalt_ECe
+
+subroutine SetRootZoneSalt_ECsw(ECsw)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: ECsw
+
+    RootZoneSalt%ECsw = ECsw
+end subroutine SetRootZoneSalt_ECsw
+
+subroutine SetRootZoneSalt_ECswFC(ECswFC)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: ECswFC
+
+    RootZoneSalt%ECswFC = ECswFC
+end subroutine SetRootZoneSalt_ECswFC
+
+subroutine SetRootZoneSalt_KsSalt(KsSalt)
+    !! Setter for the "RootZoneSalt" global variable.
+    real(dp), intent(in) :: KsSalt
+
+    RootZoneSalt%KsSalt = KsSalt
+end subroutine SetRootZoneSalt_KsSalt
 
 
 end module ac_global

@@ -1190,7 +1190,7 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2 : string;
+    TempString,TempString1,TempString2,observations_descr : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -1235,13 +1235,13 @@ SetClimateFile(Trim(TempString));
 IF (GetClimateFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathClimateFile
-        ClimateFileFull := GetClimateFile();
+        SetClimateFileFull(GetClimateFile());
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateFileFull := CONCAT(Trim(TempString),GetClimateFile());
-        Assign(fClim,ClimateFileFull);
+        SetClimateFileFull(CONCAT(Trim(TempString),GetClimateFile()));
+        Assign(fClim,GetClimateFileFull());
         Reset(fClim);
         // 1.0 Description
         READLN(fClim,TempString);
@@ -1330,8 +1330,8 @@ IF (GetCalendarFile() = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CalendarFilefull := CONCAT(Trim(TempString),GetCalendarFile());
-        GetFileDescription(CalendarFilefull,CalendarDescription);
+        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
+        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
         END;
 
 // 3. Crop
@@ -1341,8 +1341,8 @@ READLN(f0,TempString);  //CropFile
 SetCropFile(Trim(TempString));
 READLN(f0,TempString);  //PathCropFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-CropFilefull := CONCAT(Trim(TempString),GetCropFile());
-LoadCrop(CropFilefull);
+SetCropFilefull(CONCAT(Trim(TempString),GetCropFile()));
+LoadCrop(GetCropFilefull());
 
 // Adjust crop parameters of Perennials
 IF (Crop.subkind = Forage) THEN
@@ -1550,18 +1550,20 @@ IF (GetOffSeasonFile() = '(None)')
 // 12. Field data
 READLN(f0); // Info Field data
 READLN(f0,TempString);  //Field dataFile
-ObservationsFile := Trim(TempString);
-IF (ObservationsFile = '(None)')
+SetObservationsFile(Trim(TempString));
+IF (GetObservationsFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //Path Field data File
-        ObservationsFileFull := ObservationsFile;
-        ObservationsDescription := 'No field observations';
+        SetObservationsFileFull(GetObservationsFile());
+        SetObservationsDescription('No field observations');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //Path Field data File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ObservationsFileFull := CONCAT(Trim(TempString),ObservationsFile);
-        GetFileDescription(ObservationsFileFull,ObservationsDescription);
+        SetObservationsFileFull(CONCAT(Trim(TempString),GetObservationsFile()));
+        observations_descr := GetObservationsDescription();
+        GetFileDescription(GetObservationsFileFull(),observations_descr);
+        SetObservationsDescription(observations_descr);
         END;
 
 Close(f0);

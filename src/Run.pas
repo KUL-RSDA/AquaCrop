@@ -365,7 +365,7 @@ VAR dayi, monthi, yeari : INTEGER;
 
 BEGIN
 // open input file with field data
-Assign(fObs,ObservationsFileFull); // Observations recorded in File
+Assign(fObs,GetObservationsFileFull()); // Observations recorded in File
 Reset(fObs);
 READLN(fObs); // description
 READLN(fObs); // AquaCrop Version number
@@ -1325,6 +1325,7 @@ VAR VAL100 : double;
 
     Day1,Month1,Year1 : INTEGER;
     FertStress : shortint;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
     
 BEGIN
 //1. Adjustments at start
@@ -1665,7 +1666,7 @@ IF (ROUND(1000*Simulation.Bini) > 0) THEN BEGIN // overwrite settings in GlobalZ
 
 // 15. Transfer of assimilates
 IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
-   AND (Trim(CropFileFull) = Trim(Simulation.Storage.CropString)) // only for the same crop
+   AND (Trim(GetCropFileFull()) = Trim(Simulation.Storage.CropString)) // only for the same crop
    AND (Simulation.YearSeason > 1) // mobilization not possible in season 1
    AND (Simulation.YearSeason = (Simulation.Storage.Season + 1))) // season next to season in which storage took place
    THEN BEGIN
@@ -1676,7 +1677,7 @@ IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
            ELSE Transfer.Mobilize := false;
         END
    ELSE BEGIN
-        Simulation.Storage.CropString := CropFileFull;
+        Simulation.Storage.CropString := GetCropFileFull();
         // no mobilization of assimilates
         Transfer.ToMobilize := 0;
         Transfer.Mobilize := false;
@@ -1751,8 +1752,16 @@ IF (GetManagement_BundHeight() < 0.01) THEN
    END;
 IF (RootingDepth > 0) THEN // salinity in root zone
    BEGIN
-   DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
-   StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
+   ECe_temp := GetRootZoneSalt().ECe;
+   ECsw_temp := GetRootZoneSalt().ECsw;
+   ECswFC_temp := GetRootZoneSalt().ECswFC;
+   KsSalt_temp := GetRootZoneSalt().KsSalt;
+   DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+   SetRootZoneSalt_ECe(ECe_temp);
+   SetRootZoneSalt_ECsw(ECsw_temp);
+   SetRootZoneSalt_ECswFC(ECswFC_temp);
+   SetRootZoneSalt_KsSalt(KsSalt_temp);
+   StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
    END;
 // Harvest Index
 Simulation.HIfinal := Crop.HI;
@@ -2069,9 +2078,9 @@ IF Out2Crop THEN
       THEN StrSto := undef_int
       ELSE StrSto := ROUND(100 *(1 - Tact/Tpot));
    //3. Salinity stress
-   IF (RootZoneSalt.KsSalt < 0)
+   IF (GetRootZoneSalt().KsSalt < 0)
       THEN StrSalt := undef_int
-      ELSE StrSalt := ROUND(100 * (1 - RootZoneSalt.KsSalt));
+      ELSE StrSalt := ROUND(100 * (1 - GetRootZoneSalt().KsSalt));
    //4. Air temperature stress
    IF (CCiActual <= 0.0000001)
       THEN KsTr := 1
@@ -2155,16 +2164,16 @@ IF Out4Salt THEN
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
-           RootZoneSalt.ECe := undef_int;
-           RootZoneSalt.ECsw := undef_int;
-           RootZoneSalt.KsSalt := 1;
+           SetRootZoneSalt_ECe(undef_int);
+           SetRootZoneSalt_ECsw(undef_int);
+           SetRootZoneSalt_KsSalt(1);
            END
-      ELSE SaltVal := (GetRootZoneWC().SAT*RootZoneSalt.ECe*Equiv)/100;
+      ELSE SaltVal := (GetRootZoneWC().SAT*GetRootZoneSalt().ECe*Equiv)/100;
    IF (ZiAqua = undef_int)
-      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
-                 (100*(1-RootZoneSalt.KsSalt)):7:0,undef_double:8:2)
-      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
-                 (100*(1-RootZoneSalt.KsSalt)):7:0,(ZiAqua/100):8:2);
+      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,undef_double:8:2)
+      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,(ZiAqua/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,ECiAqua:8:2)
       ELSE WRITELN(fDaily,ECiAqua:8:2);
@@ -2295,6 +2304,7 @@ VAR RepeatToDay : LongInt;
     SumGDDadjCC,RatDGDD : double;
     Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, BiomassTot_temp : double;
     YieldPart_temp : double;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2706,8 +2716,16 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
            ELSE KsTr := KsTemperature((0),Crop.GDtranspLow,GDDayi);
         StressTot.Temp := ((StressTot.NrD - 1)*StressTot.Temp + 100*(1-KsTr))/StressTot.NrD;
         // soil salinity stress
-        DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
-        StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
+        ECe_temp := GetRootZoneSalt().ECe;
+        ECsw_temp := GetRootZoneSalt().ECsw;
+        ECswFC_temp := GetRootZoneSalt().ECswFC;
+        KsSalt_temp := GetRootZoneSalt().KsSalt;
+        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        SetRootZoneSalt_ECe(ECe_temp);
+        SetRootZoneSalt_ECsw(ECsw_temp);
+        SetRootZoneSalt_ECswFC(ECswFC_temp);
+        SetRootZoneSalt_KsSalt(KsSalt_temp);
+        StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
         // Biomass and yield
         Biomass_temp := GetSumWaBal_Biomass();
         BiomassPot_temp := GetSumWaBal_BiomassPot();
@@ -2882,7 +2900,7 @@ IF ((VirtualTimeCC+Simulation.DelayedDays + 1) <= Crop.DaysToFullCanopySF)
 //14.d Print ---------------------------------------
 IF (OutputAggregate > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,WPi,fDaily);
-IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -3047,12 +3065,12 @@ CASE TheProjectType OF
                InitializeSimulationRun;
                IF OutDaily THEN WriteTitleDailyResults(TheProjectType,(1),fDaily);
                IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,(1),fHarvest);
-               IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
+               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
                FileManagement((1),TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
                CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
                CloseIrrigationFile(fIrri);
                CloseManagementFile(fCuts);
-               IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
+               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
                END;
      TypePRM : BEGIN
                FOR NrRun := 1 TO Simulation.NrRuns DO
@@ -3066,12 +3084,12 @@ CASE TheProjectType OF
                    InitializeSimulationRun;
                    IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
                    IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-                   IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
                    FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
                    CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
                    CloseIrrigationFile(fIrri);
                    CloseManagementFile(fCuts);
-                   IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
                    END;
                END;
      else;

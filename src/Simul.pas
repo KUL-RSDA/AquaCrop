@@ -1793,6 +1793,7 @@ PROCEDURE EffectSoilFertilitySalinityStress(VAR FinalEffectStress : rep_EffectSt
 VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
     SaltStress,CCxRedD : double;
     CCxRed : ShortInt;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
 
     PROCEDURE NoEffectStress(VAR TheEffectStress : rep_EffectStress);
     BEGIN
@@ -1807,9 +1808,17 @@ VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
 BEGIN
 IF (Simulation.SalinityConsidered = true)
    THEN BEGIN
-        DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe,RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
+        ECe_temp := GetRootZoneSalt().ECe;
+        ECsw_temp := GetRootZoneSalt().ECsw;
+        ECswFC_temp := GetRootZoneSalt().ECswFC;
+        KsSalt_temp := GetRootZoneSalt().KsSalt;
+        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        SetRootZoneSalt_ECe(ECe_temp);
+        SetRootZoneSalt_ECsw(ECsw_temp);
+        SetRootZoneSalt_ECswFC(ECswFC_temp);
+        SetRootZoneSalt_KsSalt(KsSalt_temp);
         //SaltStress := (1-RootZoneSalt.KsSalt)*100;
-        SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-RootZoneSalt.KsSalt))/(NrDayGrow+1);
+        SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-GetRootZoneSalt().KsSalt))/(NrDayGrow+1);
         END
    ELSE SaltStress := 0;
 IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop.Day1))
@@ -3465,7 +3474,7 @@ IF (Tpot > 0) THEN
            // --- 3. Extra effect of ECsw (salt in total root zone is considered)
            IF Simulation.SalinityConsidered
               THEN RedFactECsw := AdjustedKsStoToECsw(Crop.ECemin,Crop.ECemax,Crop.ResponseECsw,
-                             RootZoneSalt.ECe,RootZoneSalt.ECsw,RootZoneSalt.ECswFC,
+                             GetRootZoneSalt().ECe,GetRootZoneSalt().ECsw,GetRootZoneSalt().ECswFC,
                              WrelSalt,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,RedFact)
               ELSE RedFactECsw := RedFact;
 
