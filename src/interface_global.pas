@@ -655,6 +655,18 @@ procedure SetCropFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcropfile_wrap';
 
+function GetCropFileFull(): string;
+
+function GetCropFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcropfilefull_wrap';
+
+procedure SetCropFileFull(constref str : string);
+
+procedure SetCropFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcropfilefull_wrap';
+
 function GetProfFile(): string;
 
 function GetProfFile_wrap(): PChar;
@@ -1577,6 +1589,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCropFile_wrap(p, strlen);
+end;
+
+
+function GetCropFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCropFileFull_wrap();
+    GetCropFileFull := AnsiString(p);
+end;
+
+
+procedure SetCropFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCropFileFull_wrap(p, strlen);
 end;
 
 

@@ -1667,7 +1667,7 @@ IF (ROUND(1000*Simulation.Bini) > 0) THEN // overwrite settings in GlobalZero (i
 
 // 15. Transfer of assimilates
 IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
-   AND (Trim(CropFileFull) = Trim(Simulation.Storage.CropString)) // only for the same crop
+   AND (Trim(GetCropFileFull()) = Trim(Simulation.Storage.CropString)) // only for the same crop
    AND (Simulation.YearSeason > 1) // mobilization not possible in season 1
    AND (Simulation.YearSeason = (Simulation.Storage.Season + 1))) // season next to season in which storage took place
    THEN BEGIN
@@ -1678,7 +1678,7 @@ IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
            ELSE Transfer.Mobilize := false;
         END
    ELSE BEGIN
-        Simulation.Storage.CropString := CropFileFull;
+        Simulation.Storage.CropString := GetCropFileFull();
         // no mobilization of assimilates
         Transfer.ToMobilize := 0;
         Transfer.Mobilize := false;
