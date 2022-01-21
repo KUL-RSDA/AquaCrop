@@ -1341,8 +1341,8 @@ READLN(f0,TempString);  //CropFile
 SetCropFile(Trim(TempString));
 READLN(f0,TempString);  //PathCropFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-CropFilefull := CONCAT(Trim(TempString),GetCropFile());
-LoadCrop(CropFilefull);
+SetCropFilefull(CONCAT(Trim(TempString),GetCropFile()));
+LoadCrop(GetCropFilefull());
 
 // Adjust crop parameters of Perennials
 IF (Crop.subkind = Forage) THEN

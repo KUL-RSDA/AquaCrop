@@ -12,6 +12,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetCO2Description, &
                      GetCO2File, &
                      GetCropFile, &
+                     GetCropFileFull, &
                      GetIrriDescription, &
                      GetIrriFile, &
                      GetClimateFile, &
@@ -43,6 +44,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetCalendarFile, &
                      SetCalendarFileFull, &
                      SetCropFile, &
+                     SetCropFileFull, &
                      SetIrriFile, &
                      SetClimateFile, &
                      SetClimFile, &
@@ -496,6 +498,24 @@ subroutine SetCropFile_wrap(CropFile, strlen)
     string = pointer2string(CropFile, strlen)
     call SetCropFile(string)
 end subroutine SetCropFile_wrap
+
+function GetCropFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCropFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCropFileFull())
+end function GetCropFileFull_wrap
+
+subroutine SetCropFileFull_wrap(CropFileFull, strlen)
+    !! Wrapper for [[ac_global:SetCropFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: CropFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CropFileFull, strlen)
+    call SetCropFileFull(string)
+end subroutine SetCropFileFull_wrap
 
 function GetProfFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetProfFile]] for foreign languages.

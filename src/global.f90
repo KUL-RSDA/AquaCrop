@@ -236,6 +236,7 @@ character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: CropFileFull
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
@@ -2005,6 +2006,20 @@ subroutine SetCropFile(str)
 
     CropFile = str
 end subroutine SetCropFile
+
+function GetCropFileFull() result(str)
+    !! Getter for the "CropFile" global variable.
+    character(len=len(CropFileFull)) :: str
+
+    str = CropFileFull
+end function GetCropFileFull
+
+subroutine SetCropFileFull(str)
+    !! Setter for the "CropFile" global variable.
+    character(len=*), intent(in) :: str
+
+    CropFileFull = str
+end subroutine SetCropFileFull
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.
