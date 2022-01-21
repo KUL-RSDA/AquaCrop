@@ -11,6 +11,7 @@ const
     CO2Ref = 369.41;
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
+    DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -50,6 +51,17 @@ type
 
     rep_planting = (Seed,Transplant,Regrowth);
 
+    rep_datatype = (Daily,Decadely, Monthly);
+
+    rep_clim = Record
+         DataType    : rep_datatype;
+         FromD,FromM,FromY : INTEGER; //D = day or decade, Y=1901 is not linked to specific year
+         ToD,ToM,ToY : INTEGER;
+         FromDayNr, ToDayNr : LongInt; //daynumber
+         FromString, ToString : String;
+         NrObs       : INTEGER; // number of observations
+         end;
+
     rep_EffectStress = Record
          RedCGC          : ShortInt; (* Reduction of CGC (%) *)
          RedCCX          : ShortInt; (* Reduction of CCx (%) *)
@@ -86,50 +98,11 @@ type
          PostSeason : double;
          end;
 
-     rep_CropFileSet = Record
-         DaysFromSenescenceToEnd : integer;
-         DaysToHarvest      : integer;  //given or calculated from GDD
-         GDDaysFromSenescenceToEnd : integer;
-         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
+    rep_DayEventDbl = Record
+         DayNr : Integer;
+         Param : Double;
          end;
-
-     rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
-
-     rep_Cuttings = Record
-         Considered : BOOLEAN;
-         CCcut      : Integer; // Canopy cover (%) after cutting
-         CGCPlus    : Integer; // Increase (percentage) of CGC after cutting
-         Day1       : Integer; // first day after time window for generating cuttings (1 = start crop cycle)
-         NrDays     : Integer; // number of days of time window for generate cuttings (-9 is whole crop cycle)
-         Generate   : Boolean; // ture: generate cuttings; false : schedule for cuttings
-         Criterion  : rep_TimeCuttings; // time criterion for generating cuttings
-         HarvestEnd : BOOLEAN; // final harvest at crop maturity
-         FirstDayNr : LongInt; // first dayNr of list of specified cutting events (-9 = onset growing cycle)
-         end;
-
-     rep_Manag = Record
-         Mulch           : ShortInt; (* percent soil cover by mulch in growing period *)
-         SoilCoverBefore : ShortInt; (* percent soil cover by mulch before growing period *)
-         SoilCoverAfter  : ShortInt; (* percent soil cover by mulch after growing period *)
-         EffectMulchOffS : ShortInt; (* effect Mulch on evaporation before and after growing period *)
-         EffectMulchInS  : ShortInt; (* effect Mulch on evaporation in growing period *)
-         FertilityStress : ShortInt;
-         BundHeight      : double; // meter;
-         RunoffOn        : BOOLEAN;  (* surface runoff *)
-         CNcorrection    : INTEGER; // percent increase/decrease of CN
-         WeedRC          : ShortInt; (* Relative weed cover in percentage at canopy closure *)
-         WeedDeltaRC     : INTEGER; (* Increase/Decrease of Relative weed cover in percentage during mid season*)
-         WeedShape       : Double; (* Shape factor for crop canopy suppression*)
-         WeedAdj         : ShortInt; (* replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials *)
-         Cuttings        : rep_Cuttings; // Multiple cuttings
-         end;
-
-     rep_RootZoneSalt = Record
-         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
-         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
-         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
-         KsSalt : double;   // stress coefficient for salinity
-         end;
+     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -602,41 +575,10 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
-function GetRootZoneWC(): rep_RootZoneWC;
-        external 'aquacrop' name '__ac_global_MOD_getrootzonewc';
 
-procedure SetRootZoneWC_Actual(constref Actual : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_actual';
+function LeapYear(constref Year : integer) : boolean;
+        external 'aquacrop' name '__ac_global_MOD_leapyear';
 
-procedure SetRootZoneWC_FC(constref FC : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_fc';
-
-procedure SetRootZoneWC_WP(constref WP : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_wp';
-
-procedure SetRootZoneWC_SAT(constref SAT : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_sat';
-
-procedure SetRootZoneWC_Leaf(constref Leaf : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_leaf';
-
-procedure SetRootZoneWC_Thresh(constref Thresh : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_thresh';
-
-procedure SetRootZoneWC_Sen(constref Sen : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_sen';
-
-procedure SetRootZoneWC_ZtopAct(constref ZtopAct : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopact';
-
-procedure SetRootZoneWC_ZtopFC(constref ZtopFC : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopfc';
-
-procedure SetRootZoneWC_ZtopWP(constref ZtopWP : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopwp';
-
-procedure SetRootZoneWC_ZtopThresh(constref ZtopThresh : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonewc_ztopthresh';
 
 function GetCalendarFile(): string;
 
@@ -698,130 +640,6 @@ procedure SetProfFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setproffile_wrap';
 
-function GetProfFilefull(): string;
-
-function GetProfFilefull_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getproffilefull_wrap';
-
-procedure SetProfFilefull(constref str : string);
-
-procedure SetProfFilefull_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setproffilefull_wrap';
-
-function GetManFile(): string;
-
-function GetManFile_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmanfile_wrap';
-
-procedure SetManFile(constref str : string);
-
-procedure SetManFile_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmanfile_wrap';
-
-function GetManFilefull(): string;
-
-function GetManFilefull_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmanfilefull_wrap';
-
-procedure SetManFilefull(constref str : string);
-
-procedure SetManFilefull_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmanfilefull_wrap';
-
-function GetOffSeasonFile(): string;
-
-function GetOffSeasonFile_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getoffseasonfile_wrap';
-
-procedure SetOffSeasonFile(constref str : string);
-
-procedure SetOffSeasonFile_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setoffseasonfile_wrap';
-
-function GetOffSeasonFilefull(): string;
-
-function GetOffSeasonFilefull_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getoffseasonfilefull_wrap';
-
-procedure SetOffSeasonFilefull(constref str : string);
-
-procedure SetOffSeasonFilefull_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setoffseasonfilefull_wrap';
-
-function GetObservationsFile(): string;
-
-function GetObservationsFile_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsfile_wrap';
-
-procedure SetObservationsFile(constref str : string);
-
-procedure SetObservationsFile_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsfile_wrap';
-
-function GetObservationsFilefull(): string;
-
-function GetObservationsFilefull_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsfilefull_wrap';
-
-procedure SetObservationsFilefull(constref str : string);
-
-procedure SetObservationsFilefull_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsfilefull_wrap';
-
-
-function GetObservationsDescription(): string;
-
-function GetObservationsDescription_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsdescription_wrap';
-
-procedure SetObservationsDescription(constref str : string);
-
-procedure SetObservationsDescription_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsdescription_wrap';
-
-function GetGroundWaterFile(): string;
-
-function GetGroundWaterFile_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getgroundwaterfile_wrap';
-
-procedure SetGroundWaterFile(constref str : string);
-
-procedure SetGroundWaterFile_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterfile_wrap';
-
-function GetGroundWaterFilefull(): string;
-
-function GetGroundWaterFilefull_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getgroundwaterfilefull_wrap';
-
-procedure SetGroundWaterFilefull(constref str : string);
-
-procedure SetGroundWaterFilefull_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterfilefull_wrap';
-
-
-function LeapYear(constref Year : integer) : boolean;
-        external 'aquacrop' name '__ac_global_MOD_leapyear';
 
 procedure CheckFilesInProject(
             constref TempFullFilename : string;
@@ -844,171 +662,123 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
-function GetManagement_Cuttings_Considered(): boolean;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_considered_wrap';
+function GetTemperatureRecord(): rep_clim;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord';
 
-function GetManagement_Cuttings_CGCPlus(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cgcplus';
+function __GetTemperatureRecord_DataType() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_datatype';
 
-function GetManagement_Cuttings_CCcut(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cccut';
+function GetTemperatureRecord_DataType() : rep_datatype;
 
-function GetManagement_Cuttings_Day1(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_day1';
+function GetTemperatureRecord_FromD() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromd';
 
-function GetManagement_Cuttings_NrDays(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_nrdays';
+function GetTemperatureRecord_FromM() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromm';
 
-function GetManagement_Cuttings_Generate(): boolean;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_generate_wrap';
+function GetTemperatureRecord_FromY() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromy';
 
-function __GetManagement_Cuttings_Criterion(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_criterion';
+function GetTemperatureRecord_ToD() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_tod';
 
-function GetManagement_Cuttings_Criterion(): rep_TimeCuttings;
+function GetTemperatureRecord_ToM() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_tom';
 
-function GetManagement_Cuttings_HarvestEnd(): boolean;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_harvestend_wrap';
+function GetTemperatureRecord_ToY() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_toy';
 
-function GetManagement_Cuttings_FirstDayNr(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_firstdaynr';
+function GetTemperatureRecord_FromDayNr() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromdaynr';
 
-procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_considered_wrap';
+function GetTemperatureRecord_ToDayNr() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_todaynr';
 
-procedure SetManagement_Cuttings_CCcut(constref CCcut : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cccut';
+function GetTemperatureRecord_NrObs() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_nrobs';
 
-procedure SetManagement_Cuttings_CGCPlus(constref CGCPlus : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cgcplus';
+function GetTemperatureRecord_FromString(): string;
 
-procedure SetManagement_Cuttings_Day1(constref Day1 : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_day1';
+function GetTemperatureRecord_FromString_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_fromstring_wrap';
 
-procedure SetManagement_Cuttings_NrDays(constref NrDays : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_nrdays';
+function GetTemperatureRecord_ToString() : string;
 
-procedure SetManagement_Cuttings_Generate(constref Generate : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_generate_wrap';
+function GetTemperatureRecord_ToString_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_tostring_wrap';
 
-procedure __SetManagement_Cuttings_Criterion(constref Criterion : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_criterion';
+procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord';
 
-procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings);
+procedure __SetTemperatureRecord_DataType(constref DataType : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype';
 
-procedure SetManagement_Cuttings_HarvestEnd(constref HarvestEnd : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_harvestend_wrap';
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
 
-procedure SetManagement_Cuttings_FirstDayNr(constref FirstDayNr : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_firstdaynr';
+procedure SetTemperatureRecord_FromD(constref FromD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromd';
 
-function GetManagement_Mulch(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_mulch';
+procedure SetTemperatureRecord_FromM(constref FromM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromm';
 
-function GetManagement_SoilCoverBefore(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_soilcoverbefore';
+procedure SetTemperatureRecord_FromY(constref FromY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromy';
 
-function GetManagement_SoilCoverAfter(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_soilcoverafter';
+procedure SetTemperatureRecord_ToD(constref ToD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tod';
 
-function GetManagement_EffectMulchOffS(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_effectmulchoffs';
+procedure SetTemperatureRecord_ToM(constref ToM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tom';
 
-function GetManagement_EffectMulchInS(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_effectmulchins';
+procedure SetTemperatureRecord_ToY(constref ToY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_toy';
 
-function GetManagement_FertilityStress(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_fertilitystress';
+procedure SetTemperatureRecord_FromDayNr(constref FromDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromdaynr';
 
-function GetManagement_BundHeight(): double;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_bundheight';
+procedure SetTemperatureRecord_ToDayNr(constref ToDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_todaynr';
 
-function GetManagement_RunoffOn(): boolean;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_runoffon_wrap';
+procedure SetTemperatureRecord_NrObs(constref NrObs : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_nrobs';
 
-function GetManagement_CNcorrection(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cncorrection';
+procedure SetTemperatureRecord_FromString(constref str : string);
 
-function GetManagement_WeedRC(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedrc';
+procedure SetTemperatureRecord_FromString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_fromstring_wrap';
 
-function GetManagement_WeedDeltaRC(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_weeddeltarc';
+procedure SetTemperatureRecord_ToString(constref str : string);
 
-function GetManagement_WeedShape(): double;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedshape';
+procedure SetTemperatureRecord_ToString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
-function GetManagement_WeedAdj(): shortint;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedadj';
+function GetTemperatureFile(): string;
 
-procedure SetManagement_Mulch(constref Mulch : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_mulch';
+function GetTemperatureFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturefile_wrap';
 
-procedure SetManagement_SoilCoverBefore(constref Mulch : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_soilcoverbefore';
+procedure SetTemperatureFile(constref str : string);
 
-procedure SetManagement_SoilCoverAfter(constref After : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_soilcoverafter';
+procedure SetTemperatureFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefile_wrap';
 
-procedure SetManagement_EffectMulchOffS(constref EffectMulchOffS : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_effectmulchoffs';
+function GetTemperatureFilefull(): string;
 
-procedure SetManagement_EffectMulchInS(constref EffectMulchInS : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_effectmulchins';
+function GetTemperatureFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturefilefull_wrap';
 
-procedure SetManagement_FertilityStress(constref FertilityStress : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_fertilitystress';
+procedure SetTemperatureFilefull(constref str : string);
 
-procedure SetManagement_BundHeight(constref BundHeight : double);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_bundheight';
-
-procedure SetManagement_RunOffOn(constref RunOffOn : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_runoffon_wrap';
-
-procedure SetManagement_CNcorrection(constref CNcorrection : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cncorrection';
-
-procedure SetManagement_WeedRC(constref WeedRC : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedrc';
-
-procedure SetManagement_WeedDeltaRC(constref WeedDeltaRC : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_weeddeltarc';
-
-procedure SetManagement_WeedShape(constref WeedShape : double);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedshape';
-
-procedure SetManagement_WeedAdj(constref WeedAdj : shortint);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedadj';
-
-function GetCropFileSet(): rep_CropFileSet;
-        external 'aquacrop' name '__ac_global_MOD_getcropfileset';
-
-procedure SetCropFileSet_DaysFromSenescenceToEnd(constref DaysFromSenescenceToEnd : double);
-        external 'aquacrop' name '__ac_global_MOD_setcropfileset_daysfromsenescencetoend';
-
-procedure SetCropFileSet_DaysToHarvest(constref DaysToHarvest : double);
-        external 'aquacrop' name '__ac_global_MOD_setcropfileset_daystoharvest';
-
-procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescenceToEnd : double);
-        external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaysfromsenescencetoend';
-
-procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
-        external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
-
-function GetRootZoneSalt(): rep_RootZoneSalt;
-        external 'aquacrop' name '__ac_global_MOD_getrootzonesalt';
-
-procedure SetRootZoneSalt_ECe(constref ECe : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ece';
-
-procedure SetRootZoneSalt_ECsw(constref ECsw : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecsw';
-
-procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecswfc';
-
-procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
-        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
+procedure SetTemperatureFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefilefull_wrap';
 
 
 implementation
@@ -1152,6 +922,61 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+function GetTemperatureRecord_DataType(): rep_datatype;
+var
+    int_datatype : integer;
+begin;
+    int_datatype := __GetTemperatureRecord_DataType();
+    GetTemperatureRecord_DataType := rep_DataType(int_datatype);
+end;
+
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+var
+   int_datatype : integer;
+
+begin;
+   int_datatype := ord(DataType);
+   __SetTemperatureRecord_DataType(int_datatype); 
+end;
+
+function GetTemperatureRecord_FromString(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetTemperatureRecord_FromString_wrap();
+    GetTemperatureRecord_FromString := AnsiString(p);
+end;
+
+function GetTemperatureRecord_ToString(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetTemperatureRecord_ToString_wrap();
+    GetTemperatureRecord_toString := AnsiString(p);
+end;
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetTemperatureRecord_FromString_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetTemperatureRecord_ToString_wrap(p, strlen);
+end;
+
 procedure GetCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
@@ -1167,6 +992,7 @@ begin;
     GetCO2Description_wrap(p1, strlen1, p2, strlen2);
     CO2Description := AnsiString(p2);
 end;
+
 
 function GetCO2File(): string;
 var
@@ -1195,6 +1021,7 @@ var
     p : PChar;
 
 begin;
+
     p := GetEToFile_wrap();
     GetEToFile := AnsiString(p);
 end;
@@ -1743,24 +1570,101 @@ begin;
 end;
 
 
-function GetCropFileFull(): string;
+function GetTemperatureFile(): string;
 var
-    p : PChar;
+     p : PChar;
 
 begin;
-    p := GetCropFileFull_wrap();
-    GetCropFileFull := AnsiString(p);
+     p := GetTemperatureFile_wrap();
+     GetTemperatureFile := AnsiString(p);
 end;
 
 
-procedure SetCropFileFull(constref str : string);
+procedure SetTemperatureFile(constref str : string);
 var
-    p : PChar;
-    strlen : integer;
+     p : PChar;
+     strlen : integer;
+
 begin;
-    p := PChar(str);
-    strlen := Length(str);
-    SetCropFileFull_wrap(p, strlen);
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureFile_wrap(p, strlen);
+end;
+
+function GetTemperatureFilefull(): string;
+var
+     p : PChar;
+
+begin;
+     p := GetTemperatureFilefull_wrap();
+     GetTemperatureFilefull := AnsiString(p);
+end;
+
+
+procedure SetTemperatureFilefull(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureFilefull_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureRecord_FromString_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureRecord_ToString_wrap(p, strlen);
+end;
+
+
+function GetTemperatureRecord() : rep_clim;
+begin
+    GetTemperatureRecord.DataType := GetTemperatureRecord_DataType();
+    GetTemperatureRecord.FromD    := GetTemperatureRecord_FromD();
+    GetTemperatureRecord.FromM    := GetTemperatureRecord_FromM();
+    GetTemperatureRecord.FromY    := GetTemperatureRecord_FromY();
+    GetTemperatureRecord.ToD      := GetTemperatureRecord_ToD();
+    GetTemperatureRecord.ToM      := GetTemperatureRecord_ToM();
+    GetTemperatureRecord.ToY      := GetTemperatureRecord_ToY();
+    GetTemperatureRecord.ToDayNr  := GetTemperatureRecord_ToDayNr();
+    GetTemperatureRecord.FromDayNr:= GetTemperatureRecord_FromDayNr();
+    GetTemperatureRecord.NrObs    := GetTemperatureRecord_NrObs();
+    GetTemperatureRecord.FromString := GetTemperatureRecord_FromString();
+    GetTemperatureRecord.ToString   := GetTemperatureRecord_ToString();
+end;
+
+procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
+begin
+    SetTemperatureRecord_DataType(TemperatureRecord.DataType);
+    SetTemperatureRecord_FromD(TemperatureRecord.FromD);
+    SetTemperatureRecord_FromM(TemperatureRecord.FromM);
+    SetTemperatureRecord_FromY(TemperatureRecord.FromY);
+    SetTemperatureRecord_ToD(TemperatureRecord.ToD);
+    SetTemperatureRecord_ToM(TemperatureRecord.ToM);
+    SetTemperatureRecord_ToY(TemperatureRecord.ToY);
+    SetTemperatureRecord_ToDayNr(TemperatureRecord.ToDayNr);
+    SetTemperatureRecord_FromDayNr(TemperatureRecord.FromDayNr);
+    SetTemperatureRecord_NrObs(TemperatureRecord.NrObs);
+    SetTemperatureRecord_FromString(TemperatureRecord.FromString);
+    SetTemperatureRecord_ToString(TemperatureRecord.ToString);
 end;
 
 

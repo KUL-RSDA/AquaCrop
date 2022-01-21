@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run;
+uses Global, interface_global, interface_run, interface_tempprocessing;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -125,7 +125,7 @@ WRITELN(fRun,'    RunNr     Day1   Month1    Year1     Rain      ETo       GD   
              '    SaltIn   SaltOut    SaltUp  SaltProf',
              '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr',
              '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-WRITELN(fRun,'                                           mm       mm    캜.day    ppm',
+WRITELN(fRun,'                                           mm       mm    째C.day    ppm',
              '        mm       mm       mm       mm       mm       mm        %       mm       mm        %',
              '    ton/ha    ton/ha    ton/ha    ton/ha',
              '      days       %        %        %        %        %        %  ',
@@ -272,9 +272,9 @@ IF Out1Wabal THEN
 IF Out2Crop THEN
    BEGIN
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      THEN WRITE(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha')
-      ELSE WRITELN(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      ELSE WRITELN(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
    END;
 // D3. Profile/Root zone - Soil water content
@@ -322,7 +322,7 @@ IF Out6CompEC THEN
       ELSE WRITELN(fDaily,NodeD:11:2);
    END;
 // D7. Climate input parameters
-IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       캜        캜        캜       ppm');
+IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       째C        째C        째C       ppm');
 END; (* WriteTitleDailyResults *)
 
 
@@ -851,13 +851,13 @@ IF (GetRainFile() <> '(None)')
         END;
 
 // 3. Temperature file
-IF (TemperatureFile <> '(None)')
+IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
-        totalname := TemperatureFilefull;
+        totalname := GetTemperatureFilefull();
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
-                CASE TemperatureRecord.DataType OF
+                CASE GetTemperatureRecord().DataType OF
                   Daily   : BEGIN
                             Assign(fTemp,totalname);
                             Reset(fTemp);
@@ -869,7 +869,7 @@ IF (TemperatureFile <> '(None)')
                             READLN(fTemp);
                             READLN(fTemp);
                             READLN(fTemp);
-                            FOR i := TemperatureRecord.FromDayNr TO (FromSimDay - 1) DO READLN(fTemp);
+                            FOR i := GetTemperatureRecord().FromDayNr TO (FromSimDay - 1) DO READLN(fTemp);
                             READLN(fTemp,StringREAD);  // i.e. DayNri
                             SplitStringInTwoParams(StringREAD,Tmin,Tmax);
                             END;
@@ -896,7 +896,7 @@ IF (TemperatureFile <> '(None)')
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
-                    CASE TemperatureRecord.DataType OF
+                    CASE GetTemperatureRecord().DataType OF
                          Daily   : BEGIN
                                    IF Eof(fTemp)
                                       THEN BEGIN
@@ -932,7 +932,7 @@ IF (TemperatureFile <> '(None)')
                     WRITELN(fTempS,Tmin:10:4,Tmax:10:4);
                     END;
                 // Close files
-                IF (TemperatureRecord.DataType = Daily) THEN Close(fTemp);
+                IF (GetTemperatureRecord().DataType = Daily) THEN Close(fTemp);
                 Close(fTempS);
                 END
            ELSE BEGIN
@@ -974,7 +974,7 @@ IF (GetRainFile() <> '(None)') THEN
            END;
    END;
 // Temperature file
-IF (TemperatureFile <> '(None)')
+IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
         totalname := CONCAT(PathNameSimul,'TempData.SIM');
         Assign(fTempSIM,totalname);
@@ -1001,12 +1001,12 @@ VAR totalname : string;
     DayX : LongInt;
 BEGIN
 Simulation.SumGDD := 0;
-IF (TemperatureFile <> '(None)')
+IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
-        totalname := TemperatureFilefull;
+        totalname := GetTemperatureFilefull();
         IF FileExists(totalname)
            THEN BEGIN
-                CASE TemperatureRecord.DataType OF
+                CASE GetTemperatureRecord().DataType OF
                   Daily   : BEGIN
                             Assign(fTemp,totalname);
                             Reset(fTemp);
@@ -1019,7 +1019,7 @@ IF (TemperatureFile <> '(None)')
                             READLN(fTemp);
                             READLN(fTemp);
                             // days before first day of simulation (= DayNri)
-                            FOR i := TemperatureRecord.FromDayNr TO (DayNri - 1) DO
+                            FOR i := GetTemperatureRecord().FromDayNr TO (DayNri - 1) DO
                                 BEGIN
                                 IF (i < Crop.Day1)
                                    THEN READLN(fTemp)
@@ -1088,7 +1088,7 @@ IF (TemperatureFile <> '(None)')
                 //
                 END;
         END;
-IF (TemperatureFile = '(None)')
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,SimulParam.GDDMethod) * (DayNri - Crop.Day1 + 1);
         IF (Simulation.SumGDD < 0) THEN Simulation.SumGDD := 0;
@@ -1365,7 +1365,7 @@ IF ((Crop.Planting = Seed) AND (Simulation.FromDayNr <= Crop.Day1))
 Simulation.DelayedDays := 0;
 
 // 3. create temperature file covering crop cycle
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    IF (Simulation.ToDayNr < Crop.DayN)
       THEN TemperatureFileCoveringCropPeriod(Crop.Day1,Simulation.TodayNr)
@@ -2906,9 +2906,11 @@ IF (Simulation.SumEToStress >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= Simulation.ToDayNr) THEN
    BEGIN
-   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
-   IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
-   IF (TemperatureFile = '(None)')
+
+   IF (EToFile <> '(None)') THEN READLN(fEToSIM,ETo);
+   IF (RainFile <> '(None)') THEN READLN(fRainSIM,Rain);
+   IF (GetTemperatureFile() = '(None)')
+
       THEN BEGIN
            Tmin := SimulParam.Tmin;
            Tmax := SimulParam.Tmax;
@@ -2996,9 +2998,11 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
     BEGIN
-    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
-    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
-    IF (TemperatureFile <> '(None)') THEN Close(fTempSIM);
+
+    IF (EToFile <> '(None)') THEN Close(fEToSIM);
+    IF (RainFile <> '(None)') THEN Close(fRainSIM);
+    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
+
     END; (* CloseClimateFiles *)
 
     PROCEDURE CloseIrrigationFile(VAR fIrri : text);
