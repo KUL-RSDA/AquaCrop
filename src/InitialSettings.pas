@@ -222,9 +222,9 @@ implementation
 
 
  // 9. Observations file
- ObservationsFile := '(None)';
- ObservationsFileFull := ObservationsFile;
- ObservationsDescription := 'No field observations';
+ SetObservationsFile('(None)');
+ SetObservationsFileFull(GetObservationsFile());
+ SetObservationsDescription('No field observations');
 
  // 10. Output files
  OutputName := 'Project';

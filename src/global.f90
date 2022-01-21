@@ -174,6 +174,9 @@ character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
+character(len=:), allocatable :: ObservationsFile
+character(len=:), allocatable :: ObservationsFilefull
+character(len=:), allocatable :: ObservationsDescription
 character(len=:), allocatable :: OffSeasonFile
 character(len=:), allocatable :: OffSeasonFilefull
 character(len=:), allocatable :: GroundWaterFile
@@ -1995,6 +1998,48 @@ subroutine SetOffSeasonFilefull(str)
 
     OffSeasonFilefull = str
 end subroutine SetOffSeasonFilefull
+
+function GetObservationsFile() result(str)
+    !! Getter for the "ObservationsFile" global variable.
+    character(len=len(ObservationsFile)) :: str
+
+    str = ObservationsFile
+end function GetObservationsFile
+
+subroutine SetObservationsFile(str)
+    !! Setter for the "ObservationsFile" global variable.
+    character(len=*), intent(in) :: str
+
+    ObservationsFile = str
+end subroutine SetObservationsFile
+
+function GetObservationsFilefull() result(str)
+    !! Getter for the "ObservationsFilefull" global variable.
+    character(len=len(ObservationsFilefull)) :: str
+
+    str = ObservationsFilefull
+end function GetObservationsFilefull
+
+subroutine SetObservationsFilefull(str)
+    !! Setter for the "ObservationsFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    ObservationsFilefull = str
+end subroutine SetObservationsFilefull
+
+function GetObservationsDescription() result(str)
+    !! Getter for the "ObservationsDescription" global variable.
+    character(len=len(ObservationsDescription)) :: str
+
+    str = ObservationsDescription
+end function GetObservationsDescription
+
+subroutine SetObservationsDescription(str)
+    !! Setter for the "ObservationsDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ObservationsDescription = str
+end subroutine SetObservationsDescription
 
 function GetGroundWaterFile() result(str)
     !! Getter for the "GroundWaterFile" global variable.
