@@ -1195,6 +1195,7 @@ VAR f0,fClim : TextFile;
     i,Runi : ShortInt;
     TotDepth : double;
     VersionNr : double;
+    FertStress : shortint;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -1404,10 +1405,12 @@ IF (GetManFile() = '(None)')
         SetManFileFull(CONCAT(Trim(TempString),GetManFile()));
         LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
+        FertStress := GetManagement_FertilityStress();
         TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
                           Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
                           Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
-                          Simulation.EffectStress.RedCCX,Management.FertilityStress);
+                          Simulation.EffectStress.RedCCX,FertStress);
+        SetManagement_FertilityStress(FertStress);
         END;
 
 // 6. Soil Profile
@@ -1507,7 +1510,7 @@ IF (Trim(TempString) = 'KeepSWC')
                Simulation.ECeIni[i] := ECeComp(Compartment[i]);
                END;
            // ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN - CHECK LATER
-           IF (Management.BundHeight >= 0.01) THEN
+           IF (GetManagement_BundHeight() >= 0.01) THEN
               BEGIN
               Simulation.SurfaceStorageIni := SurfaceStorage;
               Simulation.ECStorageIni := ECStorage;
@@ -2091,7 +2094,7 @@ FOR Dayi := 1 TO L1234 DO
                // green canopy cover of the crop (CCw) in weed-infested field (CCi is CC of crop and weeds)
                fCCx := 1.0; // only for non perennials (no self-thinning)
                IF (DeltaWeedStress <> 0)
-                  THEN WeedCorrection := GetWeedRC(DayCC,SumGDDforPlot,fCCx,WeedStress,Management.WeedAdj,
+                  THEN WeedCorrection := GetWeedRC(DayCC,SumGDDforPlot,fCCx,WeedStress,GetManagement_WeedAdj(),
                   DeltaWeedStress,L12SF,L123,GDDL12SF,GDDL123,TheModeCycle)
                   ELSE WeedCorrection := WeedStress;
                CCw := CCi * (1 - WeedCorrection/100);
