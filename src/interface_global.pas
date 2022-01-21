@@ -693,8 +693,10 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
+function GetManagement_Cuttings_Considered_wrap(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_considered_wrap';
+
 function GetManagement_Cuttings_Considered(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_considered';
 
 function GetManagement_Cuttings_CGCPlus(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cgcplus';
@@ -708,22 +710,28 @@ function GetManagement_Cuttings_Day1(): integer;
 function GetManagement_Cuttings_NrDays(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_nrdays';
 
+function GetManagement_Cuttings_Generate_wrap(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_generate_wrap';
+
 function GetManagement_Cuttings_Generate(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_generate';
 
 function __GetManagement_Cuttings_Criterion(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_criterion';
 
 function GetManagement_Cuttings_Criterion(): rep_TimeCuttings;
 
+function GetManagement_Cuttings_HarvestEnd_wrap(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_harvestend_wrap';
+
 function GetManagement_Cuttings_HarvestEnd(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_harvestend';
 
 function GetManagement_Cuttings_FirstDayNr(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_firstdaynr';
 
+procedure SetManagement_Cuttings_Considered_wrap(constref Considered : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_considered_wrap';
+
 procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_considered';
 
 procedure SetManagement_Cuttings_CCcut(constref CCcut : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cccut';
@@ -737,16 +745,20 @@ procedure SetManagement_Cuttings_Day1(constref Day1 : integer);
 procedure SetManagement_Cuttings_NrDays(constref NrDays : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_nrdays';
 
+procedure SetManagement_Cuttings_Generate_wrap(constref Generate : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_generate_wrap';
+
 procedure SetManagement_Cuttings_Generate(constref Generate : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_generate';
 
 procedure __SetManagement_Cuttings_Criterion(constref Criterion : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_criterion';
 
 procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings);
 
+procedure SetManagement_Cuttings_HarvestEnd_wrap(constref HarvestEnd : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_harvestend_wrap';
+
 procedure SetManagement_Cuttings_HarvestEnd(constref HarvestEnd : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_harvestend';
 
 procedure SetManagement_Cuttings_FirstDayNr(constref FirstDayNr : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_firstdaynr';
@@ -772,8 +784,10 @@ function GetManagement_FertilityStress(): shortint;
 function GetManagement_BundHeight(): double;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_bundheight';
 
+function GetManagement_RunoffOn_wrap(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_runoffon_wrap';
+
 function GetManagement_RunoffOn(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_runoffon';
 
 function GetManagement_CNcorrection(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cncorrection';
@@ -789,9 +803,6 @@ function GetManagement_WeedShape(): double;
 
 function GetManagement_WeedAdj(): shortint;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_weedadj';
-
-function GetManagement_Cuttings(): rep_Cuttings;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings';
 
 procedure SetManagement_Mulch(constref Mulch : shortint);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_mulch';
@@ -814,8 +825,10 @@ procedure SetManagement_FertilityStress(constref FertilityStress : shortint);
 procedure SetManagement_BundHeight(constref BundHeight : double);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_bundheight';
 
+procedure SetManagement_RunOffOn_wrap(constref RunOffOn : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_runoffon_wrap';
+
 procedure SetManagement_RunOffOn(constref RunOffOn : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_runoffon';
 
 procedure SetManagement_CNcorrection(constref CNcorrection : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cncorrection';
@@ -1351,6 +1364,45 @@ begin;
     SetCropFile_wrap(p, strlen);
 end;
 
+function GetManagement_Cuttings_Considered() : boolean;
+begin;
+    GetManagement_Cuttings_Considered := GetManagement_Cuttings_Considered_wrap()
+end;
+
+function GetManagement_Cuttings_Generate() : boolean;
+begin;
+    GetManagement_Cuttings_Generate := GetManagement_Cuttings_Generate_wrap()
+end;
+
+function GetManagement_Cuttings_HarvestEnd() : boolean;
+begin;
+    GetManagement_Cuttings_HarvestEnd := GetManagement_Cuttings_HarvestEnd_wrap()
+end;
+
+procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
+begin;
+    SetManagement_Cuttings_Considered_wrap(Considered);
+end;
+
+procedure SetManagement_Cuttings_Generate(constref Generate : boolean);
+begin;
+    SetManagement_Cuttings_Generate_wrap(Generate);
+end;
+
+procedure SetManagement_Cuttings_HarvestEnd(constref HarvestEnd : boolean);
+begin;
+    SetManagement_Cuttings_HarvestEnd_wrap(HarvestEnd);
+end;
+
+function GetManagement_RunoffOn() : boolean;
+begin;
+    GetManagement_RunoffOn := GetManagement_RunoffOn_wrap()
+end;
+
+procedure SetManagement_RunoffOn(constref RunoffOn : boolean);
+begin;
+    SetManagement_RunoffOn_wrap(RunoffOn);
+end;
 
 
 initialization
