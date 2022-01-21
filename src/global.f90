@@ -249,6 +249,7 @@ character(len=:), allocatable :: OffSeasonFilefull
 character(len=:), allocatable :: GroundWaterFile
 character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
+character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: ProjectFile
@@ -1734,6 +1735,20 @@ subroutine SetClimateFile(str)
     
     ClimateFile = str
 end subroutine SetClimateFile
+
+function GetClimateFileFull() result(str)
+    !! Getter for the "ClimateFileFull" global variable.
+    character(len=len(ClimateFileFull)) :: str
+    
+    str = ClimateFileFull
+end function GetClimateFileFull
+
+subroutine SetClimateFileFull(str)
+    !! Setter for the "ClimateFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateFileFull = str
+end subroutine SetClimateFileFull
 
 function GetClimFile() result(str)
     !! Getter for the "ClimFile" global variable.
