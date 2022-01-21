@@ -925,124 +925,128 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
 
-function GetSumWalBal_Epot() : double;
+function GetSumWaBal() : rep_sum;
+
+function GetSumWaBal_Epot() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_epot';
 
-function GetSumWalBal_Tpot() : double;
+function GetSumWaBal_Tpot() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_tpot';
 
-function GetSumWalBal_Rain() : double;
+function GetSumWaBal_Rain() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_rain';
 
-function GetSumWalBal_Irrigation() : double;
+function GetSumWaBal_Irrigation() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_irrigation';
 
-function GetSumWalBal_Infiltrated() : double;
+function GetSumWaBal_Infiltrated() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_infiltrated';
 
-function GetSumWalBal_Runoff() : double;
+function GetSumWaBal_Runoff() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_runoff';
 
-function GetSumWalBal_Drain() : double;
+function GetSumWaBal_Drain() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_drain';
 
-function GetSumWalBal_Eact() : double;
+function GetSumWaBal_Eact() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_eact';
 
-function GetSumWalBal_Tact() : double;
+function GetSumWaBal_Tact() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_tact';
 
-function GetSumWalBal_TrW() : double;
+function GetSumWaBal_TrW() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_trw';
 
-function GetSumWalBal_ECropCycle() : double;
+function GetSumWaBal_ECropCycle() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_ecropcycle';
 
-function GetSumWalBal_CRwater() : double;
+function GetSumWaBal_CRwater() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_crwater';
 
-function GetSumWalBal_Biomass() : double;
+function GetSumWaBal_Biomass() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomass';
 
-function GetSumWalBal_yieldpart() : double;
+function GetSumWaBal_YieldPart() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_yieldpart';
 
-function GetSumWalBal_BiomassPot() : double;
+function GetSumWaBal_BiomassPot() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomasspot';
 
-function GetSumWalBal_BiomasUnlim() : double;
+function GetSumWaBal_BiomassUnlim() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomassunlim';
 
-function GetSumWalBal_BiomassTot() : double;
+function GetSumWaBal_BiomassTot() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomasstot';
 
-function GetSumWalBal_SaltIn() : double;
+function GetSumWaBal_SaltIn() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_saltin';
 
-function GetSumWalBal_SaltOut() : double;
+function GetSumWaBal_SaltOut() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_saltout';
 
-function GetSumWalBal_CRsalt() : double;
+function GetSumWaBal_CRsalt() : double;
         external 'aquacrop' name '__ac_global_MOD_getsumwabal_crsalt';
 
-procedure SetSumWalBal_Epot(constref Epot : double);
+procedure SetSumWaBal(constref SumWaBal : rep_sum);
+
+procedure SetSumWaBal_Epot(constref Epot : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_epot';
 
-procedure SetSumWalBal_Tpot(constref Tpot : double);
+procedure SetSumWaBal_Tpot(constref Tpot : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_tpot';
 
-procedure SetSumWalBal_Rain(constref Rain : double);
+procedure SetSumWaBal_Rain(constref Rain : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_rain';
 
-procedure SetSumWalBal_Irrigation(constref Irrigation : double);
+procedure SetSumWaBal_Irrigation(constref Irrigation : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_irrigation';
 
-procedure SetSumWalBal_Infiltrated(constref Infiltrated : double);
+procedure SetSumWaBal_Infiltrated(constref Infiltrated : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_infiltrated';
 
-procedure SetSumWalBal_Runoff(constref Runoff : double);
+procedure SetSumWaBal_Runoff(constref Runoff : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_runoff';
 
-procedure SetSumWalBal_Drain(constref Drain : double);
+procedure SetSumWaBal_Drain(constref Drain : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_drain';
 
-procedure SetSumWalBal_Eact(constref Eact : double);
+procedure SetSumWaBal_Eact(constref Eact : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_eact';
 
-procedure SetSumWalBal_Tact(constref Tact : double);
+procedure SetSumWaBal_Tact(constref Tact : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_tact';
 
-procedure SetSumWalBal_TrW(constref TrW : double);
+procedure SetSumWaBal_TrW(constref TrW : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_trw';
 
-procedure SetSumWalBal_ECropCycle(constref ECropCycle : double);
+procedure SetSumWaBal_ECropCycle(constref ECropCycle : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_ecropcycle';
 
-procedure SetSumWalBal_CRwater(constref CRwater : double);
+procedure SetSumWaBal_CRwater(constref CRwater : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_crwater';
 
-procedure SetSumWalBal_Biomass(constref Biomass : double);
+procedure SetSumWaBal_Biomass(constref Biomass : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomass';
 
-procedure SetSumWalBal_yieldpart(constref yieldpart : double);
+procedure SetSumWaBal_yieldpart(constref yieldpart : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_yieldpart';
 
-procedure SetSumWalBal_BiomassPot(constref BiomassPot : double);
+procedure SetSumWaBal_BiomassPot(constref BiomassPot : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomasspot';
 
-procedure SetSumWalBal_BiomasUnlim(constref BiomassUnlim : double);
+procedure SetSumWaBal_BiomassUnlim(constref BiomassUnlim : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomassunlim';
 
-procedure SetSumWalBal_BiomassTot(constref BiomassTot : double);
+procedure SetSumWaBal_BiomassTot(constref BiomassTot : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomasstot';
 
-procedure SetSumWalBal_SaltIn(constref SaltIn : double);
+procedure SetSumWaBal_SaltIn(constref SaltIn : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_saltin';
 
-procedure SetSumWalBal_SaltOut(constref SaltOut : double);
+procedure SetSumWaBal_SaltOut(constref SaltOut : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_saltout';
 
-procedure SetSumWalBal_CRsalt(constref CRsalt : double);
+procedure SetSumWaBal_CRsalt(constref CRsalt : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_crsalt';
 
 implementation
@@ -1679,7 +1683,7 @@ begin;
     GetSumWaBal.Tpot := GetSumWaBal_Tpot();
     GetSumWaBal.Rain := GetSumWaBal_Rain();
     GetSumWaBal.Irrigation := GetSumWaBal_Irrigation();
-    GetSumWaBal.Infiltrated := GetSumWaBal_Infiltarted();
+    GetSumWaBal.Infiltrated := GetSumWaBal_Infiltrated();
     GetSumWaBal.Runoff := GetSumWaBal_Runoff();
     GetSumWaBal.Drain := GetSumWaBal_Drain();
     GetSumWaBal.Eact := GetSumWaBal_Eact();
@@ -1699,26 +1703,26 @@ end;
 
 procedure SetSumWaBal(constref SumWaBal : rep_sum);
 begin;
-    SetSumWaBal_Epot(SetSumWaBal.Epot);
-    SetSumWaBal_Tpot(SetSumWaBal.Tpot );
-    SetSumWaBal_Rain(SetSumWaBal.Rain);
-    SetSumWaBal_Irrigation(SetSumWaBal.Irrigation);
-    SetSumWaBal_Infiltarted(SetSumWaBal.Infiltrated);
-    SetSumWaBal_Runoff(SetSumWaBal.Runoff);
-    SetSumWaBal_Drain(SetSumWaBal.Drain);
-    SetSumWaBal_Eact(SetSumWaBal.Eact);
-    SetSumWaBal_Tact(SetSumWaBal.Tact);
-    SetSumWaBal_TrW(SetSumWaBal.TrW);
-    SetSumWaBal_ECropCycle(SetSumWaBal.ECropCycle);
-    SetSumWaBal_CRwater(SetSumWaBal.CRwater);
-    SetSumWaBal_Biomass(SetSumWaBal.Biomass);
-    SetSumWaBal_YieldPart(SetSumWaBal.YieldPart);
-    SetSumWaBal_BiomassPot(SetSumWaBal.BiomassPot);
-    SetSumWaBal_BiomassUnlim(SetSumWaBal.BiomassUnlim);
-    SetSumWaBal_BiomassTot(SetSumWaBal.BiomassTot);
-    SetSumWaBal_SaltIn(SetSumWaBal.SaltIn);
-    SetSumWaBal_SaltOut(SetSumWaBal.SaltOut);
-    SetSumWaBal_CRsalt(SetSumWaBal.CRsalt);
+    SetSumWaBal_Epot(SumWaBal.Epot);
+    SetSumWaBal_Tpot(SumWaBal.Tpot);
+    SetSumWaBal_Rain(SumWaBal.Rain);
+    SetSumWaBal_Irrigation(SumWaBal.Irrigation);
+    SetSumWaBal_Infiltrated(SumWaBal.Infiltrated);
+    SetSumWaBal_Runoff(SumWaBal.Runoff);
+    SetSumWaBal_Drain(SumWaBal.Drain);
+    SetSumWaBal_Eact(SumWaBal.Eact);
+    SetSumWaBal_Tact(SumWaBal.Tact);
+    SetSumWaBal_TrW(SumWaBal.TrW);
+    SetSumWaBal_ECropCycle(SumWaBal.ECropCycle);
+    SetSumWaBal_CRwater(SumWaBal.CRwater);
+    SetSumWaBal_Biomass(SumWaBal.Biomass);
+    SetSumWaBal_YieldPart(SumWaBal.YieldPart);
+    SetSumWaBal_BiomassPot(SumWaBal.BiomassPot);
+    SetSumWaBal_BiomassUnlim(SumWaBal.BiomassUnlim);
+    SetSumWaBal_BiomassTot(SumWaBal.BiomassTot);
+    SetSumWaBal_SaltIn(SumWaBal.SaltIn);
+    SetSumWaBal_SaltOut(SumWaBal.SaltOut);
+    SetSumWaBal_CRsalt(SumWaBal.CRsalt);
 end;
 
 

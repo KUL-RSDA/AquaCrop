@@ -2293,7 +2293,8 @@ VAR RepeatToDay : LongInt;
     HarvestNow : BOOLEAN;
     VirtualTimeCC,DayInSeason : INTEGER;
     SumGDDadjCC,RatDGDD : double;
-
+    Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, BiomassTot_temp : double;
+    YieldPart_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2691,7 +2692,9 @@ IF (CCiActual > 0) THEN
 
 
 (* 10. Potential biomass *)
-DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotNoS,GetSumWaBal_BiomassUnlim());
+BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
+DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotNoS,BiomassUnlim_temp);
+SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
 IF ((RootingDepth > 0) AND (NoMoreCrop = false))
@@ -2706,18 +2709,28 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
         StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
         // Biomass and yield
+        Biomass_temp := GetSumWaBal_Biomass();
+        BiomassPot_temp := GetSumWaBal_BiomassPot();
+        BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
+        BiomassTot_temp := GetSumWaBal_BiomassTot();
+        YieldPart_temp := GetSumWaBal_YieldPart();
         DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
                                  Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,StressTot.Salt,SumGDDadjCC,CCiActual,FracAssim,
                                  VirtualTimeCC,SumInterval,
-                                 GetSumWaBal_Biomass(),GetSumWaBal_BiomassPot(),GetSumWaBal_BiomassUnlim(),GetSumWaBal_BiomassTot(),
-                                 GetSumWaBal_YieldPart(),WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
+                                 Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
+                                 YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
                                  HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot,CCxWitheredTpotNoS,
                                  WeedRCi,CCiActualWeedInfested,TactWeedInfested,
                                  StressSFadjNEW,PreviousStressLevel,
                                  Transfer.Store,Transfer.Mobilize,
                                  Transfer.ToMobilize,Transfer.Bmobilized,Bin,Bout,
                                  TESTVALY);
+        SetSumWaBal_Biomass(Biomass_temp);
+        SetSumWaBal_BiomassPot(BiomassPot_temp);
+        SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
+        SetSumWaBal_BiomassTot(BiomassTot_temp);
+        SetSumWaBal_YieldPart(YieldPart_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;
@@ -3028,7 +3041,7 @@ CASE TheProjectType OF
                LoadSimulationRunProject(ProjectFileFull,(1));
                AdjustCompartments;
                SumWaBal_temp := GetSumWaBal();
-               GlobalZero(SumWabal);
+               GlobalZero(SumWabal_temp);
                SetSumWaBal(SumWaBal_temp);
                ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
                InitializeSimulationRun;
@@ -3047,7 +3060,7 @@ CASE TheProjectType OF
                    LoadSimulationRunProject(MultipleProjectFileFull,NrRun);
                    AdjustCompartments;
                    SumWaBal_temp := GetSumWaBal();
-                   GlobalZero(SumWabal);
+                   GlobalZero(SumWabal_temp);
                    SetSumWaBal(SumWaBal_temp);
                    ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
                    InitializeSimulationRun;
