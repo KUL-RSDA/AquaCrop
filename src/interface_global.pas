@@ -739,6 +739,43 @@ procedure SetOffSeasonFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setoffseasonfilefull_wrap';
 
+function GetObservationsFile(): string;
+
+function GetObservationsFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsfile_wrap';
+
+procedure SetObservationsFile(constref str : string);
+
+procedure SetObservationsFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsfile_wrap';
+
+function GetObservationsFilefull(): string;
+
+function GetObservationsFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsfilefull_wrap';
+
+procedure SetObservationsFilefull(constref str : string);
+
+procedure SetObservationsFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsfilefull_wrap';
+
+
+function GetObservationsDescription(): string;
+
+function GetObservationsDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsdescription_wrap';
+
+procedure SetObservationsDescription(constref str : string);
+
+procedure SetObservationsDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsdescription_wrap';
+
 function GetGroundWaterFile(): string;
 
 function GetGroundWaterFile_wrap(): PChar;
@@ -1283,6 +1320,66 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetOffSeasonFilefull_wrap(p, strlen);
+end;
+
+function GetObservationsFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetObservationsFile_wrap();
+    GetObservationsFile := AnsiString(p);
+end;
+
+procedure SetObservationsFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetObservationsFile_wrap(p, strlen);
+end;
+
+function GetObservationsFilefull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetObservationsFilefull_wrap();
+    GetObservationsFilefull := AnsiString(p);
+end;
+
+procedure SetObservationsFilefull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetObservationsFilefull_wrap(p, strlen);
+end;
+
+function GetObservationsDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetObservationsDescription_wrap();
+    GetObservationsDescription := AnsiString(p);
+end;
+
+procedure SetObservationsDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetObservationsDescription_wrap(p, strlen);
 end;
 
 

@@ -1190,7 +1190,7 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2 : string;
+    TempString,TempString1,TempString2,observations_descr : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -1550,18 +1550,20 @@ IF (GetOffSeasonFile() = '(None)')
 // 12. Field data
 READLN(f0); // Info Field data
 READLN(f0,TempString);  //Field dataFile
-ObservationsFile := Trim(TempString);
-IF (ObservationsFile = '(None)')
+SetObservationsFile(Trim(TempString));
+IF (GetObservationsFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //Path Field data File
-        ObservationsFileFull := ObservationsFile;
-        ObservationsDescription := 'No field observations';
+        SetObservationsFileFull(GetObservationsFile());
+        SetObservationsDescription('No field observations');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //Path Field data File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ObservationsFileFull := CONCAT(Trim(TempString),ObservationsFile);
-        GetFileDescription(ObservationsFileFull,ObservationsDescription);
+        SetObservationsFileFull(CONCAT(Trim(TempString),GetObservationsFile()));
+        observations_descr := GetObservationsDescription();
+        GetFileDescription(GetObservationsFileFull(),observations_descr);
+        SetObservationsDescription(observations_descr);
         END;
 
 Close(f0);

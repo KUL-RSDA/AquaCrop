@@ -25,6 +25,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetProfFilefull, &
                      GetManFile, &
                      GetManFilefull, &
+                     GetObservationsFile, &
+                     GetObservationsFilefull, &
+                     GetObservationsDescription, &
                      GetOffSeasonFile, &
                      GetOffSeasonFilefull, &
                      GetGroundWaterFile, &
@@ -52,6 +55,9 @@ use ac_global, only: CheckFilesInProject, &
                      SetProfFilefull, &
                      SetManFile, &
                      SetManFilefull, &
+                     SetObservationsFile, &
+                     SetObservationsFilefull, &
+                     SetObservationsDescription, &
                      SetOffSeasonFile, &
                      SetOffSeasonFilefull, &
                      SetGroundWaterFile, &
@@ -621,6 +627,61 @@ subroutine SetOffSeasonFilefull_wrap(OffSeasonFilefull, strlen)
     string = pointer2string(OffSeasonFilefull, strlen)
     call SetOffSeasonFilefull(string)
 end subroutine SetOffSeasonFilefull_wrap
+
+function GetObservationsFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsFile())
+end function GetObservationsFile_wrap
+
+subroutine SetObservationsFile_wrap(ObservationsFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsFile, strlen)
+    call SetObservationsFile(string)
+end subroutine SetObservationsFile_wrap
+
+
+function GetObservationsFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsFilefull())
+end function GetObservationsFilefull_wrap
+
+subroutine SetObservationsFilefull_wrap(ObservationsFilefull, strlen)
+    !! Wrapper for [[ac_global:SetObservationsFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsFilefull, strlen)
+    call SetObservationsFilefull(string)
+end subroutine SetObservationsFilefull_wrap
+
+function GetObservationsDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsDescription())
+end function GetObservationsDescription_wrap
+
+subroutine SetObservationsDescription_wrap(ObservationsDescription, strlen)
+    !! Wrapper for [[ac_global:SetObservationsDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsDescription, strlen)
+    call SetObservationsDescription(string)
+end subroutine SetObservationsDescription_wrap
 
 
 function GetGroundWaterFile_wrap() result(c_pointer)

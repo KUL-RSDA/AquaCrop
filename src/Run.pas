@@ -365,7 +365,7 @@ VAR dayi, monthi, yeari : INTEGER;
 
 BEGIN
 // open input file with field data
-Assign(fObs,ObservationsFileFull); // Observations recorded in File
+Assign(fObs,GetObservationsFileFull()); // Observations recorded in File
 Reset(fObs);
 READLN(fObs); // description
 READLN(fObs); // AquaCrop Version number
@@ -2871,7 +2871,7 @@ IF ((VirtualTimeCC+Simulation.DelayedDays + 1) <= Crop.DaysToFullCanopySF)
 //14.d Print ---------------------------------------
 IF (OutputAggregate > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,WPi,fDaily);
-IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -3033,12 +3033,12 @@ CASE TheProjectType OF
                InitializeSimulationRun;
                IF OutDaily THEN WriteTitleDailyResults(TheProjectType,(1),fDaily);
                IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,(1),fHarvest);
-               IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
+               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
                FileManagement((1),TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
                CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
                CloseIrrigationFile(fIrri);
                CloseManagementFile(fCuts);
-               IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
+               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
                END;
      TypePRM : BEGIN
                FOR NrRun := 1 TO Simulation.NrRuns DO
@@ -3050,12 +3050,12 @@ CASE TheProjectType OF
                    InitializeSimulationRun;
                    IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
                    IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-                   IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
                    FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
                    CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
                    CloseIrrigationFile(fIrri);
                    CloseManagementFile(fCuts);
-                   IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
                    END;
                END;
      else;
