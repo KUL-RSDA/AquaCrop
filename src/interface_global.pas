@@ -124,6 +124,13 @@ type
          Cuttings        : rep_Cuttings; // Multiple cuttings
          end;
 
+     rep_RootZoneSalt = Record
+         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
+         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
+         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
+         KsSalt : double;   // stress coefficient for salinity
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -990,6 +997,21 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
+
+function GetRootZoneSalt(): rep_RootZoneSalt;
+        external 'aquacrop' name '__ac_global_MOD_getrootzonesalt';
+
+procedure SetRootZoneSalt_ECe(constref ECe : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ece';
+
+procedure SetRootZoneSalt_ECsw(constref ECsw : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecsw';
+
+procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecswfc';
+
+procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
 
 
 implementation
