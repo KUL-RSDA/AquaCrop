@@ -2532,7 +2532,7 @@ end subroutine SetManagement_Cuttings_FirstDayNr
 type(rep_RootZoneSalt) function GetRootZoneSalt()
     !! Getter for the "RootZoneSalt" global variable.
 
-    GetRootZoneSalt= RootZoneSalt
+    GetRootZoneSalt = RootZoneSalt
 end function GetRootZoneSalt
 
 subroutine SetRootZoneSalt_ECe(ECe)
