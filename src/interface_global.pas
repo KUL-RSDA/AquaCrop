@@ -479,7 +479,6 @@ procedure SetIrriECw_PostSeason(constref PostSeason : double);
 function GetTemperatureRecord(): rep_clim;
          external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord';
 
-<<<<<<< HEAD
 function __GetTemperatureRecord_DataType() : integer;
          external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_datatype';
 
@@ -563,7 +562,6 @@ procedure SetTemperatureRecord_FromString_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_fromstring_wrap';
-<<<<<<< HEAD
 
 procedure SetTemperatureRecord_ToString(constref str : string);
 
