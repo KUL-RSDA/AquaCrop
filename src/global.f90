@@ -235,6 +235,7 @@ character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
+character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
 character(len=:), allocatable :: ProfFile
@@ -1720,6 +1721,22 @@ subroutine SetIrriFile(str)
 
     IrriFile = str
 end subroutine SetIrriFile
+
+
+function GetIrriFileFull() result(str)
+    !! Getter for the "IrriFileFull" global variable.
+    character(len=len(IrriFileFull)) :: str
+
+    str = IrriFileFull
+end function GetIrriFileFull
+
+
+subroutine SetIrriFileFull(str)
+    !! Setter for the "IrriFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    IrriFileFull = str
+end subroutine SetIrriFileFull
 
 
 function GetClimateFile() result(str)

@@ -200,7 +200,7 @@ implementation
 
  // 6. irrigation
  SetIrriFile('(None)');
- IrriFilefull := GetIrriFile();  (* no file *)
+ SetIrriFilefull(GetIrriFile());  (* no file *)
  NoIrrigation;
 
  // 7. Off-season

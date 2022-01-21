@@ -490,6 +490,18 @@ procedure SetIrriFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setirrifile_wrap';
 
+function GetIrriFileFull(): string;
+
+function GetIrriFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getirrifilefull_wrap';
+
+procedure SetIrriFileFull(constref str : string);
+
+procedure SetIrriFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setirrifilefull_wrap';
+
 function GetClimateFile(): string;
 
 function GetClimateFile_wrap(): PChar;
@@ -1487,6 +1499,28 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetIrriFile_wrap(p, strlen);
+end;
+
+
+function GetIrriFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetIrriFileFull_wrap();
+    GetIrriFileFull := AnsiString(p);
+end;
+
+
+procedure SetIrriFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetIrriFileFull_wrap(p, strlen);
 end;
 
 

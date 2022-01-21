@@ -1378,15 +1378,15 @@ SetIrriFile(Trim(TempString));
 IF (GetIrriFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathIrriFile
-        IrriFileFull := GetIrriFile();
+        SetIrriFileFull(GetIrriFile());
         NoIrrigation;
         //IrriDescription := 'Rainfed cropping';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        IrriFilefull := CONCAT(Trim(TempString),GetIrriFile());
-        LoadIrriScheduleInfo(IrriFilefull);
+        SetIrriFileFull(CONCAT(Trim(TempString),GetIrriFile()));
+        LoadIrriScheduleInfo(GetIrriFileFull());
         END;
 
 // 5. Field Management

@@ -1114,7 +1114,7 @@ BEGIN
 IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
    BEGIN
    IF (GetIrriFile() <> '(None)')
-      THEN totalname := IrriFileFull
+      THEN totalname := GetIrriFileFull()
       ELSE totalname := CONCAT(PathNameProg,'IrriSchedule.AqC');
    Assign(fIrri,totalname);
    Reset(fIrri);

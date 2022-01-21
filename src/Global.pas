@@ -383,7 +383,7 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     DataPath,ObsPath : BOOLEAN;
     TemperatureFile : string;
     TemperatureFileFull,CO2FileFull,
-    IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
     TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
