@@ -118,7 +118,7 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- CropFilefull := CONCAT(PathNameSimul,GetCropFile());
+ SetCropFilefull(CONCAT(PathNameSimul,GetCropFile()));
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
@@ -186,7 +186,7 @@ implementation
 
  // 5.5 Climate file
  SetClimateFile('(None)');
- ClimateFileFull := GetClimateFile();
+ SetClimateFileFull(GetClimateFile());
  ClimateDescription := '';
 
  // 5.6 Set Climate and Simulation Period
@@ -211,22 +211,22 @@ implementation
  NoManagementOffSeason;
 
  // 8. Project and Multiple Project file
- ProjectFile := '(None)';
- ProjectFileFull := ProjectFile;
+ SetProjectFile('(None)');
+ ProjectFileFull := GetProjectFile();
  ProjectDescription := 'No specific project';
  Simulation.MultipleRun := false; // No sequence of simulation runs in the project
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
- MultipleProjectFile := ProjectFile;
+ SetMultipleProjectFile(GetProjectFile());
  MultipleProjectFileFull := ProjectFileFull;
  MultipleProjectDescription := ProjectDescription;
 
 
  // 9. Observations file
- ObservationsFile := '(None)';
- ObservationsFileFull := ObservationsFile;
- ObservationsDescription := 'No field observations';
+ SetObservationsFile('(None)');
+ SetObservationsFileFull(GetObservationsFile());
+ SetObservationsDescription('No field observations');
 
  // 10. Output files
  OutputName := 'Project';

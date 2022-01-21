@@ -93,6 +93,44 @@ type
          GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
          end;
 
+     rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
+
+     rep_Cuttings = Record
+         Considered : BOOLEAN;
+         CCcut      : Integer; // Canopy cover (%) after cutting
+         CGCPlus    : Integer; // Increase (percentage) of CGC after cutting
+         Day1       : Integer; // first day after time window for generating cuttings (1 = start crop cycle)
+         NrDays     : Integer; // number of days of time window for generate cuttings (-9 is whole crop cycle)
+         Generate   : Boolean; // ture: generate cuttings; false : schedule for cuttings
+         Criterion  : rep_TimeCuttings; // time criterion for generating cuttings
+         HarvestEnd : BOOLEAN; // final harvest at crop maturity
+         FirstDayNr : LongInt; // first dayNr of list of specified cutting events (-9 = onset growing cycle)
+         end;
+
+     rep_Manag = Record
+         Mulch           : ShortInt; (* percent soil cover by mulch in growing period *)
+         SoilCoverBefore : ShortInt; (* percent soil cover by mulch before growing period *)
+         SoilCoverAfter  : ShortInt; (* percent soil cover by mulch after growing period *)
+         EffectMulchOffS : ShortInt; (* effect Mulch on evaporation before and after growing period *)
+         EffectMulchInS  : ShortInt; (* effect Mulch on evaporation in growing period *)
+         FertilityStress : ShortInt;
+         BundHeight      : double; // meter;
+         RunoffOn        : BOOLEAN;  (* surface runoff *)
+         CNcorrection    : INTEGER; // percent increase/decrease of CN
+         WeedRC          : ShortInt; (* Relative weed cover in percentage at canopy closure *)
+         WeedDeltaRC     : INTEGER; (* Increase/Decrease of Relative weed cover in percentage during mid season*)
+         WeedShape       : Double; (* Shape factor for crop canopy suppression*)
+         WeedAdj         : ShortInt; (* replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials *)
+         Cuttings        : rep_Cuttings; // Multiple cuttings
+         end;
+
+     rep_RootZoneSalt = Record
+         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
+         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
+         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
+         KsSalt : double;   // stress coefficient for salinity
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -494,6 +532,18 @@ procedure SetClimateFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimatefile_wrap';
 
+function GetClimateFileFull(): string;
+
+function GetClimateFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getclimatefilefull_wrap';
+
+procedure SetClimateFileFull(constref str : string);
+
+procedure SetClimateFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setclimatefilefull_wrap';
+
 function GetClimFile(): string;
 
 function GetClimFile_wrap(): PChar;
@@ -518,7 +568,30 @@ procedure SetSWCiniFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';      
         
-        
+function GetProjectFile(): string;
+
+function GetProjectFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getprojectfile_wrap';
+
+procedure SetProjectFile(constref str : string);
+
+procedure SetProjectFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setprojectfile_wrap';
+
+function GetMultipleProjectFile(): string;
+
+function GetMultipleProjectFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmultipleprojectfile_wrap';
+
+procedure SetMultipleProjectFile(constref str : string);
+
+procedure SetMultipleProjectFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfile_wrap';
+                
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -600,6 +673,18 @@ procedure SetCalendarFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcalendarfile_wrap';
 
+function GetCalendarFileFull(): string;
+
+function GetCalendarFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcalendarfilefull_wrap';
+
+procedure SetCalendarFileFull(constref str : string);
+
+procedure SetCalendarFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcalendarfilefull_wrap';
+
 function GetCropFile(): string;
 
 function GetCropFile_wrap(): PChar;
@@ -611,6 +696,18 @@ procedure SetCropFile_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcropfile_wrap';
+
+function GetCropFileFull(): string;
+
+function GetCropFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcropfilefull_wrap';
+
+procedure SetCropFileFull(constref str : string);
+
+procedure SetCropFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcropfilefull_wrap';
 
 function GetProfFile(): string;
 
@@ -684,6 +781,43 @@ procedure SetOffSeasonFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setoffseasonfilefull_wrap';
 
+function GetObservationsFile(): string;
+
+function GetObservationsFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsfile_wrap';
+
+procedure SetObservationsFile(constref str : string);
+
+procedure SetObservationsFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsfile_wrap';
+
+function GetObservationsFilefull(): string;
+
+function GetObservationsFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsfilefull_wrap';
+
+procedure SetObservationsFilefull(constref str : string);
+
+procedure SetObservationsFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsfilefull_wrap';
+
+
+function GetObservationsDescription(): string;
+
+function GetObservationsDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getobservationsdescription_wrap';
+
+procedure SetObservationsDescription(constref str : string);
+
+procedure SetObservationsDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setobservationsdescription_wrap';
+
 function GetGroundWaterFile(): string;
 
 function GetGroundWaterFile_wrap(): PChar;
@@ -733,6 +867,142 @@ procedure SetIrriECw_PreSeason(constref PreSeason : double);
 procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
+function GetManagement_Cuttings_Considered(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_considered_wrap';
+
+function GetManagement_Cuttings_CGCPlus(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cgcplus';
+
+function GetManagement_Cuttings_CCcut(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cccut';
+
+function GetManagement_Cuttings_Day1(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_day1';
+
+function GetManagement_Cuttings_NrDays(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_nrdays';
+
+function GetManagement_Cuttings_Generate(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_generate_wrap';
+
+function __GetManagement_Cuttings_Criterion(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_criterion';
+
+function GetManagement_Cuttings_Criterion(): rep_TimeCuttings;
+
+function GetManagement_Cuttings_HarvestEnd(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_harvestend_wrap';
+
+function GetManagement_Cuttings_FirstDayNr(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_firstdaynr';
+
+procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_considered_wrap';
+
+procedure SetManagement_Cuttings_CCcut(constref CCcut : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cccut';
+
+procedure SetManagement_Cuttings_CGCPlus(constref CGCPlus : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cgcplus';
+
+procedure SetManagement_Cuttings_Day1(constref Day1 : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_day1';
+
+procedure SetManagement_Cuttings_NrDays(constref NrDays : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_nrdays';
+
+procedure SetManagement_Cuttings_Generate(constref Generate : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_generate_wrap';
+
+procedure __SetManagement_Cuttings_Criterion(constref Criterion : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_criterion';
+
+procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings);
+
+procedure SetManagement_Cuttings_HarvestEnd(constref HarvestEnd : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_harvestend_wrap';
+
+procedure SetManagement_Cuttings_FirstDayNr(constref FirstDayNr : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_firstdaynr';
+
+function GetManagement_Mulch(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_mulch';
+
+function GetManagement_SoilCoverBefore(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_soilcoverbefore';
+
+function GetManagement_SoilCoverAfter(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_soilcoverafter';
+
+function GetManagement_EffectMulchOffS(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_effectmulchoffs';
+
+function GetManagement_EffectMulchInS(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_effectmulchins';
+
+function GetManagement_FertilityStress(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_fertilitystress';
+
+function GetManagement_BundHeight(): double;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_bundheight';
+
+function GetManagement_RunoffOn(): boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_runoffon_wrap';
+
+function GetManagement_CNcorrection(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_cncorrection';
+
+function GetManagement_WeedRC(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedrc';
+
+function GetManagement_WeedDeltaRC(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weeddeltarc';
+
+function GetManagement_WeedShape(): double;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedshape';
+
+function GetManagement_WeedAdj(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getmanagement_weedadj';
+
+procedure SetManagement_Mulch(constref Mulch : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_mulch';
+
+procedure SetManagement_SoilCoverBefore(constref Mulch : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_soilcoverbefore';
+
+procedure SetManagement_SoilCoverAfter(constref After : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_soilcoverafter';
+
+procedure SetManagement_EffectMulchOffS(constref EffectMulchOffS : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_effectmulchoffs';
+
+procedure SetManagement_EffectMulchInS(constref EffectMulchInS : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_effectmulchins';
+
+procedure SetManagement_FertilityStress(constref FertilityStress : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_fertilitystress';
+
+procedure SetManagement_BundHeight(constref BundHeight : double);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_bundheight';
+
+procedure SetManagement_RunOffOn(constref RunOffOn : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_runoffon_wrap';
+
+procedure SetManagement_CNcorrection(constref CNcorrection : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_cncorrection';
+
+procedure SetManagement_WeedRC(constref WeedRC : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedrc';
+
+procedure SetManagement_WeedDeltaRC(constref WeedDeltaRC : integer);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weeddeltarc';
+
+procedure SetManagement_WeedShape(constref WeedShape : double);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedshape';
+
+procedure SetManagement_WeedAdj(constref WeedAdj : shortint);
+        external 'aquacrop' name '__ac_global_MOD_setmanagement_weedadj';
+
 function GetCropFileSet(): rep_CropFileSet;
         external 'aquacrop' name '__ac_global_MOD_getcropfileset';
 
@@ -747,6 +1017,21 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
+
+function GetRootZoneSalt(): rep_RootZoneSalt;
+        external 'aquacrop' name '__ac_global_MOD_getrootzonesalt';
+
+procedure SetRootZoneSalt_ECe(constref ECe : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ece';
+
+procedure SetRootZoneSalt_ECsw(constref ECsw : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecsw';
+
+procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecswfc';
+
+procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
 
 
 implementation
@@ -820,6 +1105,24 @@ begin
                                             StLength,
                                             Length12,
                                             CGCVal);
+end;
+
+function GetManagement_Cuttings_Criterion() : rep_timecuttings;
+var
+    int_timecuttings : integer;
+
+begin;
+    int_timecuttings := __GetManagement_Cuttings_Criterion();
+    GetManagement_Cuttings_Criterion := rep_timecuttings(int_timecuttings);
+end;
+
+procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings); 
+var
+    int_timecuttings : integer;
+
+begin;
+    int_timecuttings := ord(Criterion);
+    __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
 
@@ -1115,6 +1418,66 @@ begin;
     SetOffSeasonFilefull_wrap(p, strlen);
 end;
 
+function GetObservationsFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetObservationsFile_wrap();
+    GetObservationsFile := AnsiString(p);
+end;
+
+procedure SetObservationsFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetObservationsFile_wrap(p, strlen);
+end;
+
+function GetObservationsFilefull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetObservationsFilefull_wrap();
+    GetObservationsFilefull := AnsiString(p);
+end;
+
+procedure SetObservationsFilefull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetObservationsFilefull_wrap(p, strlen);
+end;
+
+function GetObservationsDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetObservationsDescription_wrap();
+    GetObservationsDescription := AnsiString(p);
+end;
+
+procedure SetObservationsDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetObservationsDescription_wrap(p, strlen);
+end;
+
 
 function GetGroundWaterFile(): string;
 var
@@ -1232,6 +1595,29 @@ begin;
     SetClimateFile_wrap(p, strlen);
 end;
 
+
+function GetClimateFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetClimateFileFull_wrap();
+    GetClimateFileFull := AnsiString(p);
+end;
+
+
+procedure SetClimateFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetClimateFileFull_wrap(p, strlen);
+end;
+
+
 function GetClimFile(): string;
 var
     p : PChar;
@@ -1275,6 +1661,47 @@ begin;
     SetSWCiniFile_wrap(p, strlen);
 end;
 
+function GetProjectFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetProjectFile_wrap();
+    GetProjectFile := AnsiString(p);
+end;
+
+
+procedure SetProjectFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetProjectFile_wrap(p, strlen);
+end;
+
+function GetMultipleProjectFile(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetMultipleProjectFile_wrap();
+    GetMultipleProjectFile := AnsiString(p);
+end;
+
+
+procedure SetMultipleProjectFile(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetMultipleProjectFile_wrap(p, strlen);
+end;
 
 function GetRainFile(): string;
 var
@@ -1339,6 +1766,27 @@ begin;
 end;
 
 
+function GetCalendarFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCalendarFileFull_wrap();
+    GetCalendarFileFull := AnsiString(p);
+end;
+
+procedure SetCalendarFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCalendarFileFull_wrap(p, strlen);
+end;
+
+
 function GetCropFile(): string;
 var
     p : PChar;
@@ -1359,6 +1807,26 @@ begin;
     SetCropFile_wrap(p, strlen);
 end;
 
+
+function GetCropFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCropFileFull_wrap();
+    GetCropFileFull := AnsiString(p);
+end;
+
+
+procedure SetCropFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCropFileFull_wrap(p, strlen);
+end;
 
 
 initialization
