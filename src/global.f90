@@ -168,6 +168,8 @@ character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: CO2FileFull
+character(len=:), allocatable :: CO2Description
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: ProfFile
@@ -1437,7 +1439,7 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
-subroutine GetCO2Description(CO2FileFull, CO2Description)
+subroutine GenerateCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(in) :: CO2FileFull
     character(len=*), intent(inout) :: CO2Description
 
@@ -1448,11 +1450,11 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
     read(fhandle, *) CO2Description
     close(fhandle)
 
-    if (trim(GetCO2File()) == 'MaunaLoa.CO2') then
+    if (trim(CO2File) == 'MaunaLoa.CO2') then
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
-end subroutine GetCO2Description
+end subroutine GenerateCO2Description
 
 
 subroutine GetIrriDescription(IrriFileFull, IrriDescription)
@@ -1780,6 +1782,34 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+function GetCO2FileFull() result(str)
+    !! Getter for the "CO2FileFull" global variable.
+    character(len=len(CO2FileFull)) :: str
+
+    str = CO2FileFull
+end function GetCO2FileFull
+
+subroutine SetCO2FileFull(str)
+    !! Setter for the "CO2FileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2FileFull = str
+end subroutine SetCO2FileFull
+
+function GetCO2Description() result(str)
+    !! Getter for the "CO2Description" global variable.
+    character(len=len(CO2Description)) :: str
+
+    str = CO2Description
+end function GetCO2Description
+
+subroutine SetCO2Description(str)
+    !! Setter for the "CO2Description" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2Description = str
+end subroutine SetCO2Description
 
 type(rep_RootZoneWC) function GetRootZoneWC()
     !! Getter for the "RootZoneWC" global variable.

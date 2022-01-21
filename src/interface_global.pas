@@ -346,16 +346,16 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
-procedure GetCO2Description(
-            constref CO2FileFull : string;
+procedure GenerateCO2Description(
+            constref CO2FileFull: string;
             var CO2Description : string);
 
-procedure GetCO2Description_wrap(
+procedure GenerateCO2Description_wrap(
             constref CO2FileFull : PChar;
             constref strlen1 : integer;
             var CO2Description : PChar;
             constref strlen2 : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
+        external 'aquacrop' name '__ac_interface_global_MOD_generateco2description_wrap';
 
 procedure GetIrriDescription(
             constref IrriFileFull : string;
@@ -397,6 +397,29 @@ procedure SetCO2File_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
 
+function GetCO2FileFull(): string;
+
+function GetCO2FileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2filefull_wrap';
+
+procedure SetCO2FileFull(constref str : string);
+
+procedure SetCO2FileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2filefull_wrap';
+
+function GetCO2Description(): string;
+
+function GetCO2Description_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
+
+procedure SetCO2Description(constref str : string);
+
+procedure SetCO2Description_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2description_wrap';
 
 function GetEToFile(): string;
 
@@ -849,7 +872,7 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
-procedure GetCO2Description(
+procedure GenerateCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
 var
@@ -861,8 +884,8 @@ begin;
     p2 := PChar(CO2Description);
     strlen1 := Length(CO2FileFull);
     strlen2 := Length(CO2Description);
-    GetCO2Description_wrap(p1, strlen1, p2, strlen2);
-    CO2Description := AnsiString(p2);
+    GenerateCO2Description_wrap(p1, strlen1, p2, strlen2);
+    SetCO2Description(AnsiString(p2));
 end;
 
 function GetCO2File(): string;
@@ -884,6 +907,48 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2File_wrap(p, strlen);
+end;
+
+function GetCO2FileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2FileFull_wrap();
+    GetCO2FileFull := AnsiString(p);
+end;
+
+
+procedure SetCO2FileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2FileFull_wrap(p, strlen);
+end;
+
+function GetCO2Description(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2Description_wrap();
+    GetCO2Description := AnsiString(p);
+end;
+
+
+procedure SetCO2Description(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2Description_wrap(p, strlen);
 end;
 
 
