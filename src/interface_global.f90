@@ -25,6 +25,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      GetProfFilefull, &
+                     GetManagement_Cuttings_Considered, &
+                     GetManagement_Cuttings_Generate, &
+                     GetManagement_Cuttings_HarvestEnd, &
+                     GetManagement_RunoffOn, &
                      GetManFile, &
                      GetManFilefull, &
                      GetObservationsFile, &
@@ -59,6 +63,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetProfFilefull, &
                      SetManFile, &
                      SetManFilefull, &
+                     SetManagement_Cuttings_Considered, &
+                     SetManagement_Cuttings_Generate, &
+                     SetManagement_Cuttings_HarvestEnd, &
+                     SetManagement_RunoffOn, &
                      SetObservationsFile, &
                      SetObservationsFilefull, &
                      SetObservationsDescription, &
@@ -634,6 +642,78 @@ subroutine SetManFilefull_wrap(ManFilefull, strlen)
     string = pointer2string(ManFilefull, strlen)
     call SetManFilefull(string)
 end subroutine SetManFilefull_wrap
+
+function GetManagement_Cuttings_Considered_wrap() result(Considered_f)
+
+    logical(1) :: Considered_f
+
+    Considered_f = GetManagement_Cuttings_Considered()
+end function GetManagement_Cuttings_Considered_wrap
+
+
+function GetManagement_Cuttings_Generate_wrap() result(Generate_f)
+
+    logical(1) :: Generate_f
+
+    Generate_f = GetManagement_Cuttings_Generate()
+end function GetManagement_Cuttings_Generate_wrap
+
+
+function GetManagement_Cuttings_HarvestEnd_wrap() result(HarvestEnd_f)
+
+    logical(1) :: HarvestEnd_f
+
+    HarvestEnd_f = GetManagement_Cuttings_HarvestEnd()
+end function GetManagement_Cuttings_HarvestEnd_wrap
+
+
+subroutine SetManagement_Cuttings_Considered_wrap(Considered)
+    logical(1), intent(in) :: Considered
+
+    logical :: Considered_f
+
+    Considered_f = Considered
+    call SetManagement_Cuttings_Considered(Considered_f)    
+end subroutine SetManagement_Cuttings_Considered_wrap
+
+
+subroutine SetManagement_Cuttings_Generate_wrap(Generate)
+    logical(1), intent(in) :: Generate
+
+    logical :: Generate_f
+
+    Generate_f = Generate
+    call SetManagement_Cuttings_Generate(Generate_f)    
+end subroutine SetManagement_Cuttings_Generate_wrap
+
+
+subroutine SetManagement_Cuttings_HarvestEnd_wrap(HarvestEnd)
+    logical(1), intent(in) :: HarvestEnd
+
+    logical :: HarvestEnd_f
+
+    HarvestEnd_f = HarvestEnd
+    call SetManagement_Cuttings_HarvestEnd(HarvestEnd_f)    
+end subroutine SetManagement_Cuttings_HarvestEnd_wrap
+
+
+function GetManagement_RunoffOn_wrap() result(RunoffOn_f)
+
+    logical(1) :: RunoffOn_f
+
+    RunoffOn_f = GetManagement_RunoffOn()
+end function GetManagement_RunoffOn_wrap
+
+
+subroutine SetManagement_RunoffOn_wrap(RunoffOn)
+    logical(1), intent(in) :: RunoffOn
+
+    logical :: RunoffOn_f
+
+    RunoffOn_f = RunoffOn
+    call SetManagement_RunoffOn(RunoffOn_f)    
+end subroutine SetManagement_RunoffOn_wrap
+
 
 function GetOffSeasonFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.

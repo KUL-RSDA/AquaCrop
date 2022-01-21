@@ -124,6 +124,13 @@ type
          Cuttings        : rep_Cuttings; // Multiple cuttings
          end;
 
+     rep_RootZoneSalt = Record
+         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
+         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
+         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
+         KsSalt : double;   // stress coefficient for salinity
+         end;
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -850,7 +857,7 @@ procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
 function GetManagement_Cuttings_Considered(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_considered';
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_considered_wrap';
 
 function GetManagement_Cuttings_CGCPlus(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cgcplus';
@@ -865,7 +872,7 @@ function GetManagement_Cuttings_NrDays(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_nrdays';
 
 function GetManagement_Cuttings_Generate(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_generate';
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_generate_wrap';
 
 function __GetManagement_Cuttings_Criterion(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_criterion';
@@ -873,13 +880,13 @@ function __GetManagement_Cuttings_Criterion(): integer;
 function GetManagement_Cuttings_Criterion(): rep_TimeCuttings;
 
 function GetManagement_Cuttings_HarvestEnd(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_harvestend';
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_harvestend_wrap';
 
 function GetManagement_Cuttings_FirstDayNr(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_firstdaynr';
 
 procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_considered';
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_considered_wrap';
 
 procedure SetManagement_Cuttings_CCcut(constref CCcut : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cccut';
@@ -894,7 +901,7 @@ procedure SetManagement_Cuttings_NrDays(constref NrDays : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_nrdays';
 
 procedure SetManagement_Cuttings_Generate(constref Generate : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_generate';
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_generate_wrap';
 
 procedure __SetManagement_Cuttings_Criterion(constref Criterion : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_criterion';
@@ -902,7 +909,7 @@ procedure __SetManagement_Cuttings_Criterion(constref Criterion : integer);
 procedure SetManagement_Cuttings_Criterion(constref Criterion : rep_TimeCuttings);
 
 procedure SetManagement_Cuttings_HarvestEnd(constref HarvestEnd : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_harvestend';
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_cuttings_harvestend_wrap';
 
 procedure SetManagement_Cuttings_FirstDayNr(constref FirstDayNr : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_firstdaynr';
@@ -929,7 +936,7 @@ function GetManagement_BundHeight(): double;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_bundheight';
 
 function GetManagement_RunoffOn(): boolean;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_runoffon';
+        external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_runoffon_wrap';
 
 function GetManagement_CNcorrection(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cncorrection';
@@ -945,9 +952,6 @@ function GetManagement_WeedShape(): double;
 
 function GetManagement_WeedAdj(): shortint;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_weedadj';
-
-function GetManagement_Cuttings(): rep_Cuttings;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings';
 
 procedure SetManagement_Mulch(constref Mulch : shortint);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_mulch';
@@ -971,7 +975,7 @@ procedure SetManagement_BundHeight(constref BundHeight : double);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_bundheight';
 
 procedure SetManagement_RunOffOn(constref RunOffOn : boolean);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_runoffon';
+        external 'aquacrop' name '__ac_interface_global_MOD_setmanagement_runoffon_wrap';
 
 procedure SetManagement_CNcorrection(constref CNcorrection : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cncorrection';
@@ -1002,6 +1006,21 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
+
+function GetRootZoneSalt(): rep_RootZoneSalt;
+        external 'aquacrop' name '__ac_global_MOD_getrootzonesalt';
+
+procedure SetRootZoneSalt_ECe(constref ECe : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ece';
+
+procedure SetRootZoneSalt_ECsw(constref ECsw : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecsw';
+
+procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_ecswfc';
+
+procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
+        external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
 
 
 implementation
@@ -1777,7 +1796,6 @@ begin;
     strlen := Length(str);
     SetCropFileFull_wrap(p, strlen);
 end;
-
 
 
 initialization
