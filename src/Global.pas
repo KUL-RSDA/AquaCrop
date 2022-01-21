@@ -382,7 +382,7 @@ TYPE
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
     TemperatureFile,ObservationsFile : string;
-    CalendarFileFull,CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
+    CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     ObservationsFileFull,FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
@@ -4567,7 +4567,7 @@ END;  (* AdjustYearPerennials *)
 PROCEDURE NoCropCalendar;
 BEGIN
 SetCalendarFile('(None)');
-CalendarFileFull := GetCalendarFile();  (* no file *)
+SetCalendarFileFull(GetCalendarFile());  (* no file *)
 CalendarDescription := '';
 Onset.GenerateOn := false;
 Onset.GenerateTempOn := false;

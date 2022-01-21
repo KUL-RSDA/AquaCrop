@@ -1330,8 +1330,8 @@ IF (GetCalendarFile() = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CalendarFilefull := CONCAT(Trim(TempString),GetCalendarFile());
-        GetFileDescription(CalendarFilefull,CalendarDescription);
+        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
+        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
         END;
 
 // 3. Crop

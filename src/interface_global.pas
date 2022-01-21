@@ -631,6 +631,18 @@ procedure SetCalendarFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcalendarfile_wrap';
 
+function GetCalendarFileFull(): string;
+
+function GetCalendarFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcalendarfilefull_wrap';
+
+procedure SetCalendarFileFull(constref str : string);
+
+procedure SetCalendarFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcalendarfilefull_wrap';
+
 function GetCropFile(): string;
 
 function GetCropFile_wrap(): PChar;
@@ -1523,6 +1535,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCalendarFile_wrap(p, strlen);
+end;
+
+
+function GetCalendarFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCalendarFileFull_wrap();
+    GetCalendarFileFull := AnsiString(p);
+end;
+
+procedure SetCalendarFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCalendarFileFull_wrap(p, strlen);
 end;
 
 

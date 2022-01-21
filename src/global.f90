@@ -232,6 +232,7 @@ character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: CalendarFile
+character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
@@ -1973,6 +1974,20 @@ subroutine SetCalendarFile(str)
 
     CalendarFile = str
 end subroutine SetCalendarFile
+
+function GetCalendarFileFull() result(str)
+    !! Getter for the "CalendarFileFull" global variable.
+    character(len=len(CalendarFileFull)) :: str
+
+    str = CalendarFileFull
+end function GetCalendarFileFull
+
+subroutine SetCalendarFileFull(str)
+    !! Setter for the "CalendarFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarFileFull = str
+end subroutine SetCalendarFileFull
 
 function GetCropFile() result(str)
     !! Getter for the "CropFile" global variable.
