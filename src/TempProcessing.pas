@@ -1235,13 +1235,13 @@ SetClimateFile(Trim(TempString));
 IF (GetClimateFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathClimateFile
-        ClimateFileFull := GetClimateFile();
+        SetClimateFileFull(GetClimateFile());
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateFileFull := CONCAT(Trim(TempString),GetClimateFile());
-        Assign(fClim,ClimateFileFull);
+        SetClimateFileFull(CONCAT(Trim(TempString),GetClimateFile()));
+        Assign(fClim,GetClimateFileFull());
         Reset(fClim);
         // 1.0 Description
         READLN(fClim,TempString);
