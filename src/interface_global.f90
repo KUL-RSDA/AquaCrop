@@ -16,6 +16,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimateFile, &
                      GetClimFile, &
                      GetSWCiniFile, &
+                     GetProjectFile, &
+                     GetMultipleProjectFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      GetProfFilefull, &
@@ -25,6 +27,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetManagement_RunoffOn, &
                      GetManFile, &
                      GetManFilefull, &
+                     GetOffSeasonFile, &
+                     GetOffSeasonFilefull, &
+                     GetGroundWaterFile, &
+                     GetGroundWaterFilefull, &
                      SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
@@ -39,7 +45,9 @@ use ac_global, only: CheckFilesInProject, &
                      SetIrriFile, &
                      SetClimateFile, &
                      SetClimFile, &
-                     setSWCinifile, &
+                     setSWCiniFile, &
+                     SetProjectFile, &
+                     SetMultipleProjectFile, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
@@ -48,6 +56,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetManagement_Cuttings_Generate, &
                      SetManagement_Cuttings_HarvestEnd, &
                      SetManagement_RunoffOn, &
+                     SetOffSeasonFile, &
+                     SetOffSeasonFilefull, &
+                     SetGroundWaterFile, &
+                     SetGroundWaterFilefull, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams
 use ac_kinds, only: dp, &
@@ -354,6 +366,43 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
 end subroutine SetSWCiniFile_wrap
 
 
+function GetProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetProjectFile())
+end function GetProjectFile_wrap
+
+
+subroutine SetProjectFile_wrap(ProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectFile, strlen)
+    call SetProjectFile(string)
+end subroutine SetProjectFile_wrap
+
+function GetMultipleProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetMultipleProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetMultipleProjectFile())
+end function GetMultipleProjectFile_wrap
+
+
+subroutine SetMultipleProjectFile_wrap(MultipleProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetMultipleProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: MultipleProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(MultipleProjectFile, strlen)
+    call SetMultipleProjectFile(string)
+end subroutine SetMultipleProjectFile_wrap
 
 function GetRainFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
@@ -574,6 +623,82 @@ subroutine SetManagement_RunoffOn_wrap(RunoffOn)
     RunoffOn_f = RunoffOn
     call SetManagement_RunoffOn(RunoffOn_f)    
 end subroutine SetManagement_RunoffOn_wrap
+
+
+function GetOffSeasonFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonFile())
+end function GetOffSeasonFile_wrap
+
+subroutine SetOffSeasonFile_wrap(OffSeasonFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonFile, strlen)
+    call SetOffSeasonFile(string)
+end subroutine SetOffSeasonFile_wrap
+
+
+function GetOffSeasonFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonFilefull())
+end function GetOffSeasonFilefull_wrap
+
+subroutine SetOffSeasonFilefull_wrap(OffSeasonFilefull, strlen)
+    !! Wrapper for [[ac_global:SetOffSeasonFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonFilefull, strlen)
+    call SetOffSeasonFilefull(string)
+end subroutine SetOffSeasonFilefull_wrap
+
+
+function GetGroundWaterFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundWaterFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundWaterFile())
+end function GetGroundWaterFile_wrap
+
+subroutine SetGroundWaterFile_wrap(GroundWaterFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundWaterFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundWaterFile, strlen)
+    call SetGroundWaterFile(string)
+end subroutine SetGroundWaterFile_wrap
+
+
+function GetGroundWaterFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundWaterFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundWaterFilefull())
+end function GetGroundWaterFilefull_wrap
+
+subroutine SetGroundWaterFilefull_wrap(GroundWaterFilefull, strlen)
+    !! Wrapper for [[ac_global:SetGroundWaterFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundWaterFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundWaterFilefull, strlen)
+    call SetGroundWaterFilefull(string)
+end subroutine SetGroundWaterFilefull_wrap
 
 
 end module ac_interface_global

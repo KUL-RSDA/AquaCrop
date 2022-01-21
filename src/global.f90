@@ -239,10 +239,15 @@ character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
+character(len=:), allocatable :: OffSeasonFile
+character(len=:), allocatable :: OffSeasonFilefull
+character(len=:), allocatable :: GroundWaterFile
+character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
-
+character(len=:), allocatable :: ProjectFile
+character(len=:), allocatable :: MultipleProjectFile
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -1753,6 +1758,34 @@ subroutine SetSWCiniFile(str)
     SWCiniFile = str
 end subroutine SetSWCiniFile
 
+function GetProjectFile() result(str)
+    !! Getter for the "ProjectFile" global variable.
+    character(len=len(ProjectFile)) :: str
+    
+    str = ProjectFile
+end function GetProjectFile
+
+subroutine SetProjectFile(str)
+    !! Setter for the "ProjectFile" global variable.
+    character(len=*), intent(in) :: str
+    
+    ProjectFile = str
+end subroutine SetProjectFile
+
+function GetMultipleProjectFile() result(str)
+    !! Getter for the "MultipleProjectFile" global variable.
+    character(len=len(MultipleProjectFile)) :: str
+    
+    str = MultipleProjectFile
+end function GetMultipleProjectFile
+
+subroutine SetMultipleProjectFile(str)
+    !! Setter for the "MultipleProjectFile" global variable.
+    character(len=*), intent(in) :: str
+    
+    MultipleProjectFile = str
+end subroutine SetMultipleProjectFile
+
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
@@ -2030,6 +2063,62 @@ subroutine SetManFilefull(str)
 
     ManFilefull = str
 end subroutine SetManFilefull
+
+function GetOffSeasonFile() result(str)
+    !! Getter for the "OffSeasonFile" global variable.
+    character(len=len(OffSeasonFile)) :: str
+
+    str = OffSeasonFile
+end function GetOffSeasonFile
+
+subroutine SetOffSeasonFile(str)
+    !! Setter for the "OffSeasonFile" global variable.
+    character(len=*), intent(in) :: str
+
+    OffSeasonFile = str
+end subroutine SetOffSeasonFile
+
+function GetOffSeasonFilefull() result(str)
+    !! Getter for the "OffSeasonFilefull" global variable.
+    character(len=len(OffSeasonFilefull)) :: str
+
+    str = OffSeasonFilefull
+end function GetOffSeasonFilefull
+
+subroutine SetOffSeasonFilefull(str)
+    !! Setter for the "OffSeasonFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    OffSeasonFilefull = str
+end subroutine SetOffSeasonFilefull
+
+function GetGroundWaterFile() result(str)
+    !! Getter for the "GroundWaterFile" global variable.
+    character(len=len(GroundWaterFile)) :: str
+
+    str = GroundWaterFile
+end function GetGroundWaterFile
+
+subroutine SetGroundWaterFile(str)
+    !! Setter for the "GroundWaterFile" global variable.
+    character(len=*), intent(in) :: str
+
+    GroundWaterFile = str
+end subroutine SetGroundWaterFile
+
+function GetGroundWaterFilefull() result(str)
+    !! Getter for the "GroundWaterFilefull" global variable.
+    character(len=len(GroundWaterFilefull)) :: str
+
+    str = GroundWaterFilefull
+end function GetGroundWaterFilefull
+
+subroutine SetGroundWaterFilefull(str)
+    !! Setter for the "GroundWaterFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    GroundWaterFilefull = str
+end subroutine SetGroundWaterFilefull
 
 type(rep_CropFileSet) function GetCropFileSet()
     !! Getter for the "CropFileSet" global variable.
