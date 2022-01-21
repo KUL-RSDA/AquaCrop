@@ -422,6 +422,17 @@ procedure SetEToFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setetofilefull_wrap';
 
+function GetEToDescription(): string;
+
+function GetEToDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getetodescription_wrap';
+
+procedure SetEToDescription(constref str : string);
+
+procedure SetEToDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setetodescription_wrap';
 
 function GetRainFile(): string;
 
@@ -446,6 +457,18 @@ procedure SetRainFileFull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setrainfilefull_wrap';
+
+function GetRainDescription(): string;
+
+function GetRainDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getraindescription_wrap';
+
+procedure SetRainDescription(constref str : string);
+
+procedure SetRainDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setraindescription_wrap';
 
 function GetIrriFile(): string;
 
@@ -929,6 +952,27 @@ begin;
     SetEToFileFull_wrap(p, strlen);
 end;
 
+function GetEToDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetEToDescription_wrap();
+    GetEToDescription := AnsiString(p);
+end;
+
+
+procedure SetEToDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetEToDescription_wrap(p, strlen);
+end;
+
 
 function GetProfFile(): string;
 var
@@ -1249,6 +1293,26 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetRainFileFull_wrap(p, strlen);
+end;
+
+function GetRainDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetRainDescription_wrap();
+    GetRainDescription := AnsiString(p);
+end;
+
+procedure SetRainDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetRainDescription_wrap(p, strlen);
 end;
 
 

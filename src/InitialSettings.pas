@@ -154,7 +154,7 @@ implementation
  // 5.2 ETo
  SetEToFile('(None)');
  SetEToFilefull(GetEToFile());  (* no file *)
- EToDescription := '';
+ SetEToDescription('');
  WITH EToRecord DO
    BEGIN
    DataType := Daily;
@@ -167,7 +167,7 @@ implementation
  // 5.3 Rain
  SetRainFile('(None)');
  SetRainFilefull(GetRainFile());  (* no file *)
- RainDescription := '';
+ SetRainDescription('');
  WITH RainRecord DO
    BEGIN
    DataType := Daily;

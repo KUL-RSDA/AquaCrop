@@ -415,7 +415,7 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     CalendarFileFull,CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     ObservationsFileFull,FullFileNameProgramParameters : string;
-    ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
+    ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
     TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription,ObservationsDescription : string;
     ClimRecord,
