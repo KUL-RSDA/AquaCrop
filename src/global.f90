@@ -1450,7 +1450,7 @@ subroutine GenerateCO2Description(CO2FileFull, CO2Description)
     read(fhandle, *) CO2Description
     close(fhandle)
 
-    if (trim(CO2File) == 'MaunaLoa.CO2') then
+    if (trim(GetCO2File()) == 'MaunaLoa.CO2') then
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
