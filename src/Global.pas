@@ -205,13 +205,6 @@ TYPE
          IniAbstract : shortint;
          END;
 
-     rep_sum = RECORD
-         Epot, Tpot, Rain, Irrigation, Infiltrated,
-         Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater  : double;  (* mm *)
-         Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot : double;   (* ton/ha *)
-         SaltIn, SaltOut, CRsalt : double; (* ton/ha *)
-         End;
-
      rep_datatype = (Daily,Decadely,Monthly);
      rep_clim = Record
          DataType    : rep_datatype;
@@ -405,7 +398,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     TotalWaterContent,
     TotalSaltContent   : rep_Content; //Water Content (mm) and Salt Content (Mg/ha)
     Crop           : rep_Crop;
-    SumWabal       : rep_sum;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -1788,11 +1780,11 @@ DetermineLengthGrowthStages(Crop.CCo,Crop.CCx,Crop.CDC,Crop.DaysToGermination,Cr
 Crop.CCoAdjusted := Crop.CCo;
 Crop.CCxAdjusted := Crop.CCx;
 Crop.CCxWithered := Crop.CCx;
-SumWaBal.Biomass := 0;
-SumWaBal.BiomassPot := 0;
-SumWabal.BiomassUnlim := 0;
-SumWaBal.BiomassTot := 0; // crop and weeds (for soil fertility stress)
-SumWaBal.YieldPart := 0;
+SetSumWaBal_Biomass(0);
+SetSumWaBal_BiomassPot(0);
+SetSumWaBal_BiomassUnlim(0);
+SetSumWaBal_BiomassTot(0); // crop and weeds (for soil fertility stress)
+SetSumWaBal_YieldPart(0);
 Simulation.EvapLimitON := false;
 END; (* CompleteCropDescription *)
 

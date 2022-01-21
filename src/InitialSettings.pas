@@ -13,6 +13,7 @@ implementation
  TYPE rep_string20 = string[20];
  VAR TempString1,TempString2 : string;
      Nri : INTEGER;
+     SumWaBal_temp : rep_sum;
 
  BEGIN
  // 1. Program settings
@@ -241,7 +242,9 @@ implementation
  SurfaceStorage := 0;
  ECstorage := 0.0;
  DaySubmerged := 0;
- GlobalZero(SumWabal);
+ SumWaBal_temp := GetSumWabal();
+ GlobalZero(SumWabal_temp);
+ SetSumWaBal(SumWaBal_temp);
  Drain:= 0.0; // added 4.0
  Runoff:= 0.0;// added 4.0
  Infiltrated := 0.0; // added 4.0
