@@ -125,7 +125,7 @@ WRITELN(fRun,'    RunNr     Day1   Month1    Year1     Rain      ETo       GD   
              '    SaltIn   SaltOut    SaltUp  SaltProf',
              '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr',
              '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-WRITELN(fRun,'                                           mm       mm    캜.day    ppm',
+WRITELN(fRun,'                                           mm       mm    째C.day    ppm',
              '        mm       mm       mm       mm       mm       mm        %       mm       mm        %',
              '    ton/ha    ton/ha    ton/ha    ton/ha',
              '      days       %        %        %        %        %        %  ',
@@ -272,9 +272,9 @@ IF Out1Wabal THEN
 IF Out2Crop THEN
    BEGIN
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      THEN WRITE(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha')
-      ELSE WRITELN(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      ELSE WRITELN(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
    END;
 // D3. Profile/Root zone - Soil water content
@@ -322,7 +322,7 @@ IF Out6CompEC THEN
       ELSE WRITELN(fDaily,NodeD:11:2);
    END;
 // D7. Climate input parameters
-IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       캜        캜        캜       ppm');
+IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       째C        째C        째C       ppm');
 END; (* WriteTitleDailyResults *)
 
 
@@ -365,7 +365,7 @@ VAR dayi, monthi, yeari : INTEGER;
 
 BEGIN
 // open input file with field data
-Assign(fObs,ObservationsFileFull); // Observations recorded in File
+Assign(fObs,GetObservationsFileFull()); // Observations recorded in File
 Reset(fObs);
 READLN(fObs); // description
 READLN(fObs); // AquaCrop Version number
@@ -477,8 +477,8 @@ VAR f0 : TextFile;
     TheEnd : BOOLEAN;
 BEGIN
 // FileNameFull
-IF (GroundWaterFile <> '(None)')
-   THEN FileNameFull := GroundWaterFileFull
+IF (GetGroundWaterFile() <> '(None)')
+   THEN FileNameFull := GetGroundWaterFileFull()
    ELSE FileNameFull := CONCAT(PathNameProg,'GroundWater.AqC');
 
 // Get DayNr1Gwt
@@ -634,7 +634,7 @@ IF Crop.StressResponse.Calibrated
         Coeffb2 := undef_int;
         END;
 // 1.b Soil fertility : FracBiomassPotSF
-IF ((Management.FertilityStress <> 0) AND Crop.StressResponse.Calibrated) THEN
+IF ((GetManagement_FertilityStress() <> 0) AND Crop.StressResponse.Calibrated) THEN
    BEGIN
    BioLow := 100;
    StrLow := 0;
@@ -643,12 +643,12 @@ IF ((Management.FertilityStress <> 0) AND Crop.StressResponse.Calibrated) THEN
      StrTop := StrLow;
      BioLow := BioLow - 1;
      StrLow := Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow;
-   UNTIL ((StrLow >= Management.FertilityStress)
+   UNTIL ((StrLow >= GetManagement_FertilityStress())
                OR (BioLow <= 0) OR (StrLow >= 99.99));
    IF (StrLow >= 99.99) THEN StrLow := 100;
    IF (abs(StrLow-StrTop) < 0.001)
       THEN FracBiomassPotSF := BioTop
-      ELSE FracBiomassPotSF := BioTop - (Management.FertilityStress - StrTop)/(StrLow-StrTop);
+      ELSE FracBiomassPotSF := BioTop - (GetManagement_FertilityStress() - StrTop)/(StrLow-StrTop);
    FracBiomassPotSF := FracBiomassPotSF/100;
    END;
 
@@ -684,9 +684,9 @@ VAR totalname,totalnameOUT : string;
     RunningDay : LongInt;
 BEGIN
 // 1. ETo file
-IF (EToFile <> '(None)')
+IF (GetEToFile() <> '(None)')
    THEN BEGIN
-        totalname := EToFilefull;
+        totalname := GetEToFilefull();
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
@@ -767,9 +767,9 @@ IF (EToFile <> '(None)')
                 END;
         END;
 // 2. Rain File
-IF (RainFile <> '(None)')
+IF (GetRainFile() <> '(None)')
    THEN BEGIN
-        totalname := RainFilefull;
+        totalname := GetRainFilefull();
         IF FileExists(totalname)
         THEN BEGIN
              // open file and find first day of simulation period
@@ -948,7 +948,7 @@ VAR totalname : string;
     i : LongInt;
 BEGIN
 // ETo file
-IF (EToFile <> '(None)') THEN
+IF (GetEToFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'EToData.SIM');
    Assign(fEToSIM,totalname);
@@ -961,7 +961,7 @@ IF (EToFile <> '(None)') THEN
            END;
    END;
 // Rain file
-IF (RainFile <> '(None)') THEN
+IF (GetRainFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(PathNameSimul,'RainData.SIM');
    Assign(fRainSIM,totalname);
@@ -1113,7 +1113,7 @@ VAR totalname : string;
 BEGIN
 IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
    BEGIN
-   IF (IrriFile <> '(None)')
+   IF (GetIrriFile() <> '(None)')
       THEN totalname := IrriFileFull
       ELSE totalname := CONCAT(PathNameProg,'IrriSchedule.AqC');
    Assign(fIrri,totalname);
@@ -1170,97 +1170,94 @@ PROCEDURE GetNextHarvest;
 VAR InfoLoaded : BOOLEAN;
     DayNrXX : LongInt;
 BEGIN
-WITH Management DO
-  BEGIN
-  CASE Cuttings.Generate OF
-     false: BEGIN
-            IF (NOT Eof(fCuts))
-               THEN BEGIN
-                    READLN(fCuts,CutInfoRecord1.FromDay);
-                    CutInfoRecord1.NoMoreInfo := false;
-                    IF (Management.Cuttings.FirstDayNr <> undef_int) THEN
-                       BEGIN // scroll to start growing cycle
-                       DayNrXX := Management.Cuttings.FirstDayNr + CutInfoRecord1.FromDay -1;
-                       WHILE ((DayNrXX < Crop.Day1) AND (CutInfoRecord1.NoMoreInfo = false)) DO
-                         BEGIN
-                         IF (NOT Eof(fCuts))
-                            THEN BEGIN
-                                 READLN(fCuts,CutInfoRecord1.FromDay);
-                                 DayNrXX := Management.Cuttings.FirstDayNr + CutInfoRecord1.FromDay -1;
-                                 END
-                            ELSE CutInfoRecord1.NoMoreInfo := true;
-                         END; // while loop
-                       END; // scroll to start growing cycle
-                    END
-               ELSE CutInfoRecord1.NoMoreInfo := true;
-            END;
-     true : BEGIN
-            IF (NrCut = 0) THEN
-               BEGIN
-               CASE Cuttings.Criterion OF
-                    IntDay : READLN(fCuts,CutInfoRecord1.FromDay,CutInfoRecord1.IntervalInfo);
-                    IntGDD : READLN(fCuts,CutInfoRecord1.FromDay,CutInfoRecord1.IntervalGDD);
-                    DryB,DryY,FreshY : READLN(fCuts,CutInfoRecord1.FromDay,CutInfoRecord1.MassInfo);
-                    end;
-               IF (CutInfoRecord1.FromDay < Cuttings.Day1) THEN CutInfoRecord1.FromDay := Cuttings.Day1;
-               END;
-            InfoLoaded := false;
-            REPEAT
-            IF (NOT Eof(fCuts))
-               THEN BEGIN
-                    CASE Cuttings.Criterion OF
-                         IntDay : READLN(fCuts,CutInfoRecord2.FromDay,CutInfoRecord2.IntervalInfo);
-                         IntGDD : READLN(fCuts,CutInfoRecord2.FromDay,CutInfoRecord2.IntervalGDD);
-                         DryB,DryY,FreshY : READLN(fCuts,CutInfoRecord2.FromDay,CutInfoRecord2.MassInfo);
-                         end;
-                    IF (CutInfoRecord2.FromDay < Cuttings.Day1) THEN CutInfoRecord2.FromDay := Cuttings.Day1;
-                    IF (CutInfoRecord2.FromDay <= CutInfoRecord1.FromDay)
-                       THEN BEGIN // CutInfoRecord2 becomes CutInfoRecord1
-                            CutInfoRecord1.FromDay := CutInfoRecord2.FromDay;
-                            CASE Cuttings.Criterion OF
-                                 IntDay : CutInfoRecord1.IntervalInfo := CutInfoRecord2.IntervalInfo;
-                                 IntGDD : CutInfoRecord1.IntervalGDD := CutInfoRecord2.IntervalGDD;
-                                 DryB,DryY,FreshY : CutInfoRecord1.MassInfo := CutInfoRecord2.MassInfo;
-                                 end;
-                            CutInfoRecord1.NoMoreInfo := false;
-                            END
-                       ELSE BEGIN // complete CutInfoRecord1
-                            CutInfoRecord1.ToDay := CutInfoRecord2.FromDay - 1;
-                            CutInfoRecord1.NoMoreInfo := false;
-                            IF (Cuttings.NrDays <> undef_int) THEN
-                               BEGIN
-                               IF (CutInfoRecord1.ToDay > (Cuttings.Day1 + Cuttings.NrDays -1)) THEN
-                                  BEGIN
-                                  CutInfoRecord1.ToDay := Cuttings.Day1 + Cuttings.NrDays -1;
-                                  CutInfoRecord1.NoMoreInfo := true;
-                                  END;
-                               END;
-                            InfoLoaded := true;
-                            END;
-                    END
-               ELSE BEGIN // Eof(fCuts)
-                    IF (NrCut > 0) THEN
-                       BEGIN  // CutInfoRecord2 becomes CutInfoRecord1
-                       CutInfoRecord1.FromDay := CutInfoRecord2.FromDay;
-                       CASE Cuttings.Criterion OF
-                            IntDay : CutInfoRecord1.IntervalInfo := CutInfoRecord2.IntervalInfo;
-                            IntGDD : CutInfoRecord1.IntervalGDD := CutInfoRecord2.IntervalGDD;
-                            DryB,DryY,FreshY : CutInfoRecord1.MassInfo := CutInfoRecord2.MassInfo;
-                            end;
-                       END;
-                    CutInfoRecord1.ToDay := Crop.DaysToHarvest;
-                    IF (Cuttings.NrDays <> undef_int) THEN
-                       BEGIN
-                       IF (CutInfoRecord1.ToDay > (Cuttings.Day1 + Cuttings.NrDays -1)) THEN
-                          CutInfoRecord1.ToDay := Cuttings.Day1 + Cuttings.NrDays -1;
-                       END;
-                    CutInfoRecord1.NoMoreInfo := true;
-                    InfoLoaded := true;
-                    END;
-            UNTIL (InfoLoaded = true);
-            END;
-     end;
- END;
+CASE GetManagement_Cuttings_Generate() OF
+ false: BEGIN
+        IF (NOT Eof(fCuts))
+           THEN BEGIN
+                READLN(fCuts,CutInfoRecord1.FromDay);
+                CutInfoRecord1.NoMoreInfo := false;
+                IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) THEN
+                   BEGIN // scroll to start growing cycle
+                   DayNrXX := GetManagement_Cuttings_FirstDayNr() + CutInfoRecord1.FromDay -1;
+                   WHILE ((DayNrXX < Crop.Day1) AND (CutInfoRecord1.NoMoreInfo = false)) DO
+                     BEGIN
+                     IF (NOT Eof(fCuts))
+                        THEN BEGIN
+                             READLN(fCuts,CutInfoRecord1.FromDay);
+                             DayNrXX := GetManagement_Cuttings_FirstDayNr() + CutInfoRecord1.FromDay -1;
+                             END
+                        ELSE CutInfoRecord1.NoMoreInfo := true;
+                     END; // while loop
+                   END; // scroll to start growing cycle
+                END
+           ELSE CutInfoRecord1.NoMoreInfo := true;
+        END;
+ true : BEGIN
+        IF (NrCut = 0) THEN
+           BEGIN
+           CASE GetManagement_Cuttings_Criterion() OF
+                IntDay : READLN(fCuts,CutInfoRecord1.FromDay,CutInfoRecord1.IntervalInfo);
+                IntGDD : READLN(fCuts,CutInfoRecord1.FromDay,CutInfoRecord1.IntervalGDD);
+                DryB,DryY,FreshY : READLN(fCuts,CutInfoRecord1.FromDay,CutInfoRecord1.MassInfo);
+                end;
+           IF (CutInfoRecord1.FromDay < GetManagement_Cuttings_Day1()) THEN CutInfoRecord1.FromDay := GetManagement_Cuttings_Day1();
+           END;
+        InfoLoaded := false;
+        REPEAT
+        IF (NOT Eof(fCuts))
+           THEN BEGIN
+                CASE GetManagement_Cuttings_Criterion() OF
+                     IntDay : READLN(fCuts,CutInfoRecord2.FromDay,CutInfoRecord2.IntervalInfo);
+                     IntGDD : READLN(fCuts,CutInfoRecord2.FromDay,CutInfoRecord2.IntervalGDD);
+                     DryB,DryY,FreshY : READLN(fCuts,CutInfoRecord2.FromDay,CutInfoRecord2.MassInfo);
+                     end;
+                IF (CutInfoRecord2.FromDay < GetManagement_Cuttings_Day1()) THEN CutInfoRecord2.FromDay := GetManagement_Cuttings_Day1();
+                IF (CutInfoRecord2.FromDay <= CutInfoRecord1.FromDay)
+                   THEN BEGIN // CutInfoRecord2 becomes CutInfoRecord1
+                        CutInfoRecord1.FromDay := CutInfoRecord2.FromDay;
+                        CASE GetManagement_Cuttings_Criterion() OF
+                             IntDay : CutInfoRecord1.IntervalInfo := CutInfoRecord2.IntervalInfo;
+                             IntGDD : CutInfoRecord1.IntervalGDD := CutInfoRecord2.IntervalGDD;
+                             DryB,DryY,FreshY : CutInfoRecord1.MassInfo := CutInfoRecord2.MassInfo;
+                             end;
+                        CutInfoRecord1.NoMoreInfo := false;
+                        END
+                   ELSE BEGIN // complete CutInfoRecord1
+                        CutInfoRecord1.ToDay := CutInfoRecord2.FromDay - 1;
+                        CutInfoRecord1.NoMoreInfo := false;
+                        IF (GetManagement_Cuttings_NrDays() <> undef_int) THEN
+                           BEGIN
+                           IF (CutInfoRecord1.ToDay > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) THEN
+                              BEGIN
+                              CutInfoRecord1.ToDay := GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1;
+                              CutInfoRecord1.NoMoreInfo := true;
+                              END;
+                           END;
+                        InfoLoaded := true;
+                        END;
+                END
+           ELSE BEGIN // Eof(fCuts)
+                IF (NrCut > 0) THEN
+                   BEGIN  // CutInfoRecord2 becomes CutInfoRecord1
+                   CutInfoRecord1.FromDay := CutInfoRecord2.FromDay;
+                   CASE GetManagement_Cuttings_Criterion() OF
+                        IntDay : CutInfoRecord1.IntervalInfo := CutInfoRecord2.IntervalInfo;
+                        IntGDD : CutInfoRecord1.IntervalGDD := CutInfoRecord2.IntervalGDD;
+                        DryB,DryY,FreshY : CutInfoRecord1.MassInfo := CutInfoRecord2.MassInfo;
+                        end;
+                   END;
+                CutInfoRecord1.ToDay := Crop.DaysToHarvest;
+                IF (GetManagement_Cuttings_NrDays() <> undef_int) THEN
+                   BEGIN
+                   IF (CutInfoRecord1.ToDay > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) THEN
+                      CutInfoRecord1.ToDay := GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1;
+                   END;
+                CutInfoRecord1.NoMoreInfo := true;
+                InfoLoaded := true;
+                END;
+        UNTIL (InfoLoaded = true);
+        END;
+ end;
 END; (* GetNextHarvest *)
 
 
@@ -1270,14 +1267,14 @@ PROCEDURE OpenHarvestInfo(VAR fCuts : text);
 VAR totalname : string;
     i : ShortInt;
 BEGIN
-IF (ManFile <> '(None)')
-   THEN totalname := ManFileFull
+IF (getManFile() <> '(None)')
+   THEN totalname := GetManFileFull()
    ELSE totalname := CONCAT(PathNameSimul,'Cuttings.AqC');
 Assign(fCuts,totalname);
 Reset(fCuts);
 READLN(fCuts); // description
 READLN(fCuts); // AquaCrop version
-IF (ManFile <> '(None)') THEN For i:= 1 to 10 DO READLN(fCuts); // management info
+IF (GetManFile() <> '(None)') THEN For i:= 1 to 10 DO READLN(fCuts); // management info
 FOR i := 1 TO 12 DO READLN(fCuts);  // cuttings info (already loaded)
 GetNextHarvest;
 END; (* OpenHarvestInfo *)
@@ -1327,6 +1324,8 @@ VAR VAL100 : double;
     Cweed : ShortInt;
 
     Day1,Month1,Year1 : INTEGER;
+    FertStress : shortint;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
     
 BEGIN
 //1. Adjustments at start
@@ -1336,7 +1335,7 @@ IF WaterTableInProfile THEN AdjustForWatertable;
 IF (NOT SimulParam.ConstGwt) THEN GetGwtSet(Simulation.FromDayNr,GwTable);
 
 // 1.2 Check if FromDayNr simulation needs to be adjusted from previous run if Keep initial SWC
-IF ((SWCIniFile = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
+IF ((GetSWCIniFile() = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
    BEGIN  // assign the adjusted DayNr defined in previous run
    IF (NextSimFromDayNr <= Crop.Day1) THEN Simulation.FromDayNr := NextSimFromDayNr;
    END;
@@ -1396,20 +1395,22 @@ StressTot.Weed := 0;
 RelationshipsForFertilityAndSaltStress(Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt);
 
 // No soil fertility stress
-IF (Management.FertilityStress <= 0) THEN Management.FertilityStress := 0;
+IF (GetManagement_FertilityStress() <= 0) THEN SetManagement_FertilityStress(0);
 
 // Reset soil fertility parameters to selected value in management
-CropStressParametersSoilFertility(Crop.StressResponse,Management.FertilityStress,Simulation.EffectStress);
+CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+FertStress := GetManagement_FertilityStress();
 TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
                     Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
                     Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
-                    Simulation.EffectStress.RedCCX,Management.FertilityStress);
-PreviousStressLevel := Management.FertilityStress;
-StressSFadjNEW := Management.FertilityStress;
+                    Simulation.EffectStress.RedCCX,FertStress);
+SetManagement_FertilityStress(FertStress);
+PreviousStressLevel := GetManagement_FertilityStress();
+StressSFadjNEW := GetManagement_FertilityStress();
 // soil fertility and GDDays
 IF (Crop.ModeCycle = GDDays) THEN
    BEGIN
-   IF (Management.FertilityStress <> 0)
+   IF (GetManagement_FertilityStress() <> 0)
       THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
       ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
    END;
@@ -1428,17 +1429,17 @@ SumKci := 0;
 // 7. weed infestation and self-thinning of herbaceous perennial forage crops
 // CC expansion due to weed infestation and/or CC decrease as a result of self-thinning
 // 7.1 initialize
-Simulation.RCadj := Management.WeedRC;
+Simulation.RCadj := GetManagement_WeedRC();
 Cweed := 0;
 IF (Crop.subkind = Forage)
    THEN fi := MultiplierCCxSelfThinning(Simulation.YearSeason,Crop.YearCCx,Crop.CCxRoot)
    ELSE fi := 1;
 // 7.2 fweed
-IF (Management.WeedRC > 0)
+IF (GetManagement_WeedRC() > 0)
    THEN BEGIN
-        fWeedNoS := CCmultiplierWeed(Management.WeedRC,Crop.CCx,Management.WeedShape);
+        fWeedNoS := CCmultiplierWeed(GetManagement_WeedRC(),Crop.CCx,GetManagement_WeedShape());
         CCxCropWeedsNoSFstress := ROUND(((100* Crop.CCx * fWeedNoS) + 0.49))/100; // reference for plot with weed
-        IF (Management.FertilityStress > 0)
+        IF (GetManagement_FertilityStress() > 0)
            THEN BEGIN
                 fWeed := 1;
                 IF ((fi > 0) AND (Crop.subkind = Forage)) THEN
@@ -1446,11 +1447,11 @@ IF (Management.WeedRC > 0)
                    Cweed := 1;
                    IF (fi > 0.005)
                       THEN BEGIN // calculate the adjusted weed cover
-                           Simulation.RCadj := ROUND(Management.WeedRC
+                           Simulation.RCadj := ROUND(GetManagement_WeedRC()
                                  //+ Cweed*(1-fi)*Crop.CCx*(1-Simulation.EffectStress.RedCCX/100)*Management.WeedAdj);
-                                 + Cweed*(1-fi)*Crop.CCx*(1-Simulation.EffectStress.RedCCX/100)*Management.WeedAdj/100);
-                           IF (Simulation.RCadj < (100 * (1- fi/(fi + (1-fi)*(Management.WeedAdj/100)))))
-                              THEN Simulation.RCadj := ROUND(100 * (1- fi/(fi + (1-fi)*(Management.WeedAdj/100))));
+                                 + Cweed*(1-fi)*Crop.CCx*(1-Simulation.EffectStress.RedCCX/100)*GetManagement_WeedAdj()/100);
+                           IF (Simulation.RCadj < (100 * (1- fi/(fi + (1-fi)*(GetManagement_WeedAdj()/100)))))
+                              THEN Simulation.RCadj := ROUND(100 * (1- fi/(fi + (1-fi)*(GetManagement_WeedAdj()/100))));
                            IF (Simulation.RCadj > 100) THEN Simulation.RCadj := 98;
                            END
                       ELSE Simulation.RCadj := 100;
@@ -1458,8 +1459,8 @@ IF (Management.WeedRC > 0)
                 END
            ELSE BEGIN
                 IF (Crop.subkind = Forage)
-                   THEN fweed := CCmultiplierWeedAdjusted(Management.WeedRC,Crop.CCx,Management.WeedShape,
-                                        fi,Simulation.YearSeason,Management.WeedAdj,Simulation.RCadj)
+                   THEN fweed := CCmultiplierWeedAdjusted(GetManagement_WeedRC(),Crop.CCx,GetManagement_WeedShape(),
+                                        fi,Simulation.YearSeason,GetManagement_WeedAdj(),Simulation.RCadj)
                    ELSE fWeed := fWeedNoS;
                 END;
         END
@@ -1469,15 +1470,15 @@ IF (Management.WeedRC > 0)
         CCxCropWeedsNoSFstress := Crop.CCx;
         END;
 // 7.3 CC total due to weed infestation
-CCxTotal := fWeed * Crop.CCx * (fi+Cweed*(1-fi)*Management.WeedAdj/100);
-CDCTotal := Crop.CDC * (fWeed*Crop.CCx*(fi+Cweed*(1-fi)*Management.WeedAdj/100) + 2.29)/
-                       (Crop.CCx*(fi+Cweed*(1-fi)*Management.WeedAdj/100) + 2.29);
-GDDCDCTotal := Crop.GDDCDC * (fWeed*Crop.CCx*(fi+Cweed*(1-fi)*Management.WeedAdj/100) + 2.29)/
-                       (Crop.CCx*(fi+Cweed*(1-fi)*Management.WeedAdj/100) + 2.29);
+CCxTotal := fWeed * Crop.CCx * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
+CDCTotal := Crop.CDC * (fWeed*Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+                       (Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
+GDDCDCTotal := Crop.GDDCDC * (fWeed*Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+                       (Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
 IF (Crop.subkind = Forage)
    THEN fi := MultiplierCCoSelfThinning(Simulation.YearSeason,Crop.YearCCx,Crop.CCxRoot)
    ELSE fi := 1;
-CCoTotal := fWeed * Crop.CCo * (fi+Cweed*(1-fi)*Management.WeedAdj/100);
+CCoTotal := fWeed * Crop.CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
 
 // 8. prepare output files
 // Not applicable
@@ -1667,7 +1668,7 @@ IF (ROUND(1000*Simulation.Bini) > 0) THEN // overwrite settings in GlobalZero (i
 
 // 15. Transfer of assimilates
 IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
-   AND (Trim(CropFileFull) = Trim(Simulation.Storage.CropString)) // only for the same crop
+   AND (Trim(GetCropFileFull()) = Trim(Simulation.Storage.CropString)) // only for the same crop
    AND (Simulation.YearSeason > 1) // mobilization not possible in season 1
    AND (Simulation.YearSeason = (Simulation.Storage.Season + 1))) // season next to season in which storage took place
    THEN BEGIN
@@ -1678,7 +1679,7 @@ IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
            ELSE Transfer.Mobilize := false;
         END
    ELSE BEGIN
-        Simulation.Storage.CropString := CropFileFull;
+        Simulation.Storage.CropString := GetCropFileFull();
         // no mobilization of assimilates
         Transfer.ToMobilize := 0;
         Transfer.Mobilize := false;
@@ -1739,22 +1740,30 @@ CutInfoRecord2.MassInfo := 0;
 DayLastCut:= 0;
 CGCref := Crop.CGC;
 GDDCGCref := Crop.GDDCGC;
-IF Management.Cuttings.Considered THEN OpenHarvestInfo(fCuts);
+IF GetManagement_Cuttings_Considered() THEN OpenHarvestInfo(fCuts);
 CGCadjustmentAfterCutting := false;
 
 
 // 18. Tab sheets
 
 // 19. Labels, Plots and displays
-IF (Management.BundHeight < 0.01) THEN
+IF (GetManagement_BundHeight() < 0.01) THEN
    BEGIN
    SurfaceStorage := 0;
    ECStorage := 0;
    END;
 IF (RootingDepth > 0) THEN // salinity in root zone
    BEGIN
-   DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
-   StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
+   ECe_temp := GetRootZoneSalt().ECe;
+   ECsw_temp := GetRootZoneSalt().ECsw;
+   ECswFC_temp := GetRootZoneSalt().ECswFC;
+   KsSalt_temp := GetRootZoneSalt().KsSalt;
+   DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+   SetRootZoneSalt_ECe(ECe_temp);
+   SetRootZoneSalt_ECsw(ECsw_temp);
+   SetRootZoneSalt_ECswFC(ECswFC_temp);
+   SetRootZoneSalt_KsSalt(KsSalt_temp);
+   StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
    END;
 // Harvest Index
 Simulation.HIfinal := Crop.HI;
@@ -1860,7 +1869,7 @@ WRITE(fRun,IrriPer:9:1,InfiltPer:9:1,ROPer:9:1,DrainPer:9:1,CRwPer:9:1,
 // Soil Salinity
 WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,TotalSaltContent.EndDay:10:3);
 // seasonal stress
-WRITE(fRun,StressTot.NrD:9,StressTot.Salt:9:0,Management.FertilityStress:9,StressTot.Weed:9:0,
+WRITE(fRun,StressTot.NrD:9,StressTot.Salt:9:0,GetManagement_FertilityStress():9,StressTot.Weed:9:0,
         StressTot.Temp:9:0,StressTot.Exp:9:0,StressTot.Sto:9:0);
 // Biomass production
 IF ((BiomassPer > 0) AND (BUnlimPer > 0))
@@ -2071,9 +2080,9 @@ IF Out2Crop THEN
       THEN StrSto := undef_int
       ELSE StrSto := ROUND(100 *(1 - Tact/Tpot));
    //3. Salinity stress
-   IF (RootZoneSalt.KsSalt < 0)
+   IF (GetRootZoneSalt().KsSalt < 0)
       THEN StrSalt := undef_int
-      ELSE StrSalt := ROUND(100 * (1 - RootZoneSalt.KsSalt));
+      ELSE StrSalt := ROUND(100 * (1 - GetRootZoneSalt().KsSalt));
    //4. Air temperature stress
    IF (CCiActual <= 0.0000001)
       THEN KsTr := 1
@@ -2125,29 +2134,29 @@ IF Out3Prof THEN
    BEGIN
    WRITE(fDaily,TotalWaterContent.EndDay:10:1);
    IF (RootingDepth <= 0)
-      THEN RootZoneWC.Actual := undef_double
+      THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
            IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
               THEN DetermineRootZoneWC(Crop.RootMax,Simulation.SWCtopSoilConsidered)
               ELSE DetermineRootZoneWC(Soil.RootMax,Simulation.SWCtopSoilConsidered);
            END;
-   WRITE(fDaily,RootZoneWC.actual:9:1,RootingDepth:8:2);
+   WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
    IF (RootingDepth <= 0)
       THEN BEGIN
-           RootZoneWC.Actual := undef_double;
-           RootZoneWC.FC := undef_double;
-           RootZoneWC.WP := undef_double;
-           RootZoneWC.SAT := undef_double;
-           RootZoneWC.Thresh := undef_double;
-           RootZoneWC.Leaf := undef_double;
-           RootZoneWC.Sen := undef_double;
+           SetRootZoneWC_Actual(undef_double);
+           SetRootZoneWC_FC(undef_double);
+           SetRootZoneWC_WP(undef_double);
+           SetRootZoneWC_SAT(undef_double);
+           SetRootZoneWC_Thresh(undef_double);
+           SetRootZoneWC_Leaf(undef_double);
+           SetRootZoneWC_Sen(undef_double);
            END
       ELSE DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-   WRITE(fDaily,RootZoneWC.actual:8:1,RootZoneWC.SAT:10:1,RootZoneWC.FC:10:1,RootZoneWC.Leaf:10:1,
-      RootZoneWC.Thresh:10:1,RootZoneWC.Sen:10:1);
+   WRITE(fDaily,GetRootZoneWC().actual:8:1,GetRootZoneWC().SAT:10:1,GetRootZoneWC().FC:10:1,GetRootZoneWC().Leaf:10:1,
+      GetRootZoneWC().Thresh:10:1,GetRootZoneWC().Sen:10:1);
    IF ((Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,RootZoneWC.WP:10:1)
-      ELSE WRITELN(fDaily,RootZoneWC.WP:10:1);
+      THEN WRITE(fDaily,GetRootZoneWC().WP:10:1)
+      ELSE WRITELN(fDaily,GetRootZoneWC().WP:10:1);
    END;
    
 // 4. Profile/Root zone - soil salinity
@@ -2157,16 +2166,16 @@ IF Out4Salt THEN
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
-           RootZoneSalt.ECe := undef_int;
-           RootZoneSalt.ECsw := undef_int;
-           RootZoneSalt.KsSalt := 1;
+           SetRootZoneSalt_ECe(undef_int);
+           SetRootZoneSalt_ECsw(undef_int);
+           SetRootZoneSalt_KsSalt(1);
            END
-      ELSE SaltVal := (RootZoneWC.SAT*RootZoneSalt.ECe*Equiv)/100;
+      ELSE SaltVal := (GetRootZoneWC().SAT*GetRootZoneSalt().ECe*Equiv)/100;
    IF (ZiAqua = undef_int)
-      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
-                 (100*(1-RootZoneSalt.KsSalt)):7:0,undef_double:8:2)
-      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,RootZoneSalt.ECe:9:2,RootZoneSalt.ECsw:8:2,
-                 (100*(1-RootZoneSalt.KsSalt)):7:0,(ZiAqua/100):8:2);
+      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,undef_double:8:2)
+      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,(ZiAqua/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,ECiAqua:8:2)
       ELSE WRITELN(fDaily,ECiAqua:8:2);
@@ -2295,6 +2304,7 @@ VAR RepeatToDay : LongInt;
     HarvestNow : BOOLEAN;
     VirtualTimeCC,DayInSeason : INTEGER;
     SumGDDadjCC,RatDGDD : double;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
 
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
@@ -2426,9 +2436,9 @@ VAR RepeatToDay : LongInt;
                     END;
           WaterBetweenBunds : BEGIN
                               TargetTimeVal := IrriInfoRecord1.TimeInfo;
-                              IF  ((Management.BundHeight >= 0.01)
+                              IF  ((GetManagement_BundHeight() >= 0.01)
                                AND (GenerateDepthMode = FixDepth)
-                               AND (TargetTimeVal < (1000 * Management.BundHeight))
+                               AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
                                AND (TargetTimeVal >= ROUND(SurfaceStorage)))
                                    THEN Irrigation := TargetDepthVal
                                    ELSE Irrigation := 0;
@@ -2555,10 +2565,10 @@ RepeatToDay := Simulation.ToDayNr;
 
 REPEAT
 (* 1. Get ETo *)
-IF (EToFile = '(None)') THEN ETo := 5;
+IF (GetEToFile() = '(None)') THEN ETo := 5;
 
 (* 2. Get Rain *)
-IF (RainFile = '(None)') THEN Rain := 0;
+IF (GetRainFile() = '(None)') THEN Rain := 0;
 
 (* 3. Start mode *)
 IF StartMode THEN StartMode := false;
@@ -2705,8 +2715,16 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
            ELSE KsTr := KsTemperature((0),Crop.GDtranspLow,GDDayi);
         StressTot.Temp := ((StressTot.NrD - 1)*StressTot.Temp + 100*(1-KsTr))/StressTot.NrD;
         // soil salinity stress
-        DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe, RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
-        StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-RootZoneSalt.KsSalt))/StressTot.NrD;
+        ECe_temp := GetRootZoneSalt().ECe;
+        ECsw_temp := GetRootZoneSalt().ECsw;
+        ECswFC_temp := GetRootZoneSalt().ECswFC;
+        KsSalt_temp := GetRootZoneSalt().KsSalt;
+        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        SetRootZoneSalt_ECe(ECe_temp);
+        SetRootZoneSalt_ECsw(ECsw_temp);
+        SetRootZoneSalt_ECswFC(ECswFC_temp);
+        SetRootZoneSalt_KsSalt(KsSalt_temp);
+        StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
         // Biomass and yield
         DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
@@ -2740,28 +2758,28 @@ IF (DayNri >= Crop.Day1) THEN
 IF (TargetTimeVal = 1) THEN IrriInterval := 0;
 
 (* 13. Cuttings *)
-IF Management.Cuttings.Considered THEN
+IF GetManagement_Cuttings_Considered() THEN
    BEGIN
    HarvestNow := false;
    DayInSeason := DayNri - Crop.Day1 + 1;
    SumInterval := SumInterval + 1;
    SumGDDcuts := SumGDDcuts + GDDayi;
-   CASE Management.Cuttings.Generate OF
+   CASE GetManagement_Cuttings_Generate() OF
         false : BEGIN
-                IF (Management.Cuttings.FirstDayNr <> undef_int) // adjust DayInSeason
-                   THEN DayInSeason := DayNri - Management.Cuttings.FirstDayNr + 1;
+                IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) // adjust DayInSeason
+                   THEN DayInSeason := DayNri - GetManagement_Cuttings_FirstDayNr() + 1;
                 IF ((DayInSeason >= CutInfoRecord1.FromDay) AND (CutInfoRecord1.NoMoreInfo = false))
                    THEN BEGIN
                         HarvestNow := true;
                         GetNextHarvest;
                         END;
-                 IF (Management.Cuttings.FirstDayNr <> undef_int) // reset DayInSeason
+                 IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) // reset DayInSeason
                    THEN DayInSeason := DayNri - Crop.Day1 + 1;
                 END;
         true  : BEGIN
                 IF ((DayInSeason > CutInfoRecord1.ToDay) AND (CutInfoRecord1.NoMoreInfo = false))
                    THEN GetNextHarvest;
-                CASE Management.Cuttings.Criterion OF
+                CASE GetManagement_Cuttings_Criterion() OF
                      IntDay : BEGIN
                               IF ((SumInterval >= CutInfoRecord1.IntervalInfo)
                                    AND (DayInSeason >= CutInfoRecord1.FromDay)
@@ -2803,9 +2821,9 @@ IF Management.Cuttings.Considered THEN
       NrCut := NrCut + 1;
       DayLastCut := DayInSeason;
       CGCadjustmentAfterCutting := false; // adjustement CGC
-      IF (CCiPrev > (Management.Cuttings.CCcut/100)) THEN
+      IF (CCiPrev > (GetManagement_Cuttings_CCcut()/100)) THEN
          BEGIN
-         CCiPrev := Management.Cuttings.CCcut/100;
+         CCiPrev := GetManagement_Cuttings_CCcut()/100;
          // ook nog CCwithered
          Crop.CCxWithered := 0;  // or CCiPrev ??
          CCxWitheredTpot := 0; // for calculation Maximum Biomass but considering soil fertility stress
@@ -2871,7 +2889,7 @@ IF ((VirtualTimeCC+Simulation.DelayedDays + 1) <= Crop.DaysToFullCanopySF)
 //14.d Print ---------------------------------------
 IF (OutputAggregate > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,WPi,fDaily);
-IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -2888,9 +2906,11 @@ IF (Simulation.SumEToStress >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= Simulation.ToDayNr) THEN
    BEGIN
+
    IF (EToFile <> '(None)') THEN READLN(fEToSIM,ETo);
    IF (RainFile <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (GetTemperatureFile() = '(None)')
+
       THEN BEGIN
            Tmin := SimulParam.Tmin;
            Tmax := SimulParam.Tmax;
@@ -2912,7 +2932,7 @@ IF  ((DayNri-1) = Simulation.ToDayNr) THEN
     // multiple cuttings
     IF Part1Mult THEN
        BEGIN
-       IF (Management.Cuttings.HarvestEnd = true) THEN
+       IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
           BEGIN  // final harvest at crop maturity
           NrCut := NrCut + 1;
           RecordHarvest(NrCut,DayNri,(DayNri-Crop.Day1+1),SumInterval,BprevSum,YprevSum,fHarvest);
@@ -2978,9 +2998,11 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
     BEGIN
+
     IF (EToFile <> '(None)') THEN Close(fEToSIM);
     IF (RainFile <> '(None)') THEN Close(fRainSIM);
     IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
+
     END; (* CloseClimateFiles *)
 
     PROCEDURE CloseIrrigationFile(VAR fIrri : text);
@@ -2990,7 +3012,7 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseManagementFile(VAR fCuts : text);
     BEGIN
-    IF Management.Cuttings.Considered THEN Close(fCuts);
+    IF GetManagement_Cuttings_Considered() THEN Close(fCuts);
     END; (* CloseManagementFile *)
 
 
@@ -3033,12 +3055,12 @@ CASE TheProjectType OF
                InitializeSimulationRun;
                IF OutDaily THEN WriteTitleDailyResults(TheProjectType,(1),fDaily);
                IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,(1),fHarvest);
-               IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
+               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
                FileManagement((1),TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
                CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
                CloseIrrigationFile(fIrri);
                CloseManagementFile(fCuts);
-               IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
+               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
                END;
      TypePRM : BEGIN
                FOR NrRun := 1 TO Simulation.NrRuns DO
@@ -3050,12 +3072,12 @@ CASE TheProjectType OF
                    InitializeSimulationRun;
                    IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
                    IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-                   IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
                    FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
                    CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
                    CloseIrrigationFile(fIrri);
                    CloseManagementFile(fCuts);
-                   IF (Part2Eval AND (ObservationsFile <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
                    END;
                END;
      else;
