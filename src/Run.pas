@@ -1981,7 +1981,7 @@ DetermineDate(Simulation.ToDayNr,DayN,MonthN,YearN); // End simulation run
 WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
                GetSumWaBal_Rain(),SumETo,SumGDD,
                GetSumWaBal_Irrigation(),GetSumWaBal_Infiltrated(),GetSumWaBal_Runoff(),GetSumWaBal_Drain(),GetSumWaBal_CRwater(),
-               GetSumWaBal_Eact,GetSumWaBal_Epot,GetSumWaBal_Tact,GetSumWaBal_TrW,GetSumWaBal_Tpot,
+               GetSumWaBal_Eact(),GetSumWaBal_Epot(),GetSumWaBal_Tact(),GetSumWaBal_TrW(),GetSumWaBal_Tpot(),
                GetSumWaBal_SaltIn(),GetSumWaBal_SaltOut(),GetSumWaBal_CRsalt(),
                GetSumWaBal_Biomass(),GetSumWaBal_BiomassUnlim(),Transfer.Bmobilized,Simulation.Storage.Btotal,
                TheProjectFile,fRun);
