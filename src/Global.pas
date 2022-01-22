@@ -46,12 +46,6 @@ TYPE
 
      rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
-     rep_Content = Record  // total water (mm) or salt (Mg/ha) content
-         BeginDay  : double; //at the beginning of the day
-         EndDay    : double; //at the end of the day
-         ErrorDay  : double; //error on WaterContent or SaltContent over the day
-         END;
-
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
      
@@ -395,8 +389,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Compartment    : rep_Comp;
     Soil           : rep_soil;
     NrCompartments : INTEGER;
-    TotalWaterContent,
-    TotalSaltContent   : rep_Content; //Water Content (mm) and Salt Content (Mg/ha)
     Crop           : rep_Crop;
     SumWabal       : rep_sum;
     RootingDepth   : double;
@@ -812,10 +804,10 @@ WITH SumWabal DO
   CRwater := 0;
   CRsalt := 0;
   END;
-TotalWaterContent.BeginDay := 0;
+SetTotalWaterContent_BeginDay(0);
 FOR i :=1 to NrCompartments DO
-    TotalWaterContent.BeginDay := TotalWaterContent.BeginDay
-      + Compartment[i].theta*1000*Compartment[i].Thickness;
+        SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
+          + Compartment[i].theta*1000*Compartment[i].Thickness);
 END; (* GlobalZero *)
 
 
@@ -1388,7 +1380,7 @@ FOR compi := 1 TO NrCompartments DO
         + Simulation.ThetaIni[compi]*100*10*Compartment[compi].Thickness;
     END;
 FOR layeri := 1 TO NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
-TotalWaterContent.BeginDay := Total;
+SetTotalWaterContent_BeginDay(Total);
 
 // initial soil water content and no salts
 DeclareInitialCondAtFCandNoSalt;
@@ -1586,10 +1578,13 @@ END; (* DetermineSaltContent *)
 
 PROCEDURE CompleteProfileDescription;
 VAR i : INTEGER;
+TotalWaterContent_temp : rep_Content;
 BEGIN
 FOR i:= (Soil.NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i]);
 Simulation.ResetIniSWC := true; // soil water content and soil salinity
-specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent);
+TotalWaterContent_temp := GetTotalWaterContent();
+specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent_temp);
+SetTotalWaterContent(TotalWaterContent_temp);
 END; (* CompleteProfileDescription *)
 
 
@@ -4223,7 +4218,7 @@ FOR compi := 1 TO NrCompartments DO
                                                                 + Simulation.ThetaIni[compi]*100*10*Compartment[compi].Thickness;
     END;
 FOR layeri := 1 TO Soil.NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
-TotalWaterContent.BeginDay := Total;
+SetTotalWaterContent_BeginDay(Total);
 END; (* AdjustThetaInitial *)
 
 

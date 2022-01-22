@@ -113,6 +113,15 @@ type rep_Shapes
         !! Undocumented
 end type rep_Shapes
 
+type rep_Content
+    real(dp) :: BeginDay
+        !! at the beginning of the day
+    real(dp) :: EndDay
+        !! at the end of the day
+    real(dp) :: ErrorDay
+        !! error on WaterContent or SaltContent over the day
+end type rep_Content
+
 type rep_EffectStress
     integer(int8) :: RedCGC
         !! Reduction of CGC (%)
@@ -269,6 +278,8 @@ character(len=:), allocatable :: MultipleProjectFile
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
 type(rep_Cuttings) :: Cuttings
+type(rep_Content) :: TotalSaltContent
+type(rep_Content) :: TotalWaterContent
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_RootZoneSalt) :: RootZoneSalt
@@ -2618,6 +2629,60 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
 
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
+
+type(rep_Content) function GetTotalSaltContent()
+    !! Getter for the "TotalSaltContent" global variable.
+
+    GetTotalSaltContent = TotalSaltContent
+end function GetTotalSaltContent
+
+subroutine SetTotalSaltContent_BeginDay(BeginDay)
+    !! Setter for the "TotalSaltContent" global variable.
+    real(dp), intent(in) :: BeginDay
+
+    TotalSaltContent%BeginDay = BeginDay
+end subroutine SetTotalSaltContent_BeginDay
+
+subroutine SetTotalSaltContent_EndDay(EndDay)
+    !! Setter for the "TotalSaltContent" global variable.
+    real(dp), intent(in) :: EndDay
+
+    TotalSaltContent%EndDay = EndDay
+end subroutine SetTotalSaltContent_EndDay
+
+subroutine SetTotalSaltContent_ErrorDay(ErrorDay)
+    !! Setter for the "TotalSaltContent" global variable.
+    real(dp), intent(in) :: ErrorDay
+
+    TotalSaltContent%ErrorDay = ErrorDay
+end subroutine SetTotalSaltContent_ErrorDay
+
+type(rep_Content) function GetTotalWaterContent()
+    !! Getter for the "TotalWaterContent" global variable.
+
+    GetTotalWaterContent = TotalWaterContent
+end function GetTotalWaterContent
+
+subroutine SetTotalWaterContent_BeginDay(BeginDay)
+    !! Setter for the "TotalWaterContent" global variable.
+    real(dp), intent(in) :: BeginDay
+
+    TotalWaterContent%BeginDay = BeginDay
+end subroutine SetTotalWaterContent_BeginDay
+
+subroutine SetTotalWaterContent_EndDay(EndDay)
+    !! Setter for the "TotalWaterContent" global variable.
+    real(dp), intent(in) :: EndDay
+
+    TotalWaterContent%EndDay = EndDay
+end subroutine SetTotalWaterContent_EndDay
+
+subroutine SetTotalWaterContent_ErrorDay(ErrorDay)
+    !! Setter for the "TotalWaterContent" global variable.
+    real(dp), intent(in) :: ErrorDay
+
+    TotalWaterContent%ErrorDay = ErrorDay
+end subroutine SetTotalWaterContent_ErrorDay
 
 type(rep_RootZoneSalt) function GetRootZoneSalt()
     !! Getter for the "RootZoneSalt" global variable.
