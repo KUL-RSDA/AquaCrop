@@ -1111,7 +1111,7 @@ VAR totalname : string;
     VersionNr : double;
 
 BEGIN
-IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
+IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    BEGIN
    IF (GetIrriFile() <> '(None)')
       THEN totalname := IrriFileFull
@@ -1124,7 +1124,7 @@ IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
       THEN GlobalIrriECw := true
       ELSE GlobalIrriECw := false;
    FOR i := 1 TO 6 DO READLN(fIrri);  // irrigation info (already loaded)
-   CASE IrriMode OF
+   CASE GetIrriMode() OF
         Manual   : BEGIN
                    IF (IrriFirstDayNr = undef_int)
                       THEN DNr := DayNri - Crop.Day1 + 1
@@ -1381,7 +1381,7 @@ CO2i := CO2ForSimulationPeriod(DNr1,DNr2);
 
 // 5. seasonals stress coefficients
 Simulation.SalinityConsidered := (((Crop.ECemin <> undef_int) AND (Crop.ECemax <> undef_int)) AND (Crop.ECemin < Crop.ECemax));
-IF (IrriMode = Inet) THEN Simulation.SalinityConsidered := false;
+IF (GetIrriMode() = Inet) THEN Simulation.SalinityConsidered := false;
 StressTot.NrD := undef_int;
 StressTot.Salt := 0;
 StressTot.Temp := 0;
@@ -2399,8 +2399,8 @@ VAR RepeatToDay : LongInt;
     TargetDepthVal := -999;
     IF ((DayNri < Crop.Day1) OR (DayNri > Crop.DayN))
        THEN Irrigation := IrriOutSeason(DayNri)
-       ELSE IF (IrriMode = Manual) THEN Irrigation := IrriManual(DayNri);
-    IF ((IrriMode = Generate) AND ((DayNri >= Crop.Day1) AND (DayNri <= Crop.DayN))) THEN
+       ELSE IF (GetIrriMode() = Manual) THEN Irrigation := IrriManual(DayNri);
+    IF ((GetIrriMode() = Generate) AND ((DayNri >= Crop.Day1) AND (DayNri <= Crop.DayN))) THEN
        BEGIN
        // read next line if required
        DayInSeason := DayNri - Crop.Day1 + 1;
@@ -2669,7 +2669,7 @@ IF (((Crop.ModeCycle = CalendarDays) AND ((DayNri-Crop.Day1+1) < Crop.DaysToHarv
 IF ((RootingDepth > 0) AND (DayNri = Crop.Day1))
    THEN BEGIN //initial root zone depletion day1 (for WRITE Output)
         DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-        IF (IrriMode = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
+        IF (GetIrriMode() = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
         END;
 
 (* 8. Transfer of Assimilates  *)
@@ -2686,7 +2686,7 @@ BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayL
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
-IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (IrriMode = Inet)) THEN
+IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (GetIrriMode() = Inet)) THEN
    BEGIN
    Irrigation := Irrigation + PreIrri;
    SumWabal.Irrigation := SumWabal.Irrigation + PreIrri;
@@ -3003,7 +3003,7 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseIrrigationFile(VAR fIrri : text);
     BEGIN
-    IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN Close(fIrri);
+    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
     END; (* CloseIrrigationFile *)
 
     PROCEDURE CloseManagementFile(VAR fCuts : text);

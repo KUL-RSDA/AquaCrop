@@ -3000,7 +3000,7 @@ IF (Irrigation > 0) THEN
       THEN EvapoEntireSoilSurface := false;
    END;
 IF ((Rain > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
-IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (IrriMode = Inet))
+IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (GetIrriMode() = Inet))
    THEN EvapoEntireSoilSurface := true;
 
 // 2b. Correction for Wetted surface by Irrigation
@@ -3342,7 +3342,7 @@ VAR       sink_value, StopComp, SbotComp,
           compi, i : INTEGER;
 
 BEGIN
-IF (IrriMode = Inet)
+IF (GetIrriMode() = Inet)
    THEN BEGIN
         sink_value := (Crop.SmaxTop + Crop.SmaxBot)/2;
         for compi := 1 to NrCompartments DO Compartment[compi].Smax := sink_value;
@@ -3428,7 +3428,7 @@ Tact := 0.0;
 IF (Tpot > 0) THEN
    BEGIN
    // 1. maximum transpiration in actual root zone
-   IF (IrriMode = Inet)
+   IF (GetIrriMode() = Inet)
       THEN BEGIN
            // salinity stress not considered
            TpotMAX := Tpot;
@@ -3501,7 +3501,7 @@ IF (Tpot > 0) THEN
         pre_layer := layeri;
         END;
      // 2.b calculate alfa
-     IF (IrriMode = Inet)
+     IF (GetIrriMode() = Inet)
         THEN alfa := 1
         ELSE BEGIN
              // effect of water stress and ECe
@@ -3553,7 +3553,7 @@ IF (Tpot > 0) THEN
    UNTIL ((WtoExtract <= 0) OR (compi = Nrcompartments));
 
    // 3. add net irrigation water requirement
-   IF (IrriMode = Inet) THEN
+   IF (GetIrriMode() = Inet) THEN
      BEGIN // total root zone is considered
      DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
      InetThreshold := GetRootZoneWC().FC - SimulParam.PercRAW/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
@@ -3716,7 +3716,7 @@ IF (GetManagement_Bundheight() < 0.001) THEN
 // 5. Infiltration (Rain and Irrigation)
 IF ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
    THEN CalculateEffectiveRainfall;
-IF (((IrriMode = Generate) AND (Irrigation = 0)) AND (TargetTimeVal <> -999))
+IF (((GetIrriMode() = Generate) AND (Irrigation = 0)) AND (TargetTimeVal <> -999))
    THEN Calculate_irrigation;
 IF (GetManagement_Bundheight() >= 0.01)
    THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt)
@@ -3770,7 +3770,7 @@ AdjustpStomatalToETo(ETo,Crop.pActStom);
 // 12. Evaporation
 IF (PreDay = false) THEN PrepareStage2; // Initialize Simulation.EvapstartStg2 (REW is gone)
 IF ((Rain > 0) OR
-   ((Irrigation > 0) AND (IrriMode <> Inet)))
+   ((Irrigation > 0) AND (GetIrriMode() <> Inet)))
    THEN PrepareStage1;
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,Simulation.EvapWCsurf);
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
