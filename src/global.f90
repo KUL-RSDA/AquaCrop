@@ -64,7 +64,7 @@ integer(intEnum), parameter :: IrriMethod_MBasin = 0
 integer(intEnum), parameter :: IrriMethod_MBorder = 1
     !! index of MBorder in IrriMode enumerated type
 integer(intEnum), parameter :: IrriMethod_MDrip = 2
-    !! index of MBorder in IrriMode enumerated type
+    !! index of MDrip in IrriMode enumerated type
 integer(intEnum), parameter :: IrriMethod_MFurrow = 3
     !! index of MFurrow in IrriMode enumerated type
 integer(intEnum), parameter :: IrriMethod_MSprinkler = 4
