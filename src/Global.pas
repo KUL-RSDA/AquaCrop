@@ -287,8 +287,6 @@ TYPE
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
-     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
-     rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
          DayNr : Integer;
          Param : Integer;
@@ -388,8 +386,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     Simulation     : rep_sim;
     IrriMode       : rep_IrriMode;
     IrriMethod     : rep_IrriMethod;
-    GenerateTimeMode : rep_GenerateTimeMode;
-    GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
     SoilLayer      : rep_SoilLayer;
     Compartment    : rep_Comp;
@@ -1020,8 +1016,8 @@ BEGIN
  IrriDescription := 'Rainfed cropping';
  IrriMethod := MSprinkler;
  Simulation.IrriECw := 0.0; // dS/m
- GenerateTimeMode := AllRAW;
- GenerateDepthMode := ToFC;
+ SetGenerateTimeMode(AllRAW);
+ SetGenerateDepthMode(ToFC);
  IrriFirstDayNr := undef_int;
  FOR Nri := 1 TO 5 DO
      BEGIN
@@ -1170,16 +1166,16 @@ IF (IrriMode = Generate) THEN
    BEGIN
    READLN(f0,i); // time criterion
    Case i OF
-        1 : GenerateTimeMode := FixInt;
-        2 : GenerateTimeMode := AllDepl;
-        3 : GenerateTimeMode := AllRAW;
-        4 : GenerateTimeMode := WaterBetweenBunds;
-        else GenerateTimeMode := AllRAW;
+        1 : SetGenerateTimeMode(FixInt);
+        2 : SetGenerateTimeMode(AllDepl);
+        3 : SetGenerateTimeMode(AllRAW);
+        4 : SetGenerateTimeMode(WaterBetweenBunds);
+        else SetGenerateTimeMode(AllRAW);
      end;
    READLN(f0,i); // depth criterion
    Case i OF
-        1 : GenerateDepthMode := ToFc;
-        else GenerateDepthMode := FixDepth;
+        1 : SetGenerateDepthMode(ToFc);
+        else SetGenerateDepthMode(FixDepth);
      end;
    IrriFirstDayNr := undef_int; // start of growing period
    END;

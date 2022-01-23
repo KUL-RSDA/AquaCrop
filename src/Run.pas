@@ -2420,7 +2420,7 @@ VAR RepeatToDay : LongInt;
           END;
        // get TargetValues
        TargetDepthVal := IrriInfoRecord1.DepthInfo;
-       CASE GenerateTimeMode OF
+       CASE GetGenerateTimeMode() OF
           AllDepl : TargetTimeVal := IrriInfoRecord1.TimeInfo;
           AllRAW  : TargetTimeVal := IrriInfoRecord1.TimeInfo;
           FixInt  : BEGIN
@@ -2432,12 +2432,12 @@ VAR RepeatToDay : LongInt;
                                ELSE BEGIN  // still to solve
                                     TargetTimeVal := 1; // voorlopige oplossing
                                     END;
-                    IF ((TargetTimeVal = 1) AND (GenerateDepthMode = FixDepth)) THEN Irrigation := TargetDepthVal;
+                    IF ((TargetTimeVal = 1) AND (GetGenerateDepthMode() = FixDepth)) THEN Irrigation := TargetDepthVal;
                     END;
           WaterBetweenBunds : BEGIN
                               TargetTimeVal := IrriInfoRecord1.TimeInfo;
                               IF  ((GetManagement_BundHeight() >= 0.01)
-                               AND (GenerateDepthMode = FixDepth)
+                               AND (GetGenerateDepthMode() = FixDepth)
                                AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
                                AND (TargetTimeVal >= ROUND(SurfaceStorage)))
                                    THEN Irrigation := TargetDepthVal
