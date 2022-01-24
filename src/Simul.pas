@@ -1049,11 +1049,11 @@ BEGIN
 // total root zone is considered
 DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
 ZrWC := GetRootZoneWC().Actual - Epot - Tpot + Rain - Runoff - SubDrain;
-IF (GenerateTimeMode = AllDepl) THEN
+IF (GetGenerateTimeMode() = AllDepl) THEN
    IF ((GetRootZoneWC().FC - ZrWC) >= TargetTimeVal)
       THEN TargetTimeVal := 1
       ELSE TargetTimeVal := 0;
-IF (GenerateTimeMode = AllRAW) THEN
+IF (GetGenerateTimeMode() = AllRAW) THEN
    BEGIN
    RAWi := TargetTimeVal/100 * (GetRootZoneWC().FC - GetRootZoneWC().Thresh);
    IF ((GetRootZoneWC().FC - ZrWC) >= RAWi)
@@ -1062,7 +1062,7 @@ IF (GenerateTimeMode = AllRAW) THEN
    END;
 IF (TargetTimeVal = 1)
    THEN BEGIN
-        IF (GenerateDepthMode = FixDepth)
+        IF (GetGenerateDepthMode() = FixDepth)
            THEN Irrigation := TargetDepthVal
            ELSE BEGIN
                 Irrigation := (GetRootZoneWC().FC - ZrWc) + TargetDepthVal;

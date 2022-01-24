@@ -1190,7 +1190,7 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,eto_descr,rain_descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -1316,8 +1316,10 @@ IF (GetCO2File() = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathCO2File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CO2FileFull := CONCAT(Trim(TempString),GetCO2File());
-        GetCO2Description(CO2FileFull,CO2Description);
+        SetCO2FileFull(CONCAT(Trim(TempString),GetCO2File()));
+        CO2descr :=  GetCO2Description();
+        GenerateCO2Description(GetCO2FileFull(),CO2descr);
+        SetCO2Description(CO2descr)
         END;
 SetClimData;
 AdjustOnsetSearchPeriod; // Set initial StartSearch and StopSearchDayNr

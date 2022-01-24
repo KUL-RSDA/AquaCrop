@@ -271,8 +271,6 @@ TYPE
          CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
          End;
 
-     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
-     rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
          DayNr : Integer;
          Param : Integer;
@@ -331,19 +329,16 @@ TYPE
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
     TemperatureFile : string;
-    TemperatureFileFull,CO2FileFull,
-    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    TemperatureFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
-    TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
+    TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
     ClimRecord,
     EToRecord,
     RainRecord,
     TemperatureRecord     : rep_clim;
     Simulation     : rep_sim;
-    GenerateTimeMode : rep_GenerateTimeMode;
-    GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
     SoilLayer      : rep_SoilLayer;
     Compartment    : rep_Comp;
@@ -968,8 +963,8 @@ BEGIN
  IrriDescription := 'Rainfed cropping';
  SetIrriMethod(MSprinkler);
  Simulation.IrriECw := 0.0; // dS/m
- GenerateTimeMode := AllRAW;
- GenerateDepthMode := ToFC;
+ SetGenerateTimeMode(AllRAW);
+ SetGenerateDepthMode(ToFC);
  IrriFirstDayNr := undef_int;
  FOR Nri := 1 TO 5 DO
      BEGIN
@@ -1118,16 +1113,16 @@ IF (GetIrriMode() = Generate) THEN
    BEGIN
    READLN(f0,i); // time criterion
    Case i OF
-        1 : GenerateTimeMode := FixInt;
-        2 : GenerateTimeMode := AllDepl;
-        3 : GenerateTimeMode := AllRAW;
-        4 : GenerateTimeMode := WaterBetweenBunds;
-        else GenerateTimeMode := AllRAW;
+        1 : SetGenerateTimeMode(FixInt);
+        2 : SetGenerateTimeMode(AllDepl);
+        3 : SetGenerateTimeMode(AllRAW);
+        4 : SetGenerateTimeMode(WaterBetweenBunds);
+        else SetGenerateTimeMode(AllRAW);
      end;
    READLN(f0,i); // depth criterion
    Case i OF
-        1 : GenerateDepthMode := ToFc;
-        else GenerateDepthMode := FixDepth;
+        1 : SetGenerateDepthMode(ToFc);
+        else SetGenerateDepthMode(FixDepth);
      end;
    IrriFirstDayNr := undef_int; // start of growing period
    END;
@@ -3482,7 +3477,7 @@ DetermineDate(ToDayNr,Dayi,Monthi,ToYi);
 IF ((FromYi = 1901) OR (ToYi = 1901))
    THEN CO2ForSimulationPeriod := CO2Ref
    ELSE BEGIN
-        Assign(f0,CO2FileFull);
+        Assign(f0,GetCO2FileFull());
         Reset(f0);
         FOR i:= 1 TO 3 DO Readln(f0); // Description and Title
         // from year
