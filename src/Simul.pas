@@ -726,28 +726,29 @@ CASE control OF
                                             - Drain*ECdrain*Equiv/100
                                             + CRsalt/100
                                             + HorizontalSaltFlow);
-               SumWabal.Epot := SumWabal.Epot + Epot;
-               SumWabal.Tpot := SumWabal.Tpot + Tpot;
-               SumWabal.Rain := SumWabal.Rain + Rain;
-               SumWabal.Irrigation := SumWabal.Irrigation + Irrigation;
-               SumWabal.Infiltrated := SumWabal.Infiltrated + Infiltrated;
-               SumWabal.Runoff := SumWabal.Runoff + Runoff;
-               SumWabal.Drain := SumWabal.Drain + Drain;
-               SumWabal.Eact := SumWabal.Eact + Eact;
-               SumWabal.Tact := SumWabal.Tact + Tact;
-               SumWaBal.TrW := SumWabal.TrW + TactWeedInfested;
-               SumWabal.CRwater := SumWabal.CRwater + CRwater;
+               SetSumWaBal_Epot(GetSumWaBal_Epot() + Epot);
+               SetSumWaBal_Tpot(GetSumWaBal_Tpot() + Tpot);
+               SetSumWaBal_Rain(GetSumWaBal_Rain() + Rain);
+               SetSumWaBal_Irrigation(GetSumWaBal_Irrigation() + Irrigation);
+               SetSumWaBal_Infiltrated(GetSumWaBal_Infiltrated() + Infiltrated);
+               SetSumWaBal_Runoff(GetSumWaBal_Runoff() + Runoff);
+               SetSumWaBal_Drain(GetSumWaBal_Drain() + Drain);
+               SetSumWaBal_Eact(GetSumWaBal_Eact() + Eact);
+               SetSumWaBal_Tact(GetSumWaBal_Tact() + Tact);
+               SetSumWaBal_TrW(GetSumWaBal_TrW() + TactWeedInfested);
+               SetSumWaBal_CRwater(GetSumWaBal_CRwater() + CRwater);
+
                IF (((dayi-Simulation.DelayedDays) >= Crop.Day1 ) AND ((dayi-Simulation.DelayedDays) <= Crop.DayN)) THEN // in growing cycle
                   BEGIN
-                  IF (SumWabal.Biomass > 0) // biomass was already produced (i.e. CC present)
+                  IF (GetSumWaBal_Biomass() > 0) // biomass was already produced (i.e. CC present)
                      THEN BEGIN // and still canopy cover
-                          IF (CCiActual > 0) THEN SumWabal.ECropCycle := SumWabal.ECropCycle + Eact;
+                          IF (CCiActual > 0) THEN SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + Eact);
                           END
-                     ELSE SumWabal.ECropCycle := SumWabal.ECropCycle + Eact; // before germination
+                     ELSE SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + Eact); // before germination
                   END;
-               SumWabal.CRsalt := SumWabal.CRsalt + CRsalt/100;
-               SumWabal.SaltIn := SumWabal.SaltIn + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100;
-               SumWabal.SaltOut := SumWabal.SaltOut +  Drain*ECdrain*Equiv/100;
+               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + CRsalt/100);
+               SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100);
+               SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  Drain*ECdrain*Equiv/100);
                END;
      END;
 END; (* CheckWaterSaltBalance *)

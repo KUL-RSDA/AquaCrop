@@ -235,6 +235,19 @@ type rep_Manag
         !! Multiple cuttings
 end type rep_Manag
 
+
+type rep_sum 
+    real(dp) :: Epot, Tpot, Rain, Irrigation, Infiltrated
+        !! Undocumented
+    real(dp) :: Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater
+        !! mm
+    real(dp) :: Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot
+        !! ton/ha
+    real(dp) :: SaltIn, SaltOut, CRsalt
+        !! ton/ha
+end type rep_sum 
+
+
 type rep_RootZoneSalt 
     real(dp) :: ECe
         !! Electrical conductivity of the saturated soil-paste extract (dS/m)
@@ -245,6 +258,7 @@ type rep_RootZoneSalt
     real(dp) :: KsSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
+
 
 
 character(len=:), allocatable :: RainFile
@@ -282,6 +296,7 @@ type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
+type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
 
 
@@ -2630,6 +2645,266 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
 
+real(dp) function GetSumWaBal_Epot()
+    !! Getter for the "SumWaBal" global variable.
+
+     GetSumWaBal_Epot = SumWaBal%Epot
+end function GetSumWaBal_Epot
+
+real(dp) function GetSumWaBal_Tpot()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Tpot = SumWaBal%Tpot
+end function GetSumWaBal_Tpot
+
+real(dp) function GetSumWaBal_Rain()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Rain = SumWaBal%Rain
+end function GetSumWaBal_Rain
+
+real(dp) function GetSumWaBal_Irrigation()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Irrigation = SumWaBal%Irrigation
+end function GetSumWaBal_Irrigation
+
+real(dp) function GetSumWaBal_Infiltrated()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Infiltrated = SumWaBal%Infiltrated
+end function GetSumWaBal_Infiltrated
+
+real(dp) function GetSumWaBal_Runoff()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Runoff = SumWaBal%Runoff
+end function GetSumWaBal_Runoff
+
+real(dp) function GetSumWaBal_Drain()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Drain = SumWaBal%Drain
+end function GetSumWaBal_Drain
+
+real(dp) function GetSumWaBal_Eact()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Eact = SumWaBal%Eact
+end function GetSumWaBal_Eact
+
+real(dp) function GetSumWaBal_Tact()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Tact = SumWaBal%Tact
+end function GetSumWaBal_Tact
+
+real(dp) function GetSumWaBal_TrW()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_TrW = SumWaBal%TrW
+end function GetSumWaBal_TrW
+
+real(dp) function GetSumWaBal_ECropCycle()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_ECropCycle = SumWaBal%ECropCycle
+end function GetSumWaBal_ECropCycle
+
+real(dp) function GetSumWaBal_CRwater()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_CRwater = SumWaBal%CRwater
+end function GetSumWaBal_CRwater
+
+real(dp) function GetSumWaBal_Biomass()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Biomass = SumWaBal%Biomass
+end function GetSumWaBal_Biomass
+
+real(dp) function GetSumWaBal_YieldPart()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_YieldPart = SumWaBal%YieldPart
+end function GetSumWaBal_YieldPart
+
+real(dp) function GetSumWaBal_BiomassPot()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_BiomassPot = SumWaBal%BiomassPot
+end function GetSumWaBal_BiomassPot
+
+real(dp) function GetSumWaBal_BiomassUnlim()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_BiomassUnlim = SumWaBal%BiomassUnlim
+end function GetSumWaBal_BiomassUnlim
+
+real(dp) function GetSumWaBal_BiomassTot()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_BiomassTot = SumWaBal%BiomassTot
+end function GetSumWaBal_BiomassTot
+
+real(dp) function GetSumWaBal_SaltIn()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_SaltIn = SumWaBal%SaltIn
+end function GetSumWaBal_SaltIn
+
+real(dp) function GetSumWaBal_SaltOut()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_SaltOut = SumWaBal%SaltOut
+end function GetSumWaBal_SaltOut
+
+real(dp) function GetSumWaBal_CRSalt()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_CRSalt = SumWaBal%CRSalt
+end function GetSumWaBal_CRSalt
+
+subroutine SetSumWaBal_Epot(Epot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Epot
+
+    SumWaBal%Epot = Epot
+end subroutine SetSumWaBal_Epot
+
+subroutine SetSumWaBal_Tpot(Tpot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Tpot
+
+    SumWaBal%Tpot = Tpot
+end subroutine SetSumWaBal_Tpot
+
+subroutine SetSumWaBal_Rain(Rain)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Rain
+
+    SumWaBal%Rain = Rain
+end subroutine SetSumWaBal_Rain
+
+subroutine SetSumWaBal_Irrigation(Irrigation)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Irrigation
+
+    SumWaBal%Irrigation = Irrigation
+end subroutine SetSumWaBal_Irrigation
+
+subroutine SetSumWaBal_Infiltrated(Infiltrated)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Infiltrated
+
+    SumWaBal%Infiltrated = Infiltrated
+end subroutine SetSumWaBal_Infiltrated
+
+subroutine SetSumWaBal_Runoff(Runoff)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Runoff
+
+    SumWaBal%Runoff = Runoff
+end subroutine SetSumWaBal_Runoff
+
+subroutine SetSumWaBal_Drain(Drain)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Drain
+
+    SumWaBal%Drain = Drain
+end subroutine SetSumWaBal_Drain
+
+subroutine SetSumWaBal_Eact(Eact)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Eact
+
+    SumWaBal%Eact = Eact
+end subroutine SetSumWaBal_Eact
+
+subroutine SetSumWaBal_Tact(Tact)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Tact
+
+    SumWaBal%Tact = Tact
+end subroutine SetSumWaBal_Tact
+
+subroutine SetSumWaBal_TrW(TrW)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: TrW
+
+    SumWaBal%TrW = TrW
+end subroutine SetSumWaBal_TrW
+
+subroutine SetSumWaBal_ECropCycle(ECropCycle)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: ECropCycle
+
+    SumWaBal%ECropCycle = ECropCycle
+end subroutine SetSumWaBal_ECropCycle
+
+subroutine SetSumWaBal_CRwater(CRwater)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: CRwater
+
+    SumWaBal%CRwater = CRwater
+end subroutine SetSumWaBal_CRwater
+
+subroutine SetSumWaBal_Biomass(Biomass)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Biomass
+
+    SumWaBal%Biomass = Biomass
+end subroutine SetSumWaBal_Biomass
+
+subroutine SetSumWaBal_YieldPart(YieldPart)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: YieldPart
+
+    SumWaBal%YieldPart = YieldPart
+end subroutine SetSumWaBal_YieldPart
+
+subroutine SetSumWaBal_BiomassPot(BiomassPot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: BiomassPot
+
+    SumWaBal%BiomassPot = BiomassPot
+end subroutine SetSumWaBal_BiomassPot
+
+subroutine SetSumWaBal_BiomassUnlim(BiomassUnlim)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: BiomassUnlim
+
+    SumWaBal%BiomassUnlim = BiomassUnlim
+end subroutine SetSumWaBal_BiomassUnlim
+
+subroutine SetSumWaBal_BiomassTot(BiomassTot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: BiomassTot
+
+    SumWaBal%BiomassTot = BiomassTot
+end subroutine SetSumWaBal_BiomassTot
+
+subroutine SetSumWaBal_SaltIn(SaltIn)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: SaltIn
+
+    SumWaBal%SaltIn = SaltIn
+end subroutine SetSumWaBal_SaltIn
+
+subroutine SetSumWaBal_SaltOut(SaltOut)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: SaltOut
+
+    SumWaBal%SaltOut = SaltOut
+end subroutine SetSumWaBal_SaltOut
+
+subroutine SetSumWaBal_CRSalt(CRSalt)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: CRSalt
+
+    SumWaBal%CRSalt = CRSalt
+end subroutine SetSumWaBal_CRSalt
+
 type(rep_Content) function GetTotalSaltContent()
     !! Getter for the "TotalSaltContent" global variable.
 
@@ -2683,6 +2958,7 @@ subroutine SetTotalWaterContent_ErrorDay(ErrorDay)
 
     TotalWaterContent%ErrorDay = ErrorDay
 end subroutine SetTotalWaterContent_ErrorDay
+
 
 type(rep_RootZoneSalt) function GetRootZoneSalt()
     !! Getter for the "RootZoneSalt" global variable.

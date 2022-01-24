@@ -105,9 +105,9 @@ IF (ROUND(Ziprev) = undef_int)
                // Total extraction in restricted root zone (Zi) and max root zone (ZiMax) should be identical
                Simulation.SCor := (2*(ZiMax/Zi)*((Crop.SmaxTop+Crop.SmaxBot)/2)-Crop.SmaxTop)/Crop.SmaxBot;
                // consider part of the restricted deepening due to water stress (= less roots)
-               IF (SumWabal.Tpot > 0) THEN
+               IF (GetSumWaBal_Tpot() > 0) THEN
                   BEGIN
-                  Simulation.SCor := Simulation.SCor * (SumWabal.Tact/SumWabal.Tpot);
+                  Simulation.SCor := Simulation.SCor * (GetSumWaBal_Tact()/GetSumWaBal_Tpot());
                   IF (Simulation.SCor < 1) THEN Simulation.SCor := 1;
                   END;
                END
