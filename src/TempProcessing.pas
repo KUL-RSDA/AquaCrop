@@ -1380,15 +1380,15 @@ SetIrriFile(Trim(TempString));
 IF (GetIrriFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathIrriFile
-        IrriFileFull := GetIrriFile();
+        SetIrriFileFull(GetIrriFile());
         NoIrrigation;
         //IrriDescription := 'Rainfed cropping';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        IrriFilefull := CONCAT(Trim(TempString),GetIrriFile());
-        LoadIrriScheduleInfo(IrriFilefull);
+        SetIrriFileFull(CONCAT(Trim(TempString),GetIrriFile()));
+        LoadIrriScheduleInfo(GetIrriFileFull());
         END;
 
 // 5. Field Management
@@ -1900,7 +1900,6 @@ VAR  fTemp,fOUT : textFile;
      CCoadj,CCxadj,CDCadj,GDDCDCadj,CCw,CCtotStar,CCwStar : double;
      SumGDDfromDay1,SumGDDforPlot,CCinitial,DayFraction,GDDayFraction,fWeed,WeedCorrection : double;
      GrowthON : BOOLEAN;
-     CCiAdjusted : double;
 
 BEGIN
 //1. Adjustment for weed infestation
@@ -2191,14 +2190,12 @@ TYPE StressIndexes = Record
        BioMSquare : double;
        END;
 
-VAR fTemp : textFile;
-    StressMatrix : ARRAY[0..7] of StressIndexes;
-    Si,Stepi : ShortInt;
-    L12SF,GDDL12SF,Dayi : INTEGER;
+VAR StressMatrix : ARRAY[0..7] of StressIndexes;
+    Si : ShortInt;
+    L12SF,GDDL12SF : INTEGER;
     StressResponse : rep_EffectStress;
-    RatDGDD,SumGDD,T0dayi,TXdayi,GDDi,SumTporNor,CCi,
-    CCxWitheredForB,TpotForB,EpotTotForB,KsB,SumTpot,TpotSeason,BNor,WPi,BNor100,
-    Yavg,X1avg,X2avg,y,x1,x2,x1y,x2y,x1Sq,x2Sq,x1x2,SUMx1y,SUMx2y,SUMx1Sq,SUMx2Sq,SUMx1x2 : double;
+    RatDGDD,BNor,BNor100,Yavg,X1avg,X2avg,y,x1,x2,x1y,x2y,x1Sq,
+    x2Sq,x1x2,SUMx1y,SUMx2y,SUMx1Sq,SUMx2Sq,SUMx1x2 : double;
     SiPr : ShortInt;
     SumKcTop,HIGC,HIGClinear : double;
     DaysYieldFormation,tSwitch : INTEGER;
@@ -2600,7 +2597,7 @@ Const EToStandard = 5;
       k = 2;
       CO2iLocal = 369.41;
 
-VAR SumKcTop,HIGC,HIGClinear,fSwitch : double;
+VAR SumKcTop,HIGC,HIGClinear : double;
     RatDGDD,SumBPot,SumBSF : double;
     tSwitch,DaysYieldFormation : INTEGER;
 

@@ -17,6 +17,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetCropFileFull, &
                      GetIrriDescription, &
                      GetIrriFile, &
+                     GetIrriFileFull, &
                      GetClimateFile, &
                      GetClimateFileFull, &
                      GetClimFile, &
@@ -55,6 +56,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetCropFile, &
                      SetCropFileFull, &
                      SetIrriFile, &
+                     SetIrriFileFull, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimFile, &
@@ -357,6 +359,26 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
     string = pointer2string(IrriFile, strlen)
     call SetIrriFile(string)
 end subroutine SetIrriFile_wrap
+
+
+function GetIrriFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetIrriFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetIrriFileFull())
+end function GetIrriFileFull_wrap
+
+
+subroutine SetIrriFileFull_wrap(IrriFileFull, strlen)
+    !! Wrapper for [[ac_global:SetIrriFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriFileFull, strlen)
+    call SetIrriFileFull(string)
+end subroutine SetIrriFileFull_wrap
 
 
 function GetClimateFile_wrap() result(c_pointer)
