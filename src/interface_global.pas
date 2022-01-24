@@ -477,10 +477,9 @@ procedure SetIrriECw_PostSeason(constref PostSeason : double);
         external 'aquacrop' name '__ac_global_MOD_setirriecw_postseason';
 
 function GetTemperatureRecord(): rep_clim;
-         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord';
 
 function __GetTemperatureRecord_DataType() : integer;
-         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_datatype';
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord';
 
 function GetTemperatureRecord_DataType() : rep_datatype;
 
@@ -522,7 +521,6 @@ function GetTemperatureRecord_ToString_wrap(): PChar;
         external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_tostring_wrap';
 
 procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
-         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord';
 
 procedure __SetTemperatureRecord_DataType(constref DataType : integer);
          external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype';
@@ -929,28 +927,6 @@ begin;
      p := PChar(str);
      strlen := Length(str);
      SetTemperatureFilefull_wrap(p, strlen);
-end;
-
-procedure SetTemperatureRecord_FromString(constref str : string);
-var
-     p : PChar;
-     strlen : integer;
-
-begin;
-     p := PChar(str);
-     strlen := Length(str);
-     SetTemperatureRecord_FromString_wrap(p, strlen);
-end;
-
-procedure SetTemperatureRecord_ToString(constref str : string);
-var
-     p : PChar;
-     strlen : integer;
-
-begin;
-     p := PChar(str);
-     strlen := Length(str);
-     SetTemperatureRecord_ToString_wrap(p, strlen);
 end;
 
 

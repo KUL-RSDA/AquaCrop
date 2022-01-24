@@ -9,7 +9,8 @@ use ac_global , only: DaysinMonth, &
                       rep_DayEventDbl, &
                       DetermineDayNr, &
                       DetermineDate, &
-                      LeapYear
+                      LeapYear, &
+                      SplitStringInTwoParams
 
 
 implicit none
