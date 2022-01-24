@@ -342,35 +342,7 @@ TYPE
         GeneratedDayNrOnset,GeneratedDayNrEnd : LongInt;
 	end;
 
-      repTypeClimData = (ETData,RainData,TmpData,CO2Data,RainETData);
-      rep_TypePlot = (TypeA,TypeZgwt,TypeZr);
       rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-
-      rep_OUTindividual = Record
-         ClimOUT,
-         CropOUT,
-         WabalOUT,
-         ProfOUT,
-         SaltOUT,
-         CompWCOUT,
-         CompECOUT,
-         InetOUT,
-         HarvestOUT,
-         Requested : BOOLEAN;
-         end;
-
-      rep_OUTevaluation = Record
-         EvalDataOUT,
-         EvalStatOUT,
-         Requested : BOOLEAN;
-         end;
-
-      rep_OUTfiles = Record
-         FileOUTseasonal : BOOLEAN;
-         FileOUTindividual : rep_OUTindividual;
-         FileOUTevaluation : rep_OUTevaluation;
-         end;
-
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
@@ -417,11 +389,8 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     MinInt, MaxInt : INTEGER;
     IrriBeforeSeason,
     IrriAfterSeason : rep_IrriOutSeasonEvents;
-    TypeClimData : repTypeClimData;
     MaxPlotNew : Integer;
-    TypePlotNew : rep_TypePlot;
     MaxPlotTr : ShortInt;
-    OUTPUTfiles : rep_OUTfiles;
     Onset : rep_Onset;
     EndSeason : rep_EndSeason;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
@@ -3669,7 +3638,7 @@ FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,CO2i : double;
                             TheModeCycle : rep_modeCycle) : double;
 CONST EToStandard = 5;
-VAR SumGDD,GDDi,SumKcPot,KsB,SumGDDforPlot,SumGDDfromDay1 : double;
+VAR SumGDD,GDDi,SumKcPot,SumGDDforPlot,SumGDDfromDay1 : double;
     Tndayi, Txdayi,CCi,CCxWitheredForB,TpotForB,EpotTotForB : double;
     CCinitial,DayFraction, GDDayFraction : double;
     DayCC,Tadj,GDDTadj : INTEGER;
