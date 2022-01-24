@@ -331,11 +331,10 @@ TYPE
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
     TemperatureFile : string;
-    TemperatureFileFull,CO2FileFull,
-    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    TemperatureFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
-    TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
+    TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
     ClimRecord,
     EToRecord,
@@ -3482,7 +3481,7 @@ DetermineDate(ToDayNr,Dayi,Monthi,ToYi);
 IF ((FromYi = 1901) OR (ToYi = 1901))
    THEN CO2ForSimulationPeriod := CO2Ref
    ELSE BEGIN
-        Assign(f0,CO2FileFull);
+        Assign(f0,GetCO2FileFull());
         Reset(f0);
         FOR i:= 1 TO 3 DO Readln(f0); // Description and Title
         // from year
