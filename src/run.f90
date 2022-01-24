@@ -93,7 +93,7 @@ contains
 
 ! GwTable
 
-type(rep_GwTable) GetGwTable()
+type(rep_GwTable) function GetGwTable()
     !! Getter for the "GwTable" global variable.
     
     GetGwTable = GwTable
@@ -143,7 +143,7 @@ end subroutine SetGwTable_EC2
 
 ! PlotVarCrop
 
-type(rep_plotPar) GetPlotVarCrop()
+type(rep_plotPar) function GetPlotVarCrop()
     !! Getter for the "PlotVarCrop" global variable.
     
     GetPlotVarCrop = PlotVarCrop
@@ -165,141 +165,141 @@ end subroutine SetPlotVarCrop_ActVal
 
 ! IrriInfoRecord1
 
-logical GetIrriInfoRecord1_NoMoreInfo()
+logical function GetIrriInfoRecord1_NoMoreInfo()
     !! Getter for the "IrriInfoRecord1" global variable.
     
     GetIrriInfoRecord1_NoMoreInfo = IrriInfoRecord1%NoMoreInfo
 end function GetIrriInfoRecord1_NoMoreInfo
 
-integer(int32) GetIrriInfoRecord1_FromDay()
+integer(int32) function GetIrriInfoRecord1_FromDay()
     !! Getter for the "IrriInfoRecord1" global variable.
     
     GetIrriInfoRecord1_FromDay = IrriInfoRecord1%FromDay
 end function GetIrriInfoRecord1_FromDay
 
-integer(int32) GetIrriInfoRecord1_ToDay()
+integer(int32) function GetIrriInfoRecord1_ToDay()
     !! Getter for the "IrriInfoRecord1" global variable.
     
     GetIrriInfoRecord1_ToDay = IrriInfoRecord1%ToDay
 end function GetIrriInfoRecord1_ToDay
 
-integer(int32) GetIrriInfoRecord1_TimeInfo()
+integer(int32) function GetIrriInfoRecord1_TimeInfo()
     !! Getter for the "IrriInfoRecord1" global variable.
     
     GetIrriInfoRecord1_TimeInfo = IrriInfoRecord1%TimeInfo
 end function GetIrriInfoRecord1_TimeInfo
 
-integer(int32) GetIrriInfoRecord1_DepthInfo()
+integer(int32) function GetIrriInfoRecord1_DepthInfo()
     !! Getter for the "IrriInfoRecord1" global variable.
     
     GetIrriInfoRecord1_DepthInfo = IrriInfoRecord1%DepthInfo
 end function GetIrriInfoRecord1_DepthInfo
 
-SetIrriInfoRecord1_NoMoreInfo(NoMoreInfo)
+subroutine SetIrriInfoRecord1_NoMoreInfo(NoMoreInfo)
     !! Setter for the "IrriInfoRecord1" global variable.
     logical, intent(in) :: NoMoreInfo
     
     IrriInfoRecord1%NoMoreInfo = NoMoreInfo
-end function SetIrriInfoRecord1_NoMoreInfo
+end subroutine SetIrriInfoRecord1_NoMoreInfo
 
-SetIrriInfoRecord1_FromDay(FromDay)
+subroutine SetIrriInfoRecord1_FromDay(FromDay)
     !! Setter for the "IrriInfoRecord1" global variable.
     integer(int32), intent(in) :: FromDay
     
-    IrriInfoRecord1%FromDay = GetIrriInfoRecord1_FromDay
-end function SetIrriInfoRecord1_FromDay
+    IrriInfoRecord1%FromDay = FromDay
+end subroutine SetIrriInfoRecord1_FromDay
 
-SetIrriInfoRecord1_ToDay(ToDay)
+subroutine SetIrriInfoRecord1_ToDay(ToDay)
     !! Setter for the "IrriInfoRecord1" global variable.
     integer(int32), intent(in) :: ToDay
     
-    IrriInfoRecord1%ToDay = GetIrriInfoRecord1_ToDay
-end function SetIrriInfoRecord1_ToDay
+    IrriInfoRecord1%ToDay = ToDay
+end subroutine SetIrriInfoRecord1_ToDay
 
-SetIrriInfoRecord1_TimeInfo(TimeInfo)
+subroutine SetIrriInfoRecord1_TimeInfo(TimeInfo)
     !! Setter for the "IrriInfoRecord1" global variable.
     integer(int32), intent(in) :: TimeInfo
     
-    IrriInfoRecord1%TimeInfo = GetIrriInfoRecord1_TimeInfo
-end function SetIrriInfoRecord1_TimeInfo
+    IrriInfoRecord1%TimeInfo = TimeInfo
+end subroutine SetIrriInfoRecord1_TimeInfo
 
-SetIrriInfoRecord1_DepthInfo(DepthInfo)
+subroutine SetIrriInfoRecord1_DepthInfo(DepthInfo)
     !! Setter for the "IrriInfoRecord1" global variable.
     integer(int32), intent(in) :: DepthInfo
     
-    IrriInfoRecord1%DepthInfo = GetIrriInfoRecord1_DepthInfo
-end function SetIrriInfoRecord1_DepthInfo
+    IrriInfoRecord1%DepthInfo = DepthInfo
+end subroutine SetIrriInfoRecord1_DepthInfo
 
 ! IrriInfoRecord2
 
-logical GetIrriInfoRecord2_NoMoreInfo()
+logical function GetIrriInfoRecord2_NoMoreInfo()
     !! Getter for the "IrriInfoRecord2" global variable.
     
     GetIrriInfoRecord2_NoMoreInfo = IrriInfoRecord2%NoMoreInfo
 end function GetIrriInfoRecord2_NoMoreInfo
 
-integer(int32) GetIrriInfoRecord2_FromDay()
+integer(int32) function GetIrriInfoRecord2_FromDay()
     !! Getter for the "IrriInfoRecord2" global variable.
     
     GetIrriInfoRecord2_FromDay = IrriInfoRecord2%FromDay
 end function GetIrriInfoRecord2_FromDay
 
-integer(int32) GetIrriInfoRecord2_ToDay()
+integer(int32) function GetIrriInfoRecord2_ToDay()
     !! Getter for the "IrriInfoRecord2" global variable.
     
     GetIrriInfoRecord2_ToDay = IrriInfoRecord2%ToDay
 end function GetIrriInfoRecord2_ToDay
 
-integer(int32) GetIrriInfoRecord2_TimeInfo()
+integer(int32) function GetIrriInfoRecord2_TimeInfo()
     !! Getter for the "IrriInfoRecord2" global variable.
     
     GetIrriInfoRecord2_TimeInfo = IrriInfoRecord2%TimeInfo
 end function GetIrriInfoRecord2_TimeInfo
 
-integer(int32) GetIrriInfoRecord2_DepthInfo()
+integer(int32) function GetIrriInfoRecord2_DepthInfo()
     !! Getter for the "IrriInfoRecord2" global variable.
     
     GetIrriInfoRecord2_DepthInfo = IrriInfoRecord2%DepthInfo
 end function GetIrriInfoRecord2_DepthInfo
 
-SetIrriInfoRecord2_NoMoreInfo(NoMoreInfo)
+subroutine SetIrriInfoRecord2_NoMoreInfo(NoMoreInfo)
     !! Setter for the "IrriInfoRecord2" global variable.
     logical, intent(in) :: NoMoreInfo
     
     IrriInfoRecord2%NoMoreInfo = NoMoreInfo
-end function SetIrriInfoRecord2_NoMoreInfo
+end subroutine SetIrriInfoRecord2_NoMoreInfo
 
-SetIrriInfoRecord2_FromDay(FromDay)
+subroutine SetIrriInfoRecord2_FromDay(FromDay)
     !! Setter for the "IrriInfoRecord2" global variable.
     integer(int32), intent(in) :: FromDay
     
-    IrriInfoRecord2%FromDay = GetIrriInfoRecord2_FromDay
-end function SetIrriInfoRecord2_FromDay
+    IrriInfoRecord2%FromDay = FromDay
+end subroutine SetIrriInfoRecord2_FromDay
 
-SetIrriInfoRecord2_ToDay(ToDay)
+subroutine SetIrriInfoRecord2_ToDay(ToDay)
     !! Setter for the "IrriInfoRecord2" global variable.
     integer(int32), intent(in) :: ToDay
     
-    IrriInfoRecord2%ToDay = GetIrriInfoRecord2_ToDay
-end function SetIrriInfoRecord2_ToDay
+    IrriInfoRecord2%ToDay = ToDay
+end subroutine SetIrriInfoRecord2_ToDay
 
-SetIrriInfoRecord2_TimeInfo(TimeInfo)
+subroutine SetIrriInfoRecord2_TimeInfo(TimeInfo)
     !! Setter for the "IrriInfoRecord2" global variable.
     integer(int32), intent(in) :: TimeInfo
     
-    IrriInfoRecord2%TimeInfo = GetIrriInfoRecord2_TimeInfo
-end function SetIrriInfoRecord2_TimeInfo
+    IrriInfoRecord2%TimeInfo = TimeInfo
+end subroutine SetIrriInfoRecord2_TimeInfo
 
-SetIrriInfoRecord2_DepthInfo(DepthInfo)
+subroutine SetIrriInfoRecord2_DepthInfo(DepthInfo)
     !! Setter for the "IrriInfoRecord2" global variable.
     integer(int32), intent(in) :: DepthInfo
     
-    IrriInfoRecord2%DepthInfo = GetIrriInfoRecord2_DepthInfo
-end function SetIrriInfoRecord2_DepthInfo
+    IrriInfoRecord2%DepthInfo = DepthInfo
+end subroutine SetIrriInfoRecord2_DepthInfo
 
 ! StressTot
 
-type(rep_StressTot) GetStressTot()
+type(rep_StressTot) function GetStressTot()
     !! Getter for the "StressTot" global variable.
     
     GetStressTot = StressTot
@@ -349,110 +349,219 @@ end subroutine SetStressTot_NrD
 
 ! CutInfoRecord1
 
-logical GetCutInfoRecord1_NoMoreInfo()
+logical function GetCutInfoRecord1_NoMoreInfo()
     !! Getter for the "CutInfoRecord1" global variable.
     
     GetCutInfoRecord1_NoMoreInfo = CutInfoRecord1%NoMoreInfo
 end function GetCutInfoRecord1_NoMoreInfo
 
-integer(int32) GetCutInfoRecord1_FromDay()
+integer(int32) function GetCutInfoRecord1_FromDay()
     !! Getter for the "CutInfoRecord1" global variable.
     
     GetCutInfoRecord1_FromDay = CutInfoRecord1%FromDay
 end function GetCutInfoRecord1_FromDay
 
-integer(int32) GetCutInfoRecord1_ToDay()
+integer(int32) function GetCutInfoRecord1_ToDay()
     !! Getter for the "CutInfoRecord1" global variable.
     
     GetCutInfoRecord1_ToDay = CutInfoRecord1%ToDay
 end function GetCutInfoRecord1_ToDay
 
-integer(int32) GetCutInfoRecord1_IntervalInfo()
+integer(int32) function GetCutInfoRecord1_IntervalInfo()
     !! Getter for the "CutInfoRecord1" global variable.
     
     GetCutInfoRecord1_IntervalInfo = CutInfoRecord1%IntervalInfo
 end function GetCutInfoRecord1_IntervalInfo
 
-real(dp) GetCutInfoRecord1_IntervalGDD()
+real(dp) function GetCutInfoRecord1_IntervalGDD()
     !! Getter for the "CutInfoRecord1" global variable.
     
     GetCutInfoRecord1_IntervalGDD = CutInfoRecord1%IntervalGDD
 end function GetCutInfoRecord1_IntervalGDD
 
-real(dp) GetCutInfoRecord1_MassInfo()
+real(dp) function GetCutInfoRecord1_MassInfo()
     !! Getter for the "CutInfoRecord1" global variable.
     
     GetCutInfoRecord1_MassInfo = CutInfoRecord1%MassInfo
 end function GetCutInfoRecord1_MassInfo
 
 subroutine SetCutInfoRecord1_NoMoreInfo(NoMoreInfo)
-    !! Getter for the "CutInfoRecord1" global variable.
+    !! Setter for the "CutInfoRecord1" global variable.
+    logical, intent(in) :: NoMoreInfo
     
-    GetCutInfoRecord1_NoMoreInfo = CutInfoRecord1%NoMoreInfo
-end function GetCutInfoRecord1_NoMoreInfo
+    CutInfoRecord1%NoMoreInfo = NoMoreInfo
+end subroutine SetCutInfoRecord1_NoMoreInfo
+
+
+subroutine SetCutInfoRecord1_FromDay(FromDay)
+    !! Setter for the "CutInfoRecord1" global variable.
+    integer(int32), intent(in) :: FromDay
+    
+    CutInfoRecord1%FromDay = FromDay
+end subroutine SetCutInfoRecord1_FromDay
+
+subroutine SetCutInfoRecord1_ToDay(ToDay)
+    !! Setter for the "CutInfoRecord1" global variable.
+    integer(int32), intent(in) :: ToDay
+    
+    CutInfoRecord1%ToDay = ToDay
+end subroutine SetCutInfoRecord1_ToDay
+
+subroutine SetCutInfoRecord1_IntervalInfo(IntervalInfo)
+    !! Setter for the "CutInfoRecord1" global variable.
+    integer(int32), intent(in) :: IntervalInfo
+    
+    CutInfoRecord1%IntervalInfo = IntervalInfo
+end subroutine SetCutInfoRecord1_IntervalInfo
+
+subroutine SetCutInfoRecord1_IntervalGDD(IntervalGDD)
+    !! Setter for the "CutInfoRecord1" global variable.
+    real(dp), intent(in) :: IntervalGDD
+    
+    CutInfoRecord1%IntervalGDD = IntervalGDD
+end subroutine SetCutInfoRecord1_IntervalGDD
+
+subroutine SetCutInfoRecord1_MassInfo(MassInfo)
+    !! Setter for the "CutInfoRecord1" global variable.
+    real(dp), intent(in) :: MassInfo
+    
+    CutInfoRecord1%MassInfo = MassInfo
+end subroutine SetCutInfoRecord1_MassInfo
+
 
 ! CutInfoRecord2
 
-logical GetCutInfoRecord2_NoMoreInfo()
+logical function GetCutInfoRecord2_NoMoreInfo()
     !! Getter for the "CutInfoRecord2" global variable.
     
     GetCutInfoRecord2_NoMoreInfo = CutInfoRecord2%NoMoreInfo
 end function GetCutInfoRecord2_NoMoreInfo
 
-integer(int32) GetCutInfoRecord2_FromDay()
+integer(int32) function GetCutInfoRecord2_FromDay()
     !! Getter for the "CutInfoRecord2" global variable.
     
     GetCutInfoRecord2_FromDay = CutInfoRecord2%FromDay
 end function GetCutInfoRecord2_FromDay
 
-integer(int32) GetCutInfoRecord2_ToDay()
+integer(int32) function GetCutInfoRecord2_ToDay()
     !! Getter for the "CutInfoRecord2" global variable.
     
     GetCutInfoRecord2_ToDay = CutInfoRecord2%ToDay
 end function GetCutInfoRecord2_ToDay
 
-integer(int32) GetCutInfoRecord2_IntervalInfo()
+integer(int32) function GetCutInfoRecord2_IntervalInfo()
     !! Getter for the "CutInfoRecord2" global variable.
     
     GetCutInfoRecord2_IntervalInfo = CutInfoRecord2%IntervalInfo
 end function GetCutInfoRecord2_IntervalInfo
 
-real(dp) GetCutInfoRecord2_IntervalGDD()
+real(dp) function GetCutInfoRecord2_IntervalGDD()
     !! Getter for the "CutInfoRecord2" global variable.
     
     GetCutInfoRecord2_IntervalGDD = CutInfoRecord2%IntervalGDD
 end function GetCutInfoRecord2_IntervalGDD
 
-real(dp) GetCutInfoRecord2_MassInfo()
+real(dp) function GetCutInfoRecord2_MassInfo()
     !! Getter for the "CutInfoRecord2" global variable.
     
     GetCutInfoRecord2_MassInfo = CutInfoRecord2%MassInfo
 end function GetCutInfoRecord2_MassInfo
 
+subroutine SetCutInfoRecord2_NoMoreInfo(NoMoreInfo)
+    !! Setter for the "CutInfoRecord2" global variable.
+    logical, intent(in) :: NoMoreInfo
+    
+    CutInfoRecord2%NoMoreInfo = NoMoreInfo
+end subroutine SetCutInfoRecord2_NoMoreInfo
+
+subroutine SetCutInfoRecord2_FromDay(FromDay)
+    !! Setter for the "CutInfoRecord2" global variable.
+    integer(int32), intent(in) :: FromDay
+    
+    CutInfoRecord2%FromDay = FromDay
+end subroutine SetCutInfoRecord2_FromDay
+
+subroutine SetCutInfoRecord2_ToDay(ToDay)
+    !! Setter for the "CutInfoRecord2" global variable.
+    integer(int32), intent(in) :: ToDay
+    
+    CutInfoRecord2%ToDay = ToDay
+end subroutine SetCutInfoRecord2_ToDay
+
+subroutine SetCutInfoRecord2_IntervalInfo(IntervalInfo)
+    !! Setter for the "CutInfoRecord2" global variable.
+    integer(int32), intent(in) :: IntervalInfo
+    
+    CutInfoRecord2%IntervalInfo = IntervalInfo
+end subroutine SetCutInfoRecord2_IntervalInfo
+
+subroutine SetCutInfoRecord2_IntervalGDD(IntervalGDD)
+    !! Setter for the "CutInfoRecord2" global variable.
+    real(dp), intent(in) :: IntervalGDD
+    
+    CutInfoRecord2%IntervalGDD = IntervalGDD
+end subroutine SetCutInfoRecord2_IntervalGDD
+
+subroutine SetCutInfoRecord2_MassInfo(MassInfo)
+    !! Setter for the "CutInfoRecord2" global variable.
+    real(dp), intent(in) :: MassInfo
+    
+    CutInfoRecord2%MassInfo = MassInfo
+end subroutine SetCutInfoRecord2_MassInfo
+
 ! Transfer
 
-logical GetTransfer_Store()
+logical function GetTransfer_Store()
     !! Getter for the "Transfer" global variable.
     
     GetTransfer_Store = Transfer%Store
 end function GetTransfer_Store
 
-logical GetTransfer_Mobilize()
+logical function GetTransfer_Mobilize()
     !! Getter for the "Transfer" global variable.
     
     GetTransfer_Mobilize = Transfer%Mobilize
 end function GetTransfer_Mobilize
 
-real(dp) GetTransfer_ToMobilize()
+real(dp) function GetTransfer_ToMobilize()
     !! Getter for the "Transfer" global variable.
     
     GetTransfer_ToMobilize = Transfer%ToMobilize
 end function GetTransfer_ToMobilize
 
-real(dp) GetTransfer_Bmobilized()
+real(dp) function GetTransfer_Bmobilized()
     !! Getter for the "Transfer" global variable.
     
     GetTransfer_Bmobilized = Transfer%Bmobilized
 end function GetTransfer_Bmobilized
+
+subroutine SetTransfer_Store(Store)
+    !! Setter for the "Transfer" global variable.
+    logical, intent(in) :: Store
+
+    Transfer%Store = Store
+end subroutine SetTransfer_Store
+
+subroutine SetTransfer_Mobilize(Mobilize)
+    !! Setter for the "Transfer" global variable.
+    logical, intent(in) :: Mobilize
+
+    Transfer%Mobilize = Mobilize
+end subroutine SetTransfer_Mobilize
+
+subroutine SetTransfer_ToMobilize(ToMobilize)
+    !! Setter for the "Transfer" global variable.
+    real(dp), intent(in) :: ToMobilize
+
+    Transfer%ToMobilize = ToMobilize
+end subroutine SetTransfer_ToMobilize
+
+subroutine SetTransfer_Bmobilized(Bmobilized)
+    !! Setter for the "Transfer" global variable.
+    real(dp), intent(in) :: Bmobilized
+
+    Transfer%Bmobilized = Bmobilized
+end subroutine SetTransfer_Bmobilized
+
 
 end module ac_run
