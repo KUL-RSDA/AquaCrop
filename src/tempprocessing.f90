@@ -1,6 +1,9 @@
 module ac_tempprocessing
 
 use ac_kinds, only: int32
+
+use ac_global , only: TemperatureRecord
+
 implicit none
 
 
