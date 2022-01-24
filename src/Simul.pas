@@ -163,15 +163,12 @@ PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    VAR TESTVAL : double);
 Const TempRange = 5;
       k = 2;
-VAR RatioBM,RBM,CCiPot,CCiMAX,HItimesTotal,
+VAR RatioBM,RBM,HItimesTotal,
     pLeafULAct,pLeafLLAct,pStomatULAct,pLL,Ksleaf,Ksstomatal,KsPolWS,KsPolCs,KsPolHs,KsPol,
-    Wrel,Dcor,RatDGDD,fFlor,fSwitch,fCCx : double;
-    tmax1,tmax2,DayCor,DayiAfterFlowering,DaysYieldFormation,Yeari : INTEGER;
+    Wrel,Dcor,fFlor,fSwitch,fCCx : double;
+    tmax1,tmax2,DayCor,DayiAfterFlowering,DaysYieldFormation : INTEGER;
     PercentLagPhase : ShortInt;
-    LocalModeCycle : rep_modeCycle;
-    TpotForB,EpotTotForB,WPsf,WPunlim,BioAdj,Ksi,CCtotStar,CCwStar : double;
-    DAP : INTEGER;
-    StressSaltAdjNew : ShortInt;
+    WPsf, WPunlim, BioAdj,CCtotStar,CCwStar : double;
     wdrc_temp : integer;
 
     FUNCTION FractionFlowering(dayi : LongInt) : double;
