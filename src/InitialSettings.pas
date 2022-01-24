@@ -11,8 +11,9 @@ implementation
 
  PROCEDURE InitializeSettings;
  TYPE rep_string20 = string[20];
- VAR TempString1,TempString2 : string;
+ VAR TempString1,TempString2,CO2descr : string;
      Nri : INTEGER;
+     SumWaBal_temp : rep_sum;
 
  BEGIN
  // 1. Program settings
@@ -90,8 +91,8 @@ implementation
  If (SimulParam.CropDay1 < 1) THEN SimulParam.CropDay1 := 1;
 
  // 2a. Ground water table
- GroundWaterFile := '(None)';
- GroundWaterFilefull := GroundWaterFile;  (* no file *)
+ SetGroundWaterFile('(None)');
+ SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
  GroundWaterDescription := 'no shallow groundwater table';
  ZiAqua := undef_int;
  ECiAqua := undef_int;
@@ -100,12 +101,12 @@ implementation
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
- ProfFilefull := CONCAT(PathNameSimul,GetProfFile());
+ SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
  // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
  // Crop. RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
- LoadProfile(ProfFilefull);
+ LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
 
@@ -118,7 +119,7 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- CropFilefull := CONCAT(PathNameSimul,GetCropFile());
+ SetCropFilefull(CONCAT(PathNameSimul,GetCropFile()));
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
@@ -131,30 +132,30 @@ implementation
  NoCropCalendar;
 
  // 4. Field Management
- ManFile := '(None)';
- ManFilefull := ManFile;  (* no file *)
+ SetManFile('(None)');
+ SetManFilefull(GetManFile());  (* no file *)
  NoManagement;
 
  // 5. Climate
  // 5.1 Temperature
- SetTemperatureFile('(None)');
- SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
+ TemperatureFile := '(None)';
+ TemperatureFilefull := TemperatureFile;  (* no file *)
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
  TemperatureDescription := '';
- // WITH TemperatureRecord DO
- //  BEGIN
- SetTemperatureRecord_DataType(Daily);
- SetTemperatureRecord_NrObs(0);
- SetTemperatureRecord_FromString('any date');
- SetTemperatureRecord_ToString('any date');
- SetTemperatureRecord_FromY(1901);
- //  END;
+ WITH TemperatureRecord DO
+   BEGIN
+   DataType := Daily;
+   NrObs := 0;
+   FromString := 'any date';
+   ToString := 'any date';
+   FromY := 1901;
+   END;
 
  // 5.2 ETo
- EToFile := '(None)';
- EToFilefull := EToFile;  (* no file *)
- EToDescription := '';
+ SetEToFile('(None)');
+ SetEToFilefull(GetEToFile());  (* no file *)
+ SetEToDescription('');
  WITH EToRecord DO
    BEGIN
    DataType := Daily;
@@ -165,9 +166,9 @@ implementation
    END;
 
  // 5.3 Rain
- RainFile := '(None)';
- RainFilefull := RainFile;  (* no file *)
- RainDescription := '';
+ SetRainFile('(None)');
+ SetRainFilefull(GetRainFile());  (* no file *)
+ SetRainDescription('');
  WITH RainRecord DO
    BEGIN
    DataType := Daily;
@@ -179,12 +180,14 @@ implementation
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
- CO2FileFull := CONCAT(PathNameSimul,GetCO2File());
- GetCO2Description(CO2FileFull,CO2Description);
+ setCO2FileFull(CONCAT(PathNameSimul,GetCO2File()));
+ CO2descr := GetCO2Description();
+ GenerateCO2Description(GetCO2FileFull(),CO2descr);
+ SetCO2Description(CO2descr);
 
  // 5.5 Climate file
- ClimateFile := '(None)';
- ClimateFileFull := ClimateFile;
+ SetClimateFile('(None)');
+ SetClimateFileFull(GetClimateFile());
  ClimateDescription := '';
 
  // 5.6 Set Climate and Simulation Period
@@ -193,38 +196,38 @@ implementation
 (* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
  AdjustCropYearToClimFile(Crop.Day1,Crop.DayN);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
- IF ((ClimFile <> '(None)') AND (ClimRecord.FromY = 1901)
+ IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
 (* adjusting simulation period *)
  AdjustSimPeriod;
 
  // 6. irrigation
- IrriFile := '(None)';
- IrriFilefull := IrriFile;  (* no file *)
+ SetIrriFile('(None)');
+ SetIrriFilefull(GetIrriFile());  (* no file *)
  NoIrrigation;
 
  // 7. Off-season
- OffSeasonFile := '(None)';
- OffSeasonFileFull := OffSeasonFile;
+ SetOffSeasonFile('(None)');
+ SetOffSeasonFileFull(getOffSeasonFile());
  NoManagementOffSeason;
 
  // 8. Project and Multiple Project file
- ProjectFile := '(None)';
- ProjectFileFull := ProjectFile;
+ SetProjectFile('(None)');
+ ProjectFileFull := GetProjectFile();
  ProjectDescription := 'No specific project';
  Simulation.MultipleRun := false; // No sequence of simulation runs in the project
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
- MultipleProjectFile := ProjectFile;
+ SetMultipleProjectFile(GetProjectFile());
  MultipleProjectFileFull := ProjectFileFull;
  MultipleProjectDescription := ProjectDescription;
 
 
  // 9. Observations file
- ObservationsFile := '(None)';
- ObservationsFileFull := ObservationsFile;
- ObservationsDescription := 'No field observations';
+ SetObservationsFile('(None)');
+ SetObservationsFileFull(GetObservationsFile());
+ SetObservationsDescription('No field observations');
 
  // 10. Output files
  OutputName := 'Project';
@@ -241,7 +244,9 @@ implementation
  SurfaceStorage := 0;
  ECstorage := 0.0;
  DaySubmerged := 0;
- GlobalZero(SumWabal);
+ SumWaBal_temp := GetSumWabal();
+ GlobalZero(SumWabal_temp);
+ SetSumWaBal(SumWaBal_temp);
  Drain:= 0.0; // added 4.0
  Runoff:= 0.0;// added 4.0
  Infiltrated := 0.0; // added 4.0

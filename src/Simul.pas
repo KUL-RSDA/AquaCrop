@@ -163,15 +163,13 @@ PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    VAR TESTVAL : double);
 Const TempRange = 5;
       k = 2;
-VAR RatioBM,RBM,CCiPot,CCiMAX,HItimesTotal,
+VAR RatioBM,RBM,HItimesTotal,
     pLeafULAct,pLeafLLAct,pStomatULAct,pLL,Ksleaf,Ksstomatal,KsPolWS,KsPolCs,KsPolHs,KsPol,
-    Wrel,Dcor,RatDGDD,fFlor,fSwitch,fCCx : double;
-    tmax1,tmax2,DayCor,DayiAfterFlowering,DaysYieldFormation,Yeari : INTEGER;
+    Wrel,Dcor,fFlor,fSwitch,fCCx : double;
+    tmax1,tmax2,DayCor,DayiAfterFlowering,DaysYieldFormation : INTEGER;
     PercentLagPhase : ShortInt;
-    LocalModeCycle : rep_modeCycle;
-    TpotForB,EpotTotForB,WPsf,WPunlim,BioAdj,Ksi,CCtotStar,CCwStar : double;
-    DAP : INTEGER;
-    StressSaltAdjNew : ShortInt;
+    WPsf, WPunlim, BioAdj,CCtotStar,CCwStar : double;
+    wdrc_temp : integer;
 
     FUNCTION FractionFlowering(dayi : LongInt) : double;
     VAR f1,f2,F : double;
@@ -290,18 +288,20 @@ IF (ETo > 0) THEN
    IF ((Simulation.RCadj > 0) AND (ROUND(CCtot*10000) > 0))
       THEN BEGIN // weed infestation
            // green canopy cover of the crop in weed-infested field
-           IF (Management.WeedDeltaRC <> 0)
+           IF (GetManagement_WeedDeltaRC() <> 0)
               THEN BEGIN
                    IF (Crop.subkind = Forage)
                       THEN fCCx := MultiplierCCxSelfThinning(Simulation.YearSeason,Crop.YearCCx,Crop.CCxRoot)
                       ELSE fCCx := 1;
+                   wdrc_temp := GetManagement_WeedDeltaRC();
                    WeedRCi := GetWeedRC(VirtualTimeCC,SumGDDadjCC,fCCx,
                                  //Management.WeedRC,Management.WeedAdj,
-                                 Simulation.RCadj,Management.WeedAdj,
-                                 Management.WeedDeltaRC,
+                                 Simulation.RCadj,GetManagement_WeedAdj(),
+                                 wdrc_temp,
                                  Crop.DaysToFullCanopySF,Crop.DaysToSenescence,
                                  Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,
                                  Crop.ModeCycle);
+                   SetManagement_WeedDeltaRC(wdrc_temp);
                    END
               //ELSE WeedRCi := Management.WeedRC;
               ELSE WeedRCi := Simulation.RCadj;
@@ -394,8 +394,8 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
       // 2.3 Relative water content for that day
       DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
       IF (Simulation.SWCtopSoilConsidered = true) // top soil is relative wetter than total root zone
-         THEN Wrel := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP) // top soil
-         ELSE Wrel := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
+         THEN Wrel := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
+         ELSE Wrel := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 
       // 2.4 Failure of Pollination during flowering (alfaMax in percentage)
       IF (Crop.Subkind = grain) // - only valid for fruit/grain crops (flowers)
@@ -525,7 +525,7 @@ IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)) THEN
 
 
 // 3. Dynamic adjustment of soil fertility stress
-IF ((Management.FertilityStress > 0) AND (BiomassUnlim > 0.001) AND Crop.StressResponse.Calibrated)
+IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND Crop.StressResponse.Calibrated)
    THEN BEGIN
         //BioAdj := 100 * (FracBiomassPotSF + (FracBiomassPotSF - Biomass/BiomassUnlim));
         BioAdj := 100 * (FracBiomassPotSF + (FracBiomassPotSF - BiomassTot/BiomassUnlim));
@@ -538,18 +538,18 @@ IF ((Management.FertilityStress > 0) AND (BiomassUnlim > 0.001) AND Crop.StressR
                         StressSFadjNEW := ROUND(Coeffb0 + Coeffb1*BioAdj + Coeffb2*BioAdj*BioAdj);
                         //IF (StressSFadjNEW < 0) THEN StressSFadjNEW := 0;
                         // since < 0 is unrealistic (= poor calibration)
-                        IF (StressSFadjNEW < 0) THEN StressSFadjNEW := Management.FertilityStress;
+                        IF (StressSFadjNEW < 0) THEN StressSFadjNEW := GetManagement_FertilityStress();
                         IF (StressSFadjNEW > 80) THEN StressSFadjNEW := 80;
                         END;
-                IF (StressSFadjNEW > Management.FertilityStress)
-                   THEN StressSFadjNEW := Management.FertilityStress;
+                IF (StressSFadjNEW > GetManagement_FertilityStress())
+                   THEN StressSFadjNEW := GetManagement_FertilityStress();
                 END;
         IF ((Crop.Subkind = grain) AND Crop.DeterminancyLinked
            AND (dayi > (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + tmax1))) THEN
            BEGIN // potential vegetation period is exceeded
            IF (StressSFadjNEW < PreviousStressLevel) THEN StressSFadjNEW := PreviousStressLevel;
-           IF (StressSFadjNEW > Management.FertilityStress)
-              THEN StressSFadjNEW := Management.FertilityStress;
+           IF (StressSFadjNEW > GetManagement_FertilityStress())
+              THEN StressSFadjNEW := GetManagement_FertilityStress();
            END;
         END
    ELSE StressSFadjNEW := 0;
@@ -655,25 +655,24 @@ PROCEDURE CheckWaterSaltBalance(control: rep_control;
                                 InfiltratedIrrigation, InfiltratedStorage : double;
                                 VAR Surf0,ECInfilt,ECdrain : double);
 
-VAR   compi, layeri, celli :INTEGER;
+VAR compi, layeri, celli :INTEGER;
 VAR Surf1,ECw : double;
-
 BEGIN (* CheckWaterSaltBalance *)
 
 CASE control OF
      begin_day:BEGIN
-               TotalWaterContent.BeginDay := 0; // mm
+               SetTotalWaterContent_BeginDay(0); // mm
                Surf0 := SurfaceStorage; // mm
-               TotalSaltContent.BeginDay := 0; // Mg/ha
+               SetTotalSaltContent_BeginDay(0); // Mg/ha
                FOR compi :=1 to NrCompartments DO
                    BEGIN
-                   TotalWaterContent.BeginDay := TotalWaterContent.BeginDay
+                   SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
                    + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
                    Compartment[compi].fluxout := 0;
                    FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
-                       TotalSaltContent.BeginDay := TotalSaltContent.BeginDay
-                       + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100; // Mg/ha
+                           SetTotalSaltContent_BeginDay(GetTotalSaltContent().BeginDay
+                           + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100); // Mg/ha
                    END;
                Drain:=0.0;
                Runoff:=0.0;
@@ -692,9 +691,9 @@ CASE control OF
      end_day : BEGIN
                Infiltrated := InfiltratedRain+InfiltratedIrrigation+InfiltratedStorage;
                FOR layeri := 1 TO Soil.NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
-               TotalWaterContent.EndDay := 0;
+               SetTotalWaterContent_EndDay(0);
                Surf1 := SurfaceStorage;
-               TotalSaltContent.EndDay := 0;
+               SetTotalSaltContent_EndDay(0);
 
                // quality of irrigation water
                IF (dayi < Crop.Day1)
@@ -706,46 +705,47 @@ CASE control OF
 
                FOR compi :=1 to NrCompartments DO
                    BEGIN
-                   TotalWaterContent.EndDay := TotalWaterContent.EndDay
+                   SetTotalWaterContent_EndDay(GetTotalWaterContent().EndDay
                    + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
                    SoilLayer[Compartment[compi].Layer].WaterContent := SoilLayer[Compartment[compi].Layer].WaterContent
                    + Compartment[compi].theta*1000*Compartment[compi].Thickness
                      * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
                    FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
-                       TotalSaltContent.EndDay := TotalSaltContent.EndDay
-                       + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100; // Mg/ha
+                           SetTotalSaltContent_EndDay(GetTotalSaltContent().EndDay
+                           + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100); // Mg/ha
                    END;
-               TotalWaterContent.ErrorDay := TotalWaterContent.BeginDay + Surf0
-                              -(TotalWaterContent.EndDay+Drain+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow);
-               TotalSaltContent.ErrorDay := TotalSaltContent.BeginDay - TotalSaltContent.EndDay // Mg/ha
+               SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
+                              -(GetTotalWaterContent().EndDay+Drain+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow));
+               SetTotalSaltContent_ErrorDay(GetTotalSaltContent().BeginDay - GetTotalSaltContent().EndDay // Mg/ha
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
                                             - Drain*ECdrain*Equiv/100
                                             + CRsalt/100
-                                            + HorizontalSaltFlow;
-               SumWabal.Epot := SumWabal.Epot + Epot;
-               SumWabal.Tpot := SumWabal.Tpot + Tpot;
-               SumWabal.Rain := SumWabal.Rain + Rain;
-               SumWabal.Irrigation := SumWabal.Irrigation + Irrigation;
-               SumWabal.Infiltrated := SumWabal.Infiltrated + Infiltrated;
-               SumWabal.Runoff := SumWabal.Runoff + Runoff;
-               SumWabal.Drain := SumWabal.Drain + Drain;
-               SumWabal.Eact := SumWabal.Eact + Eact;
-               SumWabal.Tact := SumWabal.Tact + Tact;
-               SumWaBal.TrW := SumWabal.TrW + TactWeedInfested;
-               SumWabal.CRwater := SumWabal.CRwater + CRwater;
+                                            + HorizontalSaltFlow);
+               SetSumWaBal_Epot(GetSumWaBal_Epot() + Epot);
+               SetSumWaBal_Tpot(GetSumWaBal_Tpot() + Tpot);
+               SetSumWaBal_Rain(GetSumWaBal_Rain() + Rain);
+               SetSumWaBal_Irrigation(GetSumWaBal_Irrigation() + Irrigation);
+               SetSumWaBal_Infiltrated(GetSumWaBal_Infiltrated() + Infiltrated);
+               SetSumWaBal_Runoff(GetSumWaBal_Runoff() + Runoff);
+               SetSumWaBal_Drain(GetSumWaBal_Drain() + Drain);
+               SetSumWaBal_Eact(GetSumWaBal_Eact() + Eact);
+               SetSumWaBal_Tact(GetSumWaBal_Tact() + Tact);
+               SetSumWaBal_TrW(GetSumWaBal_TrW() + TactWeedInfested);
+               SetSumWaBal_CRwater(GetSumWaBal_CRwater() + CRwater);
+
                IF (((dayi-Simulation.DelayedDays) >= Crop.Day1 ) AND ((dayi-Simulation.DelayedDays) <= Crop.DayN)) THEN // in growing cycle
                   BEGIN
-                  IF (SumWabal.Biomass > 0) // biomass was already produced (i.e. CC present)
+                  IF (GetSumWaBal_Biomass() > 0) // biomass was already produced (i.e. CC present)
                      THEN BEGIN // and still canopy cover
-                          IF (CCiActual > 0) THEN SumWabal.ECropCycle := SumWabal.ECropCycle + Eact;
+                          IF (CCiActual > 0) THEN SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + Eact);
                           END
-                     ELSE SumWabal.ECropCycle := SumWabal.ECropCycle + Eact; // before germination
+                     ELSE SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + Eact); // before germination
                   END;
-               SumWabal.CRsalt := SumWabal.CRsalt + CRsalt/100;
-               SumWabal.SaltIn := SumWabal.SaltIn + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100;
-               SumWabal.SaltOut := SumWabal.SaltOut +  Drain*ECdrain*Equiv/100;
+               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + CRsalt/100);
+               SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100);
+               SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  Drain*ECdrain*Equiv/100);
                END;
      END;
 END; (* CheckWaterSaltBalance *)
@@ -944,7 +944,7 @@ END; (*calculate_relative_wetness_topsoil*)
 
 BEGIN
 //CN2 := Soil.CNvalue;
-CN2 := ROUND(Soil.CNvalue * (100 + Management.CNcorrection)/100);
+CN2 := ROUND(Soil.CNvalue * (100 + GetManagement_CNcorrection())/100);
 IF (RainRecord.DataType = Daily)
    THEN BEGIN
         IF (SimulParam.CNcorrection)
@@ -1032,7 +1032,7 @@ IF (Rain > 0) THEN
      IF (SubDrain > DrainMax) THEN
         BEGIN
         //IF (NOT SimulParam.StandingWater)
-        IF (Management.Bundheight < 0.001)
+        IF (GetManagement_Bundheight() < 0.001)
            THEN Runoff := Runoff + (SubDrain-DrainMax);
         SubDrain := DrainMax;
         END;
@@ -1048,24 +1048,24 @@ VAR ZrWC,RAWi : double;
 BEGIN
 // total root zone is considered
 DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-ZrWC := RootZoneWC.Actual - Epot - Tpot + Rain - Runoff - SubDrain;
-IF (GenerateTimeMode = AllDepl) THEN
-   IF ((RootZoneWC.FC - ZrWC) >= TargetTimeVal)
+ZrWC := GetRootZoneWC().Actual - Epot - Tpot + Rain - Runoff - SubDrain;
+IF (GetGenerateTimeMode() = AllDepl) THEN
+   IF ((GetRootZoneWC().FC - ZrWC) >= TargetTimeVal)
       THEN TargetTimeVal := 1
       ELSE TargetTimeVal := 0;
-IF (GenerateTimeMode = AllRAW) THEN
+IF (GetGenerateTimeMode() = AllRAW) THEN
    BEGIN
-   RAWi := TargetTimeVal/100 * (RootZoneWC.FC - RootZoneWC.Thresh);
-   IF ((RootZoneWC.FC - ZrWC) >= RAWi)
+   RAWi := TargetTimeVal/100 * (GetRootZoneWC().FC - GetRootZoneWC().Thresh);
+   IF ((GetRootZoneWC().FC - ZrWC) >= RAWi)
       THEN TargetTimeVal := 1
       ELSE TargetTimeVal := 0;
    END;
 IF (TargetTimeVal = 1)
    THEN BEGIN
-        IF (GenerateDepthMode = FixDepth)
+        IF (GetGenerateDepthMode() = FixDepth)
            THEN Irrigation := TargetDepthVal
            ELSE BEGIN
-                Irrigation := (RootZoneWC.FC - ZrWc) + TargetDepthVal;
+                Irrigation := (GetRootZoneWC().FC - ZrWc) + TargetDepthVal;
                 IF (Irrigation < 0) THEN Irrigation := 0;
                 END;
         END
@@ -1141,10 +1141,10 @@ IF (Sum > 0)
                SurfaceStorage := 0;
                END;
        // extra run-off
-       IF (SurfaceStorage > (Management.BundHeight*1000))
+       IF (SurfaceStorage > (GetManagement_BundHeight()*1000))
           THEN BEGIN
-               Runoff := Runoff + (SurfaceStorage - Management.BundHeight*1000);
-               SurfaceStorage := Management.BundHeight*1000;
+               Runoff := Runoff + (SurfaceStorage - GetManagement_BundHeight()*1000);
+               SurfaceStorage := GetManagement_BundHeight()*1000;
                END;
        END
   ELSE BEGIN
@@ -1284,14 +1284,14 @@ THEN BEGIN
    ============================= *)
      IF (Runoff > RunoffIni) THEN
         //IF (SimulParam.StandingWater)
-        IF (Management.Bundheight >= 0.01)
+        IF (GetManagement_Bundheight() >= 0.01)
            THEN BEGIN
                 SurfaceStorage := SurfaceStorage + (Runoff-RunoffIni);
                 InfiltratedStorage := InfiltratedStorage - (Runoff-RunoffIni);
-                IF (SurfaceStorage > Management.BundHeight*1000)
+                IF (SurfaceStorage > GetManagement_BundHeight()*1000)
                    THEN BEGIN
-                        Runoff := RunoffIni + (SurfaceStorage - Management.BundHeight*1000);
-                        SurfaceStorage := Management.BundHeight*1000;
+                        Runoff := RunoffIni + (SurfaceStorage - GetManagement_BundHeight()*1000);
+                        SurfaceStorage := GetManagement_BundHeight()*1000;
                         END
                    ELSE Runoff := RunoffIni;
                 END
@@ -1421,13 +1421,13 @@ IF (EffecRain > 0) THEN
       BEGIN
       IF (InfiltratedRain > 0) THEN InfiltratedRain := InfiltratedRain - amount_still_to_store;
       //IF (SimulParam.StandingWater)
-      IF (Management.Bundheight >= 0.01)
+      IF (GetManagement_Bundheight() >= 0.01)
          THEN BEGIN
               SurfaceStorage := SurfaceStorage + amount_still_to_store;
-              IF (SurfaceStorage > (Management.BundHeight*1000))
+              IF (SurfaceStorage > (GetManagement_BundHeight()*1000))
                  THEN BEGIN
-                      Runoff := Runoff + (SurfaceStorage - Management.BundHeight*1000);
-                      SurfaceStorage := Management.BundHeight*1000;
+                      Runoff := Runoff + (SurfaceStorage - GetManagement_BundHeight()*1000);
+                      SurfaceStorage := GetManagement_BundHeight()*1000;
                      END;
               END
          ELSE Runoff := Runoff + amount_still_to_store;
@@ -1790,6 +1790,7 @@ PROCEDURE EffectSoilFertilitySalinityStress(VAR FinalEffectStress : rep_EffectSt
 VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
     SaltStress,CCxRedD : double;
     CCxRed : ShortInt;
+    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
 
     PROCEDURE NoEffectStress(VAR TheEffectStress : rep_EffectStress);
     BEGIN
@@ -1804,9 +1805,17 @@ VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
 BEGIN
 IF (Simulation.SalinityConsidered = true)
    THEN BEGIN
-        DetermineRootZoneSaltContent(RootingDepth,RootZoneSalt.ECe,RootZoneSalt.ECsw,RootZoneSalt.ECswFC,RootZoneSalt.KsSalt);
+        ECe_temp := GetRootZoneSalt().ECe;
+        ECsw_temp := GetRootZoneSalt().ECsw;
+        ECswFC_temp := GetRootZoneSalt().ECswFC;
+        KsSalt_temp := GetRootZoneSalt().KsSalt;
+        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        SetRootZoneSalt_ECe(ECe_temp);
+        SetRootZoneSalt_ECsw(ECsw_temp);
+        SetRootZoneSalt_ECswFC(ECswFC_temp);
+        SetRootZoneSalt_KsSalt(KsSalt_temp);
         //SaltStress := (1-RootZoneSalt.KsSalt)*100;
-        SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-RootZoneSalt.KsSalt))/(NrDayGrow+1);
+        SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-GetRootZoneSalt().KsSalt))/(NrDayGrow+1);
         END
    ELSE SaltStress := 0;
 IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop.Day1))
@@ -1855,7 +1864,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                           Simulation.EffectStress.RedCCX,StressSFAdjNEW);
         IF (Crop.ModeCycle = GDDays) THEN
            BEGIN
-           IF ((Management.FertilityStress <> 0) OR (SaltStress <> 0))
+           IF ((GetManagement_FertilityStress() <> 0) OR (SaltStress <> 0))
               THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
               ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
            END;
@@ -1873,8 +1882,8 @@ BEGIN
 // total root zone is considered
 Zroot := Crop.RootMin;
 DetermineRootZoneWC(Zroot,Simulation.SWCtopSoilConsidered);
-WCGermination := RootZoneWC.WP + (RootZoneWC.FC - RootZoneWC.WP) * (SimulParam.TAWGermination/100);
-IF (RootZoneWC.Actual < WCGermination)
+WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (SimulParam.TAWGermination/100);
+IF (GetRootZoneWC().Actual < WCGermination)
    THEN BEGIN
         Simulation.DelayedDays := Simulation.DelayedDays + 1;
         Simulation.SumGDD := 0;
@@ -1912,16 +1921,16 @@ BEGIN
 // determine FC and PWP
 IF (Simulation.SWCtopSoilConsidered = true)
    THEN BEGIN // top soil is relative wetter than total root zone
-        SWCeffectiveRootZone := RootZoneWC.ZtopAct;
-        Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP);
-        FCeffectiveRootZone := RootZoneWC.ZtopFC;
-        WPeffectiveRootZone := RootZoneWC.ZtopWP;
+        SWCeffectiveRootZone := GetRootZoneWC().ZtopAct;
+        Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP);
+        FCeffectiveRootZone := GetRootZoneWC().ZtopFC;
+        WPeffectiveRootZone := GetRootZoneWC().ZtopWP;
         END
    ELSE BEGIN // total rootzone is wetter than top soil
-        SWCeffectiveRootZone := RootZoneWC.Actual;
-        Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP);
-        FCeffectiveRootZone := RootZoneWC.FC;
-        WPeffectiveRootZone := RootZoneWC.WP;
+        SWCeffectiveRootZone := GetRootZoneWC().Actual;
+        Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP);
+        FCeffectiveRootZone := GetRootZoneWC().FC;
+        WPeffectiveRootZone := GetRootZoneWC().WP;
         END;
 
 // Canopy stress and effect of soil water stress on CGC
@@ -1963,7 +1972,7 @@ IF (CGCadjusted > 0.000001) // CGC can be adjusted
            THEN CGCadjusted := CGCadjusted * (1 - FracAssim);
         // increase CGC after cutting
         IF ((CGCadjustmentAfterCutting = true) AND (StorageON = false))
-           THEN CGCadjusted := CGCadjusted * (1 + Management.Cuttings.CGCPlus/100);
+           THEN CGCadjusted := CGCadjusted * (1 + GetManagement_Cuttings_CGCPlus()/100);
         // increase CGC during mobilization
         IF ((Crop.subkind = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
            THEN BEGIN
@@ -1992,8 +2001,8 @@ VAR Wrelative : double;
 BEGIN
 pSenLL := 0.999; //WP
 IF (Simulation.SWCtopSoilConsidered = true) // top soil is relative wetter than total root zone
-   THEN Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP) // top soil
-   ELSE Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
+   THEN Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
+   ELSE Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 WithBeta := false;
 AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,pSenAct);
 IF (Wrelative <= pSenAct)
@@ -2284,13 +2293,13 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                 KsRED := 1;  // effect of soil salinity on the threshold for senescence
                 IF (Simulation.SWCtopSoilConsidered = true)
                    THEN BEGIN // top soil is relative wetter than total root zone
-                           IF ((RootZoneWC.ZtopAct < (RootZoneWC.ZtopFC - Crop.pSenAct*KsRED*(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP)))
+                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
                            AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
                         END
                    ELSE BEGIN
-                        IF ((RootZoneWC.Actual < (RootZoneWC.FC - Crop.pSenAct*KsRED*(RootZoneWC.FC - RootZoneWC.WP)))
+                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
                             AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
@@ -2428,16 +2437,16 @@ BEGIN
 // determine FC and PWP
 IF (Simulation.SWCtopSoilConsidered = true)
    THEN BEGIN // top soil is relative wetter than total root zone
-        SWCeffectiveRootZone := RootZoneWC.ZtopAct;
-        Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP); // top soil
-        FCeffectiveRootZone := RootZoneWC.ZtopFC;
-        WPeffectiveRootZone := RootZoneWC.ZtopWP;
+        SWCeffectiveRootZone := GetRootZoneWC().ZtopAct;
+        Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP); // top soil
+        FCeffectiveRootZone := GetRootZoneWC().ZtopFC;
+        WPeffectiveRootZone := GetRootZoneWC().ZtopWP;
         END
    ELSE BEGIN
-        SWCeffectiveRootZone := RootZoneWC.Actual;
-        Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
-        FCeffectiveRootZone := RootZoneWC.FC;
-        WPeffectiveRootZone := RootZoneWC.WP;
+        SWCeffectiveRootZone := GetRootZoneWC().Actual;
+        Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
+        FCeffectiveRootZone := GetRootZoneWC().FC;
+        WPeffectiveRootZone := GetRootZoneWC().WP;
         END;
 
 // Canopy stress and effect of water stress on CGCGDD
@@ -2481,7 +2490,7 @@ IF (GDDCGCadjusted > 0.000001) // CGCGDD can be adjusted
            THEN GDDCGCadjusted := GDDCGCadjusted * (1 - FracAssim);
         // increase CGC after cutting
         IF ((CGCadjustmentAfterCutting = true) AND (StorageON = false))
-           THEN GDDCGCadjusted := GDDCGCadjusted * (1 + Management.Cuttings.CGCPlus/100);
+           THEN GDDCGCadjusted := GDDCGCadjusted * (1 + GetManagement_Cuttings_CGCPlus()/100);
         // increase CGC during mobilization
         IF ((Crop.subkind = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
            THEN BEGIN
@@ -2562,8 +2571,8 @@ VAR Wrelative : double;
 BEGIN
 pSenLL := 0.999; //WP
 IF (Simulation.SWCtopSoilConsidered = true) // top soil is relative wetter than total root zone
-   THEN Wrelative := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP) // top soil
-   ELSE Wrelative := (RootZoneWC.FC - RootZoneWC.Actual)/(RootZoneWC.FC - RootZoneWC.WP); // total root zone
+   THEN Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
+   ELSE Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 
 WithBeta := false;
 AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,pSenAct);
@@ -2824,13 +2833,13 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                 KsRED := 1; // effect of soil salinity on the threshold for senescence
                 IF (Simulation.SWCtopSoilConsidered = true)
                    THEN BEGIN // top soil is relative wetter than total root zone
-                           IF ((RootZoneWC.ZtopAct < (RootZoneWC.ZtopFC - Crop.pSenAct*KsRED*(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP)))
+                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
                            AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
                         END
                    ELSE BEGIN
-                        IF ((RootZoneWC.Actual < (RootZoneWC.FC - Crop.pSenAct*KsRED*(RootZoneWC.FC - RootZoneWC.WP)))
+                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
                            AND (Simulation.ProtectedSeedling = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
@@ -2965,11 +2974,11 @@ BEGIN
 IF (SurfaceStorage <= 0.000001)
    THEN BEGIN
         IF (dayi < Crop.Day1) // before season
-           THEN Epot := EpotTot * (1 - (Management.EffectMulchOffS/100)*(Management.SoilCoverBefore/100))
+           THEN Epot := EpotTot * (1 - (GetManagement_EffectMulchOffS()/100)*(GetManagement_SoilCoverBefore()/100))
            ELSE BEGIN
                 IF (dayi < Crop.Day1+Crop.DaysToHarvest) // in season
-                   THEN Epot := EpotTot * (1 - (Management.EffectMulchInS/100)*(Management.Mulch/100))
-                   ELSE Epot := EpotTot * (1 - (Management.EffectMulchOffS/100)*(Management.SoilCoverAfter/100));
+                   THEN Epot := EpotTot * (1 - (GetManagement_EffectMulchInS()/100)*(GetManagement_Mulch()/100))
+                   ELSE Epot := EpotTot * (1 - (GetManagement_EffectMulchOffS()/100)*(GetManagement_SoilCoverAfter()/100));
                 END;
         END
    ELSE Epot := EpotTot; // flooded soil surface
@@ -2988,7 +2997,7 @@ IF (Irrigation > 0) THEN
       THEN EvapoEntireSoilSurface := false;
    END;
 IF ((Rain > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
-IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (IrriMode = Inet))
+IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (GetIrriMode() = Inet))
    THEN EvapoEntireSoilSurface := true;
 
 // 2b. Correction for Wetted surface by Irrigation
@@ -3330,7 +3339,7 @@ VAR       sink_value, StopComp, SbotComp,
           compi, i : INTEGER;
 
 BEGIN
-IF (IrriMode = Inet)
+IF (GetIrriMode() = Inet)
    THEN BEGIN
         sink_value := (Crop.SmaxTop + Crop.SmaxBot)/2;
         for compi := 1 to NrCompartments DO Compartment[compi].Smax := sink_value;
@@ -3416,7 +3425,7 @@ Tact := 0.0;
 IF (Tpot > 0) THEN
    BEGIN
    // 1. maximum transpiration in actual root zone
-   IF (IrriMode = Inet)
+   IF (GetIrriMode() = Inet)
       THEN BEGIN
            // salinity stress not considered
            TpotMAX := Tpot;
@@ -3426,21 +3435,21 @@ IF (Tpot > 0) THEN
            DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
 
            // --- 1. Effect of water stress and ECe (total rootzone)
-           WrelSalt := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
+           WrelSalt := (GetRootZoneWC().FC-GetRootZoneWC().Actual)/(GetRootZoneWC().FC-GetRootZoneWC().WP);
 
            // --- 2. Effect of water stress
            pStomatLLAct := 1;
            IF (Simulation.SWCtopSoilConsidered = true)
               THEN BEGIN // top soil is relative wetter than total root zone
-                   IF (RootZoneWC.ZtopAct < (0.999 * RootZoneWC.ZtopThresh))
+                   IF (GetRootZoneWC().ZtopAct < (0.999 * GetRootZoneWC().ZtopThresh))
                       THEN BEGIN
-                           Wrel := (RootZoneWC.ZtopFC - RootZoneWC.ZtopAct)/(RootZoneWC.ZtopFC - RootZoneWC.ZtopWP);
+                           Wrel := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP);
                            RedFact := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
                            END
                       ELSE RedFact := (1 - Simulation.EffectStress.RedKsSto/100);
                    END
               ELSE BEGIN // total root zone
-                   IF (RootZoneWC.Actual < (0.999 * RootZoneWC.Thresh))
+                   IF (GetRootZoneWC().Actual < (0.999 * GetRootZoneWC().Thresh))
                       THEN BEGIN
                            // THE 3 LINES BELOW GIVE THE CORRECT WAY
                               //Wrel := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
@@ -3450,7 +3459,7 @@ IF (Tpot > 0) THEN
                               //RedFact := 1 - (RootZoneWC.Thresh - RootZoneWC.Actual)/(RootZoneWC.Thresh - RootZoneWC.WP);
                               //IF (RedFact < 0) THEN RedFact := 0;
                            // These lines are the new way following the old procedure (but adjusted for soil salinity)
-                           Wrel := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
+                           Wrel := (GetRootZoneWC().FC-GetRootZoneWC().Actual)/(GetRootZoneWC().FC-GetRootZoneWC().WP);
                            RedFact := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
                            END
                       ELSE RedFact := (1 - Simulation.EffectStress.RedKsSto/100);
@@ -3462,7 +3471,7 @@ IF (Tpot > 0) THEN
            // --- 3. Extra effect of ECsw (salt in total root zone is considered)
            IF Simulation.SalinityConsidered
               THEN RedFactECsw := AdjustedKsStoToECsw(Crop.ECemin,Crop.ECemax,Crop.ResponseECsw,
-                             RootZoneSalt.ECe,RootZoneSalt.ECsw,RootZoneSalt.ECswFC,
+                             GetRootZoneSalt().ECe,GetRootZoneSalt().ECsw,GetRootZoneSalt().ECswFC,
                              WrelSalt,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,RedFact)
               ELSE RedFactECsw := RedFact;
 
@@ -3470,7 +3479,7 @@ IF (Tpot > 0) THEN
            TpotMAX := RedFactECsw * Tpot;
 
            // 1.b anaerobic conditions in root zone (total root zone is considered)
-           DetermineRootZoneAnaeroConditions(RootZoneWC.SAT,RootZoneWC.Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
+           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
            TpotMAX := RedFact * TpotMax;
            END;
 
@@ -3489,7 +3498,7 @@ IF (Tpot > 0) THEN
         pre_layer := layeri;
         END;
      // 2.b calculate alfa
-     IF (IrriMode = Inet)
+     IF (GetIrriMode() = Inet)
         THEN alfa := 1
         ELSE BEGIN
              // effect of water stress and ECe
@@ -3541,11 +3550,11 @@ IF (Tpot > 0) THEN
    UNTIL ((WtoExtract <= 0) OR (compi = Nrcompartments));
 
    // 3. add net irrigation water requirement
-   IF (IrriMode = Inet) THEN
+   IF (GetIrriMode() = Inet) THEN
      BEGIN // total root zone is considered
      DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-     InetThreshold := RootZoneWC.FC - SimulParam.PercRAW/100*(RootZoneWC.FC - RootZoneWC.Thresh);
-     IF (RootZoneWC.Actual < InetThreshold) THEN
+     InetThreshold := GetRootZoneWC().FC - SimulParam.PercRAW/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
+     IF (GetRootZoneWC().Actual < InetThreshold) THEN
         BEGIN
         pre_layer := 0;
         FOR compi := 1 TO NrCompartments DO
@@ -3695,18 +3704,18 @@ CalculateAdjustedFC((ZiAqua/100),Compartment);
 calculate_drainage;
 
 // 4. Runoff
-IF (Management.Bundheight < 0.001) THEN
+IF (GetManagement_Bundheight() < 0.001) THEN
    BEGIN
    DaySubmerged := 0;
-   IF ((Management.RunoffON = true) AND (Rain > 0.1)) THEN calculate_runoff(SimulParam.RunoffDepth);
+   IF ((GetManagement_RunoffON() = true) AND (Rain > 0.1)) THEN calculate_runoff(SimulParam.RunoffDepth);
    END;
 
 // 5. Infiltration (Rain and Irrigation)
 IF ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
    THEN CalculateEffectiveRainfall;
-IF (((IrriMode = Generate) AND (Irrigation = 0)) AND (TargetTimeVal <> -999))
+IF (((GetIrriMode() = Generate) AND (Irrigation = 0)) AND (TargetTimeVal <> -999))
    THEN Calculate_irrigation;
-IF (Management.Bundheight >= 0.01)
+IF (GetManagement_Bundheight() >= 0.01)
    THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt)
    ELSE calculate_Extra_runoff(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
 calculate_infiltration(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
@@ -3758,7 +3767,7 @@ AdjustpStomatalToETo(ETo,Crop.pActStom);
 // 12. Evaporation
 IF (PreDay = false) THEN PrepareStage2; // Initialize Simulation.EvapstartStg2 (REW is gone)
 IF ((Rain > 0) OR
-   ((Irrigation > 0) AND (IrriMode <> Inet)))
+   ((Irrigation > 0) AND (GetIrriMode() <> Inet)))
    THEN PrepareStage1;
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,Simulation.EvapWCsurf);
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
