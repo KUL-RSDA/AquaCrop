@@ -1865,7 +1865,7 @@ IF (TrxPer > 0)
 WRITE(fRun,IrriPer:9:1,InfiltPer:9:1,ROPer:9:1,DrainPer:9:1,CRwPer:9:1,
            EPer:9:1,RatioE:9,TrPer:9:1,TrWPer:9:1,RatioT:9);
 // Soil Salinity
-WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,TotalSaltContent.EndDay:10:3);
+WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,GetTotalSaltContent().EndDay:10:3);
 // seasonal stress
 WRITE(fRun,StressTot.NrD:9,StressTot.Salt:9:0,GetManagement_FertilityStress():9,StressTot.Weed:9:0,
         StressTot.Temp:9:0,StressTot.Exp:9:0,StressTot.Sto:9:0);
@@ -2048,9 +2048,9 @@ WRITE(fDaily,Di:6,Mi:6,Yi:6,DAP:6,StageCode:6);
 IF Out1Wabal THEN
    BEGIN
    IF (ZiAqua = undef_int)
-      THEN WRITE(fDaily,TotalWaterContent.EndDay:10:1,Rain:8:1,Irrigation:9:1,
+      THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
                SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,undef_double:8:2)
-      ELSE  WRITE(fDaily,TotalWaterContent.EndDay:10:1,Rain:8:1,Irrigation:9:1,
+      ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
                SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,(ZiAqua/100):8:2);
    IF (Tpot > 0) THEN Ratio1 := 100*Tact/Tpot
                  ELSE Ratio1 := 100.0;
@@ -2130,7 +2130,7 @@ IF Out2Crop THEN
 // 3. Profile/Root zone - Soil water content
 IF Out3Prof THEN
    BEGIN
-   WRITE(fDaily,TotalWaterContent.EndDay:10:1);
+   WRITE(fDaily,GetTotalWaterContent().EndDay:10:1);
    IF (RootingDepth <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
@@ -2160,7 +2160,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(Drain*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,TotalSaltContent.EndDay:10:3);
+   WRITE(fDaily,SaltInfiltr:9:3,(Drain*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
