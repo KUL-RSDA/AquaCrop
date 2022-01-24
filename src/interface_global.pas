@@ -144,6 +144,9 @@ type
          KsSalt : double;   // stress coefficient for salinity
          end;
 
+     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
+     rep_GenerateDepthMode = (ToFC,FixDepth);
+
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
@@ -1211,6 +1214,26 @@ procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
 procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
         external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
 
+function __GetGenerateTimeMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getgeneratetimemode';
+
+function GetGenerateTimeMode(): rep_GenerateTimeMode;
+
+procedure __SetGenerateTimeMode(constref GenerateTimeMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setgeneratetimemode';
+
+procedure SetGenerateTimeMode(constref GenerateTimeMode : rep_GenerateTimeMode);
+
+function __GetGenerateDepthMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getgeneratedepthmode';
+
+function GetGenerateDepthMode(): rep_GenerateDepthMode;
+
+procedure __SetGenerateDepthMode(constref IrriDepthMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setgeneratedepthmode';
+
+procedure SetGenerateDepthMode(constref GenerateDepthMode : rep_GenerateDepthMode);
+
 function __GetIrriMode(): integer;
         external 'aquacrop' name '__ac_global_MOD_getirrimode';
 
@@ -1230,6 +1253,7 @@ procedure __SetIrriMethod(constref IrriMethod : integer);
         external 'aquacrop' name '__ac_global_MOD_setirrimethod';
 
 procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod);
+
 
 implementation
 
@@ -1322,6 +1346,42 @@ begin;
     __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
+function GetGenerateTimeMode() : rep_GenerateTimeMode;
+var
+    int_GenerateTimeMode : integer;
+
+begin;
+    int_GenerateTimeMode := __GetGenerateTimeMode();
+    GetGenerateTimeMode := rep_GenerateTimeMode(int_GenerateTimeMode);
+end;
+
+procedure SetGenerateTimeMode(constref GenerateTimeMode : rep_GenerateTimeMode); 
+var
+    int_GenerateTimeMode : integer;
+
+begin;
+    int_GenerateTimeMode := ord(GenerateTimeMode);
+    __SetGenerateTimeMode(int_GenerateTimeMode);
+end;
+
+function GetGenerateDepthMode() : rep_GenerateDepthMode;
+var
+    int_GenerateDepthMode : integer;
+
+begin;
+    int_GenerateDepthMode := __GetGenerateDepthMode();
+    GetGenerateDepthMode := rep_GenerateDepthMode(int_GenerateDepthMode);
+end;
+
+procedure SetGenerateDepthMode(constref GenerateDepthMode : rep_GenerateDepthMode); 
+var
+    int_GenerateDepthMode : integer;
+
+begin;
+    int_GenerateDepthMode := ord(GenerateDepthMode);
+    __SetGenerateDepthMode(int_GenerateDepthMode);
+end;
+
 function GetIrriMode() : rep_IrriMode;
 var
     int_IrriMode : integer;
@@ -1357,8 +1417,6 @@ begin;
     int_IrriMethod := ord(IrriMethod);
     __SetIrriMethod(int_IrriMethod);
 end;
-
-
 
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;

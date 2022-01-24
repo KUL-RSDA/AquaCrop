@@ -50,6 +50,20 @@ integer(intEnum), parameter :: TimeCuttings_DryY = 4
 integer(intEnum), parameter :: TimeCuttings_FreshY= 5
     !! index of FreshY in TimeCuttings enumerated type
 
+integer(intEnum), parameter :: GenerateTimeMode_FixInt = 0
+    !! index of FixInt in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_AllDepl = 1
+    !! index of AllDepl in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_AllRAW = 2
+    !! index of AllRAW in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBuns = 3
+    !! index of WaterBetweenBuns in GenerateTimeMode enumerated type
+
+integer(intEnum), parameter :: GenerateDepthMode_ToFC = 0
+    !! index of ToFC in GenerateDepthMode enumerated type
+integer(intEnum), parameter :: GenerateDepthMode_FixDepth = 1
+    !! index of FixDepth in GenerateDepthMode enumerated type
+
 integer(intEnum), parameter :: IrriMode_NoIrri = 0
     !! index of NoIrri in IrriMode enumerated type
 integer(intEnum), parameter :: IrriMode_Manual = 1
@@ -323,8 +337,11 @@ type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
 
+integer(intEnum) :: GenerateTimeMode
+integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
 
 
 contains
@@ -3064,6 +3081,32 @@ subroutine SetRootZoneSalt_KsSalt(KsSalt)
 
     RootZoneSalt%KsSalt = KsSalt
 end subroutine SetRootZoneSalt_KsSalt
+
+integer(intEnum) function GetGenerateTimeMode()
+    !! Getter for the "GenerateTimeMode" global variable.
+
+    GetGenerateTimeMode = GenerateTimeMode
+end function GetGenerateTimeMode
+
+integer(intEnum) function GetGenerateDepthMode()
+    !! Getter for the "GenerateDepthMode" global variable.
+
+    GetGenerateDepthMode = GenerateDepthMode
+end function GetGenerateDepthMode
+
+subroutine SetGenerateTimeMode(int_in)
+    !! Setter for the "GenerateTimeMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    GenerateTimeMode = int_in
+end subroutine SetGenerateTimeMode
+
+subroutine SetGenerateDepthMode(int_in)
+    !! Setter for the "GenerateDepthMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    GenerateDepthMode = int_in
+end subroutine SetGenerateDepthMode
 
 integer(intEnum) function GetIrriMode()
     !! Getter for the "IrriMode" global variable.
