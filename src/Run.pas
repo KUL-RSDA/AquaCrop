@@ -184,9 +184,9 @@ IF ((Out1Wabal) OR (Out3Prof = true) OR (Out4Salt = true)) THEN
    Zprof := 0;
    FOR compi :=1 to NrCompartments DO Zprof := Zprof + Compartment[compi].Thickness;
    Str(Zprof:4:2,Str1);
-   IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
+   IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
       THEN Str(Crop.RootMax:4:2,Str2)
-      ELSE Str(Soil.RootMax:4:2,Str2);
+      ELSE Str(GetSoil().RootMax:4:2,Str2);
    END;
 
 // C. 1st line title
@@ -1711,9 +1711,9 @@ IF ((Simulation.Zrini > 0) AND (Ziprev > 0) AND (Simulation.Zrini <= Ziprev))
                    THEN Ziprev := Crop.RootMin
                    ELSE Ziprev := Crop.RootMax;
                 END;
-        IF ((ROUND(Soil.RootMax*1000) < ROUND(Crop.RootMax*1000))
-           AND (Ziprev > Soil.RootMax))
-           THEN Ziprev := Soil.RootMax;
+        IF ((ROUND(GetSoil().RootMax*1000) < ROUND(Crop.RootMax*1000))
+           AND (Ziprev > GetSoil().RootMax))
+           THEN Ziprev := GetSoil().RootMax;
         RootingDepth := Ziprev;  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
         END
    ELSE RootingDepth := ActualRootingDepth((DayNri-Crop.Day1+1),Crop.DaysToGermination,Crop.DaysToMaxRooting,
@@ -2131,9 +2131,9 @@ IF Out3Prof THEN
    IF (RootingDepth <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
-           IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
+           IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
               THEN DetermineRootZoneWC(Crop.RootMax,Simulation.SWCtopSoilConsidered)
-              ELSE DetermineRootZoneWC(Soil.RootMax,Simulation.SWCtopSoilConsidered);
+              ELSE DetermineRootZoneWC(GetSoil().RootMax,Simulation.SWCtopSoilConsidered);
            END;
    WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
    IF (RootingDepth <= 0)
@@ -2980,7 +2980,7 @@ VAR NrRun : ShortInt;
        ELSE BEGIN
             IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
                BEGIN
-               IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
+               IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
                   THEN BEGIN // no restrictive soil layer
                        AdjustSizeCompartments(Crop.RootMax);
                        // adjust soil water content
@@ -2988,9 +2988,9 @@ VAR NrRun : ShortInt;
                        IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
                        END
                   ELSE BEGIN // restrictive soil layer
-                       IF (ROUND(Soil.RootMax*1000) > ROUND(TotDepth*1000)) THEN
+                       IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000)) THEN
                           BEGIN
-                          AdjustSizeCompartments(Soil.RootMax);
+                          AdjustSizeCompartments(GetSoil().RootMax);
                           // adjust soil water content
                           CalculateAdjustedFC((ZiAqua/100),Compartment);
                           IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;

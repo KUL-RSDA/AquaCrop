@@ -102,10 +102,10 @@ implementation
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
  SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
- // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
+ // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
- // Crop. RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
+ // Crop. RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
  LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -124,7 +124,7 @@ implementation
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
  // maximum rooting depth in given soil profile
- Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+ SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
  Crop.Day1 := SimulParam.CropDay1;
  CompleteCropDescription;

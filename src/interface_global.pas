@@ -42,6 +42,13 @@ type
         CRa, CRb     : double; (* coefficients for Capillary Rise *)
         END;
 
+     rep_soil = Record
+         REW            : ShortInt; (* Readily evaporable water mm *)
+         NrSoilLayers   : ShortInt;
+         CNvalue        : ShortInt;
+         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
+         end;
+
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
     
     rep_int_array = ARRAY[1..4] OF INTEGER;
@@ -1146,6 +1153,21 @@ procedure SetSumWaBal_SaltOut(constref SaltOut : double);
 
 procedure SetSumWaBal_CRsalt(constref CRsalt : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_crsalt';
+
+function GetSoil(): rep_Soil;
+        external 'aquacrop' name '__ac_global_MOD_getsoil';
+
+procedure SetSoil_REW(constref REW : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
+
+procedure SetSoil_NrSoilLayers(constref NrSoilLayers : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_nrsoillayers';
+
+procedure SetSoil_CNvalue(constref CNvalue : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_cnvalue';
+
+procedure SetSoil_RootMax(constref RootMax : Single);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_rootmax';
 
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';

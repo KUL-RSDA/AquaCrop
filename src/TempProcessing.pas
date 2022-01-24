@@ -1472,11 +1472,11 @@ IF (Trim(TempString) = 'KeepSWC')
            ELSE BEGIN
                 IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
                    BEGIN
-                   IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
+                   IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
                       THEN AdjustSizeCompartments(Crop.RootMax) // no restrictive soil layer
                       ELSE BEGIN // restrictive soil layer
-                           IF (ROUND(Soil.RootMax*1000) > ROUND(TotDepth*1000))
-                              THEN AdjustSizeCompartments(Soil.RootMax)
+                           IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000))
+                              THEN AdjustSizeCompartments(GetSoil().RootMax)
                            END;
                    END;
                 END;
