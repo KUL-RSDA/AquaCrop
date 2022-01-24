@@ -100,7 +100,7 @@ implementation
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
- SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
+ SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
  // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
@@ -118,7 +118,7 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- CropFilefull := CONCAT(PathNameSimul,GetCropFile());
+ CropFilefull := CONCAT(GetPathNameSimul(),GetCropFile());
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
@@ -179,7 +179,7 @@ implementation
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
- CO2FileFull := CONCAT(PathNameSimul,GetCO2File());
+ CO2FileFull := CONCAT(GetPathNameSimul(),GetCO2File());
  GetCO2Description(CO2FileFull,CO2Description);
 
  // 5.5 Climate file

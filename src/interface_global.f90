@@ -17,6 +17,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimFile, &
                      GetSWCiniFile, &
                      GetNumberSimulationRuns, &
+                     GetPathNameProg, &
+                     GetPathNameOutp, &
+                     GetPathNameSimul, &
                      GetProfFile, &
                      GetProfFilefull, &
                      GetManFile, &
@@ -40,6 +43,9 @@ use ac_global, only: CheckFilesInProject, &
                      SetClimateFile, &
                      SetClimFile, &
                      setSWCinifile, &
+                     SetPathNameProg, &
+                     SetPathNameOutp, &
+                     SetPathNameSimul, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
@@ -353,7 +359,62 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
     call SetSWCiniFile(string)
 end subroutine SetSWCiniFile_wrap
 
+function GetPathNameProg_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetPathNameProg())
+end function GetPathNameProg_wrap
 
+
+subroutine SetPathNameProg_wrap(PathNameProg, strlen)
+    !! Wrapper for [[ac_global:SetPathNameProg]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameProg
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(PathNameProg, strlen)
+    call SetPathNameProg(string)
+end subroutine SetPathNameProg_wrap
+
+function GetPathNameOutp_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameOutp]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetPathNameOutp())
+end function GetPathNameOutp_wrap
+
+
+subroutine SetPathNameOutp_wrap(PathNameOutp, strlen)
+    !! Wrapper for [[ac_global:SetPathNameOutp]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameOutp
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(PathNameOutp, strlen)
+    call SetPathNameOutp(string)
+end subroutine SetPathNameOutp_wrap
+
+function GetPathNameSimul_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameSimul]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetPathNameSimul())
+end function GetPathNameSimul_wrap
+
+
+subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
+    !! Wrapper for [[ac_global:SetPathNameSimul]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameSimul
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(PathNameSimul, strlen)
+    call SetPathNameSimul(string)
+end subroutine SetPathNameSimul_wrap
 
 function GetRainFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.

@@ -409,8 +409,7 @@ TYPE
          end;
 
 
-VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
-    DataPath,ObsPath : BOOLEAN;
+VAR DataPath,ObsPath : BOOLEAN;
     TemperatureFile,ProjectFile,MultipleProjectFile,ObservationsFile : string;
     CalendarFileFull,CropFilefull, ClimateFileFull,TemperatureFileFull,CO2FileFull,
     IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
@@ -2843,7 +2842,7 @@ CASE Simulation.LinkCropToSimPeriod OF
 IF ((NOT SimulParam.ConstGwt) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THEN
    BEGIN
    IF (GetGroundWaterFile() = '(None)')
-       THEN FullFileName := CONCAT(PathNameProg,'GroundWater.AqC')
+       THEN FullFileName := CONCAT(GetPathNameProg(),'GroundWater.AqC')
        ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
    LoadGroundWater(FullFileName,Simulation.FromDayNr,ZiAqua,ECiAqua);
@@ -3296,7 +3295,7 @@ VAR f : textfile;
     FullName : string;
     i : ShortInt;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Soil.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Soil.PAR');
 Assign(f,FullName);
 Reset(f);
 READLN(f,SimulParam.RunoffDepth); //considered depth (m) of soil profile for calculation of mean soil water content
@@ -3381,7 +3380,7 @@ VAR f : textfile;
     FullName : string;
     NrM : ShortInt;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Rainfall.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Rainfall.PAR');
 Assign(f,FullName);
 Reset(f);
 Readln(f); //Settings for processing 10-day or monthly rainfall data
@@ -3405,7 +3404,7 @@ PROCEDURE ReadCropSettingsParameters;
 VAR f : textfile;
     FullName : string;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Crop.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Crop.PAR');
 Assign(f,FullName);
 Reset(f);
 WITH SimulParam DO
@@ -3432,7 +3431,7 @@ PROCEDURE ReadFieldSettingsParameters;
 VAR f : textfile;
     FullName : string;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Field.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Field.PAR');
 Assign(f,FullName);
 Reset(f);
 WITH SimulParam DO
@@ -3447,7 +3446,7 @@ PROCEDURE ReadTemperatureSettingsParameters;
 VAR f0 : text;
     FullName : string;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Temperature.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Temperature.PAR');
 Assign(f0,FullName);
 Reset(f0);
 Readln(f0);
@@ -3699,7 +3698,7 @@ BEGIN
 // 1. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 

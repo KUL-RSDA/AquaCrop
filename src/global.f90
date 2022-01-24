@@ -170,6 +170,9 @@ character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: PathNameProg
+character(len=:), allocatable :: PathNameOutp
+character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
@@ -1689,6 +1692,50 @@ subroutine SetSWCiniFile(str)
     
     SWCiniFile = str
 end subroutine SetSWCiniFile
+
+function GetPathNameProg() result(str)
+    !! Getter for the "PathNameProg" global variable.
+    character(len=len(PathNameProg)) :: str
+    
+    str = PathNameProg
+end function GetPathNameProg
+
+subroutine SetPathNameProg(str)
+    !! Setter for the "PathNameProg" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameProg = str
+end subroutine SetPathNameProg
+
+function GetPathNameOutp() result(str)
+    !! Getter for the "PathNameOutp" global variable.
+    character(len=len(PathNameOutp)) :: str
+    
+    str = PathNameOutp
+end function GetPathNameOutp
+
+subroutine SetPathNameOutp(str)
+    !! Setter for the "PathNameOutp" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameOutp = str
+end subroutine SetPathNameOutp
+
+function GetPathNameSimul() result(str)
+    !! Getter for the "PathNameSimul" global variable.
+    character(len=len(PathNameSimul)) :: str
+    
+    str = PathNameSimul
+end function GetPathNameSimul
+
+subroutine SetPathNameSimul(str)
+    !! Setter for the "PathNameSimul" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameSimul = str
+end subroutine SetPathNameSimul
+
+
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
