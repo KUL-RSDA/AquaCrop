@@ -50,6 +50,12 @@ type
 
     rep_planting = (Seed,Transplant,Regrowth);
 
+    rep_Content = Record  // total water (mm) or salt (Mg/ha) content
+        BeginDay  : double; //at the beginning of the day
+        EndDay    : double; //at the end of the day
+        ErrorDay  : double; //error on WaterContent or SaltContent over the day
+        END;
+
     rep_EffectStress = Record
          RedCGC          : ShortInt; (* Reduction of CGC (%) *)
          RedCCX          : ShortInt; (* Reduction of CCx (%) *)
@@ -995,6 +1001,32 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
 
+function GetTotalSaltContent(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
+
+procedure SetTotalSaltContent_BeginDay(constref BeginDay : double);
+        external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_beginday';
+
+procedure SetTotalSaltContent_EndDay(constref EndDay : double);
+        external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_endday';
+
+procedure SetTotalSaltContent_ErrorDay(constref ErrorDay : double);
+        external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_errorday';
+
+function GetTotalWaterContent(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
+
+procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
+
+procedure SetTotalWaterContent_BeginDay(constref BeginDay : double);
+        external 'aquacrop' name '__ac_global_MOD_settotalwatercontent_beginday';
+
+procedure SetTotalWaterContent_EndDay(constref EndDay : double);
+        external 'aquacrop' name '__ac_global_MOD_settotalwatercontent_endday';
+
+procedure SetTotalWaterContent_ErrorDay(constref ErrorDay : double);
+        external 'aquacrop' name '__ac_global_MOD_settotalwatercontent_errorday';
+
 function GetRootZoneSalt(): rep_RootZoneSalt;
         external 'aquacrop' name '__ac_global_MOD_getrootzonesalt';
 
@@ -1150,6 +1182,13 @@ begin;
     p := PChar(StringIN);
     strlen := Length(StringIN);
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
+end;
+
+procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
+begin;
+    SetTotalWaterContent_BeginDay(TotalWaterContent.BeginDay);
+    SetTotalWaterContent_EndDay(TotalWaterContent.EndDay);
+    SetTotalWaterContent_ErrorDay(TotalWaterContent.ErrorDay);
 end;
 
 procedure GetCO2Description(

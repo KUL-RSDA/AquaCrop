@@ -658,25 +658,24 @@ PROCEDURE CheckWaterSaltBalance(control: rep_control;
                                 InfiltratedIrrigation, InfiltratedStorage : double;
                                 VAR Surf0,ECInfilt,ECdrain : double);
 
-VAR   compi, layeri, celli :INTEGER;
+VAR compi, layeri, celli :INTEGER;
 VAR Surf1,ECw : double;
-
 BEGIN (* CheckWaterSaltBalance *)
 
 CASE control OF
      begin_day:BEGIN
-               TotalWaterContent.BeginDay := 0; // mm
+               SetTotalWaterContent_BeginDay(0); // mm
                Surf0 := SurfaceStorage; // mm
-               TotalSaltContent.BeginDay := 0; // Mg/ha
+               SetTotalSaltContent_BeginDay(0); // Mg/ha
                FOR compi :=1 to NrCompartments DO
                    BEGIN
-                   TotalWaterContent.BeginDay := TotalWaterContent.BeginDay
+                   SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
                    + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
                    Compartment[compi].fluxout := 0;
                    FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
-                       TotalSaltContent.BeginDay := TotalSaltContent.BeginDay
-                       + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100; // Mg/ha
+                           SetTotalSaltContent_BeginDay(GetTotalSaltContent().BeginDay
+                           + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100); // Mg/ha
                    END;
                Drain:=0.0;
                Runoff:=0.0;
@@ -695,9 +694,9 @@ CASE control OF
      end_day : BEGIN
                Infiltrated := InfiltratedRain+InfiltratedIrrigation+InfiltratedStorage;
                FOR layeri := 1 TO Soil.NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
-               TotalWaterContent.EndDay := 0;
+               SetTotalWaterContent_EndDay(0);
                Surf1 := SurfaceStorage;
-               TotalSaltContent.EndDay := 0;
+               SetTotalSaltContent_EndDay(0);
 
                // quality of irrigation water
                IF (dayi < Crop.Day1)
@@ -709,24 +708,24 @@ CASE control OF
 
                FOR compi :=1 to NrCompartments DO
                    BEGIN
-                   TotalWaterContent.EndDay := TotalWaterContent.EndDay
+                   SetTotalWaterContent_EndDay(GetTotalWaterContent().EndDay
                    + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
                    SoilLayer[Compartment[compi].Layer].WaterContent := SoilLayer[Compartment[compi].Layer].WaterContent
                    + Compartment[compi].theta*1000*Compartment[compi].Thickness
                      * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
                    FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
-                       TotalSaltContent.EndDay := TotalSaltContent.EndDay
-                       + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100; // Mg/ha
+                           SetTotalSaltContent_EndDay(GetTotalSaltContent().EndDay
+                           + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100); // Mg/ha
                    END;
-               TotalWaterContent.ErrorDay := TotalWaterContent.BeginDay + Surf0
-                              -(TotalWaterContent.EndDay+Drain+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow);
-               TotalSaltContent.ErrorDay := TotalSaltContent.BeginDay - TotalSaltContent.EndDay // Mg/ha
+               SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
+                              -(GetTotalWaterContent().EndDay+Drain+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow));
+               SetTotalSaltContent_ErrorDay(GetTotalSaltContent().BeginDay - GetTotalSaltContent().EndDay // Mg/ha
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
                                             - Drain*ECdrain*Equiv/100
                                             + CRsalt/100
-                                            + HorizontalSaltFlow;
+                                            + HorizontalSaltFlow);
                SumWabal.Epot := SumWabal.Epot + Epot;
                SumWabal.Tpot := SumWabal.Tpot + Tpot;
                SumWabal.Rain := SumWabal.Rain + Rain;
