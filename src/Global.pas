@@ -264,8 +264,6 @@ TYPE
          CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
          End;
 
-     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
-     rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
          DayNr : Integer;
          Param : Integer;
@@ -321,22 +319,20 @@ TYPE
 
       rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
-VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
-    DataPath,ObsPath : BOOLEAN;
+
+VAR DataPath,ObsPath : BOOLEAN;
     TemperatureFile : string;
-    TemperatureFileFull,CO2FileFull,
-    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    TemperatureFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
-    ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
-    TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
+    ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
+    TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
+
     ClimRecord,
     EToRecord,
     RainRecord,
     TemperatureRecord     : rep_clim;
     Simulation     : rep_sim;
-    GenerateTimeMode : rep_GenerateTimeMode;
-    GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
     SoilLayer      : rep_SoilLayer;
     Compartment    : rep_Comp;
@@ -960,8 +956,8 @@ BEGIN
  IrriDescription := 'Rainfed cropping';
  SetIrriMethod(MSprinkler);
  Simulation.IrriECw := 0.0; // dS/m
- GenerateTimeMode := AllRAW;
- GenerateDepthMode := ToFC;
+ SetGenerateTimeMode(AllRAW);
+ SetGenerateDepthMode(ToFC);
  IrriFirstDayNr := undef_int;
  FOR Nri := 1 TO 5 DO
      BEGIN
@@ -1110,16 +1106,16 @@ IF (GetIrriMode() = Generate) THEN
    BEGIN
    READLN(f0,i); // time criterion
    Case i OF
-        1 : GenerateTimeMode := FixInt;
-        2 : GenerateTimeMode := AllDepl;
-        3 : GenerateTimeMode := AllRAW;
-        4 : GenerateTimeMode := WaterBetweenBunds;
-        else GenerateTimeMode := AllRAW;
+        1 : SetGenerateTimeMode(FixInt);
+        2 : SetGenerateTimeMode(AllDepl);
+        3 : SetGenerateTimeMode(AllRAW);
+        4 : SetGenerateTimeMode(WaterBetweenBunds);
+        else SetGenerateTimeMode(AllRAW);
      end;
    READLN(f0,i); // depth criterion
    Case i OF
-        1 : GenerateDepthMode := ToFc;
-        else GenerateDepthMode := FixDepth;
+        1 : SetGenerateDepthMode(ToFc);
+        else SetGenerateDepthMode(FixDepth);
      end;
    IrriFirstDayNr := undef_int; // start of growing period
    END;
@@ -2771,7 +2767,7 @@ CASE Simulation.LinkCropToSimPeriod OF
 IF ((NOT SimulParam.ConstGwt) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THEN
    BEGIN
    IF (GetGroundWaterFile() = '(None)')
-       THEN FullFileName := CONCAT(PathNameProg,'GroundWater.AqC')
+       THEN FullFileName := CONCAT(GetPathNameProg(),'GroundWater.AqC')
        ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
    LoadGroundWater(FullFileName,Simulation.FromDayNr,ZiAqua,ECiAqua);
@@ -3224,7 +3220,7 @@ VAR f : textfile;
     FullName : string;
     i : ShortInt;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Soil.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Soil.PAR');
 Assign(f,FullName);
 Reset(f);
 READLN(f,SimulParam.RunoffDepth); //considered depth (m) of soil profile for calculation of mean soil water content
@@ -3309,7 +3305,7 @@ VAR f : textfile;
     FullName : string;
     NrM : ShortInt;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Rainfall.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Rainfall.PAR');
 Assign(f,FullName);
 Reset(f);
 Readln(f); //Settings for processing 10-day or monthly rainfall data
@@ -3333,7 +3329,7 @@ PROCEDURE ReadCropSettingsParameters;
 VAR f : textfile;
     FullName : string;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Crop.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Crop.PAR');
 Assign(f,FullName);
 Reset(f);
 WITH SimulParam DO
@@ -3360,7 +3356,7 @@ PROCEDURE ReadFieldSettingsParameters;
 VAR f : textfile;
     FullName : string;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Field.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Field.PAR');
 Assign(f,FullName);
 Reset(f);
 WITH SimulParam DO
@@ -3375,7 +3371,7 @@ PROCEDURE ReadTemperatureSettingsParameters;
 VAR f0 : text;
     FullName : string;
 BEGIN
-FullName := CONCAT(PathNameSimul,'Temperature.PAR');
+FullName := CONCAT(GetPathNameSimul(),'Temperature.PAR');
 Assign(f0,FullName);
 Reset(f0);
 Readln(f0);
@@ -3477,7 +3473,7 @@ DetermineDate(ToDayNr,Dayi,Monthi,ToYi);
 IF ((FromYi = 1901) OR (ToYi = 1901))
    THEN CO2ForSimulationPeriod := CO2Ref
    ELSE BEGIN
-        Assign(f0,CO2FileFull);
+        Assign(f0,GetCO2FileFull());
         Reset(f0);
         FOR i:= 1 TO 3 DO Readln(f0); // Description and Title
         // from year
@@ -3627,7 +3623,7 @@ BEGIN
 // 1. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 

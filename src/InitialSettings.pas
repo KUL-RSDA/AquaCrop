@@ -11,7 +11,7 @@ implementation
 
  PROCEDURE InitializeSettings;
  TYPE rep_string20 = string[20];
- VAR TempString1,TempString2 : string;
+ VAR TempString1,TempString2,CO2descr : string;
      Nri : INTEGER;
      SumWaBal_temp : rep_sum;
 
@@ -101,7 +101,7 @@ implementation
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
- SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
+ SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
  // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
@@ -119,7 +119,7 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- SetCropFilefull(CONCAT(PathNameSimul,GetCropFile()));
+ SetCropFilefull(CONCAT(GetPathNameSimul(),GetCropFile()));
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
@@ -155,7 +155,7 @@ implementation
  // 5.2 ETo
  SetEToFile('(None)');
  SetEToFilefull(GetEToFile());  (* no file *)
- EToDescription := '';
+ SetEToDescription('');
  WITH EToRecord DO
    BEGIN
    DataType := Daily;
@@ -168,7 +168,7 @@ implementation
  // 5.3 Rain
  SetRainFile('(None)');
  SetRainFilefull(GetRainFile());  (* no file *)
- RainDescription := '';
+ SetRainDescription('');
  WITH RainRecord DO
    BEGIN
    DataType := Daily;
@@ -180,8 +180,11 @@ implementation
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
- CO2FileFull := CONCAT(PathNameSimul,GetCO2File());
- GetCO2Description(CO2FileFull,CO2Description);
+ setCO2FileFull(CONCAT(GetPathNameSimul(),GetCO2File()));
+ CO2descr := GetCO2Description();
+ GenerateCO2Description(GetCO2FileFull(),CO2descr);
+ SetCO2Description(CO2descr);
+
 
  // 5.5 Climate file
  SetClimateFile('(None)');

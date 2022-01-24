@@ -50,6 +50,20 @@ integer(intEnum), parameter :: TimeCuttings_DryY = 4
 integer(intEnum), parameter :: TimeCuttings_FreshY= 5
     !! index of FreshY in TimeCuttings enumerated type
 
+integer(intEnum), parameter :: GenerateTimeMode_FixInt = 0
+    !! index of FixInt in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_AllDepl = 1
+    !! index of AllDepl in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_AllRAW = 2
+    !! index of AllRAW in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBuns = 3
+    !! index of WaterBetweenBuns in GenerateTimeMode enumerated type
+
+integer(intEnum), parameter :: GenerateDepthMode_ToFC = 0
+    !! index of ToFC in GenerateDepthMode enumerated type
+integer(intEnum), parameter :: GenerateDepthMode_FixDepth = 1
+    !! index of FixDepth in GenerateDepthMode enumerated type
+
 integer(intEnum), parameter :: IrriMode_NoIrri = 0
     !! index of NoIrri in IrriMode enumerated type
 integer(intEnum), parameter :: IrriMode_Manual = 1
@@ -293,15 +307,22 @@ end type rep_RootZoneSalt
 
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
+character(len=:), allocatable :: RainDescription
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
+character(len=:), allocatable :: EToDescription
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: CO2FileFull
+character(len=:), allocatable :: CO2Description
 character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: PathNameProg
+character(len=:), allocatable :: PathNameOutp
+character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
@@ -331,8 +352,11 @@ type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
 
+integer(intEnum) :: GenerateTimeMode
+integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
 
 
 contains
@@ -1584,7 +1608,7 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
-subroutine GetCO2Description(CO2FileFull, CO2Description)
+subroutine GenerateCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(in) :: CO2FileFull
     character(len=*), intent(inout) :: CO2Description
 
@@ -1599,7 +1623,7 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
-end subroutine GetCO2Description
+end subroutine GenerateCO2Description
 
 
 subroutine GetIrriDescription(IrriFileFull, IrriDescription)
@@ -1867,6 +1891,50 @@ subroutine SetSWCiniFile(str)
     SWCiniFile = str
 end subroutine SetSWCiniFile
 
+
+function GetPathNameProg() result(str)
+    !! Getter for the "PathNameProg" global variable.
+    character(len=len(PathNameProg)) :: str
+    
+    str = PathNameProg
+end function GetPathNameProg
+
+subroutine SetPathNameProg(str)
+    !! Setter for the "PathNameProg" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameProg = str
+end subroutine SetPathNameProg
+
+function GetPathNameOutp() result(str)
+    !! Getter for the "PathNameOutp" global variable.
+    character(len=len(PathNameOutp)) :: str
+    
+    str = PathNameOutp
+end function GetPathNameOutp
+
+subroutine SetPathNameOutp(str)
+    !! Setter for the "PathNameOutp" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameOutp = str
+end subroutine SetPathNameOutp
+
+function GetPathNameSimul() result(str)
+    !! Getter for the "PathNameSimul" global variable.
+    character(len=len(PathNameSimul)) :: str
+    
+    str = PathNameSimul
+end function GetPathNameSimul
+
+subroutine SetPathNameSimul(str)
+    !! Setter for the "PathNameSimul" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameSimul = str
+end subroutine SetPathNameSimul
+
+
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.
     character(len=len(ProjectFile)) :: str
@@ -1894,6 +1962,7 @@ subroutine SetMultipleProjectFile(str)
     
     MultipleProjectFile = str
 end subroutine SetMultipleProjectFile
+
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
@@ -1985,6 +2054,34 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+function GetCO2FileFull() result(str)
+    !! Getter for the "CO2FileFull" global variable.
+    character(len=len(CO2FileFull)) :: str
+
+    str = CO2FileFull
+end function GetCO2FileFull
+
+subroutine SetCO2FileFull(str)
+    !! Setter for the "CO2FileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2FileFull = str
+end subroutine SetCO2FileFull
+
+function GetCO2Description() result(str)
+    !! Getter for the "CO2Description" global variable.
+    character(len=len(CO2Description)) :: str
+
+    str = CO2Description
+end function GetCO2Description
+
+subroutine SetCO2Description(str)
+    !! Setter for the "CO2Description" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2Description = str
+end subroutine SetCO2Description
 
 type(rep_RootZoneWC) function GetRootZoneWC()
     !! Getter for the "RootZoneWC" global variable.
@@ -2366,6 +2463,22 @@ subroutine SetEToFileFull(str)
 end subroutine SetEToFileFull
 
 
+function GetEToDescription() result(str)
+    !! Getter for the "EToDescription" global variable.
+    character(len=len(EToDescription)) :: str
+
+    str = EToDescription
+end function GetEToDescription
+
+
+subroutine SetEToDescription(str)
+    !! Setter for the "EToDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    EToDescription = str
+end subroutine SetEToDescription
+
+
 function GetRainFile() result(str)
     !! Getter for the "RainFile" global variable.
     character(len=len(RainFile)) :: str
@@ -2396,6 +2509,23 @@ subroutine SetRainFileFull(str)
 
     RainFileFull = str
 end subroutine SetRainFileFull
+
+
+function GetRainDescription() result(str)
+    !! Getter for the "RainDescription" global variable.
+    character(len=len(RainDescription)) :: str
+
+    str = RainDescription
+end function GetRainDescription
+
+
+subroutine SetRainDescription(str)
+    !! Setter for the "RainDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    RainDescription = str
+end subroutine SetRainDescription
+
 
 integer(int8) function GetManagement_Mulch()
     !! Getter for the "Management" global variable.
@@ -3079,6 +3209,32 @@ subroutine SetRootZoneSalt_KsSalt(KsSalt)
     RootZoneSalt%KsSalt = KsSalt
 end subroutine SetRootZoneSalt_KsSalt
 
+integer(intEnum) function GetGenerateTimeMode()
+    !! Getter for the "GenerateTimeMode" global variable.
+
+    GetGenerateTimeMode = GenerateTimeMode
+end function GetGenerateTimeMode
+
+integer(intEnum) function GetGenerateDepthMode()
+    !! Getter for the "GenerateDepthMode" global variable.
+
+    GetGenerateDepthMode = GenerateDepthMode
+end function GetGenerateDepthMode
+
+subroutine SetGenerateTimeMode(int_in)
+    !! Setter for the "GenerateTimeMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    GenerateTimeMode = int_in
+end subroutine SetGenerateTimeMode
+
+subroutine SetGenerateDepthMode(int_in)
+    !! Setter for the "GenerateDepthMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    GenerateDepthMode = int_in
+end subroutine SetGenerateDepthMode
+
 integer(intEnum) function GetIrriMode()
     !! Getter for the "IrriMode" global variable.
 
@@ -3104,6 +3260,7 @@ subroutine SetIrriMethod(int_in)
 
     IrriMethod = int_in
 end subroutine SetIrriMethod
+
 
 
 end module ac_global

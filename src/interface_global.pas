@@ -151,6 +151,9 @@ type
          KsSalt : double;   // stress coefficient for salinity
          end;
 
+     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
+     rep_GenerateDepthMode = (ToFC,FixDepth);
+
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
@@ -407,16 +410,16 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
-procedure GetCO2Description(
-            constref CO2FileFull : string;
+procedure GenerateCO2Description(
+            constref CO2FileFull: string;
             var CO2Description : string);
 
-procedure GetCO2Description_wrap(
+procedure GenerateCO2Description_wrap(
             constref CO2FileFull : PChar;
             constref strlen1 : integer;
             var CO2Description : PChar;
             constref strlen2 : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
+        external 'aquacrop' name '__ac_interface_global_MOD_generateco2description_wrap';
 
 procedure GetIrriDescription(
             constref IrriFileFull : string;
@@ -458,6 +461,29 @@ procedure SetCO2File_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
 
+function GetCO2FileFull(): string;
+
+function GetCO2FileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2filefull_wrap';
+
+procedure SetCO2FileFull(constref str : string);
+
+procedure SetCO2FileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2filefull_wrap';
+
+function GetCO2Description(): string;
+
+function GetCO2Description_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
+
+procedure SetCO2Description(constref str : string);
+
+procedure SetCO2Description_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2description_wrap';
 
 function GetEToFile(): string;
 
@@ -483,6 +509,17 @@ procedure SetEToFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setetofilefull_wrap';
 
+function GetEToDescription(): string;
+
+function GetEToDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getetodescription_wrap';
+
+procedure SetEToDescription(constref str : string);
+
+procedure SetEToDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setetodescription_wrap';
 
 function GetRainFile(): string;
 
@@ -507,6 +544,18 @@ procedure SetRainFileFull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setrainfilefull_wrap';
+
+function GetRainDescription(): string;
+
+function GetRainDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getraindescription_wrap';
+
+procedure SetRainDescription(constref str : string);
+
+procedure SetRainDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setraindescription_wrap';
 
 function GetIrriFile(): string;
 
@@ -578,8 +627,46 @@ procedure SetSWCiniFile(constref str : string);
 procedure SetSWCiniFile_wrap(
             constref p : PChar;
             constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';      
-        
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';
+
+
+function GetPathNameProg(): string;
+
+function GetPathNameProg_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameprog_wrap';
+
+procedure SetPathNameProg(constref str : string);
+
+procedure SetPathNameprog_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameprog_wrap';
+
+function GetPathNameOutp(): string;
+
+function GetPathNameOutp_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameoutp_wrap';
+
+procedure SetPathNameOutp(constref str : string);
+
+procedure SetPathNameOutp_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameoutp_wrap';
+
+function GetPathNameSimul(): string;
+
+function GetPathNameSimul_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnamesimul_wrap';
+
+procedure SetPathNameSimul(constref str : string);
+
+procedure SetPathNameSimul_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnamesimul_wrap'; 
+             
+
 function GetProjectFile(): string;
 
 function GetProjectFile_wrap(): PChar;
@@ -604,6 +691,7 @@ procedure SetMultipleProjectFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfile_wrap';
                 
+
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -1210,6 +1298,26 @@ procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
 procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
         external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
 
+function __GetGenerateTimeMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getgeneratetimemode';
+
+function GetGenerateTimeMode(): rep_GenerateTimeMode;
+
+procedure __SetGenerateTimeMode(constref GenerateTimeMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setgeneratetimemode';
+
+procedure SetGenerateTimeMode(constref GenerateTimeMode : rep_GenerateTimeMode);
+
+function __GetGenerateDepthMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getgeneratedepthmode';
+
+function GetGenerateDepthMode(): rep_GenerateDepthMode;
+
+procedure __SetGenerateDepthMode(constref IrriDepthMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setgeneratedepthmode';
+
+procedure SetGenerateDepthMode(constref GenerateDepthMode : rep_GenerateDepthMode);
+
 function __GetIrriMode(): integer;
         external 'aquacrop' name '__ac_global_MOD_getirrimode';
 
@@ -1229,6 +1337,7 @@ procedure __SetIrriMethod(constref IrriMethod : integer);
         external 'aquacrop' name '__ac_global_MOD_setirrimethod';
 
 procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod);
+
 
 implementation
 
@@ -1321,6 +1430,42 @@ begin;
     __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
+function GetGenerateTimeMode() : rep_GenerateTimeMode;
+var
+    int_GenerateTimeMode : integer;
+
+begin;
+    int_GenerateTimeMode := __GetGenerateTimeMode();
+    GetGenerateTimeMode := rep_GenerateTimeMode(int_GenerateTimeMode);
+end;
+
+procedure SetGenerateTimeMode(constref GenerateTimeMode : rep_GenerateTimeMode); 
+var
+    int_GenerateTimeMode : integer;
+
+begin;
+    int_GenerateTimeMode := ord(GenerateTimeMode);
+    __SetGenerateTimeMode(int_GenerateTimeMode);
+end;
+
+function GetGenerateDepthMode() : rep_GenerateDepthMode;
+var
+    int_GenerateDepthMode : integer;
+
+begin;
+    int_GenerateDepthMode := __GetGenerateDepthMode();
+    GetGenerateDepthMode := rep_GenerateDepthMode(int_GenerateDepthMode);
+end;
+
+procedure SetGenerateDepthMode(constref GenerateDepthMode : rep_GenerateDepthMode); 
+var
+    int_GenerateDepthMode : integer;
+
+begin;
+    int_GenerateDepthMode := ord(GenerateDepthMode);
+    __SetGenerateDepthMode(int_GenerateDepthMode);
+end;
+
 function GetIrriMode() : rep_IrriMode;
 var
     int_IrriMode : integer;
@@ -1356,8 +1501,6 @@ begin;
     int_IrriMethod := ord(IrriMethod);
     __SetIrriMethod(int_IrriMethod);
 end;
-
-
 
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
@@ -1408,6 +1551,7 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 begin;
     SetTotalWaterContent_BeginDay(TotalWaterContent.BeginDay);
@@ -1415,7 +1559,7 @@ begin;
     SetTotalWaterContent_ErrorDay(TotalWaterContent.ErrorDay);
 end;
 
-procedure GetCO2Description(
+procedure GenerateCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
 var
@@ -1427,8 +1571,8 @@ begin;
     p2 := PChar(CO2Description);
     strlen1 := Length(CO2FileFull);
     strlen2 := Length(CO2Description);
-    GetCO2Description_wrap(p1, strlen1, p2, strlen2);
-    CO2Description := AnsiString(p2);
+    GenerateCO2Description_wrap(p1, strlen1, p2, strlen2);
+    SetCO2Description(AnsiString(p2));
 end;
 
 function GetCO2File(): string;
@@ -1450,6 +1594,48 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2File_wrap(p, strlen);
+end;
+
+function GetCO2FileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2FileFull_wrap();
+    GetCO2FileFull := AnsiString(p);
+end;
+
+
+procedure SetCO2FileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2FileFull_wrap(p, strlen);
+end;
+
+function GetCO2Description(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2Description_wrap();
+    GetCO2Description := AnsiString(p);
+end;
+
+
+procedure SetCO2Description(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2Description_wrap(p, strlen);
 end;
 
 
@@ -1493,6 +1679,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetEToFileFull_wrap(p, strlen);
+end;
+
+function GetEToDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetEToDescription_wrap();
+    GetEToDescription := AnsiString(p);
+end;
+
+
+procedure SetEToDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetEToDescription_wrap(p, strlen);
 end;
 
 
@@ -1890,7 +2097,6 @@ begin;
     GetProjectFile := AnsiString(p);
 end;
 
-
 procedure SetProjectFile(constref str : string);
 var
     p : PChar;
@@ -1901,6 +2107,7 @@ begin;
     strlen := Length(str);
     SetProjectFile_wrap(p, strlen);
 end;
+
 
 function GetMultipleProjectFile(): string;
 var
@@ -1920,6 +2127,70 @@ var
 begin;
     p := PChar(str);
     strlen := Length(str);
+    SetMultipleProjectFile_wrap(p, strlen);
+end;
+
+function GetPathNameProg(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameProg_wrap();
+    GetPathNameProg := AnsiString(p);
+end;
+
+
+procedure SetPathNameProg(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameProg_wrap(p, strlen);
+end;
+
+
+function GetPathNameOutp(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameOutp_wrap();
+    GetPathNameOutp := AnsiString(p);
+end;
+
+procedure SetPathNameOutp(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameOutp_wrap(p, strlen);
+end;
+
+function GetPathNameSimul(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameSimul_wrap();
+    GetPathNameSimul := AnsiString(p);
+end;
+
+
+procedure SetPathNameSimul(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameSimul_wrap(p, strlen);
     SetMultipleProjectFile_wrap(p, strlen);
 end;
 
@@ -1961,6 +2232,26 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetRainFileFull_wrap(p, strlen);
+end;
+
+function GetRainDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetRainDescription_wrap();
+    GetRainDescription := AnsiString(p);
+end;
+
+procedure SetRainDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetRainDescription_wrap(p, strlen);
 end;
 
 

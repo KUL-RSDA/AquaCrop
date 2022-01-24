@@ -1190,7 +1190,7 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -1277,13 +1277,15 @@ IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
         SetEToFilefull(GetEToFile());  (* no file *)
-        EToDescription := 'Specify ETo data when Running AquaCrop';
+        SetEToDescription('Specify ETo data when Running AquaCrop');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetEToFilefull(CONCAT(Trim(TempString),GetEToFile()));
-        LoadClim(GetEToFilefull(),EToDescription,EToRecord);
+        eto_descr := GetEToDescription();
+        LoadClim(GetEToFilefull(),eto_descr,EToRecord);
+        SetEToDescription(eto_descr); 
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain
@@ -1294,13 +1296,15 @@ IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
         SetRainFilefull(GetRainFile());  (* no file *)
-        RainDescription := 'Specify Rain data when Running AquaCrop';
+        SetRainDescription('Specify Rain data when Running AquaCrop');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetRainFileFull(CONCAT(Trim(TempString),GetRainFile()));
-        LoadClim(GetRainFilefull(),RainDescription,RainRecord);
+        rain_descr := Getraindescription();
+        LoadClim(GetRainFilefull(),rain_descr,RainRecord);
+        SetRainDescription(rain_descr);
         CompleteClimateDescription(RainRecord);
         END;
 // 1.4 CO2
@@ -1312,8 +1316,10 @@ IF (GetCO2File() = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathCO2File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CO2FileFull := CONCAT(Trim(TempString),GetCO2File());
-        GetCO2Description(CO2FileFull,CO2Description);
+        SetCO2FileFull(CONCAT(Trim(TempString),GetCO2File()));
+        CO2descr :=  GetCO2Description();
+        GenerateCO2Description(GetCO2FileFull(),CO2descr);
+        SetCO2Description(CO2descr)
         END;
 SetClimData;
 AdjustOnsetSearchPeriod; // Set initial StartSearch and StopSearchDayNr
@@ -1618,7 +1624,7 @@ IF FileExists(totalname)
                        END;
              end;
         // create SIM file and record first day
-        totalnameOUT := CONCAT(PathNameSimul,'TCrop.SIM');
+        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop.SIM');
         Assign(f2,totalnameOUT);
         Rewrite(f2);
         WRITELN(f2,Tlow:10:4,Thigh:10:4);
@@ -1712,7 +1718,7 @@ BEGIN
 //1. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 
@@ -1921,7 +1927,7 @@ IF (WeedStress > 0)
 // TEST
 IF (TestRecord = true) THEN
    BEGIN
-   Assign(fOUT,CONCAT(PathNameSimul,'TestBio.SIM'));
+   Assign(fOUT,CONCAT(GetPathNameSimul(),'TestBio.SIM'));
    Rewrite(fOUT);
    END;
 
@@ -1929,7 +1935,7 @@ IF (TestRecord = true) THEN
 //2. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 
@@ -2704,7 +2710,7 @@ BEGIN
 //1. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    FOR Dayi := 1 TO (TempFlower-1) DO READLN(fTemp);
    END;

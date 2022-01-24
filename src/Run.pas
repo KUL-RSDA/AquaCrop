@@ -113,8 +113,8 @@ VAR totalname : string;
 
 BEGIN
 CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(PathNameOutp,OutputName,'PROseason.OUT');
-      TypePRM : totalname := CONCAT(PathNameOutp,OutputName,'PRMseason.OUT');
+      TypePRO : totalname := CONCAT(GetPathNameOutp(),OutputName,'PROseason.OUT');
+      TypePRM : totalname := CONCAT(GetPathNameOutp(),OutputName,'PRMseason.OUT');
       end;
 Assign(fRun,totalname);
 Rewrite(fRun);
@@ -138,8 +138,8 @@ PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject;
 VAR totalname : string;
 BEGIN
 CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(PathNameOutp,OutputName,'PROday.OUT');
-      TypePRM : totalname := CONCAT(PathNameOutp,OutputName,'PRMday.OUT');
+      TypePRO : totalname := CONCAT(GetPathNameOutp(),OutputName,'PROday.OUT');
+      TypePRM : totalname := CONCAT(getPathNameOutp(),OutputName,'PRMday.OUT');
       end;
 Assign(fDaily,totalname);
 Rewrite(fDaily);
@@ -152,8 +152,8 @@ PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject;
 VAR totalname : string;
 BEGIN
 CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(PathNameOutp,OutputName,'PROharvests.OUT');
-      TypePRM : totalname := CONCAT(PathNameOutp,OutputName,'PRMharvests.OUT');
+      TypePRO : totalname := CONCAT(GetPathNameOutp(),OutputName,'PROharvests.OUT');
+      TypePRM : totalname := CONCAT(GetPathNameOutp(),OutputName,'PRMharvests.OUT');
       end;
 Assign(fHarvest,totalname);
 Rewrite(fHarvest);
@@ -400,7 +400,7 @@ IF (LineNrEval = undef_int) THEN Close(fObs);
 IF (Simulation.MultipleRun AND (Simulation.NrRuns > 1))
    THEN Str(NrRun:3,StrNr)
    ELSE StrNr := '';
-totalname := CONCAT(PathNameSimul,'EvalData',Trim(StrNr),'.OUT');
+totalname := CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT');
 Assign(fEval,totalname);
 Rewrite(fEval);
 WRITELN(fEval,'AquaCrop 7.0 (June 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
@@ -479,7 +479,7 @@ BEGIN
 // FileNameFull
 IF (GetGroundWaterFile() <> '(None)')
    THEN FileNameFull := GetGroundWaterFileFull()
-   ELSE FileNameFull := CONCAT(PathNameProg,'GroundWater.AqC');
+   ELSE FileNameFull := CONCAT(GetPathNameProg(),'GroundWater.AqC');
 
 // Get DayNr1Gwt
 Assign(f0,FileNameFull);
@@ -719,7 +719,7 @@ IF (GetEToFile() <> '(None)')
                             END;
                   end;
                 // create SIM file and record first day
-                totalnameOUT := CONCAT(PathNameSimul,'EToData.SIM');
+                totalnameOUT := CONCAT(GetPathNameSimul(),'EToData.SIM');
                 Assign(fEToS,totalnameOUT);
                 Rewrite(fEToS);
                 WRITELN(fEToS,ETo:10:4);
@@ -802,7 +802,7 @@ IF (GetRainFile() <> '(None)')
                             END;
                   end;
                 // create SIM file and record first day
-                totalnameOUT := CONCAT(PathNameSimul,'RainData.SIM');
+                totalnameOUT := CONCAT(GetPathNameSimul(),'RainData.SIM');
                 Assign(fRainS,totalnameOUT);
                 Rewrite(fRainS);
                 WRITELN(fRainS,Rain:10:4);
@@ -889,7 +889,7 @@ IF (TemperatureFile <> '(None)')
                             END;
                   end;
                 // create SIM file and record first day
-                totalnameOUT := CONCAT(PathNameSimul,'TempData.SIM');
+                totalnameOUT := CONCAT(GetPathNameSimul(),'TempData.SIM');
                 Assign(fTempS,totalnameOUT);
                 Rewrite(fTempS);
                 WRITELN(fTempS,Tmin:10:4,Tmax:10:4);
@@ -950,7 +950,7 @@ BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
    BEGIN
-   totalname := CONCAT(PathNameSimul,'EToData.SIM');
+   totalname := CONCAT(GetPathNameSimul(),'EToData.SIM');
    Assign(fEToSIM,totalname);
    Reset(fEToSIM);
    IF (FirstDayNr = Simulation.FromDayNr)
@@ -963,7 +963,7 @@ IF (GetEToFile() <> '(None)') THEN
 // Rain file
 IF (GetRainFile() <> '(None)') THEN
    BEGIN
-   totalname := CONCAT(PathNameSimul,'RainData.SIM');
+   totalname := CONCAT(GetPathNameSimul(),'RainData.SIM');
    Assign(fRainSIM,totalname);
    Reset(fRainSIM);
    IF (FirstDayNr = Simulation.FromDayNr)
@@ -976,7 +976,7 @@ IF (GetRainFile() <> '(None)') THEN
 // Temperature file
 IF (TemperatureFile <> '(None)')
    THEN BEGIN
-        totalname := CONCAT(PathNameSimul,'TempData.SIM');
+        totalname := CONCAT(GetPathNameSimul(),'TempData.SIM');
         Assign(fTempSIM,totalname);
         Reset(fTempSIM);
         IF (FirstDayNr = Simulation.FromDayNr)
@@ -1115,7 +1115,7 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    BEGIN
    IF (GetIrriFile() <> '(None)')
       THEN totalname := GetIrriFileFull()
-      ELSE totalname := CONCAT(PathNameProg,'IrriSchedule.AqC');
+      ELSE totalname := CONCAT(GetPathNameProg(),'IrriSchedule.AqC');
    Assign(fIrri,totalname);
    Reset(fIrri);
    READLN(fIrri); // description
@@ -1269,7 +1269,7 @@ VAR totalname : string;
 BEGIN
 IF (getManFile() <> '(None)')
    THEN totalname := GetManFileFull()
-   ELSE totalname := CONCAT(PathNameSimul,'Cuttings.AqC');
+   ELSE totalname := CONCAT(GetPathNameSimul(),'Cuttings.AqC');
 Assign(fCuts,totalname);
 Reset(fCuts);
 READLN(fCuts); // description
@@ -2413,7 +2413,7 @@ VAR RepeatToDay : LongInt;
           END;
        // get TargetValues
        TargetDepthVal := IrriInfoRecord1.DepthInfo;
-       CASE GenerateTimeMode OF
+       CASE GetGenerateTimeMode() OF
           AllDepl : TargetTimeVal := IrriInfoRecord1.TimeInfo;
           AllRAW  : TargetTimeVal := IrriInfoRecord1.TimeInfo;
           FixInt  : BEGIN
@@ -2425,12 +2425,12 @@ VAR RepeatToDay : LongInt;
                                ELSE BEGIN  // still to solve
                                     TargetTimeVal := 1; // voorlopige oplossing
                                     END;
-                    IF ((TargetTimeVal = 1) AND (GenerateDepthMode = FixDepth)) THEN Irrigation := TargetDepthVal;
+                    IF ((TargetTimeVal = 1) AND (GetGenerateDepthMode() = FixDepth)) THEN Irrigation := TargetDepthVal;
                     END;
           WaterBetweenBunds : BEGIN
                               TargetTimeVal := IrriInfoRecord1.TimeInfo;
                               IF  ((GetManagement_BundHeight() >= 0.01)
-                               AND (GenerateDepthMode = FixDepth)
+                               AND (GetGenerateDepthMode() = FixDepth)
                                AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
                                AND (TargetTimeVal >= ROUND(SurfaceStorage)))
                                    THEN Irrigation := TargetDepthVal
@@ -3030,10 +3030,10 @@ VAR NrRun : ShortInt;
     StrNr := '';
     IF (Simulation.MultipleRun AND (Simulation.NrRuns > 1)) THEN Str(NrRun:3,StrNr);
     CASE TheProjectType OF
-      TypePRO : totalnameEvalStat := CONCAT(PathNameOutp,OutputName,'PROevaluation.OUT');
+      TypePRO : totalnameEvalStat := CONCAT(GetPathNameOutp(),OutputName,'PROevaluation.OUT');
       TypePRM : BEGIN
                 Str(NrRun:3,StrNr);
-                totalnameEvalStat := CONCAT(PathNameOutp,OutputName,'PRM',Trim(StrNr),'evaluation.OUT');
+                totalnameEvalStat := CONCAT(GetPathNameOutp(),OutputName,'PRM',Trim(StrNr),'evaluation.OUT');
                 END;
       end;
     // 3. Create Evaluation statistics file

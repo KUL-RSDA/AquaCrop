@@ -9,8 +9,10 @@ use ac_global, only: CheckFilesInProject, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
-                     GetCO2Description, &
+                     GenerateCO2Description, &
                      GetCO2File, &
+                     GetCO2FileFull, &
+                     GetCO2Description, &
                      GetCropFile, &
                      GetCropFileFull, &
                      GetIrriDescription, &
@@ -23,6 +25,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetProjectFile, &
                      GetMultipleProjectFile, &
                      GetNumberSimulationRuns, &
+                     GetPathNameProg, &
+                     GetPathNameOutp, &
+                     GetPathNameSimul, &
                      GetProfFile, &
                      GetProfFilefull, &
                      GetManagement_Cuttings_Considered, &
@@ -38,17 +43,20 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonFilefull, &
                      GetGroundWaterFile, &
                      GetGroundWaterFilefull, &
-                     SetCO2File, &
                      GetEToFile, &
-                     SetEToFile, &
                      GetEToFileFull, &
-                     SetEToFileFull, &
+                     GetEToDescription, &
                      GetRainFile, &
                      setRainFile, &
                      GetRainFileFull, &
+                     GetRainDescription, &
                      setRainFileFull, &
+                     setRainDescription, &
                      SetCalendarFile, &
                      SetCalendarFileFull, &
+                     SetCO2File, &
+                     SetCO2FileFull, &
+                     SetCO2Description, &
                      SetCropFile, &
                      SetCropFileFull, &
                      SetIrriFile, &
@@ -56,7 +64,13 @@ use ac_global, only: CheckFilesInProject, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimFile, &
-                     setSWCiniFile, &
+                     SetEToFile, &
+                     SetEToFileFull, &
+                     SetEToDescription, &
+                     setSWCinifile, &
+                     SetPathNameProg, &
+                     SetPathNameOutp, &
+                     SetPathNameSimul, &
                      SetProjectFile, &
                      SetMultipleProjectFile, &
                      SetProfFile, &
@@ -182,9 +196,9 @@ subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
     call CheckFilesInProject(string, Runi, AllOK)
 end subroutine CheckFilesInProject_wrap
 
-subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
+subroutine GenerateCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
             strlen2)
-    !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
+    !! Wrapper for [[ac_global:GenerateCO2Description]] for foreign languages.
     type(c_ptr), intent(in) :: CO2FileFull
     integer(int32), intent(in) :: strlen1
     type(c_ptr), intent(inout) :: CO2Description
@@ -195,8 +209,8 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
 
     string1 = pointer2string(CO2FileFull, strlen1)
     string2 = pointer2string(CO2Description, strlen2)
-    call GetCO2Description(string1, string2)
-end subroutine GetCO2Description_wrap
+    call GenerateCO2Description(string1, string2)
+end subroutine GenerateCO2Description_wrap
 
 
 subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
@@ -243,6 +257,43 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
 
+function GetCO2FileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCO2FileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCO2FileFull())
+end function GetCO2FileFull_wrap
+
+
+subroutine SetCO2FileFull_wrap(CO2FileFull, strlen)
+    !! Wrapper for [[ac_global:SetCO2FileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: CO2Filefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CO2FileFull, strlen)
+    call SetCO2Filefull(string)
+end subroutine SetCO2FileFull_wrap
+
+function GetCO2Description_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCO2Description())
+end function GetCO2Description_wrap
+
+
+subroutine SetCO2Description_wrap(CO2Description, strlen)
+    !! Wrapper for [[ac_global:SetCO2Description]] for foreign languages.
+    type(c_ptr), intent(in) :: CO2Description
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CO2Description, strlen)
+    call SetCO2Description(string)
+end subroutine SetCO2Description_wrap
 
 
 function GetEToFile_wrap() result(c_pointer)
@@ -282,6 +333,26 @@ subroutine SetEToFileFull_wrap(EToFileFull, strlen)
     string = pointer2string(EToFileFull, strlen)
     call SetEToFileFull(string)
 end subroutine SetEToFileFull_wrap
+
+function GetEToDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToDescription())
+end function GetEToDescription_wrap
+
+
+subroutine SetEToDescription_wrap(EToDescription, strlen)
+    !! Wrapper for [[ac_global:SetEToDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: EToDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(EToDescription, strlen)
+    call SetEToDescription(string)
+end subroutine SetEToDescription_wrap
+
 
 subroutine GetIrriDescription_wrap(IrriFileFull, strlen1, IrriDescription, &
             strlen2)
@@ -419,6 +490,63 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
     call SetSWCiniFile(string)
 end subroutine SetSWCiniFile_wrap
 
+function GetPathNameProg_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetPathNameProg())
+end function GetPathNameProg_wrap
+
+
+subroutine SetPathNameProg_wrap(PathNameProg, strlen)
+    !! Wrapper for [[ac_global:SetPathNameProg]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameProg
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(PathNameProg, strlen)
+    call SetPathNameProg(string)
+end subroutine SetPathNameProg_wrap
+
+function GetPathNameOutp_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameOutp]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetPathNameOutp())
+end function GetPathNameOutp_wrap
+
+
+subroutine SetPathNameOutp_wrap(PathNameOutp, strlen)
+    !! Wrapper for [[ac_global:SetPathNameOutp]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameOutp
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(PathNameOutp, strlen)
+    call SetPathNameOutp(string)
+end subroutine SetPathNameOutp_wrap
+
+function GetPathNameSimul_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameSimul]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetPathNameSimul())
+end function GetPathNameSimul_wrap
+
+
+subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
+    !! Wrapper for [[ac_global:SetPathNameSimul]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameSimul
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(PathNameSimul, strlen)
+    call SetPathNameSimul(string)
+end subroutine SetPathNameSimul_wrap
+
 
 function GetProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetProjectFile]] for foreign languages.
@@ -458,6 +586,7 @@ subroutine SetMultipleProjectFile_wrap(MultipleProjectFile, strlen)
     call SetMultipleProjectFile(string)
 end subroutine SetMultipleProjectFile_wrap
 
+
 function GetRainFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -495,6 +624,26 @@ subroutine SetRainFileFull_wrap(RainFileFull, strlen)
     string = pointer2string(RainFileFull, strlen)
     call SetRainFileFull(string)
 end subroutine SetRainFileFull_wrap
+
+
+function GetRainDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainDescription())
+end function GetRainDescription_wrap
+
+
+subroutine SetRainDescription_wrap(RainDescription, strlen)
+    !! Wrapper for [[ac_global:SetRainDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: RainDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+ 
+    string = pointer2string(RainDescription, strlen)
+    call SetRainDescription(string)
+end subroutine SetRainDescription_wrap
 
     
 function GetCalendarFile_wrap() result(c_pointer)
