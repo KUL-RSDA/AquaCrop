@@ -37,13 +37,6 @@ TYPE
          Depo      : rep_salt; // salt deposit in cells (g/m2)
          END;
 
-     rep_soil = Record
-         REW            : ShortInt; (* Readily evaporable water mm *)
-         NrSoilLayers   : ShortInt;
-         CNvalue        : ShortInt;
-         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
-         end;
-
      rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
@@ -343,7 +336,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     IrriFirstDayNr : LongInt;
     SoilLayer      : rep_SoilLayer;
     Compartment    : rep_Comp;
-    Soil           : rep_soil;
     NrCompartments : INTEGER;
     Crop           : rep_Crop;
     RootingDepth   : double;
@@ -651,8 +643,8 @@ CASE TypeDays OF
      end;
 // restrictive soil layer
 Simulation.SCor := 1;
-IF (ROUND(Soil.RootMax*1000) < ROUND(Zmax*1000))
-   THEN ZrAdjustedToRestrictiveLayers(Zr,Soil.NrSoilLayers,SoilLayer,Zr);
+IF (ROUND(GetSoil().RootMax*1000) < ROUND(Zmax*1000))
+   THEN ZrAdjustedToRestrictiveLayers(Zr,GetSoil().NrSoilLayers,SoilLayer,Zr);
 // assign
 ActualRootingDepth:= Zr;
 END; (* ActualRootingDepth *)
@@ -1144,7 +1136,7 @@ VAR TotalDepthL, TotalDepthC, DeltaZ : double;
     i : INTEGER;
 BEGIN
 TotalDepthL := 0;
-FOR i := 1 TO Soil.NrSoilLayers DO TotalDepthL := TotalDepthL + SoilLayer[i].Thickness;
+FOR i := 1 TO GetSoil().NrSoilLayers DO TotalDepthL := TotalDepthL + SoilLayer[i].Thickness;
 TotalDepthC := 0;
 NrCompartments := 0;
 REPEAT
@@ -1274,15 +1266,15 @@ SetSWCiniFile('(None)');
 SWCiniFileFull := GetSWCiniFile(); (* no file *)
 SWCiniDescription := 'Soil water profile at Field Capacity';
 Simulation.IniSWC.AtDepths := false;
-Simulation.IniSWC.NrLoc := Soil.NrSoilLayers;
-FOR layeri := 1 TO Soil.NrSoilLayers DO
+Simulation.IniSWC.NrLoc := GetSoil().NrSoilLayers;
+FOR layeri := 1 TO GetSoil().NrSoilLayers DO
     BEGIN
     Simulation.IniSWC.Loc[layeri] := SoilLayer[layeri].Thickness;
     Simulation.IniSWC.VolProc[layeri] := SoilLayer[layeri].FC;
     Simulation.IniSWC.SaltECe[layeri] := 0;
     END;
 Simulation.IniSWC.AtFC := true;
-FOR layeri := (Soil.NrSoilLayers+1) TO max_No_compartments DO
+FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     BEGIN
     Simulation.IniSWC.Loc[layeri] := undef_double;
     Simulation.IniSWC.VolProc[layeri] := undef_double;
@@ -1532,10 +1524,10 @@ PROCEDURE CompleteProfileDescription;
 VAR i : INTEGER;
 TotalWaterContent_temp : rep_Content;
 BEGIN
-FOR i:= (Soil.NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i]);
+FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i]);
 Simulation.ResetIniSWC := true; // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
-specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent_temp);
+specify_soil_layer(NrCompartments,GetSoil().NrSoilLayers,SoilLayer,Compartment,TotalWaterContent_temp);
 SetTotalWaterContent(TotalWaterContent_temp);
 END; (* CompleteProfileDescription *)
 
@@ -1545,22 +1537,25 @@ VAR f0 : TextFile;
     i  : INTEGER;
     blank : rep_string3;
     VersionNr : double;
-
+    TempShortInt : shortint;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
 READLN(f0,ProfDescription);
 READLN(f0,VersionNr);  // AquaCrop version
-READLN(f0,Soil.CNvalue);
-READLN(f0,Soil.REW);
+READLN(f0,TempShortInt);
+SetSoil_CNvalue(TempShortInt);
+READLN(f0,TempShortInt);
+SetSoil_REW(TempShortInt);
 Simulation.SurfaceStorageIni := 0.0;
 Simulation.ECStorageIni := 0.0;
-READLN(f0,Soil.NrSoilLayers);
+READLN(f0,TempShortInt);
+SetSoil_NrSoilLayers(TempShortInt);
 READLN(f0); // depth of restrictive soil layer which is no longer applicable
 READLN(f0);
 READLN(f0);
 // Load characteristics of each soil layer
-FOR i := 1 TO Soil.NrSoilLayers DO
+FOR i := 1 TO GetSoil().NrSoilLayers DO
     BEGIN
     // Parameters for capillary rise missing in Versions 3.0 and 3.1
     IF (ROUND(VersionNr*10) < 40)
@@ -1616,7 +1611,7 @@ FOR i := 1 TO Soil.NrSoilLayers DO
     END;
 DetermineNrandThicknessCompartments;
 Close(f0);
-Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
 END; // Loadprofile
 
 
@@ -2024,7 +2019,7 @@ WITH Crop DO
   END;
 Close(f0);
 // maximum rooting depth in given soil profile
-Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
 
 // copy to CropFileSet
 SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
@@ -2156,13 +2151,13 @@ Assign(f,totalname);
 Rewrite(f);
 WRITELN(f,ProfDescription);
 WRITELN(f,'        7.0                 : AquaCrop Version (June 2021)');    // AquaCrop version
-WRITELN(f,Soil.CNvalue:9,'                   : CN (Curve Number)');
-WRITELN(f,Soil.REW:9,'                   : Readily evaporable water from top layer (mm)');
-WRITELN(f,Soil.NrSoilLayers:9,'                   : number of soil horizons');
+WRITELN(f,GetSoil().CNvalue:9,'                   : CN (Curve Number)');
+WRITELN(f,GetSoil().REW:9,'                   : Readily evaporable water from top layer (mm)');
+WRITELN(f,GetSoil().NrSoilLayers:9,'                   : number of soil horizons');
 WRITELN(f,undef_int:9,'                   : variable no longer applicable');
 WRITELN(f,'  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description');
 WRITELN(f,'  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------');
-FOR i := 1 TO Soil.NrSoilLayers DO
+FOR i := 1 TO GetSoil().NrSoilLayers DO
     WRITELN(f,SoilLayer[i].Thickness:8:2,SoilLayer[i].SAT:8:1,SoilLayer[i].FC:6:1,
               SoilLayer[i].WP:6:1,SoilLayer[i].InfRate:8:1,SoilLayer[i].Penetrability:11,
               SoilLayer[i].GravelMass:10,SoilLayer[i].CRa:14:6,SoilLayer[i].CRb:10:6,
@@ -2170,7 +2165,7 @@ FOR i := 1 TO Soil.NrSoilLayers DO
 Close(f);
 
 // maximum rooting depth in  soil profile for given crop
-Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
 END; (* SaveProfile *)
 
 
@@ -2605,7 +2600,7 @@ WITH Crop DO
 Close(f);
 
 // maximum rooting depth in given soil profile
-Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
 
 // copy to CropFileSet
 SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
@@ -2694,14 +2689,14 @@ BEGIN
 Simulation.IniSWC.AtDepths := false;
 IF (ZiAqua < 0) // no ground water table
    THEN BEGIN
-        Simulation.IniSWC.NrLoc := Soil.NrSoilLayers;
-        FOR layeri := 1 TO Soil.NrSoilLayers DO
+        Simulation.IniSWC.NrLoc := GetSoil().NrSoilLayers;
+        FOR layeri := 1 TO GetSoil().NrSoilLayers DO
             BEGIN
             Simulation.IniSWC.Loc[layeri] := SoilLayer[layeri].Thickness;
             Simulation.IniSWC.VolProc[layeri] := SoilLayer[layeri].FC;
             Simulation.IniSWC.SaltECe[layeri] := 0;
             END;
-        FOR layeri := (Soil.NrSoilLayers+1) TO max_No_compartments DO
+        FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
             BEGIN
             Simulation.IniSWC.Loc[layeri] := undef_double;
             Simulation.IniSWC.VolProc[layeri] := undef_double;
@@ -4049,7 +4044,7 @@ READLN(f0,PathName);
 PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
 FullFileName := CONCAT(Trim(PathName),Trim(FileName));
 LoadProfile(FullFileName);
-TheNrSoilLayers := Soil.NrSoilLayers;
+TheNrSoilLayers := GetSoil().NrSoilLayers;
 TheSoilLayer := SoilLayer;
 //ZrRestrict := 1000; // assumed not to be so far a restriction
 (*
@@ -4143,11 +4138,11 @@ FOR compi := 1 to NrCompartments DO TotDepthC := TotDepthC + Compartment[compi].
 
 //2. Stretch thickness of bottom soil layer if required
 TotDepthL := 0;
-For layeri := 1 to Soil.NrSoilLayers DO TotDepthL := TotDepthL + SoilLayer[layeri].Thickness;
-IF (TotDepthC > TotDepthL) THEN SoilLayer[Soil.NrSoilLayers].Thickness := SoilLayer[Soil.NrSoilLayers].Thickness + (TotDepthC - TotDepthL);
+For layeri := 1 to GetSoil().NrSoilLayers DO TotDepthL := TotDepthL + SoilLayer[layeri].Thickness;
+IF (TotDepthC > TotDepthL) THEN SoilLayer[GetSoil().NrSoilLayers].Thickness := SoilLayer[GetSoil().NrSoilLayers].Thickness + (TotDepthC - TotDepthL);
 
 //3. Assign a soil layer to each soil compartment
-DesignateSoilLayerToCompartments(NrCompartments,Soil.NrSoilLayers,Compartment);
+DesignateSoilLayerToCompartments(NrCompartments,GetSoil().NrSoilLayers,Compartment);
 
 //4. Adjust initial Soil Water Content of soil compartments
 IF Simulation.ResetIniSWC
@@ -4162,14 +4157,14 @@ IF Simulation.ResetIniSWC
 
 //5. Adjust watercontent in soil layers and determine ThetaIni
 Total := 0;
-FOR layeri := 1 TO Soil.NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
+FOR layeri := 1 TO GetSoil().NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
 FOR compi := 1 TO NrCompartments DO
     BEGIN
     Simulation.ThetaIni[compi] := Compartment[compi].Theta;
     SoilLayer[Compartment[compi].Layer].WaterContent := SoilLayer[Compartment[compi].Layer].WaterContent
                                                                 + Simulation.ThetaIni[compi]*100*10*Compartment[compi].Thickness;
     END;
-FOR layeri := 1 TO Soil.NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
+FOR layeri := 1 TO GetSoil().NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
 SetTotalWaterContent_BeginDay(Total);
 END; (* AdjustThetaInitial *)
 

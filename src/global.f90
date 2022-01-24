@@ -148,6 +148,15 @@ type rep_Shapes
         !! Undocumented
 end type rep_Shapes
 
+type rep_soil
+    integer(int8) :: REW 
+        !! (* Readily evaporable water mm *)
+    integer(int8) :: NrSoilLayers
+    integer(int8) :: CNvalue
+    real(sp) :: RootMax 
+        !! maximum rooting depth in soil profile for selected crop
+end type rep_soil
+
 type rep_Content
     real(dp) :: BeginDay
         !! at the beginning of the day
@@ -337,6 +346,7 @@ type(rep_Manag) :: Management
 type(rep_Cuttings) :: Cuttings
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
+type(rep_soil) :: Soil
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
@@ -3075,6 +3085,40 @@ subroutine SetSumWaBal_CRSalt(CRSalt)
 
     SumWaBal%CRSalt = CRSalt
 end subroutine SetSumWaBal_CRSalt
+
+type(rep_soil) function GetSoil()
+    !! Getter for the "Soil" global variable.
+
+    GetSoil = Soil
+end function GetSoil
+
+subroutine SetSoil_REW(REW)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: REW
+
+    Soil%REW = REW
+end subroutine SetSoil_REW
+
+subroutine SetSoil_NrSoilLayers(NrSoilLayers)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: NrSoilLayers
+
+    Soil%NrSoilLayers = NrSoilLayers
+end subroutine SetSoil_NrSoilLayers
+
+subroutine SetSoil_CNvalue(CNvalue)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: CNvalue
+
+    Soil%CNvalue = CNvalue
+end subroutine SetSoil_CNvalue
+
+subroutine SetSoil_RootMax(RootMax)
+    !! Setter for the "Soil" global variable.
+    real(sp), intent(in) :: RootMax
+
+    Soil%RootMax = RootMax
+end subroutine SetSoil_RootMax
 
 type(rep_Content) function GetTotalSaltContent()
     !! Getter for the "TotalSaltContent" global variable.

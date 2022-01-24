@@ -690,7 +690,7 @@ CASE control OF
 
      end_day : BEGIN
                Infiltrated := InfiltratedRain+InfiltratedIrrigation+InfiltratedStorage;
-               FOR layeri := 1 TO Soil.NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
+               FOR layeri := 1 TO GetSoil().NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
                SetTotalWaterContent_EndDay(0);
                Surf1 := SurfaceStorage;
                SetTotalSaltContent_EndDay(0);
@@ -943,8 +943,8 @@ END; (*calculate_relative_wetness_topsoil*)
 
 
 BEGIN
-//CN2 := Soil.CNvalue;
-CN2 := ROUND(Soil.CNvalue * (100 + GetManagement_CNcorrection())/100);
+//CN2 := GetSoil().CNvalue;
+CN2 := ROUND(GetSoil().CNvalue * (100 + GetManagement_CNcorrection())/100);
 IF (RainRecord.DataType = Daily)
    THEN BEGIN
         IF (SimulParam.CNcorrection)
@@ -1455,7 +1455,7 @@ MaxMM := MaxCRatDepth(SoilLayer[Compartment[compi].Layer].CRa,SoilLayer[Compartm
 ZtopNextLayer := 0;
 FOR layeri := 1 TO Compartment[NrCompartments].Layer DO ZtopNextLayer := ZtopNextLayer + SoilLayer[layeri].Thickness;
 layeri := Compartment[NrCompartments].Layer;
-WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < Soil.NrSoilLayers)) DO
+WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
    BEGIN
    layeri := layeri + 1;
    LimitMM := MaxCRatDepth(SoilLayer[layeri].CRa,SoilLayer[layeri].CRb,SoilLayer[layeri].InfRate,ZtopNextLayer,(ZiAqua/100));
@@ -2953,10 +2953,10 @@ END; (* DetermineCCiGDD *)
 PROCEDURE PrepareStage1;
 BEGIN
 IF (SurfaceStorage > 0.0000001)
-   THEN Simulation.EvapWCsurf := Soil.REW
+   THEN Simulation.EvapWCsurf := GetSoil().REW
    ELSE BEGIN
         Simulation.EvapWCsurf := Rain + Irrigation - RunOff;
-        IF (Simulation.EvapWCsurf > Soil.REW) THEN Simulation.EvapWCsurf := Soil.REW;
+        IF (Simulation.EvapWCsurf > GetSoil().REW) THEN Simulation.EvapWCsurf := GetSoil().REW;
         END;
 Simulation.EvapStartStg2 := undef_Int;
 Simulation.EvapZ := (EvapZmin/100);
@@ -3060,7 +3060,7 @@ AtTheta := AtFC;
 WFC := WCEvapLayer(Simulation.EvapZ,AtTheta);
 AtTheta := AtAct;
 Wact := WCEvapLayer(Simulation.EvapZ,AtTheta);
-Simulation.EvapStartStg2 := ROUND(100 * (Wact - (WFC-Soil.REW))/(WSAT-(WFC-Soil.REW)));
+Simulation.EvapStartStg2 := ROUND(100 * (Wact - (WFC-GetSoil().REW))/(WSAT-(WFC-GetSoil().REW)));
 IF (Simulation.EvapStartStg2 < 0)
    THEN Simulation.EvapStartStg2 := 0;
 END; (* PrepareStage2 *)
@@ -3080,7 +3080,7 @@ IF (SurfaceStorage > Epot)
    ELSE BEGIN
         Eact := SurfaceStorage;
         SurfaceStorage := 0;
-        Simulation.EvapWCsurf := Soil.REW;
+        Simulation.EvapWCsurf := GetSoil().REW;
         Simulation.EvapZ := EvapZmin/100;
         IF (Simulation.EvapWCsurf < 0.0001)
            THEN PrepareStage2
@@ -3179,7 +3179,7 @@ VAR AtTheta : rep_WhichTheta;
     WSAT := WCEvapLayer(Simulation.EvapZ,AtTheta);
     AtTheta := AtFC;
     WFC := WCEvapLayer(Simulation.EvapZ,AtTheta);
-    Wupper := (xProc/100) * (WSAT - (WFC-Soil.REW)) + (WFC-Soil.REW);
+    Wupper := (xProc/100) * (WSAT - (WFC-GetSoil().REW)) + (WFC-GetSoil().REW);
     AtTheta := AtWP;
     Wlower := WCEvapLayer(Simulation.EvapZ,AtTheta)/2;
     END; (* GetLimitsEvapLayer *)
@@ -3772,7 +3772,7 @@ IF ((Rain > 0) OR
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,Simulation.EvapWCsurf);
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
    AND (SimulParam.EffectiveRain.RootNrEvap > 0)) // reduction soil evaporation
- THEN Epot := Epot * (exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((Soil.REW+1)/20)));
+ THEN Epot := Epot * (exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((GetSoil().REW+1)/20)));
 // actual evaporation
 Eact := 0;
 IF (Epot > 0) THEN
@@ -3788,7 +3788,7 @@ IF (Epot > 0) THEN
 // Reset redcution Epot for 10-day or monthly rainfall data
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
    AND (SimulParam.EffectiveRain.RootNrEvap > 0))
- THEN Epot := Epot/(exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((Soil.REW+1)/20)));
+ THEN Epot := Epot/(exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((GetSoil().REW+1)/20)));
 
 
 // 13. Transpiration
