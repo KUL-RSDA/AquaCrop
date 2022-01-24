@@ -13,58 +13,13 @@ implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
-TYPE rep_GwTable = RECORD
-     DNr1, DNr2 : LongInt;
-     Z1, Z2 : INTEGER;  // cm
-     EC1, EC2 : double; // dS/m
-     end;
-
-TYPE rep_plotPar = RECORD
-       PotVal, ActVal : double;
-       end;
-
-TYPE repIrriInfoRecord = Record
-       NoMoreInfo : BOOLEAN;
-       FromDay,
-       ToDay,
-       TimeInfo,
-       DepthInfo  : INTEGER;
-       end;
-
-TYPE rep_StressTot = RECORD
-       Salt,
-       Temp,
-       Exp,
-       Sto,
-       Weed : double;
-       NrD  : INTEGER;
-       end;
-
-TYPE repCutInfoRecord = Record
-       NoMoreInfo : BOOLEAN;
-       FromDay,
-       ToDay,
-       IntervalInfo : INTEGER;
-       IntervalGDD,
-       MassInfo  : double;
-       end;
-
-TYPE rep_Transfer = Record
-       Store      : BOOLEAN; // transfer of assimilates from above ground parts to root system is active
-       Mobilize   : BOOLEAN; // transfer of assimialtes from root system to above ground parts is active
-       ToMobilize : double;  // Total mass of assimilates (ton/ha) to mobilize at start of the season
-       Bmobilized : double;  // Cumulative sum of assimilates (ton/ha) mobilized form root system
-       end;
 
 var  fRun, fDaily, fHarvest, fEval : text;
      fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts,fObs : text;
-     PlotVarCrop : rep_plotPar;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     GwTable : rep_GwTable;
      CCxWitheredTpot,CCxWitheredTpotNoS : double;
-     StressTot : rep_StressTot;
      Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF : double;
      Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
      CO2i : double;
@@ -75,15 +30,12 @@ var  fRun, fDaily, fHarvest, fEval : text;
      DayNri : LongInt;
      EToDataSet,RainDataSet,TminDataSet,TmaxDataSet : rep_SimulationEventsDbl;
      IrriInterval : INTEGER;
-     IrriInfoRecord1,IrriInfoRecord2 : repIrriInfoRecord;
      Tadj, GDDTadj : INTEGER;
      DayFraction,GDDayFraction,Bin,Bout : double;
      TimeSenescence : double; // calendar days or GDDays
      DayLastCut,NrCut,SumInterval : INTEGER;
-     Transfer : rep_Transfer;
      CGCadjustmentAfterCutting : BOOLEAN;
      BprevSum,YprevSum,SumGDDcuts : double;
-     CutInfoRecord1,CutInfoRecord2 : repCutInfoRecord;
      CGCref,GDDCGCref : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      StressLeaf,StressSenescence : double;   // % stress for leaf expansion and senescence
