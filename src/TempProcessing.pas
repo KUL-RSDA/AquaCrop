@@ -1190,11 +1190,12 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2 : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
     VersionNr : double;
+    FertStress : shortint;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -1234,13 +1235,13 @@ SetClimateFile(Trim(TempString));
 IF (GetClimateFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathClimateFile
-        ClimateFileFull := GetClimateFile();
+        SetClimateFileFull(GetClimateFile());
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathClimateFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateFileFull := CONCAT(Trim(TempString),GetClimateFile());
-        Assign(fClim,ClimateFileFull);
+        SetClimateFileFull(CONCAT(Trim(TempString),GetClimateFile()));
+        Assign(fClim,GetClimateFileFull());
         Reset(fClim);
         // 1.0 Description
         READLN(fClim,TempString);
@@ -1276,13 +1277,15 @@ IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
         SetEToFilefull(GetEToFile());  (* no file *)
-        EToDescription := 'Specify ETo data when Running AquaCrop';
+        SetEToDescription('Specify ETo data when Running AquaCrop');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetEToFilefull(CONCAT(Trim(TempString),GetEToFile()));
-        LoadClim(GetEToFilefull(),EToDescription,EToRecord);
+        eto_descr := GetEToDescription();
+        LoadClim(GetEToFilefull(),eto_descr,EToRecord);
+        SetEToDescription(eto_descr); 
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain
@@ -1293,13 +1296,15 @@ IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
         SetRainFilefull(GetRainFile());  (* no file *)
-        RainDescription := 'Specify Rain data when Running AquaCrop';
+        SetRainDescription('Specify Rain data when Running AquaCrop');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetRainFileFull(CONCAT(Trim(TempString),GetRainFile()));
-        LoadClim(GetRainFilefull(),RainDescription,RainRecord);
+        rain_descr := Getraindescription();
+        LoadClim(GetRainFilefull(),rain_descr,RainRecord);
+        SetRainDescription(rain_descr);
         CompleteClimateDescription(RainRecord);
         END;
 // 1.4 CO2
@@ -1311,8 +1316,10 @@ IF (GetCO2File() = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathCO2File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CO2FileFull := CONCAT(Trim(TempString),GetCO2File());
-        GetCO2Description(CO2FileFull,CO2Description);
+        SetCO2FileFull(CONCAT(Trim(TempString),GetCO2File()));
+        CO2descr :=  GetCO2Description();
+        GenerateCO2Description(GetCO2FileFull(),CO2descr);
+        SetCO2Description(CO2descr)
         END;
 SetClimData;
 AdjustOnsetSearchPeriod; // Set initial StartSearch and StopSearchDayNr
@@ -1329,8 +1336,8 @@ IF (GetCalendarFile() = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        CalendarFilefull := CONCAT(Trim(TempString),GetCalendarFile());
-        GetFileDescription(CalendarFilefull,CalendarDescription);
+        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
+        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
         END;
 
 // 3. Crop
@@ -1340,8 +1347,8 @@ READLN(f0,TempString);  //CropFile
 SetCropFile(Trim(TempString));
 READLN(f0,TempString);  //PathCropFile
 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-CropFilefull := CONCAT(Trim(TempString),GetCropFile());
-LoadCrop(CropFilefull);
+SetCropFilefull(CONCAT(Trim(TempString),GetCropFile()));
+LoadCrop(GetCropFilefull());
 
 // Adjust crop parameters of Perennials
 IF (Crop.subkind = Forage) THEN
@@ -1377,15 +1384,15 @@ SetIrriFile(Trim(TempString));
 IF (GetIrriFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathIrriFile
-        IrriFileFull := GetIrriFile();
+        SetIrriFileFull(GetIrriFile());
         NoIrrigation;
         //IrriDescription := 'Rainfed cropping';
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathIrriFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        IrriFilefull := CONCAT(Trim(TempString),GetIrriFile());
-        LoadIrriScheduleInfo(IrriFilefull);
+        SetIrriFileFull(CONCAT(Trim(TempString),GetIrriFile()));
+        LoadIrriScheduleInfo(GetIrriFileFull());
         END;
 
 // 5. Field Management
@@ -1404,10 +1411,12 @@ IF (GetManFile() = '(None)')
         SetManFileFull(CONCAT(Trim(TempString),GetManFile()));
         LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
+        FertStress := GetManagement_FertilityStress();
         TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
                           Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
                           Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
-                          Simulation.EffectStress.RedCCX,Management.FertilityStress);
+                          Simulation.EffectStress.RedCCX,FertStress);
+        SetManagement_FertilityStress(FertStress);
         END;
 
 // 6. Soil Profile
@@ -1507,7 +1516,7 @@ IF (Trim(TempString) = 'KeepSWC')
                Simulation.ECeIni[i] := ECeComp(Compartment[i]);
                END;
            // ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN - CHECK LATER
-           IF (Management.BundHeight >= 0.01) THEN
+           IF (GetManagement_BundHeight() >= 0.01) THEN
               BEGIN
               Simulation.SurfaceStorageIni := SurfaceStorage;
               Simulation.ECStorageIni := ECStorage;
@@ -1547,18 +1556,20 @@ IF (GetOffSeasonFile() = '(None)')
 // 12. Field data
 READLN(f0); // Info Field data
 READLN(f0,TempString);  //Field dataFile
-ObservationsFile := Trim(TempString);
-IF (ObservationsFile = '(None)')
+SetObservationsFile(Trim(TempString));
+IF (GetObservationsFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //Path Field data File
-        ObservationsFileFull := ObservationsFile;
-        ObservationsDescription := 'No field observations';
+        SetObservationsFileFull(GetObservationsFile());
+        SetObservationsDescription('No field observations');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //Path Field data File
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ObservationsFileFull := CONCAT(Trim(TempString),ObservationsFile);
-        GetFileDescription(ObservationsFileFull,ObservationsDescription);
+        SetObservationsFileFull(CONCAT(Trim(TempString),GetObservationsFile()));
+        observations_descr := GetObservationsDescription();
+        GetFileDescription(GetObservationsFileFull(),observations_descr);
+        SetObservationsDescription(observations_descr);
         END;
 
 Close(f0);
@@ -1893,7 +1904,6 @@ VAR  fTemp,fOUT : textFile;
      CCoadj,CCxadj,CDCadj,GDDCDCadj,CCw,CCtotStar,CCwStar : double;
      SumGDDfromDay1,SumGDDforPlot,CCinitial,DayFraction,GDDayFraction,fWeed,WeedCorrection : double;
      GrowthON : BOOLEAN;
-     CCiAdjusted : double;
 
 BEGIN
 //1. Adjustment for weed infestation
@@ -2089,7 +2099,7 @@ FOR Dayi := 1 TO L1234 DO
                // green canopy cover of the crop (CCw) in weed-infested field (CCi is CC of crop and weeds)
                fCCx := 1.0; // only for non perennials (no self-thinning)
                IF (DeltaWeedStress <> 0)
-                  THEN WeedCorrection := GetWeedRC(DayCC,SumGDDforPlot,fCCx,WeedStress,Management.WeedAdj,
+                  THEN WeedCorrection := GetWeedRC(DayCC,SumGDDforPlot,fCCx,WeedStress,GetManagement_WeedAdj(),
                   DeltaWeedStress,L12SF,L123,GDDL12SF,GDDL123,TheModeCycle)
                   ELSE WeedCorrection := WeedStress;
                CCw := CCi * (1 - WeedCorrection/100);
@@ -2184,14 +2194,12 @@ TYPE StressIndexes = Record
        BioMSquare : double;
        END;
 
-VAR fTemp : textFile;
-    StressMatrix : ARRAY[0..7] of StressIndexes;
-    Si,Stepi : ShortInt;
-    L12SF,GDDL12SF,Dayi : INTEGER;
+VAR StressMatrix : ARRAY[0..7] of StressIndexes;
+    Si : ShortInt;
+    L12SF,GDDL12SF : INTEGER;
     StressResponse : rep_EffectStress;
-    RatDGDD,SumGDD,T0dayi,TXdayi,GDDi,SumTporNor,CCi,
-    CCxWitheredForB,TpotForB,EpotTotForB,KsB,SumTpot,TpotSeason,BNor,WPi,BNor100,
-    Yavg,X1avg,X2avg,y,x1,x2,x1y,x2y,x1Sq,x2Sq,x1x2,SUMx1y,SUMx2y,SUMx1Sq,SUMx2Sq,SUMx1x2 : double;
+    RatDGDD,BNor,BNor100,Yavg,X1avg,X2avg,y,x1,x2,x1y,x2y,x1Sq,
+    x2Sq,x1x2,SUMx1y,SUMx2y,SUMx1Sq,SUMx2Sq,SUMx1x2 : double;
     SiPr : ShortInt;
     SumKcTop,HIGC,HIGClinear : double;
     DaysYieldFormation,tSwitch : INTEGER;
@@ -2593,7 +2601,7 @@ Const EToStandard = 5;
       k = 2;
       CO2iLocal = 369.41;
 
-VAR SumKcTop,HIGC,HIGClinear,fSwitch : double;
+VAR SumKcTop,HIGC,HIGClinear : double;
     RatDGDD,SumBPot,SumBSF : double;
     tSwitch,DaysYieldFormation : INTEGER;
 

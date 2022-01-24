@@ -11,8 +11,9 @@ implementation
 
  PROCEDURE InitializeSettings;
  TYPE rep_string20 = string[20];
- VAR TempString1,TempString2 : string;
+ VAR TempString1,TempString2,CO2descr : string;
      Nri : INTEGER;
+     SumWaBal_temp : rep_sum;
 
  BEGIN
  // 1. Program settings
@@ -118,7 +119,7 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- CropFilefull := CONCAT(GetPathNameSimul(),GetCropFile());
+ SetCropFilefull(CONCAT(GetPathNameSimul(),GetCropFile()));
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
@@ -154,7 +155,7 @@ implementation
  // 5.2 ETo
  SetEToFile('(None)');
  SetEToFilefull(GetEToFile());  (* no file *)
- EToDescription := '';
+ SetEToDescription('');
  WITH EToRecord DO
    BEGIN
    DataType := Daily;
@@ -167,7 +168,7 @@ implementation
  // 5.3 Rain
  SetRainFile('(None)');
  SetRainFilefull(GetRainFile());  (* no file *)
- RainDescription := '';
+ SetRainDescription('');
  WITH RainRecord DO
    BEGIN
    DataType := Daily;
@@ -179,12 +180,15 @@ implementation
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
- CO2FileFull := CONCAT(GetPathNameSimul(),GetCO2File());
- GetCO2Description(CO2FileFull,CO2Description);
+ setCO2FileFull(CONCAT(GetPathNameSimul(),GetCO2File()));
+ CO2descr := GetCO2Description();
+ GenerateCO2Description(GetCO2FileFull(),CO2descr);
+ SetCO2Description(CO2descr);
+
 
  // 5.5 Climate file
  SetClimateFile('(None)');
- ClimateFileFull := GetClimateFile();
+ SetClimateFileFull(GetClimateFile());
  ClimateDescription := '';
 
  // 5.6 Set Climate and Simulation Period
@@ -200,7 +204,7 @@ implementation
 
  // 6. irrigation
  SetIrriFile('(None)');
- IrriFilefull := GetIrriFile();  (* no file *)
+ SetIrriFilefull(GetIrriFile());  (* no file *)
  NoIrrigation;
 
  // 7. Off-season
@@ -209,22 +213,22 @@ implementation
  NoManagementOffSeason;
 
  // 8. Project and Multiple Project file
- ProjectFile := '(None)';
- ProjectFileFull := ProjectFile;
+ SetProjectFile('(None)');
+ ProjectFileFull := GetProjectFile();
  ProjectDescription := 'No specific project';
  Simulation.MultipleRun := false; // No sequence of simulation runs in the project
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
- MultipleProjectFile := ProjectFile;
+ SetMultipleProjectFile(GetProjectFile());
  MultipleProjectFileFull := ProjectFileFull;
  MultipleProjectDescription := ProjectDescription;
 
 
  // 9. Observations file
- ObservationsFile := '(None)';
- ObservationsFileFull := ObservationsFile;
- ObservationsDescription := 'No field observations';
+ SetObservationsFile('(None)');
+ SetObservationsFileFull(GetObservationsFile());
+ SetObservationsDescription('No field observations');
 
  // 10. Output files
  OutputName := 'Project';
@@ -241,7 +245,9 @@ implementation
  SurfaceStorage := 0;
  ECstorage := 0.0;
  DaySubmerged := 0;
- GlobalZero(SumWabal);
+ SumWaBal_temp := GetSumWabal();
+ GlobalZero(SumWabal_temp);
+ SetSumWaBal(SumWaBal_temp);
  Drain:= 0.0; // added 4.0
  Runoff:= 0.0;// added 4.0
  Infiltrated := 0.0; // added 4.0

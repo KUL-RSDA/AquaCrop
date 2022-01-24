@@ -102,8 +102,8 @@ Crop.Assimilates.Period := 0;  // Number of days before end of season at which s
 Crop.Assimilates.Stored := 0;  // Percentage of assimilates transferred to root system at end of season
 Crop.Assimilates.Mobilized := 0; // Percentage stored assimilates, transferred to above ground parts in next season
 
-CropFilefull := CONCAT(GetPathNameSimul(),'DEFAULT.CRO');
-SaveCrop(CropFilefull);
+SetCropFilefull(CONCAT(GetPathNameSimul(),'DEFAULT.CRO'));
+SaveCrop(GetCropFilefull());
 END; (* ResetDefaultCrop *)
 
 
