@@ -271,9 +271,6 @@ TYPE
          CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
          End;
 
-     rep_IrriMode = (NoIrri,Manual,Generate,Inet);
-     rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
-
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
      rep_DayEventInt = Record
@@ -345,8 +342,6 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     RainRecord,
     TemperatureRecord     : rep_clim;
     Simulation     : rep_sim;
-    IrriMode       : rep_IrriMode;
-    IrriMethod     : rep_IrriMethod;
     GenerateTimeMode : rep_GenerateTimeMode;
     GenerateDepthMode : rep_GenerateDepthMode;
     IrriFirstDayNr : LongInt;
@@ -969,9 +964,9 @@ END; (* LoadManagement *)
 PROCEDURE NoIrrigation;
 VAR Nri : INTEGER;
 BEGIN
- IrriMode := NoIrri;
+ SetIrriMode(NoIrri);
  IrriDescription := 'Rainfed cropping';
- IrriMethod := MSprinkler;
+ SetIrriMethod(MSprinkler);
  Simulation.IrriECw := 0.0; // dS/m
  GenerateTimeMode := AllRAW;
  GenerateDepthMode := ToFC;
@@ -1093,11 +1088,11 @@ READLN(f0,VersionNr);  // AquaCrop version
 // irrigation method
 READLN(f0,i);
 CASE i OF
-     1 : IrriMethod := MSprinkler;
-     2 : IrriMethod := MBasin;
-     3 : IrriMethod := MBorder;
-     4 : IrriMethod := MFurrow;
-     else  IrriMethod := MDrip;
+     1 : SetIrriMethod(MSprinkler);
+     2 : SetIrriMethod(MBasin);
+     3 : SetIrriMethod(MBorder);
+     4 : SetIrriMethod(MFurrow);
+     else  SetIrriMethod(MDrip);
      end;
 
 // fraction of soil surface wetted
@@ -1106,10 +1101,10 @@ READLN(f0,SimulParam.IrriFwInSeason);
 // irrigation mode and parameters
 READLN(f0,i);
 CASE i OF
-     0 : IrriMode := NoIrri; // rainfed
-     1 : IrriMode := Manual;
-     2 : IrriMode := Generate;
-     else IrriMode := Inet;
+     0 : SetIrriMode(NoIrri); // rainfed
+     1 : SetIrriMode(Manual);
+     2 : SetIrriMode(Generate);
+     else SetIrriMode(Inet);
      end;
 
 // 1. Irrigation schedule
@@ -1119,7 +1114,7 @@ IF ((i = 1) AND (ROUND(VersionNr*10) >= 70))
 
 
 // 2. Generate
-IF (IrriMode = Generate) THEN
+IF (GetIrriMode() = Generate) THEN
    BEGIN
    READLN(f0,i); // time criterion
    Case i OF
@@ -1138,7 +1133,7 @@ IF (IrriMode = Generate) THEN
    END;
 
 // 3. Net irrigation requirement
-IF (IrriMode = Inet) THEN
+IF (GetIrriMode() = Inet) THEN
    BEGIN
    READLN(f0,SimulParam.PercRAW);
    IrriFirstDayNr := undef_int;  // start of growing period

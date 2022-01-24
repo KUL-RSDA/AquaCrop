@@ -50,6 +50,27 @@ integer(intEnum), parameter :: TimeCuttings_DryY = 4
 integer(intEnum), parameter :: TimeCuttings_FreshY= 5
     !! index of FreshY in TimeCuttings enumerated type
 
+integer(intEnum), parameter :: IrriMode_NoIrri = 0
+    !! index of NoIrri in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMode_Manual = 1
+    !! index of Manual in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMode_Generate = 2
+    !! index of Generate in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMode_Inet = 3
+    !! index of inet in IrriMode enumerated type
+
+integer(intEnum), parameter :: IrriMethod_MBasin = 0
+    !! index of MBasin in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MBorder = 1
+    !! index of MBorder in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MDrip = 2
+    !! index of MDrip in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MFurrow = 3
+    !! index of MFurrow in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MSprinkler = 4
+    !! index of MSprinkler in IrriMode enumerated type
+
+
 type SoilLayerIndividual
     character(len=25) :: Description
         !! Undocumented
@@ -298,6 +319,9 @@ type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
+
+integer(intEnum) :: IrriMode
+integer(intEnum) :: IrriMethod
 
 
 contains
@@ -2993,6 +3017,32 @@ subroutine SetRootZoneSalt_KsSalt(KsSalt)
 
     RootZoneSalt%KsSalt = KsSalt
 end subroutine SetRootZoneSalt_KsSalt
+
+integer(intEnum) function GetIrriMode()
+    !! Getter for the "IrriMode" global variable.
+
+    GetIrriMode = IrriMode
+end function GetIrriMode
+
+integer(intEnum) function GetIrriMethod()
+    !! Getter for the "IrriMethod" global variable.
+
+    GetIrriMethod = IrriMethod
+end function GetIrriMethod
+
+subroutine SetIrriMode(int_in)
+    !! Setter for the "IrriMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    IrriMode = int_in
+end subroutine SetIrriMode
+
+subroutine SetIrriMethod(int_in)
+    !! Setter for the "IrriMethod" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    IrriMethod = int_in
+end subroutine SetIrriMethod
 
 
 end module ac_global

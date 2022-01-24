@@ -144,6 +144,9 @@ type
          KsSalt : double;   // stress coefficient for salinity
          end;
 
+     rep_IrriMode = (NoIrri,Manual,Generate,Inet);
+     rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
+
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -1173,6 +1176,25 @@ procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
 procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
         external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
 
+function __GetIrriMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getirrimode';
+
+function GetIrriMode(): rep_IrriMode;
+
+procedure __SetIrriMode(constref IrriMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setirrimode';
+
+procedure SetIrriMode(constref IrriMode : rep_IrriMode);
+
+function __GetIrriMethod(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getirrimethod';
+
+function GetIrriMethod(): rep_IrriMethod;
+
+procedure __SetIrriMethod(constref IrriMethod : integer);
+        external 'aquacrop' name '__ac_global_MOD_setirrimethod';
+
+procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod);
 
 implementation
 
@@ -1264,6 +1286,43 @@ begin;
     int_timecuttings := ord(Criterion);
     __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
+
+function GetIrriMode() : rep_IrriMode;
+var
+    int_IrriMode : integer;
+
+begin;
+    int_IrriMode := __GetIrriMode();
+    GetIrriMode := rep_IrriMode(int_IrriMode);
+end;
+
+procedure SetIrriMode(constref IrriMode : rep_IrriMode); 
+var
+    int_IrriMode : integer;
+
+begin;
+    int_IrriMode := ord(IrriMode);
+    __SetIrriMode(int_IrriMode);
+end;
+
+function GetIrriMethod() : rep_IrriMethod;
+var
+    int_IrriMethod : integer;
+
+begin;
+    int_IrriMethod := __GetIrriMethod();
+    GetIrriMethod := rep_IrriMethod(int_IrriMethod);
+end;
+
+procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod); 
+var
+    int_IrriMethod : integer;
+
+begin;
+    int_IrriMethod := ord(IrriMethod);
+    __SetIrriMethod(int_IrriMethod);
+end;
+
 
 
 procedure GetNumberSimulationRuns(
