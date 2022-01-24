@@ -298,8 +298,10 @@ end type rep_RootZoneSalt
 
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
+character(len=:), allocatable :: RainDescription
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
+character(len=:), allocatable :: EToDescription
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
@@ -2403,6 +2405,22 @@ subroutine SetEToFileFull(str)
 end subroutine SetEToFileFull
 
 
+function GetEToDescription() result(str)
+    !! Getter for the "EToDescription" global variable.
+    character(len=len(EToDescription)) :: str
+
+    str = EToDescription
+end function GetEToDescription
+
+
+subroutine SetEToDescription(str)
+    !! Setter for the "EToDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    EToDescription = str
+end subroutine SetEToDescription
+
+
 function GetRainFile() result(str)
     !! Getter for the "RainFile" global variable.
     character(len=len(RainFile)) :: str
@@ -2433,6 +2451,23 @@ subroutine SetRainFileFull(str)
 
     RainFileFull = str
 end subroutine SetRainFileFull
+
+
+function GetRainDescription() result(str)
+    !! Getter for the "RainDescription" global variable.
+    character(len=len(RainDescription)) :: str
+
+    str = RainDescription
+end function GetRainDescription
+
+
+subroutine SetRainDescription(str)
+    !! Setter for the "RainDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    RainDescription = str
+end subroutine SetRainDescription
+
 
 integer(int8) function GetManagement_Mulch()
     !! Getter for the "Management" global variable.
@@ -3133,6 +3168,7 @@ subroutine SetIrriMethod(int_in)
 
     IrriMethod = int_in
 end subroutine SetIrriMethod
+
 
 
 end module ac_global

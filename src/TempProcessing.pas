@@ -1190,7 +1190,7 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,CO2descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -1277,13 +1277,15 @@ IF (GetEToFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathETo
         SetEToFilefull(GetEToFile());  (* no file *)
-        EToDescription := 'Specify ETo data when Running AquaCrop';
+        SetEToDescription('Specify ETo data when Running AquaCrop');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathETo
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetEToFilefull(CONCAT(Trim(TempString),GetEToFile()));
-        LoadClim(GetEToFilefull(),EToDescription,EToRecord);
+        eto_descr := GetEToDescription();
+        LoadClim(GetEToFilefull(),eto_descr,EToRecord);
+        SetEToDescription(eto_descr); 
         CompleteClimateDescription(EToRecord);
         END;
 // 1.3 Rain
@@ -1294,13 +1296,15 @@ IF (GetRainFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathRain
         SetRainFilefull(GetRainFile());  (* no file *)
-        RainDescription := 'Specify Rain data when Running AquaCrop';
+        SetRainDescription('Specify Rain data when Running AquaCrop');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathRain
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetRainFileFull(CONCAT(Trim(TempString),GetRainFile()));
-        LoadClim(GetRainFilefull(),RainDescription,RainRecord);
+        rain_descr := Getraindescription();
+        LoadClim(GetRainFilefull(),rain_descr,RainRecord);
+        SetRainDescription(rain_descr);
         CompleteClimateDescription(RainRecord);
         END;
 // 1.4 CO2

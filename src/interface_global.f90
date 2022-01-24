@@ -41,13 +41,14 @@ use ac_global, only: CheckFilesInProject, &
                      GetGroundWaterFile, &
                      GetGroundWaterFilefull, &
                      GetEToFile, &
-                     SetEToFile, &
                      GetEToFileFull, &
-                     SetEToFileFull, &
+                     GetEToDescription, &
                      GetRainFile, &
                      setRainFile, &
                      GetRainFileFull, &
+                     GetRainDescription, &
                      setRainFileFull, &
+                     setRainDescription, &
                      SetCalendarFile, &
                      SetCalendarFileFull, &
                      SetCO2File, &
@@ -60,7 +61,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimFile, &
-                     setSWCiniFile, &
+                     SetEToFile, &
+                     SetEToFileFull, &
+                     SetEToDescription, &
+                     setSWCinifile, &
                      SetProjectFile, &
                      SetMultipleProjectFile, &
                      SetProfFile, &
@@ -324,6 +328,26 @@ subroutine SetEToFileFull_wrap(EToFileFull, strlen)
     call SetEToFileFull(string)
 end subroutine SetEToFileFull_wrap
 
+function GetEToDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToDescription())
+end function GetEToDescription_wrap
+
+
+subroutine SetEToDescription_wrap(EToDescription, strlen)
+    !! Wrapper for [[ac_global:SetEToDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: EToDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(EToDescription, strlen)
+    call SetEToDescription(string)
+end subroutine SetEToDescription_wrap
+
+
 subroutine GetIrriDescription_wrap(IrriFileFull, strlen1, IrriDescription, &
             strlen2)
     !! Wrapper for [[ac_global:GetIrriDescription]] for foreign languages.
@@ -536,6 +560,26 @@ subroutine SetRainFileFull_wrap(RainFileFull, strlen)
     string = pointer2string(RainFileFull, strlen)
     call SetRainFileFull(string)
 end subroutine SetRainFileFull_wrap
+
+
+function GetRainDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainDescription())
+end function GetRainDescription_wrap
+
+
+subroutine SetRainDescription_wrap(RainDescription, strlen)
+    !! Wrapper for [[ac_global:SetRainDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: RainDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+ 
+    string = pointer2string(RainDescription, strlen)
+    call SetRainDescription(string)
+end subroutine SetRainDescription_wrap
 
     
 function GetCalendarFile_wrap() result(c_pointer)
