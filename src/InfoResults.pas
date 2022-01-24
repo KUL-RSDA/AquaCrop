@@ -55,7 +55,7 @@ VAR Nri : INTEGER;
     SimAver := 0;
 
     // open file
-    OutputName := CONCAT(PathNameSimul,'EvalData',Trim(StrNr),'.OUT');
+    OutputName := CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT');
     Assign(fOut,OutputName);
     Reset(fOut);
     READLN(fOut); //AquaCrop Version - Date and Time

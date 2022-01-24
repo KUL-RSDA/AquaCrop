@@ -19,7 +19,7 @@ VAR FullFileName,TempString : string;
 
 BEGIN
 OutputAggregate := 0; // simulation period 0: season
-FullFileName := CONCAT(PathNameSimul,'AggregationResults.SIM');
+FullFileName := CONCAT(GetPathNameSimul(),'AggregationResults.SIM');
 IF (FileExists(FullFileName) = true) THEN
    BEGIN
    Assign(f0,FullFileName);
@@ -62,7 +62,7 @@ Out5CompWC := false;
 Out6CompEC := false;
 Out7Clim := false;
 
-FullFileName := CONCAT(PathNameSimul,'DailyResults.SIM');
+FullFileName := CONCAT(GetPathNameSimul(),'DailyResults.SIM');
 IF (FileExists(FullFileName) = true) THEN
    BEGIN
    Assign(f0,FullFileName);
@@ -102,7 +102,7 @@ BEGIN
 Part1Mult := false;
 Part2Eval := false;
 
-FullFileName := CONCAT(PathNameSimul,'ParticularResults.SIM');
+FullFileName := CONCAT(GetPathNameSimul(),'ParticularResults.SIM');
 IF (FileExists(FullFileName) = true) THEN
    BEGIN
    Assign(f0,FullFileName);
@@ -129,7 +129,7 @@ PROCEDURE PrepareReport(OutputAggregate : ShortInt;
                         Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
                         Part1Mult,Part2Eval : BOOLEAN);
 BEGIN
-Assign(fProjects,CONCAT(PathNameOutp,'ListProjectsLoaded.OUT'));
+Assign(fProjects,CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'));
 Rewrite(fProjects);
 WRITE(fProjects,'Intermediate results: ');
 CASE OutputAggregate OF
@@ -412,7 +412,7 @@ IF ListProjectFileExist THEN Close(f123);
 Close(fProjects);
 
 // all done
-Assign(fend,CONCAT(PathNameOutp,'AllDone.OUT'));
+Assign(fend,CONCAT(GetPathNameOutp(),'AllDone.OUT'));
 Rewrite(fend);
 WRITELN(fend,'All done');
 Close(fend);
@@ -424,11 +424,11 @@ END;   (* HandleProjectList *)
 PROCEDURE StartTheProgram;
 BEGIN
 Decimalseparator := '.';
-PathNameOutp := 'OUTP/';
-PathNameSimul := 'SIMUL/';
+SetPathNameOutp('OUTP/');
+SetPathNameSimul('SIMUL/');
 PathNameList :=  'LIST/';
 PathNameParam := 'PARAM/';
-PathNameProg := '';
+SetPathNameProg('');
 
 GetTimeAggregationResults(OutputAggregate);
 GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily);
