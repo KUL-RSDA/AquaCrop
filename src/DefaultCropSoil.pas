@@ -102,7 +102,7 @@ Crop.Assimilates.Period := 0;  // Number of days before end of season at which s
 Crop.Assimilates.Stored := 0;  // Percentage of assimilates transferred to root system at end of season
 Crop.Assimilates.Mobilized := 0; // Percentage stored assimilates, transferred to above ground parts in next season
 
-SetCropFilefull(CONCAT(PathNameSimul,'DEFAULT.CRO'));
+SetCropFilefull(CONCAT(GetPathNameSimul(),'DEFAULT.CRO'));
 SaveCrop(GetCropFilefull());
 END; (* ResetDefaultCrop *)
 
@@ -111,9 +111,9 @@ END; (* ResetDefaultCrop *)
 PROCEDURE ResetDefaultSoil;
 BEGIN
 ProfDescription := 'deep loamy soil profile';
-Soil.CNvalue := 61; // for an initial abstraction of 0.05 S
-Soil.REW := 9;
-Soil.NrSoilLayers := 1;
+SetSoil_CNvalue(61); // for an initial abstraction of 0.05 S
+SetSoil_REW(9);
+SetSoil_NrSoilLayers(1);
 //Soil.Zlimit := undef_int;   // to be removed
 SoilLayer[1].Thickness := 4;
 SoilLayer[1].SAT := 50.0;
@@ -126,7 +126,7 @@ SoilLayer[1].GravelVol := 0;
 SoilLayer[1].Description := 'Loamy soil horizon';
 SoilLayer[1].SoilClass := NumberSoilClass(SoilLayer[1].SAT,SoilLayer[1].FC,SoilLayer[1].WP,SoilLayer[1].InfRate);
 DetermineParametersCR(SoilLayer[1].SoilClass,SoilLayer[1].InfRate,SoilLayer[1].CRa,SoilLayer[1].CRb);
-SetProfFilefull(CONCAT(PathNameSimul,'DEFAULT.SOL'));
+SetProfFilefull(CONCAT(GetPathNameSimul(),'DEFAULT.SOL'));
 SaveProfile(GetProfFilefull());
 END; (* ResetDefaultSoil *)
 

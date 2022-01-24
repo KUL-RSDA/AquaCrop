@@ -42,6 +42,13 @@ type
         CRa, CRb     : double; (* coefficients for Capillary Rise *)
         END;
 
+     rep_soil = Record
+         REW            : ShortInt; (* Readily evaporable water mm *)
+         NrSoilLayers   : ShortInt;
+         CNvalue        : ShortInt;
+         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
+         end;
+
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
     
     rep_int_array = ARRAY[1..4] OF INTEGER;
@@ -620,8 +627,46 @@ procedure SetSWCiniFile(constref str : string);
 procedure SetSWCiniFile_wrap(
             constref p : PChar;
             constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';      
-        
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';
+
+
+function GetPathNameProg(): string;
+
+function GetPathNameProg_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameprog_wrap';
+
+procedure SetPathNameProg(constref str : string);
+
+procedure SetPathNameprog_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameprog_wrap';
+
+function GetPathNameOutp(): string;
+
+function GetPathNameOutp_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameoutp_wrap';
+
+procedure SetPathNameOutp(constref str : string);
+
+procedure SetPathNameOutp_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameoutp_wrap';
+
+function GetPathNameSimul(): string;
+
+function GetPathNameSimul_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnamesimul_wrap';
+
+procedure SetPathNameSimul(constref str : string);
+
+procedure SetPathNameSimul_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnamesimul_wrap'; 
+             
+
 function GetProjectFile(): string;
 
 function GetProjectFile_wrap(): PChar;
@@ -646,6 +691,7 @@ procedure SetMultipleProjectFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfile_wrap';
                 
+
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -1195,6 +1241,21 @@ procedure SetSumWaBal_SaltOut(constref SaltOut : double);
 
 procedure SetSumWaBal_CRsalt(constref CRsalt : double);
         external 'aquacrop' name '__ac_global_MOD_setsumwabal_crsalt';
+
+function GetSoil(): rep_Soil;
+        external 'aquacrop' name '__ac_global_MOD_getsoil';
+
+procedure SetSoil_REW(constref REW : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
+
+procedure SetSoil_NrSoilLayers(constref NrSoilLayers : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_nrsoillayers';
+
+procedure SetSoil_CNvalue(constref CNvalue : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_cnvalue';
+
+procedure SetSoil_RootMax(constref RootMax : Single);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_rootmax';
 
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
@@ -2036,7 +2097,6 @@ begin;
     GetProjectFile := AnsiString(p);
 end;
 
-
 procedure SetProjectFile(constref str : string);
 var
     p : PChar;
@@ -2047,6 +2107,7 @@ begin;
     strlen := Length(str);
     SetProjectFile_wrap(p, strlen);
 end;
+
 
 function GetMultipleProjectFile(): string;
 var
@@ -2066,6 +2127,70 @@ var
 begin;
     p := PChar(str);
     strlen := Length(str);
+    SetMultipleProjectFile_wrap(p, strlen);
+end;
+
+function GetPathNameProg(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameProg_wrap();
+    GetPathNameProg := AnsiString(p);
+end;
+
+
+procedure SetPathNameProg(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameProg_wrap(p, strlen);
+end;
+
+
+function GetPathNameOutp(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameOutp_wrap();
+    GetPathNameOutp := AnsiString(p);
+end;
+
+procedure SetPathNameOutp(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameOutp_wrap(p, strlen);
+end;
+
+function GetPathNameSimul(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameSimul_wrap();
+    GetPathNameSimul := AnsiString(p);
+end;
+
+
+procedure SetPathNameSimul(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameSimul_wrap(p, strlen);
     SetMultipleProjectFile_wrap(p, strlen);
 end;
 

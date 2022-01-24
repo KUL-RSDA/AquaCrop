@@ -1478,11 +1478,11 @@ IF (Trim(TempString) = 'KeepSWC')
            ELSE BEGIN
                 IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
                    BEGIN
-                   IF (ROUND(Soil.RootMax*1000) = ROUND(Crop.RootMax*1000))
+                   IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
                       THEN AdjustSizeCompartments(Crop.RootMax) // no restrictive soil layer
                       ELSE BEGIN // restrictive soil layer
-                           IF (ROUND(Soil.RootMax*1000) > ROUND(TotDepth*1000))
-                              THEN AdjustSizeCompartments(Soil.RootMax)
+                           IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000))
+                              THEN AdjustSizeCompartments(GetSoil().RootMax)
                            END;
                    END;
                 END;
@@ -1624,7 +1624,7 @@ IF FileExists(totalname)
                        END;
              end;
         // create SIM file and record first day
-        totalnameOUT := CONCAT(PathNameSimul,'TCrop.SIM');
+        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop.SIM');
         Assign(f2,totalnameOUT);
         Rewrite(f2);
         WRITELN(f2,Tlow:10:4,Thigh:10:4);
@@ -1718,7 +1718,7 @@ BEGIN
 //1. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 
@@ -1927,7 +1927,7 @@ IF (WeedStress > 0)
 // TEST
 IF (TestRecord = true) THEN
    BEGIN
-   Assign(fOUT,CONCAT(PathNameSimul,'TestBio.SIM'));
+   Assign(fOUT,CONCAT(GetPathNameSimul(),'TestBio.SIM'));
    Rewrite(fOUT);
    END;
 
@@ -1935,7 +1935,7 @@ IF (TestRecord = true) THEN
 //2. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 
@@ -2710,7 +2710,7 @@ BEGIN
 //1. Open Temperature file
 IF (TemperatureFile <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(PathNameSimul,'TCrop.SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    FOR Dayi := 1 TO (TempFlower-1) DO READLN(fTemp);
    END;

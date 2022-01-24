@@ -148,6 +148,15 @@ type rep_Shapes
         !! Undocumented
 end type rep_Shapes
 
+type rep_soil
+    integer(int8) :: REW 
+        !! (* Readily evaporable water mm *)
+    integer(int8) :: NrSoilLayers
+    integer(int8) :: CNvalue
+    real(sp) :: RootMax 
+        !! maximum rooting depth in soil profile for selected crop
+end type rep_soil
+
 type rep_Content
     real(dp) :: BeginDay
         !! at the beginning of the day
@@ -311,6 +320,9 @@ character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: PathNameProg
+character(len=:), allocatable :: PathNameOutp
+character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
@@ -334,6 +346,7 @@ type(rep_Manag) :: Management
 type(rep_Cuttings) :: Cuttings
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
+type(rep_soil) :: Soil
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
@@ -1878,6 +1891,50 @@ subroutine SetSWCiniFile(str)
     SWCiniFile = str
 end subroutine SetSWCiniFile
 
+
+function GetPathNameProg() result(str)
+    !! Getter for the "PathNameProg" global variable.
+    character(len=len(PathNameProg)) :: str
+    
+    str = PathNameProg
+end function GetPathNameProg
+
+subroutine SetPathNameProg(str)
+    !! Setter for the "PathNameProg" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameProg = str
+end subroutine SetPathNameProg
+
+function GetPathNameOutp() result(str)
+    !! Getter for the "PathNameOutp" global variable.
+    character(len=len(PathNameOutp)) :: str
+    
+    str = PathNameOutp
+end function GetPathNameOutp
+
+subroutine SetPathNameOutp(str)
+    !! Setter for the "PathNameOutp" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameOutp = str
+end subroutine SetPathNameOutp
+
+function GetPathNameSimul() result(str)
+    !! Getter for the "PathNameSimul" global variable.
+    character(len=len(PathNameSimul)) :: str
+    
+    str = PathNameSimul
+end function GetPathNameSimul
+
+subroutine SetPathNameSimul(str)
+    !! Setter for the "PathNameSimul" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameSimul = str
+end subroutine SetPathNameSimul
+
+
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.
     character(len=len(ProjectFile)) :: str
@@ -1905,6 +1962,7 @@ subroutine SetMultipleProjectFile(str)
     
     MultipleProjectFile = str
 end subroutine SetMultipleProjectFile
+
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
@@ -3027,6 +3085,40 @@ subroutine SetSumWaBal_CRSalt(CRSalt)
 
     SumWaBal%CRSalt = CRSalt
 end subroutine SetSumWaBal_CRSalt
+
+type(rep_soil) function GetSoil()
+    !! Getter for the "Soil" global variable.
+
+    GetSoil = Soil
+end function GetSoil
+
+subroutine SetSoil_REW(REW)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: REW
+
+    Soil%REW = REW
+end subroutine SetSoil_REW
+
+subroutine SetSoil_NrSoilLayers(NrSoilLayers)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: NrSoilLayers
+
+    Soil%NrSoilLayers = NrSoilLayers
+end subroutine SetSoil_NrSoilLayers
+
+subroutine SetSoil_CNvalue(CNvalue)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: CNvalue
+
+    Soil%CNvalue = CNvalue
+end subroutine SetSoil_CNvalue
+
+subroutine SetSoil_RootMax(RootMax)
+    !! Setter for the "Soil" global variable.
+    real(sp), intent(in) :: RootMax
+
+    Soil%RootMax = RootMax
+end subroutine SetSoil_RootMax
 
 type(rep_Content) function GetTotalSaltContent()
     !! Getter for the "TotalSaltContent" global variable.

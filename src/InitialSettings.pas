@@ -101,11 +101,11 @@ implementation
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
- SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
- // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
+ SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
+ // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
- // Crop. RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
+ // Crop. RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
  LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -119,12 +119,12 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- SetCropFilefull(CONCAT(PathNameSimul,GetCropFile()));
+ SetCropFilefull(CONCAT(GetPathNameSimul(),GetCropFile()));
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
  // maximum rooting depth in given soil profile
- Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+ SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
  Crop.Day1 := SimulParam.CropDay1;
  CompleteCropDescription;
@@ -180,10 +180,11 @@ implementation
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
- setCO2FileFull(CONCAT(PathNameSimul,GetCO2File()));
+ setCO2FileFull(CONCAT(GetPathNameSimul(),GetCO2File()));
  CO2descr := GetCO2Description();
  GenerateCO2Description(GetCO2FileFull(),CO2descr);
  SetCO2Description(CO2descr);
+
 
  // 5.5 Climate file
  SetClimateFile('(None)');
