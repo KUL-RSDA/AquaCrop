@@ -8,19 +8,32 @@ use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      FileExists, &
                      GetCalendarFile, &
+                     GetCalendarFileFull, &
                      GetCO2Description, &
                      GetCO2File, &
                      GetCropFile, &
+                     GetCropFileFull, &
                      GetIrriDescription, &
                      GetIrriFile, &
+                     GetIrriFileFull, &
                      GetClimateFile, &
+                     GetClimateFileFull, &
                      GetClimFile, &
                      GetSWCiniFile, &
+                     GetProjectFile, &
+                     GetMultipleProjectFile, &
                      GetNumberSimulationRuns, &
                      GetProfFile, &
                      GetProfFilefull, &
+                     GetManagement_Cuttings_Considered, &
+                     GetManagement_Cuttings_Generate, &
+                     GetManagement_Cuttings_HarvestEnd, &
+                     GetManagement_RunoffOn, &
                      GetManFile, &
                      GetManFilefull, &
+                     GetObservationsFile, &
+                     GetObservationsFilefull, &
+                     GetObservationsDescription, &
                      GetOffSeasonFile, &
                      GetOffSeasonFilefull, &
                      GetGroundWaterFile, &
@@ -36,18 +49,31 @@ use ac_global, only: CheckFilesInProject, &
                      setRainFileFull, &
                      setRainDescription, &
                      SetCalendarFile, &
+                     SetCalendarFileFull, &
                      SetCropFile, &
+                     SetCropFileFull, &
                      SetIrriFile, &
+                     SetIrriFileFull, &
                      SetClimateFile, &
+                     SetClimateFileFull, &
                      SetClimFile, &
                      SetEToFile, &
                      SetEToFileFull, &
                      SetEToDescription, &
                      setSWCinifile, &
+                     SetProjectFile, &
+                     SetMultipleProjectFile, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
                      SetManFilefull, &
+                     SetManagement_Cuttings_Considered, &
+                     SetManagement_Cuttings_Generate, &
+                     SetManagement_Cuttings_HarvestEnd, &
+                     SetManagement_RunoffOn, &
+                     SetObservationsFile, &
+                     SetObservationsFilefull, &
+                     SetObservationsDescription, &
                      SetOffSeasonFile, &
                      SetOffSeasonFilefull, &
                      SetGroundWaterFile, &
@@ -318,6 +344,26 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
 end subroutine SetIrriFile_wrap
 
 
+function GetIrriFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetIrriFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetIrriFileFull())
+end function GetIrriFileFull_wrap
+
+
+subroutine SetIrriFileFull_wrap(IrriFileFull, strlen)
+    !! Wrapper for [[ac_global:SetIrriFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriFileFull, strlen)
+    call SetIrriFileFull(string)
+end subroutine SetIrriFileFull_wrap
+
+
 function GetClimateFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -336,6 +382,26 @@ subroutine SetClimateFile_wrap(ClimateFile, strlen)
     string = pointer2string(ClimateFile, strlen)
     call SetClimateFile(string)
 end subroutine SetClimateFile_wrap
+
+
+function GetClimateFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimateFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimateFileFull())
+end function GetClimateFileFull_wrap
+
+
+subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
+    !! Wrapper for [[ac_global:SetClimateFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimateFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimateFileFull, strlen)
+    call SetClimateFileFull(string)
+end subroutine SetClimateFileFull_wrap
 
 
 function GetClimFile_wrap() result(c_pointer)
@@ -378,6 +444,43 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
 end subroutine SetSWCiniFile_wrap
 
 
+function GetProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetProjectFile())
+end function GetProjectFile_wrap
+
+
+subroutine SetProjectFile_wrap(ProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectFile, strlen)
+    call SetProjectFile(string)
+end subroutine SetProjectFile_wrap
+
+function GetMultipleProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetMultipleProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetMultipleProjectFile())
+end function GetMultipleProjectFile_wrap
+
+
+subroutine SetMultipleProjectFile_wrap(MultipleProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetMultipleProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: MultipleProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(MultipleProjectFile, strlen)
+    call SetMultipleProjectFile(string)
+end subroutine SetMultipleProjectFile_wrap
 
 function GetRainFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
@@ -456,6 +559,24 @@ subroutine SetCalendarFile_wrap(CalendarFile, strlen)
     call SetCalendarFile(string)
 end subroutine SetCalendarFile_wrap
 
+function GetCalendarFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCalendarFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCalendarFileFull())
+end function GetCalendarFileFull_wrap
+
+subroutine SetCalendarFileFull_wrap(CalendarFileFull, strlen)
+    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    type(c_ptr), intent(in) :: CalendarFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CalendarFileFull, strlen)
+    call SetCalendarFileFull(string)
+end subroutine SetCalendarFileFull_wrap
+
 function GetCropFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCropFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -473,6 +594,24 @@ subroutine SetCropFile_wrap(CropFile, strlen)
     string = pointer2string(CropFile, strlen)
     call SetCropFile(string)
 end subroutine SetCropFile_wrap
+
+function GetCropFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCropFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCropFileFull())
+end function GetCropFileFull_wrap
+
+subroutine SetCropFileFull_wrap(CropFileFull, strlen)
+    !! Wrapper for [[ac_global:SetCropFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: CropFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CropFileFull, strlen)
+    call SetCropFileFull(string)
+end subroutine SetCropFileFull_wrap
 
 function GetProfFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetProfFile]] for foreign languages.
@@ -548,6 +687,78 @@ subroutine SetManFilefull_wrap(ManFilefull, strlen)
     call SetManFilefull(string)
 end subroutine SetManFilefull_wrap
 
+function GetManagement_Cuttings_Considered_wrap() result(Considered_f)
+
+    logical(1) :: Considered_f
+
+    Considered_f = GetManagement_Cuttings_Considered()
+end function GetManagement_Cuttings_Considered_wrap
+
+
+function GetManagement_Cuttings_Generate_wrap() result(Generate_f)
+
+    logical(1) :: Generate_f
+
+    Generate_f = GetManagement_Cuttings_Generate()
+end function GetManagement_Cuttings_Generate_wrap
+
+
+function GetManagement_Cuttings_HarvestEnd_wrap() result(HarvestEnd_f)
+
+    logical(1) :: HarvestEnd_f
+
+    HarvestEnd_f = GetManagement_Cuttings_HarvestEnd()
+end function GetManagement_Cuttings_HarvestEnd_wrap
+
+
+subroutine SetManagement_Cuttings_Considered_wrap(Considered)
+    logical(1), intent(in) :: Considered
+
+    logical :: Considered_f
+
+    Considered_f = Considered
+    call SetManagement_Cuttings_Considered(Considered_f)    
+end subroutine SetManagement_Cuttings_Considered_wrap
+
+
+subroutine SetManagement_Cuttings_Generate_wrap(Generate)
+    logical(1), intent(in) :: Generate
+
+    logical :: Generate_f
+
+    Generate_f = Generate
+    call SetManagement_Cuttings_Generate(Generate_f)    
+end subroutine SetManagement_Cuttings_Generate_wrap
+
+
+subroutine SetManagement_Cuttings_HarvestEnd_wrap(HarvestEnd)
+    logical(1), intent(in) :: HarvestEnd
+
+    logical :: HarvestEnd_f
+
+    HarvestEnd_f = HarvestEnd
+    call SetManagement_Cuttings_HarvestEnd(HarvestEnd_f)    
+end subroutine SetManagement_Cuttings_HarvestEnd_wrap
+
+
+function GetManagement_RunoffOn_wrap() result(RunoffOn_f)
+
+    logical(1) :: RunoffOn_f
+
+    RunoffOn_f = GetManagement_RunoffOn()
+end function GetManagement_RunoffOn_wrap
+
+
+subroutine SetManagement_RunoffOn_wrap(RunoffOn)
+    logical(1), intent(in) :: RunoffOn
+
+    logical :: RunoffOn_f
+
+    RunoffOn_f = RunoffOn
+    call SetManagement_RunoffOn(RunoffOn_f)    
+end subroutine SetManagement_RunoffOn_wrap
+
+
 function GetOffSeasonFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -584,6 +795,61 @@ subroutine SetOffSeasonFilefull_wrap(OffSeasonFilefull, strlen)
     string = pointer2string(OffSeasonFilefull, strlen)
     call SetOffSeasonFilefull(string)
 end subroutine SetOffSeasonFilefull_wrap
+
+function GetObservationsFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsFile())
+end function GetObservationsFile_wrap
+
+subroutine SetObservationsFile_wrap(ObservationsFile, strlen)
+    !! Wrapper for [[ac_global:SetvFile]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsFile, strlen)
+    call SetObservationsFile(string)
+end subroutine SetObservationsFile_wrap
+
+
+function GetObservationsFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsFilefull())
+end function GetObservationsFilefull_wrap
+
+subroutine SetObservationsFilefull_wrap(ObservationsFilefull, strlen)
+    !! Wrapper for [[ac_global:SetObservationsFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsFilefull, strlen)
+    call SetObservationsFilefull(string)
+end subroutine SetObservationsFilefull_wrap
+
+function GetObservationsDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetObservationsDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetObservationsDescription())
+end function GetObservationsDescription_wrap
+
+subroutine SetObservationsDescription_wrap(ObservationsDescription, strlen)
+    !! Wrapper for [[ac_global:SetObservationsDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ObservationsDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ObservationsDescription, strlen)
+    call SetObservationsDescription(string)
+end subroutine SetObservationsDescription_wrap
 
 
 function GetGroundWaterFile_wrap() result(c_pointer)
