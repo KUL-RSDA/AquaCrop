@@ -87,7 +87,7 @@ var  fRun, fDaily, fHarvest, fEval : text;
      CGCref,GDDCGCref : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      StressLeaf,StressSenescence : double;   // % stress for leaf expansion and senescence
-     TargetTimeVal, TargetDepthVal, Step : Integer;
+     TargetTimeVal, TargetDepthVal : Integer;
 
      // DelayedGermination
      NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
@@ -1315,12 +1315,9 @@ END; (* DetermineGrowthStage *)
 
 
 PROCEDURE InitializeSimulationRun;
-VAR VAL100 : double;
-    TempString : STRING;
-    i,tHImax,DNr1,DNr2,Dayi,DayCC : integer;
-    WPi,ValDouble,SumGDDforDayCC : double;
-    DayNrCut : LongInt;
-    CCiniMin,CCiniMax,RatDGDD,fWeed,BRatioNoWeeds,fi : double;
+VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
+    SumGDDforDayCC : double;
+    CCiniMin,CCiniMax,RatDGDD, fWeed, fi : double;
     Cweed : ShortInt;
 
     Day1,Month1,Year1 : INTEGER;
@@ -2295,9 +2292,6 @@ PROCEDURE FileManagement(NrRun : ShortInt;
                          TheProjectType : repTypeProject;
                          VAR fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts : text);
 VAR RepeatToDay : LongInt;
-    StringREAD : ShortString;
-    i,T1 : INTEGER;
-    temp_str : string;
     PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     HarvestNow : BOOLEAN;
     VirtualTimeCC,DayInSeason : INTEGER;
