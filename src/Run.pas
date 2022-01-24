@@ -87,7 +87,7 @@ var  fRun, fDaily, fHarvest, fEval : text;
      CGCref,GDDCGCref : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      StressLeaf,StressSenescence : double;   // % stress for leaf expansion and senescence
-     TargetTimeVal, TargetDepthVal, Step : Integer;
+     TargetTimeVal, TargetDepthVal : Integer;
 
      // DelayedGermination
      NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
@@ -1111,10 +1111,10 @@ VAR totalname : string;
     VersionNr : double;
 
 BEGIN
-IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
+IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    BEGIN
    IF (GetIrriFile() <> '(None)')
-      THEN totalname := IrriFileFull
+      THEN totalname := GetIrriFileFull()
       ELSE totalname := CONCAT(PathNameProg,'IrriSchedule.AqC');
    Assign(fIrri,totalname);
    Reset(fIrri);
@@ -1124,7 +1124,7 @@ IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
       THEN GlobalIrriECw := true
       ELSE GlobalIrriECw := false;
    FOR i := 1 TO 6 DO READLN(fIrri);  // irrigation info (already loaded)
-   CASE IrriMode OF
+   CASE GetIrriMode() OF
         Manual   : BEGIN
                    IF (IrriFirstDayNr = undef_int)
                       THEN DNr := DayNri - Crop.Day1 + 1
@@ -1315,12 +1315,9 @@ END; (* DetermineGrowthStage *)
 
 
 PROCEDURE InitializeSimulationRun;
-VAR VAL100 : double;
-    TempString : STRING;
-    i,tHImax,DNr1,DNr2,Dayi,DayCC : integer;
-    WPi,ValDouble,SumGDDforDayCC : double;
-    DayNrCut : LongInt;
-    CCiniMin,CCiniMax,RatDGDD,fWeed,BRatioNoWeeds,fi : double;
+VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
+    SumGDDforDayCC : double;
+    CCiniMin,CCiniMax,RatDGDD, fWeed, fi : double;
     Cweed : ShortInt;
 
     Day1,Month1,Year1 : INTEGER;
@@ -1381,7 +1378,7 @@ CO2i := CO2ForSimulationPeriod(DNr1,DNr2);
 
 // 5. seasonals stress coefficients
 Simulation.SalinityConsidered := (((Crop.ECemin <> undef_int) AND (Crop.ECemax <> undef_int)) AND (Crop.ECemin < Crop.ECemax));
-IF (IrriMode = Inet) THEN Simulation.SalinityConsidered := false;
+IF (GetIrriMode() = Inet) THEN Simulation.SalinityConsidered := false;
 StressTot.NrD := undef_int;
 StressTot.Salt := 0;
 StressTot.Temp := 0;
@@ -1656,14 +1653,12 @@ CCiActual := CCiPrev;
 
 
 // 14. Biomass and re-setting of GlobalZero
-IF (ROUND(1000*Simulation.Bini) > 0) THEN // overwrite settings in GlobalZero (in Global)
-   WITH SumWabal DO
-        BEGIN
-        Biomass := Simulation.Bini;
-        BiomassPot := Simulation.Bini;
-        BiomassUnlim := Simulation.Bini;
-        BiomassTot :=  Simulation.Bini;
-        END;
+IF (ROUND(1000*Simulation.Bini) > 0) THEN BEGIN // overwrite settings in GlobalZero (in Global)
+    SetSumWaBal_Biomass(Simulation.Bini);
+    SetSumWaBal_BiomassPot(Simulation.Bini);
+    SetSumWaBal_BiomassUnlim(Simulation.Bini);
+    SetSumWaBal_BiomassTot(Simulation.Bini);
+    END;
 
 
 // 15. Transfer of assimilates
@@ -1867,7 +1862,7 @@ IF (TrxPer > 0)
 WRITE(fRun,IrriPer:9:1,InfiltPer:9:1,ROPer:9:1,DrainPer:9:1,CRwPer:9:1,
            EPer:9:1,RatioE:9,TrPer:9:1,TrWPer:9:1,RatioT:9);
 // Soil Salinity
-WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,TotalSaltContent.EndDay:10:3);
+WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,GetTotalSaltContent().EndDay:10:3);
 // seasonal stress
 WRITE(fRun,StressTot.NrD:9,StressTot.Salt:9:0,GetManagement_FertilityStress():9,StressTot.Weed:9:0,
         StressTot.Temp:9:0,StressTot.Exp:9:0,StressTot.Sto:9:0);
@@ -1883,17 +1878,17 @@ WRITE(fRun,BiomassPer:10:3,BrSF:9);
 IF (ANumber <> undef_int) // end of simulation run
    THEN BEGIN
         // Water Use Efficiency yield
-        IF (((SumWabal.Tact > 0) OR (SumWabal.ECropCycle > 0)) AND (SumWaBal.YieldPart > 0))
-           THEN WPy := (SumWaBal.YieldPart*1000)/((SumWabal.Tact+SumWaBal.ECropCycle)*10)
+        IF (((GetSumWaBal_Tact() > 0) OR (GetSumWaBal_ECropCycle() > 0)) AND (GetSumWaBal_YieldPart() > 0))
+           THEN WPy := (GetSumWaBal_YieldPart()*1000)/((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10)
            ELSE WPy := 0.0;
         // Harvest Index
-        IF ((SumWabal.Biomass > 0) AND (SumWabal.YieldPart > 0))
-           THEN HI := 100*(SumWabal.YieldPart)/(SumWabal.Biomass)
+        IF ((GetSumWaBal_Biomass() > 0) AND (GetSumWaBal_YieldPart() > 0))
+           THEN HI := 100*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
            ELSE HI := undef_double;
         // Fresh yield
         IF ((Crop.DryMatter = undef_int) OR (Crop.DryMatter = 0))
-           THEN WRITE(fRun,HI:9:1,SumWabal.YieldPart:9:3,undef_double:9:3,WPy:9:2)
-           ELSE WRITE(fRun,HI:9:1,SumWabal.YieldPart:9:3,(SumWabal.YieldPart/(Crop.DryMatter/100)):9:3,WPy:9:2);
+           THEN WRITE(fRun,HI:9:1,GetSumWaBal_YieldPart():9:3,undef_double:9:3,WPy:9:2)
+           ELSE WRITE(fRun,HI:9:1,GetSumWaBal_YieldPart():9:3,(GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):9:3,WPy:9:2);
         // Transfer of assimilates
         WRITE(fRun,Transfer.Bmobilized:9:3,Simulation.Storage.Btotal:9:3);
         END
@@ -1914,25 +1909,25 @@ BEGIN
 // determine intermediate results
 DetermineDate((PreviousDayNr+1),Day1,Month1,Year1);
 DetermineDate(DayNri,DayN,MonthN,YearN);
-RPer := SumWabal.Rain - PreviousSum.Rain;
+RPer := GetSumWaBal_Rain() - PreviousSum.Rain;
 EToPer := SumETo - PreviousSumETo;
 GDDPer := SumGDD - PreviousSumGDD;
-IrriPer := SumWabal.Irrigation - PreviousSum.Irrigation;
-InfiltPer := SumWabal.Infiltrated - PreviousSum.Infiltrated;
-EPer := SumWabal.Eact - PreviousSum.Eact;
-ExPer := SumWabal.Epot - PreviousSum.Epot;
-TrPer := SumWabal.Tact - PreviousSum.Tact;
-TrWPer := SumWabal.TrW - PreviousSum.TrW;
-TrxPer := SumWabal.Tpot - PreviousSum.Tpot;
-DrainPer := SumWabal.Drain - PreviousSum.Drain;
-BiomassPer := SumWabal.Biomass - PreviousSum.Biomass;
-BUnlimPer := SumWabal.BiomassUnlim - PreviousSum.BiomassUnlim;
+IrriPer := GetSumWaBal_Irrigation() - PreviousSum.Irrigation;
+InfiltPer := GetSumWaBal_Infiltrated() - PreviousSum.Infiltrated;
+EPer := GetSumWaBal_Eact() - PreviousSum.Eact;
+ExPer := GetSumWaBal_Epot() - PreviousSum.Epot;
+TrPer := GetSumWaBal_Tact() - PreviousSum.Tact;
+TrWPer := GetSumWaBal_TrW() - PreviousSum.TrW;
+TrxPer := GetSumWaBal_Tpot() - PreviousSum.Tpot;
+DrainPer := GetSumWaBal_Drain() - PreviousSum.Drain;
+BiomassPer := GetSumWaBal_Biomass() - PreviousSum.Biomass;
+BUnlimPer := GetSumWaBal_BiomassUnlim() - PreviousSum.BiomassUnlim;
 
-ROPer := SumWabal.Runoff - PreviousSum.Runoff;
-CRwPer := SumWabal.CRwater - PreviousSum.CRwater;
-SalInPer := SumWabal.SaltIn - PreviousSum.SaltIn;
-SalOutPer := SumWabal.SaltOut - PreviousSum.SaltOut;
-SalCRPer := SumWabal.CRsalt - PreviousSum.CRsalt;
+ROPer := GetSumWaBal_Runoff - PreviousSum.Runoff;
+CRwPer := GetSumWaBal_CRwater - PreviousSum.CRwater;
+SalInPer := GetSumWaBal_SaltIn - PreviousSum.SaltIn;
+SalOutPer := GetSumWaBal_SaltOut - PreviousSum.SaltOut;
+SalCRPer := GetSumWaBal_CRsalt - PreviousSum.CRsalt;
 
 BmobPer := Transfer.Bmobilized - PreviousBmob;
 BstoPer := Simulation.Storage.Btotal - PreviousBsto;
@@ -1948,26 +1943,26 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
 
 // reset previous sums
 PreviousDayNr := DayNri;
-PreviousSum.Rain := SumWabal.Rain;
+PreviousSum.Rain := GetSumWaBal_Rain();
 PreviousSumETo := SumETo;
 PreviousSumGDD := SumGDD;
-PreviousSum.Irrigation := SumWabal.Irrigation;
-PreviousSum.Infiltrated := SumWabal.Infiltrated;
-PreviousSum.Eact := SumWabal.Eact;
-PreviousSum.Epot := SumWabal.Epot;
-PreviousSum.Tact := SumWabal.Tact;
-PreviousSum.TrW := SumWabal.TrW;
-PreviousSum.Tpot := SumWabal.Tpot;
-PreviousSum.Drain := SumWabal.Drain;
-PreviousSum.Biomass := SumWabal.Biomass;
-PreviousSum.BiomassPot := SumWabal.BiomassPot;
-PreviousSum.BiomassUnlim := SumWabal.BiomassUnlim;
+PreviousSum.Irrigation := GetSumWaBal_Irrigation();
+PreviousSum.Infiltrated := GetSumWaBal_Infiltrated();
+PreviousSum.Eact := GetSumWaBal_Eact();
+PreviousSum.Epot := GetSumWaBal_Epot();
+PreviousSum.Tact := GetSumWaBal_Tact();
+PreviousSum.TrW := GetSumWaBal_TrW();
+PreviousSum.Tpot := GetSumWaBal_Tpot();
+PreviousSum.Drain := GetSumWaBal_Drain();
+PreviousSum.Biomass := GetSumWaBal_Biomass();
+PreviousSum.BiomassPot := GetSumWaBal_BiomassPot();
+PreviousSum.BiomassUnlim := GetSumWaBal_BiomassUnlim();
 
-PreviousSum.Runoff := SumWabal.Runoff;
-PreviousSum.CRwater := SumWabal.CRwater;
-PreviousSum.SaltIn := SumWabal.SaltIn;
-PreviousSum.SaltOut := SumWabal.SaltOut;
-PreviousSum.CRsalt := SumWabal.CRsalt;
+PreviousSum.Runoff := GetSumWaBal_Runoff();
+PreviousSum.CRwater := GetSumWaBal_CRwater();
+PreviousSum.SaltIn := GetSumWaBal_SaltIn();
+PreviousSum.SaltOut := GetSumWaBal_SaltOut();
+PreviousSum.CRsalt := GetSumWaBal_CRsalt();
 
 PreviousBmob := Transfer.Bmobilized;
 PreviousBsto := Simulation.Storage.Btotal;
@@ -1981,11 +1976,11 @@ BEGIN
 DetermineDate(Simulation.FromDayNr,Day1,Month1,Year1); // Start simulation run
 DetermineDate(Simulation.ToDayNr,DayN,MonthN,YearN); // End simulation run
 WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
-               SumWabal.Rain,SumETo,SumGDD,
-               SumWabal.Irrigation,SumWabal.Infiltrated,SumWabal.Runoff,SumWabal.Drain,SumWabal.CRwater,
-               SumWabal.Eact,SumWabal.Epot,SumWabal.Tact,SumWabal.TrW,SumWabal.Tpot,
-               SumWabal.SaltIn,SumWabal.SaltOut,SumWabal.CRsalt,
-               SumWabal.Biomass,SumWaBal.BiomassUnlim,Transfer.Bmobilized,Simulation.Storage.Btotal,
+               GetSumWaBal_Rain(),SumETo,SumGDD,
+               GetSumWaBal_Irrigation(),GetSumWaBal_Infiltrated(),GetSumWaBal_Runoff(),GetSumWaBal_Drain(),GetSumWaBal_CRwater(),
+               GetSumWaBal_Eact(),GetSumWaBal_Epot(),GetSumWaBal_Tact(),GetSumWaBal_TrW(),GetSumWaBal_Tpot(),
+               GetSumWaBal_SaltIn(),GetSumWaBal_SaltOut(),GetSumWaBal_CRsalt(),
+               GetSumWaBal_Biomass(),GetSumWaBal_BiomassUnlim(),Transfer.Bmobilized,Simulation.Storage.Btotal,
                TheProjectFile,fRun);
 END; (* WriteSimPeriod *)
 
@@ -2000,11 +1995,11 @@ BEGIN
 DetermineDate(DayNri,DayN,MonthN,YearN);
 CASE OutputAggregate OF
   1 :   BEGIN // daily output
-        BiomassDay := SumWabal.Biomass - PreviousSum.Biomass;
-        BUnlimDay := SumWabal.BiomassUnlim - PreviousSum.BiomassUnlim;
-        SaltIn := SumWabal.SaltIn - PreviousSum.SaltIn;
-        SaltOut := SumWabal.SaltOut - PreviousSum.SaltOut;
-        CRsalt := SumWabal.CRsalt - PreviousSum.CRsalt;
+        BiomassDay := GetSumWaBal_Biomass() - PreviousSum.Biomass;
+        BUnlimDay := GetSumWaBal_BiomassUnlim() - PreviousSum.BiomassUnlim;
+        SaltIn := GetSumWaBal_SaltIn() - PreviousSum.SaltIn;
+        SaltOut := GetSumWaBal_SaltOut() - PreviousSum.SaltOut;
+        CRsalt := GetSumWaBal_CRsalt() - PreviousSum.CRsalt;
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
                        Rain,ETo,GDDayi,
                        Irrigation,Infiltrated,Runoff,Drain,CRwater,
@@ -2012,11 +2007,11 @@ CASE OutputAggregate OF
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,Bin,Bout,
                        TheProjectFile,fRun);
-        PreviousSum.Biomass := SumWabal.Biomass;
-        PreviousSum.BiomassUnlim := SumWabal.BiomassUnlim;
-        PreviousSum.SaltIn := SumWabal.SaltIn;
-        PreviousSum.SaltOut := SumWabal.SaltOut;
-        PreviousSum.CRsalt := SumWabal.CRsalt;
+        PreviousSum.Biomass := GetSumWaBal_Biomass();
+        PreviousSum.BiomassUnlim := GetSumWaBal_BiomassUnlim();
+        PreviousSum.SaltIn := GetSumWaBal_SaltIn();
+        PreviousSum.SaltOut := GetSumWaBal_SaltOut();
+        PreviousSum.CRsalt := GetSumWaBal_CRsalt();
         END;
   2,3 : BEGIN  // 10-day or monthly output
         WriteNow := false;
@@ -2050,9 +2045,9 @@ WRITE(fDaily,Di:6,Mi:6,Yi:6,DAP:6,StageCode:6);
 IF Out1Wabal THEN
    BEGIN
    IF (ZiAqua = undef_int)
-      THEN WRITE(fDaily,TotalWaterContent.EndDay:10:1,Rain:8:1,Irrigation:9:1,
+      THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
                SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,undef_double:8:2)
-      ELSE  WRITE(fDaily,TotalWaterContent.EndDay:10:1,Rain:8:1,Irrigation:9:1,
+      ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
                SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,(ZiAqua/100):8:2);
    IF (Tpot > 0) THEN Ratio1 := 100*Tact/Tpot
                  ELSE Ratio1 := 100.0;
@@ -2095,15 +2090,15 @@ IF Out2Crop THEN
       THEN StrW := undef_int
       ELSE StrW := Round(WeedRCi);
    //6. WPi adjustemnt
-   IF (SumWabal.Biomass <= 0.000001) THEN WPi := 0;
+   IF (GetSumWaBal_Biomass() <= 0.000001) THEN WPi := 0;
    //7. Harvest Index
-   IF ((SumWabal.Biomass > 0) AND (SumWabal.YieldPart > 0))
-      THEN HI := 100*(SumWabal.YieldPart)/(SumWabal.Biomass)
+   IF ((GetSumWaBal_Biomass() > 0) AND (GetSumWaBal_YieldPart() > 0))
+      THEN HI := 100*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
       ELSE HI := undef_double;
    //8. Relative Biomass
-   IF ((SumWaBal.Biomass > 0) AND (SumWaBal.BiomassUnlim > 0))
+   IF ((GetSumWaBal_Biomass() > 0) AND (GetSumWaBal_BiomassUnlim() > 0))
       THEN BEGIN
-           Brel := ROUND(100*SumWaBal.Biomass/SumWaBal.BiomassUnlim);
+           Brel := ROUND(100*GetSumWaBal_Biomass()/GetSumWaBal_BiomassUnlim());
            IF (Brel > 100) THEN Brel := 100;
            END
       ELSE Brel := undef_int;
@@ -2112,17 +2107,17 @@ IF Out2Crop THEN
       THEN KcVal := Tpot/(ETo*KsTr)
       ELSE KcVal := undef_int;
    //10. Water Use Efficiency yield
-   IF (((SumWabal.Tact > 0) OR (SumWabal.ECropCycle > 0)) AND (SumWaBal.YieldPart > 0))
-      THEN WPy := (SumWaBal.YieldPart*1000)/((SumWabal.Tact+SumWabal.ECropCycle)*10)
+   IF (((GetSumWaBal_Tact() > 0) OR (GetSumWaBal_ECropCycle() > 0)) AND (GetSumWaBal_YieldPart() > 0))
+      THEN WPy := (GetSumWaBal_YieldPart()*1000)/((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10)
       ELSE WPy := 0.0;
    // write
    WRITE(fDaily,GDDayi:9:1,RootingDepth:8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
          (CCiActual*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,Tpot:9:1,Tact:9:1,
-         TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,SumWabal.Biomass:10:3,HI:8:1,SumWabal.YieldPart:9:3);
+         TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
    IF ((Crop.DryMatter = undef_int) OR (Crop.DryMatter = 0))
       THEN WRITE(fDaily,undef_double:9:3)
-      ELSE WRITE(fDaily,(SumWabal.YieldPart/(Crop.DryMatter/100)):9:3);
+      ELSE WRITE(fDaily,(GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):9:3);
    // finalize
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,Brel:8,WPy:12:2,Bin:9:3,Bout:9:3)
@@ -2132,7 +2127,7 @@ IF Out2Crop THEN
 // 3. Profile/Root zone - Soil water content
 IF Out3Prof THEN
    BEGIN
-   WRITE(fDaily,TotalWaterContent.EndDay:10:1);
+   WRITE(fDaily,GetTotalWaterContent().EndDay:10:1);
    IF (RootingDepth <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
@@ -2162,7 +2157,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(Drain*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,TotalSaltContent.EndDay:10:3);
+   WRITE(fDaily,SaltInfiltr:9:3,(Drain*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
@@ -2281,7 +2276,7 @@ IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);
 WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(CCiActual*100):8:1,CCfield:8:1,CCstd:8:1,
-           SumWabal.Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
+           GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
 END; (* WriteEvaluationData *)
 
 
@@ -2297,15 +2292,13 @@ PROCEDURE FileManagement(NrRun : ShortInt;
                          TheProjectType : repTypeProject;
                          VAR fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts : text);
 VAR RepeatToDay : LongInt;
-    StringREAD : ShortString;
-    i,T1 : INTEGER;
-    temp_str : string;
     PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     HarvestNow : BOOLEAN;
     VirtualTimeCC,DayInSeason : INTEGER;
     SumGDDadjCC,RatDGDD : double;
+    Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, BiomassTot_temp : double;
+    YieldPart_temp : double;
     ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
-
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2399,8 +2392,8 @@ VAR RepeatToDay : LongInt;
     TargetDepthVal := -999;
     IF ((DayNri < Crop.Day1) OR (DayNri > Crop.DayN))
        THEN Irrigation := IrriOutSeason(DayNri)
-       ELSE IF (IrriMode = Manual) THEN Irrigation := IrriManual(DayNri);
-    IF ((IrriMode = Generate) AND ((DayNri >= Crop.Day1) AND (DayNri <= Crop.DayN))) THEN
+       ELSE IF (GetIrriMode() = Manual) THEN Irrigation := IrriManual(DayNri);
+    IF ((GetIrriMode() = Generate) AND ((DayNri >= Crop.Day1) AND (DayNri <= Crop.DayN))) THEN
        BEGIN
        // read next line if required
        DayInSeason := DayNri - Crop.Day1 + 1;
@@ -2526,18 +2519,18 @@ VAR RepeatToDay : LongInt;
     IF (NrCut = 9999)
        THEN BEGIN
             // last line at end of season
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,SumWabal.Biomass:34:3);
+            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
             IF (Crop.DryMatter = undef_int)
-               THEN WRITELN(fHarvest,SumWabal.YieldPart:20:3)
-               ELSE WRITELN(fHarvest,SumWabal.YieldPart:20:3,(SumWabal.YieldPart/(Crop.DryMatter/100)):20:3);
+               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3)
+               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):20:3);
             END
        ELSE BEGIN
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(SumWabal.Biomass-BprevSum):12:3,
-                  SumWabal.Biomass:10:3,(SumWabal.YieldPart-YprevSum):10:3);
+            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
+                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
             IF (Crop.DryMatter = undef_int)
-               THEN WRITELN(fHarvest,SumWabal.YieldPart:10:3)
-               ELSE WRITELN(fHarvest,SumWabal.YieldPart:10:3,((SumWabal.YieldPart-YprevSum)/(Crop.DryMatter/100)):10:3,
-                         (SumWabal.YieldPart/(Crop.DryMatter/100)):10:3);
+               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3)
+               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(Crop.DryMatter/100)):10:3,
+                         (GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):10:3);
             END;
     END; (* RecordHarvest *)
 
@@ -2669,7 +2662,7 @@ IF (((Crop.ModeCycle = CalendarDays) AND ((DayNri-Crop.Day1+1) < Crop.DaysToHarv
 IF ((RootingDepth > 0) AND (DayNri = Crop.Day1))
    THEN BEGIN //initial root zone depletion day1 (for WRITE Output)
         DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-        IF (IrriMode = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
+        IF (GetIrriMode() = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
         END;
 
 (* 8. Transfer of Assimilates  *)
@@ -2686,10 +2679,10 @@ BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayL
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
-IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (IrriMode = Inet)) THEN
+IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (GetIrriMode() = Inet)) THEN
    BEGIN
    Irrigation := Irrigation + PreIrri;
-   SumWabal.Irrigation := SumWabal.Irrigation + PreIrri;
+   SetSumWabal_Irrigation(GetSumWaBal_Irrigation() + PreIrri);
    PreIrri := 0;
    END;
 
@@ -2703,7 +2696,9 @@ IF (CCiActual > 0) THEN
 
 
 (* 10. Potential biomass *)
-DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotNoS,SumWaBal.BiomassUnlim);
+BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
+DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotNoS,BiomassUnlim_temp);
+SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
 IF ((RootingDepth > 0) AND (NoMoreCrop = false))
@@ -2726,18 +2721,28 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         SetRootZoneSalt_KsSalt(KsSalt_temp);
         StressTot.Salt := ((StressTot.NrD - 1)*StressTot.Salt + 100*(1-GetRootZoneSalt().KsSalt))/StressTot.NrD;
         // Biomass and yield
+        Biomass_temp := GetSumWaBal_Biomass();
+        BiomassPot_temp := GetSumWaBal_BiomassPot();
+        BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
+        BiomassTot_temp := GetSumWaBal_BiomassTot();
+        YieldPart_temp := GetSumWaBal_YieldPart();
         DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
                                  Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,StressTot.Salt,SumGDDadjCC,CCiActual,FracAssim,
                                  VirtualTimeCC,SumInterval,
-                                 SumWaBal.Biomass,SumWaBal.BiomassPot,SumWaBal.BiomassUnlim,SumWaBal.BiomassTot,
-                                 SumWabal.YieldPart,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
+                                 Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
+                                 YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
                                  HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot,CCxWitheredTpotNoS,
                                  WeedRCi,CCiActualWeedInfested,TactWeedInfested,
                                  StressSFadjNEW,PreviousStressLevel,
                                  Transfer.Store,Transfer.Mobilize,
                                  Transfer.ToMobilize,Transfer.Bmobilized,Bin,Bout,
                                  TESTVALY);
+        SetSumWaBal_Biomass(Biomass_temp);
+        SetSumWaBal_BiomassPot(BiomassPot_temp);
+        SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
+        SetSumWaBal_BiomassTot(BiomassTot_temp);
+        SetSumWaBal_YieldPart(YieldPart_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;
@@ -2793,20 +2798,20 @@ IF GetManagement_Cuttings_Considered() THEN
                                  THEN HarvestNow := true;
                               END;
                      DryB   : BEGIN
-                              IF (((SumWabal.Biomass - BprevSum) >= CutInfoRecord1.MassInfo)
+                              IF (((GetSumWaBal_Biomass() - BprevSum) >= CutInfoRecord1.MassInfo)
                                                  AND (DayInSeason >= CutInfoRecord1.FromDay)
                                                  AND (DayInSeason <= CutInfoRecord1.ToDay))
                                  THEN HarvestNow := true;
                               END;
                      DryY   : BEGIN
-                              IF (((SumWabal.YieldPart - YprevSum) >= CutInfoRecord1.MassInfo)
+                              IF (((GetSumWaBal_YieldPart() - YprevSum) >= CutInfoRecord1.MassInfo)
                                                    AND (DayInSeason >= CutInfoRecord1.FromDay)
                                                    AND (DayInSeason <= CutInfoRecord1.ToDay))
                                  THEN HarvestNow := true;
                               END;
                      FreshY : BEGIN
                               // OK if Crop.DryMatter = undef_int (not specified) HarvestNow remains false
-                              IF ((((SumWabal.YieldPart - YprevSum)/(Crop.DryMatter/100)) >= CutInfoRecord1.MassInfo)
+                              IF ((((GetSumWaBal_YieldPart() - YprevSum)/(Crop.DryMatter/100)) >= CutInfoRecord1.MassInfo)
                                                                           AND (DayInSeason >= CutInfoRecord1.FromDay)
                                                                           AND (DayInSeason <= CutInfoRecord1.ToDay))
                                  THEN HarvestNow := true;
@@ -2837,8 +2842,8 @@ IF GetManagement_Cuttings_Considered() THEN
       // Reset
       SumInterval := 0;
       SumGDDcuts := 0;
-      BprevSum := SumWaBal.Biomass;
-      YprevSum := SumWaBal.YieldPart;
+      BprevSum := GetSumWaBal_Biomass();
+      YprevSum := GetSumWaBal_YieldPart();
       END;
    END;
 
@@ -2957,6 +2962,7 @@ END; (* FileManagement *)
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
 VAR NrRun : ShortInt;
+    SumWaBal_temp : rep_sum;
 
 
     PROCEDURE AdjustCompartments;
@@ -3003,7 +3009,7 @@ VAR NrRun : ShortInt;
 
     PROCEDURE CloseIrrigationFile(VAR fIrri : text);
     BEGIN
-    IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN Close(fIrri);
+    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
     END; (* CloseIrrigationFile *)
 
     PROCEDURE CloseManagementFile(VAR fCuts : text);
@@ -3046,7 +3052,9 @@ CASE TheProjectType OF
      TypePRO : BEGIN
                LoadSimulationRunProject(ProjectFileFull,(1));
                AdjustCompartments;
-               GlobalZero(SumWabal);
+               SumWaBal_temp := GetSumWaBal();
+               GlobalZero(SumWabal_temp);
+               SetSumWaBal(SumWaBal_temp);
                ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
                InitializeSimulationRun;
                IF OutDaily THEN WriteTitleDailyResults(TheProjectType,(1),fDaily);
@@ -3063,7 +3071,9 @@ CASE TheProjectType OF
                    BEGIN
                    LoadSimulationRunProject(MultipleProjectFileFull,NrRun);
                    AdjustCompartments;
-                   GlobalZero(SumWabal);
+                   SumWaBal_temp := GetSumWaBal();
+                   GlobalZero(SumWabal_temp);
+                   SetSumWaBal(SumWaBal_temp);
                    ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
                    InitializeSimulationRun;
                    IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);

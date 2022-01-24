@@ -9,12 +9,15 @@ use ac_global, only: CheckFilesInProject, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
-                     GetCO2Description, &
+                     GenerateCO2Description, &
                      GetCO2File, &
+                     GetCO2FileFull, &
+                     GetCO2Description, &
                      GetCropFile, &
                      GetCropFileFull, &
                      GetIrriDescription, &
                      GetIrriFile, &
+                     GetIrriFileFull, &
                      GetClimateFile, &
                      GetClimateFileFull, &
                      GetClimFile, &
@@ -37,7 +40,6 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonFilefull, &
                      GetGroundWaterFile, &
                      GetGroundWaterFilefull, &
-                     SetCO2File, &
                      GetEToFile, &
                      SetEToFile, &
                      GetEToFileFull, &
@@ -48,9 +50,13 @@ use ac_global, only: CheckFilesInProject, &
                      setRainFileFull, &
                      SetCalendarFile, &
                      SetCalendarFileFull, &
+                     SetCO2File, &
+                     SetCO2FileFull, &
+                     SetCO2Description, &
                      SetCropFile, &
                      SetCropFileFull, &
                      SetIrriFile, &
+                     SetIrriFileFull, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimFile, &
@@ -180,9 +186,9 @@ subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
     call CheckFilesInProject(string, Runi, AllOK)
 end subroutine CheckFilesInProject_wrap
 
-subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
+subroutine GenerateCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
             strlen2)
-    !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
+    !! Wrapper for [[ac_global:GenerateCO2Description]] for foreign languages.
     type(c_ptr), intent(in) :: CO2FileFull
     integer(int32), intent(in) :: strlen1
     type(c_ptr), intent(inout) :: CO2Description
@@ -193,8 +199,8 @@ subroutine GetCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
 
     string1 = pointer2string(CO2FileFull, strlen1)
     string2 = pointer2string(CO2Description, strlen2)
-    call GetCO2Description(string1, string2)
-end subroutine GetCO2Description_wrap
+    call GenerateCO2Description(string1, string2)
+end subroutine GenerateCO2Description_wrap
 
 
 subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
@@ -241,6 +247,43 @@ subroutine SetCO2File_wrap(CO2File, strlen)
     call SetCO2File(string)
 end subroutine SetCO2File_wrap
 
+function GetCO2FileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCO2FileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCO2FileFull())
+end function GetCO2FileFull_wrap
+
+
+subroutine SetCO2FileFull_wrap(CO2FileFull, strlen)
+    !! Wrapper for [[ac_global:SetCO2FileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: CO2Filefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CO2FileFull, strlen)
+    call SetCO2Filefull(string)
+end subroutine SetCO2FileFull_wrap
+
+function GetCO2Description_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCO2Description]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCO2Description())
+end function GetCO2Description_wrap
+
+
+subroutine SetCO2Description_wrap(CO2Description, strlen)
+    !! Wrapper for [[ac_global:SetCO2Description]] for foreign languages.
+    type(c_ptr), intent(in) :: CO2Description
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CO2Description, strlen)
+    call SetCO2Description(string)
+end subroutine SetCO2Description_wrap
 
 
 function GetEToFile_wrap() result(c_pointer)
@@ -316,6 +359,26 @@ subroutine SetIrriFile_wrap(IrriFile, strlen)
     string = pointer2string(IrriFile, strlen)
     call SetIrriFile(string)
 end subroutine SetIrriFile_wrap
+
+
+function GetIrriFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetIrriFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetIrriFileFull())
+end function GetIrriFileFull_wrap
+
+
+subroutine SetIrriFileFull_wrap(IrriFileFull, strlen)
+    !! Wrapper for [[ac_global:SetIrriFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriFileFull, strlen)
+    call SetIrriFileFull(string)
+end subroutine SetIrriFileFull_wrap
 
 
 function GetClimateFile_wrap() result(c_pointer)

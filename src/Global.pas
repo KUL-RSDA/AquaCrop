@@ -46,12 +46,6 @@ TYPE
 
      rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
-     rep_Content = Record  // total water (mm) or salt (Mg/ha) content
-         BeginDay  : double; //at the beginning of the day
-         EndDay    : double; //at the end of the day
-         ErrorDay  : double; //error on WaterContent or SaltContent over the day
-         END;
-
      rep_subkind = (Vegetative,Grain,Tuber,Forage);
      rep_pMethod = (NoCorrection,FAOCorrection);
      
@@ -205,13 +199,6 @@ TYPE
          IniAbstract : shortint;
          END;
 
-     rep_sum = RECORD
-         Epot, Tpot, Rain, Irrigation, Infiltrated,
-         Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater  : double;  (* mm *)
-         Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot : double;   (* ton/ha *)
-         SaltIn, SaltOut, CRsalt : double; (* ton/ha *)
-         End;
-
      rep_datatype = (Daily,Decadely,Monthly);
      rep_clim = Record
          DataType    : rep_datatype;
@@ -284,9 +271,6 @@ TYPE
          CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
          End;
 
-     rep_IrriMode = (NoIrri,Manual,Generate,Inet);
-     rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
-
      rep_DayEventInt = Record
          DayNr : Integer;
          Param : Integer;
@@ -340,61 +324,27 @@ TYPE
         GeneratedDayNrOnset,GeneratedDayNrEnd : LongInt;
 	end;
 
-      repTypeClimData = (ETData,RainData,TmpData,CO2Data,RainETData);
-      rep_TypePlot = (TypeA,TypeZgwt,TypeZr);
       rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-
-      rep_OUTindividual = Record
-         ClimOUT,
-         CropOUT,
-         WabalOUT,
-         ProfOUT,
-         SaltOUT,
-         CompWCOUT,
-         CompECOUT,
-         InetOUT,
-         HarvestOUT,
-         Requested : BOOLEAN;
-         end;
-
-      rep_OUTevaluation = Record
-         EvalDataOUT,
-         EvalStatOUT,
-         Requested : BOOLEAN;
-         end;
-
-      rep_OUTfiles = Record
-         FileOUTseasonal : BOOLEAN;
-         FileOUTindividual : rep_OUTindividual;
-         FileOUTevaluation : rep_OUTevaluation;
-         end;
-
 
 VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImport : string;
     DataPath,ObsPath : BOOLEAN;
     TemperatureFile : string;
-    TemperatureFileFull,CO2FileFull,
-    IrriFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    TemperatureFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,EToDescription,RainDescription,
-    TemperatureDescription,CO2Description,IrriDescription,ManDescription,SWCiniDescription,
+    TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
     ClimRecord,
     EToRecord,
     RainRecord,
     TemperatureRecord     : rep_clim;
     Simulation     : rep_sim;
-    IrriMode       : rep_IrriMode;
-    IrriMethod     : rep_IrriMethod;
     IrriFirstDayNr : LongInt;
     SoilLayer      : rep_SoilLayer;
     Compartment    : rep_Comp;
     Soil           : rep_soil;
     NrCompartments : INTEGER;
-    TotalWaterContent,
-    TotalSaltContent   : rep_Content; //Water Content (mm) and Salt Content (Mg/ha)
     Crop           : rep_Crop;
-    SumWabal       : rep_sum;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -413,11 +363,8 @@ VAR PathNameProg,PathNameData,PathNameOutp,PathNameSimul,PathNameObs,PathNameImp
     MinInt, MaxInt : INTEGER;
     IrriBeforeSeason,
     IrriAfterSeason : rep_IrriOutSeasonEvents;
-    TypeClimData : repTypeClimData;
     MaxPlotNew : Integer;
-    TypePlotNew : rep_TypePlot;
     MaxPlotTr : ShortInt;
-    OUTPUTfiles : rep_OUTfiles;
     Onset : rep_Onset;
     EndSeason : rep_EndSeason;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
@@ -808,10 +755,10 @@ WITH SumWabal DO
   CRwater := 0;
   CRsalt := 0;
   END;
-TotalWaterContent.BeginDay := 0;
+SetTotalWaterContent_BeginDay(0);
 FOR i :=1 to NrCompartments DO
-    TotalWaterContent.BeginDay := TotalWaterContent.BeginDay
-      + Compartment[i].theta*1000*Compartment[i].Thickness;
+        SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
+          + Compartment[i].theta*1000*Compartment[i].Thickness);
 END; (* GlobalZero *)
 
 
@@ -1012,9 +959,9 @@ END; (* LoadManagement *)
 PROCEDURE NoIrrigation;
 VAR Nri : INTEGER;
 BEGIN
- IrriMode := NoIrri;
+ SetIrriMode(NoIrri);
  IrriDescription := 'Rainfed cropping';
- IrriMethod := MSprinkler;
+ SetIrriMethod(MSprinkler);
  Simulation.IrriECw := 0.0; // dS/m
  SetGenerateTimeMode(AllRAW);
  SetGenerateDepthMode(ToFC);
@@ -1136,11 +1083,11 @@ READLN(f0,VersionNr);  // AquaCrop version
 // irrigation method
 READLN(f0,i);
 CASE i OF
-     1 : IrriMethod := MSprinkler;
-     2 : IrriMethod := MBasin;
-     3 : IrriMethod := MBorder;
-     4 : IrriMethod := MFurrow;
-     else  IrriMethod := MDrip;
+     1 : SetIrriMethod(MSprinkler);
+     2 : SetIrriMethod(MBasin);
+     3 : SetIrriMethod(MBorder);
+     4 : SetIrriMethod(MFurrow);
+     else  SetIrriMethod(MDrip);
      end;
 
 // fraction of soil surface wetted
@@ -1149,10 +1096,10 @@ READLN(f0,SimulParam.IrriFwInSeason);
 // irrigation mode and parameters
 READLN(f0,i);
 CASE i OF
-     0 : IrriMode := NoIrri; // rainfed
-     1 : IrriMode := Manual;
-     2 : IrriMode := Generate;
-     else IrriMode := Inet;
+     0 : SetIrriMode(NoIrri); // rainfed
+     1 : SetIrriMode(Manual);
+     2 : SetIrriMode(Generate);
+     else SetIrriMode(Inet);
      end;
 
 // 1. Irrigation schedule
@@ -1162,7 +1109,7 @@ IF ((i = 1) AND (ROUND(VersionNr*10) >= 70))
 
 
 // 2. Generate
-IF (IrriMode = Generate) THEN
+IF (GetIrriMode() = Generate) THEN
    BEGIN
    READLN(f0,i); // time criterion
    Case i OF
@@ -1181,7 +1128,7 @@ IF (IrriMode = Generate) THEN
    END;
 
 // 3. Net irrigation requirement
-IF (IrriMode = Inet) THEN
+IF (GetIrriMode() = Inet) THEN
    BEGIN
    READLN(f0,SimulParam.PercRAW);
    IrriFirstDayNr := undef_int;  // start of growing period
@@ -1384,7 +1331,7 @@ FOR compi := 1 TO NrCompartments DO
         + Simulation.ThetaIni[compi]*100*10*Compartment[compi].Thickness;
     END;
 FOR layeri := 1 TO NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
-TotalWaterContent.BeginDay := Total;
+SetTotalWaterContent_BeginDay(Total);
 
 // initial soil water content and no salts
 DeclareInitialCondAtFCandNoSalt;
@@ -1582,10 +1529,13 @@ END; (* DetermineSaltContent *)
 
 PROCEDURE CompleteProfileDescription;
 VAR i : INTEGER;
+TotalWaterContent_temp : rep_Content;
 BEGIN
 FOR i:= (Soil.NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i]);
 Simulation.ResetIniSWC := true; // soil water content and soil salinity
-specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent);
+TotalWaterContent_temp := GetTotalWaterContent();
+specify_soil_layer(NrCompartments,Soil.NrSoilLayers,SoilLayer,Compartment,TotalWaterContent_temp);
+SetTotalWaterContent(TotalWaterContent_temp);
 END; (* CompleteProfileDescription *)
 
 
@@ -1776,11 +1726,11 @@ DetermineLengthGrowthStages(Crop.CCo,Crop.CCx,Crop.CDC,Crop.DaysToGermination,Cr
 Crop.CCoAdjusted := Crop.CCo;
 Crop.CCxAdjusted := Crop.CCx;
 Crop.CCxWithered := Crop.CCx;
-SumWaBal.Biomass := 0;
-SumWaBal.BiomassPot := 0;
-SumWabal.BiomassUnlim := 0;
-SumWaBal.BiomassTot := 0; // crop and weeds (for soil fertility stress)
-SumWaBal.YieldPart := 0;
+SetSumWaBal_Biomass(0);
+SetSumWaBal_BiomassPot(0);
+SetSumWaBal_BiomassUnlim(0);
+SetSumWaBal_BiomassTot(0); // crop and weeds (for soil fertility stress)
+SetSumWaBal_YieldPart(0);
 Simulation.EvapLimitON := false;
 END; (* CompleteCropDescription *)
 
@@ -3527,7 +3477,7 @@ DetermineDate(ToDayNr,Dayi,Monthi,ToYi);
 IF ((FromYi = 1901) OR (ToYi = 1901))
    THEN CO2ForSimulationPeriod := CO2Ref
    ELSE BEGIN
-        Assign(f0,CO2FileFull);
+        Assign(f0,GetCO2FileFull());
         Reset(f0);
         FOR i:= 1 TO 3 DO Readln(f0); // Description and Title
         // from year
@@ -3665,7 +3615,7 @@ FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,CO2i : double;
                             TheModeCycle : rep_modeCycle) : double;
 CONST EToStandard = 5;
-VAR SumGDD,GDDi,SumKcPot,KsB,SumGDDforPlot,SumGDDfromDay1 : double;
+VAR SumGDD,GDDi,SumKcPot,SumGDDforPlot,SumGDDfromDay1 : double;
     Tndayi, Txdayi,CCi,CCxWitheredForB,TpotForB,EpotTotForB : double;
     CCinitial,DayFraction, GDDayFraction : double;
     DayCC,Tadj,GDDTadj : INTEGER;
@@ -4219,7 +4169,7 @@ FOR compi := 1 TO NrCompartments DO
                                                                 + Simulation.ThetaIni[compi]*100*10*Compartment[compi].Thickness;
     END;
 FOR layeri := 1 TO Soil.NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
-TotalWaterContent.BeginDay := Total;
+SetTotalWaterContent_BeginDay(Total);
 END; (* AdjustThetaInitial *)
 
 
