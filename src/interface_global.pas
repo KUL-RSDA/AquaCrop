@@ -1352,7 +1352,7 @@ procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod);
 
 function GetTemperatureRecord(): rep_clim;
 
-function __GetTemperatureRecord_DataType() : integer;
+function __GetTemperatureRecord_DataType() : shortint;
          external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_datatype';
 
 function GetTemperatureRecord_DataType() : rep_datatype;
@@ -1396,7 +1396,7 @@ function GetTemperatureRecord_ToString_wrap(): PChar;
 
 procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
 
-procedure __SetTemperatureRecord_DataType(constref DataType : integer);
+procedure __SetTemperatureRecord_DataType(constref DataType : shortint);
          external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype';
 
 procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
@@ -2046,7 +2046,7 @@ end;
 
 function GetTemperatureRecord_DataType(): rep_datatype;
 var
-    int_datatype : integer;
+    int_datatype : shortint;
 begin;
     int_datatype := __GetTemperatureRecord_DataType();
     GetTemperatureRecord_DataType := rep_DataType(int_datatype);
@@ -2054,7 +2054,7 @@ end;
 
 procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
 var
-   int_datatype : integer;
+   int_datatype : shortint;
 
 begin;
    int_datatype := ord(DataType);

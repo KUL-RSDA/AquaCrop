@@ -3289,70 +3289,60 @@ type(rep_clim) function GetTemperatureRecord()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord = TemperatureRecord
-
 end function GetTemperatureRecord
 
 integer(intEnum) function GetTemperatureRecord_DataType()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_DataType = TemperatureRecord%DataType
-
 end function GetTemperatureRecord_DataType
 
 integer(int32) function GetTemperatureRecord_FromD()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_FromD = TemperatureRecord%FromD
-
 end function GetTemperatureRecord_FromD
 
 integer(int32) function GetTemperatureRecord_FromM()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_FromM = TemperatureRecord%FromM
-
 end function GetTemperatureRecord_FromM
 
 integer(int32) function GetTemperatureRecord_FromY()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_FromY = TemperatureRecord%FromY
-
 end function GetTemperatureRecord_FromY
 
 integer(int32) function GetTemperatureRecord_ToD()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_ToD = TemperatureRecord%ToD
-
 end function GetTemperatureRecord_ToD
 
 integer(int32) function GetTemperatureRecord_ToM()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_ToM = TemperatureRecord%ToM
-
 end function GetTemperatureRecord_ToM
 
 integer(int32) function GetTemperatureRecord_ToY()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_ToY = TemperatureRecord%ToY
-
 end function GetTemperatureRecord_ToY
 
 integer(int32) function GetTemperatureRecord_FromDayNr()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_FromDayNr = TemperatureRecord%FromDayNr
-
 end function GetTemperatureRecord_FromDayNr
 
 integer(int32) function GetTemperatureRecord_ToDayNr()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_ToDayNr = TemperatureRecord%ToDayNr
-
 end function GetTemperatureRecord_ToDayNr
 
 function GetTemperatureRecord_FromString() result(str)
@@ -3360,7 +3350,6 @@ function GetTemperatureRecord_FromString() result(str)
     character(len=len(TemperatureRecord%FromString)) :: str
 
     str = TemperatureRecord%FromString
-
 end function GetTemperatureRecord_FromString
 
 function GetTemperatureRecord_ToString() result(str)
@@ -3368,14 +3357,12 @@ function GetTemperatureRecord_ToString() result(str)
     character(len=len(TemperatureRecord%ToString)) :: str
 
     str = TemperatureRecord%ToString
-
 end function GetTemperatureRecord_ToString
 
 integer(int32) function GetTemperatureRecord_NrObs()
     !! Getter for the "TemperatureRecord" global variable.
 
     GetTemperatureRecord_NrObs = TemperatureRecord%NrObs
-
 end function GetTemperatureRecord_NrObs
 
 subroutine SetTemperatureRecord_DataType(DataType)
@@ -3403,7 +3390,7 @@ subroutine SetTemperatureRecord_FromY(FromY)
     !! Setter for the "TemperatureRecord" global variable.
     integer(int32), intent(in) :: FromY
 
-    TemperatureRecord%FromD = FromY
+    TemperatureRecord%FromY = FromY
 end subroutine SetTemperatureRecord_FromY
 
 subroutine SetTemperatureRecord_ToD(ToD)
@@ -3424,7 +3411,7 @@ subroutine SetTemperatureRecord_TOY(ToY)
     !! Setter for the "TemperatureRecord" global variable.
     integer(int32), intent(in) :: ToY
 
-    TemperatureRecord%ToD = ToY
+    TemperatureRecord%ToY = ToY
 end subroutine SetTemperatureRecord_ToY
 
 subroutine SetTemperatureRecord_ToDayNr(ToDayNr)
@@ -3445,7 +3432,7 @@ subroutine SetTemperatureRecord_NrObs(NrObs)
     !! Setter for the "TemperatureRecord" global variable.
     integer(int32), intent(in) :: NrObs
 
-    TemperatureRecord%ToDayNr = NrObs
+    TemperatureRecord%NrObs = NrObs
 end subroutine SetTemperatureRecord_NrObs
 
 subroutine SetTemperatureRecord_ToString(ToString)
