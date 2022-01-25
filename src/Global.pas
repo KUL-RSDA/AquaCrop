@@ -257,11 +257,6 @@ TYPE
          DayNr : Integer;
          Param : Integer;
          end;
-     rep_DayEventDbl = Record
-         DayNr : Integer;
-         Param : Double;
-         end;
-     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
@@ -310,8 +305,7 @@ TYPE
 
 
 VAR DataPath,ObsPath : BOOLEAN;
-    TemperatureFile : string;
-    TemperatureFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
     TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
@@ -2917,7 +2911,7 @@ IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
 
 
 //Part B - ClimFile and Temperature files --> ClimFile
-IF (TemperatureFile = '(None)')
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         // no adjustments are required
         END
@@ -3609,7 +3603,7 @@ VAR SumGDD,GDDi,SumKcPot,SumGDDforPlot,SumGDDfromDay1 : double;
 
 BEGIN
 // 1. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
@@ -3670,7 +3664,7 @@ IF (TheDaysToCCini <> 0)
 FOR Dayi := 1 TO L1234 DO
     BEGIN
     // 3.1 calculate growing degrees for the day
-    IF (TemperatureFile <> '(None)')
+    IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
             GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
@@ -3757,7 +3751,7 @@ FOR Dayi := 1 TO L1234 DO
     END;
 
 // 5. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
+IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
 
 // 6. final sum
 SeasonalSumOfKcPot := SumKcPot;

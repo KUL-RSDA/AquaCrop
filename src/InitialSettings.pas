@@ -138,8 +138,8 @@ implementation
 
  // 5. Climate
  // 5.1 Temperature
- TemperatureFile := '(None)';
- TemperatureFilefull := TemperatureFile;  (* no file *)
+ SetTemperatureFile('(None)');
+ SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
  TemperatureDescription := '';

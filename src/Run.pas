@@ -851,9 +851,9 @@ IF (GetRainFile() <> '(None)')
         END;
 
 // 3. Temperature file
-IF (TemperatureFile <> '(None)')
+IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
-        totalname := TemperatureFilefull;
+        totalname := GetTemperatureFilefull();
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
@@ -974,7 +974,7 @@ IF (GetRainFile() <> '(None)') THEN
            END;
    END;
 // Temperature file
-IF (TemperatureFile <> '(None)')
+IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
         totalname := CONCAT(GetPathNameSimul(),'TempData.SIM');
         Assign(fTempSIM,totalname);
@@ -1001,9 +1001,9 @@ VAR totalname : string;
     DayX : LongInt;
 BEGIN
 Simulation.SumGDD := 0;
-IF (TemperatureFile <> '(None)')
+IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
-        totalname := TemperatureFilefull;
+        totalname := GetTemperatureFilefull();
         IF FileExists(totalname)
            THEN BEGIN
                 CASE GetTemperatureRecord().DataType OF
@@ -1088,7 +1088,7 @@ IF (TemperatureFile <> '(None)')
                 //
                 END;
         END;
-IF (TemperatureFile = '(None)')
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,SimulParam.GDDMethod) * (DayNri - Crop.Day1 + 1);
         IF (Simulation.SumGDD < 0) THEN Simulation.SumGDD := 0;
@@ -1362,7 +1362,7 @@ IF ((Crop.Planting = Seed) AND (Simulation.FromDayNr <= Crop.Day1))
 Simulation.DelayedDays := 0;
 
 // 3. create temperature file covering crop cycle
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    IF (Simulation.ToDayNr < Crop.DayN)
       THEN TemperatureFileCoveringCropPeriod(Crop.Day1,Simulation.TodayNr)
@@ -2913,7 +2913,7 @@ IF (DayNri <= Simulation.ToDayNr) THEN
    BEGIN
    IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
    IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
-   IF (TemperatureFile = '(None)')
+   IF (GetTemperatureFile() = '(None)')
       THEN BEGIN
            Tmin := SimulParam.Tmin;
            Tmax := SimulParam.Tmax;
@@ -3004,7 +3004,7 @@ VAR NrRun : ShortInt;
     BEGIN
     IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
     IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
-    IF (TemperatureFile <> '(None)') THEN Close(fTempSIM);
+    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
     END; (* CloseClimateFiles *)
 
     PROCEDURE CloseIrrigationFile(VAR fIrri : text);

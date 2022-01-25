@@ -302,7 +302,6 @@ type rep_Manag
         !! Multiple cuttings
 end type rep_Manag
 
-
 type rep_sum 
     real(dp) :: Epot, Tpot, Rain, Irrigation, Infiltrated
         !! Undocumented
@@ -313,7 +312,6 @@ type rep_sum
     real(dp) :: SaltIn, SaltOut, CRsalt
         !! ton/ha
 end type rep_sum 
-
 
 type rep_RootZoneSalt 
     real(dp) :: ECe
@@ -326,7 +324,12 @@ type rep_RootZoneSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
 
-type(rep_clim)  :: TemperatureRecord
+type rep_DayEventDbl
+    integer(int32) :: DayNr
+        !! Undocumented
+    real(dp) :: Param
+        !! Undocumented
+end type rep_DayEventDbl
 
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
@@ -363,6 +366,8 @@ character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: MultipleProjectFile
+character(len=:), allocatable :: TemperatureFile
+character(len=:), allocatable :: TemperatureFileFull
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -374,6 +379,7 @@ type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
+type(rep_clim)  :: TemperatureRecord
 
 integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
@@ -3284,6 +3290,33 @@ subroutine SetIrriMethod(int_in)
     IrriMethod = int_in
 end subroutine SetIrriMethod
 
+function GetTemperatureFile() result(str)
+    !! Getter for the "TemperatureFile" global variable.
+    character(len=len(TemperatureFile)) :: str
+
+    str = TemperatureFile
+end function GetTemperatureFile
+
+subroutine SetTemperatureFile(str)
+    !! Setter for the "TemperatureFile" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureFile = str
+end subroutine SetTemperatureFile
+
+function GetTemperatureFilefull() result(str)
+    !! Getter for the "TemperatureFilefull" global variable.
+    character(len=len(TemperatureFilefull)) :: str
+
+    str = TemperatureFilefull
+end function GetTemperatureFilefull
+
+subroutine SetTemperatureFilefull(str)
+    !! Setter for the "TemperatureFilefull" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureFilefull = str
+end subroutine SetTemperatureFilefull
 
 type(rep_clim) function GetTemperatureRecord()
     !! Getter for the "TemperatureRecord" global variable.
