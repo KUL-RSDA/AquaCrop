@@ -22,8 +22,11 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimateFileFull, &
                      GetClimFile, &
                      GetSWCiniFile, &
+                     GetSWCiniFileFull, &
                      GetProjectFile, &
+                     GetProjectFileFull, &
                      GetMultipleProjectFile, &
+                     GetMultipleProjectFileFull, &
                      GetNumberSimulationRuns, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
@@ -46,10 +49,13 @@ use ac_global, only: CheckFilesInProject, &
                      GetEToFile, &
                      GetEToFileFull, &
                      GetEToDescription, &
+                     GetOnset_GenerateOn, &
+                     GetOnset_GenerateTempOn, &
                      GetRainFile, &
                      setRainFile, &
                      GetRainFileFull, &
                      GetRainDescription, &
+                     LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
                      SetCalendarFile, &
@@ -67,12 +73,15 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToFile, &
                      SetEToFileFull, &
                      SetEToDescription, &
-                     setSWCinifile, &
+                     setSWCiniFile, &
+                     setSWCiniFileFull, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
                      SetProjectFile, &
+                     SetProjectFileFull, &
                      SetMultipleProjectFile, &
+                     SetMultipleProjectFileFull, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
@@ -81,6 +90,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetManagement_Cuttings_Generate, &
                      SetManagement_Cuttings_HarvestEnd, &
                      SetManagement_RunoffOn, &
+                     SetOnset_GenerateOn, &
+                     SetOnset_GenerateTempOn, &
                      SetObservationsFile, &
                      SetObservationsFilefull, &
                      SetObservationsDescription, &
@@ -190,6 +201,22 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     string = pointer2string(StringIN, strlen)
     call SplitStringInThreeParams(string, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
+
+subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
+                                                DescriptionOfProject, strlen2)
+    !! Wrapper for [[ac_global:LoadProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: FullNameProjectFile
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: DescriptionOfProject
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(FullNameProjectFile, strlen1)
+    string2 = pointer2string(DescriptionOfProject, strlen2)
+    call LoadProjectDescription(string1, string2)
+end subroutine LoadProjectDescription_wrap
 
 subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
     !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
@@ -498,6 +525,26 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
     call SetSWCiniFile(string)
 end subroutine SetSWCiniFile_wrap
 
+
+function GetSWCiniFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetSWCiniFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetSWCiniFileFull())
+end function GetSWCiniFileFull_wrap
+
+
+subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
+    !! Wrapper for [[ac_global:SetSWCiniFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: SWCiniFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniFileFull, strlen)
+    call SetSWCiniFileFull(string)
+end subroutine SetSWCiniFileFull_wrap
+
 function GetPathNameProg_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -575,6 +622,27 @@ subroutine SetProjectFile_wrap(ProjectFile, strlen)
     call SetProjectFile(string)
 end subroutine SetProjectFile_wrap
 
+
+function GetProjectFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetProjectFileFull())
+end function GetProjectFileFull_wrap
+
+
+subroutine SetProjectFileFull_wrap(ProjectFileFull, strlen)
+    !! Wrapper for [[ac_global:SetProjectFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectFileFull, strlen)
+    call SetProjectFileFull(string)
+end subroutine SetProjectFileFull_wrap
+
+
 function GetMultipleProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -593,6 +661,59 @@ subroutine SetMultipleProjectFile_wrap(MultipleProjectFile, strlen)
     string = pointer2string(MultipleProjectFile, strlen)
     call SetMultipleProjectFile(string)
 end subroutine SetMultipleProjectFile_wrap
+
+function GetOnset_GenerateOn_wrap() result(GenerateOn)
+    !! Wrapper for [[ac_global:GetOnset_GenerateOn]] for foreign languages.
+    logical(1) :: GenerateOn
+
+    GenerateOn = GetOnset_GenerateOn()
+end function GetOnset_GenerateOn_wrap
+
+function GetOnset_GenerateTempOn_wrap() result(GenerateTempOn)
+    !! Wrapper for [[ac_global:GetOnset_GenerateTempOn]] for foreign languages.
+    logical(1) :: GenerateTempOn
+
+    GenerateTempOn = GetOnset_GenerateTempOn()
+end function GetOnset_GenerateTempOn_wrap
+
+subroutine SetOnset_GenerateOn_wrap(GenerateOn)
+    !! Wrapper for [[ac_global:SetOnset_GenerateOn]] for foreign languages.
+    logical(1), intent(in) :: GenerateOn
+
+    logical :: bool
+
+    bool = GenerateOn
+    call SetOnset_GenerateOn(bool)
+end subroutine SetOnset_GenerateOn_wrap
+
+subroutine SetOnset_GenerateTempOn_wrap(GenerateTempOn)
+    !! Wrapper for [[ac_global:SetOnset_GenerateTempOn]] for foreign languages.
+    logical(1), intent(in) :: GenerateTempOn
+
+    logical :: bool
+
+    bool = GenerateTempOn
+    call SetOnset_GenerateTempOn(bool)
+end subroutine SetOnset_GenerateTempOn_wrap
+
+function GetMultipleProjectFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetMultipleProjectFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetMultipleProjectFileFull())
+end function GetMultipleProjectFileFull_wrap
+
+
+subroutine SetMultipleProjectFileFull_wrap(MultipleProjectFileFull, strlen)
+    !! Wrapper for [[ac_global:SetMultipleProjectFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: MultipleProjectFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(MultipleProjectFileFull, strlen)
+    call SetMultipleProjectFileFull(string)
+end subroutine SetMultipleProjectFileFull_wrap
 
 
 function GetRainFile_wrap() result(c_pointer)

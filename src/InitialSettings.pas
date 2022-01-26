@@ -211,14 +211,14 @@ implementation
 
  // 8. Project and Multiple Project file
  SetProjectFile('(None)');
- ProjectFileFull := GetProjectFile();
+ SetProjectFileFull(GetProjectFile());
  ProjectDescription := 'No specific project';
  Simulation.MultipleRun := false; // No sequence of simulation runs in the project
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
  SetMultipleProjectFile(GetProjectFile());
- MultipleProjectFileFull := ProjectFileFull;
+ SetMultipleProjectFileFull(GetProjectFileFull());
  MultipleProjectDescription := ProjectDescription;
 
 
@@ -231,8 +231,8 @@ implementation
  OutputName := 'Project';
 
  // 11. Onset
- Onset.Criterion := RainPeriod;
- Onset.AirTCriterion := CumulGDD;
+ SetOnset_Criterion(RainPeriod);
+ SetOnset_AirTCriterion(CumulGDD);
  AdjustOnsetSearchPeriod;
 
  // 12. Simulation run

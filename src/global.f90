@@ -52,6 +52,24 @@ integer(intEnum), parameter :: TimeCuttings_DryY = 4
 integer(intEnum), parameter :: TimeCuttings_FreshY= 5
     !! index of FreshY in TimeCuttings enumerated type
 
+integer(intEnum), parameter :: Criterion_CumulRain = 0
+    !! index of CumulRain in Criterion enumerated type
+integer(intEnum), parameter :: Criterion_RainPeriod = 1
+    !! index of RainPeriod in Criterion enumerated type
+integer(intEnum), parameter :: Criterion_RainDecade = 2
+    !! index of RainDecade in Criterion enumerated type
+integer(intEnum), parameter :: Criterion_RainVsETo = 3
+    !! index of RainVsETo in Criterion enumerated type
+
+integer(intEnum), parameter :: AirTCriterion_TminPeriod = 0
+    !! index of TminPeriod in AirTCriterion enumerated type
+integer(intEnum), parameter :: AirTCriterion_TmeanPeriod = 1
+    !! index of TmeanPeriod in AirTCriterion enumerated type
+integer(intEnum), parameter :: AirTCriterion_GDDPeriod = 2
+    !! index of GDDPeriod in AirTCriterion enumerated type
+integer(intEnum), parameter :: AirTCriterion_CumulGDD = 3
+    !! index of CumulGDD in AirTCriterion enumerated type
+
 integer(intEnum), parameter :: GenerateTimeMode_FixInt = 0
     !! index of FixInt in GenerateTimeMode enumerated type
 integer(intEnum), parameter :: GenerateTimeMode_AllDepl = 1
@@ -164,6 +182,23 @@ type rep_soil
     real(sp) :: RootMax 
         !! maximum rooting depth in soil profile for selected crop
 end type rep_soil
+
+type rep_Onset 
+    logical :: GenerateOn
+        !! by rainfall or temperature criterion
+    logical :: GenerateTempOn
+        !! by temperature criterion
+    integer(intEnum) :: Criterion
+        !! Undocumented
+    integer(intEnum) :: AirTCriterion
+        !! Undocumented
+    integer(int32) :: StartSearchDayNr
+        !! daynumber
+    integer(int32) :: StopSearchDayNr
+        !! daynumber
+    integer(int32) :: LengthSearchPeriod
+        !! days
+end type rep_Onset 
 
 type rep_Content
     real(dp) :: BeginDay
@@ -357,14 +392,18 @@ character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
+character(len=:), allocatable :: SWCiniFileFull
 character(len=:), allocatable :: ProjectFile
+character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
+character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
 type(rep_Cuttings) :: Cuttings
+type(rep_Onset) :: onset
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
 type(rep_soil) :: Soil
@@ -1914,6 +1953,21 @@ subroutine SetSWCiniFile(str)
 end subroutine SetSWCiniFile
 
 
+function GetSWCiniFileFull() result(str)
+    !! Getter for the "SWCiniFileFull" global variable.
+    character(len=len(SWCiniFileFull)) :: str
+    
+    str = SWCiniFileFull
+end function GetSWCiniFileFull
+
+subroutine SetSWCiniFileFull(str)
+    !! Setter for the "SWCiniFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    SWCiniFileFull = str
+end subroutine SetSWCiniFileFull
+
+
 function GetPathNameProg() result(str)
     !! Getter for the "PathNameProg" global variable.
     character(len=len(PathNameProg)) :: str
@@ -1971,6 +2025,20 @@ subroutine SetProjectFile(str)
     ProjectFile = str
 end subroutine SetProjectFile
 
+function GetProjectFileFull() result(str)
+    !! Getter for the "ProjectFileFull" global variable.
+    character(len=len(ProjectFileFull)) :: str
+    
+    str = ProjectFileFull
+end function GetProjectFileFull
+
+subroutine SetProjectFileFull(str)
+    !! Setter for the "ProjectFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    ProjectFileFull = str
+end subroutine SetProjectFileFull
+
 function GetMultipleProjectFile() result(str)
     !! Getter for the "MultipleProjectFile" global variable.
     character(len=len(MultipleProjectFile)) :: str
@@ -1984,6 +2052,20 @@ subroutine SetMultipleProjectFile(str)
     
     MultipleProjectFile = str
 end subroutine SetMultipleProjectFile
+
+function GetMultipleProjectFileFull() result(str)
+    !! Getter for the "MultipleProjectFileFull" global variable.
+    character(len=len(MultipleProjectFileFull)) :: str
+    
+    str = MultipleProjectFileFull
+end function GetMultipleProjectFileFull
+
+subroutine SetMultipleProjectFileFull(str)
+    !! Setter for the "MultipleProjectFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    MultipleProjectFileFull = str
+end subroutine SetMultipleProjectFileFull
 
 
 logical function LeapYear(Year)
@@ -2002,6 +2084,20 @@ logical function LeapYear(Year)
         frac = val - floor(val)
     end function frac 
 end function LeapYear
+
+
+subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
+    character(len=*), intent(in) :: FullNameProjectFile
+    character(len=*), intent(inout) :: DescriptionOfProject
+	
+	integer :: fhandle
+	
+	open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
+	read(fhandle, *) DescriptionOfProject
+	DescriptionOfProject = trim(DescriptionOfProject)
+	
+	close(fhandle)
+end subroutine LoadProjectDescription
 
 
 subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
@@ -3141,6 +3237,118 @@ subroutine SetSoil_RootMax(RootMax)
 
     Soil%RootMax = RootMax
 end subroutine SetSoil_RootMax
+
+function GetOnset() result(Onset_out)
+    !! Getter for the "onset" global variable.
+    type(rep_Onset) :: Onset_out
+
+    Onset_out = onset
+end function GetOnset
+
+function GetOnset_GenerateOn() result(GenerateOn)
+    !! Getter for the "GenerateOn" attribute of the "onset" global variable.
+    logical :: GenerateOn
+
+    GenerateOn = onset%GenerateOn
+end function GetOnset_GenerateOn
+
+function GetOnset_GenerateTempOn() result(GenerateTempOn)
+    !! Getter for the "GenerateTempOn" attribute of the "onset" global variable.
+    logical :: GenerateTempOn
+
+    GenerateTempOn = onset%GenerateTempOn
+end function GetOnset_GenerateTempOn
+
+function GetOnset_Criterion() result(Criterion)
+    !! Getter for the "Criterion" attribute of the "onset" global variable.
+    integer(intEnum) :: Criterion
+
+    Criterion = onset%Criterion
+end function GetOnset_Criterion
+
+function GetOnset_AirTCriterion() result(AirTCriterion)
+    !! Getter for the "AirTCriterion" attribute of the "onset" global variable.
+    integer(intEnum) :: AirTCriterion
+
+    AirTCriterion = onset%AirTCriterion
+end function GetOnset_AirTCriterion
+
+function GetOnset_StartSearchDayNr() result(StartSearchDayNr)
+    !! Getter for the "StartSearchDayNr" attribute of the "onset" global variable.
+    integer(int32) :: StartSearchDayNr
+
+    StartSearchDayNr = onset%StartSearchDayNr
+end function GetOnset_StartSearchDayNr
+
+function GetOnset_StopSearchDayNr() result(StopSearchDayNr)
+    !! Getter for the "StopSearchDayNr" attribute of the "onset" global variable.
+    integer(int32) :: StopSearchDayNr
+
+    StopSearchDayNr = onset%StopSearchDayNr
+end function GetOnset_StopSearchDayNr
+
+function GetOnset_LengthSearchPeriod() result(LengthSearchPeriod)
+    !! Getter for the "LengthSearchPeriod" attribute of the "onset" global variable.
+    integer(int32) :: LengthSearchPeriod
+
+    LengthSearchPeriod = onset%LengthSearchPeriod
+end function GetOnset_LengthSearchPeriod
+
+subroutine SetOnset(Onset_in)
+    !! Setter for the "onset" global variable.
+    type(rep_Onset), intent(in) :: Onset_in
+
+    onset = Onset_in
+end subroutine SetOnset
+
+subroutine SetOnset_GenerateOn(GenerateOn)
+    !! Setter for the "GenerateOn" attribute of the "onset" global variable.
+    logical, intent(in) :: GenerateOn
+
+    onset%GenerateOn = GenerateOn
+end subroutine SetOnset_GenerateOn
+
+subroutine SetOnset_GenerateTempOn(GenerateTempOn)
+    !! Setter for the "GenerateTempOn" attribute of the "onset" global variable.
+    logical, intent(in) :: GenerateTempOn
+
+    onset%GenerateTempOn = GenerateTempOn
+end subroutine SetOnset_GenerateTempOn
+
+subroutine SetOnset_Criterion(Criterion)
+    !! Setter for the "Criterion" attribute of the "onset" global variable.
+    integer(intEnum), intent(in) :: Criterion
+
+    onset%Criterion = Criterion
+end subroutine SetOnset_Criterion
+
+subroutine SetOnset_AirTCriterion(AirTCriterion)
+    !! Setter for the "AirTCriterion" attribute of the "onset" global variable.
+    integer(intEnum), intent(in) :: AirTCriterion
+
+    onset%AirTCriterion = AirTCriterion
+end subroutine SetOnset_AirTCriterion
+
+subroutine SetOnset_StartSearchDayNr(StartSearchDayNr)
+    !! Setter for the "StartSearchDayNr" attribute of the "onset" global variable.
+    integer(int32), intent(in) :: StartSearchDayNr
+
+    onset%StartSearchDayNr = StartSearchDayNr
+end subroutine SetOnset_StartSearchDayNr
+
+subroutine SetOnset_StopSearchDayNr(StopSearchDayNr)
+    !! Setter for the "StopSearchDayNr" attribute of the "onset" global variable.
+    integer(int32), intent(in) :: StopSearchDayNr
+
+    onset%StopSearchDayNr = StopSearchDayNr
+end subroutine SetOnset_StopSearchDayNr
+
+subroutine SetOnset_LengthSearchPeriod(LengthSearchPeriod)
+    !! Setter for the "LengthSearchPeriod" attribute of the "onset" global variable.
+    integer(int32), intent(in) :: LengthSearchPeriod
+
+    onset%LengthSearchPeriod = LengthSearchPeriod
+end subroutine SetOnset_LengthSearchPeriod
 
 type(rep_Content) function GetTotalSaltContent()
     !! Getter for the "TotalSaltContent" global variable.
