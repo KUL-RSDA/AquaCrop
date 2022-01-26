@@ -93,7 +93,11 @@ use ac_global, only: CheckFilesInProject, &
                      SetGroundWaterFile, &
                      SetGroundWaterFilefull, &
                      SplitStringInTwoParams, &
-                     SplitStringInThreeParams
+                     SplitStringInThreeParams, &
+                     SetTemperatureRecord_FromString, &
+                     GetTemperatureRecord_FromString, &
+                     SetTemperatureRecord_ToString, &
+                     GetTemperatureRecord_ToString
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -1031,5 +1035,46 @@ subroutine SetGroundWaterFilefull_wrap(GroundWaterFilefull, strlen)
     call SetGroundWaterFilefull(string)
 end subroutine SetGroundWaterFilefull_wrap
 
+subroutine SetTemperatureRecord_ToString_wrap(&
+                     TemperatureRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:TemperatureRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: TemperatureRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureRecord_ToString, strlen)
+    call SetTemperatureRecord_ToString(string)
+end subroutine SetTemperatureRecord_ToString_wrap
+
+function GetTemperatureRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureRecord_ToString())
+end function GetTemperatureRecord_ToString_wrap
+
+subroutine SetTemperatureRecord_FromString_wrap(&
+                     TemperatureRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:TemperatureRecord_FromString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: TemperatureRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureRecord_FromString, strlen)
+    call SetTemperatureRecord_FromString(string)
+end subroutine SetTemperatureRecord_FromString_wrap
+
+function GetTemperatureRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureRecord_FromString]] for foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureRecord_FromString())
+end function GetTemperatureRecord_FromString_wrap
 
 end module ac_interface_global

@@ -11,6 +11,7 @@ const
     CO2Ref = 369.41;
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
+    DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -69,6 +70,17 @@ type
         StopSearchDayNr : LongInt; // daynumber
         LengthSearchPeriod : INTEGER; // days
         end;
+
+    rep_datatype = (Daily,Decadely, Monthly);
+
+    rep_clim = Record
+         DataType    : rep_datatype;
+         FromD,FromM,FromY : INTEGER; //D = day or decade, Y=1901 is not linked to specific year
+         ToD,ToM,ToY : INTEGER;
+         FromDayNr, ToDayNr : LongInt; //daynumber
+         FromString, ToString : String;
+         NrObs       : INTEGER; // number of observations
+         end;
 
     rep_Content = Record  // total water (mm) or salt (Mg/ha) content
         BeginDay  : double; //at the beginning of the day
@@ -1405,6 +1417,98 @@ procedure __SetIrriMethod(constref IrriMethod : integer);
 
 procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod);
 
+function GetTemperatureRecord(): rep_clim;
+
+function __GetTemperatureRecord_DataType() : shortint;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_datatype';
+
+function GetTemperatureRecord_DataType() : rep_datatype;
+
+function GetTemperatureRecord_FromD() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromd';
+
+function GetTemperatureRecord_FromM() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromm';
+
+function GetTemperatureRecord_FromY() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromy';
+
+function GetTemperatureRecord_ToD() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_tod';
+
+function GetTemperatureRecord_ToM() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_tom';
+
+function GetTemperatureRecord_ToY() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_toy';
+
+function GetTemperatureRecord_FromDayNr() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromdaynr';
+
+function GetTemperatureRecord_ToDayNr() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_todaynr';
+
+function GetTemperatureRecord_NrObs() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_nrobs';
+
+function GetTemperatureRecord_FromString(): string;
+
+function GetTemperatureRecord_FromString_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_fromstring_wrap';
+
+function GetTemperatureRecord_ToString() : string;
+
+function GetTemperatureRecord_ToString_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_tostring_wrap';
+
+procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
+
+procedure __SetTemperatureRecord_DataType(constref DataType : shortint);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype';
+
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+
+procedure SetTemperatureRecord_FromD(constref FromD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromd';
+
+procedure SetTemperatureRecord_FromM(constref FromM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromm';
+
+procedure SetTemperatureRecord_FromY(constref FromY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromy';
+
+procedure SetTemperatureRecord_ToD(constref ToD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tod';
+
+procedure SetTemperatureRecord_ToM(constref ToM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tom';
+
+procedure SetTemperatureRecord_ToY(constref ToY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_toy';
+
+procedure SetTemperatureRecord_FromDayNr(constref FromDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromdaynr';
+
+procedure SetTemperatureRecord_ToDayNr(constref ToDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_todaynr';
+
+procedure SetTemperatureRecord_NrObs(constref NrObs : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_nrobs';
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+
+procedure SetTemperatureRecord_FromString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_fromstring_wrap';
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+
+procedure SetTemperatureRecord_ToString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
+
 
 implementation
 
@@ -2065,6 +2169,61 @@ begin;
     CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
 end;
 
+function GetTemperatureRecord_DataType(): rep_datatype;
+var
+    int_datatype : shortint;
+begin;
+    int_datatype := __GetTemperatureRecord_DataType();
+    GetTemperatureRecord_DataType := rep_DataType(int_datatype);
+end;
+
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+var
+   int_datatype : shortint;
+
+begin;
+   int_datatype := ord(DataType);
+   __SetTemperatureRecord_DataType(int_datatype); 
+end;
+
+function GetTemperatureRecord_FromString(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetTemperatureRecord_FromString_wrap();
+    GetTemperatureRecord_FromString := AnsiString(p);
+end;
+
+function GetTemperatureRecord_ToString(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetTemperatureRecord_ToString_wrap();
+    GetTemperatureRecord_toString := AnsiString(p);
+end;
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetTemperatureRecord_FromString_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetTemperatureRecord_ToString_wrap(p, strlen);
+end;
+
 procedure GetIrriDescription(
             constref IrriFileFull : string;
             var IrriDescription : string);
@@ -2513,6 +2672,37 @@ begin;
     SetCropFileFull_wrap(p, strlen);
 end;
 
+function GetTemperatureRecord() : rep_clim;
+begin
+    GetTemperatureRecord.DataType := GetTemperatureRecord_DataType();
+    GetTemperatureRecord.FromD    := GetTemperatureRecord_FromD();
+    GetTemperatureRecord.FromM    := GetTemperatureRecord_FromM();
+    GetTemperatureRecord.FromY    := GetTemperatureRecord_FromY();
+    GetTemperatureRecord.ToD      := GetTemperatureRecord_ToD();
+    GetTemperatureRecord.ToM      := GetTemperatureRecord_ToM();
+    GetTemperatureRecord.ToY      := GetTemperatureRecord_ToY();
+    GetTemperatureRecord.ToDayNr  := GetTemperatureRecord_ToDayNr();
+    GetTemperatureRecord.FromDayNr:= GetTemperatureRecord_FromDayNr();
+    GetTemperatureRecord.NrObs    := GetTemperatureRecord_NrObs();
+    GetTemperatureRecord.FromString := GetTemperatureRecord_FromString();
+    GetTemperatureRecord.ToString   := GetTemperatureRecord_ToString();
+end;
+
+procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
+begin
+    SetTemperatureRecord_DataType(TemperatureRecord.DataType);
+    SetTemperatureRecord_FromD(TemperatureRecord.FromD);
+    SetTemperatureRecord_FromM(TemperatureRecord.FromM);
+    SetTemperatureRecord_FromY(TemperatureRecord.FromY);
+    SetTemperatureRecord_ToD(TemperatureRecord.ToD);
+    SetTemperatureRecord_ToM(TemperatureRecord.ToM);
+    SetTemperatureRecord_ToY(TemperatureRecord.ToY);
+    SetTemperatureRecord_ToDayNr(TemperatureRecord.ToDayNr);
+    SetTemperatureRecord_FromDayNr(TemperatureRecord.FromDayNr);
+    SetTemperatureRecord_NrObs(TemperatureRecord.NrObs);
+    SetTemperatureRecord_FromString(TemperatureRecord.FromString);
+    SetTemperatureRecord_ToString(TemperatureRecord.ToString);
+end;
 
 initialization
 
