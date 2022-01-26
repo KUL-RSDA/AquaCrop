@@ -143,14 +143,11 @@ implementation
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
  TemperatureDescription := '';
- WITH TemperatureRecord DO
-   BEGIN
-   DataType := Daily;
-   NrObs := 0;
-   FromString := 'any date';
-   ToString := 'any date';
-   FromY := 1901;
-   END;
+ SetTemperatureRecord_DataType(Daily);
+ SetTemperatureRecord_NrObs(0);
+ SetTemperatureRecord_FromString('any date');
+ SetTemperatureRecord_ToString('any date');
+ SetTemperatureRecord_FromY(1901);
 
  // 5.2 ETo
  SetEToFile('(None)');

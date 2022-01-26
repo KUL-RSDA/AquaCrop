@@ -182,22 +182,22 @@ READLN(fTemp); // year
 READLN(fTemp);
 READLN(fTemp);
 READLN(fTemp);
-IF (TemperatureRecord.FromD > 20)
+IF (GetTemperatureRecord().FromD > 20)
    THEN DecFile := 3
-   ELSE IF (TemperatureRecord.FromD > 10)
+   ELSE IF (GetTemperatureRecord().FromD > 10)
            THEN DecFile := 2
            ELSE DecFile := 1;
-Mfile := TemperatureRecord.FromM;
-IF (TemperatureRecord.FromY = 1901) THEN Yfile := Yeari
-                                    ELSE Yfile := TemperatureRecord.FromY;
+Mfile := GetTemperatureRecord().FromM;
+IF (GetTemperatureRecord().FromY = 1901) THEN Yfile := Yeari
+                                    ELSE Yfile := GetTemperatureRecord().FromY;
 OK3 := false;
 
-IF (TemperatureRecord.NrObs <= 2) THEN
+IF (GetTemperatureRecord().NrObs <= 2) THEN
    BEGIN
    READLN(fTemp,StringREAD);
    SplitStringInTwoParams(StringREAD,C1Min,C1Max);
    //READLN(fTemp,C1Min,C1Max);
-   CASE TemperatureRecord.NrObs OF
+   CASE GetTemperatureRecord().NrObs OF
      1 : BEGIN
          C2Min := C1Min;
          C2Max := C2Max;
@@ -241,10 +241,10 @@ IF ((NOT OK3) AND ((Deci = DecFile) AND (Monthi = Mfile) AND (Yeari = Yfile))) T
    C1Max := C2Max + (C2Max-C3Max)/4;
    OK3 := true;
    END;
-IF ((NOT OK3) AND ((DayN = TemperatureRecord.ToD) AND (Monthi = TemperatureRecord.ToM))) THEN
-   IF ((TemperatureRecord.FromY = 1901) OR (Yeari = TemperatureRecord.ToY)) THEN
+IF ((NOT OK3) AND ((DayN = GetTemperatureRecord().ToD) AND (Monthi = GetTemperatureRecord().ToM))) THEN
+   IF ((GetTemperatureRecord().FromY = 1901) OR (Yeari = GetTemperatureRecord().ToY)) THEN
       BEGIN
-      FOR Nri := 1 TO (TemperatureRecord.NrObs-2) DO READLN(fTemp);
+      FOR Nri := 1 TO (GetTemperatureRecord().NrObs-2) DO READLN(fTemp);
       READLN(fTemp,StringREAD);
       SplitStringInTwoParams(StringREAD,C1Min,C1Max);
       //READLN(fTemp,C1Min,C1Max);
@@ -267,9 +267,9 @@ IF (NOT OK3) THEN
              Obsi := Obsi + 1;
              END;
    UNTIL (OK3);
-   IF (TemperatureRecord.FromD > 20)
+   IF (GetTemperatureRecord().FromD > 20)
       THEN DecFile := 3
-      ELSE IF (TemperatureRecord.FromD > 10)
+      ELSE IF (GetTemperatureRecord().FromD > 10)
               THEN DecFile := 2
               ELSE DecFile := 1;
    FOR Nri := 1 TO (Obsi-2) DO Readln(fTemp);
@@ -411,17 +411,17 @@ READLN(fTemp); // year
 READLN(fTemp);
 READLN(fTemp);
 READLN(fTemp);
-Mfile := TemperatureRecord.FromM;
-IF (TemperatureRecord.FromY = 1901) THEN Yfile := Yeari
-                                    ELSE Yfile := TemperatureRecord.FromY;
+Mfile := GetTemperatureRecord().FromM;
+IF (GetTemperatureRecord().FromY = 1901) THEN Yfile := Yeari
+                                    ELSE Yfile := GetTemperatureRecord().FromY;
 OK3 := false;
 
 //2. IF 3 or less records
-IF (TemperatureRecord.NrObs <= 3) THEN
+IF (GetTemperatureRecord().NrObs <= 3) THEN
    BEGIN
    ReadMonth(Mfile,Yfile,n1,C1Min,C1Max);
    X1 := n1;
-   CASE TemperatureRecord.NrObs OF
+   CASE GetTemperatureRecord().NrObs OF
      1 : BEGIN
          t1 := X1;
          X2 := X1 + n1;
@@ -485,10 +485,10 @@ IF ((NOT OK3) AND ((Monthi = Mfile) AND (Yeari = Yfile))) THEN
    END;
 
 //4. If last observation
-IF ((NOT OK3) AND (Monthi = TemperatureRecord.ToM)) THEN
-   IF ((TemperatureRecord.FromY = 1901) OR (Yeari = TemperatureRecord.ToY)) THEN
+IF ((NOT OK3) AND (Monthi = GetTemperatureRecord().ToM)) THEN
+   IF ((GetTemperatureRecord().FromY = 1901) OR (Yeari = GetTemperatureRecord().ToY)) THEN
       BEGIN
-      FOR Nri := 1 TO (TemperatureRecord.NrObs-3) DO
+      FOR Nri := 1 TO (GetTemperatureRecord().NrObs-3) DO
           BEGIN
           READLN(fTemp);
           Mfile := Mfile + 1;
@@ -521,7 +521,7 @@ IF (NOT OK3) THEN
              Obsi := Obsi + 1;
              END;
    UNTIL (OK3);
-   Mfile := TemperatureRecord.FromM;
+   Mfile := GetTemperatureRecord().FromM;
    FOR Nri := 1 TO (Obsi-2) DO
        BEGIN
        Readln(fTemp);
@@ -623,21 +623,21 @@ IF (ValPeriod > 0) THEN
            END
       ELSE BEGIN   // temperature file
            DayNri := FirstDayPeriod;
-           IF  FullUndefinedRecord(TemperatureRecord.FromY,TemperatureRecord.FromD,
-                                   TemperatureRecord.FromM,TemperatureRecord.ToD,TemperatureRecord.ToM)
+           IF  FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,
+                                   GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM)
                THEN BEGIN
                     AdjustDayNri := true;
                     SetDayNrToYundef(DayNri);
                     END
                ELSE AdjustDayNri := false;
            totalname := TemperatureFilefull;
-           IF (FileExists(totalname) AND (TemperatureRecord.ToDayNr > DayNri)
-                                     AND (TemperatureRecord.FromDayNr <= DayNri))
+           IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > DayNri)
+                                     AND (GetTemperatureRecord().FromDayNr <= DayNri))
                 THEN BEGIN
-                     (*AdjustDayNri := FullUndefinedRecord(TemperatureRecord.FromY,TemperatureRecord.FromD,
-                                           TemperatureRecord.FromM,TemperatureRecord.ToD,TemperatureRecord.ToM);*)
+                     (*AdjustDayNri := FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,
+                                           GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM);*)
                      RemainingDays := ValPeriod;
-                     CASE TemperatureRecord.DataType OF
+                     CASE GetTemperatureRecord().DataType OF
                           Daily   : BEGIN
                                     Assign(fTemp,totalname);
                                     Reset(fTemp);
@@ -649,7 +649,7 @@ IF (ValPeriod > 0) THEN
                                     READLN(fTemp);
                                     READLN(fTemp);
                                     READLN(fTemp);
-                                    FOR i := TemperatureRecord.FromDayNr TO (DayNri - 1) DO READLN(fTemp);
+                                    FOR i := GetTemperatureRecord().FromDayNr TO (DayNri - 1) DO READLN(fTemp);
                                     READLN(fTemp,StringREAD);
                                     SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                     //READLN(fTemp,TDayMin,TDayMax);
@@ -658,7 +658,7 @@ IF (ValPeriod > 0) THEN
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
                                     WHILE ((RemainingDays > 0)
-                                          AND ((DayNri < TemperatureRecord.ToDayNr) or AdjustDayNri)) DO
+                                          AND ((DayNri < GetTemperatureRecord().ToDayNr) or AdjustDayNri)) DO
                                        BEGIN
                                        IF Eof(fTemp)
                                           THEN BEGIN
@@ -699,7 +699,7 @@ IF (ValPeriod > 0) THEN
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
                                     WHILE((RemainingDays > 0)
-                                          AND ((DayNri < TemperatureRecord.ToDayNr) or AdjustDayNri)) DO
+                                          AND ((DayNri < GetTemperatureRecord().ToDayNr) or AdjustDayNri)) DO
                                       BEGIN
                                       IF (DayNri > TminDataSet[31].DayNr) THEN GetDecadeTemperatureDataSet(DayNri,TminDataSet,TmaxDataSet);
                                       i := 1;
@@ -724,7 +724,7 @@ IF (ValPeriod > 0) THEN
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
                                     WHILE((RemainingDays > 0)
-                                          AND ((DayNri < TemperatureRecord.ToDayNr) or AdjustDayNri)) DO
+                                          AND ((DayNri < GetTemperatureRecord().ToDayNr) or AdjustDayNri)) DO
                                       BEGIN
                                       IF (DayNri > TminDataSet[31].DayNr) THEN GetMonthlyTemperatureDataSet(DayNri,TminDataSet,TmaxDataSet);
                                       i := 1;
@@ -775,23 +775,23 @@ IF (ValGDDays > 0) THEN
            END
       ELSE BEGIN
            DayNri := FirstDayCrop;
-           IF  FullUndefinedRecord(TemperatureRecord.FromY,TemperatureRecord.FromD,
-                                   TemperatureRecord.FromM,TemperatureRecord.ToD,TemperatureRecord.ToM)
+           IF  FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,
+                                   GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM)
                THEN BEGIN
                     AdjustDayNri := true;
                     SetDayNrToYundef(DayNri);
                     END
                ELSE AdjustDayNri := false;
            totalname := TemperatureFilefull;
-           IF (FileExists(totalname) AND (TemperatureRecord.ToDayNr > DayNri)
-                                     AND (TemperatureRecord.FromDayNr <= DayNri))
+           IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > DayNri)
+                                     AND (GetTemperatureRecord().FromDayNr <= DayNri))
                 THEN BEGIN
                      (*
-                     AdjustDayNri := FullUndefinedRecord(TemperatureRecord.FromY,TemperatureRecord.FromD,
-                                           TemperatureRecord.FromM,TemperatureRecord.ToD,TemperatureRecord.ToM);
+                     AdjustDayNri := FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,
+                                           GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM);
                                            *)
                      RemainingGDDays := ValGDDays;
-                     CASE TemperatureRecord.DataType OF
+                     CASE GetTemperatureRecord().DataType OF
                           Daily   : BEGIN
                                     Assign(fTemp,totalname);
                                     Reset(fTemp);
@@ -803,7 +803,7 @@ IF (ValGDDays > 0) THEN
                                     READLN(fTemp);
                                     READLN(fTemp);
                                     READLN(fTemp);
-                                    FOR i := TemperatureRecord.FromDayNr TO (DayNri - 1) DO READLN(fTemp);
+                                    FOR i := GetTemperatureRecord().FromDayNr TO (DayNri - 1) DO READLN(fTemp);
                                     READLN(fTemp,StringREAD);
                                     SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                     //READLN(fTemp,TDayMin,TDayMax);
@@ -812,7 +812,7 @@ IF (ValGDDays > 0) THEN
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
                                     WHILE ((RemainingGDDays > 0)
-                                          AND ((DayNri < TemperatureRecord.ToDayNr) or AdjustDayNri)) DO
+                                          AND ((DayNri < GetTemperatureRecord().ToDayNr) or AdjustDayNri)) DO
                                        BEGIN
                                        IF Eof(fTemp)
                                           THEN BEGIN
@@ -853,7 +853,7 @@ IF (ValGDDays > 0) THEN
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
                                     WHILE ((RemainingGDDays > 0)
-                                          AND ((DayNri < TemperatureRecord.ToDayNr) or AdjustDayNri)) DO
+                                          AND ((DayNri < GetTemperatureRecord().ToDayNr) or AdjustDayNri)) DO
                                       BEGIN
                                       IF (DayNri > TminDataSet[31].DayNr) THEN GetDecadeTemperatureDataSet(DayNri,TminDataSet,TmaxDataSet);
                                       i := 1;
@@ -878,7 +878,7 @@ IF (ValGDDays > 0) THEN
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
                                     WHILE ((RemainingGDDays > 0)
-                                          AND ((DayNri < TemperatureRecord.ToDayNr) or AdjustDayNri)) DO
+                                          AND ((DayNri < GetTemperatureRecord().ToDayNr) or AdjustDayNri)) DO
                                       BEGIN
                                       IF (DayNri > TminDataSet[31].DayNr) THEN GetMonthlyTemperatureDataSet(DayNri,TminDataSet,TmaxDataSet);
                                       i := 1;
@@ -924,19 +924,19 @@ IF (TemperatureFile = '(None)')
         END
    ELSE BEGIN
         MaxGDDays := 0;
-        IF FullUndefinedRecord(TemperatureRecord.FromY,TemperatureRecord.FromD,
-           TemperatureRecord.FromM,TemperatureRecord.ToD,TemperatureRecord.ToM)
-           THEN FromDayNr := TemperatureRecord.FromDayNr  // since we have 365 days anyway
+        IF FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,
+           GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM)
+           THEN FromDayNr := GetTemperatureRecord().FromDayNr  // since we have 365 days anyway
            ELSE BEGIN
              //DetermineDate(CropDay1,dayi,monthi,yeari);
-             //yeari := TemperatureRecord.FromY;
+             //yeari := GetTemperatureRecord().FromY;
              //DetermineDayNr(dayi,monthi,yeari,CropDay1);
                 END;
            DayNri := FromDayNr;
            totalname := TemperatureFilefull;
-           IF (FileExists(totalname) AND (TemperatureRecord.ToDayNr > FromDayNr)
-                             AND (TemperatureRecord.FromDayNr <= FromDayNr)) THEN
-           CASE TemperatureRecord.DataType OF
+           IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > FromDayNr)
+                             AND (GetTemperatureRecord().FromDayNr <= FromDayNr)) THEN
+           CASE GetTemperatureRecord().DataType OF
                 Daily   : BEGIN
                           Assign(fTemp,totalname);
                           Reset(fTemp);
@@ -948,13 +948,13 @@ IF (TemperatureFile = '(None)')
                           READLN(fTemp);
                           READLN(fTemp);
                           READLN(fTemp);
-                          FOR i := TemperatureRecord.FromDayNr TO (FromDayNr - 1) DO READLN(fTemp);
+                          FOR i := GetTemperatureRecord().FromDayNr TO (FromDayNr - 1) DO READLN(fTemp);
                           READLN(fTemp,StringREAD);
                           SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                           DayNri := DayNri + 1;
                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
                           MaxGDDays := MaxGDDays + DayGDD;
-                          WHILE (DayNri < TemperatureRecord.ToDayNr) DO
+                          WHILE (DayNri < GetTemperatureRecord().ToDayNr) DO
                            BEGIN
                            IF Eof(fTemp)
                               THEN BEGIN
@@ -988,7 +988,7 @@ IF (TemperatureFile = '(None)')
                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
                           MaxGDDays := MaxGDDays + DayGDD;
                           DayNri := DayNri + 1;
-                          WHILE(DayNri < TemperatureRecord.ToDayNr) DO
+                          WHILE(DayNri < GetTemperatureRecord().ToDayNr) DO
                            BEGIN
                            IF (DayNri > TminDataSet[31].DayNr) THEN GetDecadeTemperatureDataSet(DayNri,TminDataSet,TmaxDataSet);
                            i := 1;
@@ -1009,7 +1009,7 @@ IF (TemperatureFile = '(None)')
                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
                           MaxGDDays := MaxGDDays + DayGDD;
                           DayNri := DayNri + 1;
-                          WHILE(DayNri < TemperatureRecord.ToDayNr) DO
+                          WHILE(DayNri < GetTemperatureRecord().ToDayNr) DO
                                BEGIN
                                IF (DayNri > TminDataSet[31].DayNr) THEN GetMonthlyTemperatureDataSet(DayNri,TminDataSet,TmaxDataSet);
                                i := 1;
@@ -1145,14 +1145,14 @@ VAR CropDay1OUT : LongInt;
 
 BEGIN
 DetermineDate(CropDay1IN,dayi,monthi,yeari);
-IF (TemperatureRecord.FromY = 1901)
+IF (GetTemperatureRecord().FromY = 1901)
    THEN BEGIN
         yeari := 1901;
         DetermineDayNr(Dayi,Monthi,Yeari,CropDay1OUT);
         END
    ELSE BEGIN
         IF SwitchToYear1
-           THEN DetermineDayNr(Dayi,Monthi,TemperatureRecord.FromY,CropDay1OUT)
+           THEN DetermineDayNr(Dayi,Monthi,GetTemperatureRecord().FromY,CropDay1OUT)
            ELSE CropDay1OUT := CropDay1IN;
         END;
 ResetCropDay1 := CropDay1OUT;
@@ -1196,6 +1196,7 @@ VAR f0,fClim : TextFile;
     TotDepth : double;
     VersionNr : double;
     FertStress : shortint;
+    temperature_record : rep_clim;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -1266,8 +1267,10 @@ IF (TemperatureFile = '(None)')
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         TemperatureFileFull := CONCAT(Trim(TempString),Trim(TemperatureFile));
-        LoadClim(TemperatureFilefull,TemperatureDescription,TemperatureRecord);
-        CompleteClimateDescription(TemperatureRecord);
+        temperature_record := GetTemperatureRecord();
+        LoadClim(TemperatureFilefull,TemperatureDescription,temperature_record);
+        CompleteClimateDescription(temperature_record);
+        SetTemperatureRecord(temperature_record);
         END;
 // 1.2 ETo
 READLN(f0); // Info ETo
@@ -1592,7 +1595,7 @@ totalname := TemperatureFilefull;
 IF FileExists(totalname)
    THEN BEGIN
         // open file and find first day of cropping period
-        CASE TemperatureRecord.DataType OF
+        CASE GetTemperatureRecord().DataType OF
              Daily   : BEGIN
                        Assign(fTemp,totalname);
                        Reset(fTemp);
@@ -1604,7 +1607,7 @@ IF FileExists(totalname)
                        READLN(fTemp);
                        READLN(fTemp);
                        READLN(fTemp);
-                       FOR i := TemperatureRecord.FromDayNr TO (CropFirstDay - 1) DO READLN(fTemp);
+                       FOR i := GetTemperatureRecord().FromDayNr TO (CropFirstDay - 1) DO READLN(fTemp);
                        READLN(fTemp,StringREAD);  // i.e. Crop.Day1
                        SplitStringInTwoParams(StringREAD,Tlow,Thigh);
                        END;
@@ -1631,7 +1634,7 @@ IF FileExists(totalname)
         // next days of simulation period
         FOR RunningDay := (CropFirstDay + 1) TO CropLastDay DO
             BEGIN
-            CASE TemperatureRecord.DataType OF
+            CASE GetTemperatureRecord().DataType OF
                  Daily   : BEGIN
                            IF Eof(fTemp)
                               THEN BEGIN
@@ -1667,7 +1670,7 @@ IF FileExists(totalname)
             WRITELN(f2,Tlow:10:4,Thigh:10:4);
             END;
         // Close files
-        IF (TemperatureRecord.DataType = Daily) THEN Close(fTemp);
+        IF (GetTemperatureRecord().DataType = Daily) THEN Close(fTemp);
         Close(f2);
         END
    ELSE BEGIN
