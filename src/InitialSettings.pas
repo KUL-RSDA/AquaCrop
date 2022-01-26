@@ -234,8 +234,8 @@ implementation
  OutputName := 'Project';
 
  // 11. Onset
- Onset.Criterion := RainPeriod;
- Onset.AirTCriterion := CumulGDD;
+ SetOnset_Criterion(RainPeriod);
+ SetOnset_AirTCriterion(CumulGDD);
  AdjustOnsetSearchPeriod;
 
  // 12. Simulation run

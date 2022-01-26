@@ -46,6 +46,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetEToFile, &
                      GetEToFileFull, &
                      GetEToDescription, &
+                     GetOnset_GenerateOn, &
+                     GetOnset_GenerateTempOn, &
                      GetRainFile, &
                      setRainFile, &
                      GetRainFileFull, &
@@ -81,6 +83,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetManagement_Cuttings_Generate, &
                      SetManagement_Cuttings_HarvestEnd, &
                      SetManagement_RunoffOn, &
+                     SetOnset_GenerateOn, &
+                     SetOnset_GenerateTempOn, &
                      SetObservationsFile, &
                      SetObservationsFilefull, &
                      SetObservationsDescription, &
@@ -586,6 +590,39 @@ subroutine SetMultipleProjectFile_wrap(MultipleProjectFile, strlen)
     call SetMultipleProjectFile(string)
 end subroutine SetMultipleProjectFile_wrap
 
+function GetOnset_GenerateOn_wrap() result(GenerateOn)
+    !! Wrapper for [[ac_global:GetOnset_GenerateOn]] for foreign languages.
+    logical(1) :: GenerateOn
+
+    GenerateOn = GetOnset_GenerateOn()
+end function GetOnset_GenerateOn_wrap
+
+function GetOnset_GenerateTempOn_wrap() result(GenerateTempOn)
+    !! Wrapper for [[ac_global:GetOnset_GenerateTempOn]] for foreign languages.
+    logical(1) :: GenerateTempOn
+
+    GenerateTempOn = GetOnset_GenerateTempOn()
+end function GetOnset_GenerateTempOn_wrap
+
+subroutine SetOnset_GenerateOn_wrap(GenerateOn)
+    !! Wrapper for [[ac_global:SetOnset_GenerateOn]] for foreign languages.
+    logical(1), intent(in) :: GenerateOn
+
+    logical :: bool
+
+    bool = GenerateOn
+    call SetOnset_GenerateOn(bool)
+end subroutine SetOnset_GenerateOn_wrap
+
+subroutine SetOnset_GenerateTempOn_wrap(GenerateTempOn)
+    !! Wrapper for [[ac_global:SetOnset_GenerateTempOn]] for foreign languages.
+    logical(1), intent(in) :: GenerateTempOn
+
+    logical :: bool
+
+    bool = GenerateTempOn
+    call SetOnset_GenerateTempOn(bool)
+end subroutine SetOnset_GenerateTempOn_wrap
 
 function GetRainFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetRainFile]] for foreign languages.
