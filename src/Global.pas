@@ -265,18 +265,6 @@ TYPE
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
-     repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
-     repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
-
-     rep_Onset = Record
-         GenerateOn : BOOLEAN;  // by rainfall or temperature criterion
-         GenerateTempOn : BOOLEAN; // by temperature criterion
-         Criterion : repCriterion;
-         AirTCriterion : repAirTCriterion;
-         StartSearchDayNr, StopSearchDayNr : LongInt; //daynumber
-         LengthSearchPeriod : INTEGER; // days
-         end;
-
      rep_EndSeason = Record
          ExtraYears : Integer; // to add to YearStartCropCycle
          GenerateTempOn : BOOLEAN; // by temperature criterion
@@ -346,7 +334,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
-    Onset : rep_Onset;
     EndSeason : rep_EndSeason;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
     // salinity
@@ -2763,26 +2750,27 @@ IF ((NOT SimulParam.ConstGwt) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THE
    END;
 END; (* AdjustSimPeriod *)
 
-
-
 PROCEDURE AdjustOnsetSearchPeriod;
+VAR temp_Integer : Integer;
 BEGIN
 IF (GetClimFile() = '(None)')
    THEN BEGIN
-        Onset.StartSearchDayNr := 1;
-        Onset.StopSearchDayNr := Onset.StartSearchDayNr + Onset.LengthSearchPeriod - 1;
-        //Onset.StopSearchDayNr := 365;
+        SetOnset_StartSearchDayNr(1);
+        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
+        //SetOnset_StopSearchDayNr(365);
         END
    ELSE BEGIN
-        //Onset.StartSearchDayNr := ClimRecord.FromDayNr;
-        //Onset.StopSearchDayNr := ClimRecord.ToDayNr;
-        DetermineDayNr((1),(1),Simulation.YearStartCropCycle,Onset.StartSearchDayNr); // 1 January
-        IF (Onset.StartSearchDayNr < ClimRecord.FromDayNr) THEN Onset.StartSearchDayNr := ClimRecord.FromDayNr;
-        Onset.StopSearchDayNr := Onset.StartSearchDayNr + Onset.LengthSearchPeriod - 1;
-        IF (Onset.StopSearchDayNr > ClimRecord.ToDayNr) THEN
+        //SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
+        //SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
+        temp_Integer := GetOnset().StartSearchDayNr;
+        DetermineDayNr((1),(1),Simulation.YearStartCropCycle,temp_Integer); // 1 January
+        SetOnset_StartSearchDayNr(temp_Integer);
+        IF (GetOnset().StartSearchDayNr < ClimRecord.FromDayNr) THEN SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
+        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
+        IF (GetOnset().StopSearchDayNr > ClimRecord.ToDayNr) THEN
            BEGIN
-           Onset.StopSearchDayNr := ClimRecord.ToDayNr;
-           Onset.LengthSearchPeriod := Onset.StopSearchDayNr - Onset.StartSearchDayNr + 1;
+           SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
+           SetOnset_LengthSearchPeriod(GetOnset().StopSearchDayNr - GetOnset().StartSearchDayNr + 1);
            END;
         END;
 END; (* AdjustOnsetSearchPeriod *)
@@ -4479,8 +4467,8 @@ BEGIN
 SetCalendarFile('(None)');
 SetCalendarFileFull(GetCalendarFile());  (* no file *)
 CalendarDescription := '';
-Onset.GenerateOn := false;
-Onset.GenerateTempOn := false;
+SetOnset_GenerateOn(false);
+SetOnset_GenerateTempOn(false);
 EndSeason.GenerateTempOn := false;
 CalendarDescription := 'No calendar for the Seeding/Planting year';
 END; (* NoCropCalendar *)

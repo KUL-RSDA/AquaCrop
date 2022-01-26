@@ -58,6 +58,19 @@ type
 
     rep_planting = (Seed,Transplant,Regrowth);
 
+    repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
+    repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
+
+    rep_Onset = Record
+        GenerateOn : BOOLEAN;  // by rainfall or temperature criterion
+        GenerateTempOn : BOOLEAN; // by temperature criterion
+        Criterion : repCriterion;
+        AirTCriterion : repAirTCriterion;
+        StartSearchDayNr : LongInt; // daynumber
+        StopSearchDayNr : LongInt; // daynumber
+        LengthSearchPeriod : INTEGER; // days
+        end;
+
     rep_datatype = (Daily,Decadely, Monthly);
 
     rep_clim = Record
@@ -1320,6 +1333,60 @@ procedure SetSoil_CNvalue(constref CNvalue : ShortInt);
 procedure SetSoil_RootMax(constref RootMax : Single);
         external 'aquacrop' name '__ac_global_MOD_setsoil_rootmax';
 
+function GetOnset() : rep_Onset;
+
+function GetOnset_GenerateOn() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getonset_generateon_wrap';
+
+function GetOnset_GenerateTempOn() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getonset_generatetempon_wrap';
+
+function GetOnset_Criterion() : repCriterion;
+
+function __GetOnset_Criterion() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getonset_criterion';
+
+function GetOnset_AirTCriterion() : repAirTCriterion;
+
+function __GetOnset_AirTCriterion() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getonset_airtcriterion';
+
+function GetOnset_StartSearchDayNr() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getonset_startsearchdaynr';
+
+function GetOnset_StopSearchDayNr() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getonset_stopsearchdaynr';
+
+function GetOnset_LengthSearchPeriod() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getonset_lengthsearchperiod';
+
+procedure SetOnset(constref Onset : rep_Onset);
+
+procedure SetOnset_GenerateOn(constref GenerateOn : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setonset_generateon_wrap';
+
+procedure SetOnset_GenerateTempOn(constref GenerateTempOn : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setonset_generatetempon_wrap';
+
+procedure SetOnset_Criterion(constref Criterion : repCriterion);
+
+procedure __SetOnset_Criterion(constref Criterion : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setonset_criterion';
+
+procedure SetOnset_AirTCriterion(constref AirTCriterion : repAirTCriterion);
+
+procedure __SetOnset_AirTCriterion(constref AirTCriterion : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setonset_airtcriterion';
+
+procedure SetOnset_StartSearchDayNr(constref StartSearchDayNr : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setonset_startsearchdaynr';
+
+procedure SetOnset_StopSearchDayNr(constref StopSearchDayNr : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setonset_stopsearchdaynr';
+
+procedure SetOnset_LengthSearchPeriod(constref LengthSearchPeriod : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setonset_lengthsearchperiod';
+
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
 
@@ -1706,6 +1773,64 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+function GetOnset() : rep_Onset;
+begin;
+    GetOnset.GenerateOn := GetOnset_GenerateOn();
+    GetOnset.GenerateTempOn := GetOnset_GenerateTempOn();
+    GetOnset.Criterion := GetOnset_Criterion();
+    GetOnset.AirTCriterion := GetOnset_AirTCriterion();
+    GetOnset.StartSearchDayNr := GetOnset_StartSearchDayNr();
+    GetOnset.StopSearchDayNr := GetOnset_StopSearchDayNr();
+    GetOnset.LengthSearchPeriod := GetOnset_LengthSearchPeriod();
+end;
+
+
+function GetOnset_Criterion() : repCriterion;
+var
+    index : shortint;
+begin;
+    index := __GetOnset_Criterion();
+    GetOnset_Criterion := repCriterion(index);
+end;
+
+
+function GetOnset_AirTCriterion() : repAirTCriterion;
+var
+    index : shortint;
+begin;
+    index := __GetOnset_AirTCriterion();
+    GetOnset_AirTCriterion := repAirTCriterion(index);
+end;
+
+
+procedure SetOnset(constref Onset : rep_Onset);
+begin;
+    SetOnset_GenerateOn(Onset.GenerateOn);
+    SetOnset_GenerateTempOn(Onset.GenerateTempOn);
+    SetOnset_Criterion(Onset.Criterion);
+    SetOnset_AirTCriterion(Onset.AirTCriterion);
+    SetOnset_StartSearchDayNr(Onset.StartSearchDayNr);
+    SetOnset_StopSearchDayNr(Onset.StopSearchDayNr);
+    SetOnset_LengthSearchPeriod(Onset.LengthSearchPeriod);
+end;
+
+
+procedure SetOnset_Criterion(constref Criterion : repCriterion);
+var
+    index : shortint;
+begin;
+    index := ord(Criterion);
+    __SetOnset_Criterion(index);
+end;
+
+
+procedure SetOnset_AirTCriterion(constref AirTCriterion : repAirTCriterion);
+var
+    index : shortint;
+begin;
+    index := ord(AirTCriterion);
+    __SetOnset_AirTCriterion(index);
+end;
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 begin;
