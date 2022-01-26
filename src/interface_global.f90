@@ -50,6 +50,7 @@ use ac_global, only: CheckFilesInProject, &
                      setRainFile, &
                      GetRainFileFull, &
                      GetRainDescription, &
+                     LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
                      SetCalendarFile, &
@@ -182,6 +183,22 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
     string = pointer2string(StringIN, strlen)
     call SplitStringInThreeParams(string, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
+
+subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
+                                                DescriptionOfProject, strlen2)
+    !! Wrapper for [[ac_global:LoadProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: FullNameProjectFile
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: DescriptionOfProject
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(FullNameProjectFile, strlen1)
+    string2 = pointer2string(DescriptionOfProject, strlen2)
+    call LoadProjectDescription(string1, string2)
+end subroutine LoadProjectDescription_wrap
 
 subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
     !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
