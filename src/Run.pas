@@ -1769,7 +1769,7 @@ IF (RootingDepth > 0) THEN // salinity in root zone
    SetRootZoneSalt_ECsw(ECsw_temp);
    SetRootZoneSalt_ECswFC(ECswFC_temp);
    SetRootZoneSalt_KsSalt(KsSalt_temp);
-   SetStressTot_Salt(((GetStressTot().NrD - 1)*GetStressTot().Salt + 100*(1-GetRootZoneSalt().KsSalt))/GetStressTot().NrD);
+   SetStressTot_Salt(((GetStressTot_NrD() - 1)*GetStressTot_Salt() + 100*(1-GetRootZoneSalt().KsSalt))/GetStressTot_NrD());
    END;
 // Harvest Index
 Simulation.HIfinal := Crop.HI;
@@ -1875,8 +1875,8 @@ WRITE(fRun,IrriPer:9:1,InfiltPer:9:1,ROPer:9:1,DrainPer:9:1,CRwPer:9:1,
 // Soil Salinity
 WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,GetTotalSaltContent().EndDay:10:3);
 // seasonal stress
-WRITE(fRun,GetStressTot().NrD:9,GetStressTot().Salt:9:0,GetManagement_FertilityStress():9,GetStressTot().Weed:9:0,
-        GetStressTot().Temp:9:0,GetStressTot().Exp:9:0,GetStressTot().Sto:9:0);
+WRITE(fRun,GetStressTot_NrD():9,GetStressTot_Salt():9:0,GetManagement_FertilityStress():9,GetStressTot_Weed():9:0,
+        GetStressTot_Temp():9:0,GetStressTot_Exp():9:0,GetStressTot_Sto():9:0);
 // Biomass production
 IF ((BiomassPer > 0) AND (BUnlimPer > 0))
    THEN BEGIN
@@ -2323,14 +2323,14 @@ VAR RepeatToDay : LongInt;
     VAR ZiIN : INTEGER;
     BEGIN
     ZiIN := ZiAqua;
-    IF (GetGwTable().DNr1 = GetGwTable().DNr2)
+    IF (GetGwTable_DNr1() = GetGwTable_DNr2())
        THEN BEGIN
-            ZiAqua := GetGwTable().Z1;
-            ECiAqua := GetGwTable().EC1;
+            ZiAqua := GetGwTable_Z1();
+            ECiAqua := GetGwTable_EC1();
             END
        ELSE BEGIN
-            ZiAqua := GetGwTable().Z1 + ROUND((DayNri - GetGwTable().DNr1)*(GetGwTable().Z2 - GetGwTable().Z1)/(GetGwTable().DNr2 - GetGwTable().DNr1));
-            ECiAqua := GetGwTable().EC1 + (DayNri - GetGwTable().DNr1)*(GetGwTable().EC2 - GetGwTable().EC1)/(GetGwTable().DNr2 - GetGwTable().DNr1);
+            ZiAqua := GetGwTable_Z1() + ROUND((DayNri - GetGwTable_DNr1())*(GetGwTable_Z2() - GetGwTable_Z1())/(GetGwTable_DNr2() - GetGwTable_DNr1()));
+            ECiAqua := GetGwTable_EC1() + (DayNri - GetGwTable_DNr1())*(GetGwTable_EC2() - GetGwTable_EC1())/(GetGwTable_DNr2() - GetGwTable_DNr1());
             END;
     IF (ZiAqua <> ZiIN) THEN CalculateAdjustedFC((ZiAqua/100),Compartment);
     END; (* GetZandECgwt *)
@@ -2595,7 +2595,7 @@ IF StartMode THEN StartMode := false;
 (* 4. Get depth and quality of the groundwater*)
 IF (NOT SimulParam.ConstGwt) THEN
    BEGIN
-   IF (DayNri > GetGwTable().DNr2) THEN BEGIN
+   IF (DayNri > GetGwTable_DNr2()) THEN BEGIN
         GwTable_temp := GetGwTable();
         GetGwtSet(DayNri,GwTable_temp);
         SetGwTable(GwTable_temp);
@@ -2708,10 +2708,10 @@ SetTransfer_Store(Store_temp);
 SetTransfer_Mobilize(Mobilize_temp);
 
 (* 9. RUN Soil water balance and actual Canopy Cover *)
-BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayLastCut,GetStressTot().NrD,
+BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayLastCut,GetStressTot_NrD(),
               Tadj,GDDTadj,
               GDDayi,CGCref,GDDCGCref,CO2i,CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
-              Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot().Salt,
+              Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),
               DayFraction,GDDayFraction,FracAssim,
               StressSFadjNEW,GetTransfer_Store(),GetTransfer_Mobilize(),
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
@@ -2727,9 +2727,9 @@ IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (IrriMode = Inet)) THEN
 // total number of days in the season
 IF (CCiActual > 0) THEN
    BEGIN
-   IF (GetStressTot().NrD < 0)
+   IF (GetStressTot_NrD() < 0)
       THEN SetStressTot_NrD(1)
-      ELSE SetStressTot_NrD(GetStressTot().NrD +1);
+      ELSE SetStressTot_NrD(GetStressTot_NrD() +1);
    END;
 
 
@@ -2744,7 +2744,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         IF (CCiActual <= 0.0000001)
            THEN KsTr := 1
            ELSE KsTr := KsTemperature((0),Crop.GDtranspLow,GDDayi);
-        SetStressTot_Temp(((GetStressTot().NrD - 1)*GetStressTot().Temp + 100*(1-KsTr))/GetStressTot().NrD);
+        SetStressTot_Temp(((GetStressTot_NrD() - 1)*GetStressTot_Temp() + 100*(1-KsTr))/GetStressTot_NrD());
         // soil salinity stress
         ECe_temp := GetRootZoneSalt().ECe;
         ECsw_temp := GetRootZoneSalt().ECsw;
@@ -2755,7 +2755,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         SetRootZoneSalt_ECsw(ECsw_temp);
         SetRootZoneSalt_ECswFC(ECswFC_temp);
         SetRootZoneSalt_KsSalt(KsSalt_temp);
-        SetStressTot_Salt(((GetStressTot().NrD - 1)*GetStressTot().Salt + 100*(1-GetRootZoneSalt().KsSalt))/GetStressTot().NrD);
+        SetStressTot_Salt(((GetStressTot_NrD() - 1)*GetStressTot_Salt() + 100*(1-GetRootZoneSalt().KsSalt))/GetStressTot_NrD());
         // Biomass and yield
         Store_temp := GetTransfer_Store(); 
         Mobilize_temp := GetTransfer_Mobilize(); 
@@ -2763,7 +2763,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         Bmobilized_temp := GetTransfer_Bmobilized(); 
         DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
-                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot().Salt,SumGDDadjCC,CCiActual,FracAssim,
+                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,CCiActual,FracAssim,
                                  VirtualTimeCC,SumInterval,
                                  SumWaBal.Biomass,SumWaBal.BiomassPot,SumWaBal.BiomassUnlim,SumWaBal.BiomassTot,
                                  SumWabal.YieldPart,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
@@ -2890,18 +2890,18 @@ IF (CCiActual > 0) THEN
    BEGIN
    // leaf expansion growth
    IF (StressLeaf > - 0.000001) THEN
-      SetStressTot_Exp(((GetStressTot().NrD - 1)*GetStressTot().Exp + StressLeaf)/GetStressTot().NrD);
+      SetStressTot_Exp(((GetStressTot_NrD() - 1)*GetStressTot_Exp() + StressLeaf)/GetStressTot_NrD());
    // stomatal closure
    IF (Tpot > 0) THEN
       BEGIN
       StressStomata := 100 *(1 - Tact/Tpot);
       IF (StressStomata > - 0.000001) THEN
-         SetStressTot_Sto(((GetStressTot().NrD - 1)*GetStressTot().Sto + StressStomata)/GetStressTot().NrD);
+         SetStressTot_Sto(((GetStressTot_NrD() - 1)*GetStressTot_Sto() + StressStomata)/GetStressTot_NrD());
       END;
    END;
 // weed stress
 IF (WeedRCi > - 0.000001) THEN
-   SetStressTot_Weed(((GetStressTot().NrD - 1)*GetStressTot().Weed + WeedRCi)/GetStressTot().NrD);
+   SetStressTot_Weed(((GetStressTot_NrD() - 1)*GetStressTot_Weed() + WeedRCi)/GetStressTot_NrD());
 //14.c Assign crop parameters
 SetPlotVarCrop_ActVal(CCiActual/CCxCropWeedsNoSFstress * 100);
 SetPlotVarCrop_PotVal(100 * (1/CCxCropWeedsNoSFstress) *

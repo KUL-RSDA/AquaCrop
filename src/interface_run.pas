@@ -48,7 +48,24 @@ TYPE rep_Transfer = Record
        end;
 
 function GetGwTable(): rep_GwTable;
-        external 'aquacrop' name '__ac_run_MOD_getgwtable';
+
+function GetGwTable_DNr1() : integer;
+        external 'aquacrop' name '__ac_run_MOD_getgwtable_dnr1';
+
+function GetGwTable_DNr2() : integer;
+        external 'aquacrop' name '__ac_run_MOD_getgwtable_dnr2';
+
+function GetGwTable_Z1() : integer;
+        external 'aquacrop' name '__ac_run_MOD_getgwtable_z1';
+
+function GetGwTable_Z2(): integer;
+        external 'aquacrop' name '__ac_run_MOD_getgwtable_z2';
+
+function GetGwTable_EC1() : double;
+        external 'aquacrop' name '__ac_run_MOD_getgwtable_ec1';
+
+function GetGwTable_EC2() : double;
+        external 'aquacrop' name '__ac_run_MOD_getgwtable_ec2';
 
 procedure SetGwTable(constref GwTable : rep_GwTable);
 
@@ -147,8 +164,23 @@ procedure SetIrriInfoRecord2_TimeInfo(constref TimeInfo : integer);
 procedure SetIrriInfoRecord2_DepthInfo(constref DepthInfo : integer);
         external 'aquacrop' name '__ac_run_MOD_setirriinforecord2_depthinfo';
 
-function GetStressTot(): rep_StressTot;
-        external 'aquacrop' name '__ac_run_MOD_getstresstot';
+function GetStressTot_Salt() : double;
+        external 'aquacrop' name '__ac_run_MOD_getstresstot_salt';
+
+function GetStressTot_Temp() : double;
+        external 'aquacrop' name '__ac_run_MOD_getstresstot_temp';
+
+function GetStressTot_Exp() : double;
+        external 'aquacrop' name '__ac_run_MOD_getstresstot_exp';
+
+function GetStressTot_Sto(): double;
+        external 'aquacrop' name '__ac_run_MOD_getstresstot_sto';
+
+function GetStressTot_Weed(): double;
+        external 'aquacrop' name '__ac_run_MOD_getstresstot_weed';
+
+function GetStressTot_NrD() : integer;
+        external 'aquacrop' name '__ac_run_MOD_getstresstot_nrd';
 
 procedure SetStressTot_Salt(constref Salt : double);
         external 'aquacrop' name '__ac_run_MOD_setstresstot_salt';
@@ -274,6 +306,16 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 
 
 implementation
+
+function GetGwTable() : rep_GwTable;
+begin;
+    GetGwTable.DNr1 := GetGwTable_DNr1();
+    GetGwTable.DNr2 := GetGwTable_DNr2();
+    GetGwTable.Z1 := GetGwTable_Z1();
+    GetGwTable.Z2 := GetGwTable_Z2();
+    GetGwTable.EC1 := GetGwTable_EC1();
+    GetGwTable.EC2 := GetGwTable_EC2();
+end; 
 
 procedure SetGwTable(constref GwTable : rep_GwTable);
 begin;

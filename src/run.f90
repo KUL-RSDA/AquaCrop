@@ -93,11 +93,41 @@ contains
 
 ! GwTable
 
-type(rep_GwTable) function GetGwTable()
-    !! Getter for the "GwTable" global variable.
+integer(int32) function GetGwTable_DNr1()
+    !! Getter for the "GetGwTable" global variable.
     
-    GetGwTable = GwTable
-end function GetGwTable
+    GetGwTable_DNr1 = GwTable%DNr1
+end function GetGwTable_DNr1
+
+integer(int32) function GetGwTable_DNr2()
+    !! Getter for the "GetGwTable" global variable.
+    
+    GetGwTable_DNr2 = GwTable%DNr2
+end function GetGwTable_DNr2
+
+integer(int32) function GetGwTable_Z1()
+    !! Getter for the "GetGwTable" global variable.
+    
+    GetGwTable_Z1 = GwTable%Z1
+end function GetGwTable_Z1
+
+integer(int32) function GetGwTable_Z2()
+    !! Getter for the "GetGwTable" global variable.
+    
+    GetGwTable_Z2 = GwTable%Z2
+end function GetGwTable_Z2
+
+real(dp) function GetGwTable_EC1()
+    !! Getter for the "GetGwTable" global variable.
+    
+    GetGwTable_EC1 = GwTable%EC1
+end function GetGwTable_EC1
+
+real(dp) function GetGwTable_EC2()
+    !! Getter for the "GetGwTable" global variable.
+    
+    GetGwTable_EC2 = GwTable%EC2
+end function GetGwTable_EC2
 
 subroutine SetGwTable_DNr1(DNr1)
     !! Setter for the "GwTable" global variable. 
@@ -299,11 +329,41 @@ end subroutine SetIrriInfoRecord2_DepthInfo
 
 ! StressTot
 
-type(rep_StressTot) function GetStressTot()
+real(dp) function GetStressTot_Salt()
     !! Getter for the "StressTot" global variable.
     
-    GetStressTot = StressTot
-end function GetStressTot
+    GetStressTot_Salt = StressTot%Salt
+end function GetStressTot_Salt
+
+real(dp) function GetStressTot_Temp()
+    !! Getter for the "StressTot" global variable.
+    
+    GetStressTot_Temp = StressTot%Temp
+end function GetStressTot_Temp
+
+real(dp) function GetStressTot_Exp()
+    !! Getter for the "StressTot" global variable.
+    
+    GetStressTot_Exp = StressTot%Exp
+end function GetStressTot_Exp
+
+real(dp) function GetStressTot_Sto()
+    !! Getter for the "StressTot" global variable.
+    
+    GetStressTot_Sto = StressTot%Sto
+end function GetStressTot_Sto
+
+real(dp) function GetStressTot_Weed()
+    !! Getter for the "StressTot" global variable.
+    
+    GetStressTot_Weed = StressTot%Weed
+end function GetStressTot_Weed
+
+integer(int32) function GetStressTot_NrD()
+    !! Getter for the "StressTot" global variable.
+    
+    GetStressTot_NrD = StressTot%NrD
+end function GetStressTot_NrD
 
 subroutine SetStressTot_Salt(Salt)
     !! Setter for the "StressTot" global variable. 
