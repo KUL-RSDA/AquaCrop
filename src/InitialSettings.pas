@@ -214,14 +214,14 @@ implementation
 
  // 8. Project and Multiple Project file
  SetProjectFile('(None)');
- ProjectFileFull := GetProjectFile();
+ SetProjectFileFull(GetProjectFile());
  ProjectDescription := 'No specific project';
  Simulation.MultipleRun := false; // No sequence of simulation runs in the project
  Simulation.NrRuns := 1;
  Simulation.MultipleRunWithKeepSWC := false;
  Simulation.MultipleRunConstZrx := undef_int;
  SetMultipleProjectFile(GetProjectFile());
- MultipleProjectFileFull := ProjectFileFull;
+ SetMultipleProjectFileFull(GetProjectFileFull());
  MultipleProjectDescription := ProjectDescription;
 
 

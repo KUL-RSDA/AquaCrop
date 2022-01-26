@@ -3050,7 +3050,7 @@ IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results 
 IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
 CASE TheProjectType OF
      TypePRO : BEGIN
-               LoadSimulationRunProject(ProjectFileFull,(1));
+               LoadSimulationRunProject(GetProjectFileFull(),(1));
                AdjustCompartments;
                SumWaBal_temp := GetSumWaBal();
                GlobalZero(SumWabal_temp);
@@ -3069,7 +3069,7 @@ CASE TheProjectType OF
      TypePRM : BEGIN
                FOR NrRun := 1 TO Simulation.NrRuns DO
                    BEGIN
-                   LoadSimulationRunProject(MultipleProjectFileFull,NrRun);
+                   LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
                    AdjustCompartments;
                    SumWaBal_temp := GetSumWaBal();
                    GlobalZero(SumWabal_temp);

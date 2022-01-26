@@ -630,6 +630,19 @@ procedure SetSWCiniFile_wrap(
         external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';
 
 
+function GetSWCiniFileFull(): string;
+
+function GetSWCiniFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getswcinifilefull_wrap';
+
+procedure SetSWCiniFileFull(constref str : string);
+
+procedure SetSWCiniFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifilefull_wrap';
+
+
 function GetPathNameProg(): string;
 
 function GetPathNameProg_wrap(): PChar;
@@ -679,6 +692,20 @@ procedure SetProjectFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setprojectfile_wrap';
 
+
+function GetProjectFileFull(): string;
+
+function GetProjectFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getprojectfilefull_wrap';
+
+procedure SetProjectFileFull(constref str : string);
+
+procedure SetProjectFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setprojectfilefull_wrap';
+
+
 function GetMultipleProjectFile(): string;
 
 function GetMultipleProjectFile_wrap(): PChar;
@@ -690,6 +717,19 @@ procedure SetMultipleProjectFile_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfile_wrap';
+
+
+function GetMultipleProjectFileFull(): string;
+
+function GetMultipleProjectFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmultipleprojectfilefull_wrap';
+
+procedure SetMultipleProjectFileFull(constref str : string);
+
+procedure SetMultipleProjectFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfilefull_wrap';
                 
 
 function FileExists(constref full_name : string) : boolean;
@@ -2088,6 +2128,29 @@ begin;
     SetSWCiniFile_wrap(p, strlen);
 end;
 
+
+function GetSWCiniFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetSWCiniFileFull_wrap();
+    GetSWCiniFileFull := AnsiString(p);
+end;
+
+
+procedure SetSWCiniFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetSWCiniFileFull_wrap(p, strlen);
+end;
+
+
 function GetProjectFile(): string;
 var
     p : PChar;
@@ -2106,6 +2169,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetProjectFile_wrap(p, strlen);
+end;
+
+
+function GetProjectFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetProjectFileFull_wrap();
+    GetProjectFileFull := AnsiString(p);
+end;
+
+procedure SetProjectFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetProjectFileFull_wrap(p, strlen);
 end;
 
 
@@ -2129,6 +2213,29 @@ begin;
     strlen := Length(str);
     SetMultipleProjectFile_wrap(p, strlen);
 end;
+
+
+function GetMultipleProjectFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetMultipleProjectFileFull_wrap();
+    GetMultipleProjectFileFull := AnsiString(p);
+end;
+
+
+procedure SetMultipleProjectFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetMultipleProjectFileFull_wrap(p, strlen);
+end;
+
 
 function GetPathNameProg(): string;
 var
