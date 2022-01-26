@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run;
+uses Global, interface_global, interface_run, interface_tempprocessing;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -857,7 +857,7 @@ IF (TemperatureFile <> '(None)')
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
-                CASE TemperatureRecord.DataType OF
+                CASE GetTemperatureRecord().DataType OF
                   Daily   : BEGIN
                             Assign(fTemp,totalname);
                             Reset(fTemp);
@@ -869,7 +869,7 @@ IF (TemperatureFile <> '(None)')
                             READLN(fTemp);
                             READLN(fTemp);
                             READLN(fTemp);
-                            FOR i := TemperatureRecord.FromDayNr TO (FromSimDay - 1) DO READLN(fTemp);
+                            FOR i := GetTemperatureRecord().FromDayNr TO (FromSimDay - 1) DO READLN(fTemp);
                             READLN(fTemp,StringREAD);  // i.e. DayNri
                             SplitStringInTwoParams(StringREAD,Tmin,Tmax);
                             END;
@@ -896,7 +896,7 @@ IF (TemperatureFile <> '(None)')
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
-                    CASE TemperatureRecord.DataType OF
+                    CASE GetTemperatureRecord().DataType OF
                          Daily   : BEGIN
                                    IF Eof(fTemp)
                                       THEN BEGIN
@@ -932,7 +932,7 @@ IF (TemperatureFile <> '(None)')
                     WRITELN(fTempS,Tmin:10:4,Tmax:10:4);
                     END;
                 // Close files
-                IF (TemperatureRecord.DataType = Daily) THEN Close(fTemp);
+                IF (GetTemperatureRecord().DataType = Daily) THEN Close(fTemp);
                 Close(fTempS);
                 END
            ELSE BEGIN
@@ -1006,7 +1006,7 @@ IF (TemperatureFile <> '(None)')
         totalname := TemperatureFilefull;
         IF FileExists(totalname)
            THEN BEGIN
-                CASE TemperatureRecord.DataType OF
+                CASE GetTemperatureRecord().DataType OF
                   Daily   : BEGIN
                             Assign(fTemp,totalname);
                             Reset(fTemp);
@@ -1019,7 +1019,7 @@ IF (TemperatureFile <> '(None)')
                             READLN(fTemp);
                             READLN(fTemp);
                             // days before first day of simulation (= DayNri)
-                            FOR i := TemperatureRecord.FromDayNr TO (DayNri - 1) DO
+                            FOR i := GetTemperatureRecord().FromDayNr TO (DayNri - 1) DO
                                 BEGIN
                                 IF (i < Crop.Day1)
                                    THEN READLN(fTemp)
