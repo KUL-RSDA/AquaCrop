@@ -265,9 +265,6 @@ TYPE
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
-     repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
-     repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
-
      rep_EndSeason = Record
          ExtraYears : Integer; // to add to YearStartCropCycle
          GenerateTempOn : BOOLEAN; // by temperature criterion
