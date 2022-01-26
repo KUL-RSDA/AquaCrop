@@ -361,8 +361,11 @@ character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
+character(len=:), allocatable :: SWCiniFileFull
 character(len=:), allocatable :: ProjectFile
+character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
+character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -1915,6 +1918,21 @@ subroutine SetSWCiniFile(str)
 end subroutine SetSWCiniFile
 
 
+function GetSWCiniFileFull() result(str)
+    !! Getter for the "SWCiniFileFull" global variable.
+    character(len=len(SWCiniFileFull)) :: str
+    
+    str = SWCiniFileFull
+end function GetSWCiniFileFull
+
+subroutine SetSWCiniFileFull(str)
+    !! Setter for the "SWCiniFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    SWCiniFileFull = str
+end subroutine SetSWCiniFileFull
+
+
 function GetPathNameProg() result(str)
     !! Getter for the "PathNameProg" global variable.
     character(len=len(PathNameProg)) :: str
@@ -1972,6 +1990,20 @@ subroutine SetProjectFile(str)
     ProjectFile = str
 end subroutine SetProjectFile
 
+function GetProjectFileFull() result(str)
+    !! Getter for the "ProjectFileFull" global variable.
+    character(len=len(ProjectFileFull)) :: str
+    
+    str = ProjectFileFull
+end function GetProjectFileFull
+
+subroutine SetProjectFileFull(str)
+    !! Setter for the "ProjectFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    ProjectFileFull = str
+end subroutine SetProjectFileFull
+
 function GetMultipleProjectFile() result(str)
     !! Getter for the "MultipleProjectFile" global variable.
     character(len=len(MultipleProjectFile)) :: str
@@ -1985,6 +2017,20 @@ subroutine SetMultipleProjectFile(str)
     
     MultipleProjectFile = str
 end subroutine SetMultipleProjectFile
+
+function GetMultipleProjectFileFull() result(str)
+    !! Getter for the "MultipleProjectFileFull" global variable.
+    character(len=len(MultipleProjectFileFull)) :: str
+    
+    str = MultipleProjectFileFull
+end function GetMultipleProjectFileFull
+
+subroutine SetMultipleProjectFileFull(str)
+    !! Setter for the "MultipleProjectFileFull" global variable.
+    character(len=*), intent(in) :: str
+    
+    MultipleProjectFileFull = str
+end subroutine SetMultipleProjectFileFull
 
 
 logical function LeapYear(Year)

@@ -339,10 +339,10 @@ IF (NrProjects > 0) THEN
                     TypePRO : BEGIN
                               // 2. Assign single project file
                               SetProjectFile(TheProjectFile);
-                              ProjectFileFull := CONCAT(PathNameList,GetProjectFile());
+                              SetProjectFileFull(CONCAT(PathNameList,GetProjectFile()));
                               //3. Check if Environment and Simulation Files exist
                               CanSelect := true;
-                              CheckFilesInProject(ProjectFileFull,(1),CanSelect);
+                              CheckFilesInProject(GetProjectFileFull(),(1),CanSelect);
                               //4. load project parameters
                               IF CanSelect THEN
                                  BEGIN
@@ -355,16 +355,16 @@ IF (NrProjects > 0) THEN
                     TypePRM : BEGIN
                               // 2. Assign multiple project file
                               SetMultipleProjectFile(TheProjectFile);
-                              MultipleProjectFileFull := CONCAT(PathNameList,GetMultipleProjectFile());
+                              SetMultipleProjectFileFull(CONCAT(PathNameList,GetMultipleProjectFile()));
                               //2bis. Get number of Simulation Runs
-                              GetNumberSimulationRuns(MultipleProjectFileFull,TotalSimRuns);
+                              GetNumberSimulationRuns(GetMultipleProjectFileFull(),TotalSimRuns);
                               //3. Check if Environment and Simulation Files exist for all runs
                               CanSelect := true;
                               SimNr := 0;
                               WHILE (CanSelect AND (SimNr < TotalSimRuns)) DO
                                 BEGIN
                                 SimNr := SimNr + 1;
-                                CheckFilesInProject(MultipleProjectFileFull,SimNr,CanSelect);
+                                CheckFilesInProject(GetMultipleProjectFileFull(),SimNr,CanSelect);
                                 END;
                               //4. load project parameters
                               IF CanSelect THEN
@@ -375,7 +375,7 @@ IF (NrProjects > 0) THEN
                                  ComposeOutputFileName(GetMultipleProjectFile());
                                  Simulation.MultipleRun := true;
                                  Simulation.NrRuns := TotalSimRuns;
-                                 CheckForKeepSWC(MultipleProjectFileFull,Simulation.NrRuns,Simulation.MultipleRunWithKeepSWC,Simulation.MultipleRunConstZrx);
+                                 CheckForKeepSWC(GetMultipleProjectFileFull(),Simulation.NrRuns,Simulation.MultipleRunWithKeepSWC,Simulation.MultipleRunConstZrx);
                                  END;
                               END;
                         else

@@ -311,7 +311,7 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     TemperatureFile : string;
-    TemperatureFileFull,SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
+    TemperatureFileFull,
     FullFileNameProgramParameters : string;
     ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
     TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
@@ -1251,7 +1251,7 @@ PROCEDURE DeclareInitialCondAtFCandNoSalt;
 VAR layeri,compi,celli : INTEGER;
 BEGIN
 SetSWCiniFile('(None)');
-SWCiniFileFull := GetSWCiniFile(); (* no file *)
+SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
 SWCiniDescription := 'Soil water profile at Field Capacity';
 Simulation.IniSWC.AtDepths := false;
 Simulation.IniSWC.NrLoc := GetSoil().NrSoilLayers;

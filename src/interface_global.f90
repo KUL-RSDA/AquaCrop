@@ -22,8 +22,11 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimateFileFull, &
                      GetClimFile, &
                      GetSWCiniFile, &
+                     GetSWCiniFileFull, &
                      GetProjectFile, &
+                     GetProjectFileFull, &
                      GetMultipleProjectFile, &
+                     GetMultipleProjectFileFull, &
                      GetNumberSimulationRuns, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
@@ -67,12 +70,15 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToFile, &
                      SetEToFileFull, &
                      SetEToDescription, &
-                     setSWCinifile, &
+                     setSWCiniFile, &
+                     setSWCiniFileFull, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
                      SetProjectFile, &
+                     SetProjectFileFull, &
                      SetMultipleProjectFile, &
+                     SetMultipleProjectFileFull, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetManFile, &
@@ -494,6 +500,26 @@ subroutine SetSWCiniFile_wrap(SWCiniFile, strlen)
     call SetSWCiniFile(string)
 end subroutine SetSWCiniFile_wrap
 
+
+function GetSWCiniFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetSWCiniFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetSWCiniFileFull())
+end function GetSWCiniFileFull_wrap
+
+
+subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
+    !! Wrapper for [[ac_global:SetSWCiniFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: SWCiniFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniFileFull, strlen)
+    call SetSWCiniFileFull(string)
+end subroutine SetSWCiniFileFull_wrap
+
 function GetPathNameProg_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -571,6 +597,27 @@ subroutine SetProjectFile_wrap(ProjectFile, strlen)
     call SetProjectFile(string)
 end subroutine SetProjectFile_wrap
 
+
+function GetProjectFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetProjectFileFull())
+end function GetProjectFileFull_wrap
+
+
+subroutine SetProjectFileFull_wrap(ProjectFileFull, strlen)
+    !! Wrapper for [[ac_global:SetProjectFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectFileFull, strlen)
+    call SetProjectFileFull(string)
+end subroutine SetProjectFileFull_wrap
+
+
 function GetMultipleProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -589,6 +636,26 @@ subroutine SetMultipleProjectFile_wrap(MultipleProjectFile, strlen)
     string = pointer2string(MultipleProjectFile, strlen)
     call SetMultipleProjectFile(string)
 end subroutine SetMultipleProjectFile_wrap
+
+
+function GetMultipleProjectFileFull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetMultipleProjectFileFull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetMultipleProjectFileFull())
+end function GetMultipleProjectFileFull_wrap
+
+
+subroutine SetMultipleProjectFileFull_wrap(MultipleProjectFileFull, strlen)
+    !! Wrapper for [[ac_global:SetMultipleProjectFileFull]] for foreign languages.
+    type(c_ptr), intent(in) :: MultipleProjectFileFull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(MultipleProjectFileFull, strlen)
+    call SetMultipleProjectFileFull(string)
+end subroutine SetMultipleProjectFileFull_wrap
 
 
 function GetRainFile_wrap() result(c_pointer)
