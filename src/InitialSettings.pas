@@ -11,8 +11,9 @@ implementation
 
  PROCEDURE InitializeSettings;
  TYPE rep_string20 = string[20];
- VAR TempString1,TempString2 : string;
+ VAR TempString1,TempString2,CO2descr : string;
      Nri : INTEGER;
+     SumWaBal_temp : rep_sum;
 
  BEGIN
  // 1. Program settings
@@ -100,11 +101,11 @@ implementation
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
- SetProfFilefull(CONCAT(PathNameSimul,GetProfFile()));
- // required for Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,Soil.NrSoilLayers,SoilLayer) in LoadProfile
+ SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
+ // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
  Crop.RootMin := 0.30; //Minimum rooting depth (m)
  Crop.RootMax := 1.00; //Maximum rooting depth (m)
- // Crop. RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
+ // Crop. RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
  LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -118,12 +119,12 @@ implementation
  // 3. Crop characteristics and cropping period
  ResetDefaultCrop; // Reset the crop to its default values
  SetCropFile('DEFAULT.CRO');
- SetCropFilefull(CONCAT(PathNameSimul,GetCropFile()));
+ SetCropFilefull(CONCAT(GetPathNameSimul(),GetCropFile()));
  //LoadCrop ==============================
  Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
  Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
  // maximum rooting depth in given soil profile
- Soil.RootMax := RootMaxInSoilProfile(Crop.RootMax,Soil.NrSoilLayers,SoilLayer);
+ SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
  Crop.Day1 := SimulParam.CropDay1;
  CompleteCropDescription;
@@ -142,19 +143,16 @@ implementation
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
  TemperatureDescription := '';
- WITH TemperatureRecord DO
-   BEGIN
-   DataType := Daily;
-   NrObs := 0;
-   FromString := 'any date';
-   ToString := 'any date';
-   FromY := 1901;
-   END;
+ SetTemperatureRecord_DataType(Daily);
+ SetTemperatureRecord_NrObs(0);
+ SetTemperatureRecord_FromString('any date');
+ SetTemperatureRecord_ToString('any date');
+ SetTemperatureRecord_FromY(1901);
 
  // 5.2 ETo
  SetEToFile('(None)');
  SetEToFilefull(GetEToFile());  (* no file *)
- EToDescription := '';
+ SetEToDescription('');
  WITH EToRecord DO
    BEGIN
    DataType := Daily;
@@ -167,7 +165,7 @@ implementation
  // 5.3 Rain
  SetRainFile('(None)');
  SetRainFilefull(GetRainFile());  (* no file *)
- RainDescription := '';
+ SetRainDescription('');
  WITH RainRecord DO
    BEGIN
    DataType := Daily;
@@ -179,8 +177,11 @@ implementation
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
- CO2FileFull := CONCAT(PathNameSimul,GetCO2File());
- GetCO2Description(CO2FileFull,CO2Description);
+ setCO2FileFull(CONCAT(GetPathNameSimul(),GetCO2File()));
+ CO2descr := GetCO2Description();
+ GenerateCO2Description(GetCO2FileFull(),CO2descr);
+ SetCO2Description(CO2descr);
+
 
  // 5.5 Climate file
  SetClimateFile('(None)');
@@ -200,7 +201,7 @@ implementation
 
  // 6. irrigation
  SetIrriFile('(None)');
- IrriFilefull := GetIrriFile();  (* no file *)
+ SetIrriFilefull(GetIrriFile());  (* no file *)
  NoIrrigation;
 
  // 7. Off-season
@@ -241,7 +242,9 @@ implementation
  SurfaceStorage := 0;
  ECstorage := 0.0;
  DaySubmerged := 0;
- GlobalZero(SumWabal);
+ SumWaBal_temp := GetSumWabal();
+ GlobalZero(SumWabal_temp);
+ SetSumWaBal(SumWaBal_temp);
  Drain:= 0.0; // added 4.0
  Runoff:= 0.0;// added 4.0
  Infiltrated := 0.0; // added 4.0

@@ -11,6 +11,7 @@ const
     CO2Ref = 369.41;
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
+    DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
 
 type
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -42,6 +43,13 @@ type
         CRa, CRb     : double; (* coefficients for Capillary Rise *)
         END;
 
+     rep_soil = Record
+         REW            : ShortInt; (* Readily evaporable water mm *)
+         NrSoilLayers   : ShortInt;
+         CNvalue        : ShortInt;
+         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
+         end;
+
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
     
     rep_int_array = ARRAY[1..4] OF INTEGER;
@@ -49,6 +57,17 @@ type
     rep_modeCycle = (GDDays, CalendarDays);
 
     rep_planting = (Seed,Transplant,Regrowth);
+
+    rep_datatype = (Daily,Decadely, Monthly);
+
+    rep_clim = Record
+         DataType    : rep_datatype;
+         FromD,FromM,FromY : INTEGER; //D = day or decade, Y=1901 is not linked to specific year
+         ToD,ToM,ToY : INTEGER;
+         FromDayNr, ToDayNr : LongInt; //daynumber
+         FromString, ToString : String;
+         NrObs       : INTEGER; // number of observations
+         end;
 
     rep_Content = Record  // total water (mm) or salt (Mg/ha) content
         BeginDay  : double; //at the beginning of the day
@@ -130,12 +149,25 @@ type
          Cuttings        : rep_Cuttings; // Multiple cuttings
          end;
 
+     rep_sum = RECORD
+         Epot, Tpot, Rain, Irrigation, Infiltrated,
+         Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater  : double;  (* mm *)
+         Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot : double;   (* ton/ha *)
+         SaltIn, SaltOut, CRsalt : double; (* ton/ha *)
+         End;
+
      rep_RootZoneSalt = Record
          ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
          ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
          ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
          KsSalt : double;   // stress coefficient for salinity
          end;
+
+     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
+     rep_GenerateDepthMode = (ToFC,FixDepth);
+
+     rep_IrriMode = (NoIrri,Manual,Generate,Inet);
+     rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -390,16 +422,16 @@ function FullUndefinedRecord(
             constref FromY,FromD,FromM,ToD,ToM : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_fullundefinedrecord';
 
-procedure GetCO2Description(
-            constref CO2FileFull : string;
+procedure GenerateCO2Description(
+            constref CO2FileFull: string;
             var CO2Description : string);
 
-procedure GetCO2Description_wrap(
+procedure GenerateCO2Description_wrap(
             constref CO2FileFull : PChar;
             constref strlen1 : integer;
             var CO2Description : PChar;
             constref strlen2 : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
+        external 'aquacrop' name '__ac_interface_global_MOD_generateco2description_wrap';
 
 procedure GetIrriDescription(
             constref IrriFileFull : string;
@@ -441,6 +473,29 @@ procedure SetCO2File_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setco2file_wrap';
 
+function GetCO2FileFull(): string;
+
+function GetCO2FileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2filefull_wrap';
+
+procedure SetCO2FileFull(constref str : string);
+
+procedure SetCO2FileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2filefull_wrap';
+
+function GetCO2Description(): string;
+
+function GetCO2Description_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getco2description_wrap';
+
+procedure SetCO2Description(constref str : string);
+
+procedure SetCO2Description_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setco2description_wrap';
 
 function GetEToFile(): string;
 
@@ -466,6 +521,17 @@ procedure SetEToFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setetofilefull_wrap';
 
+function GetEToDescription(): string;
+
+function GetEToDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getetodescription_wrap';
+
+procedure SetEToDescription(constref str : string);
+
+procedure SetEToDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setetodescription_wrap';
 
 function GetRainFile(): string;
 
@@ -491,6 +557,18 @@ procedure SetRainFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setrainfilefull_wrap';
 
+function GetRainDescription(): string;
+
+function GetRainDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getraindescription_wrap';
+
+procedure SetRainDescription(constref str : string);
+
+procedure SetRainDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setraindescription_wrap';
+
 function GetIrriFile(): string;
 
 function GetIrriFile_wrap(): PChar;
@@ -502,6 +580,18 @@ procedure SetIrriFile_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setirrifile_wrap';
+
+function GetIrriFileFull(): string;
+
+function GetIrriFileFull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getirrifilefull_wrap';
+
+procedure SetIrriFileFull(constref str : string);
+
+procedure SetIrriFileFull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setirrifilefull_wrap';
 
 function GetClimateFile(): string;
 
@@ -549,8 +639,46 @@ procedure SetSWCiniFile(constref str : string);
 procedure SetSWCiniFile_wrap(
             constref p : PChar;
             constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';      
-        
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinifile_wrap';
+
+
+function GetPathNameProg(): string;
+
+function GetPathNameProg_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameprog_wrap';
+
+procedure SetPathNameProg(constref str : string);
+
+procedure SetPathNameprog_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameprog_wrap';
+
+function GetPathNameOutp(): string;
+
+function GetPathNameOutp_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameoutp_wrap';
+
+procedure SetPathNameOutp(constref str : string);
+
+procedure SetPathNameOutp_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameoutp_wrap';
+
+function GetPathNameSimul(): string;
+
+function GetPathNameSimul_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnamesimul_wrap';
+
+procedure SetPathNameSimul(constref str : string);
+
+procedure SetPathNameSimul_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnamesimul_wrap'; 
+             
+
 function GetProjectFile(): string;
 
 function GetProjectFile_wrap(): PChar;
@@ -575,6 +703,7 @@ procedure SetMultipleProjectFile_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfile_wrap';
                 
+
 function FileExists(constref full_name : string) : boolean;
 
 function FileExists_wrap(
@@ -1001,6 +1130,145 @@ procedure SetCropFileSet_GDDaysFromSenescenceToEnd(constref GDDaysFromSenescence
 procedure SetCropFileSet_GDDaysToHarvest(constref GDDaysToHarvest : double);
         external 'aquacrop' name '__ac_global_MOD_setcropfileset_gddaystoharvest';
 
+function GetSumWaBal() : rep_sum;
+
+function GetSumWaBal_Epot() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_epot';
+
+function GetSumWaBal_Tpot() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_tpot';
+
+function GetSumWaBal_Rain() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_rain';
+
+function GetSumWaBal_Irrigation() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_irrigation';
+
+function GetSumWaBal_Infiltrated() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_infiltrated';
+
+function GetSumWaBal_Runoff() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_runoff';
+
+function GetSumWaBal_Drain() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_drain';
+
+function GetSumWaBal_Eact() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_eact';
+
+function GetSumWaBal_Tact() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_tact';
+
+function GetSumWaBal_TrW() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_trw';
+
+function GetSumWaBal_ECropCycle() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_ecropcycle';
+
+function GetSumWaBal_CRwater() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_crwater';
+
+function GetSumWaBal_Biomass() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomass';
+
+function GetSumWaBal_YieldPart() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_yieldpart';
+
+function GetSumWaBal_BiomassPot() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomasspot';
+
+function GetSumWaBal_BiomassUnlim() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomassunlim';
+
+function GetSumWaBal_BiomassTot() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_biomasstot';
+
+function GetSumWaBal_SaltIn() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_saltin';
+
+function GetSumWaBal_SaltOut() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_saltout';
+
+function GetSumWaBal_CRsalt() : double;
+        external 'aquacrop' name '__ac_global_MOD_getsumwabal_crsalt';
+
+procedure SetSumWaBal(constref SumWaBal : rep_sum);
+
+procedure SetSumWaBal_Epot(constref Epot : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_epot';
+
+procedure SetSumWaBal_Tpot(constref Tpot : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_tpot';
+
+procedure SetSumWaBal_Rain(constref Rain : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_rain';
+
+procedure SetSumWaBal_Irrigation(constref Irrigation : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_irrigation';
+
+procedure SetSumWaBal_Infiltrated(constref Infiltrated : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_infiltrated';
+
+procedure SetSumWaBal_Runoff(constref Runoff : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_runoff';
+
+procedure SetSumWaBal_Drain(constref Drain : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_drain';
+
+procedure SetSumWaBal_Eact(constref Eact : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_eact';
+
+procedure SetSumWaBal_Tact(constref Tact : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_tact';
+
+procedure SetSumWaBal_TrW(constref TrW : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_trw';
+
+procedure SetSumWaBal_ECropCycle(constref ECropCycle : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_ecropcycle';
+
+procedure SetSumWaBal_CRwater(constref CRwater : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_crwater';
+
+procedure SetSumWaBal_Biomass(constref Biomass : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomass';
+
+procedure SetSumWaBal_yieldpart(constref yieldpart : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_yieldpart';
+
+procedure SetSumWaBal_BiomassPot(constref BiomassPot : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomasspot';
+
+procedure SetSumWaBal_BiomassUnlim(constref BiomassUnlim : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomassunlim';
+
+procedure SetSumWaBal_BiomassTot(constref BiomassTot : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_biomasstot';
+
+procedure SetSumWaBal_SaltIn(constref SaltIn : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_saltin';
+
+procedure SetSumWaBal_SaltOut(constref SaltOut : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_saltout';
+
+procedure SetSumWaBal_CRsalt(constref CRsalt : double);
+        external 'aquacrop' name '__ac_global_MOD_setsumwabal_crsalt';
+
+function GetSoil(): rep_Soil;
+        external 'aquacrop' name '__ac_global_MOD_getsoil';
+
+procedure SetSoil_REW(constref REW : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
+
+procedure SetSoil_NrSoilLayers(constref NrSoilLayers : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_nrsoillayers';
+
+procedure SetSoil_CNvalue(constref CNvalue : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_cnvalue';
+
+procedure SetSoil_RootMax(constref RootMax : Single);
+        external 'aquacrop' name '__ac_global_MOD_setsoil_rootmax';
+
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
 
@@ -1041,6 +1309,138 @@ procedure SetRootZoneSalt_ECswFC(constref ECswFC : double);
 
 procedure SetRootZoneSalt_KsSalt(constref KsSalt : double);
         external 'aquacrop' name '__ac_global_MOD_setrootzonesalt_kssalt';
+
+function __GetGenerateTimeMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getgeneratetimemode';
+
+function GetGenerateTimeMode(): rep_GenerateTimeMode;
+
+procedure __SetGenerateTimeMode(constref GenerateTimeMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setgeneratetimemode';
+
+procedure SetGenerateTimeMode(constref GenerateTimeMode : rep_GenerateTimeMode);
+
+function __GetGenerateDepthMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getgeneratedepthmode';
+
+function GetGenerateDepthMode(): rep_GenerateDepthMode;
+
+procedure __SetGenerateDepthMode(constref IrriDepthMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setgeneratedepthmode';
+
+procedure SetGenerateDepthMode(constref GenerateDepthMode : rep_GenerateDepthMode);
+
+function __GetIrriMode(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getirrimode';
+
+function GetIrriMode(): rep_IrriMode;
+
+procedure __SetIrriMode(constref IrriMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setirrimode';
+
+procedure SetIrriMode(constref IrriMode : rep_IrriMode);
+
+function __GetIrriMethod(): integer;
+        external 'aquacrop' name '__ac_global_MOD_getirrimethod';
+
+function GetIrriMethod(): rep_IrriMethod;
+
+procedure __SetIrriMethod(constref IrriMethod : integer);
+        external 'aquacrop' name '__ac_global_MOD_setirrimethod';
+
+procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod);
+
+function GetTemperatureRecord(): rep_clim;
+
+function __GetTemperatureRecord_DataType() : shortint;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_datatype';
+
+function GetTemperatureRecord_DataType() : rep_datatype;
+
+function GetTemperatureRecord_FromD() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromd';
+
+function GetTemperatureRecord_FromM() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromm';
+
+function GetTemperatureRecord_FromY() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromy';
+
+function GetTemperatureRecord_ToD() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_tod';
+
+function GetTemperatureRecord_ToM() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_tom';
+
+function GetTemperatureRecord_ToY() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_toy';
+
+function GetTemperatureRecord_FromDayNr() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_fromdaynr';
+
+function GetTemperatureRecord_ToDayNr() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_todaynr';
+
+function GetTemperatureRecord_NrObs() : integer;
+         external 'aquacrop' name '__ac_global_MOD_gettemperaturerecord_nrobs';
+
+function GetTemperatureRecord_FromString(): string;
+
+function GetTemperatureRecord_FromString_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_fromstring_wrap';
+
+function GetTemperatureRecord_ToString() : string;
+
+function GetTemperatureRecord_ToString_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturerecord_tostring_wrap';
+
+procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
+
+procedure __SetTemperatureRecord_DataType(constref DataType : shortint);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_datatype';
+
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+
+procedure SetTemperatureRecord_FromD(constref FromD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromd';
+
+procedure SetTemperatureRecord_FromM(constref FromM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromm';
+
+procedure SetTemperatureRecord_FromY(constref FromY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromy';
+
+procedure SetTemperatureRecord_ToD(constref ToD : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tod';
+
+procedure SetTemperatureRecord_ToM(constref ToM : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_tom';
+
+procedure SetTemperatureRecord_ToY(constref ToY : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_toy';
+
+procedure SetTemperatureRecord_FromDayNr(constref FromDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_fromdaynr';
+
+procedure SetTemperatureRecord_ToDayNr(constref ToDayNr : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_todaynr';
+
+procedure SetTemperatureRecord_NrObs(constref NrObs : integer);
+         external 'aquacrop' name '__ac_global_MOD_settemperaturerecord_nrobs';
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+
+procedure SetTemperatureRecord_FromString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_fromstring_wrap';
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+
+procedure SetTemperatureRecord_ToString_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
 
 implementation
@@ -1134,6 +1534,77 @@ begin;
     __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
+function GetGenerateTimeMode() : rep_GenerateTimeMode;
+var
+    int_GenerateTimeMode : integer;
+
+begin;
+    int_GenerateTimeMode := __GetGenerateTimeMode();
+    GetGenerateTimeMode := rep_GenerateTimeMode(int_GenerateTimeMode);
+end;
+
+procedure SetGenerateTimeMode(constref GenerateTimeMode : rep_GenerateTimeMode); 
+var
+    int_GenerateTimeMode : integer;
+
+begin;
+    int_GenerateTimeMode := ord(GenerateTimeMode);
+    __SetGenerateTimeMode(int_GenerateTimeMode);
+end;
+
+function GetGenerateDepthMode() : rep_GenerateDepthMode;
+var
+    int_GenerateDepthMode : integer;
+
+begin;
+    int_GenerateDepthMode := __GetGenerateDepthMode();
+    GetGenerateDepthMode := rep_GenerateDepthMode(int_GenerateDepthMode);
+end;
+
+procedure SetGenerateDepthMode(constref GenerateDepthMode : rep_GenerateDepthMode); 
+var
+    int_GenerateDepthMode : integer;
+
+begin;
+    int_GenerateDepthMode := ord(GenerateDepthMode);
+    __SetGenerateDepthMode(int_GenerateDepthMode);
+end;
+
+function GetIrriMode() : rep_IrriMode;
+var
+    int_IrriMode : integer;
+
+begin;
+    int_IrriMode := __GetIrriMode();
+    GetIrriMode := rep_IrriMode(int_IrriMode);
+end;
+
+procedure SetIrriMode(constref IrriMode : rep_IrriMode); 
+var
+    int_IrriMode : integer;
+
+begin;
+    int_IrriMode := ord(IrriMode);
+    __SetIrriMode(int_IrriMode);
+end;
+
+function GetIrriMethod() : rep_IrriMethod;
+var
+    int_IrriMethod : integer;
+
+begin;
+    int_IrriMethod := __GetIrriMethod();
+    GetIrriMethod := rep_IrriMethod(int_IrriMethod);
+end;
+
+procedure SetIrriMethod(constref IrriMethod : rep_IrriMethod); 
+var
+    int_IrriMethod : integer;
+
+begin;
+    int_IrriMethod := ord(IrriMethod);
+    __SetIrriMethod(int_IrriMethod);
+end;
 
 procedure GetNumberSimulationRuns(
             constref TempFileNameFull : string;
@@ -1184,6 +1655,7 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 begin;
     SetTotalWaterContent_BeginDay(TotalWaterContent.BeginDay);
@@ -1191,7 +1663,7 @@ begin;
     SetTotalWaterContent_ErrorDay(TotalWaterContent.ErrorDay);
 end;
 
-procedure GetCO2Description(
+procedure GenerateCO2Description(
             constref CO2FileFull : string;
             var CO2Description : string);
 var
@@ -1203,8 +1675,8 @@ begin;
     p2 := PChar(CO2Description);
     strlen1 := Length(CO2FileFull);
     strlen2 := Length(CO2Description);
-    GetCO2Description_wrap(p1, strlen1, p2, strlen2);
-    CO2Description := AnsiString(p2);
+    GenerateCO2Description_wrap(p1, strlen1, p2, strlen2);
+    SetCO2Description(AnsiString(p2));
 end;
 
 function GetCO2File(): string;
@@ -1226,6 +1698,48 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2File_wrap(p, strlen);
+end;
+
+function GetCO2FileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2FileFull_wrap();
+    GetCO2FileFull := AnsiString(p);
+end;
+
+
+procedure SetCO2FileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2FileFull_wrap(p, strlen);
+end;
+
+function GetCO2Description(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCO2Description_wrap();
+    GetCO2Description := AnsiString(p);
+end;
+
+
+procedure SetCO2Description(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCO2Description_wrap(p, strlen);
 end;
 
 
@@ -1269,6 +1783,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetEToFileFull_wrap(p, strlen);
+end;
+
+function GetEToDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetEToDescription_wrap();
+    GetEToDescription := AnsiString(p);
+end;
+
+
+procedure SetEToDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetEToDescription_wrap(p, strlen);
 end;
 
 
@@ -1509,6 +2044,61 @@ begin;
     CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
 end;
 
+function GetTemperatureRecord_DataType(): rep_datatype;
+var
+    int_datatype : shortint;
+begin;
+    int_datatype := __GetTemperatureRecord_DataType();
+    GetTemperatureRecord_DataType := rep_DataType(int_datatype);
+end;
+
+procedure SetTemperatureRecord_DataType(constref DataType : rep_datatype);
+var
+   int_datatype : shortint;
+
+begin;
+   int_datatype := ord(DataType);
+   __SetTemperatureRecord_DataType(int_datatype); 
+end;
+
+function GetTemperatureRecord_FromString(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetTemperatureRecord_FromString_wrap();
+    GetTemperatureRecord_FromString := AnsiString(p);
+end;
+
+function GetTemperatureRecord_ToString(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetTemperatureRecord_ToString_wrap();
+    GetTemperatureRecord_toString := AnsiString(p);
+end;
+
+procedure SetTemperatureRecord_FromString(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetTemperatureRecord_FromString_wrap(p, strlen);
+end;
+
+procedure SetTemperatureRecord_ToString(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetTemperatureRecord_ToString_wrap(p, strlen);
+end;
+
 procedure GetIrriDescription(
             constref IrriFileFull : string;
             var IrriDescription : string);
@@ -1545,6 +2135,28 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetIrriFile_wrap(p, strlen);
+end;
+
+
+function GetIrriFileFull(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetIrriFileFull_wrap();
+    GetIrriFileFull := AnsiString(p);
+end;
+
+
+procedure SetIrriFileFull(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetIrriFileFull_wrap(p, strlen);
 end;
 
 
@@ -1644,7 +2256,6 @@ begin;
     GetProjectFile := AnsiString(p);
 end;
 
-
 procedure SetProjectFile(constref str : string);
 var
     p : PChar;
@@ -1655,6 +2266,7 @@ begin;
     strlen := Length(str);
     SetProjectFile_wrap(p, strlen);
 end;
+
 
 function GetMultipleProjectFile(): string;
 var
@@ -1674,6 +2286,70 @@ var
 begin;
     p := PChar(str);
     strlen := Length(str);
+    SetMultipleProjectFile_wrap(p, strlen);
+end;
+
+function GetPathNameProg(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameProg_wrap();
+    GetPathNameProg := AnsiString(p);
+end;
+
+
+procedure SetPathNameProg(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameProg_wrap(p, strlen);
+end;
+
+
+function GetPathNameOutp(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameOutp_wrap();
+    GetPathNameOutp := AnsiString(p);
+end;
+
+procedure SetPathNameOutp(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameOutp_wrap(p, strlen);
+end;
+
+function GetPathNameSimul(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameSimul_wrap();
+    GetPathNameSimul := AnsiString(p);
+end;
+
+
+procedure SetPathNameSimul(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameSimul_wrap(p, strlen);
     SetMultipleProjectFile_wrap(p, strlen);
 end;
 
@@ -1715,6 +2391,26 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetRainFileFull_wrap(p, strlen);
+end;
+
+function GetRainDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetRainDescription_wrap();
+    GetRainDescription := AnsiString(p);
+end;
+
+procedure SetRainDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetRainDescription_wrap(p, strlen);
 end;
 
 
@@ -1782,6 +2478,55 @@ begin;
 end;
 
 
+function GetSumWaBal() : rep_sum;
+begin;
+    GetSumWaBal.Epot := GetSumWaBal_Epot();
+    GetSumWaBal.Tpot := GetSumWaBal_Tpot();
+    GetSumWaBal.Rain := GetSumWaBal_Rain();
+    GetSumWaBal.Irrigation := GetSumWaBal_Irrigation();
+    GetSumWaBal.Infiltrated := GetSumWaBal_Infiltrated();
+    GetSumWaBal.Runoff := GetSumWaBal_Runoff();
+    GetSumWaBal.Drain := GetSumWaBal_Drain();
+    GetSumWaBal.Eact := GetSumWaBal_Eact();
+    GetSumWaBal.Tact := GetSumWaBal_Tact();
+    GetSumWaBal.TrW := GetSumWaBal_TrW();
+    GetSumWaBal.ECropCycle := GetSumWaBal_ECropCycle();
+    GetSumWaBal.CRwater := GetSumWaBal_CRwater();
+    GetSumWaBal.Biomass := GetSumWaBal_Biomass();
+    GetSumWaBal.YieldPart := GetSumWaBal_YieldPart();
+    GetSumWaBal.BiomassPot := GetSumWaBal_BiomassPot();
+    GetSumWaBal.BiomassUnlim := GetSumWaBal_BiomassUnlim();
+    GetSumWaBal.BiomassTot := GetSumWaBal_BiomassTot();
+    GetSumWaBal.SaltIn := GetSumWaBal_SaltIn();
+    GetSumWaBal.SaltOut := GetSumWaBal_SaltOut();
+    GetSumWaBal.CRsalt := GetSumWaBal_CRsalt();
+end;
+
+procedure SetSumWaBal(constref SumWaBal : rep_sum);
+begin;
+    SetSumWaBal_Epot(SumWaBal.Epot);
+    SetSumWaBal_Tpot(SumWaBal.Tpot);
+    SetSumWaBal_Rain(SumWaBal.Rain);
+    SetSumWaBal_Irrigation(SumWaBal.Irrigation);
+    SetSumWaBal_Infiltrated(SumWaBal.Infiltrated);
+    SetSumWaBal_Runoff(SumWaBal.Runoff);
+    SetSumWaBal_Drain(SumWaBal.Drain);
+    SetSumWaBal_Eact(SumWaBal.Eact);
+    SetSumWaBal_Tact(SumWaBal.Tact);
+    SetSumWaBal_TrW(SumWaBal.TrW);
+    SetSumWaBal_ECropCycle(SumWaBal.ECropCycle);
+    SetSumWaBal_CRwater(SumWaBal.CRwater);
+    SetSumWaBal_Biomass(SumWaBal.Biomass);
+    SetSumWaBal_YieldPart(SumWaBal.YieldPart);
+    SetSumWaBal_BiomassPot(SumWaBal.BiomassPot);
+    SetSumWaBal_BiomassUnlim(SumWaBal.BiomassUnlim);
+    SetSumWaBal_BiomassTot(SumWaBal.BiomassTot);
+    SetSumWaBal_SaltIn(SumWaBal.SaltIn);
+    SetSumWaBal_SaltOut(SumWaBal.SaltOut);
+    SetSumWaBal_CRsalt(SumWaBal.CRsalt);
+end;
+
+
 function GetCropFileFull(): string;
 var
     p : PChar;
@@ -1802,6 +2547,37 @@ begin;
     SetCropFileFull_wrap(p, strlen);
 end;
 
+function GetTemperatureRecord() : rep_clim;
+begin
+    GetTemperatureRecord.DataType := GetTemperatureRecord_DataType();
+    GetTemperatureRecord.FromD    := GetTemperatureRecord_FromD();
+    GetTemperatureRecord.FromM    := GetTemperatureRecord_FromM();
+    GetTemperatureRecord.FromY    := GetTemperatureRecord_FromY();
+    GetTemperatureRecord.ToD      := GetTemperatureRecord_ToD();
+    GetTemperatureRecord.ToM      := GetTemperatureRecord_ToM();
+    GetTemperatureRecord.ToY      := GetTemperatureRecord_ToY();
+    GetTemperatureRecord.ToDayNr  := GetTemperatureRecord_ToDayNr();
+    GetTemperatureRecord.FromDayNr:= GetTemperatureRecord_FromDayNr();
+    GetTemperatureRecord.NrObs    := GetTemperatureRecord_NrObs();
+    GetTemperatureRecord.FromString := GetTemperatureRecord_FromString();
+    GetTemperatureRecord.ToString   := GetTemperatureRecord_ToString();
+end;
+
+procedure SetTemperatureRecord(constref TemperatureRecord : rep_clim);
+begin
+    SetTemperatureRecord_DataType(TemperatureRecord.DataType);
+    SetTemperatureRecord_FromD(TemperatureRecord.FromD);
+    SetTemperatureRecord_FromM(TemperatureRecord.FromM);
+    SetTemperatureRecord_FromY(TemperatureRecord.FromY);
+    SetTemperatureRecord_ToD(TemperatureRecord.ToD);
+    SetTemperatureRecord_ToM(TemperatureRecord.ToM);
+    SetTemperatureRecord_ToY(TemperatureRecord.ToY);
+    SetTemperatureRecord_ToDayNr(TemperatureRecord.ToDayNr);
+    SetTemperatureRecord_FromDayNr(TemperatureRecord.FromDayNr);
+    SetTemperatureRecord_NrObs(TemperatureRecord.NrObs);
+    SetTemperatureRecord_FromString(TemperatureRecord.FromString);
+    SetTemperatureRecord_ToString(TemperatureRecord.ToString);
+end;
 
 initialization
 

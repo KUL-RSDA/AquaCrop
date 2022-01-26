@@ -24,6 +24,8 @@ real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
                                                     90.25_dp, 120.25_dp, 151.25_dp, &
                                                     181.25_dp, 212.25_dp, 243.25_dp, &
                                                     273.25_dp, 304.25_dp, 334.25_dp]
+integer(int32), dimension (12), parameter :: DaysInMonth = [31,28,31,30,31,30, &
+                                                            31,31,30,31,30,31]
 
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
@@ -49,6 +51,47 @@ integer(intEnum), parameter :: TimeCuttings_DryY = 4
     !! index of DryY in TimeCuttings enumerated type
 integer(intEnum), parameter :: TimeCuttings_FreshY= 5
     !! index of FreshY in TimeCuttings enumerated type
+
+integer(intEnum), parameter :: GenerateTimeMode_FixInt = 0
+    !! index of FixInt in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_AllDepl = 1
+    !! index of AllDepl in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_AllRAW = 2
+    !! index of AllRAW in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBuns = 3
+    !! index of WaterBetweenBuns in GenerateTimeMode enumerated type
+
+integer(intEnum), parameter :: GenerateDepthMode_ToFC = 0
+    !! index of ToFC in GenerateDepthMode enumerated type
+integer(intEnum), parameter :: GenerateDepthMode_FixDepth = 1
+    !! index of FixDepth in GenerateDepthMode enumerated type
+
+integer(intEnum), parameter :: IrriMode_NoIrri = 0
+    !! index of NoIrri in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMode_Manual = 1
+    !! index of Manual in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMode_Generate = 2
+    !! index of Generate in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMode_Inet = 3
+    !! index of inet in IrriMode enumerated type
+
+integer(intEnum), parameter :: IrriMethod_MBasin = 0
+    !! index of MBasin in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MBorder = 1
+    !! index of MBorder in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MDrip = 2
+    !! index of MDrip in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MFurrow = 3
+    !! index of MFurrow in IrriMode enumerated type
+integer(intEnum), parameter :: IrriMethod_MSprinkler = 4
+    !! index of MSprinkler in IrriMode enumerated type
+
+integer(intEnum), parameter :: datatype_daily = 0
+    !! index of daily in datatype enumerated type
+integer(intEnum), parameter :: datatype_decadely = 1
+    !! index of decadely in datatype enumerated type
+integer(intEnum), parameter :: datatype_monthly= 2
+    !! index of monthly in datatype enumerated type
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -113,6 +156,15 @@ type rep_Shapes
         !! Undocumented
 end type rep_Shapes
 
+type rep_soil
+    integer(int8) :: REW 
+        !! (* Readily evaporable water mm *)
+    integer(int8) :: NrSoilLayers
+    integer(int8) :: CNvalue
+    real(sp) :: RootMax 
+        !! maximum rooting depth in soil profile for selected crop
+end type rep_soil
+
 type rep_Content
     real(dp) :: BeginDay
         !! at the beginning of the day
@@ -170,6 +222,21 @@ type rep_IrriECw
     real(dp) :: PostSeason
         !! Undocumented
 end type rep_IrriECw 
+
+type rep_clim
+    integer(intEnum) :: DataType
+        !! Undocumented
+    integer(int32) :: FromD, FromM, FromY
+        !! D = day or decade, Y=1901 is not linked to specific year
+    integer(int32) :: ToD, ToM, ToY
+        !! Undocumented
+    integer(int32) :: FromDayNr, ToDayNr
+        !! daynumber
+    character(len=:), allocatable :: FromString, ToString
+        !! Undocumented, note GDL: randomly chose 500
+    integer(int32) :: NrObs
+        !! number of observations
+end type rep_clim
 
 type rep_CropFileSet 
     integer(int32) :: DaysFromSenescenceToEnd
@@ -235,6 +302,19 @@ type rep_Manag
         !! Multiple cuttings
 end type rep_Manag
 
+
+type rep_sum 
+    real(dp) :: Epot, Tpot, Rain, Irrigation, Infiltrated
+        !! Undocumented
+    real(dp) :: Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater
+        !! mm
+    real(dp) :: Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot
+        !! ton/ha
+    real(dp) :: SaltIn, SaltOut, CRsalt
+        !! ton/ha
+end type rep_sum 
+
+
 type rep_RootZoneSalt 
     real(dp) :: ECe
         !! Electrical conductivity of the saturated soil-paste extract (dS/m)
@@ -246,17 +326,26 @@ type rep_RootZoneSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
 
+type(rep_clim)  :: TemperatureRecord
 
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
+character(len=:), allocatable :: RainDescription
 character(len=:), allocatable :: EToFile
 character(len=:), allocatable :: EToFileFull
+character(len=:), allocatable :: EToDescription
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
 character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: CO2FileFull
+character(len=:), allocatable :: CO2Description
 character(len=:), allocatable :: IrriFile
+character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: PathNameProg
+character(len=:), allocatable :: PathNameOutp
+character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ManFile
@@ -280,9 +369,17 @@ type(rep_Manag) :: Management
 type(rep_Cuttings) :: Cuttings
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
+type(rep_soil) :: Soil
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
+type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
+
+integer(intEnum) :: GenerateTimeMode
+integer(intEnum) :: GenerateDepthMode
+integer(intEnum) :: IrriMode
+integer(intEnum) :: IrriMethod
+
 
 
 contains
@@ -1534,7 +1631,7 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 
-subroutine GetCO2Description(CO2FileFull, CO2Description)
+subroutine GenerateCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(in) :: CO2FileFull
     character(len=*), intent(inout) :: CO2Description
 
@@ -1549,7 +1646,7 @@ subroutine GetCO2Description(CO2FileFull, CO2Description)
         ! since this is an AquaCrop file, the Description is determined by AquaCrop
         CO2Description = 'Default atmospheric CO2 concentration from 1902 to 2099'
     end if
-end subroutine GetCO2Description
+end subroutine GenerateCO2Description
 
 
 subroutine GetIrriDescription(IrriFileFull, IrriDescription)
@@ -1745,6 +1842,22 @@ subroutine SetIrriFile(str)
 end subroutine SetIrriFile
 
 
+function GetIrriFileFull() result(str)
+    !! Getter for the "IrriFileFull" global variable.
+    character(len=len(IrriFileFull)) :: str
+
+    str = IrriFileFull
+end function GetIrriFileFull
+
+
+subroutine SetIrriFileFull(str)
+    !! Setter for the "IrriFileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    IrriFileFull = str
+end subroutine SetIrriFileFull
+
+
 function GetClimateFile() result(str)
     !! Getter for the "ClimateFile" global variable.
     character(len=len(ClimateFile)) :: str
@@ -1801,6 +1914,50 @@ subroutine SetSWCiniFile(str)
     SWCiniFile = str
 end subroutine SetSWCiniFile
 
+
+function GetPathNameProg() result(str)
+    !! Getter for the "PathNameProg" global variable.
+    character(len=len(PathNameProg)) :: str
+    
+    str = PathNameProg
+end function GetPathNameProg
+
+subroutine SetPathNameProg(str)
+    !! Setter for the "PathNameProg" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameProg = str
+end subroutine SetPathNameProg
+
+function GetPathNameOutp() result(str)
+    !! Getter for the "PathNameOutp" global variable.
+    character(len=len(PathNameOutp)) :: str
+    
+    str = PathNameOutp
+end function GetPathNameOutp
+
+subroutine SetPathNameOutp(str)
+    !! Setter for the "PathNameOutp" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameOutp = str
+end subroutine SetPathNameOutp
+
+function GetPathNameSimul() result(str)
+    !! Getter for the "PathNameSimul" global variable.
+    character(len=len(PathNameSimul)) :: str
+    
+    str = PathNameSimul
+end function GetPathNameSimul
+
+subroutine SetPathNameSimul(str)
+    !! Setter for the "PathNameSimul" global variable.
+    character(len=*), intent(in) :: str
+    
+    PathNameSimul = str
+end subroutine SetPathNameSimul
+
+
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.
     character(len=len(ProjectFile)) :: str
@@ -1828,6 +1985,7 @@ subroutine SetMultipleProjectFile(str)
     
     MultipleProjectFile = str
 end subroutine SetMultipleProjectFile
+
 
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
@@ -1919,6 +2077,34 @@ subroutine SetCO2File(str)
 
     CO2File = str
 end subroutine SetCO2File
+
+function GetCO2FileFull() result(str)
+    !! Getter for the "CO2FileFull" global variable.
+    character(len=len(CO2FileFull)) :: str
+
+    str = CO2FileFull
+end function GetCO2FileFull
+
+subroutine SetCO2FileFull(str)
+    !! Setter for the "CO2FileFull" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2FileFull = str
+end subroutine SetCO2FileFull
+
+function GetCO2Description() result(str)
+    !! Getter for the "CO2Description" global variable.
+    character(len=len(CO2Description)) :: str
+
+    str = CO2Description
+end function GetCO2Description
+
+subroutine SetCO2Description(str)
+    !! Setter for the "CO2Description" global variable.
+    character(len=*), intent(in) :: str
+
+    CO2Description = str
+end subroutine SetCO2Description
 
 type(rep_RootZoneWC) function GetRootZoneWC()
     !! Getter for the "RootZoneWC" global variable.
@@ -2300,6 +2486,22 @@ subroutine SetEToFileFull(str)
 end subroutine SetEToFileFull
 
 
+function GetEToDescription() result(str)
+    !! Getter for the "EToDescription" global variable.
+    character(len=len(EToDescription)) :: str
+
+    str = EToDescription
+end function GetEToDescription
+
+
+subroutine SetEToDescription(str)
+    !! Setter for the "EToDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    EToDescription = str
+end subroutine SetEToDescription
+
+
 function GetRainFile() result(str)
     !! Getter for the "RainFile" global variable.
     character(len=len(RainFile)) :: str
@@ -2330,6 +2532,23 @@ subroutine SetRainFileFull(str)
 
     RainFileFull = str
 end subroutine SetRainFileFull
+
+
+function GetRainDescription() result(str)
+    !! Getter for the "RainDescription" global variable.
+    character(len=len(RainDescription)) :: str
+
+    str = RainDescription
+end function GetRainDescription
+
+
+subroutine SetRainDescription(str)
+    !! Setter for the "RainDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    RainDescription = str
+end subroutine SetRainDescription
+
 
 integer(int8) function GetManagement_Mulch()
     !! Getter for the "Management" global variable.
@@ -2630,6 +2849,300 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
 
+real(dp) function GetSumWaBal_Epot()
+    !! Getter for the "SumWaBal" global variable.
+
+     GetSumWaBal_Epot = SumWaBal%Epot
+end function GetSumWaBal_Epot
+
+real(dp) function GetSumWaBal_Tpot()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Tpot = SumWaBal%Tpot
+end function GetSumWaBal_Tpot
+
+real(dp) function GetSumWaBal_Rain()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Rain = SumWaBal%Rain
+end function GetSumWaBal_Rain
+
+real(dp) function GetSumWaBal_Irrigation()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Irrigation = SumWaBal%Irrigation
+end function GetSumWaBal_Irrigation
+
+real(dp) function GetSumWaBal_Infiltrated()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Infiltrated = SumWaBal%Infiltrated
+end function GetSumWaBal_Infiltrated
+
+real(dp) function GetSumWaBal_Runoff()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Runoff = SumWaBal%Runoff
+end function GetSumWaBal_Runoff
+
+real(dp) function GetSumWaBal_Drain()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Drain = SumWaBal%Drain
+end function GetSumWaBal_Drain
+
+real(dp) function GetSumWaBal_Eact()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Eact = SumWaBal%Eact
+end function GetSumWaBal_Eact
+
+real(dp) function GetSumWaBal_Tact()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Tact = SumWaBal%Tact
+end function GetSumWaBal_Tact
+
+real(dp) function GetSumWaBal_TrW()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_TrW = SumWaBal%TrW
+end function GetSumWaBal_TrW
+
+real(dp) function GetSumWaBal_ECropCycle()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_ECropCycle = SumWaBal%ECropCycle
+end function GetSumWaBal_ECropCycle
+
+real(dp) function GetSumWaBal_CRwater()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_CRwater = SumWaBal%CRwater
+end function GetSumWaBal_CRwater
+
+real(dp) function GetSumWaBal_Biomass()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_Biomass = SumWaBal%Biomass
+end function GetSumWaBal_Biomass
+
+real(dp) function GetSumWaBal_YieldPart()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_YieldPart = SumWaBal%YieldPart
+end function GetSumWaBal_YieldPart
+
+real(dp) function GetSumWaBal_BiomassPot()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_BiomassPot = SumWaBal%BiomassPot
+end function GetSumWaBal_BiomassPot
+
+real(dp) function GetSumWaBal_BiomassUnlim()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_BiomassUnlim = SumWaBal%BiomassUnlim
+end function GetSumWaBal_BiomassUnlim
+
+real(dp) function GetSumWaBal_BiomassTot()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_BiomassTot = SumWaBal%BiomassTot
+end function GetSumWaBal_BiomassTot
+
+real(dp) function GetSumWaBal_SaltIn()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_SaltIn = SumWaBal%SaltIn
+end function GetSumWaBal_SaltIn
+
+real(dp) function GetSumWaBal_SaltOut()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_SaltOut = SumWaBal%SaltOut
+end function GetSumWaBal_SaltOut
+
+real(dp) function GetSumWaBal_CRSalt()
+    !! Getter for the "SumWaBal" global variable.
+
+    GetSumWaBal_CRSalt = SumWaBal%CRSalt
+end function GetSumWaBal_CRSalt
+
+subroutine SetSumWaBal_Epot(Epot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Epot
+
+    SumWaBal%Epot = Epot
+end subroutine SetSumWaBal_Epot
+
+subroutine SetSumWaBal_Tpot(Tpot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Tpot
+
+    SumWaBal%Tpot = Tpot
+end subroutine SetSumWaBal_Tpot
+
+subroutine SetSumWaBal_Rain(Rain)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Rain
+
+    SumWaBal%Rain = Rain
+end subroutine SetSumWaBal_Rain
+
+subroutine SetSumWaBal_Irrigation(Irrigation)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Irrigation
+
+    SumWaBal%Irrigation = Irrigation
+end subroutine SetSumWaBal_Irrigation
+
+subroutine SetSumWaBal_Infiltrated(Infiltrated)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Infiltrated
+
+    SumWaBal%Infiltrated = Infiltrated
+end subroutine SetSumWaBal_Infiltrated
+
+subroutine SetSumWaBal_Runoff(Runoff)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Runoff
+
+    SumWaBal%Runoff = Runoff
+end subroutine SetSumWaBal_Runoff
+
+subroutine SetSumWaBal_Drain(Drain)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Drain
+
+    SumWaBal%Drain = Drain
+end subroutine SetSumWaBal_Drain
+
+subroutine SetSumWaBal_Eact(Eact)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Eact
+
+    SumWaBal%Eact = Eact
+end subroutine SetSumWaBal_Eact
+
+subroutine SetSumWaBal_Tact(Tact)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Tact
+
+    SumWaBal%Tact = Tact
+end subroutine SetSumWaBal_Tact
+
+subroutine SetSumWaBal_TrW(TrW)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: TrW
+
+    SumWaBal%TrW = TrW
+end subroutine SetSumWaBal_TrW
+
+subroutine SetSumWaBal_ECropCycle(ECropCycle)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: ECropCycle
+
+    SumWaBal%ECropCycle = ECropCycle
+end subroutine SetSumWaBal_ECropCycle
+
+subroutine SetSumWaBal_CRwater(CRwater)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: CRwater
+
+    SumWaBal%CRwater = CRwater
+end subroutine SetSumWaBal_CRwater
+
+subroutine SetSumWaBal_Biomass(Biomass)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: Biomass
+
+    SumWaBal%Biomass = Biomass
+end subroutine SetSumWaBal_Biomass
+
+subroutine SetSumWaBal_YieldPart(YieldPart)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: YieldPart
+
+    SumWaBal%YieldPart = YieldPart
+end subroutine SetSumWaBal_YieldPart
+
+subroutine SetSumWaBal_BiomassPot(BiomassPot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: BiomassPot
+
+    SumWaBal%BiomassPot = BiomassPot
+end subroutine SetSumWaBal_BiomassPot
+
+subroutine SetSumWaBal_BiomassUnlim(BiomassUnlim)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: BiomassUnlim
+
+    SumWaBal%BiomassUnlim = BiomassUnlim
+end subroutine SetSumWaBal_BiomassUnlim
+
+subroutine SetSumWaBal_BiomassTot(BiomassTot)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: BiomassTot
+
+    SumWaBal%BiomassTot = BiomassTot
+end subroutine SetSumWaBal_BiomassTot
+
+subroutine SetSumWaBal_SaltIn(SaltIn)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: SaltIn
+
+    SumWaBal%SaltIn = SaltIn
+end subroutine SetSumWaBal_SaltIn
+
+subroutine SetSumWaBal_SaltOut(SaltOut)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: SaltOut
+
+    SumWaBal%SaltOut = SaltOut
+end subroutine SetSumWaBal_SaltOut
+
+subroutine SetSumWaBal_CRSalt(CRSalt)
+    !! Setter for the "SumWaBal" global variable.
+    real(dp), intent(in) :: CRSalt
+
+    SumWaBal%CRSalt = CRSalt
+end subroutine SetSumWaBal_CRSalt
+
+type(rep_soil) function GetSoil()
+    !! Getter for the "Soil" global variable.
+
+    GetSoil = Soil
+end function GetSoil
+
+subroutine SetSoil_REW(REW)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: REW
+
+    Soil%REW = REW
+end subroutine SetSoil_REW
+
+subroutine SetSoil_NrSoilLayers(NrSoilLayers)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: NrSoilLayers
+
+    Soil%NrSoilLayers = NrSoilLayers
+end subroutine SetSoil_NrSoilLayers
+
+subroutine SetSoil_CNvalue(CNvalue)
+    !! Setter for the "Soil" global variable.
+    integer(int8), intent(in) :: CNvalue
+
+    Soil%CNvalue = CNvalue
+end subroutine SetSoil_CNvalue
+
+subroutine SetSoil_RootMax(RootMax)
+    !! Setter for the "Soil" global variable.
+    real(sp), intent(in) :: RootMax
+
+    Soil%RootMax = RootMax
+end subroutine SetSoil_RootMax
+
 type(rep_Content) function GetTotalSaltContent()
     !! Getter for the "TotalSaltContent" global variable.
 
@@ -2684,6 +3197,7 @@ subroutine SetTotalWaterContent_ErrorDay(ErrorDay)
     TotalWaterContent%ErrorDay = ErrorDay
 end subroutine SetTotalWaterContent_ErrorDay
 
+
 type(rep_RootZoneSalt) function GetRootZoneSalt()
     !! Getter for the "RootZoneSalt" global variable.
 
@@ -2718,5 +3232,221 @@ subroutine SetRootZoneSalt_KsSalt(KsSalt)
     RootZoneSalt%KsSalt = KsSalt
 end subroutine SetRootZoneSalt_KsSalt
 
+integer(intEnum) function GetGenerateTimeMode()
+    !! Getter for the "GenerateTimeMode" global variable.
+
+    GetGenerateTimeMode = GenerateTimeMode
+end function GetGenerateTimeMode
+
+integer(intEnum) function GetGenerateDepthMode()
+    !! Getter for the "GenerateDepthMode" global variable.
+
+    GetGenerateDepthMode = GenerateDepthMode
+end function GetGenerateDepthMode
+
+subroutine SetGenerateTimeMode(int_in)
+    !! Setter for the "GenerateTimeMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    GenerateTimeMode = int_in
+end subroutine SetGenerateTimeMode
+
+subroutine SetGenerateDepthMode(int_in)
+    !! Setter for the "GenerateDepthMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    GenerateDepthMode = int_in
+end subroutine SetGenerateDepthMode
+
+integer(intEnum) function GetIrriMode()
+    !! Getter for the "IrriMode" global variable.
+
+    GetIrriMode = IrriMode
+end function GetIrriMode
+
+integer(intEnum) function GetIrriMethod()
+    !! Getter for the "IrriMethod" global variable.
+
+    GetIrriMethod = IrriMethod
+end function GetIrriMethod
+
+subroutine SetIrriMode(int_in)
+    !! Setter for the "IrriMode" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    IrriMode = int_in
+end subroutine SetIrriMode
+
+subroutine SetIrriMethod(int_in)
+    !! Setter for the "IrriMethod" global variable.
+    integer(intEnum), intent(in) :: int_in
+
+    IrriMethod = int_in
+end subroutine SetIrriMethod
+
+
+type(rep_clim) function GetTemperatureRecord()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord = TemperatureRecord
+end function GetTemperatureRecord
+
+integer(intEnum) function GetTemperatureRecord_DataType()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_DataType = TemperatureRecord%DataType
+end function GetTemperatureRecord_DataType
+
+integer(int32) function GetTemperatureRecord_FromD()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_FromD = TemperatureRecord%FromD
+end function GetTemperatureRecord_FromD
+
+integer(int32) function GetTemperatureRecord_FromM()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_FromM = TemperatureRecord%FromM
+end function GetTemperatureRecord_FromM
+
+integer(int32) function GetTemperatureRecord_FromY()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_FromY = TemperatureRecord%FromY
+end function GetTemperatureRecord_FromY
+
+integer(int32) function GetTemperatureRecord_ToD()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_ToD = TemperatureRecord%ToD
+end function GetTemperatureRecord_ToD
+
+integer(int32) function GetTemperatureRecord_ToM()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_ToM = TemperatureRecord%ToM
+end function GetTemperatureRecord_ToM
+
+integer(int32) function GetTemperatureRecord_ToY()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_ToY = TemperatureRecord%ToY
+end function GetTemperatureRecord_ToY
+
+integer(int32) function GetTemperatureRecord_FromDayNr()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_FromDayNr = TemperatureRecord%FromDayNr
+end function GetTemperatureRecord_FromDayNr
+
+integer(int32) function GetTemperatureRecord_ToDayNr()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_ToDayNr = TemperatureRecord%ToDayNr
+end function GetTemperatureRecord_ToDayNr
+
+function GetTemperatureRecord_FromString() result(str)
+    !! Getter for the "TemperatureRecord" global variable.
+    character(len=len(TemperatureRecord%FromString)) :: str
+
+    str = TemperatureRecord%FromString
+end function GetTemperatureRecord_FromString
+
+function GetTemperatureRecord_ToString() result(str)
+    !! Getter for the "TemperatureRecord" global variable.
+    character(len=len(TemperatureRecord%ToString)) :: str
+
+    str = TemperatureRecord%ToString
+end function GetTemperatureRecord_ToString
+
+integer(int32) function GetTemperatureRecord_NrObs()
+    !! Getter for the "TemperatureRecord" global variable.
+
+    GetTemperatureRecord_NrObs = TemperatureRecord%NrObs
+end function GetTemperatureRecord_NrObs
+
+subroutine SetTemperatureRecord_DataType(DataType)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    TemperatureRecord%DataType = DataType
+end subroutine SetTemperatureRecord_DataType
+
+subroutine SetTemperatureRecord_FromD(FromD)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    TemperatureRecord%FromD = FromD
+end subroutine SetTemperatureRecord_FromD
+
+subroutine SetTemperatureRecord_FromM(FromM)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    TemperatureRecord%FromM = FromM
+end subroutine SetTemperatureRecord_FromM
+
+subroutine SetTemperatureRecord_FromY(FromY)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    TemperatureRecord%FromY = FromY
+end subroutine SetTemperatureRecord_FromY
+
+subroutine SetTemperatureRecord_ToD(ToD)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    TemperatureRecord%ToD = ToD
+end subroutine SetTemperatureRecord_ToD
+
+subroutine SetTemperatureRecord_ToM(ToM)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    TemperatureRecord%ToM = ToM
+end subroutine SetTemperatureRecord_ToM
+
+subroutine SetTemperatureRecord_TOY(ToY)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    TemperatureRecord%ToY = ToY
+end subroutine SetTemperatureRecord_ToY
+
+subroutine SetTemperatureRecord_ToDayNr(ToDayNr)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    TemperatureRecord%ToDayNr = ToDayNr
+end subroutine SetTemperatureRecord_ToDayNr
+
+subroutine SetTemperatureRecord_FromDayNr(FromDayNr)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    TemperatureRecord%FromDayNr = FromDayNr
+end subroutine SetTemperatureRecord_FromDayNr
+
+subroutine SetTemperatureRecord_NrObs(NrObs)
+    !! Setter for the "TemperatureRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    TemperatureRecord%NrObs = NrObs
+end subroutine SetTemperatureRecord_NrObs
+
+subroutine SetTemperatureRecord_ToString(ToString)
+    !! Setter for the "TemperatureRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    TemperatureRecord%ToString = ToString
+end subroutine SetTemperatureRecord_ToString
+
+subroutine SetTemperatureRecord_FromString(FromString)
+    !! Setter for the "TemperatureRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    TemperatureRecord%FromString = FromString
+end subroutine SetTemperatureRecord_FromString
 
 end module ac_global
