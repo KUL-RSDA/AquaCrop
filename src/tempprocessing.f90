@@ -60,8 +60,6 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     real(dp) :: C1Min, C1Max, C2Min, C2Max, C3Min, C3Max
     real(dp) :: UlMin, LLMin, MidMin, UlMax, LLMax, MidMax
 
-    print *, 'IN DECADE'
-
     call DetermineDate(DayNri, Dayi, Monthi, Yeari)
     if (Dayi > 20) then
         Deci = 3
@@ -296,8 +294,6 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     real(dp) :: C1Max, C2Max, C3Max
     real(dp) :: aOver3Min, bOver2Min, cMin
     real(dp) :: aOver3Max, bOver2Max, cMax
-
-    print *, 'in MONTHLY'
 
     call DetermineDate(DayNri, Dayi, Monthi, Yeari)
     call GetSetofThreeMonths(Monthi, Yeari, &
