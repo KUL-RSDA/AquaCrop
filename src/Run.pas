@@ -1103,15 +1103,15 @@ IF ((IrriMode = Manual) OR (IrriMode = Generate)) THEN
                       THEN BEGIN
                            READLN(fIrri,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                            SetIrriInfoRecord1_FromDay(FromDay_temp);
-                           SetIrriInfoRecord1_FromDay(TimeInfo_temp);
-                           SetIrriInfoRecord1_FromDay(DepthInfo_temp);
+                           SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
+                           SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
                            END
                       ELSE BEGIN
                            READLN(fIrri,FromDay_temp,TimeInfo_temp,           
                                         DepthInfo_temp,Simulation.IrriECw);
                            SetIrriInfoRecord1_FromDay(FromDay_temp);
-                           SetIrriInfoRecord1_FromDay(TimeInfo_temp);
-                           SetIrriInfoRecord1_FromDay(DepthInfo_temp);
+                           SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
+                           SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
                            END;
                    IF Eof(fIrri)
                       THEN SetIrriInfoRecord1_ToDay(Crop.DayN - Crop.Day1 + 1)
