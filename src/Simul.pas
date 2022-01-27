@@ -1058,7 +1058,7 @@ VAR ZrWC,RAWi : double;
     SWCtopSoilConsidered_temp : boolean;
 BEGIN
 // total root zone is considered
-SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered;
+SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
 DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
 SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
 ZrWC := GetRootZoneWC().Actual - Epot - Tpot + Rain - Runoff - SubDrain;

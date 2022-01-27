@@ -2165,11 +2165,17 @@ IF Out3Prof THEN
    IF (RootingDepth <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
-           SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
            IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
-              THEN DetermineRootZoneWC(Crop.RootMax,SWCtopSoilConsidered_temp)
-              ELSE DetermineRootZoneWC(GetSoil().RootMax,SWCtopSoilConsidered_temp);
-              SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
+              THEN BEGIN
+                   SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
+                   DetermineRootZoneWC(Crop.RootMax,SWCtopSoilConsidered_temp);
+                   SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
+                   END
+              ELSE BEGIN
+                   SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
+                   DetermineRootZoneWC(GetSoil().RootMax,SWCtopSoilConsidered_temp);
+                   SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
+                   END;
            END;
    WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
    IF (RootingDepth <= 0)
@@ -2608,7 +2614,7 @@ VAR RepeatToDay : LongInt;
     PotValSF := CCiNoWaterStressSF(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,
         Crop.GDDaysToGermination,Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
         CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
-        GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX,GetSimulation_EffectStress_CDecline(),Crop.ModeCycle);
+        GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),Crop.ModeCycle);
     PotValSF := 100 * (1/CCxCropWeedsNoSFstress) * PotValSF;
     END; (* GetPotValSF *)
 

@@ -4070,7 +4070,6 @@ subroutine SetSimulation_ECeIni_i(i, ECeIni_i)
 
     simulation%ECeIni(i) = ECeIni_i
 end subroutine SetSimulation_ECeIni_i
-!!END ATTEMPT
 
 subroutine SetSimulation_SurfaceStorageIni(SurfaceStorageIni)
     !! Setter for the "SurfaceStorageIni" attribute of the "simulation" global variable.
