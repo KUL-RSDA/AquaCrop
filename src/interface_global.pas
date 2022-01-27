@@ -1895,67 +1895,56 @@ procedure SetSimulation_EffectStress_CDecline(constref CDecline : Double);
 procedure SetSimulation_EffectStress_RedKsSto(constref RedKsSto : ShortInt);
     external 'aquacrop' name '__ac_global_MOD_setsimulation_effectstress_redkssto';
 
-//ATTEMPT
 function GetSimulation_ThetaIni() : rep_IniComp;
-    external 'aquacrop' name '__ac_global_MOD_getsimulation_thetaini';
 
 function GetSimulation_ThetaIni_i(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getsimulation_thetaini_i';
 
 function GetSimulation_ECeIni() : rep_IniComp;
-    external 'aquacrop' name '__ac_global_MOD_getsimulation_eceini';
 
 function GetSimulation_ECeIni_i(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getsimulation_eceini_i';
 
 procedure SetSimulation_ThetaIni(constref ThetaIni : rep_IniComp);
-    external 'aquacrop' name '__ac_global_MOD_setsimulation_thetaini';
 
 procedure SetSimulation_ThetaIni_i(constref i : integer;
                                    constref ThetaIni_i : double)
     external 'aquacrop' name '__ac_global_MOD_setsimulation_thetaini_i';
 
 procedure SetSimulation_ECeIni(constref ECeIni : rep_IniComp);
-    external 'aquacrop' name '__ac_global_MOD_setsimulation_eceini';
 
 procedure SetSimulation_ECeIni_i(constref i : integer;
                               constref ECe_i : double);
     external 'aquacrop' name '__ac_global_MOD_setsimulation_eceini_i';
 
 function GetSimulation_IniSWC_Loc() : rep_IniComp;
-    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_loc';
 
 function GetSimulation_IniSWC_Loc_i(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_loc_i';
 
 function GetSimulation_IniSWC_VolProc() : rep_IniComp;
-    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_volproc';
 
 function GetSimulation_IniSWC_VolProc_i(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_volproc_i';
 
 function GetSimulation_IniSWC_SaltECe() : rep_IniComp;
-    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_saltece';
 
 function GetSimulation_IniSWC_SaltECe_i(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_ece_i';
 
 procedure SetSimulation_IniSWC_Loc(constref Loc : rep_IniComp);
-    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_loc';
 
 procedure SetSimulation_IniSWC_Loc_i(constref i : integer;
                                      constref Loc_i : double);
     external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_loc_i';
 
 procedure SetSimulation_IniSWC_VolProc(constref VolProc : rep_IniComp);
-    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_volproc';
 
 procedure SetSimulation_IniSWC_VolProc_i(constref i : integer; 
                                          constref VolProc_i : double);
     external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_volproc_i';
 
 procedure SetSimulation_IniSWC_SaltECe(constref SaltECe : rep_IniComp);
-    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_ece';
 
 procedure SetSimulation_IniSWC_SaltECe_i(constref i : integer; 
                                          constref SaltECe_i : double);
@@ -3266,14 +3255,26 @@ begin
     SetTemperatureRecord_ToString(TemperatureRecord.ToString);
 end;
 
+function GetSimulation_ThetaIni() : rep_IniComp;
+begin;
+    for i := 1 to max_No_compartments do begin
+        GetSimulation.ThetaIni[i] := GetSimulation_ThetaIni_i(i)
+    end
+end;
+
+function GetSimulation_ECeIni() : rep_IniComp;
+begin;
+    for i := 1 to max_No_compartments do begin
+        GetSimulation.ECeIni[i] := GetSimulation_ECeIni_i(i)
+    end
+end;
+
 function GetSimulation() : rep_sim;
 begin;
     GetSimulation.FromDayNr := GetSimulation_FromDayNr();
     GetSimulation.ToDayNr := GetSimulation_ToDayNr();
-//ATTEMPT
     GetSimulation.ThetaIni := GetSimulation_ThetaIni();
     GetSimulation.ECeIni := GetSimulation_ECeIni();
-//
     GetSimulation.IniSWC := GetSimulation_IniSWC();
     GetSimulation.SurfaceStorageIni := GetSimulation_SurfaceStorageIni();
     GetSimulation.ECStorageIni := GetSimulation_ECStorageIni();
@@ -3312,15 +3313,26 @@ begin;
     GetSimulation.CropDay1Previous := GetSimulation_CropDay1Previous();
 end;
 
+procedure SetSimulation_ThetaIni(constref ThetaIni : rep_IniComp);
+begin;
+    for i := 1 to max_No_compartments do begin
+        SetSimulation_ThetaIni_i(i, ThetaIni[i]);
+    end
+end;
+
+procedure SetSimulation_ECeIni(constref ECeIni : rep_IniComp);
+begin;
+    for i := 1 to max_No_compartments do begin
+        SetSimulation_ECeIni_i(i, ECe[i]);
+    end
+end;
 
 procedure SetSimulation(constref Simulation : rep_sim);
 begin;
     SetSimulation_FromDayNr(Simulation.FromDayNr);
     SetSimulation_ToDayNr(Simulation.ToDayNr);
-//ATEMPT
     SetSimulation_ThetaIni(Simulation.ThetaIni);
     SetSimulation_ECeIni(Simulation.ECeIni);
-//
     SetSimulation_IniSWC(Simulation.IniSWC);
     SetSimulation_SurfaceStorageIni(Simulation.SurfaceStorageIni);
     SetSimulation_ECStorageIni(Simulation.ECStorageIni);
@@ -3359,28 +3371,64 @@ begin;
     SetSimulation_CropDay1Previous(Simulation.CropDay1Previous);
 end;
 
+function GetSimulation_IniSWC_Loc() : rep_IniComp;
+begin;
+    for i := 1 to max_No_compartments do begin
+        GetSimulation.IniSWC.Loc[i] := GetSimulation_IniSWC_Loc_i(i)
+    end
+end;
+
+function GetSimulation_IniSWC_VolProc() : rep_IniComp;
+begin;
+    for i := 1 to max_No_compartments do begin
+        GetSimulation.IniSWC.VolProc[i] := GetSimulation_IniSWC_VolProc_i(i)
+    end
+end;
+
+function GetSimulation_IniSWC_SaltECe() : rep_IniComp;
+begin;
+    for i := 1 to max_No_compartments do begin
+        GetSimulation.IniSWC.SaltECe[i] := GetSimulation_IniSWC_SaltECe_i(i)
+    end
+end;
 
 function GetSimulation_IniSWC() : rep_IniSWC;
 begin;
     GetSimulation_IniSWC.AtDepths := GetSimulation_IniSWC_AtDepths();
     GetSimulation_IniSWC.NrLoc := GetSimulation_IniSWC_NrLoc();
-//ATTEMPT
     GetSimulation_IniSWC.Loc := GetSimulation_IniSWC_Loc();
     GetSimulation_IniSWC.VolProc := GetSimulation_IniSWC_VolProc();
     GetSimulation_IniSWC.SaltECe := GetSimulation_IniSWC_SaltECe();
-//
     GetSimulation_IniSWC.AtFC := GetSimulation_IniSWC_AtFC();
 end;
 
+procedure SetSimulation_IniSWC_Loc(constref Loc : rep_IniComp);
+begin;
+    for i := 1 to max_No_compartments do begin
+        SetSimulation_IniSWC_Loc_i(i, Loc[i]);
+    end
+end;
+
+procedure SetSimulation_IniSWC_VolProc(constref VolProc : rep_IniComp);
+begin;
+    for i := 1 to max_No_compartments do begin
+        SetSimulation_IniSWC_VolProc_i(i, VolProc[i]);
+    end
+end;
+
+procedure SetSimulation_IniSWC_SaltECe(constref SaltECe : rep_IniComp);
+begin;
+    for i := 1 to max_No_compartments do begin
+        SetSimulation_IniSWC_SaltECe_i(i, SaltECe[i]);
+    end
+end;
 
 procedure SetSimulation_IniSWC(constref Simulation_IniSWC : rep_IniSWC);
 begin;
     SetSimulation_IniSWC_AtDepths(Simulation_IniSWC.AtDepths);
-//ATTEMPT
     SetSimulation_IniSWC_Loc(Simulation_IniSWC.Loc);
     SetSimulation_IniSWC_VolProc(Simulation_IniSWC.VolProc);
     SetSimulation_IniSWC_SaltECe(Simulation_IniSWC.SaltECe);
-//
     SetSimulation_IniSWC_NrLoc(Simulation_IniSWC.NrLoc);
     SetSimulation_IniSWC_AtFC(Simulation_IniSWC.AtFC);
 end;

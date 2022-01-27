@@ -3787,14 +3787,6 @@ function GetSimulation_ToDayNr() result(ToDayNr)
     ToDayNr = simulation%ToDayNr
 end function GetSimulation_ToDayNr
 
-!!ATTEMPT
-function GetSimulation_ThetaIni() result(ThetaIni)
-    !! Getter for the "ThetaIni" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments) :: ThetaIni
-
-    ThetaIni = simulation%ThetaIni
-end function GetSimulation_ThetaIni
-
 function GetSimulation_ThetaIni_i(i) result(ThetaIni_i)
     !! Getter for the "ThetaIni" attribute of the "simulation" global variable.
     integer(int32), intent(in) :: i
@@ -3803,13 +3795,6 @@ function GetSimulation_ThetaIni_i(i) result(ThetaIni_i)
     ThetaIni_i = simulation%ThetaIni(i)
 end function GetSimulation_ThetaIni_i
 
-function GetSimulation_ECeIni() result(ECeIni)
-    !! Getter for the "ECeIni" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments) :: ECeIni
-
-    ECeIni = simulation%ECeIni
-end function GetSimulation_ECeIni
-
 function GetSimulation_ECeIni_i(i) result(ECeIni_i)
     !! Getter for the "ECeIni" attribute of the "simulation" global variable.
     integer(int32) :: i
@@ -3817,8 +3802,6 @@ function GetSimulation_ECeIni_i(i) result(ECeIni_i)
 
     ECeIni_i = simulation%ECeIni(i)
 end function GetSimulation_ECeIni_i
-
-!!END ATTEMPT
 
 function GetSimulation_SurfaceStorageIni() result(SurfaceStorageIni)
     !! Getter for the "SurfaceStorageIni" attribute of the "simulation" global variable.
@@ -4072,14 +4055,6 @@ subroutine SetSimulation_ToDayNr(ToDayNr)
     simulation%ToDayNr = ToDayNr
 end subroutine SetSimulation_ToDayNr
 
-!!ATTEMPT
-subroutine SetSimulation_ThetaIni(ThetaIni)
-    !! Setter for the "ThetaIni" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments), intent(in) :: ThetaIni
-
-    simulation%ThetaIni = ThetaIni
-end subroutine SetSimulation_ThetaIni
-
 subroutine SetSimulation_ThetaIni_i(i, ThetaIni_i)
     !! Setter for the "ThetaIni" attribute of the "simulation" global variable.
     real(dp), intent(in) :: ThetaIni_i
@@ -4087,13 +4062,6 @@ subroutine SetSimulation_ThetaIni_i(i, ThetaIni_i)
 
     simulation%ThetaIni(i) = ThetaIni_i
 end subroutine SetSimulation_ThetaIni_i
-
-subroutine SetSimulation_ECeIni(ECeIni)
-    !! Setter for the "ECeIni" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments), intent(in) :: ECeIni
-
-    simulation%ECeIni = ECeIni
-end subroutine SetSimulation_ECeIni
 
 subroutine SetSimulation_ECeIni_i(i, ECeIni_i)
     !! Setter for the "ECeIni" attribute of the "simulation" global variable.
@@ -4356,14 +4324,6 @@ function GetSimulation_IniSWC_NrLoc() result(NrLoc)
     NrLoc = simulation%IniSWC%NrLoc
 end function GetSimulation_IniSWC_NrLoc
 
-!!ATTEMPT
-function GetSimulation_IniSWC_Loc() result(Loc)
-    !! Getter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments) :: Loc
-
-    Loc = simulation%IniSWC%Loc
-end function GetSimulation_IniSWC_Loc
-
 function GetSimulation_IniSWC_Loc_i(i) result(Loc_i)
     !! Getter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable
     integer(int32), intent(in) :: i
@@ -4371,13 +4331,6 @@ function GetSimulation_IniSWC_Loc_i(i) result(Loc_i)
 
     Loc_i = simulation%IniSWC%Loc(i)
 end function GetSimulation_IniSWC_Loc_i
-
-function GetSimulation_IniSWC_VolProc() result(VolProc)
-    !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments) :: VolProc
-
-    VolProc = simulation%IniSWC%VolProc
-end function GetSimulation_IniSWC_VolProc
 
 function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
     !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
@@ -4387,13 +4340,6 @@ function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
     VolProc_i = simulation%IniSWC%VolProc(i)
 end function GetSimulation_IniSWC_VolProc_i
 
-function GetSimulation_IniSWC_SaltECe() result(SaltECe)
-    !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments) :: SaltECe
-
-    SaltECe = simulation%IniSWC%SaltECe
-end function GetSimulation_IniSWC_SaltECe
-
 function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
     !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
     integer(int32), intent(in) :: i
@@ -4401,7 +4347,6 @@ function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
 
     SaltECe_i = simulation%IniSWC%SaltECe(i)
 end function GetSimulation_IniSWC_SaltECe_i
-!!END ATTEMPT
 
 function GetSimulation_IniSWC_AtFC() result(AtFC)
     !! Getter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.
@@ -4431,14 +4376,6 @@ subroutine SetSimulation_IniSWC_NrLoc(NrLoc)
     simulation%IniSWC%NrLoc = NrLoc
 end subroutine SetSimulation_IniSWC_NrLoc
 
-!!ATTEMPT
-subroutine SetSimulation_IniSWC_Loc(Loc)
-    !! Setter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments), intent(in) :: Loc
-
-    simulation%IniSWC%Loc = Loc
-end subroutine SetSimulation_IniSWC_Loc
-
 subroutine SetSimulation_IniSWC_Loc_i(i, Loc_i)
     !! Setter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable.
     integer(int32), intent(in) :: i
@@ -4447,13 +4384,6 @@ subroutine SetSimulation_IniSWC_Loc_i(i, Loc_i)
     simulation%IniSWC%Loc(i) = Loc_i
 end subroutine SetSimulation_IniSWC_Loc_i
 
-subroutine SetSimulation_IniSWC_VolProc(VolProc)
-    !! Setter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments), intent(in) :: VolProc
-
-    simulation%IniSWC%VolProc = VolProc
-end subroutine SetSimulation_IniSWC_VolProc
-
 subroutine SetSimulation_IniSWC_VolProc_i(i, VolProc_i)
     !! Setter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable.
     integer(int32), intent(in) :: i
@@ -4461,13 +4391,6 @@ subroutine SetSimulation_IniSWC_VolProc_i(i, VolProc_i)
 
     simulation%IniSWC%VolProc(i) = VolProc_i
 end subroutine SetSimulation_IniSWC_VolProc_i
-
-subroutine SetSimulation_IniSWC_SaltECe(SaltECe)
-    !! Setter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable.
-    real(dp), dimension(max_No_compartments), intent(in) :: SaltECe
-
-    simulation%IniSWC%SaltECe = SaltECe
-end subroutine SetSimulation_IniSWC_SaltECe
 
 subroutine SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i)
     !! Setter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable.
