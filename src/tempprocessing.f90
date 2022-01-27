@@ -3,9 +3,6 @@ module ac_tempprocessing
 use ac_kinds,  only: int32, dp
 
 use ac_global , only: DaysinMonth, &
-!                      TemperatureRecord, &
-!                      TemperatureFile, &
-!                      TemperatureFileFull, &
                       rep_DayEventDbl, &
                       DetermineDayNr, &
                       DetermineDate, &
