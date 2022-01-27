@@ -2117,14 +2117,14 @@ end function LeapYear
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
     character(len=*), intent(inout) :: DescriptionOfProject
-	
-	integer :: fhandle
-	
-	open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
-	read(fhandle, *) DescriptionOfProject
-	DescriptionOfProject = trim(DescriptionOfProject)
-	
-	close(fhandle)
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
+    read(fhandle, *) DescriptionOfProject
+    DescriptionOfProject = trim(DescriptionOfProject)
+
+    close(fhandle)
 end subroutine LoadProjectDescription
 
 
