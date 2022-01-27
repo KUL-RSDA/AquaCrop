@@ -1007,6 +1007,29 @@ procedure SetGroundWaterFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterfilefull_wrap';
 
+function GetTemperatureFile(): string;
+
+function GetTemperatureFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturefile_wrap';
+
+procedure SetTemperatureFile(constref str : string);
+
+procedure SetTemperatureFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefile_wrap';
+
+function GetTemperatureFilefull(): string;
+
+function GetTemperatureFilefull_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturefilefull_wrap';
+
+procedure SetTemperatureFilefull(constref str : string);
+
+procedure SetTemperatureFilefull_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefilefull_wrap';
 
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
@@ -2803,6 +2826,44 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCropFileFull_wrap(p, strlen);
+end;
+
+function GetTemperatureFile(): string;
+var
+     p : PChar;
+begin;
+     p := GetTemperatureFile_wrap();
+     GetTemperatureFile := AnsiString(p);
+end;
+
+
+procedure SetTemperatureFile(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureFile_wrap(p, strlen);
+end;
+
+function GetTemperatureFilefull(): string;
+var
+     p : PChar;
+begin;
+     p := GetTemperatureFilefull_wrap();
+     GetTemperatureFilefull := AnsiString(p);
+end;
+
+
+procedure SetTemperatureFilefull(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureFilefull_wrap(p, strlen);
 end;
 
 function GetTemperatureRecord() : rep_clim;

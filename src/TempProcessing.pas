@@ -172,7 +172,7 @@ VAR fTemp : textfile;
 
 // 1 = previous decade, 2 = Actual decade, 3 = Next decade;
 BEGIN
-Assign(fTemp,TemperatureFilefull);
+Assign(fTemp,GetTemperatureFilefull());
 Reset(fTemp);
 READLN(fTemp); // description
 READLN(fTemp); // time step
@@ -401,7 +401,7 @@ VAR fTemp : textfile;
 
 BEGIN
 //1. Prepare record
-Assign(fTemp,TemperatureFilefull);
+Assign(fTemp,GetTemperatureFilefull());
 Reset(fTemp);
 READLN(fTemp); // description
 READLN(fTemp); // time step
@@ -616,7 +616,7 @@ BEGIN
 GDDays := 0;
 IF (ValPeriod > 0) THEN
    BEGIN
-   IF (TemperatureFile = '(None)')
+   IF (GetTemperatureFile() = '(None)')
       THEN BEGIN  // given average Tmin and Tmax
            DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
            GDDays := ROUND(ValPeriod * DayGDD)
@@ -630,7 +630,7 @@ IF (ValPeriod > 0) THEN
                     SetDayNrToYundef(DayNri);
                     END
                ELSE AdjustDayNri := false;
-           totalname := TemperatureFilefull;
+           totalname := GetTemperatureFilefull();
            IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > DayNri)
                                      AND (GetTemperatureRecord().FromDayNr <= DayNri))
                 THEN BEGIN
@@ -766,7 +766,7 @@ BEGIN
 NrCdays := 0;
 IF (ValGDDays > 0) THEN
    BEGIN
-   IF (TemperatureFile = '(None)')
+   IF (GetTemperatureFile() = '(None)')
       THEN BEGIN  // given average Tmin and Tmax
            DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
            IF (DayGDD = 0)
@@ -782,7 +782,7 @@ IF (ValGDDays > 0) THEN
                     SetDayNrToYundef(DayNri);
                     END
                ELSE AdjustDayNri := false;
-           totalname := TemperatureFilefull;
+           totalname := GetTemperatureFilefull();
            IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > DayNri)
                                      AND (GetTemperatureRecord().FromDayNr <= DayNri))
                 THEN BEGIN
@@ -917,7 +917,7 @@ VAR i : INTEGER;
 
 BEGIN
 MaxGDDays := 100000;
-IF (TemperatureFile = '(None)')
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
         If (DayGDD <= 0) THEN MaxGDDays := 0;
@@ -933,7 +933,7 @@ IF (TemperatureFile = '(None)')
              //DetermineDayNr(dayi,monthi,yeari,CropDay1);
                 END;
            DayNri := FromDayNr;
-           totalname := TemperatureFilefull;
+           totalname := GetTemperatureFilefull();
            IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > FromDayNr)
                              AND (GetTemperatureRecord().FromDayNr <= FromDayNr)) THEN
            CASE GetTemperatureRecord().DataType OF
@@ -1253,11 +1253,11 @@ IF (GetClimateFile() = '(None)')
 // 1.1 Temperature
 READLN(f0); // Info Temperature
 READLN(f0,TempString);  //TemperatureFile
-TemperatureFile:= Trim(TempString);
-IF (TemperatureFile = '(None)')
+SetTemperatureFile(Trim(TempString));
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
-        TemperatureFilefull := TemperatureFile;  (* no file *)
+        SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
         Str(SimulParam.Tmin:8:1,TempString1);
         Str(SimulParam.Tmax:8:1,TempString2);
         TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
@@ -1266,9 +1266,9 @@ IF (TemperatureFile = '(None)')
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        TemperatureFileFull := CONCAT(Trim(TempString),Trim(TemperatureFile));
+        SetTemperatureFileFull(CONCAT(Trim(TempString),Trim(GetTemperatureFile())));
         temperature_record := GetTemperatureRecord();
-        LoadClim(TemperatureFilefull,TemperatureDescription,temperature_record);
+        LoadClim(GetTemperatureFilefull(),TemperatureDescription,temperature_record);
         CompleteClimateDescription(temperature_record);
         SetTemperatureRecord(temperature_record);
         END;
@@ -1591,7 +1591,7 @@ VAR totalname,totalnameOUT : STRING;
     Tlow,Thigh : double;
 
 BEGIN
-totalname := TemperatureFilefull;
+totalname := GetTemperatureFilefull();
 IF FileExists(totalname)
    THEN BEGIN
         // open file and find first day of cropping period
@@ -1719,7 +1719,7 @@ VAR fTemp : textFile;
 BEGIN
 
 //1. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
@@ -1785,7 +1785,7 @@ IF (TheDaysToCCini <> 0)
 FOR Dayi := 1 TO L1234 DO
     BEGIN
     //4.1 growing degrees for dayi
-    IF (TemperatureFile <> '(None)')
+    IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
             GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
@@ -1879,7 +1879,7 @@ FOR Dayi := 1 TO L1234 DO
 
 
 //5. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
+IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
 END; (* BTransferPeriod *)
 
 
@@ -1936,7 +1936,7 @@ IF (TestRecord = true) THEN
 
 
 //2. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
@@ -2008,7 +2008,7 @@ IF (TheDaysToCCini <> 0)
 FOR Dayi := 1 TO L1234 DO
     BEGIN
     //5.1 growing degrees for dayi
-    IF (TemperatureFile <> '(None)')
+    IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
             GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
@@ -2162,7 +2162,7 @@ FOR Dayi := 1 TO L1234 DO
 
 
 //4. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
+IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
 
 IF (TestRecord = true) THEN Close(fOUT);
 
@@ -2711,7 +2711,7 @@ VAR  fTemp : textFile;
 
 BEGIN
 //1. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
@@ -2727,7 +2727,7 @@ HeatStress := false;
 FOR Dayi := 1 TO TempLengthFlowering DO
     BEGIN
     // 3.1 Read air temperature
-    IF (TemperatureFile <> '(None)')
+    IF (GetTemperatureFile() <> '(None)')
        THEN READLN(fTemp,Tndayi,Txdayi)
        ELSE BEGIN
             Tndayi := TempTmin;
@@ -2750,7 +2750,7 @@ FOR Dayi := 1 TO TempLengthFlowering DO
     END;
 
 //3. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
+IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
 
 END; (* HIadjColdHeat *)
 
