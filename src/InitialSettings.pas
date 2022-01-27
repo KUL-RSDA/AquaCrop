@@ -43,10 +43,10 @@ implementation
  // 1c. Rainfall.PAR - 4 parameters
  WITH SimulParam DO
    BEGIN
-   EffectiveRain.Method := USDA;
-   EffectiveRain.PercentEffRain := 70; // IF Method is Percentage
-   EffectiveRain.ShowersInDecade := 2;  // For estimation of surface run-off
-   EffectiveRain.RootNrEvap := 5; // For reduction of soil evaporation
+   SetEffectiveRain_Method(USDA);
+   SetEffectiveRain_PercentEffRain(70); // IF Method is Percentage
+   SetEffectiveRain_ShowersInDecade(2);  // For estimation of surface run-off
+   SetEffectiveRain_RootNrEvap(5); // For reduction of soil evaporation
    END;
  // 1d. Crop.PAR  - 12 parameters
  WITH SimulParam DO
