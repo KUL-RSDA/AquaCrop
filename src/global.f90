@@ -379,6 +379,13 @@ type rep_RootZoneSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
 
+type rep_DayEventDbl
+    integer(int32) :: DayNr
+        !! Undocumented
+    real(dp) :: Param
+        !! Undocumented
+end type rep_DayEventDbl
+
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: RainDescription

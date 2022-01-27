@@ -252,12 +252,6 @@ TYPE
          Param : Integer;
          end;
 
-     rep_DayEventDbl = Record
-         DayNr : Integer;
-         Param : Double;
-         end;
-     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
-
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
      rep_EndSeason = Record
