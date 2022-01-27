@@ -3259,14 +3259,14 @@ function GetSimulation_ThetaIni() : rep_IniComp;
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments do GetSimulation.ThetaIni[i] := GetSimulation_ThetaIni_i(i)
+    for i := 1 to max_No_compartments do GetSimulation_ThetaIni[i] := GetSimulation_ThetaIni_i(i)
 end;
 
 function GetSimulation_ECeIni() : rep_IniComp;
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments do GetSimulation.ECeIni[i] := GetSimulation_ECeIni_i(i)
+    for i := 1 to max_No_compartments do GetSimulation_ECeIni[i] := GetSimulation_ECeIni_i(i)
 end;
 
 function GetSimulation() : rep_sim;
@@ -3317,7 +3317,7 @@ procedure SetSimulation_ThetaIni(constref ThetaIni : rep_IniComp);
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments do begin SetSimulation_ThetaIni_i(i, ThetaIni[i])
+    for i := 1 to max_No_compartments do SetSimulation_ThetaIni_i(i, ThetaIni[i])
 end;
 
 procedure SetSimulation_ECeIni(constref ECeIni : rep_IniComp);
@@ -3375,21 +3375,21 @@ function GetSimulation_IniSWC_Loc() : rep_IniComp;
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments do GetSimulation_IniSWC.Loc[i] := GetSimulation_IniSWC_Loc_i(i)
+    for i := 1 to max_No_compartments do GetSimulation_IniSWC_Loc[i] := GetSimulation_IniSWC_Loc_i(i)
 end;
 
 function GetSimulation_IniSWC_VolProc() : rep_IniComp;
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments do GetSimulation_IniSWC.VolProc[i] := GetSimulation_IniSWC_VolProc_i(i)
+    for i := 1 to max_No_compartments do GetSimulation_IniSWC_VolProc[i] := GetSimulation_IniSWC_VolProc_i(i)
 end;
 
 function GetSimulation_IniSWC_SaltECe() : rep_IniComp;
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments do GetSimulation_IniSWC.SaltECe[i] := GetSimulation_IniSWC_SaltECe_i(i)
+    for i := 1 to max_No_compartments do GetSimulation_IniSWC_SaltECe[i] := GetSimulation_IniSWC_SaltECe_i(i)
 end;
 
 function GetSimulation_IniSWC() : rep_IniSWC;
