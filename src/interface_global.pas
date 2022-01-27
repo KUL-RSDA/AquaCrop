@@ -278,6 +278,15 @@ procedure DetermineLengthGrowthStages_wrap(
             VAR CGCVal : double);
         external 'aquacrop' name '__ac_interface_global_MOD_determinelengthgrowthstages_wrap';
 
+procedure TimeToMaxCanopySF(
+            constref CCo,CGC,CCx : double;
+            constref L0,L12,L123,LToFlor,LFlor : INTEGER;
+            constref DeterminantCrop : BOOLEAN;
+            VAR L12SF : INTEGER;
+            VAR RedCGC,RedCCx : ShortInt;
+            VAR ClassSF : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_timetomaxcanopysf';
+                            
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;
