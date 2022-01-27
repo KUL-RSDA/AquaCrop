@@ -171,6 +171,8 @@ VAR TheProjectFile,ListProjectsFile,NrString,TestFile : string;
     TotalSimRuns : Integer;
     SimNr : ShortInt;
     f123,fend : TextFile;
+    MultipleRunWithKeepSWC_temp : boolean;
+    MultipleRunConstZrx_temp : double;
 
 
 
@@ -375,7 +377,11 @@ IF (NrProjects > 0) THEN
                                  ComposeOutputFileName(GetMultipleProjectFile());
                                  SetSimulation_MultipleRun(true);
                                  SetSimulation_NrRuns(TotalSimRuns);
-                                 CheckForKeepSWC(GetMultipleProjectFileFull(),GetSimulation_NrRuns(),GetSimulation_MultipleRunWithKeepSWC(),GetSimulation_MultipleRunConstZrx());
+                                 MultipleRunWithKeepSWC_temp := GetSimulation_MultipleRunWithKeepSWC();
+                                 MultipleRunConstZrx_temp := GetSimulation_MultipleRunConstZrx();
+                                 CheckForKeepSWC(GetMultipleProjectFileFull(),GetSimulation_NrRuns(),MultipleRunWithKeepSWC_temp,MultipleRunConstZrx_temp);
+                                 SetSimulation_MultipleRunWithKeepSWC(MultipleRunWithKeepSWC_temp);
+                                 SetSimulation_MultipleRunConstZrx(MultipleRunConstZrx_temp);
                                  END;
                               END;
                         else

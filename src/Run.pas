@@ -1334,6 +1334,7 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     RedCGC_temp, RedCCX_temp, RCadj_temp : ShortInt; 
     EffectStress_temp : rep_EffectStress;
     SumGDD_temp, SumGDDFromDay1_temp : double;
+    bool_temp : boolean;
     
 BEGIN
 //1. Adjustments at start
@@ -1392,7 +1393,8 @@ IF (Crop.DayN < GetSimulation_ToDayNr()) THEN DNr2 := Crop.DayN;
 CO2i := CO2ForSimulationPeriod(DNr1,DNr2);
 
 // 5. seasonals stress coefficients
-SetSimulation_SalinityConsidered(((Crop.ECemin <> undef_int) AND (Crop.ECemax <> undef_int)) AND (Crop.ECemin < Crop.ECemax));
+bool_temp := ((Crop.ECemin <> undef_int) AND (Crop.ECemax <> undef_int)) AND (Crop.ECemin < Crop.ECemax);
+SetSimulation_SalinityConsidered(bool_temp);
 IF (GetIrriMode() = Inet) THEN SetSimulation_SalinityConsidered(false);
 SetStressTot_NrD(undef_int);
 SetStressTot_Salt(0);

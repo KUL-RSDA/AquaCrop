@@ -1930,7 +1930,7 @@ function GetSimulation_IniSWC_VolProc_i(constref i : integer) : double;
 function GetSimulation_IniSWC_SaltECe() : rep_IniComp;
 
 function GetSimulation_IniSWC_SaltECe_i(constref i : integer) : double;
-    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_ece_i';
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_saltece_i';
 
 procedure SetSimulation_IniSWC_Loc(constref Loc : rep_IniComp);
 
