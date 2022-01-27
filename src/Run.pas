@@ -2064,6 +2064,7 @@ CONST NoValD = undef_double;
       NoValI = undef_int;
 VAR Di,Mi,Yi,StrExp,StrSto,StrSalt,StrTr,StrW,Brel,Nr : INTEGER;
     Ratio1,Ratio2,Ratio3,KsTr,HI,KcVal,WPy,SaltVal : double;
+    SWCtopSoilConsidered_temp : boolean;
 BEGIN
 DetermineDate(DayNri,Di,Mi,Yi);
 IF (ClimRecord.FromY = 1901) THEN Yi := Yi - 1901 + 1;
@@ -2162,9 +2163,11 @@ IF Out3Prof THEN
    IF (RootingDepth <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
+           SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
            IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
-              THEN DetermineRootZoneWC(Crop.RootMax,GetSimulation_SWCtopSoilConsidered())
-              ELSE DetermineRootZoneWC(GetSoil().RootMax,GetSimulation_SWCtopSoilConsidered());
+              THEN DetermineRootZoneWC(Crop.RootMax,SWCtopSoilConsidered_temp)
+              ELSE DetermineRootZoneWC(GetSoil().RootMax,SWCtopSoilConsidered_temp);
+              SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
            END;
    WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
    IF (RootingDepth <= 0)
@@ -2177,7 +2180,11 @@ IF Out3Prof THEN
            SetRootZoneWC_Leaf(undef_double);
            SetRootZoneWC_Sen(undef_double);
            END
-      ELSE DetermineRootZoneWC(RootingDepth,GetSimulation_SWCtopSoilConsidered());
+      ELSE BEGIN
+           SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
+           DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+           SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
+           END; 
    WRITE(fDaily,GetRootZoneWC().actual:8:1,GetRootZoneWC().SAT:10:1,GetRootZoneWC().FC:10:1,GetRootZoneWC().Leaf:10:1,
       GetRootZoneWC().Thresh:10:1,GetRootZoneWC().Sen:10:1);
    IF ((Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
@@ -2334,6 +2341,8 @@ VAR RepeatToDay : LongInt;
     GwTable_temp : rep_GwTable;
     Store_temp, Mobilize_temp : boolean;
     ToMobilize_temp, Bmobilized_temp : double;
+    EffectStress_temp : rep_EffectStress;
+    SWCtopSOilConsidered_temp : boolean;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2391,6 +2400,7 @@ VAR RepeatToDay : LongInt;
     VAR DNr : INTEGER;
         StringREAD : ShortString;
         Ir1,Ir2 : double;
+        IrriECw_temp : double;
     BEGIN
     IF (IrriFirstDayNr = undef_int)
        THEN DNr := Dayi - Crop.Day1 + 1
@@ -2409,7 +2419,11 @@ VAR RepeatToDay : LongInt;
                        READLN(fIrri,StringREAD);
                        IF GlobalIrriECw // Versions before 3.2
                           THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
-                          ELSE SplitStringInThreeParams(StringREAD,Ir1,Ir2,GetSimulation_IrriECw());
+                          ELSE BEGIN
+                               IrriECw_temp := GetSimulation_IrriECw();
+                               SplitStringInThreeParams(StringREAD,Ir1,Ir2,IrriECw_temp);
+                               SetSimulation_IrriECw(IrriECw_temp);
+                               END;
                        SetIrriInfoRecord1_TimeInfo(ROUND(Ir1));
                        SetIrriInfoRecord1_DepthInfo(ROUND(Ir2));
                        END;
@@ -2421,6 +2435,7 @@ VAR RepeatToDay : LongInt;
 
     PROCEDURE GetIrriParam;
     VAR DayInSeason : Integer;
+        IrriECw_temp : double;
 
     BEGIN
     TargetTimeVal := -999;
@@ -2447,10 +2462,11 @@ VAR RepeatToDay : LongInt;
                           SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
                           END
                      ELSE BEGIN
-                          READLN(fIrri,FromDay_temp,TimeInfo_temp, DepthInfo_temp,GetSimulation_IrriEcw());
+                          READLN(fIrri,FromDay_temp,TimeInfo_temp, DepthInfo_temp,IrriEcw_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
                           SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
                           SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
+                          SetSimulation_IrriEcw(IrriEcw_temp);
                           END;
                   SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1);
                   END;
@@ -2661,7 +2677,9 @@ IF (Crop.DaysToCCini <> 0)
                    RatDGDD := 1;
                    IF ((Crop.ModeCycle = GDDays) AND (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence)) THEN
                       RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
-                   CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,GetSimulation_EffectStress());
+                   EffectStress_temp := GetSimulation_EffectStress();
+                   CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,EffectStress_temp);
+                   SetSimulation_EffectStress(EffectStress_temp);
                    CCiPrev := CCiniTotalFromTimeToCCini(Crop.DaysToCCini,Crop.GDDaysToCCini,
                                   Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToFullCanopySF,
                                   Crop.DaysToSenescence,Crop.DaysToHarvest,
@@ -2709,7 +2727,9 @@ IF (((Crop.ModeCycle = CalendarDays) AND ((DayNri-Crop.Day1+1) < Crop.DaysToHarv
    ELSE RootingDepth := Ziprev;
 IF ((RootingDepth > 0) AND (DayNri = Crop.Day1))
    THEN BEGIN //initial root zone depletion day1 (for WRITE Output)
-        DetermineRootZoneWC(RootingDepth,GetSimulation_SWCtopSoilConsidered());
+        SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
+        DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+        SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         IF (GetIrriMode() = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
         END;
 
@@ -2759,7 +2779,9 @@ SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 (* 11. Biomass and yield *)
 IF ((RootingDepth > 0) AND (NoMoreCrop = false))
    THEN BEGIN
-        DetermineRootZoneWC(RootingDepth,GetSimulation_SWCtopSoilConsidered());
+        SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
+        DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+        SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         // temperature stress affecting crop transpiration
         IF (CCiActual <= 0.0000001)
            THEN KsTr := 1
