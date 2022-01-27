@@ -40,11 +40,11 @@ integer(intEnum), parameter :: plant_regrowth= 2
     !! index of regrowth in planting enumerated type
 
 integer(intEnum), parameter :: Method_full = 0
-    !! index of seed in planting enumerated type
+    !! index of full in Method enumerated type
 integer(intEnum), parameter :: Method_usda = 1
-    !! index of transplant in planting enumerated type
+    !! index of usda in Method enumerated type
 integer(intEnum), parameter :: Method_percentage= 2
-    !! index of regrowth in planting enumerated type
+    !! index of percentage in Method enumerated type
 
 
 integer(intEnum), parameter :: TimeCuttings_NA = 0
