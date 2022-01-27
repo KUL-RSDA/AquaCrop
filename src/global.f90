@@ -1193,7 +1193,7 @@ subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, Deter
         ! check for L12SFmax
         if (L12SF > L12SFmax) then
             ! full canopy cannot be reached in potential period for vegetative growth
-            ! ClassSF := undef_int; ! swithc to user defined soil fertility
+            ! ClassSF := undef_int; ! switch to user defined soil fertility
             ! 1. increase CGC(soil fertility)
             do while ((L12SF > L12SFmax) .and. (RedCGC > 0))
                 RedCGC = RedCGC - 1
