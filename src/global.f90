@@ -39,6 +39,14 @@ integer(intEnum), parameter :: plant_transplant = 1
 integer(intEnum), parameter :: plant_regrowth= 2
     !! index of regrowth in planting enumerated type
 
+integer(intEnum), parameter :: Method_full = 0
+    !! index of full in Method enumerated type
+integer(intEnum), parameter :: Method_usda = 1
+    !! index of usda in Method enumerated type
+integer(intEnum), parameter :: Method_percentage= 2
+    !! index of percentage in Method enumerated type
+
+
 integer(intEnum), parameter :: TimeCuttings_NA = 0
     !! index of NA in TimeCuttings enumerated type
 integer(intEnum), parameter :: TimeCuttings_IntDay = 1
@@ -233,6 +241,18 @@ type rep_EffectStress
         !! Reduction of KsSto (%)
 end type rep_EffectStress
 
+type rep_EffectiveRain 
+    !!  for 10-day or monthly rainfall data
+    integer(intEnum) :: Method
+        !! Undocumented
+    integer(int8) :: PercentEffRain
+        !! IF Method = Percentage
+    integer(int8) :: ShowersInDecade
+        !! adjustment of surface run-off
+    integer(int8) :: RootNrEvap
+        !! Root for reduction in soil evaporation
+end type rep_EffectiveRain 
+
 type rep_RootZoneWC 
     real(dp) :: Actual
         !! actual soil water content in rootzone [mm]
@@ -418,6 +438,7 @@ type(rep_Onset) :: onset
 type(rep_Crop) :: crop
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
+type(rep_EffectiveRain) :: effectiverain
 type(rep_soil) :: Soil
 type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
@@ -3136,6 +3157,76 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
 
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
+
+function Geteffectiverain() result(effectiverain_out)
+    !! Getter for the "effectiverain" global variable.
+    type(rep_EffectiveRain) :: effectiverain_out
+
+    effectiverain_out = effectiverain
+end function Geteffectiverain
+
+function Geteffectiverain_Method() result(Method)
+    !! Getter for the "Method" attribute of the "effectiverain" global variable.
+    integer(intEnum) :: Method
+
+    Method = effectiverain%Method
+end function Geteffectiverain_Method
+
+function Geteffectiverain_PercentEffRain() result(PercentEffRain)
+    !! Getter for the "PercentEffRain" attribute of the "effectiverain" global variable.
+    integer(int8) :: PercentEffRain
+
+    PercentEffRain = effectiverain%PercentEffRain
+end function Geteffectiverain_PercentEffRain
+
+function Geteffectiverain_ShowersInDecade() result(ShowersInDecade)
+    !! Getter for the "ShowersInDecade" attribute of the "effectiverain" global variable.
+    integer(int8) :: ShowersInDecade
+
+    ShowersInDecade = effectiverain%ShowersInDecade
+end function Geteffectiverain_ShowersInDecade
+
+function Geteffectiverain_RootNrEvap() result(RootNrEvap)
+    !! Getter for the "RootNrEvap" attribute of the "effectiverain" global variable.
+    integer(int8) :: RootNrEvap
+
+    RootNrEvap = effectiverain%RootNrEvap
+end function Geteffectiverain_RootNrEvap
+
+subroutine Seteffectiverain(effectiverain_in)
+    !! Setter for the "effectiverain" global variable.
+    type(rep_EffectiveRain), intent(in) :: effectiverain_in
+
+    effectiverain = effectiverain_in
+end subroutine Seteffectiverain
+
+subroutine Seteffectiverain_Method(Method)
+    !! Setter for the "Method" attribute of the "effectiverain" global variable.
+    integer(intEnum), intent(in) :: Method
+
+    effectiverain%Method = Method
+end subroutine Seteffectiverain_Method
+
+subroutine Seteffectiverain_PercentEffRain(PercentEffRain)
+    !! Setter for the "PercentEffRain" attribute of the "effectiverain" global variable.
+    integer(int8), intent(in) :: PercentEffRain
+
+    effectiverain%PercentEffRain = PercentEffRain
+end subroutine Seteffectiverain_PercentEffRain
+
+subroutine Seteffectiverain_ShowersInDecade(ShowersInDecade)
+    !! Setter for the "ShowersInDecade" attribute of the "effectiverain" global variable.
+    integer(int8), intent(in) :: ShowersInDecade
+
+    effectiverain%ShowersInDecade = ShowersInDecade
+end subroutine Seteffectiverain_ShowersInDecade
+
+subroutine Seteffectiverain_RootNrEvap(RootNrEvap)
+    !! Setter for the "RootNrEvap" attribute of the "effectiverain" global variable.
+    integer(int8), intent(in) :: RootNrEvap
+
+    effectiverain%RootNrEvap = RootNrEvap
+end subroutine Seteffectiverain_RootNrEvap
 
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.

@@ -39,14 +39,109 @@ TYPE
      rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
      rep_EffectiveRainMethod = (Full,USDA,Percentage);
+
+     rep_subkind = (Vegetative,Grain,Tuber,Forage);
+     rep_pMethod = (NoCorrection,FAOCorrection);
+     
+
+     rep_Assimilates = Record
+         On          : Boolean;
+         Period      : INTEGER; (* Number of days at end of season during which assimilates are stored in root system *)
+         Stored      : ShortInt; (* Percentage of assimilates, transferred to root system at last day of season *)
+         Mobilized   : ShortInt; (* Percentage of stored assimilates, transferred to above ground parts in next season *)
+         end;
+
+     rep_Crop = Record
+         subkind       : rep_subkind;
+         ModeCycle     : rep_modeCycle;
+         Planting      : rep_Planting; // 1 = sown, 0 = transplanted, -9 = regrowth
+         pMethod       : rep_pMethod;
+         pdef : double;  // soil water depletion fraction for no stomatal stress as defined (ETo = 5 mm/day)
+         pActStom : double; // actual p for no stomatal stress for ETo of the day
+         KsShapeFactorLeaf,KsShapeFactorStomata,KsShapeFactorSenescence : Double;
+         pLeafDefUL,pLeafDefLL: double; //soil water depletion fraction for leaf expansion (ETo = 5 mm/day)
+         pLeafAct    : double; //actual p for upper limit leaf expansion for ETo of the day
+         pSenescence : double; //soil water depletion fraction for canopys senescence (ETo = 5 mm/day)
+         pSenAct     : double; //actual p for canopy senescence for ETo of the day
+         pPollination : double; //soil water depletion fraction for failure of pollination
+         SumEToDelaySenescence : INTEGER;
+         AnaeroPoint : INTEGER; (* (SAT - [vol%]) at which deficient aeration *)
+         StressResponse : rep_Shapes; // is reponse to soil fertility stress
+         ECemin,                // lower threshold for salinity stress (dS/m)
+         ECemax,                // upper threshold for salinity stress (dS/m)
+         CCsaltDistortion : ShortInt;  // distortion canopy cover for calibration for simulation of effect of salinity stress (%)
+         ResponseECsw : INTEGER; // Response of Ks stomata to ECsw for calibration: From 0 (none) to +200 (very strong)
+         SmaxTopQuarter, (* Smax Top 1/4 root zone HOOGLAND *)
+         SmaxBotQuarter, (* Smax Bottom 1/4 root zone HOOGLAND *)
+         SmaxTop,   (* Smax Top root zone HOOGLAND *)
+         SmaxBot,   (* Smax Bottom root zone HOOGLAND *)
+         KcTop : double;
+         KcDecline : double; // Reduction Kc (%CCx/day) as result of ageing effects, nitrogen defficiency, etc.
+         CCEffectEvapLate : INTEGER; (* % *)
+         Day1 : LongInt;   (* Daynummer: first day of croping period starting from sowing/transplanting *)
+         DayN : LongInt;   (* Daynummer: last day = harvest day*)
+         Length : rep_int_array; (* 1 .. 4 :  = the four growth stages  *)
+         RootMin, RootMax : double;   // rooting depth in meter
+         RootShape : ShortInt;     // 10 times the root of the root function
+         Tbase,                  //Base Temperature (degC)
+         Tupper       : double;  //Upper temperature threshold (degC)
+         Tcold,                   // Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+         Theat        : ShortInt; // Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+         GDtranspLow  : double; // Minimum growing degrees required for full crop transpiration (degC - day)
+         SizeSeedling : double;  //Canopy cover per seedling (cm2)
+         SizePlant    : double;  //Canopy cover of plant on 1st day (cm2) when regrowth
+         PlantingDens : LongInt; //number of plants per hectare
+         CCo,                    //starting canopy size  (fraction canopy cover)
+         CCini        : double;  //starting canopy size for regrowth (fraction canopy cover)
+         CGC          : double;  //Canopy growth coefficient (increase of CC in fraction per day)
+         GDDCGC       : double;  //Canopy growth coefficient (increase of CC in fraction per growing-degree day)
+         CCx          : double;  //expected maximum canopy cover  (fraction canopy cover)
+         CDC          : double;  //Canopy Decline Coefficient (decrease of CC in fraction per day)
+         GDDCDC       : double;  //Canopy Decline Coefficient (decrease of CC in fraction per growing-degree day)
+         CCxAdjusted  : double;  //maximum canopy cover given water stress
+         CCxWithered  : double;  //maximum existed CC during season (for correction Evap for withered canopy)
+         CCoAdjusted  : double;  //initial canopy size after soil water stress
+         DaysToCCini        : integer; //required for regrowth (if CCini > CCo)
+         DaysToGermination  : integer;  //given or calculated from GDD
+         DaysToFullCanopy   : integer;  //given or calculated from GDD
+         DaysToFullCanopySF : integer; // adjusted to soil fertility
+         DaysToFlowering    : integer;  //given or calculated from GDD
+         LengthFlowering    : integer;  //given or calculated from GDD
+         DaysToSenescence   : integer;  //given or calculated from GDD
+         DaysToHarvest      : integer;  //given or calculated from GDD
+         DaysToMaxRooting   : integer;  //given or calculated from GDD
+         DaysToHIo          : integer;  //given or calculated from GDD
+         GDDaysToCCini      : integer; //required for regrowth (if CCini > CCo)
+         GDDaysToGermination: integer;  //given or calculated from Calendar Days
+         GDDaysToFullCanopy : integer;  //given or calculated from Calendar Days
+         GDDaysToFullCanopySF : integer;  //adjusted to soil fertility
+         GDDaysToFlowering  : INTEGER;  //given or calculated from Calendar Days
+         GDDLengthFlowering : Integer;  //given or calculated from Calendar Days
+         GDDaysToSenescence : integer;  //given or calculated from Calendar Days
+         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
+         GDDaysToMaxRooting : integer;  //given or calculated from Calendar Days
+         GDDaysToHIo        : integer;  //given or calculated from Calendar Days
+         WP                 : double;  // (normalized) water productivity (gram/m2)
+         WPy                : integer; // (normalized) water productivity during yield formation (Percent WP)
+         AdaptedToCO2       : ShortInt; // Crop performance under elevated atmospheric CO2 concentration (%)
+         HI                 : integer;  // HI harvest index (percentage)
+         dHIdt              : double;   // average rate of change in harvest index (% increase per calendar day)
+         HIincrease         : ShortInt; // possible increase (%) of HI due to water stress before flowering
+         aCoeff             : double; // coefficient describing impact of restricted vegetative growth at flowering on HI
+         bCoeff             : double; // coefficient describing impact of stomatal closure at flowering on HI
+         DHImax             : ShortInt; // allowable maximum increase (%) of specified HI
+         DeterminancyLinked : BOOLEAN; // linkage of determinancy with flowering
+         fExcess            : SmallInt; // potential excess of fruits (%) ranging form
+         DryMatter          : ShortInt; // dry matter content (%) of fresh yield
+         RootMinYear1       : double; // minimum rooting depth in first year in meter (for perennial crops)
+         SownYear1          : BOOLEAN; // True = Sown, False = transplanted (for perennial crops)
+         YearCCx            : ShortInt; // number of years at which CCx declines to 90 % of its value due to self-thinning - Perennials
+         CCxRoot            : double; // shape factor of the decline of CCx over the years due to self-thinning - Perennials
+         Assimilates        : rep_Assimilates;
+         END;
+
      rep_MonthInteger = ARRAY[1..12] OF INTEGER;
 
-     rep_EffectiveRain = RECORD    // for 10-day or monthly rainfall data
-         Method : rep_EffectiveRainMethod;
-         PercentEffRain : ShortInt; // IF Method = Percentage
-         ShowersInDecade : ShortInt; // adjustment of surface run-off
-         RootNrEvap : ShortInt; // Root for reduction in soil evaporation
-         end;
 
      rep_param = RECORD  // DEFAULT.PAR
          // crop parameters IN CROP.PAR - with Reset option
@@ -3177,7 +3272,7 @@ END; (* HarvestIndexDay *)
 PROCEDURE ReadRainfallSettings;
 VAR f : textfile;
     FullName : string;
-    NrM : ShortInt;
+    NrM,effrainperc,effrainshow,effrainrootE : ShortInt;
 BEGIN
 FullName := CONCAT(GetPathNameSimul(),'Rainfall.PAR');
 Assign(f,FullName);
@@ -3187,13 +3282,19 @@ WITH SimulParam DO
    BEGIN
    Readln(f,NrM);
    Case NrM OF
-        0 : EffectiveRain.Method := Full;
-        1 : EffectiveRain.Method := USDA;
-        2 : EffectiveRain.Method := Percentage;
+        0 : SetEffectiveRain_Method(Full);
+        1 : SetEffectiveRain_Method(USDA);
+        2 : SetEffectiveRain_Method(Percentage);
       end;
-   Readln(f,EffectiveRain.PercentEffRain); // IF Method is Percentage
-   Readln(f,EffectiveRain.ShowersInDecade);  // For estimation of surface run-off
-   Readln(f,EffectiveRain.RootNrEvap); // For reduction of soil evaporation
+   effrainperc := GetEffectiveRain_PercentEffRain();
+   effrainshow := GetEffectiveRain_ShowersInDecade();
+   effrainrootE := GetEffectiveRain_RootNrEvap();
+   Readln(f,effrainperc ); // IF Method is Percentage
+   SetEffectiveRain_PercentEffRain(effrainperc);
+   Readln(f,effrainshow);  // For estimation of surface run-off
+   SetEffectiveRain_ShowersInDecade(effrainshow);
+   Readln(f,effrainrootE); // For reduction of soil evaporation
+   SetEffectiveRain_RootNrEvap(effrainrootE);
    END;
 Close(f);
 END; (* ReadRainfallSettings *)
@@ -4432,6 +4533,7 @@ END; (* GetFileForProgramParameters *)
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 VAR f0 : TextFile;
     i : INTEGER;
+    effrainperc,effrainshow,effrainrootE : ShortInt;
 BEGIN
 IF FileExists(FullFileNameProgramParameters)
    THEN BEGIN // load set of program parameters
@@ -4474,13 +4576,19 @@ IF FileExists(FullFileNameProgramParameters)
           // Rainfall
           Readln(f0,i);
           Case i OF
-            0 : EffectiveRain.Method := Full;
-            1 : EffectiveRain.Method := USDA;
-            2 : EffectiveRain.Method := Percentage;
+            0 : SetEffectiveRain_Method(Full);
+            1 : SetEffectiveRain_Method(USDA);
+            2 : SetEffectiveRain_Method(Percentage);
             end;
-          Readln(f0,EffectiveRain.PercentEffRain); // IF Method is Percentage
-          Readln(f0,EffectiveRain.ShowersInDecade);  // For estimation of surface run-off
-          Readln(f0,EffectiveRain.RootNrEvap); // For reduction of soil evaporation
+          effrainperc := GetEffectiveRain_PercentEffRain();
+          effrainshow := GetEffectiveRain_ShowersInDecade();
+          effrainrootE := GetEffectiveRain_RootNrEvap();
+          Readln(f0,effrainperc); // IF Method is Percentage
+          SetEffectiveRain_PercentEffRain(effrainperc);
+          Readln(f0,effrainshow);  // For estimation of surface run-off
+          SetEffectiveRain_ShowersInDecade(effrainshow);
+          Readln(f0,effrainrootE); // For reduction of soil evaporation
+          SetEffectiveRain_RootNrEvap(effrainrootE);
           END;
         // close
         Close(f0);

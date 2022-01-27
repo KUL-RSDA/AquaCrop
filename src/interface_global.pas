@@ -197,6 +197,15 @@ type
          RedKsSto        : ShortInt; (* Reduction of KsSto (%) *)
          end;
 
+    rep_EffectiveRainMethod = (Full,USDA,Percentage);
+
+    rep_EffectiveRain = Record    // for 10-day or monthly rainfall data
+         Method : rep_EffectiveRainMethod;
+         PercentEffRain : ShortInt; // IF Method = Percentage
+         ShowersInDecade : ShortInt; // adjustment of surface run-off
+         RootNrEvap : ShortInt; // Root for reduction in soil evaporation
+         end;
+
     rep_Shapes = Record
          Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
          ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
@@ -1739,6 +1748,40 @@ procedure CheckFilesInProject_wrap(
             var AllOK : boolean);
         external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
 
+
+function Geteffectiverain() : rep_EffectiveRain;
+
+function Geteffectiverain_Method() : rep_EffectiveRainMethod;
+
+function __Geteffectiverain_Method() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_method';
+
+function Geteffectiverain_PercentEffRain() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_percenteffrain';
+
+function Geteffectiverain_ShowersInDecade() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_showersindecade';
+
+function Geteffectiverain_RootNrEvap() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_rootnrevap';
+
+procedure Seteffectiverain(constref effectiverain : rep_EffectiveRain);
+
+procedure Seteffectiverain_Method(constref Method : rep_EffectiveRainMethod);
+
+procedure __Seteffectiverain_Method(constref Method : shortint);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_method';
+
+procedure Seteffectiverain_PercentEffRain(constref PercentEffRain : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_percenteffrain';
+
+procedure Seteffectiverain_ShowersInDecade(constref ShowersInDecade : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_showersindecade';
+
+procedure Seteffectiverain_RootNrEvap(constref RootNrEvap : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_rootnrevap';
+
+
 function GetIrriECw(): rep_IrriECw;
         external 'aquacrop' name '__ac_global_MOD_getirriecw';
 
@@ -2392,6 +2435,42 @@ begin;
     int_GenerateDepthMode := ord(GenerateDepthMode);
     __SetGenerateDepthMode(int_GenerateDepthMode);
 end;
+
+function Geteffectiverain() : rep_EffectiveRain;
+begin;
+    Geteffectiverain.Method := Geteffectiverain_Method();
+    Geteffectiverain.PercentEffRain := Geteffectiverain_PercentEffRain();
+    Geteffectiverain.ShowersInDecade := Geteffectiverain_ShowersInDecade();
+    Geteffectiverain.RootNrEvap := Geteffectiverain_RootNrEvap();
+end;
+
+
+function Geteffectiverain_Method() : rep_EffectiveRainMethod;
+var
+    index : shortint;
+begin;
+    index := __Geteffectiverain_Method();
+    Geteffectiverain_Method := rep_EffectiveRainMethod(index);
+end;
+
+
+procedure Seteffectiverain(constref effectiverain : rep_EffectiveRain);
+begin;
+    Seteffectiverain_Method(effectiverain.Method);
+    Seteffectiverain_PercentEffRain(effectiverain.PercentEffRain);
+    Seteffectiverain_ShowersInDecade(effectiverain.ShowersInDecade);
+    Seteffectiverain_RootNrEvap(effectiverain.RootNrEvap);
+end;
+
+
+procedure Seteffectiverain_Method(constref Method : rep_EffectiveRainMethod);
+var
+    index : shortint;
+begin;
+    index := ord(Method);
+    __Seteffectiverain_Method(index);
+end;
+
 
 function GetIrriMode() : rep_IrriMode;
 var
