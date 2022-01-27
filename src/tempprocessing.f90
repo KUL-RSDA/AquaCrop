@@ -3,15 +3,22 @@ module ac_tempprocessing
 use ac_kinds,  only: int32, dp
 
 use ac_global , only: DaysinMonth, &
-                      TemperatureRecord, &
-                      TemperatureFile, &
-                      TemperatureFileFull, &
+!                      TemperatureRecord, &
+!                      TemperatureFile, &
+!                      TemperatureFileFull, &
                       rep_DayEventDbl, &
                       DetermineDayNr, &
                       DetermineDate, &
                       LeapYear, &
-                      SplitStringInTwoParams
-
+                      SplitStringInTwoParams, &
+                      GetTemperatureFilefull, &                     
+                      GetTemperatureRecord_FromD, &
+                      GetTemperatureRecord_FromM, &
+                      GetTemperatureRecord_FromY, &
+                      GetTemperatureRecord_NrObs, &
+                      GetTemperatureRecord_ToD, &
+                      GetTemperatureRecord_ToM, &
+                      GetTemperatureRecord_ToY
 
 implicit none
 
@@ -144,7 +151,7 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         character(len=255) :: StringREAD
 
         !! 1 = previous decade, 2 = Actual decade, 3 = Next decade;
-        open(newunit=fhandle, file=trim(TemperatureFilefull), &
+        open(newunit=fhandle, file=trim(GetTemperatureFilefull()), &
                      status='old', action='read', iostat=rc)
         read(fhandle, *, iostat=rc) ! description
         read(fhandle, *, iostat=rc) ! time step
@@ -155,25 +162,25 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         read(fhandle, *, iostat=rc)
         read(fhandle, *, iostat=rc)
 
-        if (TemperatureRecord%FromD > 20) then
+        if (GetTemperatureRecord_FromD() > 20) then
             DecFile = 3
-        elseif (TemperatureRecord%FromD > 10) then
+        elseif (GetTemperatureRecord_FromD() > 10) then
             DecFile = 2
         else
             DecFile = 1
         end if
-        Mfile = TemperatureRecord%FromM
-        if (TemperatureRecord%FromY == 1901) then
+        Mfile = GetTemperatureRecord_FromM()
+        if (GetTemperatureRecord_FromY() == 1901) then
             Yfile = Yeari
         else
-            Yfile = TemperatureRecord%FromY
+            Yfile = GetTemperatureRecord_FromY()
         end if
         OK3 = .false.
 
-        if (TemperatureRecord%NrObs <= 2) then
+        if (GetTemperatureRecord_NrObs() <= 2) then
             read(fhandle, iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-            select case (TemperatureRecord%NrObs)
+            select case (GetTemperatureRecord_NrObs())
             case (1)
                 C2Min = C1Min
                 C2Max = C2Max
@@ -214,11 +221,11 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
             OK3 = .true.
         end if
 
-        if ((.not. OK3) .and. ((DayN == TemperatureRecord%ToD) &
-             .and. (Monthi == TemperatureRecord%ToM))) then
-            if ((TemperatureRecord%FromY == 1901) .or. &
-                (Yeari == TemperatureRecord%ToY)) then
-                do Nri = 1, (TemperatureRecord%NrObs-2)
+        if ((.not. OK3) .and. ((DayN == GetTemperatureRecord_ToD()) &
+             .and. (Monthi == GetTemperatureRecord_ToM()))) then
+            if ((GetTemperatureRecord_FromY() == 1901) .or. &
+                (Yeari == GetTemperatureRecord_ToY())) then
+                do Nri = 1, (GetTemperatureRecord_NrObs()-2)
                      read(fhandle, *, iostat=rc)
                 end do
                 read(fhandle, iostat=rc) StringREAD
@@ -245,9 +252,9 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                     Obsi = Obsi + 1
                 end if
             end do
-            if (TemperatureRecord%FromD > 20) then
+            if (GetTemperatureRecord_FromD() > 20) then
                 DecFile = 3
-            elseif (TemperatureRecord%FromD > 10) then
+            elseif (GetTemperatureRecord_FromD() > 10) then
                 DecFile = 2
             else
                 DecFile = 1
@@ -350,7 +357,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         character(len=255) :: StringREAD
 
         ! 1. Prepare record
-        open(newunit=fhandle, file=trim(TemperatureFilefull), &
+        open(newunit=fhandle, file=trim(GetTemperatureFilefull()), &
                      status='old', action='read', iostat=rc)
         read(fhandle, *, iostat=rc) ! description
         read(fhandle, *, iostat=rc) ! time step
@@ -361,19 +368,19 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         read(fhandle, *, iostat=rc)
         read(fhandle, *, iostat=rc)
 
-        Mfile = TemperatureRecord%FromM
-        if (TemperatureRecord%FromY == 1901) then
+        Mfile = GetTemperatureRecord_FromM()
+        if (GetTemperatureRecord_FromY() == 1901) then
             Yfile = Yeari
         else
-            Yfile = TemperatureRecord%FromY
+            Yfile = GetTemperatureRecord_FromY()
         end if
         OK3 = .false.
 
         ! 2. IF 3 or less records
-        if (TemperatureRecord%NrObs <= 3) then
+        if (GetTemperatureRecord_NrObs() <= 3) then
             call ReadMonth(Mfile, Yfile, n1, C1Min, C1Max, fhandle, rc)
             X1 = n1
-            select case (TemperatureRecord%NrObs)
+            select case (GetTemperatureRecord_NrObs())
             case (1)
                 t1 = X1
                 X2 = X1 + n1
@@ -447,10 +454,10 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         end if
 
         ! 4. If last observation
-        if ((.not. OK3) .and. (Monthi == TemperatureRecord%ToM)) then
-            if ((TemperatureRecord%FromY == 1901) &
-                .or. (Yeari == TemperatureRecord%ToY)) then
-                do Nri = 1, (TemperatureRecord%NrObs-3)
+        if ((.not. OK3) .and. (Monthi == GetTemperatureRecord_ToM())) then
+            if ((GetTemperatureRecord_FromY() == 1901) &
+                .or. (Yeari == GetTemperatureRecord_ToY())) then
+                do Nri = 1, (GetTemperatureRecord_NrObs()-3)
                     read(fhandle, *, iostat=rc)
                     Mfile = Mfile + 1
                     if (Mfile > 12) then
@@ -490,7 +497,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                   Obsi = Obsi + 1
                 end if
             end do
-            Mfile = TemperatureRecord%FromM
+            Mfile = GetTemperatureRecord_FromM()
             do Nri = 1, (Obsi-2)
                 read(fhandle, *, iostat=rc)
                 Mfile = Mfile + 1
