@@ -373,9 +373,9 @@ IF (NrProjects > 0) THEN
                                  ComposeFileForProgramParameters(GetMultipleProjectFile(),FullFileNameProgramParameters);
                                  LoadProgramParametersProjectPlugIn(FullFileNameProgramParameters,ProgramParametersAvailable);
                                  ComposeOutputFileName(GetMultipleProjectFile());
-                                 Simulation.MultipleRun := true;
-                                 Simulation.NrRuns := TotalSimRuns;
-                                 CheckForKeepSWC(GetMultipleProjectFileFull(),Simulation.NrRuns,Simulation.MultipleRunWithKeepSWC,Simulation.MultipleRunConstZrx);
+                                 SetSimulation_MultipleRun(true);
+                                 SetSimulation_NrRuns(TotalSimRuns);
+                                 CheckForKeepSWC(GetMultipleProjectFileFull(),GetSimulation_NrRuns(),GetSimulation_MultipleRunWithKeepSWC(),GetSimulation_MultipleRunConstZrx());
                                  END;
                               END;
                         else

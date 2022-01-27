@@ -104,7 +104,32 @@ use ac_global, only: CheckFilesInProject, &
                      SetTemperatureRecord_FromString, &
                      GetTemperatureRecord_FromString, &
                      SetTemperatureRecord_ToString, &
-                     GetTemperatureRecord_ToString
+                     GetTemperatureRecord_ToString, &
+                     GetSimulation_LinkCropToSimPeriod, &
+                     GetSimulation_ResetIniSWC, &
+                     GetSimulation_EvapLimitON, &
+                     GetSimulation_Germinate, &
+                     GetSimulation_MultipleRun, &
+                     GetSimulation_MultipleRunWithKeepSWC, &
+                     GetSimulation_SalinityConsidered, &
+                     GetSimulation_ProtectedSeedling, &
+                     GetSimulation_SWCtopSoilConsidered, &
+                     SetSimulation_LinkCropToSimPeriod, &
+                     SetSimulation_ResetIniSWC, &
+                     SetSimulation_EvapLimitON, &
+                     SetSimulation_Germinate, &
+                     SetSimulation_MultipleRun, &
+                     SetSimulation_MultipleRunWithKeepSWC, &
+                     SetSimulation_SalinityConsidered, &
+                     SetSimulation_ProtectedSeedling, &
+                     SetSimulation_SWCtopSoilConsidered, &
+                     GetSimulation_IniSWC_AtDepths, &
+                     GetSimulation_IniSWC_AtFC, &
+                     SetSimulation_IniSWC_AtDepths, &
+                     SetSimulation_IniSWC_AtFC, &
+                     GetSimulation_Storage_CropString, &
+                     SetSimulation_Storage_CropString
+
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum
@@ -1160,5 +1185,210 @@ function GetTemperatureRecord_FromString_wrap() result(c_pointer)
 
     c_pointer = string2pointer(GetTemperatureRecord_FromString())
 end function GetTemperatureRecord_FromString_wrap
+
+function GetSimulation_LinkCropToSimPeriod_wrap() result(LinkCropToSimPeriod)
+    !! Wrapper for [[ac_global:GetSimulation_LinkCropToSimPeriod]] for foreign languages.
+    logical(1) :: LinkCropToSimPeriod
+
+    LinkCropToSimPeriod = GetSimulation_LinkCropToSimPeriod()
+end function GetSimulation_LinkCropToSimPeriod_wrap
+
+function GetSimulation_ResetIniSWC_wrap() result(ResetIniSWC)
+    !! Wrapper for [[ac_global:GetSimulation_ResetIniSWC]] for foreign languages.
+    logical(1) :: ResetIniSWC
+
+    ResetIniSWC = GetSimulation_ResetIniSWC()
+end function GetSimulation_ResetIniSWC_wrap
+
+function GetSimulation_EvapLimitON_wrap() result(EvapLimitON)
+    !! Wrapper for [[ac_global:GetSimulation_EvapLimitON]] for foreign languages.
+    logical(1) :: EvapLimitON
+
+    EvapLimitON = GetSimulation_EvapLimitON()
+end function GetSimulation_EvapLimitON_wrap
+
+function GetSimulation_Germinate_wrap() result(Germinate)
+    !! Wrapper for [[ac_global:GetSimulation_Germinate]] for foreign languages.
+    logical(1) :: Germinate
+
+    Germinate = GetSimulation_Germinate()
+end function GetSimulation_Germinate_wrap
+
+function GetSimulation_MultipleRun_wrap() result(MultipleRun)
+    !! Wrapper for [[ac_global:GetSimulation_MultipleRun]] for foreign languages.
+    logical(1) :: MultipleRun
+
+    MultipleRun = GetSimulation_MultipleRun()
+end function GetSimulation_MultipleRun_wrap
+
+function GetSimulation_MultipleRunWithKeepSWC_wrap() result(MultipleRunWithKeepSWC)
+    !! Wrapper for [[ac_global:GetSimulation_MultipleRunWithKeepSWC]] for foreign languages.
+    logical(1) :: MultipleRunWithKeepSWC
+
+    MultipleRunWithKeepSWC = GetSimulation_MultipleRunWithKeepSWC()
+end function GetSimulation_MultipleRunWithKeepSWC_wrap
+
+function GetSimulation_SalinityConsidered_wrap() result(SalinityConsidered)
+    !! Wrapper for [[ac_global:GetSimulation_SalinityConsidered]] for foreign languages.
+    logical(1) :: SalinityConsidered
+
+    SalinityConsidered = GetSimulation_SalinityConsidered()
+end function GetSimulation_SalinityConsidered_wrap
+
+function GetSimulation_ProtectedSeedling_wrap() result(ProtectedSeedling)
+    !! Wrapper for [[ac_global:GetSimulation_ProtectedSeedling]] for foreign languages.
+    logical(1) :: ProtectedSeedling
+
+    ProtectedSeedling = GetSimulation_ProtectedSeedling()
+end function GetSimulation_ProtectedSeedling_wrap
+
+function GetSimulation_SWCtopSoilConsidered_wrap() result(SWCtopSoilConsidered)
+    !! Wrapper for [[ac_global:GetSimulation_SWCtopSoilConsidered]] for foreign languages.
+    logical(1) :: SWCtopSoilConsidered
+
+    SWCtopSoilConsidered = GetSimulation_SWCtopSoilConsidered()
+end function GetSimulation_SWCtopSoilConsidered_wrap
+
+subroutine SetSimulation_LinkCropToSimPeriod_wrap(LinkCropToSimPeriod)
+    !! Wrapper for [[ac_global:SetSimulation_LinkCropToSimPeriod]] for foreign languages.
+    logical(1), intent(in) :: LinkCropToSimPeriod
+
+    logical :: bool
+
+    bool = LinkCropToSimPeriod
+    call SetSimulation_LinkCropToSimPeriod(bool)
+end subroutine SetSimulation_LinkCropToSimPeriod_wrap
+
+subroutine SetSimulation_ResetIniSWC_wrap(ResetIniSWC)
+    !! Wrapper for [[ac_global:SetSimulation_ResetIniSWC]] for foreign languages.
+    logical(1), intent(in) :: ResetIniSWC
+
+    logical :: bool
+
+    bool = ResetIniSWC
+    call SetSimulation_ResetIniSWC(bool)
+end subroutine SetSimulation_ResetIniSWC_wrap
+
+subroutine SetSimulation_EvapLimitON_wrap(EvapLimitON)
+    !! Wrapper for [[ac_global:SetSimulation_EvapLimitON]] for foreign languages.
+    logical(1), intent(in) :: EvapLimitON
+
+    logical :: bool
+
+    bool = EvapLimitON
+    call SetSimulation_EvapLimitON(bool)
+end subroutine SetSimulation_EvapLimitON_wrap
+
+subroutine SetSimulation_Germinate_wrap(Germinate)
+    !! Wrapper for [[ac_global:SetSimulation_Germinate]] for foreign languages.
+    logical(1), intent(in) :: Germinate
+
+    logical :: bool
+
+    bool = Germinate
+    call SetSimulation_Germinate(bool)
+end subroutine SetSimulation_Germinate_wrap
+
+subroutine SetSimulation_MultipleRun_wrap(MultipleRun)
+    !! Wrapper for [[ac_global:SetSimulation_MultipleRun]] for foreign languages.
+    logical(1), intent(in) :: MultipleRun
+
+    logical :: bool
+
+    bool = MultipleRun
+    call SetSimulation_MultipleRun(bool)
+end subroutine SetSimulation_MultipleRun_wrap
+
+subroutine SetSimulation_MultipleRunWithKeepSWC_wrap(MultipleRunWithKeepSWC)
+    !! Wrapper for [[ac_global:SetSimulation_MultipleRunWithKeepSWC]] for foreign languages.
+    logical(1), intent(in) :: MultipleRunWithKeepSWC
+
+    logical :: bool
+
+    bool = MultipleRunWithKeepSWC
+    call SetSimulation_MultipleRunWithKeepSWC(bool)
+end subroutine SetSimulation_MultipleRunWithKeepSWC_wrap
+
+subroutine SetSimulation_SalinityConsidered_wrap(SalinityConsidered)
+    !! Wrapper for [[ac_global:SetSimulation_SalinityConsidered]] for foreign languages.
+    logical(1), intent(in) :: SalinityConsidered
+
+    logical :: bool
+
+    bool = SalinityConsidered
+    call SetSimulation_SalinityConsidered(bool)
+end subroutine SetSimulation_SalinityConsidered_wrap
+
+subroutine SetSimulation_ProtectedSeedling_wrap(ProtectedSeedling)
+    !! Wrapper for [[ac_global:SetSimulation_ProtectedSeedling]] for foreign languages.
+    logical(1), intent(in) :: ProtectedSeedling
+
+    logical :: bool
+
+    bool = ProtectedSeedling
+    call SetSimulation_ProtectedSeedling(bool)
+end subroutine SetSimulation_ProtectedSeedling_wrap
+
+subroutine SetSimulation_SWCtopSoilConsidered_wrap(SWCtopSoilConsidered)
+    !! Wrapper for [[ac_global:SetSimulation_SWCtopSoilConsidered]] for foreign languages.
+    logical(1), intent(in) :: SWCtopSoilConsidered
+
+    logical :: bool
+
+    bool = SWCtopSoilConsidered
+    call SetSimulation_SWCtopSoilConsidered(bool)
+end subroutine SetSimulation_SWCtopSoilConsidered_wrap
+
+function GetSimulation_IniSWC_AtDepths_wrap() result(AtDepths)
+    !! Wrapper for [[ac_global:GetSimulation_IniSWC_AtDepths]] for foreign languages.
+    logical(1) :: AtDepths
+
+    AtDepths = GetSimulation_IniSWC_AtDepths()
+end function GetSimulation_IniSWC_AtDepths_wrap
+
+function GetSimulation_IniSWC_AtFC_wrap() result(AtFC)
+    !! Wrapper for [[ac_global:GetSimulation_IniSWC_AtFC]] for foreign languages.
+    logical(1) :: AtFC
+
+    AtFC = GetSimulation_IniSWC_AtFC()
+end function GetSimulation_IniSWC_AtFC_wrap
+
+subroutine SetSimulation_IniSWC_AtDepths_wrap(AtDepths)
+    !! Wrapper for [[ac_global:SetSimulation_IniSWC_AtDepths]] for foreign languages.
+    logical(1), intent(in) :: AtDepths
+
+    logical :: bool
+
+    bool = AtDepths
+    call SetSimulation_IniSWC_AtDepths(bool)
+end subroutine SetSimulation_IniSWC_AtDepths_wrap
+
+subroutine SetSimulation_IniSWC_AtFC_wrap(AtFC)
+    !! Wrapper for [[ac_global:SetSimulation_IniSWC_AtFC]] for foreign languages.
+    logical(1), intent(in) :: AtFC
+
+    logical :: bool
+
+    bool = AtFC
+    call SetSimulation_IniSWC_AtFC(bool)
+end subroutine SetSimulation_IniSWC_AtFC_wrap
+
+function GetSimulation_Storage_CropString_wrap() result(CropString)
+    !! Wrapper for [[ac_global:GetSimulation_Storage_CropString]] for foreign languages.
+    type(c_ptr) :: CropString
+
+    CropString = string2pointer(GetSimulation_Storage_CropString())
+end function GetSimulation_Storage_CropString_wrap
+
+subroutine SetSimulation_Storage_CropString_wrap(CropString, strlen)
+    !! Wrapper for [[ac_global:SetSimulation_Storage_CropString]] for foreign languages.
+    type(c_ptr), intent(in) :: CropString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CropString, strlen)
+    call SetSimulation_Storage_CropString(string)
+end subroutine SetSimulation_Storage_CropString_wrap
 
 end module ac_interface_global

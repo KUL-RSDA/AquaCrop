@@ -1197,6 +1197,8 @@ VAR f0,fClim : TextFile;
     VersionNr : double;
     FertStress : shortint;
     temperature_record : rep_clim;
+    YearSeason_temp, RedCGC_temp, RedCCX_temp : ShortInt;
+    IniSWC_temp : rep_IniSWC;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -1221,7 +1223,9 @@ IF (NrRun > 1) THEN
        FOR i := 1 TO 47  DO Readln(f0); // 5 + 42 lines with files
    END;
 // Year of cultivation and Simulation and Cropping period
-READLN(f0,Simulation.YearSeason); // year number of cultivation (1 = seeding/planting year)
+YearSeason_temp := GetSimulation_YearSeason();
+READLN(f0,YearSeason_temp); // year number of cultivation (1 = seeding/planting year)
+SetSimulation_YearSeason(YearSeason_temp);
 READLN(f0,TempSimDayNr1); //First day of simulation period
 READLN(f0,TempSimDayNrN); //Last day of simulation period
 READLN(f0,Crop.Day1); //First day of cropping period
@@ -1344,7 +1348,7 @@ IF (GetCalendarFile() = '(None)')
         END;
 
 // 3. Crop
-Simulation.LinkCropToSimPeriod := true;
+SetSimulation_LinkCropToSimPeriod(true);
 READLN(f0); // Info Crop
 READLN(f0,TempString);  //CropFile
 SetCropFile(Trim(TempString));
@@ -1357,7 +1361,7 @@ LoadCrop(GetCropFilefull());
 IF (Crop.subkind = Forage) THEN
    BEGIN
    // adjust crop characteristics to the Year (Seeding/Planting or Non-seesing/Planting year)
-   AdjustYearPerennials(Simulation.YearSeason,Crop.SownYear1,Crop.ModeCycle,Crop.RootMax,Crop.RootMinYear1,
+   AdjustYearPerennials(GetSimulation_YearSeason(),Crop.SownYear1,Crop.ModeCycle,Crop.RootMax,Crop.RootMinYear1,
                      Crop.CCo,Crop.SizeSeedling,Crop.CGC,Crop.CCx,Crop.GDDCGC,Crop.PlantingDens,
                      Crop.Planting,Crop.RootMin,Crop.SizePlant,Crop.CCini,
                      Crop.DaysToCCini,Crop.GDDaysToCCini);
@@ -1415,11 +1419,15 @@ IF (GetManFile() = '(None)')
         LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
         FertStress := GetManagement_FertilityStress();
+        RedCGC_temp := GetSimulation_EffectStress_RedCGC();
+        RedCCX_temp := GetSimulation_EffectStress_RedCCX();
         TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
                           Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
-                          Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
-                          Simulation.EffectStress.RedCCX,FertStress);
+                          Crop.DaysToFullCanopySF,RedCGC_temp,
+                          RedCCX_temp,FertStress);
         SetManagement_FertilityStress(FertStress);
+        SetSimulation_EffectStress_RedCGC(RedCGC_temp);
+        SetSimulation_EffectStress_RedCCX(RedCCX_temp);
         END;
 
 // 6. Soil Profile
@@ -1450,10 +1458,10 @@ IF (GetGroundWaterFile() = '(None)')
 
 
 // 8. Set simulation period
-Simulation.FromDayNr := TempSimDayNr1;
-Simulation.ToDayNr := TempSimDayNrN;
-IF ((Crop.Day1 <> Simulation.FromDayNr) OR (Crop.DayN <> Simulation.ToDayNr))
-   THEN Simulation.LinkCropToSimPeriod := false;
+SetSimulation_FromDayNr(TempSimDayNr1);
+SetSimulation_ToDayNr(TempSimDayNrN);
+IF ((Crop.Day1 <> GetSimulation_FromDayNr()) OR (Crop.DayN <> GetSimulation_ToDayNr()))
+   THEN SetSimulation_LinkCropToSimPeriod(false);
 
 // 9. Initial conditions
 READLN(f0); // Info Initial conditions
@@ -1473,10 +1481,10 @@ IF (Trim(TempString) = 'KeepSWC')
         //Adjust size of compartments if required
         TotDepth := 0;
         FOR i := 1 to NrCompartments DO TotDepth := TotDepth + Compartment[i].Thickness;
-        IF Simulation.MultipleRunWithKeepSWC // Project with a sequence of simulation runs and KeepSWC
+        IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
            THEN BEGIN
-                IF (ROUND(Simulation.MultipleRunConstZrx*1000) > ROUND(TotDepth*1000))
-                   THEN AdjustSizeCompartments(Simulation.MultipleRunConstZrx);
+                IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
+                   THEN AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx());
                 END
            ELSE BEGIN
                 IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
@@ -1501,35 +1509,37 @@ IF (Trim(TempString) = 'KeepSWC')
                 READLN(f0,TempString);  //PathSWCIniFile
                 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
                 SetSWCiniFileFull(CONCAT(Trim(TempString),GetSWCIniFile()));
-                LoadInitialConditions(GetSWCiniFileFull(),SurfaceStorage,Simulation.IniSWC);
+                IniSWC_temp := GetSimulation_IniSWC();
+                LoadInitialConditions(GetSWCiniFileFull(),SurfaceStorage,IniSWC_temp);
+                SetSimulation_IniSWC(IniSWC_temp);
                 END;
-        CASE Simulation.IniSWC.AtDepths OF
-             true : TranslateIniPointsToSWProfile(Simulation.IniSWC.NrLoc,Simulation.IniSWC.Loc,Simulation.IniSWC.VolProc,
-                                                  Simulation.IniSWC.SaltECe,NrCompartments,Compartment);
-             else TranslateIniLayersToSWProfile(Simulation.IniSWC.NrLoc,Simulation.IniSWC.Loc,Simulation.IniSWC.VolProc,
-                                                Simulation.IniSWC.SaltECe,NrCompartments,Compartment);
+        CASE GetSimulation_IniSWC_AtDepths() OF
+             true : TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
+                                                  GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment);
+             else TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
+                                                GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment);
              end;
 
 
-        IF Simulation.ResetIniSWC THEN // to reset SWC and SALT at end of simulation run
+        IF GetSimulation_ResetIniSWC() THEN // to reset SWC and SALT at end of simulation run
            BEGIN
            FOR i := 1 TO NrCompartments DO
                BEGIN
-               Simulation.ThetaIni[i] := Compartment[i].Theta;
-               Simulation.ECeIni[i] := ECeComp(Compartment[i]);
+               SetSimulation_ThetaIni_i(i,Compartment[i].Theta);
+               SetSimulation_ECeIni_i(i,ECeComp(Compartment[i]));
                END;
            // ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN - CHECK LATER
            IF (GetManagement_BundHeight() >= 0.01) THEN
               BEGIN
-              Simulation.SurfaceStorageIni := SurfaceStorage;
-              Simulation.ECStorageIni := ECStorage;
+              SetSimulation_SurfaceStorageIni(SurfaceStorage);
+              SetSimulation_ECStorageIni(ECStorage);
               END;
            END;
         END;
 
 // 10. load the groundwater file if it exists (only possible for Version 4.0 and higher)
 IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the groundwater file is only available in Version 4.0 or higher
-   THEN LoadGroundWater(GetGroundWaterFilefull(),Simulation.FromDayNr,ZiAqua,ECiAqua)
+   THEN LoadGroundWater(GetGroundWaterFilefull(),GetSimulation_FromDayNr(),ZiAqua,ECiAqua)
    ELSE BEGIN
         ZiAqua := undef_int;
         ECiAqua := undef_int;
@@ -1537,7 +1547,7 @@ IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the g
         END;
 CalculateAdjustedFC((ZiAqua/100),Compartment);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
-IF (Simulation.IniSWC.AtFC AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
+IF (GetSimulation_IniSWC_AtFC() AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
 
 // 11. Off-season conditions
 READLN(f0); // Info Off-season conditions
@@ -1726,7 +1736,7 @@ IF (TemperatureFile <> '(None)') THEN
    END;
 
 // 2. initialize
-Simulation.DelayedDays := 0; // required for CalculateETpot
+SetSimulation_DelayedDays(0); // required for CalculateETpot
 SumBtot := 0;
 SumBstored := 0;
 SumGDDforPlot := undef_int;
@@ -1950,7 +1960,7 @@ SumKcTopSF := (1 - StressInPercent/100) * SumKcTop;   // only required for soil 
 IF (TestRecord = true) THEN WRITELN(fOUT,SumKcTopSF:10:1);
 
 
-Simulation.DelayedDays := 0; // required for CalculateETpot
+SetSimulation_DelayedDays(0); // required for CalculateETpot
 SumKci := 0;
 SumBnor := 0;
 SumGDDforPlot := undef_int;
@@ -2209,7 +2219,7 @@ VAR StressMatrix : ARRAY[0..7] of StressIndexes;
 
 BEGIN
 // 1. initialize
-Simulation.DelayedDays := 0; // required for CalculateETpot
+SetSimulation_DelayedDays(0); // required for CalculateETpot
 L12SF := L12; // to calculate SumKcTop (no stress)
 GDDL12SF := GDDL12; // to calculate SumKcTop (no stress)
 // Maximum sum Kc (no stress)
@@ -2457,7 +2467,7 @@ VAR L12SS,GDDL12SS,DaysYieldFormation,tSwitch : INTEGER;
 
 BEGIN
 // 1. initialize
-Simulation.DelayedDays := 0; // required for CalculateETpot
+SetSimulation_DelayedDays(0); // required for CalculateETpot
 GDDL12SS := GDDL12; // to calculate SumKcTop (no stress)
 BNor100 := undef_int;
 // Maximum sum Kc (no stress)

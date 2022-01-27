@@ -111,9 +111,9 @@ implementation
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
 
  // 2c. Complete initial conditions (crop development)
- Simulation.CCini := undef_int;
- Simulation.Bini := 0.000;
- Simulation.Zrini := undef_int;
+ SetSimulation_CCini(undef_int);
+ SetSimulation_Bini(0.000);
+ SetSimulation_Zrini(undef_int);
 
 
  // 3. Crop characteristics and cropping period
@@ -128,7 +128,7 @@ implementation
  // determine miscellaneous
  Crop.Day1 := SimulParam.CropDay1;
  CompleteCropDescription;
- Simulation.YearSeason := 1;
+ SetSimulation_YearSeason(1);
  NoCropCalendar;
 
  // 4. Field Management
@@ -190,7 +190,7 @@ implementation
 
  // 5.6 Set Climate and Simulation Period
  SetClimData;
- Simulation.LinkCropToSimPeriod := true;
+ SetSimulation_LinkCropToSimPeriod(true);
 (* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
  AdjustCropYearToClimFile(Crop.Day1,Crop.DayN);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
@@ -213,10 +213,10 @@ implementation
  SetProjectFile('(None)');
  SetProjectFileFull(GetProjectFile());
  ProjectDescription := 'No specific project';
- Simulation.MultipleRun := false; // No sequence of simulation runs in the project
- Simulation.NrRuns := 1;
- Simulation.MultipleRunWithKeepSWC := false;
- Simulation.MultipleRunConstZrx := undef_int;
+ SetSimulation_MultipleRun(false); // No sequence of simulation runs in the project
+ SetSimulation_NrRuns(1);
+ SetSimulation_MultipleRunWithKeepSWC(false);
+ SetSimulation_MultipleRunConstZrx(undef_int);
  SetMultipleProjectFile(GetProjectFile());
  SetMultipleProjectFileFull(GetProjectFileFull());
  MultipleProjectDescription := ProjectDescription;
@@ -250,12 +250,12 @@ implementation
  Infiltrated := 0.0; // added 4.0
  CRwater := 0; // added 4.0
  CRsalt := 0; // added 4.0
- Simulation.ResetIniSWC := true;
- Simulation.EvapLimitON := false;
+ SetSimulation_ResetIniSWC(true);
+ SetSimulation_EvapLimitON(false);
  MaxPlotNew := 50;
  MaxPlotTr := 10;
- Simulation.InitialStep := 10; // Length of period (days) for displaying intermediate results during simulation run
- Simulation.LengthCuttingInterval := 40; // Default length of cutting interval (days)
+ SetSimulation_InitialStep(10); // Length of period (days) for displaying intermediate results during simulation run
+ SetSimulation_LengthCuttingInterval(40); // Default length of cutting interval (days)
  END; (* InitializeSettings *)
 
 
