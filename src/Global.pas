@@ -258,19 +258,13 @@ TYPE
          Param : Integer;
          end;
 
-     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
-
-     repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
-     repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
-
-     rep_Onset = Record
-         GenerateOn : BOOLEAN;  // by rainfall or temperature criterion
-         GenerateTempOn : BOOLEAN; // by temperature criterion
-         Criterion : repCriterion;
-         AirTCriterion : repAirTCriterion;
-         StartSearchDayNr, StopSearchDayNr : LongInt; //daynumber
-         LengthSearchPeriod : INTEGER; // days
+     rep_DayEventDbl = Record
+         DayNr : Integer;
+         Param : Double;
          end;
+     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
+
+     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
      rep_EndSeason = Record
          ExtraYears : Integer; // to add to YearStartCropCycle
@@ -340,7 +334,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
-    Onset : rep_Onset;
     EndSeason : rep_EndSeason;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
     // salinity
@@ -502,8 +495,7 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double;
                                 VAR IniSWCRead : rep_IniSWC);
-PROCEDURE LoadProjectDescription(FullNameProjectFile : string;
-                                 VAR DescriptionOfProject : string);
+
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
@@ -1245,7 +1237,7 @@ PROCEDURE DeclareInitialCondAtFCandNoSalt;
 VAR layeri,compi,celli : INTEGER;
 BEGIN
 SetSWCiniFile('(None)');
-SWCiniFileFull := GetSWCiniFile(); (* no file *)
+SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
 SWCiniDescription := 'Soil water profile at Field Capacity';
 Simulation.IniSWC.AtDepths := false;
 Simulation.IniSWC.NrLoc := GetSoil().NrSoilLayers;
@@ -2758,26 +2750,27 @@ IF ((NOT SimulParam.ConstGwt) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THE
    END;
 END; (* AdjustSimPeriod *)
 
-
-
 PROCEDURE AdjustOnsetSearchPeriod;
+VAR temp_Integer : Integer;
 BEGIN
 IF (GetClimFile() = '(None)')
    THEN BEGIN
-        Onset.StartSearchDayNr := 1;
-        Onset.StopSearchDayNr := Onset.StartSearchDayNr + Onset.LengthSearchPeriod - 1;
-        //Onset.StopSearchDayNr := 365;
+        SetOnset_StartSearchDayNr(1);
+        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
+        //SetOnset_StopSearchDayNr(365);
         END
    ELSE BEGIN
-        //Onset.StartSearchDayNr := ClimRecord.FromDayNr;
-        //Onset.StopSearchDayNr := ClimRecord.ToDayNr;
-        DetermineDayNr((1),(1),Simulation.YearStartCropCycle,Onset.StartSearchDayNr); // 1 January
-        IF (Onset.StartSearchDayNr < ClimRecord.FromDayNr) THEN Onset.StartSearchDayNr := ClimRecord.FromDayNr;
-        Onset.StopSearchDayNr := Onset.StartSearchDayNr + Onset.LengthSearchPeriod - 1;
-        IF (Onset.StopSearchDayNr > ClimRecord.ToDayNr) THEN
+        //SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
+        //SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
+        temp_Integer := GetOnset().StartSearchDayNr;
+        DetermineDayNr((1),(1),Simulation.YearStartCropCycle,temp_Integer); // 1 January
+        SetOnset_StartSearchDayNr(temp_Integer);
+        IF (GetOnset().StartSearchDayNr < ClimRecord.FromDayNr) THEN SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
+        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
+        IF (GetOnset().StopSearchDayNr > ClimRecord.ToDayNr) THEN
            BEGIN
-           Onset.StopSearchDayNr := ClimRecord.ToDayNr;
-           Onset.LengthSearchPeriod := Onset.StopSearchDayNr - Onset.StartSearchDayNr + 1;
+           SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
+           SetOnset_LengthSearchPeriod(GetOnset().StopSearchDayNr - GetOnset().StartSearchDayNr + 1);
            END;
         END;
 END; (* AdjustOnsetSearchPeriod *)
@@ -3969,17 +3962,6 @@ Simulation.IniSWC.AtFC := false;
 END; (* LoadInitialConditions *)
 
 
-PROCEDURE LoadProjectDescription(FullNameProjectFile : string;
-                                 VAR DescriptionOfProject : string);
-VAR f0 : TextFile;
-BEGIN
-Assign(f0,FullNameProjectFile);
-Reset(f0);
-READLN(f0,DescriptionOfProject);
-DescriptionOfProject := Trim(DescriptionOfProject);
-Close(f0);
-END; (* LoadProjectDescription *)
-
 
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
 VAR TempString : string;
@@ -4485,8 +4467,8 @@ BEGIN
 SetCalendarFile('(None)');
 SetCalendarFileFull(GetCalendarFile());  (* no file *)
 CalendarDescription := '';
-Onset.GenerateOn := false;
-Onset.GenerateTempOn := false;
+SetOnset_GenerateOn(false);
+SetOnset_GenerateTempOn(false);
 EndSeason.GenerateTempOn := false;
 CalendarDescription := 'No calendar for the Seeding/Planting year';
 END; (* NoCropCalendar *)
