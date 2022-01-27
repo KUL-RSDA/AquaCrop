@@ -176,6 +176,12 @@ type
          KsSalt : double;   // stress coefficient for salinity
          end;
 
+     rep_DayEventDbl = Record
+         DayNr : Integer;
+         Param : Double;
+         end;
+     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
+
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
 
