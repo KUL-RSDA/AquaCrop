@@ -126,13 +126,6 @@ FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
                       DeltaWeedStress : INTEGER;
                       DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
 
-PROCEDURE HIadjColdHeat(TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
-                        TempTmin,TempTmax : double;
-                        TempTcold,TempTheat : shortInt;
-                        TempfExcess : smallInt;
-                        VAR HIadjusted : double;
-                        VAR ColdStress,HeatStress : BOOLEAN);
-
 PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
                                    LseasonDays : INTEGER;
                                    TheCropDay1 : LongInt;
@@ -2203,102 +2196,6 @@ BiomassRatio := SumBSF/SumBPot;
 END; (* BiomassRatio *)
 
 
-PROCEDURE HIadjColdHeat(TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
-                        TempTmin,TempTmax : double;
-                        TempTcold,TempTheat : shortInt;
-                        TempfExcess : smallInt;
-                        VAR HIadjusted : double;
-                        VAR ColdStress,HeatStress : BOOLEAN);
-CONST TempRange = 5;
-VAR  fTemp : textFile;
-     Dayi : INTEGER;
-     Tndayi,Txdayi,KsPol,KsPolCS,KsPolHS,fFlor : double;
-
-
- FUNCTION FractionFlowering(Dayi : INTEGER) : double;
-    VAR f1,f2,F : double;
-        DiFlor : INTEGER;
-
-        FUNCTION FractionPeriod(DiFlor : INTEGER) : double;
-        VAR fi,TimePerc : double;
-        BEGIN
-        IF (DiFlor <= 0)
-           THEN fi := 0
-           ELSE BEGIN
-                TimePerc := 100 * (DiFlor/TempLengthFlowering);
-                IF (TimePerc > 100)
-                   THEN fi := 1
-                   ELSE BEGIN
-                        fi := 0.00558 * exp(0.63*Ln(TimePerc)) - 0.000969 * TimePerc - 0.00383;
-                        IF (fi < 0) THEN fi := 0;
-                        END;
-                END;
-        FractionPeriod := fi;
-        END; (* FractionPeriod *)
-
-    BEGIN
-    IF (TempLengthFlowering <=1)
-       THEN F := 1
-       ELSE BEGIN
-            DiFlor := Dayi;
-            f2 := FractionPeriod(DiFlor);
-            DiFlor := Dayi-1;
-            f1 := FractionPeriod(DiFlor);
-            IF (ABS(f1-f2) < 0.0000001)
-               THEN F := 0
-               ELSE F := ((f1+f2)/2)* 100/TempLengthFlowering;
-            END;
-    FractionFlowering := F;
-    END; (* FractionFlowering *)
-
-
-
-BEGIN
-//1. Open Temperature file
-IF (GetTemperatureFile() <> '(None)') THEN
-   BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
-   Reset(fTemp);
-   FOR Dayi := 1 TO (TempFlower-1) DO READLN(fTemp);
-   END;
-
-//2. Initialize
-HIadjusted := 0;
-ColdStress := false;
-HeatStress := false;
-
-//3. Cold or Heat stress affecting pollination
-FOR Dayi := 1 TO TempLengthFlowering DO
-    BEGIN
-    // 3.1 Read air temperature
-    IF (GetTemperatureFile() <> '(None)')
-       THEN READLN(fTemp,Tndayi,Txdayi)
-       ELSE BEGIN
-            Tndayi := TempTmin;
-            Txdayi := TempTmax;
-            END;
-    // 3.2 Fraction of flowers which are flowering on day  (fFlor)
-    fFlor := FractionFlowering(dayi);
-    // 3.3 Ks(pollination) cold stress
-    KsPolCS := KsTemperature((TempTcold-TempRange),TempTcold,Tndayi);
-    IF (ROUND(10000*KsPolCS) < 10000) THEN ColdStress := true;
-    // 3.4 Ks(pollination) heat stress
-    KsPolHS := KsTemperature((TempTheat+TempRange),TempTheat,Txdayi);
-    IF (ROUND(10000*KsPolHS) < 10000) THEN HeatStress := true;
-    // 3.5 Adjust HI
-    KsPol := 1;
-    IF (KsPol > KsPolCS) THEN KsPol := KsPolCS;
-    IF (KsPol > KsPolHS) THEN KsPol := KsPolHS;
-    HIadjusted := HIadjusted + (KsPol * (1 + TempfExcess/100) * fFlor * TempHI);
-    IF (HIadjusted > TempHI) THEN HIadjusted := TempHI;
-    END;
-
-//3. Close Temperature file
-IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
-
-END; (* HIadjColdHeat *)
-
-
 PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
                                    LseasonDays : INTEGER;
                                    TheCropDay1 : LongInt;
@@ -2323,10 +2220,6 @@ IF (TheModeCycle = GDDays)
         GDD123 := undef_int;
         END;
 END; (* AdjustCropFileParameters *)
-
-
-
-
 
 
 end.

@@ -1,6 +1,9 @@
 module ac_tempprocessing
 
-use ac_kinds,  only: int32, dp
+use ac_kinds,  only: dp, &
+                     int8, &
+                     int16, &   
+                     int32
 
 use ac_global , only: DaysinMonth, &
                       rep_DayEventDbl, &
@@ -8,7 +11,10 @@ use ac_global , only: DaysinMonth, &
                       DetermineDate, &
                       LeapYear, &
                       SplitStringInTwoParams, &
-                      GetTemperatureFilefull, &                     
+                      KsTemperature, &
+                      GetPathNameSimul, &
+                      GetTemperatureFile, &                     
+                      GetTemperatureFilefull, &
                       GetTemperatureRecord_FromD, &
                       GetTemperatureRecord_FromM, &
                       GetTemperatureRecord_FromY, &
@@ -542,7 +548,6 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         CiMax = CiMax * ni
     end subroutine ReadMonth
 
-
     subroutine GetInterpolationParameters(C1, C2, C3, &
                           X1, X2, X3, aOver3, bOver2, c)
         real(dp), intent(in) :: C1
@@ -562,5 +567,135 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     end subroutine GetInterpolationParameters
 
 end subroutine GetMonthlyTemperatureDataSet
+
+
+subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
+                         TempHI, TempTmin, TempTmax, &
+                         TempTcold, TempTheat, TempfExcess, &
+                         HIadjusted, ColdStress, HeatStress)
+    integer(int32), intent(in) :: TempHarvest
+    integer(int32), intent(in) :: TempFlower
+    integer(int32), intent(in) :: TempLengthFlowering
+    integer(int32), intent(in) :: TempHI
+    real(dp), intent(in) :: TempTmin
+    real(dp), intent(in) :: TempTmax
+    integer(int8), intent(in) :: TempTcold
+    integer(int8), intent(in) :: TempTheat
+    integer(int16), intent(in) :: TempfExcess
+    real(dp), intent(inout) :: HIadjusted
+    logical, intent(inout) :: ColdStress
+    logical, intent(inout) :: HeatStress
+
+    integer(int32), parameter :: TempRange = 5
+    integer(int32) :: fhandle
+    integer(int32) :: Dayi,rc
+    real(dp) :: Tndayi, Txdayi, KsPol, KsPolCS, KsPolHS, fFlor
+
+    ! 1. Open Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        open(newunit=fhandle, &
+             file=trim(GetPathNameSimul())//trim('TCrop.SIM'),&
+             status='old', action='read', iostat=rc)
+        do Dayi = 1, (TempFlower-1)
+            read(fhandle, *, iostat=rc)
+        end do
+    end if
+
+    ! 2. Initialize
+    HIadjusted = 0._dp
+    ColdStress = .false.
+    HeatStress = .false.
+
+    ! 3. Cold or Heat stress affecting pollination
+    do Dayi = 1, TempLengthFlowering
+        ! 3.1 Read air temperature
+        if (GetTemperatureFile() /= '(None)') then
+            read(fhandle, *, iostat=rc) Tndayi, Txdayi
+        else
+            Tndayi = TempTmin
+            Txdayi = TempTmax
+        end if
+        ! 3.2 Fraction of flowers which are flowering on day  (fFlor)
+        fFlor = FractionFlowering(dayi)
+        ! 3.3 Ks(pollination) cold stress
+        KsPolCS = KsTemperature(real(TempTcold-TempRange, kind=dp), &
+                      real(TempTcold, kind=dp), Tndayi)
+        if (nint(10000*KsPolCS , kind=int32) < 10000) then
+            ColdStress = .true.
+        end if
+        ! 3.4 Ks(pollination) heat stress
+        KsPolHS = KsTemperature(real(TempTheat+TempRange, kind=dp), &
+                     real(TempTheat, kind=dp), Txdayi)
+        if (nint(10000*KsPolHS, kind=int32) < 10000) then
+            HeatStress = .true.
+        end if
+        ! 3.5 Adjust HI
+        KsPol = 1
+        if (KsPol > KsPolCS) then
+            KsPol = KsPolCS
+        end if
+        if (KsPol > KsPolHS) then
+            KsPol = KsPolHS
+        end if
+        HIadjusted = HIadjusted + (KsPol * (1._dp + TempfExcess/100._dp) &
+                                         * fFlor * TempHI)
+        if (HIadjusted > TempHI) then
+            HIadjusted = TempHI
+        end if
+    end do
+
+    ! 3. Close Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        close(fhandle)
+    end if
+
+    contains
+
+    real(dp) function FractionFlowering(Dayi)
+      integer(int32), intent(in) :: Dayi
+
+      real(dp) :: f1, f2, F
+      integer(int32) :: DiFlor
+
+      if (TempLengthFlowering <=1) then
+          F = 1._dp
+      else
+          DiFlor = Dayi
+          f2 = FractionPeriod(DiFlor,TempLengthFlowering)
+          DiFlor = Dayi-1
+          f1 = FractionPeriod(DiFlor,TempLengthFlowering)
+          f1 = FractionPeriod(DiFlor,TempLengthFlowering)
+          if (abs(f1-f2) < 0.0000001) then
+              F = 0._dp
+          else
+              F = ((f1+f2)/2._dp)* 100._dp/TempLengthFlowering
+          end if
+      end if
+      FractionFlowering = F
+    end function FractionFlowering
+
+    real(dp) function FractionPeriod(DiFlor,TempLengthFlowering)
+        integer(int32), intent(in) :: DiFlor,TempLengthFlowering
+
+        real(dp) :: fi, TimePerc
+
+        if (DiFlor <= 0) then
+            fi = 0._dp
+        else
+            TimePerc = 100._dp * (DiFlor/TempLengthFlowering)
+            if (TimePerc > 100) then
+                fi = 1._dp
+            else
+                fi = 0.00558 * exp(0.63*log(TimePerc)) - &
+                     0.000969 * TimePerc - 0.00383
+                if (fi < 0) then
+                    fi = 0._dp
+                end if
+            end if
+        end if
+        FractionPeriod = fi
+    end function FractionPeriod
+
+end subroutine HIadjColdHeat
 
 end module ac_tempprocessing
