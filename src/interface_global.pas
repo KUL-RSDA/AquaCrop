@@ -322,6 +322,46 @@ procedure set_layer_undef(
 
 function GetCrop() : rep_Crop;
 
+function GetCrop_StressResponse() : rep_Shapes;
+
+function GetCrop_StressResponse_Stress() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_stress';
+
+function GetCrop_StressResponse_ShapeCGC() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapecgc';
+
+function GetCrop_StressResponse_ShapeCCX() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapeccx';
+
+function GetCrop_StressResponse_ShapeWP() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapewp';
+
+function GetCrop_StressResponse_ShapeCDecline() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapecdecline';
+
+function GetCrop_StressResponse_Calibrated() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getcrop_stressresponse_calibrated_wrap';
+
+procedure SetCrop_StressResponse(constref Crop_StressResponse : rep_Shapes);
+
+procedure SetCrop_StressResponse_Stress(constref Stress : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_stress';
+
+procedure SetCrop_StressResponse_ShapeCGC(constref ShapeCGC : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapecgc';
+
+procedure SetCrop_StressResponse_ShapeCCX(constref ShapeCCX : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapeccx';
+
+procedure SetCrop_StressResponse_ShapeWP(constref ShapeWP : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapewp';
+
+procedure SetCrop_StressResponse_ShapeCDecline(constref ShapeCDecline : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapecdecline';
+
+procedure SetCrop_StressResponse_Calibrated(constref Calibrated : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setcrop_stressresponse_calibrated_wrap';
+
 function GetCrop_Length() :: rep_int_array;
 
 function GetCrop_Length_i(constref i : integer) : double;
@@ -2562,7 +2602,7 @@ end;
 
 function GetCrop() : rep_Crop;
 begin;
-    GetCrop.subkind := GetCrop_subkind();
+    GetSetCrop_subkind(GetCrop_subkind();
     GetCrop.ModeCycle := GetCrop_ModeCycle();
     GetCrop.Planting := GetCrop_Planting();
     GetCrop.pMethod := GetCrop_pMethod();
@@ -2652,6 +2692,27 @@ begin;
     GetCrop.YearCCx := GetCrop_YearCCx();
     GetCrop.CCxRoot := GetCrop_CCxRoot();
     GetCrop.Assimilates := GetCrop_Assimilates();
+end;
+
+function GetCrop_StressResponse() : rep_Shapes;
+begin;
+    GetCrop_StressResponse.Stress := GetCrop_StressResponse_Stress();
+    GetCrop_StressResponse.ShapeCGC := GetCrop_StressResponse_ShapeCGC();
+    GetCrop_StressResponse.ShapeCCX := GetCrop_StressResponse_ShapeCCX();
+    GetCrop_StressResponse.ShapeWP := GetCrop_StressResponse_ShapeWP();
+    GetCrop_StressResponse.ShapeCDecline := GetCrop_StressResponse_ShapeCDecline();
+    GetCrop_StressResponse.Calibrated := GetCrop_StressResponse_Calibrated();
+end;
+
+
+procedure SetCrop_StressResponse(constref Crop_StressResponse : rep_Shapes);
+begin;
+    SetCrop_StressResponse_Stress(Crop_StressResponse.Stress);
+    SetCrop_StressResponse_ShapeCGC(Crop_StressResponse.ShapeCGC);
+    SetCrop_StressResponse_ShapeCCX(Crop_StressResponse.ShapeCCX);
+    SetCrop_StressResponse_ShapeWP(Crop_StressResponse.ShapeWP);
+    SetCrop_StressResponse_ShapeCDecline(Crop_StressResponse.ShapeCDecline);
+    SetCrop_StressResponse_Calibrated(Crop_StressResponse.Calibrated);
 end;
 
 function GetCrop_Length() : rep_int_array;
