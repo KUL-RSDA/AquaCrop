@@ -1223,7 +1223,6 @@ IF (NrRun > 1) THEN
        FOR i := 1 TO 47  DO Readln(f0); // 5 + 42 lines with files
    END;
 // Year of cultivation and Simulation and Cropping period
-YearSeason_temp := GetSimulation_YearSeason();
 READLN(f0,YearSeason_temp); // year number of cultivation (1 = seeding/planting year)
 SetSimulation_YearSeason(YearSeason_temp);
 READLN(f0,TempSimDayNr1); //First day of simulation period

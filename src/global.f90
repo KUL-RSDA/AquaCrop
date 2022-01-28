@@ -4057,16 +4057,16 @@ end subroutine SetSimulation_ToDayNr
 
 subroutine SetSimulation_ThetaIni_i(i, ThetaIni_i)
     !! Setter for the "ThetaIni" attribute of the "simulation" global variable.
-    real(dp), intent(in) :: ThetaIni_i
     integer(int32), intent(in) :: i
+    real(dp), intent(in) :: ThetaIni_i
 
     simulation%ThetaIni(i) = ThetaIni_i
 end subroutine SetSimulation_ThetaIni_i
 
 subroutine SetSimulation_ECeIni_i(i, ECeIni_i)
     !! Setter for the "ECeIni" attribute of the "simulation" global variable.
-    real(dp), intent(in) :: ECeIni_i
     integer(int32), intent(in) :: i
+    real(dp), intent(in) :: ECeIni_i
 
     simulation%ECeIni(i) = ECeIni_i
 end subroutine SetSimulation_ECeIni_i
