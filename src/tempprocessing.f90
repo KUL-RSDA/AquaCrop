@@ -594,7 +594,7 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
     ! 1. Open Temperature file
     if (GetTemperatureFile() /= '(None)') then
         open(newunit=fhandle, &
-             file=trim(GetPathNameSimul())//trim('TCrop%SIM'),&
+             file=trim(GetPathNameSimul())//trim('TCrop.SIM'),&
              status='old', action='read', iostat=rc)
         do Dayi = 1, (TempFlower-1)
             read(fhandle, *, iostat=rc)
@@ -620,13 +620,13 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
         ! 3.3 Ks(pollination) cold stress
         KsPolCS = KsTemperature(real(TempTcold-TempRange, kind=dp), &
                       real(TempTcold, kind=dp), Tndayi)
-        if (nint(10000*KsPolCS) < 10000) then
+        if (nint(10000*KsPolCS , kind=int32) < 10000) then
             ColdStress = .true.
         end if
         ! 3.4 Ks(pollination) heat stress
         KsPolHS = KsTemperature(real(TempTheat+TempRange, kind=dp), &
                      real(TempTheat, kind=dp), Txdayi)
-        if (nint(10000*KsPolHS) < 10000) then
+        if (nint(10000*KsPolHS, kind=int32) < 10000) then
             HeatStress = .true.
         end if
         ! 3.5 Adjust HI
@@ -658,7 +658,7 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
       integer(int32) :: DiFlor
 
       if (TempLengthFlowering <=1) then
-          F = 1
+          F = 1._dp
       else
           DiFlor = Dayi
           f2 = FractionPeriod(DiFlor,TempLengthFlowering)
