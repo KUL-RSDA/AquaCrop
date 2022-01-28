@@ -657,7 +657,6 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
       real(dp) :: f1, f2, F
       integer(int32) :: DiFlor
 
-
       if (TempLengthFlowering <=1) then
           F = 1
       else
