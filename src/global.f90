@@ -390,6 +390,13 @@ type rep_RootZoneSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
 
+type rep_DayEventDbl
+    integer(int32) :: DayNr
+        !! Undocumented
+    real(dp) :: Param
+        !! Undocumented
+end type rep_DayEventDbl
+
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: RainDescription
@@ -2303,14 +2310,14 @@ end function LeapYear
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
     character(len=*), intent(inout) :: DescriptionOfProject
-	
-	integer :: fhandle
-	
-	open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
-	read(fhandle, *) DescriptionOfProject
-	DescriptionOfProject = trim(DescriptionOfProject)
-	
-	close(fhandle)
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
+    read(fhandle, *) DescriptionOfProject
+    DescriptionOfProject = trim(DescriptionOfProject)
+
+    close(fhandle)
 end subroutine LoadProjectDescription
 
 
