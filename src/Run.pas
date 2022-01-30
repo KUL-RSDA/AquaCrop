@@ -1345,9 +1345,9 @@ IF ((GetSWCIniFile() = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
 NextSimFromDayNr := undef_int;
 
 // 2. initial settings for Crop
-Crop.pActStom := Crop.pdef;
-Crop.pSenAct := Crop.pSenescence;
-Crop.pLeafAct := Crop.pLeafDefUL;
+SetCrop_pActStom(Crop.pdef);
+SetCrop_pSenAc(Crop.pSenescence);
+SetCrop_pLeafAct(Crop.pLeafDefUL);
 EvapoEntireSoilSurface := true;
 Simulation.EvapLimitON := false;
 Simulation.EvapWCsurf := 0;
@@ -1414,8 +1414,8 @@ StressSFadjNEW := GetManagement_FertilityStress();
 IF (Crop.ModeCycle = GDDays) THEN
    BEGIN
    IF (GetManagement_FertilityStress() <> 0)
-      THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
-      ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
+      THEN SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax))
+      ELSE SetCrop_GDDaysToFullCanopySF(Crop.GDDaysToFullCanopy);
    END;
 
 // Maximum sum Kc (for reduction WP in season if soil fertility stress)
@@ -1649,10 +1649,10 @@ IF ((Simulation.CCini > 0) AND (ROUND(10000*CCiPrev) > 0) AND (ROUND(Simulation.
         IF ((Simulation.CCini >= CCiniMin) AND (Simulation.CCini <= CCiniMax)) THEN CCiPrev := Simulation.CCini/100;
         END;
 // 13.3
-Crop.CCxAdjusted := CCxTotal;
-Crop.CCoAdjusted := CCoTotal;
+SetCrop_CCxAdjusted(CCxTotal);
+SetCrop_CCoAdjusted(CCoTotal);
 TimeSenescence := 0;
-Crop.CCxWithered := 0;
+SetCrop_CCxWithered(0);
 NoMoreCrop := false;
 
 CCiActual := CCiPrev;
@@ -2869,10 +2869,10 @@ IF GetManagement_Cuttings_Considered() THEN
          BEGIN
          CCiPrev := GetManagement_Cuttings_CCcut()/100;
          // ook nog CCwithered
-         Crop.CCxWithered := 0;  // or CCiPrev ??
+         SetCrop_CCxWithered(0);  // or CCiPrev ??
          CCxWitheredTpot := 0; // for calculation Maximum Biomass but considering soil fertility stress
          CCxWitheredTpotNoS := 0; //  for calculation Maximum Biomass unlimited soil fertility
-         Crop.CCxAdjusted := CCiPrev; // new
+         SetCrop_CCxAdjusted(CCiPrev); // new
          // Increase of CGC
          CGCadjustmentAfterCutting := true; // adjustement CGC
          END;

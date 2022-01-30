@@ -48,7 +48,7 @@ implementation
    SetEffectiveRain_ShowersInDecade(2);  // For estimation of surface run-off
    SetEffectiveRain_RootNrEvap(5); // For reduction of soil evaporation
    END;
- // 1d. Crop.PAR  - 12 parameters
+ // 1d. GetCrop().PAR  - 12 parameters
  WITH SimulParam DO
    BEGIN
    EvapDeclineFactor := 4; // evaporation decline factor in stage 2
@@ -103,9 +103,9 @@ implementation
  SetProfFile('DEFAULT.SOL');
  SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
  // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
- Crop.RootMin := 0.30; //Minimum rooting depth (m)
- Crop.RootMax := 1.00; //Maximum rooting depth (m)
- // Crop. RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
+ SetCrop_RootMin(0.30); //Minimum rooting depth (m)
+ SetCrop_RootMax(1.00); //Maximum rooting depth (m)
+ // GetCrop(). RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
  LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -121,12 +121,12 @@ implementation
  SetCropFile('DEFAULT.CRO');
  SetCropFilefull(CONCAT(GetPathNameSimul(),GetCropFile()));
  //LoadCrop ==============================
- Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
- Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
+ SetCrop_CCo((GetCrop().PlantingDens/10000) * (GetCrop().SizeSeedling/10000));
+ SetCrop_CCini((GetCrop().PlantingDens/10000) * (GetCrop().SizePlant/10000));
  // maximum rooting depth in given soil profile
  SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
- Crop.Day1 := SimulParam.CropDay1;
+ SetCrop_Day1(SimulParam.CropDay1);
  CompleteCropDescription;
  Simulation.YearSeason := 1;
  NoCropCalendar;

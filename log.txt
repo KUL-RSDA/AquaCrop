@@ -1,0 +1,973 @@
+.git/config:	url = git@github.com:mbechtold/AquaCrop.git
+.git/logs/refs/remotes/origin/HEAD:0000000000000000000000000000000000000000 7e6212f1b9028880418f592e5ada0f1de04774dd Michel Bechtold <michel.bechtold@kuleuven.be> 1641855604 +0100	clone: from git@github.com:mbechtold/AquaCrop.git
+.git/logs/refs/heads/main:0000000000000000000000000000000000000000 7e6212f1b9028880418f592e5ada0f1de04774dd Michel Bechtold <michel.bechtold@kuleuven.be> 1641855604 +0100	clone: from git@github.com:mbechtold/AquaCrop.git
+.git/logs/HEAD:0000000000000000000000000000000000000000 7e6212f1b9028880418f592e5ada0f1de04774dd Michel Bechtold <michel.bechtold@kuleuven.be> 1641855604 +0100	clone: from git@github.com:mbechtold/AquaCrop.git
+src/Global.pas:         SCor : single; // correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
+src/Global.pas:SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+src/Global.pas:        IF (Crop.DaysToHIo > 0)
+src/Global.pas:        SetCrop_DaysToCCini(TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.CGC));
+src/Global.pas:        SetCrop_DaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * Crop.CCx),Crop.CCo,Crop.CCx,Crop.CGC,Crop.DaysToGermination));
+src/Global.pas:             TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,
+src/Global.pas:                  Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
+src/Global.pas:                  Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
+src/Global.pas:                  Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
+src/Global.pas:        SetCrop_GDDaysToCCini(TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.GDDCGC));
+src/Global.pas:        SetCrop_DaysToCCini(TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.CGC));
+src/Global.pas:        SetCrop_GDDaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * Crop.CCx),Crop.CCo,Crop.CCx,Crop.GDDCGC,Crop.GDDaysToGermination));
+src/Global.pas:CGCisGiven := true; // required to adjust Crop.DaysToFullCanopy (does not exist)
+src/Global.pas:DetermineLengthGrowthStages(Crop.CCo,Crop.CCx,Crop.CDC,Crop.DaysToGermination,Crop.DaysToHarvest,CGCisGiven,
+src/Global.pas:                            Crop.DaysToCCini,Crop.Planting,Crop_DaysToSenescence_temp,
+src/Global.pas:     THEN SetCrop_StressResponse_ShapeKsSto(Crop.StressResponse.ShapeWP)
+src/Global.pas:  // Crop.DeterminancyLinked
+src/Global.pas:SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+src/Global.pas:  // Crop.DeterminancyLinked
+src/Global.pas:  IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage))
+src/Global.pas:  IF (Crop.subkind = Forage)
+src/Global.pas:  IF (Crop.SownYear1 = true)
+src/Global.pas:          IF (Crop.subkind = Forage)
+src/Global.pas:          IF (Crop.subkind = Forage)
+src/Global.pas:SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+src/Global.pas:SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
+src/Global.pas:SetCropFileSet_DaysToHarvest(Crop.DaysToHarvest);
+src/Global.pas:SetCropFileSet_GDDaysFromSenescenceToEnd(Crop.GDDaysToHarvest - Crop.GDDaysToSenescence);
+src/Global.pas:SetCropFileSet_GDDaysToHarvest(Crop.GDDaysToHarvest);
+src/Global.pas:// Deze functie bepaald Crop.DayN en de string
+src/Global.pas:DayN := Day1 + Crop.DaysToHarvest - 1;
+src/Global.pas:            DetermineLinkedSimDay1(Crop.Day1,Simulation.FromDayNr);
+src/Global.pas:            IF (Crop.Day1 = Simulation.FromDayNr)
+src/Global.pas:               THEN Simulation.ToDayNr := Crop.DayN
+src/Global.pas:            IF (Simulation.FromDayNr > Crop.Day1) THEN Simulation.FromDayNr := Crop.Day1;
+src/Global.pas:            Simulation.ToDayNr := Crop.DayN;
+src/Global.pas:     - Crop.pLeafAct * (SoilLayer[Compartment[compi].Layer].FC-SoilLayer[Compartment[compi].Layer].WP))
+src/Global.pas:     - Crop.pActStom * (SoilLayer[Compartment[compi].Layer].FC-SoilLayer[Compartment[compi].Layer].WP))
+src/Global.pas:     - Crop.pSenAct * (SoilLayer[Compartment[compi].Layer].FC-SoilLayer[Compartment[compi].Layer].WP))
+src/Global.pas:            - Crop.pActStom * (SoilLayer[Compartment[compi].Layer].FC-SoilLayer[Compartment[compi].Layer].WP))
+src/Global.pas:        IF ((Crop.Subkind = Vegetative) AND (TempPlanting = Regrowth)) THEN dHIdt := 100;
+src/Global.pas:        IF ((Crop.Subkind = Forage) AND (TempPlanting = Regrowth)) THEN dHIdt := 100;
+src/Global.pas:                        IF ((Crop.subkind = Tuber) OR (Crop.subkind = Vegetative) OR (Crop.subkind = Forage))
+src/Global.pas:            AND (Crop.subkind <> Vegetative) AND (Crop.subkind <> Forage))
+src/Global.pas:FullName := CONCAT(GetPathNameSimul(),'Crop.PAR');
+src/Global.pas:IF (RootingDepth >= Crop.RootMin)
+src/Global.pas:        IF (((Crop.ECemin <> undef_int) AND (Crop.ECemax <> undef_int)) AND (Crop.ECemin < Crop.ECemax))
+src/Global.pas:           THEN ZrKsSalt := KsSalinity((true),Crop.ECemin,Crop.ECemax,ZrECe,(0.0))
+src/Global.pas:           ELSE ZrKsSalt := KsSalinity((false),Crop.ECemin,Crop.ECemax,ZrECe,(0.0));
+src/Global.pas:   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
+src/Global.pas:   IF ((Crop.subkind = Forage) AND (Yeari > 1) and (fCCx < 0.995)) THEN
+src/InitialSettings.pas: // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
+src/InitialSettings.pas: SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+src/InitialSettings.pas:(* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
+src/InitialSettings.pas: AdjustCropYearToClimFile(Crop.Day1,Crop.DayN);
+src/InitialSettings.pas:   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
+src/RootUnit.pas:            pZexp := Crop.pdef + (1-Crop.pdef)/2; // soil water depletion threshold for root deepening
+src/RootUnit.pas:                       dZ := dZ * KsAny(Wrel,pZexp,(1),Crop.KsShapeFactorStomata);
+src/RootUnit.pas:               Simulation.SCor := (2*(ZiMax/Zi)*((Crop.SmaxTop+Crop.SmaxBot)/2)-Crop.SmaxTop)/Crop.SmaxBot;
+src/Run.pas:   IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
+src/Run.pas:      THEN Str(Crop.RootMax:4:2,Str2)
+src/Run.pas:DetermineDate(Crop.Day1,Dayi,Monthi,Yeari);
+src/Run.pas:IF Crop.StressResponse.Calibrated
+src/Run.pas:        StressBiomassRelationship(Crop.DaysToCCini,Crop.GDDaysToCCini,
+src/Run.pas:               Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:               Crop.DaysToFlowering,Crop.LengthFlowering,
+src/Run.pas:               Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:               Crop.WPy,Crop.HI,
+src/Run.pas:               Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
+src/Run.pas:               Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
+src/Run.pas:               Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,
+src/Run.pas:               Crop.Day1,Crop.DeterminancyLinked,Crop.StressResponse,Crop.subkind,Crop.ModeCycle,
+src/Run.pas:IF ((GetManagement_FertilityStress() <> 0) AND Crop.StressResponse.Calibrated) THEN
+src/Run.pas:        CCxSaltStressRelationship(Crop.DaysToCCini,Crop.GDDaysToCCini,
+src/Run.pas:               Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:               Crop.DaysToFlowering,Crop.LengthFlowering,Crop.GDDaysToFlowering,Crop.GDDLengthFlowering,
+src/Run.pas:               Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:               Crop.WPy,Crop.HI,
+src/Run.pas:               Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
+src/Run.pas:               Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
+src/Run.pas:               Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,                     
+src/Run.pas:               Crop.Day1,Crop.DeterminancyLinked,Crop.subkind,Crop.ModeCycle,
+src/Run.pas:               Crop.CCsaltDistortion,
+src/Run.pas:                                IF (i < Crop.Day1)
+src/Run.pas:                                                             + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:                            DayX := Crop.Day1;
+src/Run.pas:                            Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:                                         + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:                            DayX := Crop.Day1;
+src/Run.pas:                            Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:                                         + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:        Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,SimulParam.GDDMethod) * (DayNri - Crop.Day1 + 1);
+src/Run.pas:        SumGDDtillDayM1 := DegreesDay(Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,SimulParam.GDDMethod) * (DayNri - Crop.Day1);
+src/Run.pas:        SumGDDtillDayM1 := SumGDDtillDay - DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:                      THEN DNr := DayNri - Crop.Day1 + 1
+src/Run.pas:                      THEN SetIrriInfoRecord1_ToDay(Crop.DayN - Crop.Day1 + 1)
+src/Run.pas:                   WHILE ((DayNrXX < Crop.Day1) AND (GetCutInfoRecord1_NoMoreInfo() = false)) DO
+src/Run.pas:                SetCutInfoRecord1_ToDay(Crop.DaysToHarvest);
+src/Run.pas:VirtualDay := Dayi - Simulation.DelayedDays - Crop.Day1;
+src/Run.pas:        IF (VirtualDay < Crop.DaysToGermination)
+src/Run.pas:                IF ((Crop.subkind = Grain) AND (VirtualDay >= Crop.DaysToFlowering))
+src/Run.pas:                        IF (VirtualDay < (Crop.DaysToFlowering + Crop.LengthFlowering))
+src/Run.pas:                IF ((Crop.subkind = Tuber) AND (VirtualDay >= Crop.DaysToFlowering))
+src/Run.pas:                IF ((VirtualDay > Crop.DaysToGermination) AND (CCiPrev <= 0))
+src/Run.pas:                IF (VirtualDay >= (Crop.Length[1]+Crop.Length[2]+Crop.Length[3]+Crop.Length[4]))
+src/Run.pas:   IF (NextSimFromDayNr <= Crop.Day1) THEN Simulation.FromDayNr := NextSimFromDayNr;
+src/Run.pas:Crop.pActStom := Crop.pdef;
+src/Run.pas:Crop.pSenAct := Crop.pSenescence;
+src/Run.pas:Crop.pLeafAct := Crop.pLeafDefUL;
+src/Run.pas:IF ((Crop.Planting = Seed) AND (Simulation.FromDayNr <= Crop.Day1))
+src/Run.pas:   IF (Simulation.ToDayNr < Crop.DayN)
+src/Run.pas:      THEN TemperatureFileCoveringCropPeriod(Crop.Day1,Simulation.TodayNr)
+src/Run.pas:      ELSE TemperatureFileCoveringCropPeriod(Crop.Day1,Crop.DayN);
+src/Run.pas:IF (Crop.Day1 > Simulation.FromDayNr) THEN DNr1 := Crop.Day1;
+src/Run.pas:IF (Crop.DayN < Simulation.ToDayNr) THEN DNr2 := Crop.DayN;
+src/Run.pas:Simulation.SalinityConsidered := (((Crop.ECemin <> undef_int) AND (Crop.ECemax <> undef_int)) AND (Crop.ECemin < Crop.ECemax));
+src/Run.pas:CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+src/Run.pas:TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
+src/Run.pas:                    Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
+src/Run.pas:                    Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
+src/Run.pas:IF (Crop.ModeCycle = GDDays) THEN
+src/Run.pas:      THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
+src/Run.pas:      ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
+src/Run.pas:SumKcTop := SeasonalSumOfKcPot(Crop.DaysToCCini,Crop.GDDaysToCCini,
+src/Run.pas:                 Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:                 Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:                 Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
+src/Run.pas:                 Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
+src/Run.pas:                 Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,CO2i,
+src/Run.pas:                 Crop.ModeCycle);
+src/Run.pas:IF (Crop.subkind = Forage)
+src/Run.pas:   THEN fi := MultiplierCCxSelfThinning(Simulation.YearSeason,Crop.YearCCx,Crop.CCxRoot)
+src/Run.pas:        fWeedNoS := CCmultiplierWeed(GetManagement_WeedRC(),Crop.CCx,GetManagement_WeedShape());
+src/Run.pas:        CCxCropWeedsNoSFstress := ROUND(((100* Crop.CCx * fWeedNoS) + 0.49))/100; // reference for plot with weed
+src/Run.pas:                IF ((fi > 0) AND (Crop.subkind = Forage)) THEN
+src/Run.pas:                                 //+ Cweed*(1-fi)*Crop.CCx*(1-Simulation.EffectStress.RedCCX/100)*Management.WeedAdj);
+src/Run.pas:                                 + Cweed*(1-fi)*Crop.CCx*(1-Simulation.EffectStress.RedCCX/100)*GetManagement_WeedAdj()/100);
+src/Run.pas:                IF (Crop.subkind = Forage)
+src/Run.pas:                   THEN fweed := CCmultiplierWeedAdjusted(GetManagement_WeedRC(),Crop.CCx,GetManagement_WeedShape(),
+src/Run.pas:        CCxCropWeedsNoSFstress := Crop.CCx;
+src/Run.pas:CCxTotal := fWeed * Crop.CCx * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
+src/Run.pas:CDCTotal := Crop.CDC * (fWeed*Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+src/Run.pas:                       (Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
+src/Run.pas:GDDCDCTotal := Crop.GDDCDC * (fWeed*Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+src/Run.pas:                       (Crop.CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
+src/Run.pas:IF (Crop.subkind = Forage)
+src/Run.pas:   THEN fi := MultiplierCCoSelfThinning(Simulation.YearSeason,Crop.YearCCx,Crop.CCxRoot)
+src/Run.pas:CCoTotal := fWeed * Crop.CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
+src/Run.pas:IF ((Crop.ModeCycle = GDDays) AND (Crop.Day1 < DayNri))
+src/Run.pas:GDDayi := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:IF (DayNri >= Crop.Day1)
+src/Run.pas:        IF (DayNri = Crop.Day1) THEN Simulation.SumGDD := Simulation.SumGDD + GDDayi;
+src/Run.pas:IF (Crop.DaysToCCini <> 0)
+src/Run.pas:        IF (Crop.DaysToCCini = undef_int)
+src/Run.pas:           THEN Tadj := Crop.DaysToFullCanopy - Crop.DaysToGermination
+src/Run.pas:           ELSE Tadj := Crop.DaysToCCini;
+src/Run.pas:        DayFraction := (Crop.DaysToSenescence-Crop.DaysToFullCanopy)/(Tadj + Crop.DaysToGermination + (Crop.DaysToSenescence-Crop.DaysToFullCanopy) );
+src/Run.pas:        IF (Crop.ModeCycle = GDDays) THEN
+src/Run.pas:           IF (Crop.GDDaysToCCini = undef_int)
+src/Run.pas:              THEN GDDTadj := Crop.GDDaysToFullCanopy - Crop.GDDaysToGermination
+src/Run.pas:              ELSE GDDTadj := Crop.GDDaysToCCini;
+src/Run.pas:           GDDayFraction := (Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopy)/(GDDTadj + Crop.GDDaysToGermination + (Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopy));
+src/Run.pas:IF (Crop.ModeCycle = GDDays) THEN
+src/Run.pas:   IF (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence)
+src/Run.pas:      THEN RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+src/Run.pas:Dayi := DayNri - Crop.Day1;
+src/Run.pas:IF (Crop.DaysToCCini = 0)
+src/Run.pas:        DayCC := Dayi + Tadj + Crop.DaysToGermination; // adjusted time scale
+src/Run.pas:        IF (DayCC > Crop.DaysToHarvest) THEN DayCC := Crop.DaysToHarvest; // special case where L123 > L1234
+src/Run.pas:        IF (DayCC > Crop.DaysToFullCanopy) THEN
+src/Run.pas:           IF (Dayi <= Crop.DaysToSenescence)
+src/Run.pas:              THEN DayCC := Crop.DaysToFullCanopy  + ROUND(DayFraction * (Dayi+Tadj+Crop.DaysToGermination - Crop.DaysToFullCanopy)) // slow down
+src/Run.pas:IF (Crop.ModeCycle = GDDays) THEN
+src/Run.pas:   IF (Crop.GDDaysToCCini = 0)
+src/Run.pas:           SumGDDforDayCC := Simulation.SumGDDfromDay1 - GDDayi + GDDTadj + Crop.GDDaysToGermination;
+src/Run.pas:           IF (SumGDDforDayCC > Crop.GDDaysToHarvest) THEN SumGDDforDayCC := Crop.GDDaysToHarvest; // special case where L123 > L1234
+src/Run.pas:           IF (SumGDDforDayCC > Crop.GDDaysToFullCanopy) THEN
+src/Run.pas:              IF (Simulation.SumGDDfromDay1 <= Crop.GDDaysToSenescence)
+src/Run.pas:                 THEN SumGDDforDayCC := Crop.GDDaysToFullCanopy + ROUND(GDDayFraction * (Simulation.SumGDDfromDay1+GDDTadj+Crop.GDDaysToGermination-Crop.GDDaysToFullCanopy)) // slow down
+src/Run.pas:IF (DayNri <= Crop.Day1)
+src/Run.pas:        IF (Crop.DaysToCCini <> 0)
+src/Run.pas:                IF (DayNri = Crop.Day1)
+src/Run.pas:                                      Crop.DaysToGermination,
+src/Run.pas:                                      Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:                                      Crop.GDDaysToGermination,Crop.GDDaysToFullCanopySF,
+src/Run.pas:                                      Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:                                      CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,
+src/Run.pas:                                      Simulation.EffectStress.CDecline,Crop.ModeCycle);
+src/Run.pas:                IF (DayNri = (Crop.Day1+Crop.DaysToGermination)) THEN CCiPrev := CCoTotal;
+src/Run.pas:        IF (DayNri > Crop.DayN)
+src/Run.pas:                              Crop.DaysToGermination,
+src/Run.pas:                              Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:                              Crop.GDDaysToGermination,Crop.GDDaysToFullCanopySF,
+src/Run.pas:                              Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:                              CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,
+src/Run.pas:                              Simulation.EffectStress.CDecline,Crop.ModeCycle);
+src/Run.pas:        CCiniMin := 100 * (Crop.SizeSeedling/10000)*(Crop.PlantingDens/10000);
+src/Run.pas:Crop.CCxAdjusted := CCxTotal;
+src/Run.pas:Crop.CCoAdjusted := CCoTotal;
+src/Run.pas:Crop.CCxWithered := 0;
+src/Run.pas:IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
+src/Run.pas:        SetTransfer_ToMobilize(Simulation.Storage.Btotal * Crop.Assimilates.Mobilized/100);
+src/Run.pas:IF (DayNri <= Crop.Day1)
+src/Run.pas:        IF (DayNri > Crop.DayN)
+src/Run.pas:                ZiPrev := ActualRootingDepth((DayNri-Crop.Day1),Crop.DaysToGermination,Crop.DaysToMaxRooting,
+src/Run.pas:                            Crop.DaysToHarvest,Crop.GDDaysToGermination,Crop.GDDaysToMaxRooting,Crop.GDDaysToHarvest,
+src/Run.pas:                            SumGDDPrev,Crop.RootMin,Crop.RootMax,Crop.RootShape,Crop.ModeCycle);
+src/Run.pas:        IF ((Simulation.Zrini >= Crop.RootMin) AND (Simulation.Zrini <= Crop.RootMax))
+src/Run.pas:                IF (Simulation.Zrini < Crop.RootMin)
+src/Run.pas:                   THEN Ziprev := Crop.RootMin
+src/Run.pas:                   ELSE Ziprev := Crop.RootMax;
+src/Run.pas:        IF ((ROUND(GetSoil().RootMax*1000) < ROUND(Crop.RootMax*1000))
+src/Run.pas:   ELSE RootingDepth := ActualRootingDepth((DayNri-Crop.Day1+1),Crop.DaysToGermination,Crop.DaysToMaxRooting,
+src/Run.pas:                      Crop.DaysToHarvest,Crop.GDDaysToGermination,Crop.GDDaysToMaxRooting,Crop.GDDaysToHarvest,
+src/Run.pas:                      SumGDDPrev,Crop.RootMin,Crop.RootMax,Crop.RootShape,Crop.ModeCycle);
+src/Run.pas:CGCref := Crop.CGC;
+src/Run.pas:GDDCGCref := Crop.GDDCGC;
+src/Run.pas:Simulation.HIfinal := Crop.HI;
+src/Run.pas:IF (Simulation.FromDayNr <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering))
+src/Run.pas:        IF Crop.DeterminancyLinked
+src/Run.pas:           THEN tHImax := ROUND(Crop.LengthFlowering/2)
+src/Run.pas:           ELSE tHImax := (Crop.DaysToSenescence - Crop.DaysToFlowering);
+src/Run.pas:        IF ((Simulation.FromDayNr <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + tHImax)) // not yet end period
+src/Run.pas:                ScorAT1 := ScorAT1 * (Simulation.FromDayNr - (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering));
+src/Run.pas:        IF (Crop.dHIdt > 99)
+src/Run.pas:           ELSE tHImax := ROUND(Crop.HI/Crop.dHIdt);
+src/Run.pas:        IF ((Simulation.FromDayNr <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + tHImax)) // not yet end period
+src/Run.pas:                ScorAT2 := ScorAT2 * (Simulation.FromDayNr - (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering));
+src/Run.pas:        IF ((Crop.DryMatter = undef_int) OR (Crop.DryMatter = 0))
+src/Run.pas:           ELSE WRITE(fRun,HI:9:1,GetSumWaBal_YieldPart():9:3,(GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):9:3,WPy:9:2);
+src/Run.pas:      ELSE KsTr := KsTemperature((0),Crop.GDtranspLow,GDDayi);
+src/Run.pas:   IF ((Crop.DryMatter = undef_int) OR (Crop.DryMatter = 0))
+src/Run.pas:      ELSE WRITE(fDaily,(GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):9:3);
+src/Run.pas:           IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
+src/Run.pas:              THEN DetermineRootZoneWC(Crop.RootMax,Simulation.SWCtopSoilConsidered)
+src/Run.pas:    IF (Dayi > Crop.DayN) THEN
+src/Run.pas:       DNr := Dayi - Crop.DayN;
+src/Run.pas:       THEN DNr := Dayi - Crop.Day1 + 1
+src/Run.pas:    IF ((DayNri < Crop.Day1) OR (DayNri > Crop.DayN))
+src/Run.pas:    IF ((GetIrriMode() = Generate) AND ((DayNri >= Crop.Day1) AND (DayNri <= Crop.DayN))) THEN
+src/Run.pas:       DayInSeason := DayNri - Crop.Day1 + 1;
+src/Run.pas:             THEN SetIrriInfoRecord1_ToDay(Crop.DayN - Crop.Day1 + 1)
+src/Run.pas:      ThetaPercRaw := SoilLayer[layeri].FC/100 - SimulParam.PercRAW/100*Crop.pdef*(SoilLayer[layeri].FC/100-SoilLayer[layeri].WP/100);
+src/Run.pas:    IF (Crop.subkind = Forage) THEN // only for perennial herbaceous forage crops
+src/Run.pas:              //IF ((DayNri - Simulation.DelayedDays - Crop.Day1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
+src/Run.pas:              IF ((DayNri - Simulation.DelayedDays - Crop.Day1 + 1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
+src/Run.pas:              IF ((StorageOn = true) AND (Crop.Assimilates.Period > 0))
+src/Run.pas:                 THEN FracAssim := (Crop.Assimilates.Stored/100) *
+src/Run.pas:                 //(((DayNri - Simulation.DelayedDays - Crop.Day1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
+src/Run.pas:                 (((DayNri - Simulation.DelayedDays - Crop.Day1 + 1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
+src/Run.pas:    DetermineDate(Crop.Day1,Dayi,Monthi,Yeari);
+src/Run.pas:            IF (Crop.DryMatter = undef_int)
+src/Run.pas:               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):20:3);
+src/Run.pas:            IF (Crop.DryMatter = undef_int)
+src/Run.pas:               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(Crop.DryMatter/100)):10:3,
+src/Run.pas:                         (GetSumWaBal_YieldPart()/(Crop.DryMatter/100)):10:3);
+src/Run.pas:    IF ((Crop.ModeCycle = GDDays) AND (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence))
+src/Run.pas:       THEN RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+src/Run.pas:    PotValSF := CCiNoWaterStressSF(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:        Crop.GDDaysToGermination,Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:        CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
+src/Run.pas:        Simulation.EffectStress.RedCGC,Simulation.EffectStress.RedCCX,Simulation.EffectStress.CDecline,Crop.ModeCycle);
+src/Run.pas:IF (Crop.DaysToCCini <> 0)
+src/Run.pas:        IF (DayNri >= Crop.Day1)
+src/Run.pas:                VirtualTimeCC := (DayNri - Simulation.DelayedDays - Crop.Day1) + Tadj + Crop.DaysToGermination; // adjusted time scale
+src/Run.pas:                IF (VirtualTimeCC > Crop.DaysToHarvest) THEN VirtualTimeCC := Crop.DaysToHarvest; // special case where L123 > L1234
+src/Run.pas:                IF (VirtualTimeCC > Crop.DaysToFullCanopy) THEN
+src/Run.pas:                   IF ((DayNri - Simulation.DelayedDays - Crop.Day1) <= Crop.DaysToSenescence)
+src/Run.pas:                      THEN VirtualTimeCC := Crop.DaysToFullCanopy + ROUND(DayFraction *
+src/Run.pas:                            ( (DayNri - Simulation.DelayedDays - Crop.Day1)+Tadj+Crop.DaysToGermination - Crop.DaysToFullCanopy)) // slow down
+src/Run.pas:                      ELSE VirtualTimeCC := (DayNri - Simulation.DelayedDays - Crop.Day1); // switch time scale
+src/Run.pas:                IF (Crop.ModeCycle = GDDays) THEN
+src/Run.pas:                   SumGDDadjCC := Simulation.SumGDDfromDay1 + GDDTadj + Crop.GDDaysToGermination;
+src/Run.pas:                   IF (SumGDDadjCC > Crop.GDDaysToHarvest) THEN SumGDDadjCC := Crop.GDDaysToHarvest; // special case where L123 > L1234
+src/Run.pas:                   IF (SumGDDadjCC > Crop.GDDaysToFullCanopy) THEN
+src/Run.pas:                      IF (Simulation.SumGDDfromDay1 <= Crop.GDDaysToSenescence)
+src/Run.pas:                         THEN SumGDDadjCC := Crop.GDDaysToFullCanopy
+src/Run.pas:                           + ROUND(GDDayFraction * (Simulation.SumGDDfromDay1+GDDTadj+Crop.GDDaysToGermination-Crop.GDDaysToFullCanopy)) // slow down
+src/Run.pas:                IF ((DayNri = Crop.Day1) AND (DayNri > Simulation.FromDayNr)) THEN
+src/Run.pas:                   IF ((Crop.ModeCycle = GDDays) AND (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence)) THEN
+src/Run.pas:                      RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+src/Run.pas:                   CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,Simulation.EffectStress);
+src/Run.pas:                   CCiPrev := CCiniTotalFromTimeToCCini(Crop.DaysToCCini,Crop.GDDaysToCCini,
+src/Run.pas:                                  Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToFullCanopySF,
+src/Run.pas:                                  Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:                                  Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToFullCanopySF,
+src/Run.pas:                                  Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:                                  Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,RatDGDD,
+src/Run.pas:                                  Simulation.EffectStress.CDecline,(CCxTotal/Crop.CCx),Crop.ModeCycle);  // (CCxTotal/Crop.CCx) = fWeed
+src/Run.pas:                VirtualTimeCC := DayNri - Simulation.DelayedDays - Crop.Day1;
+src/Run.pas:                IF (Crop.ModeCycle = GDDays) THEN SumGDDadjCC := Simulation.SumGDD;
+src/Run.pas:        VirtualTimeCC := DayNri - Simulation.DelayedDays - Crop.Day1;
+src/Run.pas:        IF (Crop.ModeCycle = GDDays) THEN SumGDDadjCC := Simulation.SumGDD;
+src/Run.pas:        IF ((DayNri = (Crop.Day1 + Crop.DaysToGermination)) AND (DayNri > Simulation.FromDayNr))
+src/Run.pas:IF (((Crop.ModeCycle = CalendarDays) AND ((DayNri-Crop.Day1+1) < Crop.DaysToHarvest))
+src/Run.pas:              OR ((Crop.ModeCycle = GDDays) AND (Simulation.SumGDD < Crop.GDDaysToHarvest)))
+src/Run.pas:        IF (((DayNri-Simulation.DelayedDays) >= Crop.Day1) AND ((DayNri-Simulation.DelayedDays) <= Crop.DayN))
+src/Run.pas:           THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
+src/Run.pas:                                (DayNri-Crop.Day1+1),Crop.DaysToGermination,Crop.DaysToMaxRooting,Crop.DaysToHarvest,
+src/Run.pas:                                Crop.GDDaysToGermination,Crop.GDDaysToMaxRooting,Crop.GDDaysToHarvest,(SumGDDPrev),
+src/Run.pas:                                (Simulation.SumGDD),Crop.RootMin,Crop.RootMax,Ziprev,Crop.RootShape,
+src/Run.pas:                                Crop.ModeCycle);
+src/Run.pas:                IF ((ZiAqua >= 0) AND (RootingDepth > (ZiAqua/100)) AND (Crop.AnaeroPoint > 0)) THEN
+src/Run.pas:                   IF (RootingDepth < Crop.RootMin) THEN RootingDepth := Crop.RootMin;
+src/Run.pas:IF ((RootingDepth > 0) AND (DayNri = Crop.Day1))
+src/Run.pas:IF ((RootingDepth > 0) AND (DayNri = Crop.Day1) AND (GetIrriMode() = Inet)) THEN
+src/Run.pas:           ELSE KsTr := KsTemperature((0),Crop.GDtranspLow,GDDayi);
+src/Run.pas:IF (DayNri >= Crop.Day1) THEN
+src/Run.pas:   DayInSeason := DayNri - Crop.Day1 + 1;
+src/Run.pas:                   THEN DayInSeason := DayNri - Crop.Day1 + 1;
+src/Run.pas:                              // OK if Crop.DryMatter = undef_int (not specified) HarvestNow remains false
+src/Run.pas:                              IF ((((GetSumWaBal_YieldPart() - YprevSum)/(Crop.DryMatter/100)) >= GetCutInfoRecord1_MassInfo())
+src/Run.pas:         Crop.CCxWithered := 0;  // or CCiPrev ??
+src/Run.pas:         Crop.CCxAdjusted := CCiPrev; // new
+src/Run.pas:                              CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays + 1),Crop.DaysToGermination,
+src/Run.pas:                              Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:                              Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:                              (fWeedNoS*Crop.CCo),(fWeedNoS*Crop.CCx),CGCref,
+src/Run.pas:                              (Crop.CDC*(fWeedNoS*Crop.CCx + 2.29)/(Crop.CCx + 2.29)),
+src/Run.pas:                              GDDCGCref,(Crop.GDDCDC*(fWeedNoS*Crop.CCx + 2.29)/(Crop.CCx + 2.29)),
+src/Run.pas:                              SumGDDadjCC,Crop.ModeCycle,
+src/Run.pas:IF ((VirtualTimeCC+Simulation.DelayedDays + 1) <= Crop.DaysToFullCanopySF)
+src/Run.pas:                         CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays + 1),Crop.DaysToGermination,
+src/Run.pas:                         Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Run.pas:                         Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Run.pas:                         CCoTotal,CCxTotal,Crop.CGC,
+src/Run.pas:                         CDCTotal,Crop.GDDCGC,GDDCDCTotal,
+src/Run.pas:                         SumGDDadjCC,Crop.ModeCycle,
+src/Run.pas:IF OutDaily THEN WriteDailyResults((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,WPi,fDaily);
+src/Run.pas:IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((DayNri-Simulation.DelayedDays-Crop.Day1+1),StageCode,fEval);
+src/Run.pas:IF (DayNri = Crop.Day1)
+src/Run.pas:   GDDayi := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+src/Run.pas:   IF (DayNri >= Crop.Day1) THEN
+src/Run.pas:          RecordHarvest(NrCut,DayNri,(DayNri-Crop.Day1+1),SumInterval,BprevSum,YprevSum,fHarvest);
+src/Run.pas:       RecordHarvest((9999),DayNri,(DayNri-Crop.Day1+1),SumInterval,BprevSum,YprevSum,fHarvest); // last line at end of season
+src/Run.pas:            IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
+src/Run.pas:               IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
+src/Run.pas:                       AdjustSizeCompartments(Crop.RootMax);
+src/Simul.pas:CCiPot := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:             Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:             Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:             Crop.CCo,Crop.CCx,Crop.CGC,Crop.CDC,Crop.GDDCGC,Crop.GDDCDC,
+src/Simul.pas:             SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:IF (Crop.ModeCycle = Calendardays)
+src/Simul.pas:                               Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax);
+src/Simul.pas:CalculateETpot(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
+src/Simul.pas:               Crop.DaysToHarvest,(0),CCiPot,ETo,Crop.KcTop,Crop.KcDecline,Crop.CCx,CCxWitheredTpotNoS,Crop.CCEffectEvapLate,
+src/Simul.pas:               //Crop.DaysToHarvest,CCiPot,ETo,Crop.KcTop,Crop.KcDecline,Crop.CCxAdjusted,Crop.CCxWithered,Crop.CCEffectEvapLate,
+src/Simul.pas:               CO2i,GDDayi,Crop.GDtranspLow,TpotForB,EpotTotForB);
+src/Simul.pas:WPi := (Crop.WP/100);
+src/Simul.pas:IF (((Crop.subkind = Grain) OR (Crop.subkind = Tuber))
+src/Simul.pas:    AND (Crop.WPy < 100) AND (Crop.dHIdt > 0)
+src/Simul.pas:    AND (VirtualTimeCC >= Crop.DaysToFlowering)) THEN
+src/Simul.pas:  DaysYieldFormation := ROUND(Crop.HI/Crop.dHIdt);
+src/Simul.pas:  DayiAfterFlowering := VirtualTimeCC - Crop.DaysToFlowering;
+src/Simul.pas:  WPi :=  WPi * (1 - (1-Crop.WPy/100)*fSwitch)
+src/Simul.pas:   WPi := WPi * fAdjustedForCO2(CO2i,Crop.WP,Crop.AdaptedToCO2);
+src/Simul.pas:CASE Crop.pMethod OF
+src/Simul.pas:     NoCorrection      : pStomatULAct := Crop.pdef ;
+src/Simul.pas:                         pStomatULAct := Crop.pdef + SimulParam.pAdjFAO * (0.04*(5-MeanETo))*log10(10-9*Crop.pdef);
+src/Simul.pas:pLeafLLAct := Crop.pLeafDefLL;
+src/Simul.pas:pLeafULAct := Crop.pLeafDefUL;
+src/Simul.pas:IF (Crop.pMethod = FAOCorrection) THEN
+src/Simul.pas:   pLeafLLAct := Crop.pLeafDefLL + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefLL);
+src/Simul.pas:   pLeafULAct := Crop.pLeafDefUL + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefUL);
+src/Simul.pas:pSenAct := Crop.pSenescence;
+src/Simul.pas:IF (Crop.pMethod = FAOCorrection) THEN
+src/Simul.pas:   pSenAct := Crop.pSenescence + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pSenescence);
+src/Simul.pas:                TimePerc := 100 * (DiFlor/Crop.LengthFlowering);
+src/Simul.pas:    IF (Crop.LengthFlowering <=1)
+src/Simul.pas:            DiFlor := ROUND(dayi - (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering));
+src/Simul.pas:            DiFlor := ROUND((dayi-1) - (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering));
+src/Simul.pas:               ELSE F := 100 * ((f1+f2)/2)/Crop.LengthFlowering;
+src/Simul.pas:IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain) OR (Crop.Subkind = Vegetative) OR (Crop.Subkind = Forage))
+src/Simul.pas:        IF  (((Crop.Subkind = Vegetative) AND (Crop.Planting = Regrowth)
+src/Simul.pas:           OR (Crop.Subkind = Forage) AND (Crop.Planting = Regrowth)))
+src/Simul.pas:           THEN alfa := Crop.HI
+src/Simul.pas:           ELSE alfa := HarvestIndexDay((dayi-Crop.Day1),Crop.DaysToFlowering,Crop.HI,Crop.dHIdt,CCiactual,
+src/Simul.pas:                              Crop.CCxAdjusted,SimulParam.PercCCxHIfinal,Crop.Planting,
+src/Simul.pas:WPi := (Crop.WP/100);
+src/Simul.pas:   WPi := (Crop.WP/100);
+src/Simul.pas:   IF (((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) AND (alfa > 0)) THEN // WPi switch to WP for reproductive stage
+src/Simul.pas:      DaysYieldFormation := ROUND(Crop.HI/Crop.dHIdt);
+src/Simul.pas:         IF Crop.DeterminancyLinked
+src/Simul.pas:                 DayiAfterFlowering := dayi - Simulation.DelayedDays - Crop.Day1 - Crop.DaysToFlowering;
+src/Simul.pas:      WPi :=  WPi * (1 - (1-Crop.WPy/100)*fSwitch)  // switch in Lag Phase
+src/Simul.pas:      WPi := WPi * fAdjustedForCO2(CO2i,Crop.WP,Crop.AdaptedToCO2);
+src/Simul.pas:                   IF (Crop.subkind = Forage)
+src/Simul.pas:                      THEN fCCx := MultiplierCCxSelfThinning(Simulation.YearSeason,Crop.YearCCx,Crop.CCxRoot)
+src/Simul.pas:                                 Crop.DaysToFullCanopySF,Crop.DaysToSenescence,
+src/Simul.pas:                                 Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,
+src/Simul.pas:                                 Crop.ModeCycle);
+src/Simul.pas:   IF (Crop.subkind = Forage) THEN // only for perennial herbaceous forage crops
+src/Simul.pas:IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
+src/Simul.pas:   IF (dayi > (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering)) THEN
+src/Simul.pas:                 RBM := BMRange(Crop.HIincrease);
+src/Simul.pas:                 HItimesBEF := HImultiplier(RatioBM,RBM,Crop.HIincrease);
+src/Simul.pas:      IF (Crop.Subkind = grain) // - only valid for fruit/grain crops (flowers)
+src/Simul.pas:              IF ((dayi <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + Crop.LengthFlowering)) // calculation limited to flowering period
+src/Simul.pas:                 KsPolWS := KsAny(Wrel,Crop.pPollination,pLL,(0));
+src/Simul.pas:                 KsPolCS := KsTemperature((Crop.Tcold-TempRange),Crop.Tcold,TminOnDay);
+src/Simul.pas:                 KsPolHS := KsTemperature((Crop.Theat+TempRange),Crop.Theat,TmaxOnDay);
+src/Simul.pas:                 alfaMax := alfaMax + (KsPol * (1 + Crop.fExcess/100) * fFlor * Crop.HI);
+src/Simul.pas:                 IF (alfaMax > Crop.HI) THEN alfaMax := Crop.HI;
+src/Simul.pas:         ELSE alfaMax := Crop.HI; // for Tuber crops (no flowering)
+src/Simul.pas:      IF Crop.DeterminancyLinked
+src/Simul.pas:         THEN tmax1 := ROUND(Crop.LengthFlowering/2)
+src/Simul.pas:         ELSE tmax1 := (Crop.DaysToSenescence - Crop.DaysToFlowering);
+src/Simul.pas:          AND (dayi <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + tmax1)) // and not yet end period
+src/Simul.pas:          AND (ROUND(Crop.aCoeff) <> Undef_int) // otherwise no effect
+src/Simul.pas:              Ksleaf := KsAny(Wrel,pLeafULAct,pLeafLLAct,Crop.KsShapeFactorLeaf);
+src/Simul.pas:              Dcor := (1 + (1-Ksleaf)/Crop.aCoeff);
+src/Simul.pas:              DayCor := dayi - (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering);
+src/Simul.pas:      IF (Crop.dHIdt > 99)
+src/Simul.pas:         ELSE tmax2 := ROUND(Crop.HI/Crop.dHIdt);
+src/Simul.pas:          AND (dayi <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + tmax2)) // and not yet end period
+src/Simul.pas:          AND (ROUND(Crop.bCoeff) <> Undef_int) // otherwise no effect
+src/Simul.pas:              Ksstomatal := KsAny(Wrel,pStomatULAct,pLL,Crop.KsShapeFactorStomata);
+src/Simul.pas:                   THEN Dcor := (Exp(0.10*Ln(Ksstomatal))) * (1-(1-Ksstomatal)/Crop.bCoeff)
+src/Simul.pas:              DayCor := dayi - (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering);
+src/Simul.pas:                                      IF (ROUND(Crop.bCoeff) = Undef_int) THEN HItimesAT := HItimesAT1;
+src/Simul.pas:                                      IF (ROUND(Crop.aCoeff) = Undef_int) THEN HItimesAT := HItimesAT2;
+src/Simul.pas:                                      IF (ROUND(Crop.bCoeff) = Undef_int) THEN HItimesAT := HItimesAT1;
+src/Simul.pas:                                      IF (ROUND(Crop.aCoeff) = Undef_int) THEN HItimesAT := HItimesAT2;
+src/Simul.pas:      IF (HItimesTotal > (1+(Crop.DHImax/100))) THEN HItimesTotal := 1+(Crop.DHImax/100);
+src/Simul.pas:   END; // (Crop.subkind = Tuber) OR (Crop.Subkind = grain)
+src/Simul.pas:IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)) THEN
+src/Simul.pas:   IF (dayi >= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering)) THEN
+src/Simul.pas:IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND Crop.StressResponse.Calibrated)
+src/Simul.pas:        IF ((Crop.Subkind = grain) AND Crop.DeterminancyLinked
+src/Simul.pas:           AND (dayi > (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + tmax1))) THEN
+src/Simul.pas:               IF (dayi < Crop.Day1)
+src/Simul.pas:                       IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
+src/Simul.pas:               IF (((dayi-Simulation.DelayedDays) >= Crop.Day1 ) AND ((dayi-Simulation.DelayedDays) <= Crop.DayN)) THEN // in growing cycle
+src/Simul.pas:       IF (dayi < Crop.Day1)
+src/Simul.pas:               IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
+src/Simul.pas:IF (dayi < Crop.Day1)
+src/Simul.pas:        IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
+src/Simul.pas:IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop.Day1))
+src/Simul.pas:        Crop.DaysToFullCanopySF := Crop.DaysToFullCanopy;
+src/Simul.pas:        IF (Crop.ModeCycle = GDDays) THEN Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
+src/Simul.pas:           ELSE CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,FertilityEffectStress);
+src/Simul.pas:                CropStressParametersSoilSalinity(CCxRed,Crop.CCsaltDistortion,Crop.CCo,Crop.CCx,Crop.CGC,
+src/Simul.pas:                             Crop.GDDCGC,Crop.DeterminancyLinked,Crop.DaysToFullCanopy,Crop.DaysToFlowering,
+src/Simul.pas:                             Crop.LengthFlowering,Crop.DaysToHarvest,Crop.GDDaysToFullCanopy,
+src/Simul.pas:                             Crop.GDDaysToFlowering,Crop.GDDLengthFlowering,
+src/Simul.pas:                             Crop.GDDaysToHarvest,Crop.ModeCycle,SalinityEffectStress);
+src/Simul.pas:        TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
+src/Simul.pas:                          Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
+src/Simul.pas:                          Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
+src/Simul.pas:        IF (Crop.ModeCycle = GDDays) THEN
+src/Simul.pas:              THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
+src/Simul.pas:              ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
+src/Simul.pas:Zroot := Crop.RootMin;
+src/Simul.pas:        IF (Crop.Planting = Seed)
+src/Simul.pas:                IF (Wrelative <= Crop.pLeafAct)
+src/Simul.pas:                                KsLeaf := KsAny(Wrelative,Crop.pLeafAct,pLeafLLAct,Crop.KsShapeFactorLeaf);
+src/Simul.pas:   AND (  ((Crop.subkind = Forage) AND ((StorageON = true) OR (MobilizationON = true))) // transfer assimilates
+src/Simul.pas:        IF ((Crop.subkind = Forage) AND (StorageON = true))
+src/Simul.pas:        IF ((Crop.subkind = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
+src/Simul.pas:                KsSen := KsAny(Wrelative,pSenAct,pSenLL,Crop.KsShapeFactorSenescence);
+src/Simul.pas:tfictive := RequiredTimeNew(CCiprev,Crop.CCoAdjusted,CCxSF,CGCadjusted);
+src/Simul.pas:        CCxAdjusted := CCatTime(tfictive,Crop.CCoAdjusted,CGCadjusted,CCxSF);
+src/Simul.pas://CCxAdjusted := CCiPrev/(1-0.05*(exp((VirtualTimeCC-Crop.DaysToSenescence)*CDC/CCX)-1));
+src/Simul.pas:CCxAdjusted := CCiPrev/(1-0.05*(exp((VirtualTimeCC-Crop.DaysToSenescence)*CDC*3.33/(CCX+2.29))-1));
+src/Simul.pas:IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop.Day1)))
+src/Simul.pas:        CGCSF := Crop.CGC*(1-Simulation.EffectStress.RedCGC/100);
+src/Simul.pas:        IF (VirtualTimeCC <= Crop.DaysToFullCanopySF)
+src/Simul.pas:                IF (VirtualTimeCC < Crop.DaysToSenescence)
+src/Simul.pas:                        CCxSFCD := CCiNoWaterStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                            Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,Crop.GDDaysToGermination,
+src/Simul.pas:                            Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                            CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,Simulation.SumGDD,(1),
+src/Simul.pas:                            Crop.ModeCycle);
+src/Simul.pas:                   ELSE CCxSFCD := CCxSF - (Simulation.EffectStress.CDecline/100) * (Crop.DaysToSenescence-Crop.DaysToFullCanopySF);
+src/Simul.pas:        IF (VirtualTimeCC = Crop.DaysToGermination) THEN CCiPrev := CCoTotal;
+src/Simul.pas:        tFinalCCx := Crop.DaysToSenescence; // undeterminant crop
+src/Simul.pas:        IF ((Crop.subkind = Grain) AND (Crop.DeterminancyLinked = true)) THEN  // determinant crop
+src/Simul.pas:           IF (Crop.DaysToCCini <> 0)
+src/Simul.pas:                   tFinalCCx := Crop.DaysToFullCanopy
+src/Simul.pas:                      + ROUND(DayFraction * ( (Crop.DaysToFlowering + (Crop.LengthFlowering/2)
+src/Simul.pas:                      - Simulation.DelayedDays)+Tadj+Crop.DaysToGermination - Crop.DaysToFullCanopy));
+src/Simul.pas:                   tFinalCCx := Crop.DaysToFlowering + ROUND(Crop.LengthFlowering/2);
+src/Simul.pas:           IF (tFinalCCx > Crop.DaysToSenescence) THEN tFinalCCx := Crop.DaysToSenescence;
+src/Simul.pas:        // Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
+src/Simul.pas:        AdjustpLeafToETo(ETo,Crop.pLeafAct,pLeafLLAct);
+src/Simul.pas:        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+src/Simul.pas:                IF ((CCiPrev <= Crop.CCoAdjusted)
+src/Simul.pas:                                CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                                       Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                                       Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                                       CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
+src/Simul.pas:                                                       Simulation.SumGDD,Crop.ModeCycle,
+src/Simul.pas:                                   THEN CCiActual := Crop.CCoAdjusted*Exp(CGCSF*2)
+src/Simul.pas:                                   ELSE CCiActual := Crop.CCoAdjusted*Exp(CGCSF*1);
+src/Simul.pas:                        //CCiActual := Crop.CCoAdjusted*Exp(CGCSF*1);
+src/Simul.pas:                                        DetermineCCxAdjusted(Crop.CCxAdjusted);
+src/Simul.pas:                                        IF (Crop.CCxAdjusted < 0)
+src/Simul.pas:                                                   THEN CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                                                         Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                                                         Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                                                         CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
+src/Simul.pas:                                                                         Simulation.SumGDD,Crop.ModeCycle,
+src/Simul.pas:                                                        tTemp := RequiredTimeNew(CCiprev,Crop.CCoAdjusted,Crop.CCxAdjusted,CGCadjusted);
+src/Simul.pas:                                                                CCiActual := CCatTime(tTemp,Crop.CCoAdjusted,CGCadjusted,Crop.CCxAdjusted);
+src/Simul.pas:                                        IF (CCiActual > Crop.CCoAdjusted)
+src/Simul.pas:                                           THEN Crop.CCoAdjusted := CCoTotal
+src/Simul.pas:                                           ELSE Crop.CCoAdjusted := CCiActual;
+src/Simul.pas:                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
+src/Simul.pas:                                     Simulation.SumGDD,Crop.ModeCycle,
+src/Simul.pas:                                Crop.CCoAdjusted := CCoTotal;
+src/Simul.pas:                Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                IF (Crop.CCxAdjusted < 0)
+src/Simul.pas:                   THEN Crop.CCxAdjusted := CCiPrev;
+src/Simul.pas:                IF (VirtualTimeCC < Crop.DaysToSenescence)
+src/Simul.pas:                        IF (Crop.CCxAdjusted > 0.97999*CCxSF)
+src/Simul.pas:                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
+src/Simul.pas:                                     Simulation.SumGDD,Crop.ModeCycle,
+src/Simul.pas:                                Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                           ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,(Crop.CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
+src/Simul.pas:                                     Simulation.SumGDD,Crop.ModeCycle,
+src/Simul.pas:                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
+src/Simul.pas:                        IF (Crop.CCxAdjusted < 0.01)
+src/Simul.pas:                                          * (exp(2*Ln((VirtualTimeCC+Simulation.DelayedDays+1) - Crop.DaysToFullCanopySF))
+src/Simul.pas:                                                /(Crop.DaysToSenescence-Crop.DaysToFullCanopySF));
+src/Simul.pas:                                        CDCadjusted := GetCDCadjustedNoStressNew(CCxTotal,CDCTotal,Crop.CCxAdjusted);
+src/Simul.pas:                                             < (Crop.DaysToSenescence + LengthCanopyDecline(Crop.CCxAdjusted,CDCadjusted)))
+src/Simul.pas:                                                 CCiActual := Crop.CCxAdjusted *
+src/Simul.pas:                                                   (1 - 0.05 * (exp(((VirtualTimeCC+Simulation.DelayedDays+1)-Crop.DaysToSenescence)
+src/Simul.pas:                                                                 *3.33* CDCadjusted/(Crop.CCxAdjusted + 2.29))-1));
+src/Simul.pas:        IF ((VirtualTimeCC < Crop.DaysToSenescence) // not yet late season stage
+src/Simul.pas:                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+src/Simul.pas:                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
+src/Simul.pas:                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
+src/Simul.pas:                                IF ((Simulation.SumEToStress > Crop.SumEToDelaySenescence)
+src/Simul.pas:                                   OR (Crop.SumEToDelaySenescence = 0))
+src/Simul.pas:                                        IF (CCdormant > Crop.CCo)
+src/Simul.pas:                                           THEN CCiSen := Crop.CCo + (1 - Simulation.SumEToStress/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
+src/Simul.pas:                                           ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                                           IF ((Simulation.SumEToStress > Crop.SumEToDelaySenescence)
+src/Simul.pas:                                              OR (Crop.SumEToDelaySenescence = 0))
+src/Simul.pas:                                                   IF (CCdormant > Crop.CCo)
+src/Simul.pas:                                                      THEN CCiSen := Crop.CCo + (1 - Simulation.SumEToStress/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
+src/Simul.pas:                                                      ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                                IF ((Crop.SumEToDelaySenescence > 0) AND (Simulation.SumEToStress <= Crop.SumEToDelaySenescence)) THEN
+src/Simul.pas:                                   IF ((CCiSen < Crop.CCo) OR (CCiSen < CCdormant)) THEN
+src/Simul.pas:                                      IF (CCdormant > Crop.CCo)
+src/Simul.pas:                                         THEN CCiSen := Crop.CCo + (1 - Simulation.SumEToStress/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
+src/Simul.pas:                                         ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                        IF (VirtualTimeCC < Crop.DaysToSenescence)
+src/Simul.pas:                                Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                                   THEN Crop.CCoAdjusted := CCiActual
+src/Simul.pas:                                   ELSE Crop.CCoAdjusted := CCoTotal;
+src/Simul.pas:                                   //Crop.CCxAdjusted := CCiTopEarlySen;
+src/Simul.pas:                                   //Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                        //IF (CCiSen <= Crop.CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
+src/Simul.pas:                           OR (ROUND(10000*CCiSen) <= ROUND(10000*Crop.CCo)))
+src/Simul.pas:                        IF ((VirtualTimeCC > Crop.DaysToSenescence) AND (CCiActual > CCiprev)) THEN
+src/Simul.pas:                           GetNewCCxandCDC(CCiprev,CDCTotal,CCxSF,Crop.CCxAdjusted,CDCadjusted);
+src/Simul.pas:                           CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,(Crop.CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),
+src/Simul.pas:                                     Crop.CGC,CDCadjusted,Crop.GDDCGC,GDDCDCTotal,
+src/Simul.pas:                                     Simulation.SumGDD,Crop.ModeCycle,
+src/Simul.pas:        //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
+src/Simul.pas:        IF (CCiActual > Crop.CCxWithered) THEN Crop.CCxWithered := CCiActual;
+src/Simul.pas:        //IF (Crop.CCxWithered > CCxSFCD) THEN Crop.CCxWithered := CCxSFCD; - OUT 15/10/2008
+src/Simul.pas:         IF (VirtualTimeCC > Crop.DaysToSenescence) THEN
+src/Simul.pas:                IF (Wrelative <= Crop.pLeafAct)
+src/Simul.pas:                                KsLeaf := KsAny(Wrelative,Crop.pLeafAct,pLeafLLAct,Crop.KsShapeFactorLeaf);
+src/Simul.pas:   AND (  ((Crop.subkind = Forage) AND ((StorageON = true) OR (MobilizationON = true))) // transfer assimilates
+src/Simul.pas:        IF ((Crop.subkind = Forage) AND (StorageON = true))
+src/Simul.pas:        IF ((Crop.subkind = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
+src/Simul.pas:GDDtfictive := RequiredGDD(CCiprev,Crop.CCoAdjusted,CCxSF,GDDCGCadjusted);
+src/Simul.pas:        CCxAdjusted := CCatGDDTime(GDDtfictive,Crop.CCoAdjusted,GDDCGCadjusted,CCxSF);
+src/Simul.pas:                KsSen := KsAny(Wrelative,pSenAct,pSenLL,Crop.KsShapeFactorSenescence);
+src/Simul.pas://CCxAdjusted := CCiPrev/(1-0.05*(exp((SumGDDadjCC-GDDayi-Crop.GDDaysToSenescence)*GDDCDC/CCX)-1));
+src/Simul.pas:CCxAdjusted := CCiPrev/(1-0.05*(exp((SumGDDadjCC-GDDayi-Crop.GDDaysToSenescence)*GDDCDC*3.33/(CCX+2.29))-1));
+src/Simul.pas:IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDaysToHarvest))
+src/Simul.pas:        CGCGDDSF := Crop.GDDCGC *(1-Simulation.EffectStress.RedCGC/100);
+src/Simul.pas:        IF (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence)
+src/Simul.pas:           THEN RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+src/Simul.pas:        IF (SumGDDadjCC <= Crop.GDDaysToFullCanopySF)
+src/Simul.pas:                IF (SumGDDadjCC < Crop.GDDaysToSenescence)
+src/Simul.pas:                        CCxSFCD := CCiNoWaterStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                            Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,Crop.GDDaysToGermination,
+src/Simul.pas:                            Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                            CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
+src/Simul.pas:                            Crop.ModeCycle);
+src/Simul.pas:                   ELSE CCxSFCD := CCxSF - (RatDGDD*Simulation.EffectStress.CDecline/100) * (Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+src/Simul.pas:        IF ((SumGDDadjCC = Crop.GDDaysToGermination) AND (Crop.DaysToCCini = 0)) THEN CCiPrev := CCoTotal;
+src/Simul.pas:        GDDtFinalCCx := Crop.GDDaysToSenescence; // non determinant crop
+src/Simul.pas:        IF ((Crop.subkind = Grain) AND (Crop.DeterminancyLinked = true)) THEN // determinancy
+src/Simul.pas:           IF (Crop.DaysToCCini <> 0)
+src/Simul.pas:                   GDDtFinalCCx := Crop.GDDaysToFullCanopy
+src/Simul.pas:                       + ROUND(GDDayFraction * (Crop.GDDaysToFlowering + (Crop.GDDLengthFlowering/2)
+src/Simul.pas:                          +GDDTadj+Crop.GDDaysToGermination-Crop.GDDaysToFullCanopy)) // slow down
+src/Simul.pas:                   GDDtFinalCCx := Crop.GDDaysToFlowering + ROUND(Crop.GDDLengthFlowering/2);
+src/Simul.pas:           IF (GDDtFinalCCx > Crop.GDDaysToSenescence) THEN GDDtFinalCCx := Crop.GDDaysToSenescence;
+src/Simul.pas:        //Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
+src/Simul.pas:        AdjustpLeafToETo(ETo,Crop.pLeafAct,pLeafLLAct);
+src/Simul.pas:        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+src/Simul.pas:                IF ((CCiPrev <= Crop.CCoAdjusted) OR (SumGDDadjCC <= GDDayi)
+src/Simul.pas:                                CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                                       Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                                       Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                                       CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                                       SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:                                CCiActual := Crop.CCoAdjusted*Exp(CGCGDDSF * GDDayi);
+src/Simul.pas:                                   THEN BEGIN // Crop.GDDCGC or GDDCGCadjusted > 0
+src/Simul.pas:                                        DetermineCCxAdjusted(Crop.CCxAdjusted);
+src/Simul.pas:                                        IF (Crop.CCxAdjusted < 0)
+src/Simul.pas:                                                   THEN CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                                                         Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                                                         Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                                                         CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                                                         SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:                                                        GDDtTemp := RequiredGDD(CCiprev,Crop.CCoAdjusted,Crop.CCxAdjusted,GDDCGCadjusted);
+src/Simul.pas:                                                                CCiActual := CCatGDDTime(GDDtTemp,Crop.CCoAdjusted,GDDCGCadjusted,Crop.CCxAdjusted)
+src/Simul.pas:                                        IF (CCiActual > Crop.CCoAdjusted)
+src/Simul.pas:                                           THEN Crop.CCoAdjusted := CCoTotal
+src/Simul.pas:                                           ELSE Crop.CCoAdjusted := CCiActual;
+src/Simul.pas:                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                     SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:                                Crop.CCoAdjusted := CCoTotal;
+src/Simul.pas:                Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                IF (Crop.CCxAdjusted < 0) THEN Crop.CCxAdjusted := CCiPrev;
+src/Simul.pas:                IF (SumGDDadjCC < Crop.GDDaysToSenescence)
+src/Simul.pas:                        IF (Crop.CCxAdjusted > 0.97999*CCxSF)
+src/Simul.pas:                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                     SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:                                Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                           ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,(Crop.CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),
+src/Simul.pas:                                     Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                     SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
+src/Simul.pas:                        GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,Crop.CCxAdjusted);
+src/Simul.pas:                        CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,(Crop.CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),
+src/Simul.pas:                                     Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                     SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
+src/Simul.pas:                        IF (Crop.CCxAdjusted < 0.01)
+src/Simul.pas:                                          * (exp(2*Ln(SumGDDadjCC - Crop.GDDaysToFullCanopySF))
+src/Simul.pas:                                                /(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF));
+src/Simul.pas:                                        GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,Crop.CCxAdjusted);
+src/Simul.pas:                                        IF (SumGDDadjCC < (Crop.GDDaysToSenescence + LengthCanopyDecline(Crop.CCxAdjusted,GDDCDCadjusted)))
+src/Simul.pas:                                                 CCiActual := Crop.CCxAdjusted *
+src/Simul.pas:                                                   (1 - 0.05 * (exp((SumGDDadjCC-Crop.GDDaysToSenescence)
+src/Simul.pas:                                                                 *3.33* GDDCDCadjusted/(Crop.CCxAdjusted + 2.29))-1));
+src/Simul.pas:        IF ((SumGDDadjCC < Crop.GDDaysToSenescence) // not yet late season stage
+src/Simul.pas:                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+src/Simul.pas:                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
+src/Simul.pas:                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
+src/Simul.pas:                                IF ((Simulation.SumEToStress > Crop.SumEToDelaySenescence)
+src/Simul.pas:                                   OR (Crop.SumEToDelaySenescence = 0))
+src/Simul.pas:                                        IF (CCdormant > Crop.CCo)
+src/Simul.pas:                                           THEN CCiSen := Crop.CCo + (1 - Simulation.SumEToStress/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
+src/Simul.pas:                                           ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                                           IF ((Simulation.SumEToStress > Crop.SumEToDelaySenescence)
+src/Simul.pas:                                              OR (Crop.SumEToDelaySenescence = 0))
+src/Simul.pas:                                              //ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                                                   IF (CCdormant > Crop.CCo)
+src/Simul.pas:                                                      THEN CCiSen := Crop.CCo + (1 - Simulation.SumEToStress/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
+src/Simul.pas:                                                      ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                                IF ((Crop.SumEToDelaySenescence > 0) AND (Simulation.SumEToStress <= Crop.SumEToDelaySenescence)) THEN
+src/Simul.pas:                                   IF ((CCiSen < Crop.CCo) OR (CCiSen < CCdormant)) THEN
+src/Simul.pas:                                      IF (CCdormant > Crop.CCo)
+src/Simul.pas:                                         THEN CCiSen := Crop.CCo + (1 - Simulation.SumEToStress/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
+src/Simul.pas:                                         ELSE CCiSen := Crop.CCo;
+src/Simul.pas:                        IF (SumGDDadjCC < Crop.GDDaysToSenescence)
+src/Simul.pas:                                Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                                   THEN Crop.CCoAdjusted := CCiActual
+src/Simul.pas:                                   ELSE Crop.CCoAdjusted := CCoTotal;
+src/Simul.pas:                                //Crop.CCxAdjusted := CCiTopEarlySen;
+src/Simul.pas:                                //Crop.CCxAdjusted := CCiActual;
+src/Simul.pas:                        //IF (CCiSen <= Crop.CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
+src/Simul.pas:                           OR (ROUND(10000*CCiSen) <= ROUND(10000*Crop.CCo)))
+src/Simul.pas:                        IF ((TimeSenescence > 0) AND (SumGDDadjCC > Crop.GDDaysToSenescence)) THEN
+src/Simul.pas:                           GetNewCCxandGDDCDC(CCiprev,GDDCDCTotal,CCxSF,Crop.CCxAdjusted,GDDCDCadjusted);
+src/Simul.pas:                           CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
+src/Simul.pas:                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/Simul.pas:                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
+src/Simul.pas:                                     CCoTotal,(Crop.CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),
+src/Simul.pas:                                     Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
+src/Simul.pas:                                     SumGDDadjCC,Crop.ModeCycle,
+src/Simul.pas:        //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
+src/Simul.pas:        IF (CCiActual > Crop.CCxWithered) THEN Crop.CCxWithered := CCiActual;
+src/Simul.pas:        //IF (Crop.CCxWithered > CCxSFCD) THEN Crop.CCxWithered := CCxSFCD; - OUT 15/10/2008
+src/Simul.pas:         IF (SumGDDadjCC > Crop.GDDaysToSenescence) THEN
+src/Simul.pas:        IF (dayi < Crop.Day1) // before season
+src/Simul.pas:                IF (dayi < Crop.Day1+Crop.DaysToHarvest) // in season
+src/Simul.pas:   IF ((dayi < Crop.Day1) AND (SimulParam.IrriFwOffSeason < 100))
+src/Simul.pas:   IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (SimulParam.IrriFwInSeason < 100))
+src/Simul.pas:   IF ((dayi >= Crop.Day1+Crop.DaysToHarvest)AND (SimulParam.IrriFwOffSeason < 100))
+src/Simul.pas:IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (GetIrriMode() = Inet))
+src/Simul.pas:   IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest))
+src/Simul.pas:theta_critical := SoilLayer[layeri].FC/100 - theta_TAW * Crop.pActStom;
+src/Simul.pas:        sink_value := (Crop.SmaxTop + Crop.SmaxBot)/2;
+src/Simul.pas:        SbotComp := Crop.SmaxTop;
+src/Simul.pas:              THEN SbotComp := Crop.SmaxBot * Simulation.SCor + (Crop.SmaxTop - Crop.SmaxBot*Simulation.SCor)
+src/Simul.pas:              ELSE SbotComp := Crop.SmaxBot*Simulation.SCor;
+src/Simul.pas:IF ((DaySubmerged >= SimulParam.DelayLowOxygen) AND (Crop.AnaeroPoint > 0))
+src/Simul.pas:   ELSE IF (Comp.theta > (SoilLayer[Comp.Layer].SAT - Crop.AnaeroPoint)/100)
+src/Simul.pas:                alfaAN := (SoilLayer[Comp.Layer].SAT/100 - Comp.theta)/(Crop.AnaeroPoint/100);
+src/Simul.pas:                           RedFact := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
+src/Simul.pas:                              //RedFact := KsAny(Wrel,Crop.pActStom,pStomatLLAct,Crop.KsShapeFactorStomata);
+src/Simul.pas:                           RedFact := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
+src/Simul.pas:              THEN RedFactECsw := AdjustedKsStoToECsw(Crop.ECemin,Crop.ECemax,Crop.ResponseECsw,
+src/Simul.pas:           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
+src/Simul.pas:                                     alfa := (1 - Simulation.EffectStress.RedKsSto/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,Crop.KsShapeFactorStomata);
+src/Simul.pas:                     RedFactECsw := AdjustedKsStoToECsw(Crop.ECemin,Crop.ECemax,Crop.ResponseECsw,
+src/Simul.pas:     IF (Crop.AnaeroPoint > 0) THEN Correction_Anaeroby(Compartment[compi],alfa);
+src/Simul.pas:IF (Crop.AnaeroPoint > 0) THEN Part := (1-DaySubmerged/SimulParam.DelayLowOxygen)
+src/Simul.pas://KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,SimulParam.KsShapeFactorSalt);
+src/Simul.pas:KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,(0.0));
+src/Simul.pas:IF ((Simulation.Germinate = false) AND (dayi >=Crop.Day1)) THEN CheckGermination;
+src/Simul.pas:   CASE Crop.ModeCycle OF
+src/Simul.pas:IF (Crop.ModeCycle = Calendardays)
+src/Simul.pas:                      Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax);
+src/Simul.pas:CalculateETpot(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,Crop.DaysToHarvest,DayLastCut,
+src/Simul.pas:               CCiActual,ETo,Crop.KcTop,Crop.KcDecline,Crop.CCxAdjusted,Crop.CCxWithered,Crop.CCEffectEvapLate,CO2i,
+src/Simul.pas:               GDDayi,Crop.GDtranspLow,Tpot,EpotTot);
+src/Simul.pas:AdjustpStomatalToETo(ETo,Crop.pActStom);
+src/Simul.pas:       ((Crop.AnaeroPoint = 0) OR (DaySubmerged < SimulParam.DelayLowOxygen)))
+src/TempProcessing.pas:CASE Crop.ModeCycle OF
+src/TempProcessing.pas:              Crop.GDDaysToFullCanopy := Crop.GDDaysToGermination +
+src/TempProcessing.pas:                 ROUND(LN((0.25*Crop.CCx*Crop.CCx/Crop.CCo)/(Crop.CCx-(0.98*Crop.CCx)))/Crop.GDDCGC);
+src/TempProcessing.pas:              IF (Crop.GDDaysToFullCanopy > Crop.GDDaysToHarvest)
+src/TempProcessing.pas:                 THEN Crop.GDDaysToFullCanopy := Crop.GDDaysToHarvest;
+src/TempProcessing.pas:              AdjustCalendarDays(FirstCropDay,Crop.subkind,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,
+src/TempProcessing.pas:                 Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToFlowering,
+src/TempProcessing.pas:                 Crop.GDDLengthFlowering,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,Crop.GDDaysToMaxRooting,
+src/TempProcessing.pas:                 Crop.GDDaysToHIo,
+src/TempProcessing.pas:                 Crop.GDDCGC,Crop.GDDCDC,Crop.CCo,Crop.CCx,CGCisGiven,Crop.HI,
+src/TempProcessing.pas:                 Crop.DaysToCCini,Crop.Planting,
+src/TempProcessing.pas:                 Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToFlowering,Crop.LengthFlowering,
+src/TempProcessing.pas:                 Crop.DaysToSenescence,Crop.DaysToHarvest,Crop.DaysToMaxRooting,Crop.DaysToHIo,
+src/TempProcessing.pas:                 Crop.Length,Crop.CGC,Crop.CDC,Crop.dHIdt,Succes);
+src/TempProcessing.pas:READLN(f0,Crop.Day1); //First day of cropping period
+src/TempProcessing.pas:READLN(f0,Crop.DayN); //Last day of cropping period
+src/TempProcessing.pas:IF (Crop.subkind = Forage) THEN
+src/TempProcessing.pas:   AdjustYearPerennials(Simulation.YearSeason,Crop.SownYear1,Crop.ModeCycle,Crop.RootMax,Crop.RootMinYear1,
+src/TempProcessing.pas:                     Crop.CCo,Crop.SizeSeedling,Crop.CGC,Crop.CCx,Crop.GDDCGC,Crop.PlantingDens,
+src/TempProcessing.pas:                     Crop.Planting,Crop.RootMin,Crop.SizePlant,Crop.CCini,
+src/TempProcessing.pas:                     Crop.DaysToCCini,Crop.GDDaysToCCini);
+src/TempProcessing.pas:   Crop.DaysToHarvest := Crop.DayN - Crop.Day1 + 1;
+src/TempProcessing.pas:   AdjustCropFileParameters(GetCropFileSet(),(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
+src/TempProcessing.pas:                                    Crop.DaysToSenescence,Crop.DaysToHarvest,
+src/TempProcessing.pas:                                    Crop.GDDaysToSenescence,Crop.GDDaysToHarvest);
+src/TempProcessing.pas:AdjustCalendarCrop(Crop.Day1);
+src/TempProcessing.pas:   THEN AdjustCropYearToClimFile(Crop.Day1,Crop.DayN) // adjusting Crop.Day1 and Crop.DayN to ClimFile
+src/TempProcessing.pas:   ELSE Crop.DayN := Crop.Day1 + Crop.DaysToHarvest - 1;
+src/TempProcessing.pas:   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
+src/TempProcessing.pas:        TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
+src/TempProcessing.pas:                          Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
+src/TempProcessing.pas:                          Crop.DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
+src/TempProcessing.pas:IF ((Crop.Day1 <> Simulation.FromDayNr) OR (Crop.DayN <> Simulation.ToDayNr))
+src/TempProcessing.pas:                IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
+src/TempProcessing.pas:                   IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
+src/TempProcessing.pas:                      THEN AdjustSizeCompartments(Crop.RootMax) // no restrictive soil layer
+src/TempProcessing.pas:                       READLN(fTemp,StringREAD);  // i.e. Crop.Day1
+src/TempProcessing.pas:        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop.SIM');
+src/TempProcessing.pas:   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
+src/TempProcessing.pas:   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
+src/TempProcessing.pas:    IF (((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) AND (WPyield < 100) AND (Dayi > LFlor)) THEN
+src/TempProcessing.pas:IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN //DaysToFlowering corresponds with Tuberformation
+src/TempProcessing.pas:   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
+src/interface_global.pas:    GetCrop.ModeCycle := GetCrop_ModeCycle();
+src/interface_global.pas:    GetCrop.Planting := GetCrop_Planting();
+src/interface_global.pas:    GetCrop.pMethod := GetCrop_pMethod();
+src/interface_global.pas:    GetCrop.pdef := GetCrop_pdef();
+src/interface_global.pas:    GetCrop.pActStom := GetCrop_pActStom();
+src/interface_global.pas:    GetCrop.KsShapeFactorLeaf := GetCrop_KsShapeFactorLeaf();
+src/interface_global.pas:    GetCrop.KsShapeFactorStomata := GetCrop_KsShapeFactorStomata();
+src/interface_global.pas:    GetCrop.KsShapeFactorSenescence := GetCrop_KsShapeFactorSenescence();
+src/interface_global.pas:    GetCrop.pLeafDefUL := GetCrop_pLeafDefUL();
+src/interface_global.pas:    GetCrop.pLeafDefLL := GetCrop_pLeafDefLL();
+src/interface_global.pas:    GetCrop.pLeafAct := GetCrop_pLeafAct();
+src/interface_global.pas:    GetCrop.pSenescence := GetCrop_pSenescence();
+src/interface_global.pas:    GetCrop.pSenAct := GetCrop_pSenAct();
+src/interface_global.pas:    GetCrop.pPollination := GetCrop_pPollination();
+src/interface_global.pas:    GetCrop.SumEToDelaySenescence := GetCrop_SumEToDelaySenescence();
+src/interface_global.pas:    GetCrop.AnaeroPoint := GetCrop_AnaeroPoint();
+src/interface_global.pas:    GetCrop.StressResponse := GetCrop_StressResponse();
+src/interface_global.pas:    GetCrop.ECemin := GetCrop_ECemin();
+src/interface_global.pas:    GetCrop.ECemax := GetCrop_ECemax();
+src/interface_global.pas:    GetCrop.CCsaltDistortion := GetCrop_CCsaltDistortion();
+src/interface_global.pas:    GetCrop.ResponseECsw := GetCrop_ResponseECsw();
+src/interface_global.pas:    GetCrop.SmaxTopQuarter := GetCrop_SmaxTopQuarter();
+src/interface_global.pas:    GetCrop.SmaxBotQuarter := GetCrop_SmaxBotQuarter();
+src/interface_global.pas:    GetCrop.SmaxTop := GetCrop_SmaxTop();
+src/interface_global.pas:    GetCrop.SmaxBot := GetCrop_SmaxBot();
+src/interface_global.pas:    GetCrop.KcTop := GetCrop_KcTop();
+src/interface_global.pas:    GetCrop.KcDecline := GetCrop_KcDecline();
+src/interface_global.pas:    GetCrop.CCEffectEvapLate := GetCrop_CCEffectEvapLate();
+src/interface_global.pas:    GetCrop.Day1 := GetCrop_Day1();
+src/interface_global.pas:    GetCrop.DayN := GetCrop_DayN();
+src/interface_global.pas:    GetCrop.Length := GetCrop_Length();
+src/interface_global.pas:    GetCrop.RootMin := GetCrop_RootMin();
+src/interface_global.pas:    GetCrop.RootMax := GetCrop_RootMax();
+src/interface_global.pas:    GetCrop.RootShape := GetCrop_RootShape();
+src/interface_global.pas:    GetCrop.Tbase := GetCrop_Tbase();
+src/interface_global.pas:    GetCrop.Tupper := GetCrop_Tupper();
+src/interface_global.pas:    GetCrop.Tcold := GetCrop_Tcold();
+src/interface_global.pas:    GetCrop.Theat := GetCrop_Theat();
+src/interface_global.pas:    GetCrop.GDtranspLow := GetCrop_GDtranspLow();
+src/interface_global.pas:    GetCrop.SizeSeedling := GetCrop_SizeSeedling();
+src/interface_global.pas:    GetCrop.SizePlant := GetCrop_SizePlant();
+src/interface_global.pas:    GetCrop.PlantingDens := GetCrop_PlantingDens();
+src/interface_global.pas:    GetCrop.CCo := GetCrop_CCo();
+src/interface_global.pas:    GetCrop.CCini := GetCrop_CCini();
+src/interface_global.pas:    GetCrop.CGC := GetCrop_CGC();
+src/interface_global.pas:    GetCrop.GDDCGC := GetCrop_GDDCGC();
+src/interface_global.pas:    GetCrop.CCx := GetCrop_CCx();
+src/interface_global.pas:    GetCrop.CDC := GetCrop_CDC();
+src/interface_global.pas:    GetCrop.GDDCDC := GetCrop_GDDCDC();
+src/interface_global.pas:    GetCrop.CCxAdjusted := GetCrop_CCxAdjusted();
+src/interface_global.pas:    GetCrop.CCxWithered := GetCrop_CCxWithered();
+src/interface_global.pas:    GetCrop.CCoAdjusted := GetCrop_CCoAdjusted();
+src/interface_global.pas:    GetCrop.DaysToCCini := GetCrop_DaysToCCini();
+src/interface_global.pas:    GetCrop.DaysToGermination := GetCrop_DaysToGermination();
+src/interface_global.pas:    GetCrop.DaysToFullCanopy := GetCrop_DaysToFullCanopy();
+src/interface_global.pas:    GetCrop.DaysToFullCanopySF := GetCrop_DaysToFullCanopySF();
+src/interface_global.pas:    GetCrop.DaysToFlowering := GetCrop_DaysToFlowering();
+src/interface_global.pas:    GetCrop.LengthFlowering := GetCrop_LengthFlowering();
+src/interface_global.pas:    GetCrop.DaysToSenescence := GetCrop_DaysToSenescence();
+src/interface_global.pas:    GetCrop.DaysToHarvest := GetCrop_DaysToHarvest();
+src/interface_global.pas:    GetCrop.DaysToMaxRooting := GetCrop_DaysToMaxRooting();
+src/interface_global.pas:    GetCrop.DaysToHIo := GetCrop_DaysToHIo();
+src/interface_global.pas:    GetCrop.GDDaysToCCini := GetCrop_GDDaysToCCini();
+src/interface_global.pas:    GetCrop.GDDaysToGermination := GetCrop_GDDaysToGermination();
+src/interface_global.pas:    GetCrop.GDDaysToFullCanopy := GetCrop_GDDaysToFullCanopy();
+src/interface_global.pas:    GetCrop.GDDaysToFullCanopySF := GetCrop_GDDaysToFullCanopySF();
+src/interface_global.pas:    GetCrop.GDDaysToFlowering := GetCrop_GDDaysToFlowering();
+src/interface_global.pas:    GetCrop.GDDLengthFlowering := GetCrop_GDDLengthFlowering();
+src/interface_global.pas:    GetCrop.GDDaysToSenescence := GetCrop_GDDaysToSenescence();
+src/interface_global.pas:    GetCrop.GDDaysToHarvest := GetCrop_GDDaysToHarvest();
+src/interface_global.pas:    GetCrop.GDDaysToMaxRooting := GetCrop_GDDaysToMaxRooting();
+src/interface_global.pas:    GetCrop.GDDaysToHIo := GetCrop_GDDaysToHIo();
+src/interface_global.pas:    GetCrop.WP := GetCrop_WP();
+src/interface_global.pas:    GetCrop.WPy := GetCrop_WPy();
+src/interface_global.pas:    GetCrop.AdaptedToCO2 := GetCrop_AdaptedToCO2();
+src/interface_global.pas:    GetCrop.HI := GetCrop_HI();
+src/interface_global.pas:    GetCrop.dHIdt := GetCrop_dHIdt();
+src/interface_global.pas:    GetCrop.HIincrease := GetCrop_HIincrease();
+src/interface_global.pas:    GetCrop.aCoeff := GetCrop_aCoeff();
+src/interface_global.pas:    GetCrop.bCoeff := GetCrop_bCoeff();
+src/interface_global.pas:    GetCrop.DHImax := GetCrop_DHImax();
+src/interface_global.pas:    GetCrop.DeterminancyLinked := GetCrop_DeterminancyLinked();
+src/interface_global.pas:    GetCrop.fExcess := GetCrop_fExcess();
+src/interface_global.pas:    GetCrop.DryMatter := GetCrop_DryMatter();
+src/interface_global.pas:    GetCrop.RootMinYear1 := GetCrop_RootMinYear1();
+src/interface_global.pas:    GetCrop.SownYear1 := GetCrop_SownYear1();
+src/interface_global.pas:    GetCrop.YearCCx := GetCrop_YearCCx();
+src/interface_global.pas:    GetCrop.CCxRoot := GetCrop_CCxRoot();
+src/interface_global.pas:    GetCrop.Assimilates := GetCrop_Assimilates();
+src/interface_global.pas:    SetCrop_subkind(Crop.subkind);
+src/interface_global.pas:    SetCrop_ModeCycle(Crop.ModeCycle);
+src/interface_global.pas:    SetCrop_Planting(Crop.Planting);
+src/interface_global.pas:    SetCrop_pMethod(Crop.pMethod);
+src/interface_global.pas:    SetCrop_pdef(Crop.pdef);
+src/interface_global.pas:    SetCrop_pActStom(Crop.pActStom);
+src/interface_global.pas:    SetCrop_KsShapeFactorLeaf(Crop.KsShapeFactorLeaf);
+src/interface_global.pas:    SetCrop_KsShapeFactorStomata(Crop.KsShapeFactorStomata);
+src/interface_global.pas:    SetCrop_KsShapeFactorSenescence(Crop.KsShapeFactorSenescence);
+src/interface_global.pas:    SetCrop_pLeafDefUL(Crop.pLeafDefUL);
+src/interface_global.pas:    SetCrop_pLeafDefLL(Crop.pLeafDefLL);
+src/interface_global.pas:    SetCrop_pLeafAct(Crop.pLeafAct);
+src/interface_global.pas:    SetCrop_pSenescence(Crop.pSenescence);
+src/interface_global.pas:    SetCrop_pSenAct(Crop.pSenAct);
+src/interface_global.pas:    SetCrop_pPollination(Crop.pPollination);
+src/interface_global.pas:    SetCrop_SumEToDelaySenescence(Crop.SumEToDelaySenescence);
+src/interface_global.pas:    SetCrop_AnaeroPoint(Crop.AnaeroPoint);
+src/interface_global.pas:    SetCrop_StressResponse(Crop.StressResponse);
+src/interface_global.pas:    SetCrop_ECemin(Crop.ECemin);
+src/interface_global.pas:    SetCrop_ECemax(Crop.ECemax);
+src/interface_global.pas:    SetCrop_CCsaltDistortion(Crop.CCsaltDistortion);
+src/interface_global.pas:    SetCrop_ResponseECsw(Crop.ResponseECsw);
+src/interface_global.pas:    SetCrop_SmaxTopQuarter(Crop.SmaxTopQuarter);
+src/interface_global.pas:    SetCrop_SmaxBotQuarter(Crop.SmaxBotQuarter);
+src/interface_global.pas:    SetCrop_SmaxTop(Crop.SmaxTop);
+src/interface_global.pas:    SetCrop_SmaxBot(Crop.SmaxBot);
+src/interface_global.pas:    SetCrop_KcTop(Crop.KcTop);
+src/interface_global.pas:    SetCrop_KcDecline(Crop.KcDecline);
+src/interface_global.pas:    SetCrop_CCEffectEvapLate(Crop.CCEffectEvapLate);
+src/interface_global.pas:    SetCrop_Day1(Crop.Day1);
+src/interface_global.pas:    SetCrop_DayN(Crop.DayN);
+src/interface_global.pas:    SetCrop_Length(Crop.Length);
+src/interface_global.pas:    SetCrop_RootMin(Crop.RootMin);
+src/interface_global.pas:    SetCrop_RootMax(Crop.RootMax);
+src/interface_global.pas:    SetCrop_RootShape(Crop.RootShape);
+src/interface_global.pas:    SetCrop_Tbase(Crop.Tbase);
+src/interface_global.pas:    SetCrop_Tupper(Crop.Tupper);
+src/interface_global.pas:    SetCrop_Tcold(Crop.Tcold);
+src/interface_global.pas:    SetCrop_Theat(Crop.Theat);
+src/interface_global.pas:    SetCrop_GDtranspLow(Crop.GDtranspLow);
+src/interface_global.pas:    SetCrop_SizeSeedling(Crop.SizeSeedling);
+src/interface_global.pas:    SetCrop_SizePlant(Crop.SizePlant);
+src/interface_global.pas:    SetCrop_PlantingDens(Crop.PlantingDens);
+src/interface_global.pas:    SetCrop_CCo(Crop.CCo);
+src/interface_global.pas:    SetCrop_CCini(Crop.CCini);
+src/interface_global.pas:    SetCrop_CGC(Crop.CGC);
+src/interface_global.pas:    SetCrop_GDDCGC(Crop.GDDCGC);
+src/interface_global.pas:    SetCrop_CCx(Crop.CCx);
+src/interface_global.pas:    SetCrop_CDC(Crop.CDC);
+src/interface_global.pas:    SetCrop_GDDCDC(Crop.GDDCDC);
+src/interface_global.pas:    SetCrop_CCxAdjusted(Crop.CCxAdjusted);
+src/interface_global.pas:    SetCrop_CCxWithered(Crop.CCxWithered);
+src/interface_global.pas:    SetCrop_CCoAdjusted(Crop.CCoAdjusted);
+src/interface_global.pas:    SetCrop_DaysToCCini(Crop.DaysToCCini);
+src/interface_global.pas:    SetCrop_DaysToGermination(Crop.DaysToGermination);
+src/interface_global.pas:    SetCrop_DaysToFullCanopy(Crop.DaysToFullCanopy);
+src/interface_global.pas:    SetCrop_DaysToFullCanopySF(Crop.DaysToFullCanopySF);
+src/interface_global.pas:    SetCrop_DaysToFlowering(Crop.DaysToFlowering);
+src/interface_global.pas:    SetCrop_LengthFlowering(Crop.LengthFlowering);
+src/interface_global.pas:    SetCrop_DaysToSenescence(Crop.DaysToSenescence);
+src/interface_global.pas:    SetCrop_DaysToHarvest(Crop.DaysToHarvest);
+src/interface_global.pas:    SetCrop_DaysToMaxRooting(Crop.DaysToMaxRooting);
+src/interface_global.pas:    SetCrop_DaysToHIo(Crop.DaysToHIo);
+src/interface_global.pas:    SetCrop_GDDaysToCCini(Crop.GDDaysToCCini);
+src/interface_global.pas:    SetCrop_GDDaysToGermination(Crop.GDDaysToGermination);
+src/interface_global.pas:    SetCrop_GDDaysToFullCanopy(Crop.GDDaysToFullCanopy);
+src/interface_global.pas:    SetCrop_GDDaysToFullCanopySF(Crop.GDDaysToFullCanopySF);
+src/interface_global.pas:    SetCrop_GDDaysToFlowering(Crop.GDDaysToFlowering);
+src/interface_global.pas:    SetCrop_GDDLengthFlowering(Crop.GDDLengthFlowering);
+src/interface_global.pas:    SetCrop_GDDaysToSenescence(Crop.GDDaysToSenescence);
+src/interface_global.pas:    SetCrop_GDDaysToHarvest(Crop.GDDaysToHarvest);
+src/interface_global.pas:    SetCrop_GDDaysToMaxRooting(Crop.GDDaysToMaxRooting);
+src/interface_global.pas:    SetCrop_GDDaysToHIo(Crop.GDDaysToHIo);
+src/interface_global.pas:    SetCrop_WP(Crop.WP);
+src/interface_global.pas:    SetCrop_WPy(Crop.WPy);
+src/interface_global.pas:    SetCrop_AdaptedToCO2(Crop.AdaptedToCO2);
+src/interface_global.pas:    SetCrop_HI(Crop.HI);
+src/interface_global.pas:    SetCrop_dHIdt(Crop.dHIdt);
+src/interface_global.pas:    SetCrop_HIincrease(Crop.HIincrease);
+src/interface_global.pas:    SetCrop_aCoeff(Crop.aCoeff);
+src/interface_global.pas:    SetCrop_bCoeff(Crop.bCoeff);
+src/interface_global.pas:    SetCrop_DHImax(Crop.DHImax);
+src/interface_global.pas:    SetCrop_DeterminancyLinked(Crop.DeterminancyLinked);
+src/interface_global.pas:    SetCrop_fExcess(Crop.fExcess);
+src/interface_global.pas:    SetCrop_DryMatter(Crop.DryMatter);
+src/interface_global.pas:    SetCrop_RootMinYear1(Crop.RootMinYear1);
+src/interface_global.pas:    SetCrop_SownYear1(Crop.SownYear1);
+src/interface_global.pas:    SetCrop_YearCCx(Crop.YearCCx);
+src/interface_global.pas:    SetCrop_CCxRoot(Crop.CCxRoot);
+src/interface_global.pas:    SetCrop_Assimilates(Crop.Assimilates);
+Binary file src/PlugInBareV70 matches

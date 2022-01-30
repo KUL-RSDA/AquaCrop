@@ -2197,8 +2197,8 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                    ELSE BEGIN // CGCadjusted = 0 - too dry for leaf expansion
                                         CCiActual := CCiPrev;
                                         IF (CCiActual > Crop.CCoAdjusted)
-                                           THEN Crop.CCoAdjusted := CCoTotal
-                                           ELSE Crop.CCoAdjusted := CCiActual;
+                                           THEN SetCrop_CCoAdjusted(CCoTotal)
+                                           ELSE SetCrop_CCoAdjusted(CCiActual);
                                         END;
                                 END
                            ELSE BEGIN
@@ -2208,7 +2208,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                      CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
                                      Simulation.SumGDD,Crop.ModeCycle,
                                      Simulation.EffectStress.RedCGC,Simulation.EffectStress.RedCCX);
-                                Crop.CCoAdjusted := CCoTotal;
+                                SetCrop_CCoAdjusted(CCoTotal);
                                 StressLeaf := -33; // maximum canopy is reached;
                                 CGCadjustmentAfterCutting := false; // no increase anymore of CGC after cutting
                                 END;
@@ -2219,7 +2219,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                            CGCadjustmentAfterCutting := false; // no increase anymore of CGC after cutting
                            END;
                         END;
-                Crop.CCxAdjusted := CCiActual;
+                SetCrop_CCxAdjusted(CCiActual);
                 END
 
         //3. Canopy can no longer develop (Mid-season (from tFinalCCx) or Late season stage)
@@ -2227,7 +2227,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                 StressLeaf := -33; // maximum canopy is reached;
                 CGCadjustmentAfterCutting := false; // no increase anymore of CGC after cutting
                 IF (Crop.CCxAdjusted < 0)
-                   THEN Crop.CCxAdjusted := CCiPrev;
+                   THEN SetCrop_CCxAdjusted(CCiPrev);
 
                 IF (VirtualTimeCC < Crop.DaysToSenescence)
                 // mid-season
@@ -2240,7 +2240,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                      CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
                                      Simulation.SumGDD,Crop.ModeCycle,
                                      Simulation.EffectStress.RedCGC,Simulation.EffectStress.RedCCX);
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 END
                            ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
                                      Crop.DaysToSenescence,Crop.DaysToHarvest,
@@ -2253,7 +2253,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                 // late season
                    ELSE BEGIN
                         StressSenescence := undef_int; // to avoid display of zero stress in late season
-                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
+                        IF (Crop.CCxAdjusted > CCxSFCD) THEN SetCrop_CCxAdjusted(CCxSFCD);
                         IF (Crop.CCxAdjusted < 0.01)
                            THEN CCiActual := 0
                            ELSE BEGIN  // calculate CC in late season
@@ -2361,15 +2361,15 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                 CCiActual := CCiSen;
                                 IF (CCiActual > CCiPrev) THEN CCiActual := CCiPrev; // to avoid jump in CC
                                                          // when CGCadjusted increases as a result of watering
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 IF (CCiActual < CCoTotal)
-                                   THEN Crop.CCoAdjusted := CCiActual
-                                   ELSE Crop.CCoAdjusted := CCoTotal;
+                                   THEN SetCrop_CCoAdjusted(CCiActual)
+                                   ELSE SetCrop_CCoAdjusted(CCoTotal);
                                 END
                            ELSE BEGIN // in late season
                                 IF (CCiSen < CCiActual) THEN CCiActual := CCiSen;
-                                   //Crop.CCxAdjusted := CCiTopEarlySen;
-                                   //Crop.CCxAdjusted := CCiActual;
+                                   //SetCrop_CCxAdjusted(CCiTopEarlySen);
+                                   //SetCrop_CCxAdjusted(CCiActual);
                                 END;
                         //IF (CCiSen <= Crop.CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
                         IF ((ROUND(10000*CCiSen) <= (10000*CCdormant))
@@ -2726,8 +2726,8 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                    ELSE BEGIN // GDDCGCadjusted = 0 - too dry for leaf expansion
                                         CCiActual := CCiPrev;
                                         IF (CCiActual > Crop.CCoAdjusted)
-                                           THEN Crop.CCoAdjusted := CCoTotal
-                                           ELSE Crop.CCoAdjusted := CCiActual;
+                                           THEN SetCrop_CCoAdjusted(CCoTotal)
+                                           ELSE SetCrop_CCoAdjusted(CCiActual);
                                         END;
                                 END
                            ELSE BEGIN
@@ -2737,7 +2737,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                      CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
                                      SumGDDadjCC,Crop.ModeCycle,
                                      Simulation.EffectStress.RedCGC,Simulation.EffectStress.RedCCX);
-                                Crop.CCoAdjusted := CCoTotal;
+                                SetCrop_CCoAdjusted(CCoTotal);
                                 StressLeaf := -33; // maximum canopy is reached;
                                 CGCadjustmentAfterCutting := false;   // no increase of Canopy development after Cutting
                                 END;
@@ -2748,14 +2748,14 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                            CGCadjustmentAfterCutting := false;  // no increase of Canopy development after Cutting
                            END;
                         END;
-                Crop.CCxAdjusted := CCiActual;
+                SetCrop_CCxAdjusted(CCiActual);
                 END
 
         //3. Canopy can no longer develop (Mid-season (from tFinalCCx) or Late season stage)
            ELSE BEGIN
                 StressLeaf := -33; // maximum canopy is reached;
                 CGCadjustmentAfterCutting := false;   // no increase of Canopy development after Cutting
-                IF (Crop.CCxAdjusted < 0) THEN Crop.CCxAdjusted := CCiPrev;
+                IF (Crop.CCxAdjusted < 0) THEN SetCrop_CCxAdjusted(CCiPrev);
 
                 IF (SumGDDadjCC < Crop.GDDaysToSenescence)
                 // mid-season
@@ -2768,7 +2768,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                      CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
                                      SumGDDadjCC,Crop.ModeCycle,
                                      Simulation.EffectStress.RedCGC,Simulation.EffectStress.RedCCX);
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 END
                            ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
                                      Crop.DaysToSenescence,Crop.DaysToHarvest,
@@ -2783,7 +2783,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                    ELSE BEGIN
                         (*
                         StressSenescence := undef_int; // to avoid display of zero stress in late season
-                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
+                        IF (Crop.CCxAdjusted > CCxSFCD) THEN SetCrop_CCxAdjusted(CCxSFCD);
                         GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,Crop.CCxAdjusted);
                         CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
                                      Crop.DaysToSenescence,Crop.DaysToHarvest,
@@ -2795,7 +2795,7 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                         //IF (CCiActual > CCxSFCD) THEN CCiActual := CCxSFCD; // added March 2017 *)
 
                         StressSenescence := undef_int; // to avoid display of zero stress in late season
-                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
+                        IF (Crop.CCxAdjusted > CCxSFCD) THEN SetCrop_CCxAdjusted(CCxSFCD);
                         IF (Crop.CCxAdjusted < 0.01)
                            THEN CCiActual := 0
                            ELSE BEGIN  // calculate CC in late season
@@ -2901,15 +2901,15 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                 CCiActual := CCiSen;
                                 IF (CCiActual > CCiPrev) THEN CCiActual := CCiPrev; // to avoid jump in CC
                                                          // when GDDCGCadjusted increases as a result of watering
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 IF (CCiActual < CCoTotal)
-                                   THEN Crop.CCoAdjusted := CCiActual
-                                   ELSE Crop.CCoAdjusted := CCoTotal;
+                                   THEN SetCrop_CCoAdjusted(CCiActual)
+                                   ELSE SetCrop_CCoAdjusted(CCoTotal);
                                 END
                            ELSE BEGIN // in late season
                                 IF (CCiSen < CCiActual) THEN CCiActual := CCiSen;
-                                //Crop.CCxAdjusted := CCiTopEarlySen;
-                                //Crop.CCxAdjusted := CCiActual;
+                                //SetCrop_CCxAdjusted(CCiTopEarlySen);
+                                //SetCrop_CCxAdjusted(CCiActual);
                                 END;
                         //IF (CCiSen <= Crop.CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
                         IF ((ROUND(10000*CCiSen) <= (10000*CCdormant))

@@ -123,7 +123,7 @@ TYPE
          Germinate   : BOOLEAN; // germinate is false when crop cannot germinate due to water stress
          SumEToStress : double; // Sum ETo during stress period to delay canopy senescence
          SumGDD : double; // Sum of Growing Degree-days
-         SumGDDfromDay1 : double; // Sum of Growing Degree-days since Crop.Day1
+         SumGDDfromDay1 : double; // Sum of Growing Degree-days since GetCrop().Day1
          SCor : single; // correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
          MultipleRun : BOOLEAN; // Project with a sequence of simulation runs
          NrRuns : INTEGER;
@@ -673,7 +673,7 @@ SetManagement_Mulch(0);
 SetManagement_EffectMulchInS(50);
 // soil fertility
 SetManagement_FertilityStress(0);
-CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
 // soil bunds
 SetManagement_BundHeight(0);
 Simulation.SurfaceStorageIni := 0.0;
@@ -719,7 +719,7 @@ SetManagement_EffectMulchInS(TempShortInt);
 // soil fertility
 READLN(f0,TempShortInt); // effect is crop specific
 SetManagement_FertilityStress(TempShortInt);
-CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
 // soil bunds
 READLN(f0,TempDouble);
 SetManagement_BundHeight(TempDouble);
@@ -1528,28 +1528,41 @@ END; (* CCiniTotalFromTimeToCCini *)
 PROCEDURE CompleteCropDescription;
 VAR CGCisGiven : BOOLEAN;
     FertStress : shortint;
+    TempDouble : double;
+    Crop_DaysToSenescence_temp : integer;
+    Crop_Length_temp : integer ;
+    Crop_DaysToFullCanopy_temp : integer;
+    Crop_CGC_temp : double;
 BEGIN
-IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage))
+IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
    THEN BEGIN
-        IF (Crop.DaysToHIo > 0)
+        IF (GetCrop().DaysToHIo > 0)
            THEN BEGIN
-                IF (Crop.DaysToHIo > Crop.DaysToHarvest)
-                   THEN Crop.dHIdt := Crop.HI/Crop.DaysToHarvest
-                   ELSE Crop.dHIdt := Crop.HI/Crop.DaysToHIo;
-                IF (Crop.dHIdt > 100) THEN Crop.dHIdt := 100;
+                IF (GetCrop().DaysToHIo > GetCrop().DaysToHarvest)
+                   THEN BEGIN
+                        TempDouble = GetCrop().HI/GetCrop().DaysToHarvest;
+                        SetCrop_dHIdt(TempDouble);
+                        END
+                   ELSE BEGIN
+                        TempDouble = GetCrop().HI/GetCrop().DaysToHIo;
+                        SetCrop_dHIdt(TempDouble);
+                        END;
+                IF (GetCrop().dHIdt > 100) THEN SetCrop_dHIdt(100);
                 END
-           ELSE Crop.dHIdt := 100;
+           ELSE SetCrop_dHIdt(100);
         END
    ELSE BEGIN  //  grain or tuber crops
         IF (Crop.DaysToHIo > 0)
-           THEN Crop.dHIdt := Crop.HI/Crop.DaysToHIo
-           ELSE Crop.dHIdt := undef_int;
+           THEN BEGIN
+                TempDouble = GetCrop().HI/GetCrop().DaysToHIo;
+                SetCrop_dHIdt(TempDouble);
+                END
+           ELSE SetCrop_dHIdt(undef_int);
         END;
-IF (Crop.ModeCycle = CalendarDays)
+IF (GetCrop().ModeCycle = CalendarDays)
    THEN BEGIN
-        Crop.DaysToCCini := TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.CGC);
-        Crop.DaysToFullCanopy :=
-            DaysToReachCCwithGivenCGC((0.98 * Crop.CCx),Crop.CCo,Crop.CCx,Crop.CGC,Crop.DaysToGermination);
+        SetCrop_DaysToCCini(TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.CGC));
+        SetCrop_DaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * Crop.CCx),Crop.CCo,Crop.CCx,Crop.CGC,Crop.DaysToGermination));
         IF (GetManagement_FertilityStress() <> 0)
            THEN BEGIN
              FertStress := GetManagement_FertilityStress();
@@ -1560,35 +1573,38 @@ IF (Crop.ModeCycle = CalendarDays)
                   Simulation.EffectStress.RedCCX,FertStress);
              SetManagement_FertilityStress(FertStress);
             END
-           ELSE Crop.DaysToFullCanopySF := Crop.DaysToFullCanopy;
-        Crop.GDDaysToCCini := undef_int;
-        Crop.GDDaysToGermination := undef_int;
-        Crop.GDDaysToFullCanopy := undef_int;
-        Crop.GDDaysToFullCanopySF := undef_int;
-        Crop.GDDaysToFlowering := undef_int;
-        Crop.GDDLengthFlowering := undef_int;
-        Crop.GDDaysToSenescence := undef_int;
-        Crop.GDDaysToHarvest := undef_int;
-        Crop.GDDaysToMaxRooting := undef_int;
-        Crop.GDDCGC := undef_int;
-        Crop.GDDCDC := undef_int;
+           ELSE SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
+        SetCrop_GDDaysToCCini(undef_int);
+        SetCrop_GDDaysToGermination(undef_int);
+        SetCrop_GDDaysToFullCanopy(undef_int);
+        SetCrop_GDDaysToFullCanopySF(undef_int);
+        SetCrop_GDDaysToFlowering(undef_int);
+        SetCrop_GDDLengthFlowering(undef_int);
+        SetCrop_GDDaysToSenescence(undef_int);
+        SetCrop_GDDaysToHarvest(undef_int);
+        SetCrop_GDDaysToMaxRooting(undef_int);
+        SetCrop_GDDCGC(undef_int);
+        SetCrop_GDDCDC(undef_int);
         END
    ELSE BEGIN
-        Crop.GDDaysToCCini := TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.GDDCGC);
-        Crop.DaysToCCini := TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.CGC);
-        Crop.GDDaysToFullCanopy :=
-            DaysToReachCCwithGivenCGC((0.98 * Crop.CCx),Crop.CCo,Crop.CCx,Crop.GDDCGC,Crop.GDDaysToGermination);
-        //Crop.GDDaysToFullCanopySF is determined in RUN or ManagementUnit if required
+        SetCrop_GDDaysToCCini(TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.GDDCGC));
+        SetCrop_DaysToCCini(TimeToCCini(Crop.Planting,Crop.PlantingDens,Crop.SizeSeedling,Crop.SizePlant,Crop.CCx,Crop.CGC));
+        SetCrop_GDDaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * Crop.CCx),Crop.CCo,Crop.CCx,Crop.GDDCGC,Crop.GDDaysToGermination));
+        //GetCrop().GDDaysToFullCanopySF is determined in RUN or ManagementUnit if required
         END;
 
 CGCisGiven := true; // required to adjust Crop.DaysToFullCanopy (does not exist)
 DetermineLengthGrowthStages(Crop.CCo,Crop.CCx,Crop.CDC,Crop.DaysToGermination,Crop.DaysToHarvest,CGCisGiven,
-                            Crop.DaysToCCini,Crop.Planting,Crop.DaysToSenescence,
-                            Crop.Length,Crop.DaysToFullCanopy,Crop.CGC);
+                            Crop.DaysToCCini,Crop.Planting,Crop_DaysToSenescence_temp,
+                            Crop_Length_temp,Crop_DaysToFullCanopy_temp,Crop_CGC_temp);
+SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
+SetCrop_Length(Crop_Length_temp);
+SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp);
+SetCrop_CGC(Crop_CGC_temp);
 
-Crop.CCoAdjusted := Crop.CCo;
-Crop.CCxAdjusted := Crop.CCx;
-Crop.CCxWithered := Crop.CCx;
+SetCrop_CCoAdjusted(GetCrop().CCo);
+SetCrop_CCxAdjusted(GetCrop().CCx);
+SetCrop_CCxWithered(GetCrop().CCx);
 SetSumWaBal_Biomass(0);
 SetSumWaBal_BiomassPot(0);
 SetSumWaBal_BiomassUnlim(0);
@@ -1607,6 +1623,7 @@ VAR f0 : TextFile;
     TempShortInt : shortint;
     TempInt : integer;
     TempDouble : double;
+    TempDouble2 : double;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -1691,14 +1708,14 @@ WITH Crop DO
   // -----  UPDATE response factor
   (*
   IF (ROUND(VersionNr*10) < 40)  // UPDATE required for Version 3.0 and 3.1
-     THEN Crop.StressResponse.ShapeKsSto := Crop.StressResponse.ShapeWP
-     ELSE READLN(f0,Crop.StressResponse.ShapeKsSto);  //Shape factor for the response of Stomatal Closure to soil salinity stress
+     THEN SetCrop_StressResponse_ShapeKsSto(Crop.StressResponse.ShapeWP)
+     ELSE READLN(f0,SetCrop_StressResponse_ShapeKsSto();  //Shape factor for the response of Stomatal Closure to soil salinity stress
        *)
   IF (ROUND(VersionNr*10) >= 40)  // UPDATE required for Version 4.0 and next
      THEN READLN(f0);  //Shape factor for the response of Stomatal Closure to soil salinity stress NO LONGER VALID
   // continue with soil fertility/salinity stress
-  IF ((Crop.StressResponse.ShapeCGC > 24.9) AND (Crop.StressResponse.ShapeCCX > 24.9)
-      AND (Crop.StressResponse.ShapeWP > 24.9) AND (Crop.StressResponse.ShapeCDecline > 24.9))
+  IF ((GetCrop_StressResponse().ShapeCGC > 24.9) AND (GetCrop_StressResponse().ShapeCCX > 24.9)
+      AND (GetCrop_StressResponse().ShapeWP > 24.9) AND (GetCrop_StressResponse().ShapeCDecline > 24.9))
     THEN SetCrop_StressResponse_Calibrated(false)
     ELSE SetCrop_StressResponse_Calibrated(true);
 
@@ -1753,9 +1770,9 @@ WITH Crop DO
   SetCrop_SmaxTopQuarter(TempDouble);
   READLN(f0,TempDouble);
   SetCrop_SmaxBotQuarter(TempDouble);
-  DeriveSmaxTopBottom(Crop.SmaxTopQuarter,Crop.SmaxBotQuarter,Crop.SmaxTop,Crop.SmaxBot);
+  DeriveSmaxTopBottom(GetCrop().SmaxTopQuarter,GetCrop().SmaxBotQuarter,TempDouble,TempDouble2);
   SetCrop_SmaxTop(TempDouble);
-  SetCrop_SmaxBot(TempDouble);
+  SetCrop_SmaxBot(TempDouble2);
   READLN(f0,TempInt);
   SetCrop_CCEffectEvapLate(TempInt);
 
@@ -1768,66 +1785,92 @@ WITH Crop DO
          READLN(f0,TempDouble); // Canopy size of individual plant (re-growth) at 1st day (cm2)
          SetCrop_SizePlant(TempDouble);
          END;
-  READLN(f0,PlantingDens);
-  CCo := (PlantingDens/10000) * (SizeSeedling/10000));
-  CCini := (PlantingDens/10000) * (SizePlant/10000));
-  READLN(f0,CGC);
+  READLN(f0,TempInt);
+  SetCrop_PlantingDens(TempInt);
+  SetCrop_CCo((GetCrop().PlantingDens/10000) * (GetCrop().SizeSeedling/10000));
+  SetCrop_CCini((GetCrop().PlantingDens/10000) * (GetCrop().SizePlant/10000));
+  READLN(f0,TempDouble);
+  SetCrop_CGC(TempDouble);
 
-  READLN(f0,YearCCx); // Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials
-  READLN(f0,CCxRoot); // Shape factor of the decline of CCx over the years due to self-thinning - for Perennials
+  READLN(f0,TempShortInt); // Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials
+  SetCrop_YearCCx(TempShortInt);
+  READLN(f0,TempDouble); // Shape factor of the decline of CCx over the years due to self-thinning - for Perennials
+  SetCrop_CCxRoot(TempDouble);
   //READLN(f0,CGCdx);  removed as crop parameter
   //READLN(f0,CGCns);  removed as crop parameter
   READLN(f0);  //READLN(f0,CGCroot);  removed as crop parameter
 
-  READLN(f0,CCx);
-  READLN(f0,CDC);
-  READLN(f0,DaysToGermination);
-  READLN(f0,DaysToMaxRooting);
-  READLN(f0,DaysToSenescence);
-  READLN(f0,DaysToHarvest);
-  READLN(f0,DaysToFlowering);
-  READLN(f0,LengthFlowering);
+  READLN(f0,TempDouble);
+  SetCrop_CCx(TempDouble);
+  READLN(f0,TempDouble);
+  SetCrop_CDC(TempDouble);
+  READLN(f0,TempInt);
+  SetCrop_DaysToGermination(TempInt);
+  READLN(f0,TempInt);
+  SetCrop_DaysToMaxRooting(TempInt);
+  READLN(f0,TempInt);
+  SetCrop_DaysToSenescence(TempInt);
+  READLN(f0,TempInt);
+  SetCrop_DaysToHarvest(TempInt);
+  READLN(f0,TempInt);
+  SetCrop_DaysToFlowering(TempInt);
+  READLN(f0,TempInt);
+  SetCrop_LengthFlowering(TempInt);
   // -----  UPDATE crop development for Version 3.1
   // leafy vegetable crop has an Harvest Index which builds up starting from sowing
-  IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage))  THEN
+  IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))  THEN
      BEGIN
-     DaysToFlowering := 0);
-     LengthFlowering := 0);
+     SetCrop_DaysToFlowering(0);
+     SetCrop_LengthFlowering(0);
      END;
 
   // Crop.DeterminancyLinked
   READLN(f0,XX);
   CASE XX of
-       1 : Crop.DeterminancyLinked := true);
-       else Crop.DeterminancyLinked := false);
+       1 : SetCrop_DeterminancyLinked(true);
+       else SetCrop_DeterminancyLinked(false);
        end;
 
   // Potential excess of fruits (%) and building up HI
-  IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage))
+  IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
      THEN BEGIN
           READLN(f0);  // PercCycle no longer considered
-          Crop.fExcess := undef_int);
+          SetCrop_fExcess(undef_int);
           END
-     ELSE READLN(f0,fExcess);
-  READLN(f0,Crop.DaysToHIo);
+     ELSE BEGIN
+          READLN(f0,TempInt);
+          SetCrop_fExcess(TempInt);
+          END;
+  READLN(f0,TempInt);
+  SetCrop_DaysToHIo(TempInt);
 
   // yield response to water
-  READLN(f0,WP);
-  READLN(f0,WPy);
+  READLN(f0,TempDouble);
+  SetCrop_WP(TempDouble);
+  READLN(f0,TempInt);
+  SetCrop_WPy(TempInt);
   // adaptation to elevated CO2 (Version 3.2 and higher)
   // -----  UPDATE Crop performance under elevated atmospheric CO2 concentration (%)
   IF (ROUND(VersionNr*10) < 32)  // UPDATE required for Version 3.0 and 3.1
-     THEN AdaptedToCO2 := 50)
-     ELSE READLN(f0,AdaptedToCO2);
-  READLN(f0,HI);
-  READLN(f0,HIincrease); // possible increase (%) of HI due to water stress before flowering
-  READLN(f0,aCoeff); // coefficient describing impact of restricted vegetative growth at flowering on HI
-  READLN(f0,bCoeff); // coefficient describing impact of stomatal closure at flowering on HI
-  READLN(f0,DHImax); // allowable maximum increase (%) of specified HI
+     THEN SetCrop_AdaptedToCO2(50)
+     ELSE BEGIN
+          READLN(f0,ShortInt);
+          SetCrop_AdaptedToCO2(ShortInt);
+          END;
+  READLN(f0,TempInt);
+  SetCrop_HI(TempInt);
+  READLN(f0,ShortInt);
+  SetCrop_HIincrease(ShortInt); // possible increase (%) of HI due to water stress before flowering
+  READLN(f0,TempDouble);
+  SetCrop_aCoeff(TempDouble); // coefficient describing impact of restricted vegetative growth at flowering on HI
+  READLN(f0,TempDouble);
+  SetCrop_bCoeff(TempDouble); // coefficient describing impact of stomatal closure at flowering on HI
+  READLN(f0,ShortInt);
+  SetCrop_DHImax(ShortInt); // allowable maximum increase (%) of specified HI
   // -----  UPDATE yield response to water for Version 3.1
   // leafy vegetable crop has an Harvest Index (default is 85 %)
-  IF ((ROUND(VersionNr*10) = 30) AND ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)))
-     THEN IF (ROUND(Crop.HI) = undef_int) THEN HI := 85);
+  IF ((ROUND(VersionNr*10) = 30) AND ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage)))
+     THEN IF (ROUND(GetCrop().HI) = undef_int) THEN SetCrop_HI(85);
 
   // growing degree days
   READLN(f0,TempInt);
@@ -1851,47 +1894,54 @@ WITH Crop DO
 
   // -----  UPDATE yield response to water for Version 3.1
   // leafy vegetable crop has an Harvest Index which builds up starting from sowing
-  IF ((ModeCycle = GDDays) AND ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage))) THEN
+  IF ((GetCrop().ModeCycle = GDDays) AND ((GetCrop().subkind = Vegetative) OR (GeCrop().subkind = Forage))) THEN
      BEGIN
-     GDDaysToFlowering := 0);
-     GDDLengthFlowering := 0);
+     SetCrop_GDDaysToFlowering(0);
+     SetCrop_GDDLengthFlowering(0);
      END;
 
   // extra version 6.2
   IF (ROUND(VersionNr*10) < 62)  // UPDATE required for Version 6.2
-     THEN DryMatter := undef_int) // undefined
-     ELSE READLN(f0,DryMatter); // dry matter content (%) of fresh yield
+     THEN SetCrop_DryMatter(undef_int) // undefined
+     ELSE BEGIN
+          READLN(f0,TempShortInt);
+          SetCrop_DryMatter(); // dry matter content (%) of fresh yield
+          END;
 
   // extra version 7.0
   IF (ROUND(VersionNr*10) < 62)  // UPDATE required for Version 7.0
      THEN BEGIN
-          RootMinYear1 := RootMin); // regrowth not yet possible
-          SownYear1 := (Planting = Seed));  // type of planting first year
+          SetCrop_RootMinYear1(RootMin); // regrowth not yet possible
+          SetCrop_SownYear1(GetCrop().Planting = Seed);  // type of planting first year
           // transfer of assimilates
-          Assimilates.On := false); // Transfer of assimilates between root system and above ground parts is NOT considered
-          Assimilates.Period := 0);
-          Assimilates.Stored := 0);
-          Assimilates.Mobilized := 0);
+          SetCrop_Assimilates_On(false); // Transfer of assimilates between root system and above ground parts is NOT considered
+          SetCrop_Assimilates_Period(0);
+          SetCrop_Assimilates_Stored(0);
+          SetCrop_Assimilates_Mobilized(0);
           END
      ELSE BEGIN
-          READLN(f0,RootMinYear1); // Minimum rooting depth in first year in meter (for regrowth)
+          READLN(f0,TempDouble); 
+          SetCrop_RootMinYear1(TempDouble); // Minimum rooting depth in first year in meter (for regrowth)
           READLN(f0,XX);
           CASE XX of
-                1 : Crop.SownYear1 := true);  // crop is sown in 1 st year (for perennials)
-               else Crop.SownYear1 := false); // crop is transplanted in 1st year (for regrowth)
+                1 : SetCrop_SownYear1(true);  // crop is sown in 1 st year (for perennials)
+               else SetCrop_SownYear1(false); // crop is transplanted in 1st year (for regrowth)
                end;
           // transfer of assimilates
           READLN(f0,XX);
           CASE XX of
-                1 : Assimilates.On := true);  // Transfer of assimilates from above ground parts to root system is considered
-               else Assimilates.On := false); // Transfer of assimilates from above ground parts to root system is NOT considered
+                1 : SetCrop_Assimilates_On(true);  // Transfer of assimilates from above ground parts to root system is considered
+               else SetCrop_Assimilates_On(false); // Transfer of assimilates from above ground parts to root system is NOT considered
                end;
-          READLN(f0,Assimilates.Period); // Number of days at end of season during which assimilates are stored in root system
-          READLN(f0,Assimilates.Stored); // Percentage of assimilates, transferred to root system at last day of season
-          READLN(f0,Assimilates.Mobilized); // Percentage of stored assimilates, transferred to above ground parts in next season
+          READLN(f0,TempInt);
+          SetCrop_Assimilates_Period(TempInt); // Number of days at end of season during which assimilates are stored in root system
+          READLN(f0,ShortInt);
+          SetCrop_Assimilates_Stored(ShortInt); // Percentage of assimilates, transferred to root system at last day of season
+          READLN(f0,ShortInt);
+          SetCrop_Assimilates_Mobilized(ShortInt); // Percentage of stored assimilates, transferred to above ground parts in next season
           END;
 
-  IF (subkind = Forage) THEN
+  IF (GetCrop().subkind = Forage) THEN
      BEGIN // data for the determination of the growing period
      // 1. Title
      For XX := 1 to 3 DO READLN(f0);
@@ -1938,15 +1988,15 @@ WITH Crop DO
   END;
 Close(f0);
 // maximum rooting depth in given soil profile
-SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
 
 // copy to CropFileSet
-SetCropFileSet_DaysFromSenescenceToEnd(Crop.DaysToHarvest - Crop.DaysToSenescence);
-SetCropFileSet_DaysToHarvest(Crop.DaysToHarvest);
-IF (Crop.ModeCycle = GDDays)
+SetCropFileSet_DaysFromSenescenceToEnd(GetCrop().DaysToHarvest - GetCrop().DaysToSenescence);
+SetCropFileSet_DaysToHarvest(GetCrop().DaysToHarvest);
+IF (GetCrop().ModeCycle = GDDays)
    THEN BEGIN
-        SetCropFileSet_GDDaysFromSenescenceToEnd(Crop.GDDaysToHarvest - Crop.GDDaysToSenescence);
-        SetCropFileSet_GDDaysToHarvest(Crop.GDDaysToHarvest);
+        SetCropFileSet_GDDaysFromSenescenceToEnd(GetCrop().GDDaysToHarvest - GetCrop().GDDaysToSenescence);
+        SetCropFileSet_GDDaysToHarvest(GetCrop().GDDaysToHarvest);
         END
    ELSE BEGIN
         SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int);
@@ -2298,19 +2348,19 @@ WITH Crop DO
   WRITELN(f,AnaeroPoint:6,'         : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)');
 
   // stress response
-  WRITELN(f,Crop.StressResponse.Stress:6,'         : Considered soil fertility stress for calibration of stress response (%)');
-  IF (Crop.StressResponse.ShapeCGC > 24.9)
-     THEN WRITELN(f,Crop.StressResponse.ShapeCGC:9:2,'      : Response of canopy expansion is not considered')
-     ELSE WRITELN(f,Crop.StressResponse.ShapeCGC:9:2,'      : Shape factor for the response of canopy expansion to soil fertility stress');
-  IF (Crop.StressResponse.ShapeCCX > 24.9)
-     THEN WRITELN(f,Crop.StressResponse.ShapeCCX:9:2,'      : Response of maximum canopy cover is not considered')
-     ELSE WRITELN(f,Crop.StressResponse.ShapeCCX:9:2,'      : Shape factor for the response of maximum canopy cover to soil fertility stress');
-  IF (Crop.StressResponse.ShapeWP > 24.9)
-     THEN WRITELN(f,Crop.StressResponse.ShapeWP:9:2,'      : Response of crop Water Productivity is not considered')
-     ELSE WRITELN(f,Crop.StressResponse.ShapeWP:9:2,'      : Shape factor for the response of crop Water Productivity to soil fertility stress');
-  IF (Crop.StressResponse.ShapeCDecline > 24.9)
-     THEN WRITELN(f,Crop.StressResponse.ShapeCDecline:9:2,'      : Response of decline of canopy cover is not considered')
-     ELSE WRITELN(f,Crop.StressResponse.ShapeCDecline:9:2,'      : Shape factor for the response of decline of canopy cover to soil fertility stress');
+  WRITELN(f,GetCrop_StressResponse().Stress:6,'         : Considered soil fertility stress for calibration of stress response (%)');
+  IF (GetCrop_StressResponse().ShapeCGC > 24.9)
+     THEN WRITELN(f,GetCrop_StressResponse().ShapeCGC:9:2,'      : Response of canopy expansion is not considered')
+     ELSE WRITELN(f,GetCrop_StressResponse().ShapeCGC:9:2,'      : Shape factor for the response of canopy expansion to soil fertility stress');
+  IF (GetCrop_StressResponse().ShapeCCX > 24.9)
+     THEN WRITELN(f,GetCrop_StressResponse().ShapeCCX:9:2,'      : Response of maximum canopy cover is not considered')
+     ELSE WRITELN(f,GetCrop_StressResponse().ShapeCCX:9:2,'      : Shape factor for the response of maximum canopy cover to soil fertility stress');
+  IF (GetCrop_StressResponse().ShapeWP > 24.9)
+     THEN WRITELN(f,GetCrop_StressResponse().ShapeWP:9:2,'      : Response of crop Water Productivity is not considered')
+     ELSE WRITELN(f,GetCrop_StressResponse().ShapeWP:9:2,'      : Shape factor for the response of crop Water Productivity to soil fertility stress');
+  IF (GetCrop_StressResponse().ShapeCDecline > 24.9)
+     THEN WRITELN(f,GetCrop_StressResponse().ShapeCDecline:9:2,'      : Response of decline of canopy cover is not considered')
+     ELSE WRITELN(f,GetCrop_StressResponse().ShapeCDecline:9:2,'      : Shape factor for the response of decline of canopy cover to soil fertility stress');
   WRITELN(f,'    -9         : dummy - Parameter no Longer required');
 
   // temperature stress
@@ -2500,7 +2550,7 @@ WITH Crop DO
           END;
 
   // added to 7.0 - Assimilates
-  IF (Crop.Assimilates.On = false)
+  IF (GetCrop_Assimilates().On = false)
      THEN BEGIN
           i := 0;
           WRITELN(f,i:6,'         : Transfer of assimilates from above ground parts to root system is NOT considered');
@@ -2511,9 +2561,9 @@ WITH Crop DO
      ELSE BEGIN
           i := 1;
           WRITELN(f,i:6,'         : Transfer of assimilates from above ground parts to root system is considered');
-          WRITELN(f,Crop.Assimilates.Period:6,'         : Number of days at end of season during which assimilates are stored in root system');
-          WRITELN(f,Crop.Assimilates.Stored:6,'         : Percentage of assimilates transferred to root system at last day of season');
-          WRITELN(f,Crop.Assimilates.Mobilized:6,'         : Percentage of stored assimilates transferred to above ground parts in next season');
+          WRITELN(f,GetCrop_Assimilates().Period:6,'         : Number of days at end of season during which assimilates are stored in root system');
+          WRITELN(f,GetCrop_Assimilates().Stored:6,'         : Percentage of assimilates transferred to root system at last day of season');
+          WRITELN(f,GetCrop_Assimilates().Mobilized:6,'         : Percentage of stored assimilates transferred to above ground parts in next season');
           END;
   END;
 Close(f);
