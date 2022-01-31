@@ -138,15 +138,9 @@ TYPE
          Assimilates        : rep_Assimilates;
          END;
 
-     rep_EffectiveRainMethod = (Full,USDA,Percentage);
+
      rep_MonthInteger = ARRAY[1..12] OF INTEGER;
 
-     rep_EffectiveRain = RECORD    // for 10-day or monthly rainfall data
-         Method : rep_EffectiveRainMethod;
-         PercentEffRain : ShortInt; // IF Method = Percentage
-         ShowersInDecade : ShortInt; // adjustment of surface run-off
-         RootNrEvap : ShortInt; // Root for reduction in soil evaporation
-         end;
 
      rep_param = RECORD  // DEFAULT.PAR
          // crop parameters IN CROP.PAR - with Reset option
@@ -257,12 +251,6 @@ TYPE
          DayNr : Integer;
          Param : Integer;
          end;
-
-     rep_DayEventDbl = Record
-         DayNr : Integer;
-         Param : Double;
-         end;
-     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
@@ -3230,7 +3218,7 @@ END; (* HarvestIndexDay *)
 PROCEDURE ReadRainfallSettings;
 VAR f : textfile;
     FullName : string;
-    NrM : ShortInt;
+    NrM,effrainperc,effrainshow,effrainrootE : ShortInt;
 BEGIN
 FullName := CONCAT(GetPathNameSimul(),'Rainfall.PAR');
 Assign(f,FullName);
@@ -3240,13 +3228,19 @@ WITH SimulParam DO
    BEGIN
    Readln(f,NrM);
    Case NrM OF
-        0 : EffectiveRain.Method := Full;
-        1 : EffectiveRain.Method := USDA;
-        2 : EffectiveRain.Method := Percentage;
+        0 : SetEffectiveRain_Method(Full);
+        1 : SetEffectiveRain_Method(USDA);
+        2 : SetEffectiveRain_Method(Percentage);
       end;
-   Readln(f,EffectiveRain.PercentEffRain); // IF Method is Percentage
-   Readln(f,EffectiveRain.ShowersInDecade);  // For estimation of surface run-off
-   Readln(f,EffectiveRain.RootNrEvap); // For reduction of soil evaporation
+   effrainperc := GetEffectiveRain_PercentEffRain();
+   effrainshow := GetEffectiveRain_ShowersInDecade();
+   effrainrootE := GetEffectiveRain_RootNrEvap();
+   Readln(f,effrainperc ); // IF Method is Percentage
+   SetEffectiveRain_PercentEffRain(effrainperc);
+   Readln(f,effrainshow);  // For estimation of surface run-off
+   SetEffectiveRain_ShowersInDecade(effrainshow);
+   Readln(f,effrainrootE); // For reduction of soil evaporation
+   SetEffectiveRain_RootNrEvap(effrainrootE);
    END;
 Close(f);
 END; (* ReadRainfallSettings *)
@@ -4485,6 +4479,7 @@ END; (* GetFileForProgramParameters *)
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 VAR f0 : TextFile;
     i : INTEGER;
+    effrainperc,effrainshow,effrainrootE : ShortInt;
 BEGIN
 IF FileExists(FullFileNameProgramParameters)
    THEN BEGIN // load set of program parameters
@@ -4527,13 +4522,19 @@ IF FileExists(FullFileNameProgramParameters)
           // Rainfall
           Readln(f0,i);
           Case i OF
-            0 : EffectiveRain.Method := Full;
-            1 : EffectiveRain.Method := USDA;
-            2 : EffectiveRain.Method := Percentage;
+            0 : SetEffectiveRain_Method(Full);
+            1 : SetEffectiveRain_Method(USDA);
+            2 : SetEffectiveRain_Method(Percentage);
             end;
-          Readln(f0,EffectiveRain.PercentEffRain); // IF Method is Percentage
-          Readln(f0,EffectiveRain.ShowersInDecade);  // For estimation of surface run-off
-          Readln(f0,EffectiveRain.RootNrEvap); // For reduction of soil evaporation
+          effrainperc := GetEffectiveRain_PercentEffRain();
+          effrainshow := GetEffectiveRain_ShowersInDecade();
+          effrainrootE := GetEffectiveRain_RootNrEvap();
+          Readln(f0,effrainperc); // IF Method is Percentage
+          SetEffectiveRain_PercentEffRain(effrainperc);
+          Readln(f0,effrainshow);  // For estimation of surface run-off
+          SetEffectiveRain_ShowersInDecade(effrainshow);
+          Readln(f0,effrainrootE); // For reduction of soil evaporation
+          SetEffectiveRain_RootNrEvap(effrainrootE);
           END;
         // close
         Close(f0);
