@@ -85,7 +85,7 @@ implementation
  IF (NrCompartments > max_No_compartments) //Savety check of value in General.PAR;
     THEN NrCompartments := max_No_compartments;
  FOR Nri := 1 TO max_No_compartments DO  // required for formactivate ParamNew
-     Compartment[Nri].Thickness := SimulParam.CompDefThick;
+     SetCompartment_Thickness(Nri, SimulParam.CompDefThick);
  // Default CropDay1 - Savety check of value in General.PAR
  WHILE (SimulParam.CropDay1 > 365) DO SimulParam.CropDay1 := SimulParam.CropDay1-365;
  If (SimulParam.CropDay1 < 1) THEN SimulParam.CropDay1 := 1;
