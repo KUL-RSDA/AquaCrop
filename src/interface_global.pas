@@ -293,6 +293,23 @@ procedure DetermineLengthGrowthStages_wrap(
             VAR CGCVal : double);
         external 'aquacrop' name '__ac_interface_global_MOD_determinelengthgrowthstages_wrap';
 
+procedure TimeToMaxCanopySF_wrap(
+            constref CCo,CGC,CCx : double;
+            constref L0,L12,L123,LToFlor,LFlor : INTEGER;
+            constref DeterminantCrop : BOOLEAN;
+            VAR L12SF : INTEGER;
+            VAR RedCGC,RedCCx : ShortInt;
+            VAR ClassSF : ShortInt);
+        external 'aquacrop' name '__ac_global_MOD_timetomaxcanopysf_wrap';
+
+procedure TimeToMaxCanopySF(
+            constref CCo,CGC,CCx : double;
+            constref L0,L12,L123,LToFlor,LFlor : INTEGER;
+            constref DeterminantCrop : BOOLEAN;
+            VAR L12SF : INTEGER;
+            VAR RedCGC,RedCCx : ShortInt;
+            VAR ClassSF : ShortInt);   
+            
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;
@@ -1674,6 +1691,19 @@ begin
     TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
                                  TheSizePlant, TheCropCCx, TheCropCGC);
 end;
+
+procedure TimeToMaxCanopySF(
+            constref CCo,CGC,CCx : double;
+            constref L0,L12,L123,LToFlor,LFlor : integer;
+            constref DeterminantCrop : boolean;
+            VAR L12SF : integer;
+            VAR RedCGC,RedCCx : ShortInt;
+            VAR ClassSF : ShortInt);
+
+begin
+    TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, &
+                            DeterminantCrop, L12SF, RedCGC, RedCCx, ClassSF);
+end;    
 
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;

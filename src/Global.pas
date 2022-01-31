@@ -353,12 +353,7 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          VAR TpotVal, EpotVal : double);
 
 PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-PROCEDURE TimeToMaxCanopySF(CCo,CGC,CCx : double;
-                            L0,L12,L123,LToFlor,LFlor : INTEGER;
-                            DeterminantCrop : BOOLEAN;
-                            VAR L12SF : INTEGER;
-                            VAR RedCGC,RedCCx : ShortInt;
-                            VAR ClassSF : ShortInt);
+
 PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
 
@@ -715,49 +710,6 @@ FOR i :=1 to NrCompartments DO
         SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
           + Compartment[i].theta*1000*Compartment[i].Thickness);
 END; (* GlobalZero *)
-
-
-
-
-PROCEDURE TimeToMaxCanopySF(CCo,CGC,CCx : double;
-                            L0,L12,L123,LToFlor,LFlor : INTEGER;
-                            DeterminantCrop : BOOLEAN;
-                            VAR L12SF : INTEGER;
-                            VAR RedCGC,RedCCx : ShortInt;
-                            VAR ClassSF : ShortInt);
-VAR CCToReach : double;
-    L12SFmax : INTEGER;
-BEGIN
-IF ((ClassSF = 0) OR ((RedCCx = 0) AND (RedCGC = 0)))
-   THEN L12SF := L12
-   ELSE BEGIN
-        CCToReach := 0.98*(1-RedCCX/100)*CCx;
-        L12SF := DaysToReachCCwithGivenCGC(CCToReach,CCo,((1-RedCCX/100)*CCx),(CGC*(1-(RedCGC)/100)),L0);
-        // determine L12SFmax
-        IF DeterminantCrop
-           THEN L12SFmax := LToFlor + ROUND(LFlor/2)
-           ELSE L12SFmax := L123;
-        // check for L12SFmax
-        IF (L12SF > L12SFmax) THEN // full canopy cannot be reached in potential period for vegetative growth
-           BEGIN
-           //ClassSF := undef_int; // swithc to user defined soil fertility
-           //1. increase CGC(soil fertility)
-           WHILE ((L12SF > L12SFmax) AND (RedCGC > 0)) DO
-              BEGIN
-              RedCGC := RedCGC - 1;
-              L12SF := DaysToReachCCwithGivenCGC(CCToReach,CCo,((1-RedCCX/100)*CCx),(CGC*(1-(RedCGC)/100)),L0);
-              END;
-           //2. if not sufficient decrease CCx(soil fertility)
-           WHILE ((L12SF > L12SFmax) AND ( ((1-RedCCX/100)*CCx) > 0.10) AND (RedCCx <= 50)) DO
-              BEGIN
-              RedCCx := RedCCx + 1;
-              CCToReach := 0.98*(1-RedCCX/100)*CCx;
-              L12SF := DaysToReachCCwithGivenCGC(CCToReach,CCo,((1-RedCCX/100)*CCx),(CGC*(1-(RedCGC)/100)),L0);
-              END;
-           END;
-        END;
-END; (* TimeToMaxCanopySF *)
-
 
 
 PROCEDURE NoManagement;

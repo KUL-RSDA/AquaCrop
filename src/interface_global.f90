@@ -111,7 +111,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetTemperatureRecord_ToString
 use ac_kinds, only: dp, &
                     int32, &
-                    intEnum
+                    intEnum, &
+                    int8
 implicit none
 
 
@@ -247,6 +248,30 @@ subroutine GenerateCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
     call GenerateCO2Description(string1, string2)
 end subroutine GenerateCO2Description_wrap
 
+subroutine TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
+                                  LFlor, DeterminantCrop, L12SF, RedCGC, &
+                                  RedCCx, ClassSF)
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CCx
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LToFlor
+    integer(int32), intent(in) :: LFlor
+    logical(1), intent(in) :: DeterminantCrop
+    integer(int32), intent(inout) :: L12SF
+    integer(int8), intent(inout) :: RedCGC
+    integer(int8), intent(inout) :: RedCCx
+    integer(int8), intent(inout) :: ClassSF
+    
+    logical :: DeterminantCrop_f
+    
+    DeterminantCrop_f = DeterminantCrop
+    call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
+                                  LFlor, DeterminantCrop, L12SF, RedCGC, &
+                                  RedCCx, ClassSF)
+end subroutine TimeToMaxCanopySF_wrap
 
 subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                         TotalLength, CGCgiven, TheDaysToCCini, ThePlanting, &
