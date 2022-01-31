@@ -260,13 +260,13 @@ subroutine TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
     integer(int32), intent(in) :: L123
     integer(int32), intent(in) :: LToFlor
     integer(int32), intent(in) :: LFlor
-    logical(4), intent(in) :: DeterminantCrop
+    logical, intent(in) :: DeterminantCrop
     integer(int32), intent(inout) :: L12SF
     integer(int8), intent(inout) :: RedCGC
     integer(int8), intent(inout) :: RedCCx
     integer(int8), intent(inout) :: ClassSF
     
-    logical :: DeterminantCrop_f
+    logical(1) :: DeterminantCrop_f
     
     DeterminantCrop_f = DeterminantCrop
     call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
