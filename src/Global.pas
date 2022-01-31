@@ -38,7 +38,6 @@ TYPE
 
      rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
-     rep_EffectiveRainMethod = (Full,USDA,Percentage);
 
      rep_MonthInteger = ARRAY[1..12] OF INTEGER;
 
@@ -1888,10 +1887,10 @@ READLN(f0,TempInt);
 SetCrop_GDDaysToFlowering(TempInt);
 READLN(f0,TempInt);
 SetCrop_GDDLengthFlowering(TempInt);
-READLN(f0,TempInt);
-SetCrop_GDDCGC(TempInt);
-READLN(f0,TempInt);
-SetCrop_GDDCDC(TempInt);
+READLN(f0,TempDouble);
+SetCrop_GDDCGC(TempDouble);
+READLN(f0,TempDouble);
+SetCrop_GDDCDC(TempDouble);
 READLN(f0,TempInt);
 SetCrop_GDDaysToHIo(TempInt);
 

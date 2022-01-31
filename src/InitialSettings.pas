@@ -14,6 +14,8 @@ implementation
  VAR TempString1,TempString2,CO2descr : string;
      Nri : INTEGER;
      SumWaBal_temp : rep_sum;
+     Crop_Day1_temp : INTEGER;
+     Crop_DayN_temp : INTEGER;
 
  BEGIN
  // 1. Program settings
@@ -192,7 +194,11 @@ implementation
  SetClimData;
  Simulation.LinkCropToSimPeriod := true;
 (* adjusting GetCrop().Day1 and GetCrop().DayN to ClimFile *)
- AdjustCropYearToClimFile(GetCrop().Day1,GetCrop().DayN);
+Crop_Day1_temp := GetCrop().Day1;
+Crop_DayN_temp := GetCrop().DayN;
+ AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp);
+SetCrop_Day1(Crop_Day1_temp);
+SetCrop_DayN(Crop_DayN_temp);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
  IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);

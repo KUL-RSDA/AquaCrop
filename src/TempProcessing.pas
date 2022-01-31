@@ -699,6 +699,13 @@ END; (* ResetCropDay1 *)
 PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
 VAR succes : BOOLEAN;
     CGCisGiven : BOOLEAN;
+    Crop_GDDaysToHIo_temp : integer;
+    Crop_DaysToGermination_temp, Crop_DaysToFullCanopy_temp, Crop_DaysToFlowering_temp, Crop_LengthFlowering_temp : integer;
+    Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp, Crop_DaysToMaxRooting_temp, Crop_DaysToHIo_temp : integer;
+    Crop_Length_temp : rep_int_array; 
+    Crop_CGC_temp : double;
+    Crop_CDC_temp : double;
+    Crop_dHIdt_temp : double; 
 BEGIN
 CGCisGiven := true;
 CASE GetCrop().ModeCycle OF
@@ -707,15 +714,41 @@ CASE GetCrop().ModeCycle OF
                  ROUND(LN((0.25*GetCrop().CCx*GetCrop().CCx/GetCrop().CCo)/(GetCrop().CCx-(0.98*GetCrop().CCx)))/GetCrop().GDDCGC));
               IF (GetCrop().GDDaysToFullCanopy > GetCrop().GDDaysToHarvest)
                  THEN SetCrop_GDDaysToFullCanopy(GetCrop().GDDaysToHarvest);
+              Crop_GDDaysToHIo_temp := GetCrop().GDDaysToHIo;
+              Crop_DaysToGermination_temp := GetCrop().DaysToGermination;
+              Crop_DaysToFullCanopy_temp := GetCrop().DaysToFullCanopy;
+              Crop_DaysToFlowering_temp := GetCrop().DaysToFlowering;
+              Crop_LengthFlowering_temp := GetCrop().LengthFlowering;
+              Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
+              Crop_DaysToHarvest_temp := GetCrop().DaysToHarvest;
+              Crop_DaysToMaxRooting_temp := GetCrop().DaysToMaxRooting;
+              Crop_DaysToHIo_temp := GetCrop().DaysToHIo;
+              Crop_Length_temp := GetCrop().Length; 
+              Crop_CGC_temp := GetCrop().CGC; 
+              Crop_CDC_temp := GetCrop().CDC; 
+              Crop_dHIdt_temp := GetCrop().dHIdt; 
               AdjustCalendarDays(FirstCropDay,GetCrop().subkind,GetCrop().Tbase,GetCrop().Tupper,SimulParam.Tmin,SimulParam.Tmax,
                  GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToFlowering,
                  GetCrop().GDDLengthFlowering,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,GetCrop().GDDaysToMaxRooting,
-                 GetCrop().GDDaysToHIo,
+                 Crop_GDDaysToHIo_temp,
                  GetCrop().GDDCGC,GetCrop().GDDCDC,GetCrop().CCo,GetCrop().CCx,CGCisGiven,GetCrop().HI,
                  GetCrop().DaysToCCini,GetCrop().Planting,
-                 GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToFlowering,GetCrop().LengthFlowering,
-                 GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,GetCrop().DaysToMaxRooting,GetCrop().DaysToHIo,
-                 GetCrop().Length,GetCrop().CGC,GetCrop().CDC,GetCrop().dHIdt,Succes);
+                 Crop_DaysToGermination_temp,Crop_DaysToFullCanopy_temp,Crop_DaysToFlowering_temp,Crop_LengthFlowering_temp,
+                 Crop_DaysToSenescence_temp,Crop_DaysToHarvest_temp,Crop_DaysToMaxRooting_temp,Crop_DaysToHIo_temp,
+                 Crop_Length_temp,Crop_CGC_temp,Crop_CDC_temp,Crop_dHIdt_temp,Succes);
+              SetCrop_GDDaysToHIo(Crop_GDDaysToHIo_temp);
+              SetCrop_DaysToGermination(Crop_DaysToGermination_temp);
+              SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp);
+              SetCrop_DaysToFlowering(Crop_DaysToFlowering_temp);
+              SetCrop_LengthFlowering(Crop_LengthFlowering_temp);
+              SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
+              SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp);
+              SetCrop_DaysToMaxRooting(Crop_DaysToMaxRooting_temp);
+              SetCrop_DaysToHIo(Crop_DaysToHIo_temp);
+              SetCrop_Length(Crop_Length_temp); 
+              SetCrop_CGC(Crop_CGC_temp);
+              SetCrop_CDC(Crop_CDC_temp);
+              SetCrop_dHIdt(Crop_dHIdt_temp); 
               END;
      else Succes := true;
      end;
@@ -735,6 +768,14 @@ VAR f0,fClim : TextFile;
     FertStress : shortint;
     temperature_record : rep_clim;
     TempInt : integer;
+    Crop_Planting_temp : rep_Planting;
+    Crop_RootMin_temp, Crop_SizePlant_temp, Crop_CCini_temp : double;
+    Crop_DaysToCCini_temp, Crop_GDDaysToCCini_temp : integer;
+    Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp : integer;
+    Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp : integer;
+    Crop_Day1_temp : INTEGER;
+    Crop_DayN_temp : INTEGER;
+    Crop_DaysToFullCanopySF_temp : INTEGER;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -897,23 +938,50 @@ LoadCrop(GetCropFilefull());
 IF (GetCrop().subkind = Forage) THEN
    BEGIN
    // adjust crop characteristics to the Year (Seeding/Planting or Non-seesing/Planting year)
+   Crop_Planting_temp := GetCrop().Planting;
+   Crop_RootMin_temp := GetCrop().RootMin;
+   Crop_SizePlant_temp := GetCrop().SizePlant;
+   Crop_CCini_temp := GetCrop().CCini;
+   Crop_DaysToCCini_temp := GetCrop().DaysToCCini;
+   Crop_GDDaysToCCini_temp := GetCrop().GDDaysToCCini;
    AdjustYearPerennials(Simulation.YearSeason,GetCrop().SownYear1,GetCrop().ModeCycle,GetCrop().RootMax,GetCrop().RootMinYear1,
                      GetCrop().CCo,GetCrop().SizeSeedling,GetCrop().CGC,GetCrop().CCx,GetCrop().GDDCGC,GetCrop().PlantingDens,
-                     GetCrop().Planting,GetCrop().RootMin,GetCrop().SizePlant,GetCrop().CCini,
-                     GetCrop().DaysToCCini,GetCrop().GDDaysToCCini);
+                     Crop_Planting_temp,Crop_RootMin_temp,Crop_SizePlant_temp,Crop_CCini_temp,
+                     Crop_DaysToCCini_temp,Crop_GDDaysToCCini_temp);
+   SetCrop_Planting(Crop_Planting_temp);
+   SetCrop_RootMin(Crop_RootMin_temp);
+   SetCrop_SizePlant(Crop_SizePlant_temp);
+   SetCrop_CCini(Crop_CCini_temp);
+   SetCrop_DaysToCCini(Crop_DaysToCCini_temp);
+   SetCrop_GDDaysToCCini(Crop_GDDaysToCCini_temp);
    // adjust length of season
    SetCrop_DaysToHarvest(GetCrop().DayN - GetCrop().Day1 + 1);
+   Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
+   Crop_DaysToHarvest_temp := GetCrop().DaysToHarvest;
+   Crop_GDDaysToSenescence_temp := GetCrop().GDDaysToSenescence;
+   Crop_GDDaysToHarvest_temp := GetCrop().GDDaysToHarvest;
    AdjustCropFileParameters(GetCropFileSet(),(GetCrop().DaysToHarvest),GetCrop().Day1,GetCrop().ModeCycle,GetCrop().Tbase,GetCrop().Tupper,
-                                    GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-                                    GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest);
+                                    Crop_DaysToSenescence_temp,Crop_DaysToHarvest_temp,
+                                    Crop_GDDaysToSenescence_temp,Crop_GDDaysToHarvest_temp);
+   SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
+   SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp);
+   SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp);
+   SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp);
    END;
 
 AdjustCalendarCrop(GetCrop().Day1);
 CompleteCropDescription;
 //Onset.Off := true;
 IF (GetClimFile() = '(None)')
-   THEN AdjustCropYearToClimFile(GetCrop().Day1,GetCrop().DayN) // adjusting GetCrop().Day1 and GetCrop().DayN to ClimFile
+   THEN BEGIN
+       Crop_Day1_temp := GetCrop().Day1;
+       Crop_DayN_temp := GetCrop().DayN;
+       AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp); // adjusting GetCrop().Day1 and GetCrop().DayN to ClimFile
+       SetCrop_Day1(Crop_Day1_temp);
+       SetCrop_DayN(Crop_DayN_temp);
+       END
    ELSE SetCrop_DayN(GetCrop().Day1 + GetCrop().DaysToHarvest - 1);
+
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
 IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
@@ -955,10 +1023,12 @@ IF (GetManFile() = '(None)')
         LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
         FertStress := GetManagement_FertilityStress();
+        Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
         TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
                           GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
-                          GetCrop().DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
+                          Crop_DaysToFullCanopySF_temp,Simulation.EffectStress.RedCGC,
                           Simulation.EffectStress.RedCCX,FertStress);
+        SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
         SetManagement_FertilityStress(FertStress);
         END;
 

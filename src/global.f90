@@ -33,6 +33,20 @@ integer(intEnum), parameter :: modeCycle_GDDDays = 0
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
     !! index of CalendarDays in modeCycle enumerated type
 
+integer(intEnum), parameter :: pMethod_NoCorrection = 0
+    !! index of NoCorrection in pMethod enumerated type
+integer(intEnum), parameter :: pMethod_FAOCorrection = 1
+    !! index of FAOCorrection in pMethod enumerated type
+
+integer(intEnum), parameter :: subkind_Vegetative = 0
+    !! index of Vegetative in subkind enumerated type
+integer(intEnum), parameter :: subkind_Grain = 1
+    !! index of Grain in subkind enumerated type
+integer(intEnum), parameter :: subkind_Tuber = 2
+    !! index of Tuber in subkind enumerated type
+integer(intEnum), parameter :: subkind_Forage = 3
+    !! index of Forage in subkind enumerated type
+
 integer(intEnum), parameter :: plant_seed = 0
     !! index of seed in planting enumerated type
 integer(intEnum), parameter :: plant_transplant = 1

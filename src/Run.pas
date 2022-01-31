@@ -1305,7 +1305,7 @@ IF (VirtualDay < 0)
                    THEN Code := 4; // yield formation
                 IF ((VirtualDay > GetCrop().DaysToGermination) AND (CCiPrev <= 0))
                    THEN Code := Undef_int;  // no growth stage
-                IF (VirtualDay >= (GetCrop().Length(1)+GetCrop().Length(2)+GetCrop().Length(3)+GetCrop().Length(4)))
+                IF (VirtualDay >= (GetCrop_Length_i(1)+GetCrop_Length_i(2)+GetCrop_Length_i(3)+GetCrop_Length_i(4)))
                    THEN Code := 0; // after cropping period
                 END;
         END;
@@ -1325,7 +1325,8 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     FertStress : shortint;
     ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
     GwTable_temp : rep_GwTable;
-    
+    Crop_DaysToFullCanopySF_temp : integer;
+
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
@@ -1346,7 +1347,7 @@ NextSimFromDayNr := undef_int;
 
 // 2. initial settings for Crop
 SetCrop_pActStom(GetCrop().pdef);
-SetCrop_pSenAc(GetCrop().pSenescence);
+SetCrop_pSenAct(GetCrop().pSenescence);
 SetCrop_pLeafAct(GetCrop().pLeafDefUL);
 EvapoEntireSoilSurface := true;
 Simulation.EvapLimitON := false;
@@ -1403,10 +1404,12 @@ IF (GetManagement_FertilityStress() <= 0) THEN SetManagement_FertilityStress(0);
 // Reset soil fertility parameters to selected value in management
 CropStressParametersSoilFertility(GetCrop_StressResponse(),GetManagement_FertilityStress(),Simulation.EffectStress);
 FertStress := GetManagement_FertilityStress();
+Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
 TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
                     GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
-                    GetCrop().DaysToFullCanopySF,Simulation.EffectStress.RedCGC,
+                    Crop_DaysToFullCanopySF_temp,Simulation.EffectStress.RedCGC,
                     Simulation.EffectStress.RedCCX,FertStress);
+SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
 SetManagement_FertilityStress(FertStress);
 PreviousStressLevel := GetManagement_FertilityStress();
 StressSFadjNEW := GetManagement_FertilityStress();

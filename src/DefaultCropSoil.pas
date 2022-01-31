@@ -30,12 +30,12 @@ SetCrop_SumEToDelaySenescence(50); //Sum(ETo) during stress period to be exceede
 SetCrop_pPollination(0.90);
 SetCrop_AnaeroPoint(5); //Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)
 
-SetCrop_StressResponse.Stress(50);  //Soil fertility stress at calibration (%)
-SetCrop_StressResponse.ShapeCGC(+2.16);  //Shape factor for response of Canopy Growth Coefficient to soil fertility stress
-SetCrop_StressResponse.ShapeCCX(0.79);  //Shape factor for response of Maximum Canopy Coefficient to soil fertility stress
-SetCrop_StressResponse.ShapeWP(+1.67);  //Shape factor for response of Crop water productivity to soil fertility stress
-SetCrop_StressResponse.ShapeCDecline(+1.67); //Shape factor for response of Canopy cover decline to soil fertility stress
-SetCrop_StressResponse.Calibrated(true);
+SetCrop_StressResponse_Stress(50);  //Soil fertility stress at calibration (%)
+SetCrop_StressResponse_ShapeCGC(+2.16);  //Shape factor for response of Canopy Growth Coefficient to soil fertility stress
+SetCrop_StressResponse_ShapeCCX(0.79);  //Shape factor for response of Maximum Canopy Coefficient to soil fertility stress
+SetCrop_StressResponse_ShapeWP(+1.67);  //Shape factor for response of Crop water productivity to soil fertility stress
+SetCrop_StressResponse_ShapeCDecline(+1.67); //Shape factor for response of Canopy cover decline to soil fertility stress
+SetCrop_StressResponse_Calibrated(true);
 
 SetCrop_ECemin(2); //Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
 SetCrop_ECemax(12); //Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
@@ -48,16 +48,16 @@ SetCrop_KcTop(1.10); //Crop coefficient when complete cover and prior to senesce
 SetCrop_KcDecline(0.150); //Decline crop coefficient (%/day) as a result of ageing, nitrogen defficiency, etc.
 SetCrop_RootMin(0.30); //Minimum rooting depth (m)
 SetCrop_RootMax(1.00); //Maximum rooting depth (m)
-SetCrop_RootMinYear1(SetCrop_RootMin); //Minimum rooting depth in first year in meter (for perennials)
+SetCrop_RootMinYear1(GetCrop().RootMin); //Minimum rooting depth in first year in meter (for perennials)
 SetCrop_RootShape(15); //Shape factor describing root zone expansion
 SetCrop_SmaxTopQuarter(0.048); //Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone
 SetCrop_SmaxBotQuarter(0.012); //Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone
 SetCrop_CCEffectEvapLate(50); //Effect of canopy cover on reduction soil evap in late season stage
 SetCrop_SizeSeedling(6.50); //Canopy cover per seedling (cm2)
-SetCrop_SizePlant(SetCrop_SizeSeedling); // Canopy cover when regrowth (cm2)
+SetCrop_SizePlant(GetCrop().SizeSeedling); // Canopy cover when regrowth (cm2)
 SetCrop_PlantingDens(185000); //Number of plants per hectare
-SetCrop_CCo((SetCrop_SizeSeedling/10000) * (SetCrop_PlantingDens/10000)); //Starting canopy size (CCo) in fraction
-SetCrop_CCini(SetCrop_CCo);
+SetCrop_CCo((GetCrop().SizeSeedling/10000) * (GetCrop().PlantingDens/10000)); //Starting canopy size (CCo) in fraction
+SetCrop_CCini(GetCrop().CCo);
 SetCrop_CGC(0.15); //Canopy growth coefficient (CGC): Increase in canopy cover (in fraction) per day
 // SetCrop_CGCdx(undef_int); //Maximum decrease (%) of Canopy Growth Coefficient in and between seasons - Forage/Pasture Crops
 // SetCrop_CGCns(undef_int); //Number of seasons at which Maximum decrease of Canopy Growth Coefficient is reached - Forage/Pasture Crops
@@ -97,10 +97,10 @@ SetCrop_GDDaysToHIo(-9);
 SetCrop_GDDCGC(-9.000000); //CGC for GGDays: Increase in canopy cover (in fraction) per growing-degree day
 SetCrop_GDDCDC(-9.000000); //CDC for GGDays: Decrease in canopy cover (in fraction) growing-degree day
 
-SetCrop_Assimilates.On(false);  // transfer of assimilates from above ground parts to root system is NOT considered
-SetCrop_Assimilates.Period(0);  // Number of days before end of season at which storage starts
-SetCrop_Assimilates.Stored(0);  // Percentage of assimilates transferred to root system at end of season
-SetCrop_Assimilates.Mobilized(0); // Percentage stored assimilates, transferred to above ground parts in next season
+SetCrop_Assimilates_On(false);  // transfer of assimilates from above ground parts to root system is NOT considered
+SetCrop_Assimilates_Period(0);  // Number of days before end of season at which storage starts
+SetCrop_Assimilates_Stored(0);  // Percentage of assimilates transferred to root system at end of season
+SetCrop_Assimilates_Mobilized(0); // Percentage stored assimilates, transferred to above ground parts in next season
 
 SetCropFilefull(CONCAT(GetPathNameSimul(),'DEFAULT.CRO'));
 SaveCrop(GetCropFilefull());

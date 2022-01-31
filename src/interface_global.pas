@@ -18,23 +18,8 @@ type
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
 
-    rep_int_array = ARRAY[1..4] OF INTEGER;
-
-    rep_modeCycle = (GDDays, CalendarDays);
-
-    rep_planting = (Seed,Transplant,Regrowth);
-
     rep_subkind = (Vegetative,Grain,Tuber,Forage);
     rep_pMethod = (NoCorrection,FAOCorrection);
-
-    rep_Shapes = Record
-         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
-         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
-         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
-         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
-         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
-         Calibrated      : BOOLEAN;
-         end;
 
     rep_Assimilates = Record
         On          : Boolean;
@@ -67,6 +52,157 @@ type
         SoilClass    : shortInt; // 1 = sandy, 2 = loamy, 3 = sandy clayey, 4 - silty clayey soils
         CRa, CRb     : double; (* coefficients for Capillary Rise *)
         END;
+
+     rep_soil = Record
+         REW            : ShortInt; (* Readily evaporable water mm *)
+         NrSoilLayers   : ShortInt;
+         CNvalue        : ShortInt;
+         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
+         end;
+
+    rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
+    
+    rep_int_array = ARRAY[1..4] OF INTEGER;
+
+    rep_modeCycle = (GDDays, CalendarDays);
+
+    rep_planting = (Seed,Transplant,Regrowth);
+
+    repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
+    repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
+
+    rep_Onset = Record
+        GenerateOn : BOOLEAN;  // by rainfall or temperature criterion
+        GenerateTempOn : BOOLEAN; // by temperature criterion
+        Criterion : repCriterion;
+        AirTCriterion : repAirTCriterion;
+        StartSearchDayNr : LongInt; // daynumber
+        StopSearchDayNr : LongInt; // daynumber
+        LengthSearchPeriod : INTEGER; // days
+        end;
+
+    rep_datatype = (Daily,Decadely, Monthly);
+
+    rep_clim = Record
+         DataType    : rep_datatype;
+         FromD,FromM,FromY : INTEGER; //D = day or decade, Y=1901 is not linked to specific year
+         ToD,ToM,ToY : INTEGER;
+         FromDayNr, ToDayNr : LongInt; //daynumber
+         FromString, ToString : String;
+         NrObs       : INTEGER; // number of observations
+         end;
+
+    rep_Content = Record  // total water (mm) or salt (Mg/ha) content
+        BeginDay  : double; //at the beginning of the day
+        EndDay    : double; //at the end of the day
+        ErrorDay  : double; //error on WaterContent or SaltContent over the day
+        END;
+
+    rep_EffectStress = Record
+         RedCGC          : ShortInt; (* Reduction of CGC (%) *)
+         RedCCX          : ShortInt; (* Reduction of CCx (%) *)
+         RedWP           : ShortInt; (* Reduction of WP (%) *)
+         CDecline        : Double; (* Average decrease of CCx in mid season (%/day) *)
+         RedKsSto        : ShortInt; (* Reduction of KsSto (%) *)
+         end;
+
+    rep_EffectiveRainMethod = (Full,USDA,Percentage);
+
+    rep_EffectiveRain = Record    // for 10-day or monthly rainfall data
+         Method : rep_EffectiveRainMethod;
+         PercentEffRain : ShortInt; // IF Method = Percentage
+         ShowersInDecade : ShortInt; // adjustment of surface run-off
+         RootNrEvap : ShortInt; // Root for reduction in soil evaporation
+         end;
+
+    rep_Shapes = Record
+         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
+         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
+         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
+         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
+         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
+         Calibrated      : BOOLEAN;
+         end;
+
+     rep_RootZoneWC = Record
+         Actual : double; // actual soil water content in rootzone [mm]
+         FC     : double; //  soil water content [mm] in rootzone at FC
+         WP     : double; // soil water content [mm] in rootzone at WP
+         SAT    : double; // soil water content [mm] in rootzone at Sat
+         Leaf   : double; // soil water content [mm] in rootzone at upper Threshold for leaf expansion
+         Thresh : double; // soil water content [mm] in rootzone at Threshold for stomatal closure
+         Sen    : double; // soil water content [mm] in rootzone at Threshold for canopy senescence
+         ZtopAct : double;  // actual soil water content [mm] in top soil (= top compartment)
+         ZtopFC  : double;  // soil water content [mm] at FC in top soil (= top compartment)
+         ZtopWP  : double;  // soil water content [mm] at WP in top soil (= top compartment)
+         ZtopThresh : double; // soil water content [mm] at Threshold for stomatal closure in top soil
+         end;
+
+     rep_IrriECw = Record
+         PreSeason  : double;
+         PostSeason : double;
+         end;
+
+     rep_CropFileSet = Record
+         DaysFromSenescenceToEnd : integer;
+         DaysToHarvest      : integer;  //given or calculated from GDD
+         GDDaysFromSenescenceToEnd : integer;
+         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
+         end;
+
+     rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
+
+     rep_Cuttings = Record
+         Considered : BOOLEAN;
+         CCcut      : Integer; // Canopy cover (%) after cutting
+         CGCPlus    : Integer; // Increase (percentage) of CGC after cutting
+         Day1       : Integer; // first day after time window for generating cuttings (1 = start crop cycle)
+         NrDays     : Integer; // number of days of time window for generate cuttings (-9 is whole crop cycle)
+         Generate   : Boolean; // ture: generate cuttings; false : schedule for cuttings
+         Criterion  : rep_TimeCuttings; // time criterion for generating cuttings
+         HarvestEnd : BOOLEAN; // final harvest at crop maturity
+         FirstDayNr : LongInt; // first dayNr of list of specified cutting events (-9 = onset growing cycle)
+         end;
+
+     rep_Manag = Record
+         Mulch           : ShortInt; (* percent soil cover by mulch in growing period *)
+         SoilCoverBefore : ShortInt; (* percent soil cover by mulch before growing period *)
+         SoilCoverAfter  : ShortInt; (* percent soil cover by mulch after growing period *)
+         EffectMulchOffS : ShortInt; (* effect Mulch on evaporation before and after growing period *)
+         EffectMulchInS  : ShortInt; (* effect Mulch on evaporation in growing period *)
+         FertilityStress : ShortInt;
+         BundHeight      : double; // meter;
+         RunoffOn        : BOOLEAN;  (* surface runoff *)
+         CNcorrection    : INTEGER; // percent increase/decrease of CN
+         WeedRC          : ShortInt; (* Relative weed cover in percentage at canopy closure *)
+         WeedDeltaRC     : INTEGER; (* Increase/Decrease of Relative weed cover in percentage during mid season*)
+         WeedShape       : Double; (* Shape factor for crop canopy suppression*)
+         WeedAdj         : ShortInt; (* replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials *)
+         Cuttings        : rep_Cuttings; // Multiple cuttings
+         end;
+
+     rep_sum = RECORD
+         Epot, Tpot, Rain, Irrigation, Infiltrated,
+         Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater  : double;  (* mm *)
+         Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot : double;   (* ton/ha *)
+         SaltIn, SaltOut, CRsalt : double; (* ton/ha *)
+         End;
+
+     rep_RootZoneSalt = Record
+         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
+         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
+         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
+         KsSalt : double;   // stress coefficient for salinity
+         end;
+
+     rep_DayEventDbl = Record
+         DayNr : Integer;
+         Param : Double;
+         end;
+     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
+
+     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
+     rep_GenerateDepthMode = (ToFC,FixDepth);
 
      rep_Crop = Record
          subkind       : rep_subkind;
@@ -158,142 +294,6 @@ type
          CCxRoot            : double; // shape factor of the decline of CCx over the years due to self-thinning - Perennials
          Assimilates        : rep_Assimilates;
          END;
-
-     rep_soil = Record
-         REW            : ShortInt; (* Readily evaporable water mm *)
-         NrSoilLayers   : ShortInt;
-         CNvalue        : ShortInt;
-         RootMax        : Single; // maximum rooting depth in soil profile for selected crop
-         end;
-
-    rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
-    
-    repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
-    repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
-
-    rep_Onset = Record
-        GenerateOn : BOOLEAN;  // by rainfall or temperature criterion
-        GenerateTempOn : BOOLEAN; // by temperature criterion
-        Criterion : repCriterion;
-        AirTCriterion : repAirTCriterion;
-        StartSearchDayNr : LongInt; // daynumber
-        StopSearchDayNr : LongInt; // daynumber
-        LengthSearchPeriod : INTEGER; // days
-        end;
-
-    rep_datatype = (Daily,Decadely, Monthly);
-
-    rep_clim = Record
-         DataType    : rep_datatype;
-         FromD,FromM,FromY : INTEGER; //D = day or decade, Y=1901 is not linked to specific year
-         ToD,ToM,ToY : INTEGER;
-         FromDayNr, ToDayNr : LongInt; //daynumber
-         FromString, ToString : String;
-         NrObs       : INTEGER; // number of observations
-         end;
-
-    rep_Content = Record  // total water (mm) or salt (Mg/ha) content
-        BeginDay  : double; //at the beginning of the day
-        EndDay    : double; //at the end of the day
-        ErrorDay  : double; //error on WaterContent or SaltContent over the day
-        END;
-
-    rep_EffectStress = Record
-         RedCGC          : ShortInt; (* Reduction of CGC (%) *)
-         RedCCX          : ShortInt; (* Reduction of CCx (%) *)
-         RedWP           : ShortInt; (* Reduction of WP (%) *)
-         CDecline        : Double; (* Average decrease of CCx in mid season (%/day) *)
-         RedKsSto        : ShortInt; (* Reduction of KsSto (%) *)
-         end;
-
-    rep_EffectiveRainMethod = (Full,USDA,Percentage);
-
-    rep_EffectiveRain = Record    // for 10-day or monthly rainfall data
-         Method : rep_EffectiveRainMethod;
-         PercentEffRain : ShortInt; // IF Method = Percentage
-         ShowersInDecade : ShortInt; // adjustment of surface run-off
-         RootNrEvap : ShortInt; // Root for reduction in soil evaporation
-         end;
-
-     rep_RootZoneWC = Record
-         Actual : double; // actual soil water content in rootzone [mm]
-         FC     : double; //  soil water content [mm] in rootzone at FC
-         WP     : double; // soil water content [mm] in rootzone at WP
-         SAT    : double; // soil water content [mm] in rootzone at Sat
-         Leaf   : double; // soil water content [mm] in rootzone at upper Threshold for leaf expansion
-         Thresh : double; // soil water content [mm] in rootzone at Threshold for stomatal closure
-         Sen    : double; // soil water content [mm] in rootzone at Threshold for canopy senescence
-         ZtopAct : double;  // actual soil water content [mm] in top soil (= top compartment)
-         ZtopFC  : double;  // soil water content [mm] at FC in top soil (= top compartment)
-         ZtopWP  : double;  // soil water content [mm] at WP in top soil (= top compartment)
-         ZtopThresh : double; // soil water content [mm] at Threshold for stomatal closure in top soil
-         end;
-
-     rep_IrriECw = Record
-         PreSeason  : double;
-         PostSeason : double;
-         end;
-
-     rep_CropFileSet = Record
-         DaysFromSenescenceToEnd : integer;
-         DaysToHarvest      : integer;  //given or calculated from GDD
-         GDDaysFromSenescenceToEnd : integer;
-         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
-         end;
-
-     rep_TimeCuttings = (NA,IntDay,IntGDD,DryB,DryY,FreshY);
-
-     rep_Cuttings = Record
-         Considered : BOOLEAN;
-         CCcut      : Integer; // Canopy cover (%) after cutting
-         CGCPlus    : Integer; // Increase (percentage) of CGC after cutting
-         Day1       : Integer; // first day after time window for generating cuttings (1 = start crop cycle)
-         NrDays     : Integer; // number of days of time window for generate cuttings (-9 is whole crop cycle)
-         Generate   : Boolean; // ture: generate cuttings; false : schedule for cuttings
-         Criterion  : rep_TimeCuttings; // time criterion for generating cuttings
-         HarvestEnd : BOOLEAN; // final harvest at crop maturity
-         FirstDayNr : LongInt; // first dayNr of list of specified cutting events (-9 = onset growing cycle)
-         end;
-
-     rep_Manag = Record
-         Mulch           : ShortInt; (* percent soil cover by mulch in growing period *)
-         SoilCoverBefore : ShortInt; (* percent soil cover by mulch before growing period *)
-         SoilCoverAfter  : ShortInt; (* percent soil cover by mulch after growing period *)
-         EffectMulchOffS : ShortInt; (* effect Mulch on evaporation before and after growing period *)
-         EffectMulchInS  : ShortInt; (* effect Mulch on evaporation in growing period *)
-         FertilityStress : ShortInt;
-         BundHeight      : double; // meter;
-         RunoffOn        : BOOLEAN;  (* surface runoff *)
-         CNcorrection    : INTEGER; // percent increase/decrease of CN
-         WeedRC          : ShortInt; (* Relative weed cover in percentage at canopy closure *)
-         WeedDeltaRC     : INTEGER; (* Increase/Decrease of Relative weed cover in percentage during mid season*)
-         WeedShape       : Double; (* Shape factor for crop canopy suppression*)
-         WeedAdj         : ShortInt; (* replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials *)
-         Cuttings        : rep_Cuttings; // Multiple cuttings
-         end;
-
-     rep_sum = RECORD
-         Epot, Tpot, Rain, Irrigation, Infiltrated,
-         Runoff, Drain, Eact, Tact, TrW, ECropCycle, CRwater  : double;  (* mm *)
-         Biomass, YieldPart, BiomassPot, BiomassUnlim, BiomassTot : double;   (* ton/ha *)
-         SaltIn, SaltOut, CRsalt : double; (* ton/ha *)
-         End;
-
-     rep_RootZoneSalt = Record
-         ECe    : double;   // Electrical conductivity of the saturated soil-paste extract (dS/m)
-         ECsw   : double;   // Electrical conductivity of the soil water (dS/m)
-         ECswFC : double;   // Electrical conductivity of the soil water at Field Capacity(dS/m)
-         KsSalt : double;   // stress coefficient for salinity
-         end;
-
-     rep_DayEventDbl = Record
-         DayNr : Integer;
-         Param : Double;
-         end;
-     rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
-
-     rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
-     rep_GenerateDepthMode = (ToFC,FixDepth);
 
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
