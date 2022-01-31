@@ -1890,6 +1890,28 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
     end do
 end subroutine SplitStringInThreeParams
 
+
+subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile, CO2File)
+    character(len=*), intent(in) :: FullName
+    character(len=*), intent(inout) :: ClimateDescription
+    character(len=*), intent(inout) :: TempFile
+    character(len=*), intent(inout) :: EToFile
+    character(len=*), intent(inout) :: RainFile
+    character(len=*), intent(inout) :: CO2File
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(FullName), status='old', &
+         action='read')
+    read(fhandle, *) ClimateDescription
+    read(fhandle) ! AquaCrop Version
+    read(fhandle, *) TempFile
+    read(fhandle, *) EToFile
+    read(fhandle, *) RainFile
+    read(fhandle, *) CO2File 
+    close(fhandle)
+end subroutine LoadClimate
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
