@@ -1702,7 +1702,7 @@ WITH Crop DO
   // -----  UPDATE response factor
   (*
   IF (ROUND(VersionNr*10) < 40)  // UPDATE required for Version 3.0 and 3.1
-     THEN SetCrop_StressResponse_ShapeKsSto(Crop.StressResponse.ShapeWP)
+     THEN SetCrop_StressResponse_ShapeKsSto(GetCrop_StressResponse().ShapeWP)
      ELSE READLN(f0,SetCrop_StressResponse_ShapeKsSto();  //Shape factor for the response of Stomatal Closure to soil salinity stress
        *)
   IF (ROUND(VersionNr*10) >= 40)  // UPDATE required for Version 4.0 and next

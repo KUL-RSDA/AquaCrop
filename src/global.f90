@@ -521,7 +521,8 @@ type rep_Crop
         !! Daynummer: first day of croping period starting from sowing/transplanting
     integer(int32) :: DayN
         !! Daynummer: last day = harvest day
-    !! Length : rep_int_array; @ 1 .. 4 :  = the four growth stages
+    integer(int32), dimension(4) :: Length
+        !! Length : rep_int_array; @ 1 .. 4 :  = the four growth stages
     real(dp) :: RootMin
         !! rooting depth in meter
     real(dp) :: RootMax

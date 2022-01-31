@@ -525,7 +525,7 @@ IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)) THEN
 
 
 // 3. Dynamic adjustment of soil fertility stress
-IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND Crop.StressResponse.Calibrated)
+IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND GetCrop_StressResponse().Calibrated)
    THEN BEGIN
         //BioAdj := 100 * (FracBiomassPotSF + (FracBiomassPotSF - Biomass/BiomassUnlim));
         BioAdj := 100 * (FracBiomassPotSF + (FracBiomassPotSF - BiomassTot/BiomassUnlim));
@@ -1830,7 +1830,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
         // Soil fertility
         IF (StressSFAdjNEW = 0)
            THEN NoEffectStress(FertilityEffectStress)
-           ELSE CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,FertilityEffectStress);
+           ELSE CropStressParametersSoilFertility(GetCrop_StressResponse(),StressSFAdjNEW,FertilityEffectStress);
         // Soil Salinity
         CCxRedD := ROUND(Coeffb0Salt + Coeffb1Salt * SaltStress + Coeffb2Salt * SaltStress * SaltStress);
         IF ((CCxRedD < 0) OR (SaltStress <= 0.1) OR (Simulation.SalinityConsidered = false))

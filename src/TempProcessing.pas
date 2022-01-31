@@ -703,10 +703,10 @@ BEGIN
 CGCisGiven := true;
 CASE Crop.ModeCycle OF
      GDDays : BEGIN
-              Crop.GDDaysToFullCanopy := Crop.GDDaysToGermination +
-                 ROUND(LN((0.25*Crop.CCx*Crop.CCx/Crop.CCo)/(Crop.CCx-(0.98*Crop.CCx)))/Crop.GDDCGC);
+              SetCrop_GDDaysToFullCanopy(Crop.GDDaysToGermination +
+                 ROUND(LN((0.25*Crop.CCx*Crop.CCx/Crop.CCo)/(Crop.CCx-(0.98*Crop.CCx)))/Crop.GDDCGC));
               IF (Crop.GDDaysToFullCanopy > Crop.GDDaysToHarvest)
-                 THEN Crop.GDDaysToFullCanopy := Crop.GDDaysToHarvest;
+                 THEN SetCrop_GDDaysToFullCanopy(Crop.GDDaysToHarvest);
               AdjustCalendarDays(FirstCropDay,Crop.subkind,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,
                  Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToFlowering,
                  Crop.GDDLengthFlowering,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,Crop.GDDaysToMaxRooting,
@@ -734,6 +734,7 @@ VAR f0,fClim : TextFile;
     VersionNr : double;
     FertStress : shortint;
     temperature_record : rep_clim;
+    TempInt : integer;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -761,8 +762,10 @@ IF (NrRun > 1) THEN
 READLN(f0,Simulation.YearSeason); // year number of cultivation (1 = seeding/planting year)
 READLN(f0,TempSimDayNr1); //First day of simulation period
 READLN(f0,TempSimDayNrN); //Last day of simulation period
-READLN(f0,Crop.Day1); //First day of cropping period
-READLN(f0,Crop.DayN); //Last day of cropping period
+READLN(f0,TempInt); //First day of cropping period
+SetCrop_Day1(TempInt);
+READLN(f0,TempInt); //Last day of cropping period
+SetCrop_DayN(TempInt);
 
 
 // 1. Climate
@@ -899,7 +902,7 @@ IF (Crop.subkind = Forage) THEN
                      Crop.Planting,Crop.RootMin,Crop.SizePlant,Crop.CCini,
                      Crop.DaysToCCini,Crop.GDDaysToCCini);
    // adjust length of season
-   Crop.DaysToHarvest := Crop.DayN - Crop.Day1 + 1;
+   SetCrop_DaysToHarvest(Crop.DayN - Crop.Day1 + 1);
    AdjustCropFileParameters(GetCropFileSet(),(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
                                     Crop.GDDaysToSenescence,Crop.GDDaysToHarvest);
@@ -910,7 +913,7 @@ CompleteCropDescription;
 //Onset.Off := true;
 IF (GetClimFile() = '(None)')
    THEN AdjustCropYearToClimFile(Crop.Day1,Crop.DayN) // adjusting Crop.Day1 and Crop.DayN to ClimFile
-   ELSE Crop.DayN := Crop.Day1 + Crop.DaysToHarvest - 1;
+   ELSE SetCrop_DayN(Crop.Day1 + Crop.DaysToHarvest - 1);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
 IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
    AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);

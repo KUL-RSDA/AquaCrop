@@ -371,7 +371,6 @@ procedure SetCrop_StressResponse_Calibrated(constref Calibrated : BOOLEAN);
 function GetCrop_Length() :: rep_int_array;
 
 function GetCrop_Length_i(constref i : integer) : double;
-        external 'aquacrop' name '__ac_global_MOD_getcrop_length_i';
 
 function GetCrop_subkind() : rep_subkind;
 
@@ -648,7 +647,6 @@ procedure SetCrop_Length(constref Length :: rep_int_array);
 
 function SetCrop_Length_i(constref i : integer; 
                           constref Length_i : double);
-        external 'aquacrop' name '__ac_global_MOD_setcrop_length_i';
 
 procedure SetCrop_subkind(constref subkind : rep_subkind);
 
@@ -2719,13 +2717,6 @@ begin;
     SetCrop_StressResponse_ShapeWP(Crop_StressResponse.ShapeWP);
     SetCrop_StressResponse_ShapeCDecline(Crop_StressResponse.ShapeCDecline);
     SetCrop_StressResponse_Calibrated(Crop_StressResponse.Calibrated);
-end;
-
-function GetCrop_Length() : rep_int_array;
-var
-    i : integer;
-begin;
-    for i := 1 to 4 do GetCrop_Length[i] := GetCrop_Length_i(i)
 end;
 
 function GetCrop_Length() : rep_int_array;

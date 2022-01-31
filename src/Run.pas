@@ -567,7 +567,7 @@ BEGIN
 // 1. Soil fertility
 FracBiomassPotSF := 1;
 // 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
-IF Crop.StressResponse.Calibrated
+IF GetCrop_StressResponse().Calibrated
    THEN BEGIN
         StressBiomassRelationship(Crop.DaysToCCini,Crop.GDDaysToCCini,
                Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,Crop.DaysToHarvest,
@@ -577,7 +577,7 @@ IF Crop.StressResponse.Calibrated
                Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
                Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
                Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,
-               Crop.Day1,Crop.DeterminancyLinked,Crop.StressResponse,Crop.subkind,Crop.ModeCycle,
+               Crop.Day1,Crop.DeterminancyLinked,GetCrop_StressResponse(),Crop.subkind,Crop.ModeCycle,
                Coeffb0,Coeffb1,Coeffb2,X10,X20,X30,X40,X50,X60,X70);
         END
    ELSE BEGIN
@@ -586,7 +586,7 @@ IF Crop.StressResponse.Calibrated
         Coeffb2 := undef_int;
         END;
 // 1.b Soil fertility : FracBiomassPotSF
-IF ((GetManagement_FertilityStress() <> 0) AND Crop.StressResponse.Calibrated) THEN
+IF ((GetManagement_FertilityStress() <> 0) AND GetCrop_StressResponse().Calibrated) THEN
    BEGIN
    BioLow := 100;
    StrLow := 0;
@@ -1401,7 +1401,7 @@ RelationshipsForFertilityAndSaltStress(Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
 IF (GetManagement_FertilityStress() <= 0) THEN SetManagement_FertilityStress(0);
 
 // Reset soil fertility parameters to selected value in management
-CropStressParametersSoilFertility(Crop.StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+CropStressParametersSoilFertility(GetCrop_StressResponse(),GetManagement_FertilityStress(),Simulation.EffectStress);
 FertStress := GetManagement_FertilityStress();
 TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
                     Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
@@ -1674,7 +1674,7 @@ IF ((Crop.subkind = Forage) // only valid for perennial herbaceous forage crops
    AND (Simulation.YearSeason = (Simulation.Storage.Season + 1))) // season next to season in which storage took place
    THEN BEGIN
         // mobilization of assimilates
-        SetTransfer_ToMobilize(Simulation.Storage.Btotal * Crop.Assimilates.Mobilized/100);
+        SetTransfer_ToMobilize(Simulation.Storage.Btotal * GetCrop_Assimilates().Mobilized/100);
         IF (ROUND(1000 * GetTransfer_ToMobilize()) > 0)  // minimum 1 kg
            THEN SetTransfer_Mobilize(true)
            ELSE SetTransfer_Mobilize(false);
@@ -2499,8 +2499,8 @@ VAR RepeatToDay : LongInt;
               END
          ELSE BEGIN
               // Start of storage period ?
-              //IF ((DayNri - Simulation.DelayedDays - Crop.Day1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
-              IF ((DayNri - Simulation.DelayedDays - Crop.Day1 + 1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
+              //IF ((DayNri - Simulation.DelayedDays - Crop.Day1) = (Crop.DaysToHarvest - GetCrop_Assimilates().Period + 1)) THEN
+              IF ((DayNri - Simulation.DelayedDays - Crop.Day1 + 1) = (Crop.DaysToHarvest - GetCrop_Assimilates().Period + 1)) THEN
                  BEGIN
                  // switch storage on
                  StorageOn := true;
@@ -2510,10 +2510,10 @@ VAR RepeatToDay : LongInt;
                  END;
               // Fraction of assimilates transferred
               IF (MobilizationOn = true) THEN FracAssim := (AssimToMobilize-AssimMobilized)/AssimToMobilize;
-              IF ((StorageOn = true) AND (Crop.Assimilates.Period > 0))
-                 THEN FracAssim := (Crop.Assimilates.Stored/100) *
-                 //(((DayNri - Simulation.DelayedDays - Crop.Day1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
-                 (((DayNri - Simulation.DelayedDays - Crop.Day1 + 1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
+              IF ((StorageOn = true) AND (GetCrop_Assimilates().Period > 0))
+                 THEN FracAssim := (GetCrop_Assimilates().Stored/100) *
+                 //(((DayNri - Simulation.DelayedDays - Crop.Day1)-(Crop.DaysToHarvest-GetCrop_Assimilates().Period))/GetCrop_Assimilates().Period);
+                 (((DayNri - Simulation.DelayedDays - Crop.Day1 + 1)-(Crop.DaysToHarvest-GetCrop_Assimilates().Period))/GetCrop_Assimilates().Period);
               IF (FracAssim < 0) THEN FracAssim := 0;
               IF (FracAssim > 1) THEN FracAssim := 1;
               END;
@@ -2636,7 +2636,7 @@ IF (Crop.DaysToCCini <> 0)
                    RatDGDD := 1;
                    IF ((Crop.ModeCycle = GDDays) AND (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence)) THEN
                       RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
-                   CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,Simulation.EffectStress);
+                   CropStressParametersSoilFertility(GetCrop_StressResponse(),StressSFAdjNEW,Simulation.EffectStress);
                    CCiPrev := CCiniTotalFromTimeToCCini(Crop.DaysToCCini,Crop.GDDaysToCCini,
                                   Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToFullCanopySF,
                                   Crop.DaysToSenescence,Crop.DaysToHarvest,
