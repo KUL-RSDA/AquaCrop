@@ -18,6 +18,31 @@ type
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
 
+    rep_int_array = ARRAY[1..4] OF INTEGER;
+
+    rep_modeCycle = (GDDays, CalendarDays);
+
+    rep_planting = (Seed,Transplant,Regrowth);
+
+    rep_subkind = (Vegetative,Grain,Tuber,Forage);
+    rep_pMethod = (NoCorrection,FAOCorrection);
+
+    rep_Shapes = Record
+         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
+         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
+         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
+         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
+         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
+         Calibrated      : BOOLEAN;
+         end;
+
+    rep_Assimilates = Record
+        On          : Boolean;
+        Period      : INTEGER; (* Number of days at end of season during which assimilates are stored in root system *)
+        Stored      : ShortInt; (* Percentage of assimilates, transferred to root system at last day of season *)
+        Mobilized   : ShortInt; (* Percentage of stored assimilates, transferred to above ground parts in next season *)
+        end;
+
     SoilLayerIndividual = Record
         Description  : rep_string25;
         Thickness    : double;   (* meter *)
@@ -141,24 +166,8 @@ type
          RootMax        : Single; // maximum rooting depth in soil profile for selected crop
          end;
 
-     rep_Assimilates = Record
-         On          : Boolean;
-         Period      : INTEGER; (* Number of days at end of season during which assimilates are stored in root system *)
-         Stored      : ShortInt; (* Percentage of assimilates, transferred to root system at last day of season *)
-         Mobilized   : ShortInt; (* Percentage of stored assimilates, transferred to above ground parts in next season *)
-         end;
-
     rep_SoilLayer = ARRAY[1..max_SoilLayers] of SoilLayerIndividual;
     
-    rep_int_array = ARRAY[1..4] OF INTEGER;
-
-    rep_modeCycle = (GDDays, CalendarDays);
-
-    rep_planting = (Seed,Transplant,Regrowth);
-
-    rep_subkind = (Vegetative,Grain,Tuber,Forage);
-    rep_pMethod = (NoCorrection,FAOCorrection);
-
     repCriterion = (CumulRain, RainPeriod, RainDecade, RainVsETo);
     repAirTCriterion = (TminPeriod,TmeanPeriod,GDDPeriod,CumulGDD);
 
@@ -204,15 +213,6 @@ type
          PercentEffRain : ShortInt; // IF Method = Percentage
          ShowersInDecade : ShortInt; // adjustment of surface run-off
          RootNrEvap : ShortInt; // Root for reduction in soil evaporation
-         end;
-
-    rep_Shapes = Record
-         Stress          : ShortInt; (* Percentage soil fertility stress for calibration*)
-         ShapeCGC        : Double; (* Shape factor for the response of Canopy Growth Coefficient to soil fertility stress *)
-         ShapeCCX        : Double; (* Shape factor for the response of Maximum Canopy Cover to soil fertility stress *)
-         ShapeWP         : Double; (* Shape factor for the response of Crop Water Producitity to soil fertility stress *)
-         ShapeCDecline   : Double; (* Shape factor for the response of Decline of Canopy Cover to soil fertility stress *)
-         Calibrated      : BOOLEAN;
          end;
 
      rep_RootZoneWC = Record
@@ -368,9 +368,10 @@ procedure SetCrop_StressResponse_ShapeCDecline(constref ShapeCDecline : Double);
 procedure SetCrop_StressResponse_Calibrated(constref Calibrated : BOOLEAN);
     external 'aquacrop' name '__ac_interface_global_MOD_setcrop_stressresponse_calibrated_wrap';
 
-function GetCrop_Length() :: rep_int_array;
+function GetCrop_Length() : rep_int_array;
 
-function GetCrop_Length_i(constref i : integer) : double;
+function GetCrop_Length_i(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_length_i';
 
 function GetCrop_subkind() : rep_subkind;
 
@@ -643,10 +644,11 @@ function GetCrop_CCxRoot() : double;
 
 procedure SetCrop(constref Crop : rep_Crop);
 
-procedure SetCrop_Length(constref Length :: rep_int_array);
+procedure SetCrop_Length(constref Length : rep_int_array);
 
-function SetCrop_Length_i(constref i : integer; 
-                          constref Length_i : double);
+procedure SetCrop_Length_i(constref i : integer; 
+                          constref Length_i : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_length_i';
 
 procedure SetCrop_subkind(constref subkind : rep_subkind);
 
@@ -2601,12 +2603,9 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
-
-
-
 function GetCrop() : rep_Crop;
 begin;
-    GetSetCrop_subkind(GetCrop_subkind();
+    GetCrop.subkind := GetCrop_subkind();
     GetCrop.ModeCycle := GetCrop_ModeCycle();
     GetCrop.Planting := GetCrop_Planting();
     GetCrop.pMethod := GetCrop_pMethod();

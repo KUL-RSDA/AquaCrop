@@ -102,7 +102,7 @@ implementation
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
  SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
- // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
+ // required for SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetCrop().RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
  SetCrop_RootMin(0.30); //Minimum rooting depth (m)
  SetCrop_RootMax(1.00); //Maximum rooting depth (m)
  // GetCrop(). RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
@@ -124,7 +124,7 @@ implementation
  SetCrop_CCo((GetCrop().PlantingDens/10000) * (GetCrop().SizeSeedling/10000));
  SetCrop_CCini((GetCrop().PlantingDens/10000) * (GetCrop().SizePlant/10000));
  // maximum rooting depth in given soil profile
- SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+ SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
  SetCrop_Day1(SimulParam.CropDay1);
  CompleteCropDescription;
@@ -191,11 +191,11 @@ implementation
  // 5.6 Set Climate and Simulation Period
  SetClimData;
  Simulation.LinkCropToSimPeriod := true;
-(* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
- AdjustCropYearToClimFile(Crop.Day1,Crop.DayN);
+(* adjusting GetCrop().Day1 and GetCrop().DayN to ClimFile *)
+ AdjustCropYearToClimFile(GetCrop().Day1,GetCrop().DayN);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
  IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
-   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
+   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
 (* adjusting simulation period *)
  AdjustSimPeriod;
 

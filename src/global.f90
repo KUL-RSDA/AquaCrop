@@ -2,6 +2,7 @@ module ac_global
 
 use ac_kinds, only: dp, &
                     int8, &
+                    int16, &
                     int32, &
                     intEnum, &
                     sp
@@ -39,13 +40,12 @@ integer(intEnum), parameter :: plant_transplant = 1
 integer(intEnum), parameter :: plant_regrowth= 2
     !! index of regrowth in planting enumerated type
 
-integer(intEnum), parameter :: Method_full = 0
-    !! index of full in Method enumerated type
-integer(intEnum), parameter :: Method_usda = 1
-    !! index of usda in Method enumerated type
-integer(intEnum), parameter :: Method_percentage= 2
-    !! index of percentage in Method enumerated type
-
+integer(intEnum), parameter :: EffectiveRainMethod_full = 0
+    !! index of full in EffectiveRainMethod enumerated type
+integer(intEnum), parameter :: EffectiveRainMethod_usda = 1
+    !! index of usda in EffectiveRainMethod enumerated type
+integer(intEnum), parameter :: EffectiveRainMethod_percentage= 2
+    !! index of percentage in EffectiveRainMethod enumerated type
 
 integer(intEnum), parameter :: TimeCuttings_NA = 0
     !! index of NA in TimeCuttings enumerated type
@@ -397,67 +397,6 @@ type rep_DayEventDbl
         !! Undocumented
 end type rep_DayEventDbl
 
-character(len=:), allocatable :: RainFile
-character(len=:), allocatable :: RainFileFull
-character(len=:), allocatable :: RainDescription
-character(len=:), allocatable :: EToFile
-character(len=:), allocatable :: EToFileFull
-character(len=:), allocatable :: EToDescription
-character(len=:), allocatable :: CalendarFile
-character(len=:), allocatable :: CalendarFileFull
-character(len=:), allocatable :: CO2File
-character(len=:), allocatable :: CO2FileFull
-character(len=:), allocatable :: CO2Description
-character(len=:), allocatable :: IrriFile
-character(len=:), allocatable :: IrriFileFull
-character(len=:), allocatable :: CropFile
-character(len=:), allocatable :: CropFileFull
-character(len=:), allocatable :: PathNameProg
-character(len=:), allocatable :: PathNameOutp
-character(len=:), allocatable :: PathNameSimul
-character(len=:), allocatable :: ProfFile
-character(len=:), allocatable :: ProfFilefull
-character(len=:), allocatable :: ManFile
-character(len=:), allocatable :: ManFilefull
-character(len=:), allocatable :: ObservationsFile
-character(len=:), allocatable :: ObservationsFilefull
-character(len=:), allocatable :: ObservationsDescription
-character(len=:), allocatable :: OffSeasonFile
-character(len=:), allocatable :: OffSeasonFilefull
-character(len=:), allocatable :: GroundWaterFile
-character(len=:), allocatable :: GroundWaterFilefull
-character(len=:), allocatable :: ClimateFile
-character(len=:), allocatable :: ClimateFileFull
-character(len=:), allocatable :: ClimFile
-character(len=:), allocatable :: SWCiniFile
-character(len=:), allocatable :: SWCiniFileFull
-character(len=:), allocatable :: ProjectFile
-character(len=:), allocatable :: ProjectFileFull
-character(len=:), allocatable :: MultipleProjectFile
-character(len=:), allocatable :: TemperatureFile
-character(len=:), allocatable :: TemperatureFileFull
-character(len=:), allocatable :: MultipleProjectFileFull
-
-type(rep_IrriECw) :: IrriECw
-type(rep_Manag) :: Management
-type(rep_Cuttings) :: Cuttings
-type(rep_Onset) :: onset
-type(rep_Crop) :: crop
-type(rep_Content) :: TotalSaltContent
-type(rep_Content) :: TotalWaterContent
-type(rep_EffectiveRain) :: effectiverain
-type(rep_soil) :: Soil
-type(rep_RootZoneWC) :: RootZoneWC
-type(rep_CropFileSet) :: CropFileSet
-type(rep_sum) :: SumWaBal
-type(rep_RootZoneSalt) :: RootZoneSalt
-type(rep_clim)  :: TemperatureRecord
-
-integer(intEnum) :: GenerateTimeMode
-integer(intEnum) :: GenerateDepthMode
-integer(intEnum) :: IrriMode
-integer(intEnum) :: IrriMethod
-
 type rep_Crop 
     integer(intEnum) :: subkind
         !! Undocumented
@@ -640,6 +579,67 @@ type rep_Crop
     type(rep_Assimilates) :: Assimilates
         !! Undocumented
 end type rep_Crop 
+
+character(len=:), allocatable :: RainFile
+character(len=:), allocatable :: RainFileFull
+character(len=:), allocatable :: RainDescription
+character(len=:), allocatable :: EToFile
+character(len=:), allocatable :: EToFileFull
+character(len=:), allocatable :: EToDescription
+character(len=:), allocatable :: CalendarFile
+character(len=:), allocatable :: CalendarFileFull
+character(len=:), allocatable :: CO2File
+character(len=:), allocatable :: CO2FileFull
+character(len=:), allocatable :: CO2Description
+character(len=:), allocatable :: IrriFile
+character(len=:), allocatable :: IrriFileFull
+character(len=:), allocatable :: CropFile
+character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: PathNameProg
+character(len=:), allocatable :: PathNameOutp
+character(len=:), allocatable :: PathNameSimul
+character(len=:), allocatable :: ProfFile
+character(len=:), allocatable :: ProfFilefull
+character(len=:), allocatable :: ManFile
+character(len=:), allocatable :: ManFilefull
+character(len=:), allocatable :: ObservationsFile
+character(len=:), allocatable :: ObservationsFilefull
+character(len=:), allocatable :: ObservationsDescription
+character(len=:), allocatable :: OffSeasonFile
+character(len=:), allocatable :: OffSeasonFilefull
+character(len=:), allocatable :: GroundWaterFile
+character(len=:), allocatable :: GroundWaterFilefull
+character(len=:), allocatable :: ClimateFile
+character(len=:), allocatable :: ClimateFileFull
+character(len=:), allocatable :: ClimFile
+character(len=:), allocatable :: SWCiniFile
+character(len=:), allocatable :: SWCiniFileFull
+character(len=:), allocatable :: ProjectFile
+character(len=:), allocatable :: ProjectFileFull
+character(len=:), allocatable :: MultipleProjectFile
+character(len=:), allocatable :: TemperatureFile
+character(len=:), allocatable :: TemperatureFileFull
+character(len=:), allocatable :: MultipleProjectFileFull
+
+type(rep_IrriECw) :: IrriECw
+type(rep_Manag) :: Management
+type(rep_Cuttings) :: Cuttings
+type(rep_Onset) :: onset
+type(rep_Crop) :: crop
+type(rep_Content) :: TotalSaltContent
+type(rep_Content) :: TotalWaterContent
+type(rep_EffectiveRain) :: effectiverain
+type(rep_soil) :: Soil
+type(rep_RootZoneWC) :: RootZoneWC
+type(rep_CropFileSet) :: CropFileSet
+type(rep_sum) :: SumWaBal
+type(rep_RootZoneSalt) :: RootZoneSalt
+type(rep_clim)  :: TemperatureRecord
+
+integer(intEnum) :: GenerateTimeMode
+integer(intEnum) :: GenerateDepthMode
+integer(intEnum) :: IrriMode
+integer(intEnum) :: IrriMethod
 
 
 contains
@@ -5210,6 +5210,22 @@ subroutine SetTemperatureFilefull(str)
 
     TemperatureFilefull = str
 end subroutine SetTemperatureFilefull
+
+function GetCrop_Length_i(i) result(Length_i)
+    !! Getter for the "Length" attribute of "Crop" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Length_i
+
+    Length_i = Crop%Length(i)
+end function GetCrop_Length_i
+
+subroutine SetCrop_Length_i(i, Length_i)
+    !! Setter for the "Length" attribute of "Crop" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Length_i
+
+    Crop%Length(i) = Length_i
+end subroutine SetCrop_Length_i
 
 type(rep_clim) function GetTemperatureRecord()
     !! Getter for the "TemperatureRecord" global variable.

@@ -1067,7 +1067,6 @@ subroutine SetManagement_RunoffOn_wrap(RunoffOn)
     call SetManagement_RunoffOn(RunoffOn_f)    
 end subroutine SetManagement_RunoffOn_wrap
 
-
 function GetOffSeasonFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
     type(c_ptr) :: c_pointer
