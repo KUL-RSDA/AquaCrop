@@ -1528,7 +1528,7 @@ VAR CGCisGiven : BOOLEAN;
     Crop_CGC_temp : double;
     Crop_DaysToFullCanopySF_temp : integer;
 BEGIN
-IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
+IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
    THEN BEGIN
         IF (GetCrop().DaysToHIo > 0)
            THEN BEGIN
@@ -1553,7 +1553,7 @@ IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
                 END
            ELSE SetCrop_dHIdt(undef_int);
         END;
-IF (GetCrop().ModeCycle = CalendarDays)
+IF (GetCrop_ModeCycle() = CalendarDays)
    THEN BEGIN
         SetCrop_DaysToCCini(TimeToCCini(GetCrop().Planting,GetCrop().PlantingDens,GetCrop().SizeSeedling,GetCrop().SizePlant,GetCrop().CCx,GetCrop().CGC));
         SetCrop_DaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * GetCrop().CCx),GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().DaysToGermination));
@@ -1820,7 +1820,7 @@ READLN(f0,TempInt);
 SetCrop_LengthFlowering(TempInt);
 // -----  UPDATE crop development for Version 3.1
 // leafy vegetable crop has an Harvest Index which builds up starting from sowing
-IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))  THEN
+IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))  THEN
    BEGIN
    SetCrop_DaysToFlowering(0);
    SetCrop_LengthFlowering(0);
@@ -1834,7 +1834,7 @@ CASE XX of
      end;
 
 // Potential excess of fruits (%) and building up HI
-IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
+IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
    THEN BEGIN
         READLN(f0);  // PercCycle no longer considered
         SetCrop_fExcess(undef_int);
@@ -1871,7 +1871,7 @@ READLN(f0,TempShortInt);
 SetCrop_DHImax(TempShortInt); // allowable maximum increase (%) of specified HI
 // -----  UPDATE yield response to water for Version 3.1
 // leafy vegetable crop has an Harvest Index (default is 85 %)
-IF ((ROUND(VersionNr*10) = 30) AND ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage)))
+IF ((ROUND(VersionNr*10) = 30) AND ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage)))
    THEN IF (ROUND(GetCrop().HI) = undef_int) THEN SetCrop_HI(85);
 
 // growing degree days
@@ -1896,7 +1896,7 @@ SetCrop_GDDaysToHIo(TempInt);
 
 // -----  UPDATE yield response to water for Version 3.1
 // leafy vegetable crop has an Harvest Index which builds up starting from sowing
-IF ((GetCrop().ModeCycle = GDDays) AND ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))) THEN
+IF ((GetCrop_ModeCycle() = GDDays) AND ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))) THEN
    BEGIN
    SetCrop_GDDaysToFlowering(0);
    SetCrop_GDDLengthFlowering(0);
@@ -1944,7 +1944,7 @@ IF (ROUND(VersionNr*10) < 62)  // UPDATE required for Version 7.0
         SetCrop_Assimilates_Mobilized(TempShortInt); // Percentage of stored assimilates, transferred to above ground parts in next season
         END;
 
-IF (GetCrop().subkind = Forage) THEN
+IF (GetCrop_subkind() = Forage) THEN
    BEGIN // data for the determination of the growing period
    // 1. Title
    For XX := 1 to 3 DO READLN(f0);
@@ -1995,7 +1995,7 @@ SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,So
 // copy to CropFileSet
 SetCropFileSet_DaysFromSenescenceToEnd(GetCrop().DaysToHarvest - GetCrop().DaysToSenescence);
 SetCropFileSet_DaysToHarvest(GetCrop().DaysToHarvest);
-IF (GetCrop().ModeCycle = GDDays)
+IF (GetCrop_ModeCycle() = GDDays)
    THEN BEGIN
         SetCropFileSet_GDDaysFromSenescenceToEnd(GetCrop().GDDaysToHarvest - GetCrop().GDDaysToSenescence);
         SetCropFileSet_GDDaysToHarvest(GetCrop().GDDaysToHarvest);
@@ -2263,7 +2263,7 @@ WRITELN(f,'     1         : File not protected');
 
 //SubKind
 i := 2;
-CASE GetCrop().subkind OF
+CASE GetCrop_subkind() OF
      Vegetative : BEGIN
                   i := 1;
                   TempString := '         : leafy vegetable crop';
@@ -2287,7 +2287,7 @@ WRITELN(f,i:6,TempString);
 IF (GetCrop().Planting = Seed)
    THEN BEGIN
         i := 1;
-        IF (GetCrop().subkind = Forage)
+        IF (GetCrop_subkind() = Forage)
            THEN WRITELN(f,i:6,'         : Crop is sown in 1st year')
            ELSE WRITELN(f,i:6,'         : Crop is sown');
         END
@@ -2295,7 +2295,7 @@ IF (GetCrop().Planting = Seed)
         IF (GetCrop().Planting = Transplant)
            THEN BEGIN
                 i := 0;
-                IF (GetCrop().subkind = Forage)
+                IF (GetCrop_subkind() = Forage)
                    THEN WRITELN(f,i:6,'         : Crop is transplanted in 1st year')
                    ELSE WRITELN(f,i:6,'         : Crop is transplanted');
                 END
@@ -2308,7 +2308,7 @@ IF (GetCrop().Planting = Seed)
 //Mode (description crop cycle)
 i := 1;
 TempString := '         : Determination of crop cycle : by calendar days';
-IF (GetCrop().ModeCycle = GDDays) THEN
+IF (GetCrop_ModeCycle() = GDDays) THEN
    BEGIN
    i := 0;
    TempString := '         : Determination of crop cycle : by growing degree-days';
@@ -2412,7 +2412,7 @@ IF (GetCrop().Planting = Seed)
         WRITELN(f,GetCrop().DaysToMaxRooting:6,'         : Calendar Days: from sowing to maximum rooting depth');
         WRITELN(f,GetCrop().DaysToSenescence:6,'         : Calendar Days: from sowing to start senescence');
         WRITELN(f,GetCrop().DaysToHarvest:6,'         : Calendar Days: from sowing to maturity (length of crop cycle)');
-        IF (GetCrop().subkind = Tuber)
+        IF (GetCrop_subkind() = Tuber)
            THEN WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from sowing to start of yield formation')
            ELSE WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from sowing to flowering');
         END
@@ -2423,7 +2423,7 @@ IF (GetCrop().Planting = Seed)
                 WRITELN(f,GetCrop().DaysToMaxRooting:6,'         : Calendar Days: from transplanting to maximum rooting depth');
                 WRITELN(f,GetCrop().DaysToSenescence:6,'         : Calendar Days: from transplanting to start senescence');
                 WRITELN(f,GetCrop().DaysToHarvest:6,'         : Calendar Days: from transplanting to maturity');
-                IF (GetCrop().subkind = Tuber)
+                IF (GetCrop_subkind() = Tuber)
                    THEN WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from transplanting to start of yield formation')
                    ELSE WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from transplanting to flowering');
                 END
@@ -2432,7 +2432,7 @@ IF (GetCrop().Planting = Seed)
                 WRITELN(f,GetCrop().DaysToMaxRooting:6,'         : Calendar Days: from regrowth to maximum rooting depth');
                 WRITELN(f,GetCrop().DaysToSenescence:6,'         : Calendar Days: from regrowth to start senescence');
                 WRITELN(f,GetCrop().DaysToHarvest:6,'         : Calendar Days: from regrowth to maturity');
-                IF (GetCrop().subkind = Tuber)
+                IF (GetCrop_subkind() = Tuber)
                    THEN WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from regrowth to start of yield formation')
                    ELSE WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from regrowth to flowering');
                 END;
@@ -2452,7 +2452,7 @@ IF (GetCrop().DeterminancyLinked = true)
 WRITELN(f,i:6,TempString);
 
 // Potential excess of fruits (%)
-IF ((GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
+IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
    THEN WRITELN(f,undef_int:6,'         : parameter NO LONGER required') // Building up of Harvest Index (% of growing cycle)')
    ELSE BEGIN
         WRITE(f,GetCrop().fExcess:6);
@@ -2466,7 +2466,7 @@ WRITE(f,GetCrop().DaysToHIo:6);
 IF (GetCrop().DaysToHIo = undef_int)
    THEN WRITELN(f,'         : Building up of Harvest Index - Not Applicable')
    ELSE BEGIN
-        CASE GetCrop().subkind OF
+        CASE GetCrop_subkind() OF
              Vegetative,
              Forage     : WRITELN(f,'         : Building up of Harvest Index starting at sowing/transplanting (days)');
              Grain      : WRITELN(f,'         : Building up of Harvest Index starting at flowering (days)');
@@ -2480,7 +2480,7 @@ WRITELN(f,GetCrop().WP:8:1,'       : Water Productivity normalized for ETo and C
 WRITELN(f,GetCrop().WPy:6,'         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)');
 WRITELN(f,GetCrop().AdaptedToCO2:6,'         : Crop performance under elevated atmospheric CO2 concentration (%)');
 WRITELN(f,GetCrop().HI:6,'         : Reference Harvest Index (HIo) (%)');
-IF (GetCrop().subkind = Tuber)
+IF (GetCrop_subkind() = Tuber)
    THEN WRITELN(f,GetCrop().HIincrease:6,'         : Possible increase (%) of HI due to water stress before start of yield formation')
    ELSE WRITELN(f,GetCrop().HIincrease:6,'         : Possible increase (%) of HI due to water stress before flowering');
 IF (ROUND(GetCrop().aCoeff) = undef_int)
@@ -2498,7 +2498,7 @@ IF (GetCrop().Planting = Seed)
         WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from sowing to maximum rooting depth');
         WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from sowing to start senescence');
         WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : GDDays: from sowing to maturity (length of crop cycle)');
-        IF (GetCrop().subkind = Tuber)
+        IF (GetCrop_subkind() = Tuber)
            THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from sowing to start tuber formation')
            ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from sowing to flowering');
         END
@@ -2509,7 +2509,7 @@ IF (GetCrop().Planting = Seed)
                 WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from transplanting to maximum rooting depth');
                 WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from transplanting to start senescence');
                 WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : GDDays: from transplanting to maturity');
-                IF (GetCrop().subkind = Tuber)
+                IF (GetCrop_subkind() = Tuber)
                    THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from transplanting to start yield formation')
                    ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from transplanting to flowering');
                 END
@@ -2518,7 +2518,7 @@ IF (GetCrop().Planting = Seed)
                 WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from regrowth to maximum rooting depth');
                 WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from regrowth to start senescence');
                 WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : GDDays: from regrowth to maturity');
-                IF (GetCrop().subkind = Tuber)
+                IF (GetCrop_subkind() = Tuber)
                    THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from regrowth to start yield formation')
                    ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from regrowth to flowering');
                 END;
@@ -2532,19 +2532,19 @@ WRITELN(f,GetCrop().GDDaysToHIo:6,'         : GDDays: building-up of Harvest Ind
 WRITELN(f,GetCrop().DryMatter:6,'         : dry matter content (%) of fresh yield');
 
 // added to 7.0 - Perennial crops
-IF (GetCrop().subkind = Forage)
+IF (GetCrop_subkind() = Forage)
    THEN WRITELN(f,GetCrop().RootMinYear1:9:2,'      : Minimum effective rooting depth (m) in first year (for perennials)')
    ELSE WRITELN(f,GetCrop().RootMinYear1:9:2,'      : Minimum effective rooting depth (m) in first year - required only in case of regrowth');
 IF (GetCrop().SownYear1 = true)
    THEN BEGIN
         i := 1;
-        IF (GetCrop().subkind = Forage)
+        IF (GetCrop_subkind() = Forage)
            THEN WRITELN(f,i:6,'         : Crop is sown in 1st year (for perennials)')
            ELSE WRITELN(f,i:6,'         : Crop is sown in 1st year - required only in case of regrowth');
         END
    ELSE BEGIN
         i := 0;
-        IF (GetCrop().subkind = Forage)
+        IF (GetCrop_subkind() = Forage)
            THEN WRITELN(f,i:6,'         : Crop is transplanted in 1st year (for perennials)')
            ELSE WRITELN(f,i:6,'         : Crop is transplanted in 1st year - required only in case of regrowth');
         END;
@@ -3242,7 +3242,7 @@ IF (t <= 0)
                         END
                    ELSE BEGIN
                         PercentLagPhase := 100;
-                        IF ((GetCrop().subkind = Tuber) OR (GetCrop().subkind = Vegetative) OR (GetCrop().subkind = Forage))
+                        IF ((GetCrop_subkind() = Tuber) OR (GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
                            THEN BEGIN // continue with logistic equation
                                 HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t));
                                 IF (HIday >= 0.9799*HImax) THEN HIday := HImax;
@@ -3260,7 +3260,7 @@ IF (t <= 0)
         // adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
         tMax := ROUND(HImax/dHIdt);
         IF ((HIfinal = HImax) AND (t <= tmax) AND (CCi <= (PercCCxHIfinal/100))
-            AND (GetCrop().subkind <> Vegetative) AND (GetCrop().subkind <> Forage))
+            AND (GetCrop_subkind() <> Vegetative) AND (GetCrop_subkind() <> Forage))
                 THEN HIfinal := ROUND(HIday);
         IF (HIday > HIfinal) THEN HIday := HIfinal;
         END;
@@ -3598,7 +3598,7 @@ BEGIN
 // 1. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TGetCrop().SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop().SIM'));
    Reset(fTemp);
    END;
 
@@ -4382,7 +4382,7 @@ IF (ProcentWeedCover > 0) THEN
    BEGIN
    fweedi := CCmultiplierWeed(ProcentWeedCover,CCxCrop,FshapeWeed);
    // FOR perennials when self-thinning
-   IF ((GetCrop().subkind = Forage) AND (Yeari > 1) and (fCCx < 0.995)) THEN
+   IF ((GetCrop_subkind() = Forage) AND (Yeari > 1) and (fCCx < 0.995)) THEN
       BEGIN //need for adjustment
       // step 1 - adjusment of shape factor to degree of crop replacement by weeds
       FshapeMinimum := 10 - 20*( (exp(fCCx*3)-1)/(exp(3)-1) + sqr(MWeedAdj/100));

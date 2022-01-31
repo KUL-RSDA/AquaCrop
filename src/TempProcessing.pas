@@ -708,7 +708,7 @@ VAR succes : BOOLEAN;
     Crop_dHIdt_temp : double; 
 BEGIN
 CGCisGiven := true;
-CASE GetCrop().ModeCycle OF
+CASE GetCrop_ModeCycle() OF
      GDDays : BEGIN
               SetCrop_GDDaysToFullCanopy(GetCrop().GDDaysToGermination +
                  ROUND(LN((0.25*GetCrop().CCx*GetCrop().CCx/GetCrop().CCo)/(GetCrop().CCx-(0.98*GetCrop().CCx)))/GetCrop().GDDCGC));
@@ -727,7 +727,7 @@ CASE GetCrop().ModeCycle OF
               Crop_CGC_temp := GetCrop().CGC; 
               Crop_CDC_temp := GetCrop().CDC; 
               Crop_dHIdt_temp := GetCrop().dHIdt; 
-              AdjustCalendarDays(FirstCropDay,GetCrop().subkind,GetCrop().Tbase,GetCrop().Tupper,SimulParam.Tmin,SimulParam.Tmax,
+              AdjustCalendarDays(FirstCropDay,GetCrop_subkind(),GetCrop().Tbase,GetCrop().Tupper,SimulParam.Tmin,SimulParam.Tmax,
                  GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToFlowering,
                  GetCrop().GDDLengthFlowering,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,GetCrop().GDDaysToMaxRooting,
                  Crop_GDDaysToHIo_temp,
@@ -935,7 +935,7 @@ SetCropFilefull(CONCAT(Trim(TempString),GetCropFile()));
 LoadCrop(GetCropFilefull());
 
 // Adjust crop parameters of Perennials
-IF (GetCrop().subkind = Forage) THEN
+IF (GetCrop_subkind() = Forage) THEN
    BEGIN
    // adjust crop characteristics to the Year (Seeding/Planting or Non-seesing/Planting year)
    Crop_Planting_temp := GetCrop().Planting;
@@ -944,7 +944,7 @@ IF (GetCrop().subkind = Forage) THEN
    Crop_CCini_temp := GetCrop().CCini;
    Crop_DaysToCCini_temp := GetCrop().DaysToCCini;
    Crop_GDDaysToCCini_temp := GetCrop().GDDaysToCCini;
-   AdjustYearPerennials(Simulation.YearSeason,GetCrop().SownYear1,GetCrop().ModeCycle,GetCrop().RootMax,GetCrop().RootMinYear1,
+   AdjustYearPerennials(Simulation.YearSeason,GetCrop().SownYear1,GetCrop_ModeCycle(),GetCrop().RootMax,GetCrop().RootMinYear1,
                      GetCrop().CCo,GetCrop().SizeSeedling,GetCrop().CGC,GetCrop().CCx,GetCrop().GDDCGC,GetCrop().PlantingDens,
                      Crop_Planting_temp,Crop_RootMin_temp,Crop_SizePlant_temp,Crop_CCini_temp,
                      Crop_DaysToCCini_temp,Crop_GDDaysToCCini_temp);
@@ -960,7 +960,7 @@ IF (GetCrop().subkind = Forage) THEN
    Crop_DaysToHarvest_temp := GetCrop().DaysToHarvest;
    Crop_GDDaysToSenescence_temp := GetCrop().GDDaysToSenescence;
    Crop_GDDaysToHarvest_temp := GetCrop().GDDaysToHarvest;
-   AdjustCropFileParameters(GetCropFileSet(),(GetCrop().DaysToHarvest),GetCrop().Day1,GetCrop().ModeCycle,GetCrop().Tbase,GetCrop().Tupper,
+   AdjustCropFileParameters(GetCropFileSet(),(GetCrop().DaysToHarvest),GetCrop().Day1,GetCrop_ModeCycle(),GetCrop().Tbase,GetCrop().Tupper,
                                     Crop_DaysToSenescence_temp,Crop_DaysToHarvest_temp,
                                     Crop_GDDaysToSenescence_temp,Crop_GDDaysToHarvest_temp);
    SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
@@ -1237,7 +1237,7 @@ IF FileExists(totalname)
                        END;
              end;
         // create SIM file and record first day
-        totalnameOUT := CONCAT(GetPathNameSimul(),'TGetCrop().SIM');
+        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop().SIM');
         Assign(f2,totalnameOUT);
         Rewrite(f2);
         WRITELN(f2,Tlow:10:4,Thigh:10:4);
@@ -1331,7 +1331,7 @@ BEGIN
 //1. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TGetCrop().SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop().SIM'));
    Reset(fTemp);
    END;
 
@@ -1548,7 +1548,7 @@ IF (TestRecord = true) THEN
 //2. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TGetCrop().SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop().SIM'));
    Reset(fTemp);
    END;
 
@@ -1734,7 +1734,7 @@ FOR Dayi := 1 TO L1234 DO
     //5.6 biomass water productivity (WP)
      WPi := WPbio; // vegetative stage
     // 5.6a. vegetative versus yield formation stage
-    IF (((GetCrop().subkind = Tuber) OR (GetCrop().Subkind = grain)) AND (WPyield < 100) AND (Dayi > LFlor)) THEN
+    IF (((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) AND (WPyield < 100) AND (Dayi > LFlor)) THEN
        BEGIN // yield formation stage
        fSwitch := 1;
        IF ((DaysYieldFormation > 0) AND (tSwitch > 0)) THEN
@@ -2234,7 +2234,7 @@ IF ((TempModeCycle = GDDays) AND (SFInfoStress > 0) AND (GDDL12SF < TempGDDL123)
    THEN RatDGDD := (TempL123-L12SF)/(TempGDDL123-GDDL12SF);
 //1 - c. Get PercentLagPhase (for estimate WPi during yield formation)
 DaysYieldFormation := undef_int;
-IF ((GetCrop().subkind = Tuber) OR (GetCrop().Subkind = grain)) THEN //DaysToFlowering corresponds with Tuberformation
+IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN //DaysToFlowering corresponds with Tuberformation
    BEGIN
    DaysYieldFormation := ROUND(TempHI/TempdHIdt);
    IF DeterminantCropType

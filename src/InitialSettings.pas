@@ -50,7 +50,7 @@ implementation
    SetEffectiveRain_ShowersInDecade(2);  // For estimation of surface run-off
    SetEffectiveRain_RootNrEvap(5); // For reduction of soil evaporation
    END;
- // 1d. GetCrop().PAR  - 12 parameters
+ // 1d. Crop.PAR  - 12 parameters
  WITH SimulParam DO
    BEGIN
    EvapDeclineFactor := 4; // evaporation decline factor in stage 2
@@ -107,7 +107,7 @@ implementation
  // required for SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetCrop().RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
  SetCrop_RootMin(0.30); //Minimum rooting depth (m)
  SetCrop_RootMax(1.00); //Maximum rooting depth (m)
- // GetCrop(). RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
+ // Crop.RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
  LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -193,7 +193,7 @@ implementation
  // 5.6 Set Climate and Simulation Period
  SetClimData;
  Simulation.LinkCropToSimPeriod := true;
-(* adjusting GetCrop().Day1 and GetCrop().DayN to ClimFile *)
+(* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
 Crop_Day1_temp := GetCrop().Day1;
 Crop_DayN_temp := GetCrop().DayN;
  AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp);
