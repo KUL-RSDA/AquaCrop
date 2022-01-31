@@ -1237,54 +1237,6 @@ subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, Deter
     end if
 end subroutine TimeToMaxCanopySF
 
-subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, DeterminantCrop, L12SF, RedCGC, RedCCx, ClassSF)
-    real(dp), intent(in) :: CCo
-    real(dp), intent(in) :: CGC
-    real(dp), intent(in) :: CCx
-    integer(int32), intent(in) :: L0
-    integer(int32), intent(in) :: L12
-    integer(int32), intent(in) :: L123
-    integer(int32), intent(in) :: LToFlor
-    integer(int32), intent(in) :: LFlor
-    logical, intent(in) :: DeterminantCrop
-    integer(int32), intent(inout) :: L12SF
-    integer(int8), intent(inout) :: RedCGC
-    integer(int8), intent(inout) :: RedCCx
-    integer(int8), intent(inout) :: ClassSF
-
-    real(dp) :: CCToReach
-    integer(int32) :: L12SFmax
-
-    if ((ClassSF == 0) .or. ((RedCCx == 0) .and. (RedCGC == 0))) then
-        L12SF = L12
-    else
-        CCToReach = 0.98_dp*(1-RedCCX/100)*CCx
-        L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100)*CCx), (CGC*(1-(RedCGC)/100)), L0)
-        ! determine L12SFmax
-        if (DeterminantCrop) then
-            L12SFmax = LToFlor + nint(LFlor/2._dp)
-        else
-            L12SFmax = L123
-        end if
-        ! check for L12SFmax
-        if (L12SF > L12SFmax) then
-            ! full canopy cannot be reached in potential period for vegetative growth
-            ! ClassSF := undef_int; ! switch to user defined soil fertility
-            ! 1. increase CGC(soil fertility)
-            do while ((L12SF > L12SFmax) .and. (RedCGC > 0))
-                RedCGC = RedCGC - 1
-                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100)*CCx), (CGC*(1-(RedCGC)/100)), L0)
-            end do
-            ! 2. if not sufficient decrease CCx(soil fertility)
-            do while ((L12SF > L12SFmax) .and. ( ((1-RedCCX/100)*CCx) > 0.10_dp) .and. (RedCCx <= 50))
-                RedCCx = RedCCx + 1
-                CCToReach = 0.98_dp*(1-RedCCX/100)*CCx
-                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100)*CCx), (CGC*(1-(RedCGC)/100)), L0)
-            end do
-        end if
-    end if
-end subroutine TimeToMaxCanopySF
-
 
 real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
     real(dp), intent(in) :: Wrel

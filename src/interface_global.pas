@@ -309,7 +309,8 @@ procedure TimeToMaxCanopySF(
             constref DeterminantCrop : BOOLEAN;
             VAR L12SF : INTEGER;
             VAR RedCGC,RedCCx : ShortInt;
-            VAR ClassSF : ShortInt);   
+            VAR ClassSF : ShortInt); 
+        external 'aquacrop' name '__ac_global_MOD_timetomaxcanopysf';  
 
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
@@ -1691,19 +1692,6 @@ begin
     int_planting := ord(ThePlantingType); 
     TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
                                  TheSizePlant, TheCropCCx, TheCropCGC);
-end;
-
-procedure TimeToMaxCanopySF(
-            constref CCo,CGC,CCx : double;
-            constref L0,L12,L123,LToFlor,LFlor : integer;
-            constref DeterminantCrop : boolean;
-            VAR L12SF : integer;
-            VAR RedCGC,RedCCx : ShortInt;
-            VAR ClassSF : ShortInt);
-
-begin
-    TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, &
-                            DeterminantCrop, L12SF, RedCGC, RedCCx, ClassSF);
 end;    
 
 procedure DetermineLengthGrowthStages(
