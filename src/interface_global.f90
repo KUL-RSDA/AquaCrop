@@ -6,6 +6,7 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_ptr
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
+                     TimeToMaxCanopySF, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -259,7 +260,7 @@ subroutine TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
     integer(int32), intent(in) :: L123
     integer(int32), intent(in) :: LToFlor
     integer(int32), intent(in) :: LFlor
-    logical(1), intent(in) :: DeterminantCrop
+    logical(4), intent(in) :: DeterminantCrop
     integer(int32), intent(inout) :: L12SF
     integer(int8), intent(inout) :: RedCGC
     integer(int8), intent(inout) :: RedCCx

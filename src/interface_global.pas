@@ -300,7 +300,7 @@ procedure TimeToMaxCanopySF_wrap(
             VAR L12SF : INTEGER;
             VAR RedCGC,RedCCx : ShortInt;
             VAR ClassSF : ShortInt);
-        external 'aquacrop' name '__ac_global_MOD_timetomaxcanopysf_wrap';
+        external 'aquacrop' name '__ac_interface_global_MOD_timetomaxcanopysf_wrap';
 
 procedure TimeToMaxCanopySF(
             constref CCo,CGC,CCx : double;
