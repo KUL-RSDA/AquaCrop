@@ -139,52 +139,6 @@ TYPE
          END;
 
 
-     rep_MonthInteger = ARRAY[1..12] OF INTEGER;
-
-
-     rep_param = RECORD  // DEFAULT.PAR
-         // crop parameters IN CROP.PAR - with Reset option
-         EvapDeclineFactor : ShortInt;  // exponential decline with relative soil water [1 = small ... 8 = sharp]
-         KcWetBare       : double; //Soil evaporation coefficients from wet bare soil
-         PercCCxHIfinal    : ShortInt; // CC threshold below which HI no longer increase (% of 100)
-         RootPercentZmin : INTEGER; //starting depth of root sine function in % of Zmin (sowing depth)
-         MaxRootZoneExpansion : double; // maximum root zone expansion in cm/day - fixed at 5 cm/day
-         KsShapeFactorRoot : Shortint; //shape factro for the effect of water stress on root zone expansion
-         TAWGermination    : ShortInt; // Soil water content (% TAW) required at sowing depth for germination
-         pAdjFAO         : double; //Adjustment factor for FAO-adjustment of soil water depletion (p) for various ET
-         DelayLowOxygen  : INTEGER; //delay [days] for full effect of anaeroby
-         ExpFsen           : double; // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
-         Beta              : ShortInt; // Percentage decrease of p(senescence) once early canopy senescence is triggered
-         ThicknessTopSWC   : ShortInt; // Thickness of top soil for determination of its Soil Water Content (cm)
-         // Field parameter IN FIELD.PAR  - with Reset option
-         EvapZmax : ShortInt; // cm  maximum soil depth for water extraction by evaporation
-         // Runoff parameters IN RUNOFF.PAR  - with Reset option
-         RunoffDepth : double; //considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
-         CNcorrection : BOOLEAN; //correction Antecedent Moisture Class (On/Off)
-         // Temperature parameters IN TEMPERATURE.PAR  - with Reset option
-         Tmin,Tmax   : double; // Default Minimum and maximum air temperature (degC) if no temperature file
-         GDDMethod   : ShortInt; // 1 for Method 1, 2 for Method 2, 3 for Method 3
-         // General parameters IN GENERAL.PAR
-         PercRAW     : INTEGER; //allowable percent RAW depletion for determination Inet
-         CompDefThick: double; // Default thickness of soil compartments [m]
-         CropDay1    : integer;  // First day after sowing/transplanting (DAP = 1)
-         Tbase,Tupper : double; // Default base and upper temperature (degC) assigned to crop
-         IrriFwInSeason  : ShortInt; // Percentage of soil surface wetted by irrigation in crop season
-         IrriFwOffSeason : ShortInt; // Percentage of soil surface wetted by irrigation off-season
-         // Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
-         ShowersInDecade : rep_MonthInteger; // 10-day or Monthly rainfall --> Runoff estimate
-         EffectiveRain : rep_EffectiveRain; // 10-day or Monthly rainfall --> Effective rainfall
-         // Salinity
-         SaltDiff : ShortInt; // salt diffusion factor (capacity for salt diffusion in micro pores) [%]
-         SaltSolub : ShortInt;  // salt solubility [g/liter]
-         // Groundwater table
-         ConstGwt : BOOLEAN; // groundwater table is constant (or absent) during the simulation period
-         // Capillary rise
-         RootNrDF : shortint;
-         // Initial abstraction for surface runoff
-         IniAbstract : shortint;
-         END;
-
      rep_IniComp =  ARRAY[1.. max_No_compartments] of double;
      rep_IniSWC = RECORD
          AtDepths : BOOLEAN;    // at specific depths or for specific layers
@@ -319,7 +273,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
     OutputName     : string;
     PreDay         : BOOLEAN;
-    SimulParam     : rep_param;
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
@@ -555,7 +508,7 @@ IF ((VirtualDay < 1) OR (VirtualDay > L1234))
         THEN ActualRootingDepthDays := Zmax
         ELSE IF (Zmin < Zmax)
                 THEN BEGIN
-                     Zini := ZMin * (SimulParam.RootPercentZmin/100);
+                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
                      T0 := ROUND(L0/2);
                      IF (LZmax <= T0)
                         THEN Zr := Zini + (Zmax-Zini)*VirtualDay/LZmax
@@ -584,7 +537,7 @@ IF ((VirtualDay < 1) OR (VirtualDay > L1234))
         THEN ActualRootingDepthGDDays := Zmax
         ELSE IF (Zmin < Zmax)
                 THEN BEGIN
-                     Zini := ZMin * (SimulParam.RootPercentZmin/100);
+                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
                      GDDT0 := GDDL0/2;
                      IF (GDDLZmax <= GDDT0)
                         THEN Zr := Zini + (Zmax-Zini)*SumGDD/GDDLZmax
@@ -631,7 +584,7 @@ VirtualDay := DAP - Simulation.DelayedDays;
 IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   //To handlle Forage crops: Round(100*CCi) = 0
    THEN BEGIN
         TpotVal := 0;
-        EpotVal := SimulParam.KcWetBare*EToVal;
+        EpotVal := GetSimulParam_KcWetBare()*EToVal;
         END
    ELSE BEGIN
         (* Correction for micro-advection *)
@@ -654,10 +607,10 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
 
         (* First estimate of Epot and Tpot *)
         TpotVal := CCiAdjusted * KsTrCold * KcVal * EToVal;
-        EpotVal := SimulParam.KcWetBare * (1 - CCiAdjusted) * EToVal;
+        EpotVal := GetSimulParam_KcWetBare() * (1 - CCiAdjusted) * EToVal;
 
         (* Maximum Epot with withered canopy as a result of (early) senescence*)
-        EpotMax := SimulParam.KcWetBare * EToVal * (1 - CCxWithered * CCEffectProcent/100);
+        EpotMax := GetSimulParam_KcWetBare() * EToVal * (1 - CCxWithered * CCEffectProcent/100);
 
         (* Correction Epot for dying crop in late-season stage *)
         IF ((VirtualDay > L123) AND (CCx > 0)) THEN
@@ -670,7 +623,7 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
                    END
               ELSE Multiplier := 1; // full effect
            EpotVal := EpotVal * (1 - CCx * (CCEffectProcent/100) * Multiplier);
-           EpotMin := SimulParam.KcWetBare * (1 - 1.72*CCx + 1*(CCx*CCx) - 0.30*(CCx*CCx*CCx)) * EToVal;
+           EpotMin := GetSimulParam_KcWetBare() * (1 - 1.72*CCx + 1*(CCx*CCx) - 0.30*(CCx*CCx*CCx)) * EToVal;
            IF (EpotMin < 0) THEN EpotMin := 0;
            IF (EpotVal < EpotMin) THEN EpotVal := EpotMin;
            IF (EpotVal > EpotMax) THEN EpotVal := EpotMax;
@@ -683,7 +636,7 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
         IF (CCi < CCxWithered) THEN
            BEGIN
            IF (CCxWithered > 0.01) AND (CCi > 0.001)
-              THEN TpotVal := TpotVal * Exp(SimulParam.ExpFsen*Ln(CCi/CCxWithered));
+              THEN TpotVal := TpotVal * Exp(GetSimulParam_ExpFsen()*Ln(CCi/CCxWithered));
            END;
         END;
 END; (* CalculateETpot *)
@@ -948,7 +901,7 @@ SetManagement_SoilCoverBefore(0);
 SetManagement_SoilCoverAfter(0);
 SetManagement_EffectMulchOffS(50);
 // off-season irrigation
-SimulParam.IrriFwOffSeason := 100;
+SetSimulParam_IrriFwOffSeason(100);
 SetIrriECw_PreSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
@@ -973,7 +926,7 @@ VAR f0 : TextFile;
     VersionNr : double;
     PreSeason_in : double;
     PostSeason_in : double;
-    TempShortInt : shortint;
+    TempShortInt, simul_irri_of: shortint;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -1009,7 +962,9 @@ IF (ROUND(10*VersionNr) < 32) // irrigation water quality AFTER growing period
     READLN(f0,PostSeason_in);
     SetIrriECw_PostSeason(PostSeason_in);
     END;
-READLN(f0,SimulParam.IrriFwOffSeason); // percentage of soil surface wetted
+simul_irri_of := GetSimulParam_IrriFwOffSeason(); 
+READLN(f0,simul_irri_of); // percentage of soil surface wetted
+SetSimulParam_IrriFwOffSeason(simul_irri_of);
 // irrigation events - get events before and after season
 IF (NrEvents1 > 0) OR (NrEvents2 > 0) THEN FOR Nri := 1 TO 3 DO READLN(f0); // title
 IF (NrEvents1 > 0) THEN FOR Nri := 1 TO NrEvents1 DO // events BEFORE growing period
@@ -1034,6 +989,7 @@ PROCEDURE LoadIrriScheduleInfo(FullName : string);
 VAR f0 : TextFile;
     i : INTEGER;
     VersionNr : double;
+    simul_irri_in,simul_percraw : shortint; 
 
 BEGIN
 Assign(f0,FullName);
@@ -1052,7 +1008,9 @@ CASE i OF
      end;
 
 // fraction of soil surface wetted
-READLN(f0,SimulParam.IrriFwInSeason);
+simul_irri_in := GetSimulParam_IrriFwInSeason();
+READLN(f0,simul_irri_in);
+SetSimulParam_IrriFwInSeason(simul_irri_in);
 
 // irrigation mode and parameters
 READLN(f0,i);
@@ -1091,7 +1049,9 @@ IF (GetIrriMode() = Generate) THEN
 // 3. Net irrigation requirement
 IF (GetIrriMode() = Inet) THEN
    BEGIN
-   READLN(f0,SimulParam.PercRAW);
+   simul_percraw := GetSimulParam_PercRAW();
+   READLN(f0,simul_percraw);
+   SetSimulParam_PercRAW(simul_percraw);
    IrriFirstDayNr := undef_int;  // start of growing period
    END;
 
@@ -1110,8 +1070,8 @@ NrCompartments := 0;
 REPEAT
   DeltaZ := (TotalDepthL - TotalDepthC);
   NrCompartments := NrCompartments + 1;
-  IF (DeltaZ > SimulParam.CompDefThick)
-     THEN Compartment[NrCompartments].Thickness := SimulParam.CompDefThick
+  IF (DeltaZ > GetSimulParam_CompDefThick())
+     THEN Compartment[NrCompartments].Thickness := GetSimulParam_CompDefThick()
      ELSE Compartment[NrCompartments].Thickness := DeltaZ;
   TotalDepthC := TotalDepthC + Compartment[NrCompartments].Thickness;
 UNTIL ((NrCompartments = max_No_compartments) OR (Abs(TotalDepthC - TotalDepthL) < 0.0001));
@@ -1413,7 +1373,7 @@ TotSalt := 0;
 FOR i := 1 TO SoilLayer[Comp.Layer].SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; //g/m2
 TotSalt := TotSalt/
         (volSAT*10*Comp.Thickness*(1-SoilLayer[Comp.Layer].GravelVol/100)); // g/l
-IF (TotSalt > SimulParam.SaltSolub) THEN TotSalt := SimulParam.SaltSolub;
+IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
 ECeComp := TotSalt/Equiv; //dS/m
 END; (* ECeComp *)
 
@@ -1432,7 +1392,7 @@ IF (atFC = true)
                 (SoilLayer[Comp.Layer].FC*10*Comp.Thickness*(1-SoilLayer[Comp.Layer].GravelVol/100)) // g/l
    ELSE TotSalt := TotSalt/
                 (Comp.theta*1000*Comp.Thickness*(1-SoilLayer[Comp.Layer].GravelVol/100)); // g/l
-IF (TotSalt > SimulParam.SaltSolub) THEN TotSalt := SimulParam.SaltSolub;
+IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
 ECswComp := TotSalt/Equiv;
 END; (* ECswComp *)
 
@@ -1443,10 +1403,10 @@ PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
                       VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
 BEGIN
 SaltSolution := SaltSolution + SaltDeposit;
-IF (SaltSolution > SimulParam.SaltSolub * mm)
+IF (SaltSolution > GetSimulParam_SaltSolub() * mm)
     THEN BEGIN
-         SaltDeposit := SaltSolution - SimulParam.SaltSolub * mm;
-         SaltSolution := SimulParam.SaltSolub * mm;
+         SaltDeposit := SaltSolution - GetSimulParam_SaltSolub() * mm;
+         SaltSolution := GetSimulParam_SaltSolub() * mm;
          END
     ELSE SaltDeposit := 0;
 END; (* SaltSolutionDeposit *)
@@ -1571,7 +1531,7 @@ FOR i := 1 TO GetSoil().NrSoilLayers DO
     SoilLayer[i].Macro := ROUND(SoilLayer[i].FC);
     SoilLayer[i].UL := ((SoilLayer[i].SAT)/100) * (SoilLayer[i].SC/(SoilLayer[i].SC+2)); (* m3/m3 *)
     SoilLayer[i].Dx := (SoilLayer[i].UL)/SoilLayer[i].SC;  (* m3/m3 *)
-    Calculate_SaltMobility(i,SimulParam.SaltDiff,SoilLayer[i].Macro,SoilLayer[i].SaltMobility);
+    Calculate_SaltMobility(i,GetSimulParam_SaltDiff(),SoilLayer[i].Macro,SoilLayer[i].SaltMobility);
     // determine default parameters for capillary rise if missing
     SoilLayer[i].SoilClass := NumberSoilClass(SoilLayer[i].SAT,SoilLayer[i].FC,SoilLayer[i].WP,SoilLayer[i].InfRate);
     IF (ROUND(VersionNr*10) < 40) THEN
@@ -2732,7 +2692,7 @@ CASE Simulation.LinkCropToSimPeriod OF
     end;
 
 // adjust initial depth and quality of the groundwater when required
-IF ((NOT SimulParam.ConstGwt) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THEN
+IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THEN
    BEGIN
    IF (GetGroundWaterFile() = '(None)')
        THEN FullFileName := CONCAT(GetPathNameProg(),'GroundWater.AqC')
@@ -3056,7 +3016,7 @@ REPEAT
 UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
 
 // calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
-IF ((RootingDepth*100) <= SimulParam.ThicknessTopSWC)
+IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
    THEN BEGIN
         SetRootZoneWC_ZtopAct(GetRootZoneWC().Actual);
         SetRootZoneWC_ZtopFC(GetRootZoneWC().FC);
@@ -3070,11 +3030,11 @@ IF ((RootingDepth*100) <= SimulParam.ThicknessTopSWC)
         SetRootZoneWC_ZtopFC(0);
         SetRootZoneWC_ZtopWP(0);
         SetRootZoneWC_ZtopThresh(0);
-        TopSoilInMeter := SimulParam.ThicknessTopSWC/100;
+        TopSoilInMeter := GetSimulParam_ThicknessTopSWC()/100;
         REPEAT
           compi := compi + 1;
           CumDepth := CumDepth + Compartment[compi].Thickness;
-          IF ((CumDepth*100) <= SimulParam.ThicknessTopSWC)
+          IF ((CumDepth*100) <= GetSimulParam_ThicknessTopSWC())
              THEN Factor := 1
              ELSE BEGIN
                   frac_value := TopSoilInMeter - (CumDepth - Compartment[compi].Thickness);
@@ -3187,21 +3147,33 @@ END; (* CanopyCoverNoStressSF *)
 PROCEDURE ReadSoilSettings;
 VAR f : textfile;
     FullName : string;
-    i : ShortInt;
+    i,simul_saltdiff,simul_saltsolub,simul_root,simul_iniab : ShortInt;
+    simul_rod : double;
+
 BEGIN
 FullName := CONCAT(GetPathNameSimul(),'Soil.PAR');
 Assign(f,FullName);
 Reset(f);
-READLN(f,SimulParam.RunoffDepth); //considered depth (m) of soil profile for calculation of mean soil water content
+simul_rod := GetSimulParam_RunoffDepth(); 
+READLN(f,simul_rod); //considered depth (m) of soil profile for calculation of mean soil water content
+SetSimulParam_RunoffDepth(simul_rod);
 READLN(f,i);   // correction CN for Antecedent Moisture Class
-IF (i = 1) THEN SimulParam.CNcorrection := true
-           ELSE SimulParam.CNcorrection := false;
-READLN(f,SimulParam.SaltDiff); // salt diffusion factor (%)
-READLN(f,SimulParam.SaltSolub); // salt solubility (g/liter)
-READLN(f,SimulParam.RootNrDF); // shape factor capillary rise factor
+IF (i = 1) THEN SetSimulParam_CNcorrection(true)
+           ELSE SetSimulParam_CNcorrection(false);
+simul_saltdiff := GetSimulParam_SaltDiff();
+simul_saltsolub := GetSimulParam_SaltSolub();
+simul_root := GetSimulParam_RootNrDF();
+READLN(f,simul_saltdiff); // salt diffusion factor (%)
+READLN(f,simul_saltsolub); // salt solubility (g/liter)
+READLN(f,simul_root); // shape factor capillary rise factor
+SetSimulParam_SaltDiff(simul_saltdiff);
+SetSimulParam_SaltSolub(simul_saltsolub);
+SetSimulParam_RootNrDF(simul_root);
 // new Version 4.1
-READLN(f,SimulParam.IniAbstract); // Percentage of S for initial abstraction for surface runoff
-SimulParam.IniAbstract := 5; // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
+simul_iniab := GetSimulParam_IniAbstract();
+READLN(f,simul_iniab); // Percentage of S for initial abstraction for surface runoff
+SetSimulParam_IniAbstract(simul_iniab);
+SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
 Close(f);
 END; (* ReadSoilSettings *)
 
@@ -3278,7 +3250,7 @@ FullName := CONCAT(GetPathNameSimul(),'Rainfall.PAR');
 Assign(f,FullName);
 Reset(f);
 Readln(f); //Settings for processing 10-day or monthly rainfall data
-WITH SimulParam DO
+WITH GetSimulParam() DO
    BEGIN
    Readln(f,NrM);
    Case NrM OF
@@ -3307,7 +3279,7 @@ BEGIN
 FullName := CONCAT(GetPathNameSimul(),'Crop.PAR');
 Assign(f,FullName);
 Reset(f);
-WITH SimulParam DO
+WITH GetSimulParam() DO
    BEGIN
    Readln(f,EvapDeclineFactor); // evaporation decline factor in stage 2
    Readln(f,KcWetBare); //Kc wet bare soil [-]
@@ -3334,7 +3306,7 @@ BEGIN
 FullName := CONCAT(GetPathNameSimul(),'Field.PAR');
 Assign(f,FullName);
 Reset(f);
-WITH SimulParam DO
+WITH GetSimulParam() DO
    BEGIN
    Readln(f,EvapZmax); //maximum water extraction depth by soil evaporation [cm]
    END;
@@ -3350,7 +3322,7 @@ FullName := CONCAT(GetPathNameSimul(),'Temperature.PAR');
 Assign(f0,FullName);
 Reset(f0);
 Readln(f0);
-WITH SimulParam DO
+WITH GetSimulParam() DO
    BEGIN
    Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
    Readln(f0,Tmax);   //Default maximum temperature (degC) if no temperature file is specified
@@ -3660,9 +3632,9 @@ FOR Dayi := 1 TO L1234 DO
     IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
-            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
+            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,GetSimulParam_GDDMethod());
             END
-       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
     IF (TheModeCycle = GDDays) THEN
        BEGIN
        SumGDD := SumGDD + GDDi;
@@ -4158,8 +4130,8 @@ FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + Compartment[i].Thicknes
 IF (NrCompartments < 12) THEN
    REPEAT
    NrCompartments := NrCompartments + 1;
-   IF ((CropZx - TotDepthC) > SimulParam.CompDefThick)
-      THEN Compartment[NrCompartments].Thickness := SimulParam.CompDefThick
+   IF ((CropZx - TotDepthC) > GetSimulParam_CompDefThick())
+      THEN Compartment[NrCompartments].Thickness := GetSimulParam_CompDefThick()
       ELSE Compartment[NrCompartments].Thickness := CropZx - TotDepthC;
    TotDepthC := TotDepthC + Compartment[NrCompartments].Thickness;
    UNTIL ((NrCompartments = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
@@ -4251,17 +4223,17 @@ CASE i OF
      0 : BEGIN // no groundwater table
          Zcm := undef_int;
          ECdSm := undef_int;
-         SimulParam.ConstGwt := true;
+         SetSimulParam_ConstGwt(true);
          TheEnd := true;
          END;
      1 : BEGIN // constant groundwater table
-         SimulParam.ConstGwt := true;
+         SetSimulParam_ConstGwt(true);
          END;
-     else SimulParam.ConstGwt := false;
+     else SetSimulParam_ConstGwt(false);
      end;
 
 // first day of observations (only for variable groundwater table)
-IF (NOT SimulParam.ConstGwt) THEN
+IF (NOT GetSimulParam_ConstGwt()) THEN
    BEGIN
    READLN(f0,dayi);
    READLN(f0,monthi);
@@ -4533,13 +4505,14 @@ END; (* GetFileForProgramParameters *)
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 VAR f0 : TextFile;
     i : INTEGER;
-    effrainperc,effrainshow,effrainrootE : ShortInt;
+    effrainperc,effrainshow,effrainrootE,simul_saltdiff,simul_saltsolub,simul_root : ShortInt;
+    simul_rod : double ;
 BEGIN
 IF FileExists(FullFileNameProgramParameters)
    THEN BEGIN // load set of program parameters
         Assign(f0,FullFileNameProgramParameters);
         Reset(f0);
-        WITH SimulParam DO
+        WITH GetSimulParam() DO
           BEGIN
           // crop
           Readln(f0,EvapDeclineFactor); // evaporation decline factor in stage 2
@@ -4558,15 +4531,23 @@ IF FileExists(FullFileNameProgramParameters)
           // field
           Readln(f0,EvapZmax); //maximum water extraction depth by soil evaporation [cm]
           // soil
-          READLN(f0,SimulParam.RunoffDepth); //considered depth (m) of soil profile for calculation of mean soil water content
+          simul_rod := GetSimulParam_RunoffDepth();
+          READLN(f0,simul_rod); //considered depth (m) of soil profile for calculation of mean soil water content
+          SetSimulParam_RunoffDepth(simul_rod);
           READLN(f0,i);   // correction CN for Antecedent Moisture Class
           IF (i = 1)
-             THEN SimulParam.CNcorrection := true
-             ELSE SimulParam.CNcorrection := false;
-          READLN(f0,SimulParam.SaltDiff); // salt diffusion factor (%)
-          READLN(f0,SimulParam.SaltSolub); // salt solubility (g/liter)
-          READLN(f0,SimulParam.RootNrDF); // shape factor capillary rise factor
-          SimulParam.IniAbstract := 5; // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
+             THEN SetSimulParam_CNcorrection(true)
+             ELSE SetSimulParam_CNcorrection(false);
+          simul_saltdiff := GetSimulParam_SaltDiff();
+          simul_saltsolub := GetSimulParam_SaltSolub();
+          simul_root := GetSimulParam_RootNrDF();
+          READLN(f0,simul_saltdiff); // salt diffusion factor (%)
+          READLN(f0,simul_saltsolub); // salt solubility (g/liter)
+          READLN(f0,simul_root); // shape factor capillary rise factor
+          SetSimulParam_SaltDiff(simul_saltdiff);
+          SetSimulParam_SaltSolub(simul_saltsolub);
+          SetSimulParam_RootNrDF(simul_root);
+          SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
           // Temperature
           Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
           Readln(f0,Tmax);   //Default maximum temperature (degC) if no temperature file is specified

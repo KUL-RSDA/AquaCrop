@@ -192,6 +192,53 @@ type
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
 
+     rep_MonthInteger = ARRAY[1..12] OF INTEGER;
+
+     rep_param = RECORD  // DEFAULT.PAR
+         // crop parameters IN CROP.PAR - with Reset option
+         EvapDeclineFactor : ShortInt;  // exponential decline with relative soil water [1 = small ... 8 = sharp]
+         KcWetBare       : double; //Soil evaporation coefficients from wet bare soil
+         PercCCxHIfinal    : ShortInt; // CC threshold below which HI no longer increase (% of 100)
+         RootPercentZmin : integer; //starting depth of root sine function in % of Zmin (sowing depth)
+         MaxRootZoneExpansion : double; // maximum root zone expansion in cm/day - fixed at 5 cm/day
+         KsShapeFactorRoot : Shortint; //shape factro for the effect of water stress on root zone expansion
+         TAWGermination    : ShortInt; // Soil water content (% TAW) required at sowing depth for germination
+         pAdjFAO         : double; //Adjustment factor for FAO-adjustment of soil water depletion (p) for various ET
+         DelayLowOxygen  : integer; //delay [days] for full effect of anaeroby
+         ExpFsen           : double; // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+         Beta              : ShortInt; // Percentage decrease of p(senescence) once early canopy senescence is triggered
+         ThicknessTopSWC   : ShortInt; // Thickness of top soil for determination of its Soil Water Content (cm)
+         // Field parameter IN FIELD.PAR  - with Reset option
+         EvapZmax : ShortInt; // cm  maximum soil depth for water extraction by evaporation
+         // Runoff parameters IN RUNOFF.PAR  - with Reset option
+         RunoffDepth : double; //considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+         CNcorrection : Boolean; //correction Antecedent Moisture Class (On/Off)
+         // Temperature parameters IN TEMPERATURE.PAR  - with Reset option
+         Tmin,Tmax   : double; // Default Minimum and maximum air temperature (degC) if no temperature file
+         GDDMethod   : ShortInt; // 1 for Method 1, 2 for Method 2, 3 for Method 3
+         // General parameters IN GENERAL.PAR
+         PercRAW     : integer; //allowable percent RAW depletion for determination Inet
+         CompDefThick: double; // Default thickness of soil compartments [m]
+         CropDay1    : integer;  // First day after sowing/transplanting (DAP = 1)
+         Tbase,Tupper : double; // Default base and upper temperature (degC) assigned to crop
+         IrriFwInSeason  : ShortInt; // Percentage of soil surface wetted by irrigation in crop season
+         IrriFwOffSeason : ShortInt; // Percentage of soil surface wetted by irrigation off-season
+         // Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
+         ShowersInDecade : rep_MonthInteger; // 10-day or Monthly rainfall --> Runoff estimate
+         EffectiveRain : rep_EffectiveRain; // 10-day or Monthly rainfall --> Effective rainfall
+         // Salinity
+         SaltDiff : ShortInt; // salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+         SaltSolub : ShortInt;  // salt solubility [g/liter]
+         // Groundwater table
+         ConstGwt : Boolean; // groundwater table is constant (or absent) during the simulation period
+         // Capillary rise
+         RootNrDF : shortint;
+         // Initial abstraction for surface runoff
+         IniAbstract : shortint;
+         END;
+
+
+
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
          
@@ -676,6 +723,250 @@ procedure SetSWCiniFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setswcinifilefull_wrap';
 
+function Geteffectiverain() : rep_EffectiveRain;
+
+function Geteffectiverain_Method() : rep_EffectiveRainMethod;
+
+function __Geteffectiverain_Method() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_method';
+
+function Geteffectiverain_PercentEffRain() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_percenteffrain';
+
+function Geteffectiverain_ShowersInDecade() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_showersindecade';
+
+function Geteffectiverain_RootNrEvap() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_rootnrevap';
+
+procedure Seteffectiverain(constref effectiverain : rep_EffectiveRain);
+
+procedure Seteffectiverain_Method(constref Method : rep_EffectiveRainMethod);
+
+procedure __Seteffectiverain_Method(constref Method : shortint);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_method';
+
+procedure Seteffectiverain_PercentEffRain(constref PercentEffRain : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_percenteffrain';
+
+procedure Seteffectiverain_ShowersInDecade(constref ShowersInDecade : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_showersindecade';
+
+procedure Seteffectiverain_RootNrEvap(constref RootNrEvap : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_rootnrevap';
+
+function GetSimulParam() : rep_param;
+
+function GetSimulParam_EvapDeclineFactor() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_evapdeclinefactor';
+
+function GetSimulParam_KcWetBare() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_kcwetbare';
+
+function GetSimulParam_PercCCxHIfinal() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_percccxhifinal';
+
+function GetSimulParam_RootPercentZmin() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_rootpercentzmin';
+
+function GetSimulParam_MaxRootZoneExpansion() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_maxrootzoneexpansion';
+
+function GetSimulParam_KsShapeFactorRoot() : Shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_ksshapefactorroot';
+
+function GetSimulParam_TAWGermination() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tawgermination';
+
+function GetSimulParam_pAdjFAO() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_padjfao';
+
+function GetSimulParam_DelayLowOxygen() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_delaylowoxygen';
+
+function GetSimulParam_ExpFsen() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_expfsen';
+
+function GetSimulParam_Beta() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_beta';
+
+function GetSimulParam_ThicknessTopSWC() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_thicknesstopswc';
+
+function GetSimulParam_EvapZmax() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_evapzmax';
+
+function GetSimulParam_RunoffDepth() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_runoffdepth';
+
+function GetSimulParam_CNcorrection() : Boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulparam_cncorrection_wrap';
+
+function GetSimulParam_Tmin() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tmin';
+
+function GetSimulParam_Tmax() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tmax';
+
+function GetSimulParam_GDDMethod() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_gddmethod';
+
+function GetSimulParam_PercRAW() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_percraw';
+
+function GetSimulParam_CompDefThick() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_compdefthick';
+
+function GetSimulParam_CropDay1() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_cropday1';
+
+function GetSimulParam_Tbase() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tbase';
+
+function GetSimulParam_Tupper() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tupper';
+
+function GetSimulParam_IrriFwInSeason() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_irrifwinseason';
+
+function GetSimulParam_IrriFwOffSeason() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_irrifwoffseason';
+
+function GetSimulParam_SaltDiff() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_saltdiff';
+
+function GetSimulParam_SaltSolub() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_saltsolub';
+
+function GetSimulParam_ConstGwt() : Boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulparam_constgwt_wrap';
+
+function GetSimulParam_RootNrDF() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_rootnrdf';
+
+function GetSimulParam_IniAbstract() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_iniabstract';
+
+function __GetSimulParam_EffectiveRain_method(): integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_method';
+
+function GetSimulParam_EffectiveRain_method(): rep_EffectiveRainMethod;
+
+function GetSimulParam_EffectiveRain_PercentEffRain(): shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_percenteffrain';
+
+function GetSimulParam_EffectiveRain_ShowersInDecade(): shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_showersindecade';
+
+function GetSimulParam_EffectiveRain_RootNrEvap(): shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
+
+procedure SetSimulParam(constref SimulParam : rep_param);
+
+procedure SetSimulParam_EvapDeclineFactor(constref EvapDeclineFactor : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_evapdeclinefactor';
+
+procedure SetSimulParam_KcWetBare(constref KcWetBare : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_kcwetbare';
+
+procedure SetSimulParam_PercCCxHIfinal(constref PercCCxHIfinal : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_percccxhifinal';
+
+procedure SetSimulParam_RootPercentZmin(constref RootPercentZmin : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_rootpercentzmin';
+
+procedure SetSimulParam_MaxRootZoneExpansion(constref MaxRootZoneExpansion : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_maxrootzoneexpansion';
+
+procedure SetSimulParam_KsShapeFactorRoot(constref KsShapeFactorRoot : Shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_ksshapefactorroot';
+
+procedure SetSimulParam_TAWGermination(constref TAWGermination : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tawgermination';
+
+procedure SetSimulParam_pAdjFAO(constref pAdjFAO : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_padjfao';
+
+procedure SetSimulParam_DelayLowOxygen(constref DelayLowOxygen : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_delaylowoxygen';
+
+procedure SetSimulParam_ExpFsen(constref ExpFsen : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_expfsen';
+
+procedure SetSimulParam_Beta(constref Beta : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_beta';
+
+procedure SetSimulParam_ThicknessTopSWC(constref ThicknessTopSWC : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_thicknesstopswc';
+
+procedure SetSimulParam_EvapZmax(constref EvapZmax : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_evapzmax';
+
+procedure SetSimulParam_RunoffDepth(constref RunoffDepth : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_runoffdepth';
+
+procedure SetSimulParam_CNcorrection(constref CNcorrection : Boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulparam_cncorrection_wrap';
+
+procedure SetSimulParam_Tmin(constref Tmin : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tmin';
+
+procedure SetSimulParam_Tmax(constref Tmax : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tmax';
+
+procedure SetSimulParam_GDDMethod(constref GDDMethod : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_gddmethod';
+
+procedure SetSimulParam_PercRAW(constref PercRAW : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_percraw';
+
+procedure SetSimulParam_CompDefThick(constref CompDefThick : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_compdefthick';
+
+procedure SetSimulParam_CropDay1(constref CropDay1 : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_cropday1';
+
+procedure SetSimulParam_Tbase(constref Tbase : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tbase';
+
+procedure SetSimulParam_Tupper(constref Tupper : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tupper';
+
+procedure SetSimulParam_IrriFwInSeason(constref IrriFwInSeason : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_irrifwinseason';
+
+procedure SetSimulParam_IrriFwOffSeason(constref IrriFwOffSeason : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_irrifwoffseason';
+
+procedure SetSimulParam_SaltDiff(constref SaltDiff : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_saltdiff';
+
+procedure SetSimulParam_SaltSolub(constref SaltSolub : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_saltsolub';
+
+procedure SetSimulParam_ConstGwt(constref ConstGwt : Boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulparam_constgwt_wrap';
+
+procedure SetSimulParam_RootNrDF(constref RootNrDF : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_rootnrdf';
+
+procedure SetSimulParam_IniAbstract(constref IniAbstract : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_iniabstract';
+
+procedure __SetSimulParam_EffectiveRain_method(constref Method : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_effectiverain_method';
+
+procedure SetSimulParam_EffectiveRain_method(constref Method : rep_EffectiveRainMethod);
+
+procedure SetSimulParam_EffectiveRain_PercentEffRain(constref PercentEffRain : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_effectiverain_percenteffrain';
+	
+procedure SetSimulParam_EffectiveRain_ShowersInDecade(constref ShowersInDecade : shortint);
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_showersindecade';
+	
+procedure SetSimulParam_EffectiveRain_RootNrEvap(constref RootNrEvap : shortint);
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
+
 
 function GetPathNameProg(): string;
 
@@ -1067,37 +1358,6 @@ procedure CheckFilesInProject_wrap(
         external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
 
 
-function Geteffectiverain() : rep_EffectiveRain;
-
-function Geteffectiverain_Method() : rep_EffectiveRainMethod;
-
-function __Geteffectiverain_Method() : shortint;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_method';
-
-function Geteffectiverain_PercentEffRain() : ShortInt;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_percenteffrain';
-
-function Geteffectiverain_ShowersInDecade() : ShortInt;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_showersindecade';
-
-function Geteffectiverain_RootNrEvap() : ShortInt;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_rootnrevap';
-
-procedure Seteffectiverain(constref effectiverain : rep_EffectiveRain);
-
-procedure Seteffectiverain_Method(constref Method : rep_EffectiveRainMethod);
-
-procedure __Seteffectiverain_Method(constref Method : shortint);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_method';
-
-procedure Seteffectiverain_PercentEffRain(constref PercentEffRain : ShortInt);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_percenteffrain';
-
-procedure Seteffectiverain_ShowersInDecade(constref ShowersInDecade : ShortInt);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_showersindecade';
-
-procedure Seteffectiverain_RootNrEvap(constref RootNrEvap : ShortInt);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_rootnrevap';
 
 
 function GetIrriECw(): rep_IrriECw;
@@ -1718,6 +1978,25 @@ begin;
     __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
+function GetSimulParam_EffectiveRain_Method() : rep_EffectiveRainMethod;
+var
+    int_EffectiveRainMethod : integer;
+
+begin;
+    int_EffectiveRainMethod := __GetSimulParam_EffectiveRain_Method();
+    GetSimulParam_EffectiveRain_Method := rep_EffectiveRainMethod(int_EffectiveRainMethod);
+end;
+
+procedure SetSimulParam_EffectiveRain_Method(constref Method: rep_EffectiveRainMethod); 
+var
+    int_EffectiveRainMethod : integer;
+
+begin;
+    int_EffectiveRainMethod := ord(Method);
+    __SetSimulParam_EffectiveRain_Method(int_EffectiveRainMethod);
+end;
+
+
 function GetGenerateTimeMode() : rep_GenerateTimeMode;
 var
     int_GenerateTimeMode : integer;
@@ -1933,6 +2212,8 @@ begin;
     index := ord(AirTCriterion);
     __SetOnset_AirTCriterion(index);
 end;
+
+
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 begin;
@@ -2835,6 +3116,85 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCropFile_wrap(p, strlen);
+end;
+
+function GetSimulParam() : rep_param;
+begin;
+    GetSimulParam.EvapDeclineFactor := GetSimulParam_EvapDeclineFactor();
+    GetSimulParam.KcWetBare := GetSimulParam_KcWetBare();
+    GetSimulParam.PercCCxHIfinal := GetSimulParam_PercCCxHIfinal();
+    GetSimulParam.RootPercentZmin := GetSimulParam_RootPercentZmin();
+    GetSimulParam.MaxRootZoneExpansion := GetSimulParam_MaxRootZoneExpansion();
+    GetSimulParam.KsShapeFactorRoot := GetSimulParam_KsShapeFactorRoot();
+    GetSimulParam.TAWGermination := GetSimulParam_TAWGermination();
+    GetSimulParam.pAdjFAO := GetSimulParam_pAdjFAO();
+    GetSimulParam.DelayLowOxygen := GetSimulParam_DelayLowOxygen();
+    GetSimulParam.ExpFsen := GetSimulParam_ExpFsen();
+    GetSimulParam.Beta := GetSimulParam_Beta();
+    GetSimulParam.ThicknessTopSWC := GetSimulParam_ThicknessTopSWC();
+    GetSimulParam.EvapZmax := GetSimulParam_EvapZmax();
+    GetSimulParam.RunoffDepth := GetSimulParam_RunoffDepth();
+    GetSimulParam.CNcorrection := GetSimulParam_CNcorrection();
+    GetSimulParam.Tmin := GetSimulParam_Tmin();
+    GetSimulParam.Tmax := GetSimulParam_Tmax();
+    GetSimulParam.GDDMethod := GetSimulParam_GDDMethod();
+    GetSimulParam.PercRAW := GetSimulParam_PercRAW();
+    GetSimulParam.CompDefThick := GetSimulParam_CompDefThick();
+    GetSimulParam.CropDay1 := GetSimulParam_CropDay1();
+    GetSimulParam.Tbase := GetSimulParam_Tbase();
+    GetSimulParam.Tupper := GetSimulParam_Tupper();
+    GetSimulParam.IrriFwInSeason := GetSimulParam_IrriFwInSeason();
+    GetSimulParam.IrriFwOffSeason := GetSimulParam_IrriFwOffSeason();
+    GetSimulParam.SaltDiff := GetSimulParam_SaltDiff();
+    GetSimulParam.SaltSolub := GetSimulParam_SaltSolub();
+    GetSimulParam.ConstGwt := GetSimulParam_ConstGwt();
+    GetSimulParam.RootNrDF := GetSimulParam_RootNrDF();
+    GetSimulParam.IniAbstract := GetSimulParam_IniAbstract();
+    GetSimulParam.EffectiveRain.Method := GetSimulParam_EffectiveRain_Method();
+    GetSimulParam.EffectiveRain.PercentEffRain := GetSimulParam_EffectiveRain_PercentEffRain();
+    GetSimulParam.EffectiveRain.ShowersInDecade := GetSimulParam_EffectiveRain_ShowersInDecade();
+    GetSimulParam.EffectiveRain.RootNrEvap := GetSimulParam_EffectiveRain_RootNrEvap();
+
+end;
+
+
+procedure SetSimulParam(constref SimulParam : rep_param);
+begin;
+    SetSimulParam_EvapDeclineFactor(SimulParam.EvapDeclineFactor);
+    SetSimulParam_KcWetBare(SimulParam.KcWetBare);
+    SetSimulParam_PercCCxHIfinal(SimulParam.PercCCxHIfinal);
+    SetSimulParam_RootPercentZmin(SimulParam.RootPercentZmin);
+    SetSimulParam_MaxRootZoneExpansion(SimulParam.MaxRootZoneExpansion);
+    SetSimulParam_KsShapeFactorRoot(SimulParam.KsShapeFactorRoot);
+    SetSimulParam_TAWGermination(SimulParam.TAWGermination);
+    SetSimulParam_pAdjFAO(SimulParam.pAdjFAO);
+    SetSimulParam_DelayLowOxygen(SimulParam.DelayLowOxygen);
+    SetSimulParam_ExpFsen(SimulParam.ExpFsen);
+    SetSimulParam_Beta(SimulParam.Beta);
+    SetSimulParam_ThicknessTopSWC(SimulParam.ThicknessTopSWC);
+    SetSimulParam_EvapZmax(SimulParam.EvapZmax);
+    SetSimulParam_RunoffDepth(SimulParam.RunoffDepth);
+    SetSimulParam_CNcorrection(SimulParam.CNcorrection);
+    SetSimulParam_Tmin(SimulParam.Tmin);
+    SetSimulParam_Tmax(SimulParam.Tmax);
+    SetSimulParam_GDDMethod(SimulParam.GDDMethod);
+    SetSimulParam_PercRAW(SimulParam.PercRAW);
+    SetSimulParam_CompDefThick(SimulParam.CompDefThick);
+    SetSimulParam_CropDay1(SimulParam.CropDay1);
+    SetSimulParam_Tbase(SimulParam.Tbase);
+    SetSimulParam_Tupper(SimulParam.Tupper);
+    SetSimulParam_IrriFwInSeason(SimulParam.IrriFwInSeason);
+    SetSimulParam_IrriFwOffSeason(SimulParam.IrriFwOffSeason);
+    SetSimulParam_SaltDiff(SimulParam.SaltDiff);
+    SetSimulParam_SaltSolub(SimulParam.SaltSolub);
+    SetSimulParam_ConstGwt(SimulParam.ConstGwt);
+    SetSimulParam_RootNrDF(SimulParam.RootNrDF);
+    SetSimulParam_IniAbstract(SimulParam.IniAbstract);
+    SetSimulParam_EffectiveRain_Method(SimulParam.EffectiveRain.Method);
+    SetSimulParam_EffectiveRain_PercentEffRain(SimulParam.EffectiveRain.PercentEffRain);
+    SetSimulParam_EffectiveRain_ShowersInDecade(SimulParam.EffectiveRain.ShowersInDecade);
+    SetSimulParam_EffectiveRain_RootNrEvap(SimulParam.EffectiveRain.RootNrEvap);
+
 end;
 
 

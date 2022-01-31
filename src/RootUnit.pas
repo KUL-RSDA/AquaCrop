@@ -57,12 +57,12 @@ IF (ROUND(Ziprev) = undef_int)
         // -- 3.1 correction for restrictive soil layer is already considered in ActualRootingDepth
 
         // -- 3.2 correction for stomatal closure
-        IF ((Tpot > 0) AND (Tact < Tpot) AND (SimulParam.KsShapeFactorRoot <> undef_int))
+        IF ((Tpot > 0) AND (Tact < Tpot) AND (GetSimulParam_KsShapeFactorRoot() <> undef_int))
            THEN BEGIN
-                IF (SimulParam.KsShapeFactorRoot >= 0)
+                IF (GetSimulParam_KsShapeFactorRoot() >= 0)
                    THEN dZ := dZ * (Tact/Tpot)   //linear
-                   ELSE dZ := dZ * (Exp((Tact/Tpot)*SimulParam.KsShapeFactorRoot)-1)
-                                   /(Exp(SimulParam.KsShapeFactorRoot)-1); // exponential
+                   ELSE dZ := dZ * (Exp((Tact/Tpot)*GetSimulParam_KsShapeFactorRoot())-1)
+                                   /(Exp(GetSimulParam_KsShapeFactorRoot())-1); // exponential
                 END;
 
          // -- 3.2 correction for dry soil at expansion front of actual root zone

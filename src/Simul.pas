@@ -60,7 +60,7 @@ IF (Crop.ModeCycle = Calendardays)
    THEN DAP := VirtualTimeCC
    ELSE BEGIN // growing degree days
         DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                               Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax);
+                               Crop.Day1,Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
         DAP := DAP + Simulation.DelayedDays; // are not considered when working with GDDays
         END;
 CalculateETpot(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
@@ -101,7 +101,7 @@ BEGIN
 CASE Crop.pMethod OF
      NoCorrection      : pStomatULAct := Crop.pdef ;
      FAOCorrection     : BEGIN
-                         pStomatULAct := Crop.pdef + SimulParam.pAdjFAO * (0.04*(5-MeanETo))*log10(10-9*Crop.pdef);
+                         pStomatULAct := Crop.pdef + GetSimulParam_pAdjFAO() * (0.04*(5-MeanETo))*log10(10-9*Crop.pdef);
                          IF pStomatULAct > 1 THEN pStomatULAct := 1;
                          IF pStomatULAct < 0 THEN pStomatULAct := 0;
                          END;
@@ -117,10 +117,10 @@ pLeafLLAct := Crop.pLeafDefLL;
 pLeafULAct := Crop.pLeafDefUL;
 IF (Crop.pMethod = FAOCorrection) THEN
    BEGIN
-   pLeafLLAct := Crop.pLeafDefLL + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefLL);
+   pLeafLLAct := Crop.pLeafDefLL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefLL);
    IF pLeafLLAct > 1.0 THEN pLeafLLAct := 1.0;
    IF pLeafLLAct < 0 THEN pLeafLLAct := 0;
-   pLeafULAct := Crop.pLeafDefUL + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefUL);
+   pLeafULAct := Crop.pLeafDefUL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefUL);
    IF pLeafULAct > 1.0 THEN pLeafULAct := 1.0;
    IF pLeafULAct < 0 THEN pLeafULAct := 0;
    END;
@@ -136,9 +136,9 @@ BEGIN
 pSenAct := Crop.pSenescence;
 IF (Crop.pMethod = FAOCorrection) THEN
    BEGIN
-   pSenAct := Crop.pSenescence + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pSenescence);
+   pSenAct := Crop.pSenescence + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*Crop.pSenescence);
    IF ((TimeSenescence > 0.0001) AND WithBeta)
-      THEN pSenAct := pSenAct * (1-SimulParam.Beta/100);
+      THEN pSenAct := pSenAct * (1-GetSimulParam_Beta()/100);
    IF pSenAct < 0 THEN pSenAct := 0;
    IF pSenAct >= 1.0 THEN pSenAct := 0.98; // otherwise senescence is not possible at WP
    END;
@@ -228,7 +228,7 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain) OR (Crop.Subkind = Vegetati
            OR (Crop.Subkind = Forage) AND (Crop.Planting = Regrowth)))
            THEN alfa := Crop.HI
            ELSE alfa := HarvestIndexDay((dayi-Crop.Day1),Crop.DaysToFlowering,Crop.HI,Crop.dHIdt,CCiactual,
-                              Crop.CCxAdjusted,SimulParam.PercCCxHIfinal,Crop.Planting,
+                              Crop.CCxAdjusted,GetSimulParam_PercCCxHIfinal(),Crop.Planting,
                               PercentLagPhase,Simulation.HIfinal);
         END;
 
@@ -401,7 +401,7 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
       IF (Crop.Subkind = grain) // - only valid for fruit/grain crops (flowers)
          THEN BEGIN
               IF ((dayi <= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering + Crop.LengthFlowering)) // calculation limited to flowering period
-                 AND ((CCiactual*100) > SimulParam.PercCCxHIfinal)) THEN // sufficient green canopy remains
+                 AND ((CCiactual*100) > GetSimulParam_PercCCxHIfinal())) THEN // sufficient green canopy remains
                  BEGIN
                  // 2.4a - Fraction of flowers which are flowering on day  (fFlor)
                  fFlor := FractionFlowering(dayi);
@@ -509,7 +509,7 @@ IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)) THEN
    IF (dayi >= (Simulation.DelayedDays + Crop.Day1 + Crop.DaysToFlowering)) THEN
       BEGIN  // calculation starts at crop day 1 (since days to flowering is 0)
       //YieldPart := Biomass * (alfa/100);
-      IF ((100*CCw) < SimulParam.PercCCxHIfinal) THEN alfa := 0;
+      IF ((100*CCw) < GetSimulParam_PercCCxHIfinal()) THEN alfa := 0;
       //IF (Management.WeedRC > 0)
       IF (ROUND(100*ETo)> 0) THEN
          BEGIN  // with correction for transferred assimilates
@@ -947,7 +947,7 @@ BEGIN
 CN2 := ROUND(GetSoil().CNvalue * (100 + GetManagement_CNcorrection())/100);
 IF (RainRecord.DataType = Daily)
    THEN BEGIN
-        IF (SimulParam.CNcorrection)
+        IF (GetSimulParam_CNcorrection())
            THEN BEGIN
                 calculate_relative_wetness_topsoil(SUM);
                 DetermineCNIandIII(CN2,CN1,CN3);
@@ -958,20 +958,20 @@ IF (RainRecord.DataType = Daily)
         END
    ELSE BEGIN
         CNA := CN2;
-        Shower := (Rain*10)/SimulParam.EffectiveRain.ShowersInDecade;
+        Shower := (Rain*10)/GetSimulParam_EffectiveRain_ShowersInDecade();
         END;
 S := 254 * (100/CNA - 1);
 //term := Shower - 0.2 * S;
-term := Shower - (SimulParam.IniAbstract/100) * S;
+term := Shower - (GetSimulParam_IniAbstract()/100) * S;
 IF term <= 0 THEN Runoff := 0.0
              //ELSE Runoff := SQR(term)/(Shower + 0.8 * S);
-             ELSE Runoff := SQR(term)/(Shower + (1-(SimulParam.IniAbstract/100)) * S);
+             ELSE Runoff := SQR(term)/(Shower + (1-(GetSimulParam_IniAbstract()/100)) * S);
 IF ((Runoff > 0) AND ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))) THEN
    BEGIN
    IF (Runoff >= Shower)
       THEN Runoff := Rain
       ELSE BEGIN
-           Runoff := Runoff * (SimulParam.EffectiveRain.ShowersInDecade/10.14);
+           Runoff := Runoff * (GetSimulParam_EffectiveRain_ShowersInDecade()/10.14);
            IF (Runoff > Rain) THEN Runoff := Rain;
            END;
    END;
@@ -991,8 +991,8 @@ IF (Rain > 0) THEN
    BEGIN
    // 1. Effective Rainfall
    EffecRain := (Rain-Runoff);
-   Case SimulParam.EffectiveRain.Method OF
-      Percentage : EffecRain := (SimulParam.EffectiveRain.PercentEffRain/100) * (Rain-Runoff);
+   Case GetSimulParam_EffectiveRain_Method() OF
+      Percentage : EffecRain := (GetSimulParam_EffectiveRain_PercentEffRain()/100) * (Rain-Runoff);
       USDA       : BEGIN
                    ETcropMonth := ((Epot+Tpot)*30)/25.4; // inch/month
                    RainMonth := ((Rain-Runoff)*30)/25.4; //inch/Month
@@ -1015,7 +1015,7 @@ IF (Rain > 0) THEN
         THEN DrainMax := 0
         ELSE BEGIN
              Zr := RootingDepth;
-             IF (Zr <= 0) THEN Zr := (SimulParam.EvapZmax/100);
+             IF (Zr <= 0) THEN Zr := (GetSimulParam_EvapZmax()/100);
              compi := 0;
              depthi := 0;
              DTheta := (EffecRain/Zr)/1000;
@@ -1314,7 +1314,7 @@ IF (SubDrain > 0) THEN
 
    (* Where to store *)
    Zr := RootingDepth;
-   IF (Zr <= 0) THEN Zr := SimulParam.EvapZmax/100;
+   IF (Zr <= 0) THEN Zr := GetSimulParam_EvapZmax()/100;
    compi := 0;
    depthi := 0;
    REPEAT
@@ -1362,7 +1362,7 @@ IF (SubDrain > 0) THEN
 IF (EffecRain > 0) THEN
    BEGIN
    Zr := RootingDepth;
-   IF (Zr <= 0) THEN Zr := SimulParam.EvapZmax/100;
+   IF (Zr <= 0) THEN Zr := GetSimulParam_EvapZmax()/100;
    amount_still_to_store := EffecRain;
 
    (* Store *)
@@ -1466,9 +1466,9 @@ WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
 WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(Compartment[compi].fluxout*1000) = 0)) DO
    BEGIN
    // Driving force
-   IF ((Compartment[compi].Theta >= SoilLayer[Compartment[compi].Layer].WP/100) AND (SimulParam.RootNrDF > 0))
-      THEN DrivingForce := 1 - (exp(SimulParam.RootNrDF*Ln(Compartment[compi].Theta-SoilLayer[Compartment[compi].Layer].WP/100))
-                                     /exp(SimulParam.RootNrDF*Ln(Compartment[compi].FCadj/100-SoilLayer[Compartment[compi].Layer].WP/100)))
+   IF ((Compartment[compi].Theta >= SoilLayer[Compartment[compi].Layer].WP/100) AND (GetSimulParam_RootNrDF() > 0))
+      THEN DrivingForce := 1 - (exp(GetSimulParam_RootNrDF()*Ln(Compartment[compi].Theta-SoilLayer[Compartment[compi].Layer].WP/100))
+                                     /exp(GetSimulParam_RootNrDF()*Ln(Compartment[compi].FCadj/100-SoilLayer[Compartment[compi].Layer].WP/100)))
       ELSE DrivingForce := 1;
    // relative hydraulic conductivity
    ThetaThreshold := (SoilLayer[Compartment[compi].Layer].WP/100 + SoilLayer[Compartment[compi].Layer].FC/100)/2;
@@ -1661,10 +1661,10 @@ FOR compi := 1 TO NrCompartments DO
                       Compartment[compi].Salt[celi] := 0;
                       mm1 := (Theta - limit)*1000*Compartment[compi].Thickness
                              * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-                      IF SaltOut > (SimulParam.SaltSolub * mm1)
+                      IF SaltOut > (GetSimulParam_SaltSolub() * mm1)
                          THEN BEGIN
-                              Compartment[compi].Depo[celi] := SaltOut - (SimulParam.SaltSolub * mm1);
-                              SaltOut := (SimulParam.SaltSolub * mm1);
+                              Compartment[compi].Depo[celi] := SaltOut - (GetSimulParam_SaltSolub() * mm1);
+                              SaltOut := (GetSimulParam_SaltSolub() * mm1);
                               END
                          ELSE Compartment[compi].Depo[celi] := 0;
                       DeltaTheta := DeltaTheta - (Theta-limit);
@@ -1678,10 +1678,10 @@ FOR compi := 1 TO NrCompartments DO
                       Compartment[compi].Depo[celi] := Compartment[compi].Depo[celi] *(1-DeltaTheta/(Theta-limit));
                       mm1 := DeltaTheta*1000*Compartment[compi].Thickness
                              * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-                      IF SaltOut > (SimulParam.SaltSolub * mm1) THEN
+                      IF SaltOut > (GetSimulParam_SaltSolub() * mm1) THEN
                          BEGIN
-                         Compartment[compi].Depo[celi] := Compartment[compi].Depo[celi] + (SaltOut - SimulParam.SaltSolub * mm1);
-                         SaltOut := (SimulParam.SaltSolub * mm1);
+                         Compartment[compi].Depo[celi] := Compartment[compi].Depo[celi] + (SaltOut - GetSimulParam_SaltSolub() * mm1);
+                         SaltOut := (GetSimulParam_SaltSolub() * mm1);
                          END;
                       DeltaTheta := 0;
                       mm1 := SoilLayer[Compartment[compi].Layer].DX*1000*Compartment[compi].Thickness
@@ -1738,7 +1738,7 @@ FOR compi := 2 TO NrCompartments DO
 IF (SubDrain > 0) THEN
    BEGIN
    Zr := RootingDepth;
-   IF (Zr >= 0) THEN Zr := (SimulParam.EvapZmax/100); // in meter
+   IF (Zr >= 0) THEN Zr := (GetSimulParam_EvapZmax()/100); // in meter
    compi := 0;
    depthi := 0;
    ECsubdrain := 0;
@@ -1865,7 +1865,7 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
         IF (Crop.ModeCycle = GDDays) THEN
            BEGIN
            IF ((GetManagement_FertilityStress() <> 0) OR (SaltStress <> 0))
-              THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
+              THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
               ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
            END;
         END;
@@ -1882,7 +1882,7 @@ BEGIN
 // total root zone is considered
 Zroot := Crop.RootMin;
 DetermineRootZoneWC(Zroot,Simulation.SWCtopSoilConsidered);
-WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (SimulParam.TAWGermination/100);
+WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (GetSimulParam_TAWGermination()/100);
 IF (GetRootZoneWC().Actual < WCGermination)
    THEN BEGIN
         Simulation.DelayedDays := Simulation.DelayedDays + 1;
@@ -2987,13 +2987,13 @@ IF (SurfaceStorage <= 0.000001)
 IF (Irrigation > 0) THEN
    BEGIN
    // before season
-   IF ((dayi < Crop.Day1) AND (SimulParam.IrriFwOffSeason < 100))
+   IF ((dayi < Crop.Day1) AND (GetSimulParam_IrriFwOffSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    // in season
-   IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (SimulParam.IrriFwInSeason < 100))
+   IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (GetSimulParam_IrriFwInSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    // after season
-   IF ((dayi >= Crop.Day1+Crop.DaysToHarvest)AND (SimulParam.IrriFwOffSeason < 100))
+   IF ((dayi >= Crop.Day1+Crop.DaysToHarvest)AND (GetSimulParam_IrriFwOffSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    END;
 IF ((Rain > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
@@ -3005,12 +3005,12 @@ IF (EvapoEntireSoilSurface = false) THEN
    BEGIN
    IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest))
       THEN BEGIN // in season
-           EvapWCsurface := EvapWCsurface * (SimulParam.IrriFwInSeason/100);
-           EpotIrri := EpotTot * (SimulParam.IrriFwInSeason/100);
+           EvapWCsurface := EvapWCsurface * (GetSimulParam_IrriFwInSeason()/100);
+           EpotIrri := EpotTot * (GetSimulParam_IrriFwInSeason()/100);
            END
       ELSE BEGIN // off-season
-           EvapWCsurface := EvapWCsurface * (SimulParam.IrriFwOffSeason/100);
-           EpotIrri := EpotTot * (SimulParam.IrriFwOffSeason/100);
+           EvapWCsurface := EvapWCsurface * (GetSimulParam_IrriFwOffSeason()/100);
+           EpotIrri := EpotTot * (GetSimulParam_IrriFwOffSeason()/100);
            END;
    IF (Eact > EpotIrri) THEN EpotIrri := Eact;  // Eact refers to the previous day
    IF (EpotIrri < Epot) THEN Epot := Epotirri;
@@ -3203,7 +3203,7 @@ BEGIN (* CalculateSoilEvaporationStage2 *)
 // Step 1. Conditions before soil evaporation
 compi := 1;
 MaxSaltExDepth := Compartment[1].Thickness;
-WHILE ((MaxSaltExDepth < SimulParam.EvapZmax) AND (compi < NrCompartments)) DO
+WHILE ((MaxSaltExDepth < GetSimulParam_EvapZmax()) AND (compi < NrCompartments)) DO
   BEGIN
   compi := compi + 1;
   ThetaIniEvap[compi] := Compartment[compi].theta;
@@ -3220,9 +3220,9 @@ FOR i := 1 TO NrOfStepsInDay DO
     AtTheta := AtAct;
     Wact := WCEvapLayer(Simulation.EvapZ,AtTheta);
     Wrel := (Wact-Wlower)/(Wupper-Wlower);
-    IF (SimulParam.EvapZmax > EvapZmin) THEN
-       WHILE ((Wrel < (FractionWtoExpandZ*(SimulParam.EvapZmax-(100*Simulation.EvapZ))/(SimulParam.EvapZmax-EvapZmin)))
-          AND (Simulation.EvapZ < SimulParam.EvapZmax/100)) DO
+    IF (GetSimulParam_EvapZmax() > EvapZmin) THEN
+       WHILE ((Wrel < (FractionWtoExpandZ*(GetSimulParam_EvapZmax()-(100*Simulation.EvapZ))/(GetSimulParam_EvapZmax()-EvapZmin)))
+          AND (Simulation.EvapZ < GetSimulParam_EvapZmax()/100)) DO
           BEGIN
           Simulation.EvapZ := Simulation.EvapZ + 0.001; // add 1 mm
           GetLimitsEvapLayer(Simulation.EvapStartStg2,Wupper,Wlower);
@@ -3230,7 +3230,7 @@ FOR i := 1 TO NrOfStepsInDay DO
           Wact := WCEvapLayer(Simulation.EvapZ,AtTheta);
           Wrel := (Wact-Wlower)/(Wupper-Wlower);
           END;
-    Kr := SoilEvaporationReductionCoefficient(Wrel,SimulParam.EvapDeclineFactor);
+    Kr := SoilEvaporationReductionCoefficient(Wrel,GetSimulParam_EvapDeclineFactor());
     IF (Abs(ETo - 5) > 0.01) THEN // correction for evaporative demand
        BEGIN
        // adjustment of Kr (not considered yet)
@@ -3370,20 +3370,20 @@ PROCEDURE Correction_Anaeroby(VAR Comp : CompartmentIndividual;
 VAR alfaAN : double;
     ini : INTEGER;
 BEGIN
-IF ((DaySubmerged >= SimulParam.DelayLowOxygen) AND (Crop.AnaeroPoint > 0))
+IF ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) AND (Crop.AnaeroPoint > 0))
    THEN alfaAN := 0
    ELSE IF (Comp.theta > (SoilLayer[Comp.Layer].SAT - Crop.AnaeroPoint)/100)
            THEN BEGIN
                 Comp.DayAnaero := Comp.DayAnaero + 1;
-                IF (Comp.DayAnaero >= SimulParam.DelayLowOxygen)
+                IF (Comp.DayAnaero >= GetSimulParam_DelayLowOxygen())
                    THEN BEGIN
                         ini := 0;
-                        Comp.DayAnaero := SimulParam.DelayLowOxygen;
+                        Comp.DayAnaero := GetSimulParam_DelayLowOxygen();
                         END
                    ELSE ini := 1;
                 alfaAN := (SoilLayer[Comp.Layer].SAT/100 - Comp.theta)/(Crop.AnaeroPoint/100);
                 IF (alfaAN < 0) THEN alfaAN := 0;
-                IF (SimulParam.DelayLowOxygen > 1)
+                IF (GetSimulParam_DelayLowOxygen() > 1)
                    THEN alfaAN := (ini+(Comp.DayAnaero-1)*alfaAN)/(ini+Comp.DayAnaero-1);
                 END
            ELSE BEGIN
@@ -3409,8 +3409,8 @@ IF ((AnaeVol > 0) AND (Zr > 0))
         IF (ActVol > (SatVol-AnaeVol))
            THEN BEGIN
                 Simulation.DayAnaero := Simulation.DayAnaero + 1;
-                IF (Simulation.DayAnaero > SimulParam.DelayLowOxygen) THEN Simulation.DayAnaero := SimulParam.DelayLowOxygen;
-                RedFact := 1 - (1-((SATVol - ACTVol)/AnaeVol))* (Simulation.DayAnaero/SimulParam.DelayLowOxygen);
+                IF (Simulation.DayAnaero > GetSimulParam_DelayLowOxygen()) THEN Simulation.DayAnaero := GetSimulParam_DelayLowOxygen();
+                RedFact := 1 - (1-((SATVol - ACTVol)/AnaeVol))* (Simulation.DayAnaero/GetSimulParam_DelayLowOxygen());
                 END
            ELSE Simulation.DayAnaero := 0;
         END
@@ -3553,7 +3553,7 @@ IF (Tpot > 0) THEN
    IF (GetIrriMode() = Inet) THEN
      BEGIN // total root zone is considered
      DetermineRootZoneWC(RootingDepth,Simulation.SWCtopSoilConsidered);
-     InetThreshold := GetRootZoneWC().FC - SimulParam.PercRAW/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
+     InetThreshold := GetRootZoneWC().FC - GetSimulParam_PercRAW()/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
      IF (GetRootZoneWC().Actual < InetThreshold) THEN
         BEGIN
         pre_layer := 0;
@@ -3563,7 +3563,7 @@ IF (Tpot > 0) THEN
            IF (layeri > pre_layer) THEN
               BEGIN
               calculate_theta_critical(layeri,theta_critical);
-              InetThreshold := SoilLayer[layeri].FC/100 - SimulParam.PercRAW/100*(SoilLayer[layeri].FC/100 - theta_critical);
+              InetThreshold := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*(SoilLayer[layeri].FC/100 - theta_critical);
               pre_layer := layeri;
               END;
            //DeltaWC := Compartment[compi].WFactor * (InetThreshold - Compartment[compi].Theta)*1000*Compartment[compi].Thickness;
@@ -3590,10 +3590,10 @@ DaySubmerged := DaySubmerged + 1;
 FOR compi := 1 TO NrCompartments DO
     BEGIN
     Compartment[compi].DayAnaero := Compartment[compi].DayAnaero + 1;
-    IF (Compartment[compi].DayAnaero > SimulParam.DelayLowOxygen)
-       THEN Compartment[compi].DayAnaero := SimulParam.DelayLowOxygen;
+    IF (Compartment[compi].DayAnaero > GetSimulParam_DelayLowOxygen())
+       THEN Compartment[compi].DayAnaero := GetSimulParam_DelayLowOxygen();
     END;
-IF (Crop.AnaeroPoint > 0) THEN Part := (1-DaySubmerged/SimulParam.DelayLowOxygen)
+IF (Crop.AnaeroPoint > 0) THEN Part := (1-DaySubmerged/GetSimulParam_DelayLowOxygen())
                           ELSE Part := 1;
 //KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,SimulParam.KsShapeFactorSalt);
 KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,(0.0));
@@ -3707,7 +3707,7 @@ calculate_drainage;
 IF (GetManagement_Bundheight() < 0.001) THEN
    BEGIN
    DaySubmerged := 0;
-   IF ((GetManagement_RunoffON() = true) AND (Rain > 0.1)) THEN calculate_runoff(SimulParam.RunoffDepth);
+   IF ((GetManagement_RunoffON() = true) AND (Rain > 0.1)) THEN calculate_runoff(GetSimulParam_RunoffDepth());
    END;
 
 // 5. Infiltration (Rain and Irrigation)
@@ -3753,7 +3753,7 @@ IF (Crop.ModeCycle = Calendardays)
    THEN DAP := VirtualTimeCC
    ELSE BEGIN // growing degree days - to position correctly where in cycle
         DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                      Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax);
+                      Crop.Day1,Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
         DAP := DAP + Simulation.DelayedDays; // are not considered when working with GDDays
         END;
 // 11.2 Calculation
@@ -3771,8 +3771,8 @@ IF ((Rain > 0) OR
    THEN PrepareStage1;
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,Simulation.EvapWCsurf);
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
-   AND (SimulParam.EffectiveRain.RootNrEvap > 0)) // reduction soil evaporation
- THEN Epot := Epot * (exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((GetSoil().REW+1)/20)));
+   AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) // reduction soil evaporation
+ THEN Epot := Epot * (exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 // actual evaporation
 Eact := 0;
 IF (Epot > 0) THEN
@@ -3787,15 +3787,15 @@ IF (Epot > 0) THEN
    END;
 // Reset redcution Epot for 10-day or monthly rainfall data
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
-   AND (SimulParam.EffectiveRain.RootNrEvap > 0))
- THEN Epot := Epot/(exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((GetSoil().REW+1)/20)));
+   AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0))
+ THEN Epot := Epot/(exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 
 
 // 13. Transpiration
 IF ((NoMoreCrop = false) AND (RootingDepth > 0.0001)) THEN
    BEGIN
    IF ((SurfaceStorage > 0) AND
-       ((Crop.AnaeroPoint = 0) OR (DaySubmerged < SimulParam.DelayLowOxygen)))
+       ((Crop.AnaeroPoint = 0) OR (DaySubmerged < GetSimulParam_DelayLowOxygen())))
        THEN surface_transpiration
        ELSE calculate_transpiration(Tpot,Tact);
    END;

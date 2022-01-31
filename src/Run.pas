@@ -576,7 +576,7 @@ IF Crop.StressResponse.Calibrated
                Crop.WPy,Crop.HI,
                Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
                Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
-               Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,
+               Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,
                Crop.Day1,Crop.DeterminancyLinked,Crop.StressResponse,Crop.subkind,Crop.ModeCycle,
                Coeffb0,Coeffb1,Coeffb2,X10,X20,X30,X40,X50,X60,X70);
         END
@@ -614,7 +614,7 @@ IF (Simulation.SalinityConsidered = true)
                Crop.WPy,Crop.HI,
                Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
                Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
-               Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,                     
+               Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),Crop.GDtranspLow,Crop.WP,Crop.dHIdt,CO2i,                     
                Crop.Day1,Crop.DeterminancyLinked,Crop.subkind,Crop.ModeCycle,
                Crop.CCsaltDistortion,
                Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,X10,X20,X30,X40,X50,X60,X70,X80,X90);
@@ -939,8 +939,8 @@ IF (GetTemperatureFile() <> '(None)')
                 END;
         END
    ELSE BEGIN
-        Tmin := SimulParam.Tmin;
-        Tmax := SimulParam.Tmax;
+        Tmin := GetSimulParam_Tmin();
+        Tmax := GetSimulParam_Tmax();
         END;
 END; (* OpenClimFilesAndGetDataFirstDay *)
 
@@ -979,7 +979,7 @@ IF (GetTemperatureFile() <> '(None)')
                                         READLN(fTemp,StringREAD);
                                         SplitStringInTwoParams(StringREAD,Tmin,Tmax);
                                         Simulation.SumGDD := Simulation.SumGDD
-                                                             + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+                                                             + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
                                         END;
                                 END;
                             Close(fTemp);
@@ -992,7 +992,7 @@ IF (GetTemperatureFile() <> '(None)')
                             While (TminDataSet[i].DayNr <> DayX) Do i := i+1;
                             Tmin := TminDataSet[i].Param;
                             Tmax := TmaxDataSet[i].Param;
-                            Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+                            Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
                             // next days
                             WHILE (DayX < DayNri) DO
                                  BEGIN
@@ -1006,7 +1006,7 @@ IF (GetTemperatureFile() <> '(None)')
                                  Tmin := TminDataSet[i].Param;
                                  Tmax := TmaxDataSet[i].Param;
                                  Simulation.SumGDD := Simulation.SumGDD
-                                         + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+                                         + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
                                  END;
                             END;
                   Monthly : BEGIN
@@ -1017,7 +1017,7 @@ IF (GetTemperatureFile() <> '(None)')
                             While (TminDataSet[i].DayNr <> DayX) Do i := i+1;
                             Tmin := TminDataSet[i].Param;
                             Tmax := TmaxDataSet[i].Param;
-                            Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+                            Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
                             // next days
                             WHILE (DayX < DayNri) DO
                                   BEGIN
@@ -1031,7 +1031,7 @@ IF (GetTemperatureFile() <> '(None)')
                                   Tmin := TminDataSet[i].Param;
                                   Tmax := TmaxDataSet[i].Param;
                                   Simulation.SumGDD := Simulation.SumGDD
-                                         + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+                                         + DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
                                   END;
                             END;
                   end;
@@ -1042,15 +1042,15 @@ IF (GetTemperatureFile() <> '(None)')
         END;
 IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
-        Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,SimulParam.GDDMethod) * (DayNri - Crop.Day1 + 1);
+        Simulation.SumGDD := DegreesDay(Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetSimulParam_GDDMethod()) * (DayNri - Crop.Day1 + 1);
         IF (Simulation.SumGDD < 0) THEN Simulation.SumGDD := 0;
         SumGDDtillDay := Simulation.SumGDD;
-        SumGDDtillDayM1 := DegreesDay(Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,SimulParam.GDDMethod) * (DayNri - Crop.Day1);
+        SumGDDtillDayM1 := DegreesDay(Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetSimulParam_GDDMethod()) * (DayNri - Crop.Day1);
         IF (SumGDDtillDayM1 < 0) THEN SumGDDtillDayM1 := 0;
         end
    ELSE BEGIN
         SumGDDtillDay := Simulation.SumGDD;
-        SumGDDtillDayM1 := SumGDDtillDay - DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+        SumGDDtillDayM1 := SumGDDtillDay - DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
         END;
 END; (* GetSumGDDBeforeSimulation *)
 
@@ -1331,7 +1331,7 @@ BEGIN
 //1.1 Adjust soil water and salt content if water table IN soil profile
 CheckForWaterTableInProfile((ZiAqua/100),Compartment,WaterTableInProfile);
 IF WaterTableInProfile THEN AdjustForWatertable;
-IF (NOT SimulParam.ConstGwt) THEN BEGIN
+IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
     GetGwtSet(Simulation.FromDayNr,GwTable_temp);
     SetGwTable(GwTable_temp);
@@ -1414,7 +1414,7 @@ StressSFadjNEW := GetManagement_FertilityStress();
 IF (Crop.ModeCycle = GDDays) THEN
    BEGIN
    IF (GetManagement_FertilityStress() <> 0)
-      THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
+      THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
       ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
    END;
 
@@ -1424,7 +1424,7 @@ SumKcTop := SeasonalSumOfKcPot(Crop.DaysToCCini,Crop.GDDaysToCCini,
                  Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
                  Crop.CCo,Crop.CCx,Crop.CGC,Crop.GDDCGC,Crop.CDC,Crop.GDDCDC,
                  Crop.KcTop,Crop.KcDecline,Crop.CCEffectEvapLate,
-                 Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,Crop.GDtranspLow,CO2i,
+                 Crop.Tbase,Crop.Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),Crop.GDtranspLow,CO2i,
                  Crop.ModeCycle);
 SumKcTopStress := SumKcTop * FracBiomassPotSF;
 SumKci := 0;
@@ -1508,7 +1508,7 @@ IF ((Crop.ModeCycle = GDDays) AND (Crop.Day1 < DayNri))
 SumGDDPrev := Simulation.SumGDDfromDay1;
 
 // Sum of GDD at end of first day
-GDDayi := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+GDDayi := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
 IF (DayNri >= Crop.Day1)
    THEN BEGIN
         IF (DayNri = Crop.Day1) THEN Simulation.SumGDD := Simulation.SumGDD + GDDayi;
@@ -2472,7 +2472,7 @@ VAR RepeatToDay : LongInt;
       compi := compi + 1;
       SumDepth := SumDepth + Compartment[compi].Thickness;
       layeri := Compartment[compi].Layer;
-      ThetaPercRaw := SoilLayer[layeri].FC/100 - SimulParam.PercRAW/100*Crop.pdef*(SoilLayer[layeri].FC/100-SoilLayer[layeri].WP/100);
+      ThetaPercRaw := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*Crop.pdef*(SoilLayer[layeri].FC/100-SoilLayer[layeri].WP/100);
       IF (Compartment[compi].Theta < ThetaPercRaw) THEN
          BEGIN
          PreIrri := PreIrri + (ThetaPercRaw - Compartment[compi].Theta)*1000*Compartment[compi].Thickness;
@@ -2586,7 +2586,7 @@ IF (GetRainFile() = '(None)') THEN Rain := 0;
 IF StartMode THEN StartMode := false;
 
 (* 4. Get depth and quality of the groundwater*)
-IF (NOT SimulParam.ConstGwt) THEN
+IF (NOT GetSimulParam_ConstGwt()) THEN
    BEGIN
    IF (DayNri > GetGwTable_DNr2()) THEN BEGIN
         GwTable_temp := GetGwTable();
@@ -2954,11 +2954,11 @@ IF (DayNri <= Simulation.ToDayNr) THEN
    IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (GetTemperatureFile() = '(None)')
       THEN BEGIN
-           Tmin := SimulParam.Tmin;
-           Tmax := SimulParam.Tmax;
+           Tmin := GetSimulParam_Tmin();
+           Tmax := GetSimulParam_Tmax();
            END
       ELSE READLN(fTempSIM,Tmin,Tmax);
-   GDDayi := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,SimulParam.GDDMethod);
+   GDDayi := DegreesDay(Crop.Tbase,Crop.Tupper,Tmin,Tmax,GetSimulParam_GDDMethod());
    IF (DayNri >= Crop.Day1) THEN
       BEGIN
       Simulation.SumGDD := Simulation.SumGDD + GDDayi;
