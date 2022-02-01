@@ -2968,7 +2968,7 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
 
         //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
         IF (CCiActual > GetCrop().CCxWithered) THEN SetCrop_CCxWithered(CCiActual);
-        //IF (GetCrop().CCxWithered > CCxSFCD) THEN SetCrop_CCxWithered(CCxSFCD); - OUT 15/10/2008
+        //IF (Crop.CCxWithered > CCxSFCD) THEN SetCrop_CCxWithered(CCxSFCD); - OUT 15/10/2008
 
         // 6. correction for late-season stage for rounding off errors
          IF (SumGDDadjCC > GetCrop().GDDaysToSenescence) THEN
