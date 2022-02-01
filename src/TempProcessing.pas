@@ -1545,7 +1545,7 @@ IF (TestRecord = true) THEN
    END;
 
 
-//2. Open Temperature file
+// 2. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
