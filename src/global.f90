@@ -1210,11 +1210,11 @@ subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, Deter
     if ((ClassSF == 0) .or. ((RedCCx == 0) .and. (RedCGC == 0))) then
         L12SF = L12
     else
-        CCToReach = 0.98_dp*(1-RedCCX/100)*CCx
-        L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100)*CCx), (CGC*(1-(RedCGC)/100)), L0)
+        CCToReach = 0.98_dp*(1-RedCCX/100._dp)*CCx
+        L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
         ! determine L12SFmax
         if (DeterminantCrop) then
-            L12SFmax = LToFlor + nint(LFlor/2._dp)
+            L12SFmax = LToFlor + nint(LFlor/2._dp, kind=int32)
         else
             L12SFmax = L123
         end if
@@ -1225,13 +1225,13 @@ subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, Deter
             ! 1. increase CGC(soil fertility)
             do while ((L12SF > L12SFmax) .and. (RedCGC > 0))
                 RedCGC = RedCGC - 1
-                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100)*CCx), (CGC*(1-(RedCGC)/100)), L0)
+                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
             end do
             ! 2. if not sufficient decrease CCx(soil fertility)
-            do while ((L12SF > L12SFmax) .and. ( ((1-RedCCX/100)*CCx) > 0.10_dp) .and. (RedCCx <= 50))
+            do while ((L12SF > L12SFmax) .and. ( ((1-RedCCX/100._dp)*CCx) > 0.10_dp) .and. (RedCCx <= 50))
                 RedCCx = RedCCx + 1
-                CCToReach = 0.98_dp*(1-RedCCX/100)*CCx
-                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100)*CCx), (CGC*(1-(RedCGC)/100)), L0)
+                CCToReach = 0.98_dp*(1-RedCCX/100._dp)*CCx
+                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
             end do
         end if
     end if

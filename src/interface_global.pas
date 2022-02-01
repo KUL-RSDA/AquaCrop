@@ -1682,7 +1682,7 @@ begin
     int_planting := ord(ThePlantingType); 
     TimeToCCini := __TimeToCCini(int_planting, TheCropPlantingDens, TheSizeSeedling,
                                  TheSizePlant, TheCropCCx, TheCropCGC);
-end;    
+end;
 
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
