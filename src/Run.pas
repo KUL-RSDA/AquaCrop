@@ -2669,7 +2669,7 @@ IF (((GetCrop_ModeCycle() = CalendarDays) AND ((DayNri-GetCrop().Day1+1) < GetCr
               OR ((GetCrop_ModeCycle() = GDDays) AND (Simulation.SumGDD < GetCrop().GDDaysToHarvest)))
    THEN BEGIN
         IF (((DayNri-Simulation.DelayedDays) >= GetCrop().Day1) AND ((DayNri-Simulation.DelayedDays) <= GetCrop().DayN))
-           THEN BEGIN // rooting depth at DAP (at GetCrop().Day1, DAP = 1)
+           THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
                 RootingDepth := AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,Tpot,Tact,StressLeaf,StressSenescence,
                                 (DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
                                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
@@ -2852,7 +2852,7 @@ IF GetManagement_Cuttings_Considered() THEN
                                  THEN HarvestNow := true;
                               END;
                      FreshY : BEGIN
-                              // OK if GetCrop().DryMatter = undef_int (not specified) HarvestNow remains false
+                              // OK if Crop.DryMatter = undef_int (not specified) HarvestNow remains false
                               IF ((((GetSumWaBal_YieldPart() - YprevSum)/(GetCrop().DryMatter/100)) >= GetCutInfoRecord1_MassInfo())
                                                                           AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                                           AND (DayInSeason <= GetCutInfoRecord1_ToDay()))

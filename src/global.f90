@@ -54,6 +54,13 @@ integer(intEnum), parameter :: plant_transplant = 1
 integer(intEnum), parameter :: plant_regrowth= 2
     !! index of regrowth in planting enumerated type
 
+integer(intEnum), parameter :: Method_full = 0
+    !! index of full in Method enumerated type
+integer(intEnum), parameter :: Method_usda = 1
+    !! index of usda in Method enumerated type
+integer(intEnum), parameter :: Method_percentage= 2
+    !! index of percentage in Method enumerated type
+
 integer(intEnum), parameter :: EffectiveRainMethod_full = 0
     !! index of full in EffectiveRainMethod enumerated type
 integer(intEnum), parameter :: EffectiveRainMethod_usda = 1

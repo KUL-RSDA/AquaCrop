@@ -2413,7 +2413,7 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
                         END;
                 END;
 
-        //5. Adjust GetCrop().CCxWithered - required for correction of Transpiration of dying green canopy
+        //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
         IF (CCiActual > GetCrop().CCxWithered) THEN SetCrop_CCxWithered(CCiActual);
         //IF (GetCrop().CCxWithered > CCxSFCD) THEN SetCrop_CCxWithered(CCxSFCD); - OUT 15/10/2008
 
@@ -2966,7 +2966,7 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
                         END;
                 END;
 
-        //5. Adjust GetCrop().CCxWithered - required for correction of Transpiration of dying green canopy
+        //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
         IF (CCiActual > GetCrop().CCxWithered) THEN SetCrop_CCxWithered(CCiActual);
         //IF (GetCrop().CCxWithered > CCxSFCD) THEN SetCrop_CCxWithered(CCxSFCD); - OUT 15/10/2008
 

@@ -1816,7 +1816,7 @@ IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))  THEN
    SetCrop_LengthFlowering(0);
    END;
 
-// GetCrop().DeterminancyLinked
+// Crop.DeterminancyLinked
 READLN(f0,XX);
 CASE XX of
      1 : SetCrop_DeterminancyLinked(true);
@@ -2429,7 +2429,7 @@ IF (GetCrop().Planting = Seed)
         END;
 WRITELN(f,GetCrop().LengthFlowering:6,'         : Length of the flowering stage (days)');
 
-// GetCrop().DeterminancyLinked
+// Crop.DeterminancyLinked
 IF (GetCrop().DeterminancyLinked = true)
    THEN BEGIN
         i := 1;
@@ -2503,7 +2503,7 @@ IF (GetCrop().Planting = Seed)
                    THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from transplanting to start yield formation')
                    ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from transplanting to flowering');
                 END
-           ELSE BEGIN // GetCrop().Planting = regrowth
+           ELSE BEGIN // Crop.Planting = regrowth
                 WRITELN(f,GetCrop().GDDaysToGermination:6,'         : GDDays: from regrowth to recovering');
                 WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from regrowth to maximum rooting depth');
                 WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from regrowth to start senescence');

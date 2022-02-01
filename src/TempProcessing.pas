@@ -976,7 +976,7 @@ IF (GetClimFile() = '(None)')
    THEN BEGIN
        Crop_Day1_temp := GetCrop().Day1;
        Crop_DayN_temp := GetCrop().DayN;
-       AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp); // adjusting GetCrop().Day1 and GetCrop().DayN to ClimFile
+       AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp); // adjusting Crop.Day1 and Crop.DayN to ClimFile
        SetCrop_Day1(Crop_Day1_temp);
        SetCrop_DayN(Crop_DayN_temp);
        END
