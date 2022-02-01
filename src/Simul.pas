@@ -501,7 +501,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
          THEN YieldPart := Biomass * HItimesTotal*(alfa/100)
          ELSE YieldPart := Biomass * HItimesTotal*(alfaMax/100)
       END;
-   END; // (GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)
+   END; // (Crop.subkind = Tuber) OR (Crop.Subkind = grain)
 
 // 2bis. yield leafy vegetable crops
 IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage)) THEN
@@ -2139,7 +2139,7 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
            IF (tFinalCCx > GetCrop().DaysToSenescence) THEN tFinalCCx := GetCrop().DaysToSenescence;
            END;
 
-        // GetCrop().pLeafAct and GetCrop().pSenAct for plotting root zone depletion in RUN
+        // Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
         Crop_pLeafAct_temp := GetCrop().pLeafAct;
         AdjustpLeafToETo(ETo,Crop_pLeafAct_temp,pLeafLLAct);
         SetCrop_pLeafAct(Crop_pLeafAct_temp);
@@ -2688,7 +2688,7 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
            IF (GDDtFinalCCx > GetCrop().GDDaysToSenescence) THEN GDDtFinalCCx := GetCrop().GDDaysToSenescence;
            END;
 
-        //GetCrop().pLeafAct and GetCrop().pSenAct for plotting root zone depletion in RUN
+        //Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
         Crop_pLeafAct_temp := GetCrop().pLeafAct;
         AdjustpLeafToETo(ETo,Crop_pLeafAct_temp,pLeafLLAct);
         SetCrop_pLeafAct(Crop_pLeafAct_temp);
@@ -2726,7 +2726,7 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
                            THEN BEGIN
                                 DetermineGDDCGCadjusted(GDDCGCadjusted);
                                 IF (GDDCGCadjusted > 0.00000001)
-                                   THEN BEGIN // GetCrop().GDDCGC or GDDCGCadjusted > 0
+                                   THEN BEGIN // Crop.GDDCGC or GDDCGCadjusted > 0
                                         Crop_CCxAdjusted_temp := GetCrop().CCxAdjusted;
                                         DetermineCCxAdjusted(Crop_CCxAdjusted_temp);
                                         SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp);
