@@ -1218,7 +1218,7 @@ IF FileExists(totalname)
                        READLN(fTemp);
                        READLN(fTemp);
                        FOR i := GetTemperatureRecord().FromDayNr TO (CropFirstDay - 1) DO READLN(fTemp);
-                       READLN(fTemp,StringREAD);  // i.e. GetCrop().Day1
+                       READLN(fTemp,StringREAD);  // i.e. Crop.Day1
                        SplitStringInTwoParams(StringREAD,Tlow,Thigh);
                        END;
              Decadely: BEGIN
@@ -1237,7 +1237,7 @@ IF FileExists(totalname)
                        END;
              end;
         // create SIM file and record first day
-        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop().SIM');
+        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop.SIM');
         Assign(f2,totalnameOUT);
         Rewrite(f2);
         WRITELN(f2,Tlow:10:4,Thigh:10:4);
@@ -1331,7 +1331,7 @@ BEGIN
 //1. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop().SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 
@@ -1548,7 +1548,7 @@ IF (TestRecord = true) THEN
 //2. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop().SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 

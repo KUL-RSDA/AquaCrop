@@ -122,8 +122,8 @@ TYPE
          Germinate   : BOOLEAN; // germinate is false when crop cannot germinate due to water stress
          SumEToStress : double; // Sum ETo during stress period to delay canopy senescence
          SumGDD : double; // Sum of Growing Degree-days
-         SumGDDfromDay1 : double; // Sum of Growing Degree-days since GetCrop().Day1
-         SCor : single; // correction factor for GetCrop().SmaxBot if restrictive soil layer inhibit root development
+         SumGDDfromDay1 : double; // Sum of Growing Degree-days since Crop.Day1
+         SCor : single; // correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
          MultipleRun : BOOLEAN; // Project with a sequence of simulation runs
          NrRuns : INTEGER;
          MultipleRunWithKeepSWC : BOOLEAN; // Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
@@ -1576,10 +1576,10 @@ IF (GetCrop_ModeCycle() = CalendarDays)
         SetCrop_GDDaysToCCini(TimeToCCini(GetCrop().Planting,GetCrop().PlantingDens,GetCrop().SizeSeedling,GetCrop().SizePlant,GetCrop().CCx,GetCrop().GDDCGC));
         SetCrop_DaysToCCini(TimeToCCini(GetCrop().Planting,GetCrop().PlantingDens,GetCrop().SizeSeedling,GetCrop().SizePlant,GetCrop().CCx,GetCrop().CGC));
         SetCrop_GDDaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * GetCrop().CCx),GetCrop().CCo,GetCrop().CCx,GetCrop().GDDCGC,GetCrop().GDDaysToGermination));
-        //GetCrop().GDDaysToFullCanopySF is determined in RUN or ManagementUnit if required
+        //Crop.GDDaysToFullCanopySF is determined in RUN or ManagementUnit if required
         END;
 
-CGCisGiven := true; // required to adjust GetCrop().DaysToFullCanopy (does not exist)
+CGCisGiven := true; // required to adjust Crop.DaysToFullCanopy (does not exist)
 Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
 Crop_Length_temp := GetCrop().Length;
 Crop_DaysToFullCanopy_temp := GetCrop().DaysToFullCanopy;
@@ -2579,7 +2579,7 @@ FUNCTION EndGrowingPeriod(Day1 : longint;
 VAR dayi,monthi,yeari : integer;
     Strday,StrMonth : string;
 BEGIN
-// Deze functie bepaald GetCrop().DayN en de string
+// This function determines Crop.DayN and the string
 DayN := Day1 + GetCrop().DaysToHarvest - 1;
 IF (DayN < Day1) THEN DayN := Day1;
 DetermineDate(DayN,dayi,monthi,yeari);
@@ -3294,7 +3294,7 @@ PROCEDURE ReadCropSettingsParameters;
 VAR f : textfile;
     FullName : string;
 BEGIN
-FullName := CONCAT(GetPathNameSimul(),'GetCrop().PAR');
+FullName := CONCAT(GetPathNameSimul(),'Crop.PAR');
 Assign(f,FullName);
 Reset(f);
 WITH SimulParam DO
@@ -3588,7 +3588,7 @@ BEGIN
 // 1. Open Temperature file
 IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop().SIM'));
+   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
    END;
 
