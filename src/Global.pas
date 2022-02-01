@@ -1521,7 +1521,6 @@ END; (* CCiniTotalFromTimeToCCini *)
 PROCEDURE CompleteCropDescription;
 VAR CGCisGiven : BOOLEAN;
     FertStress : shortint;
-    TempDouble : double;
     Crop_DaysToSenescence_temp : integer;
     Crop_Length_temp : rep_int_array ;
     Crop_DaysToFullCanopy_temp : integer;
@@ -1533,24 +1532,15 @@ IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
         IF (GetCrop().DaysToHIo > 0)
            THEN BEGIN
                 IF (GetCrop().DaysToHIo > GetCrop().DaysToHarvest)
-                   THEN BEGIN
-                        TempDouble := GetCrop().HI/GetCrop().DaysToHarvest;
-                        SetCrop_dHIdt(TempDouble);
-                        END
-                   ELSE BEGIN
-                        TempDouble := GetCrop().HI/GetCrop().DaysToHIo;
-                        SetCrop_dHIdt(TempDouble);
-                        END;
+                   THEN SetCrop_dHIdt(GetCrop().HI/GetCrop().DaysToHarvest)
+                   ELSE SetCrop_dHIdt(GetCrop().HI/GetCrop().DaysToHIo);
                 IF (GetCrop().dHIdt > 100) THEN SetCrop_dHIdt(100);
                 END
            ELSE SetCrop_dHIdt(100);
         END
    ELSE BEGIN  //  grain or tuber crops
         IF (GetCrop().DaysToHIo > 0)
-           THEN BEGIN
-                TempDouble := GetCrop().HI/GetCrop().DaysToHIo;
-                SetCrop_dHIdt(TempDouble);
-                END
+           THEN SetCrop_dHIdt(GetCrop().HI/GetCrop().DaysToHIo)
            ELSE SetCrop_dHIdt(undef_int);
         END;
 IF (GetCrop_ModeCycle() = CalendarDays)
