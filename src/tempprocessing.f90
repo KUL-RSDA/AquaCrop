@@ -698,4 +698,26 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
 
 end subroutine HIadjColdHeat
 
+integer(int32) function ResetCropDay1(CropDay1IN, SwitchToYear1)
+    integer(int32), intent(in) :: CropDay1IN
+    logical, intent(in) :: SwitchToYear1
+
+    integer(int32) :: CropDay1OUT
+    integer(int32) :: dayi, monthi, yeari
+
+    call DetermineDate(CropDay1IN, dayi, monthi, yeari)
+    if (GetTemperatureRecord_FromY() == 1901) then
+        yeari = 1901
+        call DetermineDayNr(Dayi, Monthi, Yeari, CropDay1OUT)
+    else
+        if (SwitchToYear1) then
+            call DetermineDayNr(Dayi, Monthi, &
+                 GetTemperatureRecord_FromY(), CropDay1OUT)
+        else
+            CropDay1OUT = CropDay1IN
+        end if
+    end if
+    ResetCropDay1 = CropDay1OUT
+end function ResetCropDay1
+
 end module ac_tempprocessing

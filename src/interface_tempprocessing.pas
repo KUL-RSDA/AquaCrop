@@ -27,13 +27,19 @@ procedure GetMonthlyTemperatureDataSet(
             VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
         external 'aquacrop' name '__ac_tempprocessing_MOD_getmonthlytemperaturedataset';
 
-procedure HIadjColdHeat(TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
-                        TempTmin,TempTmax : double;
-                        TempTcold,TempTheat : shortInt;
-                        TempfExcess : smallInt;
-                        VAR HIadjusted : double;
-                        VAR ColdStress,HeatStress : BOOLEAN);
+procedure HIadjColdHeat(
+            TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
+            TempTmin,TempTmax : double;
+            TempTcold,TempTheat : shortInt;
+            TempfExcess : smallInt;
+            VAR HIadjusted : double;
+            VAR ColdStress,HeatStress : BOOLEAN);
          external 'aquacrop' name '__ac_tempprocessing_MOD_hiadjcoldheat';
+
+function ResetCropDay1(
+            CropDay1IN : LongInt;
+            SwitchToYear1 : BOOLEAN) : LongInt;
+         external 'aquacrop' name '__ac_tempprocessing_MOD_resetcropday1';
 
 implementation
 

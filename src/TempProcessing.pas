@@ -38,10 +38,6 @@ PROCEDURE AdjustCalendarDays(PlantDayNr : LongInt;
                              VAR Succes : BOOLEAN);
 
 
-FUNCTION ResetCropDay1(CropDay1IN : LongInt;
-         SwitchToYear1 : BOOLEAN) : LongInt;
-
-
 PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
 
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
@@ -672,28 +668,6 @@ IF Succes THEN
       END;
    END;
 END; (* AdjustCalendarDays *)
-
-
-
-FUNCTION ResetCropDay1(CropDay1IN : LongInt;
-         SwitchToYear1 : BOOLEAN) : LongInt;
-VAR CropDay1OUT : LongInt;
-    dayi,monthi,yeari : INTEGER;
-
-BEGIN
-DetermineDate(CropDay1IN,dayi,monthi,yeari);
-IF (GetTemperatureRecord().FromY = 1901)
-   THEN BEGIN
-        yeari := 1901;
-        DetermineDayNr(Dayi,Monthi,Yeari,CropDay1OUT);
-        END
-   ELSE BEGIN
-        IF SwitchToYear1
-           THEN DetermineDayNr(Dayi,Monthi,GetTemperatureRecord().FromY,CropDay1OUT)
-           ELSE CropDay1OUT := CropDay1IN;
-        END;
-ResetCropDay1 := CropDay1OUT;
-END; (* ResetCropDay1 *)
 
 
 PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
