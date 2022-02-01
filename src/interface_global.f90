@@ -55,6 +55,7 @@ use ac_global, only: CheckFilesInProject, &
                      setRainFile, &
                      GetRainFileFull, &
                      GetRainDescription, &
+                     LoadClimate, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -271,6 +272,39 @@ subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                                      CGCgiven_f, TheDaysToCCini, ThePlanting, &
                                      Length123, StLength, Length12, CGCVal)
 end subroutine DetermineLengthGrowthStages_wrap
+
+subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
+                            TempFile, strlen3, EToFile, strlen4, &
+                            RainFile, strlen5, CO2File, strlen6)
+    !! Wrapper for [[ac_global:LoadClimate]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: ClimateDescription
+    integer(int32), intent(in) :: strlen2
+    type(c_ptr), intent(inout) :: TempFile
+    integer(int32), intent(in) :: strlen3
+    type(c_ptr), intent(inout) :: EToFile
+    integer(int32), intent(in) :: strlen4
+    type(c_ptr), intent(inout) :: RainFile
+    integer(int32), intent(in) :: strlen5
+    type(c_ptr), intent(inout) :: CO2File
+    integer(int32), intent(in) :: strlen6
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+    character(len=strlen1) :: string3
+    character(len=strlen2) :: string4
+    character(len=strlen1) :: string5
+    character(len=strlen2) :: string6
+
+    string1 = pointer2string(FullName, strlen1)
+    string2 = pointer2string(ClimateDescription, strlen2)
+    string3 = pointer2string(TempFile, strlen3)
+    string4 = pointer2string(EToFile, strlen4)
+    string5 = pointer2string(RainFile, strlen5)
+    string6 = pointer2string(CO2File, strlen6)
+    call LoadClimate(string1, string2, string3, string4, string5, string6)
+end subroutine LoadClimate_wrap
 
 
 function GetCO2File_wrap() result(c_pointer)
@@ -1202,5 +1236,6 @@ function GetTemperatureRecord_FromString_wrap() result(c_pointer)
 
     c_pointer = string2pointer(GetTemperatureRecord_FromString())
 end function GetTemperatureRecord_FromString_wrap
+
 
 end module ac_interface_global

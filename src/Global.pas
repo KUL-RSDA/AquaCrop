@@ -409,9 +409,6 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
 PROCEDURE CompleteCropDescription;
 PROCEDURE LoadCrop (FullName : string);
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
-PROCEDURE LoadClimate(FullName : string;
-                      VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File: string);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -2053,25 +2050,6 @@ IF ClimateRecord.FromY = 1901 THEN yearStr := ''
                               ELSE Str(ClimateRecord.ToY:4,yearStr);
 ClimateRecord.ToString := CONCAT(dayStr,' ',NameMonth[ClimateRecord.ToM],' ',yearStr);
 END; (* CompleteClimateDescription *)
-
-
-PROCEDURE LoadClimate(FullName : string;
-                      VAR ClimateDescription : string;
-                      VAR TempFile,EToFile,RainFile,CO2File : string);
-VAR f0 : TextFile;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,CLimateDescription);
-READLN(f0); // AquaCrop Version
-READLN(f0,TempFile);
-READLN(f0,EToFile);
-READLN(f0,RainFile);
-READLN(f0,CO2File);
-Close(f0);
-END; (* LoadClimate *)
-
-
 
 
 PROCEDURE LoadClim (FullName : string;

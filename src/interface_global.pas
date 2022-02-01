@@ -1632,6 +1632,23 @@ procedure SetTemperatureRecord_ToString_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
+procedure LoadClimate(constref FullName : string;
+                      var ClimateDescription : string;
+                      var TempFile,EToFile,RainFile,CO2File: string);
+
+procedure LoadClimate_wrap(constref FullName : PChar;
+                           constref strlen1 : integer;  
+                           var ClimateDescription : PChar;
+                           constref strlen2 : integer;
+                           var TempFile : PChar;
+                           constref strlen3 : integer;
+                           var EToFile : PChar;
+                           constref strlen4 : integer;
+                           var RainFile : PChar;
+                           constref strlen5 : integer;
+                           var CO2File : PChar;
+                           constref strlen6 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_loadclimate_wrap';
 
 implementation
 
@@ -2981,6 +2998,30 @@ begin
     SetTemperatureRecord_NrObs(TemperatureRecord.NrObs);
     SetTemperatureRecord_FromString(TemperatureRecord.FromString);
     SetTemperatureRecord_ToString(TemperatureRecord.ToString);
+end;
+
+
+procedure LoadClimate(
+            constref FullName : string;
+            var ClimateDescription, TempFile, EToFile, RainFile, CO2File : string);
+var
+    p1, p2, p3, p4, p5, p6 : PChar;
+    strlen1, strlen2, strlen3, strlen4, strlen5, strlen6 : integer;
+
+begin;
+    p1 := PChar(FullName);
+    p2 := PChar(ClimateDescription);
+    p3 := PChar(TempFile);
+    p4 := PChar(EToFile);
+    p5 := PChar(RainFile);
+    p6 := PChar(CO2File);
+    strlen1 := Length(FullName);
+    strlen2 := Length(ClimateDescription);
+    strlen3 := Length(TempFile);
+    strlen4 := Length(EToFile);
+    strlen5 := Length(RainFile);
+    strlen6 := Length(CO2File);
+    LoadClimate_wrap(p1, strlen1, p2, strlen2, p3, strlen3, p4, strlen4, p5, strlen5, p6, strlen6);
 end;
 
 initialization
