@@ -43,8 +43,6 @@ PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 
-PROCEDURE TemperatureFileCoveringCropPeriod(CropFirstDay,CropLastDay : LongInt);
-
 Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
                        FirstDayPeriod : LongInt;
                        TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
@@ -1088,108 +1086,6 @@ IF (GetObservationsFile() = '(None)')
 
 Close(f0);
 END; (* LoadSimulationRunProject *)
-
-
-
-
-PROCEDURE TemperatureFileCoveringCropPeriod(CropFirstDay,CropLastDay : LongInt);
-VAR totalname,totalnameOUT : STRING;
-    fTemp: text;
-    f2 : textFile;
-    i,RunningDay : INTEGER;
-    StringREAD : ShortString;
-    TminDataSet,TmaxDataSet : rep_SimulationEventsDbl;
-    Tlow,Thigh : double;
-
-BEGIN
-totalname := GetTemperatureFilefull();
-IF FileExists(totalname)
-   THEN BEGIN
-        // open file and find first day of cropping period
-        CASE GetTemperatureRecord().DataType OF
-             Daily   : BEGIN
-                       Assign(fTemp,totalname);
-                       Reset(fTemp);
-                       READLN(fTemp); // description
-                       READLN(fTemp); // time step
-                       READLN(fTemp); // day
-                       READLN(fTemp); // month
-                       READLN(fTemp); // year
-                       READLN(fTemp);
-                       READLN(fTemp);
-                       READLN(fTemp);
-                       FOR i := GetTemperatureRecord().FromDayNr TO (CropFirstDay - 1) DO READLN(fTemp);
-                       READLN(fTemp,StringREAD);  // i.e. Crop.Day1
-                       SplitStringInTwoParams(StringREAD,Tlow,Thigh);
-                       END;
-             Decadely: BEGIN
-                       GetDecadeTemperatureDataSet(CropFirstDay,TminDataSet,TmaxDataSet);
-                       i := 1;
-                       While (TminDataSet[i].DayNr <> CropFirstDay) Do i := i+1;
-                       Tlow := TminDataSet[i].Param;
-                       Thigh := TmaxDataSet[i].Param;
-                       END;
-             Monthly : BEGIN
-                       GetMonthlyTemperatureDataSet(CropFirstDay,TminDataSet,TmaxDataSet);
-                       i := 1;
-                       While (TminDataSet[i].DayNr <> CropFirstDay) Do i := i+1;
-                       Tlow := TminDataSet[i].Param;
-                       Thigh := TmaxDataSet[i].Param;
-                       END;
-             end;
-        // create SIM file and record first day
-        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop.SIM');
-        Assign(f2,totalnameOUT);
-        Rewrite(f2);
-        WRITELN(f2,Tlow:10:4,Thigh:10:4);
-        // next days of simulation period
-        FOR RunningDay := (CropFirstDay + 1) TO CropLastDay DO
-            BEGIN
-            CASE GetTemperatureRecord().DataType OF
-                 Daily   : BEGIN
-                           IF Eof(fTemp)
-                              THEN BEGIN
-                                   Reset(fTemp);
-                                   READLN(fTemp); // description
-                                   READLN(fTemp); // time step
-                                   READLN(fTemp); // day
-                                   READLN(fTemp); // month
-                                   READLN(fTemp); // year
-                                   READLN(fTemp);
-                                   READLN(fTemp);
-                                   READLN(fTemp);
-                                   READLN(fTemp,StringREAD);
-                                   SplitStringInTwoParams(StringREAD,Tlow,Thigh);
-                                   END
-                              ELSE READLN(fTemp,Tlow,Thigh);
-                                   END;
-                 Decadely: BEGIN
-                           IF (RunningDay > TminDataSet[31].DayNr) THEN GetDecadeTemperatureDataSet(RunningDay,TminDataSet,TmaxDataSet);
-                           i := 1;
-                           While (TminDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                           Tlow := TminDataSet[i].Param;
-                           Thigh := TmaxDataSet[i].Param;
-                           END;
-                 Monthly : BEGIN
-                           IF (RunningDay > TminDataSet[31].DayNr) THEN GetMonthlyTemperatureDataSet(RunningDay,TminDataSet,TmaxDataSet);
-                           i := 1;
-                           While (TminDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                           Tlow := TminDataSet[i].Param;
-                           Thigh := TmaxDataSet[i].Param;
-                           END;
-                 end;
-            WRITELN(f2,Tlow:10:4,Thigh:10:4);
-            END;
-        // Close files
-        IF (GetTemperatureRecord().DataType = Daily) THEN Close(fTemp);
-        Close(f2);
-        END
-   ELSE BEGIN
-        // fatal error if no air temperature file
-        END;
-END; (* TemperatureFileCoveringCropPeriod *)
-
-
 
 
 Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
