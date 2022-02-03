@@ -394,6 +394,7 @@ character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: EToDescription
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
+character(len=:), allocatable :: CalendarDescription
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: CO2FileFull
 character(len=:), allocatable :: CO2Description
@@ -2425,6 +2426,20 @@ subroutine SetCalendarFileFull(str)
 
     CalendarFileFull = str
 end subroutine SetCalendarFileFull
+
+function GetCalendarDescription() result(str)
+    !! Getter for the "CalendarDescription" global variable.
+    character(len=len(CalendarDescription)) :: str
+
+    str = CalendarDescription
+end function GetCalendarDescription
+
+subroutine SetCalendarDescription(str)
+    !! Setter for the "CalendarDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarDescription = str
+end subroutine SetCalendarDescription
 
 function GetCropFile() result(str)
     !! Getter for the "CropFile" global variable.

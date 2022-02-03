@@ -727,14 +727,14 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr,CalendarDescriptionLocal : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
     VersionNr : double;
     FertStress : shortint;
     temperature_record : rep_clim;
-
+    
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
     VAR f0 : textfile;
@@ -871,13 +871,15 @@ SetCalendarFile(Trim(TempString));
 IF (GetCalendarFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathCalendarFile
-        CalendarDescription := 'No calendar for the Seeding/Planting year';
+        SetCalendarDescription('No calendar for the Seeding/Planting year');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
-        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
+        SetCalendarFileFull(CONCAT(Trim(TempString),GetCalendarFile()));
+        CalendarDescriptionLocal := GetCalendarDescription();
+        GetFileDescription(GetCalendarFileFull(),CalendarDescriptionLocal);
+        SetCalendarDescription(CalendarDescriptionLocal);
         END;
 
 // 3. Crop

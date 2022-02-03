@@ -289,7 +289,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
-    CalendarDescription,CropDescription,ClimDescription,
+    CropDescription,ClimDescription,
     TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
@@ -4392,11 +4392,11 @@ PROCEDURE NoCropCalendar;
 BEGIN
 SetCalendarFile('(None)');
 SetCalendarFileFull(GetCalendarFile());  (* no file *)
-CalendarDescription := '';
+SetCalendarDescription('');
 SetOnset_GenerateOn(false);
 SetOnset_GenerateTempOn(false);
 EndSeason.GenerateTempOn := false;
-CalendarDescription := 'No calendar for the Seeding/Planting year';
+SetCalendarDescription('No calendar for the Seeding/Planting year');
 END; (* NoCropCalendar *)
 
 
@@ -4410,12 +4410,14 @@ VAR f0 : TextFile;
     Onseti : ShortInt;
     Dayi,Monthi,Yeari,CriterionNr : INTEGER;
     DayNr : LongInt;
+    CalendarDescriptionLocal : string;
 BEGIN
 GetOnset := false;
 GetOnsetTemp := false;
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,CalendarDescription);
+READLN(f0,CalendarDescriptionLocal);
+SetCalendarDescription(CalendarDescriptionLocal);
 READLN(f0); // AquaCrop Version
 
 // Specification of Onset and End growing season

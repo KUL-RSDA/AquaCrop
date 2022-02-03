@@ -10,6 +10,7 @@ use ac_global, only: CheckFilesInProject, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
+                     GetCalendarDescription, &
                      GenerateCO2Description, &
                      GetCO2File, &
                      GetCO2FileFull, &
@@ -64,6 +65,7 @@ use ac_global, only: CheckFilesInProject, &
                      setRainDescription, &
                      SetCalendarFile, &
                      SetCalendarFileFull, &
+                     SetCalendarDescription, &
                      SetCO2File, &
                      SetCO2FileFull, &
                      SetCO2Description, &
@@ -892,6 +894,24 @@ subroutine SetCalendarFileFull_wrap(CalendarFileFull, strlen)
     string = pointer2string(CalendarFileFull, strlen)
     call SetCalendarFileFull(string)
 end subroutine SetCalendarFileFull_wrap
+
+function GetCalendarDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCalendarDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCalendarDescription())
+end function GetCalendarDescription_wrap
+
+subroutine SetCalendarDescription_wrap(CalendarDescription, strlen)
+    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    type(c_ptr), intent(in) :: CalendarDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CalendarDescription, strlen)
+    call SetCalendarDescription(string)
+end subroutine SetCalendarDescription_wrap
 
 function GetCropFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCropFile]] for foreign languages.
