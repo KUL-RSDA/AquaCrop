@@ -16,6 +16,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetCO2Description, &
                      GetCropFile, &
                      GetCropFileFull, &
+                     GetCrop_DeterminancyLinked, &
+                     GetCrop_SownYear1, &
+                     GetCrop_StressResponse_Calibrated, &
+                     GetCrop_Assimilates_On, &
                      GetIrriDescription, &
                      GetIrriFile, &
                      GetIrriFileFull, &
@@ -67,6 +71,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetCO2Description, &
                      SetCropFile, &
                      SetCropFileFull, &
+                     SetCrop_DeterminancyLinked, &
+                     SetCrop_SownYear1, &
+                     SetCrop_StressResponse_Calibrated, &
+                     SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
                      SetClimateFile, &
@@ -151,6 +159,73 @@ function string2pointer(string) result(c_pointer)
     c_pointer = c_loc(f_string)
 end function string2pointer
 
+function GetCrop_Assimilates_On_wrap() result(On)
+    !! Wrapper for [[ac_global:GetCrop_Assimilates_On]] for foreign languages.
+    logical(1) :: On
+
+    On = GetCrop_Assimilates_On()
+end function GetCrop_Assimilates_On_wrap
+
+subroutine SetCrop_Assimilates_On_wrap(On)
+    !! Wrapper for [[ac_global:SetCrop_Assimilates_On]] for foreign languages.
+    logical(1), intent(in) :: On
+
+    logical :: bool
+
+    bool = On
+    call SetCrop_Assimilates_On(bool)
+end subroutine SetCrop_Assimilates_On_wrap
+
+function GetCrop_DeterminancyLinked_wrap() result(DeterminancyLinked)
+    !! Wrapper for [[ac_global:GetCrop_DeterminancyLinked]] for foreign languages.
+    logical(1) :: DeterminancyLinked
+
+    DeterminancyLinked = GetCrop_DeterminancyLinked()
+end function GetCrop_DeterminancyLinked_wrap
+
+function GetCrop_SownYear1_wrap() result(SownYear1)
+    !! Wrapper for [[ac_global:GetCrop_SownYear1]] for foreign languages.
+    logical(1) :: SownYear1
+
+    SownYear1 = GetCrop_SownYear1()
+end function GetCrop_SownYear1_wrap
+
+subroutine SetCrop_DeterminancyLinked_wrap(DeterminancyLinked)
+    !! Wrapper for [[ac_global:SetCrop_DeterminancyLinked]] for foreign languages.
+    logical(1), intent(in) :: DeterminancyLinked
+
+    logical :: bool
+
+    bool = DeterminancyLinked
+    call SetCrop_DeterminancyLinked(bool)
+end subroutine SetCrop_DeterminancyLinked_wrap
+
+subroutine SetCrop_SownYear1_wrap(SownYear1)
+    !! Wrapper for [[ac_global:SetCrop_SownYear1]] for foreign languages.
+    logical(1), intent(in) :: SownYear1
+
+    logical :: bool
+
+    bool = SownYear1
+    call SetCrop_SownYear1(bool)
+end subroutine SetCrop_SownYear1_wrap
+
+function GetCrop_StressResponse_Calibrated_wrap() result(Calibrated)
+    !! Wrapper for [[ac_global:GetCrop_StressResponse_Calibrated]] for foreign languages.
+    logical(1) :: Calibrated
+
+    Calibrated = GetCrop_StressResponse_Calibrated()
+end function GetCrop_StressResponse_Calibrated_wrap
+
+subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
+    !! Wrapper for [[ac_global:SetCrop_StressResponse_Calibrated]] for foreign languages.
+    logical(1), intent(in) :: Calibrated
+
+    logical :: bool
+
+    bool = Calibrated
+    call SetCrop_StressResponse_Calibrated(bool)
+end subroutine SetCrop_StressResponse_Calibrated_wrap
 
 subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
@@ -1051,7 +1126,6 @@ subroutine SetManagement_RunoffOn_wrap(RunoffOn)
     RunoffOn_f = RunoffOn
     call SetManagement_RunoffOn(RunoffOn_f)    
 end subroutine SetManagement_RunoffOn_wrap
-
 
 function GetOffSeasonFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
