@@ -21,6 +21,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetIrriFileFull, &
                      GetClimateFile, &
                      GetClimateFileFull, &
+                     GetClimateDescription, &
                      GetClimFile, &
                      GetSWCiniFile, &
                      GetSWCiniFileFull, &
@@ -72,6 +73,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetIrriFileFull, &
                      SetClimateFile, &
                      SetClimateFileFull, &
+                     SetClimateDescription, &
                      SetClimFile, &
                      SetEToFile, &
                      SetEToFileFull, &
@@ -547,6 +549,24 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
 
+function GetClimateDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimateDescription())
+end function GetClimateDescription_wrap
+
+
+subroutine SetClimateDescription_wrap(ClimateDescription, strlen)
+    !! Wrapper for [[ac_global:SetClimateDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimateDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimateDescription, strlen)
+    call SetClimateDescription(string)
+end subroutine SetClimateDescription_wrap
 
 function GetClimFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimFile]] for foreign languages.

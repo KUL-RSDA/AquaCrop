@@ -418,6 +418,7 @@ character(len=:), allocatable :: GroundWaterFile
 character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
+character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
@@ -2022,6 +2023,20 @@ subroutine SetClimateFileFull(str)
     
     ClimateFileFull = str
 end subroutine SetClimateFileFull
+
+function GetClimateDescription() result(str)
+    !! Getter for the "ClimateDescription" global variable.
+    character(len=len(ClimateDescription)) :: str
+    
+    str = ClimateDescription
+end function GetClimateDescription
+
+subroutine SetClimateDescription(str)
+    !! Setter for the "ClimateDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateDescription = str
+end subroutine SetClimateDescription
 
 function GetClimFile() result(str)
     !! Getter for the "ClimFile" global variable.

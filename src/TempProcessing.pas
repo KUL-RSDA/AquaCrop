@@ -784,7 +784,7 @@ IF (GetClimateFile() = '(None)')
         // 1.0 Description
         READLN(fClim,TempString);
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateDescription := Trim(TempString);
+        SetClimateDescription(Trim(TempString));
         Close(fClim);
         END;
 // 1.1 Temperature

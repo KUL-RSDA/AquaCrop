@@ -186,7 +186,7 @@ implementation
  // 5.5 Climate file
  SetClimateFile('(None)');
  SetClimateFileFull(GetClimateFile());
- ClimateDescription := '';
+ SetClimateDescription('');
 
  // 5.6 Set Climate and Simulation Period
  SetClimData;

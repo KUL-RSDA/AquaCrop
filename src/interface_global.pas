@@ -654,6 +654,18 @@ procedure SetClimateFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimatefilefull_wrap';
 
+function GetClimateDescription(): string;
+
+function GetClimateDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getclimatedescription_wrap';
+
+procedure SetClimateDescription(constref str : string);
+
+procedure SetClimateDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setclimatedescription_wrap';
+
 function GetClimFile(): string;
 
 function GetClimFile_wrap(): PChar;
@@ -2558,6 +2570,28 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetClimateFileFull_wrap(p, strlen);
+end;
+
+
+function GetClimateDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetClimateDescription_wrap();
+    GetClimateDescription := AnsiString(p);
+end;
+
+
+procedure SetClimateDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetClimateDescription_wrap(p, strlen);
 end;
 
 

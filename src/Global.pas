@@ -289,7 +289,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
-    ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
+    CalendarDescription,CropDescription,ClimDescription,
     TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
