@@ -33,6 +33,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
                      GetNumberSimulationRuns, &
+                     GetSimulParam_CNcorrection, &
+                     GetsimulParam_ConstGwt, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
@@ -85,6 +87,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToDescription, &
                      setSWCiniFile, &
                      setSWCiniFileFull, &
+                     SetSimulParam_CNcorrection, &
+                     SetSimulParam_ConstGwt, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
@@ -679,6 +683,40 @@ subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
     string = pointer2string(SWCiniFileFull, strlen)
     call SetSWCiniFileFull(string)
 end subroutine SetSWCiniFileFull_wrap
+
+function GetSimulParam_CNcorrection_wrap() result(CNcorrection)
+    !! Wrapper for [[ac_global:GetSimulParam_CNcorrection]] for foreign languages.
+    logical(1) :: CNcorrection
+
+    CNcorrection = GetSimulParam_CNcorrection()
+end function GetSimulParam_CNcorrection_wrap
+
+function GetSimulParam_ConstGwt_wrap() result(ConstGwt)
+    !! Wrapper for [[ac_global:GetSimulParam_ConstGwt]] for foreign languages.
+    logical(1) :: ConstGwt
+
+    ConstGwt = GetSimulParam_ConstGwt()
+end function GetSimulParam_ConstGwt_wrap
+
+subroutine SetSimulParam_CNcorrection_wrap(CNcorrection)
+    !! Wrapper for [[ac_global:SetSimulParam_CNcorrection]] for foreign languages.
+    logical(1), intent(in) :: CNcorrection
+
+    logical :: bool
+
+    bool = CNcorrection
+    call SetSimulParam_CNcorrection(bool)
+end subroutine SetSimulParam_CNcorrection_wrap
+
+subroutine SetSimulParam_ConstGwt_wrap(ConstGwt)
+    !! Wrapper for [[ac_global:SetSimulParam_ConstGwt]] for foreign languages.
+    logical(1), intent(in) :: ConstGwt
+
+    logical :: bool
+
+    bool = ConstGwt
+    call SetSimulParam_ConstGwt(bool)
+end subroutine SetSimulParam_ConstGwt_wrap
 
 function GetPathNameProg_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.

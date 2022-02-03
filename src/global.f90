@@ -389,6 +389,83 @@ type rep_Manag
         !! Multiple cuttings
 end type rep_Manag
 
+type rep_param 
+    !!  DEFAULT.PAR
+    !! crop parameters IN CROP.PAR - with Reset option
+    integer(int8) :: EvapDeclineFactor
+        !! exponential decline with relative soil water [1 = small ... 8 = sharp]
+    real(dp) :: KcWetBare
+        !! Soil evaporation coefficients from wet bare soil
+    integer(int8) :: PercCCxHIfinal
+        !! CC threshold below which HI no longer increase (% of 100)
+    integer(int32) :: RootPercentZmin
+        !! starting depth of root sine function in % of Zmin (sowing depth)
+    real(dp) :: MaxRootZoneExpansion
+        !! maximum root zone expansion in cm/day - fixed at 5 cm/day
+    integer(int8) :: KsShapeFactorRoot
+        !! shape factro for the effect of water stress on root zone expansion
+    integer(int8) :: TAWGermination
+        !! Soil water content (% TAW) required at sowing depth for germination
+    real(dp) :: pAdjFAO
+        !! Adjustment factor for FAO-adjustment of soil water depletion (p) for various ET
+    integer(int32) :: DelayLowOxygen
+        !! delay [days] for full effect of anaeroby
+    real(dp) :: ExpFsen
+        !! exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+    integer(int8) :: Beta
+        !! Percentage decrease of p(senescence) once early canopy senescence is triggered
+    integer(int8) :: ThicknessTopSWC
+        !! Thickness of top soil for determination of its Soil Water Content (cm)
+    !! Field parameter IN FIELD.PAR  - with Reset option
+    integer(int8) :: EvapZmax
+        !! cm  maximum soil depth for water extraction by evaporation
+    !! Runoff parameters IN RUNOFF.PAR  - with Reset option
+    real(dp) :: RunoffDepth
+        !! considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+    logical :: CNcorrection
+        !! correction Antecedent Moisture Class (On/Off)
+    !! Temperature parameters IN TEMPERATURE.PAR  - with Reset option
+    real(dp) :: Tmin
+        !! Default Minimum and maximum air temperature (degC) if no temperature file
+    real(dp) :: Tmax
+        !! Default Minimum and maximum air temperature (degC) if no temperature file
+    integer(int8) :: GDDMethod
+        !! 1 for Method 1, 2 for Method 2, 3 for Method 3
+    !! General parameters IN GENERAL.PAR
+    integer(int32) :: PercRAW
+        !! allowable percent RAW depletion for determination Inet
+    real(dp) :: CompDefThick
+        !! Default thickness of soil compartments [m]
+    integer(int32) :: CropDay1
+        !! First day after sowing/transplanting (DAP = 1)
+    real(dp) :: Tbase
+        !! Default base and upper temperature (degC) assigned to crop
+    real(dp) :: Tupper
+        !! Default base and upper temperature (degC) assigned to crop
+    integer(int8) :: IrriFwInSeason
+        !! Percentage of soil surface wetted by irrigation in crop season
+    integer(int8) :: IrriFwOffSeason
+        !! Percentage of soil surface wetted by irrigation off-season
+    !! Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
+    integer(int32), dimension(12) :: ShowersInDecade !! 10-day or Monthly rainfall --> Runoff estimate
+    type(rep_EffectiveRain) :: EffectiveRain
+        !! 10-day or Monthly rainfall --> Effective rainfall
+    !! Salinity
+    integer(int8) :: SaltDiff
+        !! salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+    integer(int8) :: SaltSolub
+        !! salt solubility [g/liter]
+    !! Groundwater table
+    logical :: ConstGwt
+        !! groundwater table is constant (or absent) during the simulation period
+    !! Capillary rise
+    integer(int8) :: RootNrDF
+        !! Undocumented
+    !! Initial abstraction for surface runoff
+    integer(int8) :: IniAbstract
+        !! Undocumented
+end type rep_param 
+
 type rep_sum 
     real(dp) :: Epot, Tpot, Rain, Irrigation, Infiltrated
         !! Undocumented
@@ -644,6 +721,7 @@ character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
+type(rep_param) :: simulparam
 type(rep_Cuttings) :: Cuttings
 type(rep_Onset) :: onset
 type(rep_Crop) :: crop
@@ -3257,6 +3335,8 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
 
+
+
 function Geteffectiverain() result(effectiverain_out)
     !! Getter for the "effectiverain" global variable.
     type(rep_EffectiveRain) :: effectiverain_out
@@ -3326,6 +3406,507 @@ subroutine Seteffectiverain_RootNrEvap(RootNrEvap)
 
     effectiverain%RootNrEvap = RootNrEvap
 end subroutine Seteffectiverain_RootNrEvap
+
+
+function GetSimulParam() result(SimulParam_out)
+    !! Getter for the "simulparam" global variable.
+    type(rep_param) :: SimulParam_out
+
+    SimulParam_out = simulparam
+end function GetSimulParam
+
+function GetSimulParam_EvapDeclineFactor() result(EvapDeclineFactor)
+    !! Getter for the "EvapDeclineFactor" attribute of the "simulparam" global variable.
+    integer(int8) :: EvapDeclineFactor
+
+    EvapDeclineFactor = simulparam%EvapDeclineFactor
+end function GetSimulParam_EvapDeclineFactor
+
+type(rep_EffectiveRain) function GetSimulParam_EffectiveRain()
+    !! Setter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain = SimulParam%EffectiveRain
+end function GetSimulParam_EffectiveRain
+
+function GetSimulParam_KcWetBare() result(KcWetBare)
+    !! Getter for the "KcWetBare" attribute of the "simulparam" global variable.
+    real(dp) :: KcWetBare
+
+    KcWetBare = simulparam%KcWetBare
+end function GetSimulParam_KcWetBare
+
+function GetSimulParam_PercCCxHIfinal() result(PercCCxHIfinal)
+    !! Getter for the "PercCCxHIfinal" attribute of the "simulparam" global variable.
+    integer(int8) :: PercCCxHIfinal
+
+    PercCCxHIfinal = simulparam%PercCCxHIfinal
+end function GetSimulParam_PercCCxHIfinal
+
+function GetSimulParam_RootPercentZmin() result(RootPercentZmin)
+    !! Getter for the "RootPercentZmin" attribute of the "simulparam" global variable.
+    integer(int32) :: RootPercentZmin
+
+    RootPercentZmin = simulparam%RootPercentZmin
+end function GetSimulParam_RootPercentZmin
+
+function GetSimulParam_MaxRootZoneExpansion() result(MaxRootZoneExpansion)
+    !! Getter for the "MaxRootZoneExpansion" attribute of the "simulparam" global variable.
+    real(dp) :: MaxRootZoneExpansion
+
+    MaxRootZoneExpansion = simulparam%MaxRootZoneExpansion
+end function GetSimulParam_MaxRootZoneExpansion
+
+function GetSimulParam_KsShapeFactorRoot() result(KsShapeFactorRoot)
+    !! Getter for the "KsShapeFactorRoot" attribute of the "simulparam" global variable.
+    integer(int8) :: KsShapeFactorRoot
+
+    KsShapeFactorRoot = simulparam%KsShapeFactorRoot
+end function GetSimulParam_KsShapeFactorRoot
+
+function GetSimulParam_TAWGermination() result(TAWGermination)
+    !! Getter for the "TAWGermination" attribute of the "simulparam" global variable.
+    integer(int8) :: TAWGermination
+
+    TAWGermination = simulparam%TAWGermination
+end function GetSimulParam_TAWGermination
+
+function GetSimulParam_pAdjFAO() result(pAdjFAO)
+    !! Getter for the "pAdjFAO" attribute of the "simulparam" global variable.
+    real(dp) :: pAdjFAO
+
+    pAdjFAO = simulparam%pAdjFAO
+end function GetSimulParam_pAdjFAO
+
+function GetSimulParam_DelayLowOxygen() result(DelayLowOxygen)
+    !! Getter for the "DelayLowOxygen" attribute of the "simulparam" global variable.
+    integer(int32) :: DelayLowOxygen
+
+    DelayLowOxygen = simulparam%DelayLowOxygen
+end function GetSimulParam_DelayLowOxygen
+
+function GetSimulParam_ExpFsen() result(ExpFsen)
+    !! Getter for the "ExpFsen" attribute of the "simulparam" global variable.
+    real(dp) :: ExpFsen
+
+    ExpFsen = simulparam%ExpFsen
+end function GetSimulParam_ExpFsen
+
+function GetSimulParam_Beta() result(Beta)
+    !! Getter for the "Beta" attribute of the "simulparam" global variable.
+    integer(int8) :: Beta
+
+    Beta = simulparam%Beta
+end function GetSimulParam_Beta
+
+function GetSimulParam_ThicknessTopSWC() result(ThicknessTopSWC)
+    !! Getter for the "ThicknessTopSWC" attribute of the "simulparam" global variable.
+    integer(int8) :: ThicknessTopSWC
+
+    ThicknessTopSWC = simulparam%ThicknessTopSWC
+end function GetSimulParam_ThicknessTopSWC
+
+function GetSimulParam_EvapZmax() result(EvapZmax)
+    !! Getter for the "EvapZmax" attribute of the "simulparam" global variable.
+    integer(int8) :: EvapZmax
+
+    EvapZmax = simulparam%EvapZmax
+end function GetSimulParam_EvapZmax
+
+function GetSimulParam_RunoffDepth() result(RunoffDepth)
+    !! Getter for the "RunoffDepth" attribute of the "simulparam" global variable.
+    real(dp) :: RunoffDepth
+
+    RunoffDepth = simulparam%RunoffDepth
+end function GetSimulParam_RunoffDepth
+
+function GetSimulParam_CNcorrection() result(CNcorrection)
+    !! Getter for the "CNcorrection" attribute of the "simulparam" global variable.
+    logical :: CNcorrection
+
+    CNcorrection = simulparam%CNcorrection
+end function GetSimulParam_CNcorrection
+
+function GetSimulParam_Tmin() result(Tmin)
+    !! Getter for the "Tmin" attribute of the "simulparam" global variable.
+    real(dp) :: Tmin
+
+    Tmin = simulparam%Tmin
+end function GetSimulParam_Tmin
+
+function GetSimulParam_Tmax() result(Tmax)
+    !! Getter for the "Tmax" attribute of the "simulparam" global variable.
+    real(dp) :: Tmax
+
+    Tmax = simulparam%Tmax
+end function GetSimulParam_Tmax
+
+function GetSimulParam_GDDMethod() result(GDDMethod)
+    !! Getter for the "GDDMethod" attribute of the "simulparam" global variable.
+    integer(int8) :: GDDMethod
+
+    GDDMethod = simulparam%GDDMethod
+end function GetSimulParam_GDDMethod
+
+function GetSimulParam_PercRAW() result(PercRAW)
+    !! Getter for the "PercRAW" attribute of the "simulparam" global variable.
+    integer(int32) :: PercRAW
+
+    PercRAW = simulparam%PercRAW
+end function GetSimulParam_PercRAW
+
+function GetSimulParam_CompDefThick() result(CompDefThick)
+    !! Getter for the "CompDefThick" attribute of the "simulparam" global variable.
+    real(dp) :: CompDefThick
+
+    CompDefThick = simulparam%CompDefThick
+end function GetSimulParam_CompDefThick
+
+function GetSimulParam_CropDay1() result(CropDay1)
+    !! Getter for the "CropDay1" attribute of the "simulparam" global variable.
+    integer(int32) :: CropDay1
+
+    CropDay1 = simulparam%CropDay1
+end function GetSimulParam_CropDay1
+
+function GetSimulParam_Tbase() result(Tbase)
+    !! Getter for the "Tbase" attribute of the "simulparam" global variable.
+    real(dp) :: Tbase
+
+    Tbase = simulparam%Tbase
+end function GetSimulParam_Tbase
+
+function GetSimulParam_Tupper() result(Tupper)
+    !! Getter for the "Tupper" attribute of the "simulparam" global variable.
+    real(dp) :: Tupper
+
+    Tupper = simulparam%Tupper
+end function GetSimulParam_Tupper
+
+function GetSimulParam_IrriFwInSeason() result(IrriFwInSeason)
+    !! Getter for the "IrriFwInSeason" attribute of the "simulparam" global variable.
+    integer(int8) :: IrriFwInSeason
+
+    IrriFwInSeason = simulparam%IrriFwInSeason
+end function GetSimulParam_IrriFwInSeason
+
+function GetSimulParam_IrriFwOffSeason() result(IrriFwOffSeason)
+    !! Getter for the "IrriFwOffSeason" attribute of the "simulparam" global variable.
+    integer(int8) :: IrriFwOffSeason
+
+    IrriFwOffSeason = simulparam%IrriFwOffSeason
+end function GetSimulParam_IrriFwOffSeason
+
+function GetSimulParam_SaltDiff() result(SaltDiff)
+    !! Getter for the "SaltDiff" attribute of the "simulparam" global variable.
+    integer(int8) :: SaltDiff
+
+    SaltDiff = simulparam%SaltDiff
+end function GetSimulParam_SaltDiff
+
+function GetSimulParam_SaltSolub() result(SaltSolub)
+    !! Getter for the "SaltSolub" attribute of the "simulparam" global variable.
+    integer(int8) :: SaltSolub
+
+    SaltSolub = simulparam%SaltSolub
+end function GetSimulParam_SaltSolub
+
+function GetSimulParam_ConstGwt() result(ConstGwt)
+    !! Getter for the "ConstGwt" attribute of the "simulparam" global variable.
+    logical :: ConstGwt
+
+    ConstGwt = simulparam%ConstGwt
+end function GetSimulParam_ConstGwt
+
+function GetSimulParam_RootNrDF() result(RootNrDF)
+    !! Getter for the "RootNrDF" attribute of the "simulparam" global variable.
+    integer(int8) :: RootNrDF
+
+    RootNrDF = simulparam%RootNrDF
+end function GetSimulParam_RootNrDF
+
+function GetSimulParam_IniAbstract() result(IniAbstract)
+    !! Getter for the "IniAbstract" attribute of the "simulparam" global variable.
+    integer(int8) :: IniAbstract
+
+    IniAbstract = simulparam%IniAbstract
+end function GetSimulParam_IniAbstract
+
+subroutine SetSimulParam(SimulParam_in)
+    !! Setter for the "simulparam" global variable.
+    type(rep_param), intent(in) :: SimulParam_in
+
+    simulparam = SimulParam_in
+end subroutine SetSimulParam
+
+subroutine SetSimulParam_EvapDeclineFactor(EvapDeclineFactor)
+    !! Setter for the "EvapDeclineFactor" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: EvapDeclineFactor
+
+    simulparam%EvapDeclineFactor = EvapDeclineFactor
+end subroutine SetSimulParam_EvapDeclineFactor
+
+subroutine SetSimulParam_EffectiveRain(EffectiveRain)
+    !! Setter for the "EffectiveRain" global variable.
+    type(rep_EffectiveRain), intent(in) :: EffectiveRain
+
+    SimulParam%EffectiveRain = EffectiveRain
+end subroutine SetSimulParam_EffectiveRain
+
+subroutine SetSimulParam_KcWetBare(KcWetBare)
+    !! Setter for the "KcWetBare" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: KcWetBare
+
+    simulparam%KcWetBare = KcWetBare
+end subroutine SetSimulParam_KcWetBare
+
+subroutine SetSimulParam_PercCCxHIfinal(PercCCxHIfinal)
+    !! Setter for the "PercCCxHIfinal" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: PercCCxHIfinal
+
+    simulparam%PercCCxHIfinal = PercCCxHIfinal
+end subroutine SetSimulParam_PercCCxHIfinal
+
+subroutine SetSimulParam_RootPercentZmin(RootPercentZmin)
+    !! Setter for the "RootPercentZmin" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: RootPercentZmin
+
+    simulparam%RootPercentZmin = RootPercentZmin
+end subroutine SetSimulParam_RootPercentZmin
+
+subroutine SetSimulParam_MaxRootZoneExpansion(MaxRootZoneExpansion)
+    !! Setter for the "MaxRootZoneExpansion" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: MaxRootZoneExpansion
+
+    simulparam%MaxRootZoneExpansion = MaxRootZoneExpansion
+end subroutine SetSimulParam_MaxRootZoneExpansion
+
+subroutine SetSimulParam_KsShapeFactorRoot(KsShapeFactorRoot)
+    !! Setter for the "KsShapeFactorRoot" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: KsShapeFactorRoot
+
+    simulparam%KsShapeFactorRoot = KsShapeFactorRoot
+end subroutine SetSimulParam_KsShapeFactorRoot
+
+subroutine SetSimulParam_TAWGermination(TAWGermination)
+    !! Setter for the "TAWGermination" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: TAWGermination
+
+    simulparam%TAWGermination = TAWGermination
+end subroutine SetSimulParam_TAWGermination
+
+subroutine SetSimulParam_pAdjFAO(pAdjFAO)
+    !! Setter for the "pAdjFAO" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: pAdjFAO
+
+    simulparam%pAdjFAO = pAdjFAO
+end subroutine SetSimulParam_pAdjFAO
+
+subroutine SetSimulParam_DelayLowOxygen(DelayLowOxygen)
+    !! Setter for the "DelayLowOxygen" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: DelayLowOxygen
+
+    simulparam%DelayLowOxygen = DelayLowOxygen
+end subroutine SetSimulParam_DelayLowOxygen
+
+subroutine SetSimulParam_ExpFsen(ExpFsen)
+    !! Setter for the "ExpFsen" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: ExpFsen
+
+    simulparam%ExpFsen = ExpFsen
+end subroutine SetSimulParam_ExpFsen
+
+subroutine SetSimulParam_Beta(Beta)
+    !! Setter for the "Beta" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: Beta
+
+    simulparam%Beta = Beta
+end subroutine SetSimulParam_Beta
+
+subroutine SetSimulParam_ThicknessTopSWC(ThicknessTopSWC)
+    !! Setter for the "ThicknessTopSWC" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: ThicknessTopSWC
+
+    simulparam%ThicknessTopSWC = ThicknessTopSWC
+end subroutine SetSimulParam_ThicknessTopSWC
+
+subroutine SetSimulParam_EvapZmax(EvapZmax)
+    !! Setter for the "EvapZmax" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: EvapZmax
+
+    simulparam%EvapZmax = EvapZmax
+end subroutine SetSimulParam_EvapZmax
+
+subroutine SetSimulParam_RunoffDepth(RunoffDepth)
+    !! Setter for the "RunoffDepth" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: RunoffDepth
+
+    simulparam%RunoffDepth = RunoffDepth
+end subroutine SetSimulParam_RunoffDepth
+
+subroutine SetSimulParam_CNcorrection(CNcorrection)
+    !! Setter for the "CNcorrection" attribute of the "simulparam" global variable.
+    logical, intent(in) :: CNcorrection
+
+    simulparam%CNcorrection = CNcorrection
+end subroutine SetSimulParam_CNcorrection
+
+subroutine SetSimulParam_Tmin(Tmin)
+    !! Setter for the "Tmin" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tmin
+
+    simulparam%Tmin = Tmin
+end subroutine SetSimulParam_Tmin
+
+subroutine SetSimulParam_Tmax(Tmax)
+    !! Setter for the "Tmax" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tmax
+
+    simulparam%Tmax = Tmax
+end subroutine SetSimulParam_Tmax
+
+subroutine SetSimulParam_GDDMethod(GDDMethod)
+    !! Setter for the "GDDMethod" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: GDDMethod
+
+    simulparam%GDDMethod = GDDMethod
+end subroutine SetSimulParam_GDDMethod
+
+subroutine SetSimulParam_PercRAW(PercRAW)
+    !! Setter for the "PercRAW" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: PercRAW
+
+    simulparam%PercRAW = PercRAW
+end subroutine SetSimulParam_PercRAW
+
+subroutine SetSimulParam_CompDefThick(CompDefThick)
+    !! Setter for the "CompDefThick" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: CompDefThick
+
+    simulparam%CompDefThick = CompDefThick
+end subroutine SetSimulParam_CompDefThick
+
+subroutine SetSimulParam_CropDay1(CropDay1)
+    !! Setter for the "CropDay1" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: CropDay1
+
+    simulparam%CropDay1 = CropDay1
+end subroutine SetSimulParam_CropDay1
+
+subroutine SetSimulParam_Tbase(Tbase)
+    !! Setter for the "Tbase" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tbase
+
+    simulparam%Tbase = Tbase
+end subroutine SetSimulParam_Tbase
+
+subroutine SetSimulParam_Tupper(Tupper)
+    !! Setter for the "Tupper" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tupper
+
+    simulparam%Tupper = Tupper
+end subroutine SetSimulParam_Tupper
+
+subroutine SetSimulParam_IrriFwInSeason(IrriFwInSeason)
+    !! Setter for the "IrriFwInSeason" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: IrriFwInSeason
+
+    simulparam%IrriFwInSeason = IrriFwInSeason
+end subroutine SetSimulParam_IrriFwInSeason
+
+subroutine SetSimulParam_IrriFwOffSeason(IrriFwOffSeason)
+    !! Setter for the "IrriFwOffSeason" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: IrriFwOffSeason
+
+    simulparam%IrriFwOffSeason = IrriFwOffSeason
+end subroutine SetSimulParam_IrriFwOffSeason
+
+subroutine SetSimulParam_SaltDiff(SaltDiff)
+    !! Setter for the "SaltDiff" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: SaltDiff
+
+    simulparam%SaltDiff = SaltDiff
+end subroutine SetSimulParam_SaltDiff
+
+subroutine SetSimulParam_SaltSolub(SaltSolub)
+    !! Setter for the "SaltSolub" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: SaltSolub
+
+    simulparam%SaltSolub = SaltSolub
+end subroutine SetSimulParam_SaltSolub
+
+subroutine SetSimulParam_ConstGwt(ConstGwt)
+    !! Setter for the "ConstGwt" attribute of the "simulparam" global variable.
+    logical, intent(in) :: ConstGwt
+
+    simulparam%ConstGwt = ConstGwt
+end subroutine SetSimulParam_ConstGwt
+
+subroutine SetSimulParam_RootNrDF(RootNrDF)
+    !! Setter for the "RootNrDF" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: RootNrDF
+
+    simulparam%RootNrDF = RootNrDF
+end subroutine SetSimulParam_RootNrDF
+
+subroutine SetSimulParam_IniAbstract(IniAbstract)
+    !! Setter for the "IniAbstract" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: IniAbstract
+
+    simulparam%IniAbstract = IniAbstract
+end subroutine SetSimulParam_IniAbstract
+
+integer(intEnum) function GetSimulParam_EffectiveRain_Method()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_Method = EffectiveRain%Method
+end function GetSimulParam_EffectiveRain_Method
+
+integer(int8) function GetSimulParam_EffectiveRain_PercentEffRain()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_PercentEffRain = EffectiveRain%PercentEffRain
+end function GetSimulParam_EffectiveRain_PercentEffRain
+
+integer(int8) function GetSimulParam_EffectiveRain_ShowersInDecade()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_ShowersInDecade = EffectiveRain%ShowersInDecade
+end function GetSimulParam_EffectiveRain_ShowersInDecade
+
+integer(int8) function GetSimulParam_EffectiveRain_RootNrEvap()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_RootNrEvap = EffectiveRain%RootNrEvap
+end function GetSimulParam_EffectiveRain_RootNrEvap
+
+subroutine SetSimulParam_EffectiveRain_Method(Method)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(intEnum), intent(in) :: Method
+
+    EffectiveRain%Method = Method
+end subroutine SetSimulParam_EffectiveRain_Method
+
+subroutine SetSimulParam_EffectiveRain_PercentEffRain(PercentEffRain)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(int8), intent(in) :: PercentEffRain
+
+    EffectiveRain%PercentEffRain = PercentEffRain
+end subroutine SetSimulParam_EffectiveRain_PercentEffRain
+
+subroutine SetSimulParam_EffectiveRain_ShowersInDecade(ShowersInDecade)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(int8), intent(in) :: ShowersInDecade
+
+    EffectiveRain%ShowersInDecade= ShowersInDecade
+end subroutine SetSimulParam_EffectiveRain_ShowersInDecade
+
+subroutine SetSimulParam_EffectiveRain_RootNrEvap(RootNrEvap)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(int8), intent(in) :: RootNrEvap
+
+    EffectiveRain%RootNrEvap= RootNrEvap
+end subroutine SetSimulParam_EffectiveRain_RootNrEvap
+
 
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.

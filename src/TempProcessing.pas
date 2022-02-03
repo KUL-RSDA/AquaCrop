@@ -155,7 +155,7 @@ IF (ValPeriod > 0) THEN
    BEGIN
    IF (GetTemperatureFile() = '(None)')
       THEN BEGIN  // given average Tmin and Tmax
-           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
            GDDays := ROUND(ValPeriod * DayGDD)
            END
       ELSE BEGIN   // temperature file
@@ -190,7 +190,7 @@ IF (ValPeriod > 0) THEN
                                     READLN(fTemp,StringREAD);
                                     SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                     //READLN(fTemp,TDayMin,TDayMax);
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     GDDays := GDDays + DayGDD;
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
@@ -217,7 +217,7 @@ IF (ValPeriod > 0) THEN
                                                SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                                //READLN(fTemp,TDayMin,TDayMax);
                                                END;
-                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                        GDDays := GDDays + DayGDD;
                                        RemainingDays := RemainingDays - 1;
                                        DayNri := DayNri + 1;
@@ -231,7 +231,7 @@ IF (ValPeriod > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDaymin := TminDataSet[i].Param;
                                     TDaymax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     GDDays := GDDays + DayGDD;
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
@@ -243,7 +243,7 @@ IF (ValPeriod > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       GDDays := GDDays + DayGDD;
                                       RemainingDays := RemainingDays - 1;
                                       DayNri := DayNri + 1;
@@ -256,7 +256,7 @@ IF (ValPeriod > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDayMin := TminDataSet[i].Param;
                                     TDayMax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     GDDays := GDDays + DayGDD;
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
@@ -268,7 +268,7 @@ IF (ValPeriod > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       GDDays := GDDays + DayGDD;
                                       RemainingDays := RemainingDays - 1;
                                       DayNri := DayNri + 1;
@@ -305,7 +305,7 @@ IF (ValGDDays > 0) THEN
    BEGIN
    IF (GetTemperatureFile() = '(None)')
       THEN BEGIN  // given average Tmin and Tmax
-           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
            IF (DayGDD = 0)
               THEN NrCDays := -9
               ELSE NrCDays := ROUND(ValGDDays/DayGDD);
@@ -344,7 +344,7 @@ IF (ValGDDays > 0) THEN
                                     READLN(fTemp,StringREAD);
                                     SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                     //READLN(fTemp,TDayMin,TDayMax);
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     NrCDays := NrCDays + 1;
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
@@ -371,7 +371,7 @@ IF (ValGDDays > 0) THEN
                                                SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                                //READLN(fTemp,TDayMin,TDayMax);
                                                END;
-                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                        NrCDays := NrCDays + 1;
                                        RemainingGDDays := RemainingGDDays - DayGDD;
                                        DayNri := DayNri + 1;
@@ -385,7 +385,7 @@ IF (ValGDDays > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDaymin := TminDataSet[i].Param;
                                     TDaymax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     NrCDays := NrCDays + 1;
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
@@ -397,7 +397,7 @@ IF (ValGDDays > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       NrCDays := NrCDays + 1;
                                       RemainingGDDays := RemainingGDDays - DayGDD;
                                       DayNri := DayNri + 1;
@@ -410,7 +410,7 @@ IF (ValGDDays > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDayMin := TminDataSet[i].Param;
                                     TDayMax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     NrCDays := NrCDays + 1;
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
@@ -422,7 +422,7 @@ IF (ValGDDays > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       NrCDays := NrCDays + 1;
                                       RemainingGDDays := RemainingGDDays - DayGDD;
                                       DayNri := DayNri + 1;
@@ -456,7 +456,7 @@ BEGIN
 MaxGDDays := 100000;
 IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
-        DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+        DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
         If (DayGDD <= 0) THEN MaxGDDays := 0;
         END
    ELSE BEGIN
@@ -489,7 +489,7 @@ IF (GetTemperatureFile() = '(None)')
                           READLN(fTemp,StringREAD);
                           SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                           DayNri := DayNri + 1;
-                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                           MaxGDDays := MaxGDDays + DayGDD;
                           WHILE (DayNri < GetTemperatureRecord().ToDayNr) DO
                            BEGIN
@@ -511,7 +511,7 @@ IF (GetTemperatureFile() = '(None)')
                                    READLN(fTemp,StringREAD);
                                    SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                    END;
-                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                            MaxGDDays := MaxGDDays + DayGDD;
                            DayNri := DayNri + 1;
                            END;
@@ -522,7 +522,7 @@ IF (GetTemperatureFile() = '(None)')
                           While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                           TDaymin := TminDataSet[i].Param;
                           TDaymax := TmaxDataSet[i].Param;
-                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                           MaxGDDays := MaxGDDays + DayGDD;
                           DayNri := DayNri + 1;
                           WHILE(DayNri < GetTemperatureRecord().ToDayNr) DO
@@ -532,7 +532,7 @@ IF (GetTemperatureFile() = '(None)')
                            While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                            TDayMin := TminDataSet[i].Param;
                            TDayMax := TmaxDataSet[i].Param;
-                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                            MaxGDDays := MaxGDDays + DayGDD;
                            DayNri := DayNri + 1;
                            END;
@@ -543,7 +543,7 @@ IF (GetTemperatureFile() = '(None)')
                           While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                           TDayMin := TminDataSet[i].Param;
                           TDayMax := TmaxDataSet[i].Param;
-                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                           MaxGDDays := MaxGDDays + DayGDD;
                           DayNri := DayNri + 1;
                           WHILE(DayNri < GetTemperatureRecord().ToDayNr) DO
@@ -553,7 +553,7 @@ IF (GetTemperatureFile() = '(None)')
                                While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                TDayMin := TminDataSet[i].Param;
                                TDayMax := TmaxDataSet[i].Param;
-                               DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                               DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                MaxGDDays := MaxGDDays + DayGDD;
                                DayNri := DayNri + 1;
                                END;
@@ -727,7 +727,7 @@ CASE GetCrop_ModeCycle() OF
               Crop_CGC_temp := GetCrop().CGC; 
               Crop_CDC_temp := GetCrop().CDC; 
               Crop_dHIdt_temp := GetCrop().dHIdt; 
-              AdjustCalendarDays(FirstCropDay,GetCrop_subkind(),GetCrop().Tbase,GetCrop().Tupper,SimulParam.Tmin,SimulParam.Tmax,
+              AdjustCalendarDays(FirstCropDay,GetCrop_subkind(),GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),
                  GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToFlowering,
                  GetCrop().GDDLengthFlowering,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,GetCrop().GDDaysToMaxRooting,
                  Crop_GDDaysToHIo_temp,
@@ -839,8 +839,8 @@ IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
         SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
-        Str(SimulParam.Tmin:8:1,TempString1);
-        Str(SimulParam.Tmax:8:1,TempString2);
+        Str(GetSimulParam_Tmin():8:1,TempString1);
+        Str(GetSimulParam_Tmax():8:1,TempString2);
         TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
                     trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
         END
@@ -1143,7 +1143,7 @@ IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the g
    ELSE BEGIN
         ZiAqua := undef_int;
         ECiAqua := undef_int;
-        SimulParam.ConstGwt := true;
+        SetSimulParam_ConstGwt(true);
         END;
 CalculateAdjustedFC((ZiAqua/100),Compartment);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
@@ -1398,9 +1398,9 @@ FOR Dayi := 1 TO L1234 DO
     IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
-            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
+            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,GetSimulParam_GDDMethod());
             END
-       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
     IF (TheModeCycle = GDDays) THEN
        BEGIN
        SumGDD := SumGDD + GDDi;
@@ -1621,9 +1621,9 @@ FOR Dayi := 1 TO L1234 DO
     IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
-            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
+            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,GetSimulParam_GDDMethod());
             END
-       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
     IF (TheModeCycle = GDDays) THEN
        BEGIN
        SumGDD := SumGDD + GDDi;
@@ -2279,14 +2279,14 @@ BEGIN  // Adjust some crop parameters (CROP.*) as specified by the generated len
 // time to maturity
 L1234 := LseasonDays; // days
 IF (TheModeCycle = GDDays)
-   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,SimulParam.Tmin,SimulParam.Tmax)
+   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
    ELSE GDD1234 := undef_int;
 
 // time to senescence  (reference is given in TheCropFileSet
 IF (TheModeCycle = GDDays)
    THEN BEGIN
         GDD123 := GDD1234 - TheCropFileSet.GDDaysFromSenescenceToEnd;
-        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,SimulParam.Tmin,SimulParam.Tmax);
+        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
         END
    ELSE BEGIN
         L123 := L1234 - TheCropFileSet.DaysFromSenescenceToEnd;
