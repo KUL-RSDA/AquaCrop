@@ -134,7 +134,7 @@ IF (TheProjectType = TypePRM) THEN
 IF ((Out1Wabal) OR (Out3Prof = true) OR (Out4Salt = true)) THEN
    BEGIN
    Zprof := 0;
-   FOR compi :=1 to NrCompartments DO Zprof := Zprof + Compartment[compi].Thickness;
+   FOR compi :=1 to NrCompartments DO Zprof := Zprof + GetCompartment_Thickness(compi);
    Str(Zprof:4:2,Str1);
    IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
       THEN Str(GetCrop().RootMax:4:2,Str2)
@@ -246,14 +246,14 @@ IF Out4Salt THEN
 // D5. Compartments - Soil water content
 IF Out5CompWC THEN
    BEGIN
-   NodeD := Compartment[1].Thickness/2;
+   NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
    FOR Compi := 2 TO (NrCompartments-1) DO
        BEGIN
-       NodeD := NodeD + Compartment[Compi-1].Thickness/2 + Compartment[Compi].Thickness/2;
+       NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(Compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
-   NodeD := NodeD + Compartment[NrCompartments-1].Thickness/2 + Compartment[NrCompartments].Thickness/2;
+   NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
    IF ((Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,NodeD:11:2)
       ELSE WRITELN(fDaily,NodeD:11:2);
@@ -261,14 +261,14 @@ IF Out5CompWC THEN
 // D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
 IF Out6CompEC THEN
    BEGIN
-   NodeD := Compartment[1].Thickness/2;
+   NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
    FOR Compi := 2 TO (NrCompartments-1) DO
        BEGIN
-       NodeD := NodeD + Compartment[Compi-1].Thickness/2 + Compartment[Compi].Thickness/2;
+       NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
-   NodeD := NodeD + Compartment[NrCompartments-1].Thickness/2 + Compartment[NrCompartments].Thickness/2;
+   NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
    IF (Out7Clim = true)
       THEN WRITE(fDaily,NodeD:11:2)
       ELSE WRITELN(fDaily,NodeD:11:2);
@@ -403,16 +403,19 @@ END; (* ResetPreviousSum *)
 PROCEDURE AdjustForWatertable;
 Var Ztot, Zi : double;
     compi : INTEGER;
+    Compi_temp : CompartmentIndividual;
 BEGIN
 Ztot := 0;
 FOR compi := 1 to NrCompartments DO
     BEGIN
-    Ztot := Ztot + Compartment[compi].Thickness;
-    Zi := Ztot - Compartment[compi].Thickness/2;
+    Ztot := Ztot + GetCompartment_Thickness(compi);
+    Zi := Ztot - GetCompartment_Thickness(compi)/2;
     IF (Zi >= (ZiAqua/100)) THEN // compartment at or below groundwater table
        BEGIN
-       Compartment[compi].Theta := SoilLayer[Compartment[compi].Layer].SAT/100;
-       DetermineSaltContent(ECiAqua,Compartment[compi]);
+       SetCompartment_Theta(compi, SoilLayer[GetCompartment_Layer(compi)].SAT/100);
+       Compi_temp := GetCOmpartment_i(compi);
+       DetermineSaltContent(ECiAqua,Compi_temp);
+       SetCompartment_i(compi, Compi_temp);
        END;
     END;
 END; (* AdjustForWatertable *)
@@ -1330,7 +1333,7 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
-CheckForWaterTableInProfile((ZiAqua/100),Compartment,WaterTableInProfile);
+CheckForWaterTableInProfile((ZiAqua/100),GetCompartment(),WaterTableInProfile);
 IF WaterTableInProfile THEN AdjustForWatertable;
 IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
@@ -2189,24 +2192,24 @@ IF Out4Salt THEN
 // 5. Compartments - Soil water content
 IF Out5CompWC THEN
    BEGIN
-   WRITE(fDaily,(Compartment[1].theta*100):11:1);
-   FOR Nr := 2 TO (NrCompartments-1) DO WRITE(fDaily,(Compartment[Nr].theta*100):11:1);
+   WRITE(fDaily,(GetCompartment_Theta(1)*100):11:1);
+   FOR Nr := 2 TO (NrCompartments-1) DO WRITE(fDaily,(GetCompartment_Theta(Nr)*100):11:1);
    IF ((Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,(Compartment[NrCompartments].theta*100):11:1)
-      ELSE WRITELN(fDaily,(Compartment[NrCompartments].theta*100):11:1);
+      THEN WRITE(fDaily,(GetCompartment_Theta(NrCompartments)*100):11:1)
+      ELSE WRITELN(fDaily,(GetCompartment_Theta(NrCompartments)*100):11:1);
    END;
 
 // 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
 IF Out6CompEC THEN
    BEGIN
-   SaltVal := ECeComp(Compartment[1]);
+   SaltVal := ECeComp(GetCompartment_i(1));
    WRITE(fDaily,SaltVal:11:1);
    FOR Nr := 2 TO (NrCompartments-1) DO
        BEGIN
-       SaltVal := ECeComp(Compartment[Nr]);
+       SaltVal := ECeComp(GetCompartment_i(Nr));
        WRITE(fDaily,SaltVal:11:1);
        END;
-   SaltVal := ECeComp(Compartment[NrCompartments]);
+   SaltVal := ECeComp(GetCompartment_i(NrCompartments));
    IF (Out7Clim = true)
       THEN WRITE(fDaily,SaltVal:11:1)
       ELSE WRITELN(fDaily,SaltVal:11:1);
@@ -2238,16 +2241,16 @@ VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
     SWCact := 0;
     REPEAT
       compi := compi + 1;
-      CumDepth := CumDepth + Compartment[compi].Thickness;
+      CumDepth := CumDepth + GetCompartment_Thickness(compi);
       IF (CumDepth <= Zsoil)
          THEN Factor := 1
          ELSE BEGIN
-              frac_value := Zsoil - (CumDepth - Compartment[compi].Thickness);
+              frac_value := Zsoil - (CumDepth - GetCompartment_Thickness(compi));
               IF (frac_value > 0)
-                 THEN Factor := frac_value/Compartment[compi].Thickness
+                 THEN Factor := frac_value/GetCompartment_Thickness(compi)
                  ELSE Factor := 0;
               END;
-      SWCact := SWCact + Factor * 10 * (Compartment[compi].theta*100) * Compartment[compi].Thickness;
+      SWCact := SWCact + Factor * 10 * (GetCompartment_Theta(compi)*100) * GetCompartment_Thickness(compi);
 
     UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = NrCompartments));
     SWCZsoil := SWCact;
@@ -2318,6 +2321,7 @@ VAR RepeatToDay : LongInt;
                        VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
     VAR ZiIN : INTEGER;
+        Comp_temp : rep_comp;
     BEGIN
     ZiIN := ZiAqua;
     IF (GetGwTable_DNr1() = GetGwTable_DNr2())
@@ -2329,7 +2333,11 @@ VAR RepeatToDay : LongInt;
             ZiAqua := GetGwTable_Z1() + ROUND((DayNri - GetGwTable_DNr1())*(GetGwTable_Z2() - GetGwTable_Z1())/(GetGwTable_DNr2() - GetGwTable_DNr1()));
             ECiAqua := GetGwTable_EC1() + (DayNri - GetGwTable_DNr1())*(GetGwTable_EC2() - GetGwTable_EC1())/(GetGwTable_DNr2() - GetGwTable_DNr1());
             END;
-    IF (ZiAqua <> ZiIN) THEN CalculateAdjustedFC((ZiAqua/100),Compartment);
+    IF (ZiAqua <> ZiIN) THEN BEGIN
+                             Comp_temp := GetCompartment();
+                             CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                             SetCompartment(Comp_temp);
+                             END;
     END; (* GetZandECgwt *)
 
 
@@ -2474,13 +2482,13 @@ VAR RepeatToDay : LongInt;
     PreIrri := 0;
     REPEAT
       compi := compi + 1;
-      SumDepth := SumDepth + Compartment[compi].Thickness;
-      layeri := Compartment[compi].Layer;
+      SumDepth := SumDepth + GetCompartment_Thickness(compi);
+      layeri := GetCompartment_Layer(compi);
       ThetaPercRaw := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(SoilLayer[layeri].FC/100-SoilLayer[layeri].WP/100);
-      IF (Compartment[compi].Theta < ThetaPercRaw) THEN
+      IF (GetCompartment_Theta(compi) < ThetaPercRaw) THEN
          BEGIN
-         PreIrri := PreIrri + (ThetaPercRaw - Compartment[compi].Theta)*1000*Compartment[compi].Thickness;
-         Compartment[compi].Theta := ThetaPercRaw;
+         PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
+         SetCompartment_Theta(compi, ThetaPercRaw);
          END;
     UNTIL ((SumDepth >= RootingDepth) OR (compi = NrCompartments))
     END; (* AdjustSWCRootZone *)
@@ -2598,7 +2606,7 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
         SetGwTable(GwTable_temp);
         END;
    GetZandECgwt(DayNri,ZiAqua,ECiAqua);
-   CheckForWaterTableInProfile((ZiAqua/100),Compartment,WaterTableInProfile);
+   CheckForWaterTableInProfile((ZiAqua/100),GetCompartment(),WaterTableInProfile);
    IF WaterTableInProfile THEN AdjustForWatertable;
    END;
 
@@ -3011,10 +3019,11 @@ VAR NrRun : ShortInt;
     PROCEDURE AdjustCompartments;
     VAR TotDepth : double;
         i : ShortInt;
+        Comp_temp : rep_Comp;
     BEGIN
     //Adjust size of compartments if required
     TotDepth := 0;
-    FOR i := 1 to NrCompartments DO TotDepth := TotDepth + Compartment[i].Thickness;
+    FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
     IF Simulation.MultipleRunWithKeepSWC // Project with a sequence of simulation runs and KeepSWC
        THEN BEGIN
             IF (ROUND(Simulation.MultipleRunConstZrx*1000) > ROUND(TotDepth*1000))
@@ -3027,7 +3036,9 @@ VAR NrRun : ShortInt;
                   THEN BEGIN // no restrictive soil layer
                        AdjustSizeCompartments(GetCrop().RootMax);
                        // adjust soil water content
-                       CalculateAdjustedFC((ZiAqua/100),Compartment);
+                       Comp_temp := GetCompartment();
+                       CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                       SetCompartment(Comp_temp);
                        IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
                        END
                   ELSE BEGIN // restrictive soil layer
@@ -3035,7 +3046,9 @@ VAR NrRun : ShortInt;
                           BEGIN
                           AdjustSizeCompartments(GetSoil().RootMax);
                           // adjust soil water content
-                          CalculateAdjustedFC((ZiAqua/100),Compartment);
+                          Comp_temp := GetCompartment();
+                          CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                          SetCompartment(Comp_temp);
                           IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
                           END
                        END;
