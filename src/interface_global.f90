@@ -946,7 +946,7 @@ function GetCalendarFile_wrap() result(c_pointer)
 end function GetCalendarFile_wrap
 
 subroutine SetCalendarFile_wrap(CalendarFile, strlen)
-    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    !! Wrapper for [[ac_global:SetCalendarFile]] for foreign languages.
     type(c_ptr), intent(in) :: CalendarFile
     integer(int32), intent(in) :: strlen
 
@@ -964,7 +964,7 @@ function GetCalendarFileFull_wrap() result(c_pointer)
 end function GetCalendarFileFull_wrap
 
 subroutine SetCalendarFileFull_wrap(CalendarFileFull, strlen)
-    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    !! Wrapper for [[ac_global:SetCalendarFileFull]] for foreign languages.
     type(c_ptr), intent(in) :: CalendarFileFull
     integer(int32), intent(in) :: strlen
 
@@ -982,7 +982,7 @@ function GetCalendarDescription_wrap() result(c_pointer)
 end function GetCalendarDescription_wrap
 
 subroutine SetCalendarDescription_wrap(CalendarDescription, strlen)
-    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    !! Wrapper for [[ac_global:SetCalendarDescription]] for foreign languages.
     type(c_ptr), intent(in) :: CalendarDescription
     integer(int32), intent(in) :: strlen
 
@@ -1387,7 +1387,7 @@ end function GetTemperatureDescription_wrap
 
 
 subroutine SetTemperatureDescription_wrap(TemperatureDescription, strlen)
-    !! Wrapper for [[ac_global:TemperatureDescription]] for foreign languages.
+    !! Wrapper for [[ac_global:SetTemperatureDescription]] for foreign languages.
     type(c_ptr), intent(in) :: TemperatureDescription
     integer(int32), intent(in) :: strlen
 
