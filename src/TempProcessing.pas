@@ -727,7 +727,8 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr,CalendarDescriptionLocal : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr,
+    CalendarDescriptionLocal, TemperatureDescriptionLocal : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -797,15 +798,17 @@ IF (GetTemperatureFile() = '(None)')
         SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
         Str(SimulParam.Tmin:8:1,TempString1);
         Str(SimulParam.Tmax:8:1,TempString2);
-        TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
+        SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C'));
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetTemperatureFileFull(CONCAT(Trim(TempString),Trim(GetTemperatureFile())));
         temperature_record := GetTemperatureRecord();
-        LoadClim(GetTemperatureFilefull(),TemperatureDescription,temperature_record);
+        TemperatureDescriptionLocal := GetTemperatureDescription();
+        LoadClim(GetTemperatureFileFull(),TemperatureDescriptionLocal,temperature_record);
+        SetTemperatureDescription(TemperatureDescriptionLocal);
         CompleteClimateDescription(temperature_record);
         SetTemperatureRecord(temperature_record);
         END;

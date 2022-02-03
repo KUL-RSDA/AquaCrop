@@ -111,8 +111,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetGroundWaterFilefull, &
                      GetTemperatureFile, &
                      GetTemperatureFilefull, &
+                     GetTemperatureDescription, &
                      SetTemperatureFile, &
                      SetTemperatureFilefull, &
+                     SetTemperatureDescription, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      SetTemperatureRecord_FromString, &
@@ -1300,6 +1302,27 @@ subroutine SetTemperatureFilefull_wrap(TemperatureFilefull, strlen)
     string = pointer2string(TemperatureFilefull, strlen)
     call SetTemperatureFilefull(string)
 end subroutine SetTemperatureFilefull_wrap
+
+
+function GetTemperatureDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureDescription())
+end function GetTemperatureDescription_wrap
+
+
+subroutine SetTemperatureDescription_wrap(TemperatureDescription, strlen)
+    !! Wrapper for [[ac_global:TemperatureDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: TemperatureDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureDescription, strlen)
+    call SetTemperatureDescription(string)
+end subroutine SetTemperatureDescription_wrap
+
 
 subroutine SetTemperatureRecord_ToString_wrap(&
                      TemperatureRecord_ToString, strlen)

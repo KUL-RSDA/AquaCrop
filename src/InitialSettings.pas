@@ -142,7 +142,7 @@ implementation
  SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
- TemperatureDescription := '';
+ SetTemperatureDescription('');
  SetTemperatureRecord_DataType(Daily);
  SetTemperatureRecord_NrObs(0);
  SetTemperatureRecord_FromString('any date');

@@ -429,6 +429,7 @@ character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
+character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
@@ -3746,6 +3747,20 @@ subroutine SetTemperatureFilefull(str)
 
     TemperatureFilefull = str
 end subroutine SetTemperatureFilefull
+
+function GetTemperatureDescription() result(str)
+    !! Getter for the "TemperatureDescription" global variable.
+    character(len=len(TemperatureDescription)) :: str
+
+    str = TemperatureDescription
+end function GetTemperatureDescription
+
+subroutine SetTemperatureDescription(str)
+    !! Setter for the "TemperatureDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureDescription = str
+end subroutine SetTemperatureDescription
 
 type(rep_clim) function GetTemperatureRecord()
     !! Getter for the "TemperatureRecord" global variable.
