@@ -609,6 +609,7 @@ character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: EToDescription
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
+character(len=:), allocatable :: CalendarDescription
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: CO2FileFull
 character(len=:), allocatable :: CO2Description
@@ -616,11 +617,13 @@ character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: CropDescription
 character(len=:), allocatable :: PathNameProg
 character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
+character(len=:), allocatable :: ProfDescription
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
 character(len=:), allocatable :: ObservationsFile
@@ -632,6 +635,7 @@ character(len=:), allocatable :: GroundWaterFile
 character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
+character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
@@ -640,6 +644,7 @@ character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
+character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
@@ -2237,6 +2242,20 @@ subroutine SetClimateFileFull(str)
     ClimateFileFull = str
 end subroutine SetClimateFileFull
 
+function GetClimateDescription() result(str)
+    !! Getter for the "ClimateDescription" global variable.
+    character(len=len(ClimateDescription)) :: str
+    
+    str = ClimateDescription
+end function GetClimateDescription
+
+subroutine SetClimateDescription(str)
+    !! Setter for the "ClimateDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateDescription = str
+end subroutine SetClimateDescription
+
 function GetClimFile() result(str)
     !! Getter for the "ClimFile" global variable.
     character(len=len(ClimFile)) :: str
@@ -2625,6 +2644,20 @@ subroutine SetCalendarFileFull(str)
     CalendarFileFull = str
 end subroutine SetCalendarFileFull
 
+function GetCalendarDescription() result(str)
+    !! Getter for the "CalendarDescription" global variable.
+    character(len=len(CalendarDescription)) :: str
+
+    str = CalendarDescription
+end function GetCalendarDescription
+
+subroutine SetCalendarDescription(str)
+    !! Setter for the "CalendarDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarDescription = str
+end subroutine SetCalendarDescription
+
 function GetCropFile() result(str)
     !! Getter for the "CropFile" global variable.
     character(len=len(CropFile)) :: str
@@ -2652,6 +2685,20 @@ subroutine SetCropFileFull(str)
 
     CropFileFull = str
 end subroutine SetCropFileFull
+
+function GetCropDescription() result(str)
+    !! Getter for the "CropDescription" global variable.
+    character(len=len(CropDescription)) :: str
+
+    str = CropDescription
+end function GetCropDescription
+
+subroutine SetCropDescription(str)
+    !! Setter for the "CropDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    CropDescription = str
+end subroutine SetCropDescription
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.
@@ -2700,6 +2747,20 @@ subroutine SetProfFilefull(str)
 
     ProfFilefull = str
 end subroutine SetProfFilefull
+
+function GetProfDescription() result(str)
+    !! Getter for the "ProfDescription" global variable.
+    character(len=len(ProfDescription)) :: str
+
+    str = ProfDescription
+end function GetProfDescription
+
+subroutine SetProfDescription(str)
+    !! Setter for the "ProfDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfDescription = str
+end subroutine SetProfDescription
 
 function GetManFile() result(str)
     !! Getter for the "ManFile" global variable.
@@ -5301,6 +5362,20 @@ subroutine SetTemperatureFilefull(str)
 
     TemperatureFilefull = str
 end subroutine SetTemperatureFilefull
+
+function GetTemperatureDescription() result(str)
+    !! Getter for the "TemperatureDescription" global variable.
+    character(len=len(TemperatureDescription)) :: str
+
+    str = TemperatureDescription
+end function GetTemperatureDescription
+
+subroutine SetTemperatureDescription(str)
+    !! Setter for the "TemperatureDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureDescription = str
+end subroutine SetTemperatureDescription
 
 function GetCrop_Length_i(i) result(Length_i)
     !! Getter for the "Length" attribute of "Crop" global variable.

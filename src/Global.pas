@@ -188,8 +188,8 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
-    ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
-    TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
+    ClimDescription,
+    IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
     ClimRecord,
@@ -1347,10 +1347,12 @@ VAR f0 : TextFile;
     blank : rep_string3;
     VersionNr : double;
     TempShortInt : shortint;
+    ProfDescriptionLocal : string;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,ProfDescription);
+READLN(f0,ProfDescriptionLocal);
+SetProfDescription(ProfDescriptionLocal);
 READLN(f0,VersionNr);  // AquaCrop version
 READLN(f0,TempShortInt);
 SetSoil_CNvalue(TempShortInt);
@@ -1565,10 +1567,12 @@ VAR f0 : TextFile;
     TempBoolean : boolean;
     Crop_SmaxBot_temp : double;
     Crop_SmaxTop_temp : double;
+    CropDescriptionLocal : string;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,CropDescription);
+READLN(f0,CropDescriptionLocal);
+SetCropDescription(CropDescriptionLocal);
 READLN(f0,VersionNr);  // AquaCrop version
 READLN(f0);  // Protected or Open file
 
@@ -2040,7 +2044,7 @@ VAR f : TextFile;
 BEGIN
 Assign(f,totalname);
 Rewrite(f);
-WRITELN(f,ProfDescription);
+WRITELN(f,GetProfDescription());
 WRITELN(f,'        7.0                 : AquaCrop Version (June 2021)');    // AquaCrop version
 WRITELN(f,GetSoil().CNvalue:9,'                   : CN (Curve Number)');
 WRITELN(f,GetSoil().REW:9,'                   : Readily evaporable water from top layer (mm)');
@@ -2176,7 +2180,7 @@ VAR f : TextFile;
 BEGIN
 Assign(f,totalname);
 Rewrite(f);
-WRITELN(f,CropDescription);
+WRITELN(f,GetCropDescription());
 // AquaCrop version
 WRITELN(f,'     7.0       : AquaCrop Version (June 2021)');
 WRITELN(f,'     1         : File not protected');
@@ -4386,11 +4390,11 @@ PROCEDURE NoCropCalendar;
 BEGIN
 SetCalendarFile('(None)');
 SetCalendarFileFull(GetCalendarFile());  (* no file *)
-CalendarDescription := '';
+SetCalendarDescription('');
 SetOnset_GenerateOn(false);
 SetOnset_GenerateTempOn(false);
 EndSeason.GenerateTempOn := false;
-CalendarDescription := 'No calendar for the Seeding/Planting year';
+SetCalendarDescription('No calendar for the Seeding/Planting year');
 END; (* NoCropCalendar *)
 
 
@@ -4404,12 +4408,14 @@ VAR f0 : TextFile;
     Onseti : ShortInt;
     Dayi,Monthi,Yeari,CriterionNr : INTEGER;
     DayNr : LongInt;
+    CalendarDescriptionLocal : string;
 BEGIN
 GetOnset := false;
 GetOnsetTemp := false;
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,CalendarDescription);
+READLN(f0,CalendarDescriptionLocal);
+SetCalendarDescription(CalendarDescriptionLocal);
 READLN(f0); // AquaCrop Version
 
 // Specification of Onset and End growing season

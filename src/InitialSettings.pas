@@ -144,7 +144,7 @@ implementation
  SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
  Str(SimulParam.Tmin:8:1,TempString1);
  Str(SimulParam.Tmax:8:1,TempString2);
- TemperatureDescription := '';
+ SetTemperatureDescription('');
  SetTemperatureRecord_DataType(Daily);
  SetTemperatureRecord_NrObs(0);
  SetTemperatureRecord_FromString('any date');
@@ -188,7 +188,7 @@ implementation
  // 5.5 Climate file
  SetClimateFile('(None)');
  SetClimateFileFull(GetClimateFile());
- ClimateDescription := '';
+ SetClimateDescription('');
 
  // 5.6 Set Climate and Simulation Period
  SetClimData;
