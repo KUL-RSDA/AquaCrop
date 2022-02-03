@@ -2,6 +2,7 @@ module ac_global
 
 use ac_kinds, only: dp, &
                     int8, &
+                    int16, &
                     int32, &
                     intEnum, &
                     sp
@@ -33,6 +34,20 @@ integer(intEnum), parameter :: modeCycle_GDDDays = 0
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
     !! index of CalendarDays in modeCycle enumerated type
 
+integer(intEnum), parameter :: pMethod_NoCorrection = 0
+    !! index of NoCorrection in pMethod enumerated type
+integer(intEnum), parameter :: pMethod_FAOCorrection = 1
+    !! index of FAOCorrection in pMethod enumerated type
+
+integer(intEnum), parameter :: subkind_Vegetative = 0
+    !! index of Vegetative in subkind enumerated type
+integer(intEnum), parameter :: subkind_Grain = 1
+    !! index of Grain in subkind enumerated type
+integer(intEnum), parameter :: subkind_Tuber = 2
+    !! index of Tuber in subkind enumerated type
+integer(intEnum), parameter :: subkind_Forage = 3
+    !! index of Forage in subkind enumerated type
+
 integer(intEnum), parameter :: plant_seed = 0
     !! index of seed in planting enumerated type
 integer(intEnum), parameter :: plant_transplant = 1
@@ -47,6 +62,12 @@ integer(intEnum), parameter :: Method_usda = 1
 integer(intEnum), parameter :: Method_percentage= 2
     !! index of percentage in Method enumerated type
 
+integer(intEnum), parameter :: EffectiveRainMethod_full = 0
+    !! index of full in EffectiveRainMethod enumerated type
+integer(intEnum), parameter :: EffectiveRainMethod_usda = 1
+    !! index of usda in EffectiveRainMethod enumerated type
+integer(intEnum), parameter :: EffectiveRainMethod_percentage= 2
+    !! index of percentage in EffectiveRainMethod enumerated type
 
 integer(intEnum), parameter :: TimeCuttings_NA = 0
     !! index of NA in TimeCuttings enumerated type
@@ -220,6 +241,17 @@ type rep_soil
         !! maximum rooting depth in soil profile for selected crop
 end type rep_soil
 
+type rep_Assimilates 
+    logical :: On
+        !! Undocumented
+    integer(int32) :: Period
+        !! Number of days at end of season during which assimilates are stored in root system
+    integer(int8) :: Stored
+        !! Percentage of assimilates, transferred to root system at last day of season
+    integer(int8) :: Mobilized
+        !! Percentage of stored assimilates, transferred to above ground parts in next season
+end type rep_Assimilates 
+
 type rep_Onset 
     logical :: GenerateOn
         !! by rainfall or temperature criterion
@@ -317,7 +349,7 @@ type rep_clim
     integer(int32) :: FromDayNr, ToDayNr
         !! daynumber
     character(len=:), allocatable :: FromString, ToString
-        !! Undocumented, note GDL: randomly chose 500
+        !! Undocumented
     integer(int32) :: NrObs
         !! number of observations
 end type rep_clim
@@ -386,6 +418,83 @@ type rep_Manag
         !! Multiple cuttings
 end type rep_Manag
 
+type rep_param 
+    !!  DEFAULT.PAR
+    !! crop parameters IN CROP.PAR - with Reset option
+    integer(int8) :: EvapDeclineFactor
+        !! exponential decline with relative soil water [1 = small ... 8 = sharp]
+    real(dp) :: KcWetBare
+        !! Soil evaporation coefficients from wet bare soil
+    integer(int8) :: PercCCxHIfinal
+        !! CC threshold below which HI no longer increase (% of 100)
+    integer(int32) :: RootPercentZmin
+        !! starting depth of root sine function in % of Zmin (sowing depth)
+    real(dp) :: MaxRootZoneExpansion
+        !! maximum root zone expansion in cm/day - fixed at 5 cm/day
+    integer(int8) :: KsShapeFactorRoot
+        !! shape factro for the effect of water stress on root zone expansion
+    integer(int8) :: TAWGermination
+        !! Soil water content (% TAW) required at sowing depth for germination
+    real(dp) :: pAdjFAO
+        !! Adjustment factor for FAO-adjustment of soil water depletion (p) for various ET
+    integer(int32) :: DelayLowOxygen
+        !! delay [days] for full effect of anaeroby
+    real(dp) :: ExpFsen
+        !! exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+    integer(int8) :: Beta
+        !! Percentage decrease of p(senescence) once early canopy senescence is triggered
+    integer(int8) :: ThicknessTopSWC
+        !! Thickness of top soil for determination of its Soil Water Content (cm)
+    !! Field parameter IN FIELD.PAR  - with Reset option
+    integer(int8) :: EvapZmax
+        !! cm  maximum soil depth for water extraction by evaporation
+    !! Runoff parameters IN RUNOFF.PAR  - with Reset option
+    real(dp) :: RunoffDepth
+        !! considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+    logical :: CNcorrection
+        !! correction Antecedent Moisture Class (On/Off)
+    !! Temperature parameters IN TEMPERATURE.PAR  - with Reset option
+    real(dp) :: Tmin
+        !! Default Minimum and maximum air temperature (degC) if no temperature file
+    real(dp) :: Tmax
+        !! Default Minimum and maximum air temperature (degC) if no temperature file
+    integer(int8) :: GDDMethod
+        !! 1 for Method 1, 2 for Method 2, 3 for Method 3
+    !! General parameters IN GENERAL.PAR
+    integer(int32) :: PercRAW
+        !! allowable percent RAW depletion for determination Inet
+    real(dp) :: CompDefThick
+        !! Default thickness of soil compartments [m]
+    integer(int32) :: CropDay1
+        !! First day after sowing/transplanting (DAP = 1)
+    real(dp) :: Tbase
+        !! Default base and upper temperature (degC) assigned to crop
+    real(dp) :: Tupper
+        !! Default base and upper temperature (degC) assigned to crop
+    integer(int8) :: IrriFwInSeason
+        !! Percentage of soil surface wetted by irrigation in crop season
+    integer(int8) :: IrriFwOffSeason
+        !! Percentage of soil surface wetted by irrigation off-season
+    !! Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
+    integer(int32), dimension(12) :: ShowersInDecade !! 10-day or Monthly rainfall --> Runoff estimate
+    type(rep_EffectiveRain) :: EffectiveRain
+        !! 10-day or Monthly rainfall --> Effective rainfall
+    !! Salinity
+    integer(int8) :: SaltDiff
+        !! salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+    integer(int8) :: SaltSolub
+        !! salt solubility [g/liter]
+    !! Groundwater table
+    logical :: ConstGwt
+        !! groundwater table is constant (or absent) during the simulation period
+    !! Capillary rise
+    integer(int8) :: RootNrDF
+        !! Undocumented
+    !! Initial abstraction for surface runoff
+    integer(int8) :: IniAbstract
+        !! Undocumented
+end type rep_param 
+
 type rep_sum 
     real(dp) :: Epot, Tpot, Rain, Irrigation, Infiltrated
         !! Undocumented
@@ -414,6 +523,189 @@ type rep_DayEventDbl
     real(dp) :: Param
         !! Undocumented
 end type rep_DayEventDbl
+
+type rep_Crop 
+    integer(intEnum) :: subkind
+        !! Undocumented
+    integer(intEnum) :: ModeCycle
+        !! Undocumented
+    integer(intEnum) :: Planting
+        !! 1 = sown, 0 = transplanted, -9 = regrowth
+    integer(intEnum) :: pMethod
+        !! Undocumented
+    real(dp) :: pdef
+        !! soil water depletion fraction for no stomatal stress as defined (ETo = 5 mm/day)
+    real(dp) :: pActStom
+        !! actual p for no stomatal stress for ETo of the day
+    real(dp) :: KsShapeFactorLeaf
+        !! Undocumented
+    real(dp) :: KsShapeFactorStomata
+        !! Undocumented
+    real(dp) :: KsShapeFactorSenescence
+        !! Undocumented
+    real(dp) :: pLeafDefUL
+        !! soil water depletion fraction for leaf expansion (ETo = 5 mm/day)
+    real(dp) :: pLeafDefLL
+        !! soil water depletion fraction for leaf expansion (ETo = 5 mm/day)
+    real(dp) :: pLeafAct
+        !! actual p for upper limit leaf expansion for ETo of the day
+    real(dp) :: pSenescence
+        !! soil water depletion fraction for canopys senescence (ETo = 5 mm/day)
+    real(dp) :: pSenAct
+        !! actual p for canopy senescence for ETo of the day
+    real(dp) :: pPollination
+        !! soil water depletion fraction for failure of pollination
+    integer(int32) :: SumEToDelaySenescence
+        !! Undocumented
+    integer(int32) :: AnaeroPoint
+        !! (SAT - [vol%]) at which deficient aeration
+    type(rep_Shapes) :: StressResponse
+        !! is reponse to soil fertility stress
+    integer(int8) :: ECemin
+        !! lower threshold for salinity stress (dS/m)
+    integer(int8) :: ECemax
+        !! upper threshold for salinity stress (dS/m)
+    integer(int8) :: CCsaltDistortion
+        !! distortion canopy cover for calibration for simulation of effect of salinity stress (%)
+    integer(int32) :: ResponseECsw
+        !! Response of Ks stomata to ECsw for calibration: From 0 (none) to +200 (very strong)
+    real(dp) :: SmaxTopQuarter
+        !! Smax Top 1/4 root zone HOOGLAND
+    real(dp) :: SmaxBotQuarter
+        !! Smax Bottom 1/4 root zone HOOGLAND
+    real(dp) :: SmaxTop
+        !! Smax Top root zone HOOGLAND
+    real(dp) :: SmaxBot
+        !! Smax Bottom root zone HOOGLAND
+    real(dp) :: KcTop
+        !! Undocumented
+    real(dp) :: KcDecline
+        !! Reduction Kc (%CCx/day) as result of ageing effects, nitrogen defficiency, etc.
+    integer(int32) :: CCEffectEvapLate
+        !! %
+    integer(int32) :: Day1
+        !! Daynummer: first day of croping period starting from sowing/transplanting
+    integer(int32) :: DayN
+        !! Daynummer: last day = harvest day
+    integer(int32), dimension(4) :: Length
+        !! Length : rep_int_array; @ 1 .. 4 :  = the four growth stages
+    real(dp) :: RootMin
+        !! rooting depth in meter
+    real(dp) :: RootMax
+        !! rooting depth in meter
+    integer(int8) :: RootShape
+        !! 10 times the root of the root function
+    real(dp) :: Tbase
+        !! Base Temperature (degC)
+    real(dp) :: Tupper
+        !! Upper temperature threshold (degC)
+    integer(int8) :: Tcold
+        !! Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+    integer(int8) :: Theat
+        !! Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+    real(dp) :: GDtranspLow
+        !! Minimum growing degrees required for full crop transpiration (degC - day)
+    real(dp) :: SizeSeedling
+        !! Canopy cover per seedling (cm2)
+    real(dp) :: SizePlant
+        !! Canopy cover of plant on 1st day (cm2) when regrowth
+    integer(int32) :: PlantingDens
+        !! number of plants per hectare
+    real(dp) :: CCo
+        !! starting canopy size  (fraction canopy cover)
+    real(dp) :: CCini
+        !! starting canopy size for regrowth (fraction canopy cover)
+    real(dp) :: CGC
+        !! Canopy growth coefficient (increase of CC in fraction per day)
+    real(dp) :: GDDCGC
+        !! Canopy growth coefficient (increase of CC in fraction per growing-degree day)
+    real(dp) :: CCx
+        !! expected maximum canopy cover  (fraction canopy cover)
+    real(dp) :: CDC
+        !! Canopy Decline Coefficient (decrease of CC in fraction per day)
+    real(dp) :: GDDCDC
+        !! Canopy Decline Coefficient (decrease of CC in fraction per growing-degree day)
+    real(dp) :: CCxAdjusted
+        !! maximum canopy cover given water stress
+    real(dp) :: CCxWithered
+        !! maximum existed CC during season (for correction Evap for withered canopy)
+    real(dp) :: CCoAdjusted
+        !! initial canopy size after soil water stress
+    integer(int32) :: DaysToCCini
+        !! required for regrowth (if CCini > CCo)
+    integer(int32) :: DaysToGermination
+        !! given or calculated from GDD
+    integer(int32) :: DaysToFullCanopy
+        !! given or calculated from GDD
+    integer(int32) :: DaysToFullCanopySF
+        !! adjusted to soil fertility
+    integer(int32) :: DaysToFlowering
+        !! given or calculated from GDD
+    integer(int32) :: LengthFlowering
+        !! given or calculated from GDD
+    integer(int32) :: DaysToSenescence
+        !! given or calculated from GDD
+    integer(int32) :: DaysToHarvest
+        !! given or calculated from GDD
+    integer(int32) :: DaysToMaxRooting
+        !! given or calculated from GDD
+    integer(int32) :: DaysToHIo
+        !! given or calculated from GDD
+    integer(int32) :: GDDaysToCCini
+        !! required for regrowth (if CCini > CCo)
+    integer(int32) :: GDDaysToGermination
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDaysToFullCanopy
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDaysToFullCanopySF
+        !! adjusted to soil fertility
+    integer(int32) :: GDDaysToFlowering
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDLengthFlowering
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDaysToSenescence
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDaysToHarvest
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDaysToMaxRooting
+        !! given or calculated from Calendar Days
+    integer(int32) :: GDDaysToHIo
+        !! given or calculated from Calendar Days
+    real(dp) :: WP
+        !! (normalized) water productivity (gram/m2)
+    integer(int32) :: WPy
+        !! (normalized) water productivity during yield formation (Percent WP)
+    integer(int8) :: AdaptedToCO2
+        !! Crop performance under elevated atmospheric CO2 concentration (%)
+    integer(int32) :: HI
+        !! HI harvest index (percentage)
+    real(dp) :: dHIdt
+        !! average rate of change in harvest index (% increase per calendar day)
+    integer(int8) :: HIincrease
+        !! possible increase (%) of HI due to water stress before flowering
+    real(dp) :: aCoeff
+        !! coefficient describing impact of restricted vegetative growth at flowering on HI
+    real(dp) :: bCoeff
+        !! coefficient describing impact of stomatal closure at flowering on HI
+    integer(int8) :: DHImax
+        !! allowable maximum increase (%) of specified HI
+    logical :: DeterminancyLinked
+        !! linkage of determinancy with flowering
+    integer(int16) :: fExcess
+        !! potential excess of fruits (%) ranging form
+    integer(int8) :: DryMatter
+        !! dry matter content (%) of fresh yield
+    real(dp) :: RootMinYear1
+        !! minimum rooting depth in first year in meter (for perennial crops)
+    logical :: SownYear1
+        !! True = Sown, False = transplanted (for perennial crops)
+    integer(int8) :: YearCCx
+        !! number of years at which CCx declines to 90 % of its value due to self-thinning - Perennials
+    real(dp) :: CCxRoot
+        !! shape factor of the decline of CCx over the years due to self-thinning - Perennials
+    type(rep_Assimilates) :: Assimilates
+        !! Undocumented
+end type rep_Crop 
 
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
@@ -458,8 +750,10 @@ character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
+type(rep_param) :: simulparam
 type(rep_Cuttings) :: Cuttings
 type(rep_Onset) :: onset
+type(rep_Crop) :: crop
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
 type(rep_EffectiveRain) :: effectiverain
@@ -476,7 +770,6 @@ integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
-
 
 
 contains
@@ -1219,6 +1512,54 @@ real(dp) function KsSalinity(SalinityResponsConsidered, &
     end if
     KsSalinity = M
 end function KsSalinity
+
+subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, DeterminantCrop, L12SF, RedCGC, RedCCx, ClassSF)
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CCx
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LToFlor
+    integer(int32), intent(in) :: LFlor
+    logical, intent(in) :: DeterminantCrop
+    integer(int32), intent(inout) :: L12SF
+    integer(int8), intent(inout) :: RedCGC
+    integer(int8), intent(inout) :: RedCCx
+    integer(int8), intent(inout) :: ClassSF
+    
+    real(dp) :: CCToReach
+    integer(int32) :: L12SFmax
+
+    if ((ClassSF == 0) .or. ((RedCCx == 0) .and. (RedCGC == 0))) then
+        L12SF = L12
+    else
+        CCToReach = 0.98_dp*(1-RedCCX/100._dp)*CCx
+        L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
+        ! determine L12SFmax
+        if (DeterminantCrop) then
+            L12SFmax = LToFlor + nint(LFlor/2._dp, kind=int32)
+        else
+            L12SFmax = L123
+        end if
+        ! check for L12SFmax
+        if (L12SF > L12SFmax) then
+            ! full canopy cannot be reached in potential period for vegetative growth
+            ! ClassSF := undef_int; ! switch to user defined soil fertility
+            ! 1. increase CGC(soil fertility)
+            do while ((L12SF > L12SFmax) .and. (RedCGC > 0))
+                RedCGC = RedCGC - 1
+                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
+            end do
+            ! 2. if not sufficient decrease CCx(soil fertility)
+            do while ((L12SF > L12SFmax) .and. ( ((1-RedCCX/100._dp)*CCx) > 0.10_dp) .and. (RedCCx <= 50))
+                RedCCx = RedCCx + 1
+                CCToReach = 0.98_dp*(1-RedCCX/100._dp)*CCx
+                L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
+            end do
+        end if
+    end if
+end subroutine TimeToMaxCanopySF
 
 
 real(dp) function SoilEvaporationReductionCoefficient(Wrel, Edecline)
@@ -3025,6 +3366,8 @@ subroutine SetManagement_Cuttings_FirstDayNr(FirstDayNr)
     Cuttings%FirstDayNr = FirstDayNr
 end subroutine SetManagement_Cuttings_FirstDayNr
 
+
+
 function Geteffectiverain() result(effectiverain_out)
     !! Getter for the "effectiverain" global variable.
     type(rep_EffectiveRain) :: effectiverain_out
@@ -3094,6 +3437,507 @@ subroutine Seteffectiverain_RootNrEvap(RootNrEvap)
 
     effectiverain%RootNrEvap = RootNrEvap
 end subroutine Seteffectiverain_RootNrEvap
+
+
+function GetSimulParam() result(SimulParam_out)
+    !! Getter for the "simulparam" global variable.
+    type(rep_param) :: SimulParam_out
+
+    SimulParam_out = simulparam
+end function GetSimulParam
+
+function GetSimulParam_EvapDeclineFactor() result(EvapDeclineFactor)
+    !! Getter for the "EvapDeclineFactor" attribute of the "simulparam" global variable.
+    integer(int8) :: EvapDeclineFactor
+
+    EvapDeclineFactor = simulparam%EvapDeclineFactor
+end function GetSimulParam_EvapDeclineFactor
+
+type(rep_EffectiveRain) function GetSimulParam_EffectiveRain()
+    !! Setter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain = SimulParam%EffectiveRain
+end function GetSimulParam_EffectiveRain
+
+function GetSimulParam_KcWetBare() result(KcWetBare)
+    !! Getter for the "KcWetBare" attribute of the "simulparam" global variable.
+    real(dp) :: KcWetBare
+
+    KcWetBare = simulparam%KcWetBare
+end function GetSimulParam_KcWetBare
+
+function GetSimulParam_PercCCxHIfinal() result(PercCCxHIfinal)
+    !! Getter for the "PercCCxHIfinal" attribute of the "simulparam" global variable.
+    integer(int8) :: PercCCxHIfinal
+
+    PercCCxHIfinal = simulparam%PercCCxHIfinal
+end function GetSimulParam_PercCCxHIfinal
+
+function GetSimulParam_RootPercentZmin() result(RootPercentZmin)
+    !! Getter for the "RootPercentZmin" attribute of the "simulparam" global variable.
+    integer(int32) :: RootPercentZmin
+
+    RootPercentZmin = simulparam%RootPercentZmin
+end function GetSimulParam_RootPercentZmin
+
+function GetSimulParam_MaxRootZoneExpansion() result(MaxRootZoneExpansion)
+    !! Getter for the "MaxRootZoneExpansion" attribute of the "simulparam" global variable.
+    real(dp) :: MaxRootZoneExpansion
+
+    MaxRootZoneExpansion = simulparam%MaxRootZoneExpansion
+end function GetSimulParam_MaxRootZoneExpansion
+
+function GetSimulParam_KsShapeFactorRoot() result(KsShapeFactorRoot)
+    !! Getter for the "KsShapeFactorRoot" attribute of the "simulparam" global variable.
+    integer(int8) :: KsShapeFactorRoot
+
+    KsShapeFactorRoot = simulparam%KsShapeFactorRoot
+end function GetSimulParam_KsShapeFactorRoot
+
+function GetSimulParam_TAWGermination() result(TAWGermination)
+    !! Getter for the "TAWGermination" attribute of the "simulparam" global variable.
+    integer(int8) :: TAWGermination
+
+    TAWGermination = simulparam%TAWGermination
+end function GetSimulParam_TAWGermination
+
+function GetSimulParam_pAdjFAO() result(pAdjFAO)
+    !! Getter for the "pAdjFAO" attribute of the "simulparam" global variable.
+    real(dp) :: pAdjFAO
+
+    pAdjFAO = simulparam%pAdjFAO
+end function GetSimulParam_pAdjFAO
+
+function GetSimulParam_DelayLowOxygen() result(DelayLowOxygen)
+    !! Getter for the "DelayLowOxygen" attribute of the "simulparam" global variable.
+    integer(int32) :: DelayLowOxygen
+
+    DelayLowOxygen = simulparam%DelayLowOxygen
+end function GetSimulParam_DelayLowOxygen
+
+function GetSimulParam_ExpFsen() result(ExpFsen)
+    !! Getter for the "ExpFsen" attribute of the "simulparam" global variable.
+    real(dp) :: ExpFsen
+
+    ExpFsen = simulparam%ExpFsen
+end function GetSimulParam_ExpFsen
+
+function GetSimulParam_Beta() result(Beta)
+    !! Getter for the "Beta" attribute of the "simulparam" global variable.
+    integer(int8) :: Beta
+
+    Beta = simulparam%Beta
+end function GetSimulParam_Beta
+
+function GetSimulParam_ThicknessTopSWC() result(ThicknessTopSWC)
+    !! Getter for the "ThicknessTopSWC" attribute of the "simulparam" global variable.
+    integer(int8) :: ThicknessTopSWC
+
+    ThicknessTopSWC = simulparam%ThicknessTopSWC
+end function GetSimulParam_ThicknessTopSWC
+
+function GetSimulParam_EvapZmax() result(EvapZmax)
+    !! Getter for the "EvapZmax" attribute of the "simulparam" global variable.
+    integer(int8) :: EvapZmax
+
+    EvapZmax = simulparam%EvapZmax
+end function GetSimulParam_EvapZmax
+
+function GetSimulParam_RunoffDepth() result(RunoffDepth)
+    !! Getter for the "RunoffDepth" attribute of the "simulparam" global variable.
+    real(dp) :: RunoffDepth
+
+    RunoffDepth = simulparam%RunoffDepth
+end function GetSimulParam_RunoffDepth
+
+function GetSimulParam_CNcorrection() result(CNcorrection)
+    !! Getter for the "CNcorrection" attribute of the "simulparam" global variable.
+    logical :: CNcorrection
+
+    CNcorrection = simulparam%CNcorrection
+end function GetSimulParam_CNcorrection
+
+function GetSimulParam_Tmin() result(Tmin)
+    !! Getter for the "Tmin" attribute of the "simulparam" global variable.
+    real(dp) :: Tmin
+
+    Tmin = simulparam%Tmin
+end function GetSimulParam_Tmin
+
+function GetSimulParam_Tmax() result(Tmax)
+    !! Getter for the "Tmax" attribute of the "simulparam" global variable.
+    real(dp) :: Tmax
+
+    Tmax = simulparam%Tmax
+end function GetSimulParam_Tmax
+
+function GetSimulParam_GDDMethod() result(GDDMethod)
+    !! Getter for the "GDDMethod" attribute of the "simulparam" global variable.
+    integer(int8) :: GDDMethod
+
+    GDDMethod = simulparam%GDDMethod
+end function GetSimulParam_GDDMethod
+
+function GetSimulParam_PercRAW() result(PercRAW)
+    !! Getter for the "PercRAW" attribute of the "simulparam" global variable.
+    integer(int32) :: PercRAW
+
+    PercRAW = simulparam%PercRAW
+end function GetSimulParam_PercRAW
+
+function GetSimulParam_CompDefThick() result(CompDefThick)
+    !! Getter for the "CompDefThick" attribute of the "simulparam" global variable.
+    real(dp) :: CompDefThick
+
+    CompDefThick = simulparam%CompDefThick
+end function GetSimulParam_CompDefThick
+
+function GetSimulParam_CropDay1() result(CropDay1)
+    !! Getter for the "CropDay1" attribute of the "simulparam" global variable.
+    integer(int32) :: CropDay1
+
+    CropDay1 = simulparam%CropDay1
+end function GetSimulParam_CropDay1
+
+function GetSimulParam_Tbase() result(Tbase)
+    !! Getter for the "Tbase" attribute of the "simulparam" global variable.
+    real(dp) :: Tbase
+
+    Tbase = simulparam%Tbase
+end function GetSimulParam_Tbase
+
+function GetSimulParam_Tupper() result(Tupper)
+    !! Getter for the "Tupper" attribute of the "simulparam" global variable.
+    real(dp) :: Tupper
+
+    Tupper = simulparam%Tupper
+end function GetSimulParam_Tupper
+
+function GetSimulParam_IrriFwInSeason() result(IrriFwInSeason)
+    !! Getter for the "IrriFwInSeason" attribute of the "simulparam" global variable.
+    integer(int8) :: IrriFwInSeason
+
+    IrriFwInSeason = simulparam%IrriFwInSeason
+end function GetSimulParam_IrriFwInSeason
+
+function GetSimulParam_IrriFwOffSeason() result(IrriFwOffSeason)
+    !! Getter for the "IrriFwOffSeason" attribute of the "simulparam" global variable.
+    integer(int8) :: IrriFwOffSeason
+
+    IrriFwOffSeason = simulparam%IrriFwOffSeason
+end function GetSimulParam_IrriFwOffSeason
+
+function GetSimulParam_SaltDiff() result(SaltDiff)
+    !! Getter for the "SaltDiff" attribute of the "simulparam" global variable.
+    integer(int8) :: SaltDiff
+
+    SaltDiff = simulparam%SaltDiff
+end function GetSimulParam_SaltDiff
+
+function GetSimulParam_SaltSolub() result(SaltSolub)
+    !! Getter for the "SaltSolub" attribute of the "simulparam" global variable.
+    integer(int8) :: SaltSolub
+
+    SaltSolub = simulparam%SaltSolub
+end function GetSimulParam_SaltSolub
+
+function GetSimulParam_ConstGwt() result(ConstGwt)
+    !! Getter for the "ConstGwt" attribute of the "simulparam" global variable.
+    logical :: ConstGwt
+
+    ConstGwt = simulparam%ConstGwt
+end function GetSimulParam_ConstGwt
+
+function GetSimulParam_RootNrDF() result(RootNrDF)
+    !! Getter for the "RootNrDF" attribute of the "simulparam" global variable.
+    integer(int8) :: RootNrDF
+
+    RootNrDF = simulparam%RootNrDF
+end function GetSimulParam_RootNrDF
+
+function GetSimulParam_IniAbstract() result(IniAbstract)
+    !! Getter for the "IniAbstract" attribute of the "simulparam" global variable.
+    integer(int8) :: IniAbstract
+
+    IniAbstract = simulparam%IniAbstract
+end function GetSimulParam_IniAbstract
+
+subroutine SetSimulParam(SimulParam_in)
+    !! Setter for the "simulparam" global variable.
+    type(rep_param), intent(in) :: SimulParam_in
+
+    simulparam = SimulParam_in
+end subroutine SetSimulParam
+
+subroutine SetSimulParam_EvapDeclineFactor(EvapDeclineFactor)
+    !! Setter for the "EvapDeclineFactor" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: EvapDeclineFactor
+
+    simulparam%EvapDeclineFactor = EvapDeclineFactor
+end subroutine SetSimulParam_EvapDeclineFactor
+
+subroutine SetSimulParam_EffectiveRain(EffectiveRain)
+    !! Setter for the "EffectiveRain" global variable.
+    type(rep_EffectiveRain), intent(in) :: EffectiveRain
+
+    SimulParam%EffectiveRain = EffectiveRain
+end subroutine SetSimulParam_EffectiveRain
+
+subroutine SetSimulParam_KcWetBare(KcWetBare)
+    !! Setter for the "KcWetBare" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: KcWetBare
+
+    simulparam%KcWetBare = KcWetBare
+end subroutine SetSimulParam_KcWetBare
+
+subroutine SetSimulParam_PercCCxHIfinal(PercCCxHIfinal)
+    !! Setter for the "PercCCxHIfinal" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: PercCCxHIfinal
+
+    simulparam%PercCCxHIfinal = PercCCxHIfinal
+end subroutine SetSimulParam_PercCCxHIfinal
+
+subroutine SetSimulParam_RootPercentZmin(RootPercentZmin)
+    !! Setter for the "RootPercentZmin" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: RootPercentZmin
+
+    simulparam%RootPercentZmin = RootPercentZmin
+end subroutine SetSimulParam_RootPercentZmin
+
+subroutine SetSimulParam_MaxRootZoneExpansion(MaxRootZoneExpansion)
+    !! Setter for the "MaxRootZoneExpansion" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: MaxRootZoneExpansion
+
+    simulparam%MaxRootZoneExpansion = MaxRootZoneExpansion
+end subroutine SetSimulParam_MaxRootZoneExpansion
+
+subroutine SetSimulParam_KsShapeFactorRoot(KsShapeFactorRoot)
+    !! Setter for the "KsShapeFactorRoot" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: KsShapeFactorRoot
+
+    simulparam%KsShapeFactorRoot = KsShapeFactorRoot
+end subroutine SetSimulParam_KsShapeFactorRoot
+
+subroutine SetSimulParam_TAWGermination(TAWGermination)
+    !! Setter for the "TAWGermination" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: TAWGermination
+
+    simulparam%TAWGermination = TAWGermination
+end subroutine SetSimulParam_TAWGermination
+
+subroutine SetSimulParam_pAdjFAO(pAdjFAO)
+    !! Setter for the "pAdjFAO" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: pAdjFAO
+
+    simulparam%pAdjFAO = pAdjFAO
+end subroutine SetSimulParam_pAdjFAO
+
+subroutine SetSimulParam_DelayLowOxygen(DelayLowOxygen)
+    !! Setter for the "DelayLowOxygen" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: DelayLowOxygen
+
+    simulparam%DelayLowOxygen = DelayLowOxygen
+end subroutine SetSimulParam_DelayLowOxygen
+
+subroutine SetSimulParam_ExpFsen(ExpFsen)
+    !! Setter for the "ExpFsen" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: ExpFsen
+
+    simulparam%ExpFsen = ExpFsen
+end subroutine SetSimulParam_ExpFsen
+
+subroutine SetSimulParam_Beta(Beta)
+    !! Setter for the "Beta" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: Beta
+
+    simulparam%Beta = Beta
+end subroutine SetSimulParam_Beta
+
+subroutine SetSimulParam_ThicknessTopSWC(ThicknessTopSWC)
+    !! Setter for the "ThicknessTopSWC" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: ThicknessTopSWC
+
+    simulparam%ThicknessTopSWC = ThicknessTopSWC
+end subroutine SetSimulParam_ThicknessTopSWC
+
+subroutine SetSimulParam_EvapZmax(EvapZmax)
+    !! Setter for the "EvapZmax" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: EvapZmax
+
+    simulparam%EvapZmax = EvapZmax
+end subroutine SetSimulParam_EvapZmax
+
+subroutine SetSimulParam_RunoffDepth(RunoffDepth)
+    !! Setter for the "RunoffDepth" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: RunoffDepth
+
+    simulparam%RunoffDepth = RunoffDepth
+end subroutine SetSimulParam_RunoffDepth
+
+subroutine SetSimulParam_CNcorrection(CNcorrection)
+    !! Setter for the "CNcorrection" attribute of the "simulparam" global variable.
+    logical, intent(in) :: CNcorrection
+
+    simulparam%CNcorrection = CNcorrection
+end subroutine SetSimulParam_CNcorrection
+
+subroutine SetSimulParam_Tmin(Tmin)
+    !! Setter for the "Tmin" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tmin
+
+    simulparam%Tmin = Tmin
+end subroutine SetSimulParam_Tmin
+
+subroutine SetSimulParam_Tmax(Tmax)
+    !! Setter for the "Tmax" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tmax
+
+    simulparam%Tmax = Tmax
+end subroutine SetSimulParam_Tmax
+
+subroutine SetSimulParam_GDDMethod(GDDMethod)
+    !! Setter for the "GDDMethod" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: GDDMethod
+
+    simulparam%GDDMethod = GDDMethod
+end subroutine SetSimulParam_GDDMethod
+
+subroutine SetSimulParam_PercRAW(PercRAW)
+    !! Setter for the "PercRAW" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: PercRAW
+
+    simulparam%PercRAW = PercRAW
+end subroutine SetSimulParam_PercRAW
+
+subroutine SetSimulParam_CompDefThick(CompDefThick)
+    !! Setter for the "CompDefThick" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: CompDefThick
+
+    simulparam%CompDefThick = CompDefThick
+end subroutine SetSimulParam_CompDefThick
+
+subroutine SetSimulParam_CropDay1(CropDay1)
+    !! Setter for the "CropDay1" attribute of the "simulparam" global variable.
+    integer(int32), intent(in) :: CropDay1
+
+    simulparam%CropDay1 = CropDay1
+end subroutine SetSimulParam_CropDay1
+
+subroutine SetSimulParam_Tbase(Tbase)
+    !! Setter for the "Tbase" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tbase
+
+    simulparam%Tbase = Tbase
+end subroutine SetSimulParam_Tbase
+
+subroutine SetSimulParam_Tupper(Tupper)
+    !! Setter for the "Tupper" attribute of the "simulparam" global variable.
+    real(dp), intent(in) :: Tupper
+
+    simulparam%Tupper = Tupper
+end subroutine SetSimulParam_Tupper
+
+subroutine SetSimulParam_IrriFwInSeason(IrriFwInSeason)
+    !! Setter for the "IrriFwInSeason" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: IrriFwInSeason
+
+    simulparam%IrriFwInSeason = IrriFwInSeason
+end subroutine SetSimulParam_IrriFwInSeason
+
+subroutine SetSimulParam_IrriFwOffSeason(IrriFwOffSeason)
+    !! Setter for the "IrriFwOffSeason" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: IrriFwOffSeason
+
+    simulparam%IrriFwOffSeason = IrriFwOffSeason
+end subroutine SetSimulParam_IrriFwOffSeason
+
+subroutine SetSimulParam_SaltDiff(SaltDiff)
+    !! Setter for the "SaltDiff" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: SaltDiff
+
+    simulparam%SaltDiff = SaltDiff
+end subroutine SetSimulParam_SaltDiff
+
+subroutine SetSimulParam_SaltSolub(SaltSolub)
+    !! Setter for the "SaltSolub" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: SaltSolub
+
+    simulparam%SaltSolub = SaltSolub
+end subroutine SetSimulParam_SaltSolub
+
+subroutine SetSimulParam_ConstGwt(ConstGwt)
+    !! Setter for the "ConstGwt" attribute of the "simulparam" global variable.
+    logical, intent(in) :: ConstGwt
+
+    simulparam%ConstGwt = ConstGwt
+end subroutine SetSimulParam_ConstGwt
+
+subroutine SetSimulParam_RootNrDF(RootNrDF)
+    !! Setter for the "RootNrDF" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: RootNrDF
+
+    simulparam%RootNrDF = RootNrDF
+end subroutine SetSimulParam_RootNrDF
+
+subroutine SetSimulParam_IniAbstract(IniAbstract)
+    !! Setter for the "IniAbstract" attribute of the "simulparam" global variable.
+    integer(int8), intent(in) :: IniAbstract
+
+    simulparam%IniAbstract = IniAbstract
+end subroutine SetSimulParam_IniAbstract
+
+integer(intEnum) function GetSimulParam_EffectiveRain_Method()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_Method = EffectiveRain%Method
+end function GetSimulParam_EffectiveRain_Method
+
+integer(int8) function GetSimulParam_EffectiveRain_PercentEffRain()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_PercentEffRain = EffectiveRain%PercentEffRain
+end function GetSimulParam_EffectiveRain_PercentEffRain
+
+integer(int8) function GetSimulParam_EffectiveRain_ShowersInDecade()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_ShowersInDecade = EffectiveRain%ShowersInDecade
+end function GetSimulParam_EffectiveRain_ShowersInDecade
+
+integer(int8) function GetSimulParam_EffectiveRain_RootNrEvap()
+    !! Getter for the "EffectiveRain" global variable.
+
+    GetSimulParam_EffectiveRain_RootNrEvap = EffectiveRain%RootNrEvap
+end function GetSimulParam_EffectiveRain_RootNrEvap
+
+subroutine SetSimulParam_EffectiveRain_Method(Method)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(intEnum), intent(in) :: Method
+
+    EffectiveRain%Method = Method
+end subroutine SetSimulParam_EffectiveRain_Method
+
+subroutine SetSimulParam_EffectiveRain_PercentEffRain(PercentEffRain)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(int8), intent(in) :: PercentEffRain
+
+    EffectiveRain%PercentEffRain = PercentEffRain
+end subroutine SetSimulParam_EffectiveRain_PercentEffRain
+
+subroutine SetSimulParam_EffectiveRain_ShowersInDecade(ShowersInDecade)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(int8), intent(in) :: ShowersInDecade
+
+    EffectiveRain%ShowersInDecade= ShowersInDecade
+end subroutine SetSimulParam_EffectiveRain_ShowersInDecade
+
+subroutine SetSimulParam_EffectiveRain_RootNrEvap(RootNrEvap)
+    !! Setter for the "EffectiveRain" global variable.
+    integer(int8), intent(in) :: RootNrEvap
+
+    EffectiveRain%RootNrEvap= RootNrEvap
+end subroutine SetSimulParam_EffectiveRain_RootNrEvap
+
 
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.
@@ -3389,6 +4233,1406 @@ subroutine SetSoil_RootMax(RootMax)
     Soil%RootMax = RootMax
 end subroutine SetSoil_RootMax
 
+function GetCrop_StressResponse() result(StressResponse)
+    !! Getter for the "StressResponse" attribute of the "crop" global variable.
+    type(rep_Shapes) :: StressResponse
+
+    StressResponse = crop%StressResponse
+end function GetCrop_StressResponse
+
+function GetCrop_StressResponse_Stress() result(Stress)
+    !! Getter for the "Stress" attribute of the "StressResponse" attribute of the "crop" global variable.
+    integer(int8) :: Stress
+
+    Stress = crop%StressResponse%Stress
+end function GetCrop_StressResponse_Stress
+
+function GetCrop_StressResponse_ShapeCGC() result(ShapeCGC)
+    !! Getter for the "ShapeCGC" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp) :: ShapeCGC
+
+    ShapeCGC = crop%StressResponse%ShapeCGC
+end function GetCrop_StressResponse_ShapeCGC
+
+function GetCrop_StressResponse_ShapeCCX() result(ShapeCCX)
+    !! Getter for the "ShapeCCX" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp) :: ShapeCCX
+
+    ShapeCCX = crop%StressResponse%ShapeCCX
+end function GetCrop_StressResponse_ShapeCCX
+
+function GetCrop_StressResponse_ShapeWP() result(ShapeWP)
+    !! Getter for the "ShapeWP" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp) :: ShapeWP
+
+    ShapeWP = crop%StressResponse%ShapeWP
+end function GetCrop_StressResponse_ShapeWP
+
+function GetCrop_StressResponse_ShapeCDecline() result(ShapeCDecline)
+    !! Getter for the "ShapeCDecline" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp) :: ShapeCDecline
+
+    ShapeCDecline = crop%StressResponse%ShapeCDecline
+end function GetCrop_StressResponse_ShapeCDecline
+
+function GetCrop_StressResponse_Calibrated() result(Calibrated)
+    !! Getter for the "Calibrated" attribute of the "StressResponse" attribute of the "crop" global variable.
+    logical :: Calibrated
+
+    Calibrated = crop%StressResponse%Calibrated
+end function GetCrop_StressResponse_Calibrated
+
+subroutine SetCrop_StressResponse(StressResponse)
+    !! Setter for the "StressResponse" attribute of the "crop" global variable.
+    type(rep_Shapes), intent(in) :: StressResponse
+
+    crop%StressResponse = StressResponse
+end subroutine SetCrop_StressResponse
+
+subroutine SetCrop_StressResponse_Stress(Stress)
+    !! Setter for the "Stress" attribute of the "StressResponse" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: Stress
+
+    crop%StressResponse%Stress = Stress
+end subroutine SetCrop_StressResponse_Stress
+
+subroutine SetCrop_StressResponse_ShapeCGC(ShapeCGC)
+    !! Setter for the "ShapeCGC" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp), intent(in) :: ShapeCGC
+
+    crop%StressResponse%ShapeCGC = ShapeCGC
+end subroutine SetCrop_StressResponse_ShapeCGC
+
+subroutine SetCrop_StressResponse_ShapeCCX(ShapeCCX)
+    !! Setter for the "ShapeCCX" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp), intent(in) :: ShapeCCX
+
+    crop%StressResponse%ShapeCCX = ShapeCCX
+end subroutine SetCrop_StressResponse_ShapeCCX
+
+subroutine SetCrop_StressResponse_ShapeWP(ShapeWP)
+    !! Setter for the "ShapeWP" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp), intent(in) :: ShapeWP
+
+    crop%StressResponse%ShapeWP = ShapeWP
+end subroutine SetCrop_StressResponse_ShapeWP
+
+subroutine SetCrop_StressResponse_ShapeCDecline(ShapeCDecline)
+    !! Setter for the "ShapeCDecline" attribute of the "StressResponse" attribute of the "crop" global variable.
+    real(dp), intent(in) :: ShapeCDecline
+
+    crop%StressResponse%ShapeCDecline = ShapeCDecline
+end subroutine SetCrop_StressResponse_ShapeCDecline
+
+subroutine SetCrop_StressResponse_Calibrated(Calibrated)
+    !! Setter for the "Calibrated" attribute of the "StressResponse" attribute of the "crop" global variable.
+    logical, intent(in) :: Calibrated
+
+    crop%StressResponse%Calibrated = Calibrated
+end subroutine SetCrop_StressResponse_Calibrated
+
+function GetCrop() result(Crop_out)
+    !! Getter for the "crop" global variable.
+    type(rep_Crop) :: Crop_out
+
+    Crop_out = crop
+end function GetCrop
+
+function GetCrop_subkind() result(subkind)
+    !! Getter for the "subkind" attribute of the "crop" global variable.
+    integer(intEnum) :: subkind
+
+    subkind = crop%subkind
+end function GetCrop_subkind
+
+function GetCrop_ModeCycle() result(ModeCycle)
+    !! Getter for the "ModeCycle" attribute of the "crop" global variable.
+    integer(intEnum) :: ModeCycle
+
+    ModeCycle = crop%ModeCycle
+end function GetCrop_ModeCycle
+
+function GetCrop_Planting() result(Planting)
+    !! Getter for the "Planting" attribute of the "crop" global variable.
+    integer(intEnum) :: Planting
+
+    Planting = crop%Planting
+end function GetCrop_Planting
+
+function GetCrop_pMethod() result(pMethod)
+    !! Getter for the "pMethod" attribute of the "crop" global variable.
+    integer(intEnum) :: pMethod
+
+    pMethod = crop%pMethod
+end function GetCrop_pMethod
+
+function GetCrop_pdef() result(pdef)
+    !! Getter for the "pdef" attribute of the "crop" global variable.
+    real(dp) :: pdef
+
+    pdef = crop%pdef
+end function GetCrop_pdef
+
+function GetCrop_pActStom() result(pActStom)
+    !! Getter for the "pActStom" attribute of the "crop" global variable.
+    real(dp) :: pActStom
+
+    pActStom = crop%pActStom
+end function GetCrop_pActStom
+
+function GetCrop_KsShapeFactorLeaf() result(KsShapeFactorLeaf)
+    !! Getter for the "KsShapeFactorLeaf" attribute of the "crop" global variable.
+    real(dp) :: KsShapeFactorLeaf
+
+    KsShapeFactorLeaf = crop%KsShapeFactorLeaf
+end function GetCrop_KsShapeFactorLeaf
+
+function GetCrop_KsShapeFactorStomata() result(KsShapeFactorStomata)
+    !! Getter for the "KsShapeFactorStomata" attribute of the "crop" global variable.
+    real(dp) :: KsShapeFactorStomata
+
+    KsShapeFactorStomata = crop%KsShapeFactorStomata
+end function GetCrop_KsShapeFactorStomata
+
+function GetCrop_KsShapeFactorSenescence() result(KsShapeFactorSenescence)
+    !! Getter for the "KsShapeFactorSenescence" attribute of the "crop" global variable.
+    real(dp) :: KsShapeFactorSenescence
+
+    KsShapeFactorSenescence = crop%KsShapeFactorSenescence
+end function GetCrop_KsShapeFactorSenescence
+
+function GetCrop_pLeafDefUL() result(pLeafDefUL)
+    !! Getter for the "pLeafDefUL" attribute of the "crop" global variable.
+    real(dp) :: pLeafDefUL
+
+    pLeafDefUL = crop%pLeafDefUL
+end function GetCrop_pLeafDefUL
+
+function GetCrop_pLeafDefLL() result(pLeafDefLL)
+    !! Getter for the "pLeafDefLL" attribute of the "crop" global variable.
+    real(dp) :: pLeafDefLL
+
+    pLeafDefLL = crop%pLeafDefLL
+end function GetCrop_pLeafDefLL
+
+function GetCrop_pLeafAct() result(pLeafAct)
+    !! Getter for the "pLeafAct" attribute of the "crop" global variable.
+    real(dp) :: pLeafAct
+
+    pLeafAct = crop%pLeafAct
+end function GetCrop_pLeafAct
+
+function GetCrop_pSenescence() result(pSenescence)
+    !! Getter for the "pSenescence" attribute of the "crop" global variable.
+    real(dp) :: pSenescence
+
+    pSenescence = crop%pSenescence
+end function GetCrop_pSenescence
+
+function GetCrop_pSenAct() result(pSenAct)
+    !! Getter for the "pSenAct" attribute of the "crop" global variable.
+    real(dp) :: pSenAct
+
+    pSenAct = crop%pSenAct
+end function GetCrop_pSenAct
+
+function GetCrop_pPollination() result(pPollination)
+    !! Getter for the "pPollination" attribute of the "crop" global variable.
+    real(dp) :: pPollination
+
+    pPollination = crop%pPollination
+end function GetCrop_pPollination
+
+function GetCrop_SumEToDelaySenescence() result(SumEToDelaySenescence)
+    !! Getter for the "SumEToDelaySenescence" attribute of the "crop" global variable.
+    integer(int32) :: SumEToDelaySenescence
+
+    SumEToDelaySenescence = crop%SumEToDelaySenescence
+end function GetCrop_SumEToDelaySenescence
+
+function GetCrop_AnaeroPoint() result(AnaeroPoint)
+    !! Getter for the "AnaeroPoint" attribute of the "crop" global variable.
+    integer(int32) :: AnaeroPoint
+
+    AnaeroPoint = crop%AnaeroPoint
+end function GetCrop_AnaeroPoint
+
+function GetCrop_ECemin() result(ECemin)
+    !! Getter for the "ECemin" attribute of the "crop" global variable.
+    integer(int8) :: ECemin
+
+    ECemin = crop%ECemin
+end function GetCrop_ECemin
+
+function GetCrop_ECemax() result(ECemax)
+    !! Getter for the "ECemax" attribute of the "crop" global variable.
+    integer(int8) :: ECemax
+
+    ECemax = crop%ECemax
+end function GetCrop_ECemax
+
+function GetCrop_CCsaltDistortion() result(CCsaltDistortion)
+    !! Getter for the "CCsaltDistortion" attribute of the "crop" global variable.
+    integer(int8) :: CCsaltDistortion
+
+    CCsaltDistortion = crop%CCsaltDistortion
+end function GetCrop_CCsaltDistortion
+
+function GetCrop_ResponseECsw() result(ResponseECsw)
+    !! Getter for the "ResponseECsw" attribute of the "crop" global variable.
+    integer(int32) :: ResponseECsw
+
+    ResponseECsw = crop%ResponseECsw
+end function GetCrop_ResponseECsw
+
+function GetCrop_SmaxTopQuarter() result(SmaxTopQuarter)
+    !! Getter for the "SmaxTopQuarter" attribute of the "crop" global variable.
+    real(dp) :: SmaxTopQuarter
+
+    SmaxTopQuarter = crop%SmaxTopQuarter
+end function GetCrop_SmaxTopQuarter
+
+function GetCrop_SmaxBotQuarter() result(SmaxBotQuarter)
+    !! Getter for the "SmaxBotQuarter" attribute of the "crop" global variable.
+    real(dp) :: SmaxBotQuarter
+
+    SmaxBotQuarter = crop%SmaxBotQuarter
+end function GetCrop_SmaxBotQuarter
+
+function GetCrop_SmaxTop() result(SmaxTop)
+    !! Getter for the "SmaxTop" attribute of the "crop" global variable.
+    real(dp) :: SmaxTop
+
+    SmaxTop = crop%SmaxTop
+end function GetCrop_SmaxTop
+
+function GetCrop_SmaxBot() result(SmaxBot)
+    !! Getter for the "SmaxBot" attribute of the "crop" global variable.
+    real(dp) :: SmaxBot
+
+    SmaxBot = crop%SmaxBot
+end function GetCrop_SmaxBot
+
+function GetCrop_KcTop() result(KcTop)
+    !! Getter for the "KcTop" attribute of the "crop" global variable.
+    real(dp) :: KcTop
+
+    KcTop = crop%KcTop
+end function GetCrop_KcTop
+
+function GetCrop_KcDecline() result(KcDecline)
+    !! Getter for the "KcDecline" attribute of the "crop" global variable.
+    real(dp) :: KcDecline
+
+    KcDecline = crop%KcDecline
+end function GetCrop_KcDecline
+
+function GetCrop_CCEffectEvapLate() result(CCEffectEvapLate)
+    !! Getter for the "CCEffectEvapLate" attribute of the "crop" global variable.
+    integer(int32) :: CCEffectEvapLate
+
+    CCEffectEvapLate = crop%CCEffectEvapLate
+end function GetCrop_CCEffectEvapLate
+
+function GetCrop_Day1() result(Day1)
+    !! Getter for the "Day1" attribute of the "crop" global variable.
+    integer(int32) :: Day1
+
+    Day1 = crop%Day1
+end function GetCrop_Day1
+
+function GetCrop_DayN() result(DayN)
+    !! Getter for the "DayN" attribute of the "crop" global variable.
+    integer(int32) :: DayN
+
+    DayN = crop%DayN
+end function GetCrop_DayN
+
+function GetCrop_RootMin() result(RootMin)
+    !! Getter for the "RootMin" attribute of the "crop" global variable.
+    real(dp) :: RootMin
+
+    RootMin = crop%RootMin
+end function GetCrop_RootMin
+
+function GetCrop_RootMax() result(RootMax)
+    !! Getter for the "RootMax" attribute of the "crop" global variable.
+    real(dp) :: RootMax
+
+    RootMax = crop%RootMax
+end function GetCrop_RootMax
+
+function GetCrop_RootShape() result(RootShape)
+    !! Getter for the "RootShape" attribute of the "crop" global variable.
+    integer(int8) :: RootShape
+
+    RootShape = crop%RootShape
+end function GetCrop_RootShape
+
+function GetCrop_Tbase() result(Tbase)
+    !! Getter for the "Tbase" attribute of the "crop" global variable.
+    real(dp) :: Tbase
+
+    Tbase = crop%Tbase
+end function GetCrop_Tbase
+
+function GetCrop_Tupper() result(Tupper)
+    !! Getter for the "Tupper" attribute of the "crop" global variable.
+    real(dp) :: Tupper
+
+    Tupper = crop%Tupper
+end function GetCrop_Tupper
+
+function GetCrop_Tcold() result(Tcold)
+    !! Getter for the "Tcold" attribute of the "crop" global variable.
+    integer(int8) :: Tcold
+
+    Tcold = crop%Tcold
+end function GetCrop_Tcold
+
+function GetCrop_Theat() result(Theat)
+    !! Getter for the "Theat" attribute of the "crop" global variable.
+    integer(int8) :: Theat
+
+    Theat = crop%Theat
+end function GetCrop_Theat
+
+function GetCrop_GDtranspLow() result(GDtranspLow)
+    !! Getter for the "GDtranspLow" attribute of the "crop" global variable.
+    real(dp) :: GDtranspLow
+
+    GDtranspLow = crop%GDtranspLow
+end function GetCrop_GDtranspLow
+
+function GetCrop_SizeSeedling() result(SizeSeedling)
+    !! Getter for the "SizeSeedling" attribute of the "crop" global variable.
+    real(dp) :: SizeSeedling
+
+    SizeSeedling = crop%SizeSeedling
+end function GetCrop_SizeSeedling
+
+function GetCrop_SizePlant() result(SizePlant)
+    !! Getter for the "SizePlant" attribute of the "crop" global variable.
+    real(dp) :: SizePlant
+
+    SizePlant = crop%SizePlant
+end function GetCrop_SizePlant
+
+function GetCrop_PlantingDens() result(PlantingDens)
+    !! Getter for the "PlantingDens" attribute of the "crop" global variable.
+    integer(int32) :: PlantingDens
+
+    PlantingDens = crop%PlantingDens
+end function GetCrop_PlantingDens
+
+function GetCrop_CCo() result(CCo)
+    !! Getter for the "CCo" attribute of the "crop" global variable.
+    real(dp) :: CCo
+
+    CCo = crop%CCo
+end function GetCrop_CCo
+
+function GetCrop_CCini() result(CCini)
+    !! Getter for the "CCini" attribute of the "crop" global variable.
+    real(dp) :: CCini
+
+    CCini = crop%CCini
+end function GetCrop_CCini
+
+function GetCrop_CGC() result(CGC)
+    !! Getter for the "CGC" attribute of the "crop" global variable.
+    real(dp) :: CGC
+
+    CGC = crop%CGC
+end function GetCrop_CGC
+
+function GetCrop_GDDCGC() result(GDDCGC)
+    !! Getter for the "GDDCGC" attribute of the "crop" global variable.
+    real(dp) :: GDDCGC
+
+    GDDCGC = crop%GDDCGC
+end function GetCrop_GDDCGC
+
+function GetCrop_CCx() result(CCx)
+    !! Getter for the "CCx" attribute of the "crop" global variable.
+    real(dp) :: CCx
+
+    CCx = crop%CCx
+end function GetCrop_CCx
+
+function GetCrop_CDC() result(CDC)
+    !! Getter for the "CDC" attribute of the "crop" global variable.
+    real(dp) :: CDC
+
+    CDC = crop%CDC
+end function GetCrop_CDC
+
+function GetCrop_GDDCDC() result(GDDCDC)
+    !! Getter for the "GDDCDC" attribute of the "crop" global variable.
+    real(dp) :: GDDCDC
+
+    GDDCDC = crop%GDDCDC
+end function GetCrop_GDDCDC
+
+function GetCrop_CCxAdjusted() result(CCxAdjusted)
+    !! Getter for the "CCxAdjusted" attribute of the "crop" global variable.
+    real(dp) :: CCxAdjusted
+
+    CCxAdjusted = crop%CCxAdjusted
+end function GetCrop_CCxAdjusted
+
+function GetCrop_CCxWithered() result(CCxWithered)
+    !! Getter for the "CCxWithered" attribute of the "crop" global variable.
+    real(dp) :: CCxWithered
+
+    CCxWithered = crop%CCxWithered
+end function GetCrop_CCxWithered
+
+function GetCrop_CCoAdjusted() result(CCoAdjusted)
+    !! Getter for the "CCoAdjusted" attribute of the "crop" global variable.
+    real(dp) :: CCoAdjusted
+
+    CCoAdjusted = crop%CCoAdjusted
+end function GetCrop_CCoAdjusted
+
+function GetCrop_DaysToCCini() result(DaysToCCini)
+    !! Getter for the "DaysToCCini" attribute of the "crop" global variable.
+    integer(int32) :: DaysToCCini
+
+    DaysToCCini = crop%DaysToCCini
+end function GetCrop_DaysToCCini
+
+function GetCrop_DaysToGermination() result(DaysToGermination)
+    !! Getter for the "DaysToGermination" attribute of the "crop" global variable.
+    integer(int32) :: DaysToGermination
+
+    DaysToGermination = crop%DaysToGermination
+end function GetCrop_DaysToGermination
+
+function GetCrop_DaysToFullCanopy() result(DaysToFullCanopy)
+    !! Getter for the "DaysToFullCanopy" attribute of the "crop" global variable.
+    integer(int32) :: DaysToFullCanopy
+
+    DaysToFullCanopy = crop%DaysToFullCanopy
+end function GetCrop_DaysToFullCanopy
+
+function GetCrop_DaysToFullCanopySF() result(DaysToFullCanopySF)
+    !! Getter for the "DaysToFullCanopySF" attribute of the "crop" global variable.
+    integer(int32) :: DaysToFullCanopySF
+
+    DaysToFullCanopySF = crop%DaysToFullCanopySF
+end function GetCrop_DaysToFullCanopySF
+
+function GetCrop_DaysToFlowering() result(DaysToFlowering)
+    !! Getter for the "DaysToFlowering" attribute of the "crop" global variable.
+    integer(int32) :: DaysToFlowering
+
+    DaysToFlowering = crop%DaysToFlowering
+end function GetCrop_DaysToFlowering
+
+function GetCrop_LengthFlowering() result(LengthFlowering)
+    !! Getter for the "LengthFlowering" attribute of the "crop" global variable.
+    integer(int32) :: LengthFlowering
+
+    LengthFlowering = crop%LengthFlowering
+end function GetCrop_LengthFlowering
+
+function GetCrop_DaysToSenescence() result(DaysToSenescence)
+    !! Getter for the "DaysToSenescence" attribute of the "crop" global variable.
+    integer(int32) :: DaysToSenescence
+
+    DaysToSenescence = crop%DaysToSenescence
+end function GetCrop_DaysToSenescence
+
+function GetCrop_DaysToHarvest() result(DaysToHarvest)
+    !! Getter for the "DaysToHarvest" attribute of the "crop" global variable.
+    integer(int32) :: DaysToHarvest
+
+    DaysToHarvest = crop%DaysToHarvest
+end function GetCrop_DaysToHarvest
+
+function GetCrop_DaysToMaxRooting() result(DaysToMaxRooting)
+    !! Getter for the "DaysToMaxRooting" attribute of the "crop" global variable.
+    integer(int32) :: DaysToMaxRooting
+
+    DaysToMaxRooting = crop%DaysToMaxRooting
+end function GetCrop_DaysToMaxRooting
+
+function GetCrop_DaysToHIo() result(DaysToHIo)
+    !! Getter for the "DaysToHIo" attribute of the "crop" global variable.
+    integer(int32) :: DaysToHIo
+
+    DaysToHIo = crop%DaysToHIo
+end function GetCrop_DaysToHIo
+
+function GetCrop_GDDaysToCCini() result(GDDaysToCCini)
+    !! Getter for the "GDDaysToCCini" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToCCini
+
+    GDDaysToCCini = crop%GDDaysToCCini
+end function GetCrop_GDDaysToCCini
+
+function GetCrop_GDDaysToGermination() result(GDDaysToGermination)
+    !! Getter for the "GDDaysToGermination" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToGermination
+
+    GDDaysToGermination = crop%GDDaysToGermination
+end function GetCrop_GDDaysToGermination
+
+function GetCrop_GDDaysToFullCanopy() result(GDDaysToFullCanopy)
+    !! Getter for the "GDDaysToFullCanopy" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToFullCanopy
+
+    GDDaysToFullCanopy = crop%GDDaysToFullCanopy
+end function GetCrop_GDDaysToFullCanopy
+
+function GetCrop_GDDaysToFullCanopySF() result(GDDaysToFullCanopySF)
+    !! Getter for the "GDDaysToFullCanopySF" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToFullCanopySF
+
+    GDDaysToFullCanopySF = crop%GDDaysToFullCanopySF
+end function GetCrop_GDDaysToFullCanopySF
+
+function GetCrop_GDDaysToFlowering() result(GDDaysToFlowering)
+    !! Getter for the "GDDaysToFlowering" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToFlowering
+
+    GDDaysToFlowering = crop%GDDaysToFlowering
+end function GetCrop_GDDaysToFlowering
+
+function GetCrop_GDDLengthFlowering() result(GDDLengthFlowering)
+    !! Getter for the "GDDLengthFlowering" attribute of the "crop" global variable.
+    integer(int32) :: GDDLengthFlowering
+
+    GDDLengthFlowering = crop%GDDLengthFlowering
+end function GetCrop_GDDLengthFlowering
+
+function GetCrop_GDDaysToSenescence() result(GDDaysToSenescence)
+    !! Getter for the "GDDaysToSenescence" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToSenescence
+
+    GDDaysToSenescence = crop%GDDaysToSenescence
+end function GetCrop_GDDaysToSenescence
+
+function GetCrop_GDDaysToHarvest() result(GDDaysToHarvest)
+    !! Getter for the "GDDaysToHarvest" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToHarvest
+
+    GDDaysToHarvest = crop%GDDaysToHarvest
+end function GetCrop_GDDaysToHarvest
+
+function GetCrop_GDDaysToMaxRooting() result(GDDaysToMaxRooting)
+    !! Getter for the "GDDaysToMaxRooting" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToMaxRooting
+
+    GDDaysToMaxRooting = crop%GDDaysToMaxRooting
+end function GetCrop_GDDaysToMaxRooting
+
+function GetCrop_GDDaysToHIo() result(GDDaysToHIo)
+    !! Getter for the "GDDaysToHIo" attribute of the "crop" global variable.
+    integer(int32) :: GDDaysToHIo
+
+    GDDaysToHIo = crop%GDDaysToHIo
+end function GetCrop_GDDaysToHIo
+
+function GetCrop_WP() result(WP)
+    !! Getter for the "WP" attribute of the "crop" global variable.
+    real(dp) :: WP
+
+    WP = crop%WP
+end function GetCrop_WP
+
+function GetCrop_WPy() result(WPy)
+    !! Getter for the "WPy" attribute of the "crop" global variable.
+    integer(int32) :: WPy
+
+    WPy = crop%WPy
+end function GetCrop_WPy
+
+function GetCrop_AdaptedToCO2() result(AdaptedToCO2)
+    !! Getter for the "AdaptedToCO2" attribute of the "crop" global variable.
+    integer(int8) :: AdaptedToCO2
+
+    AdaptedToCO2 = crop%AdaptedToCO2
+end function GetCrop_AdaptedToCO2
+
+function GetCrop_HI() result(HI)
+    !! Getter for the "HI" attribute of the "crop" global variable.
+    integer(int32) :: HI
+
+    HI = crop%HI
+end function GetCrop_HI
+
+function GetCrop_dHIdt() result(dHIdt)
+    !! Getter for the "dHIdt" attribute of the "crop" global variable.
+    real(dp) :: dHIdt
+
+    dHIdt = crop%dHIdt
+end function GetCrop_dHIdt
+
+function GetCrop_HIincrease() result(HIincrease)
+    !! Getter for the "HIincrease" attribute of the "crop" global variable.
+    integer(int8) :: HIincrease
+
+    HIincrease = crop%HIincrease
+end function GetCrop_HIincrease
+
+function GetCrop_aCoeff() result(aCoeff)
+    !! Getter for the "aCoeff" attribute of the "crop" global variable.
+    real(dp) :: aCoeff
+
+    aCoeff = crop%aCoeff
+end function GetCrop_aCoeff
+
+function GetCrop_bCoeff() result(bCoeff)
+    !! Getter for the "bCoeff" attribute of the "crop" global variable.
+    real(dp) :: bCoeff
+
+    bCoeff = crop%bCoeff
+end function GetCrop_bCoeff
+
+function GetCrop_DHImax() result(DHImax)
+    !! Getter for the "DHImax" attribute of the "crop" global variable.
+    integer(int8) :: DHImax
+
+    DHImax = crop%DHImax
+end function GetCrop_DHImax
+
+function GetCrop_DeterminancyLinked() result(DeterminancyLinked)
+    !! Getter for the "DeterminancyLinked" attribute of the "crop" global variable.
+    logical :: DeterminancyLinked
+
+    DeterminancyLinked = crop%DeterminancyLinked
+end function GetCrop_DeterminancyLinked
+
+function GetCrop_fExcess() result(fExcess)
+    !! Getter for the "fExcess" attribute of the "crop" global variable.
+    integer(int16) :: fExcess
+
+    fExcess = crop%fExcess
+end function GetCrop_fExcess
+
+function GetCrop_DryMatter() result(DryMatter)
+    !! Getter for the "DryMatter" attribute of the "crop" global variable.
+    integer(int8) :: DryMatter
+
+    DryMatter = crop%DryMatter
+end function GetCrop_DryMatter
+
+function GetCrop_RootMinYear1() result(RootMinYear1)
+    !! Getter for the "RootMinYear1" attribute of the "crop" global variable.
+    real(dp) :: RootMinYear1
+
+    RootMinYear1 = crop%RootMinYear1
+end function GetCrop_RootMinYear1
+
+function GetCrop_SownYear1() result(SownYear1)
+    !! Getter for the "SownYear1" attribute of the "crop" global variable.
+    logical :: SownYear1
+
+    SownYear1 = crop%SownYear1
+end function GetCrop_SownYear1
+
+function GetCrop_YearCCx() result(YearCCx)
+    !! Getter for the "YearCCx" attribute of the "crop" global variable.
+    integer(int8) :: YearCCx
+
+    YearCCx = crop%YearCCx
+end function GetCrop_YearCCx
+
+function GetCrop_CCxRoot() result(CCxRoot)
+    !! Getter for the "CCxRoot" attribute of the "crop" global variable.
+    real(dp) :: CCxRoot
+
+    CCxRoot = crop%CCxRoot
+end function GetCrop_CCxRoot
+
+subroutine SetCrop(Crop_in)
+    !! Setter for the "crop" global variable.
+    type(rep_Crop), intent(in) :: Crop_in
+
+    crop = Crop_in
+end subroutine SetCrop
+
+subroutine SetCrop_subkind(subkind)
+    !! Setter for the "subkind" attribute of the "crop" global variable.
+    integer(intEnum), intent(in) :: subkind
+
+    crop%subkind = subkind
+end subroutine SetCrop_subkind
+
+subroutine SetCrop_ModeCycle(ModeCycle)
+    !! Setter for the "ModeCycle" attribute of the "crop" global variable.
+    integer(intEnum), intent(in) :: ModeCycle
+
+    crop%ModeCycle = ModeCycle
+end subroutine SetCrop_ModeCycle
+
+subroutine SetCrop_Planting(Planting)
+    !! Setter for the "Planting" attribute of the "crop" global variable.
+    integer(intEnum), intent(in) :: Planting
+
+    crop%Planting = Planting
+end subroutine SetCrop_Planting
+
+subroutine SetCrop_pMethod(pMethod)
+    !! Setter for the "pMethod" attribute of the "crop" global variable.
+    integer(intEnum), intent(in) :: pMethod
+
+    crop%pMethod = pMethod
+end subroutine SetCrop_pMethod
+
+subroutine SetCrop_pdef(pdef)
+    !! Setter for the "pdef" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pdef
+
+    crop%pdef = pdef
+end subroutine SetCrop_pdef
+
+subroutine SetCrop_pActStom(pActStom)
+    !! Setter for the "pActStom" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pActStom
+
+    crop%pActStom = pActStom
+end subroutine SetCrop_pActStom
+
+subroutine SetCrop_KsShapeFactorLeaf(KsShapeFactorLeaf)
+    !! Setter for the "KsShapeFactorLeaf" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KsShapeFactorLeaf
+
+    crop%KsShapeFactorLeaf = KsShapeFactorLeaf
+end subroutine SetCrop_KsShapeFactorLeaf
+
+subroutine SetCrop_KsShapeFactorStomata(KsShapeFactorStomata)
+    !! Setter for the "KsShapeFactorStomata" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KsShapeFactorStomata
+
+    crop%KsShapeFactorStomata = KsShapeFactorStomata
+end subroutine SetCrop_KsShapeFactorStomata
+
+subroutine SetCrop_KsShapeFactorSenescence(KsShapeFactorSenescence)
+    !! Setter for the "KsShapeFactorSenescence" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KsShapeFactorSenescence
+
+    crop%KsShapeFactorSenescence = KsShapeFactorSenescence
+end subroutine SetCrop_KsShapeFactorSenescence
+
+subroutine SetCrop_pLeafDefUL(pLeafDefUL)
+    !! Setter for the "pLeafDefUL" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pLeafDefUL
+
+    crop%pLeafDefUL = pLeafDefUL
+end subroutine SetCrop_pLeafDefUL
+
+subroutine SetCrop_pLeafDefLL(pLeafDefLL)
+    !! Setter for the "pLeafDefLL" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pLeafDefLL
+
+    crop%pLeafDefLL = pLeafDefLL
+end subroutine SetCrop_pLeafDefLL
+
+subroutine SetCrop_pLeafAct(pLeafAct)
+    !! Setter for the "pLeafAct" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pLeafAct
+
+    crop%pLeafAct = pLeafAct
+end subroutine SetCrop_pLeafAct
+
+subroutine SetCrop_pSenescence(pSenescence)
+    !! Setter for the "pSenescence" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pSenescence
+
+    crop%pSenescence = pSenescence
+end subroutine SetCrop_pSenescence
+
+subroutine SetCrop_pSenAct(pSenAct)
+    !! Setter for the "pSenAct" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pSenAct
+
+    crop%pSenAct = pSenAct
+end subroutine SetCrop_pSenAct
+
+subroutine SetCrop_pPollination(pPollination)
+    !! Setter for the "pPollination" attribute of the "crop" global variable.
+    real(dp), intent(in) :: pPollination
+
+    crop%pPollination = pPollination
+end subroutine SetCrop_pPollination
+
+subroutine SetCrop_SumEToDelaySenescence(SumEToDelaySenescence)
+    !! Setter for the "SumEToDelaySenescence" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: SumEToDelaySenescence
+
+    crop%SumEToDelaySenescence = SumEToDelaySenescence
+end subroutine SetCrop_SumEToDelaySenescence
+
+subroutine SetCrop_AnaeroPoint(AnaeroPoint)
+    !! Setter for the "AnaeroPoint" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: AnaeroPoint
+
+    crop%AnaeroPoint = AnaeroPoint
+end subroutine SetCrop_AnaeroPoint
+
+subroutine SetCrop_ECemin(ECemin)
+    !! Setter for the "ECemin" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: ECemin
+
+    crop%ECemin = ECemin
+end subroutine SetCrop_ECemin
+
+subroutine SetCrop_ECemax(ECemax)
+    !! Setter for the "ECemax" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: ECemax
+
+    crop%ECemax = ECemax
+end subroutine SetCrop_ECemax
+
+subroutine SetCrop_CCsaltDistortion(CCsaltDistortion)
+    !! Setter for the "CCsaltDistortion" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: CCsaltDistortion
+
+    crop%CCsaltDistortion = CCsaltDistortion
+end subroutine SetCrop_CCsaltDistortion
+
+subroutine SetCrop_ResponseECsw(ResponseECsw)
+    !! Setter for the "ResponseECsw" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: ResponseECsw
+
+    crop%ResponseECsw = ResponseECsw
+end subroutine SetCrop_ResponseECsw
+
+subroutine SetCrop_SmaxTopQuarter(SmaxTopQuarter)
+    !! Setter for the "SmaxTopQuarter" attribute of the "crop" global variable.
+    real(dp), intent(in) :: SmaxTopQuarter
+
+    crop%SmaxTopQuarter = SmaxTopQuarter
+end subroutine SetCrop_SmaxTopQuarter
+
+subroutine SetCrop_SmaxBotQuarter(SmaxBotQuarter)
+    !! Setter for the "SmaxBotQuarter" attribute of the "crop" global variable.
+    real(dp), intent(in) :: SmaxBotQuarter
+
+    crop%SmaxBotQuarter = SmaxBotQuarter
+end subroutine SetCrop_SmaxBotQuarter
+
+subroutine SetCrop_SmaxTop(SmaxTop)
+    !! Setter for the "SmaxTop" attribute of the "crop" global variable.
+    real(dp), intent(in) :: SmaxTop
+
+    crop%SmaxTop = SmaxTop
+end subroutine SetCrop_SmaxTop
+
+subroutine SetCrop_SmaxBot(SmaxBot)
+    !! Setter for the "SmaxBot" attribute of the "crop" global variable.
+    real(dp), intent(in) :: SmaxBot
+
+    crop%SmaxBot = SmaxBot
+end subroutine SetCrop_SmaxBot
+
+subroutine SetCrop_KcTop(KcTop)
+    !! Setter for the "KcTop" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KcTop
+
+    crop%KcTop = KcTop
+end subroutine SetCrop_KcTop
+
+subroutine SetCrop_KcDecline(KcDecline)
+    !! Setter for the "KcDecline" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KcDecline
+
+    crop%KcDecline = KcDecline
+end subroutine SetCrop_KcDecline
+
+subroutine SetCrop_CCEffectEvapLate(CCEffectEvapLate)
+    !! Setter for the "CCEffectEvapLate" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: CCEffectEvapLate
+
+    crop%CCEffectEvapLate = CCEffectEvapLate
+end subroutine SetCrop_CCEffectEvapLate
+
+subroutine SetCrop_Day1(Day1)
+    !! Setter for the "Day1" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: Day1
+
+    crop%Day1 = Day1
+end subroutine SetCrop_Day1
+
+subroutine SetCrop_DayN(DayN)
+    !! Setter for the "DayN" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DayN
+
+    crop%DayN = DayN
+end subroutine SetCrop_DayN
+
+subroutine SetCrop_RootMin(RootMin)
+    !! Setter for the "RootMin" attribute of the "crop" global variable.
+    real(dp), intent(in) :: RootMin
+
+    crop%RootMin = RootMin
+end subroutine SetCrop_RootMin
+
+subroutine SetCrop_RootMax(RootMax)
+    !! Setter for the "RootMax" attribute of the "crop" global variable.
+    real(dp), intent(in) :: RootMax
+
+    crop%RootMax = RootMax
+end subroutine SetCrop_RootMax
+
+subroutine SetCrop_RootShape(RootShape)
+    !! Setter for the "RootShape" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: RootShape
+
+    crop%RootShape = RootShape
+end subroutine SetCrop_RootShape
+
+subroutine SetCrop_Tbase(Tbase)
+    !! Setter for the "Tbase" attribute of the "crop" global variable.
+    real(dp), intent(in) :: Tbase
+
+    crop%Tbase = Tbase
+end subroutine SetCrop_Tbase
+
+subroutine SetCrop_Tupper(Tupper)
+    !! Setter for the "Tupper" attribute of the "crop" global variable.
+    real(dp), intent(in) :: Tupper
+
+    crop%Tupper = Tupper
+end subroutine SetCrop_Tupper
+
+subroutine SetCrop_Tcold(Tcold)
+    !! Setter for the "Tcold" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: Tcold
+
+    crop%Tcold = Tcold
+end subroutine SetCrop_Tcold
+
+subroutine SetCrop_Theat(Theat)
+    !! Setter for the "Theat" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: Theat
+
+    crop%Theat = Theat
+end subroutine SetCrop_Theat
+
+subroutine SetCrop_GDtranspLow(GDtranspLow)
+    !! Setter for the "GDtranspLow" attribute of the "crop" global variable.
+    real(dp), intent(in) :: GDtranspLow
+
+    crop%GDtranspLow = GDtranspLow
+end subroutine SetCrop_GDtranspLow
+
+subroutine SetCrop_SizeSeedling(SizeSeedling)
+    !! Setter for the "SizeSeedling" attribute of the "crop" global variable.
+    real(dp), intent(in) :: SizeSeedling
+
+    crop%SizeSeedling = SizeSeedling
+end subroutine SetCrop_SizeSeedling
+
+subroutine SetCrop_SizePlant(SizePlant)
+    !! Setter for the "SizePlant" attribute of the "crop" global variable.
+    real(dp), intent(in) :: SizePlant
+
+    crop%SizePlant = SizePlant
+end subroutine SetCrop_SizePlant
+
+subroutine SetCrop_PlantingDens(PlantingDens)
+    !! Setter for the "PlantingDens" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: PlantingDens
+
+    crop%PlantingDens = PlantingDens
+end subroutine SetCrop_PlantingDens
+
+subroutine SetCrop_CCo(CCo)
+    !! Setter for the "CCo" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCo
+
+    crop%CCo = CCo
+end subroutine SetCrop_CCo
+
+subroutine SetCrop_CCini(CCini)
+    !! Setter for the "CCini" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCini
+
+    crop%CCini = CCini
+end subroutine SetCrop_CCini
+
+subroutine SetCrop_CGC(CGC)
+    !! Setter for the "CGC" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CGC
+
+    crop%CGC = CGC
+end subroutine SetCrop_CGC
+
+subroutine SetCrop_GDDCGC(GDDCGC)
+    !! Setter for the "GDDCGC" attribute of the "crop" global variable.
+    real(dp), intent(in) :: GDDCGC
+
+    crop%GDDCGC = GDDCGC
+end subroutine SetCrop_GDDCGC
+
+subroutine SetCrop_CCx(CCx)
+    !! Setter for the "CCx" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCx
+
+    crop%CCx = CCx
+end subroutine SetCrop_CCx
+
+subroutine SetCrop_CDC(CDC)
+    !! Setter for the "CDC" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CDC
+
+    crop%CDC = CDC
+end subroutine SetCrop_CDC
+
+subroutine SetCrop_GDDCDC(GDDCDC)
+    !! Setter for the "GDDCDC" attribute of the "crop" global variable.
+    real(dp), intent(in) :: GDDCDC
+
+    crop%GDDCDC = GDDCDC
+end subroutine SetCrop_GDDCDC
+
+subroutine SetCrop_CCxAdjusted(CCxAdjusted)
+    !! Setter for the "CCxAdjusted" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCxAdjusted
+
+    crop%CCxAdjusted = CCxAdjusted
+end subroutine SetCrop_CCxAdjusted
+
+subroutine SetCrop_CCxWithered(CCxWithered)
+    !! Setter for the "CCxWithered" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCxWithered
+
+    crop%CCxWithered = CCxWithered
+end subroutine SetCrop_CCxWithered
+
+subroutine SetCrop_CCoAdjusted(CCoAdjusted)
+    !! Setter for the "CCoAdjusted" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCoAdjusted
+
+    crop%CCoAdjusted = CCoAdjusted
+end subroutine SetCrop_CCoAdjusted
+
+subroutine SetCrop_DaysToCCini(DaysToCCini)
+    !! Setter for the "DaysToCCini" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToCCini
+
+    crop%DaysToCCini = DaysToCCini
+end subroutine SetCrop_DaysToCCini
+
+subroutine SetCrop_DaysToGermination(DaysToGermination)
+    !! Setter for the "DaysToGermination" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToGermination
+
+    crop%DaysToGermination = DaysToGermination
+end subroutine SetCrop_DaysToGermination
+
+subroutine SetCrop_DaysToFullCanopy(DaysToFullCanopy)
+    !! Setter for the "DaysToFullCanopy" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToFullCanopy
+
+    crop%DaysToFullCanopy = DaysToFullCanopy
+end subroutine SetCrop_DaysToFullCanopy
+
+subroutine SetCrop_DaysToFullCanopySF(DaysToFullCanopySF)
+    !! Setter for the "DaysToFullCanopySF" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToFullCanopySF
+
+    crop%DaysToFullCanopySF = DaysToFullCanopySF
+end subroutine SetCrop_DaysToFullCanopySF
+
+subroutine SetCrop_DaysToFlowering(DaysToFlowering)
+    !! Setter for the "DaysToFlowering" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToFlowering
+
+    crop%DaysToFlowering = DaysToFlowering
+end subroutine SetCrop_DaysToFlowering
+
+subroutine SetCrop_LengthFlowering(LengthFlowering)
+    !! Setter for the "LengthFlowering" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: LengthFlowering
+
+    crop%LengthFlowering = LengthFlowering
+end subroutine SetCrop_LengthFlowering
+
+subroutine SetCrop_DaysToSenescence(DaysToSenescence)
+    !! Setter for the "DaysToSenescence" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToSenescence
+
+    crop%DaysToSenescence = DaysToSenescence
+end subroutine SetCrop_DaysToSenescence
+
+subroutine SetCrop_DaysToHarvest(DaysToHarvest)
+    !! Setter for the "DaysToHarvest" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToHarvest
+
+    crop%DaysToHarvest = DaysToHarvest
+end subroutine SetCrop_DaysToHarvest
+
+subroutine SetCrop_DaysToMaxRooting(DaysToMaxRooting)
+    !! Setter for the "DaysToMaxRooting" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToMaxRooting
+
+    crop%DaysToMaxRooting = DaysToMaxRooting
+end subroutine SetCrop_DaysToMaxRooting
+
+subroutine SetCrop_DaysToHIo(DaysToHIo)
+    !! Setter for the "DaysToHIo" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: DaysToHIo
+
+    crop%DaysToHIo = DaysToHIo
+end subroutine SetCrop_DaysToHIo
+
+subroutine SetCrop_GDDaysToCCini(GDDaysToCCini)
+    !! Setter for the "GDDaysToCCini" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToCCini
+
+    crop%GDDaysToCCini = GDDaysToCCini
+end subroutine SetCrop_GDDaysToCCini
+
+subroutine SetCrop_GDDaysToGermination(GDDaysToGermination)
+    !! Setter for the "GDDaysToGermination" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToGermination
+
+    crop%GDDaysToGermination = GDDaysToGermination
+end subroutine SetCrop_GDDaysToGermination
+
+subroutine SetCrop_GDDaysToFullCanopy(GDDaysToFullCanopy)
+    !! Setter for the "GDDaysToFullCanopy" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToFullCanopy
+
+    crop%GDDaysToFullCanopy = GDDaysToFullCanopy
+end subroutine SetCrop_GDDaysToFullCanopy
+
+subroutine SetCrop_GDDaysToFullCanopySF(GDDaysToFullCanopySF)
+    !! Setter for the "GDDaysToFullCanopySF" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToFullCanopySF
+
+    crop%GDDaysToFullCanopySF = GDDaysToFullCanopySF
+end subroutine SetCrop_GDDaysToFullCanopySF
+
+subroutine SetCrop_GDDaysToFlowering(GDDaysToFlowering)
+    !! Setter for the "GDDaysToFlowering" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToFlowering
+
+    crop%GDDaysToFlowering = GDDaysToFlowering
+end subroutine SetCrop_GDDaysToFlowering
+
+subroutine SetCrop_GDDLengthFlowering(GDDLengthFlowering)
+    !! Setter for the "GDDLengthFlowering" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDLengthFlowering
+
+    crop%GDDLengthFlowering = GDDLengthFlowering
+end subroutine SetCrop_GDDLengthFlowering
+
+subroutine SetCrop_GDDaysToSenescence(GDDaysToSenescence)
+    !! Setter for the "GDDaysToSenescence" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToSenescence
+
+    crop%GDDaysToSenescence = GDDaysToSenescence
+end subroutine SetCrop_GDDaysToSenescence
+
+subroutine SetCrop_GDDaysToHarvest(GDDaysToHarvest)
+    !! Setter for the "GDDaysToHarvest" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToHarvest
+
+    crop%GDDaysToHarvest = GDDaysToHarvest
+end subroutine SetCrop_GDDaysToHarvest
+
+subroutine SetCrop_GDDaysToMaxRooting(GDDaysToMaxRooting)
+    !! Setter for the "GDDaysToMaxRooting" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToMaxRooting
+
+    crop%GDDaysToMaxRooting = GDDaysToMaxRooting
+end subroutine SetCrop_GDDaysToMaxRooting
+
+subroutine SetCrop_GDDaysToHIo(GDDaysToHIo)
+    !! Setter for the "GDDaysToHIo" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: GDDaysToHIo
+
+    crop%GDDaysToHIo = GDDaysToHIo
+end subroutine SetCrop_GDDaysToHIo
+
+subroutine SetCrop_WP(WP)
+    !! Setter for the "WP" attribute of the "crop" global variable.
+    real(dp), intent(in) :: WP
+
+    crop%WP = WP
+end subroutine SetCrop_WP
+
+subroutine SetCrop_WPy(WPy)
+    !! Setter for the "WPy" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: WPy
+
+    crop%WPy = WPy
+end subroutine SetCrop_WPy
+
+subroutine SetCrop_AdaptedToCO2(AdaptedToCO2)
+    !! Setter for the "AdaptedToCO2" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: AdaptedToCO2
+
+    crop%AdaptedToCO2 = AdaptedToCO2
+end subroutine SetCrop_AdaptedToCO2
+
+subroutine SetCrop_HI(HI)
+    !! Setter for the "HI" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: HI
+
+    crop%HI = HI
+end subroutine SetCrop_HI
+
+subroutine SetCrop_dHIdt(dHIdt)
+    !! Setter for the "dHIdt" attribute of the "crop" global variable.
+    real(dp), intent(in) :: dHIdt
+
+    crop%dHIdt = dHIdt
+end subroutine SetCrop_dHIdt
+
+subroutine SetCrop_HIincrease(HIincrease)
+    !! Setter for the "HIincrease" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: HIincrease
+
+    crop%HIincrease = HIincrease
+end subroutine SetCrop_HIincrease
+
+subroutine SetCrop_aCoeff(aCoeff)
+    !! Setter for the "aCoeff" attribute of the "crop" global variable.
+    real(dp), intent(in) :: aCoeff
+
+    crop%aCoeff = aCoeff
+end subroutine SetCrop_aCoeff
+
+subroutine SetCrop_bCoeff(bCoeff)
+    !! Setter for the "bCoeff" attribute of the "crop" global variable.
+    real(dp), intent(in) :: bCoeff
+
+    crop%bCoeff = bCoeff
+end subroutine SetCrop_bCoeff
+
+subroutine SetCrop_DHImax(DHImax)
+    !! Setter for the "DHImax" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: DHImax
+
+    crop%DHImax = DHImax
+end subroutine SetCrop_DHImax
+
+subroutine SetCrop_DeterminancyLinked(DeterminancyLinked)
+    !! Setter for the "DeterminancyLinked" attribute of the "crop" global variable.
+    logical, intent(in) :: DeterminancyLinked
+
+    crop%DeterminancyLinked = DeterminancyLinked
+end subroutine SetCrop_DeterminancyLinked
+
+subroutine SetCrop_fExcess(fExcess)
+    !! Setter for the "fExcess" attribute of the "crop" global variable.
+    integer(int16), intent(in) :: fExcess
+
+    crop%fExcess = fExcess
+end subroutine SetCrop_fExcess
+
+subroutine SetCrop_DryMatter(DryMatter)
+    !! Setter for the "DryMatter" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: DryMatter
+
+    crop%DryMatter = DryMatter
+end subroutine SetCrop_DryMatter
+
+subroutine SetCrop_RootMinYear1(RootMinYear1)
+    !! Setter for the "RootMinYear1" attribute of the "crop" global variable.
+    real(dp), intent(in) :: RootMinYear1
+
+    crop%RootMinYear1 = RootMinYear1
+end subroutine SetCrop_RootMinYear1
+
+subroutine SetCrop_SownYear1(SownYear1)
+    !! Setter for the "SownYear1" attribute of the "crop" global variable.
+    logical, intent(in) :: SownYear1
+
+    crop%SownYear1 = SownYear1
+end subroutine SetCrop_SownYear1
+
+subroutine SetCrop_YearCCx(YearCCx)
+    !! Setter for the "YearCCx" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: YearCCx
+
+    crop%YearCCx = YearCCx
+end subroutine SetCrop_YearCCx
+
+subroutine SetCrop_CCxRoot(CCxRoot)
+    !! Setter for the "CCxRoot" attribute of the "crop" global variable.
+    real(dp), intent(in) :: CCxRoot
+
+    crop%CCxRoot = CCxRoot
+end subroutine SetCrop_CCxRoot
+
+function GetCrop_Assimilates() result(Assimilates)
+    !! Getter for the "Assimilates" attribute of the "crop" global variable.
+    type(rep_Assimilates) :: Assimilates
+
+    Assimilates = crop%Assimilates
+end function GetCrop_Assimilates
+
+function GetCrop_Assimilates_On() result(On)
+    !! Getter for the "On" attribute of the "Assimilates" attribute of the "crop" global variable.
+    logical :: On
+
+    On = crop%Assimilates%On
+end function GetCrop_Assimilates_On
+
+function GetCrop_Assimilates_Period() result(Period)
+    !! Getter for the "Period" attribute of the "Assimilates" attribute of the "crop" global variable.
+    integer(int32) :: Period
+
+    Period = crop%Assimilates%Period
+end function GetCrop_Assimilates_Period
+
+function GetCrop_Assimilates_Stored() result(Stored)
+    !! Getter for the "Stored" attribute of the "Assimilates" attribute of the "crop" global variable.
+    integer(int8) :: Stored
+
+    Stored = crop%Assimilates%Stored
+end function GetCrop_Assimilates_Stored
+
+function GetCrop_Assimilates_Mobilized() result(Mobilized)
+    !! Getter for the "Mobilized" attribute of the "Assimilates" attribute of the "crop" global variable.
+    integer(int8) :: Mobilized
+
+    Mobilized = crop%Assimilates%Mobilized
+end function GetCrop_Assimilates_Mobilized
+
+subroutine SetCrop_Assimilates(Assimilates)
+    !! Setter for the "Assimilates" attribute of the "crop" global variable.
+    type(rep_Assimilates), intent(in) :: Assimilates
+
+    crop%Assimilates = Assimilates
+end subroutine SetCrop_Assimilates
+
+subroutine SetCrop_Assimilates_On(On)
+    !! Setter for the "On" attribute of the "Assimilates" attribute of the "crop" global variable.
+    logical, intent(in) :: On
+
+    crop%Assimilates%On = On
+end subroutine SetCrop_Assimilates_On
+
+subroutine SetCrop_Assimilates_Period(Period)
+    !! Setter for the "Period" attribute of the "Assimilates" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: Period
+
+    crop%Assimilates%Period = Period
+end subroutine SetCrop_Assimilates_Period
+
+subroutine SetCrop_Assimilates_Stored(Stored)
+    !! Setter for the "Stored" attribute of the "Assimilates" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: Stored
+
+    crop%Assimilates%Stored = Stored
+end subroutine SetCrop_Assimilates_Stored
+
+subroutine SetCrop_Assimilates_Mobilized(Mobilized)
+    !! Setter for the "Mobilized" attribute of the "Assimilates" attribute of the "crop" global variable.
+    integer(int8), intent(in) :: Mobilized
+
+    crop%Assimilates%Mobilized = Mobilized
+end subroutine SetCrop_Assimilates_Mobilized
+
 function GetOnset() result(Onset_out)
     !! Getter for the "onset" global variable.
     type(rep_Onset) :: Onset_out
@@ -3669,6 +5913,22 @@ subroutine SetTemperatureFilefull(str)
 
     TemperatureFilefull = str
 end subroutine SetTemperatureFilefull
+
+function GetCrop_Length_i(i) result(Length_i)
+    !! Getter for the "Length" attribute of "Crop" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Length_i
+
+    Length_i = Crop%Length(i)
+end function GetCrop_Length_i
+
+subroutine SetCrop_Length_i(i, Length_i)
+    !! Setter for the "Length" attribute of "Crop" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Length_i
+
+    Crop%Length(i) = Length_i
+end subroutine SetCrop_Length_i
 
 type(rep_clim) function GetTemperatureRecord()
     !! Getter for the "TemperatureRecord" global variable.

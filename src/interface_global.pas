@@ -39,6 +39,16 @@ type
 
     rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
+    rep_subkind = (Vegetative,Grain,Tuber,Forage);
+    rep_pMethod = (NoCorrection,FAOCorrection);
+
+    rep_Assimilates = Record
+        On          : Boolean;
+        Period      : INTEGER; (* Number of days at end of season during which assimilates are stored in root system *)
+        Stored      : ShortInt; (* Percentage of assimilates, transferred to root system at last day of season *)
+        Mobilized   : ShortInt; (* Percentage of stored assimilates, transferred to above ground parts in next season *)
+        end;
+
     SoilLayerIndividual = Record
         Description  : rep_string25;
         Thickness    : double;   (* meter *)
@@ -215,8 +225,146 @@ type
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
 
+     rep_Crop = Record
+         subkind       : rep_subkind;
+         ModeCycle     : rep_modeCycle;
+         Planting      : rep_Planting; // 1 = sown, 0 = transplanted, -9 = regrowth
+         pMethod       : rep_pMethod;
+         pdef : double;  // soil water depletion fraction for no stomatal stress as defined (ETo = 5 mm/day)
+         pActStom : double; // actual p for no stomatal stress for ETo of the day
+         KsShapeFactorLeaf : Double;
+         KsShapeFactorStomata : Double;
+         KsShapeFactorSenescence : Double;
+         pLeafDefUL,pLeafDefLL: double; //soil water depletion fraction for leaf expansion (ETo = 5 mm/day)
+         pLeafAct    : double; //actual p for upper limit leaf expansion for ETo of the day
+         pSenescence : double; //soil water depletion fraction for canopys senescence (ETo = 5 mm/day)
+         pSenAct     : double; //actual p for canopy senescence for ETo of the day
+         pPollination : double; //soil water depletion fraction for failure of pollination
+         SumEToDelaySenescence : INTEGER;
+         AnaeroPoint : INTEGER; (* (SAT - [vol%]) at which deficient aeration *)
+         StressResponse : rep_Shapes; // is reponse to soil fertility stress
+         ECemin : ShortInt;     // lower threshold for salinity stress (dS/m)
+         ECemax : ShortInt;     // upper threshold for salinity stress (dS/m)
+         CCsaltDistortion : ShortInt;  // distortion canopy cover for calibration for simulation of effect of salinity stress (%)
+         ResponseECsw : INTEGER; // Response of Ks stomata to ECsw for calibration: From 0 (none) to +200 (very strong)
+         SmaxTopQuarter : double; (* Smax Top 1/4 root zone HOOGLAND *)
+         SmaxBotQuarter : double; (* Smax Bottom 1/4 root zone HOOGLAND *)
+         SmaxTop : double;   (* Smax Top root zone HOOGLAND *)
+         SmaxBot : double;   (* Smax Bottom root zone HOOGLAND *)
+         KcTop : double;
+         KcDecline : double; // Reduction Kc (%CCx/day) as result of ageing effects, nitrogen defficiency, etc.
+         CCEffectEvapLate : INTEGER; (* % *)
+         Day1 : LongInt;   (* Daynummer: first day of croping period starting from sowing/transplanting *)
+         DayN : LongInt;   (* Daynummer: last day = harvest day*)
+         Length : rep_int_array; (* 1 .. 4 :  = the four growth stages  *)
+         RootMin, RootMax : double;   // rooting depth in meter
+         RootShape : ShortInt;     // 10 times the root of the root function
+         Tbase        : double;           //Base Temperature (degC)
+         Tupper       : double;  //Upper temperature threshold (degC)
+         Tcold        : ShortInt;            // Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+         Theat        : ShortInt; // Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+         GDtranspLow  : double; // Minimum growing degrees required for full crop transpiration (degC - day)
+         SizeSeedling : double;  //Canopy cover per seedling (cm2)
+         SizePlant    : double;  //Canopy cover of plant on 1st day (cm2) when regrowth
+         PlantingDens : LongInt; //number of plants per hectare
+         CCo          : double;           //starting canopy size  (fraction canopy cover)
+         CCini        : double;  //starting canopy size for regrowth (fraction canopy cover)
+         CGC          : double;  //Canopy growth coefficient (increase of CC in fraction per day)
+         GDDCGC       : double;  //Canopy growth coefficient (increase of CC in fraction per growing-degree day)
+         CCx          : double;  //expected maximum canopy cover  (fraction canopy cover)
+         CDC          : double;  //Canopy Decline Coefficient (decrease of CC in fraction per day)
+         GDDCDC       : double;  //Canopy Decline Coefficient (decrease of CC in fraction per growing-degree day)
+         CCxAdjusted  : double;  //maximum canopy cover given water stress
+         CCxWithered  : double;  //maximum existed CC during season (for correction Evap for withered canopy)
+         CCoAdjusted  : double;  //initial canopy size after soil water stress
+         DaysToCCini        : integer; //required for regrowth (if CCini > CCo)
+         DaysToGermination  : integer;  //given or calculated from GDD
+         DaysToFullCanopy   : integer;  //given or calculated from GDD
+         DaysToFullCanopySF : integer; // adjusted to soil fertility
+         DaysToFlowering    : integer;  //given or calculated from GDD
+         LengthFlowering    : integer;  //given or calculated from GDD
+         DaysToSenescence   : integer;  //given or calculated from GDD
+         DaysToHarvest      : integer;  //given or calculated from GDD
+         DaysToMaxRooting   : integer;  //given or calculated from GDD
+         DaysToHIo          : integer;  //given or calculated from GDD
+         GDDaysToCCini      : integer; //required for regrowth (if CCini > CCo)
+         GDDaysToGermination: integer;  //given or calculated from Calendar Days
+         GDDaysToFullCanopy : integer;  //given or calculated from Calendar Days
+         GDDaysToFullCanopySF : integer;  //adjusted to soil fertility
+         GDDaysToFlowering  : INTEGER;  //given or calculated from Calendar Days
+         GDDLengthFlowering : Integer;  //given or calculated from Calendar Days
+         GDDaysToSenescence : integer;  //given or calculated from Calendar Days
+         GDDaysToHarvest    : integer;  //given or calculated from Calendar Days
+         GDDaysToMaxRooting : integer;  //given or calculated from Calendar Days
+         GDDaysToHIo        : integer;  //given or calculated from Calendar Days
+         WP                 : double;  // (normalized) water productivity (gram/m2)
+         WPy                : integer; // (normalized) water productivity during yield formation (Percent WP)
+         AdaptedToCO2       : ShortInt; // Crop performance under elevated atmospheric CO2 concentration (%)
+         HI                 : integer;  // HI harvest index (percentage)
+         dHIdt              : double;   // average rate of change in harvest index (% increase per calendar day)
+         HIincrease         : ShortInt; // possible increase (%) of HI due to water stress before flowering
+         aCoeff             : double; // coefficient describing impact of restricted vegetative growth at flowering on HI
+         bCoeff             : double; // coefficient describing impact of stomatal closure at flowering on HI
+         DHImax             : ShortInt; // allowable maximum increase (%) of specified HI
+         DeterminancyLinked : BOOLEAN; // linkage of determinancy with flowering
+         fExcess            : SmallInt; // potential excess of fruits (%) ranging form
+         DryMatter          : ShortInt; // dry matter content (%) of fresh yield
+         RootMinYear1       : double; // minimum rooting depth in first year in meter (for perennial crops)
+         SownYear1          : BOOLEAN; // True = Sown, False = transplanted (for perennial crops)
+         YearCCx            : ShortInt; // number of years at which CCx declines to 90 % of its value due to self-thinning - Perennials
+         CCxRoot            : double; // shape factor of the decline of CCx over the years due to self-thinning - Perennials
+         Assimilates        : rep_Assimilates;
+         END;
+
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
+
+
+     rep_MonthInteger = ARRAY[1..12] OF INTEGER;
+
+     rep_param = RECORD  // DEFAULT.PAR
+         // crop parameters IN CROP.PAR - with Reset option
+         EvapDeclineFactor : ShortInt;  // exponential decline with relative soil water [1 = small ... 8 = sharp]
+         KcWetBare       : double; //Soil evaporation coefficients from wet bare soil
+         PercCCxHIfinal    : ShortInt; // CC threshold below which HI no longer increase (% of 100)
+         RootPercentZmin : integer; //starting depth of root sine function in % of Zmin (sowing depth)
+         MaxRootZoneExpansion : double; // maximum root zone expansion in cm/day - fixed at 5 cm/day
+         KsShapeFactorRoot : Shortint; //shape factro for the effect of water stress on root zone expansion
+         TAWGermination    : ShortInt; // Soil water content (% TAW) required at sowing depth for germination
+         pAdjFAO         : double; //Adjustment factor for FAO-adjustment of soil water depletion (p) for various ET
+         DelayLowOxygen  : integer; //delay [days] for full effect of anaeroby
+         ExpFsen           : double; // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+         Beta              : ShortInt; // Percentage decrease of p(senescence) once early canopy senescence is triggered
+         ThicknessTopSWC   : ShortInt; // Thickness of top soil for determination of its Soil Water Content (cm)
+         // Field parameter IN FIELD.PAR  - with Reset option
+         EvapZmax : ShortInt; // cm  maximum soil depth for water extraction by evaporation
+         // Runoff parameters IN RUNOFF.PAR  - with Reset option
+         RunoffDepth : double; //considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+         CNcorrection : Boolean; //correction Antecedent Moisture Class (On/Off)
+         // Temperature parameters IN TEMPERATURE.PAR  - with Reset option
+         Tmin,Tmax   : double; // Default Minimum and maximum air temperature (degC) if no temperature file
+         GDDMethod   : ShortInt; // 1 for Method 1, 2 for Method 2, 3 for Method 3
+         // General parameters IN GENERAL.PAR
+         PercRAW     : integer; //allowable percent RAW depletion for determination Inet
+         CompDefThick: double; // Default thickness of soil compartments [m]
+         CropDay1    : integer;  // First day after sowing/transplanting (DAP = 1)
+         Tbase,Tupper : double; // Default base and upper temperature (degC) assigned to crop
+         IrriFwInSeason  : ShortInt; // Percentage of soil surface wetted by irrigation in crop season
+         IrriFwOffSeason : ShortInt; // Percentage of soil surface wetted by irrigation off-season
+         // Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
+         ShowersInDecade : rep_MonthInteger; // 10-day or Monthly rainfall --> Runoff estimate
+         EffectiveRain : rep_EffectiveRain; // 10-day or Monthly rainfall --> Effective rainfall
+         // Salinity
+         SaltDiff : ShortInt; // salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+         SaltSolub : ShortInt;  // salt solubility [g/liter]
+         // Groundwater table
+         ConstGwt : Boolean; // groundwater table is constant (or absent) during the simulation period
+         // Capillary rise
+         RootNrDF : shortint;
+         // Initial abstraction for surface runoff
+         IniAbstract : shortint;
+         END;
+
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -245,6 +393,627 @@ function TimeRootFunction(
 procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
          external 'aquacrop' name '__ac_global_MOD_set_layer_undef';
+
+function GetCrop() : rep_Crop;
+
+function GetCrop_StressResponse() : rep_Shapes;
+
+function GetCrop_StressResponse_Stress() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_stress';
+
+function GetCrop_StressResponse_ShapeCGC() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapecgc';
+
+function GetCrop_StressResponse_ShapeCCX() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapeccx';
+
+function GetCrop_StressResponse_ShapeWP() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapewp';
+
+function GetCrop_StressResponse_ShapeCDecline() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_stressresponse_shapecdecline';
+
+function GetCrop_StressResponse_Calibrated() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getcrop_stressresponse_calibrated_wrap';
+
+procedure SetCrop_StressResponse(constref Crop_StressResponse : rep_Shapes);
+
+procedure SetCrop_StressResponse_Stress(constref Stress : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_stress';
+
+procedure SetCrop_StressResponse_ShapeCGC(constref ShapeCGC : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapecgc';
+
+procedure SetCrop_StressResponse_ShapeCCX(constref ShapeCCX : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapeccx';
+
+procedure SetCrop_StressResponse_ShapeWP(constref ShapeWP : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapewp';
+
+procedure SetCrop_StressResponse_ShapeCDecline(constref ShapeCDecline : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_stressresponse_shapecdecline';
+
+procedure SetCrop_StressResponse_Calibrated(constref Calibrated : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setcrop_stressresponse_calibrated_wrap';
+
+function GetCrop_Length() : rep_int_array;
+
+function GetCrop_Length_i(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_length_i';
+
+function GetCrop_subkind() : rep_subkind;
+
+function __GetCrop_subkind() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_subkind';
+
+function GetCrop_ModeCycle() : rep_modeCycle;
+
+function __GetCrop_ModeCycle() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_modecycle';
+
+function GetCrop_Planting() : rep_Planting;
+
+function __GetCrop_Planting() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_planting';
+
+function GetCrop_pMethod() : rep_pMethod;
+
+function __GetCrop_pMethod() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_pmethod';
+
+function GetCrop_pdef() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_pdef';
+
+function GetCrop_pActStom() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_pactstom';
+
+function GetCrop_KsShapeFactorLeaf() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ksshapefactorleaf';
+
+function GetCrop_KsShapeFactorStomata() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ksshapefactorstomata';
+
+function GetCrop_KsShapeFactorSenescence() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ksshapefactorsenescence';
+
+function GetCrop_pLeafDefUL() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_pleafdeful';
+
+function GetCrop_pLeafDefLL() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_pleafdefll';
+
+function GetCrop_pLeafAct() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_pleafact';
+
+function GetCrop_pSenescence() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_psenescence';
+
+function GetCrop_pSenAct() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_psenact';
+
+function GetCrop_pPollination() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ppollination';
+
+function GetCrop_SumEToDelaySenescence() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_sumetodelaysenescence';
+
+function GetCrop_AnaeroPoint() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_anaeropoint';
+
+function GetCrop_ECemin() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ecemin';
+
+function GetCrop_ECemax() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ecemax';
+
+function GetCrop_CCsaltDistortion() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccsaltdistortion';
+
+function GetCrop_ResponseECsw() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_responseecsw';
+
+function GetCrop_SmaxTopQuarter() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_smaxtopquarter';
+
+function GetCrop_SmaxBotQuarter() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_smaxbotquarter';
+
+function GetCrop_SmaxTop() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_smaxtop';
+
+function GetCrop_SmaxBot() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_smaxbot';
+
+function GetCrop_KcTop() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_kctop';
+
+function GetCrop_KcDecline() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_kcdecline';
+
+function GetCrop_CCEffectEvapLate() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_cceffectevaplate';
+
+function GetCrop_Day1() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_day1';
+
+function GetCrop_DayN() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_dayn';
+
+function GetCrop_RootMin() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_rootmin';
+
+function GetCrop_RootMax() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_rootmax';
+
+function GetCrop_RootShape() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_rootshape';
+
+function GetCrop_Tbase() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_tbase';
+
+function GetCrop_Tupper() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_tupper';
+
+function GetCrop_Tcold() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_tcold';
+
+function GetCrop_Theat() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_theat';
+
+function GetCrop_GDtranspLow() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gdtransplow';
+
+function GetCrop_SizeSeedling() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_sizeseedling';
+
+function GetCrop_SizePlant() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_sizeplant';
+
+function GetCrop_PlantingDens() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_plantingdens';
+
+function GetCrop_CCo() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_cco';
+
+function GetCrop_CCini() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccini';
+
+function GetCrop_CGC() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_cgc';
+
+function GetCrop_GDDCGC() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddcgc';
+
+function GetCrop_CCx() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccx';
+
+function GetCrop_CDC() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_cdc';
+
+function GetCrop_GDDCDC() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddcdc';
+
+function GetCrop_CCxAdjusted() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccxadjusted';
+
+function GetCrop_CCxWithered() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccxwithered';
+
+function GetCrop_CCoAdjusted() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccoadjusted';
+
+function GetCrop_DaysToCCini() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystoccini';
+
+function GetCrop_DaysToGermination() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystogermination';
+
+function GetCrop_DaysToFullCanopy() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystofullcanopy';
+
+function GetCrop_DaysToFullCanopySF() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystofullcanopysf';
+
+function GetCrop_DaysToFlowering() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystoflowering';
+
+function GetCrop_LengthFlowering() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_lengthflowering';
+
+function GetCrop_DaysToSenescence() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystosenescence';
+
+function GetCrop_DaysToHarvest() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystoharvest';
+
+function GetCrop_DaysToMaxRooting() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystomaxrooting';
+
+function GetCrop_DaysToHIo() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_daystohio';
+
+function GetCrop_GDDaysToCCini() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystoccini';
+
+function GetCrop_GDDaysToGermination() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystogermination';
+
+function GetCrop_GDDaysToFullCanopy() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystofullcanopy';
+
+function GetCrop_GDDaysToFullCanopySF() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystofullcanopysf';
+
+function GetCrop_GDDaysToFlowering() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystoflowering';
+
+function GetCrop_GDDLengthFlowering() : Integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddlengthflowering';
+
+function GetCrop_GDDaysToSenescence() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystosenescence';
+
+function GetCrop_GDDaysToHarvest() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystoharvest';
+
+function GetCrop_GDDaysToMaxRooting() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystomaxrooting';
+
+function GetCrop_GDDaysToHIo() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_gddaystohio';
+
+function GetCrop_WP() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_wp';
+
+function GetCrop_WPy() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_wpy';
+
+function GetCrop_AdaptedToCO2() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_adaptedtoco2';
+
+function GetCrop_HI() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_hi';
+
+function GetCrop_dHIdt() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_dhidt';
+
+function GetCrop_HIincrease() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_hiincrease';
+
+function GetCrop_aCoeff() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_acoeff';
+
+function GetCrop_bCoeff() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_bcoeff';
+
+function GetCrop_DHImax() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_dhimax';
+
+function GetCrop_DeterminancyLinked() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getcrop_determinancylinked_wrap';
+
+function GetCrop_fExcess() : SmallInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_fexcess';
+
+function GetCrop_DryMatter() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_drymatter';
+
+function GetCrop_RootMinYear1() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_rootminyear1';
+
+function GetCrop_SownYear1() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getcrop_sownyear1_wrap';
+
+function GetCrop_YearCCx() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_yearccx';
+
+function GetCrop_CCxRoot() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_ccxroot';
+
+procedure SetCrop(constref Crop : rep_Crop);
+
+procedure SetCrop_Length(constref Length : rep_int_array);
+
+procedure SetCrop_Length_i(constref i : integer; 
+                          constref Length_i : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_length_i';
+
+procedure SetCrop_subkind(constref subkind : rep_subkind);
+
+procedure __SetCrop_subkind(constref subkind : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_subkind';
+
+procedure SetCrop_ModeCycle(constref ModeCycle : rep_modeCycle);
+
+procedure __SetCrop_ModeCycle(constref ModeCycle : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_modecycle';
+
+procedure SetCrop_Planting(constref Planting : rep_Planting);
+
+procedure __SetCrop_Planting(constref Planting : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_planting';
+
+procedure SetCrop_pMethod(constref pMethod : rep_pMethod);
+
+procedure __SetCrop_pMethod(constref pMethod : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_pmethod';
+
+procedure SetCrop_pdef(constref pdef : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_pdef';
+
+procedure SetCrop_pActStom(constref pActStom : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_pactstom';
+
+procedure SetCrop_KsShapeFactorLeaf(constref KsShapeFactorLeaf : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ksshapefactorleaf';
+
+procedure SetCrop_KsShapeFactorStomata(constref KsShapeFactorStomata : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ksshapefactorstomata';
+
+procedure SetCrop_KsShapeFactorSenescence(constref KsShapeFactorSenescence : Double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ksshapefactorsenescence';
+
+procedure SetCrop_pLeafDefUL(constref pLeafDefUL : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_pleafdeful';
+
+procedure SetCrop_pLeafDefLL(constref pLeafDefLL : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_pleafdefll';
+
+procedure SetCrop_pLeafAct(constref pLeafAct : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_pleafact';
+
+procedure SetCrop_pSenescence(constref pSenescence : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_psenescence';
+
+procedure SetCrop_pSenAct(constref pSenAct : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_psenact';
+
+procedure SetCrop_pPollination(constref pPollination : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ppollination';
+
+procedure SetCrop_SumEToDelaySenescence(constref SumEToDelaySenescence : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_sumetodelaysenescence';
+
+procedure SetCrop_AnaeroPoint(constref AnaeroPoint : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_anaeropoint';
+
+procedure SetCrop_ECemin(constref ECemin : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ecemin';
+
+procedure SetCrop_ECemax(constref ECemax : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ecemax';
+
+procedure SetCrop_CCsaltDistortion(constref CCsaltDistortion : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccsaltdistortion';
+
+procedure SetCrop_ResponseECsw(constref ResponseECsw : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_responseecsw';
+
+procedure SetCrop_SmaxTopQuarter(constref SmaxTopQuarter : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_smaxtopquarter';
+
+procedure SetCrop_SmaxBotQuarter(constref SmaxBotQuarter : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_smaxbotquarter';
+
+procedure SetCrop_SmaxTop(constref SmaxTop : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_smaxtop';
+
+procedure SetCrop_SmaxBot(constref SmaxBot : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_smaxbot';
+
+procedure SetCrop_KcTop(constref KcTop : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_kctop';
+
+procedure SetCrop_KcDecline(constref KcDecline : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_kcdecline';
+
+procedure SetCrop_CCEffectEvapLate(constref CCEffectEvapLate : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_cceffectevaplate';
+
+procedure SetCrop_Day1(constref Day1 : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_day1';
+
+procedure SetCrop_DayN(constref DayN : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_dayn';
+
+procedure SetCrop_RootMin(constref RootMin : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_rootmin';
+
+procedure SetCrop_RootMax(constref RootMax : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_rootmax';
+
+procedure SetCrop_RootShape(constref RootShape : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_rootshape';
+
+procedure SetCrop_Tbase(constref Tbase : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_tbase';
+
+procedure SetCrop_Tupper(constref Tupper : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_tupper';
+
+procedure SetCrop_Tcold(constref Tcold : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_tcold';
+
+procedure SetCrop_Theat(constref Theat : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_theat';
+
+procedure SetCrop_GDtranspLow(constref GDtranspLow : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gdtransplow';
+
+procedure SetCrop_SizeSeedling(constref SizeSeedling : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_sizeseedling';
+
+procedure SetCrop_SizePlant(constref SizePlant : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_sizeplant';
+
+procedure SetCrop_PlantingDens(constref PlantingDens : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_plantingdens';
+
+procedure SetCrop_CCo(constref CCo : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_cco';
+
+procedure SetCrop_CCini(constref CCini : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccini';
+
+procedure SetCrop_CGC(constref CGC : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_cgc';
+
+procedure SetCrop_GDDCGC(constref GDDCGC : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddcgc';
+
+procedure SetCrop_CCx(constref CCx : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccx';
+
+procedure SetCrop_CDC(constref CDC : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_cdc';
+
+procedure SetCrop_GDDCDC(constref GDDCDC : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddcdc';
+
+procedure SetCrop_CCxAdjusted(constref CCxAdjusted : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccxadjusted';
+
+procedure SetCrop_CCxWithered(constref CCxWithered : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccxwithered';
+
+procedure SetCrop_CCoAdjusted(constref CCoAdjusted : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccoadjusted';
+
+procedure SetCrop_DaysToCCini(constref DaysToCCini : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystoccini';
+
+procedure SetCrop_DaysToGermination(constref DaysToGermination : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystogermination';
+
+procedure SetCrop_DaysToFullCanopy(constref DaysToFullCanopy : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystofullcanopy';
+
+procedure SetCrop_DaysToFullCanopySF(constref DaysToFullCanopySF : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystofullcanopysf';
+
+procedure SetCrop_DaysToFlowering(constref DaysToFlowering : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystoflowering';
+
+procedure SetCrop_LengthFlowering(constref LengthFlowering : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_lengthflowering';
+
+procedure SetCrop_DaysToSenescence(constref DaysToSenescence : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystosenescence';
+
+procedure SetCrop_DaysToHarvest(constref DaysToHarvest : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystoharvest';
+
+procedure SetCrop_DaysToMaxRooting(constref DaysToMaxRooting : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystomaxrooting';
+
+procedure SetCrop_DaysToHIo(constref DaysToHIo : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_daystohio';
+
+procedure SetCrop_GDDaysToCCini(constref GDDaysToCCini : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystoccini';
+
+procedure SetCrop_GDDaysToGermination(constref GDDaysToGermination : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystogermination';
+
+procedure SetCrop_GDDaysToFullCanopy(constref GDDaysToFullCanopy : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystofullcanopy';
+
+procedure SetCrop_GDDaysToFullCanopySF(constref GDDaysToFullCanopySF : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystofullcanopysf';
+
+procedure SetCrop_GDDaysToFlowering(constref GDDaysToFlowering : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystoflowering';
+
+procedure SetCrop_GDDLengthFlowering(constref GDDLengthFlowering : Integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddlengthflowering';
+
+procedure SetCrop_GDDaysToSenescence(constref GDDaysToSenescence : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystosenescence';
+
+procedure SetCrop_GDDaysToHarvest(constref GDDaysToHarvest : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystoharvest';
+
+procedure SetCrop_GDDaysToMaxRooting(constref GDDaysToMaxRooting : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystomaxrooting';
+
+procedure SetCrop_GDDaysToHIo(constref GDDaysToHIo : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_gddaystohio';
+
+procedure SetCrop_WP(constref WP : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_wp';
+
+procedure SetCrop_WPy(constref WPy : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_wpy';
+
+procedure SetCrop_AdaptedToCO2(constref AdaptedToCO2 : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_adaptedtoco2';
+
+procedure SetCrop_HI(constref HI : integer);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_hi';
+
+procedure SetCrop_dHIdt(constref dHIdt : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_dhidt';
+
+procedure SetCrop_HIincrease(constref HIincrease : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_hiincrease';
+
+procedure SetCrop_aCoeff(constref aCoeff : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_acoeff';
+
+procedure SetCrop_bCoeff(constref bCoeff : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_bcoeff';
+
+procedure SetCrop_DHImax(constref DHImax : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_dhimax';
+
+procedure SetCrop_DeterminancyLinked(constref DeterminancyLinked : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setcrop_determinancylinked_wrap';
+
+procedure SetCrop_fExcess(constref fExcess : SmallInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_fexcess';
+
+procedure SetCrop_DryMatter(constref DryMatter : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_drymatter';
+
+procedure SetCrop_RootMinYear1(constref RootMinYear1 : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_rootminyear1';
+
+procedure SetCrop_SownYear1(constref SownYear1 : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setcrop_sownyear1_wrap';
+
+procedure SetCrop_YearCCx(constref YearCCx : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_yearccx';
+
+procedure SetCrop_CCxRoot(constref CCxRoot : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_ccxroot';
+
+function GetCrop_Assimilates() : rep_Assimilates;
+
+function GetCrop_Assimilates_On() : Boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getcrop_assimilates_on_wrap';
+
+function GetCrop_Assimilates_Period() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_assimilates_period';
+
+function GetCrop_Assimilates_Stored() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_assimilates_stored';
+
+function GetCrop_Assimilates_Mobilized() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getcrop_assimilates_mobilized';
+
+procedure SetCrop_Assimilates(constref Crop_Assimilates : rep_Assimilates);
+
+procedure SetCrop_Assimilates_On(constref On : Boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setcrop_assimilates_on_wrap';
+
+procedure SetCrop_Assimilates_Period(constref Period : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_assimilates_period';
+
+procedure SetCrop_Assimilates_Stored(constref Stored : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_assimilates_stored';
+
+procedure SetCrop_Assimilates_Mobilized(constref Mobilized : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setcrop_assimilates_mobilized';
 
 procedure DetermineDayNr(
             constref Dayi,Monthi,Yeari : integer;
@@ -314,6 +1083,15 @@ procedure DetermineLengthGrowthStages_wrap(
             VAR CGCVal : double);
         external 'aquacrop' name '__ac_interface_global_MOD_determinelengthgrowthstages_wrap';
 
+procedure TimeToMaxCanopySF(
+            constref CCo,CGC,CCx : double;
+            constref L0,L12,L123,LToFlor,LFlor : integer;
+            constref DeterminantCrop : boolean;
+            VAR L12SF : integer;
+            VAR RedCGC,RedCCx : ShortInt;
+            VAR ClassSF : ShortInt);
+        external 'aquacrop' name '__ac_interface_global_MOD_timetomaxcanopysf_wrap';
+           
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;
@@ -702,6 +1480,248 @@ procedure SetSWCiniFileFull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setswcinifilefull_wrap';
+
+function Geteffectiverain() : rep_EffectiveRain;
+
+function Geteffectiverain_Method() : rep_EffectiveRainMethod;
+
+function __Geteffectiverain_Method() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_method';
+
+function Geteffectiverain_PercentEffRain() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_percenteffrain';
+
+function Geteffectiverain_ShowersInDecade() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_showersindecade';
+
+function Geteffectiverain_RootNrEvap() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_rootnrevap';
+
+procedure Seteffectiverain(constref effectiverain : rep_EffectiveRain);
+
+procedure Seteffectiverain_Method(constref Method : rep_EffectiveRainMethod);
+
+procedure __Seteffectiverain_Method(constref Method : shortint);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_method';
+
+procedure Seteffectiverain_PercentEffRain(constref PercentEffRain : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_percenteffrain';
+
+procedure Seteffectiverain_ShowersInDecade(constref ShowersInDecade : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_showersindecade';
+
+procedure Seteffectiverain_RootNrEvap(constref RootNrEvap : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_rootnrevap';
+
+
+function GetSimulParam_EvapDeclineFactor() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_evapdeclinefactor';
+
+function GetSimulParam_KcWetBare() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_kcwetbare';
+
+function GetSimulParam_PercCCxHIfinal() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_percccxhifinal';
+
+function GetSimulParam_RootPercentZmin() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_rootpercentzmin';
+
+function GetSimulParam_MaxRootZoneExpansion() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_maxrootzoneexpansion';
+
+function GetSimulParam_KsShapeFactorRoot() : Shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_ksshapefactorroot';
+
+function GetSimulParam_TAWGermination() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tawgermination';
+
+function GetSimulParam_pAdjFAO() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_padjfao';
+
+function GetSimulParam_DelayLowOxygen() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_delaylowoxygen';
+
+function GetSimulParam_ExpFsen() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_expfsen';
+
+function GetSimulParam_Beta() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_beta';
+
+function GetSimulParam_ThicknessTopSWC() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_thicknesstopswc';
+
+function GetSimulParam_EvapZmax() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_evapzmax';
+
+function GetSimulParam_RunoffDepth() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_runoffdepth';
+
+function GetSimulParam_CNcorrection() : Boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulparam_cncorrection_wrap';
+
+function GetSimulParam_Tmin() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tmin';
+
+function GetSimulParam_Tmax() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tmax';
+
+function GetSimulParam_GDDMethod() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_gddmethod';
+
+function GetSimulParam_PercRAW() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_percraw';
+
+function GetSimulParam_CompDefThick() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_compdefthick';
+
+function GetSimulParam_CropDay1() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_cropday1';
+
+function GetSimulParam_Tbase() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tbase';
+
+function GetSimulParam_Tupper() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_tupper';
+
+function GetSimulParam_IrriFwInSeason() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_irrifwinseason';
+
+function GetSimulParam_IrriFwOffSeason() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_irrifwoffseason';
+
+function GetSimulParam_SaltDiff() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_saltdiff';
+
+function GetSimulParam_SaltSolub() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_saltsolub';
+
+function GetSimulParam_ConstGwt() : Boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulparam_constgwt_wrap';
+
+function GetSimulParam_RootNrDF() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_rootnrdf';
+
+function GetSimulParam_IniAbstract() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_iniabstract';
+
+function __GetSimulParam_EffectiveRain_method(): integer;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_method';
+
+function GetSimulParam_EffectiveRain_method(): rep_EffectiveRainMethod;
+
+function GetSimulParam_EffectiveRain_PercentEffRain(): shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_percenteffrain';
+
+function GetSimulParam_EffectiveRain_ShowersInDecade(): shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_showersindecade';
+
+function GetSimulParam_EffectiveRain_RootNrEvap(): shortint;
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
+
+
+procedure SetSimulParam_EvapDeclineFactor(constref EvapDeclineFactor : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_evapdeclinefactor';
+
+procedure SetSimulParam_KcWetBare(constref KcWetBare : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_kcwetbare';
+
+procedure SetSimulParam_PercCCxHIfinal(constref PercCCxHIfinal : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_percccxhifinal';
+
+procedure SetSimulParam_RootPercentZmin(constref RootPercentZmin : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_rootpercentzmin';
+
+procedure SetSimulParam_MaxRootZoneExpansion(constref MaxRootZoneExpansion : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_maxrootzoneexpansion';
+
+procedure SetSimulParam_KsShapeFactorRoot(constref KsShapeFactorRoot : Shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_ksshapefactorroot';
+
+procedure SetSimulParam_TAWGermination(constref TAWGermination : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tawgermination';
+
+procedure SetSimulParam_pAdjFAO(constref pAdjFAO : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_padjfao';
+
+procedure SetSimulParam_DelayLowOxygen(constref DelayLowOxygen : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_delaylowoxygen';
+
+procedure SetSimulParam_ExpFsen(constref ExpFsen : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_expfsen';
+
+procedure SetSimulParam_Beta(constref Beta : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_beta';
+
+procedure SetSimulParam_ThicknessTopSWC(constref ThicknessTopSWC : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_thicknesstopswc';
+
+procedure SetSimulParam_EvapZmax(constref EvapZmax : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_evapzmax';
+
+procedure SetSimulParam_RunoffDepth(constref RunoffDepth : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_runoffdepth';
+
+procedure SetSimulParam_CNcorrection(constref CNcorrection : Boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulparam_cncorrection_wrap';
+
+procedure SetSimulParam_Tmin(constref Tmin : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tmin';
+
+procedure SetSimulParam_Tmax(constref Tmax : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tmax';
+
+procedure SetSimulParam_GDDMethod(constref GDDMethod : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_gddmethod';
+
+procedure SetSimulParam_PercRAW(constref PercRAW : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_percraw';
+
+procedure SetSimulParam_CompDefThick(constref CompDefThick : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_compdefthick';
+
+procedure SetSimulParam_CropDay1(constref CropDay1 : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_cropday1';
+
+procedure SetSimulParam_Tbase(constref Tbase : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tbase';
+
+procedure SetSimulParam_Tupper(constref Tupper : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_tupper';
+
+procedure SetSimulParam_IrriFwInSeason(constref IrriFwInSeason : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_irrifwinseason';
+
+procedure SetSimulParam_IrriFwOffSeason(constref IrriFwOffSeason : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_irrifwoffseason';
+
+procedure SetSimulParam_SaltDiff(constref SaltDiff : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_saltdiff';
+
+procedure SetSimulParam_SaltSolub(constref SaltSolub : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_saltsolub';
+
+procedure SetSimulParam_ConstGwt(constref ConstGwt : Boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulparam_constgwt_wrap';
+
+procedure SetSimulParam_RootNrDF(constref RootNrDF : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_rootnrdf';
+
+procedure SetSimulParam_IniAbstract(constref IniAbstract : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_iniabstract';
+
+procedure __SetSimulParam_EffectiveRain_method(constref Method : integer);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_effectiverain_method';
+
+procedure SetSimulParam_EffectiveRain_method(constref Method : rep_EffectiveRainMethod);
+
+procedure SetSimulParam_EffectiveRain_PercentEffRain(constref PercentEffRain : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setsimulparam_effectiverain_percenteffrain';
+	
+procedure SetSimulParam_EffectiveRain_ShowersInDecade(constref ShowersInDecade : shortint);
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_showersindecade';
+	
+procedure SetSimulParam_EffectiveRain_RootNrEvap(constref RootNrEvap : shortint);
+    external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
 
 
 function GetPathNameProg(): string;
@@ -1094,37 +2114,6 @@ procedure CheckFilesInProject_wrap(
         external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
 
 
-function Geteffectiverain() : rep_EffectiveRain;
-
-function Geteffectiverain_Method() : rep_EffectiveRainMethod;
-
-function __Geteffectiverain_Method() : shortint;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_method';
-
-function Geteffectiverain_PercentEffRain() : ShortInt;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_percenteffrain';
-
-function Geteffectiverain_ShowersInDecade() : ShortInt;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_showersindecade';
-
-function Geteffectiverain_RootNrEvap() : ShortInt;
-    external 'aquacrop' name '__ac_global_MOD_geteffectiverain_rootnrevap';
-
-procedure Seteffectiverain(constref effectiverain : rep_EffectiveRain);
-
-procedure Seteffectiverain_Method(constref Method : rep_EffectiveRainMethod);
-
-procedure __Seteffectiverain_Method(constref Method : shortint);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_method';
-
-procedure Seteffectiverain_PercentEffRain(constref PercentEffRain : ShortInt);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_percenteffrain';
-
-procedure Seteffectiverain_ShowersInDecade(constref ShowersInDecade : ShortInt);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_showersindecade';
-
-procedure Seteffectiverain_RootNrEvap(constref RootNrEvap : ShortInt);
-    external 'aquacrop' name '__ac_global_MOD_seteffectiverain_rootnrevap';
 
 
 function GetIrriECw(): rep_IrriECw;
@@ -1844,6 +2833,25 @@ begin;
     __SetManagement_Cuttings_Criterion(int_timecuttings);
 end;
 
+function GetSimulParam_EffectiveRain_Method() : rep_EffectiveRainMethod;
+var
+    int_EffectiveRainMethod : integer;
+
+begin;
+    int_EffectiveRainMethod := __GetSimulParam_EffectiveRain_Method();
+    GetSimulParam_EffectiveRain_Method := rep_EffectiveRainMethod(int_EffectiveRainMethod);
+end;
+
+procedure SetSimulParam_EffectiveRain_Method(constref Method: rep_EffectiveRainMethod); 
+var
+    int_EffectiveRainMethod : integer;
+
+begin;
+    int_EffectiveRainMethod := ord(Method);
+    __SetSimulParam_EffectiveRain_Method(int_EffectiveRainMethod);
+end;
+
+
 function GetGenerateTimeMode() : rep_GenerateTimeMode;
 var
     int_GenerateTimeMode : integer;
@@ -2001,6 +3009,317 @@ begin;
     SplitStringInThreeParams_wrap(p, strlen, Par1, Par2,Par3);
 end;
 
+function GetCrop() : rep_Crop;
+begin;
+    GetCrop.subkind := GetCrop_subkind();
+    GetCrop.ModeCycle := GetCrop_ModeCycle();
+    GetCrop.Planting := GetCrop_Planting();
+    GetCrop.pMethod := GetCrop_pMethod();
+    GetCrop.pdef := GetCrop_pdef();
+    GetCrop.pActStom := GetCrop_pActStom();
+    GetCrop.KsShapeFactorLeaf := GetCrop_KsShapeFactorLeaf();
+    GetCrop.KsShapeFactorStomata := GetCrop_KsShapeFactorStomata();
+    GetCrop.KsShapeFactorSenescence := GetCrop_KsShapeFactorSenescence();
+    GetCrop.pLeafDefUL := GetCrop_pLeafDefUL();
+    GetCrop.pLeafDefLL := GetCrop_pLeafDefLL();
+    GetCrop.pLeafAct := GetCrop_pLeafAct();
+    GetCrop.pSenescence := GetCrop_pSenescence();
+    GetCrop.pSenAct := GetCrop_pSenAct();
+    GetCrop.pPollination := GetCrop_pPollination();
+    GetCrop.SumEToDelaySenescence := GetCrop_SumEToDelaySenescence();
+    GetCrop.AnaeroPoint := GetCrop_AnaeroPoint();
+    GetCrop.StressResponse := GetCrop_StressResponse();
+    GetCrop.ECemin := GetCrop_ECemin();
+    GetCrop.ECemax := GetCrop_ECemax();
+    GetCrop.CCsaltDistortion := GetCrop_CCsaltDistortion();
+    GetCrop.ResponseECsw := GetCrop_ResponseECsw();
+    GetCrop.SmaxTopQuarter := GetCrop_SmaxTopQuarter();
+    GetCrop.SmaxBotQuarter := GetCrop_SmaxBotQuarter();
+    GetCrop.SmaxTop := GetCrop_SmaxTop();
+    GetCrop.SmaxBot := GetCrop_SmaxBot();
+    GetCrop.KcTop := GetCrop_KcTop();
+    GetCrop.KcDecline := GetCrop_KcDecline();
+    GetCrop.CCEffectEvapLate := GetCrop_CCEffectEvapLate();
+    GetCrop.Day1 := GetCrop_Day1();
+    GetCrop.DayN := GetCrop_DayN();
+    GetCrop.Length := GetCrop_Length();
+    GetCrop.RootMin := GetCrop_RootMin();
+    GetCrop.RootMax := GetCrop_RootMax();
+    GetCrop.RootShape := GetCrop_RootShape();
+    GetCrop.Tbase := GetCrop_Tbase();
+    GetCrop.Tupper := GetCrop_Tupper();
+    GetCrop.Tcold := GetCrop_Tcold();
+    GetCrop.Theat := GetCrop_Theat();
+    GetCrop.GDtranspLow := GetCrop_GDtranspLow();
+    GetCrop.SizeSeedling := GetCrop_SizeSeedling();
+    GetCrop.SizePlant := GetCrop_SizePlant();
+    GetCrop.PlantingDens := GetCrop_PlantingDens();
+    GetCrop.CCo := GetCrop_CCo();
+    GetCrop.CCini := GetCrop_CCini();
+    GetCrop.CGC := GetCrop_CGC();
+    GetCrop.GDDCGC := GetCrop_GDDCGC();
+    GetCrop.CCx := GetCrop_CCx();
+    GetCrop.CDC := GetCrop_CDC();
+    GetCrop.GDDCDC := GetCrop_GDDCDC();
+    GetCrop.CCxAdjusted := GetCrop_CCxAdjusted();
+    GetCrop.CCxWithered := GetCrop_CCxWithered();
+    GetCrop.CCoAdjusted := GetCrop_CCoAdjusted();
+    GetCrop.DaysToCCini := GetCrop_DaysToCCini();
+    GetCrop.DaysToGermination := GetCrop_DaysToGermination();
+    GetCrop.DaysToFullCanopy := GetCrop_DaysToFullCanopy();
+    GetCrop.DaysToFullCanopySF := GetCrop_DaysToFullCanopySF();
+    GetCrop.DaysToFlowering := GetCrop_DaysToFlowering();
+    GetCrop.LengthFlowering := GetCrop_LengthFlowering();
+    GetCrop.DaysToSenescence := GetCrop_DaysToSenescence();
+    GetCrop.DaysToHarvest := GetCrop_DaysToHarvest();
+    GetCrop.DaysToMaxRooting := GetCrop_DaysToMaxRooting();
+    GetCrop.DaysToHIo := GetCrop_DaysToHIo();
+    GetCrop.GDDaysToCCini := GetCrop_GDDaysToCCini();
+    GetCrop.GDDaysToGermination := GetCrop_GDDaysToGermination();
+    GetCrop.GDDaysToFullCanopy := GetCrop_GDDaysToFullCanopy();
+    GetCrop.GDDaysToFullCanopySF := GetCrop_GDDaysToFullCanopySF();
+    GetCrop.GDDaysToFlowering := GetCrop_GDDaysToFlowering();
+    GetCrop.GDDLengthFlowering := GetCrop_GDDLengthFlowering();
+    GetCrop.GDDaysToSenescence := GetCrop_GDDaysToSenescence();
+    GetCrop.GDDaysToHarvest := GetCrop_GDDaysToHarvest();
+    GetCrop.GDDaysToMaxRooting := GetCrop_GDDaysToMaxRooting();
+    GetCrop.GDDaysToHIo := GetCrop_GDDaysToHIo();
+    GetCrop.WP := GetCrop_WP();
+    GetCrop.WPy := GetCrop_WPy();
+    GetCrop.AdaptedToCO2 := GetCrop_AdaptedToCO2();
+    GetCrop.HI := GetCrop_HI();
+    GetCrop.dHIdt := GetCrop_dHIdt();
+    GetCrop.HIincrease := GetCrop_HIincrease();
+    GetCrop.aCoeff := GetCrop_aCoeff();
+    GetCrop.bCoeff := GetCrop_bCoeff();
+    GetCrop.DHImax := GetCrop_DHImax();
+    GetCrop.DeterminancyLinked := GetCrop_DeterminancyLinked();
+    GetCrop.fExcess := GetCrop_fExcess();
+    GetCrop.DryMatter := GetCrop_DryMatter();
+    GetCrop.RootMinYear1 := GetCrop_RootMinYear1();
+    GetCrop.SownYear1 := GetCrop_SownYear1();
+    GetCrop.YearCCx := GetCrop_YearCCx();
+    GetCrop.CCxRoot := GetCrop_CCxRoot();
+    GetCrop.Assimilates := GetCrop_Assimilates();
+end;
+
+function GetCrop_StressResponse() : rep_Shapes;
+begin;
+    GetCrop_StressResponse.Stress := GetCrop_StressResponse_Stress();
+    GetCrop_StressResponse.ShapeCGC := GetCrop_StressResponse_ShapeCGC();
+    GetCrop_StressResponse.ShapeCCX := GetCrop_StressResponse_ShapeCCX();
+    GetCrop_StressResponse.ShapeWP := GetCrop_StressResponse_ShapeWP();
+    GetCrop_StressResponse.ShapeCDecline := GetCrop_StressResponse_ShapeCDecline();
+    GetCrop_StressResponse.Calibrated := GetCrop_StressResponse_Calibrated();
+end;
+
+
+procedure SetCrop_StressResponse(constref Crop_StressResponse : rep_Shapes);
+begin;
+    SetCrop_StressResponse_Stress(Crop_StressResponse.Stress);
+    SetCrop_StressResponse_ShapeCGC(Crop_StressResponse.ShapeCGC);
+    SetCrop_StressResponse_ShapeCCX(Crop_StressResponse.ShapeCCX);
+    SetCrop_StressResponse_ShapeWP(Crop_StressResponse.ShapeWP);
+    SetCrop_StressResponse_ShapeCDecline(Crop_StressResponse.ShapeCDecline);
+    SetCrop_StressResponse_Calibrated(Crop_StressResponse.Calibrated);
+end;
+
+function GetCrop_Length() : rep_int_array;
+var
+    i : integer;
+begin;
+    for i := 1 to 4 do GetCrop_Length[i] := GetCrop_Length_i(i)
+end;
+
+function GetCrop_subkind() : rep_subkind;
+var
+    index : shortint;
+begin;
+    index := __GetCrop_subkind();
+    GetCrop_subkind := rep_subkind(index);
+end;
+
+
+function GetCrop_ModeCycle() : rep_modeCycle;
+var
+    index : shortint;
+begin;
+    index := __GetCrop_ModeCycle();
+    GetCrop_ModeCycle := rep_modeCycle(index);
+end;
+
+
+function GetCrop_Planting() : rep_Planting;
+var
+    index : shortint;
+begin;
+    index := __GetCrop_Planting();
+    GetCrop_Planting := rep_Planting(index);
+end;
+
+
+function GetCrop_pMethod() : rep_pMethod;
+var
+    index : shortint;
+begin;
+    index := __GetCrop_pMethod();
+    GetCrop_pMethod := rep_pMethod(index);
+end;
+
+procedure SetCrop_Length(constref Length : rep_int_array);
+var
+    i : integer;
+begin;
+    for i := 1 to 4 do SetCrop_Length_i(i, Length[i])
+end;
+
+procedure SetCrop(constref Crop : rep_Crop);
+begin;
+    SetCrop_subkind(Crop.subkind);
+    SetCrop_ModeCycle(Crop.ModeCycle);
+    SetCrop_Planting(Crop.Planting);
+    SetCrop_pMethod(Crop.pMethod);
+    SetCrop_pdef(Crop.pdef);
+    SetCrop_pActStom(Crop.pActStom);
+    SetCrop_KsShapeFactorLeaf(Crop.KsShapeFactorLeaf);
+    SetCrop_KsShapeFactorStomata(Crop.KsShapeFactorStomata);
+    SetCrop_KsShapeFactorSenescence(Crop.KsShapeFactorSenescence);
+    SetCrop_pLeafDefUL(Crop.pLeafDefUL);
+    SetCrop_pLeafDefLL(Crop.pLeafDefLL);
+    SetCrop_pLeafAct(Crop.pLeafAct);
+    SetCrop_pSenescence(Crop.pSenescence);
+    SetCrop_pSenAct(Crop.pSenAct);
+    SetCrop_pPollination(Crop.pPollination);
+    SetCrop_SumEToDelaySenescence(Crop.SumEToDelaySenescence);
+    SetCrop_AnaeroPoint(Crop.AnaeroPoint);
+    SetCrop_StressResponse(Crop.StressResponse);
+    SetCrop_ECemin(Crop.ECemin);
+    SetCrop_ECemax(Crop.ECemax);
+    SetCrop_CCsaltDistortion(Crop.CCsaltDistortion);
+    SetCrop_ResponseECsw(Crop.ResponseECsw);
+    SetCrop_SmaxTopQuarter(Crop.SmaxTopQuarter);
+    SetCrop_SmaxBotQuarter(Crop.SmaxBotQuarter);
+    SetCrop_SmaxTop(Crop.SmaxTop);
+    SetCrop_SmaxBot(Crop.SmaxBot);
+    SetCrop_KcTop(Crop.KcTop);
+    SetCrop_KcDecline(Crop.KcDecline);
+    SetCrop_CCEffectEvapLate(Crop.CCEffectEvapLate);
+    SetCrop_Day1(Crop.Day1);
+    SetCrop_DayN(Crop.DayN);
+    SetCrop_Length(Crop.Length);
+    SetCrop_RootMin(Crop.RootMin);
+    SetCrop_RootMax(Crop.RootMax);
+    SetCrop_RootShape(Crop.RootShape);
+    SetCrop_Tbase(Crop.Tbase);
+    SetCrop_Tupper(Crop.Tupper);
+    SetCrop_Tcold(Crop.Tcold);
+    SetCrop_Theat(Crop.Theat);
+    SetCrop_GDtranspLow(Crop.GDtranspLow);
+    SetCrop_SizeSeedling(Crop.SizeSeedling);
+    SetCrop_SizePlant(Crop.SizePlant);
+    SetCrop_PlantingDens(Crop.PlantingDens);
+    SetCrop_CCo(Crop.CCo);
+    SetCrop_CCini(Crop.CCini);
+    SetCrop_CGC(Crop.CGC);
+    SetCrop_GDDCGC(Crop.GDDCGC);
+    SetCrop_CCx(Crop.CCx);
+    SetCrop_CDC(Crop.CDC);
+    SetCrop_GDDCDC(Crop.GDDCDC);
+    SetCrop_CCxAdjusted(Crop.CCxAdjusted);
+    SetCrop_CCxWithered(Crop.CCxWithered);
+    SetCrop_CCoAdjusted(Crop.CCoAdjusted);
+    SetCrop_DaysToCCini(Crop.DaysToCCini);
+    SetCrop_DaysToGermination(Crop.DaysToGermination);
+    SetCrop_DaysToFullCanopy(Crop.DaysToFullCanopy);
+    SetCrop_DaysToFullCanopySF(Crop.DaysToFullCanopySF);
+    SetCrop_DaysToFlowering(Crop.DaysToFlowering);
+    SetCrop_LengthFlowering(Crop.LengthFlowering);
+    SetCrop_DaysToSenescence(Crop.DaysToSenescence);
+    SetCrop_DaysToHarvest(Crop.DaysToHarvest);
+    SetCrop_DaysToMaxRooting(Crop.DaysToMaxRooting);
+    SetCrop_DaysToHIo(Crop.DaysToHIo);
+    SetCrop_GDDaysToCCini(Crop.GDDaysToCCini);
+    SetCrop_GDDaysToGermination(Crop.GDDaysToGermination);
+    SetCrop_GDDaysToFullCanopy(Crop.GDDaysToFullCanopy);
+    SetCrop_GDDaysToFullCanopySF(Crop.GDDaysToFullCanopySF);
+    SetCrop_GDDaysToFlowering(Crop.GDDaysToFlowering);
+    SetCrop_GDDLengthFlowering(Crop.GDDLengthFlowering);
+    SetCrop_GDDaysToSenescence(Crop.GDDaysToSenescence);
+    SetCrop_GDDaysToHarvest(Crop.GDDaysToHarvest);
+    SetCrop_GDDaysToMaxRooting(Crop.GDDaysToMaxRooting);
+    SetCrop_GDDaysToHIo(Crop.GDDaysToHIo);
+    SetCrop_WP(Crop.WP);
+    SetCrop_WPy(Crop.WPy);
+    SetCrop_AdaptedToCO2(Crop.AdaptedToCO2);
+    SetCrop_HI(Crop.HI);
+    SetCrop_dHIdt(Crop.dHIdt);
+    SetCrop_HIincrease(Crop.HIincrease);
+    SetCrop_aCoeff(Crop.aCoeff);
+    SetCrop_bCoeff(Crop.bCoeff);
+    SetCrop_DHImax(Crop.DHImax);
+    SetCrop_DeterminancyLinked(Crop.DeterminancyLinked);
+    SetCrop_fExcess(Crop.fExcess);
+    SetCrop_DryMatter(Crop.DryMatter);
+    SetCrop_RootMinYear1(Crop.RootMinYear1);
+    SetCrop_SownYear1(Crop.SownYear1);
+    SetCrop_YearCCx(Crop.YearCCx);
+    SetCrop_CCxRoot(Crop.CCxRoot);
+    SetCrop_Assimilates(Crop.Assimilates);
+end;
+
+
+procedure SetCrop_subkind(constref subkind : rep_subkind);
+var
+    index : shortint;
+begin;
+    index := ord(subkind);
+    __SetCrop_subkind(index);
+end;
+
+
+procedure SetCrop_ModeCycle(constref ModeCycle : rep_modeCycle);
+var
+    index : shortint;
+begin;
+    index := ord(ModeCycle);
+    __SetCrop_ModeCycle(index);
+end;
+
+
+procedure SetCrop_Planting(constref Planting : rep_Planting);
+var
+    index : shortint;
+begin;
+    index := ord(Planting);
+    __SetCrop_Planting(index);
+end;
+
+
+procedure SetCrop_pMethod(constref pMethod : rep_pMethod);
+var
+    index : shortint;
+begin;
+    index := ord(pMethod);
+    __SetCrop_pMethod(index);
+end;
+
+function GetCrop_Assimilates() : rep_Assimilates;
+begin;
+    GetCrop_Assimilates.On := GetCrop_Assimilates_On();
+    GetCrop_Assimilates.Period := GetCrop_Assimilates_Period();
+    GetCrop_Assimilates.Stored := GetCrop_Assimilates_Stored();
+    GetCrop_Assimilates.Mobilized := GetCrop_Assimilates_Mobilized();
+end;
+
+
+procedure SetCrop_Assimilates(constref Crop_Assimilates : rep_Assimilates);
+begin;
+    SetCrop_Assimilates_On(Crop_Assimilates.On);
+    SetCrop_Assimilates_Period(Crop_Assimilates.Period);
+    SetCrop_Assimilates_Stored(Crop_Assimilates.Stored);
+    SetCrop_Assimilates_Mobilized(Crop_Assimilates.Mobilized);
+end;
+
 function GetOnset() : rep_Onset;
 begin;
     GetOnset.GenerateOn := GetOnset_GenerateOn();
@@ -2059,6 +3378,8 @@ begin;
     index := ord(AirTCriterion);
     __SetOnset_AirTCriterion(index);
 end;
+
+
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 begin;
@@ -2962,6 +4283,7 @@ begin;
     strlen := Length(str);
     SetCropFile_wrap(p, strlen);
 end;
+
 
 
 function GetSumWaBal() : rep_sum;

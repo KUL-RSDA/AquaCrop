@@ -6,6 +6,7 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_ptr
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
+                     TimeToMaxCanopySF, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -15,6 +16,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetCO2Description, &
                      GetCropFile, &
                      GetCropFileFull, &
+                     GetCrop_DeterminancyLinked, &
+                     GetCrop_SownYear1, &
+                     GetCrop_StressResponse_Calibrated, &
+                     GetCrop_Assimilates_On, &
                      GetIrriDescription, &
                      GetIrriFile, &
                      GetIrriFileFull, &
@@ -28,6 +33,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
                      GetNumberSimulationRuns, &
+                     GetSimulParam_CNcorrection, &
+                     GetsimulParam_ConstGwt, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
@@ -66,6 +73,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetCO2Description, &
                      SetCropFile, &
                      SetCropFileFull, &
+                     SetCrop_DeterminancyLinked, &
+                     SetCrop_SownYear1, &
+                     SetCrop_StressResponse_Calibrated, &
+                     SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
                      SetClimateFile, &
@@ -76,6 +87,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToDescription, &
                      setSWCiniFile, &
                      setSWCiniFileFull, &
+                     SetSimulParam_CNcorrection, &
+                     SetSimulParam_ConstGwt, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
@@ -112,7 +125,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetTemperatureRecord_ToString
 use ac_kinds, only: dp, &
                     int32, &
-                    intEnum
+                    intEnum, &
+                    int8
 implicit none
 
 
@@ -149,6 +163,73 @@ function string2pointer(string) result(c_pointer)
     c_pointer = c_loc(f_string)
 end function string2pointer
 
+function GetCrop_Assimilates_On_wrap() result(On)
+    !! Wrapper for [[ac_global:GetCrop_Assimilates_On]] for foreign languages.
+    logical(1) :: On
+
+    On = GetCrop_Assimilates_On()
+end function GetCrop_Assimilates_On_wrap
+
+subroutine SetCrop_Assimilates_On_wrap(On)
+    !! Wrapper for [[ac_global:SetCrop_Assimilates_On]] for foreign languages.
+    logical(1), intent(in) :: On
+
+    logical :: bool
+
+    bool = On
+    call SetCrop_Assimilates_On(bool)
+end subroutine SetCrop_Assimilates_On_wrap
+
+function GetCrop_DeterminancyLinked_wrap() result(DeterminancyLinked)
+    !! Wrapper for [[ac_global:GetCrop_DeterminancyLinked]] for foreign languages.
+    logical(1) :: DeterminancyLinked
+
+    DeterminancyLinked = GetCrop_DeterminancyLinked()
+end function GetCrop_DeterminancyLinked_wrap
+
+function GetCrop_SownYear1_wrap() result(SownYear1)
+    !! Wrapper for [[ac_global:GetCrop_SownYear1]] for foreign languages.
+    logical(1) :: SownYear1
+
+    SownYear1 = GetCrop_SownYear1()
+end function GetCrop_SownYear1_wrap
+
+subroutine SetCrop_DeterminancyLinked_wrap(DeterminancyLinked)
+    !! Wrapper for [[ac_global:SetCrop_DeterminancyLinked]] for foreign languages.
+    logical(1), intent(in) :: DeterminancyLinked
+
+    logical :: bool
+
+    bool = DeterminancyLinked
+    call SetCrop_DeterminancyLinked(bool)
+end subroutine SetCrop_DeterminancyLinked_wrap
+
+subroutine SetCrop_SownYear1_wrap(SownYear1)
+    !! Wrapper for [[ac_global:SetCrop_SownYear1]] for foreign languages.
+    logical(1), intent(in) :: SownYear1
+
+    logical :: bool
+
+    bool = SownYear1
+    call SetCrop_SownYear1(bool)
+end subroutine SetCrop_SownYear1_wrap
+
+function GetCrop_StressResponse_Calibrated_wrap() result(Calibrated)
+    !! Wrapper for [[ac_global:GetCrop_StressResponse_Calibrated]] for foreign languages.
+    logical(1) :: Calibrated
+
+    Calibrated = GetCrop_StressResponse_Calibrated()
+end function GetCrop_StressResponse_Calibrated_wrap
+
+subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
+    !! Wrapper for [[ac_global:SetCrop_StressResponse_Calibrated]] for foreign languages.
+    logical(1), intent(in) :: Calibrated
+
+    logical :: bool
+
+    bool = Calibrated
+    call SetCrop_StressResponse_Calibrated(bool)
+end subroutine SetCrop_StressResponse_Calibrated_wrap
 
 subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
@@ -248,6 +329,30 @@ subroutine GenerateCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
     call GenerateCO2Description(string1, string2)
 end subroutine GenerateCO2Description_wrap
 
+subroutine TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
+                                  LFlor, DeterminantCrop, L12SF, RedCGC, &
+                                  RedCCx, ClassSF)
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CCx
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LToFlor
+    integer(int32), intent(in) :: LFlor
+    logical(1), intent(in) :: DeterminantCrop
+    integer(int32), intent(inout) :: L12SF
+    integer(int8), intent(inout) :: RedCGC
+    integer(int8), intent(inout) :: RedCCx
+    integer(int8), intent(inout) :: ClassSF
+    
+    logical :: DeterminantCrop_f
+    
+    DeterminantCrop_f = DeterminantCrop
+    call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
+                                  LFlor, DeterminantCrop_f, L12SF, RedCGC, &
+                                  RedCCx, ClassSF)
+end subroutine TimeToMaxCanopySF_wrap
 
 subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                         TotalLength, CGCgiven, TheDaysToCCini, ThePlanting, &
@@ -578,6 +683,40 @@ subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
     string = pointer2string(SWCiniFileFull, strlen)
     call SetSWCiniFileFull(string)
 end subroutine SetSWCiniFileFull_wrap
+
+function GetSimulParam_CNcorrection_wrap() result(CNcorrection)
+    !! Wrapper for [[ac_global:GetSimulParam_CNcorrection]] for foreign languages.
+    logical(1) :: CNcorrection
+
+    CNcorrection = GetSimulParam_CNcorrection()
+end function GetSimulParam_CNcorrection_wrap
+
+function GetSimulParam_ConstGwt_wrap() result(ConstGwt)
+    !! Wrapper for [[ac_global:GetSimulParam_ConstGwt]] for foreign languages.
+    logical(1) :: ConstGwt
+
+    ConstGwt = GetSimulParam_ConstGwt()
+end function GetSimulParam_ConstGwt_wrap
+
+subroutine SetSimulParam_CNcorrection_wrap(CNcorrection)
+    !! Wrapper for [[ac_global:SetSimulParam_CNcorrection]] for foreign languages.
+    logical(1), intent(in) :: CNcorrection
+
+    logical :: bool
+
+    bool = CNcorrection
+    call SetSimulParam_CNcorrection(bool)
+end subroutine SetSimulParam_CNcorrection_wrap
+
+subroutine SetSimulParam_ConstGwt_wrap(ConstGwt)
+    !! Wrapper for [[ac_global:SetSimulParam_ConstGwt]] for foreign languages.
+    logical(1), intent(in) :: ConstGwt
+
+    logical :: bool
+
+    bool = ConstGwt
+    call SetSimulParam_ConstGwt(bool)
+end subroutine SetSimulParam_ConstGwt_wrap
 
 function GetPathNameProg_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
@@ -1025,7 +1164,6 @@ subroutine SetManagement_RunoffOn_wrap(RunoffOn)
     RunoffOn_f = RunoffOn
     call SetManagement_RunoffOn(RunoffOn_f)    
 end subroutine SetManagement_RunoffOn_wrap
-
 
 function GetOffSeasonFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
