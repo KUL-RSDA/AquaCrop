@@ -755,7 +755,6 @@ procedure Seteffectiverain_ShowersInDecade(constref ShowersInDecade : ShortInt);
 procedure Seteffectiverain_RootNrEvap(constref RootNrEvap : ShortInt);
     external 'aquacrop' name '__ac_global_MOD_seteffectiverain_rootnrevap';
 
-function GetSimulParam() : rep_param;
 
 function GetSimulParam_EvapDeclineFactor() : ShortInt;
     external 'aquacrop' name '__ac_global_MOD_getsimulparam_evapdeclinefactor';
@@ -861,7 +860,6 @@ function GetSimulParam_EffectiveRain_ShowersInDecade(): shortint;
 function GetSimulParam_EffectiveRain_RootNrEvap(): shortint;
     external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
 
-procedure SetSimulParam(constref SimulParam : rep_param);
 
 procedure SetSimulParam_EvapDeclineFactor(constref EvapDeclineFactor : ShortInt);
     external 'aquacrop' name '__ac_global_MOD_setsimulparam_evapdeclinefactor';
@@ -3118,84 +3116,6 @@ begin;
     SetCropFile_wrap(p, strlen);
 end;
 
-function GetSimulParam() : rep_param;
-begin;
-    GetSimulParam.EvapDeclineFactor := GetSimulParam_EvapDeclineFactor();
-    GetSimulParam.KcWetBare := GetSimulParam_KcWetBare();
-    GetSimulParam.PercCCxHIfinal := GetSimulParam_PercCCxHIfinal();
-    GetSimulParam.RootPercentZmin := GetSimulParam_RootPercentZmin();
-    GetSimulParam.MaxRootZoneExpansion := GetSimulParam_MaxRootZoneExpansion();
-    GetSimulParam.KsShapeFactorRoot := GetSimulParam_KsShapeFactorRoot();
-    GetSimulParam.TAWGermination := GetSimulParam_TAWGermination();
-    GetSimulParam.pAdjFAO := GetSimulParam_pAdjFAO();
-    GetSimulParam.DelayLowOxygen := GetSimulParam_DelayLowOxygen();
-    GetSimulParam.ExpFsen := GetSimulParam_ExpFsen();
-    GetSimulParam.Beta := GetSimulParam_Beta();
-    GetSimulParam.ThicknessTopSWC := GetSimulParam_ThicknessTopSWC();
-    GetSimulParam.EvapZmax := GetSimulParam_EvapZmax();
-    GetSimulParam.RunoffDepth := GetSimulParam_RunoffDepth();
-    GetSimulParam.CNcorrection := GetSimulParam_CNcorrection();
-    GetSimulParam.Tmin := GetSimulParam_Tmin();
-    GetSimulParam.Tmax := GetSimulParam_Tmax();
-    GetSimulParam.GDDMethod := GetSimulParam_GDDMethod();
-    GetSimulParam.PercRAW := GetSimulParam_PercRAW();
-    GetSimulParam.CompDefThick := GetSimulParam_CompDefThick();
-    GetSimulParam.CropDay1 := GetSimulParam_CropDay1();
-    GetSimulParam.Tbase := GetSimulParam_Tbase();
-    GetSimulParam.Tupper := GetSimulParam_Tupper();
-    GetSimulParam.IrriFwInSeason := GetSimulParam_IrriFwInSeason();
-    GetSimulParam.IrriFwOffSeason := GetSimulParam_IrriFwOffSeason();
-    GetSimulParam.SaltDiff := GetSimulParam_SaltDiff();
-    GetSimulParam.SaltSolub := GetSimulParam_SaltSolub();
-    GetSimulParam.ConstGwt := GetSimulParam_ConstGwt();
-    GetSimulParam.RootNrDF := GetSimulParam_RootNrDF();
-    GetSimulParam.IniAbstract := GetSimulParam_IniAbstract();
-    GetSimulParam.EffectiveRain.Method := GetSimulParam_EffectiveRain_Method();
-    GetSimulParam.EffectiveRain.PercentEffRain := GetSimulParam_EffectiveRain_PercentEffRain();
-    GetSimulParam.EffectiveRain.ShowersInDecade := GetSimulParam_EffectiveRain_ShowersInDecade();
-    GetSimulParam.EffectiveRain.RootNrEvap := GetSimulParam_EffectiveRain_RootNrEvap();
-
-end;
-
-
-procedure SetSimulParam(constref SimulParam : rep_param);
-begin;
-    SetSimulParam_EvapDeclineFactor(SimulParam.EvapDeclineFactor);
-    SetSimulParam_KcWetBare(SimulParam.KcWetBare);
-    SetSimulParam_PercCCxHIfinal(SimulParam.PercCCxHIfinal);
-    SetSimulParam_RootPercentZmin(SimulParam.RootPercentZmin);
-    SetSimulParam_MaxRootZoneExpansion(SimulParam.MaxRootZoneExpansion);
-    SetSimulParam_KsShapeFactorRoot(SimulParam.KsShapeFactorRoot);
-    SetSimulParam_TAWGermination(SimulParam.TAWGermination);
-    SetSimulParam_pAdjFAO(SimulParam.pAdjFAO);
-    SetSimulParam_DelayLowOxygen(SimulParam.DelayLowOxygen);
-    SetSimulParam_ExpFsen(SimulParam.ExpFsen);
-    SetSimulParam_Beta(SimulParam.Beta);
-    SetSimulParam_ThicknessTopSWC(SimulParam.ThicknessTopSWC);
-    SetSimulParam_EvapZmax(SimulParam.EvapZmax);
-    SetSimulParam_RunoffDepth(SimulParam.RunoffDepth);
-    SetSimulParam_CNcorrection(SimulParam.CNcorrection);
-    SetSimulParam_Tmin(SimulParam.Tmin);
-    SetSimulParam_Tmax(SimulParam.Tmax);
-    SetSimulParam_GDDMethod(SimulParam.GDDMethod);
-    SetSimulParam_PercRAW(SimulParam.PercRAW);
-    SetSimulParam_CompDefThick(SimulParam.CompDefThick);
-    SetSimulParam_CropDay1(SimulParam.CropDay1);
-    SetSimulParam_Tbase(SimulParam.Tbase);
-    SetSimulParam_Tupper(SimulParam.Tupper);
-    SetSimulParam_IrriFwInSeason(SimulParam.IrriFwInSeason);
-    SetSimulParam_IrriFwOffSeason(SimulParam.IrriFwOffSeason);
-    SetSimulParam_SaltDiff(SimulParam.SaltDiff);
-    SetSimulParam_SaltSolub(SimulParam.SaltSolub);
-    SetSimulParam_ConstGwt(SimulParam.ConstGwt);
-    SetSimulParam_RootNrDF(SimulParam.RootNrDF);
-    SetSimulParam_IniAbstract(SimulParam.IniAbstract);
-    SetSimulParam_EffectiveRain_Method(SimulParam.EffectiveRain.Method);
-    SetSimulParam_EffectiveRain_PercentEffRain(SimulParam.EffectiveRain.PercentEffRain);
-    SetSimulParam_EffectiveRain_ShowersInDecade(SimulParam.EffectiveRain.ShowersInDecade);
-    SetSimulParam_EffectiveRain_RootNrEvap(SimulParam.EffectiveRain.RootNrEvap);
-
-end;
 
 
 function GetSumWaBal() : rep_sum;

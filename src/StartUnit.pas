@@ -238,58 +238,41 @@ VAR TheProjectFile,ListProjectsFile,NrString,TestFile : string;
             Assign(f0,FullFileNameProgramParameters);
             Reset(f0);
             // crop
-            simul_ed := GetSimulParam_EvapDeclineFactor();
             Readln(f0,simul_ed); // evaporation decline factor in stage 2
             SetSimulParam_EvapDeclineFactor(simul_ed);
-            simul_kcWB := GetSimulParam_KcWetBare();
             Readln(f0,simul_kcWB); //Kc wet bare soil [-]
             SetSimulParam_KcWetBare(simul_kcWB);
-            simul_pCCHIf := GetSimulParam_PercCCxHIfinal();
             Readln(f0,simul_pCCHIf); // CC threshold below which HI no longer increase(% of 100)
             SetSimulParam_PercCCxHIfinal(simul_pCCHIf);
-            simul_RpZmi := GetSimulParam_RootPercentZmin();
             Readln(f0,simul_RpZmi); //Starting depth of root sine function (% of Zmin)
             SetSimulParam_RootPercentZmin(simul_RpZmi);
-            simul_RZEma:= GetSimulParam_MaxRootZoneExpansion();
             Readln(f0,simul_RZEma); // cm/day
             SetSimulParam_MaxRootZoneExpansion(simul_RZEma);
             SetSimulParam_MaxRootZoneExpansion(5.00); // fixed at 5 cm/day
-            simul_SFR := GetSimulParam_KsShapeFactorRoot();
             Readln(f0,simul_SFR); // Shape factor for effect water stress on rootzone expansion
             SetSimulParam_KsShapeFactorRoot(simul_SFR);
-            simul_TAWg := GetSimulParam_TAWGermination();
             Readln(f0,simul_TAWg);  // Soil water content (% TAW) required at sowing depth for germination
             SetSimulParam_TAWGermination(simul_TAWg);
-            simul_pfao := GetSimulParam_pAdjFAO();
             Readln(f0,simul_pfao); //Adjustment factor for FAO-adjustment soil water depletion (p) for various ET
             SetSimulParam_pAdjFAO(simul_pfao);
-            simul_lowox := GetSimulParam_DelayLowOxygen();
             Readln(f0,simul_lowox); //number of days for full effect of deficient aeration
             SetSimulParam_DelayLowOxygen(simul_lowox);
-            simul_expFsen := GetSimulParam_ExpFsen();
             Readln(f0,simul_expFsen); // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
             SetSimulParam_ExpFsen(simul_expFsen);
-            simul_beta := GetSimulParam_Beta();
             Readln(f0,simul_beta); // Decrease (percentage) of p(senescence) once early canopy senescence is triggered
             SetSimulParam_Beta(simul_beta);
-            simul_Tswc := GetSimulParam_ThicknessTopSWC();
             Readln(f0,simul_Tswc);  // Thickness top soil (cm) in which soil water depletion has to be determined
             SetSimulParam_ThicknessTopSWC(simul_Tswc);
             // field
-            simul_EZma := GetSimulParam_EvapZmax();
             Readln(f0,simul_EZma); //maximum water extraction depth by soil evaporation [cm]
             SetSimulParam_EvapZmax(simul_EZma);
             // soil
-            simul_rod := GetSimulParam_RunoffDepth();
             READLN(f0,simul_rod); //considered depth (m) of soil profile for calculation of mean soil water content
             SetSimulParam_RunoffDepth(simul_rod);
             READLN(f0,i);   // correction CN for Antecedent Moisture Class
             IF (i = 1)
                THEN SetSimulParam_CNcorrection(true)
                ELSE SetSimulParam_CNcorrection(false);
-            simul_saltdiff := GetSimulParam_SaltDiff();
-            simul_saltsolub:= GetSimulParam_SaltSolub();
-            simul_root := GetSimulParam_RootNrDF();
             READLN(f0,simul_saltdiff); // salt diffusion factor (%)
             SetSimulParam_SaltDiff(simul_saltdiff); 
             READLN(f0,simul_saltsolub); // salt solubility (g/liter)
@@ -298,15 +281,12 @@ VAR TheProjectFile,ListProjectsFile,NrString,TestFile : string;
             SetSimulParam_RootNrDF(simul_root);             
             SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
             // Temperature
-            simul_Tmi := GetSimulParam_Tmin();
-            simul_Tma := GetSimulParam_Tmax();
-            simul_GDD := GetSimulParam_GDDMethod();
             Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
             SetSimulParam_Tmin(simul_Tmi);
             Readln(f0,simul_Tma);   //Default maximum temperature (degC) if no temperature file is specified
             SetSimulParam_Tmax(simul_Tma);
             Readln(f0,simul_GDD); //Default method for GDD calculations
-            SetSimulParam_GDDMethod(simul_GDD );
+            SetSimulParam_GDDMethod(simul_GDD);
             IF (GetSimulParam_GDDMethod() > 3) THEN SetSimulParam_GDDMethod(3);
             IF (GetSimulParam_GDDMethod() < 1) THEN SetSimulParam_GDDMethod(1);
             // Rainfall
@@ -316,9 +296,6 @@ VAR TheProjectFile,ListProjectsFile,NrString,TestFile : string;
               1 : SetSimulParam_EffectiveRain_Method(USDA);
               2 : SetSimulParam_EffectiveRain_Method(Percentage);
               end;
-            effrainperc := GetSimulParam_EffectiveRain_PercentEffRain();
-            effrainshow := GetSimulParam_EffectiveRain_ShowersInDecade();
-            effrainrootE := GetSimulParam_EffectiveRain_RootNrEvap();
             Readln(f0,effrainperc); // IF Method is Percentage
             SetSimulParam_EffectiveRain_PercentEffRain(effrainperc);
             Readln(f0,effrainshow);  // For estimation of surface run-off
