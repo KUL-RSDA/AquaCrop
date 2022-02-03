@@ -185,7 +185,7 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         OK3 = .false.
 
         if (GetTemperatureRecord_NrObs() <= 2) then
-            read(fhandle, *, iostat=rc) StringREAD
+            read(fhandle, '(a)', iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
             select case (GetTemperatureRecord_NrObs())
             case (0)
@@ -198,7 +198,7 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                 if (DecFile > 3) then
                     call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
                 end if
-                read(fhandle, *, iostat=rc) StringREAD
+                read(fhandle, '(a)', iostat=rc) StringREAD
                 call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
                 if (Deci == DecFile) then
                     C2Min = C3Min
@@ -217,11 +217,11 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
        if ((.not. OK3) .and. ((Deci == DecFile) .and. (Monthi == Mfile) &
             .and. (Yeari == Yfile))) then
-            read(fhandle, *, iostat=rc) StringREAD
+            read(fhandle, '(a)', iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
             C2Min = C1Min
             C2Max = C1Max
-            read(fhandle, *, iostat=rc) StringREAD
+            read(fhandle, '(a)', iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
             C1Min = C2Min + (C2Min-C3Min)/4._dp
             C1Max = C2Max + (C2Max-C3Max)/4._dp
@@ -235,7 +235,7 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                 do Nri = 1, (GetTemperatureRecord_NrObs()-2)
                      read(fhandle, *, iostat=rc)
                 end do
-                read(fhandle, *, iostat=rc) StringREAD
+                read(fhandle, '(a)', iostat=rc) StringREAD
                 call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
                 read(fhandle, *, iostat=rc) StringREAD
                 call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
@@ -269,11 +269,11 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
             do Nri = 1, (Obsi-2)
                 read(fhandle, *, iostat=rc)
             end do
-            read(fhandle, *, iostat=rc) StringREAD
+            read(fhandle, '(a)', iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-            read(fhandle, *, iostat=rc) StringREAD
+            read(fhandle, '(a)', iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
-            read(fhandle, *, iostat=rc) StringREAD
+            read(fhandle, '(a)', iostat=rc) StringREAD
             call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
         end if
         close(fhandle)
@@ -544,7 +544,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
         character(len=255) :: StringREAD
 
-        read(fhandle, iostat=rc) StringREAD
+        read(fhandle, '(a)', iostat=rc) StringREAD
         call SplitStringInTwoParams(StringREAD, CiMin, CiMax)
         ! simplification give better results for all cases
         ni = 30
@@ -755,10 +755,8 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             do i = GetTemperatureRecord_FromDayNr(), (CropFirstDay - 1)
                 read(fhandle1, *, iostat=rc)
             end do
-            !read(fhandle1, *, iostat=rc) StringREAD ! i.e. Crop.Day1
-            !call SplitStringInTwoParams(StringREAD, Tlow, Thigh)
-            !GDL 02/02/2022 direct reading, b/c the above fails
-            read(fhandle1, *, iostat=rc) Tlow, Thigh
+            read(fhandle1, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
+            call SplitStringInTwoParams(StringREAD, Tlow, Thigh)
         case (1) !Decadely
             call GetDecadeTemperatureDataSet(CropFirstDay, TminDataSet, &
                         TmaxDataSet)
@@ -795,7 +793,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
                     read(fhandle1, *, iostat=rc)
                     read(fhandle1, *, iostat=rc)
                     read(fhandle1, *, iostat=rc)
-                    read(fhandle1, *, iostat=rc) StringREAD
+                    read(fhandle1, '(a)', iostat=rc) StringREAD
                     call SplitStringInTwoParams(StringREAD, Tlow, Thigh)
                 else
                     read(fhandle1, *, iostat=rc) Tlow, Thigh
