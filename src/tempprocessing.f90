@@ -237,7 +237,7 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                 end do
                 read(fhandle, '(a)', iostat=rc) StringREAD
                 call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-                read(fhandle, *, iostat=rc) StringREAD
+                read(fhandle, '(a)', iostat=rc) StringREAD
                 call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
                 C3Min = C2Min+(C2Min-C1Min)/4._dp
                 C3Max = C2Max+(C2Max-C1Max)/4._dp
