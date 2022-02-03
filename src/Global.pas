@@ -289,7 +289,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
-    CropDescription,ClimDescription,
+    ClimDescription,
     TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
@@ -1650,10 +1650,12 @@ PROCEDURE LoadCrop (FullName : string);
 VAR f0 : TextFile;
     XX, YY : INTEGER;
     VersionNr : double;
+    CropDescriptionLocal : string;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,CropDescription);
+READLN(f0,CropDescriptionLocal);
+SetCropDescription(CropDescriptionLocal);
 WITH Crop DO
   BEGIN
   READLN(f0,VersionNr);  // AquaCrop version
@@ -2179,7 +2181,7 @@ VAR f : TextFile;
 BEGIN
 Assign(f,totalname);
 Rewrite(f);
-WRITELN(f,CropDescription);
+WRITELN(f,GetCropDescription());
 WITH Crop DO
   BEGIN
   // AquaCrop version

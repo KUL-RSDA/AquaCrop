@@ -402,6 +402,7 @@ character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: CropDescription
 character(len=:), allocatable :: PathNameProg
 character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
@@ -2468,6 +2469,20 @@ subroutine SetCropFileFull(str)
 
     CropFileFull = str
 end subroutine SetCropFileFull
+
+function GetCropDescription() result(str)
+    !! Getter for the "CropDescription" global variable.
+    character(len=len(CropDescription)) :: str
+
+    str = CropDescription
+end function GetCropDescription
+
+subroutine SetCropDescription(str)
+    !! Setter for the "CropDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    CropDescription = str
+end subroutine SetCropDescription
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.

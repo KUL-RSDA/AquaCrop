@@ -922,6 +922,18 @@ procedure SetCropFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcropfilefull_wrap';
 
+function GetCropDescription(): string;
+
+function GetCropDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcropdescription_wrap';
+
+procedure SetCropDescription(constref str : string);
+
+procedure SetCropDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcropdescription_wrap';
+
 function GetProfFile(): string;
 
 function GetProfFile_wrap(): PChar;
@@ -3037,6 +3049,28 @@ begin;
     strlen := Length(str);
     SetCropFileFull_wrap(p, strlen);
 end;
+
+
+function GetCropDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCropDescription_wrap();
+    GetCropDescription := AnsiString(p);
+end;
+
+
+procedure SetCropDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCropDescription_wrap(p, strlen);
+end;
+
 
 function GetTemperatureFile(): string;
 var

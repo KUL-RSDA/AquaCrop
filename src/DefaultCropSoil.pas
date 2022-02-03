@@ -11,7 +11,7 @@ implementation
 
 PROCEDURE ResetDefaultCrop;
 BEGIN
-CropDescription := 'a generic crop';
+SetCropDescription('a generic crop');
 Crop.subkind := Grain;
 Crop.Planting := Seed;
 Crop.SownYear1 := true; // for perennials
