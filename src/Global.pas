@@ -3322,7 +3322,7 @@ Assign(f0,FullName);
 Reset(f0);
 Readln(f0);
 Readln(f0,simul_Tmi);   //Default minimum temperature (degC) if no temperature file is specified
-SetSimulParam_Tmax(simul_Tmi);
+SetSimulParam_Tmin(simul_Tmi);
 Readln(f0,simul_Tma);   //Default maximum temperature (degC) if no temperature file is specified
 SetSimulParam_Tmax(simul_Tma);
 Readln(f0,simul_GDD); //Default method for GDD calculations
