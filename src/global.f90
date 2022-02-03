@@ -320,7 +320,7 @@ type rep_clim
     integer(int32) :: FromDayNr, ToDayNr
         !! daynumber
     character(len=:), allocatable :: FromString, ToString
-        !! Undocumented, note GDL: randomly chose 500
+        !! Undocumented
     integer(int32) :: NrObs
         !! number of observations
 end type rep_clim

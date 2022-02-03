@@ -1817,6 +1817,7 @@ IF OutDaily THEN DetermineGrowthStage(DayNri,CCiPrev,StageCode);
 StartMode := true;
 StressLeaf := undef_int;
 StressSenescence := undef_int;
+
 END; (* InitializeSimulationRun *)
 
 
