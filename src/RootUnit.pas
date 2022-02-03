@@ -57,18 +57,18 @@ IF (ROUND(Ziprev) = undef_int)
         // -- 3.1 correction for restrictive soil layer is already considered in ActualRootingDepth
 
         // -- 3.2 correction for stomatal closure
-        IF ((Tpot > 0) AND (Tact < Tpot) AND (SimulParam.KsShapeFactorRoot <> undef_int))
+        IF ((Tpot > 0) AND (Tact < Tpot) AND (GetSimulParam_KsShapeFactorRoot() <> undef_int))
            THEN BEGIN
-                IF (SimulParam.KsShapeFactorRoot >= 0)
+                IF (GetSimulParam_KsShapeFactorRoot() >= 0)
                    THEN dZ := dZ * (Tact/Tpot)   //linear
-                   ELSE dZ := dZ * (Exp((Tact/Tpot)*SimulParam.KsShapeFactorRoot)-1)
-                                   /(Exp(SimulParam.KsShapeFactorRoot)-1); // exponential
+                   ELSE dZ := dZ * (Exp((Tact/Tpot)*GetSimulParam_KsShapeFactorRoot())-1)
+                                   /(Exp(GetSimulParam_KsShapeFactorRoot())-1); // exponential
                 END;
 
          // -- 3.2 correction for dry soil at expansion front of actual root zone
          IF (dZ > 0.001) THEN
             BEGIN
-            pZexp := Crop.pdef + (1-Crop.pdef)/2; // soil water depletion threshold for root deepening
+            pZexp := GetCrop().pdef + (1-GetCrop().pdef)/2; // soil water depletion threshold for root deepening
             ZiTest := Ziprev + dZ; // restrictive soil layer is considered by ActualRootingDepth
             compi := 0;
             Zsoil := 0;
@@ -85,7 +85,7 @@ IF (ROUND(Ziprev) = undef_int)
                   THEN dZ := 0
                   ELSE BEGIN
                        Wrel := (SoilLayer[Compartment[compi].Layer].FC/100 - Compartment[compi].theta)/TAWcompi;
-                       dZ := dZ * KsAny(Wrel,pZexp,(1),Crop.KsShapeFactorStomata);
+                       dZ := dZ * KsAny(Wrel,pZexp,(1),GetCrop().KsShapeFactorStomata);
                        END;
                END;
             END;
@@ -103,7 +103,7 @@ IF (ROUND(Ziprev) = undef_int)
         IF (ROUND(Zi*1000) < ROUND(ZiMax*1000))
           THEN BEGIN
                // Total extraction in restricted root zone (Zi) and max root zone (ZiMax) should be identical
-               Simulation.SCor := (2*(ZiMax/Zi)*((Crop.SmaxTop+Crop.SmaxBot)/2)-Crop.SmaxTop)/Crop.SmaxBot;
+               Simulation.SCor := (2*(ZiMax/Zi)*((GetCrop().SmaxTop+GetCrop().SmaxBot)/2)-GetCrop().SmaxTop)/GetCrop().SmaxBot;
                // consider part of the restricted deepening due to water stress (= less roots)
                IF (GetSumWaBal_Tpot() > 0) THEN
                   BEGIN
