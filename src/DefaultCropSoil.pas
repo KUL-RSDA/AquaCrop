@@ -110,7 +110,7 @@ END; (* ResetDefaultCrop *)
 
 PROCEDURE ResetDefaultSoil;
 BEGIN
-ProfDescription := 'deep loamy soil profile';
+SetProfDescription('deep loamy soil profile');
 SetSoil_CNvalue(61); // for an initial abstraction of 0.05 S
 SetSoil_REW(9);
 SetSoil_NrSoilLayers(1);

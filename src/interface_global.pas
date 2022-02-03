@@ -922,6 +922,18 @@ procedure SetProfFilefull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setproffilefull_wrap';
 
+function GetProfDescription(): string;
+
+function GetProfDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getprofdescription_wrap';
+
+procedure SetProfDescription(constref str : string);
+
+procedure SetProfDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setprofdescription_wrap';
+
 function GetManFile(): string;
 
 function GetManFile_wrap(): PChar;
@@ -2155,6 +2167,26 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetProfFilefull_wrap(p, strlen);
+end;
+
+function GetProfDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetProfDescription_wrap();
+    GetProfDescription := AnsiString(p);
+end;
+
+procedure SetProfDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetProfDescription_wrap(p, strlen);
 end;
 
 function GetManFile(): string;

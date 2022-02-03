@@ -406,6 +406,7 @@ character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
+character(len=:), allocatable :: ProfDescription
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
 character(len=:), allocatable :: ObservationsFile
@@ -2485,6 +2486,20 @@ subroutine SetProfFilefull(str)
 
     ProfFilefull = str
 end subroutine SetProfFilefull
+
+function GetProfDescription() result(str)
+    !! Getter for the "ProfDescription" global variable.
+    character(len=len(ProfDescription)) :: str
+
+    str = ProfDescription
+end function GetProfDescription
+
+subroutine SetProfDescription(str)
+    !! Setter for the "ProfDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfDescription = str
+end subroutine SetProfDescription
 
 function GetManFile() result(str)
     !! Getter for the "ManFile" global variable.

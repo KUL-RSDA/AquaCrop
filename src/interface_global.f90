@@ -34,6 +34,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetPathNameSimul, &
                      GetProfFile, &
                      GetProfFilefull, &
+                     GetProfDescription, &
                      GetManagement_Cuttings_Considered, &
                      GetManagement_Cuttings_Generate, &
                      GetManagement_Cuttings_HarvestEnd, &
@@ -86,6 +87,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetMultipleProjectFileFull, &
                      SetProfFile, &
                      SetProfFilefull, &
+                     SetProfDescription, &
                      SetManFile, &
                      SetManFilefull, &
                      SetManagement_Cuttings_Considered, &
@@ -943,6 +945,24 @@ subroutine SetProfFilefull_wrap(ProfFilefull, strlen)
     string = pointer2string(ProfFilefull, strlen)
     call SetProfFilefull(string)
 end subroutine SetProfFilefull_wrap
+
+function GetProfDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfDescription())
+end function GetProfDescription_wrap
+
+subroutine SetProfDescription_wrap(ProfDescription, strlen)
+    !! Wrapper for [[ac_global:SetProfDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfDescription, strlen)
+    call SetProfDescription(string)
+end subroutine SetProfDescription_wrap
 
 function GetManFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetManFile]] for foreign languages.

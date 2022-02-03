@@ -289,7 +289,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
     FullFileNameProgramParameters : string;
-    ProfDescription, ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
+    ClimateDescription,CalendarDescription,CropDescription,ClimDescription,
     TemperatureDescription,IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
@@ -1449,10 +1449,12 @@ VAR f0 : TextFile;
     blank : rep_string3;
     VersionNr : double;
     TempShortInt : shortint;
+    ProfDescriptionLocal : string;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,ProfDescription);
+READLN(f0,ProfDescriptionLocal);
+SetProfDescription(ProfDescriptionLocal);
 READLN(f0,VersionNr);  // AquaCrop version
 READLN(f0,TempShortInt);
 SetSoil_CNvalue(TempShortInt);
@@ -2041,7 +2043,7 @@ VAR f : TextFile;
 BEGIN
 Assign(f,totalname);
 Rewrite(f);
-WRITELN(f,ProfDescription);
+WRITELN(f,GetProfDescription());
 WRITELN(f,'        7.0                 : AquaCrop Version (June 2021)');    // AquaCrop version
 WRITELN(f,GetSoil().CNvalue:9,'                   : CN (Curve Number)');
 WRITELN(f,GetSoil().REW:9,'                   : Readily evaporable water from top layer (mm)');
