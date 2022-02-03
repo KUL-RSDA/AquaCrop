@@ -246,11 +246,11 @@ IF Out4Salt THEN
 // D5. Compartments - Soil water content
 IF Out5CompWC THEN
    BEGIN
-   NodeD := GetCompartment_Layer(1)/2;
+   NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
    FOR Compi := 2 TO (NrCompartments-1) DO
        BEGIN
-       NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(compi)/2;
+       NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(Compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
    NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
@@ -261,7 +261,7 @@ IF Out5CompWC THEN
 // D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
 IF Out6CompEC THEN
    BEGIN
-   NodeD := GetCompartment_Thickness(1])/2;
+   NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
    FOR Compi := 2 TO (NrCompartments-1) DO
        BEGIN
@@ -403,6 +403,7 @@ END; (* ResetPreviousSum *)
 PROCEDURE AdjustForWatertable;
 Var Ztot, Zi : double;
     compi : INTEGER;
+    Compi_temp : CompartmentIndividual;
 BEGIN
 Ztot := 0;
 FOR compi := 1 to NrCompartments DO
@@ -412,7 +413,9 @@ FOR compi := 1 to NrCompartments DO
     IF (Zi >= (ZiAqua/100)) THEN // compartment at or below groundwater table
        BEGIN
        SetCompartment_Theta(compi, SoilLayer[GetCompartment_Layer(compi)].SAT/100);
-       DetermineSaltContent(ECiAqua,GetCompartment_i(i));
+       Compi_temp := GetCOmpartment_i(compi);
+       DetermineSaltContent(ECiAqua,Compi_temp);
+       SetCompartment_i(compi, Compi_temp);
        END;
     END;
 END; (* AdjustForWatertable *)
@@ -2195,14 +2198,14 @@ IF Out5CompWC THEN
 // 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
 IF Out6CompEC THEN
    BEGIN
-   SaltVal := ECeComp(GetCompartment_i(1)]);
+   SaltVal := ECeComp(GetCompartment_i(1));
    WRITE(fDaily,SaltVal:11:1);
    FOR Nr := 2 TO (NrCompartments-1) DO
        BEGIN
        SaltVal := ECeComp(GetCompartment_i(Nr));
        WRITE(fDaily,SaltVal:11:1);
        END;
-   SaltVal := ECeComp(GetCompartment(NrCompartments));
+   SaltVal := ECeComp(GetCompartment_i(NrCompartments));
    IF (Out7Clim = true)
       THEN WRITE(fDaily,SaltVal:11:1)
       ELSE WRITELN(fDaily,SaltVal:11:1);
@@ -2314,6 +2317,7 @@ VAR RepeatToDay : LongInt;
                        VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
     VAR ZiIN : INTEGER;
+        Comp_temp : rep_comp;
     BEGIN
     ZiIN := ZiAqua;
     IF (GetGwTable_DNr1() = GetGwTable_DNr2())
@@ -2325,7 +2329,11 @@ VAR RepeatToDay : LongInt;
             ZiAqua := GetGwTable_Z1() + ROUND((DayNri - GetGwTable_DNr1())*(GetGwTable_Z2() - GetGwTable_Z1())/(GetGwTable_DNr2() - GetGwTable_DNr1()));
             ECiAqua := GetGwTable_EC1() + (DayNri - GetGwTable_DNr1())*(GetGwTable_EC2() - GetGwTable_EC1())/(GetGwTable_DNr2() - GetGwTable_DNr1());
             END;
-    IF (ZiAqua <> ZiIN) THEN CalculateAdjustedFC((ZiAqua/100),GetCompartment());
+    IF (ZiAqua <> ZiIN) THEN BEGIN
+                             Comp_temp := GetCompartment();
+                             CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                             SetCompartment(Comp_temp);
+                             END;
     END; (* GetZandECgwt *)
 
 
@@ -3007,6 +3015,7 @@ VAR NrRun : ShortInt;
     PROCEDURE AdjustCompartments;
     VAR TotDepth : double;
         i : ShortInt;
+        Comp_temp : rep_Comp;
     BEGIN
     //Adjust size of compartments if required
     TotDepth := 0;
@@ -3023,7 +3032,9 @@ VAR NrRun : ShortInt;
                   THEN BEGIN // no restrictive soil layer
                        AdjustSizeCompartments(Crop.RootMax);
                        // adjust soil water content
-                       CalculateAdjustedFC((ZiAqua/100),GetCompartment());
+                       Comp_temp := GetCompartment();
+                       CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                       SetCompartment(Comp_temp);
                        IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
                        END
                   ELSE BEGIN // restrictive soil layer
@@ -3031,7 +3042,9 @@ VAR NrRun : ShortInt;
                           BEGIN
                           AdjustSizeCompartments(GetSoil().RootMax);
                           // adjust soil water content
-                          CalculateAdjustedFC((ZiAqua/100),GetCompartment());
+                          Comp_temp := GetCompartment();
+                          CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                          SetCompartment(Comp_temp);
                           IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
                           END
                        END;

@@ -11,6 +11,7 @@ implicit none
 
 
 integer(int32), parameter :: max_SoilLayers = 5
+integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -141,9 +142,9 @@ type CompartmentIndividual
         !! - evaporation process
         !! - transpiration process *)
     !! salinity factors
-    real(dp), dimension(max_No_compartments) :: Salt
+    real(dp), dimension(11) :: Salt
         !! salt content in solution in cells (g/m2)
-    real(dp), dimension(max_No_compartments) :: Depo
+    real(dp), dimension(11) :: Depo
         !! salt deposit in cells (g/m2)
 end type CompartmentIndividual 
 
@@ -468,12 +469,13 @@ type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
 type(rep_clim)  :: TemperatureRecord
-type(re_Comp) :: Compartment
 
 integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
+type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
 
 
@@ -3914,23 +3916,23 @@ function GetCompartment_WFactor(i) result(WFactor)
     WFactor = compartment(i)%WFactor
 end function GetCompartment_WFactor
 
-function GetCompartment_Salt_i(i1, i2) result(Salt_i)
+function GetCompartment_Salt(i1, i2) result(Salt)
     !! Getter for individual elements of "Salt" attribute of the "compartment" global variable.
     integer(int32), intent(in) :: i1
     integer(int32), intent(in) :: i2
-    real(dp) :: Salt_i
+    real(dp) :: Salt
 
-    Salt_i = compartment(i1)%Salt(i2)
-end function GetCompartment_Salt_i
+    Salt = compartment(i1)%Salt(i2)
+end function GetCompartment_Salt
 
-function GetCompartment_Depo_i(i1, i2) result(Depo_i)
+function GetCompartment_Depo(i1, i2) result(Depo)
     !! Getter for individual elements of "Depo" attribute of the "compartment" global variable.
     integer(int32), intent(in) :: i1
     integer(int32), intent(in) :: i2
-    real(dp) :: Depo_i
+    real(dp) :: Depo
 
-    Depo_i = compartment(i1)%Depo(i2)
-end function GetCompartment_Depo_i
+    Depo = compartment(i1)%Depo(i2)
+end function GetCompartment_Depo
 
 subroutine SetCompartment(Compartment_in)
     !! Setter for the "compartment" global variable.
@@ -4003,23 +4005,23 @@ subroutine SetCompartment_WFactor(i, WFactor)
     compartment(i)%WFactor = WFactor
 end subroutine SetCompartment_WFactor
 
-subroutine SetCompartment_Salt_i(i1, i2, Salt)
+subroutine SetCompartment_Salt(i1, i2, Salt)
     !! Setter for individual elements of "Salt" attribute of the "compartment global variable.
     integer(int32), intent(in) :: i1
     integer(int32), intent(in) :: i2
     real(dp), intent(in) :: Salt
 
     compartment(i1)%Salt(i2) = Salt
-end subroutine SetCompartment_Salt_i
+end subroutine SetCompartment_Salt
 
-subroutine SetCompartment_Depo_i(i1, i2, Depo)
+subroutine SetCompartment_Depo(i1, i2, Depo)
     !! Setter for individual elements of "Depo" attribute of the "compartment global variable.
     integer(int32), intent(in) :: i1
     integer(int32), intent(in) :: i2
     real(dp), intent(in) :: Depo
 
     compartment(i1)%Depo(i2) = Depo
-end subroutine SetCompartment_Depo_i
+end subroutine SetCompartment_Depo
 
 
 end module ac_global

@@ -19,6 +19,24 @@ type
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
 
+     CompartmentIndividual = Record
+         Thickness : double;  (* meter *)
+         theta     : double;  (* m3/m3 *)
+         fluxout   : double;  (* mm/day *)
+         Layer     : INTEGER;
+         Smax      : double;  (* Maximum root extraction m3/m3.day *)
+         FCadj     : double;  (* Vol % at Field Capacity adjusted to Aquifer *)
+         DayAnaero : INTEGER; (* number of days under anaerobic conditions *)
+         WFactor   : double;  (* weighting factor 0 ... 1
+                               Importance of compartment in calculation of
+                               - relative wetness (RUNOFF)
+                               - evaporation process
+                               - transpiration process *)
+         // salinity factors
+         Salt      : rep_salt; // salt content in solution in cells (g/m2)
+         Depo      : rep_salt; // salt deposit in cells (g/m2)
+         END;
+
     rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
     SoilLayerIndividual = Record
@@ -1656,14 +1674,13 @@ procedure LoadClimate_wrap(constref FullName : PChar;
 function GetCompartment_i(constref i : integer) : CompartmentIndividual;
         external 'aquacrop' name '__ac_global_MOD_getcompartment_i';
 
-function GetCompartment() : rep_Comp
+function GetCompartment() : rep_Comp;
 
 procedure SetCompartment_i(constref i : integer;
                            constref Compartment_i : CompartmentIndividual);
         external 'aquacrop' name '__ac_global_MOD_setcompartment_i';
 
-procedure SetCompartment(constref i : integer;
-                         constref Compartment : CompartmentIndividual);
+procedure SetCompartment(constref Compartment : rep_Comp);
 
 function GetCompartment_Thickness(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getcompartment_thickness';
@@ -1689,43 +1706,51 @@ function GetCompartment_DayAnaero(constref i : integer) : INTEGER;
 function GetCompartment_WFactor(constref i : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_getcompartment_wfactor';
 
-function GetCompartment_Salt_i(constref i1, i2 : integer) : double;
-    external 'aquacrop' name '__ac_global_MOD_getcompartment_salt_i';
+function GetCompartment_Salt(constref i1, i2 : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getcompartment_salt';
 
-function GetCompartment_Depo_i(constref i1, i2 : integer) : double;
-    external 'aquacrop' name '__ac_global_MOD_getcompartment_depo_i';
+function GetCompartment_Depo(constref i1, i2 : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getcompartment_depo';
 
-procedure SetCompartment_Thickness(constref Thickness : double);
+procedure SetCompartment_Thickness(constref i : integer;
+                                   constref Thickness : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_thickness';
 
-procedure SetCompartment_theta(constref theta : double);
+procedure SetCompartment_theta(constref i : integer;
+                               constref theta : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_theta';
 
-procedure SetCompartment_fluxout(constref fluxout : double);
+procedure SetCompartment_fluxout(constref i : integer;
+                                 constref fluxout : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_fluxout';
 
-procedure SetCompartment_Layer(constref Layer : INTEGER);
+procedure SetCompartment_Layer(constref i : integer;
+                               constref Layer : INTEGER);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_layer';
 
-procedure SetCompartment_Smax(constref Smax : double);
+procedure SetCompartment_Smax(constref i : integer;
+                              constref Smax : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_smax';
 
-procedure SetCompartment_FCadj(constref FCadj : double);
+procedure SetCompartment_FCadj(constref i : integer;
+                               constref FCadj : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_fcadj';
 
-procedure SetCompartment_DayAnaero(constref DayAnaero : INTEGER);
+procedure SetCompartment_DayAnaero(constref i : integer;
+                                   constref DayAnaero : INTEGER);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_dayanaero';
 
-procedure SetCompartment_WFactor(constref WFactor : double);
+procedure SetCompartment_WFactor(constref i : integer;
+                                 constref WFactor : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_wfactor';
 
-procedure SetCompartment_Salt_i(constref i1, i2 : integer;
+procedure SetCompartment_Salt(constref i1, i2 : integer;
                                 constref Salt : double);
-    external 'aquacrop' name '__ac_global_MOD_setcompartment_salt_i';
+    external 'aquacrop' name '__ac_global_MOD_setcompartment_salt';
 
-procedure SetCompartment_Depo_i(constref i1, i2 : integer;
+procedure SetCompartment_Depo(constref i1, i2 : integer;
                                 constref Depo : double);
-    external 'aquacrop' name '__ac_global_MOD_setcompartment_Depo_i';
+    external 'aquacrop' name '__ac_global_MOD_setcompartment_depo';
 
 
 implementation
@@ -3103,11 +3128,11 @@ begin;
 end;
 
 
-function GetCompartment() : rep_Comp
+function GetCompartment() : rep_Comp;
 var
     i : integer;
 begin;
-    for i := 1 to max_No_compartments go GetCompartment[i] := GetCompartment_i(i)
+    for i := 1 to max_No_compartments do GetCompartment[i] := GetCompartment_i(i)
 end;
 
 
