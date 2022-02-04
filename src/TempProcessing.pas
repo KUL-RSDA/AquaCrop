@@ -812,10 +812,6 @@ IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
         SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
-        Str(SimulParam.Tmin:8:1,TempString1);
-        Str(SimulParam.Tmax:8:1,TempString2);
-        SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C'));
         Str(GetSimulParam_Tmin():8:1,TempString1);
         Str(GetSimulParam_Tmax():8:1,TempString2);
         SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
