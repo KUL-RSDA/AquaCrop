@@ -2661,13 +2661,11 @@ procedure LoadClimate_wrap(constref FullName : PChar;
         external 'aquacrop' name '__ac_interface_global_MOD_loadclimate_wrap';
 
 function GetCompartment_i(constref i : integer) : CompartmentIndividual;
-        external 'aquacrop' name '__ac_global_MOD_getcompartment_i';
 
 function GetCompartment() : rep_Comp;
 
 procedure SetCompartment_i(constref i : integer;
                            constref Compartment_i : CompartmentIndividual);
-        external 'aquacrop' name '__ac_global_MOD_setcompartment_i';
 
 procedure SetCompartment(constref Compartment : rep_Comp);
 
@@ -4464,6 +4462,41 @@ var
 begin;
     for i := 1 to max_No_compartments do SetCompartment_i(i, Compartment[i])
 end;
+
+function GetCompartment_i(constref i : integer) : CompartmentIndividual;
+var
+    i2 : integer;
+begin;
+    GetCompartment_i.Thickness := GetCompartment_Thickness(i);
+    GetCompartment_i.Theta := GetCompartment_Theta(i);
+    GetCompartment_i.fluxout := GetCompartment_fluxout(i);
+    GetCompartment_i.Layer := GetCompartment_Layer(i);
+    GetCompartment_i.Smax := GetCompartment_Smax(i);
+    GetCompartment_i.FCadj := GetCompartment_FCadj(i);
+    GetCompartment_i.DayAnaero := GetCompartment_DayAnaero(i);
+    GetCompartment_i.WFactor := GetCompartment_WFactor(i);
+    for i2 := 1 to 11 do GetCompartment_i.Salt[i2] := GetCompartment_Salt(i, i2);
+    for i2 := 1 to 11 do GetCompartment_i.Depo[i2] := GetCompartment_Depo(i, i2);
+end;
+
+procedure SetCompartment_i(constref i : integer;
+                          constref Compartment_i : CompartmentIndividual);
+var
+    i2 : integer;
+begin;
+    SetCompartment_Thickness(i, Compartment_i.Thickness);
+    SetCompartment_Theta(i, Compartment_i.Theta);
+    SetCompartment_fluxout(i, Compartment_i.fluxout);
+    SetCompartment_Layer(i, Compartment_i.Layer);
+    SetCompartment_Smax(i, Compartment_i.Smax);
+    SetCompartment_FCadj(i, Compartment_i.FCadj);
+    SetCompartment_DayAnaero(i, Compartment_i.DayAnaero);
+    SetCompartment_WFactor(i, Compartment_i.WFactor);
+    for i2 := 1 to 11 do SetCompartment_Salt(i, i2, Compartment_i.Salt[i2]);
+    for i2 := 1 to 11 do SetCompartment_Depo(i, i2, Compartment_i.Depo[i2]);
+end;
+
+
 
 
 initialization
