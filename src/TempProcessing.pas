@@ -732,7 +732,8 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr,
+    CalendarDescriptionLocal, TemperatureDescriptionLocal : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -800,7 +801,7 @@ IF (GetClimateFile() = '(None)')
         // 1.0 Description
         READLN(fClim,TempString);
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateDescription := Trim(TempString);
+        SetClimateDescription(Trim(TempString));
         Close(fClim);
         END;
 // 1.1 Temperature
@@ -811,17 +812,23 @@ IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
         SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
+        Str(SimulParam.Tmin:8:1,TempString1);
+        Str(SimulParam.Tmax:8:1,TempString2);
+        SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C'));
         Str(GetSimulParam_Tmin():8:1,TempString1);
         Str(GetSimulParam_Tmax():8:1,TempString2);
-        TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
+        SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C'));
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetTemperatureFileFull(CONCAT(Trim(TempString),Trim(GetTemperatureFile())));
         temperature_record := GetTemperatureRecord();
-        LoadClim(GetTemperatureFilefull(),TemperatureDescription,temperature_record);
+        TemperatureDescriptionLocal := GetTemperatureDescription();
+        LoadClim(GetTemperatureFileFull(),TemperatureDescriptionLocal,temperature_record);
+        SetTemperatureDescription(TemperatureDescriptionLocal);
         CompleteClimateDescription(temperature_record);
         SetTemperatureRecord(temperature_record);
         END;
@@ -887,13 +894,15 @@ SetCalendarFile(Trim(TempString));
 IF (GetCalendarFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathCalendarFile
-        CalendarDescription := 'No calendar for the Seeding/Planting year';
+        SetCalendarDescription('No calendar for the Seeding/Planting year');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
-        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
+        SetCalendarFileFull(CONCAT(Trim(TempString),GetCalendarFile()));
+        CalendarDescriptionLocal := GetCalendarDescription();
+        GetFileDescription(GetCalendarFileFull(),CalendarDescriptionLocal);
+        SetCalendarDescription(CalendarDescriptionLocal);
         END;
 
 // 3. Crop
