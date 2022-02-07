@@ -387,10 +387,6 @@ PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
-FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
-                                  CCxCrop,FshapeWeed,fCCx : double;
-                                  Yeari,MWeedAdj : ShortInt;
-                                  VAR RCadj : ShortInt) : double;
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
                                Sown1stYear : BOOLEAN;
@@ -4307,63 +4303,6 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
-
-
-FUNCTION CCmultiplierWeedAdjusted(ProcentWeedCover : ShortInt;
-                                  CCxCrop,FshapeWeed,fCCx : double;
-                                  Yeari,MWeedAdj : ShortInt;
-                                  VAR RCadj : ShortInt) : double;
-VAR fWeedi,CCxTot100,CCxTot0,CCxTotM,fweedMax,RCadjD,FshapeMinimum : double;
-
-BEGIN
-fWeedi := 1;
-RCadj := ProcentWeedCover;
-IF (ProcentWeedCover > 0) THEN
-   BEGIN
-   fweedi := CCmultiplierWeed(ProcentWeedCover,CCxCrop,FshapeWeed);
-   // FOR perennials when self-thinning
-   IF ((GetCrop_subkind() = Forage) AND (Yeari > 1) and (fCCx < 0.995)) THEN
-      BEGIN //need for adjustment
-      // step 1 - adjusment of shape factor to degree of crop replacement by weeds
-      FshapeMinimum := 10 - 20*( (exp(fCCx*3)-1)/(exp(3)-1) + sqr(MWeedAdj/100));
-      IF (ROUND(FshapeMinimum*10) = 0) THEN FshapeMinimum := 0.1;
-      IF (FshapeWeed < FshapeMinimum) THEN FshapeWeed := FshapeMinimum;
-
-      // step 2 - Estimate of CCxTot
-      // A. Total CC (crop and weeds) when self-thinning and 100% weed take over
-      fweedi := CCmultiplierWeed(ProcentWeedCover,CCxCrop,FshapeWeed);
-      CCxTot100 := fweedi * CCxCrop;
-      // B. Total CC (crop and weeds) when self-thinning and 0% weed take over
-      IF (fCCx > 0.005)
-         THEN fweedi := CCmultiplierWeed(ROUND(fCCx*ProcentWeedCover),(fCCx*CCxCrop),FshapeWeed)
-         ELSE fweedi := 1;
-      CCxTot0 := fweedi * (fCCx*CCxCrop);
-      // C. total CC (crop and weeds) with specified weed take over (MWeedAdj)
-      CCxTotM := CCxTot0 + (CCxTot100 - CCxTot0)* MWeedAdj/100;
-      IF (CCxTotM < (fCCx*CCxCrop*(1-ProcentWeedCover/100)))
-         THEN CCxTotM := fCCx*CCxCrop*(1-ProcentWeedCover/100);
-      IF (fCCx > 0.005) THEN
-         BEGIN
-         fweedi := CCxTotM/(fCCx*CCxCrop);
-         fweedMax := 1/(fCCx*CCxCrop);
-         IF (ROUND(fweedi*1000) > ROUND(fWeedMax*1000)) THEN fweedi := fweedMax;
-         END;
-
-      // step 3 - Estimate of adjusted weed cover
-      RCadjD := ProcentWeedCover + (1-fCCx)*CCxCrop*MWeedAdj;
-      IF (fCCx > 0.005) THEN
-         BEGIN
-         IF (RCadjD < (100*(CCxTotM - fCCx*CCxCrop)/CCxTotM))
-            THEN RCadjD := 100*(CCxTotM - fCCx*CCxCrop)/CCxTotM;
-         IF (RCadjD > (100 * (1- (fCCx*CCxCrop*(1-ProcentWeedCover/100)/CCxTotM))))
-            THEN RCadjD := 100*(1- fCCx*CCxCrop*(1-ProcentWeedCover/100)/CCxTotM);
-         END;
-      RCadj := ROUND(RCadjD);
-      IF (RCadj > 100) THEN RCadj := 100;
-      END;
-   END;
-CCmultiplierWeedAdjusted := fWeedi;
-END; (* CCmultiplierWeedAdjusted *)
 
 
 PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;

@@ -1600,6 +1600,78 @@ real(dp) function CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
     CCmultiplierWeed = fWeed
 end function CCmultiplierWeed
 
+real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed, fCCx, Yeari, MWeedAdj, RCadj)
+    integer(int8), intent(in) :: ProcentWeedCover
+    real(dp), intent(in) :: CCxCrop
+    real(dp) :: FshapeWeed
+    real(dp), intent(in) :: fCCx
+    integer(int8), intent(in) :: Yeari
+    integer(int8), intent(in) :: MWeedAdj
+    integer(int8), intent(inout) :: RCadj
+
+    real(dp) :: fWeedi, CCxTot100, CCxTot0, CCxTotM, fweedMax, RCadjD, FshapeMinimum
+
+    fWeedi = 1._dp
+    RCadj = ProcentWeedCover
+    if (ProcentWeedCover > 0) then
+        fweedi = CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
+        ! FOR perennials when self-thinning
+        if ((GetCrop_subkind() == subkind_Forage) .and. (Yeari > 1) .and. (fCCx < 0.995)) then
+            ! need for adjustment
+            ! step 1 - adjusment of shape factor to degree of crop replacement by weeds
+            FshapeMinimum = 10 - 20*( (exp(fCCx*3._dp)-1)/(exp(3._dp)-1) + sqrt(MWeedAdj/100._dp))
+            if (nint(FshapeMinimum*10,kind=int32) == 0) then
+                FshapeMinimum = 0.1
+            end if
+            FshapeWeed = FshapeWeed;
+            if (FshapeWeed < FshapeMinimum) then
+                FshapeWeed = FshapeMinimum
+            end if
+
+            ! step 2 - Estimate of CCxTot
+            ! A. Total CC (crop and weeds) when self-thinning and 100% weed take over
+            fweedi = CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
+            CCxTot100 = fweedi * CCxCrop
+            ! B. Total CC (crop and weeds) when self-thinning and 0% weed take over
+            if (fCCx > 0.005) then
+                fweedi = CCmultiplierWeed(nint(fCCx*ProcentWeedCover,kind=int8),&
+                    (fCCx*CCxCrop), FshapeWeed)
+            else
+                fweedi = 1
+            end if
+            CCxTot0 = fweedi * (fCCx*CCxCrop)
+            ! C. total CC (crop and weeds) with specified weed take over (MWeedAdj)
+            CCxTotM = CCxTot0 + (CCxTot100 - CCxTot0)* MWeedAdj/100
+            if (CCxTotM < (fCCx*CCxCrop*(1-ProcentWeedCover/100._dp))) then
+                CCxTotM = fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)
+            end if
+            if (fCCx > 0.005) then
+                fweedi = CCxTotM/(fCCx*CCxCrop)
+                fweedMax = 1._dp/(fCCx*CCxCrop)
+                if (nint(fweedi*1000,kind=int32) > nint(fWeedMax*1000,kind=int32)) then
+                    fweedi = fweedMax
+                end if
+            end if
+
+            ! step 3 - Estimate of adjusted weed cover
+            RCadjD = ProcentWeedCover + (1-fCCx)*CCxCrop*MWeedAdj
+            if (fCCx > 0.005) then
+                if (RCadjD < (100*(CCxTotM - fCCx*CCxCrop)/CCxTotM)) then
+                    RCadjD = 100*(CCxTotM - fCCx*CCxCrop)/CCxTotM
+                end if
+                if (RCadjD > (100 * (1- (fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)))) then
+                    RCadjD = 100*(1- fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)
+                end if
+            end if
+            RCadj = nint(RCadjD,kind=int8)
+            if (RCadj > 100) then
+                RCadj = 100
+            end if
+        end if
+    end if
+    CCmultiplierWeedAdjusted = fWeedi
+    ! CCmultiplierWeedAdjusted 
+end function CCmultiplierWeedAdjusted
 
 real(dp) function BMRange(HIadj)
     integer(int32), intent(in) :: HIadj
