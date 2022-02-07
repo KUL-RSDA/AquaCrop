@@ -798,6 +798,7 @@ function roundc_int8(x) result(y)
     end if
 end function roundc_int8
 
+
 function trunc(x) result(y)
     !! Returns the integer part of x, which is always smaller than (or equal to) x
     !! in absolute value.
