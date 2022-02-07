@@ -38,6 +38,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
+                     GetPerennialPeriod_GenerateOnset, &
+                     GetPerennialPeriod_GenerateEnd, &
                      GetProfFile, &
                      GetProfFilefull, &
                      GetManagement_Cuttings_Considered, &
@@ -92,6 +94,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
+                     SetPerennialPeriod_GenerateOnset, &
+                     SetPerennialPeriod_GenerateEnd, &
                      SetProjectFile, &
                      SetProjectFileFull, &
                      SetMultipleProjectFile, &
@@ -774,6 +778,40 @@ subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
     string = pointer2string(PathNameSimul, strlen)
     call SetPathNameSimul(string)
 end subroutine SetPathNameSimul_wrap
+
+function GetPerennialPeriod_GenerateOnset_wrap() result(GenerateOnset)
+    !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateOnset]] for foreign languages.
+    logical(1) :: GenerateOnset
+
+    GenerateOnset = GetPerennialPeriod_GenerateOnset()
+end function GetPerennialPeriod_GenerateOnset_wrap
+
+function GetPerennialPeriod_GenerateEnd_wrap() result(GenerateEnd)
+    !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateEnd]] for foreign languages.
+    logical(1) :: GenerateEnd
+
+    GenerateEnd = GetPerennialPeriod_GenerateEnd()
+end function GetPerennialPeriod_GenerateEnd_wrap
+
+subroutine SetPerennialPeriod_GenerateOnset_wrap(GenerateOnset)
+    !! Wrapper for [[ac_global:SetPerennialPeriod_GenerateOnset]] for foreign languages.
+    logical(1), intent(in) :: GenerateOnset
+
+    logical :: bool
+
+    bool = GenerateOnset
+    call SetPerennialPeriod_GenerateOnset(bool)
+end subroutine SetPerennialPeriod_GenerateOnset_wrap
+
+subroutine SetPerennialPeriod_GenerateEnd_wrap(GenerateEnd)
+    !! Wrapper for [[ac_global:SetPerennialPeriod_GenerateEnd]] for foreign languages.
+    logical(1), intent(in) :: GenerateEnd
+
+    logical :: bool
+
+    bool = GenerateEnd
+    call SetPerennialPeriod_GenerateEnd(bool)
+end subroutine SetPerennialPeriod_GenerateEnd_wrap
 
 
 function GetProjectFile_wrap() result(c_pointer)
