@@ -1628,7 +1628,7 @@ FOR compi := 1 TO NrCompartments DO
             WHILE (Theta > Dx*celi) DO celi := celi + 1;
             END
        ELSE celi := SoilLayer[GetCompartment_Layer(compi)].SCP1;
-    IF (celi = 0) THEN celi := 1;
+    IF (celi = 0) THEN celi := 1; //LB: added this 'IF' statement to avoid errors in testing (DEBUG=1)
     IF (DeltaTheta > 0) THEN SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + SaltIN);
 
     //3. Mixing
