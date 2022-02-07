@@ -1914,7 +1914,7 @@ procedure SetSimulation_ThetaIni_i(constref i : integer;
 procedure SetSimulation_ECeIni(constref ECeIni : rep_IniComp);
 
 procedure SetSimulation_ECeIni_i(constref i : integer;
-                              constref ECe_i : double);
+                              constref ECeIni_i : double);
     external 'aquacrop' name '__ac_global_MOD_setsimulation_eceini_i';
 
 function GetSimulation_IniSWC_Loc() : rep_IniComp;
