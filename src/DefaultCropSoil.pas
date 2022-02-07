@@ -11,8 +11,7 @@ implementation
 
 PROCEDURE ResetDefaultCrop;
 BEGIN
-
-SetCropDescription('a generic crop');
+CropDescription := 'a generic crop';
 SetCrop_subkind(Grain);
 SetCrop_Planting(Seed);
 SetCrop_SownYear1(true); // for perennials
@@ -111,7 +110,7 @@ END; (* ResetDefaultCrop *)
 
 PROCEDURE ResetDefaultSoil;
 BEGIN
-SetProfDescription('deep loamy soil profile');
+ProfDescription := 'deep loamy soil profile';
 SetSoil_CNvalue(61); // for an initial abstraction of 0.05 S
 SetSoil_REW(9);
 SetSoil_NrSoilLayers(1);
