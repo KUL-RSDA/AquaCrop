@@ -749,6 +749,55 @@ integer(intEnum) :: IrriMethod
 contains
 
 
+function roundc(x) result(y)
+    !! Returns commercial rounds, following Pascal's Banker's rules for rounding
+    real(dp), intent(in) :: x
+    integer(int32) :: y
+
+    if (abs(x - floor(x, kind=int32) - 0.5_dp) < epsilon(1._dp)) then  
+       if (x > 0) then
+          if (mod(abs(trunc(x)),2) == 0) then
+              y = floor(x, kind=int32)
+          else
+              y = ceiling(x, kind=int32)
+          end if
+       else
+          if (mod(abs(trunc(x)),2) == 0) then
+              y = ceiling(x, kind=int32)
+          else
+              y = floor(x, kind=int32)
+          end if
+       end if
+    else !standard round for values not ending on 0.5
+       y = nint(x, kind=int32) 
+    end if
+end function roundc
+
+
+function roundc_int8(x) result(y)
+    !! Returns commercial rounds, following Pascal's Banker's rules for rounding
+    real(dp), intent(in) :: x
+    integer(int8) :: y
+
+    if (abs(x - floor(x, kind=int32) - 0.5_dp) < epsilon(1._dp)) then
+       if (x > 0) then
+          if (mod(abs(trunc(x)),2) == 0) then
+              y = floor(x, kind=int8)
+          else
+              y = ceiling(x, kind=int8)
+          end if
+       else
+          if (mod(abs(trunc(x)),2) == 0) then
+              y = ceiling(x, kind=int8)
+          else
+              y = floor(x, kind=int8)
+          end if
+       end if
+    else !standard round for values not ending on 0.5
+       y = nint(x, kind=int8)
+    end if
+end function roundc_int8
+
 function trunc(x) result(y)
     !! Returns the integer part of x, which is always smaller than (or equal to) x
     !! in absolute value.
@@ -799,7 +848,7 @@ real(sp) function RootMaxInSoilProfile(ZmaxCrop, TheNrSoilLayers, TheSoilLayer)
         layi = layi + 1
 
         if ((TheSoilLayer(layi)%Penetrability < 100) .and. &
-            (nint(Zsoil*1000) < nint(ZmaxCrop*1000))) then
+            (roundc(Zsoil*1000) < roundc(ZmaxCrop*1000))) then
             Zmax = undef_int
         end if
 
@@ -841,7 +890,7 @@ subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
 
         if ((layi == TheNrSoilLayers) &
             .or. (TheLayer(layi)%Penetrability == 0) &
-            .or. (nint(ZrTest*10000) <= nint(Zsoil*10000))) then
+            .or. (roundc(ZrTest*10000) <= roundc(Zsoil*10000))) then
             ! no root expansion in layer
             TheEnd = .true.
             ZrOUT = ZrTest
@@ -897,22 +946,22 @@ subroutine CropStressParametersSoilFertility(CropSResp, &
     ! decline canopy growth coefficient (CGC)
     pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCGC)
-    StressOUT%RedCGC = nint((1._dp-Ksi)*100._dp, int8)
+    StressOUT%RedCGC = roundc_int8((1._dp-Ksi)*100._dp)
     ! decline maximum canopy cover (CCx)
     pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCCX)
-    StressOUT%RedCCX = nint((1._dp-Ksi)*100._dp, int8)
+    StressOUT%RedCCX = roundc_int8((1._dp-Ksi)*100._dp)
     ! decline crop water productivity (WP)
     pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeWP)
-    StressOUT%RedWP = nint((1._dp-Ksi)*100._dp, int8)
+    StressOUT%RedWP = roundc_int8((1._dp-Ksi)*100._dp)
     ! decline Canopy Cover (CDecline)
     pULActual = 0._dp
     Ksi = KsAny(StressLevel/100._dp, pULActual, pLLActual, CropSResp%ShapeCDecline)
     StressOUT%CDecline = 1._dp - Ksi
     ! inducing stomatal closure (KsSto) not applicable
     Ksi = 1._dp
-    StressOUT%RedKsSto = nint((1._dp-Ksi)*100._dp, int8)
+    StressOUT%RedKsSto = roundc_int8((1._dp-Ksi)*100._dp)
 end subroutine CropStressParametersSoilFertility
 
 
@@ -938,7 +987,7 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
 
     ti = real(undef_int, kind=dp)
 
-    if (nint(Zi*100) >= nint(Zx*100)) then
+    if (roundc(Zi*100) >= roundc(Zx*100)) then
         ti = real(LZxAdj, kind=dp)
     else
         if (((Zo+0.0001_dp) < Zx) .and. (LZxAdj > Lo/2._dp) .and. (LZxAdj > 0) &
@@ -998,9 +1047,8 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
             if (fCCx < 0.005_dp) then
                 TempWeedDeltaRC = 0
             else
-                TempWeedDeltaRC = nint(TempWeedDeltaRC * exp( &
-                                       log(fCCx) * (1+TempWeedAdj/100._dp)), &
-                                       kind=int32)
+                TempWeedDeltaRC = roundc(TempWeedDeltaRC * exp( &
+                                       log(fCCx) * (1+TempWeedAdj/100._dp)))
             end if
         end if
 
@@ -1182,10 +1230,10 @@ integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
             ElapsedTime = undef_int
         else
             if (TheCropCCini <= TheCropCCx/2) then
-                ElapsedTime = nint(((log(TheCropCCini/TheCropCCo))/TheCropCGC), kind=int32)
+                ElapsedTime = roundc(((log(TheCropCCini/TheCropCCo))/TheCropCGC))
             else
-                ElapsedTime = (-1)* nint(((log(((TheCropCCx-TheCropCCini)* &
-                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC), kind=int32)
+                ElapsedTime = (-1)* roundc(((log(((TheCropCCx-TheCropCCini)* &
+                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC))
             end if
         end if
     end if
@@ -1200,8 +1248,8 @@ real(dp) function MultiplierCCxSelfThinning(Yeari, Yearx, ShapeFactor)
     real(dp) :: fCCx, Year0
     
     fCCx = 1
-    if ((Yeari >= 2) .and. (Yearx >= 2) .and. (nint(100._dp*ShapeFactor, &
-                                                    int32) /= 0)) then
+    if ((Yeari >= 2) .and. (Yearx >= 2) .and. &
+        (roundc(100._dp*ShapeFactor) /= 0)) then
         Year0 = 1._dp + (Yearx-1._dp) * exp(ShapeFactor*log(10._dp))
         if (Yeari >= Year0) then
             fCCx = 0
@@ -1238,7 +1286,7 @@ integer(int32) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, &
         end if
 
     end if
-    DaysToReachCCwithGivenCGC = L0 + nint(L, int32)
+    DaysToReachCCwithGivenCGC = L0 + roundc(L)
 end function DaysToReachCCwithGivenCGC
 
 integer(int32) function LengthCanopyDecline(CCx, CDC)
@@ -1252,8 +1300,8 @@ integer(int32) function LengthCanopyDecline(CCx, CDC)
         if (CDC <= epsilon(1._dp)) then
             ND = undef_int
         else
-            ND = nint((((CCx+2.29_dp)/(CDC*3.33_dp))*log(1._dp + 1._dp/0.05_dp &
-                     ) + 0.50_dp), int32)  ! + 0.50 to guarantee that CC is zero
+            ND = roundc((((CCx+2.29_dp)/(CDC*3.33_dp))* &
+                         log(1._dp + 1._dp/0.05_dp) + 0.50_dp))  ! + 0.50 to guarantee that CC is zero
         end if
 
     end if
@@ -1298,7 +1346,7 @@ real(dp) function TauFromKsat(Ksat)
     if (abs(Ksat) < epsilon(1._dp)) then
         TauFromKsat = 0
     else
-        TauTemp = nint(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)), kind=int32)
+        TauTemp = roundc(100.0_dp*0.0866_dp*exp(0.35_dp*log(Ksat)))
         if (TauTemp < 0) then
             TauTemp = 0
         end if
@@ -1391,8 +1439,8 @@ real(dp) function KsTemperature(T0, T1, Tin)
     integer(int8) :: a
 
     M = 1._dp ! no correction applied (TO and/or T1 is undefined, or T0=T1)
-    if (((nint(T0, kind=int32) /= undef_int) .and. &
-         (nint(T1, kind=int32) /= undef_int)) .and. abs(T0-T1)> eps) then
+    if (((roundc(T0) /= undef_int) .and. &
+         (roundc(T1) /= undef_int)) .and. abs(T0-T1)> eps) then
         if (T0 < T1) then
             a =  1  ! cold stress
         else
@@ -1455,13 +1503,13 @@ real(dp) function KsSalinity(SalinityResponsConsidered, &
     if (SalinityResponsConsidered) then
         if ((ECeVAR > ECeN) .and. (ECeVar < ECeX)) then
             ! within range for correction
-            if ((nint(KsShapeSalinity*10._dp) /= 0) .and. &
-                (nint(KsShapeSalinity*10) /= 990)) then
+            if ((roundc(KsShapeSalinity*10._dp) /= 0) .and. &
+                (roundc(KsShapeSalinity*10) /= 990)) then
                 tmp_var = real(ECeN, kind=dp)
                 M = KsAny(ECeVar, tmp_var, real(ECeX, kind=dp), KsShapeSalinity) 
                 ! convex or concave
             else
-                if (nint(KsShapeSalinity*10._dp) == 0) then
+                if (roundc(KsShapeSalinity*10._dp) == 0) then
                     M = 1._dp - (ECeVAR-ECeN)/(ECeX-ECeN) 
                     ! linear (KsShapeSalinity = 0)
                 else
@@ -1512,7 +1560,7 @@ subroutine TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, LFlor, Deter
         L12SF = DaysToReachCCwithGivenCGC(CCToReach, CCo, ((1-RedCCX/100._dp)*CCx), (CGC*(1-(RedCGC)/100._dp)), L0)
         ! determine L12SFmax
         if (DeterminantCrop) then
-            L12SFmax = LToFlor + nint(LFlor/2._dp, kind=int32)
+            L12SFmax = LToFlor + roundc(LFlor/2._dp)
         else
             L12SFmax = L123
         end if
@@ -1688,7 +1736,7 @@ subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
         if (SumDayMonth <= ElapsedDays(Monthi+1)) exit
         Monthi = Monthi + 1
     end do
-    Dayi = nint(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp, kind=int32)
+    Dayi = roundc(SumDayMonth - ElapsedDays(Monthi) + 0.25_dp + 0.06_dp)
 end subroutine DetermineDate
 
 
@@ -1760,10 +1808,10 @@ subroutine DetermineCNIandIII(CN2, CN1, CN3)
     integer(int8), intent(inout) :: CN1
     integer(int8), intent(inout) :: CN3
 
-    CN1 = nint(1.4_dp*(exp(-14*log(10._dp))) + 0.507_dp*CN2 &
-                - 0.00374_dp*CN2*CN2 + 0.0000867_dp*CN2*CN2*CN2, kind=int8)
-    CN3 = nint(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp*CN2 &
-               - 0.0209_dp*CN2*CN2 + 0.000076_dp*CN2*CN2*CN2, kind=int8)
+    CN1 = roundc(1.4_dp*(exp(-14*log(10._dp))) + 0.507_dp*CN2 &
+                  - 0.00374_dp*CN2*CN2 + 0.0000867_dp*CN2*CN2*CN2)
+    CN3 = roundc(5.6_dp*(exp(-14*log(10._dp))) + 2.33_dp*CN2 &
+                 - 0.0209_dp*CN2*CN2 + 0.000076_dp*CN2*CN2*CN2)
 
     if (CN1 <= 0) then
         CN1 = 1
@@ -1805,7 +1853,7 @@ real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     real(dp) :: fCCo, Year0
 
     fCCo = 1._dp
-    if ((Yeari >= 1) .and. (Yearx >= 2) .and. (nint(100*ShapeFactor) /= 0)) then
+    if ((Yeari >= 1) .and. (Yearx >= 2) .and. (roundc(100*ShapeFactor) /= 0)) then
         Year0 = 1._dp + (Yearx-1) * exp(ShapeFactor*log(10._dp))
         if ((Yeari >= Year0) .or. (Year0 <= 1)) then
             fCCo = 0._dp
@@ -1842,7 +1890,7 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     elseif (pRelativeLLUL >= 1._dp) then
         KsVal = 0._dp
     else
-        if (nint(10*ShapeFactor) == 0) then ! straight line
+        if (roundc(10*ShapeFactor) == 0) then ! straight line
             KsVal = 1._dp - &
                     (exp(pRelativeLLUL*0.01_dp)-1._dp)/(exp(0.01_dp)-1._dp)
         else
@@ -1892,7 +1940,7 @@ real(dp) function CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123, GDDLMaturity, SumG
 
     ! SumGDD refers to the end of the day and Delayed days are not considered
     CC = 0._dp
-    if ((SumGDD > 0._dp) .and. (nint(SumGDD, kind=int32) <= GDDLMaturity) .and. (CCo > 0._dp)) then
+    if ((SumGDD > 0._dp) .and. (roundc(SumGDD) <= GDDLMaturity) .and. (CCo > 0._dp)) then
         if (SumGDD <= GDDL0) then ! before germination or recovering of transplant
             CC = 0._dp
         else
@@ -1934,7 +1982,7 @@ real(dp) function HIadjWStressAtFlowering(KsVeg, KsSto, a, b)
     real(dp), intent(in) :: b
 
     if (a == undef_int) then
-        if (nint(b, kind=int32) == undef_int) then
+        if (roundc(b) == undef_int) then
             HIadjWStressAtFlowering = 1._dp
         elseif (KsSto > 0.001_dp) then
             HIadjWStressAtFlowering = (exp(0.10_dp*log(KsSto))) * (1._dp-(1._dp-KsSto)/b)
@@ -1942,7 +1990,7 @@ real(dp) function HIadjWStressAtFlowering(KsVeg, KsSto, a, b)
             HIadjWStressAtFlowering = 0.0_dp
         end if
     else
-        if (nint(b, kind=int32) == undef_int) then
+        if (roundc(b) == undef_int) then
             HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a)
         elseif (KsSto > 0.001_dp) then
             HIadjWStressAtFlowering = (1._dp + (1._dp-KsVeg)/a) * (exp(0.10_dp*log(KsSto))) &
@@ -2085,7 +2133,7 @@ subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
     integer(int32) :: tmax, ti
     integer(int32), parameter :: HIo = 1
 
-    tmax = nint(HImax/dHIdt, kind=int32)
+    tmax = roundc(HImax/dHIdt)
     ti = 0
     HiM1 = HIo
     if (tmax > 0) then

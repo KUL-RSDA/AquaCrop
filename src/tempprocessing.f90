@@ -7,13 +7,16 @@ use ac_kinds,  only: dp, &
 
 use iso_fortran_env, only: iostat_end
 
-use ac_global , only: DaysinMonth, &
+use ac_global , only: undef_int, &
+                      roundc, &
+                      DaysinMonth, &
                       rep_DayEventDbl, &
                       DetermineDayNr, &
                       DetermineDate, &
                       LeapYear, &
                       SplitStringInTwoParams, &
                       KsTemperature, &
+                      DegreesDay, &
                       GetPathNameSimul, &
                       GetTemperatureFile, &                     
                       GetTemperatureFilefull, &
@@ -25,7 +28,10 @@ use ac_global , only: DaysinMonth, &
                       GetTemperatureRecord_ToM, &
                       GetTemperatureRecord_ToY, &
                       GetTemperatureRecord_DataType, &
-                      GetTemperatureRecord_FromDayNr
+                      GetTemperatureRecord_FromDayNr, &
+                      GetTemperatureRecord_ToDayNr, &
+                      GetSimulParam_GDDMethod, &
+                      FullUndefinedRecord
 
 implicit none
 
@@ -572,6 +578,181 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
 end subroutine GetMonthlyTemperatureDataSet
 
+integer(int32) function GrowingDegreeDays(ValPeriod, &
+               FirstDayPeriod, Tbase, Tupper, TDayMin, TDayMax)
+    integer(int32), intent(in) :: ValPeriod
+    integer(int32), intent(in) :: FirstDayPeriod
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(inout) :: TDayMin
+    real(dp), intent(inout) :: TDayMax
+
+    integer(int32) :: i, RemainingDays
+    character(len=:), allocatable :: totalname
+    integer(int32) :: fhandle, rc
+    integer(int32) :: DayNri
+    real(dp)       :: GDDays, DayGDD
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+    character(len=255) :: StringREAD
+    logical :: AdjustDayNri, file_exists
+
+    GDDays = 0
+    if (ValPeriod > 0) then
+        if (GetTemperatureFile() == '(None)') then
+            ! given average Tmin and Tmax
+            DayGDD = DegreesDay(Tbase, Tupper, &
+                     TDayMin, TDayMax, GetSimulParam_GDDMethod())
+            GDDays = roundc(ValPeriod * DayGDD)
+        else
+            ! temperature file
+            DayNri = FirstDayPeriod
+            if (FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+                  GetTemperatureRecord_FromD(), GetTemperatureRecord_FromM(),&
+                  GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
+                AdjustDayNri = .true.
+                call SetDayNrToYundef(DayNri)
+            else
+                AdjustDayNri = .false.
+            end if
+            totalname = GetTemperatureFilefull()
+            inquire(file=trim(totalname), exist=file_exists)
+            if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
+                .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
+                RemainingDays = ValPeriod
+                select case (GetTemperatureRecord_DataType())
+                case (0) !Daily
+                    open(newunit=fhandle, file=trim(totalname), &
+                     status='old', action='read', iostat=rc)
+                    read(fhandle, *, iostat=rc) ! description
+                    read(fhandle, *, iostat=rc) ! time step
+                    read(fhandle, *, iostat=rc) ! day
+                    read(fhandle, *, iostat=rc) ! month
+                    read(fhandle, *, iostat=rc) ! year
+                    read(fhandle, *, iostat=rc)
+                    read(fhandle, *, iostat=rc)
+                    read(fhandle, *, iostat=rc)
+                    do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1)
+                         read(fhandle, *, iostat=rc)
+                    end do
+                    read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
+                    call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                    DayGDD = DegreesDay(Tbase, Tupper, &
+                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                    GDDays = GDDays + DayGDD
+                    RemainingDays = RemainingDays - 1
+                    DayNri = DayNri + 1
+                    do while ((RemainingDays > 0) &
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .or. AdjustDayNri))
+                        if (rc == iostat_end) then
+                            read(fhandle, *, iostat=rc) ! description
+                            read(fhandle, *, iostat=rc) ! time step
+                            read(fhandle, *, iostat=rc) ! day
+                            read(fhandle, *, iostat=rc) ! month
+                            read(fhandle, *, iostat=rc) ! year
+                            read(fhandle, *, iostat=rc)
+                            read(fhandle, *, iostat=rc)
+                            read(fhandle, *, iostat=rc)
+                            read(fhandle, '(a)', iostat=rc) StringREAD
+                            call SplitStringInTwoParams(StringREAD, &
+                                     TDayMin, TDayMax)
+                        else
+                            read(fhandle, '(a)', iostat=rc) StringREAD
+                            call SplitStringInTwoParams(StringREAD, &
+                                     TDayMin, TDayMax)
+                        end if
+                        DayGDD = DegreesDay(Tbase, Tupper, &
+                                     TDayMin, TDayMax,&
+                                     GetSimulParam_GDDMethod())
+                        GDDays = GDDays + DayGDD
+                        RemainingDays = RemainingDays - 1
+                        DayNri = DayNri + 1
+                    end do
+                    if (RemainingDays > 0) then
+                        GDDays = undef_int
+                    end if
+                    close(fhandle)
+                case(1) !Decadely:
+                    call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
+                                TmaxDataSet)
+                    i = 1
+                    do while (TminDataSet(i)%DayNr /= DayNri)
+                        i = i+1
+                    end do
+                    TDaymin = TminDataSet(i)%Param
+                    TDaymax = TmaxDataSet(i)%Param
+                    DayGDD = DegreesDay(Tbase, Tupper, &
+                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                    GDDays = GDDays + DayGDD
+                    RemainingDays = RemainingDays - 1
+                    DayNri = DayNri + 1
+                    do while ((RemainingDays > 0) &
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                               .or. AdjustDayNri))
+                        if (DayNri > TminDataSet(31)%DayNr) then
+                            call GetDecadeTemperatureDataSet(DayNri, &
+                                    TminDataSet, TmaxDataSet)
+                        end if
+                        i = 1
+                        do while (TminDataSet(i)%DayNr /= DayNri)
+                            i = i+1
+                        end do
+                        TDayMin = TminDataSet(i)%Param
+                        TDayMax = TmaxDataSet(i)%Param
+                        DayGDD = DegreesDay(Tbase, Tupper, &
+                                     TDayMin, TDayMax,&
+                                     GetSimulParam_GDDMethod())
+                        GDDays = GDDays + DayGDD
+                        RemainingDays = RemainingDays - 1
+                        DayNri = DayNri + 1
+                    end do
+                    if (RemainingDays > 0) then
+                        GDDays = undef_int
+                    end if
+                case(2) !Monthly:
+                    call GetMonthlyTemperatureDataSet(DayNri, &
+                            TminDataSet, TmaxDataSet)
+                    i = 1
+                    do while (TminDataSet(i)%DayNr /= DayNri)
+                        i = i+1
+                    end do
+                    TDayMin = TminDataSet(i)%Param
+                    TDayMax = TmaxDataSet(i)%Param
+                    DayGDD = DegreesDay(Tbase, Tupper, &
+                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                    GDDays = GDDays + DayGDD
+                    RemainingDays = RemainingDays - 1
+                    DayNri = DayNri + 1
+                    do while((RemainingDays > 0) &
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .or. AdjustDayNri))
+                        if (DayNri > TminDataSet(31)%DayNr) then
+                            call GetMonthlyTemperatureDataSet(DayNri, &
+                                 TminDataSet, TmaxDataSet)
+                        end if
+                        i = 1
+                        do while (TminDataSet(i)%DayNr /= DayNri)
+                            i = i+1
+                        end do
+                        TDayMin = TminDataSet(i)%Param
+                        TDayMax = TmaxDataSet(i)%Param
+                        DayGDD = DegreesDay(Tbase, Tupper, &
+                              TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                        GDDays = GDDays + DayGDD
+                        RemainingDays = RemainingDays - 1
+                        DayNri = DayNri + 1
+                    end do
+                    if (RemainingDays > 0) then
+                        GDDays = undef_int
+                    end if
+                end select
+            end if !if temperaturefull file exists
+        end if !if temperature file
+    else    
+        GDDays = undef_int
+    endif !end valperiod>0
+    GrowingDegreeDays = roundc(GDDays)
+end function GrowingDegreeDays
 
 subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
                          TempHI, TempTmin, TempTmax, &
@@ -624,13 +805,13 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
         ! 3.3 Ks(pollination) cold stress
         KsPolCS = KsTemperature(real(TempTcold-TempRange, kind=dp), &
                       real(TempTcold, kind=dp), Tndayi)
-        if (nint(10000*KsPolCS , kind=int32) < 10000) then
+        if (roundc(10000*KsPolCS) < 10000) then
             ColdStress = .true.
         end if
         ! 3.4 Ks(pollination) heat stress
         KsPolHS = KsTemperature(real(TempTheat+TempRange, kind=dp), &
                      real(TempTheat, kind=dp), Txdayi)
-        if (nint(10000*KsPolHS, kind=int32) < 10000) then
+        if (roundc(10000*KsPolHS) < 10000) then
             HeatStress = .true.
         end if
         ! 3.5 Adjust HI
@@ -729,7 +910,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
     integer(int32), intent(in) :: CropLastDay
 
     character(len=:), allocatable :: totalname, totalnameOUT
-    integer :: fhandle1, fhandle2
+    integer(int32) :: fhandle1, fhandle2
     integer(int32) :: i, RunningDay, rc
     character(len=255) :: StringREAD
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
