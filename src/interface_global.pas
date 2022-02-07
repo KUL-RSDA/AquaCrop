@@ -6,7 +6,6 @@ interface
 
 const
     max_SoilLayers = 5;
-    max_No_compartments = 12;
     undef_double = -9.9;
     undef_int = -9;
     CO2Ref = 369.41;
@@ -18,26 +17,6 @@ type
     rep_string25 = string[25]; (* Description SoilLayer *)
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
-
-     CompartmentIndividual = Record
-         Thickness : double;  (* meter *)
-         theta     : double;  (* m3/m3 *)
-         fluxout   : double;  (* mm/day *)
-         Layer     : INTEGER;
-         Smax      : double;  (* Maximum root extraction m3/m3.day *)
-         FCadj     : double;  (* Vol % at Field Capacity adjusted to Aquifer *)
-         DayAnaero : INTEGER; (* number of days under anaerobic conditions *)
-         WFactor   : double;  (* weighting factor 0 ... 1
-                               Importance of compartment in calculation of
-                               - relative wetness (RUNOFF)
-                               - evaporation process
-                               - transpiration process *)
-         // salinity factors
-         Salt      : rep_salt; // salt content in solution in cells (g/m2)
-         Depo      : rep_salt; // salt deposit in cells (g/m2)
-         END;
-
-    rep_Comp = ARRAY[1.. max_No_compartments] of CompartmentIndividual;
 
     rep_subkind = (Vegetative,Grain,Tuber,Forage);
     rep_pMethod = (NoCorrection,FAOCorrection);
@@ -1444,6 +1423,18 @@ procedure SetClimateFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimatefilefull_wrap';
 
+function GetClimateDescription(): string;
+
+function GetClimateDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getclimatedescription_wrap';
+
+procedure SetClimateDescription(constref str : string);
+
+procedure SetClimateDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setclimatedescription_wrap';
+
 function GetClimFile(): string;
 
 function GetClimFile_wrap(): PChar;
@@ -1906,6 +1897,18 @@ procedure SetCalendarFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcalendarfilefull_wrap';
 
+function GetCalendarDescription(): string;
+
+function GetCalendarDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcalendardescription_wrap';
+
+procedure SetCalendarDescription(constref str : string);
+
+procedure SetCalendarDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcalendardescription_wrap';
+
 function GetCropFile(): string;
 
 function GetCropFile_wrap(): PChar;
@@ -1930,6 +1933,18 @@ procedure SetCropFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setcropfilefull_wrap';
 
+function GetCropDescription(): string;
+
+function GetCropDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getcropdescription_wrap';
+
+procedure SetCropDescription(constref str : string);
+
+procedure SetCropDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setcropdescription_wrap';
+
 function GetProfFile(): string;
 
 function GetProfFile_wrap(): PChar;
@@ -1953,6 +1968,18 @@ procedure SetProfFilefull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setproffilefull_wrap';
+
+function GetProfDescription(): string;
+
+function GetProfDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getprofdescription_wrap';
+
+procedure SetProfDescription(constref str : string);
+
+procedure SetProfDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setprofdescription_wrap';
 
 function GetManFile(): string;
 
@@ -2086,6 +2113,18 @@ procedure SetTemperatureFilefull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturefilefull_wrap';
+
+function GetTemperatureDescription(): string;
+
+function GetTemperatureDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_gettemperaturedescription_wrap';
+
+procedure SetTemperatureDescription(constref str : string);
+
+procedure SetTemperatureDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settemperaturedescription_wrap';
 
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
@@ -3570,6 +3609,26 @@ begin;
     SetProfFilefull_wrap(p, strlen);
 end;
 
+function GetProfDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetProfDescription_wrap();
+    GetProfDescription := AnsiString(p);
+end;
+
+procedure SetProfDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetProfDescription_wrap(p, strlen);
+end;
+
 function GetManFile(): string;
 var
     p : PChar;
@@ -3942,6 +4001,28 @@ begin;
 end;
 
 
+function GetClimateDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetClimateDescription_wrap();
+    GetClimateDescription := AnsiString(p);
+end;
+
+
+procedure SetClimateDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetClimateDescription_wrap(p, strlen);
+end;
+
+
 function GetClimFile(): string;
 var
     p : PChar;
@@ -4262,6 +4343,27 @@ begin;
 end;
 
 
+function GetCalendarDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCalendarDescription_wrap();
+    GetCalendarDescription := AnsiString(p);
+end;
+
+procedure SetCalendarDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCalendarDescription_wrap(p, strlen);
+end;
+
+
 function GetCropFile(): string;
 var
     p : PChar;
@@ -4353,6 +4455,28 @@ begin;
     SetCropFileFull_wrap(p, strlen);
 end;
 
+
+function GetCropDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetCropDescription_wrap();
+    GetCropDescription := AnsiString(p);
+end;
+
+
+procedure SetCropDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetCropDescription_wrap(p, strlen);
+end;
+
+
 function GetTemperatureFile(): string;
 var
      p : PChar;
@@ -4390,6 +4514,27 @@ begin;
      strlen := Length(str);
      SetTemperatureFilefull_wrap(p, strlen);
 end;
+
+
+function GetTemperatureDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetTemperatureDescription_wrap();
+     GetTemperatureDescription := AnsiString(p);
+end;
+
+
+procedure SetTemperatureDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTemperatureDescription_wrap(p, strlen);
+end;
+
 
 function GetTemperatureRecord() : rep_clim;
 begin
@@ -4495,8 +4640,6 @@ begin;
     for i2 := 1 to 11 do SetCompartment_Salt(i, i2, Compartment_i.Salt[i2]);
     for i2 := 1 to 11 do SetCompartment_Depo(i, i2, Compartment_i.Depo[i2]);
 end;
-
-
 
 
 initialization

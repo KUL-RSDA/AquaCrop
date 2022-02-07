@@ -12,7 +12,6 @@ implicit none
 
 
 integer(int32), parameter :: max_SoilLayers = 5
-integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -140,34 +139,6 @@ integer(intEnum), parameter :: datatype_decadely = 1
     !! index of decadely in datatype enumerated type
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
-
-type CompartmentIndividual 
-    real(dp) :: Thickness
-        !! meter
-    real(dp) :: theta
-        !! m3/m3
-    real(dp) :: fluxout
-        !! mm/day
-    integer(int32) :: Layer
-        !! Undocumented
-    real(dp) :: Smax
-        !! Maximum root extraction m3/m3.day
-    real(dp) :: FCadj
-        !! Vol % at Field Capacity adjusted to Aquifer
-    integer(int32) :: DayAnaero
-        !! number of days under anaerobic conditions
-    real(dp) :: WFactor
-        !! weighting factor 0 ... 1
-        !! Importance of compartment in calculation of
-        !! - relative wetness (RUNOFF)
-        !! - evaporation process
-        !! - transpiration process *)
-    !! salinity factors
-    real(dp), dimension(11) :: Salt
-        !! salt content in solution in cells (g/m2)
-    real(dp), dimension(11) :: Depo
-        !! salt deposit in cells (g/m2)
-end type CompartmentIndividual 
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -715,6 +686,7 @@ character(len=:), allocatable :: EToFileFull
 character(len=:), allocatable :: EToDescription
 character(len=:), allocatable :: CalendarFile
 character(len=:), allocatable :: CalendarFileFull
+character(len=:), allocatable :: CalendarDescription
 character(len=:), allocatable :: CO2File
 character(len=:), allocatable :: CO2FileFull
 character(len=:), allocatable :: CO2Description
@@ -722,11 +694,13 @@ character(len=:), allocatable :: IrriFile
 character(len=:), allocatable :: IrriFileFull
 character(len=:), allocatable :: CropFile
 character(len=:), allocatable :: CropFileFull
+character(len=:), allocatable :: CropDescription
 character(len=:), allocatable :: PathNameProg
 character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
+character(len=:), allocatable :: ProfDescription
 character(len=:), allocatable :: ManFile
 character(len=:), allocatable :: ManFilefull
 character(len=:), allocatable :: ObservationsFile
@@ -738,6 +712,7 @@ character(len=:), allocatable :: GroundWaterFile
 character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
+character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
@@ -746,6 +721,7 @@ character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
+character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 
 type(rep_IrriECw) :: IrriECw
@@ -768,8 +744,6 @@ integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
-
-type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
 
 contains
@@ -2346,6 +2320,20 @@ subroutine SetClimateFileFull(str)
     ClimateFileFull = str
 end subroutine SetClimateFileFull
 
+function GetClimateDescription() result(str)
+    !! Getter for the "ClimateDescription" global variable.
+    character(len=len(ClimateDescription)) :: str
+    
+    str = ClimateDescription
+end function GetClimateDescription
+
+subroutine SetClimateDescription(str)
+    !! Setter for the "ClimateDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    ClimateDescription = str
+end subroutine SetClimateDescription
+
 function GetClimFile() result(str)
     !! Getter for the "ClimFile" global variable.
     character(len=len(ClimFile)) :: str
@@ -2734,6 +2722,20 @@ subroutine SetCalendarFileFull(str)
     CalendarFileFull = str
 end subroutine SetCalendarFileFull
 
+function GetCalendarDescription() result(str)
+    !! Getter for the "CalendarDescription" global variable.
+    character(len=len(CalendarDescription)) :: str
+
+    str = CalendarDescription
+end function GetCalendarDescription
+
+subroutine SetCalendarDescription(str)
+    !! Setter for the "CalendarDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    CalendarDescription = str
+end subroutine SetCalendarDescription
+
 function GetCropFile() result(str)
     !! Getter for the "CropFile" global variable.
     character(len=len(CropFile)) :: str
@@ -2761,6 +2763,20 @@ subroutine SetCropFileFull(str)
 
     CropFileFull = str
 end subroutine SetCropFileFull
+
+function GetCropDescription() result(str)
+    !! Getter for the "CropDescription" global variable.
+    character(len=len(CropDescription)) :: str
+
+    str = CropDescription
+end function GetCropDescription
+
+subroutine SetCropDescription(str)
+    !! Setter for the "CropDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    CropDescription = str
+end subroutine SetCropDescription
 
 type(rep_IrriECw) function GetIrriECw()
     !! Getter for the "IrriECw" global variable.
@@ -2809,6 +2825,20 @@ subroutine SetProfFilefull(str)
 
     ProfFilefull = str
 end subroutine SetProfFilefull
+
+function GetProfDescription() result(str)
+    !! Getter for the "ProfDescription" global variable.
+    character(len=len(ProfDescription)) :: str
+
+    str = ProfDescription
+end function GetProfDescription
+
+subroutine SetProfDescription(str)
+    !! Setter for the "ProfDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProfDescription = str
+end subroutine SetProfDescription
 
 function GetManFile() result(str)
     !! Getter for the "ManFile" global variable.
@@ -5914,6 +5944,20 @@ subroutine SetTemperatureFilefull(str)
     TemperatureFilefull = str
 end subroutine SetTemperatureFilefull
 
+function GetTemperatureDescription() result(str)
+    !! Getter for the "TemperatureDescription" global variable.
+    character(len=len(TemperatureDescription)) :: str
+
+    str = TemperatureDescription
+end function GetTemperatureDescription
+
+subroutine SetTemperatureDescription(str)
+    !! Setter for the "TemperatureDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    TemperatureDescription = str
+end subroutine SetTemperatureDescription
+
 function GetCrop_Length_i(i) result(Length_i)
     !! Getter for the "Length" attribute of "Crop" global variable.
     integer(int32), intent(in) :: i
@@ -6093,195 +6137,5 @@ subroutine SetTemperatureRecord_FromString(FromString)
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
-
-function GetCompartment_i(i) result(Compartment_i)
-    !! Getter for individual elements of "Compartment" global variable.
-    integer(int32), intent(in) :: i
-    type(CompartmentIndividual) :: Compartment_i
-
-    Compartment_i = Compartment(i)
-end function GetCompartment_i
-
-
-subroutine SetCompartment_i(i, Compartment_i)
-    !! Setter for individual elements of "Compartment" global variable.
-    integer(int32), intent(in) :: i
-    type(CompartmentIndividual) :: Compartment_i
-
-    Compartment(i) = Compartment_i
-end subroutine SetCompartment_i
-
-
-function GetCompartment_Thickness(i) result(Thickness)
-    !! Getter for the "Thickness" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp) :: Thickness
-
-    Thickness = compartment(i)%Thickness
-end function GetCompartment_Thickness
-
-function GetCompartment_theta(i) result(theta)
-    !! Getter for the "theta" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp) :: theta
-
-    theta = compartment(i)%theta
-end function GetCompartment_theta
-
-function GetCompartment_fluxout(i) result(fluxout)
-    !! Getter for the "fluxout" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp) :: fluxout
-
-    fluxout = compartment(i)%fluxout
-end function GetCompartment_fluxout
-
-function GetCompartment_Layer(i) result(Layer)
-    !! Getter for the "Layer" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    integer(int32) :: Layer
-
-    Layer = compartment(i)%Layer
-end function GetCompartment_Layer
-
-function GetCompartment_Smax(i) result(Smax)
-    !! Getter for the "Smax" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp) :: Smax
-
-    Smax = compartment(i)%Smax
-end function GetCompartment_Smax
-
-function GetCompartment_FCadj(i) result(FCadj)
-    !! Getter for the "FCadj" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp) :: FCadj
-
-    FCadj = compartment(i)%FCadj
-end function GetCompartment_FCadj
-
-function GetCompartment_DayAnaero(i) result(DayAnaero)
-    !! Getter for the "DayAnaero" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    integer(int32) :: DayAnaero
-
-    DayAnaero = compartment(i)%DayAnaero
-end function GetCompartment_DayAnaero
-
-function GetCompartment_WFactor(i) result(WFactor)
-    !! Getter for the "WFactor" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp) :: WFactor
-
-    WFactor = compartment(i)%WFactor
-end function GetCompartment_WFactor
-
-function GetCompartment_Salt(i1, i2) result(Salt)
-    !! Getter for individual elements of "Salt" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i1
-    integer(int32), intent(in) :: i2
-    real(dp) :: Salt
-
-    Salt = compartment(i1)%Salt(i2)
-end function GetCompartment_Salt
-
-function GetCompartment_Depo(i1, i2) result(Depo)
-    !! Getter for individual elements of "Depo" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i1
-    integer(int32), intent(in) :: i2
-    real(dp) :: Depo
-
-    Depo = compartment(i1)%Depo(i2)
-end function GetCompartment_Depo
-
-subroutine SetCompartment(Compartment_in)
-    !! Setter for the "compartment" global variable.
-    type(CompartmentIndividual), intent(in) :: Compartment_in
-
-    compartment = Compartment_in
-end subroutine SetCompartment
-
-subroutine SetCompartment_Thickness(i, Thickness)
-    !! Setter for the "Thickness" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: Thickness
-
-    compartment(i)%Thickness = Thickness
-end subroutine SetCompartment_Thickness
-
-subroutine SetCompartment_theta(i, theta)
-    !! Setter for the "theta" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: theta
-
-    compartment(i)%theta = theta
-end subroutine SetCompartment_theta
-
-subroutine SetCompartment_fluxout(i, fluxout)
-    !! Setter for the "fluxout" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: fluxout
-
-    compartment(i)%fluxout = fluxout
-end subroutine SetCompartment_fluxout
-
-subroutine SetCompartment_Layer(i, Layer)
-    !! Setter for the "Layer" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    integer(int32), intent(in) :: Layer
-
-    compartment(i)%Layer = Layer
-end subroutine SetCompartment_Layer
-
-subroutine SetCompartment_Smax(i, Smax)
-    !! Setter for the "Smax" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: Smax
-
-    compartment(i)%Smax = Smax
-end subroutine SetCompartment_Smax
-
-subroutine SetCompartment_FCadj(i, FCadj)
-    !! Setter for the "FCadj" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: FCadj
-
-    compartment(i)%FCadj = FCadj
-end subroutine SetCompartment_FCadj
-
-subroutine SetCompartment_DayAnaero(i, DayAnaero)
-    !! Setter for the "DayAnaero" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    integer(int32), intent(in) :: DayAnaero
-
-    compartment(i)%DayAnaero = DayAnaero
-end subroutine SetCompartment_DayAnaero
-
-subroutine SetCompartment_WFactor(i, WFactor)
-    !! Setter for the "WFactor" attribute of the "compartment" global variable.
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: WFactor
-
-    compartment(i)%WFactor = WFactor
-end subroutine SetCompartment_WFactor
-
-subroutine SetCompartment_Salt(i1, i2, Salt)
-    !! Setter for individual elements of "Salt" attribute of the "compartment global variable.
-    integer(int32), intent(in) :: i1
-    integer(int32), intent(in) :: i2
-    real(dp), intent(in) :: Salt
-
-    compartment(i1)%Salt(i2) = Salt
-end subroutine SetCompartment_Salt
-
-subroutine SetCompartment_Depo(i1, i2, Depo)
-    !! Setter for individual elements of "Depo" attribute of the "compartment global variable.
-    integer(int32), intent(in) :: i1
-    integer(int32), intent(in) :: i2
-    real(dp), intent(in) :: Depo
-
-    compartment(i1)%Depo(i2) = Depo
-end subroutine SetCompartment_Depo
-
 
 end module ac_global
