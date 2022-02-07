@@ -1149,6 +1149,15 @@ function CCmultiplierWeed(
             constref FshapeWeed : double) : double;
          external 'aquacrop' name '__ac_global_MOD_ccmultiplierweed';
 
+function CCmultiplierWeedAdjusted(
+            constref ProcentWeedCover: shortint;
+            constref CCxCrop : double;
+            constref FshapeWeed : double;
+            constref fCCx : double;
+            constref Yeari : shortint;
+            constref MWeedAdj : shortint;
+            constref RCadj : shortint) : shortint;
+         external 'aquacrop' name '__ac_global_MOD_ccmultiplierweedadjusted';
 
 function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;
