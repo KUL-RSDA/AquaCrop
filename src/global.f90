@@ -2258,6 +2258,50 @@ subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile
     close(fhandle)
 end subroutine LoadClimate
 
+subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearStart)
+    character(len=*), intent(in) :: FullName
+    logical, intent(inout) :: GetOnset
+    logical, intent(inout) :: GetOnsetTemp
+    integer(int32), intent(inout) :: DayNrStart
+    integer(int32), intent(in) :: YearStart
+
+
+
+    integer :: fhandle
+    integer(int8) :: Onseti
+    integer(int32) :: Dayi, Monthi, Yeari, CriterionNr
+    integer(int32) :: DayNr
+    GetOnset = .false.
+    GetOnsetTemp = .false.
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) CalendarDescription
+    read(fhandle, *) ! AquaCrop Version
+
+    ! Specification of Onset and End growing season
+    read(fhandle, *) Onseti ! specification of the onset
+
+    ! Onset growing season
+    if (Onseti == 0) then
+        ! onset on a specific day
+        read(fhandle, *) ! start search period - not applicable
+        read(fhandle, *) ! length search period - not applicable
+        read(fhandle, *) DayNr ! day-number
+        call DetermineDate(DayNr, Dayi, Monthi, Yeari)
+        call DetermineDayNr(Dayi, Monthi, YearStart, DayNrStart)
+    else
+        ! onset is generated
+        GetOnset = .true.
+        read(fhandle, *) ! start search period
+        read(fhandle, *) ! length search period
+        read(fhandle, *) CriterionNr ! criterion number to decide if based on rainfall or air temperature
+        if (CriterionNr > 10) then
+            GetOnsetTemp = .true.
+        end if
+    end if
+    close(fhandle)
+end subroutine LoadCropCalendar
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)

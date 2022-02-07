@@ -67,6 +67,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainFileFull, &
                      GetRainDescription, &
                      LoadClimate, &
+                     LoadCropCalendar, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -420,6 +421,21 @@ subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, &
     string6 = pointer2string(CO2File, strlen6)
     call LoadClimate(string1, string2, string3, string4, string5, string6)
 end subroutine LoadClimate_wrap
+
+subroutine LoadCropCalendar_wrap(FullName, strlen, GetOnset,GetOnsetTemp,DayNrStart,YearStart)
+    !! Wrapper for [[ac_global:LoadCropCalendar]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+    logical, intent(inout) :: GetOnset
+    logical, intent(inout) :: GetOnsetTemp
+    integer(int32), intent(inout) :: DayNrStart
+    integer(int32), intent(in) :: YearStart
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadCropCalendar(string,GetOnset,GetOnsetTemp,DayNrStart,YearStart)
+end subroutine LoadCropCalendar_wrap
 
 
 function GetCO2File_wrap() result(c_pointer)
