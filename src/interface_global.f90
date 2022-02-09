@@ -6,20 +6,28 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_ptr
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
+                     TimeToMaxCanopySF, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
+                     GetCalendarDescription, &
                      GenerateCO2Description, &
                      GetCO2File, &
                      GetCO2FileFull, &
                      GetCO2Description, &
                      GetCropFile, &
                      GetCropFileFull, &
+                     GetCropDescription, &
+                     GetCrop_DeterminancyLinked, &
+                     GetCrop_SownYear1, &
+                     GetCrop_StressResponse_Calibrated, &
+                     GetCrop_Assimilates_On, &
                      GetIrriDescription, &
                      GetIrriFile, &
                      GetIrriFileFull, &
                      GetClimateFile, &
                      GetClimateFileFull, &
+                     GetClimateDescription, &
                      GetClimFile, &
                      GetSWCiniFile, &
                      GetSWCiniFileFull, &
@@ -28,11 +36,16 @@ use ac_global, only: CheckFilesInProject, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
                      GetNumberSimulationRuns, &
+                     GetSimulParam_CNcorrection, &
+                     GetsimulParam_ConstGwt, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
+                     GetPerennialPeriod_GenerateOnset, &
+                     GetPerennialPeriod_GenerateEnd, &
                      GetProfFile, &
                      GetProfFilefull, &
+                     GetProfDescription, &
                      GetManagement_Cuttings_Considered, &
                      GetManagement_Cuttings_Generate, &
                      GetManagement_Cuttings_HarvestEnd, &
@@ -55,35 +68,49 @@ use ac_global, only: CheckFilesInProject, &
                      setRainFile, &
                      GetRainFileFull, &
                      GetRainDescription, &
+                     LoadClimate, &
+                     LoadCropCalendar, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
                      SetCalendarFile, &
                      SetCalendarFileFull, &
+                     SetCalendarDescription, &
                      SetCO2File, &
                      SetCO2FileFull, &
                      SetCO2Description, &
                      SetCropFile, &
                      SetCropFileFull, &
+                     SetCropDescription, &
+                     SetCrop_DeterminancyLinked, &
+                     SetCrop_SownYear1, &
+                     SetCrop_StressResponse_Calibrated, &
+                     SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
                      SetClimateFile, &
                      SetClimateFileFull, &
+                     SetClimateDescription, &
                      SetClimFile, &
                      SetEToFile, &
                      SetEToFileFull, &
                      SetEToDescription, &
                      setSWCiniFile, &
                      setSWCiniFileFull, &
+                     SetSimulParam_CNcorrection, &
+                     SetSimulParam_ConstGwt, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
+                     SetPerennialPeriod_GenerateOnset, &
+                     SetPerennialPeriod_GenerateEnd, &
                      SetProjectFile, &
                      SetProjectFileFull, &
                      SetMultipleProjectFile, &
                      SetMultipleProjectFileFull, &
                      SetProfFile, &
                      SetProfFilefull, &
+                     SetProfDescription, &
                      SetManFile, &
                      SetManFilefull, &
                      SetManagement_Cuttings_Considered, &
@@ -99,6 +126,12 @@ use ac_global, only: CheckFilesInProject, &
                      SetOffSeasonFilefull, &
                      SetGroundWaterFile, &
                      SetGroundWaterFilefull, &
+                     GetTemperatureFile, &
+                     GetTemperatureFilefull, &
+                     GetTemperatureDescription, &
+                     SetTemperatureFile, &
+                     SetTemperatureFilefull, &
+                     SetTemperatureDescription, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      SetTemperatureRecord_FromString, &
@@ -132,7 +165,8 @@ use ac_global, only: CheckFilesInProject, &
 
 use ac_kinds, only: dp, &
                     int32, &
-                    intEnum
+                    intEnum, &
+                    int8
 implicit none
 
 
@@ -169,6 +203,73 @@ function string2pointer(string) result(c_pointer)
     c_pointer = c_loc(f_string)
 end function string2pointer
 
+function GetCrop_Assimilates_On_wrap() result(On)
+    !! Wrapper for [[ac_global:GetCrop_Assimilates_On]] for foreign languages.
+    logical(1) :: On
+
+    On = GetCrop_Assimilates_On()
+end function GetCrop_Assimilates_On_wrap
+
+subroutine SetCrop_Assimilates_On_wrap(On)
+    !! Wrapper for [[ac_global:SetCrop_Assimilates_On]] for foreign languages.
+    logical(1), intent(in) :: On
+
+    logical :: bool
+
+    bool = On
+    call SetCrop_Assimilates_On(bool)
+end subroutine SetCrop_Assimilates_On_wrap
+
+function GetCrop_DeterminancyLinked_wrap() result(DeterminancyLinked)
+    !! Wrapper for [[ac_global:GetCrop_DeterminancyLinked]] for foreign languages.
+    logical(1) :: DeterminancyLinked
+
+    DeterminancyLinked = GetCrop_DeterminancyLinked()
+end function GetCrop_DeterminancyLinked_wrap
+
+function GetCrop_SownYear1_wrap() result(SownYear1)
+    !! Wrapper for [[ac_global:GetCrop_SownYear1]] for foreign languages.
+    logical(1) :: SownYear1
+
+    SownYear1 = GetCrop_SownYear1()
+end function GetCrop_SownYear1_wrap
+
+subroutine SetCrop_DeterminancyLinked_wrap(DeterminancyLinked)
+    !! Wrapper for [[ac_global:SetCrop_DeterminancyLinked]] for foreign languages.
+    logical(1), intent(in) :: DeterminancyLinked
+
+    logical :: bool
+
+    bool = DeterminancyLinked
+    call SetCrop_DeterminancyLinked(bool)
+end subroutine SetCrop_DeterminancyLinked_wrap
+
+subroutine SetCrop_SownYear1_wrap(SownYear1)
+    !! Wrapper for [[ac_global:SetCrop_SownYear1]] for foreign languages.
+    logical(1), intent(in) :: SownYear1
+
+    logical :: bool
+
+    bool = SownYear1
+    call SetCrop_SownYear1(bool)
+end subroutine SetCrop_SownYear1_wrap
+
+function GetCrop_StressResponse_Calibrated_wrap() result(Calibrated)
+    !! Wrapper for [[ac_global:GetCrop_StressResponse_Calibrated]] for foreign languages.
+    logical(1) :: Calibrated
+
+    Calibrated = GetCrop_StressResponse_Calibrated()
+end function GetCrop_StressResponse_Calibrated_wrap
+
+subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
+    !! Wrapper for [[ac_global:SetCrop_StressResponse_Calibrated]] for foreign languages.
+    logical(1), intent(in) :: Calibrated
+
+    logical :: bool
+
+    bool = Calibrated
+    call SetCrop_StressResponse_Calibrated(bool)
+end subroutine SetCrop_StressResponse_Calibrated_wrap
 
 subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
@@ -268,6 +369,30 @@ subroutine GenerateCO2Description_wrap(CO2FileFull, strlen1, CO2Description, &
     call GenerateCO2Description(string1, string2)
 end subroutine GenerateCO2Description_wrap
 
+subroutine TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
+                                  LFlor, DeterminantCrop, L12SF, RedCGC, &
+                                  RedCCx, ClassSF)
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CCx
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LToFlor
+    integer(int32), intent(in) :: LFlor
+    logical(1), intent(in) :: DeterminantCrop
+    integer(int32), intent(inout) :: L12SF
+    integer(int8), intent(inout) :: RedCGC
+    integer(int8), intent(inout) :: RedCCx
+    integer(int8), intent(inout) :: ClassSF
+    
+    logical :: DeterminantCrop_f
+    
+    DeterminantCrop_f = DeterminantCrop
+    call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
+                                  LFlor, DeterminantCrop_f, L12SF, RedCGC, &
+                                  RedCCx, ClassSF)
+end subroutine TimeToMaxCanopySF_wrap
 
 subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                         TotalLength, CGCgiven, TheDaysToCCini, ThePlanting, &
@@ -292,6 +417,54 @@ subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                                      CGCgiven_f, TheDaysToCCini, ThePlanting, &
                                      Length123, StLength, Length12, CGCVal)
 end subroutine DetermineLengthGrowthStages_wrap
+
+subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
+                            TempFile, strlen3, EToFile, strlen4, &
+                            RainFile, strlen5, CO2File, strlen6)
+    !! Wrapper for [[ac_global:LoadClimate]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: ClimateDescription
+    integer(int32), intent(in) :: strlen2
+    type(c_ptr), intent(inout) :: TempFile
+    integer(int32), intent(in) :: strlen3
+    type(c_ptr), intent(inout) :: EToFile
+    integer(int32), intent(in) :: strlen4
+    type(c_ptr), intent(inout) :: RainFile
+    integer(int32), intent(in) :: strlen5
+    type(c_ptr), intent(inout) :: CO2File
+    integer(int32), intent(in) :: strlen6
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+    character(len=strlen1) :: string3
+    character(len=strlen2) :: string4
+    character(len=strlen1) :: string5
+    character(len=strlen2) :: string6
+
+    string1 = pointer2string(FullName, strlen1)
+    string2 = pointer2string(ClimateDescription, strlen2)
+    string3 = pointer2string(TempFile, strlen3)
+    string4 = pointer2string(EToFile, strlen4)
+    string5 = pointer2string(RainFile, strlen5)
+    string6 = pointer2string(CO2File, strlen6)
+    call LoadClimate(string1, string2, string3, string4, string5, string6)
+end subroutine LoadClimate_wrap
+
+subroutine LoadCropCalendar_wrap(FullName, strlen, GetOnset,GetOnsetTemp,DayNrStart,YearStart)
+    !! Wrapper for [[ac_global:LoadCropCalendar]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+    logical, intent(inout) :: GetOnset
+    logical, intent(inout) :: GetOnsetTemp
+    integer(int32), intent(inout) :: DayNrStart
+    integer(int32), intent(in) :: YearStart
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadCropCalendar(string,GetOnset,GetOnsetTemp,DayNrStart,YearStart)
+end subroutine LoadCropCalendar_wrap
 
 
 function GetCO2File_wrap() result(c_pointer)
@@ -506,6 +679,24 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
 
+function GetClimateDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetClimateDescription())
+end function GetClimateDescription_wrap
+
+
+subroutine SetClimateDescription_wrap(ClimateDescription, strlen)
+    !! Wrapper for [[ac_global:SetClimateDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimateDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimateDescription, strlen)
+    call SetClimateDescription(string)
+end subroutine SetClimateDescription_wrap
 
 function GetClimFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimFile]] for foreign languages.
@@ -566,6 +757,40 @@ subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
     call SetSWCiniFileFull(string)
 end subroutine SetSWCiniFileFull_wrap
 
+function GetSimulParam_CNcorrection_wrap() result(CNcorrection)
+    !! Wrapper for [[ac_global:GetSimulParam_CNcorrection]] for foreign languages.
+    logical(1) :: CNcorrection
+
+    CNcorrection = GetSimulParam_CNcorrection()
+end function GetSimulParam_CNcorrection_wrap
+
+function GetSimulParam_ConstGwt_wrap() result(ConstGwt)
+    !! Wrapper for [[ac_global:GetSimulParam_ConstGwt]] for foreign languages.
+    logical(1) :: ConstGwt
+
+    ConstGwt = GetSimulParam_ConstGwt()
+end function GetSimulParam_ConstGwt_wrap
+
+subroutine SetSimulParam_CNcorrection_wrap(CNcorrection)
+    !! Wrapper for [[ac_global:SetSimulParam_CNcorrection]] for foreign languages.
+    logical(1), intent(in) :: CNcorrection
+
+    logical :: bool
+
+    bool = CNcorrection
+    call SetSimulParam_CNcorrection(bool)
+end subroutine SetSimulParam_CNcorrection_wrap
+
+subroutine SetSimulParam_ConstGwt_wrap(ConstGwt)
+    !! Wrapper for [[ac_global:SetSimulParam_ConstGwt]] for foreign languages.
+    logical(1), intent(in) :: ConstGwt
+
+    logical :: bool
+
+    bool = ConstGwt
+    call SetSimulParam_ConstGwt(bool)
+end subroutine SetSimulParam_ConstGwt_wrap
+
 function GetPathNameProg_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -622,6 +847,40 @@ subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
     string = pointer2string(PathNameSimul, strlen)
     call SetPathNameSimul(string)
 end subroutine SetPathNameSimul_wrap
+
+function GetPerennialPeriod_GenerateOnset_wrap() result(GenerateOnset)
+    !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateOnset]] for foreign languages.
+    logical(1) :: GenerateOnset
+
+    GenerateOnset = GetPerennialPeriod_GenerateOnset()
+end function GetPerennialPeriod_GenerateOnset_wrap
+
+function GetPerennialPeriod_GenerateEnd_wrap() result(GenerateEnd)
+    !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateEnd]] for foreign languages.
+    logical(1) :: GenerateEnd
+
+    GenerateEnd = GetPerennialPeriod_GenerateEnd()
+end function GetPerennialPeriod_GenerateEnd_wrap
+
+subroutine SetPerennialPeriod_GenerateOnset_wrap(GenerateOnset)
+    !! Wrapper for [[ac_global:SetPerennialPeriod_GenerateOnset]] for foreign languages.
+    logical(1), intent(in) :: GenerateOnset
+
+    logical :: bool
+
+    bool = GenerateOnset
+    call SetPerennialPeriod_GenerateOnset(bool)
+end subroutine SetPerennialPeriod_GenerateOnset_wrap
+
+subroutine SetPerennialPeriod_GenerateEnd_wrap(GenerateEnd)
+    !! Wrapper for [[ac_global:SetPerennialPeriod_GenerateEnd]] for foreign languages.
+    logical(1), intent(in) :: GenerateEnd
+
+    logical :: bool
+
+    bool = GenerateEnd
+    call SetPerennialPeriod_GenerateEnd(bool)
+end subroutine SetPerennialPeriod_GenerateEnd_wrap
 
 
 function GetProjectFile_wrap() result(c_pointer)
@@ -804,7 +1063,7 @@ function GetCalendarFile_wrap() result(c_pointer)
 end function GetCalendarFile_wrap
 
 subroutine SetCalendarFile_wrap(CalendarFile, strlen)
-    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    !! Wrapper for [[ac_global:SetCalendarFile]] for foreign languages.
     type(c_ptr), intent(in) :: CalendarFile
     integer(int32), intent(in) :: strlen
 
@@ -822,7 +1081,7 @@ function GetCalendarFileFull_wrap() result(c_pointer)
 end function GetCalendarFileFull_wrap
 
 subroutine SetCalendarFileFull_wrap(CalendarFileFull, strlen)
-    !! Wrapper for [[ac_global:SetCO2File]] for foreign languages.
+    !! Wrapper for [[ac_global:SetCalendarFileFull]] for foreign languages.
     type(c_ptr), intent(in) :: CalendarFileFull
     integer(int32), intent(in) :: strlen
 
@@ -831,6 +1090,24 @@ subroutine SetCalendarFileFull_wrap(CalendarFileFull, strlen)
     string = pointer2string(CalendarFileFull, strlen)
     call SetCalendarFileFull(string)
 end subroutine SetCalendarFileFull_wrap
+
+function GetCalendarDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCalendarDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCalendarDescription())
+end function GetCalendarDescription_wrap
+
+subroutine SetCalendarDescription_wrap(CalendarDescription, strlen)
+    !! Wrapper for [[ac_global:SetCalendarDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: CalendarDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CalendarDescription, strlen)
+    call SetCalendarDescription(string)
+end subroutine SetCalendarDescription_wrap
 
 function GetCropFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCropFile]] for foreign languages.
@@ -868,6 +1145,24 @@ subroutine SetCropFileFull_wrap(CropFileFull, strlen)
     call SetCropFileFull(string)
 end subroutine SetCropFileFull_wrap
 
+function GetCropDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetCropDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetCropDescription())
+end function GetCropDescription_wrap
+
+subroutine SetCropDescription_wrap(CropDescription, strlen)
+    !! Wrapper for [[ac_global:SetCropDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: CropDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CropDescription, strlen)
+    call SetCropDescription(string)
+end subroutine SetCropDescription_wrap
+
 function GetProfFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetProfFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -904,6 +1199,24 @@ subroutine SetProfFilefull_wrap(ProfFilefull, strlen)
     string = pointer2string(ProfFilefull, strlen)
     call SetProfFilefull(string)
 end subroutine SetProfFilefull_wrap
+
+function GetProfDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProfDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProfDescription())
+end function GetProfDescription_wrap
+
+subroutine SetProfDescription_wrap(ProfDescription, strlen)
+    !! Wrapper for [[ac_global:SetProfDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ProfDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProfDescription, strlen)
+    call SetProfDescription(string)
+end subroutine SetProfDescription_wrap
 
 function GetManFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetManFile]] for foreign languages.
@@ -1012,7 +1325,6 @@ subroutine SetManagement_RunoffOn_wrap(RunoffOn)
     RunoffOn_f = RunoffOn
     call SetManagement_RunoffOn(RunoffOn_f)    
 end subroutine SetManagement_RunoffOn_wrap
-
 
 function GetOffSeasonFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOffSeasonFile]] for foreign languages.
@@ -1143,6 +1455,65 @@ subroutine SetGroundWaterFilefull_wrap(GroundWaterFilefull, strlen)
     string = pointer2string(GroundWaterFilefull, strlen)
     call SetGroundWaterFilefull(string)
 end subroutine SetGroundWaterFilefull_wrap
+
+function GetTemperatureFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureFile())
+end function GetTemperatureFile_wrap
+
+
+subroutine SetTemperatureFile_wrap(TemperatureFile, strlen)
+    !! Wrapper for [[ac_global:TemperatureFile]] for foreign languages.
+    type(c_ptr), intent(in) :: TemperatureFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureFile, strlen)
+    call SetTemperatureFile(string)
+end subroutine SetTemperatureFile_wrap
+
+function GetTemperatureFilefull_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureFilefull]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureFilefull())
+end function GetTemperatureFilefull_wrap
+
+
+subroutine SetTemperatureFilefull_wrap(TemperatureFilefull, strlen)
+    !! Wrapper for [[ac_global:TemperatureFilefull]] for foreign languages.
+    type(c_ptr), intent(in) :: TemperatureFilefull
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureFilefull, strlen)
+    call SetTemperatureFilefull(string)
+end subroutine SetTemperatureFilefull_wrap
+
+
+function GetTemperatureDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTemperatureDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTemperatureDescription())
+end function GetTemperatureDescription_wrap
+
+
+subroutine SetTemperatureDescription_wrap(TemperatureDescription, strlen)
+    !! Wrapper for [[ac_global:SetTemperatureDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: TemperatureDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TemperatureDescription, strlen)
+    call SetTemperatureDescription(string)
+end subroutine SetTemperatureDescription_wrap
+
 
 subroutine SetTemperatureRecord_ToString_wrap(&
                      TemperatureRecord_ToString, strlen)
@@ -1390,5 +1761,6 @@ subroutine SetSimulation_Storage_CropString_wrap(CropString, strlen)
     string = pointer2string(CropString, strlen)
     call SetSimulation_Storage_CropString(string)
 end subroutine SetSimulation_Storage_CropString_wrap
+
 
 end module ac_interface_global

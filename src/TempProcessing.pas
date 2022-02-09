@@ -4,12 +4,6 @@ interface
 
 uses Global, interface_global, SysUtils, interface_tempprocessing;
 
-PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
-                                      VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
-PROCEDURE GetMonthlyTemperatureDataSet(DayNri : LongInt;
-                                       VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
-
-
 
 FUNCTION GrowingDegreeDays(ValPeriod : INTEGER;
                            FirstDayPeriod : LongInt;
@@ -44,16 +38,10 @@ PROCEDURE AdjustCalendarDays(PlantDayNr : LongInt;
                              VAR Succes : BOOLEAN);
 
 
-FUNCTION ResetCropDay1(CropDay1IN : LongInt;
-         SwitchToYear1 : BOOLEAN) : LongInt;
-
-
 PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
 
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
-
-PROCEDURE TemperatureFileCoveringCropPeriod(CropFirstDay,CropLastDay : LongInt);
 
 Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
                        FirstDayPeriod : LongInt;
@@ -132,13 +120,6 @@ FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
                       DeltaWeedStress : INTEGER;
                       DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
 
-PROCEDURE HIadjColdHeat(TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
-                        TempTmin,TempTmax : double;
-                        TempTcold,TempTheat : shortInt;
-                        TempfExcess : smallInt;
-                        VAR HIadjusted : double;
-                        VAR ColdStress,HeatStress : BOOLEAN);
-
 PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
                                    LseasonDays : INTEGER;
                                    TheCropDay1 : LongInt;
@@ -149,456 +130,6 @@ PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
 
 
 implementation
-
-
-PROCEDURE GetDecadeTemperatureDataSet(DayNri : LongInt;
-                                      VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
-
-VAR Nri,ni,Dayi,Deci,Monthi,Yeari,DayN : INTEGER;
-    DNR : LongInt;
-    C1Min,C1Max,C2Min,C2Max,C3Min,C3Max : Double;
-    UlMin,LLMin,MidMin,
-    UlMax,LLMax,MidMax : double;
-
-
-
-
-PROCEDURE GetSetofThree(DayN,Deci,Monthi,Yeari : INTEGER;
-                        VAR C1Min,C1Max,C2Min,C2Max,C3Min,C3Max : double);
-VAR fTemp : textfile;
-    DecFile,Mfile,Yfile,Nri,Obsi : INTEGER;
-    OK3 : BOOLEAN;
-    StringREAD : ShortString;
-
-// 1 = previous decade, 2 = Actual decade, 3 = Next decade;
-BEGIN
-Assign(fTemp,TemperatureFilefull);
-Reset(fTemp);
-READLN(fTemp); // description
-READLN(fTemp); // time step
-READLN(fTemp); // day
-READLN(fTemp); // month
-READLN(fTemp); // year
-READLN(fTemp);
-READLN(fTemp);
-READLN(fTemp);
-IF (GetTemperatureRecord().FromD > 20)
-   THEN DecFile := 3
-   ELSE IF (GetTemperatureRecord().FromD > 10)
-           THEN DecFile := 2
-           ELSE DecFile := 1;
-Mfile := GetTemperatureRecord().FromM;
-IF (GetTemperatureRecord().FromY = 1901) THEN Yfile := Yeari
-                                    ELSE Yfile := GetTemperatureRecord().FromY;
-OK3 := false;
-
-IF (GetTemperatureRecord().NrObs <= 2) THEN
-   BEGIN
-   READLN(fTemp,StringREAD);
-   SplitStringInTwoParams(StringREAD,C1Min,C1Max);
-   //READLN(fTemp,C1Min,C1Max);
-   CASE GetTemperatureRecord().NrObs OF
-     1 : BEGIN
-         C2Min := C1Min;
-         C2Max := C2Max;
-         C3Min := C1Min;
-         C3Max := C1Max;
-         END;
-     2 : BEGIN
-         DecFile := DecFile + 1;
-         IF (DecFile > 3) THEN AdjustDecadeMONTHandYEAR(DecFile,Mfile,Yfile);
-         READLN(fTemp,StringREAD);
-         SplitStringInTwoParams(StringREAD,C3Min,C3Max);
-         //READLN(fTemp,C3Min,C3Max);
-         IF (Deci = DecFile)
-            THEN BEGIN
-                 C2Min := C3Min;
-                 C2Max := C3Max;
-                 C3Min := C2Min+(C2Min-C1Min)/4;
-                 C3Max := C2Max+(C2Max-C1Max)/4;
-                 END
-            ELSE BEGIN
-                 C2Min := C1Min;
-                 C2Max := C1Max;
-                 C1Min := C2Min + (C2Min-C3Min)/4;
-                 C1Max := C2Max + (C2Max-C3Max)/4;
-                 END;
-         END;
-     END;
-   OK3 := true;
-   END;
-IF ((NOT OK3) AND ((Deci = DecFile) AND (Monthi = Mfile) AND (Yeari = Yfile))) THEN
-   BEGIN
-   READLN(fTemp,StringREAD);
-   SplitStringInTwoParams(StringREAD,C1Min,C1Max);
-   //READLN(fTemp,C1Min,C1Max);
-   C2Min := C1Min;
-   C2Max := C1Max;
-   READLN(fTemp,StringREAD);
-   SplitStringInTwoParams(StringREAD,C3Min,C3Max);
-   //READLN(fTemp,C3Min,C3Max);
-   C1Min := C2Min + (C2Min-C3Min)/4;
-   C1Max := C2Max + (C2Max-C3Max)/4;
-   OK3 := true;
-   END;
-IF ((NOT OK3) AND ((DayN = GetTemperatureRecord().ToD) AND (Monthi = GetTemperatureRecord().ToM))) THEN
-   IF ((GetTemperatureRecord().FromY = 1901) OR (Yeari = GetTemperatureRecord().ToY)) THEN
-      BEGIN
-      FOR Nri := 1 TO (GetTemperatureRecord().NrObs-2) DO READLN(fTemp);
-      READLN(fTemp,StringREAD);
-      SplitStringInTwoParams(StringREAD,C1Min,C1Max);
-      //READLN(fTemp,C1Min,C1Max);
-      READLN(fTemp,StringREAD);
-      SplitStringInTwoParams(StringREAD,C2Min,C2Max);
-      //READLN(fTemp,C2Min,C2Max);
-      C3Min := C2Min+(C2Min-C1Min)/4;
-      C3Max := C2Max+(C2Max-C1Max)/4;
-      OK3 := true;
-      END;
-IF (NOT OK3) THEN
-   BEGIN
-   Obsi := 1;
-   REPEAT
-     IF ((Deci = DecFile) AND (Monthi = Mfile) AND (Yeari = Yfile))
-        THEN OK3 := true
-        ELSE BEGIN
-             DecFile := DecFile + 1;
-             IF (DecFile > 3) THEN AdjustDecadeMONTHandYEAR(DecFile,Mfile,Yfile);
-             Obsi := Obsi + 1;
-             END;
-   UNTIL (OK3);
-   IF (GetTemperatureRecord().FromD > 20)
-      THEN DecFile := 3
-      ELSE IF (GetTemperatureRecord().FromD > 10)
-              THEN DecFile := 2
-              ELSE DecFile := 1;
-   FOR Nri := 1 TO (Obsi-2) DO Readln(fTemp);
-   READLN(fTemp,StringREAD);
-   SplitStringInTwoParams(StringREAD,C1Min,C1Max);
-   //READLN(fTemp,C1Min,C1Max);
-   READLN(fTemp,StringREAD);
-   SplitStringInTwoParams(StringREAD,C2Min,C2Max);
-   //READLN(fTemp,C2Min,C2Max);
-   READLN(fTemp,StringREAD);
-   SplitStringInTwoParams(StringREAD,C3Min,C3Max);
-   //READLN(fTemp,C3Min,C3Max);
-   END;
-Close(fTemp);
-END; (* GetSetofThree *)
-
-
-PROCEDURE GetParameters(C1,C2,C3 : double;
-                        VAR UL,LL,Mid : double);
-BEGIN
-UL := (C1+C2)/2;
-LL := (C2+C3)/2;
-Mid := 2*C2 - (UL+LL)/2;
-// --previous decade-->/UL/....... Mid ......../LL/<--next decade--
-END; (* GetParameters *)
-
-
-BEGIN (* GetDecadeTemperatureDataSet *)
-DetermineDate(DayNri,Dayi,Monthi,Yeari);
-IF (Dayi > 20)
-   THEN BEGIN
-        Deci := 3;
-        Dayi := 21;
-        DayN := DaysInMonth[Monthi];
-        IF ((Monthi = 2) AND LeapYear(Yeari)) THEN DayN := DayN + 1;
-        ni := DayN - Dayi + 1;
-        END
-   ELSE IF (Dayi > 10)
-           THEN BEGIN
-                Deci := 2;
-                Dayi := 11;
-                DayN := 20;
-                ni := 10;
-                END
-           ELSE BEGIN
-                Deci := 1;
-                Dayi := 1;
-                DayN := 10;
-                ni := 10;
-                END;
-GetSetofThree(DayN,Deci,Monthi,Yeari,C1Min,C1Max,C2Min,C2Max,C3Min,C3Max);
-DetermineDayNr(Dayi,Monthi,Yeari,DNR);
-
-GetParameters(C1Min,C2Min,C3Min,ULMin,LLMin,MidMin);
-For Nri := 1 TO ni DO
-    BEGIN
-    TMinDataSet[Nri].DayNr := DNR+Nri-1;
-    IF (Nri <= (ni/2+0.01))
-       THEN TMinDataSet[Nri].Param := (2*ULMin + (MidMin-ULMin)*(2*Nri-1)/(ni/2))/2
-       ELSE BEGIN
-            IF (((ni = 11) OR (ni = 9)) AND (Nri < (ni+1.01)/2))
-               THEN TminDataSet[Nri].Param := MidMin
-               ELSE TminDataSet[Nri].Param := (2*MidMin + (LLMin-MidMin)*(2*Nri-(ni+1))/(ni/2))/2;
-            END;
-    //IF (EToDataSet[Nri].Param < 0) THEN EToDataSet[Nri].Param := 0;
-    END;
-
-GetParameters(C1Max,C2Max,C3Max,ULMax,LLMax,MidMax);
-For Nri := 1 TO ni DO
-    BEGIN
-    TMaxDataSet[Nri].DayNr := DNR+Nri-1;
-    IF (Nri <= (ni/2+0.01))
-       THEN TMaxDataSet[Nri].Param := (2*ULMax + (MidMax-ULMax)*(2*Nri-1)/(ni/2))/2
-       ELSE BEGIN
-            IF (((ni = 11) OR (ni = 9)) AND (Nri < (ni+1.01)/2))
-               THEN TmaxDataSet[Nri].Param := MidMax
-               ELSE TmaxDataSet[Nri].Param := (2*MidMax + (LLMax-MidMax)*(2*Nri-(ni+1))/(ni/2))/2;
-            END;
-    //IF (EToDataSet[Nri].Param < 0) THEN EToDataSet[Nri].Param := 0;
-    END;
-
-
-FOR Nri := (ni+1) TO 31 DO
-    BEGIN
-    TminDataSet[Nri].DayNr := DNR+ni-1;
-    TminDataSet[Nri].Param := 0;
-    TmaxDataSet[Nri].DayNr := DNR+ni-1;
-    TmaxDataSet[Nri].Param := 0;
-    END;
-END; (* GetDecadeTemperatureDataSet *)
-
-
-
-PROCEDURE GetMonthlyTemperatureDataSet(DayNri : LongInt;
-                                       VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
-VAR Dayi,Monthi,Yeari,DayN : INTEGER;
-    DNR : LongInt;
-    X1,X2,X3,t1,t2 : INTEGER;
-    C1Min,C2Min,C3Min : Double;
-    C1Max,C2Max,C3Max : Double;
-    aOver3Min,bOver2Min,cMin : extended;
-    aOver3Max,bOver2Max,cMax : extended;
-
-
-PROCEDURE GetSetofThreeMonths(Monthi,Yeari : INTEGER;
-                        VAR C1Min,C2Min,C3Min,
-                            C1Max,C2Max,C3Max : double;
-                        VAR X1,X2,X3,t1 : INTEGER);
-VAR fTemp : textfile;
-    Mfile,Yfile,n1,n2,n3,Nri,Obsi : INTEGER;
-    OK3 : BOOLEAN;
-    StringREAD : ShortString;
-
-
-
-    PROCEDURE ReadMonth(Mfile,Yfile : INTEGER;
-                        VAR ni : INTEGER;
-                        VAR CiMin,CiMax : double);
-    BEGIN
-    READLN(fTemp,StringREAD);
-    SplitStringInTwoParams(StringREAD,CiMin,CiMax);
-    //READLN(fTemp,CiMin,CiMax);
-    ni := 30; // simplification give better results for all cases
-    //ni := DaysInMonth[Mfile];
-    //IF ((Mfile = 2) AND LeapYear(Yfile)) THEN ni := ni + 1;
-    CiMin := CiMin * ni;
-    CiMax := CiMax * ni;
-    END; (* ReadMonth *)
-
-BEGIN
-//1. Prepare record
-Assign(fTemp,TemperatureFilefull);
-Reset(fTemp);
-READLN(fTemp); // description
-READLN(fTemp); // time step
-READLN(fTemp); // day
-READLN(fTemp); // month
-READLN(fTemp); // year
-READLN(fTemp);
-READLN(fTemp);
-READLN(fTemp);
-Mfile := GetTemperatureRecord().FromM;
-IF (GetTemperatureRecord().FromY = 1901) THEN Yfile := Yeari
-                                    ELSE Yfile := GetTemperatureRecord().FromY;
-OK3 := false;
-
-//2. IF 3 or less records
-IF (GetTemperatureRecord().NrObs <= 3) THEN
-   BEGIN
-   ReadMonth(Mfile,Yfile,n1,C1Min,C1Max);
-   X1 := n1;
-   CASE GetTemperatureRecord().NrObs OF
-     1 : BEGIN
-         t1 := X1;
-         X2 := X1 + n1;
-         C2Min := C1Min;
-         C2Max := C1Max;
-         X3 := X2 + n1;
-         C3Min := C1Min;
-         C3Max := C1Max;
-         END;
-     2 : BEGIN
-         t1 := X1;
-         Mfile := Mfile + 1;
-         IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-         ReadMonth(Mfile,Yfile,n3,C3Min,C3Max);
-         IF (Monthi = Mfile)
-            THEN BEGIN
-                 C2Min := C3Min;
-                 C2Max := C3Max;
-                 X2 := X1 + n3;
-                 X3 := X2 + n3;
-                 END
-            ELSE BEGIN
-                 C2Min := C1Min;
-                 C2Max := C1Max;
-                 X2 := X1 + n1;
-                 X3 := X2 + n3;
-                 END;
-         END;
-     3 : BEGIN
-         IF (Monthi = Mfile) THEN t1 := 0;
-         Mfile := Mfile + 1;
-         IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-         ReadMonth(Mfile,Yfile,n2,C2Min,C2Max);
-         X2 := X1 + n2;
-         IF (Monthi = Mfile) THEN t1 := X1;
-         Mfile := Mfile + 1;
-         IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-         ReadMonth(Mfile,Yfile,n3,C3Min,C3Max);
-         X3 := X2 + n3;
-         IF (Monthi = Mfile) THEN t1 := X2;
-         END;
-     END;
-   OK3 := true;
-   END;
-
-//3. If first observation
-IF ((NOT OK3) AND ((Monthi = Mfile) AND (Yeari = Yfile))) THEN
-   BEGIN
-   t1 := 0;
-   ReadMonth(Mfile,Yfile,n1,C1Min,C1Max);
-   X1 := n1;
-   Mfile := Mfile + 1;
-   IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-   ReadMonth(Mfile,Yfile,n2,C2Min,C2Max);
-   X2 := X1 + n2;
-   Mfile := Mfile + 1;
-   IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-   ReadMonth(Mfile,Yfile,n3,C3Min,C3Max);
-   X3 := X2 + n3;
-   OK3 := true;
-   END;
-
-//4. If last observation
-IF ((NOT OK3) AND (Monthi = GetTemperatureRecord().ToM)) THEN
-   IF ((GetTemperatureRecord().FromY = 1901) OR (Yeari = GetTemperatureRecord().ToY)) THEN
-      BEGIN
-      FOR Nri := 1 TO (GetTemperatureRecord().NrObs-3) DO
-          BEGIN
-          READLN(fTemp);
-          Mfile := Mfile + 1;
-          IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-          END;
-      ReadMonth(Mfile,Yfile,n1,C1Min,C1Max);
-      X1 := n1;
-      Mfile := Mfile + 1;
-      IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-      ReadMonth(Mfile,Yfile,n2,C2Min,C2Max);
-      X2 := X1 + n2;
-      t1 := X2;
-      Mfile := Mfile + 1;
-      IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-      ReadMonth(Mfile,Yfile,n3,C3Min,C3Max);
-      X3 := X2 + n3;
-      OK3 := true;
-      END;
-
-//5. IF not previous cases
-IF (NOT OK3) THEN
-   BEGIN
-   Obsi := 1;
-   REPEAT
-     IF ((Monthi = Mfile) AND (Yeari = Yfile))
-        THEN OK3 := true
-        ELSE BEGIN
-             Mfile := Mfile + 1;
-             IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-             Obsi := Obsi + 1;
-             END;
-   UNTIL (OK3);
-   Mfile := GetTemperatureRecord().FromM;
-   FOR Nri := 1 TO (Obsi-2) DO
-       BEGIN
-       Readln(fTemp);
-       Mfile := Mfile + 1;
-       IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-       END;
-   ReadMonth(Mfile,Yfile,n1,C1Min,C1Max);
-   X1 := n1;
-   t1 := X1;
-   Mfile := Mfile + 1;
-   IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-   ReadMonth(Mfile,Yfile,n2,C2Min,C2Max);
-   X2 := X1 + n2;
-   Mfile := Mfile + 1;
-   IF (Mfile > 12) THEN AdjustMONTHandYEAR(Mfile,Yfile);
-   ReadMonth(Mfile,Yfile,n3,C3Min,C3Max);
-   X3 := X2 + n3;
-   END;
-
-Close(fTemp);
-END; (* GetSetofThreeMonths *)
-
-
-PROCEDURE GetInterpolationParameters(C1,C2,C3 : double;
-                                     X1,X2,X3 : INTEGER;
-                                     VAR aOver3,bOver2,c : extended);
-BEGIN //n1=n2=n3=30 --> better parabola
-aOver3 := (C1-2*C2+C3)/(6*30*30*30);
-bOver2 := (-6*C1+9*C2-3*C3)/(6*30*30);
-c := (11*C1-7*C2+2*C3)/(6*30);
-END; (* GetInterpolationParameters *)
-
-
-BEGIN (* GetMonthlyTemperatureDataSet *)
-DetermineDate(DayNri,Dayi,Monthi,Yeari);
-GetSetofThreeMonths(Monthi,Yeari,C1Min,C2Min,C3Min,C1Max,C2Max,C3Max,X1,X2,X3,t1);
-
-Dayi := 1;
-DetermineDayNr(Dayi,Monthi,Yeari,DNR);
-DayN := DaysInMonth[Monthi];
-IF ((Monthi = 2) AND LeapYear(Yeari)) THEN DayN := DayN + 1;
-
-GetInterpolationParameters(C1Min,C2Min,C3Min,X1,X2,X3,aOver3Min,bOver2Min,cMin);
-GetInterpolationParameters(C1Max,C2Max,C3Max,X1,X2,X3,aOver3Max,bOver2Max,cMax);
-For Dayi := 1 TO DayN DO
-    BEGIN
-    t2 := t1 + 1;
-    TminDataSet[Dayi].DayNr := DNR+Dayi-1;
-    TmaxDataSet[Dayi].DayNr := DNR+Dayi-1;
-    TminDataSet[Dayi].Param := aOver3Min*(t2*t2*t2-t1*t1*t1)
-                              + bOver2Min*(t2*t2-t1*t1) + cMin*(t2-t1);
-    TmaxDataSet[Dayi].Param := aOver3Max*(t2*t2*t2-t1*t1*t1)
-                              + bOver2Max*(t2*t2-t1*t1) + cMax*(t2-t1);
-    //IF (EToDataSet[Dayi].Param < 0) THEN EToDataSet[Dayi].Param := 0;
-    t1 := t2;
-    END;
-FOR Dayi := (DayN+1) TO 31 DO
-    BEGIN
-    TminDataSet[Dayi].DayNr := DNR+DayN-1;
-    TmaxDataSet[Dayi].DayNr := DNR+DayN-1;
-    TminDataSet[Dayi].Param := 0;
-    TmaxDataSet[Dayi].Param := 0;
-    END;
-END; (* GetMonthlyTemperatureDataSet *)
-
-
-
-
-
-PROCEDURE SetDayNrToYundef(VAR DayNri : LongInt);
-VAR Dayi,Monthi,Yeari : INTEGER;
-BEGIN
-DetermineDate(DayNri,Dayi,Monthi,Yeari);
-Yeari := 1901;
-DetermineDayNr(Dayi,Monthi,Yeari,DayNri);
-END; (* SetDayNrToYundef *)
-
 
 
 FUNCTION GrowingDegreeDays(ValPeriod : INTEGER;
@@ -616,9 +147,9 @@ BEGIN
 GDDays := 0;
 IF (ValPeriod > 0) THEN
    BEGIN
-   IF (TemperatureFile = '(None)')
+   IF (GetTemperatureFile() = '(None)')
       THEN BEGIN  // given average Tmin and Tmax
-           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
            GDDays := ROUND(ValPeriod * DayGDD)
            END
       ELSE BEGIN   // temperature file
@@ -630,7 +161,7 @@ IF (ValPeriod > 0) THEN
                     SetDayNrToYundef(DayNri);
                     END
                ELSE AdjustDayNri := false;
-           totalname := TemperatureFilefull;
+           totalname := GetTemperatureFilefull();
            IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > DayNri)
                                      AND (GetTemperatureRecord().FromDayNr <= DayNri))
                 THEN BEGIN
@@ -653,7 +184,7 @@ IF (ValPeriod > 0) THEN
                                     READLN(fTemp,StringREAD);
                                     SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                     //READLN(fTemp,TDayMin,TDayMax);
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     GDDays := GDDays + DayGDD;
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
@@ -680,7 +211,7 @@ IF (ValPeriod > 0) THEN
                                                SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                                //READLN(fTemp,TDayMin,TDayMax);
                                                END;
-                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                        GDDays := GDDays + DayGDD;
                                        RemainingDays := RemainingDays - 1;
                                        DayNri := DayNri + 1;
@@ -694,7 +225,7 @@ IF (ValPeriod > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDaymin := TminDataSet[i].Param;
                                     TDaymax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     GDDays := GDDays + DayGDD;
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
@@ -706,7 +237,7 @@ IF (ValPeriod > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       GDDays := GDDays + DayGDD;
                                       RemainingDays := RemainingDays - 1;
                                       DayNri := DayNri + 1;
@@ -719,7 +250,7 @@ IF (ValPeriod > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDayMin := TminDataSet[i].Param;
                                     TDayMax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     GDDays := GDDays + DayGDD;
                                     RemainingDays := RemainingDays - 1;
                                     DayNri := DayNri + 1;
@@ -731,7 +262,7 @@ IF (ValPeriod > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       GDDays := GDDays + DayGDD;
                                       RemainingDays := RemainingDays - 1;
                                       DayNri := DayNri + 1;
@@ -766,9 +297,9 @@ BEGIN
 NrCdays := 0;
 IF (ValGDDays > 0) THEN
    BEGIN
-   IF (TemperatureFile = '(None)')
+   IF (GetTemperatureFile() = '(None)')
       THEN BEGIN  // given average Tmin and Tmax
-           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
            IF (DayGDD = 0)
               THEN NrCDays := -9
               ELSE NrCDays := ROUND(ValGDDays/DayGDD);
@@ -782,7 +313,7 @@ IF (ValGDDays > 0) THEN
                     SetDayNrToYundef(DayNri);
                     END
                ELSE AdjustDayNri := false;
-           totalname := TemperatureFilefull;
+           totalname := GetTemperatureFilefull();
            IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > DayNri)
                                      AND (GetTemperatureRecord().FromDayNr <= DayNri))
                 THEN BEGIN
@@ -807,7 +338,7 @@ IF (ValGDDays > 0) THEN
                                     READLN(fTemp,StringREAD);
                                     SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                     //READLN(fTemp,TDayMin,TDayMax);
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     NrCDays := NrCDays + 1;
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
@@ -834,7 +365,7 @@ IF (ValGDDays > 0) THEN
                                                SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                                //READLN(fTemp,TDayMin,TDayMax);
                                                END;
-                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                       DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                        NrCDays := NrCDays + 1;
                                        RemainingGDDays := RemainingGDDays - DayGDD;
                                        DayNri := DayNri + 1;
@@ -848,7 +379,7 @@ IF (ValGDDays > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDaymin := TminDataSet[i].Param;
                                     TDaymax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     NrCDays := NrCDays + 1;
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
@@ -860,7 +391,7 @@ IF (ValGDDays > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       NrCDays := NrCDays + 1;
                                       RemainingGDDays := RemainingGDDays - DayGDD;
                                       DayNri := DayNri + 1;
@@ -873,7 +404,7 @@ IF (ValGDDays > 0) THEN
                                     While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                     TDayMin := TminDataSet[i].Param;
                                     TDayMax := TmaxDataSet[i].Param;
-                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                    DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                     NrCDays := NrCDays + 1;
                                     RemainingGDDays := RemainingGDDays - DayGDD;
                                     DayNri := DayNri + 1;
@@ -885,7 +416,7 @@ IF (ValGDDays > 0) THEN
                                       While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                       TDayMin := TminDataSet[i].Param;
                                       TDayMax := TmaxDataSet[i].Param;
-                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                                      DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                       NrCDays := NrCDays + 1;
                                       RemainingGDDays := RemainingGDDays - DayGDD;
                                       DayNri := DayNri + 1;
@@ -917,9 +448,9 @@ VAR i : INTEGER;
 
 BEGIN
 MaxGDDays := 100000;
-IF (TemperatureFile = '(None)')
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
-        DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+        DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
         If (DayGDD <= 0) THEN MaxGDDays := 0;
         END
    ELSE BEGIN
@@ -933,7 +464,7 @@ IF (TemperatureFile = '(None)')
              //DetermineDayNr(dayi,monthi,yeari,CropDay1);
                 END;
            DayNri := FromDayNr;
-           totalname := TemperatureFilefull;
+           totalname := GetTemperatureFilefull();
            IF (FileExists(totalname) AND (GetTemperatureRecord().ToDayNr > FromDayNr)
                              AND (GetTemperatureRecord().FromDayNr <= FromDayNr)) THEN
            CASE GetTemperatureRecord().DataType OF
@@ -952,7 +483,7 @@ IF (TemperatureFile = '(None)')
                           READLN(fTemp,StringREAD);
                           SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                           DayNri := DayNri + 1;
-                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                           MaxGDDays := MaxGDDays + DayGDD;
                           WHILE (DayNri < GetTemperatureRecord().ToDayNr) DO
                            BEGIN
@@ -974,7 +505,7 @@ IF (TemperatureFile = '(None)')
                                    READLN(fTemp,StringREAD);
                                    SplitStringInTwoParams(StringREAD,TDayMin,TDayMax);
                                    END;
-                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                            MaxGDDays := MaxGDDays + DayGDD;
                            DayNri := DayNri + 1;
                            END;
@@ -985,7 +516,7 @@ IF (TemperatureFile = '(None)')
                           While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                           TDaymin := TminDataSet[i].Param;
                           TDaymax := TmaxDataSet[i].Param;
-                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                           MaxGDDays := MaxGDDays + DayGDD;
                           DayNri := DayNri + 1;
                           WHILE(DayNri < GetTemperatureRecord().ToDayNr) DO
@@ -995,7 +526,7 @@ IF (TemperatureFile = '(None)')
                            While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                            TDayMin := TminDataSet[i].Param;
                            TDayMax := TmaxDataSet[i].Param;
-                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                           DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                            MaxGDDays := MaxGDDays + DayGDD;
                            DayNri := DayNri + 1;
                            END;
@@ -1006,7 +537,7 @@ IF (TemperatureFile = '(None)')
                           While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                           TDayMin := TminDataSet[i].Param;
                           TDayMax := TmaxDataSet[i].Param;
-                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                          DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                           MaxGDDays := MaxGDDays + DayGDD;
                           DayNri := DayNri + 1;
                           WHILE(DayNri < GetTemperatureRecord().ToDayNr) DO
@@ -1016,7 +547,7 @@ IF (TemperatureFile = '(None)')
                                While (TminDataSet[i].DayNr <> DayNri) Do i := i+1;
                                TDayMin := TminDataSet[i].Param;
                                TDayMax := TmaxDataSet[i].Param;
-                               DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+                               DayGDD := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
                                MaxGDDays := MaxGDDays + DayGDD;
                                DayNri := DayNri + 1;
                                END;
@@ -1137,48 +668,59 @@ IF Succes THEN
 END; (* AdjustCalendarDays *)
 
 
-
-FUNCTION ResetCropDay1(CropDay1IN : LongInt;
-         SwitchToYear1 : BOOLEAN) : LongInt;
-VAR CropDay1OUT : LongInt;
-    dayi,monthi,yeari : INTEGER;
-
-BEGIN
-DetermineDate(CropDay1IN,dayi,monthi,yeari);
-IF (GetTemperatureRecord().FromY = 1901)
-   THEN BEGIN
-        yeari := 1901;
-        DetermineDayNr(Dayi,Monthi,Yeari,CropDay1OUT);
-        END
-   ELSE BEGIN
-        IF SwitchToYear1
-           THEN DetermineDayNr(Dayi,Monthi,GetTemperatureRecord().FromY,CropDay1OUT)
-           ELSE CropDay1OUT := CropDay1IN;
-        END;
-ResetCropDay1 := CropDay1OUT;
-END; (* ResetCropDay1 *)
-
-
 PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
 VAR succes : BOOLEAN;
     CGCisGiven : BOOLEAN;
+    Crop_GDDaysToHIo_temp : integer;
+    Crop_DaysToGermination_temp, Crop_DaysToFullCanopy_temp, Crop_DaysToFlowering_temp, Crop_LengthFlowering_temp : integer;
+    Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp, Crop_DaysToMaxRooting_temp, Crop_DaysToHIo_temp : integer;
+    Crop_Length_temp : rep_int_array; 
+    Crop_CGC_temp : double;
+    Crop_CDC_temp : double;
+    Crop_dHIdt_temp : double; 
 BEGIN
 CGCisGiven := true;
-CASE Crop.ModeCycle OF
+CASE GetCrop_ModeCycle() OF
      GDDays : BEGIN
-              Crop.GDDaysToFullCanopy := Crop.GDDaysToGermination +
-                 ROUND(LN((0.25*Crop.CCx*Crop.CCx/Crop.CCo)/(Crop.CCx-(0.98*Crop.CCx)))/Crop.GDDCGC);
-              IF (Crop.GDDaysToFullCanopy > Crop.GDDaysToHarvest)
-                 THEN Crop.GDDaysToFullCanopy := Crop.GDDaysToHarvest;
-              AdjustCalendarDays(FirstCropDay,Crop.subkind,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax,
-                 Crop.GDDaysToGermination,Crop.GDDaysToFullCanopy,Crop.GDDaysToFlowering,
-                 Crop.GDDLengthFlowering,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,Crop.GDDaysToMaxRooting,
-                 Crop.GDDaysToHIo,
-                 Crop.GDDCGC,Crop.GDDCDC,Crop.CCo,Crop.CCx,CGCisGiven,Crop.HI,
-                 Crop.DaysToCCini,Crop.Planting,
-                 Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToFlowering,Crop.LengthFlowering,
-                 Crop.DaysToSenescence,Crop.DaysToHarvest,Crop.DaysToMaxRooting,Crop.DaysToHIo,
-                 Crop.Length,Crop.CGC,Crop.CDC,Crop.dHIdt,Succes);
+              SetCrop_GDDaysToFullCanopy(GetCrop().GDDaysToGermination +
+                 ROUND(LN((0.25*GetCrop().CCx*GetCrop().CCx/GetCrop().CCo)/(GetCrop().CCx-(0.98*GetCrop().CCx)))/GetCrop().GDDCGC));
+              IF (GetCrop().GDDaysToFullCanopy > GetCrop().GDDaysToHarvest)
+                 THEN SetCrop_GDDaysToFullCanopy(GetCrop().GDDaysToHarvest);
+              Crop_GDDaysToHIo_temp := GetCrop().GDDaysToHIo;
+              Crop_DaysToGermination_temp := GetCrop().DaysToGermination;
+              Crop_DaysToFullCanopy_temp := GetCrop().DaysToFullCanopy;
+              Crop_DaysToFlowering_temp := GetCrop().DaysToFlowering;
+              Crop_LengthFlowering_temp := GetCrop().LengthFlowering;
+              Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
+              Crop_DaysToHarvest_temp := GetCrop().DaysToHarvest;
+              Crop_DaysToMaxRooting_temp := GetCrop().DaysToMaxRooting;
+              Crop_DaysToHIo_temp := GetCrop().DaysToHIo;
+              Crop_Length_temp := GetCrop().Length; 
+              Crop_CGC_temp := GetCrop().CGC; 
+              Crop_CDC_temp := GetCrop().CDC; 
+              Crop_dHIdt_temp := GetCrop().dHIdt; 
+              AdjustCalendarDays(FirstCropDay,GetCrop_subkind(),GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),
+                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToFlowering,
+                 GetCrop().GDDLengthFlowering,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,GetCrop().GDDaysToMaxRooting,
+                 Crop_GDDaysToHIo_temp,
+                 GetCrop().GDDCGC,GetCrop().GDDCDC,GetCrop().CCo,GetCrop().CCx,CGCisGiven,GetCrop().HI,
+                 GetCrop().DaysToCCini,GetCrop().Planting,
+                 Crop_DaysToGermination_temp,Crop_DaysToFullCanopy_temp,Crop_DaysToFlowering_temp,Crop_LengthFlowering_temp,
+                 Crop_DaysToSenescence_temp,Crop_DaysToHarvest_temp,Crop_DaysToMaxRooting_temp,Crop_DaysToHIo_temp,
+                 Crop_Length_temp,Crop_CGC_temp,Crop_CDC_temp,Crop_dHIdt_temp,Succes);
+              SetCrop_GDDaysToHIo(Crop_GDDaysToHIo_temp);
+              SetCrop_DaysToGermination(Crop_DaysToGermination_temp);
+              SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp);
+              SetCrop_DaysToFlowering(Crop_DaysToFlowering_temp);
+              SetCrop_LengthFlowering(Crop_LengthFlowering_temp);
+              SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
+              SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp);
+              SetCrop_DaysToMaxRooting(Crop_DaysToMaxRooting_temp);
+              SetCrop_DaysToHIo(Crop_DaysToHIo_temp);
+              SetCrop_Length(Crop_Length_temp); 
+              SetCrop_CGC(Crop_CGC_temp);
+              SetCrop_CDC(Crop_CDC_temp);
+              SetCrop_dHIdt(Crop_dHIdt_temp); 
               END;
      else Succes := true;
      end;
@@ -1190,7 +732,8 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr,
+    CalendarDescriptionLocal, TemperatureDescriptionLocal : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
@@ -1198,6 +741,16 @@ VAR f0,fClim : TextFile;
     FertStress : shortint;
     temperature_record : rep_clim;
     YearSeason_temp, RedCGC_temp, RedCCX_temp : ShortInt;
+    Compartment_temp : rep_Comp;
+    TempInt : integer;
+    Crop_Planting_temp : rep_Planting;
+    Crop_RootMin_temp, Crop_SizePlant_temp, Crop_CCini_temp : double;
+    Crop_DaysToCCini_temp, Crop_GDDaysToCCini_temp : integer;
+    Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp : integer;
+    Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp : integer;
+    Crop_Day1_temp : INTEGER;
+    Crop_DayN_temp : INTEGER;
+    Crop_DaysToFullCanopySF_temp : INTEGER;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -1226,8 +779,10 @@ READLN(f0,YearSeason_temp); // year number of cultivation (1 = seeding/planting 
 SetSimulation_YearSeason(YearSeason_temp);
 READLN(f0,TempSimDayNr1); //First day of simulation period
 READLN(f0,TempSimDayNrN); //Last day of simulation period
-READLN(f0,Crop.Day1); //First day of cropping period
-READLN(f0,Crop.DayN); //Last day of cropping period
+READLN(f0,TempInt); //First day of cropping period
+SetCrop_Day1(TempInt);
+READLN(f0,TempInt); //Last day of cropping period
+SetCrop_DayN(TempInt);
 
 
 // 1. Climate
@@ -1249,28 +804,30 @@ IF (GetClimateFile() = '(None)')
         // 1.0 Description
         READLN(fClim,TempString);
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateDescription := Trim(TempString);
+        SetClimateDescription(Trim(TempString));
         Close(fClim);
         END;
 // 1.1 Temperature
 READLN(f0); // Info Temperature
 READLN(f0,TempString);  //TemperatureFile
-TemperatureFile:= Trim(TempString);
-IF (TemperatureFile = '(None)')
+SetTemperatureFile(Trim(TempString));
+IF (GetTemperatureFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathTemperatureFile
-        TemperatureFilefull := TemperatureFile;  (* no file *)
-        Str(SimulParam.Tmin:8:1,TempString1);
-        Str(SimulParam.Tmax:8:1,TempString2);
-        TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
+        SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
+        Str(GetSimulParam_Tmin():8:1,TempString1);
+        Str(GetSimulParam_Tmax():8:1,TempString2);
+        SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C'));
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        TemperatureFileFull := CONCAT(Trim(TempString),Trim(TemperatureFile));
+        SetTemperatureFileFull(CONCAT(Trim(TempString),Trim(GetTemperatureFile())));
         temperature_record := GetTemperatureRecord();
-        LoadClim(TemperatureFilefull,TemperatureDescription,temperature_record);
+        TemperatureDescriptionLocal := GetTemperatureDescription();
+        LoadClim(GetTemperatureFileFull(),TemperatureDescriptionLocal,temperature_record);
+        SetTemperatureDescription(TemperatureDescriptionLocal);
         CompleteClimateDescription(temperature_record);
         SetTemperatureRecord(temperature_record);
         END;
@@ -1336,13 +893,15 @@ SetCalendarFile(Trim(TempString));
 IF (GetCalendarFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathCalendarFile
-        CalendarDescription := 'No calendar for the Seeding/Planting year';
+        SetCalendarDescription('No calendar for the Seeding/Planting year');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
-        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
+        SetCalendarFileFull(CONCAT(Trim(TempString),GetCalendarFile()));
+        CalendarDescriptionLocal := GetCalendarDescription();
+        GetFileDescription(GetCalendarFileFull(),CalendarDescriptionLocal);
+        SetCalendarDescription(CalendarDescriptionLocal);
         END;
 
 // 3. Crop
@@ -1356,29 +915,56 @@ SetCropFilefull(CONCAT(Trim(TempString),GetCropFile()));
 LoadCrop(GetCropFilefull());
 
 // Adjust crop parameters of Perennials
-IF (Crop.subkind = Forage) THEN
+IF (GetCrop_subkind() = Forage) THEN
    BEGIN
    // adjust crop characteristics to the Year (Seeding/Planting or Non-seesing/Planting year)
-   AdjustYearPerennials(GetSimulation_YearSeason(),Crop.SownYear1,Crop.ModeCycle,Crop.RootMax,Crop.RootMinYear1,
-                     Crop.CCo,Crop.SizeSeedling,Crop.CGC,Crop.CCx,Crop.GDDCGC,Crop.PlantingDens,
-                     Crop.Planting,Crop.RootMin,Crop.SizePlant,Crop.CCini,
-                     Crop.DaysToCCini,Crop.GDDaysToCCini);
+   Crop_Planting_temp := GetCrop().Planting;
+   Crop_RootMin_temp := GetCrop().RootMin;
+   Crop_SizePlant_temp := GetCrop().SizePlant;
+   Crop_CCini_temp := GetCrop().CCini;
+   Crop_DaysToCCini_temp := GetCrop().DaysToCCini;
+   Crop_GDDaysToCCini_temp := GetCrop().GDDaysToCCini;
+   AdjustYearPerennials(GetSimulation_YearSeason(),GetCrop().SownYear1,GetCrop_ModeCycle(),GetCrop().RootMax,GetCrop().RootMinYear1,
+                     GetCrop().CCo,GetCrop().SizeSeedling,GetCrop().CGC,GetCrop().CCx,GetCrop().GDDCGC,GetCrop().PlantingDens,
+                     Crop_Planting_temp,Crop_RootMin_temp,Crop_SizePlant_temp,Crop_CCini_temp,
+                     Crop_DaysToCCini_temp,Crop_GDDaysToCCini_temp);
+   SetCrop_Planting(Crop_Planting_temp);
+   SetCrop_RootMin(Crop_RootMin_temp);
+   SetCrop_SizePlant(Crop_SizePlant_temp);
+   SetCrop_CCini(Crop_CCini_temp);
+   SetCrop_DaysToCCini(Crop_DaysToCCini_temp);
+   SetCrop_GDDaysToCCini(Crop_GDDaysToCCini_temp);
    // adjust length of season
-   Crop.DaysToHarvest := Crop.DayN - Crop.Day1 + 1;
-   AdjustCropFileParameters(GetCropFileSet(),(Crop.DaysToHarvest),Crop.Day1,Crop.ModeCycle,Crop.Tbase,Crop.Tupper,
-                                    Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                    Crop.GDDaysToSenescence,Crop.GDDaysToHarvest);
+   SetCrop_DaysToHarvest(GetCrop().DayN - GetCrop().Day1 + 1);
+   Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
+   Crop_DaysToHarvest_temp := GetCrop().DaysToHarvest;
+   Crop_GDDaysToSenescence_temp := GetCrop().GDDaysToSenescence;
+   Crop_GDDaysToHarvest_temp := GetCrop().GDDaysToHarvest;
+   AdjustCropFileParameters(GetCropFileSet(),(GetCrop().DaysToHarvest),GetCrop().Day1,GetCrop_ModeCycle(),GetCrop().Tbase,GetCrop().Tupper,
+                                    Crop_DaysToSenescence_temp,Crop_DaysToHarvest_temp,
+                                    Crop_GDDaysToSenescence_temp,Crop_GDDaysToHarvest_temp);
+   SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
+   SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp);
+   SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp);
+   SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp);
    END;
 
-AdjustCalendarCrop(Crop.Day1);
+AdjustCalendarCrop(GetCrop().Day1);
 CompleteCropDescription;
 //Onset.Off := true;
 IF (GetClimFile() = '(None)')
-   THEN AdjustCropYearToClimFile(Crop.Day1,Crop.DayN) // adjusting Crop.Day1 and Crop.DayN to ClimFile
-   ELSE Crop.DayN := Crop.Day1 + Crop.DaysToHarvest - 1;
+   THEN BEGIN
+       Crop_Day1_temp := GetCrop().Day1;
+       Crop_DayN_temp := GetCrop().DayN;
+       AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp); // adjusting Crop.Day1 and Crop.DayN to ClimFile
+       SetCrop_Day1(Crop_Day1_temp);
+       SetCrop_DayN(Crop_DayN_temp);
+       END
+   ELSE SetCrop_DayN(GetCrop().Day1 + GetCrop().DaysToHarvest - 1);
+
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
 IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
-   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
+   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
 (* adjusting simulation period *)
 AdjustSimPeriod;
 
@@ -1417,12 +1003,14 @@ IF (GetManFile() = '(None)')
         LoadManagement(GetManFilefull());
         // reset canopy development to soil fertility
         FertStress := GetManagement_FertilityStress();
+        Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
         RedCGC_temp := GetSimulation_EffectStress_RedCGC();
         RedCCX_temp := GetSimulation_EffectStress_RedCCX();
-        TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
-                          Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
-                          Crop.DaysToFullCanopySF,RedCGC_temp,
+        TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
+                          GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
+                          Crop_DaysToFullCanopySF_temp,RedCGC_temp,
                           RedCCX_temp,FertStress);
+        SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
         SetManagement_FertilityStress(FertStress);
         SetSimulation_EffectStress_RedCGC(RedCGC_temp);
         SetSimulation_EffectStress_RedCCX(RedCCX_temp);
@@ -1458,7 +1046,7 @@ IF (GetGroundWaterFile() = '(None)')
 // 8. Set simulation period
 SetSimulation_FromDayNr(TempSimDayNr1);
 SetSimulation_ToDayNr(TempSimDayNrN);
-IF ((Crop.Day1 <> GetSimulation_FromDayNr()) OR (Crop.DayN <> GetSimulation_ToDayNr()))
+IF ((GetCrop().Day1 <> GetSimulation_FromDayNr()) OR (GetCrop().DayN <> GetSimulation_ToDayNr()))
    THEN SetSimulation_LinkCropToSimPeriod(false);
 
 // 9. Initial conditions
@@ -1478,17 +1066,17 @@ IF (Trim(TempString) = 'KeepSWC')
 
         //Adjust size of compartments if required
         TotDepth := 0;
-        FOR i := 1 to NrCompartments DO TotDepth := TotDepth + Compartment[i].Thickness;
+        FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
         IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
            THEN BEGIN
                 IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
                    THEN AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx());
                 END
            ELSE BEGIN
-                IF (ROUND(Crop.RootMax*1000) > ROUND(TotDepth*1000)) THEN
+                IF (ROUND(GetCrop().RootMax*1000) > ROUND(TotDepth*1000)) THEN
                    BEGIN
-                   IF (ROUND(GetSoil().RootMax*1000) = ROUND(Crop.RootMax*1000))
-                      THEN AdjustSizeCompartments(Crop.RootMax) // no restrictive soil layer
+                   IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
+                      THEN AdjustSizeCompartments(GetCrop().RootMax) // no restrictive soil layer
                       ELSE BEGIN // restrictive soil layer
                            IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000))
                               THEN AdjustSizeCompartments(GetSoil().RootMax)
@@ -1509,20 +1097,22 @@ IF (Trim(TempString) = 'KeepSWC')
                 SetSWCiniFileFull(CONCAT(Trim(TempString),GetSWCIniFile()));
                 LoadInitialConditions(GetSWCiniFileFull(),SurfaceStorage);
                 END;
+        Compartment_temp := GetCompartment();
         CASE GetSimulation_IniSWC_AtDepths() OF
              true : TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                                  GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment);
+                                                  GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
              else TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                                GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment);
+                                                GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
              end;
+        SetCompartment(Compartment_temp);
 
 
         IF GetSimulation_ResetIniSWC() THEN // to reset SWC and SALT at end of simulation run
            BEGIN
            FOR i := 1 TO NrCompartments DO
                BEGIN
-               SetSimulation_ThetaIni_i(i,Compartment[i].Theta);
-               SetSimulation_ECeIni_i(i,ECeComp(Compartment[i]));
+               SetSimulation_ThetaIni_i(i,GetCompartment_Theta(i));
+               SetSimulation_ECeIni_i(i,ECeComp(GetCompartment_i(i)));
                END;
            // ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN - CHECK LATER
            IF (GetManagement_BundHeight() >= 0.01) THEN
@@ -1539,9 +1129,11 @@ IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the g
    ELSE BEGIN
         ZiAqua := undef_int;
         ECiAqua := undef_int;
-        SimulParam.ConstGwt := true;
+        SetSimulParam_ConstGwt(true);
         END;
-CalculateAdjustedFC((ZiAqua/100),Compartment);
+Compartment_temp := GetCompartment();
+CalculateAdjustedFC((ZiAqua/100),Compartment_temp);
+SetCompartment(Compartment_temp);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
 IF (GetSimulation_IniSWC_AtFC() AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
 
@@ -1585,108 +1177,6 @@ Close(f0);
 END; (* LoadSimulationRunProject *)
 
 
-
-
-PROCEDURE TemperatureFileCoveringCropPeriod(CropFirstDay,CropLastDay : LongInt);
-VAR totalname,totalnameOUT : STRING;
-    fTemp: text;
-    f2 : textFile;
-    i,RunningDay : INTEGER;
-    StringREAD : ShortString;
-    TminDataSet,TmaxDataSet : rep_SimulationEventsDbl;
-    Tlow,Thigh : double;
-
-BEGIN
-totalname := TemperatureFilefull;
-IF FileExists(totalname)
-   THEN BEGIN
-        // open file and find first day of cropping period
-        CASE GetTemperatureRecord().DataType OF
-             Daily   : BEGIN
-                       Assign(fTemp,totalname);
-                       Reset(fTemp);
-                       READLN(fTemp); // description
-                       READLN(fTemp); // time step
-                       READLN(fTemp); // day
-                       READLN(fTemp); // month
-                       READLN(fTemp); // year
-                       READLN(fTemp);
-                       READLN(fTemp);
-                       READLN(fTemp);
-                       FOR i := GetTemperatureRecord().FromDayNr TO (CropFirstDay - 1) DO READLN(fTemp);
-                       READLN(fTemp,StringREAD);  // i.e. Crop.Day1
-                       SplitStringInTwoParams(StringREAD,Tlow,Thigh);
-                       END;
-             Decadely: BEGIN
-                       GetDecadeTemperatureDataSet(CropFirstDay,TminDataSet,TmaxDataSet);
-                       i := 1;
-                       While (TminDataSet[i].DayNr <> CropFirstDay) Do i := i+1;
-                       Tlow := TminDataSet[i].Param;
-                       Thigh := TmaxDataSet[i].Param;
-                       END;
-             Monthly : BEGIN
-                       GetMonthlyTemperatureDataSet(CropFirstDay,TminDataSet,TmaxDataSet);
-                       i := 1;
-                       While (TminDataSet[i].DayNr <> CropFirstDay) Do i := i+1;
-                       Tlow := TminDataSet[i].Param;
-                       Thigh := TmaxDataSet[i].Param;
-                       END;
-             end;
-        // create SIM file and record first day
-        totalnameOUT := CONCAT(GetPathNameSimul(),'TCrop.SIM');
-        Assign(f2,totalnameOUT);
-        Rewrite(f2);
-        WRITELN(f2,Tlow:10:4,Thigh:10:4);
-        // next days of simulation period
-        FOR RunningDay := (CropFirstDay + 1) TO CropLastDay DO
-            BEGIN
-            CASE GetTemperatureRecord().DataType OF
-                 Daily   : BEGIN
-                           IF Eof(fTemp)
-                              THEN BEGIN
-                                   Reset(fTemp);
-                                   READLN(fTemp); // description
-                                   READLN(fTemp); // time step
-                                   READLN(fTemp); // day
-                                   READLN(fTemp); // month
-                                   READLN(fTemp); // year
-                                   READLN(fTemp);
-                                   READLN(fTemp);
-                                   READLN(fTemp);
-                                   READLN(fTemp,StringREAD);
-                                   SplitStringInTwoParams(StringREAD,Tlow,Thigh);
-                                   END
-                              ELSE READLN(fTemp,Tlow,Thigh);
-                                   END;
-                 Decadely: BEGIN
-                           IF (RunningDay > TminDataSet[31].DayNr) THEN GetDecadeTemperatureDataSet(RunningDay,TminDataSet,TmaxDataSet);
-                           i := 1;
-                           While (TminDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                           Tlow := TminDataSet[i].Param;
-                           Thigh := TmaxDataSet[i].Param;
-                           END;
-                 Monthly : BEGIN
-                           IF (RunningDay > TminDataSet[31].DayNr) THEN GetMonthlyTemperatureDataSet(RunningDay,TminDataSet,TmaxDataSet);
-                           i := 1;
-                           While (TminDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                           Tlow := TminDataSet[i].Param;
-                           Thigh := TmaxDataSet[i].Param;
-                           END;
-                 end;
-            WRITELN(f2,Tlow:10:4,Thigh:10:4);
-            END;
-        // Close files
-        IF (GetTemperatureRecord().DataType = Daily) THEN Close(fTemp);
-        Close(f2);
-        END
-   ELSE BEGIN
-        // fatal error if no air temperature file
-        END;
-END; (* TemperatureFileCoveringCropPeriod *)
-
-
-
-
 Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
                        FirstDayPeriod : LongInt;
                        TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
@@ -1725,7 +1215,7 @@ VAR fTemp : textFile;
 BEGIN
 
 //1. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
@@ -1791,12 +1281,12 @@ IF (TheDaysToCCini <> 0)
 FOR Dayi := 1 TO L1234 DO
     BEGIN
     //4.1 growing degrees for dayi
-    IF (TemperatureFile <> '(None)')
+    IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
-            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
+            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,GetSimulParam_GDDMethod());
             END
-       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
     IF (TheModeCycle = GDDays) THEN
        BEGIN
        SumGDD := SumGDD + GDDi;
@@ -1885,7 +1375,7 @@ FOR Dayi := 1 TO L1234 DO
 
 
 //5. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
+IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
 END; (* BTransferPeriod *)
 
 
@@ -1941,8 +1431,8 @@ IF (TestRecord = true) THEN
    END;
 
 
-//2. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
+// 2. Open Temperature file
+IF (GetTemperatureFile() <> '(None)') THEN
    BEGIN
    Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
    Reset(fTemp);
@@ -2014,12 +1504,12 @@ IF (TheDaysToCCini <> 0)
 FOR Dayi := 1 TO L1234 DO
     BEGIN
     //5.1 growing degrees for dayi
-    IF (TemperatureFile <> '(None)')
+    IF (GetTemperatureFile() <> '(None)')
        THEN BEGIN
             READLN(fTemp,Tndayi,Txdayi);
-            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,SimulParam.GDDMethod);
+            GDDi := DegreesDay(Tbase,Tupper,Tndayi,Txdayi,GetSimulParam_GDDMethod());
             END
-       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,SimulParam.GDDMethod);
+       ELSE GDDi := DegreesDay(Tbase,Tupper,TDayMin,TDayMax,GetSimulParam_GDDMethod());
     IF (TheModeCycle = GDDays) THEN
        BEGIN
        SumGDD := SumGDD + GDDi;
@@ -2130,7 +1620,7 @@ FOR Dayi := 1 TO L1234 DO
     //5.6 biomass water productivity (WP)
      WPi := WPbio; // vegetative stage
     // 5.6a. vegetative versus yield formation stage
-    IF (((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) AND (WPyield < 100) AND (Dayi > LFlor)) THEN
+    IF (((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) AND (WPyield < 100) AND (Dayi > LFlor)) THEN
        BEGIN // yield formation stage
        fSwitch := 1;
        IF ((DaysYieldFormation > 0) AND (tSwitch > 0)) THEN
@@ -2168,7 +1658,7 @@ FOR Dayi := 1 TO L1234 DO
 
 
 //4. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
+IF (GetTemperatureFile() <> '(None)') THEN Close(fTemp);
 
 IF (TestRecord = true) THEN Close(fOUT);
 
@@ -2630,7 +2120,7 @@ IF ((TempModeCycle = GDDays) AND (SFInfoStress > 0) AND (GDDL12SF < TempGDDL123)
    THEN RatDGDD := (TempL123-L12SF)/(TempGDDL123-GDDL12SF);
 //1 - c. Get PercentLagPhase (for estimate WPi during yield formation)
 DaysYieldFormation := undef_int;
-IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN //DaysToFlowering corresponds with Tuberformation
+IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN //DaysToFlowering corresponds with Tuberformation
    BEGIN
    DaysYieldFormation := ROUND(TempHI/TempdHIdt);
    IF DeterminantCropType
@@ -2665,102 +2155,6 @@ BiomassRatio := SumBSF/SumBPot;
 END; (* BiomassRatio *)
 
 
-PROCEDURE HIadjColdHeat(TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
-                        TempTmin,TempTmax : double;
-                        TempTcold,TempTheat : shortInt;
-                        TempfExcess : smallInt;
-                        VAR HIadjusted : double;
-                        VAR ColdStress,HeatStress : BOOLEAN);
-CONST TempRange = 5;
-VAR  fTemp : textFile;
-     Dayi : INTEGER;
-     Tndayi,Txdayi,KsPol,KsPolCS,KsPolHS,fFlor : double;
-
-
- FUNCTION FractionFlowering(Dayi : INTEGER) : double;
-    VAR f1,f2,F : double;
-        DiFlor : INTEGER;
-
-        FUNCTION FractionPeriod(DiFlor : INTEGER) : double;
-        VAR fi,TimePerc : double;
-        BEGIN
-        IF (DiFlor <= 0)
-           THEN fi := 0
-           ELSE BEGIN
-                TimePerc := 100 * (DiFlor/TempLengthFlowering);
-                IF (TimePerc > 100)
-                   THEN fi := 1
-                   ELSE BEGIN
-                        fi := 0.00558 * exp(0.63*Ln(TimePerc)) - 0.000969 * TimePerc - 0.00383;
-                        IF (fi < 0) THEN fi := 0;
-                        END;
-                END;
-        FractionPeriod := fi;
-        END; (* FractionPeriod *)
-
-    BEGIN
-    IF (TempLengthFlowering <=1)
-       THEN F := 1
-       ELSE BEGIN
-            DiFlor := Dayi;
-            f2 := FractionPeriod(DiFlor);
-            DiFlor := Dayi-1;
-            f1 := FractionPeriod(DiFlor);
-            IF (ABS(f1-f2) < 0.0000001)
-               THEN F := 0
-               ELSE F := ((f1+f2)/2)* 100/TempLengthFlowering;
-            END;
-    FractionFlowering := F;
-    END; (* FractionFlowering *)
-
-
-
-BEGIN
-//1. Open Temperature file
-IF (TemperatureFile <> '(None)') THEN
-   BEGIN
-   Assign(fTemp,CONCAT(GetPathNameSimul(),'TCrop.SIM'));
-   Reset(fTemp);
-   FOR Dayi := 1 TO (TempFlower-1) DO READLN(fTemp);
-   END;
-
-//2. Initialize
-HIadjusted := 0;
-ColdStress := false;
-HeatStress := false;
-
-//3. Cold or Heat stress affecting pollination
-FOR Dayi := 1 TO TempLengthFlowering DO
-    BEGIN
-    // 3.1 Read air temperature
-    IF (TemperatureFile <> '(None)')
-       THEN READLN(fTemp,Tndayi,Txdayi)
-       ELSE BEGIN
-            Tndayi := TempTmin;
-            Txdayi := TempTmax;
-            END;
-    // 3.2 Fraction of flowers which are flowering on day  (fFlor)
-    fFlor := FractionFlowering(dayi);
-    // 3.3 Ks(pollination) cold stress
-    KsPolCS := KsTemperature((TempTcold-TempRange),TempTcold,Tndayi);
-    IF (ROUND(10000*KsPolCS) < 10000) THEN ColdStress := true;
-    // 3.4 Ks(pollination) heat stress
-    KsPolHS := KsTemperature((TempTheat+TempRange),TempTheat,Txdayi);
-    IF (ROUND(10000*KsPolHS) < 10000) THEN HeatStress := true;
-    // 3.5 Adjust HI
-    KsPol := 1;
-    IF (KsPol > KsPolCS) THEN KsPol := KsPolCS;
-    IF (KsPol > KsPolHS) THEN KsPol := KsPolHS;
-    HIadjusted := HIadjusted + (KsPol * (1 + TempfExcess/100) * fFlor * TempHI);
-    IF (HIadjusted > TempHI) THEN HIadjusted := TempHI;
-    END;
-
-//3. Close Temperature file
-IF (TemperatureFile <> '(None)') THEN Close(fTemp);
-
-END; (* HIadjColdHeat *)
-
-
 PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
                                    LseasonDays : INTEGER;
                                    TheCropDay1 : LongInt;
@@ -2771,24 +2165,20 @@ BEGIN  // Adjust some crop parameters (CROP.*) as specified by the generated len
 // time to maturity
 L1234 := LseasonDays; // days
 IF (TheModeCycle = GDDays)
-   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,SimulParam.Tmin,SimulParam.Tmax)
+   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
    ELSE GDD1234 := undef_int;
 
 // time to senescence  (reference is given in TheCropFileSet
 IF (TheModeCycle = GDDays)
    THEN BEGIN
         GDD123 := GDD1234 - TheCropFileSet.GDDaysFromSenescenceToEnd;
-        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,SimulParam.Tmin,SimulParam.Tmax);
+        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
         END
    ELSE BEGIN
         L123 := L1234 - TheCropFileSet.DaysFromSenescenceToEnd;
         GDD123 := undef_int;
         END;
 END; (* AdjustCropFileParameters *)
-
-
-
-
 
 
 end.

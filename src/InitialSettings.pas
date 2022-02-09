@@ -14,68 +14,60 @@ implementation
  VAR TempString1,TempString2,CO2descr : string;
      Nri : INTEGER;
      SumWaBal_temp : rep_sum;
+     Crop_Day1_temp : INTEGER;
+     Crop_DayN_temp : INTEGER;
 
  BEGIN
  // 1. Program settings
  // Settings of Program parameters
  // 1a. General.PAR
- WITH SimulParam DO
-   BEGIN
-   PercRAW := 50; //Threshold [% of RAW] for determination of Inet
-   NrCompartments := 12; //Number of soil compartments (maximum is 12) (not a program parameter)
-   CompDefThick := 0.10; //Default thickness of soil compartments [m]
-   CropDay1 := 81; //DayNumber of first day cropping period (1..365)
-   Tbase:= 10.0;  //Default base temperature (degC) below which no crop development
-   Tupper:= 30.0; //Default upper temperature threshold for crop development
-   IrriFwInSeason := 100; //Percentage of soil surface wetted by irrigation in crop season
-   IrriFwOffSeason := 100; // Percentage of soil surface wetted by irrigation off-season
-   END;
+
+ SetSimulParam_PercRAW(50); //Threshold [% of RAW] for determination of Inet
+ NrCompartments := 12; //Number of soil compartments (maximum is 12) (not a program parameter)
+ SetSimulParam_CompDefThick(0.10); //Default thickness of soil compartments [m]
+ SetSimulParam_CropDay1(81); //DayNumber of first day cropping period (1..365)
+ SetSimulParam_Tbase(10.0);  //Default base temperature (degC) below which no crop development
+ SetSimulParam_Tupper(30.0); //Default upper temperature threshold for crop development
+ SetSimulParam_IrriFwInSeason(100); //Percentage of soil surface wetted by irrigation in crop season
+ SetSimulParam_IrriFwOffSeason(100); // Percentage of soil surface wetted by irrigation off-season
+
  // 1b. Soil.PAR - 6 parameters
- WITH SimulParam DO
-   BEGIN
-   RunoffDepth := 0.30; //considered depth (m) of soil profile for calculation of mean soil water content
-   CNcorrection := true;
-   SaltDiff := 20; // salt diffusion factor (%)
-   SaltSolub := 100; // salt solubility (g/liter)
-   RootNrDF := 16; // shape factor capillary rise factor
-   IniAbstract := 5; // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
-   END;
+
+ SetSimulParam_RunoffDepth(0.30); //considered depth (m) of soil profile for calculation of mean soil water content
+ SetSimulParam_CNcorrection(true);
+ SetSimulParam_SaltDiff(20); // salt diffusion factor (%)
+ SetSimulParam_SaltSolub(100); // salt solubility (g/liter)
+ SetSimulParam_RootNrDF(16); // shape factor capillary rise factor
+ SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
+
  // 1c. Rainfall.PAR - 4 parameters
- WITH SimulParam DO
-   BEGIN
-   EffectiveRain.Method := USDA;
-   EffectiveRain.PercentEffRain := 70; // IF Method is Percentage
-   EffectiveRain.ShowersInDecade := 2;  // For estimation of surface run-off
-   EffectiveRain.RootNrEvap := 5; // For reduction of soil evaporation
-   END;
+ SetSimulParam_EffectiveRain_Method(USDA);
+ SetSimulParam_EffectiveRain_PercentEffRain(70); // IF Method is Percentage
+ SetSimulParam_EffectiveRain_ShowersInDecade(2);  // For estimation of surface run-off
+ SetSimulParam_EffectiveRain_RootNrEvap(5); // For reduction of soil evaporation
+
  // 1d. Crop.PAR  - 12 parameters
- WITH SimulParam DO
-   BEGIN
-   EvapDeclineFactor := 4; // evaporation decline factor in stage 2
-   KcWetBare := 1.10; //Kc wet bare soil [-]
-   PercCCxHIfinal := 5; // CC threshold below which HI no longer increase(% of 100)
-   RootPercentZmin := 70; //Starting depth of root sine function (% of Zmin)
-   MaxRootZoneExpansion := 5.00; // fixed at 5 cm/day
-   KsShapeFactorRoot := -6; // Shape factor for effect water stress on rootzone expansion
-   TAWGermination := 20;  // Soil water content (% TAW) required at sowing depth for germination
-   pAdjFAO := 1; //Adjustment factor for FAO-adjustment soil water depletion (p) for various ET
-   DelayLowOxygen := 3; //number of days for full effect of deficient aeration
-   ExpFsen := 1.00; // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
-   Beta := 12; // Decrease (percentage) of p(senescence) once early canopy senescence is triggered
-   ThicknessTopSWC := 10; // Thickness top soil (cm) in which soil water depletion has to be determined
-   END;
+ SetSimulParam_EvapDeclineFactor(4); // evaporation decline factor in stage 2
+ SetSimulParam_KcWetBare(1.10); //Kc wet bare soil [-]
+ SetSimulParam_PercCCxHIfinal(5); // CC threshold below which HI no longer increase(% of 100)
+ SetSimulParam_RootPercentZmin(70); //Starting depth of root sine function (% of Zmin)
+ SetSimulParam_MaxRootZoneExpansion(5.00); // fixed at 5 cm/day
+ SetSimulParam_KsShapeFactorRoot(-6); // Shape factor for effect water stress on rootzone expansion
+ SetSimulParam_TAWGermination(20);  // Soil water content (% TAW) required at sowing depth for germination
+ SetSimulParam_pAdjFAO(1); //Adjustment factor for FAO-adjustment soil water depletion (p) for various ET
+ SetSimulParam_DelayLowOxygen(3); //number of days for full effect of deficient aeration
+ SetSimulParam_ExpFsen(1.00); // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+ SetSimulParam_Beta(12); // Decrease (percentage) of p(senescence) once early canopy senescence is triggered
+ SetSimulParam_ThicknessTopSWC(10); // Thickness top soil (cm) in which soil water depletion has to be determined
+
  // 1e. Field.PAR - 1 parameter
- WITH SimulParam DO
-   BEGIN
-   EvapZmax := 30; //maximum water extraction depth by soil evaporation [cm]
-   END;
+ SetSimulParam_EvapZmax(30); //maximum water extraction depth by soil evaporation [cm]
+
  // 1f. Temperature.PAR - 3 parameters
- WITH SimulParam DO
-   BEGIN
-   Tmin := 12.0;   //Default minimum temperature (degC) if no temperature file is specified
-   Tmax := 28.0;   //Default maximum temperature (degC) if no temperature file is specified
-   GDDMethod := 3; //Default method for GDD calculations
-   END;
+ SetSimulParam_Tmin(12.0);   //Default minimum temperature (degC) if no temperature file is specified
+ SetSimulParam_Tmax(28.0);   //Default maximum temperature (degC) if no temperature file is specified
+ SetSimulParam_GDDMethod(3); //Default method for GDD calculations
+
 
 
  PreDay := false;
@@ -85,10 +77,10 @@ implementation
  IF (NrCompartments > max_No_compartments) //Savety check of value in General.PAR;
     THEN NrCompartments := max_No_compartments;
  FOR Nri := 1 TO max_No_compartments DO  // required for formactivate ParamNew
-     Compartment[Nri].Thickness := SimulParam.CompDefThick;
+     SetCompartment_Thickness(Nri, GetSimulParam_CompDefThick());
  // Default CropDay1 - Savety check of value in General.PAR
- WHILE (SimulParam.CropDay1 > 365) DO SimulParam.CropDay1 := SimulParam.CropDay1-365;
- If (SimulParam.CropDay1 < 1) THEN SimulParam.CropDay1 := 1;
+ WHILE (GetSimulParam_CropDay1() > 365) DO SetSimulParam_CropDay1(GetSimulParam_CropDay1()-365);
+ If (GetSimulParam_CropDay1() < 1) THEN SetSimulParam_CropDay1(1);
 
  // 2a. Ground water table
  SetGroundWaterFile('(None)');
@@ -96,16 +88,16 @@ implementation
  GroundWaterDescription := 'no shallow groundwater table';
  ZiAqua := undef_int;
  ECiAqua := undef_int;
- SimulParam.ConstGwt := true;
+ SetSimulParam_ConstGwt(true);
 
  // 2b. Soil profile and initial soil water content
  ResetDefaultSoil; // Reset the soil profile to its default values
  SetProfFile('DEFAULT.SOL');
  SetProfFilefull(CONCAT(getPathNameSimul(),GetProfFile()));
- // required for SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,Crop.RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
- Crop.RootMin := 0.30; //Minimum rooting depth (m)
- Crop.RootMax := 1.00; //Maximum rooting depth (m)
- // Crop. RootMin, RootMax, and GetSoil().RootMax are correctly calculated in LoadCrop
+ // required for SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetCrop().RootMin,GetSoil().NrSoilLayers,SoilLayer)) in LoadProfile
+ SetCrop_RootMin(0.30); //Minimum rooting depth (m)
+ SetCrop_RootMax(1.00); //Maximum rooting depth (m)
+ // Crop.RootMin, RootMax, and Soil.RootMax are correctly calculated in LoadCrop
  LoadProfile(GetProfFilefull());
  CompleteProfileDescription; // Simulation.ResetIniSWC AND specify_soil_layer whcih contains PROCEDURE DeclareInitialCondAtFCandNoSalt,
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
@@ -121,12 +113,12 @@ implementation
  SetCropFile('DEFAULT.CRO');
  SetCropFilefull(CONCAT(GetPathNameSimul(),GetCropFile()));
  //LoadCrop ==============================
- Crop.CCo := (Crop.PlantingDens/10000) * (Crop.SizeSeedling/10000);
- Crop.CCini := (Crop.PlantingDens/10000) * (Crop.SizePlant/10000);
+ SetCrop_CCo((GetCrop().PlantingDens/10000) * (GetCrop().SizeSeedling/10000));
+ SetCrop_CCini((GetCrop().PlantingDens/10000) * (GetCrop().SizePlant/10000));
  // maximum rooting depth in given soil profile
- SetSoil_RootMax(RootMaxInSoilProfile(Crop.RootMax,GetSoil().NrSoilLayers,SoilLayer));
+ SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
  // determine miscellaneous
- Crop.Day1 := SimulParam.CropDay1;
+ SetCrop_Day1(GetSimulParam_CropDay1());
  CompleteCropDescription;
  SetSimulation_YearSeason(1);
  NoCropCalendar;
@@ -138,11 +130,11 @@ implementation
 
  // 5. Climate
  // 5.1 Temperature
- TemperatureFile := '(None)';
- TemperatureFilefull := TemperatureFile;  (* no file *)
- Str(SimulParam.Tmin:8:1,TempString1);
- Str(SimulParam.Tmax:8:1,TempString2);
- TemperatureDescription := '';
+ SetTemperatureFile('(None)');
+ SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
+ Str(GetSimulParam_Tmin():8:1,TempString1);
+ Str(GetSimulParam_Tmax():8:1,TempString2);
+ SetTemperatureDescription('');
  SetTemperatureRecord_DataType(Daily);
  SetTemperatureRecord_NrObs(0);
  SetTemperatureRecord_FromString('any date');
@@ -186,16 +178,20 @@ implementation
  // 5.5 Climate file
  SetClimateFile('(None)');
  SetClimateFileFull(GetClimateFile());
- ClimateDescription := '';
+ SetClimateDescription('');
 
  // 5.6 Set Climate and Simulation Period
  SetClimData;
  SetSimulation_LinkCropToSimPeriod(true);
 (* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
- AdjustCropYearToClimFile(Crop.Day1,Crop.DayN);
+Crop_Day1_temp := GetCrop().Day1;
+Crop_DayN_temp := GetCrop().DayN;
+ AdjustCropYearToClimFile(Crop_Day1_temp,Crop_DayN_temp);
+SetCrop_Day1(Crop_Day1_temp);
+SetCrop_DayN(Crop_DayN_temp);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
  IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
-   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(Crop.DayN);
+   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
 (* adjusting simulation period *)
  AdjustSimPeriod;
 

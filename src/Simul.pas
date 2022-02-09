@@ -46,47 +46,47 @@ VAR CCiPot,TpotForB,EpotTotForB,WPi,fSwitch : double;
 
 BEGIN   // potential biomass - unlimited soil fertiltiy
 // 1. - CCi
-CCiPot := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-             Crop.DaysToSenescence,Crop.DaysToHarvest,
-             Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-             Crop.CCo,Crop.CCx,Crop.CGC,Crop.CDC,Crop.GDDCGC,Crop.GDDCDC,
-             SumGDDadjCC,Crop.ModeCycle,
+CCiPot := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+             GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+             GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+             GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().CDC,GetCrop().GDDCGC,GetCrop().GDDCDC,
+             SumGDDadjCC,GetCrop().ModeCycle,
              (0),(0));
 IF (CCiPot < 0) THEN CCiPot := 0;
 IF (CCiPot > CCxWitheredTpotNoS) THEN CCxWitheredTpotNoS := CCiPot;
 
 // 2. - Calculation of Tpot
-IF (Crop.ModeCycle = Calendardays)
+IF (GetCrop_ModeCycle() = Calendardays)
    THEN DAP := VirtualTimeCC
    ELSE BEGIN // growing degree days
         DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                               Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax);
+                               GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
         DAP := DAP + GetSimulation_DelayedDays(); // are not considered when working with GDDays
         END;
-CalculateETpot(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
-               Crop.DaysToHarvest,(0),CCiPot,ETo,Crop.KcTop,Crop.KcDecline,Crop.CCx,CCxWitheredTpotNoS,Crop.CCEffectEvapLate,
-               //Crop.DaysToHarvest,CCiPot,ETo,Crop.KcTop,Crop.KcDecline,Crop.CCxAdjusted,Crop.CCxWithered,Crop.CCEffectEvapLate,
-               CO2i,GDDayi,Crop.GDtranspLow,TpotForB,EpotTotForB);
+CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
+               GetCrop().DaysToHarvest,(0),CCiPot,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCx,CCxWitheredTpotNoS,GetCrop().CCEffectEvapLate,
+               //GetCrop().DaysToHarvest,CCiPot,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,
+               CO2i,GDDayi,GetCrop().GDtranspLow,TpotForB,EpotTotForB);
 
 // 3. - WPi for that day
 // 3a - given WPi
-WPi := (Crop.WP/100);
+WPi := (GetCrop().WP/100);
 // 3b - WPi decline in reproductive stage  (works with calendar days)
-IF (((Crop.subkind = Grain) OR (Crop.subkind = Tuber))
-    AND (Crop.WPy < 100) AND (Crop.dHIdt > 0)
-    AND (VirtualTimeCC >= Crop.DaysToFlowering)) THEN
+IF (((GetCrop_subkind() = Grain) OR (GetCrop_subkind() = Tuber))
+    AND (GetCrop().WPy < 100) AND (GetCrop().dHIdt > 0)
+    AND (VirtualTimeCC >= GetCrop().DaysToFlowering)) THEN
   BEGIN
   // WPi in reproductive stage
   fSwitch := 1;
-  DaysYieldFormation := ROUND(Crop.HI/Crop.dHIdt);
-  DayiAfterFlowering := VirtualTimeCC - Crop.DaysToFlowering;
+  DaysYieldFormation := ROUND(GetCrop().HI/GetCrop().dHIdt);
+  DayiAfterFlowering := VirtualTimeCC - GetCrop().DaysToFlowering;
   IF ((DaysYieldFormation > 0) AND (DayiAfterFlowering < (DaysYieldFormation/3)))
      THEN fSwitch := DayiAfterFlowering/(DaysYieldFormation/3);
-  WPi :=  WPi * (1 - (1-Crop.WPy/100)*fSwitch)
+  WPi :=  WPi * (1 - (1-GetCrop().WPy/100)*fSwitch)
   END;
 // 3c - adjustment WPi for CO2
 IF ROUND(100*CO2i) <> ROUND(100*CO2Ref) THEN
-   WPi := WPi * fAdjustedForCO2(CO2i,Crop.WP,Crop.AdaptedToCO2);
+   WPi := WPi * fAdjustedForCO2(CO2i,GetCrop().WP,GetCrop().AdaptedToCO2);
 
 // 4. - Potential Biomass
 IF (ETo > 0) THEN BiomassUnlim := BiomassUnlim + WPi * TpotForB/ETo; (* ton/ha*)
@@ -98,10 +98,10 @@ END; (* DeterminePotentialBiomass *)
 PROCEDURE AdjustpStomatalToETo(MeanETo : double;
                                VAR pStomatULAct : double);
 BEGIN
-CASE Crop.pMethod OF
-     NoCorrection      : pStomatULAct := Crop.pdef ;
+CASE GetCrop().pMethod OF
+     NoCorrection      : pStomatULAct := GetCrop().pdef ;
      FAOCorrection     : BEGIN
-                         pStomatULAct := Crop.pdef + SimulParam.pAdjFAO * (0.04*(5-MeanETo))*log10(10-9*Crop.pdef);
+                         pStomatULAct := GetCrop().pdef + GetSimulParam_pAdjFAO() * (0.04*(5-MeanETo))*log10(10-9*GetCrop().pdef);
                          IF pStomatULAct > 1 THEN pStomatULAct := 1;
                          IF pStomatULAct < 0 THEN pStomatULAct := 0;
                          END;
@@ -113,14 +113,14 @@ END; (* AdjustpStomatalToETo *)
 PROCEDURE AdjustpLeafToETo(EToMean : double;
                            VAR pLeafULAct, pLeafLLAct : double);
 BEGIN
-pLeafLLAct := Crop.pLeafDefLL;
-pLeafULAct := Crop.pLeafDefUL;
-IF (Crop.pMethod = FAOCorrection) THEN
+pLeafLLAct := GetCrop().pLeafDefLL;
+pLeafULAct := GetCrop().pLeafDefUL;
+IF (GetCrop().pMethod = FAOCorrection) THEN
    BEGIN
-   pLeafLLAct := Crop.pLeafDefLL + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefLL);
+   pLeafLLAct := GetCrop().pLeafDefLL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pLeafDefLL);
    IF pLeafLLAct > 1.0 THEN pLeafLLAct := 1.0;
    IF pLeafLLAct < 0 THEN pLeafLLAct := 0;
-   pLeafULAct := Crop.pLeafDefUL + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pLeafDefUL);
+   pLeafULAct := GetCrop().pLeafDefUL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pLeafDefUL);
    IF pLeafULAct > 1.0 THEN pLeafULAct := 1.0;
    IF pLeafULAct < 0 THEN pLeafULAct := 0;
    END;
@@ -133,12 +133,12 @@ PROCEDURE AdjustpSenescenceToETo(EToMean : double;
                                  WithBeta : BOOLEAN;
                                  VAR pSenAct : double);
 BEGIN
-pSenAct := Crop.pSenescence;
-IF (Crop.pMethod = FAOCorrection) THEN
+pSenAct := GetCrop().pSenescence;
+IF (GetCrop().pMethod = FAOCorrection) THEN
    BEGIN
-   pSenAct := Crop.pSenescence + SimulParam.pAdjFAO * 0.04*(5-EToMean)*log10(10-9*Crop.pSenescence);
+   pSenAct := GetCrop().pSenescence + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pSenescence);
    IF ((TimeSenescence > 0.0001) AND WithBeta)
-      THEN pSenAct := pSenAct * (1-SimulParam.Beta/100);
+      THEN pSenAct := pSenAct * (1-GetSimulParam_Beta()/100);
    IF pSenAct < 0 THEN pSenAct := 0;
    IF pSenAct >= 1.0 THEN pSenAct := 0.98; // otherwise senescence is not possible at WP
    END;
@@ -182,7 +182,7 @@ VAR RatioBM,RBM,HItimesTotal,
         IF (DiFlor <= 0)
            THEN fi := 0
            ELSE BEGIN
-                TimePerc := 100 * (DiFlor/Crop.LengthFlowering);
+                TimePerc := 100 * (DiFlor/GetCrop().LengthFlowering);
                 IF (TimePerc > 100)
                    THEN fi := 1
                    ELSE BEGIN
@@ -194,16 +194,16 @@ VAR RatioBM,RBM,HItimesTotal,
         END; (* FractionPeriod *)
 
     BEGIN
-    IF (Crop.LengthFlowering <=1)
+    IF (GetCrop().LengthFlowering <=1)
        THEN F := 1
        ELSE BEGIN
-            DiFlor := ROUND(dayi - (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering));
+            DiFlor := ROUND(dayi - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering));
             f2 := FractionPeriod(DiFlor);
-            DiFlor := ROUND((dayi-1) - (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering));
+            DiFlor := ROUND((dayi-1) - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering));
             f1 := FractionPeriod(DiFlor);
             IF (ABS(f1-f2) < 0.0000001)
                THEN F := 0
-               ELSE F := 100 * ((f1+f2)/2)/Crop.LengthFlowering;
+               ELSE F := 100 * ((f1+f2)/2)/GetCrop().LengthFlowering;
             END;
     FractionFlowering := F;
     END; (* FractionFlowering *)
@@ -223,51 +223,51 @@ BEGIN
 TESTVAL := undef_int;
 
 // 0. Reference HarvestIndex for that day (alfa in percentage) + Information on PercentLagPhase (for estimate WPi)
-IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain) OR (Crop.Subkind = Vegetative) OR (Crop.Subkind = Forage))
+IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain) OR (GetCrop().Subkind = Vegetative) OR (GetCrop().Subkind = Forage))
    THEN BEGIN //DaysToFlowering corresponds with Tuberformation
-        IF  (((Crop.Subkind = Vegetative) AND (Crop.Planting = Regrowth)
-           OR (Crop.Subkind = Forage) AND (Crop.Planting = Regrowth)))
-           THEN alfa := Crop.HI
+        IF  (((GetCrop().Subkind = Vegetative) AND (GetCrop().Planting = Regrowth)
+           OR (GetCrop().Subkind = Forage) AND (GetCrop().Planting = Regrowth)))
+           THEN alfa := GetCrop().HI
            ELSE BEGIN
                 HIfinal_temp := GetSimulation_HIfinal();
-                alfa := HarvestIndexDay((dayi-Crop.Day1),Crop.DaysToFlowering,Crop.HI,Crop.dHIdt,CCiactual,
-                              Crop.CCxAdjusted,SimulParam.PercCCxHIfinal,Crop.Planting,
+                alfa := HarvestIndexDay((dayi-GetCrop().Day1),GetCrop().DaysToFlowering,GetCrop().HI,GetCrop().dHIdt,CCiactual,
+                              GetCrop().CCxAdjusted,GetSimulParam_PercCCxHIfinal(),GetCrop().Planting,
                               PercentLagPhase,HIfinal_temp);
                 SetSimulation_HIfinal(HIfinal_temp);
                 END;
         END;
 
 //WPi := undef_int; // for the case ETo is zero, WPi is not determined and hence not displayed
-WPi := (Crop.WP/100);
+WPi := (GetCrop().WP/100);
 
 // 1. biomass
 IF (ETo > 0) THEN
    BEGIN
    // 1.1 WPi for that day
    // 1.1a - given WPi
-   WPi := (Crop.WP/100);
+   WPi := (GetCrop().WP/100);
    // 1.1b - adjustment WPi for reproductive stage (works with calendar days)
-   IF (((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) AND (alfa > 0)) THEN // WPi switch to WP for reproductive stage
+   IF (((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) AND (alfa > 0)) THEN // WPi switch to WP for reproductive stage
       BEGIN
       fSwitch := 1;
-      DaysYieldFormation := ROUND(Crop.HI/Crop.dHIdt);
+      DaysYieldFormation := ROUND(GetCrop().HI/GetCrop().dHIdt);
       IF (DaysYieldFormation > 0) THEN
          BEGIN
-         IF Crop.DeterminancyLinked
+         IF GetCrop().DeterminancyLinked
             THEN fSwitch := PercentLagPhase/100
             ELSE BEGIN
-                 DayiAfterFlowering := dayi - GetSimulation_DelayedDays() - Crop.Day1 - Crop.DaysToFlowering;
+                 DayiAfterFlowering := dayi - GetSimulation_DelayedDays() - GetCrop().Day1 - GetCrop().DaysToFlowering;
                  IF (DayiAfterFlowering < (DaysYieldFormation/3))
                     THEN fSwitch := DayiAfterFlowering/(DaysYieldFormation/3);
                  END;
          END;
-      WPi :=  WPi * (1 - (1-Crop.WPy/100)*fSwitch)  // switch in Lag Phase
+      WPi :=  WPi * (1 - (1-GetCrop().WPy/100)*fSwitch)  // switch in Lag Phase
       END;
 
    // 1.1c - adjustment WPi for CO2
    IF ROUND(100*CO2i) <> ROUND(100*CO2Ref) THEN
       BEGIN
-      WPi := WPi * fAdjustedForCO2(CO2i,Crop.WP,Crop.AdaptedToCO2);
+      WPi := WPi * fAdjustedForCO2(CO2i,GetCrop().WP,GetCrop().AdaptedToCO2);
       END;
 
 
@@ -295,17 +295,17 @@ IF (ETo > 0) THEN
            // green canopy cover of the crop in weed-infested field
            IF (GetManagement_WeedDeltaRC() <> 0)
               THEN BEGIN
-                   IF (Crop.subkind = Forage)
-                      THEN fCCx := MultiplierCCxSelfThinning(GetSimulation_YearSeason(),Crop.YearCCx,Crop.CCxRoot)
+                   IF (GetCrop().subkind = Forage)
+                      THEN fCCx := MultiplierCCxSelfThinning(GetSimulation_YearSeason(),GetCrop().YearCCx,GetCrop().CCxRoot)
                       ELSE fCCx := 1;
                    wdrc_temp := GetManagement_WeedDeltaRC();
                    WeedRCi := GetWeedRC(VirtualTimeCC,SumGDDadjCC,fCCx,
                                  //Management.WeedRC,Management.WeedAdj,
                                  GetSimulation_RCadj(),GetManagement_WeedAdj(),
                                  wdrc_temp,
-                                 Crop.DaysToFullCanopySF,Crop.DaysToSenescence,
-                                 Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,
-                                 Crop.ModeCycle);
+                                 GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,
+                                 GetCrop().GDDaysToFullCanopySF,GetCrop().GDDaysToSenescence,
+                                 GetCrop_ModeCycle());
                    SetManagement_WeedDeltaRC(wdrc_temp);
                    END
               //ELSE WeedRCi := Management.WeedRC;
@@ -333,7 +333,7 @@ IF (ETo > 0) THEN
            END;
 
    // Transfer of assimilates
-   IF (Crop.subkind = Forage) THEN // only for perennial herbaceous forage crops
+   IF (GetCrop_subkind() = Forage) THEN // only for perennial herbaceous forage crops
       BEGIN
       // 1. Mobilize assimilates at start of season
       IF (MobilizeAssimilates = true) THEN
@@ -374,9 +374,9 @@ BiomassPot :=  FracBiomassPotSF * BiomassUnlim; (* ton/ha*)
 
 // 2. yield
 tmax1 := undef_int;
-IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
+IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
    BEGIN  //DaysToFlowering corresponds with Tuberformation
-   IF (dayi > (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering)) THEN
+   IF (dayi > (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering)) THEN
       BEGIN  // calculation starts when flowering has started
 
       // 2.2 determine HImultiplier at the start of flowering
@@ -390,8 +390,8 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
                  // Not correct if weed infestation and no fertility stress
                  // for that case BiomassPot might be larger (but cannot be calculated since WP is unknown)
                  IF (RatioBM > 1) THEN RatioBM := 1;
-                 RBM := BMRange(Crop.HIincrease);
-                 HItimesBEF := HImultiplier(RatioBM,RBM,Crop.HIincrease);
+                 RBM := BMRange(GetCrop().HIincrease);
+                 HItimesBEF := HImultiplier(RatioBM,RBM,GetCrop().HIincrease);
                  END;
          IF (CCiActual <= 0.01) THEN HItimesBEF := 0; // no green canopy cover left at start of flowering;
          END;
@@ -405,74 +405,74 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
          ELSE Wrel := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 
       // 2.4 Failure of Pollination during flowering (alfaMax in percentage)
-      IF (Crop.Subkind = grain) // - only valid for fruit/grain crops (flowers)
+      IF (GetCrop().Subkind = grain) // - only valid for fruit/grain crops (flowers)
          THEN BEGIN
-              IF ((dayi <= (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering + Crop.LengthFlowering)) // calculation limited to flowering period
-                 AND ((CCiactual*100) > SimulParam.PercCCxHIfinal)) THEN // sufficient green canopy remains
+              IF ((dayi <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + GetCrop().LengthFlowering)) // calculation limited to flowering period
+                 AND ((CCiactual*100) > GetSimulParam_PercCCxHIfinal())) THEN // sufficient green canopy remains
                  BEGIN
                  // 2.4a - Fraction of flowers which are flowering on day  (fFlor)
                  fFlor := FractionFlowering(dayi);
                  // 2.4b - Ks(pollination) water stress
                  pLL := 1;
-                 KsPolWS := KsAny(Wrel,Crop.pPollination,pLL,(0));
+                 KsPolWS := KsAny(Wrel,GetCrop().pPollination,pLL,(0));
                  // 2.4c - Ks(pollination) cold stress
-                 KsPolCS := KsTemperature((Crop.Tcold-TempRange),Crop.Tcold,TminOnDay);
+                 KsPolCS := KsTemperature((GetCrop().Tcold-TempRange),GetCrop().Tcold,TminOnDay);
                  // 2.4d - Ks(pollination) heat stress
-                 KsPolHS := KsTemperature((Crop.Theat+TempRange),Crop.Theat,TmaxOnDay);
+                 KsPolHS := KsTemperature((GetCrop().Theat+TempRange),GetCrop().Theat,TmaxOnDay);
                  // 2.4e - Adjust alfa
                  KsPol := KsPolWS;
                  IF (KsPol > KsPolCS) THEN KsPol := KsPolCS;
                  IF (KsPol > KsPolHS) THEN KsPol := KsPolHS;
-                 alfaMax := alfaMax + (KsPol * (1 + Crop.fExcess/100) * fFlor * Crop.HI);
-                 IF (alfaMax > Crop.HI) THEN alfaMax := Crop.HI;
+                 alfaMax := alfaMax + (KsPol * (1 + GetCrop().fExcess/100) * fFlor * GetCrop().HI);
+                 IF (alfaMax > GetCrop().HI) THEN alfaMax := GetCrop().HI;
                  END;
               END
-         ELSE alfaMax := Crop.HI; // for Tuber crops (no flowering)
+         ELSE alfaMax := GetCrop().HI; // for Tuber crops (no flowering)
 
       // 2.5 determine effect of water stress affecting leaf expansion after flowering
              //from start flowering till end of determinancy
-      IF Crop.DeterminancyLinked
-         THEN tmax1 := ROUND(Crop.LengthFlowering/2)
-         ELSE tmax1 := (Crop.DaysToSenescence - Crop.DaysToFlowering);
+      IF GetCrop().DeterminancyLinked
+         THEN tmax1 := ROUND(GetCrop().LengthFlowering/2)
+         ELSE tmax1 := (GetCrop().DaysToSenescence - GetCrop().DaysToFlowering);
       IF ((HItimesBEF > 0.99) // there is green canopy cover at start of flowering;
-          AND (dayi <= (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering + tmax1)) // and not yet end period
+          AND (dayi <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tmax1)) // and not yet end period
           AND (tmax1 > 0) // otherwise no effect
-          AND (ROUND(Crop.aCoeff) <> Undef_int) // otherwise no effect
+          AND (ROUND(GetCrop().aCoeff) <> Undef_int) // otherwise no effect
           AND (CCiactual > 0.001))  // and as long as green canopy cover remains (for correction to stresses)
          THEN BEGIN
               // determine KsLeaf
               AdjustpLeafToETo(ETo,pLeafULAct,pLeafLLAct);
-              Ksleaf := KsAny(Wrel,pLeafULAct,pLeafLLAct,Crop.KsShapeFactorLeaf);
+              Ksleaf := KsAny(Wrel,pLeafULAct,pLeafLLAct,GetCrop().KsShapeFactorLeaf);
               // daily correction
-              Dcor := (1 + (1-Ksleaf)/Crop.aCoeff);
+              Dcor := (1 + (1-Ksleaf)/GetCrop().aCoeff);
               // weighted correction
               ScorAT1 := ScorAT1 + Dcor/tmax1;
-              DayCor := dayi - (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering);
+              DayCor := dayi - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering);
               HItimesAT1  := (tmax1/DayCor) * ScorAT1;
               END;
 
       // 2.6 determine effect of water stress affecting stomatal closure after flowering
              //during yield formation
-      IF (Crop.dHIdt > 99)
+      IF (GetCrop().dHIdt > 99)
          THEN tmax2 := 0
-         ELSE tmax2 := ROUND(Crop.HI/Crop.dHIdt);
+         ELSE tmax2 := ROUND(GetCrop().HI/GetCrop().dHIdt);
       IF ((HItimesBEF > 0.99) // there is green canopy cover at start of flowering;
-          AND (dayi <= (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering + tmax2)) // and not yet end period
+          AND (dayi <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tmax2)) // and not yet end period
           AND (tmax2 > 0) // otherwise no effect
-          AND (ROUND(Crop.bCoeff) <> Undef_int) // otherwise no effect
+          AND (ROUND(GetCrop().bCoeff) <> Undef_int) // otherwise no effect
           AND (CCiactual > 0.001))  // and as long as green canopy cover remains (for correction to stresses)
          THEN BEGIN
               // determine KsStomatal
               AdjustpStomatalToETo(ETo,pStomatULAct);
               pLL := 1;
-              Ksstomatal := KsAny(Wrel,pStomatULAct,pLL,Crop.KsShapeFactorStomata);
+              Ksstomatal := KsAny(Wrel,pStomatULAct,pLL,GetCrop().KsShapeFactorStomata);
               // daily correction
               IF (Ksstomatal > 0.001)
-                   THEN Dcor := (Exp(0.10*Ln(Ksstomatal))) * (1-(1-Ksstomatal)/Crop.bCoeff)
+                   THEN Dcor := (Exp(0.10*Ln(Ksstomatal))) * (1-(1-Ksstomatal)/GetCrop().bCoeff)
                    ELSE Dcor := 0;
               // weighted correction
               ScorAT2 := ScorAT2 + Dcor/tmax2;
-              DayCor := dayi - (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering);
+              DayCor := dayi - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering);
               HItimesAT2  := (tmax2/DayCor) * ScorAT2;
               END;
 
@@ -488,20 +488,20 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
                          ELSE IF (tmax1 <= tmax2)
                                  THEN BEGIN
                                       HItimesAT := HItimesAT2 * ((tmax1*HItimesAT1 + (tmax2-tmax1))/tmax2);
-                                      IF (ROUND(Crop.bCoeff) = Undef_int) THEN HItimesAT := HItimesAT1;
-                                      IF (ROUND(Crop.aCoeff) = Undef_int) THEN HItimesAT := HItimesAT2;
+                                      IF (ROUND(GetCrop().bCoeff) = Undef_int) THEN HItimesAT := HItimesAT1;
+                                      IF (ROUND(GetCrop().aCoeff) = Undef_int) THEN HItimesAT := HItimesAT2;
                                       END
                                  ELSE BEGIN
                                       HItimesAT := HItimesAT1 * ((tmax2*HItimesAT2 + (tmax1-tmax2))/tmax1);
-                                      IF (ROUND(Crop.bCoeff) = Undef_int) THEN HItimesAT := HItimesAT1;
-                                      IF (ROUND(Crop.aCoeff) = Undef_int) THEN HItimesAT := HItimesAT2;
+                                      IF (ROUND(GetCrop().bCoeff) = Undef_int) THEN HItimesAT := HItimesAT1;
+                                      IF (ROUND(GetCrop().aCoeff) = Undef_int) THEN HItimesAT := HItimesAT2;
                                       END;
                       END;
               END;
 
       // 2.8 Limit HI to allowable maximum increase
       HItimesTotal := HItimesBEF * HItimesAT;
-      IF (HItimesTotal > (1+(Crop.DHImax/100))) THEN HItimesTotal := 1+(Crop.DHImax/100);
+      IF (HItimesTotal > (1+(GetCrop().DHImax/100))) THEN HItimesTotal := 1+(GetCrop().DHImax/100);
 
       // 2.9 Yield
       IF (alfaMax >= alfa)
@@ -511,12 +511,12 @@ IF ((Crop.subkind = Tuber) OR (Crop.Subkind = grain)) THEN
    END; // (Crop.subkind = Tuber) OR (Crop.Subkind = grain)
 
 // 2bis. yield leafy vegetable crops
-IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)) THEN
+IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage)) THEN
    BEGIN
-   IF (dayi >= (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering)) THEN
+   IF (dayi >= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering)) THEN
       BEGIN  // calculation starts at crop day 1 (since days to flowering is 0)
       //YieldPart := Biomass * (alfa/100);
-      IF ((100*CCw) < SimulParam.PercCCxHIfinal) THEN alfa := 0;
+      IF ((100*CCw) < GetSimulParam_PercCCxHIfinal()) THEN alfa := 0;
       //IF (Management.WeedRC > 0)
       IF (ROUND(100*ETo)> 0) THEN
          BEGIN  // with correction for transferred assimilates
@@ -532,7 +532,7 @@ IF ((Crop.subkind = Vegetative) OR (Crop.subkind = Forage)) THEN
 
 
 // 3. Dynamic adjustment of soil fertility stress
-IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND Crop.StressResponse.Calibrated)
+IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND GetCrop_StressResponse().Calibrated)
    THEN BEGIN
         //BioAdj := 100 * (FracBiomassPotSF + (FracBiomassPotSF - Biomass/BiomassUnlim));
         BioAdj := 100 * (FracBiomassPotSF + (FracBiomassPotSF - BiomassTot/BiomassUnlim));
@@ -551,8 +551,8 @@ IF ((GetManagement_FertilityStress() > 0) AND (BiomassUnlim > 0.001) AND Crop.St
                 IF (StressSFadjNEW > GetManagement_FertilityStress())
                    THEN StressSFadjNEW := GetManagement_FertilityStress();
                 END;
-        IF ((Crop.Subkind = grain) AND Crop.DeterminancyLinked
-           AND (dayi > (GetSimulation_DelayedDays() + Crop.Day1 + Crop.DaysToFlowering + tmax1))) THEN
+        IF ((GetCrop().Subkind = grain) AND GetCrop().DeterminancyLinked
+           AND (dayi > (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tmax1))) THEN
            BEGIN // potential vegetation period is exceeded
            IF (StressSFadjNEW < PreviousStressLevel) THEN StressSFadjNEW := PreviousStressLevel;
            IF (StressSFadjNEW > GetManagement_FertilityStress())
@@ -600,7 +600,8 @@ VAR  control : rep_control;
      EffectStress_temp : rep_EffectStress;
      SWCtopSoilConsidered_temp : boolean;
      EvapWCsurf_temp : double;
-
+     Comp_temp : rep_Comp;
+     Crop_pActStom_temp : double;
 
 
 FUNCTION calculate_delta_theta(theta,thetaAdjFC : double; NrLayer : INTEGER) : double;
@@ -677,12 +678,12 @@ CASE control OF
                FOR compi :=1 to NrCompartments DO
                    BEGIN
                    SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
-                   + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
-                   Compartment[compi].fluxout := 0;
-                   FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
+                   + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
+                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+                   SetCompartment_fluxout(compi, 0);
+                   FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
                            SetTotalSaltContent_BeginDay(GetTotalSaltContent().BeginDay
-                           + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100); // Mg/ha
+                           + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
                Drain:=0.0;
                Runoff:=0.0;
@@ -706,24 +707,24 @@ CASE control OF
                SetTotalSaltContent_EndDay(0);
 
                // quality of irrigation water
-               IF (dayi < Crop.Day1)
+               IF (dayi < GetCrop().Day1)
                   THEN ECw := GetIrriECw().PreSeason
                   ELSE BEGIN
                        ECw := GetSimulation_IrriECw();;
-                       IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
+                       IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
                        END;
 
                FOR compi :=1 to NrCompartments DO
                    BEGIN
                    SetTotalWaterContent_EndDay(GetTotalWaterContent().EndDay
-                   + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
-                   SoilLayer[Compartment[compi].Layer].WaterContent := SoilLayer[Compartment[compi].Layer].WaterContent
-                   + Compartment[compi].theta*1000*Compartment[compi].Thickness
-                     * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-                   FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
+                   + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
+                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+                   SoilLayer[GetCompartment_Layer(compi)].WaterContent := SoilLayer[GetCompartment_Layer(compi)].WaterContent
+                   + GetCompartment_theta(compi)*1000*GetCompartment_theta(compi)
+                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                   FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
                            SetTotalSaltContent_EndDay(GetTotalSaltContent().EndDay
-                           + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100); // Mg/ha
+                           + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
                SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
                               -(GetTotalWaterContent().EndDay+Drain+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow));
@@ -745,7 +746,7 @@ CASE control OF
                SetSumWaBal_TrW(GetSumWaBal_TrW() + TactWeedInfested);
                SetSumWaBal_CRwater(GetSumWaBal_CRwater() + CRwater);
 
-               IF (((dayi-GetSimulation_DelayedDays()) >= Crop.Day1 ) AND ((dayi-GetSimulation_DelayedDays()) <= Crop.DayN)) THEN // in growing cycle
+               IF (((dayi-GetSimulation_DelayedDays()) >= GetCrop().Day1 ) AND ((dayi-GetSimulation_DelayedDays()) <= GetCrop().DayN)) THEN // in growing cycle
                   BEGIN
                   IF (GetSumWaBal_Biomass() > 0) // biomass was already produced (i.e. CC present)
                      THEN BEGIN // and still canopy cover
@@ -786,12 +787,12 @@ FOR compi:=1 to NrCompartments DO
     BEGIN
 (*   1. Calculate drainage of compartment
      ===================================== *)
-       layeri := Compartment[compi].Layer;
+       layeri := GetCompartment_Layer(compi);
        // IF Compartment[compi].theta > SoilLayer[layeri].FC/100
-       IF Compartment[compi].theta > Compartment[compi].FCadj/100
-          THEN delta_theta := calculate_delta_theta(Compartment[compi].theta,(Compartment[compi].FCadj/100),layeri)
+       IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
+          THEN delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri)
           ELSE delta_theta := 0;
-       drain_comp := delta_theta * 1000 * Compartment[compi].Thickness
+       drain_comp := delta_theta * 1000 * GetCompartment_Thickness(compi)
                      * (1 - SoilLayer[layeri].GravelVol/100);
 
 
@@ -799,7 +800,7 @@ FOR compi:=1 to NrCompartments DO
      ======================   *)
        excess := 0;
        pre_thick := 0;
-       FOR i := 1 TO (compi-1) DO pre_thick := pre_thick + Compartment[i].Thickness;
+       FOR i := 1 TO (compi-1) DO pre_thick := pre_thick + GetCompartment_Thickness(i);
        drainmax := delta_theta * 1000 * pre_thick * (1 - SoilLayer[layeri].GravelVol/100);
        IF drainsum <= drainmax
           THEN drainability := true
@@ -811,7 +812,7 @@ FOR compi:=1 to NrCompartments DO
        IF drainability = true
        (* -----------------*)
           THEN BEGIN
-               Compartment[compi].theta := Compartment[compi].theta - delta_theta;
+               SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
                drainsum := drainsum + drain_comp;
                CheckDrainsum(layeri,drainsum,excess);
                END;
@@ -820,37 +821,37 @@ FOR compi:=1 to NrCompartments DO
        (* ------------------*)
           THEN BEGIN
                delta_theta := drainsum/(1000 * pre_thick * (1 - SoilLayer[layeri].GravelVol/100));
-               theta_x := calculate_theta(delta_theta,(Compartment[compi].FCadj/100),layeri);
+               theta_x := calculate_theta(delta_theta,(GetCompartment_FCadj(compi)/100),layeri);
 
                IF theta_x <= SoilLayer[layeri].SAT/100
                (* ----------------------------------*)
                THEN BEGIN
-                    Compartment[compi].theta := Compartment[compi].theta + drainsum/
-                              (1000*Compartment[compi].Thickness*(1-SoilLayer[layeri].GravelVol/100));
-                    IF Compartment[compi].theta > theta_x
+                    SetCompartment_theta(compi, GetCompartment_theta(compi) + drainsum/
+                              (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[layeri].GravelVol/100)));
+                    IF GetCompartment_theta(compi) > theta_x
                        THEN BEGIN
                             // OLD
-                            drainsum := ((Compartment[compi].theta - theta_x) + delta_theta)
-                                        * 1000 * Compartment[compi].Thickness;
+                            drainsum := ((GetCompartment_theta(compi) - theta_x) + delta_theta)
+                                        * 1000 * GetCompartment_Thickness(compi);
                             // OLD
 
                             // NEW
-                            drainsum := (Compartment[compi].theta - theta_x) * 1000 * Compartment[compi].Thickness
+                            drainsum := (GetCompartment_theta(compi) - theta_x) * 1000 * GetCompartment_Thickness(compi)
                                         * (1 - SoilLayer[layeri].GravelVol/100);
-                            delta_theta := calculate_delta_theta(theta_x,(Compartment[compi].FCadj/100),layeri);
-                            drainsum := drainsum +  delta_theta * 1000 * Compartment[compi].Thickness
+                            delta_theta := calculate_delta_theta(theta_x,(GetCompartment_FCadj(compi)/100),layeri);
+                            drainsum := drainsum +  delta_theta * 1000 * GetCompartment_Thickness(compi)
                                         * (1 - SoilLayer[layeri].GravelVol/100);
                             // NEW
 
                             CheckDrainsum(layeri,drainsum,excess);
-                            Compartment[compi].theta := theta_x - delta_theta;
+                            SetCompartment_theta(compi, theta_x - delta_theta);
                             END
                        //ELSE IF Compartment[compi].theta > SoilLayer[layeri].FC/100
-                       ELSE IF Compartment[compi].theta > Compartment[compi].FCadj/100
+                       ELSE IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
                                THEN BEGIN
-                                    delta_theta := calculate_delta_theta(Compartment[compi].theta,(Compartment[compi].FCadj/100),layeri);
-                                    Compartment[compi].theta := Compartment[compi].theta - delta_theta;
-                                    drainsum := delta_theta * 1000 * Compartment[compi].Thickness
+                                    delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
+                                    SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
+                                    drainsum := delta_theta * 1000 * GetCompartment_Thickness(compi)
                                                 * (1 - SoilLayer[layeri].GravelVol/100);
                                     CheckDrainsum(layeri,drainsum,excess);
                                     END
@@ -860,27 +861,27 @@ FOR compi:=1 to NrCompartments DO
                IF theta_x > SoilLayer[layeri].SAT/100
                (* ----------------------------------*)
                THEN BEGIN
-                    Compartment[compi].theta := Compartment[compi].theta + drainsum/
-                            (1000*Compartment[compi].Thickness*(1-SoilLayer[layeri].GravelVol/100));
-                    IF Compartment[compi].theta <= SoilLayer[layeri].SAT/100
-                       THEN IF Compartment[compi].theta > Compartment[compi].FCadj/100
+                    SetCompartment_theta(compi, GetCompartment_theta(compi) + drainsum/
+                            (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[layeri].GravelVol/100)));
+                    IF GetCompartment_theta(compi) <= SoilLayer[layeri].SAT/100
+                       THEN IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
                                THEN BEGIN
-                                    delta_theta := calculate_delta_theta(Compartment[compi].theta,(Compartment[compi].FCadj/100),layeri);
-                                    Compartment[compi].theta := Compartment[compi].theta - delta_theta;
-                                    drainsum := delta_theta * 1000 * Compartment[compi].Thickness
+                                    delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
+                                    SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
+                                    drainsum := delta_theta * 1000 * GetCompartment_Thickness(compi)
                                                 * (1 - SoilLayer[layeri].GravelVol/100);
                                     CheckDrainsum(layeri,drainsum,excess);
                                     END
                                ELSE drainsum := 0;
 
-                    IF Compartment[compi].theta > SoilLayer[layeri].SAT/100
+                    IF GetCompartment_theta(compi) > SoilLayer[layeri].SAT/100
                        THEN BEGIN
-                            excess := (Compartment[compi].theta - SoilLayer[layeri].SAT/100)
-                                      * 1000 * Compartment[compi].Thickness
+                            excess := (GetCompartment_theta(compi) - SoilLayer[layeri].SAT/100)
+                                      * 1000 * GetCompartment_Thickness(compi)
                                       * (1 - SoilLayer[layeri].GravelVol/100);
-                            delta_theta := calculate_delta_theta(Compartment[compi].theta,(Compartment[compi].FCadj/100),layeri);
-                            Compartment[compi].theta := SoilLayer[layeri].SAT/100 - delta_theta;
-                            drain_comp := delta_theta * 1000 * Compartment[compi].Thickness
+                            delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
+                            SetCompartment_theta(compi, SoilLayer[layeri].SAT/100 - delta_theta);
+                            drain_comp := delta_theta * 1000 * GetCompartment_Thickness(compi)
                                           * (1 - SoilLayer[layeri].GravelVol/100);
                             drainmax := delta_theta * 1000 * pre_thick
                                         * (1 - SoilLayer[layeri].GravelVol/100);
@@ -892,7 +893,7 @@ FOR compi:=1 to NrCompartments DO
                     END; (* theta_x > SoilLayer[layeri].SAT/100  *)
                END; (* drainability = false *)
 
-        Compartment[compi].fluxout := drainsum;
+        SetCompartment_fluxout(compi, drainsum);
 
 
 (*   4. Redistribute excess
@@ -902,15 +903,15 @@ FOR compi:=1 to NrCompartments DO
              pre_nr := compi + 1;
              REPEAT
                pre_nr := pre_nr - 1;
-               layeri := Compartment[pre_nr].Layer;
-               IF (pre_nr < compi) THEN Compartment[pre_nr].fluxout := Compartment[pre_nr].fluxout - excess;
-               Compartment[pre_nr].theta := Compartment[pre_nr].theta + excess/
-                    (1000*Compartment[pre_nr].Thickness*(1-SoilLayer[Compartment[pre_nr].Layer].GravelVol/100));
-               IF Compartment[pre_nr].theta > SoilLayer[layeri].SAT/100
+               layeri := GetCompartment_Layer(pre_nr);
+               IF (pre_nr < compi) THEN SetCompartment_fluxout(pre_nr, GetCompartment_fluxout(pre_nr) - excess);
+               SetCompartment_theta(pre_nr, GetCompartment_theta(pre_nr) + excess/
+                    (1000*GetCompartment_Thickness(pre_nr)*(1-SoilLayer[GetCompartment_Layer(pre_nr)].GravelVol/100)));
+               IF GetCompartment_theta(pre_nr) > SoilLayer[layeri].SAT/100
                   THEN BEGIN
-                       excess := (Compartment[pre_nr].theta - SoilLayer[layeri].SAT/100)*1000*Compartment[pre_nr].Thickness
-                                 * (1 - SoilLayer[Compartment[pre_nr].Layer].GravelVol/100);
-                       Compartment[pre_nr].theta := SoilLayer[layeri].SAT/100;
+                       excess := (GetCompartment_theta(pre_nr) - SoilLayer[layeri].SAT/100)*1000*GetCompartment_Thickness(pre_nr)
+                                 * (1 - SoilLayer[GetCompartment_Layer(pre_nr)].GravelVol/100);
+                       SetCompartment_theta(pre_nr, SoilLayer[layeri].SAT/100);
                        END
                   ELSE excess:=0;
              UNTIL (excess = 0) or (pre_nr = 1);
@@ -931,20 +932,23 @@ PROCEDURE calculate_relative_wetness_topsoil(VAR SUM : double);
 
 VAR CumDepth, theta : double;
     compi, layeri : INTEGER;
+    Compartment_temp : rep_Comp;
 
 BEGIN     (*calculate_relative_wetness_topsoil*)
-calculate_weighting_factors(MaxDepth,Compartment);
+Compartment_temp := GetCompartment();
+calculate_weighting_factors(MaxDepth,Compartment_temp);
+SetCompartment(Compartment_temp);
 SUM := 0.0;
 compi := 0;
 CumDepth := 0;
 REPEAT
   compi := compi + 1;
-  layeri := Compartment[compi].Layer;
-  CumDepth := CumDepth + Compartment[compi].Thickness;
-  IF Compartment[compi].theta < SoilLayer[layeri].WP/100
+  layeri := GetCompartment_Layer(compi);
+  CumDepth := CumDepth + GetCompartment_Thickness(compi);
+  IF GetCompartment_theta(compi) < SoilLayer[layeri].WP/100
      THEN theta := SoilLayer[layeri].WP/100
-     ELSE theta := Compartment[compi].theta;
-  SUM := SUM + Compartment[compi].WFactor
+     ELSE theta := GetCompartment_theta(compi);
+  SUM := SUM + GetCompartment_WFactor(compi)
          * (theta-SoilLayer[layeri].WP/100)/(SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100);
 UNTIL (CumDepth >= MaxDepth) OR (compi = NrCompartments);
 IF SUM < 0 THEN SUM := 0.0;
@@ -957,7 +961,7 @@ BEGIN
 CN2 := ROUND(GetSoil().CNvalue * (100 + GetManagement_CNcorrection())/100);
 IF (RainRecord.DataType = Daily)
    THEN BEGIN
-        IF (SimulParam.CNcorrection)
+        IF (GetSimulParam_CNcorrection())
            THEN BEGIN
                 calculate_relative_wetness_topsoil(SUM);
                 DetermineCNIandIII(CN2,CN1,CN3);
@@ -968,20 +972,20 @@ IF (RainRecord.DataType = Daily)
         END
    ELSE BEGIN
         CNA := CN2;
-        Shower := (Rain*10)/SimulParam.EffectiveRain.ShowersInDecade;
+        Shower := (Rain*10)/GetSimulParam_EffectiveRain_ShowersInDecade();
         END;
 S := 254 * (100/CNA - 1);
 //term := Shower - 0.2 * S;
-term := Shower - (SimulParam.IniAbstract/100) * S;
+term := Shower - (GetSimulParam_IniAbstract()/100) * S;
 IF term <= 0 THEN Runoff := 0.0
              //ELSE Runoff := SQR(term)/(Shower + 0.8 * S);
-             ELSE Runoff := SQR(term)/(Shower + (1-(SimulParam.IniAbstract/100)) * S);
+             ELSE Runoff := SQR(term)/(Shower + (1-(GetSimulParam_IniAbstract()/100)) * S);
 IF ((Runoff > 0) AND ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))) THEN
    BEGIN
    IF (Runoff >= Shower)
       THEN Runoff := Rain
       ELSE BEGIN
-           Runoff := Runoff * (SimulParam.EffectiveRain.ShowersInDecade/10.14);
+           Runoff := Runoff * (GetSimulParam_EffectiveRain_ShowersInDecade()/10.14);
            IF (Runoff > Rain) THEN Runoff := Rain;
            END;
    END;
@@ -1001,8 +1005,8 @@ IF (Rain > 0) THEN
    BEGIN
    // 1. Effective Rainfall
    EffecRain := (Rain-Runoff);
-   Case SimulParam.EffectiveRain.Method OF
-      Percentage : EffecRain := (SimulParam.EffectiveRain.PercentEffRain/100) * (Rain-Runoff);
+   Case GetSimulParam_EffectiveRain_Method() OF
+      Percentage : EffecRain := (GetSimulParam_EffectiveRain_PercentEffRain()/100) * (Rain-Runoff);
       USDA       : BEGIN
                    ETcropMonth := ((Epot+Tpot)*30)/25.4; // inch/month
                    RainMonth := ((Rain-Runoff)*30)/25.4; //inch/Month
@@ -1025,18 +1029,18 @@ IF (Rain > 0) THEN
         THEN DrainMax := 0
         ELSE BEGIN
              Zr := RootingDepth;
-             IF (Zr <= 0) THEN Zr := (SimulParam.EvapZmax/100);
+             IF (Zr <= 0) THEN Zr := (GetSimulParam_EvapZmax()/100);
              compi := 0;
              depthi := 0;
              DTheta := (EffecRain/Zr)/1000;
              REPEAT
                compi := compi + 1;
-               depthi := depthi + Compartment[compi].Thickness;
-               RestTheta := SoilLayer[Compartment[compi].Layer].SAT/100
-                                         - (Compartment[compi].theta + DTheta);
+               depthi := depthi + GetCompartment_Thickness(compi);
+               RestTheta := SoilLayer[GetCompartment_Layer(compi)].SAT/100
+                                         - (GetCompartment_theta(compi) + DTheta);
                IF (RestTheta <= 0) THEN DrainMax := 0;
-               IF (SoilLayer[Compartment[compi].Layer].InfRate < DrainMax)
-                  THEN DrainMax := SoilLayer[Compartment[compi].Layer].InfRate;
+               IF (SoilLayer[GetCompartment_Layer(compi)].InfRate < DrainMax)
+                  THEN DrainMax := SoilLayer[GetCompartment_Layer(compi)].InfRate;
              UNTIL ((depthi >= Zr) OR (compi >= NrCompartments));
              END;
      IF (SubDrain > DrainMax) THEN
@@ -1095,17 +1099,17 @@ InfiltratedRain := Rain - Runoff;
 IF (InfiltratedRain > 0)
    THEN FracSubDrain := SubDrain/InfiltratedRain
    ELSE FracSubDrain := 0;
-IF (Irrigation+InfiltratedRain) > SoilLayer[Compartment[1].Layer].InfRate
-   THEN IF (Irrigation > SoilLayer[Compartment[1].Layer].InfRate)
+IF (Irrigation+InfiltratedRain) > SoilLayer[GetCompartment_Layer(1)].InfRate
+   THEN IF (Irrigation > SoilLayer[GetCompartment_Layer(1)].InfRate)
            THEN BEGIN
-                InfiltratedIrrigation := SoilLayer[Compartment[1].Layer].InfRate;
+                InfiltratedIrrigation := SoilLayer[GetCompartment_Layer(1)].InfRate;
                 Runoff := Rain + (Irrigation-InfiltratedIrrigation);
                 InfiltratedRain := 0;
                 SubDrain := 0;
                 END
            ELSE BEGIN
                 InfiltratedIrrigation := Irrigation;
-                InfiltratedRain := SoilLayer[Compartment[1].Layer].InfRate - InfiltratedIrrigation;
+                InfiltratedRain := SoilLayer[GetCompartment_Layer(1)].InfRate - InfiltratedIrrigation;
                 SubDrain := FracSubDrain*InfiltratedRain;
                 Runoff := Rain - InfiltratedRain;
                 END
@@ -1128,20 +1132,20 @@ IF (RainRecord.DataType = Daily)
 IF (Sum > 0)
   THEN BEGIN
        // quality of irrigation water
-       IF (dayi < Crop.Day1)
+       IF (dayi < GetCrop().Day1)
           THEN ECw := GetIrriECw().PreSeason
           ELSE BEGIN
                ECw := GetSimulation_IrriECw();
-               IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
+               IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
                END;
        // quality of stored surface water
        ECstorage := (ECstorage*SurfaceStorage + ECw*Irrigation)/Sum;
        // quality of infiltrated water (rain and/or irrigation and/or stored surface water)
        ECinfilt := ECstorage;
        // surface storage
-       IF (Sum > SoilLayer[Compartment[1].Layer].InfRate)
+       IF (Sum > SoilLayer[GetCompartment_Layer(1)].InfRate)
           THEN BEGIN
-               InfiltratedStorage := SoilLayer[Compartment[1].Layer].InfRate;
+               InfiltratedStorage := SoilLayer[GetCompartment_Layer(1)].InfRate;
                SurfaceStorage := Sum - InfiltratedStorage;
                END
           ELSE BEGIN
@@ -1182,7 +1186,7 @@ BEGIN (* calculate_factor *)
 delta_theta_SAT := calculate_delta_theta(SoilLayer[layeri].SAT/100,SoilLayer[layeri].FC/100,layeri);
 IF (delta_theta_SAT > 0)
     THEN Calculate_factor := SoilLayer[layeri].InfRate/
-         (delta_theta_SAT * 1000 * Compartment[compi].Thickness * (1-SoilLayer[layeri].GravelVol/100))
+         (delta_theta_SAT * 1000 * GetCompartment_Thickness(compi) * (1-SoilLayer[layeri].GravelVol/100))
     ELSE Calculate_factor := 1;
 END; (* calculate_factor *)
 
@@ -1208,7 +1212,7 @@ THEN BEGIN
 
      REPEAT
      compi := compi + 1;
-     layeri := Compartment[compi].Layer;
+     layeri := GetCompartment_Layer(compi);
 
    (*1. Calculate multiplication factor
    ==================================== *)
@@ -1218,15 +1222,15 @@ THEN BEGIN
    (*2. Calculate theta nul
    ======================== *)
      delta_theta_nul := amount_still_to_store/
-                       (1000 * Compartment[compi].Thickness * (1-SoilLayer[layeri].GravelVol/100));
+                       (1000 * GetCompartment_Thickness(compi) * (1-SoilLayer[layeri].GravelVol/100));
      delta_theta_SAT := calculate_delta_theta(SoilLayer[layeri].SAT/100,SoilLayer[layeri].FC/100,layeri);
 
      IF (delta_theta_nul < delta_theta_SAT)
         THEN BEGIN
              theta_nul := calculate_theta(delta_theta_nul,SoilLayer[layeri].FC/100,layeri);
-             IF (theta_nul <= (Compartment[compi].FCadj/100)) THEN
+             IF (theta_nul <= (GetCompartment_FCadj(compi)/100)) THEN
                 BEGIN
-                theta_nul := Compartment[compi].FCadj/100;
+                theta_nul := GetCompartment_FCadj(compi)/100;
                 delta_theta_nul := calculate_delta_theta(theta_nul,SoilLayer[layeri].FC/100,layeri);
                 END;
              IF (theta_nul > SoilLayer[layeri].SAT/100) THEN theta_nul := SoilLayer[layeri].SAT/100;
@@ -1239,28 +1243,28 @@ THEN BEGIN
 
    (*3. Calculate drain max
    ======================== *)
-     drain_max := factor * delta_theta_nul * 1000 * Compartment[compi].Thickness
+     drain_max := factor * delta_theta_nul * 1000 * GetCompartment_Thickness(compi)
                   * (1-SoilLayer[layeri].GravelVol/100);
-     IF ((compartment[compi].fluxout + drain_max) > SoilLayer[layeri].InfRate)
-        THEN drain_max := SoilLayer[layeri].InfRate - compartment[compi].fluxout;
+     IF ((GetCompartment_fluxout(compi) + drain_max) > SoilLayer[layeri].InfRate)
+        THEN drain_max := SoilLayer[layeri].InfRate - GetCompartment_fluxout(compi);
 
 
    (*4. Store water
    ================ *)
-     diff := theta_nul - Compartment[compi].theta;
+     diff := theta_nul - GetCompartment_theta(compi);
      IF (diff > 0) THEN
         BEGIN
-        Compartment[compi].theta := Compartment[compi].theta + amount_still_to_store/
-                 (1000*Compartment[compi].Thickness*(1-SoilLayer[layeri].GravelVol/100));
-        IF Compartment[compi].theta > theta_nul
+        SetCompartment_theta(compi, GetCompartment_theta(compi)+ amount_still_to_store/
+                 (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[layeri].GravelVol/100)));
+        IF GetCompartment_theta(compi) > theta_nul
            THEN BEGIN
-                amount_still_to_store := (Compartment[compi].theta - theta_nul) * 1000 * Compartment[compi].Thickness
+                amount_still_to_store := (GetCompartment_theta(compi) - theta_nul) * 1000 * GetCompartment_Thickness(compi)
                                          * (1-SoilLayer[layeri].GravelVol/100);
-                Compartment[compi].theta := theta_nul;
+                SetCompartment_theta(compi, theta_nul);
                 END
            ELSE amount_still_to_store := 0.0;
         END;
-     Compartment[compi].fluxout := Compartment[compi].fluxout + amount_still_to_store;
+     SetCompartment_fluxout(compi, GetCompartment_fluxout(compi) + amount_still_to_store);
 
 
    (*5. Redistribute excess
@@ -1274,16 +1278,16 @@ THEN BEGIN
         pre_comp := compi + 1;
         REPEAT
           pre_comp := pre_comp - 1;
-          layeri := Compartment[pre_comp].Layer;
-          Compartment[pre_comp].fluxout := Compartment[pre_comp].fluxout - excess;
-          Compartment[pre_comp].theta := Compartment[pre_comp].theta  + excess/
-             (1000 * Compartment[pre_comp].Thickness * (1-SoilLayer[Compartment[pre_comp].Layer].GravelVol/100));
-          IF (Compartment[pre_comp].theta > SoilLayer[layeri].SAT/100)
+          layeri := GetCompartment_Layer(pre_comp);
+          SetCompartment_fluxout(pre_comp, GetCompartment_fluxout(pre_comp) - excess);
+          SetCompartment_theta(pre_comp, GetCompartment_theta(pre_comp)  + excess/
+             (1000 * GetCompartment_Thickness(pre_comp) * (1-SoilLayer[GetCompartment_Layer(pre_comp)].GravelVol/100)));
+          IF (GetCompartment_theta(pre_comp) > SoilLayer[layeri].SAT/100)
              THEN BEGIN
-                  excess := (Compartment[pre_comp].theta - SoilLayer[layeri].SAT/100)
-                            * 1000 * Compartment[pre_comp].Thickness
-                            * (1-SoilLayer[Compartment[pre_comp].Layer].GravelVol/100);
-                  Compartment[pre_comp].theta := SoilLayer[layeri].SAT/100;
+                  excess := (GetCompartment_theta(pre_comp) - SoilLayer[layeri].SAT/100)
+                            * 1000 * GetCompartment_Thickness(pre_comp)
+                            * (1-SoilLayer[GetCompartment_Layer(pre_comp)].GravelVol/100);
+                  SetCompartment_theta(pre_comp, SoilLayer[layeri].SAT/100);
                   END
              ELSE excess := 0.0;
         UNTIL ((excess = 0) OR (pre_comp = 1));
@@ -1327,12 +1331,12 @@ IF (SubDrain > 0) THEN
 
    (* Where to store *)
    Zr := RootingDepth;
-   IF (Zr <= 0) THEN Zr := SimulParam.EvapZmax/100;
+   IF (Zr <= 0) THEN Zr := GetSimulParam_EvapZmax()/100;
    compi := 0;
    depthi := 0;
    REPEAT
      compi := compi + 1;
-     depthi := depthi + Compartment[compi].Thickness;
+     depthi := depthi + GetCompartment_Thickness(compi);
    UNTIL ((depthi >= Zr) OR (compi >= NrCompartments));
    IF (depthi > Zr) THEN DeltaZ := (depthi - Zr)
                     ELSE DeltaZ := 0;
@@ -1343,27 +1347,27 @@ IF (SubDrain > 0) THEN
      IF (DeltaZ = 0) THEN
         BEGIN
         compi := compi + 1;
-        DeltaZ := Compartment[compi].Thickness;
+        DeltaZ := GetCompartment_Thickness(compi);
         END;
-     StorableMM := (SoilLayer[Compartment[compi].Layer].SAT/100 - Compartment[compi].Theta) * 1000 * DeltaZ
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+     StorableMM := (SoilLayer[GetCompartment_Layer(compi)].SAT/100 - GetCompartment_Theta(compi)) * 1000 * DeltaZ
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
      IF (StorableMM > amount_still_to_store)
         THEN BEGIN
-             Compartment[compi].theta := Compartment[compi].theta + (amount_still_to_store)/
-                   (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+             SetCompartment_theta(compi, GetCompartment_Theta(compi) + (amount_still_to_store)/
+                   (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
              amount_still_to_store := 0;
              END
         ELSE BEGIN
              amount_still_to_store := amount_still_to_store - StorableMM;
-             Compartment[compi].theta := Compartment[compi].theta + (StorableMM)/
-                   (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+             SetCompartment_theta(compi, GetCompartment_Theta(compi) + (StorableMM)/
+                   (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
              END;
      DeltaZ := 0;
-     IF (amount_still_to_store > SoilLayer[Compartment[compi].Layer].InfRate) THEN
+     IF (amount_still_to_store > SoilLayer[GetCompartment_Layer(compi)].InfRate) THEN
         BEGIN
-        SubDrain := SubDrain - (amount_still_to_store - SoilLayer[Compartment[compi].Layer].InfRate);
-        EffecRain := EffecRain + (amount_still_to_store - SoilLayer[Compartment[compi].Layer].InfRate);
-        amount_still_to_store := SoilLayer[Compartment[compi].Layer].InfRate;
+        SubDrain := SubDrain - (amount_still_to_store - SoilLayer[GetCompartment_Layer(compi)].InfRate);
+        EffecRain := EffecRain + (amount_still_to_store - SoilLayer[GetCompartment_Layer(compi)].InfRate);
+        amount_still_to_store := SoilLayer[GetCompartment_Layer(compi)].InfRate;
         END;
      END;
 
@@ -1375,7 +1379,7 @@ IF (SubDrain > 0) THEN
 IF (EffecRain > 0) THEN
    BEGIN
    Zr := RootingDepth;
-   IF (Zr <= 0) THEN Zr := SimulParam.EvapZmax/100;
+   IF (Zr <= 0) THEN Zr := GetSimulParam_EvapZmax()/100;
    amount_still_to_store := EffecRain;
 
    (* Store *)
@@ -1384,23 +1388,23 @@ IF (EffecRain > 0) THEN
    depthi := 0;
    REPEAT
      compi := compi + 1;
-     depthi := depthi + Compartment[compi].Thickness;
-     IF (depthi <= Zr) THEN DeltaZ := Compartment[compi].Thickness
-                       ELSE DeltaZ := Compartment[compi].Thickness - (depthi-Zr);
+     depthi := depthi + GetCompartment_Thickness(compi);
+     IF (depthi <= Zr) THEN DeltaZ := GetCompartment_Thickness(compi)
+                       ELSE DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr);
      //StorableMM := (SoilLayer[Compartment[compi].Layer].FC/100 - Compartment[compi].theta)*1000*DeltaZ;
-     StorableMM := (Compartment[compi].FCadj/100 - Compartment[compi].theta)*1000*DeltaZ
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+     StorableMM := (GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi))*1000*DeltaZ
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
      IF (StorableMM < 0) THEN StorableMM := 0;
      IF (StorableMM > amount_still_to_store)
         THEN BEGIN
-             Compartment[compi].theta := Compartment[compi].theta + amount_still_to_store/
-                (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+             SetCompartment_theta(compi, GetCompartment_Theta(compi) + amount_still_to_store/
+                (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
              amount_still_to_store := 0;
              END
         ELSE IF (StorableMM > 0) THEN
                 BEGIN
-                Compartment[compi].theta := Compartment[compi].theta + StorableMM/
-                   (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+                SetCompartment_theta(compi, GetCompartment_Theta(compi) + StorableMM/
+                   (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
                 amount_still_to_store := amount_still_to_store - StorableMM;
                 END;
    UNTIL ((depthi >= Zr) OR (compi >= NrCompartments) OR (amount_still_to_store <= 0));
@@ -1408,25 +1412,25 @@ IF (EffecRain > 0) THEN
    (* step 2 fill to SATURATION (from bottom to top) *)
    IF (amount_still_to_store > 0) THEN
       REPEAT
-        IF (depthi > Zr) THEN DeltaZ := Compartment[compi].Thickness - (depthi-Zr)
-                         ELSE DeltaZ := Compartment[compi].Thickness;
-        StorableMM := (SoilLayer[Compartment[compi].Layer].SAT/100 - Compartment[compi].theta)*1000*DeltaZ
-                       * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+        IF (depthi > Zr) THEN DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr)
+                         ELSE DeltaZ := GetCompartment_Thickness(compi);
+        StorableMM := (SoilLayer[GetCompartment_Layer(compi)].SAT/100 - GetCompartment_Theta(compi))*1000*DeltaZ
+                       * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
         IF (StorableMM < 0) THEN StorableMM := 0;
         IF (StorableMM > amount_still_to_store)
            THEN BEGIN
-                Compartment[compi].theta := Compartment[compi].theta + amount_still_to_store/
-                     (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+                SetCompartment_theta(compi, GetCompartment_theta(compi) + amount_still_to_store/
+                     (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
                 amount_still_to_store := 0;
                 END
            ELSE IF (StorableMM > 0) THEN
                 BEGIN
-                Compartment[compi].theta := Compartment[compi].theta + StorableMM/
-                      (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+                SetCompartment_theta(compi, GetCompartment_Theta(compi) + StorableMM/
+                      (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
                 amount_still_to_store := amount_still_to_store - StorableMM;
                 END;
          compi := compi - 1;
-         depthi := depthi - Compartment[compi].Thickness;
+         depthi := depthi - GetCompartment_Thickness(compi);
       UNTIL ((compi = 0) OR (amount_still_to_store <= 0));
 
    (* excess *)
@@ -1457,17 +1461,17 @@ VAR Zbottom,MaxMM,DThetaMax,DTheta,LimitMM,CRcomp,SaltCRi,DrivingForce,ZtopNextL
     compi,SCellAct,layeri : INTEGER;
 BEGIN
 Zbottom := 0;
-FOR compi := 1 TO NrCompartments DO Zbottom := Zbottom + Compartment[compi].Thickness;
+FOR compi := 1 TO NrCompartments DO Zbottom := Zbottom + GetCompartment_Thickness(compi);
 
 // start at the bottom of the soil profile
 compi := NrCompartments;
-MaxMM := MaxCRatDepth(SoilLayer[Compartment[compi].Layer].CRa,SoilLayer[Compartment[compi].Layer].CRb,
-                      SoilLayer[Compartment[compi].Layer].InfRate,(Zbottom - Compartment[compi].Thickness/2),(ZiAqua/100));
+MaxMM := MaxCRatDepth(SoilLayer[GetCompartment_Layer(compi)].CRa,SoilLayer[GetCompartment_Layer(compi)].CRb,
+                      SoilLayer[GetCompartment_Layer(compi)].InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
 
 // check restrictions on CR from soil layers below
 ZtopNextLayer := 0;
-FOR layeri := 1 TO Compartment[NrCompartments].Layer DO ZtopNextLayer := ZtopNextLayer + SoilLayer[layeri].Thickness;
-layeri := Compartment[NrCompartments].Layer;
+FOR layeri := 1 TO GetCompartment_Layer(NrCompartments) DO ZtopNextLayer := ZtopNextLayer + SoilLayer[layeri].Thickness;
+layeri := GetCompartment_Layer(NrCompartments);
 WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
    BEGIN
    layeri := layeri + 1;
@@ -1476,57 +1480,57 @@ WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
    ZtopNextLayer := ZtopNextLayer + SoilLayer[layeri].Thickness;
    END;
 
-WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(Compartment[compi].fluxout*1000) = 0)) DO
+WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout(compi)*1000) = 0)) DO
    BEGIN
    // Driving force
-   IF ((Compartment[compi].Theta >= SoilLayer[Compartment[compi].Layer].WP/100) AND (SimulParam.RootNrDF > 0))
-      THEN DrivingForce := 1 - (exp(SimulParam.RootNrDF*Ln(Compartment[compi].Theta-SoilLayer[Compartment[compi].Layer].WP/100))
-                                     /exp(SimulParam.RootNrDF*Ln(Compartment[compi].FCadj/100-SoilLayer[Compartment[compi].Layer].WP/100)))
+   IF ((GetCompartment_theta(compi) >= SoilLayer[GetCompartment_Layer(compi)].WP/100) AND (GetSimulParam_RootNrDF() > 0))
+      THEN DrivingForce := 1 - (exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_theta(compi)-SoilLayer[GetCompartment_Layer(compi)].WP/100))
+                                     /exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_FCadj(compi)/100-SoilLayer[GetCompartment_Layer(compi)].WP/100)))
       ELSE DrivingForce := 1;
    // relative hydraulic conductivity
-   ThetaThreshold := (SoilLayer[Compartment[compi].Layer].WP/100 + SoilLayer[Compartment[compi].Layer].FC/100)/2;
-   IF (Compartment[compi].Theta < ThetaThreshold)
+   ThetaThreshold := (SoilLayer[GetCompartment_Layer(compi)].WP/100 + SoilLayer[GetCompartment_Layer(compi)].FC/100)/2;
+   IF (GetCompartment_Theta(compi) < ThetaThreshold)
       THEN BEGIN
-           IF ((Compartment[compi].Theta <= SoilLayer[Compartment[compi].Layer].WP/100)
-               OR (ThetaThreshold <= SoilLayer[Compartment[compi].Layer].WP/100))
+           IF ((GetCompartment_Theta(compi) <= SoilLayer[GetCompartment_Layer(compi)].WP/100)
+               OR (ThetaThreshold <= SoilLayer[GetCompartment_Layer(compi)].WP/100))
               THEN Krel := 0
-              ELSE Krel := (Compartment[compi].Theta - SoilLayer[Compartment[compi].Layer].WP/100)/
-                           (ThetaThreshold - SoilLayer[Compartment[compi].Layer].WP/100);
+              ELSE Krel := (GetCompartment_Theta(compi) - SoilLayer[GetCompartment_Layer(compi)].WP/100)/
+                           (ThetaThreshold - SoilLayer[GetCompartment_Layer(compi)].WP/100);
            END
       ELSE Krel := 1;
 
    // room available to store water
-   DTheta := Compartment[compi].FCadj/100 - Compartment[compi].Theta;
-   IF ((DTheta > 0) AND ((Zbottom - Compartment[compi].Thickness/2) < (ZiAqua/100))) THEN
+   DTheta := GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi);
+   IF ((DTheta > 0) AND ((Zbottom - GetCompartment_Thickness(compi)/2) < (ZiAqua/100))) THEN
       BEGIN
       // water stored
-      DThetaMax := Krel * DrivingForce * MaxMM/(1000*Compartment[compi].Thickness);
+      DThetaMax := Krel * DrivingForce * MaxMM/(1000*GetCompartment_Thickness(compi));
       IF (DTheta >= DThetaMax)
          THEN BEGIN
-              Compartment[compi].Theta := Compartment[compi].Theta + DThetaMax;
-              CRcomp := DThetaMax*1000*Compartment[compi].Thickness
-                        * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+              SetCompartment_Theta(compi, GetCompartment_Theta(compi) + DThetaMax);
+              CRcomp := DThetaMax*1000*GetCompartment_Thickness(compi)
+                        * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
               MaxMM := 0;
               END
          ELSE BEGIN
-              Compartment[compi].Theta := Compartment[compi].FCadj/100;
-              CRcomp := DTheta*1000*Compartment[compi].Thickness
-                        * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+              SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
+              CRcomp := DTheta*1000*GetCompartment_Thickness(compi)
+                        * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
               MaxMM := Krel * MaxMM - CRcomp;
               END;
       CRwater := CRwater + CRcomp;
       // salt stored
-      SCellAct := ActiveCells(Compartment[compi]);
+      SCellAct := ActiveCells(GetCompartment_i(compi));
       SaltCRi := Equiv * CRcomp * ECiAqua; // gram/m2
-      Compartment[compi].Salt[SCellAct] := Compartment[compi].Salt[SCellAct] + SaltCRi;
+      SetCompartment_Salt(compi, SCellAct, GetCompartment_Salt(compi, SCellAct) + SaltCRi);
       CRsalt := CRsalt + SaltCRi;
       END;
-   Zbottom := Zbottom - Compartment[compi].Thickness;
+   Zbottom := Zbottom - GetCompartment_Thickness(compi);
    compi := compi - 1;
    IF (compi > 0) THEN
       BEGIN
-      LimitMM := MaxCRatDepth(SoilLayer[Compartment[compi].Layer].CRa,SoilLayer[Compartment[compi].Layer].CRb,
-                              SoilLayer[Compartment[compi].Layer].InfRate,(Zbottom - Compartment[compi].Thickness/2),(ZiAqua/100));
+      LimitMM := MaxCRatDepth(SoilLayer[GetCompartment_Layer(compi)].CRa,SoilLayer[GetCompartment_Layer(compi)].CRb,
+                              SoilLayer[GetCompartment_Layer(compi)].InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
       IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
       END;
    END;
@@ -1541,6 +1545,8 @@ VAR   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, mm1, mm2, Dx, limit, Dif, U
 
       compi, celi, celiM1, Ni : INTEGER;
       ECw : double;
+      Salt_temp, Salt2_temp, Depo_temp, Depo2_temp : double;
+      Compi_temp : CompartmentIndividual;
 
 
 
@@ -1602,11 +1608,11 @@ BEGIN (* calculate_saltcontent *)
 mmIN := InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage;
 
 // quality of irrigation water
-IF (dayi < Crop.Day1)
+IF (dayi < GetCrop().Day1)
    THEN ECw := GetIrriECw().PreSeason
    ELSE BEGIN
         ECw := GetSimulation_IrriECw();
-        IF (dayi > Crop.DayN) THEN ECw := GetIrriECw().PostSeason;
+        IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
         END;
 
 // initialise salt balance
@@ -1618,14 +1624,14 @@ SaltOut:= 0;
 FOR compi := 1 TO NrCompartments DO
     BEGIN
     //0. Set compartment parameters
-    SAT := (SoilLayer[Compartment[compi].Layer].SAT)/100;  (* m3/m3 *)
-    UL := SoilLayer[Compartment[compi].Layer].UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-    Dx := SoilLayer[Compartment[compi].Layer].Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
+    SAT := (SoilLayer[GetCompartment_Layer(compi)].SAT)/100;  (* m3/m3 *)
+    UL := SoilLayer[GetCompartment_Layer(compi)].UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
+    Dx := SoilLayer[GetCompartment_Layer(compi)].Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
 
     //1. Initial situation before drain and infiltration
     DeltaTheta := mmIN/
-                (1000*Compartment[compi].Thickness*(1 - SoilLayer[Compartment[compi].Layer].GravelVol/100));
-    Theta := Compartment[compi].theta-DeltaTheta+Compartment[compi].fluxout/(1000*Compartment[compi].Thickness);
+                (1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+    Theta := GetCompartment_theta(compi)-DeltaTheta+GetCompartment_fluxout(compi)/(1000*GetCompartment_Thickness(compi));
 
     //2. Determine active SaltCels and Add IN
     Theta := Theta + DeltaTheta;
@@ -1634,78 +1640,90 @@ FOR compi := 1 TO NrCompartments DO
             celi := 0;
             WHILE (Theta > Dx*celi) DO celi := celi + 1;
             END
-       ELSE celi := SoilLayer[Compartment[compi].Layer].SCP1;
-    IF (DeltaTheta > 0) THEN Compartment[compi].Salt[celi] := Compartment[compi].Salt[celi] + SaltIN;
+       ELSE celi := SoilLayer[GetCompartment_Layer(compi)].SCP1;
+    IF (celi = 0) THEN celi := 1;  // XXX would be best to avoid celi=0 to begin with 
+    IF (DeltaTheta > 0) THEN SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + SaltIN);
 
     //3. Mixing
     IF (celi > 1) THEN
        BEGIN
        FOR Ni := 1 TO (celi-1) DO
            BEGIN
-           mm1 := Dx*1000*Compartment[compi].Thickness
-                  * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-           IF (Ni < SoilLayer[Compartment[compi].Layer].SC)
+           mm1 := Dx*1000*GetCompartment_Thickness(compi)
+                  * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           IF (Ni < SoilLayer[GetCompartment_Layer(compi)].SC)
               THEN mm2 := mm1
               ELSE IF (Theta > SAT)
-                      THEN mm2 := (Theta-UL)*1000*Compartment[compi].Thickness
-                                  * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100)
-                      ELSE mm2 := (SAT-UL)*1000*Compartment[compi].Thickness
-                                  * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-           Dif := SoilLayer[Compartment[compi].Layer].SaltMobility[Ni];
-           Mixing(Dif,mm1,mm2,Compartment[compi].Salt[Ni],Compartment[compi].Salt[Ni+1],
-                   Compartment[compi].Depo[Ni],Compartment[compi].Depo[Ni+1]);
+                      THEN mm2 := (Theta-UL)*1000*GetCompartment_Thickness(compi)
+                                  * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)
+                      ELSE mm2 := (SAT-UL)*1000*GetCompartment_Thickness(compi)
+                                  * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           Dif := SoilLayer[GetCompartment_Layer(compi)].SaltMobility[Ni];
+           Salt_temp := GetCompartment_Salt(compi, Ni);
+           Salt2_temp := GetCompartment_Salt(compi, Ni+1);
+           Depo_temp := GetCompartment_Depo(compi, Ni);
+           Depo2_temp := GetCompartment_Depo(compi, Ni+1);
+           Mixing(Dif,mm1,mm2,Salt_temp,Salt2_temp,Depo_temp,Depo2_temp);
+           SetCompartment_Salt(compi, Ni, Salt_temp);
+           SetCompartment_Salt(compi, Ni+1, Salt2_temp);
+           SetCompartment_Depo(compi, Ni, Depo_temp);
+           SetCompartment_Depo(compi, Ni+1, Depo2_temp);
            END;
        END;
 
     //4. Drain
     SaltOut := 0;
-    IF (Compartment[compi].fluxout > 0)
+    IF (GetCompartment_fluxout(compi) > 0)
        THEN BEGIN
-            DeltaTheta := Compartment[compi].fluxout/
-                       (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+            DeltaTheta := GetCompartment_fluxout(compi)/
+                       (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
             WHILE (DeltaTheta > 0) DO
               BEGIN
-              IF (celi < SoilLayer[Compartment[compi].Layer].SCP1) THEN limit := (celi-1)*Dx
+              IF (celi < SoilLayer[GetCompartment_Layer(compi)].SCP1) THEN limit := (celi-1)*Dx
                                                                    ELSE limit := UL;
               IF (Theta - DeltaTheta) < limit
                  THEN BEGIN
-                      SaltOut := SaltOut + Compartment[compi].Salt[celi]
-                                         + Compartment[compi].Depo[celi] ;
-                      Compartment[compi].Salt[celi] := 0;
-                      mm1 := (Theta - limit)*1000*Compartment[compi].Thickness
-                             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-                      IF SaltOut > (SimulParam.SaltSolub * mm1)
+                      SaltOut := SaltOut + GetCompartment_Salt(compi, celi)
+                                         + GetCompartment_Depo(compi, celi);
+                      SetCompartment_Salt(compi, celi, 0);
+                      mm1 := (Theta - limit)*1000*GetCompartment_Thickness(compi)
+                             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                      IF SaltOut > (GetSimulParam_SaltSolub() * mm1)
                          THEN BEGIN
-                              Compartment[compi].Depo[celi] := SaltOut - (SimulParam.SaltSolub * mm1);
-                              SaltOut := (SimulParam.SaltSolub * mm1);
+                              SetCompartment_Depo(compi, celi, SaltOut - (GetSimulParam_SaltSolub() * mm1));
+                              SaltOut := (GetSimulParam_SaltSolub() * mm1);
                               END
-                         ELSE Compartment[compi].Depo[celi] := 0;
+                         ELSE SetCompartment_Depo(compi, celi, 0);
                       DeltaTheta := DeltaTheta - (Theta-limit);
                       Theta := limit;
                       celi := celi - 1;
                       END
                  ELSE BEGIN
-                      SaltOut := SaltOut + (Compartment[compi].Salt[celi]
-                            + Compartment[compi].Depo[celi])*(DeltaTheta/(Theta-limit));
-                      Compartment[compi].Salt[celi] := Compartment[compi].Salt[celi] *(1-DeltaTheta/(Theta-limit));
-                      Compartment[compi].Depo[celi] := Compartment[compi].Depo[celi] *(1-DeltaTheta/(Theta-limit));
-                      mm1 := DeltaTheta*1000*Compartment[compi].Thickness
-                             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-                      IF SaltOut > (SimulParam.SaltSolub * mm1) THEN
+                      SaltOut := SaltOut + (GetCompartment_Salt(compi, celi)
+                            + GetCompartment_Depo(compi, celi))*(DeltaTheta/(Theta-limit));
+                      SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) *(1-DeltaTheta/(Theta-limit)));
+                      SetCompartment_Depo(compi, celi, GetCompartment_Depo(compi, celi) *(1-DeltaTheta/(Theta-limit)));
+                      mm1 := DeltaTheta*1000*GetCompartment_Thickness(compi)
+                             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                      IF SaltOut > (GetSimulParam_SaltSolub() * mm1) THEN
                          BEGIN
-                         Compartment[compi].Depo[celi] := Compartment[compi].Depo[celi] + (SaltOut - SimulParam.SaltSolub * mm1);
-                         SaltOut := (SimulParam.SaltSolub * mm1);
+                         SetCompartment_Depo(compi, celi, GetCompartment_Depo(compi, celi) + (SaltOut - GetSimulParam_SaltSolub() * mm1));
+                         SaltOut := (GetSimulParam_SaltSolub() * mm1);
                          END;
                       DeltaTheta := 0;
-                      mm1 := SoilLayer[Compartment[compi].Layer].DX*1000*Compartment[compi].Thickness
-                             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-                      IF (celi = SoilLayer[Compartment[compi].Layer].SCP1) THEN mm1 := 2*mm1;
-                      SaltSolutionDeposit(mm1,Compartment[compi].Salt[celi],Compartment[compi].Depo[celi]);
+                      mm1 := SoilLayer[GetCompartment_Layer(compi)].DX*1000*GetCompartment_Thickness(compi)
+                             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                      IF (celi = SoilLayer[GetCompartment_Layer(compi)].SCP1) THEN mm1 := 2*mm1;
+                      Salt_temp := GetCompartment_Salt(compi, celi);
+                      Depo_temp := GetCompartment_Depo(compi, celi);
+                      SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
+                      SetCompartment_Salt(compi, celi, Salt_temp);
+                      SetCOmpartment_Depo(compi, celi, Depo_temp);
                       END;
               END;
             END;
 
-    mmIN := Compartment[compi].fluxout;
+    mmIN := GetCompartment_fluxout(compi);
     SaltIN := SaltOUT;
     END;
 
@@ -1713,22 +1731,22 @@ IF (Drain > 0.001) THEN ECdrain := SaltOUT/(Drain*Equiv);
 
 
 //5. vertical salt diffusion
-celi := ActiveCells(Compartment[1]);
-SM2 := SoilLayer[Compartment[1].Layer].SaltMobility[celi]/4;
-ECsw2 := ECswComp(Compartment[1],(false)); // not at FC
-mm2 := Compartment[1].Theta*1000*Compartment[1].Thickness
-       * (1 - SoilLayer[Compartment[1].Layer].GravelVol/100);
+celi := ActiveCells(GetCompartment_i(1));
+SM2 := SoilLayer[GetCompartment_Layer(1)].SaltMobility[celi]/4;
+ECsw2 := ECswComp(GetCompartment_i(1),(false)); // not at FC
+mm2 := GetCompartment_Theta(1)*1000*GetCompartment_Thickness(1)
+       * (1 - SoilLayer[GetCompartment_Layer(1)].GravelVol/100);
 FOR compi := 2 TO NrCompartments DO
     BEGIN
     celiM1 := celi;
     SM1 := SM2;
     ECsw1 := ECsw2;
     mm1 := mm2;
-    celi :=  ActiveCells(Compartment[compi]);
-    SM2 := SoilLayer[Compartment[compi].Layer].SaltMobility[celi]/4;
-    ECsw2 := ECswComp(Compartment[compi],(false)); // not at FC
-    mm2 := Compartment[compi].Theta*1000*Compartment[compi].Thickness
-           * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+    celi :=  ActiveCells(GetCompartment_i(compi));
+    SM2 := SoilLayer[GetCompartment_Layer(compi)].SaltMobility[celi]/4;
+    ECsw2 := ECswComp(GetCompartment_i(compi),(false)); // not at FC
+    mm2 := GetCompartment_Theta(compi)*1000*GetCompartment_Thickness(compi)
+           * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
     ECsw := (ECsw1*mm1+ECsw2*mm2)/(mm1+mm2);
     DS1 := (ECsw1 - (ECsw1+(ECsw-ECsw1)*SM1))*mm1*Equiv;
     DS2 := (ECsw2 - (ECsw2+(ECsw-ECsw2)*SM2))*mm2*Equiv;
@@ -1737,9 +1755,13 @@ FOR compi := 2 TO NrCompartments DO
     IF (DS > 0) THEN
        BEGIN
        IF (ECsw1 > ECsw) THEN DS := DS*(-1);
-       MoveSaltTo(Compartment[compi-1],celiM1,DS);
+       Compi_temp := GetCompartment_i(compi-1);
+       MoveSaltTo(Compi_temp,celiM1,DS);
+       SetCompartment_i(compi-1, Compi_temp);
        DS := DS*(-1);
-       MoveSaltTo(Compartment[compi],celi,DS);
+       Compi_temp := GetCompartment_i(compi);
+       MoveSaltTo(Compi_temp,celi,DS);
+       SetCompartment_i(compi, Compi_temp);
        END;
     END;
 
@@ -1751,7 +1773,7 @@ FOR compi := 2 TO NrCompartments DO
 IF (SubDrain > 0) THEN
    BEGIN
    Zr := RootingDepth;
-   IF (Zr >= 0) THEN Zr := (SimulParam.EvapZmax/100); // in meter
+   IF (Zr >= 0) THEN Zr := (GetSimulParam_EvapZmax()/100); // in meter
    compi := 0;
    depthi := 0;
    ECsubdrain := 0;
@@ -1759,22 +1781,26 @@ IF (SubDrain > 0) THEN
    //extract
    REPEAT
      compi := compi + 1;
-     depthi := depthi + Compartment[compi].Thickness;
+     depthi := depthi + GetCompartment_Thickness(compi);
      If (depthi <= Zr)
-        THEN DeltaZ := Compartment[compi].Thickness
-        ELSE DeltaZ := Compartment[compi].Thickness - (depthi-Zr);
-     celi := ActiveCells(Compartment[compi]);
-     IF (celi < SoilLayer[Compartment[compi].Layer].SCP1)
-        THEN mm1 := SoilLayer[Compartment[compi].Layer].Dx*1000*Compartment[compi].Thickness
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100)
-        ELSE mm1 := 2*SoilLayer[Compartment[compi].Layer].Dx*1000*Compartment[compi].Thickness
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-     ECcel := Compartment[compi].Salt[celi]/(mm1*Equiv);
-     ECsubdrain := (ECcel*mm1*(DeltaZ/Compartment[compi].Thickness)+ECsubdrain*SubDrain)
-                   /(mm1*(DeltaZ/Compartment[compi].Thickness)+SubDrain);
-     Compartment[compi].Salt[celi] := (1-(DeltaZ/Compartment[compi].Thickness))*Compartment[compi].Salt[celi]
-                                      + (DeltaZ/Compartment[compi].Thickness)*ECsubdrain*mm1*Equiv;
-     SaltSolutionDeposit(mm1,Compartment[compi].Salt[celi],Compartment[compi].Depo[celi]);
+        THEN DeltaZ := GetCompartment_Thickness(compi)
+        ELSE DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr);
+     celi := ActiveCells(GetCompartment_i(compi));
+     IF (celi < SoilLayer[GetCompartment_Layer(compi)].SCP1)
+        THEN mm1 := SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)
+        ELSE mm1 := 2*SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+     ECcel := GetCompartment_Salt(compi, celi)/(mm1*Equiv);
+     ECsubdrain := (ECcel*mm1*(DeltaZ/GetCompartment_Thickness(compi))+ECsubdrain*SubDrain)
+                   /(mm1*(DeltaZ/GetCompartment_Thickness(compi))+SubDrain);
+     SetCompartment_Salt(compi, celi, (1-(DeltaZ/GetCompartment_Thickness(compi)))*GetCompartment_Salt(compi,celi)
+                                      + (DeltaZ/GetCompartment_Thickness(compi))*ECsubdrain*mm1*Equiv);
+     Salt_temp := GetCompartment_Salt(compi, celi);
+     Depo_temp := GetCompartment_Depo(compi, celi);
+     SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
+     SetCompartment_Salt(compi, celi, Salt_temp);
+     SetCompartment_Depo(compi, celi, Depo_temp);
    UNTIl (depthi >= Zr) OR (compi >= NrCompartments);
 
    //dump
@@ -1785,14 +1811,18 @@ IF (SubDrain > 0) THEN
            END
       ELSE BEGIN
            compi := compi + 1;
-           celi := ActiveCells(Compartment[compi]);
-           IF (celi < SoilLayer[Compartment[compi].Layer].SCP1)
-              THEN mm1 := SoilLayer[Compartment[compi].Layer].Dx*1000*Compartment[compi].Thickness
-                          * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100)
-              ELSE mm1 := 2*SoilLayer[Compartment[compi].Layer].Dx*1000*Compartment[compi].Thickness
-                          * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-           Compartment[compi].Salt[celi] := Compartment[compi].Salt[celi] + ECsubdrain*SubDrain*Equiv;
-           SaltSolutionDeposit(mm1,Compartment[compi].Salt[celi],Compartment[compi].Depo[celi]);
+           celi := ActiveCells(GetCompartment_i(compi));
+           IF (celi < SoilLayer[GetCompartment_Layer(compi)].SCP1)
+              THEN mm1 := SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
+                          * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)
+              ELSE mm1 := 2*SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
+                          * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + ECsubdrain*SubDrain*Equiv);
+           Salt_temp := GetCompartment_Salt(compi, celi);
+           Depo_temp := GetCompartment_Depo(compi, celi);
+           SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
+           SetCompartment_Salt(compi, celi, Salt_temp);
+           SetCompartment_Depo(compi, celi, Depo_temp);
            END;
    END;
 END; (* calculate_saltcontent *)
@@ -1805,6 +1835,7 @@ VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
     CCxRed : ShortInt;
     ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
     RedCGC_temp, RedCCX_temp : ShortInt;
+    Crop_DaysToFullCanopySF_temp : integer;
 
     PROCEDURE NoEffectStress(VAR TheEffectStress : rep_EffectStress);
     BEGIN
@@ -1832,19 +1863,19 @@ IF (GetSimulation_SalinityConsidered() = true)
         SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-GetRootZoneSalt().KsSalt))/(NrDayGrow+1);
         END
    ELSE SaltStress := 0;
-IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop.Day1))
+IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop().DayN-GetCrop().Day1))
     OR (GetSimulation_Germinate() = false)
     OR ((StressSFAdjNEW = 0) AND (SaltStress <= 0.1)))
    THEN BEGIN  // no soil fertility and salinity stress
         NoEffectStress(FinalEffectStress);
-        Crop.DaysToFullCanopySF := Crop.DaysToFullCanopy;
-        IF (Crop.ModeCycle = GDDays) THEN Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
+        SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
+        IF (GetCrop_ModeCycle() = GDDays) THEN SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
         END
    ELSE BEGIN
         // Soil fertility
         IF (StressSFAdjNEW = 0)
            THEN NoEffectStress(FertilityEffectStress)
-           ELSE CropStressParametersSoilFertility(Crop.StressResponse,StressSFAdjNEW,FertilityEffectStress);
+           ELSE CropStressParametersSoilFertility(GetCrop_StressResponse(),StressSFAdjNEW,FertilityEffectStress);
         // Soil Salinity
         CCxRedD := ROUND(Coeffb0Salt + Coeffb1Salt * SaltStress + Coeffb2Salt * SaltStress * SaltStress);
         IF ((CCxRedD < 0) OR (SaltStress <= 0.1) OR (GetSimulation_SalinityConsidered() = false))
@@ -1853,11 +1884,11 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                 IF ((CCxRedD > 100) OR (SaltStress >= 99.9))
                    THEN CCxRed := 100
                    ELSE CCxRed := ROUND(CCxRedD);
-                CropStressParametersSoilSalinity(CCxRed,Crop.CCsaltDistortion,Crop.CCo,Crop.CCx,Crop.CGC,
-                             Crop.GDDCGC,Crop.DeterminancyLinked,Crop.DaysToFullCanopy,Crop.DaysToFlowering,
-                             Crop.LengthFlowering,Crop.DaysToHarvest,Crop.GDDaysToFullCanopy,
-                             Crop.GDDaysToFlowering,Crop.GDDLengthFlowering,
-                             Crop.GDDaysToHarvest,Crop.ModeCycle,SalinityEffectStress);
+                CropStressParametersSoilSalinity(CCxRed,GetCrop().CCsaltDistortion,GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,
+                             GetCrop().GDDCGC,GetCrop().DeterminancyLinked,GetCrop().DaysToFullCanopy,GetCrop().DaysToFlowering,
+                             GetCrop().LengthFlowering,GetCrop().DaysToHarvest,GetCrop().GDDaysToFullCanopy,
+                             GetCrop().GDDaysToFlowering,GetCrop().GDDLengthFlowering,
+                             GetCrop().GDDaysToHarvest,GetCrop_ModeCycle(),SalinityEffectStress);
                 END;
         // Assign integrated effect of the stresses
         FinalEffectStress.RedWP := FertilityEffectStress.RedWP;
@@ -1874,17 +1905,20 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
         // adjust time to maximum canopy cover
         RedCGC_temp := GetSimulation_EffectStress_RedCGC();
         RedCCX_temp := GetSimulation_EffectStress_RedCCX();
-        TimeToMaxCanopySF(Crop.CCo,Crop.CGC,Crop.CCx,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,
-                          Crop.DaysToFlowering,Crop.LengthFlowering,Crop.DeterminancyLinked,
-                          Crop.DaysToFullCanopySF,RedCGC_temp,
+        Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
+        TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
+                          GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
+                          Crop_DaysToFullCanopySF_temp,RedCGC_temp,
                           RedCCX_temp,StressSFAdjNEW);
         SetSimulation_EffectStress_RedCGC(RedCGC_temp);
         SetSimulation_EffectStress_RedCCX(RedCCX_temp);
-        IF (Crop.ModeCycle = GDDays) THEN
+        SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
+        IF (GetCrop().ModeCycle = GDDays) THEN
            BEGIN
            IF ((GetManagement_FertilityStress() <> 0) OR (SaltStress <> 0))
-              THEN Crop.GDDaysToFullCanopySF := GrowingDegreeDays(Crop.DaysToFullCanopySF,Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax)
-              ELSE Crop.GDDaysToFullCanopySF := Crop.GDDaysToFullCanopy;
+              THEN SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(GetCrop().DaysToFullCanopySF,GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,
+                                            GetSimulParam_Tmin(),GetSimulParam_Tmax()))
+              ELSE SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
            END;
         END;
 END; (* EffectSoilFertilitySalinityStress *)
@@ -1899,11 +1933,11 @@ VAR Zroot, WCGermination : double;
 
 BEGIN
 // total root zone is considered
-Zroot := Crop.RootMin;
+Zroot := GetCrop().RootMin;
 SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
 DetermineRootZoneWC(Zroot,SWCtopSoilConsidered_temp);
 SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (SimulParam.TAWGermination/100);
+WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (GetSimulParam_TAWGermination()/100);
 IF (GetRootZoneWC().Actual < WCGermination)
    THEN BEGIN
         SetSimulation_DelayedDays(GetSimulation_DelayedDays() + 1);
@@ -1911,7 +1945,7 @@ IF (GetRootZoneWC().Actual < WCGermination)
         END
    ELSE BEGIN
         SetSimulation_Germinate(true);
-        IF (Crop.Planting = Seed)
+        IF (GetCrop().Planting = Seed)
            THEN SetSimulation_ProtectedSeedling(true)
            ELSE SetSimulation_ProtectedSeedling(false);
         END;
@@ -1931,6 +1965,9 @@ VAR pLeafLLAct , CGCadjusted, CDCadjusted, CCiSen, tTemp,CCxSF,CGCSF,CCxSFCD,KsR
     TheSenescenceON : BOOLEAN;
     // test Version 6.2
     KsSen : double;
+    Crop_pLeafAct_temp : double;
+    Crop_pSenAct_temp : double;
+    Crop_CCxAdjusted_temp : double;
 
 
 PROCEDURE DetermineCGCadjusted(VAR CGCadjusted : double);
@@ -1966,7 +2003,7 @@ IF (SWCeffectiveRootZone >= FCeffectiveRootZone)
                 StressLeaf := 100;
                 END
            ELSE BEGIN
-                IF (Wrelative <= Crop.pLeafAct)
+                IF (Wrelative <= GetCrop().pLeafAct)
                    THEN BEGIN
                         CGCadjusted := CGCSF;
                         StressLeaf := 0;
@@ -1977,7 +2014,7 @@ IF (SWCeffectiveRootZone >= FCeffectiveRootZone)
                                 StressLeaf := 100;
                                 END
                            ELSE BEGIN
-                                KsLeaf := KsAny(Wrelative,Crop.pLeafAct,pLeafLLAct,Crop.KsShapeFactorLeaf);
+                                KsLeaf := KsAny(Wrelative,GetCrop().pLeafAct,pLeafLLAct,GetCrop().KsShapeFactorLeaf);
                                 CGCadjusted := CGCSF * KsLeaf;
                                 StressLeaf := 100 * (1 - KsLeaf);
                                 END;
@@ -1985,17 +2022,17 @@ IF (SWCeffectiveRootZone >= FCeffectiveRootZone)
 
 // effect of transfer of assimilates on CGC
 IF (CGCadjusted > 0.000001) // CGC can be adjusted
-   AND (  ((Crop.subkind = Forage) AND ((StorageON = true) OR (MobilizationON = true))) // transfer assimilates
+   AND (  ((GetCrop_subkind() = Forage) AND ((StorageON = true) OR (MobilizationON = true))) // transfer assimilates
         OR (CGCadjustmentAfterCutting = true)) // increase of Canopy development after Cutting
    THEN BEGIN
         // decrease CGC during storage
-        IF ((Crop.subkind = Forage) AND (StorageON = true))
+        IF ((GetCrop_subkind() = Forage) AND (StorageON = true))
            THEN CGCadjusted := CGCadjusted * (1 - FracAssim);
         // increase CGC after cutting
         IF ((CGCadjustmentAfterCutting = true) AND (StorageON = false))
            THEN CGCadjusted := CGCadjusted * (1 + GetManagement_Cuttings_CGCPlus()/100);
         // increase CGC during mobilization
-        IF ((Crop.subkind = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
+        IF ((GetCrop_subkind() = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
            THEN BEGIN
                 IF ((CCxSFCD <=0) OR (CCiPrev >= 0.9*CCxSFCD))
                    THEN MaxVal := 0
@@ -2040,7 +2077,7 @@ IF (Wrelative <= pSenAct)
                 KsSen := 0;
                 END
            ELSE BEGIN
-                KsSen := KsAny(Wrelative,pSenAct,pSenLL,Crop.KsShapeFactorSenescence);
+                KsSen := KsAny(Wrelative,pSenAct,pSenLL,GetCrop().KsShapeFactorSenescence);
                 IF (KsSen > 0.000001)
                    THEN BEGIN
                         //CDCadjusted := CDCTotal * (CCxSFCD/CCxTotal) * (1 - Exp(8*Ln(KsSen)));
@@ -2087,13 +2124,13 @@ PROCEDURE DetermineCCxAdjusted(VAR CCxAdjusted : double);  //canopy development
 VAR tfictive : double;
 BEGIN
 //1. find time (tfictive) required to reach CCiPrev (CCi of previous day) with CGCadjusted
-tfictive := RequiredTimeNew(CCiprev,Crop.CCoAdjusted,CCxSF,CGCadjusted);
+tfictive := RequiredTimeNew(CCiprev,GetCrop().CCoAdjusted,CCxSF,CGCadjusted);
 
 //2. Get CCxadjusted (reached at end of stretched crop development)
 IF (tfictive > 0)
    THEN BEGIN
         tfictive := tfictive + (tFinalCCx - VirtualTimeCC);
-        CCxAdjusted := CCatTime(tfictive,Crop.CCoAdjusted,CGCadjusted,CCxSF);
+        CCxAdjusted := CCatTime(tfictive,GetCrop().CCoAdjusted,CGCadjusted,CCxSF);
         END
    ELSE CCxAdjusted := undef_double; // this means CCiActual := CCiPrev
 END; (* DetermineCCxAdjusted *)
@@ -2102,8 +2139,8 @@ END; (* DetermineCCxAdjusted *)
 PROCEDURE GetNewCCxandCDC(CCiPrev,CDC,CCx : double;
                           VAR CCxAdjusted,CDCadjusted : double);
 BEGIN
-//CCxAdjusted := CCiPrev/(1-0.05*(exp((VirtualTimeCC-Crop.DaysToSenescence)*CDC/CCX)-1));
-CCxAdjusted := CCiPrev/(1-0.05*(exp((VirtualTimeCC-Crop.DaysToSenescence)*CDC*3.33/(CCX+2.29))-1));
+//CCxAdjusted := CCiPrev/(1-0.05*(exp((VirtualTimeCC-GetCrop().DaysToSenescence)*CDC/CCX)-1));
+CCxAdjusted := CCiPrev/(1-0.05*(exp((VirtualTimeCC-GetCrop().DaysToSenescence)*CDC*3.33/(CCX+2.29))-1));
 //CDCadjusted := CDC * CCxAdjusted/CCx;
 CDCadjusted := CDC * (CCxAdjusted+2.29)/(CCx+2.29);
 END; (* GetNewCCxandCDC *)
@@ -2111,58 +2148,61 @@ END; (* GetNewCCxandCDC *)
 
 
 BEGIN (* DetermineCCi *)
-IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop.Day1)))
+IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop().DayN-GetCrop().Day1)))
    THEN CCiActual := 0
    ELSE BEGIN // growing season (once germinated)
         //1. find some parameters
-        CGCSF := Crop.CGC*(1-GetSimulation_EffectStress_RedCGC()/100);
+        CGCSF := GetCrop().CGC*(1-GetSimulation_EffectStress_RedCGC()/100);
         CGCadjusted := CGCSF;
         CCxSF := CCxTotal*(1-GetSimulation_EffectStress_RedCCX()/100);
         // maximum canopy cover than can be reached (considering soil fertility/salinity, weed stress)
-        IF (VirtualTimeCC <= Crop.DaysToFullCanopySF)
+        IF (VirtualTimeCC <= GetCrop().DaysToFullCanopySF)
            THEN CCxSFCD := CCxSF // no correction before maximum canopy is reached
            ELSE BEGIN
-                IF (VirtualTimeCC < Crop.DaysToSenescence)
+                IF (VirtualTimeCC < GetCrop().DaysToSenescence)
                    THEN BEGIN
-                        CCxSFCD := CCiNoWaterStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                            Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,Crop.GDDaysToGermination,
-                            Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                            CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,GetSimulation_SumGDD(),(1),
+                        CCxSFCD := CCiNoWaterStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                            GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,GetCrop().GDDaysToGermination,
+                            GetCrop().GDDaysToFullCanopySF,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                            CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,GetSimulation_SumGDD(),(1),
                             GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),
-                            Crop.ModeCycle);
+                            GetCrop().ModeCycle);
                         END
-                   ELSE CCxSFCD := CCxSF - (GetSimulation_EffectStress_CDecline()/100) * (Crop.DaysToSenescence-Crop.DaysToFullCanopySF);
+                   ELSE CCxSFCD := CCxSF - (GetSimulation_EffectStress_CDecline()/100) * (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopySF);
                 IF (CCxSFCD < 0) THEN CCxSFCD := 0;
                 END;
         StressLeaf := undef_int;
-        IF (VirtualTimeCC = Crop.DaysToGermination) THEN CCiPrev := CCoTotal;
+        IF (VirtualTimeCC = GetCrop().DaysToGermination) THEN CCiPrev := CCoTotal;
 
         // time of potentional vegetative growth
-        tFinalCCx := Crop.DaysToSenescence; // undeterminant crop
-        IF ((Crop.subkind = Grain) AND (Crop.DeterminancyLinked = true)) THEN  // determinant crop
+        tFinalCCx := GetCrop().DaysToSenescence; // undeterminant crop
+        IF ((GetCrop_subkind() = Grain) AND (GetCrop().DeterminancyLinked = true)) THEN  // determinant crop
            BEGIN //reduce tFinalCC in f(determinancy of crop)
-           IF (Crop.DaysToCCini <> 0)
+           IF (GetCrop().DaysToCCini <> 0)
               THEN BEGIN  // regrowth  (adjust to slower time)
-                   tFinalCCx := Crop.DaysToFullCanopy
-                      + ROUND(DayFraction * ( (Crop.DaysToFlowering + (Crop.LengthFlowering/2)
-                      - GetSimulation_DelayedDays())+Tadj+Crop.DaysToGermination - Crop.DaysToFullCanopy));
+                   tFinalCCx := GetCrop().DaysToFullCanopy
+                      + ROUND(DayFraction * ( (GetCrop().DaysToFlowering + (GetCrop().LengthFlowering/2)
+                      - GetSimulation_DelayedDays())+Tadj+GetCrop().DaysToGermination - GetCrop().DaysToFullCanopy));
                    END
               ELSE BEGIN // sown or transplant
-                   tFinalCCx := Crop.DaysToFlowering + ROUND(Crop.LengthFlowering/2);
+                   tFinalCCx := GetCrop().DaysToFlowering + ROUND(GetCrop().LengthFlowering/2);
                    END;
-           IF (tFinalCCx > Crop.DaysToSenescence) THEN tFinalCCx := Crop.DaysToSenescence;
+           IF (tFinalCCx > GetCrop().DaysToSenescence) THEN tFinalCCx := GetCrop().DaysToSenescence;
            END;
 
         // Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
-        AdjustpLeafToETo(ETo,Crop.pLeafAct,pLeafLLAct);
+        Crop_pLeafAct_temp := GetCrop().pLeafAct;
+        AdjustpLeafToETo(ETo,Crop_pLeafAct_temp,pLeafLLAct);
+        SetCrop_pLeafAct(Crop_pLeafAct_temp);
         WithBeta := true;
-        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
-
+        Crop_pSenAct_temp := GetCrop().pSenAct;
+        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+        SetCrop_pSenAct(Crop_pSenAct_temp);
 
         //2. Canopy can still develop (stretched to tFinalCCx)
         IF (VirtualTimeCC < tFinalCCx)
            THEN BEGIN //Canopy can stil develop (stretched to tFinalCCx)
-                IF ((CCiPrev <= Crop.CCoAdjusted)
+                IF ((CCiPrev <= GetCrop().CCoAdjusted)
                    OR (VirtualTimeCC <= 1)
                    OR ((GetSimulation_ProtectedSeedling() = true) AND (CCiPrev <= (1.25 * CCoTotal))))
                    //2.a first day or very small CC as a result of senescence (no adjustment for leaf stress)
@@ -2171,21 +2211,21 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                         IF (GetSimulation_ProtectedSeedling() = true)
                            THEN BEGIN
                                 CCiActual :=
-                                CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                                       Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                                       Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                                       CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
-                                                       GetSimulation_SumGDD(),Crop.ModeCycle,
+                                CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                                       GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                                       GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                                       CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                                                       GetSimulation_SumGDD(),GetCrop().ModeCycle,
                                                        GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
                                 IF (CCiActual > (1.25 * CCoTotal)) THEN SetSimulation_ProtectedSeedling(false);
                                 END
                            ELSE BEGIN
                                 // this results in CC increase when during senescence CC becomes smaller than CCini)
                                 IF (VirtualTimeCC = 1)
-                                   THEN CCiActual := Crop.CCoAdjusted*Exp(CGCSF*2)
-                                   ELSE CCiActual := Crop.CCoAdjusted*Exp(CGCSF*1);
+                                   THEN CCiActual := GetCrop().CCoAdjusted*Exp(CGCSF*2)
+                                   ELSE CCiActual := GetCrop().CCoAdjusted*Exp(CGCSF*1);
                                 END;
-                        //CCiActual := Crop.CCoAdjusted*Exp(CGCSF*1);
+                        //CCiActual := GetCrop().CCoAdjusted*Exp(CGCSF*1);
                         END
                    //2.b CC > CCo
                    ELSE BEGIN
@@ -2194,42 +2234,44 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                 DetermineCGCadjusted(CGCadjusted);
                                 IF (CGCadjusted > 0.00000001)
                                    THEN BEGIN // CGCSF or CGCadjusted > 0
-                                        DetermineCCxAdjusted(Crop.CCxAdjusted);
-                                        IF (Crop.CCxAdjusted < 0)
+                                        Crop_CCxAdjusted_temp := GetCrop().CCxAdjusted;
+                                        DetermineCCxAdjusted(Crop_CCxAdjusted_temp);
+                                        SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp);
+                                        IF (GetCrop().CCxAdjusted < 0)
                                            THEN CCiActual := CCiPrev
                                            ELSE IF (Abs(CCiPrev - 0.97999*CCxSF) < 0.001)
                                                    //THEN CCiActual := CCxSF // not correct since this will become CCxWithered and Transpiration will drop
-                                                   THEN CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                                                         Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                                                         Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                                                         CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
-                                                                         GetSimulation_SumGDD(),Crop.ModeCycle,
+                                                   THEN CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                                                         GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                                                         GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                                                         CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                                                                         GetSimulation_SumGDD(),GetCrop().ModeCycle,
                                                                          GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX())
                                                    ELSE BEGIN
-                                                        tTemp := RequiredTimeNew(CCiprev,Crop.CCoAdjusted,Crop.CCxAdjusted,CGCadjusted);
+                                                        tTemp := RequiredTimeNew(CCiprev,GetCrop().CCoAdjusted,GetCrop().CCxAdjusted,CGCadjusted);
                                                         IF (tTemp < 0)
                                                            THEN CCiActual := CCiPrev
                                                            ELSE BEGIN
                                                                 tTemp := tTemp+1;
-                                                                CCiActual := CCatTime(tTemp,Crop.CCoAdjusted,CGCadjusted,Crop.CCxAdjusted);
+                                                                CCiActual := CCatTime(tTemp,GetCrop().CCoAdjusted,CGCadjusted,GetCrop().CCxAdjusted);
                                                                 END;
                                                         END;
                                         END
                                    ELSE BEGIN // CGCadjusted = 0 - too dry for leaf expansion
                                         CCiActual := CCiPrev;
-                                        IF (CCiActual > Crop.CCoAdjusted)
-                                           THEN Crop.CCoAdjusted := CCoTotal
-                                           ELSE Crop.CCoAdjusted := CCiActual;
+                                        IF (CCiActual > GetCrop().CCoAdjusted)
+                                           THEN SetCrop_CCoAdjusted(CCoTotal)
+                                           ELSE SetCrop_CCoAdjusted(CCiActual);
                                         END;
                                 END
                            ELSE BEGIN
-                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
-                                     GetSimulation_SumGDD(),Crop.ModeCycle,
+                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                                     GetSimulation_SumGDD(),GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
-                                Crop.CCoAdjusted := CCoTotal;
+                                SetCrop_CCoAdjusted(CCoTotal);
                                 StressLeaf := -33; // maximum canopy is reached;
                                 CGCadjustmentAfterCutting := false; // no increase anymore of CGC after cutting
                                 END;
@@ -2240,59 +2282,61 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                            CGCadjustmentAfterCutting := false; // no increase anymore of CGC after cutting
                            END;
                         END;
-                Crop.CCxAdjusted := CCiActual;
+                SetCrop_CCxAdjusted(CCiActual);
                 END
 
         //3. Canopy can no longer develop (Mid-season (from tFinalCCx) or Late season stage)
            ELSE BEGIN
                 StressLeaf := -33; // maximum canopy is reached;
                 CGCadjustmentAfterCutting := false; // no increase anymore of CGC after cutting
-                IF (Crop.CCxAdjusted < 0)
-                   THEN Crop.CCxAdjusted := CCiPrev;
+                IF (GetCrop().CCxAdjusted < 0)
+                   THEN SetCrop_CCxAdjusted(CCiPrev);
 
-                IF (VirtualTimeCC < Crop.DaysToSenescence)
+                IF (VirtualTimeCC < GetCrop().DaysToSenescence)
                 // mid-season
                    THEN BEGIN
-                        IF (Crop.CCxAdjusted > 0.97999*CCxSF)
+                        IF (GetCrop().CCxAdjusted > 0.97999*CCxSF)
                            THEN BEGIN
-                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
-                                     GetSimulation_SumGDD(),Crop.ModeCycle,
+                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                                     GetSimulation_SumGDD(),GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 END
-                           ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,(Crop.CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCTotal,
-                                     GetSimulation_SumGDD(),Crop.ModeCycle,
+                           ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,(GetCrop().CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                                     GetSimulation_SumGDD(),GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
                         IF (CCiActual > CCxSFCD) THEN CCiActual := CCxSFCD;
                         END
                 // late season
                    ELSE BEGIN
                         StressSenescence := undef_int; // to avoid display of zero stress in late season
-                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
-                        IF (Crop.CCxAdjusted < 0.01)
+                        IF (GetCrop().CCxAdjusted > CCxSFCD) THEN SetCrop_CCxAdjusted(CCxSFCD);
+                        IF (GetCrop().CCxAdjusted < 0.01)
                            THEN CCiActual := 0
                            ELSE BEGIN  // calculate CC in late season
                                 // CCibis = CC which canopy declines (soil fertility/salinity stress) further in late season
                                 CCibis := CCxSF - (GetSimulation_EffectStress_CDecline()/100)
-                                          * (exp(2*Ln((VirtualTimeCC+GetSimulation_DelayedDays()+1) - Crop.DaysToFullCanopySF))
-                                                /(Crop.DaysToSenescence-Crop.DaysToFullCanopySF));
+                                          * (exp(2*Ln((VirtualTimeCC+GetSimulation_DelayedDays()+1) - GetCrop().DaysToFullCanopySF))
+                                                /(GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopySF));
                                 IF (CCibis < 0)
                                    THEN CCiActual := 0
                                    ELSE BEGIN
                                         // CCiActual = CC with natural senescence in late season
-                                        CDCadjusted := GetCDCadjustedNoStressNew(CCxTotal,CDCTotal,Crop.CCxAdjusted);
+                                        Crop_CCxAdjusted_temp := GetCrop().CCxAdjusted;
+                                        CDCadjusted := GetCDCadjustedNoStressNew(CCxTotal,CDCTotal,Crop_CCxAdjusted_temp);
+                                        SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp);
                                         IF ((VirtualTimeCC+GetSimulation_DelayedDays()+1)
-                                             < (Crop.DaysToSenescence + LengthCanopyDecline(Crop.CCxAdjusted,CDCadjusted)))
+                                             < (GetCrop().DaysToSenescence + LengthCanopyDecline(GetCrop().CCxAdjusted,CDCadjusted)))
                                             THEN BEGIN
-                                                 CCiActual := Crop.CCxAdjusted *
-                                                   (1 - 0.05 * (exp(((VirtualTimeCC+GetSimulation_DelayedDays()+1)-Crop.DaysToSenescence)
-                                                                 *3.33* CDCadjusted/(Crop.CCxAdjusted + 2.29))-1));
+                                                 CCiActual := GetCrop().CCxAdjusted *
+                                                   (1 - 0.05 * (exp(((VirtualTimeCC+GetSimulation_DelayedDays()+1)-GetCrop().DaysToSenescence)
+                                                                 *3.33* CDCadjusted/(GetCrop().CCxAdjusted + 2.29))-1));
                                                  // CCiActual becomes CCibis, when canopy decline is more severe
                                                  IF (CCibis < CCiActual) THEN CCiActual := CCibis;
                                                  END
@@ -2305,22 +2349,24 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
 
 
         //4. Canopy senescence due to water stress ?
-        IF ((VirtualTimeCC < Crop.DaysToSenescence) // not yet late season stage
+        IF ((VirtualTimeCC < GetCrop().DaysToSenescence) // not yet late season stage
            OR (TimeSenescence > 0)) // in late season with ongoing early senesence (TimeSenescence in days)
            THEN BEGIN
                 StressSenescence := 0;
                 WithBeta := true;
-                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+                Crop_pSenAct_temp := GetCrop().pSenAct;
+                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+                SetCrop_pSenAct(Crop_pSenAct_temp);
                 KsRED := 1;  // effect of soil salinity on the threshold for senescence
                 IF (GetSimulation_SWCtopSoilConsidered() = true)
                    THEN BEGIN // top soil is relative wetter than total root zone
-                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
+                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - GetCrop().pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
                            AND (GetSimulation_ProtectedSeedling() = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
                         END
                    ELSE BEGIN
-                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
+                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - GetCrop().pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
                             AND (GetSimulation_ProtectedSeedling() = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
@@ -2335,26 +2381,26 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                         DetermineCDCadjustedWaterStress(CDCadjusted,KsSen);
                         IF (CCiTopEarlySen < 0.001)
                            THEN BEGIN
-                                IF ((GetSimulation_SumEToStress() > Crop.SumEToDelaySenescence)
-                                   OR (Crop.SumEToDelaySenescence = 0))
+                                IF ((GetSimulation_SumEToStress() > GetCrop().SumEToDelaySenescence)
+                                   OR (GetCrop().SumEToDelaySenescence = 0))
                                    THEN CCiSen := 0 // no crop anymore
                                    ELSE BEGIN
-                                        IF (CCdormant > Crop.CCo)
-                                           THEN CCiSen := Crop.CCo + (1 - GetSimulation_SumEToStress()/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
-                                           ELSE CCiSen := Crop.CCo;
+                                        IF (CCdormant > GetCrop().CCo)
+                                           THEN CCiSen := GetCrop().CCo + (1 - GetSimulation_SumEToStress()/GetCrop().SumEToDelaySenescence)*(CCdormant - GetCrop().CCo)
+                                           ELSE CCiSen := GetCrop().CCo;
                                         END;
                                 END
                            ELSE BEGIN
                                 IF (((TimeSenescence*CDCTotal*3.33)/(CCiTopEarlySen+2.29) > 100) // e power too large and in any case CCisen << 0
                                        OR (CCiprev >= 1.05 * CCiTopEarlySen)) // Ln of negative or zero value
                                       THEN BEGIN
-                                           IF ((GetSimulation_SumEToStress() > Crop.SumEToDelaySenescence)
-                                              OR (Crop.SumEToDelaySenescence = 0))
+                                           IF ((GetSimulation_SumEToStress() > GetCrop().SumEToDelaySenescence)
+                                              OR (GetCrop().SumEToDelaySenescence = 0))
                                               THEN CCiSen := 0 // no crop anymore
                                               ELSE BEGIN
-                                                   IF (CCdormant > Crop.CCo)
-                                                      THEN CCiSen := Crop.CCo + (1 - GetSimulation_SumEToStress()/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
-                                                      ELSE CCiSen := Crop.CCo;
+                                                   IF (CCdormant > GetCrop().CCo)
+                                                      THEN CCiSen := GetCrop().CCo + (1 - GetSimulation_SumEToStress()/GetCrop().SumEToDelaySenescence)*(CCdormant - GetCrop().CCo)
+                                                      ELSE CCiSen := GetCrop().CCo;
                                                    END;
                                            END
                                       ELSE BEGIN
@@ -2366,62 +2412,64 @@ IF ((VirtualTimeCC < Crop.DaysToGermination) OR (VirtualTimeCC > (Crop.DayN-Crop
                                            END;
 
                                 IF (CCiSen < 0) THEN CCiSen := 0;
-                                IF ((Crop.SumEToDelaySenescence > 0) AND (GetSimulation_SumEToStress() <= Crop.SumEToDelaySenescence)) THEN
+                                IF ((GetCrop().SumEToDelaySenescence > 0) AND (GetSimulation_SumEToStress() <= GetCrop().SumEToDelaySenescence)) THEN
                                    BEGIN
-                                   IF ((CCiSen < Crop.CCo) OR (CCiSen < CCdormant)) THEN
+                                   IF ((CCiSen < GetCrop().CCo) OR (CCiSen < CCdormant)) THEN
                                       BEGIN
-                                      IF (CCdormant > Crop.CCo)
-                                         THEN CCiSen := Crop.CCo + (1 - GetSimulation_SumEToStress()/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
-                                         ELSE CCiSen := Crop.CCo;
+                                      IF (CCdormant > GetCrop().CCo)
+                                         THEN CCiSen := GetCrop().CCo + (1 - GetSimulation_SumEToStress()/GetCrop().SumEToDelaySenescence)*(CCdormant - GetCrop().CCo)
+                                         ELSE CCiSen := GetCrop().CCo;
                                       END;
                                    END;
                                 END;
-                        IF (VirtualTimeCC < Crop.DaysToSenescence)
+                        IF (VirtualTimeCC < GetCrop().DaysToSenescence)
                            THEN BEGIN // before late season
                                 IF (CCiSen > CCxSFCD) THEN CCiSen := CCxSFCD;
                                 CCiActual := CCiSen;
                                 IF (CCiActual > CCiPrev) THEN CCiActual := CCiPrev; // to avoid jump in CC
                                                          // when CGCadjusted increases as a result of watering
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 IF (CCiActual < CCoTotal)
-                                   THEN Crop.CCoAdjusted := CCiActual
-                                   ELSE Crop.CCoAdjusted := CCoTotal;
+                                   THEN SetCrop_CCoAdjusted(CCiActual)
+                                   ELSE SetCrop_CCoAdjusted(CCoTotal);
                                 END
                            ELSE BEGIN // in late season
                                 IF (CCiSen < CCiActual) THEN CCiActual := CCiSen;
-                                   //Crop.CCxAdjusted := CCiTopEarlySen;
-                                   //Crop.CCxAdjusted := CCiActual;
+                                   //SetCrop_CCxAdjusted(CCiTopEarlySen);
+                                   //SetCrop_CCxAdjusted(CCiActual);
                                 END;
-                        //IF (CCiSen <= Crop.CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
+                        //IF (CCiSen <= GetCrop().CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
                         IF ((ROUND(10000*CCiSen) <= (10000*CCdormant))
-                           OR (ROUND(10000*CCiSen) <= ROUND(10000*Crop.CCo)))
+                           OR (ROUND(10000*CCiSen) <= ROUND(10000*GetCrop().CCo)))
                               THEN SetSimulation_SumEToStress(GetSimulation_SumEToStress() + ETo);
                         END
                    ELSE BEGIN // no water stress, resulting in canopy senescence
                         TimeSenescence := 0;  // No early senescence or back to normal
                         StressSenescence := 0;
                         SetSimulation_SumEToStress(0);
-                        IF ((VirtualTimeCC > Crop.DaysToSenescence) AND (CCiActual > CCiprev)) THEN
+                        IF ((VirtualTimeCC > GetCrop().DaysToSenescence) AND (CCiActual > CCiprev)) THEN
                            BEGIN // result of a rewatering in late season of an early declining canopy
-                           GetNewCCxandCDC(CCiprev,CDCTotal,CCxSF,Crop.CCxAdjusted,CDCadjusted);
-                           CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,(Crop.CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),
-                                     Crop.CGC,CDCadjusted,Crop.GDDCGC,GDDCDCTotal,
-                                     GetSimulation_SumGDD(),Crop.ModeCycle,
+                           Crop_CCxAdjusted_temp := GetCrop().CCxAdjusted;
+                           GetNewCCxandCDC(CCiprev,CDCTotal,CCxSF,Crop_CCxAdjusted_temp,CDCadjusted);
+                           SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp);
+                           CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,(GetCrop().CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),
+                                     GetCrop().CGC,CDCadjusted,GetCrop().GDDCGC,GDDCDCTotal,
+                                     GetSimulation_SumGDD(),GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
                            //IF (CCiActual > CCxSFCD) THEN CCiActual := CCxSFCD; // added March 2017
                            END;
                         END;
                 END;
 
-        //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
-        IF (CCiActual > Crop.CCxWithered) THEN Crop.CCxWithered := CCiActual;
-        //IF (Crop.CCxWithered > CCxSFCD) THEN Crop.CCxWithered := CCxSFCD; - OUT 15/10/2008
+        //5. Adjust GetCrop().CCxWithered - required for correction of Transpiration of dying green canopy
+        IF (CCiActual > GetCrop().CCxWithered) THEN SetCrop_CCxWithered(CCiActual);
+        //IF (GetCrop().CCxWithered > CCxSFCD) THEN SetCrop_CCxWithered(CCxSFCD); - OUT 15/10/2008
 
         // 6. correction for late-season stage for rounding off errors
-         IF (VirtualTimeCC > Crop.DaysToSenescence) THEN
+         IF (VirtualTimeCC > GetCrop().DaysToSenescence) THEN
             IF (CCiActual > CCiprev) THEN CCiActual := CCiprev;
 
         // 7. no crop as a result of fertiltiy and/or water stress
@@ -2448,6 +2496,9 @@ VAR pLeafLLAct , GDDCGCadjusted, GDDCDCadjusted, CCiSen, GDDtTemp,
 
     // test Version 6.2
     KsSen : double;
+    Crop_pLeafAct_temp : double;
+    Crop_pSenAct_temp : double;
+    Crop_CCxAdjusted_temp : double;
 
 
 PROCEDURE DetermineGDDCGCadjusted(VAR GDDCGCadjusted : double);
@@ -2483,7 +2534,7 @@ IF (SWCeffectiveRootZone >= FCeffectiveRootZone)
                 StressLeaf := 100;
                 END
            ELSE BEGIN
-                IF (Wrelative <= Crop.pLeafAct)
+                IF (Wrelative <= GetCrop().pLeafAct)
                    THEN BEGIN
                         GDDCGCadjusted := CGCGDDSF;
                         StressLeaf := 0;
@@ -2494,7 +2545,7 @@ IF (SWCeffectiveRootZone >= FCeffectiveRootZone)
                                 StressLeaf := 100;
                                 END
                            ELSE BEGIN
-                                KsLeaf := KsAny(Wrelative,Crop.pLeafAct,pLeafLLAct,Crop.KsShapeFactorLeaf);
+                                KsLeaf := KsAny(Wrelative,GetCrop().pLeafAct,pLeafLLAct,GetCrop().KsShapeFactorLeaf);
                                 GDDCGCadjusted := CGCGDDSF * KsLeaf;
                                 StressLeaf := 100 * (1 - KsLeaf);
                                 END;
@@ -2503,17 +2554,17 @@ IF (SWCeffectiveRootZone >= FCeffectiveRootZone)
 
 // effect of transfer of assimilates on CGCGDD
 IF (GDDCGCadjusted > 0.000001) // CGCGDD can be adjusted
-   AND (  ((Crop.subkind = Forage) AND ((StorageON = true) OR (MobilizationON = true))) // transfer assimilates
+   AND (  ((GetCrop_subkind() = Forage) AND ((StorageON = true) OR (MobilizationON = true))) // transfer assimilates
         OR (CGCadjustmentAfterCutting = true)) // increase of Canopy development after Cutting
    THEN BEGIN
         // decrease CGC during storage
-        IF ((Crop.subkind = Forage) AND (StorageON = true))
+        IF ((GetCrop_subkind() = Forage) AND (StorageON = true))
            THEN GDDCGCadjusted := GDDCGCadjusted * (1 - FracAssim);
         // increase CGC after cutting
         IF ((CGCadjustmentAfterCutting = true) AND (StorageON = false))
            THEN GDDCGCadjusted := GDDCGCadjusted * (1 + GetManagement_Cuttings_CGCPlus()/100);
         // increase CGC during mobilization
-        IF ((Crop.subkind = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
+        IF ((GetCrop_subkind() = Forage) AND (MobilizationON = true) AND (CGCadjustmentAfterCutting = false))
            THEN BEGIN
                 IF ((CCxSFCD <=0) OR (CCiPrev >= 0.9*CCxSFCD))
                    THEN MaxVal := 0
@@ -2560,13 +2611,13 @@ PROCEDURE DetermineCCxAdjusted(VAR CCxAdjusted : double);  //canopy development
 VAR GDDtfictive : double;
 BEGIN
 //1. find time (GDDtfictive) required to reach CCiPrev (CCi of previous day) with GDDCGCadjusted
-GDDtfictive := RequiredGDD(CCiprev,Crop.CCoAdjusted,CCxSF,GDDCGCadjusted);
+GDDtfictive := RequiredGDD(CCiprev,GetCrop().CCoAdjusted,CCxSF,GDDCGCadjusted);
 
 //2. Get CCxadjusted (reached at end of stretched crop development)
 IF (GDDtfictive > 0)
    THEN BEGIN
         GDDtfictive := GDDtfictive + (GDDtFinalCCx - SumGDDadjCC) + GDDayi;
-        CCxAdjusted := CCatGDDTime(GDDtfictive,Crop.CCoAdjusted,GDDCGCadjusted,CCxSF);
+        CCxAdjusted := CCatGDDTime(GDDtfictive,GetCrop().CCoAdjusted,GDDCGCadjusted,CCxSF);
         END
    ELSE CCxAdjusted := undef_double; // this means CCiActual := CCiPrev
 END; (* DetermineCCxAdjusted *)
@@ -2611,7 +2662,7 @@ IF (Wrelative <= pSenAct)
                 KsSen := 0;
                 END
            ELSE BEGIN
-                KsSen := KsAny(Wrelative,pSenAct,pSenLL,Crop.KsShapeFactorSenescence);
+                KsSen := KsAny(Wrelative,pSenAct,pSenLL,GetCrop().KsShapeFactorSenescence);
                 IF (KsSen > 0.000001)
                    THEN BEGIN
                         //GDDCDCadjusted := GDDCDCTotal * (CCxSFCD/CCxTotal) * (1 - Exp(8*Ln(KsSen)));
@@ -2631,8 +2682,8 @@ END; (* DetermineGDDCDCadjustedWaterStress *)
 PROCEDURE GetNewCCxandGDDCDC(CCiPrev,GDDCDC,CCx : double;
                              VAR CCxAdjusted,GDDCDCadjusted : double);
 BEGIN
-//CCxAdjusted := CCiPrev/(1-0.05*(exp((SumGDDadjCC-GDDayi-Crop.GDDaysToSenescence)*GDDCDC/CCX)-1));
-CCxAdjusted := CCiPrev/(1-0.05*(exp((SumGDDadjCC-GDDayi-Crop.GDDaysToSenescence)*GDDCDC*3.33/(CCX+2.29))-1));
+//CCxAdjusted := CCiPrev/(1-0.05*(exp((SumGDDadjCC-GDDayi-GetCrop().GDDaysToSenescence)*GDDCDC/CCX)-1));
+CCxAdjusted := CCiPrev/(1-0.05*(exp((SumGDDadjCC-GDDayi-GetCrop().GDDaysToSenescence)*GDDCDC*3.33/(CCX+2.29))-1));
 //GDDCDCadjusted := GDDCDC * CCxAdjusted/CCx;
 GDDCDCadjusted := GDDCDC * (CCxAdjusted+2.29)/(CCx+2.29);
 END; (* GetNewCCxandCDC *)
@@ -2640,63 +2691,67 @@ END; (* GetNewCCxandCDC *)
 
 
 BEGIN (* DetermineCCiGDD *)
-IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDaysToHarvest))
+IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetCrop().GDDaysToHarvest))
    THEN CCiActual := 0
    ELSE BEGIN // growing season (once germinated)
         //1. find some parameters
-        CGCGDDSF := Crop.GDDCGC *(1-GetSimulation_EffectStress_RedCGC()/100);
+        CGCGDDSF := GetCrop().GDDCGC *(1-GetSimulation_EffectStress_RedCGC()/100);
         GDDCGCadjusted := CGCGDDSF;
 
         RatDGDD := 1;
-        IF (Crop.GDDaysToFullCanopySF < Crop.GDDaysToSenescence)
-           THEN RatDGDD := (Crop.DaysToSenescence-Crop.DaysToFullCanopySF)/(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+        IF (GetCrop().GDDaysToFullCanopySF < GetCrop().GDDaysToSenescence)
+           THEN RatDGDD := (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopySF)/(GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopySF);
 
         CCxSF := CCxTotal*(1-GetSimulation_EffectStress_RedCCX()/100);
         // maximum canopy cover than can be reached (considering soil fertility/salinity, weed stress)
-        IF (SumGDDadjCC <= Crop.GDDaysToFullCanopySF)
+        IF (SumGDDadjCC <= GetCrop().GDDaysToFullCanopySF)
            THEN CCxSFCD := CCxSF // no canopy decline before max canopy can be reached
            ELSE BEGIN // canopy decline due to soil fertility
-                IF (SumGDDadjCC < Crop.GDDaysToSenescence)
+                IF (SumGDDadjCC < GetCrop().GDDaysToSenescence)
                    THEN BEGIN
-                        CCxSFCD := CCiNoWaterStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                            Crop.DaysToFullCanopySF,Crop.DaysToSenescence,Crop.DaysToHarvest,Crop.GDDaysToGermination,
-                            Crop.GDDaysToFullCanopySF,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                            CCoTotal,CCxTotal,Crop.CGC,Crop.GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
+                        CCxSFCD := CCiNoWaterStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                            GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,GetCrop().GDDaysToGermination,
+                            GetCrop().GDDaysToFullCanopySF,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                            CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
                             GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),
-                            Crop.ModeCycle);
+                            GetCrop().ModeCycle);
                         END
-                   ELSE CCxSFCD := CCxSF - (RatDGDD*GetSimulation_EffectStress_CDecline()/100) * (Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF);
+                   ELSE CCxSFCD := CCxSF - (RatDGDD*GetSimulation_EffectStress_CDecline()/100) * (GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopySF);
                 IF (CCxSFCD < 0) THEN CCxSFCD := 0;
                 END;
         StressLeaf := undef_int;
-        IF ((SumGDDadjCC = Crop.GDDaysToGermination) AND (Crop.DaysToCCini = 0)) THEN CCiPrev := CCoTotal;
+        IF ((SumGDDadjCC = GetCrop().GDDaysToGermination) AND (GetCrop().DaysToCCini = 0)) THEN CCiPrev := CCoTotal;
 
         // time of potential vegetative growth
-        GDDtFinalCCx := Crop.GDDaysToSenescence; // non determinant crop
-        IF ((Crop.subkind = Grain) AND (Crop.DeterminancyLinked = true)) THEN // determinancy
+        GDDtFinalCCx := GetCrop().GDDaysToSenescence; // non determinant crop
+        IF ((GetCrop_subkind() = Grain) AND (GetCrop().DeterminancyLinked = true)) THEN // determinancy
            BEGIN
            //reduce GDDtFinalCCx in f(determinancy of crop)
-           IF (Crop.DaysToCCini <> 0)
+           IF (GetCrop().DaysToCCini <> 0)
               THEN BEGIN // regrowth
-                   GDDtFinalCCx := Crop.GDDaysToFullCanopy
-                       + ROUND(GDDayFraction * (Crop.GDDaysToFlowering + (Crop.GDDLengthFlowering/2)
-                          +GDDTadj+Crop.GDDaysToGermination-Crop.GDDaysToFullCanopy)) // slow down
+                   GDDtFinalCCx := GetCrop().GDDaysToFullCanopy
+                       + ROUND(GDDayFraction * (GetCrop().GDDaysToFlowering + (GetCrop().GDDLengthFlowering/2)
+                          +GDDTadj+GetCrop().GDDaysToGermination-GetCrop().GDDaysToFullCanopy)) // slow down
                    END
               ELSE BEGIN // sown or transplant
-                   GDDtFinalCCx := Crop.GDDaysToFlowering + ROUND(Crop.GDDLengthFlowering/2);
+                   GDDtFinalCCx := GetCrop().GDDaysToFlowering + ROUND(GetCrop().GDDLengthFlowering/2);
                    END;
-           IF (GDDtFinalCCx > Crop.GDDaysToSenescence) THEN GDDtFinalCCx := Crop.GDDaysToSenescence;
+           IF (GDDtFinalCCx > GetCrop().GDDaysToSenescence) THEN GDDtFinalCCx := GetCrop().GDDaysToSenescence;
            END;
 
         //Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
-        AdjustpLeafToETo(ETo,Crop.pLeafAct,pLeafLLAct);
+        Crop_pLeafAct_temp := GetCrop().pLeafAct;
+        AdjustpLeafToETo(ETo,Crop_pLeafAct_temp,pLeafLLAct);
+        SetCrop_pLeafAct(Crop_pLeafAct_temp);
         WithBeta := true;
-        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+        Crop_pSenAct_temp := GetCrop().pSenAct;
+        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+        SetCrop_pSenAct(Crop_pSenAct_temp);
 
         //2. Canopy can still develop (stretched to GDDtFinalCCx)
         IF (SumGDDadjCC < GDDtFinalCCx)
            THEN BEGIN //Canopy can stil develop (stretched to GDDtFinalCCx)
-                IF ((CCiPrev <= Crop.CCoAdjusted) OR (SumGDDadjCC <= GDDayi)
+                IF ((CCiPrev <= GetCrop().CCoAdjusted) OR (SumGDDadjCC <= GDDayi)
                    OR ((GetSimulation_ProtectedSeedling() = true) AND (CCiPrev <= (1.25 * CCoTotal))))
                    //2.a First day or very small CC as a result of senescence (no adjustment for leaf stress)
                    THEN BEGIN
@@ -2704,16 +2759,16 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                          IF (GetSimulation_ProtectedSeedling() = true)
                            THEN BEGIN
                                 CCiActual :=
-                                CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                                       Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                                       Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                                       CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                                       SumGDDadjCC,Crop.ModeCycle,
+                                CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                                       GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                                       GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                                       CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                                       SumGDDadjCC,GetCrop().ModeCycle,
                                                        GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
                                 IF (CCiActual > (1.25 * CCoTotal)) THEN SetSimulation_ProtectedSeedling(false);
                                 END
                            ELSE BEGIN
-                                CCiActual := Crop.CCoAdjusted*Exp(CGCGDDSF * GDDayi);
+                                CCiActual := GetCrop().CCoAdjusted*Exp(CGCGDDSF * GDDayi);
                                 END;
                         END
                    //2.b CC > CCo
@@ -2723,42 +2778,44 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                 DetermineGDDCGCadjusted(GDDCGCadjusted);
                                 IF (GDDCGCadjusted > 0.00000001)
                                    THEN BEGIN // Crop.GDDCGC or GDDCGCadjusted > 0
-                                        DetermineCCxAdjusted(Crop.CCxAdjusted);
-                                        IF (Crop.CCxAdjusted < 0)
+                                        Crop_CCxAdjusted_temp := GetCrop().CCxAdjusted;
+                                        DetermineCCxAdjusted(Crop_CCxAdjusted_temp);
+                                        SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp);
+                                        IF (GetCrop().CCxAdjusted < 0)
                                            THEN CCiActual := CCiPrev
                                            ELSE IF (ABS(CCiPrev - 0.97999*CCxSF) < 0.001)
                                                    //THEN CCiActual := CCxSF
-                                                   THEN CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                                                         Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                                                         Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                                                         CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                                                         SumGDDadjCC,Crop.ModeCycle,
+                                                   THEN CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                                                         GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                                                         GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                                                         CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                                                         SumGDDadjCC,GetCrop().ModeCycle,
                                                                          GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX())
                                                    ELSE BEGIN
-                                                        GDDtTemp := RequiredGDD(CCiprev,Crop.CCoAdjusted,Crop.CCxAdjusted,GDDCGCadjusted);
+                                                        GDDtTemp := RequiredGDD(CCiprev,GetCrop().CCoAdjusted,GetCrop().CCxAdjusted,GDDCGCadjusted);
                                                         IF (GDDtTemp < 0)
                                                            THEN CCiActual := CCiPrev
                                                            ELSE BEGIN
                                                                 GDDtTemp := GDDtTemp + GDDayi;
-                                                                CCiActual := CCatGDDTime(GDDtTemp,Crop.CCoAdjusted,GDDCGCadjusted,Crop.CCxAdjusted)
+                                                                CCiActual := CCatGDDTime(GDDtTemp,GetCrop().CCoAdjusted,GDDCGCadjusted,GetCrop().CCxAdjusted)
                                                                 END;
                                                         END;
                                         END
                                    ELSE BEGIN // GDDCGCadjusted = 0 - too dry for leaf expansion
                                         CCiActual := CCiPrev;
-                                        IF (CCiActual > Crop.CCoAdjusted)
-                                           THEN Crop.CCoAdjusted := CCoTotal
-                                           ELSE Crop.CCoAdjusted := CCiActual;
+                                        IF (CCiActual > GetCrop().CCoAdjusted)
+                                           THEN SetCrop_CCoAdjusted(CCoTotal)
+                                           ELSE SetCrop_CCoAdjusted(CCiActual);
                                         END;
                                 END
                            ELSE BEGIN
-                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                     SumGDDadjCC,Crop.ModeCycle,
+                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                     SumGDDadjCC,GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
-                                Crop.CCoAdjusted := CCoTotal;
+                                SetCrop_CCoAdjusted(CCoTotal);
                                 StressLeaf := -33; // maximum canopy is reached;
                                 CGCadjustmentAfterCutting := false;   // no increase of Canopy development after Cutting
                                 END;
@@ -2769,34 +2826,34 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                            CGCadjustmentAfterCutting := false;  // no increase of Canopy development after Cutting
                            END;
                         END;
-                Crop.CCxAdjusted := CCiActual;
+                SetCrop_CCxAdjusted(CCiActual);
                 END
 
         //3. Canopy can no longer develop (Mid-season (from tFinalCCx) or Late season stage)
            ELSE BEGIN
                 StressLeaf := -33; // maximum canopy is reached;
                 CGCadjustmentAfterCutting := false;   // no increase of Canopy development after Cutting
-                IF (Crop.CCxAdjusted < 0) THEN Crop.CCxAdjusted := CCiPrev;
+                IF (GetCrop().CCxAdjusted < 0) THEN SetCrop_CCxAdjusted(CCiPrev);
 
-                IF (SumGDDadjCC < Crop.GDDaysToSenescence)
+                IF (SumGDDadjCC < GetCrop().GDDaysToSenescence)
                 // mid-season
                    THEN BEGIN
-                        IF (Crop.CCxAdjusted > 0.97999*CCxSF)
+                        IF (GetCrop().CCxAdjusted > 0.97999*CCxSF)
                            THEN BEGIN
-                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,CCxTotal,Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                     SumGDDadjCC,Crop.ModeCycle,
+                                CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,CCxTotal,GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                     SumGDDadjCC,GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 END
-                           ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,(Crop.CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),
-                                     Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                     SumGDDadjCC,Crop.ModeCycle,
+                           ELSE CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,(GetCrop().CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),
+                                     GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                     SumGDDadjCC,GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
                         IF (CCiActual > CCxSFCD) THEN CCiActual := CCxSFCD;
                         END
@@ -2804,36 +2861,36 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                    ELSE BEGIN
                         (*
                         StressSenescence := undef_int; // to avoid display of zero stress in late season
-                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
-                        GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,Crop.CCxAdjusted);
-                        CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,(Crop.CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),
-                                     Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                     SumGDDadjCC,Crop.ModeCycle,
+                        IF (GetCrop().CCxAdjusted > CCxSFCD) THEN SetCrop_CCxAdjusted(CCxSFCD);
+                        GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,GetCrop().CCxAdjusted);
+                        CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+Simulation.DelayedDays+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,(GetCrop().CCxAdjusted/(1-Simulation.EffectStress.RedCCx/100)),
+                                     GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                     SumGDDadjCC,GetCrop_ModeCycle(),
                                      Simulation.EffectStress.RedCGC,Simulation.EffectStress.RedCCX);
                         //IF (CCiActual > CCxSFCD) THEN CCiActual := CCxSFCD; // added March 2017 *)
 
                         StressSenescence := undef_int; // to avoid display of zero stress in late season
-                        IF (Crop.CCxAdjusted > CCxSFCD) THEN Crop.CCxAdjusted := CCxSFCD;
-                        IF (Crop.CCxAdjusted < 0.01)
+                        IF (GetCrop().CCxAdjusted > CCxSFCD) THEN SetCrop_CCxAdjusted(CCxSFCD);
+                        IF (GetCrop().CCxAdjusted < 0.01)
                            THEN CCiActual := 0
                            ELSE BEGIN  // calculate CC in late season
                                 // CCibis = CC which canopy declines (soil fertility/salinity stress) further in late season
                                 CCibis := CCxSF - (RatDGDD*GetSimulation_EffectStress_CDecline()/100)
-                                          * (exp(2*Ln(SumGDDadjCC - Crop.GDDaysToFullCanopySF))
-                                                /(Crop.GDDaysToSenescence-Crop.GDDaysToFullCanopySF));
+                                          * (exp(2*Ln(SumGDDadjCC - GetCrop().GDDaysToFullCanopySF))
+                                                /(GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopySF));
                                 IF (CCibis < 0)
                                    THEN CCiActual := 0
                                    ELSE BEGIN
                                         // CCiActual = CC with natural senescence in late season
-                                        GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,Crop.CCxAdjusted);
-                                        IF (SumGDDadjCC < (Crop.GDDaysToSenescence + LengthCanopyDecline(Crop.CCxAdjusted,GDDCDCadjusted)))
+                                        GDDCDCadjusted := GetGDDCDCadjustedNoStress(CCxTotal,GDDCDCTotal,GetCrop().CCxAdjusted);
+                                        IF (SumGDDadjCC < (GetCrop().GDDaysToSenescence + LengthCanopyDecline(GetCrop().CCxAdjusted,GDDCDCadjusted)))
                                             THEN BEGIN
-                                                 CCiActual := Crop.CCxAdjusted *
-                                                   (1 - 0.05 * (exp((SumGDDadjCC-Crop.GDDaysToSenescence)
-                                                                 *3.33* GDDCDCadjusted/(Crop.CCxAdjusted + 2.29))-1));
+                                                 CCiActual := GetCrop().CCxAdjusted *
+                                                   (1 - 0.05 * (exp((SumGDDadjCC-GetCrop().GDDaysToSenescence)
+                                                                 *3.33* GDDCDCadjusted/(GetCrop().CCxAdjusted + 2.29))-1));
                                                  // CCiActual becomes CCibis, when canopy decline is more severe
                                                  IF (CCibis < CCiActual) THEN CCiActual := CCibis;
                                                  END
@@ -2845,22 +2902,24 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
 
 
         //4. Canopy senescence due to water stress ?
-        IF ((SumGDDadjCC < Crop.GDDaysToSenescence) // not yet late season stage
+        IF ((SumGDDadjCC < GetCrop().GDDaysToSenescence) // not yet late season stage
            OR (TimeSenescence > 0)) // in late season with ongoing early senesence  (TimeSenescence in GDD)
            THEN BEGIN
                 StressSenescence := 0;
                 WithBeta := true;
-                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop.pSenAct);
+                Crop_pSenAct_temp := GetCrop().pSenAct;
+                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+                SetCrop_pSenAct(Crop_pSenAct_temp);
                 KsRED := 1; // effect of soil salinity on the threshold for senescence
                 IF (GetSimulation_SWCtopSoilConsidered() = true)
                    THEN BEGIN // top soil is relative wetter than total root zone
-                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - Crop.pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
+                           IF ((GetRootZoneWC().ZtopAct < (GetRootZoneWC().ZtopFC - GetCrop().pSenAct*KsRED*(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP)))
                            AND (GetSimulation_ProtectedSeedling() = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
                         END
                    ELSE BEGIN
-                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - Crop.pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
+                        IF ((GetRootZoneWC().Actual < (GetRootZoneWC().FC - GetCrop().pSenAct*KsRED*(GetRootZoneWC().FC - GetRootZoneWC().WP)))
                            AND (GetSimulation_ProtectedSeedling() = false))
                                THEN TheSenescenceON := true
                                ELSE TheSenescenceON := false;
@@ -2875,27 +2934,27 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                         DetermineGDDCDCadjustedWaterStress(GDDCDCadjusted,KsSen);
                         IF (CCiTopEarlySen < 0.001)
                            THEN BEGIN
-                                IF ((GetSimulation_SumEToStress() > Crop.SumEToDelaySenescence)
-                                   OR (Crop.SumEToDelaySenescence = 0))
+                                IF ((GetSimulation_SumEToStress() > GetCrop().SumEToDelaySenescence)
+                                   OR (GetCrop().SumEToDelaySenescence = 0))
                                    THEN CCiSen := 0 // no crop anymore
                                    ELSE BEGIN
-                                        IF (CCdormant > Crop.CCo)
-                                           THEN CCiSen := Crop.CCo + (1 - GetSimulation_SumEToStress()/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
-                                           ELSE CCiSen := Crop.CCo;
+                                        IF (CCdormant > GetCrop().CCo)
+                                           THEN CCiSen := GetCrop().CCo + (1 - GetSimulation_SumEToStress()/GetCrop().SumEToDelaySenescence)*(CCdormant - GetCrop().CCo)
+                                           ELSE CCiSen := GetCrop().CCo;
                                         END;
                                 END
                            ELSE BEGIN
                                 IF (((TimeSenescence*GDDCDCadjusted*3.33)/(CCiTopEarlySen+2.29) > 100) // e power too large and in any case CCisen << 0
                                       OR (CCiprev >= 1.05 * CCiTopEarlySen)) // Ln of negative or zero value
                                       THEN BEGIN
-                                           IF ((GetSimulation_SumEToStress() > Crop.SumEToDelaySenescence)
-                                              OR (Crop.SumEToDelaySenescence = 0))
+                                           IF ((GetSimulation_SumEToStress() > GetCrop().SumEToDelaySenescence)
+                                              OR (GetCrop().SumEToDelaySenescence = 0))
                                               THEN CCiSen := 0 // no crop anymore
-                                              //ELSE CCiSen := Crop.CCo;
+                                              //ELSE CCiSen := GetCrop().CCo;
                                               ELSE BEGIN
-                                                   IF (CCdormant > Crop.CCo)
-                                                      THEN CCiSen := Crop.CCo + (1 - GetSimulation_SumEToStress()/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
-                                                      ELSE CCiSen := Crop.CCo;
+                                                   IF (CCdormant > GetCrop().CCo)
+                                                      THEN CCiSen := GetCrop().CCo + (1 - GetSimulation_SumEToStress()/GetCrop().SumEToDelaySenescence)*(CCdormant - GetCrop().CCo)
+                                                      ELSE CCiSen := GetCrop().CCo;
                                                    END;
                                            END
                                       ELSE BEGIN
@@ -2906,47 +2965,49 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                                            CCiSen := CCiTopEarlySen * (1 - 0.05*(exp((GDDtTemp+GDDayi)*GDDCDCadjusted*3.33/(CCiTopEarlySen+2.29))-1));
                                            END;
                                 IF (CCiSen < 0) THEN CCiSen := 0;
-                                IF ((Crop.SumEToDelaySenescence > 0) AND (GetSimulation_SumEToStress() <= Crop.SumEToDelaySenescence)) THEN
+                                IF ((GetCrop().SumEToDelaySenescence > 0) AND (GetSimulation_SumEToStress() <= GetCrop().SumEToDelaySenescence)) THEN
                                    BEGIN
-                                   IF ((CCiSen < Crop.CCo) OR (CCiSen < CCdormant)) THEN
+                                   IF ((CCiSen < GetCrop().CCo) OR (CCiSen < CCdormant)) THEN
                                       BEGIN
-                                      IF (CCdormant > Crop.CCo)
-                                         THEN CCiSen := Crop.CCo + (1 - GetSimulation_SumEToStress()/Crop.SumEToDelaySenescence)*(CCdormant - Crop.CCo)
-                                         ELSE CCiSen := Crop.CCo;
+                                      IF (CCdormant > GetCrop().CCo)
+                                         THEN CCiSen := GetCrop().CCo + (1 - GetSimulation_SumEToStress()/GetCrop().SumEToDelaySenescence)*(CCdormant - GetCrop().CCo)
+                                         ELSE CCiSen := GetCrop().CCo;
                                       END;
                                    END;
                                 END;
-                        IF (SumGDDadjCC < Crop.GDDaysToSenescence)
+                        IF (SumGDDadjCC < GetCrop().GDDaysToSenescence)
                            THEN BEGIN // before late season
                                 IF (CCiSen > CCxSFCD) THEN CCiSen := CCxSFCD;
                                 CCiActual := CCiSen;
                                 IF (CCiActual > CCiPrev) THEN CCiActual := CCiPrev; // to avoid jump in CC
                                                          // when GDDCGCadjusted increases as a result of watering
-                                Crop.CCxAdjusted := CCiActual;
+                                SetCrop_CCxAdjusted(CCiActual);
                                 IF (CCiActual < CCoTotal)
-                                   THEN Crop.CCoAdjusted := CCiActual
-                                   ELSE Crop.CCoAdjusted := CCoTotal;
+                                   THEN SetCrop_CCoAdjusted(CCiActual)
+                                   ELSE SetCrop_CCoAdjusted(CCoTotal);
                                 END
                            ELSE BEGIN // in late season
                                 IF (CCiSen < CCiActual) THEN CCiActual := CCiSen;
-                                //Crop.CCxAdjusted := CCiTopEarlySen;
-                                //Crop.CCxAdjusted := CCiActual;
+                                //SetCrop_CCxAdjusted(CCiTopEarlySen);
+                                //SetCrop_CCxAdjusted(CCiActual);
                                 END;
-                        //IF (CCiSen <= Crop.CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
+                        //IF (CCiSen <= GetCrop().CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
                         IF ((ROUND(10000*CCiSen) <= (10000*CCdormant))
-                           OR (ROUND(10000*CCiSen) <= ROUND(10000*Crop.CCo)))
+                           OR (ROUND(10000*CCiSen) <= ROUND(10000*GetCrop().CCo)))
                               THEN SetSimulation_SumEToStress(GetSimulation_SumEToStress() + ETo);
                         END
                    ELSE BEGIN // no water stress, resulting in canopy senescence
-                        IF ((TimeSenescence > 0) AND (SumGDDadjCC > Crop.GDDaysToSenescence)) THEN
+                        IF ((TimeSenescence > 0) AND (SumGDDadjCC > GetCrop().GDDaysToSenescence)) THEN
                            BEGIN  //rewatering in late season of an early declining canopy
-                           GetNewCCxandGDDCDC(CCiprev,GDDCDCTotal,CCxSF,Crop.CCxAdjusted,GDDCDCadjusted);
-                           CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),Crop.DaysToGermination,
-                                     Crop.DaysToSenescence,Crop.DaysToHarvest,
-                                     Crop.GDDaysToGermination,Crop.GDDaysToSenescence,Crop.GDDaysToHarvest,
-                                     CCoTotal,(Crop.CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),
-                                     Crop.CGC,CDCTotal,Crop.GDDCGC,GDDCDCadjusted,
-                                     SumGDDadjCC,Crop.ModeCycle,
+                           Crop_CCxAdjusted_temp := GetCrop().CCxAdjusted;
+                           GetNewCCxandGDDCDC(CCiprev,GDDCDCTotal,CCxSF,Crop_CCxAdjusted_temp,GDDCDCadjusted);
+                           SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp);
+                           CCiActual := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
+                                     GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
+                                     GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
+                                     CCoTotal,(GetCrop().CCxAdjusted/(1-GetSimulation_EffectStress_RedCCx()/100)),
+                                     GetCrop().CGC,CDCTotal,GetCrop().GDDCGC,GDDCDCadjusted,
+                                     SumGDDadjCC,GetCrop().ModeCycle,
                                      GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
                            //IF (CCiActual > CCxSFCD) THEN CCiActual := CCxSFCD; // added March 2017
                            END;
@@ -2957,11 +3018,11 @@ IF ((SumGDDadjCC <= Crop.GDDaysToGermination) OR (ROUND(SumGDDadjCC) > Crop.GDDa
                 END;
 
         //5. Adjust Crop.CCxWithered - required for correction of Transpiration of dying green canopy
-        IF (CCiActual > Crop.CCxWithered) THEN Crop.CCxWithered := CCiActual;
-        //IF (Crop.CCxWithered > CCxSFCD) THEN Crop.CCxWithered := CCxSFCD; - OUT 15/10/2008
+        IF (CCiActual > GetCrop().CCxWithered) THEN SetCrop_CCxWithered(CCiActual);
+        //IF (Crop.CCxWithered > CCxSFCD) THEN SetCrop_CCxWithered(CCxSFCD); - OUT 15/10/2008
 
         // 6. correction for late-season stage for rounding off errors
-         IF (SumGDDadjCC > Crop.GDDaysToSenescence) THEN
+         IF (SumGDDadjCC > GetCrop().GDDaysToSenescence) THEN
             IF (CCiActual > CCiprev) THEN CCiActual := CCiprev;
 
         // 7. no crop as a result of fertiltiy and/or water stress
@@ -2994,10 +3055,10 @@ BEGIN
 // 1. Mulches (reduction of EpotTot to Epot)
 IF (SurfaceStorage <= 0.000001)
    THEN BEGIN
-        IF (dayi < Crop.Day1) // before season
+        IF (dayi < GetCrop().Day1) // before season
            THEN Epot := EpotTot * (1 - (GetManagement_EffectMulchOffS()/100)*(GetManagement_SoilCoverBefore()/100))
            ELSE BEGIN
-                IF (dayi < Crop.Day1+Crop.DaysToHarvest) // in season
+                IF (dayi < GetCrop().Day1+GetCrop().DaysToHarvest) // in season
                    THEN Epot := EpotTot * (1 - (GetManagement_EffectMulchInS()/100)*(GetManagement_Mulch()/100))
                    ELSE Epot := EpotTot * (1 - (GetManagement_EffectMulchOffS()/100)*(GetManagement_SoilCoverAfter()/100));
                 END;
@@ -3008,30 +3069,30 @@ IF (SurfaceStorage <= 0.000001)
 IF (Irrigation > 0) THEN
    BEGIN
    // before season
-   IF ((dayi < Crop.Day1) AND (SimulParam.IrriFwOffSeason < 100))
+   IF ((dayi < GetCrop().Day1) AND (GetSimulParam_IrriFwOffSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    // in season
-   IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (SimulParam.IrriFwInSeason < 100))
+   IF ((dayi >= GetCrop().Day1) AND (dayi < GetCrop().Day1+GetCrop().DaysToHarvest) AND (GetSimulParam_IrriFwInSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    // after season
-   IF ((dayi >= Crop.Day1+Crop.DaysToHarvest)AND (SimulParam.IrriFwOffSeason < 100))
+   IF ((dayi >= GetCrop().Day1+GetCrop().DaysToHarvest)AND (GetSimulParam_IrriFwOffSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    END;
 IF ((Rain > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
-IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest) AND (GetIrriMode() = Inet))
+IF ((dayi >= GetCrop().Day1) AND (dayi < GetCrop().Day1+GetCrop().DaysToHarvest) AND (GetIrriMode() = Inet))
    THEN EvapoEntireSoilSurface := true;
 
 // 2b. Correction for Wetted surface by Irrigation
 IF (EvapoEntireSoilSurface = false) THEN
    BEGIN
-   IF ((dayi >= Crop.Day1) AND (dayi < Crop.Day1+Crop.DaysToHarvest))
+   IF ((dayi >= GetCrop().Day1) AND (dayi < GetCrop().Day1+GetCrop().DaysToHarvest))
       THEN BEGIN // in season
-           EvapWCsurface := EvapWCsurface * (SimulParam.IrriFwInSeason/100);
-           EpotIrri := EpotTot * (SimulParam.IrriFwInSeason/100);
+           EvapWCsurface := EvapWCsurface * (GetSimulParam_IrriFwInSeason()/100);
+           EpotIrri := EpotTot * (GetSimulParam_IrriFwInSeason()/100);
            END
       ELSE BEGIN // off-season
-           EvapWCsurface := EvapWCsurface * (SimulParam.IrriFwOffSeason/100);
-           EpotIrri := EpotTot * (SimulParam.IrriFwOffSeason/100);
+           EvapWCsurface := EvapWCsurface * (GetSimulParam_IrriFwOffSeason()/100);
+           EpotIrri := EpotTot * (GetSimulParam_IrriFwOffSeason()/100);
            END;
    IF (Eact > EpotIrri) THEN EpotIrri := Eact;  // Eact refers to the previous day
    IF (EpotIrri < Epot) THEN Epot := Epotirri;
@@ -3050,20 +3111,20 @@ compi := 0;
 WHILE ((ABS(Zlayer-Ztot) > 0.0001) AND (compi < NrCompartments)) DO
       BEGIN
       compi := compi + 1;
-      IF ((Ztot + Compartment[compi].Thickness) > Zlayer)
-         THEN fracZ := (Zlayer - Ztot)/(Compartment[compi].Thickness)
+      IF ((Ztot + GetCompartment_Thickness(compi)) > Zlayer)
+         THEN fracZ := (Zlayer - Ztot)/(GetCompartment_Thickness(compi))
          ELSE fracZ := 1;
       CASE AtTheta OF
-           AtSAT  : Wx := Wx + 10 * SoilLayer[Compartment[compi].Layer].SAT * fracZ * Compartment[compi].Thickness
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-           AtFC   : Wx := Wx + 10 * SoilLayer[Compartment[compi].Layer].FC * fracZ * Compartment[compi].Thickness
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-           AtWP   : Wx := Wx + 10 * SoilLayer[Compartment[compi].Layer].WP * fracZ * Compartment[compi].Thickness
-                    * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-           else Wx := Wx + 1000 * Compartment[compi].Theta * fracZ * Compartment[compi].Thickness
-                      * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+           AtSAT  : Wx := Wx + 10 * SoilLayer[GetCompartment_Layer(compi)].SAT * fracZ * GetCompartment_Thickness(compi)
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           AtFC   : Wx := Wx + 10 * SoilLayer[GetCompartment_Layer(compi)].FC * fracZ * GetCompartment_Thickness(compi)
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           AtWP   : Wx := Wx + 10 * SoilLayer[GetCompartment_Layer(compi)].WP * fracZ * GetCompartment_Thickness(compi)
+                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           else Wx := Wx + 1000 * GetCompartment_Theta(compi) * fracZ * GetCompartment_Thickness(compi)
+                      * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
            end;
-      Ztot := Ztot + fracZ * Compartment[compi].Thickness;
+      Ztot := Ztot + fracZ * GetCompartment_Thickness(compi);
       END;
 WCEvapLayer := Wx;
 END; (* WCEvapLayer *)
@@ -3124,13 +3185,13 @@ compi := 0;
 Ztot := 0;
 REPEAT
   compi := compi + 1;
-  IF ((Ztot + Compartment[compi].Thickness) > Zact)
-     THEN fracZ := (Zact-Ztot)/Compartment[compi].Thickness
+  IF ((Ztot + GetCompartment_Thickness(compi)) > Zact)
+     THEN fracZ := (Zact-Ztot)/GetCompartment_Thickness(compi)
      ELSE fracZ := 1;
-  Wairdry := 10 * SoilLayer[Compartment[compi].Layer].WP/2 * Compartment[compi].Thickness
-             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-  Wx := 1000 * Compartment[compi].Theta * Compartment[compi].Thickness
-        * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+  Wairdry := 10 * SoilLayer[GetCompartment_Layer(compi)].WP/2 * GetCompartment_Thickness(compi)
+             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+  Wx := 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
+        * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
   AvailableW := (Wx-Wairdry)*fracZ;
   StillToExtract := (EvapToLose-EvapLost);
   IF (AvailableW > 0) THEN
@@ -3146,10 +3207,10 @@ REPEAT
              EvapLost := EvapLost + AvailableW;
              Wx := Wx - AvailableW;
              END;
-     Compartment[compi].Theta := Wx/
-        (1000*Compartment[compi].Thickness*(1-SoilLayer[Compartment[compi].Layer].GravelVol/100));
+     SetCompartment_Theta(compi, Wx/
+        (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
      END;
-  Ztot := Ztot + fracZ * (Compartment[compi].Thickness);
+  Ztot := Ztot + fracZ * (GetCompartment_Thickness(compi));
 UNTIL ((Compi >= NrCompartments)
        OR (Abs(StillToExtract) < 0.0000001)
        OR (Ztot >= 0.999999*Zact));
@@ -3223,13 +3284,13 @@ BEGIN (* CalculateSoilEvaporationStage2 *)
 
 // Step 1. Conditions before soil evaporation
 compi := 1;
-MaxSaltExDepth := Compartment[1].Thickness;
-WHILE ((MaxSaltExDepth < SimulParam.EvapZmax) AND (compi < NrCompartments)) DO
+MaxSaltExDepth := GetCompartment_Thickness(1);
+WHILE ((MaxSaltExDepth < GetSimulParam_EvapZmax()) AND (compi < NrCompartments)) DO
   BEGIN
   compi := compi + 1;
-  ThetaIniEvap[compi] := Compartment[compi].theta;
-  SCellIniEvap[compi] := ActiveCells(Compartment[compi]);
-  MaxSaltExDepth := MaxSaltExDepth + Compartment[compi].Thickness;
+  ThetaIniEvap[compi] := GetCompartment_Theta(compi);
+  SCellIniEvap[compi] := ActiveCells(GetCompartment_i(compi));
+  MaxSaltExDepth := MaxSaltExDepth + GetCompartment_Thickness(compi);
   END;
 
 // Step 2. Soil evaporation
@@ -3241,9 +3302,9 @@ FOR i := 1 TO NrOfStepsInDay DO
     AtTheta := AtAct;
     Wact := WCEvapLayer(GetSimulation_EvapZ(),AtTheta);
     Wrel := (Wact-Wlower)/(Wupper-Wlower);
-    IF (SimulParam.EvapZmax > EvapZmin) THEN
-       WHILE ((Wrel < (FractionWtoExpandZ*(SimulParam.EvapZmax-(100*GetSimulation_EvapZ()))/(SimulParam.EvapZmax-EvapZmin)))
-          AND (GetSimulation_EvapZ() < SimulParam.EvapZmax/100)) DO
+    IF (GetSimulParam_EvapZmax() > EvapZmin) THEN
+       WHILE ((Wrel < (FractionWtoExpandZ*(GetSimulParam_EvapZmax()-(100*GetSimulation_EvapZ()))/(GetSimulParam_EvapZmax()-EvapZmin)))
+          AND (GetSimulation_EvapZ() < GetSimulParam_EvapZmax()/100)) DO
           BEGIN
           SetSimulation_EvapZ(GetSimulation_EvapZ() + 0.001); // add 1 mm
           GetLimitsEvapLayer(GetSimulation_EvapStartStg2(),Wupper,Wlower);
@@ -3251,7 +3312,7 @@ FOR i := 1 TO NrOfStepsInDay DO
           Wact := WCEvapLayer(GetSimulation_EvapZ(),AtTheta);
           Wrel := (Wact-Wlower)/(Wupper-Wlower);
           END;
-    Kr := SoilEvaporationReductionCoefficient(Wrel,SimulParam.EvapDeclineFactor);
+    Kr := SoilEvaporationReductionCoefficient(Wrel,GetSimulParam_EvapDeclineFactor());
     IF (Abs(ETo - 5) > 0.01) THEN // correction for evaporative demand
        BEGIN
        // adjustment of Kr (not considered yet)
@@ -3261,40 +3322,40 @@ FOR i := 1 TO NrOfStepsInDay DO
     END;
 
 // Step 3. Upward salt transport
-SX := SaltTransportFactor(compartment[1].theta);
+SX := SaltTransportFactor(Getcompartment_Theta(1));
 IF (SX > 0.01) THEN
    BEGIN
-   SCell1 := ActiveCells(Compartment[1]);
+   SCell1 := ActiveCells(GetCompartment_i(1));
    compi := 2;
-   Zi := Compartment[1].Thickness + Compartment[2].Thickness;
+   Zi := GetCompartment_Thickness(1) + GetCompartment_Thickness(2);
    WHILE ((ROUND(Zi*100) <= ROUND(MaxSaltExDepth*100)) AND (compi <= NrCompartments)
-          AND (ROUND(ThetaIniEvap[compi]*100000) <> ROUND(Compartment[compi].theta*100000))) DO
+          AND (ROUND(ThetaIniEvap[compi]*100000) <> ROUND(GetCompartment_theta(compi)*100000))) DO
       BEGIN  // move salt to compartment 1
-      SCellEnd := ActiveCells(Compartment[compi]);
+      SCellEnd := ActiveCells(GetCompartment_i(compi));
       BoolCell := false;
-      UL := SoilLayer[Compartment[compi].Layer].UL;
-      DeltaX := SoilLayer[Compartment[compi].Layer].Dx;
+      UL := SoilLayer[GetCompartment_Layer(compi)].UL;
+      DeltaX := SoilLayer[GetCompartment_Layer(compi)].Dx;
       REPEAT
       IF (SCellEnd < SCellIniEvap[compi])
          THEN BEGIN
-              SaltDisplaced := SX * Compartment[compi].Salt[SCellIniEvap[compi]];
-              Compartment[compi].Salt[SCellIniEvap[compi]] := Compartment[compi].Salt[SCellIniEvap[compi]] - SaltDisplaced;
+              SaltDisplaced := SX * GetCompartment_Salt(compi, SCellIniEvap[compi]);
+              SetCompartment_Salt(compi, SCellIniEvap[compi], GetCompartment_Salt(compi, SCellIniEvap[compi]) - SaltDisplaced);
               SCellIniEvap[compi] := SCellIniEvap[compi] - 1;
               ThetaIniEvap[compi] := DeltaX * SCellIniEvap[compi];
               END
          ELSE BEGIN
               BoolCell := true;
-              IF (SCellEnd = SoilLayer[Compartment[compi].Layer].SCP1)
-                 THEN SaltDisplaced := SX * Compartment[compi].Salt[SCellIniEvap[compi]]
-                      * (ThetaIniEvap[compi] - Compartment[compi].theta)/(ThetaIniEvap[compi]-UL)
-                 ELSE SaltDisplaced := SX * Compartment[compi].Salt[SCellIniEvap[compi]]
-                      * (ThetaIniEvap[compi] - Compartment[compi].theta)/(ThetaIniEvap[compi]-(DeltaX*(SCellEnd-1)));
-              Compartment[compi].Salt[SCellIniEvap[compi]] := Compartment[compi].Salt[SCellIniEvap[compi]] - SaltDisplaced;
+              IF (SCellEnd = SoilLayer[GetCompartment_Layer(compi)].SCP1)
+                 THEN SaltDisplaced := SX * GetCompartment_Salt(compi, SCellIniEvap[compi])
+                      * (ThetaIniEvap[compi] - GetCompartment_theta(compi))/(ThetaIniEvap[compi]-UL)
+                 ELSE SaltDisplaced := SX * GetCompartment_Salt(compi, SCellIniEvap[compi])
+                      * (ThetaIniEvap[compi] - GetCompartment_theta(compi))/(ThetaIniEvap[compi]-(DeltaX*(SCellEnd-1)));
+              SetCompartment_Salt(compi, SCellIniEvap[compi], GetCompartment_Salt(compi, SCellIniEvap[compi]) - SaltDisplaced);
               END;
-      Compartment[1].Salt[SCell1] := Compartment[1].Salt[SCell1] + SaltDisplaced;
+      SetCompartment_Salt(1, SCell1, GetCompartment_Salt(1, SCell1) + SaltDisplaced);
       UNTIL BoolCell;
       compi := compi + 1;
-      IF (compi <= NrCompartments) THEN Zi := Zi + Compartment[compi].Thickness;
+      IF (compi <= NrCompartments) THEN Zi := Zi + GetCompartment_Thickness(compi);
       END;
    END;
 
@@ -3311,6 +3372,8 @@ VAR WtoExtract, theta_critical, alfa, sinkMM : double;
     Wrel,WrelSalt,pStomatLLAct : double;
     CompiECe,CompiECsw,CompiECswFC : double;
     SWCtopSoilConsidered_temp : boolean;
+    Comp_temp : rep_Comp;
+    Compi_temp : CompartmentIndividual;
 
 
 
@@ -3321,7 +3384,7 @@ VAR theta_TAW : double;
 
 BEGIN
 theta_TAW := SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100;
-theta_critical := SoilLayer[layeri].FC/100 - theta_TAW * Crop.pActStom;
+theta_critical := SoilLayer[layeri].FC/100 - theta_TAW * GetCrop().pActStom;
 END; (*calculate_theta_critical*)
 
 
@@ -3363,21 +3426,21 @@ VAR       sink_value, StopComp, SbotComp,
 BEGIN
 IF (GetIrriMode() = Inet)
    THEN BEGIN
-        sink_value := (Crop.SmaxTop + Crop.SmaxBot)/2;
+        sink_value := (GetCrop().SmaxTop + GetCrop().SmaxBot)/2;
         for compi := 1 to NrCompartments DO Compartment[compi].Smax := sink_value;
         END
    ELSE BEGIN
         cumdepth := 0;
         compi := 0;
-        SbotComp := Crop.SmaxTop;
+        SbotComp := GetCrop().SmaxTop;
         REPEAT
            compi := compi + 1;
            StopComp := SbotComp;
            cumdepth := cumdepth + Compartment[compi].Thickness;
            IF (cumdepth <= RootingDepth)
-              THEN SbotComp := Crop.SmaxBot * GetSimulation_SCor() + (Crop.SmaxTop - Crop.SmaxBot*GetSimulation_SCor())
+              THEN SbotComp := GetCrop().SmaxBot * GetSimulation_SCor() + (GetCrop().SmaxTop - GetCrop().SmaxBot*GetSimulation_SCor())
                                       * (RootingDepth - cumdepth)/RootingDepth
-              ELSE SbotComp := Crop.SmaxBot*GetSimulation_SCor();
+              ELSE SbotComp := GetCrop().SmaxBot*GetSimulation_SCor();
            Compartment[compi].Smax := ((StopComp + SbotComp)/2);
            IF (Compartment[compi].Smax > 0.06) THEN Compartment[compi].Smax := 0.06;
         UNTIL (cumdepth >= RootingDepth) OR (compi = NrCompartments);
@@ -3392,20 +3455,20 @@ PROCEDURE Correction_Anaeroby(VAR Comp : CompartmentIndividual;
 VAR alfaAN : double;
     ini : INTEGER;
 BEGIN
-IF ((DaySubmerged >= SimulParam.DelayLowOxygen) AND (Crop.AnaeroPoint > 0))
+IF ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint > 0))
    THEN alfaAN := 0
-   ELSE IF (Comp.theta > (SoilLayer[Comp.Layer].SAT - Crop.AnaeroPoint)/100)
+   ELSE IF (Comp.theta > (SoilLayer[Comp.Layer].SAT - GetCrop().AnaeroPoint)/100)
            THEN BEGIN
                 Comp.DayAnaero := Comp.DayAnaero + 1;
-                IF (Comp.DayAnaero >= SimulParam.DelayLowOxygen)
+                IF (Comp.DayAnaero >= GetSimulParam_DelayLowOxygen())
                    THEN BEGIN
                         ini := 0;
-                        Comp.DayAnaero := SimulParam.DelayLowOxygen;
+                        Comp.DayAnaero := GetSimulParam_DelayLowOxygen();
                         END
                    ELSE ini := 1;
-                alfaAN := (SoilLayer[Comp.Layer].SAT/100 - Comp.theta)/(Crop.AnaeroPoint/100);
+                alfaAN := (SoilLayer[Comp.Layer].SAT/100 - Comp.theta)/(GetCrop().AnaeroPoint/100);
                 IF (alfaAN < 0) THEN alfaAN := 0;
-                IF (SimulParam.DelayLowOxygen > 1)
+                IF (GetSimulParam_DelayLowOxygen() > 1)
                    THEN alfaAN := (ini+(Comp.DayAnaero-1)*alfaAN)/(ini+Comp.DayAnaero-1);
                 END
            ELSE BEGIN
@@ -3431,8 +3494,8 @@ IF ((AnaeVol > 0) AND (Zr > 0))
         IF (ActVol > (SatVol-AnaeVol))
            THEN BEGIN
                 SetSimulation_DayAnaero(GetSimulation_DayAnaero() + 1);
-                IF (GetSimulation_DayAnaero() > SimulParam.DelayLowOxygen) THEN SetSimulation_DayAnaero(SimulParam.DelayLowOxygen);
-                RedFact := 1 - (1-((SATVol - ACTVol)/AnaeVol))* (GetSimulation_DayAnaero()/SimulParam.DelayLowOxygen);
+                IF (GetSimulation_DayAnaero() > GetSimulParam_DelayLowOxygen()) THEN SetSimulation_DayAnaero(GetSimulParam_DelayLowOxygen());
+                RedFact := 1 - (1-((SATVol - ACTVol)/AnaeVol))* (GetSimulation_DayAnaero()/GetSimulParam_DelayLowOxygen());
                 END
            ELSE SetSimulation_DayAnaero(0);
         END
@@ -3468,7 +3531,7 @@ IF (Tpot > 0) THEN
                    IF (GetRootZoneWC().ZtopAct < (0.999 * GetRootZoneWC().ZtopThresh))
                       THEN BEGIN
                            Wrel := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP);
-                           RedFact := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
+                           RedFact := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,GetCrop().pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
                            END
                       ELSE RedFact := (1 - GetSimulation_EffectStress_RedKsSto()/100);
                    END
@@ -3478,13 +3541,13 @@ IF (Tpot > 0) THEN
                            // THE 3 LINES BELOW GIVE THE CORRECT WAY
                               //Wrel := (RootZoneWC.FC-RootZoneWC.Actual)/(RootZoneWC.FC-RootZoneWC.WP);
                               //pStomatLLAct := 1;
-                              //RedFact := KsAny(Wrel,Crop.pActStom,pStomatLLAct,Crop.KsShapeFactorStomata);
+                              //RedFact := KsAny(Wrel,GetCrop().pActStom,pStomatLLAct,GetCrop().KsShapeFactorStomata);
                            // THIS LINE IS THE OLD WAY SINCE RELEASE (version 3.0)
                               //RedFact := 1 - (RootZoneWC.Thresh - RootZoneWC.Actual)/(RootZoneWC.Thresh - RootZoneWC.WP);
                               //IF (RedFact < 0) THEN RedFact := 0;
                            // These lines are the new way following the old procedure (but adjusted for soil salinity)
                            Wrel := (GetRootZoneWC().FC-GetRootZoneWC().Actual)/(GetRootZoneWC().FC-GetRootZoneWC().WP);
-                           RedFact := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
+                           RedFact := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,GetCrop().pActStom,pStomatLLAct,(0.0)); // where (0.0) is linear
                            END
                       ELSE RedFact := (1 - GetSimulation_EffectStress_RedKsSto()/100);
                    END;
@@ -3494,7 +3557,7 @@ IF (Tpot > 0) THEN
 
            // --- 3. Extra effect of ECsw (salt in total root zone is considered)
            IF GetSimulation_SalinityConsidered()
-              THEN RedFactECsw := AdjustedKsStoToECsw(Crop.ECemin,Crop.ECemax,Crop.ResponseECsw,
+              THEN RedFactECsw := AdjustedKsStoToECsw(GetCrop().ECemin,GetCrop().ECemax,GetCrop().ResponseECsw,
                              GetRootZoneSalt().ECe,GetRootZoneSalt().ECsw,GetRootZoneSalt().ECswFC,
                              WrelSalt,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,RedFact)
               ELSE RedFactECsw := RedFact;
@@ -3503,19 +3566,21 @@ IF (Tpot > 0) THEN
            TpotMAX := RedFactECsw * Tpot;
 
            // 1.b anaerobic conditions in root zone (total root zone is considered)
-           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,Crop.AnaeroPoint,RootingDepth,RedFact);
+           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,GetCrop().AnaeroPoint,RootingDepth,RedFact);
            TpotMAX := RedFact * TpotMax;
            END;
 
    // 2. extraction of TpotMax out of the compartments
    // 2.a initial settings
-   calculate_rootfraction_compartment(RootingDepth,Compartment);
-   calculate_sink_values(TpotMAX,RootingDepth,Compartment,Crop);
+   Comp_temp := GetCompartment();
+   calculate_rootfraction_compartment(RootingDepth,Comp_temp);
+   calculate_sink_values(TpotMAX,RootingDepth,Comp_temp,GetCrop());
+   SetCompartment(Comp_temp);
    compi := 0;
    pre_layer := 0;
    REPEAT
      compi := compi + 1;
-     layeri := Compartment[compi].Layer;
+     layeri := GetCompartment_Layer(compi);
      IF (layeri > pre_layer) THEN
         BEGIN
         calculate_theta_critical(layeri,theta_critical);
@@ -3526,16 +3591,16 @@ IF (Tpot > 0) THEN
         THEN alfa := 1
         ELSE BEGIN
              // effect of water stress and ECe
-             IF (Compartment[compi].theta >= (theta_critical))
+             IF (GetCompartment_theta(compi) >= (theta_critical))
                 THEN alfa := (1 - GetSimulation_EffectStress_RedKsSto()/100)
-                ELSE IF (Compartment[compi].theta > (SoilLayer[layeri].WP/100))
+                ELSE IF (GetCompartment_theta(compi) > (SoilLayer[layeri].WP/100))
                         THEN BEGIN
                              IF (theta_critical > SoilLayer[layeri].WP/100)
                                 THEN BEGIN
-                                     Wrel := (SoilLayer[layeri].FC/100 - Compartment[compi].theta)
+                                     Wrel := (SoilLayer[layeri].FC/100 - GetCompartment_theta(compi))
                                              /(SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100);
                                      pStomatLLAct := 1;
-                                     alfa := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,Crop.pActStom,pStomatLLAct,Crop.KsShapeFactorStomata);
+                                     alfa := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,GetCrop().pActStom,pStomatLLAct,GetCrop().KsShapeFactorStomata);
                                      END
                                 ELSE alfa := (1 - GetSimulation_EffectStress_RedKsSto()/100);
                              END
@@ -3543,29 +3608,33 @@ IF (Tpot > 0) THEN
              // extra effect of ECsw
              IF GetSimulation_SalinityConsidered()
                 THEN BEGIN
-                     WrelSalt := (SoilLayer[layeri].FC/100 - Compartment[compi].theta)
+                     WrelSalt := (SoilLayer[layeri].FC/100 - GetCompartment_theta(compi))
                                /(SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100);
-                     CompiECe := ECeComp(Compartment[compi]);
-                     CompiECsw := ECswComp(Compartment[compi],(false));
-                     CompiECswFC := ECswComp(Compartment[compi],(true));
-                     RedFactECsw := AdjustedKsStoToECsw(Crop.ECemin,Crop.ECemax,Crop.ResponseECsw,
+                     CompiECe := ECeComp(GetCompartment_i(compi));
+                     CompiECsw := ECswComp(GetCompartment_i(compi),(false));
+                     CompiECswFC := ECswComp(GetCompartment_i(compi),(true));
+                     RedFactECsw := AdjustedKsStoToECsw(GetCrop().ECemin,GetCrop().ECemax,GetCrop().ResponseECsw,
                               CompiECe,CompiECsw,CompiECswFC,
                               WrelSalt,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,alfa);
                      END
                 ELSE RedFactECsw := alfa;
              alfa := RedFactECsw;
              END;
-     IF (Crop.AnaeroPoint > 0) THEN Correction_Anaeroby(Compartment[compi],alfa);
+     IF (GetCrop().AnaeroPoint > 0) THEN BEGIN
+                                    Compi_temp := GetCompartment_i(compi);
+                                    Correction_Anaeroby(Compi_temp,alfa);
+                                    SetCompartment_i(compi, Compi_temp);
+                                    END;
      // 2.c extract water
      //sink := alfa * Compartment[compi].WFactor * Compartment[compi].Smax;
-     sinkMM := 1000 * (alfa * Compartment[compi].WFactor * Compartment[compi].Smax) * Compartment[compi].Thickness;
+     sinkMM := 1000 * (alfa * GetCompartment_WFactor(compi) * GetCompartment_Smax(compi)) * GetCompartment_Thickness(compi);
      //theta_to_extract := ((TpotMAX-Tact)/1000)/Compartment[compi].Thickness;
      WtoExtract := TpotMAX-Tact;
      //IF (theta_to_extract < sink) THEN sink := theta_to_extract;
      IF (WtoExtract < sinkMM) THEN sinkMM := WtoExtract;
      //Compartment[compi].theta := Compartment[compi].theta - sink;
-     Compartment[compi].theta := Compartment[compi].theta
-          - sinkMM/(1000*Compartment[compi].Thickness*(1 - SoilLayer[layeri].GravelVol/100));
+     SetCompartment_theta(compi, GetCompartment_theta(compi)
+          - sinkMM/(1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[layeri].GravelVol/100)));
      //theta_to_extract := theta_to_extract - sink;
      WtoExtract := WtoExtract - sinkMM;
      //Tact := Tact + sink * 1000 * Compartment[compi].Thickness;
@@ -3579,25 +3648,25 @@ IF (Tpot > 0) THEN
      SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
      DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
      SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-     InetThreshold := GetRootZoneWC().FC - SimulParam.PercRAW/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
+     InetThreshold := GetRootZoneWC().FC - GetSimulParam_PercRAW()/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
      IF (GetRootZoneWC().Actual < InetThreshold) THEN
         BEGIN
         pre_layer := 0;
         FOR compi := 1 TO NrCompartments DO
            BEGIN
-           layeri := Compartment[compi].Layer;
+           layeri := GetCompartment_Layer(compi);
            IF (layeri > pre_layer) THEN
               BEGIN
               calculate_theta_critical(layeri,theta_critical);
-              InetThreshold := SoilLayer[layeri].FC/100 - SimulParam.PercRAW/100*(SoilLayer[layeri].FC/100 - theta_critical);
+              InetThreshold := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*(SoilLayer[layeri].FC/100 - theta_critical);
               pre_layer := layeri;
               END;
            //DeltaWC := Compartment[compi].WFactor * (InetThreshold - Compartment[compi].Theta)*1000*Compartment[compi].Thickness;
-           DeltaWC := Compartment[compi].WFactor * (InetThreshold - Compartment[compi].Theta)
-                      *1000*Compartment[compi].Thickness*(1 - SoilLayer[layeri].GravelVol/100);
+           DeltaWC := GetCompartment_WFactor(compi) * (InetThreshold - GetCompartment_Theta(compi))
+                      *1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[layeri].GravelVol/100);
            //Compartment[compi].Theta := Compartment[compi].Theta + DeltaWC/(1000*Compartment[compi].Thickness);
-           Compartment[compi].Theta := Compartment[compi].Theta + DeltaWC
-                                       /(1000*Compartment[compi].Thickness*(1 - SoilLayer[layeri].GravelVol/100));
+           SetCompartment_Theta(compi, GetCompartment_theta(compi) + DeltaWC
+                                       /(1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[layeri].GravelVol/100)));
            Irrigation := Irrigation + DeltaWC;
            END;
         END;
@@ -3615,14 +3684,14 @@ BEGIN
 DaySubmerged := DaySubmerged + 1;
 FOR compi := 1 TO NrCompartments DO
     BEGIN
-    Compartment[compi].DayAnaero := Compartment[compi].DayAnaero + 1;
-    IF (Compartment[compi].DayAnaero > SimulParam.DelayLowOxygen)
-       THEN Compartment[compi].DayAnaero := SimulParam.DelayLowOxygen;
+    SetCompartment_DayAnaero(compi, GetCompartment_DayAnaero(compi) + 1);
+    IF (GetCompartment_DayAnaero(compi) > GetSimulParam_DelayLowOxygen())
+       THEN SetCompartment_DayAnaero(compi, GetSimulParam_DelayLowOxygen());
     END;
-IF (Crop.AnaeroPoint > 0) THEN Part := (1-DaySubmerged/SimulParam.DelayLowOxygen)
+IF (GetCrop().AnaeroPoint > 0) THEN Part := (1-DaySubmerged/GetSimulParam_DelayLowOxygen())
                           ELSE Part := 1;
 //KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,SimulParam.KsShapeFactorSalt);
-KsReduction := KsSalinity(GetSimulation_SalinityConsidered(),Crop.ECemin,Crop.ECemax,ECstorage,(0.0));
+KsReduction := KsSalinity(GetSimulation_SalinityConsidered(),GetCrop().ECemin,GetCrop().ECemax,ECstorage,(0.0));
 SaltSurface := SurfaceStorage*ECstorage*Equiv;
 IF (SurfaceStorage > KsReduction*Part*Tpot)
    THEN BEGIN
@@ -3655,32 +3724,35 @@ END; (* FeedbackCC *)
 PROCEDURE HorizontalInflowGWTable(DepthGWTmeter : double);
 Var Ztot, Zi, DeltaTheta, SaltAct,SaltAdj : double;
     compi,celli : INTEGER;
+    Compi_temp : CompartmentIndividual;
 BEGIN
 Ztot := 0;
 FOR compi := 1 TO NrCompartments DO
     BEGIN
-    Ztot := Ztot + Compartment[compi].Thickness;
-    Zi := Ztot - Compartment[compi].Thickness/2;
+    Ztot := Ztot + GetCompartment_Thickness(compi);
+    Zi := Ztot - GetCompartment_Thickness(compi)/2;
     IF (Zi >= DepthGWTmeter) THEN
        BEGIN
        // soil water content is at saturation
-       IF (Compartment[compi].Theta < SoilLayer[Compartment[compi].Layer].SAT/100) THEN
+       IF (GetCompartment_Theta(compi) < SoilLayer[GetCompartment_Layer(compi)].SAT/100) THEN
           BEGIN
-          DeltaTheta := SoilLayer[Compartment[compi].Layer].SAT/100 - Compartment[compi].Theta;
-          Compartment[compi].Theta := SoilLayer[Compartment[compi].Layer].SAT/100;
-          HorizontalWaterFlow := HorizontalWaterFlow + 1000 * DeltaTheta * Compartment[compi].Thickness
-                                 * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
+          DeltaTheta := SoilLayer[GetCompartment_Layer(compi)].SAT/100 - GetCompartment_Theta(compi);
+          SetCompartment_theta(compi, SoilLayer[GetCompartment_Layer(compi)].SAT/100);
+          HorizontalWaterFlow := HorizontalWaterFlow + 1000 * DeltaTheta * GetCompartment_Thickness(compi)
+                                 * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
           END;
        // ECe is equal to the EC of the groundwater table
-       IF (Abs(ECeComp(Compartment[compi]) - ECiAqua) > 0.0001) THEN
+       IF (Abs(ECeComp(GetCompartment_i(compi)) - ECiAqua) > 0.0001) THEN
           BEGIN
           SaltAct := 0;
-          FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
-              SaltAct := SaltAct + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100; // Mg/ha
-          DetermineSaltContent(ECiAqua,Compartment[compi]);
+          FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+              SaltAct := SaltAct + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
+          Compi_temp := GetCompartment_i(compi);
+          DetermineSaltContent(ECiAqua,Compi_temp);
+          SetCompartment_i(compi, Compi_temp);
           SaltAdj := 0;
-          FOR celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
-              SaltAdj := SaltAdj + (Compartment[compi].Salt[celli] + Compartment[compi].Depo[celli])/100; // Mg/ha
+          FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+              SaltAdj := SaltAdj + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
           HorizontalSaltFlow := HorizontalSaltFlow + (SaltAdj - SaltAct);
           END;
        END;
@@ -3692,23 +3764,28 @@ END; (* HorizontalInflowGWTable *)
 PROCEDURE ConcentrateSalts;
 Var compi, celWet, celi : INTEGER;
     SaltTot, mm : Double;
+    Salt_temp, Depo_temp : double;
 BEGIN
 FOR compi := 1 TO NrCompartments DO
     BEGIN
     SaltTot := 0;
-    celWet := ActiveCells(Compartment[compi]);
-    IF (celWet < SoilLayer[Compartment[compi].Layer].SCP1) THEN FOR celi := (celWet+1) TO SoilLayer[Compartment[compi].Layer].SCP1 DO
+    celWet := ActiveCells(GetCompartment_i(compi));
+    IF (celWet < SoilLayer[GetCompartment_Layer(compi)].SCP1) THEN FOR celi := (celWet+1) TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
        BEGIN
-       SaltTot := SaltTot + Compartment[compi].Salt[celi]+ Compartment[compi].Depo[celi];
-       Compartment[compi].Salt[celi] := 0;
-       Compartment[compi].Depo[celi] := 0;
+       SaltTot := SaltTot + GetCompartment_Salt(compi, celi) + GetCompartment_Depo(compi, celi);
+       SetCompartment_Salt(compi, celi, 0);
+       SetCompartment_Depo(compi, celi, 0);
        END;
     IF (SaltTot > 0) THEN
        BEGIN
-       Compartment[compi].Salt[celWet] := Compartment[compi].Salt[celWet] + SaltTot;
-       mm := SoilLayer[Compartment[compi].Layer].Dx*1000*Compartment[compi].Thickness
-             * (1 - SoilLayer[Compartment[compi].Layer].GravelVol/100);
-       SaltSolutionDeposit(mm,Compartment[compi].Salt[celWet],Compartment[compi].Depo[celWet]);
+       SetCompartment_Salt(compi, celWet, GetCompartment_Salt(compi, celWet) + SaltTot);
+       mm := SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
+             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+       Salt_temp := GetCompartment_Salt(compi, celWet);
+       Depo_temp := GetCompartment_Depo(compi, celWet);
+       SaltSolutionDeposit(mm,Salt_temp, Depo_temp);
+       SetCompartment_Salt(compi, celWet, Salt_temp);
+       SetCompartment_Depo(compi, celWet, Depo_temp);
        END;
     END;
 END; (* ConcentrateSalts *)
@@ -3723,8 +3800,10 @@ control := begin_day;
 CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain);
 
 // 2. Adjustments in presence of Groundwater table
-CheckForWaterTableInProfile((ZiAqua/100),Compartment,WaterTableInProfile);
-CalculateAdjustedFC((ZiAqua/100),Compartment);
+CheckForWaterTableInProfile((ZiAqua/100),GetCompartment(),WaterTableInProfile);
+Comp_temp := GetCompartment();
+CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+SetCompartment(Comp_temp);
 
 // 3. Drainage
 calculate_drainage;
@@ -3733,7 +3812,7 @@ calculate_drainage;
 IF (GetManagement_Bundheight() < 0.001) THEN
    BEGIN
    DaySubmerged := 0;
-   IF ((GetManagement_RunoffON() = true) AND (Rain > 0.1)) THEN calculate_runoff(SimulParam.RunoffDepth);
+   IF ((GetManagement_RunoffON() = true) AND (Rain > 0.1)) THEN calculate_runoff(GetSimulParam_RunoffDepth());
    END;
 
 // 5. Infiltration (Rain and Irrigation)
@@ -3754,7 +3833,7 @@ calculate_saltcontent(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
 
 
 // 8. Check Germination
-IF ((GetSimulation_Germinate() = false) AND (dayi >=Crop.Day1)) THEN CheckGermination;
+IF ((GetSimulation_Germinate() = false) AND (dayi >=GetCrop().Day1)) THEN CheckGermination;
 
 // 9. Determine effect of soil fertiltiy and soil salinity stress
 // EffectSoilFertilitySalinityStress(Simulation.EffectStress);
@@ -3773,7 +3852,7 @@ IF (NoMoreCrop = false) THEN
    DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
    SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
    // determine canopy cover
-   CASE Crop.ModeCycle OF
+   CASE GetCrop_ModeCycle() OF
            GDDays : DetermineCCiGDD(CCxTotal,CCoTotal,CCiActual);
            else DetermineCCi(CCxTotal,CCoTotal,CCiActual);
            end;
@@ -3781,19 +3860,21 @@ IF (NoMoreCrop = false) THEN
 
 // 11. Determine Tpot and Epot
 // 11.1 Days after Planting
-IF (Crop.ModeCycle = Calendardays)
+IF (GetCrop_ModeCycle() = Calendardays)
    THEN DAP := VirtualTimeCC
    ELSE BEGIN // growing degree days - to position correctly where in cycle
         DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                      Crop.Day1,Crop.Tbase,Crop.Tupper,SimulParam.Tmin,SimulParam.Tmax);
+                      GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
         DAP := DAP + GetSimulation_DelayedDays(); // are not considered when working with GDDays
         END;
 // 11.2 Calculation
-CalculateETpot(DAP,Crop.DaysToGermination,Crop.DaysToFullCanopy,Crop.DaysToSenescence,Crop.DaysToHarvest,DayLastCut,
-               CCiActual,ETo,Crop.KcTop,Crop.KcDecline,Crop.CCxAdjusted,Crop.CCxWithered,Crop.CCEffectEvapLate,CO2i,
-               GDDayi,Crop.GDtranspLow,Tpot,EpotTot);
+CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,DayLastCut,
+               CCiActual,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,CO2i,
+               GDDayi,GetCrop().GDtranspLow,Tpot,EpotTot);
 Epot := EpotTot;    // adjustment Epot for mulch and partial wetting in next step
-AdjustpStomatalToETo(ETo,Crop.pActStom);
+Crop_pActStom_temp := GetCrop().pActStom;
+AdjustpStomatalToETo(ETo,Crop_pActStom_temp);
+SetCrop_pActStom(Crop_pActStom_temp);
 
 
 // 12. Evaporation
@@ -3805,8 +3886,8 @@ EvapWCsurf_temp := GetSimulation_EvapWCsurf();
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,EvapWCsurf_temp);
 SetSimulation_EvapWCsurf(EvapWCsurf_temp);
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
-   AND (SimulParam.EffectiveRain.RootNrEvap > 0)) // reduction soil evaporation
- THEN Epot := Epot * (exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((GetSoil().REW+1)/20)));
+   AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) // reduction soil evaporation
+ THEN Epot := Epot * (exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 // actual evaporation
 Eact := 0;
 IF (Epot > 0) THEN
@@ -3821,15 +3902,15 @@ IF (Epot > 0) THEN
    END;
 // Reset redcution Epot for 10-day or monthly rainfall data
 IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
-   AND (SimulParam.EffectiveRain.RootNrEvap > 0))
- THEN Epot := Epot/(exp((1/SimulParam.EffectiveRain.RootNrEvap)*ln((GetSoil().REW+1)/20)));
+   AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0))
+ THEN Epot := Epot/(exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 
 
 // 13. Transpiration
 IF ((NoMoreCrop = false) AND (RootingDepth > 0.0001)) THEN
    BEGIN
    IF ((SurfaceStorage > 0) AND
-       ((Crop.AnaeroPoint = 0) OR (DaySubmerged < SimulParam.DelayLowOxygen)))
+       ((GetCrop().AnaeroPoint = 0) OR (DaySubmerged < GetSimulParam_DelayLowOxygen())))
        THEN surface_transpiration
        ELSE calculate_transpiration(Tpot,Tact);
    END;
