@@ -336,10 +336,7 @@ PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
 
 
 PROCEDURE NoCropCalendar;
-PROCEDURE LoadCropCalendar(FullName : string;
-                           VAR GetOnset,GetOnsetTemp : BOOLEAN;
-                           VAR DayNrStart : LongInt;
-                           YearStart : INTEGER);
+
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
@@ -4307,47 +4304,6 @@ SetCalendarDescription('No calendar for the Seeding/Planting year');
 END; (* NoCropCalendar *)
 
 
-
-PROCEDURE LoadCropCalendar(FullName : string;
-                           VAR GetOnset,GetOnsetTemp : BOOLEAN;
-                           VAR DayNrStart : LongInt;
-                           YearStart : INTEGER);
-
-VAR f0 : TextFile;
-    Onseti : ShortInt;
-    Dayi,Monthi,Yeari,CriterionNr : INTEGER;
-    DayNr : LongInt;
-    CalendarDescriptionLocal : string;
-BEGIN
-GetOnset := false;
-GetOnsetTemp := false;
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,CalendarDescriptionLocal);
-SetCalendarDescription(CalendarDescriptionLocal);
-READLN(f0); // AquaCrop Version
-
-// Specification of Onset and End growing season
-READLN(f0,Onseti);  // specification of the onset
-
-// Onset growing season
-IF (Onseti = 0)
-   THEN BEGIN  // onset on a specific day
-        READLN(f0); // start search period - not applicable
-        READLN(f0); // length search period - not applicable
-        READLN(f0,DayNr); // day-number
-        DetermineDate(DayNr,Dayi,Monthi,Yeari);
-        DetermineDayNr(Dayi,Monthi,YearStart,DayNrStart);
-        END
-   ELSE BEGIN // onset is generated
-        GetOnset := true;
-        READLN(f0); // start search period
-        READLN(f0); // length search period
-        READLN(f0,CriterionNr); // criterion number to decide if based on rainfall or air temperature
-        IF (CriterionNr > 10) THEN GetOnsetTemp := true;
-        END;
-Close(f0);
-END; (* LoadCropCalendar *)
 
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;

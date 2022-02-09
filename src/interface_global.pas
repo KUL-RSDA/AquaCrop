@@ -2729,6 +2729,19 @@ procedure LoadClimate_wrap(constref FullName : PChar;
                            constref strlen6 : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_loadclimate_wrap';
 
+procedure LoadCropCalendar(
+            constref FullName : string;
+            var GetOnset,GetOnsetTemp : boolean;
+            var DayNrStart : integer;
+            constref YearStart : integer);
+
+procedure LoadCropCalendar_wrap(constref FullName : PChar;
+                                constref strlen : integer;
+                                var GetOnset,GetOnsetTemp : boolean;
+                                var DayNrStart : integer;
+                                constref YearStart : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_loadcropcalendar_wrap';
+
 function GetCompartment_i(constref i : integer) : CompartmentIndividual;
 
 function GetCompartment() : rep_Comp;
@@ -4620,6 +4633,22 @@ begin;
     strlen5 := Length(RainFile);
     strlen6 := Length(CO2File);
     LoadClimate_wrap(p1, strlen1, p2, strlen2, p3, strlen3, p4, strlen4, p5, strlen5, p6, strlen6);
+end;
+
+procedure LoadCropCalendar(
+            constref FullName : string;
+            var GetOnset,GetOnsetTemp : boolean;
+            var DayNrStart : integer;
+            constref YearStart : integer);
+
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadCropCalendar_wrap(p,strlen,GetOnset,GetOnsetTemp,DayNrStart,YearStart);
 end;
 
 
