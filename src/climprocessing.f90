@@ -48,13 +48,10 @@ subroutine GetParameters(C1, C2, C3, UL, LL, Mid)
 end subroutine GetParameters
 
 
-subroutine GetInterpolationParameters(C1, C2, C3, X1, X2, X3, aOver3, bOver2, c)
+subroutine GetInterpolationParameters(C1, C2, C3, aOver3, bOver2, c)
     real(dp), intent(in) :: C1
     real(dp), intent(in) :: C2
     real(dp), intent(in) :: C3
-    integer(int32), intent(in) :: X1
-    integer(int32), intent(in) :: X2
-    integer(int32), intent(in) :: X3
     real(dp), intent(inout) :: aOver3
     real(dp), intent(inout) :: bOver2
     real(dp), intent(inout) :: c
