@@ -2265,8 +2265,6 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     integer(int32), intent(inout) :: DayNrStart
     integer(int32), intent(in) :: YearStart
 
-
-
     integer :: fhandle
     integer(int8) :: Onseti
     integer(int32) :: Dayi, Monthi, Yeari, CriterionNr
