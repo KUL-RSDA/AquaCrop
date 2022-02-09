@@ -732,13 +732,15 @@ END; (* AdjustCalendarCrop *)
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 VAR f0,fClim : TextFile;
-    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr : string;
+    TempString,TempString1,TempString2,observations_descr,eto_descr,CO2descr,rain_descr,
+    CalendarDescriptionLocal, TemperatureDescriptionLocal : string;
     TempSimDayNr1,TempSimDayNrN : LongInt;
     i,Runi : ShortInt;
     TotDepth : double;
     VersionNr : double;
     FertStress : shortint;
     temperature_record : rep_clim;
+    Compartment_temp : rep_Comp;
     TempInt : integer;
     Crop_Planting_temp : rep_Planting;
     Crop_RootMin_temp, Crop_SizePlant_temp, Crop_CCini_temp : double;
@@ -800,7 +802,7 @@ IF (GetClimateFile() = '(None)')
         // 1.0 Description
         READLN(fClim,TempString);
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        ClimateDescription := Trim(TempString);
+        SetClimateDescription(Trim(TempString));
         Close(fClim);
         END;
 // 1.1 Temperature
@@ -813,15 +815,17 @@ IF (GetTemperatureFile() = '(None)')
         SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
         Str(GetSimulParam_Tmin():8:1,TempString1);
         Str(GetSimulParam_Tmax():8:1,TempString2);
-        TemperatureDescription := CONCAT('Default temperature data: Tmin = ',
-                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C');
+        SetTemperatureDescription(CONCAT('Default temperature data: Tmin = ',
+                    trim(TempString1),' and Tmax = ',trim(TempString2),' °C'));
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathTemperatureFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetTemperatureFileFull(CONCAT(Trim(TempString),Trim(GetTemperatureFile())));
         temperature_record := GetTemperatureRecord();
-        LoadClim(GetTemperatureFilefull(),TemperatureDescription,temperature_record);
+        TemperatureDescriptionLocal := GetTemperatureDescription();
+        LoadClim(GetTemperatureFileFull(),TemperatureDescriptionLocal,temperature_record);
+        SetTemperatureDescription(TemperatureDescriptionLocal);
         CompleteClimateDescription(temperature_record);
         SetTemperatureRecord(temperature_record);
         END;
@@ -887,13 +891,15 @@ SetCalendarFile(Trim(TempString));
 IF (GetCalendarFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathCalendarFile
-        CalendarDescription := 'No calendar for the Seeding/Planting year';
+        SetCalendarDescription('No calendar for the Seeding/Planting year');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathCalendarFile
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
-        SetCalendarFilefull(CONCAT(Trim(TempString),GetCalendarFile()));
-        GetFileDescription(GetCalendarFilefull(),CalendarDescription);
+        SetCalendarFileFull(CONCAT(Trim(TempString),GetCalendarFile()));
+        CalendarDescriptionLocal := GetCalendarDescription();
+        GetFileDescription(GetCalendarFileFull(),CalendarDescriptionLocal);
+        SetCalendarDescription(CalendarDescriptionLocal);
         END;
 
 // 3. Crop
@@ -1054,7 +1060,7 @@ IF (Trim(TempString) = 'KeepSWC')
 
         //Adjust size of compartments if required
         TotDepth := 0;
-        FOR i := 1 to NrCompartments DO TotDepth := TotDepth + Compartment[i].Thickness;
+        FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
         IF Simulation.MultipleRunWithKeepSWC // Project with a sequence of simulation runs and KeepSWC
            THEN BEGIN
                 IF (ROUND(Simulation.MultipleRunConstZrx*1000) > ROUND(TotDepth*1000))
@@ -1085,20 +1091,22 @@ IF (Trim(TempString) = 'KeepSWC')
                 SetSWCiniFileFull(CONCAT(Trim(TempString),GetSWCIniFile()));
                 LoadInitialConditions(GetSWCiniFileFull(),SurfaceStorage,Simulation.IniSWC);
                 END;
+        Compartment_temp := GetCompartment();
         CASE Simulation.IniSWC.AtDepths OF
              true : TranslateIniPointsToSWProfile(Simulation.IniSWC.NrLoc,Simulation.IniSWC.Loc,Simulation.IniSWC.VolProc,
-                                                  Simulation.IniSWC.SaltECe,NrCompartments,Compartment);
+                                                  Simulation.IniSWC.SaltECe,NrCompartments,Compartment_temp);
              else TranslateIniLayersToSWProfile(Simulation.IniSWC.NrLoc,Simulation.IniSWC.Loc,Simulation.IniSWC.VolProc,
-                                                Simulation.IniSWC.SaltECe,NrCompartments,Compartment);
+                                                Simulation.IniSWC.SaltECe,NrCompartments,Compartment_temp);
              end;
+        SetCompartment(Compartment_temp);
 
 
         IF Simulation.ResetIniSWC THEN // to reset SWC and SALT at end of simulation run
            BEGIN
            FOR i := 1 TO NrCompartments DO
                BEGIN
-               Simulation.ThetaIni[i] := Compartment[i].Theta;
-               Simulation.ECeIni[i] := ECeComp(Compartment[i]);
+               Simulation.ThetaIni[i] := GetCompartment_Theta(i);
+               Simulation.ECeIni[i] := ECeComp(GetCompartment_i(i));
                END;
            // ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN - CHECK LATER
            IF (GetManagement_BundHeight() >= 0.01) THEN
@@ -1117,7 +1125,9 @@ IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the g
         ECiAqua := undef_int;
         SetSimulParam_ConstGwt(true);
         END;
-CalculateAdjustedFC((ZiAqua/100),Compartment);
+Compartment_temp := GetCompartment();
+CalculateAdjustedFC((ZiAqua/100),Compartment_temp);
+SetCompartment(Compartment_temp);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
 IF (Simulation.IniSWC.AtFC AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
 

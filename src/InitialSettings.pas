@@ -77,7 +77,7 @@ implementation
  IF (NrCompartments > max_No_compartments) //Savety check of value in General.PAR;
     THEN NrCompartments := max_No_compartments;
  FOR Nri := 1 TO max_No_compartments DO  // required for formactivate ParamNew
-     Compartment[Nri].Thickness := GetSimulParam_CompDefThick();
+     SetCompartment_Thickness(Nri, GetSimulParam_CompDefThick());
  // Default CropDay1 - Savety check of value in General.PAR
  WHILE (GetSimulParam_CropDay1() > 365) DO SetSimulParam_CropDay1(GetSimulParam_CropDay1()-365);
  If (GetSimulParam_CropDay1() < 1) THEN SetSimulParam_CropDay1(1);
@@ -134,7 +134,7 @@ implementation
  SetTemperatureFilefull(GetTemperatureFile());  (* no file *)
  Str(GetSimulParam_Tmin():8:1,TempString1);
  Str(GetSimulParam_Tmax():8:1,TempString2);
- TemperatureDescription := '';
+ SetTemperatureDescription('');
  SetTemperatureRecord_DataType(Daily);
  SetTemperatureRecord_NrObs(0);
  SetTemperatureRecord_FromString('any date');
@@ -178,7 +178,7 @@ implementation
  // 5.5 Climate file
  SetClimateFile('(None)');
  SetClimateFileFull(GetClimateFile());
- ClimateDescription := '';
+ SetClimateDescription('');
 
  // 5.6 Set Climate and Simulation Period
  SetClimData;
