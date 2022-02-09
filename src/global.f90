@@ -106,8 +106,8 @@ integer(intEnum), parameter :: GenerateTimeMode_AllDepl = 1
     !! index of AllDepl in GenerateTimeMode enumerated type
 integer(intEnum), parameter :: GenerateTimeMode_AllRAW = 2
     !! index of AllRAW in GenerateTimeMode enumerated type
-integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBuns = 3
-    !! index of WaterBetweenBuns in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBunds = 3
+    !! index of WaterBetweenBunds in GenerateTimeMode enumerated type
 
 integer(intEnum), parameter :: GenerateDepthMode_ToFC = 0
     !! index of ToFC in GenerateDepthMode enumerated type
@@ -773,6 +773,8 @@ integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
+integer(int32) :: IrriFirstDayNr
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
@@ -2144,6 +2146,119 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
     FullUndefinedRecord = ((FromY == 1901) .and. (FromD == 1)&
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
+
+subroutine NoIrrigation()
+    integer(int32) :: Nri
+    call SetIrriMode(IrriMode_NoIrri)
+    IrriDescription = 'Rainfed cropping'
+    call SetIrriMethod(IrriMethod_MSprinkler)
+    call SetSimulation_IrriECw(0.0) ! dS/m
+    call SetGenerateTimeMode(AllRAW)
+    call SetGenerateDepthMode(ToFC)
+    IrriFirstDayNr = undef_int
+    do Nri = 1, 5
+    call SetIrriBeforeSeason(Nri)%DayNr = 0
+    call SetIrriBeforeSeason(Nri)%Param = 0
+    call SetIrriAfterSeason(Nri)%DayNr = 0
+    call SetIrriAfterSeason(Nri)%Param = 0
+    end do
+    call SetIrriECw_PreSeason(0.0) ! dS/m
+    call SetIrriECw_PostSeason(0.0) ! dS/m
+    ! NoIrrigation 
+end subroutine NoIrrigation
+
+
+
+subroutine LoadIrriScheduleInfo(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer(int32) :: fhandle
+    integer(int32) :: i, rc
+    real(dp) :: VersionNr
+    integer(int8) :: simul_irri_in
+    integer(int32) :: simul_percraw
+    character(len=255) :: StringREAD
+
+    open(newunit=fhandle, file=trim(FullName), &
+                             status='old', action='read', iostat=rc)
+    read(fhandle, *, iostat=rc) 
+    read(fhandle, *, iostat=rc) StringREAD ! IrriDescription, not used
+    read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
+
+    ! irrigation method
+    read(fhandle, *, iostat=rc) i
+    select case (i)
+    case(0)
+        call SetIrriMethod(IrriMethod_MSprinkler)
+    case(1)
+        call SetIrriMethod(IrriMethod_MBasin)
+    case(2)
+        call SetIrriMethod(IrriMethod_MBorder)
+    case(3)
+        call SetIrriMethod(IrriMethod_MFurrow)
+    case(4)
+        call SetIrriMethod(IrriMethod_MDrip)
+    end select
+    ! fraction of soil surface wetted
+    read(fhandle, *, iostat=rc) simul_irri_in
+    call SetSimulParam_IrriFwInSeason(simul_irri_in)
+
+    ! irrigation mode and parameters
+    read(fhandle, *, iostat=rc) i
+    select case (i)
+    case(0)
+        call SetIrriMode(IrriMode_NoIrri) ! rainfed
+    case(1)
+        call SetIrriMode(IrriMode_Manual)
+    case(2)
+        call SetIrriMode(IrriMode_Generate)
+    case(3)
+        call SetIrriMode(IrriMode_Inet)
+    end select
+
+    ! 1. Irrigation schedule
+    if ((i == 1) .and. (nint(VersionNr*10,kind=int32) >= 70)) then
+        read(fhandle, *, iostat=rc) IrriFirstDayNr ! line 6
+    else
+        IrriFirstDayNr = undef_int ! start of growing period
+    end if
+
+
+    ! 2. Generate
+    if (GetIrriMode() == IrriMode_Generate) then
+        read(fhandle, *, iostat=rc) i ! time criterion
+        select case (i)
+        case(1)
+            call SetGenerateTimeMode(GenerateTimeMode_FixInt)
+        case(2)
+            call SetGenerateTimeMode(GenerateTimeMode_AllDepl)
+        case(3)
+            call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+        case(4)
+            call SetGenerateTimeMode(GenerateTimeMode_WaterBetweenBunds)
+        case default
+            call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+        end select
+        read(fhandle, *, iostat=rc) i ! depth criterion
+        select case (i)
+        case(1)
+            call SetGenerateDepthMode(GenerateDepthMode_ToFc)
+        case default
+            call SetGenerateDepthMode(GenerateDepthMode_FixDepth)
+        end select
+        IrriFirstDayNr = undef_int ! start of growing period
+    end if
+
+    ! 3. Net irrigation requirement
+    if (GetIrriMode() == IrriMode_Inet) then
+        read(fhandle, *, iostat=rc) simul_percraw
+        call SetSimulParam_PercRAW(simul_percraw)
+        IrriFirstDayNr = undef_int  ! start of growing period
+    end if
+
+    close(fhandle)
+    ! LoadIrriScheduleInfo 
+end subroutine LoadIrriScheduleInfo
 
 
 subroutine GenerateCO2Description(CO2FileFull, CO2Description)
