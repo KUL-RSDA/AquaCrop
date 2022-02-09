@@ -1198,7 +1198,6 @@ VAR f0,fClim : TextFile;
     FertStress : shortint;
     temperature_record : rep_clim;
     YearSeason_temp, RedCGC_temp, RedCCX_temp : ShortInt;
-    IniSWC_temp : rep_IniSWC;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -1508,9 +1507,7 @@ IF (Trim(TempString) = 'KeepSWC')
                 READLN(f0,TempString);  //PathSWCIniFile
                 TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
                 SetSWCiniFileFull(CONCAT(Trim(TempString),GetSWCIniFile()));
-                IniSWC_temp := GetSimulation_IniSWC();
-                LoadInitialConditions(GetSWCiniFileFull(),SurfaceStorage,IniSWC_temp);
-                SetSimulation_IniSWC(IniSWC_temp);
+                LoadInitialConditions(GetSWCiniFileFull(),SurfaceStorage);
                 END;
         CASE GetSimulation_IniSWC_AtDepths() OF
              true : TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),

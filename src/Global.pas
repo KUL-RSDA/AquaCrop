@@ -430,8 +430,7 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
                                         NrComp : INTEGER;
                                         VAR Comp : rep_Comp);
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double;
-                                VAR IniSWCRead : rep_IniSWC);
+                                VAR IniSurfaceStorage : double);
 
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
@@ -3866,14 +3865,18 @@ END; (* TranslateIniPointsToSWProfile *)
 
 
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double;
-                                VAR IniSWCRead : rep_IniSWC);
+                                VAR IniSurfaceStorage : double);
 VAR f0 : TextFile;
     i : ShortInt;
     StringParam : string;
     VersionNr : double;
     CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
+    NrLoc_temp : shortint;
+    Loc_i_temp, VolProc_i_temp, SaltECe_i_temp : double;
 BEGIN
+// IniSWCRead attribute of the function was removed to fix a 
+// bug occurring when the function was called in TempProcessing.pas
+// Keep in mind that this could affect the graphical interface
 Assign(f0,SWCiniFileFull);
 Reset(f0);
 READLN(f0,SWCiniDescription);
@@ -3905,21 +3908,30 @@ IF (ROUND(10*VersionNr) < 32) // EC of the ini surface storage
         END;
 READLN(f0,i);
 IF (i = 1)
-   THEN IniSWCRead.AtDepths := true
-   ELSE IniSWCRead.AtDepths := false;
-READLN(f0,IniSWCRead.NrLoc);
+   THEN SetSimulation_IniSWC_AtDepths(true)
+   ELSE SetSimulation_IniSWC_AtDepths(false);
+READLN(f0,NrLoc_temp);
+SetSimulation_IniSWC_NrLoc(NrLoc_temp);
 READLN(f0);
 READLN(f0);
 READLN(f0);
-FOR i := 1 TO IniSWCRead.NrLoc DO
+FOR i := 1 TO GetSimulation_IniSWC_NrLoc() DO
     BEGIN
     READLN(f0,StringParam);
+    Loc_i_temp := GetSimulation_IniSWC_Loc_i(i);
+    VolProc_i_temp := GetSimulation_IniSWC_VolProc_i(i);
     IF (ROUND(10*VersionNr) < 32) // ECe at the locations
        THEN BEGIN
-            SplitStringInTwoParams(StringParam,IniSWCRead.Loc[i],IniSWCRead.VolProc[i]);
-            IniSWCRead.SaltECe[i] := 0;
+            SplitStringInTwoParams(StringParam,Loc_i_temp,VolProc_i_temp);
+            SetSimulation_IniSWC_SaltECe_i(i, 0);
             END
-       ELSE SplitStringInThreeParams(StringParam,IniSWCRead.Loc[i],IniSWCRead.VolProc[i],IniSWCRead.SaltECe[i]);
+       ELSE BEGIN
+            SaltECe_i_temp := GetSimulation_IniSWC_SaltECe_i(i);
+            SplitStringInThreeParams(StringParam,Loc_i_temp,VolProc_i_temp,SaltECe_i_temp);
+            SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp);
+            END;
+    SetSimulation_IniSWC_Loc_i(i, Loc_i_temp);
+    SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp);
     END;
 Close(f0);
 SetSimulation_IniSWC_AtFC(false);
