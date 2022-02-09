@@ -12,6 +12,7 @@ implicit none
 
 
 integer(int32), parameter :: max_SoilLayers = 5
+integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -139,6 +140,34 @@ integer(intEnum), parameter :: datatype_decadely = 1
     !! index of decadely in datatype enumerated type
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
+
+type CompartmentIndividual 
+    real(dp) :: Thickness
+        !! meter
+    real(dp) :: theta
+        !! m3/m3
+    real(dp) :: fluxout
+        !! mm/day
+    integer(int32) :: Layer
+        !! Undocumented
+    real(dp) :: Smax
+        !! Maximum root extraction m3/m3.day
+    real(dp) :: FCadj
+        !! Vol % at Field Capacity adjusted to Aquifer
+    integer(int32) :: DayAnaero
+        !! number of days under anaerobic conditions
+    real(dp) :: WFactor
+        !! weighting factor 0 ... 1
+        !! Importance of compartment in calculation of
+        !! - relative wetness (RUNOFF)
+        !! - evaporation process
+        !! - transpiration process *)
+    !! salinity factors
+    real(dp), dimension(11) :: Salt
+        !! salt content in solution in cells (g/m2)
+    real(dp), dimension(11) :: Depo
+        !! salt deposit in cells (g/m2)
+end type CompartmentIndividual 
 
 type SoilLayerIndividual
     character(len=25) :: Description
@@ -744,6 +773,8 @@ integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
+type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
 
 contains
@@ -1600,6 +1631,78 @@ real(dp) function CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
     CCmultiplierWeed = fWeed
 end function CCmultiplierWeed
 
+real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed, fCCx, Yeari, MWeedAdj, RCadj)
+    integer(int8), intent(in) :: ProcentWeedCover
+    real(dp), intent(in) :: CCxCrop
+    real(dp) :: FshapeWeed
+    real(dp), intent(in) :: fCCx
+    integer(int8), intent(in) :: Yeari
+    integer(int8), intent(in) :: MWeedAdj
+    integer(int8), intent(inout) :: RCadj
+
+    real(dp) :: fWeedi, CCxTot100, CCxTot0, CCxTotM, fweedMax, RCadjD, FshapeMinimum
+
+    fWeedi = 1._dp
+    RCadj = ProcentWeedCover
+    if (ProcentWeedCover > 0) then
+        fweedi = CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
+        ! FOR perennials when self-thinning
+        if ((GetCrop_subkind() == subkind_Forage) .and. (Yeari > 1) .and. (fCCx < 0.995)) then
+            ! need for adjustment
+            ! step 1 - adjusment of shape factor to degree of crop replacement by weeds
+            FshapeMinimum = 10 - 20*( (exp(fCCx*3._dp)-1)/(exp(3._dp)-1) + sqrt(MWeedAdj/100._dp))
+            if (nint(FshapeMinimum*10,kind=int32) == 0) then
+                FshapeMinimum = 0.1
+            end if
+            FshapeWeed = FshapeWeed;
+            if (FshapeWeed < FshapeMinimum) then
+                FshapeWeed = FshapeMinimum
+            end if
+
+            ! step 2 - Estimate of CCxTot
+            ! A. Total CC (crop and weeds) when self-thinning and 100% weed take over
+            fweedi = CCmultiplierWeed(ProcentWeedCover, CCxCrop, FshapeWeed)
+            CCxTot100 = fweedi * CCxCrop
+            ! B. Total CC (crop and weeds) when self-thinning and 0% weed take over
+            if (fCCx > 0.005) then
+                fweedi = CCmultiplierWeed(nint(fCCx*ProcentWeedCover,kind=int8),&
+                    (fCCx*CCxCrop), FshapeWeed)
+            else
+                fweedi = 1
+            end if
+            CCxTot0 = fweedi * (fCCx*CCxCrop)
+            ! C. total CC (crop and weeds) with specified weed take over (MWeedAdj)
+            CCxTotM = CCxTot0 + (CCxTot100 - CCxTot0)* MWeedAdj/100
+            if (CCxTotM < (fCCx*CCxCrop*(1-ProcentWeedCover/100._dp))) then
+                CCxTotM = fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)
+            end if
+            if (fCCx > 0.005) then
+                fweedi = CCxTotM/(fCCx*CCxCrop)
+                fweedMax = 1._dp/(fCCx*CCxCrop)
+                if (nint(fweedi*1000,kind=int32) > nint(fWeedMax*1000,kind=int32)) then
+                    fweedi = fweedMax
+                end if
+            end if
+
+            ! step 3 - Estimate of adjusted weed cover
+            RCadjD = ProcentWeedCover + (1-fCCx)*CCxCrop*MWeedAdj
+            if (fCCx > 0.005) then
+                if (RCadjD < (100*(CCxTotM - fCCx*CCxCrop)/CCxTotM)) then
+                    RCadjD = 100*(CCxTotM - fCCx*CCxCrop)/CCxTotM
+                end if
+                if (RCadjD > (100 * (1- (fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)))) then
+                    RCadjD = 100*(1- fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)
+                end if
+            end if
+            RCadj = nint(RCadjD,kind=int8)
+            if (RCadj > 100) then
+                RCadj = 100
+            end if
+        end if
+    end if
+    CCmultiplierWeedAdjusted = fWeedi
+    ! CCmultiplierWeedAdjusted 
+end function CCmultiplierWeedAdjusted
 
 real(dp) function BMRange(HIadj)
     integer(int32), intent(in) :: HIadj
@@ -6179,5 +6282,195 @@ subroutine SetTemperatureRecord_FromString(FromString)
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
+
+function GetCompartment_i(i) result(Compartment_i)
+    !! Getter for individual elements of "Compartment" global variable.
+    integer(int32), intent(in) :: i
+    type(CompartmentIndividual) :: Compartment_i
+
+    Compartment_i = Compartment(i)
+end function GetCompartment_i
+
+
+subroutine SetCompartment_i(i, Compartment_i)
+    !! Setter for individual elements of "Compartment" global variable.
+    integer(int32), intent(in) :: i
+    type(CompartmentIndividual) :: Compartment_i
+
+    Compartment(i) = Compartment_i
+end subroutine SetCompartment_i
+
+
+function GetCompartment_Thickness(i) result(Thickness)
+    !! Getter for the "Thickness" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Thickness
+
+    Thickness = compartment(i)%Thickness
+end function GetCompartment_Thickness
+
+function GetCompartment_theta(i) result(theta)
+    !! Getter for the "theta" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: theta
+
+    theta = compartment(i)%theta
+end function GetCompartment_theta
+
+function GetCompartment_fluxout(i) result(fluxout)
+    !! Getter for the "fluxout" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: fluxout
+
+    fluxout = compartment(i)%fluxout
+end function GetCompartment_fluxout
+
+function GetCompartment_Layer(i) result(Layer)
+    !! Getter for the "Layer" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Layer
+
+    Layer = compartment(i)%Layer
+end function GetCompartment_Layer
+
+function GetCompartment_Smax(i) result(Smax)
+    !! Getter for the "Smax" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Smax
+
+    Smax = compartment(i)%Smax
+end function GetCompartment_Smax
+
+function GetCompartment_FCadj(i) result(FCadj)
+    !! Getter for the "FCadj" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: FCadj
+
+    FCadj = compartment(i)%FCadj
+end function GetCompartment_FCadj
+
+function GetCompartment_DayAnaero(i) result(DayAnaero)
+    !! Getter for the "DayAnaero" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: DayAnaero
+
+    DayAnaero = compartment(i)%DayAnaero
+end function GetCompartment_DayAnaero
+
+function GetCompartment_WFactor(i) result(WFactor)
+    !! Getter for the "WFactor" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: WFactor
+
+    WFactor = compartment(i)%WFactor
+end function GetCompartment_WFactor
+
+function GetCompartment_Salt(i1, i2) result(Salt)
+    !! Getter for individual elements of "Salt" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i1
+    integer(int32), intent(in) :: i2
+    real(dp) :: Salt
+
+    Salt = compartment(i1)%Salt(i2)
+end function GetCompartment_Salt
+
+function GetCompartment_Depo(i1, i2) result(Depo)
+    !! Getter for individual elements of "Depo" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i1
+    integer(int32), intent(in) :: i2
+    real(dp) :: Depo
+
+    Depo = compartment(i1)%Depo(i2)
+end function GetCompartment_Depo
+
+subroutine SetCompartment(Compartment_in)
+    !! Setter for the "compartment" global variable.
+    type(CompartmentIndividual), intent(in) :: Compartment_in
+
+    compartment = Compartment_in
+end subroutine SetCompartment
+
+subroutine SetCompartment_Thickness(i, Thickness)
+    !! Setter for the "Thickness" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Thickness
+
+    compartment(i)%Thickness = Thickness
+end subroutine SetCompartment_Thickness
+
+subroutine SetCompartment_theta(i, theta)
+    !! Setter for the "theta" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: theta
+
+    compartment(i)%theta = theta
+end subroutine SetCompartment_theta
+
+subroutine SetCompartment_fluxout(i, fluxout)
+    !! Setter for the "fluxout" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: fluxout
+
+    compartment(i)%fluxout = fluxout
+end subroutine SetCompartment_fluxout
+
+subroutine SetCompartment_Layer(i, Layer)
+    !! Setter for the "Layer" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Layer
+
+    compartment(i)%Layer = Layer
+end subroutine SetCompartment_Layer
+
+subroutine SetCompartment_Smax(i, Smax)
+    !! Setter for the "Smax" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Smax
+
+    compartment(i)%Smax = Smax
+end subroutine SetCompartment_Smax
+
+subroutine SetCompartment_FCadj(i, FCadj)
+    !! Setter for the "FCadj" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: FCadj
+
+    compartment(i)%FCadj = FCadj
+end subroutine SetCompartment_FCadj
+
+subroutine SetCompartment_DayAnaero(i, DayAnaero)
+    !! Setter for the "DayAnaero" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayAnaero
+
+    compartment(i)%DayAnaero = DayAnaero
+end subroutine SetCompartment_DayAnaero
+
+subroutine SetCompartment_WFactor(i, WFactor)
+    !! Setter for the "WFactor" attribute of the "compartment" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: WFactor
+
+    compartment(i)%WFactor = WFactor
+end subroutine SetCompartment_WFactor
+
+subroutine SetCompartment_Salt(i1, i2, Salt)
+    !! Setter for individual elements of "Salt" attribute of the "compartment global variable.
+    integer(int32), intent(in) :: i1
+    integer(int32), intent(in) :: i2
+    real(dp), intent(in) :: Salt
+
+    compartment(i1)%Salt(i2) = Salt
+end subroutine SetCompartment_Salt
+
+subroutine SetCompartment_Depo(i1, i2, Depo)
+    !! Setter for individual elements of "Depo" attribute of the "compartment global variable.
+    integer(int32), intent(in) :: i1
+    integer(int32), intent(in) :: i2
+    real(dp), intent(in) :: Depo
+
+    compartment(i1)%Depo(i2) = Depo
+end subroutine SetCompartment_Depo
+
 
 end module ac_global
