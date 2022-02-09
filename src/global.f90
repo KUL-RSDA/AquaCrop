@@ -1872,7 +1872,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             ! need for adjustment
             ! step 1 - adjusment of shape factor to degree of crop replacement by weeds
             FshapeMinimum = 10 - 20*( (exp(fCCx*3._dp)-1)/(exp(3._dp)-1) + sqrt(MWeedAdj/100._dp))
-            if (nint(FshapeMinimum*10,kind=int32) == 0) then
+            if (roundc(FshapeMinimum*10,mold=1_int32) == 0) then
                 FshapeMinimum = 0.1
             end if
             FshapeWeed = FshapeWeed;
@@ -1886,7 +1886,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             CCxTot100 = fweedi * CCxCrop
             ! B. Total CC (crop and weeds) when self-thinning and 0% weed take over
             if (fCCx > 0.005) then
-                fweedi = CCmultiplierWeed(nint(fCCx*ProcentWeedCover,kind=int8),&
+                fweedi = CCmultiplierWeed(roundc(fCCx*ProcentWeedCover,mold=1_int8),&
                     (fCCx*CCxCrop), FshapeWeed)
             else
                 fweedi = 1
@@ -1900,7 +1900,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             if (fCCx > 0.005) then
                 fweedi = CCxTotM/(fCCx*CCxCrop)
                 fweedMax = 1._dp/(fCCx*CCxCrop)
-                if (nint(fweedi*1000,kind=int32) > nint(fWeedMax*1000,kind=int32)) then
+                if (roundc(fweedi*1000,mold=1_int32) > roundc(fWeedMax*1000,mold=1_int32)) then
                     fweedi = fweedMax
                 end if
             end if
@@ -1915,7 +1915,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
                     RCadjD = 100*(1- fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)
                 end if
             end if
-            RCadj = nint(RCadjD,kind=int8)
+            RCadj = roundc(RCadjD,mold=1_int8)
             if (RCadj > 100) then
                 RCadj = 100
             end if
