@@ -41,6 +41,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
+                     GetPerennialPeriod_GenerateOnset, &
+                     GetPerennialPeriod_GenerateEnd, &
                      GetProfFile, &
                      GetProfFilefull, &
                      GetProfDescription, &
@@ -67,6 +69,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainFileFull, &
                      GetRainDescription, &
                      LoadClimate, &
+                     LoadCropCalendar, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -99,6 +102,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
+                     SetPerennialPeriod_GenerateOnset, &
+                     SetPerennialPeriod_GenerateEnd, &
                      SetProjectFile, &
                      SetProjectFileFull, &
                      SetMultipleProjectFile, &
@@ -420,6 +425,21 @@ subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, &
     string6 = pointer2string(CO2File, strlen6)
     call LoadClimate(string1, string2, string3, string4, string5, string6)
 end subroutine LoadClimate_wrap
+
+subroutine LoadCropCalendar_wrap(FullName, strlen, GetOnset,GetOnsetTemp,DayNrStart,YearStart)
+    !! Wrapper for [[ac_global:LoadCropCalendar]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+    logical, intent(inout) :: GetOnset
+    logical, intent(inout) :: GetOnsetTemp
+    integer(int32), intent(inout) :: DayNrStart
+    integer(int32), intent(in) :: YearStart
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadCropCalendar(string,GetOnset,GetOnsetTemp,DayNrStart,YearStart)
+end subroutine LoadCropCalendar_wrap
 
 
 function GetCO2File_wrap() result(c_pointer)
@@ -802,6 +822,40 @@ subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
     string = pointer2string(PathNameSimul, strlen)
     call SetPathNameSimul(string)
 end subroutine SetPathNameSimul_wrap
+
+function GetPerennialPeriod_GenerateOnset_wrap() result(GenerateOnset)
+    !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateOnset]] for foreign languages.
+    logical(1) :: GenerateOnset
+
+    GenerateOnset = GetPerennialPeriod_GenerateOnset()
+end function GetPerennialPeriod_GenerateOnset_wrap
+
+function GetPerennialPeriod_GenerateEnd_wrap() result(GenerateEnd)
+    !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateEnd]] for foreign languages.
+    logical(1) :: GenerateEnd
+
+    GenerateEnd = GetPerennialPeriod_GenerateEnd()
+end function GetPerennialPeriod_GenerateEnd_wrap
+
+subroutine SetPerennialPeriod_GenerateOnset_wrap(GenerateOnset)
+    !! Wrapper for [[ac_global:SetPerennialPeriod_GenerateOnset]] for foreign languages.
+    logical(1), intent(in) :: GenerateOnset
+
+    logical :: bool
+
+    bool = GenerateOnset
+    call SetPerennialPeriod_GenerateOnset(bool)
+end subroutine SetPerennialPeriod_GenerateOnset_wrap
+
+subroutine SetPerennialPeriod_GenerateEnd_wrap(GenerateEnd)
+    !! Wrapper for [[ac_global:SetPerennialPeriod_GenerateEnd]] for foreign languages.
+    logical(1), intent(in) :: GenerateEnd
+
+    logical :: bool
+
+    bool = GenerateEnd
+    call SetPerennialPeriod_GenerateEnd(bool)
+end subroutine SetPerennialPeriod_GenerateEnd_wrap
 
 
 function GetProjectFile_wrap() result(c_pointer)
