@@ -2390,6 +2390,33 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
     end do
 end subroutine SplitStringInThreeParams
 
+subroutine ReadRainfallSettings()
+
+    integer :: fhandle
+    character :: fullname
+    integer(int8) :: NrM, effrainperc,effrainshow,effrainrootE 
+
+    fullName = PathNameSimul // 'Rainfall.PAR'
+
+    open(newunit=fhandle, file=trim(fullname), status='old', action='read')
+    read(fhandle)! Settings for processing 10-day or monthly rainfall data
+    read(fhandle, *) NrM
+    select case (NrM) 
+        case (0)
+            call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_full)
+        case (1)
+            call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_usda)
+        case (2)
+            call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_percentage)
+    end select 
+    read(fhandle, *) effrainperc ! IF Method is Percentage
+    call SetSimulParam_EffectiveRain_PercentEffRain(effrainperc)
+    read(fhandle, *) effrainshow  ! For estimation of surface run-off
+    call SetSimulParam_EffectiveRain_ShowersInDecade(effrainshow)
+    read(fhandle, *) effrainrootE ! For reduction of soil evaporation
+    call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
+    close(fhandle)
+end subroutine ReadRainfallSettings
 
 subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile, CO2File)
     character(len=*), intent(in) :: FullName
