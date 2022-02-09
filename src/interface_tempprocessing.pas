@@ -27,6 +27,12 @@ procedure GetMonthlyTemperatureDataSet(
             VAR TminDataSet,TmaxDataSet : rep_SimulationEventsDbl);
         external 'aquacrop' name '__ac_tempprocessing_MOD_getmonthlytemperaturedataset';
 
+function GrowingDegreeDays(
+            constref ValPeriod : INTEGER;
+            constref FirstDayPeriod : LongInt;
+            constref Tbase,Tupper,TDayMin,TDayMax : double) : integer;
+        external 'aquacrop' name '__ac_tempprocessing_MOD_growingdegreedays';
+
 procedure HIadjColdHeat(
             constref TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
             constref TempTmin,TempTmax : double;

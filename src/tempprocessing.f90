@@ -7,13 +7,16 @@ use ac_kinds,  only: dp, &
 
 use iso_fortran_env, only: iostat_end
 
-use ac_global , only: DaysinMonth, &
+use ac_global , only: undef_int, &
+                      roundc, &
+                      DaysinMonth, &
                       rep_DayEventDbl, &
                       DetermineDayNr, &
                       DetermineDate, &
                       LeapYear, &
                       SplitStringInTwoParams, &
                       KsTemperature, &
+                      DegreesDay, &
                       GetPathNameSimul, &
                       GetTemperatureFile, &                     
                       GetTemperatureFilefull, &
@@ -25,7 +28,10 @@ use ac_global , only: DaysinMonth, &
                       GetTemperatureRecord_ToM, &
                       GetTemperatureRecord_ToY, &
                       GetTemperatureRecord_DataType, &
-                      GetTemperatureRecord_FromDayNr
+                      GetTemperatureRecord_FromDayNr, &
+                      GetTemperatureRecord_ToDayNr, &
+                      GetSimulParam_GDDMethod, &
+                      FullUndefinedRecord
 
 implicit none
 
@@ -321,9 +327,9 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     end if
 
     call GetInterpolationParameters(C1Min, C2Min, C3Min, &
-                   X1, X2, X3, aOver3Min, bOver2Min, cMin)
+                   aOver3Min, bOver2Min, cMin)
     call GetInterpolationParameters(C1Max, C2Max, C3Max, &
-                   X1, X2, X3, aOver3Max, bOver2Max, cMax)
+                   aOver3Max, bOver2Max, cMax)
     do Dayi = 1, DayN
         t2 = t1 + 1
         TminDataSet(Dayi)%DayNr = DNR+Dayi-1
@@ -361,7 +367,6 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         integer(int32) :: fhandle
         integer(int32) :: Mfile, Yfile, n1, n2, n3, Nri, Obsi, rc
         logical :: OK3
-        character(len=255) :: StringREAD
 
         ! 1. Prepare record
         open(newunit=fhandle, file=trim(GetTemperatureFilefull()), &
@@ -385,7 +390,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
         ! 2. IF 3 or less records
         if (GetTemperatureRecord_NrObs() <= 3) then
-            call ReadMonth(Mfile, Yfile, n1, C1Min, C1Max, fhandle, rc)
+            call ReadMonth(C1Min, C1Max, fhandle, rc)
             X1 = n1
             select case (GetTemperatureRecord_NrObs())
             case (0)
@@ -402,7 +407,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                 if (Mfile > 12) then
                     call AdjustMONTHandYEAR(Mfile, Yfile)
                 end if
-                call ReadMonth(Mfile, Yfile, n3, C3Min, C3Max, fhandle, rc)
+                call ReadMonth(C3Min, C3Max, fhandle, rc)
                 if (Monthi == Mfile) then
                     C2Min = C3Min
                     C2Max = C3Max
@@ -422,7 +427,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                if (Mfile > 12) then
                    call AdjustMONTHandYEAR(Mfile, Yfile)
                end if
-               call ReadMonth(Mfile, Yfile, n2, C2Min, C2Max, fhandle, rc)
+               call ReadMonth(C2Min, C2Max, fhandle, rc)
                X2 = X1 + n2
                if (Monthi == Mfile) then
                    t1 = X1
@@ -431,7 +436,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                if (Mfile > 12) then
                    call AdjustMONTHandYEAR(Mfile, Yfile)
                end if
-               call ReadMonth(Mfile, Yfile, n3, C3Min, C3Max, fhandle, rc)
+               call ReadMonth(C3Min, C3Max, fhandle, rc)
                X3 = X2 + n3
                if (Monthi == Mfile) then
                    t1 = X2
@@ -443,19 +448,19 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         ! 3. If first observation
         if ((.not. OK3) .and. ((Monthi == Mfile) .and. (Yeari == Yfile))) then
             t1 = 0
-            call ReadMonth(Mfile, Yfile, n1, C1Min, C1Max, fhandle, rc)
+            call ReadMonth(C1Min, C1Max, fhandle, rc)
             X1 = n1
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
-            call ReadMonth(Mfile, Yfile, n2, C2Min, C2Max, fhandle, rc)
+            call ReadMonth(C2Min, C2Max, fhandle, rc)
             X2 = X1 + n2
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
-            call ReadMonth(Mfile, Yfile, n3, C3Min, C3Max, fhandle, rc)
+            call ReadMonth(C3Min, C3Max, fhandle, rc)
             X3 = X2 + n3
             OK3 = .true.
         end if
@@ -471,20 +476,20 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                         call AdjustMONTHandYEAR(Mfile, Yfile)
                     end if
                 end do
-                call ReadMonth(Mfile, Yfile, n1, C1Min, C1Max, fhandle, rc)
+                call ReadMonth(C1Min, C1Max, fhandle, rc)
                 X1 = n1
                 Mfile = Mfile + 1
                 if (Mfile > 12) then
                     call AdjustMONTHandYEAR(Mfile, Yfile)
                 end if
-                call ReadMonth(Mfile, Yfile, n2, C2Min, C2Max, fhandle, rc)
+                call ReadMonth(C2Min, C2Max, fhandle, rc)
                 X2 = X1 + n2
                 t1 = X2
                 Mfile = Mfile + 1
                 if (Mfile > 12) then
                     call AdjustMONTHandYEAR(Mfile, Yfile)
                 end if
-                call ReadMonth(Mfile, Yfile, n3, C3Min, C3Max, fhandle, rc)
+                call ReadMonth(C3Min, C3Max, fhandle, rc)
                 X3 = X2 + n3
                 OK3 = .true.
             end if
@@ -512,54 +517,47 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                     call AdjustMONTHandYEAR(Mfile, Yfile)
                 end if
             end do
-            call ReadMonth(Mfile, Yfile, n1, C1Min, C1Max, fhandle, rc)
+            call ReadMonth(C1Min, C1Max, fhandle, rc)
             X1 = n1
             t1 = X1
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
-            call ReadMonth(Mfile, Yfile, n2, C2Min, C2Max, fhandle, rc)
+            call ReadMonth(C2Min, C2Max, fhandle, rc)
             X2 = X1 + n2
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
-            call ReadMonth(Mfile, Yfile, n3, C3Min, C3Max, fhandle, rc)
+            call ReadMonth(C3Min, C3Max, fhandle, rc)
             X3 = X2 + n3
         end if
 
         close(fhandle)
     end subroutine GetSetofThreeMonths
 
-    subroutine ReadMonth(Mfile, Yfile, ni, CiMin, CiMax, &
-                  fhandle, rc)
-        integer(int32), intent(in) :: Mfile
-        integer(int32), intent(in) :: Yfile
-        integer(int32), intent(inout) :: ni
+    subroutine ReadMonth(CiMin, CiMax, fhandle, rc)
         real(dp), intent(inout) :: CiMin
         real(dp), intent(inout) :: CiMax
         integer(int32), intent(in) :: fhandle
         integer(int32), intent(inout) :: rc
 
+        integer(int32), parameter :: ni = 30
         character(len=255) :: StringREAD
 
         read(fhandle, '(a)', iostat=rc) StringREAD
         call SplitStringInTwoParams(StringREAD, CiMin, CiMax)
         ! simplification give better results for all cases
-        ni = 30
         CiMin = CiMin * ni
         CiMax = CiMax * ni
     end subroutine ReadMonth
 
     subroutine GetInterpolationParameters(C1, C2, C3, &
-                          X1, X2, X3, aOver3, bOver2, c)
+                          aOver3, bOver2, c)
         real(dp), intent(in) :: C1
         real(dp), intent(in) :: C2
         real(dp), intent(in) :: C3
-        integer(int32), intent(in) :: X1
-        integer(int32), intent(in) :: X2
-        integer(int32), intent(in) :: X3
         real(dp), intent(inout) :: aOver3
         real(dp), intent(inout) :: bOver2
         real(dp), intent(inout) :: c
@@ -572,12 +570,186 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
 end subroutine GetMonthlyTemperatureDataSet
 
+integer(int32) function GrowingDegreeDays(ValPeriod, &
+               FirstDayPeriod, Tbase, Tupper, TDayMin, TDayMax)
+    integer(int32), intent(in) :: ValPeriod
+    integer(int32), intent(in) :: FirstDayPeriod
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(inout) :: TDayMin
+    real(dp), intent(inout) :: TDayMax
 
-subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
+    integer(int32) :: i, RemainingDays
+    character(len=:), allocatable :: totalname
+    integer(int32) :: fhandle, rc
+    integer(int32) :: DayNri
+    real(dp)       :: GDDays, DayGDD
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+    character(len=255) :: StringREAD
+    logical :: AdjustDayNri, file_exists
+
+    GDDays = 0
+    if (ValPeriod > 0) then
+        if (GetTemperatureFile() == '(None)') then
+            ! given average Tmin and Tmax
+            DayGDD = DegreesDay(Tbase, Tupper, &
+                     TDayMin, TDayMax, GetSimulParam_GDDMethod())
+            GDDays = roundc(ValPeriod * DayGDD, mold=1_int32)
+        else
+            ! temperature file
+            DayNri = FirstDayPeriod
+            if (FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+                  GetTemperatureRecord_FromD(), GetTemperatureRecord_FromM(),&
+                  GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
+                AdjustDayNri = .true.
+                call SetDayNrToYundef(DayNri)
+            else
+                AdjustDayNri = .false.
+            end if
+            totalname = GetTemperatureFilefull()
+            inquire(file=trim(totalname), exist=file_exists)
+            if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
+                .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
+                RemainingDays = ValPeriod
+                select case (GetTemperatureRecord_DataType())
+                case (0) !Daily
+                    open(newunit=fhandle, file=trim(totalname), &
+                     status='old', action='read', iostat=rc)
+                    read(fhandle, *, iostat=rc) ! description
+                    read(fhandle, *, iostat=rc) ! time step
+                    read(fhandle, *, iostat=rc) ! day
+                    read(fhandle, *, iostat=rc) ! month
+                    read(fhandle, *, iostat=rc) ! year
+                    read(fhandle, *, iostat=rc)
+                    read(fhandle, *, iostat=rc)
+                    read(fhandle, *, iostat=rc)
+                    do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1)
+                         read(fhandle, *, iostat=rc)
+                    end do
+                    read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
+                    call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                    DayGDD = DegreesDay(Tbase, Tupper, &
+                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                    GDDays = GDDays + DayGDD
+                    RemainingDays = RemainingDays - 1
+                    DayNri = DayNri + 1
+                    do while ((RemainingDays > 0) &
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .or. AdjustDayNri))
+                        if (rc == iostat_end) then
+                            read(fhandle, *, iostat=rc) ! description
+                            read(fhandle, *, iostat=rc) ! time step
+                            read(fhandle, *, iostat=rc) ! day
+                            read(fhandle, *, iostat=rc) ! month
+                            read(fhandle, *, iostat=rc) ! year
+                            read(fhandle, *, iostat=rc)
+                            read(fhandle, *, iostat=rc)
+                            read(fhandle, *, iostat=rc)
+                            read(fhandle, '(a)', iostat=rc) StringREAD
+                            call SplitStringInTwoParams(StringREAD, &
+                                     TDayMin, TDayMax)
+                        else
+                            read(fhandle, '(a)', iostat=rc) StringREAD
+                            call SplitStringInTwoParams(StringREAD, &
+                                     TDayMin, TDayMax)
+                        end if
+                        DayGDD = DegreesDay(Tbase, Tupper, &
+                                     TDayMin, TDayMax,&
+                                     GetSimulParam_GDDMethod())
+                        GDDays = GDDays + DayGDD
+                        RemainingDays = RemainingDays - 1
+                        DayNri = DayNri + 1
+                    end do
+                    if (RemainingDays > 0) then
+                        GDDays = undef_int
+                    end if
+                    close(fhandle)
+                case(1) !Decadely:
+                    call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
+                                TmaxDataSet)
+                    i = 1
+                    do while (TminDataSet(i)%DayNr /= DayNri)
+                        i = i+1
+                    end do
+                    TDaymin = TminDataSet(i)%Param
+                    TDaymax = TmaxDataSet(i)%Param
+                    DayGDD = DegreesDay(Tbase, Tupper, &
+                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                    GDDays = GDDays + DayGDD
+                    RemainingDays = RemainingDays - 1
+                    DayNri = DayNri + 1
+                    do while ((RemainingDays > 0) &
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                               .or. AdjustDayNri))
+                        if (DayNri > TminDataSet(31)%DayNr) then
+                            call GetDecadeTemperatureDataSet(DayNri, &
+                                    TminDataSet, TmaxDataSet)
+                        end if
+                        i = 1
+                        do while (TminDataSet(i)%DayNr /= DayNri)
+                            i = i+1
+                        end do
+                        TDayMin = TminDataSet(i)%Param
+                        TDayMax = TmaxDataSet(i)%Param
+                        DayGDD = DegreesDay(Tbase, Tupper, &
+                                     TDayMin, TDayMax,&
+                                     GetSimulParam_GDDMethod())
+                        GDDays = GDDays + DayGDD
+                        RemainingDays = RemainingDays - 1
+                        DayNri = DayNri + 1
+                    end do
+                    if (RemainingDays > 0) then
+                        GDDays = undef_int
+                    end if
+                case(2) !Monthly:
+                    call GetMonthlyTemperatureDataSet(DayNri, &
+                            TminDataSet, TmaxDataSet)
+                    i = 1
+                    do while (TminDataSet(i)%DayNr /= DayNri)
+                        i = i+1
+                    end do
+                    TDayMin = TminDataSet(i)%Param
+                    TDayMax = TmaxDataSet(i)%Param
+                    DayGDD = DegreesDay(Tbase, Tupper, &
+                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                    GDDays = GDDays + DayGDD
+                    RemainingDays = RemainingDays - 1
+                    DayNri = DayNri + 1
+                    do while((RemainingDays > 0) &
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .or. AdjustDayNri))
+                        if (DayNri > TminDataSet(31)%DayNr) then
+                            call GetMonthlyTemperatureDataSet(DayNri, &
+                                 TminDataSet, TmaxDataSet)
+                        end if
+                        i = 1
+                        do while (TminDataSet(i)%DayNr /= DayNri)
+                            i = i+1
+                        end do
+                        TDayMin = TminDataSet(i)%Param
+                        TDayMax = TmaxDataSet(i)%Param
+                        DayGDD = DegreesDay(Tbase, Tupper, &
+                              TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                        GDDays = GDDays + DayGDD
+                        RemainingDays = RemainingDays - 1
+                        DayNri = DayNri + 1
+                    end do
+                    if (RemainingDays > 0) then
+                        GDDays = undef_int
+                    end if
+                end select
+            end if !if temperaturefull file exists
+        end if !if temperature file
+    else    
+        GDDays = undef_int
+    endif !end valperiod>0
+    GrowingDegreeDays = roundc(GDDays, mold=1_int32)
+end function GrowingDegreeDays
+
+subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
                          TempHI, TempTmin, TempTmax, &
                          TempTcold, TempTheat, TempfExcess, &
                          HIadjusted, ColdStress, HeatStress)
-    integer(int32), intent(in) :: TempHarvest
     integer(int32), intent(in) :: TempFlower
     integer(int32), intent(in) :: TempLengthFlowering
     integer(int32), intent(in) :: TempHI
@@ -624,13 +796,13 @@ subroutine HIadjColdHeat(TempHarvest, TempFlower, TempLengthFlowering, &
         ! 3.3 Ks(pollination) cold stress
         KsPolCS = KsTemperature(real(TempTcold-TempRange, kind=dp), &
                       real(TempTcold, kind=dp), Tndayi)
-        if (nint(10000*KsPolCS , kind=int32) < 10000) then
+        if (roundc(10000*KsPolCS, mold=1_int32) < 10000) then
             ColdStress = .true.
         end if
         ! 3.4 Ks(pollination) heat stress
         KsPolHS = KsTemperature(real(TempTheat+TempRange, kind=dp), &
                      real(TempTheat, kind=dp), Txdayi)
-        if (nint(10000*KsPolHS, kind=int32) < 10000) then
+        if (roundc(10000*KsPolHS, mold=1_int32) < 10000) then
             HeatStress = .true.
         end if
         ! 3.5 Adjust HI
@@ -729,7 +901,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
     integer(int32), intent(in) :: CropLastDay
 
     character(len=:), allocatable :: totalname, totalnameOUT
-    integer :: fhandle1, fhandle2
+    integer(int32) :: fhandle1, fhandle2
     integer(int32) :: i, RunningDay, rc
     character(len=255) :: StringREAD
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
