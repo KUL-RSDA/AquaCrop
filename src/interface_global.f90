@@ -41,6 +41,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
+                     GetOutputName, &
                      GetPerennialPeriod_GenerateOnset, &
                      GetPerennialPeriod_GenerateEnd, &
                      GetProfFile, &
@@ -102,6 +103,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
+                     SetOutputName, &
                      SetPerennialPeriod_GenerateOnset, &
                      SetPerennialPeriod_GenerateEnd, &
                      SetProjectFile, &
@@ -822,6 +824,24 @@ subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
     string = pointer2string(PathNameSimul, strlen)
     call SetPathNameSimul(string)
 end subroutine SetPathNameSimul_wrap
+
+function GetOutputName_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOutputName]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetOutputName())
+end function GetOutputName_wrap
+
+subroutine SetOutputName_wrap(OutputName, strlen)
+    !! Wrapper for [[ac_global:SetOutputName]] for foreign languages.
+    type(c_ptr), intent(in) :: OutputName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OutputName, strlen)
+    call SetOutputName(string)
+end subroutine SetOutputName_wrap
 
 function GetPerennialPeriod_GenerateOnset_wrap() result(GenerateOnset)
     !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateOnset]] for foreign languages.

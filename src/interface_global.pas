@@ -1801,7 +1801,18 @@ procedure SetPathNameSimul_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setpathnamesimul_wrap'; 
-             
+
+function GetOutputName(): string;
+
+function GetOutputName_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getoutputname_wrap';
+
+procedure SetOutputName(constref str : string);
+
+procedure SetOutputName_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setoutputname_wrap';             
 
 function GetProjectFile(): string;
 
@@ -4531,6 +4542,25 @@ begin;
     GetPathNameSimul := AnsiString(p);
 end;
 
+function GetOutputName(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetOutputName_wrap();
+    GetOutputName := AnsiString(p);
+end;
+
+procedure SetOutputName(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetOutputName_wrap(p, strlen);
+end;
 
 procedure SetPathNameSimul(constref str : string);
 var
