@@ -1353,10 +1353,9 @@ FOR i := 1 TO GetSoil().NrSoilLayers DO
             IF (GetSoilLayer_i(i).SCP1 < 2) THEN SetSoilLayer_SCP1(i, 2)
             END;
     // determine parameters for soil salinity
-    SetSoilLayer_FC(i, GetSoilLayer_i(i).SCP1 -1);
+    SetSoilLayer_SC(i, GetSoilLayer_i(i).SCP1 -1);
     SetSoilLayer_Macro(i, ROUND(GetSoilLayer_i(i).FC));
     SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100) * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2))); (* m3/m3 *)
-    WRITELN(GetSoilLayer_SC(i));
     dx_temp := (GetSoilLayer_UL(i))/GetSoilLayer_SC(i);
     SetSoilLayer_Dx(i, dx_temp);  (* m3/m3 *)
     saltmob_temp := GetSoilLayer_i(i).SaltMobility;
