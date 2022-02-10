@@ -757,8 +757,8 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
     integer(int32), intent(in) :: FirstDayCrop
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
-    real(dp), intent(in) :: TDayMin
-    real(dp), intent(in) :: TDayMax
+    real(dp), intent(inout) :: TDayMin
+    real(dp), intent(inout) :: TDayMax
 
     integer(int32) :: i
     integer(int32) :: fhandle, rc
@@ -766,7 +766,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
     character(len=:), allocatable :: totalname
     real(dp) :: RemainingGDDays, DayGDD
     integer(int32) :: DayNri
-    type(rep_DayEventsDbl), dimension(31) :: TminDataSet, TmaxDataSet
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     logical :: AdjustDayNri, file_exists
     character(len=255) :: StringREAD
 
@@ -776,7 +776,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             ! given average Tmin and Tmax
             DayGDD = DegreesDay(Tbase, Tupper, &
                        TDayMin, TDayMax, GetSimulParam_GDDMethod())
-            if (DayGDD = 0) then
+            if (DayGDD == 0) then
                 NrCDays = -9
             else
                 NrCDays = roundc(ValGDDays/DayGDD, mold=1_int32)
@@ -785,16 +785,16 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             DayNri = FirstDayCrop
             if (FullUndefinedRecord(GetTemperatureRecord_FromY(), &
                   GetTemperatureRecord_FromD(), GetTemperatureRecord_FromM(), &
-                  GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM()) then
+                  GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
                 AdjustDayNri = .true.
-                SetDayNrToYundef(DayNri)
+                call SetDayNrToYundef(DayNri)
             else
                 AdjustDayNri = .false.
             end if
             totalname = GetTemperatureFilefull()
             inquire(file=trim(totalname), exist=file_exists)
             if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
-                .and. (GetTemperatureRecord()%FromDayNr <= DayNri)) then
+                .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingGDDays = ValGDDays
                 select case (GetTemperatureRecord_DataType())
                 case (0) ! Daily 
@@ -818,7 +818,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
-                    do while ((RemainingDays > 0) &
+                    do while ((RemainingGDDays > 0) &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
                         if (rc == iostat_end) then
@@ -845,7 +845,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                         RemainingGDDays = RemainingGDDays - DayGDD
                         DayNri = DayNri + 1
                     end do
-                    if (RemainingDays > 0) then
+                    if (RemainingGDDays > 0) then
                         NrCDays = undef_int
                     end if
                     close(fhandle)
@@ -899,7 +899,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
-                    do while ((RemainingGDDays > 0)
+                    do while ((RemainingGDDays > 0) &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) & 
                          .or. AdjustDayNri))
                         if (DayNri > TminDataSet(31)%DayNr) then
