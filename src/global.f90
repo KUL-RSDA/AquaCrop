@@ -2399,7 +2399,7 @@ subroutine ReadRainfallSettings()
     fullName = PathNameSimul // 'Rainfall.PAR'
 
     open(newunit=fhandle, file=trim(fullname), status='old', action='read')
-    read(fhandle)! Settings for processing 10-day or monthly rainfall data
+    read(fhandle, *)! Settings for processing 10-day or monthly rainfall data
     read(fhandle, *) NrM
     select case (NrM) 
         case (0)
