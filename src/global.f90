@@ -2371,6 +2371,19 @@ logical function FileExists(full_name)
 end function FileExists 
 
 
+subroutine ComposeOutputFileName(TheProjectFileName)
+    character(len=*), intent(in) :: TheProjectFileName
+    
+    character(len=len(TheProjectFileName)) :: TempString
+    integer(int8) :: i
+    
+    TempString = Trim(TheProjectFileName)
+    i = len(TempString)
+    
+    TempString = TempString(1:i-4)
+    OutputName = TempString
+end subroutine ComposeOutputFileName
+
 subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
     character(len=*), intent(in) :: StringIN
     real(dp), intent(inout) :: Par1

@@ -1196,6 +1196,11 @@ function HImultiplier(
             constref HIadj : ShortInt) : double;
          external 'aquacrop' name '__ac_global_MOD_himultiplier';
 
+procedure ComposeOutputFileName(
+            constref TheProjectFileName : string);
+         external 'aquacrop' name '__ac_global_MOD_composeoutputfilename';
+
+
 function NumberSoilClass (
             constref SatvolPro : double;
             constref FCvolPro : double;
