@@ -1270,6 +1270,9 @@ function CanopyCoverNoStressGDDaysSF(
             constref SFRedCGC,SFRedCCx : shortint) : double;
          external 'aquacrop' name '__ac_global_MOD_canopycovernostressgddayssf';
 
+procedure ReadRainfallSettings();
+        external 'aquacrop' name '__ac_global_MOD_readrainfallsettings';
+
 function fAdjustedForCO2 (
             constref CO2i, WPi : double;
             constref PercentA : ShortInt) : double;
