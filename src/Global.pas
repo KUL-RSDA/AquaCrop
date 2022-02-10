@@ -186,11 +186,9 @@ PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
 PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
 
-PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE DetermineNrandThicknessCompartments;
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
@@ -677,33 +675,6 @@ IF (ROUND(VersionNr*10) >= 70)  // UPDATE required for multiple cuttings
 Close(f0);
 END; (* LoadManagement *)
 
-
-
-
-
-
-PROCEDURE NoIrrigation;
-VAR Nri : INTEGER;
-BEGIN
- SetIrriMode(NoIrri);
- IrriDescription := 'Rainfed cropping';
- SetIrriMethod(MSprinkler);
- Simulation.IrriECw := 0.0; // dS/m
- SetGenerateTimeMode(AllRAW);
- SetGenerateDepthMode(ToFC);
- IrriFirstDayNr := undef_int;
- FOR Nri := 1 TO 5 DO
-     BEGIN
-     IrriBeforeSeason[Nri].DayNr := 0;
-     IrriBeforeSeason[Nri].Param := 0;
-     IrriAfterSeason[Nri].DayNr := 0;
-     IrriAfterSeason[Nri].Param := 0;
-     END;
- SetIrriECw_PreSeason(0.0); //dS/m
- SetIrriECw_PostSeason(0.0); //dS/m
-END; (* NoIrrigation *)
-
-
 PROCEDURE NoManagementOffSeason;
 VAR Nri : INTEGER;
 BEGIN
@@ -794,78 +765,6 @@ IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing per
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
-VAR f0 : TextFile;
-    i : INTEGER;
-    VersionNr : double;
-    simul_irri_in,simul_percraw : shortint; 
-
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,IrriDescription);
-READLN(f0,VersionNr);  // AquaCrop version
-
-// irrigation method
-READLN(f0,i);
-CASE i OF
-     1 : SetIrriMethod(MSprinkler);
-     2 : SetIrriMethod(MBasin);
-     3 : SetIrriMethod(MBorder);
-     4 : SetIrriMethod(MFurrow);
-     else  SetIrriMethod(MDrip);
-     end;
-
-// fraction of soil surface wetted
-READLN(f0,simul_irri_in);
-SetSimulParam_IrriFwInSeason(simul_irri_in);
-
-// irrigation mode and parameters
-READLN(f0,i);
-CASE i OF
-     0 : SetIrriMode(NoIrri); // rainfed
-     1 : SetIrriMode(Manual);
-     2 : SetIrriMode(Generate);
-     else SetIrriMode(Inet);
-     end;
-
-// 1. Irrigation schedule
-IF ((i = 1) AND (ROUND(VersionNr*10) >= 70))
-   THEN READLN(f0,IrriFirstDayNr) // line 6
-   ELSE IrriFirstDayNr := undef_int; // start of growing period
-
-
-// 2. Generate
-IF (GetIrriMode() = Generate) THEN
-   BEGIN
-   READLN(f0,i); // time criterion
-   Case i OF
-        1 : SetGenerateTimeMode(FixInt);
-        2 : SetGenerateTimeMode(AllDepl);
-        3 : SetGenerateTimeMode(AllRAW);
-        4 : SetGenerateTimeMode(WaterBetweenBunds);
-        else SetGenerateTimeMode(AllRAW);
-     end;
-   READLN(f0,i); // depth criterion
-   Case i OF
-        1 : SetGenerateDepthMode(ToFc);
-        else SetGenerateDepthMode(FixDepth);
-     end;
-   IrriFirstDayNr := undef_int; // start of growing period
-   END;
-
-// 3. Net irrigation requirement
-IF (GetIrriMode() = Inet) THEN
-   BEGIN
-   READLN(f0,simul_percraw);
-   SetSimulParam_PercRAW(simul_percraw);
-   IrriFirstDayNr := undef_int;  // start of growing period
-   END;
-
-Close(f0);
-END; (* LoadIrriScheduleInfo *)
 
 
 PROCEDURE DetermineNrandThicknessCompartments;

@@ -141,6 +141,11 @@ integer(intEnum), parameter :: datatype_decadely = 1
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
 
+type rep_DayEventInt
+    integer(int32) :: DayNr
+    integer(int32) :: param
+end type rep_DayEventInt
+
 type CompartmentIndividual 
     real(dp) :: Thickness
         !! meter
@@ -778,6 +783,7 @@ integer(int32) :: IrriFirstDayNr
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
+type(rep_DayEventInt), dimension (5) :: rep_IrriOutSeasonEvents 
 
 contains
 
@@ -2153,14 +2159,14 @@ subroutine NoIrrigation()
     IrriDescription = 'Rainfed cropping'
     call SetIrriMethod(IrriMethod_MSprinkler)
     call SetSimulation_IrriECw(0.0) ! dS/m
-    call SetGenerateTimeMode(AllRAW)
-    call SetGenerateDepthMode(ToFC)
+    call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+    call SetGenerateDepthMode(GenerateDepthMode_ToFC)
     IrriFirstDayNr = undef_int
     do Nri = 1, 5
-    call SetIrriBeforeSeason(Nri)%DayNr = 0
-    call SetIrriBeforeSeason(Nri)%Param = 0
-    call SetIrriAfterSeason(Nri)%DayNr = 0
-    call SetIrriAfterSeason(Nri)%Param = 0
+        call SetIrriBeforeSeason(Nri)%DayNr = 0
+        call SetIrriBeforeSeason(Nri)%Param = 0
+        call SetIrriAfterSeason(Nri)%DayNr = 0
+        call SetIrriAfterSeason(Nri)%Param = 0
     end do
     call SetIrriECw_PreSeason(0.0) ! dS/m
     call SetIrriECw_PostSeason(0.0) ! dS/m
@@ -6397,6 +6403,23 @@ subroutine SetTemperatureRecord_FromString(FromString)
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
+
+function GetCompartment_i(i) result(Compartment_i)
+    !! Getter for individual elements of "Compartment" global variable.
+    integer(int32), intent(in) :: i
+    type(CompartmentIndividual) :: Compartment_i
+
+    Compartment_i = Compartment(i)
+end function GetCompartment_i
+
+
+subroutine SetCompartment_i(i, Compartment_i)
+    !! Setter for individual elements of "Compartment" global variable.
+    integer(int32), intent(in) :: i
+    type(CompartmentIndividual) :: Compartment_i
+
+    Compartment(i) = Compartment_i
+end subroutine SetCompartment_i
 
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
