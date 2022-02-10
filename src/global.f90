@@ -2459,7 +2459,7 @@ subroutine ReadRainfallSettings()
     character :: fullname
     integer(int8) :: NrM, effrainperc,effrainshow,effrainrootE 
 
-    fullName = PathNameSimul // 'Rainfall.PAR'
+    fullName = trim(GetPathNameSimul()) // 'Rainfall.PAR'
 
     open(newunit=fhandle, file=trim(fullname), status='old', action='read')
     read(fhandle, *)! Settings for processing 10-day or monthly rainfall data
@@ -2480,6 +2480,37 @@ subroutine ReadRainfallSettings()
     call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
     close(fhandle)
 end subroutine ReadRainfallSettings
+
+subroutine ReadSoilSettings()
+
+    integer :: fhandle
+    character(len=:), allocatable :: fullName
+    integer(int8) :: i, simul_saltdiff, simul_saltsolub, simul_root, simul_iniab
+    real(dp) :: simul_rod
+
+    fullName = trim(GetPathNameSimul()) // 'Soil.PAR'
+
+    open(newunit=fhandle, file=trim(fullname), status='old', action='read')
+    read(fhandle,*) simul_rod ! considered depth (m) of soil profile for calculation of mean soil water content
+    call SetSimulParam_RunoffDepth(simul_rod)
+    read(fhandle,*) i   ! correction CN for Antecedent Moisture Class
+    if (i == 1) then
+        call SetSimulParam_CNcorrection(.true.)
+    else
+        call SetSimulParam_CNcorrection(.false.)
+    end if
+    read(fhandle, *) simul_saltdiff ! salt diffusion factor (%)
+    read(fhandle, *) simul_saltsolub ! salt solubility (g/liter)
+    read(fhandle, *) simul_root ! shape factor capillary rise factor
+    call SetSimulParam_SaltDiff(simul_saltdiff)
+    call SetSimulParam_SaltSolub(simul_saltsolub)
+    call SetSimulParam_RootNrDF(simul_root)
+    ! new Version 4.1
+    read(fhandle, *) simul_iniab ! Percentage of S for initial abstraction for surface runoff
+    call SetSimulParam_IniAbstract(simul_iniab)
+    call SetSimulParam_IniAbstract(INT(5,1)) ! fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
+    close(fhandle)
+end subroutine ReadSoilSettings
 
 subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile, CO2File)
     character(len=*), intent(in) :: FullName

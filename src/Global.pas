@@ -240,7 +240,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
                                TypeDays : rep_modeCycle;
                                SFRedCGC,SFRedCCx : ShortInt) : double;
 
-PROCEDURE ReadSoilSettings;
+
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;
@@ -3035,35 +3035,6 @@ CASE TypeDays OF
                                                CCo,CCx,CGC,CDC,SFRedCGC,SFRedCCx);
      end;
 END; (* CanopyCoverNoStressSF *)
-
-
-PROCEDURE ReadSoilSettings;
-VAR f : textfile;
-    FullName : string;
-    i,simul_saltdiff,simul_saltsolub,simul_root,simul_iniab : ShortInt;
-    simul_rod : double;
-
-BEGIN
-FullName := CONCAT(GetPathNameSimul(),'Soil.PAR');
-Assign(f,FullName);
-Reset(f);
-READLN(f,simul_rod); //considered depth (m) of soil profile for calculation of mean soil water content
-SetSimulParam_RunoffDepth(simul_rod);
-READLN(f,i);   // correction CN for Antecedent Moisture Class
-IF (i = 1) THEN SetSimulParam_CNcorrection(true)
-           ELSE SetSimulParam_CNcorrection(false);
-READLN(f,simul_saltdiff); // salt diffusion factor (%)
-READLN(f,simul_saltsolub); // salt solubility (g/liter)
-READLN(f,simul_root); // shape factor capillary rise factor
-SetSimulParam_SaltDiff(simul_saltdiff);
-SetSimulParam_SaltSolub(simul_saltsolub);
-SetSimulParam_RootNrDF(simul_root);
-// new Version 4.1
-READLN(f,simul_iniab); // Percentage of S for initial abstraction for surface runoff
-SetSimulParam_IniAbstract(simul_iniab);
-SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
-Close(f);
-END; (* ReadSoilSettings *)
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
