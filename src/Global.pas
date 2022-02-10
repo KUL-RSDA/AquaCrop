@@ -248,7 +248,7 @@ FUNCTION HarvestIndexDay(DAP  : LongInt;
                          TempPlanting : rep_Planting;
                          VAR PercentLagPhase : ShortInt;
                          VAR HIfinal : INTEGER)   : double;
-PROCEDURE ReadRainfallSettings;
+
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
@@ -3128,30 +3128,6 @@ HarvestIndexDay := HIday;
 
 END; (* HarvestIndexDay *)
 
-
-PROCEDURE ReadRainfallSettings;
-VAR f : textfile;
-    FullName : string;
-    NrM,effrainperc,effrainshow,effrainrootE : ShortInt;
-BEGIN
-FullName := CONCAT(GetPathNameSimul(),'Rainfall.PAR');
-Assign(f,FullName);
-Reset(f);
-Readln(f); //Settings for processing 10-day or monthly rainfall data
-Readln(f,NrM);
-Case NrM OF
-     0 : SetSimulParam_EffectiveRain_Method(Full);
-     1 : SetSimulParam_EffectiveRain_Method(USDA);
-     2 : SetSimulParam_EffectiveRain_Method(Percentage);
-   end;
-Readln(f,effrainperc ); // IF Method is Percentage
-SetSimulParam_EffectiveRain_PercentEffRain(effrainperc);
-Readln(f,effrainshow);  // For estimation of surface run-off
-SetSimulParam_EffectiveRain_ShowersInDecade(effrainshow);
-Readln(f,effrainrootE); // For reduction of soil evaporation
-SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE);
-Close(f);
-END; (* ReadRainfallSettings *)
 
 
 PROCEDURE ReadCropSettingsParameters;
