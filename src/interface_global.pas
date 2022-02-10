@@ -102,6 +102,14 @@ type
         LengthSearchPeriod : INTEGER; // days
         end;
 
+     rep_EndSeason = Record
+         ExtraYears : Integer; // to add to YearStartCropCycle
+         GenerateTempOn : BOOLEAN; // by temperature criterion
+         AirTCriterion : repAirTCriterion;
+         StartSearchDayNr, StopSearchDayNr : integer; //daynumber
+         LengthSearchPeriod : INTEGER; //days
+         end;
+
     rep_datatype = (Daily,Decadely, Monthly);
 
     rep_clim = Record
@@ -2557,6 +2565,50 @@ procedure SetOnset_StopSearchDayNr(constref StopSearchDayNr : LongInt);
 procedure SetOnset_LengthSearchPeriod(constref LengthSearchPeriod : INTEGER);
     external 'aquacrop' name '__ac_global_MOD_setonset_lengthsearchperiod';
 
+function GetEndSeason() : rep_EndSeason;
+
+function GetEndSeason_ExtraYears() : Integer;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_extrayears';
+
+function GetEndSeason_GenerateTempOn() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getendseason_generatetempon_wrap';
+
+function GetEndSeason_AirTCriterion() : repAirTCriterion;
+
+function __GetEndSeason_AirTCriterion() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_airtcriterion';
+
+function GetEndSeason_StartSearchDayNr() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_startsearchdaynr';
+
+function GetEndSeason_StopSearchDayNr() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_stopsearchdaynr';
+
+function GetEndSeason_LengthSearchPeriod() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_lengthsearchperiod';
+
+procedure SetEndSeason(constref EndSeason : rep_EndSeason);
+
+procedure SetEndSeason_ExtraYears(constref ExtraYears : Integer);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_extrayears';
+
+procedure SetEndSeason_GenerateTempOn(constref GenerateTempOn : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setendseason_generatetempon_wrap';
+
+procedure SetEndSeason_AirTCriterion(constref AirTCriterion : repAirTCriterion);
+
+procedure __SetEndSeason_AirTCriterion(constref AirTCriterion : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_airtcriterion';
+
+procedure SetEndSeason_StartSearchDayNr(constref StartSearchDayNr : integer);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_startsearchdaynr';
+
+procedure SetEndSeason_StopSearchDayNr(constref StopSearchDayNr : integer);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_stopsearchdaynr';
+
+procedure SetEndSeason_LengthSearchPeriod(constref LengthSearchPeriod : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_lengthsearchperiod';
+
 
 function GetPerennialPeriod() : rep_PerennialPeriod;
 
@@ -3628,6 +3680,45 @@ var
 begin;
     index := ord(AirTCriterion);
     __SetOnset_AirTCriterion(index);
+end;
+
+function GetEndSeason() : rep_EndSeason;
+begin;
+    GetEndSeason.ExtraYears := GetEndSeason_ExtraYears();
+    GetEndSeason.GenerateTempOn := GetEndSeason_GenerateTempOn();
+    GetEndSeason.AirTCriterion := GetEndSeason_AirTCriterion();
+    GetEndSeason.StartSearchDayNr := GetEndSeason_StartSearchDayNr();
+    GetEndSeason.StopSearchDayNr := GetEndSeason_StopSearchDayNr();
+    GetEndSeason.LengthSearchPeriod := GetEndSeason_LengthSearchPeriod();
+end;
+
+
+function GetEndSeason_AirTCriterion() : repAirTCriterion;
+var
+    index : shortint;
+begin;
+    index := __GetEndSeason_AirTCriterion();
+    GetEndSeason_AirTCriterion := repAirTCriterion(index);
+end;
+
+
+procedure SetEndSeason(constref EndSeason : rep_EndSeason);
+begin;
+    SetEndSeason_ExtraYears(EndSeason.ExtraYears);
+    SetEndSeason_GenerateTempOn(EndSeason.GenerateTempOn);
+    SetEndSeason_AirTCriterion(EndSeason.AirTCriterion);
+    SetEndSeason_StartSearchDayNr(EndSeason.StartSearchDayNr);
+    SetEndSeason_StopSearchDayNr(EndSeason.StopSearchDayNr);
+    SetEndSeason_LengthSearchPeriod(EndSeason.LengthSearchPeriod);
+end;
+
+
+procedure SetEndSeason_AirTCriterion(constref AirTCriterion : repAirTCriterion);
+var
+    index : shortint;
+begin;
+    index := ord(AirTCriterion);
+    __SetEndSeason_AirTCriterion(index);
 end;
 
 

@@ -86,15 +86,7 @@ TYPE
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
-     rep_EndSeason = Record
-         ExtraYears : Integer; // to add to YearStartCropCycle
-         GenerateTempOn : BOOLEAN; // by temperature criterion
-         AirTCriterion : repAirTCriterion;
-         StartSearchDayNr, StopSearchDayNr : LongInt; //daynumber
-         LengthSearchPeriod : INTEGER; //days
-         end;
-
-      rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
+     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
 
 VAR DataPath,ObsPath : BOOLEAN;
@@ -130,7 +122,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
-    EndSeason : rep_EndSeason;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
     // salinity
     ECstorage      : double; (* EC surface storage dS/m *)
@@ -4294,7 +4285,7 @@ SetCalendarFileFull(GetCalendarFile());  (* no file *)
 SetCalendarDescription('');
 SetOnset_GenerateOn(false);
 SetOnset_GenerateTempOn(false);
-EndSeason.GenerateTempOn := false;
+SetEndSeason_GenerateTempOn(false);
 SetCalendarDescription('No calendar for the Seeding/Planting year');
 END; (* NoCropCalendar *)
 
