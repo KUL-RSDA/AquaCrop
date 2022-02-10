@@ -826,6 +826,7 @@ integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
+type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
 
 interface roundc
     module procedure roundc_int8
@@ -6948,6 +6949,372 @@ subroutine SetCompartment_Depo(i1, i2, Depo)
 
     compartment(i1)%Depo(i2) = Depo
 end subroutine SetCompartment_Depo
+
+function GetSoilLayer() result(SoilLayer_out)
+    !! Getter for the "soillayer" global variable.
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: SoilLayer_out
+
+    SoilLayer_out = soillayer
+end function GetSoilLayer
+
+function GetSoilLayer_i(i) result(SoilLayer_i)
+    !! Getter for the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i
+    type(SoilLayerIndividual) :: SoilLayer_i
+
+    SoilLayer_i = soillayer(i)
+end function GetSoilLayer_i
+
+function GetSoilLayer_Description(i) result(Description)
+    !! Getter for the "Description" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    character(len=25) :: Description
+
+    Description = soillayer(i)%Description
+end function GetSoilLayer_Description
+
+function GetSoilLayer_Thickness(i) result(Thickness)
+    !! Getter for the "Thickness" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Thickness
+
+    Thickness = soillayer(i)%Thickness
+end function GetSoilLayer_Thickness
+
+function GetSoilLayer_SAT(i) result(SAT)
+    !! Getter for the "SAT" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: SAT
+
+    SAT = soillayer(i)%SAT
+end function GetSoilLayer_SAT
+
+function GetSoilLayer_FC(i) result(FC)
+    !! Getter for the "FC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: FC
+
+    FC = soillayer(i)%FC
+end function GetSoilLayer_FC
+
+function GetSoilLayer_WP(i) result(WP)
+    !! Getter for the "WP" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: WP
+
+    WP = soillayer(i)%WP
+end function GetSoilLayer_WP
+
+function GetSoilLayer_tau(i) result(tau)
+    !! Getter for the "tau" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: tau
+
+    tau = soillayer(i)%tau
+end function GetSoilLayer_tau
+
+function GetSoilLayer_InfRate(i) result(InfRate)
+    !! Getter for the "InfRate" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: InfRate
+
+    InfRate = soillayer(i)%InfRate
+end function GetSoilLayer_InfRate
+
+function GetSoilLayer_Penetrability(i) result(Penetrability)
+    !! Getter for the "Penetrability" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: Penetrability
+
+    Penetrability = soillayer(i)%Penetrability
+end function GetSoilLayer_Penetrability
+
+function GetSoilLayer_GravelMass(i) result(GravelMass)
+    !! Getter for the "GravelMass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: GravelMass
+
+    GravelMass = soillayer(i)%GravelMass
+end function GetSoilLayer_GravelMass
+
+function GetSoilLayer_GravelVol(i) result(GravelVol)
+    !! Getter for the "GravelVol" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: GravelVol
+
+    GravelVol = soillayer(i)%GravelVol
+end function GetSoilLayer_GravelVol
+
+function GetSoilLayer_WaterContent(i) result(WaterContent)
+    !! Getter for the "WaterContent" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: WaterContent
+
+    WaterContent = soillayer(i)%WaterContent
+end function GetSoilLayer_WaterContent
+
+function GetSoilLayer_Macro(i) result(Macro)
+    !! Getter for the "Macro" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: Macro
+
+    Macro = soillayer(i)%Macro
+end function GetSoilLayer_Macro
+
+function GetSoilLayer_SaltMobility(i) result(SaltMobility)
+    !! Getter for the "SaltMobility" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), dimension(11) :: SaltMobility
+
+    SaltMobility  = soillayer(i)%SaltMobility
+end function GetSoilLayer_SaltMobility
+
+function GetSoilLayer_SaltMobility_i(i1, i2) result(SaltMobility_i)
+    !! Getter for the "SaltMobility" attribute of the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i1, i2
+    real(dp) :: SaltMobility_i
+
+    SaltMobility_i = soillayer(i1)%SaltMobility(i2)
+end function GetSoilLayer_SaltMobility_i
+
+function GetSoilLayer_SC(i) result(SC)
+    !! Getter for the "SC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: SC
+
+    SC = soillayer(i)%SC
+end function GetSoilLayer_SC
+
+function GetSoilLayer_SCP1(i) result(SCP1)
+    !! Getter for the "SCP1" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: SCP1
+
+    SCP1 = soillayer(i)%SCP1
+end function GetSoilLayer_SCP1
+
+function GetSoilLayer_UL(i) result(UL)
+    !! Getter for the "UL" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: UL
+
+    UL = soillayer(i)%UL
+end function GetSoilLayer_UL
+
+function GetSoilLayer_Dx(i) result(Dx)
+    !! Getter for the "Dx" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Dx
+
+    Dx = soillayer(i)%Dx
+end function GetSoilLayer_Dx
+
+function GetSoilLayer_SoilClass(i) result(SoilClass)
+    !! Getter for the "SoilClass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: SoilClass
+
+    SoilClass = soillayer(i)%SoilClass
+end function GetSoilLayer_SoilClass
+
+function GetSoilLayer_CRa(i) result(CRa)
+    !! Getter for the "CRa" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: CRa
+
+    CRa = soillayer(i)%CRa
+end function GetSoilLayer_CRa
+
+function GetSoilLayer_CRb(i) result(CRb)
+    !! Getter for the "CRb" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: CRb
+
+    CRb = soillayer(i)%CRb
+end function GetSoilLayer_CRb
+
+subroutine SetSoilLayer(SoilLayer_in)
+    !! Setter for the "soillayer" global variable.
+    type(SoilLayerIndividual), dimension(max_SoilLayers), intent(in) :: SoilLayer_in
+
+    soillayer = SoilLayer_in
+end subroutine SetSoilLayer
+
+subroutine SetSoilLayer_i(i, SoilLayer_i)
+    !! Setter for the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i
+    type(SoilLayerIndividual), intent(in) :: SoilLayer_i
+
+    soillayer(i) = SoilLayer_i
+end subroutine SetSoilLayer_i
+
+subroutine SetSoilLayer_Description(i, Description)
+    !! Setter for the "Description" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    character(len=25), intent(in) :: Description
+
+    soillayer(i)%Description = Description
+end subroutine SetSoilLayer_Description
+
+subroutine SetSoilLayer_Thickness(i, Thickness)
+    !! Setter for the "Thickness" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Thickness
+
+    soillayer(i)%Thickness = Thickness
+end subroutine SetSoilLayer_Thickness
+
+subroutine SetSoilLayer_SAT(i, SAT)
+    !! Setter for the "SAT" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: SAT
+
+    soillayer(i)%SAT = SAT
+end subroutine SetSoilLayer_SAT
+
+subroutine SetSoilLayer_FC(i, FC)
+    !! Setter for the "FC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: FC
+
+    soillayer(i)%FC = FC
+end subroutine SetSoilLayer_FC
+
+subroutine SetSoilLayer_WP(i, WP)
+    !! Setter for the "WP" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: WP
+
+    soillayer(i)%WP = WP
+end subroutine SetSoilLayer_WP
+
+subroutine SetSoilLayer_tau(i, tau)
+    !! Setter for the "tau" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: tau
+
+    soillayer(i)%tau = tau
+end subroutine SetSoilLayer_tau
+
+subroutine SetSoilLayer_InfRate(i, InfRate)
+    !! Setter for the "InfRate" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: InfRate
+
+    soillayer(i)%InfRate = InfRate
+end subroutine SetSoilLayer_InfRate
+
+subroutine SetSoilLayer_Penetrability(i, Penetrability)
+    !! Setter for the "Penetrability" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: Penetrability
+
+    soillayer(i)%Penetrability = Penetrability
+end subroutine SetSoilLayer_Penetrability
+
+subroutine SetSoilLayer_GravelMass(i, GravelMass)
+    !! Setter for the "GravelMass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: GravelMass
+
+    soillayer(i)%GravelMass = GravelMass
+end subroutine SetSoilLayer_GravelMass
+
+subroutine SetSoilLayer_GravelVol(i, GravelVol)
+    !! Setter for the "GravelVol" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: GravelVol
+
+    soillayer(i)%GravelVol = GravelVol
+end subroutine SetSoilLayer_GravelVol
+
+subroutine SetSoilLayer_WaterContent(i, WaterContent)
+    !! Setter for the "WaterContent" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: WaterContent
+
+    soillayer(i)%WaterContent = WaterContent
+end subroutine SetSoilLayer_WaterContent
+
+subroutine SetSoilLayer_Macro(i, Macro)
+    !! Setter for the "Macro" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: Macro
+
+    soillayer(i)%Macro = Macro
+end subroutine SetSoilLayer_Macro
+
+subroutine SetSoilLayer_SaltMobility(i, SaltMobility)
+    !! Setter for the "SaltMobility" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), dimension(11) :: SaltMobility
+
+    soillayer(i)%SaltMobility = SaltMobility
+end subroutine SetSoilLayer_SaltMobility
+
+subroutine SetSoilLayer_SaltMobility_i(i1, i2, SaltMobility_i)
+    !! Setter for the "SaltMobility" attribute of the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i1, i2
+    real(dp) :: SaltMobility_i
+
+    soillayer(i1)%SaltMobility(i2) = SaltMobility_i
+end subroutine SetSoilLayer_SaltMobility_i
+
+subroutine SetSoilLayer_SC(i, SC)
+    !! Setter for the "SC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: SC
+
+    soillayer(i)%SC = SC
+end subroutine SetSoilLayer_SC
+
+subroutine SetSoilLayer_SCP1(i, SCP1)
+    !! Setter for the "SCP1" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: SCP1
+
+    soillayer(i)%SCP1 = SCP1
+end subroutine SetSoilLayer_SCP1
+
+subroutine SetSoilLayer_UL(i, UL)
+    !! Setter for the "UL" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: UL
+
+    soillayer(i)%UL = UL
+end subroutine SetSoilLayer_UL
+
+subroutine SetSoilLayer_Dx(i, Dx)
+    !! Setter for the "Dx" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Dx
+
+    soillayer(i)%Dx = Dx
+end subroutine SetSoilLayer_Dx
+
+subroutine SetSoilLayer_SoilClass(i, SoilClass)
+    !! Setter for the "SoilClass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: SoilClass
+
+    soillayer(i)%SoilClass = SoilClass
+end subroutine SetSoilLayer_SoilClass
+
+subroutine SetSoilLayer_CRa(i, CRa)
+    !! Setter for the "CRa" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: CRa
+
+    soillayer(i)%CRa = CRa
+end subroutine SetSoilLayer_CRa
+
+subroutine SetSoilLayer_CRb(i, CRb)
+    !! Setter for the "CRb" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: CRb
+
+    soillayer(i)%CRb = CRb
+end subroutine SetSoilLayer_CRb
 
 
 end module ac_global

@@ -116,7 +116,7 @@ implementation
  SetCrop_CCo((GetCrop().PlantingDens/10000) * (GetCrop().SizeSeedling/10000));
  SetCrop_CCini((GetCrop().PlantingDens/10000) * (GetCrop().SizePlant/10000));
  // maximum rooting depth in given soil profile
- SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
+ SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
  // determine miscellaneous
  SetCrop_Day1(GetSimulParam_CropDay1());
  CompleteCropDescription;
