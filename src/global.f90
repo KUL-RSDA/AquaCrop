@@ -2433,7 +2433,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     open(newunit=fhandle, file=trim(FullName), &
                              status='old', action='read', iostat=rc)
     read(fhandle, *, iostat=rc) 
-    read(fhandle, *, iostat=rc) StringREAD ! IrriDescription, not used
+    read(fhandle, *, iostat=rc) StringREAD 
     call SetIrriDescription(StringREAD)
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
 
