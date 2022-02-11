@@ -65,8 +65,8 @@ VAR totalname : string;
 
 BEGIN
 CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),OutputName,'PROseason.OUT');
-      TypePRM : totalname := CONCAT(GetPathNameOutp(),OutputName,'PRMseason.OUT');
+      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROseason.OUT');
+      TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMseason.OUT');
       end;
 Assign(fRun,totalname);
 Rewrite(fRun);
@@ -90,8 +90,8 @@ PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject;
 VAR totalname : string;
 BEGIN
 CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),OutputName,'PROday.OUT');
-      TypePRM : totalname := CONCAT(getPathNameOutp(),OutputName,'PRMday.OUT');
+      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROday.OUT');
+      TypePRM : totalname := CONCAT(getPathNameOutp(),GetOutputName(),'PRMday.OUT');
       end;
 Assign(fDaily,totalname);
 Rewrite(fDaily);
@@ -104,8 +104,8 @@ PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject;
 VAR totalname : string;
 BEGIN
 CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),OutputName,'PROharvests.OUT');
-      TypePRM : totalname := CONCAT(GetPathNameOutp(),OutputName,'PRMharvests.OUT');
+      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROharvests.OUT');
+      TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMharvests.OUT');
       end;
 Assign(fHarvest,totalname);
 Rewrite(fHarvest);
@@ -3141,10 +3141,10 @@ VAR NrRun : ShortInt;
     StrNr := '';
     IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);
     CASE TheProjectType OF
-      TypePRO : totalnameEvalStat := CONCAT(GetPathNameOutp(),OutputName,'PROevaluation.OUT');
+      TypePRO : totalnameEvalStat := CONCAT(GetPathNameOutp(),GetOutputName(),'PROevaluation.OUT');
       TypePRM : BEGIN
                 Str(NrRun:3,StrNr);
-                totalnameEvalStat := CONCAT(GetPathNameOutp(),OutputName,'PRM',Trim(StrNr),'evaluation.OUT');
+                totalnameEvalStat := CONCAT(GetPathNameOutp(),GetOutputName(),'PRM',Trim(StrNr),'evaluation.OUT');
                 END;
       end;
     // 3. Create Evaluation statistics file

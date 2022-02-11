@@ -48,7 +48,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Runoff, Drain, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-    OutputName     : string;
     PreDay         : BOOLEAN;
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
@@ -3781,7 +3780,7 @@ BEGIN
 TempString := Trim(TheProjectFileName);
 i := Length(TempString);
 Delete(TempString,(i-3),(4));
-OutputName := TempString;
+SetOutputName(TempString);
 END; (* ComposeOutputFileName *)
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;

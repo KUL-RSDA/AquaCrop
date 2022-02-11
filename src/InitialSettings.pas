@@ -224,7 +224,7 @@ SetCrop_DayN(Crop_DayN_temp);
  SetObservationsDescription('No field observations');
 
  // 10. Output files
- OutputName := 'Project';
+ SetOutputName('Project');
 
  // 11. Onset
  SetOnset_Criterion(RainPeriod);
