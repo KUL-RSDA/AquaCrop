@@ -12,7 +12,7 @@ implicit none
 
 
 integer(int32), parameter :: max_SoilLayers = 5
-integer(int32), parameter :: max_No_compartments = 12
+integer(int32), parameter :: max_No_compartments = 12;
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -539,6 +539,113 @@ type rep_RootZoneSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
 
+type rep_IniSWC 
+    logical :: AtDepths
+        !! at specific depths or for specific layers
+    integer(int8) :: NrLoc
+        !! number of depths or layers considered
+    real(dp), dimension(max_No_compartments) :: Loc
+        !! depth or layer thickness [m]
+    real(dp), dimension(max_No_compartments) :: VolProc
+        !! soil water content (vol%)
+    real(dp), dimension(max_No_compartments) :: SaltECe
+        !! ECe in dS/m
+    logical :: AtFC
+        !! If iniSWC is at FC
+end type rep_IniSWC
+
+type rep_storage 
+    real(dp) :: Btotal
+        !! assimilates (ton/ha) stored in root systemn by CropString in Storage-Season
+    character(len=:), allocatable :: CropString
+        !! full name of crop file which stores Btotal during Storage-Season
+    integer(int8) :: Season
+        !! season in which Btotal is stored
+end type rep_storage 
+
+type rep_sim 
+    integer(int32) :: FromDayNr
+        !! daynumber
+    integer(int32) :: ToDayNr
+        !! daynumber
+    type(rep_IniSWC) :: IniSWC
+        !! Undocumented
+    real(dp), dimension(max_No_compartments) :: ThetaIni
+        !! dS/m
+    real(dp), dimension(max_No_compartments) :: ECeIni
+        !! dS/m
+    real(dp) :: SurfaceStorageIni
+        !! Undocumented
+    real(dp) :: ECStorageIni
+        !! Undocumented
+    real(dp) :: CCini
+        !! Undocumented
+    real(dp) :: Bini
+        !! Undocumented
+    real(dp) :: Zrini
+        !! Undocumented
+    logical :: LinkCropToSimPeriod
+        !! Undocumented
+    logical :: ResetIniSWC
+        !! soil water and salts
+    integer(int32) :: InitialStep
+        !! Undocumented
+    logical :: EvapLimitON
+        !! soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover
+    real(dp) :: EvapWCsurf
+        !! remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]
+    integer(int8) :: EvapStartStg2
+        !! % extra to define upper limit of soil water content at start of stage 2 [100 .. 0]
+    real(dp) :: EvapZ
+        !! actual soil depth (m) for water extraction by evaporation  [EvapZmin/100 .. EvapZmax/100]
+    integer(int32) :: HIfinal
+        !! final Harvest Index might be smaller than HImax due to early canopy decline
+    integer(int32) :: DelayedDays
+        !! delayed days since sowing/planting due to water stress (crop cannot germinate)
+    logical :: Germinate
+        !! germinate is false when crop cannot germinate due to water stress
+    real(dp) :: SumEToStress
+        !! Sum ETo during stress period to delay canopy senescence
+    real(dp) :: SumGDD
+        !! Sum of Growing Degree-days
+    real(dp) :: SumGDDfromDay1
+        !! Sum of Growing Degree-days since Crop.Day1
+    real(sp) :: SCor
+        !! correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
+    logical :: MultipleRun
+        !! Project with a sequence of simulation runs
+    integer(int32) :: NrRuns
+        !! Undocumented
+    logical :: MultipleRunWithKeepSWC
+        !! Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
+    real(dp) :: MultipleRunConstZrx
+        !! Maximum rooting depth for multiple projects with KeepSWC
+    real(dp) :: IrriECw
+        !! quality of irrigation water (dS/m)
+    integer(int8) :: DayAnaero
+        !! number of days under anaerobic conditions
+    type(rep_EffectStress) :: EffectStress
+        !! effect of soil fertility and salinity stress on CC, WP and KsSto
+    logical :: SalinityConsidered
+        !! Undocumented
+    logical :: ProtectedSeedling
+        !! IF protected (before CC = 1.25 CC0), seedling triggering of early senescence is switched off
+    logical :: SWCtopSoilConsidered
+        !! Top soil is relative wetter than root zone and determines water stresses
+    integer(int32) :: LengthCuttingInterval
+        !! Default length of cutting interval (days)
+    integer(int8) :: YearSeason
+        !! year number for perennials (1 = 1st year, 2, 3, 4, max = 127)
+    integer(int8) :: RCadj
+        !! adjusted relative cover of weeds with self thinning for perennials
+    type(rep_storage) :: Storage
+        !! Undocumented
+    integer(int32) :: YearStartCropCycle
+        !! calendar year in which crop cycle starts
+    integer(int32) :: CropDay1Previous
+        !! previous daynumber at the start of teh crop cycle
+end type rep_sim
+
 type rep_DayEventDbl
     integer(int32) :: DayNr
         !! Undocumented
@@ -799,6 +906,7 @@ character(len=:), allocatable :: CropDescription
 character(len=:), allocatable :: PathNameProg
 character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
+character(len=:), allocatable :: OutputName
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ProfDescription
@@ -824,6 +932,7 @@ character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
 character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
+character(len=:), allocatable :: FullFileNameProgramParameters
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -842,6 +951,7 @@ type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
 type(rep_clim)  :: TemperatureRecord
+type(rep_sim) :: Simulation
 
 integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
@@ -1792,7 +1902,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             ! need for adjustment
             ! step 1 - adjusment of shape factor to degree of crop replacement by weeds
             FshapeMinimum = 10 - 20*( (exp(fCCx*3._dp)-1)/(exp(3._dp)-1) + sqrt(MWeedAdj/100._dp))
-            if (nint(FshapeMinimum*10,kind=int32) == 0) then
+            if (roundc(FshapeMinimum*10,mold=1_int32) == 0) then
                 FshapeMinimum = 0.1
             end if
             FshapeWeed = FshapeWeed;
@@ -1806,7 +1916,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             CCxTot100 = fweedi * CCxCrop
             ! B. Total CC (crop and weeds) when self-thinning and 0% weed take over
             if (fCCx > 0.005) then
-                fweedi = CCmultiplierWeed(nint(fCCx*ProcentWeedCover,kind=int8),&
+                fweedi = CCmultiplierWeed(roundc(fCCx*ProcentWeedCover,mold=1_int8),&
                     (fCCx*CCxCrop), FshapeWeed)
             else
                 fweedi = 1
@@ -1820,7 +1930,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             if (fCCx > 0.005) then
                 fweedi = CCxTotM/(fCCx*CCxCrop)
                 fweedMax = 1._dp/(fCCx*CCxCrop)
-                if (nint(fweedi*1000,kind=int32) > nint(fWeedMax*1000,kind=int32)) then
+                if (roundc(fweedi*1000,mold=1_int32) > roundc(fWeedMax*1000,mold=1_int32)) then
                     fweedi = fweedMax
                 end if
             end if
@@ -1835,7 +1945,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
                     RCadjD = 100*(1- fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)
                 end if
             end if
-            RCadj = nint(RCadjD,kind=int8)
+            RCadj = roundc(RCadjD,mold=1_int8)
             if (RCadj > 100) then
                 RCadj = 100
             end if
@@ -2847,6 +2957,19 @@ subroutine SetPathNameSimul(str)
     PathNameSimul = str
 end subroutine SetPathNameSimul
 
+function GetOutputName() result(str)
+    !! Getter for the "OutputName" global variable.
+    character(len=len(OutputName)) :: str
+    
+    str = OutputName
+end function GetOutputName
+
+subroutine SetOutputName(str)
+    !! Setter for the "OutputName" global variable.
+    character(len=*), intent(in) :: str
+    
+    OutputName = str
+end subroutine SetOutputName
 
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.
@@ -2905,6 +3028,21 @@ subroutine SetMultipleProjectFileFull(str)
 end subroutine SetMultipleProjectFileFull
 
 
+function GetFullFileNameProgramParameters() result(str)
+    !! Getter for the "FullFileNameProgramParameters" global variable.
+    character(len=len(FullFileNameProgramParameters)) :: str
+    
+    str = FullFileNameProgramParameters
+end function GetFullFileNameProgramParameters
+
+subroutine SetFullFileNameProgramParameters(str)
+    !! Setter for the "FullFileNameProgramParameters" global variable.
+    character(len=*), intent(in) :: str
+    
+    FullFileNameProgramParameters = str
+end subroutine SetFullFileNameProgramParameters
+
+
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
@@ -2932,7 +3070,6 @@ subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
     read(fhandle, *) DescriptionOfProject
     DescriptionOfProject = trim(DescriptionOfProject)
-
     close(fhandle)
 end subroutine LoadProjectDescription
 
@@ -7108,6 +7245,787 @@ subroutine SetIrriBeforeSeason_Param(i, Param)
 
     IrriBeforeSeason(i)%Param = Param
 end subroutine SetIrriBeforeSeason_Param
+
+function GetSimulation() result(Simulation_out)
+    !! Getter for the "simulation" global variable.
+    type(rep_sim) :: Simulation_out
+
+    Simulation_out = simulation
+end function GetSimulation
+
+function GetSimulation_FromDayNr() result(FromDayNr)
+    !! Getter for the "FromDayNr" attribute of the "simulation" global variable.
+    integer(int32) :: FromDayNr
+
+    FromDayNr = simulation%FromDayNr
+end function GetSimulation_FromDayNr
+
+function GetSimulation_ToDayNr() result(ToDayNr)
+    !! Getter for the "ToDayNr" attribute of the "simulation" global variable.
+    integer(int32) :: ToDayNr
+
+    ToDayNr = simulation%ToDayNr
+end function GetSimulation_ToDayNr
+
+function GetSimulation_ThetaIni_i(i) result(ThetaIni_i)
+    !! Getter for the "ThetaIni" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: ThetaIni_i
+
+    ThetaIni_i = simulation%ThetaIni(i)
+end function GetSimulation_ThetaIni_i
+
+function GetSimulation_ECeIni_i(i) result(ECeIni_i)
+    !! Getter for the "ECeIni" attribute of the "simulation" global variable.
+    integer(int32) :: i
+    real(dp) :: ECeIni_i
+
+    ECeIni_i = simulation%ECeIni(i)
+end function GetSimulation_ECeIni_i
+
+function GetSimulation_SurfaceStorageIni() result(SurfaceStorageIni)
+    !! Getter for the "SurfaceStorageIni" attribute of the "simulation" global variable.
+    real(dp) :: SurfaceStorageIni
+
+    SurfaceStorageIni = simulation%SurfaceStorageIni
+end function GetSimulation_SurfaceStorageIni
+
+function GetSimulation_ECStorageIni() result(ECStorageIni)
+    !! Getter for the "ECStorageIni" attribute of the "simulation" global variable.
+    real(dp) :: ECStorageIni
+
+    ECStorageIni = simulation%ECStorageIni
+end function GetSimulation_ECStorageIni
+
+function GetSimulation_CCini() result(CCini)
+    !! Getter for the "CCini" attribute of the "simulation" global variable.
+    real(dp) :: CCini
+
+    CCini = simulation%CCini
+end function GetSimulation_CCini
+
+function GetSimulation_Bini() result(Bini)
+    !! Getter for the "Bini" attribute of the "simulation" global variable.
+    real(dp) :: Bini
+
+    Bini = simulation%Bini
+end function GetSimulation_Bini
+
+function GetSimulation_Zrini() result(Zrini)
+    !! Getter for the "Zrini" attribute of the "simulation" global variable.
+    real(dp) :: Zrini
+
+    Zrini = simulation%Zrini
+end function GetSimulation_Zrini
+
+function GetSimulation_LinkCropToSimPeriod() result(LinkCropToSimPeriod)
+    !! Getter for the "LinkCropToSimPeriod" attribute of the "simulation" global variable.
+    logical :: LinkCropToSimPeriod
+
+    LinkCropToSimPeriod = simulation%LinkCropToSimPeriod
+end function GetSimulation_LinkCropToSimPeriod
+
+function GetSimulation_ResetIniSWC() result(ResetIniSWC)
+    !! Getter for the "ResetIniSWC" attribute of the "simulation" global variable.
+    logical :: ResetIniSWC
+
+    ResetIniSWC = simulation%ResetIniSWC
+end function GetSimulation_ResetIniSWC
+
+function GetSimulation_InitialStep() result(InitialStep)
+    !! Getter for the "InitialStep" attribute of the "simulation" global variable.
+    integer(int32) :: InitialStep
+
+    InitialStep = simulation%InitialStep
+end function GetSimulation_InitialStep
+
+function GetSimulation_EvapLimitON() result(EvapLimitON)
+    !! Getter for the "EvapLimitON" attribute of the "simulation" global variable.
+    logical :: EvapLimitON
+
+    EvapLimitON = simulation%EvapLimitON
+end function GetSimulation_EvapLimitON
+
+function GetSimulation_EvapWCsurf() result(EvapWCsurf)
+    !! Getter for the "EvapWCsurf" attribute of the "simulation" global variable.
+    real(dp) :: EvapWCsurf
+
+    EvapWCsurf = simulation%EvapWCsurf
+end function GetSimulation_EvapWCsurf
+
+function GetSimulation_EvapStartStg2() result(EvapStartStg2)
+    !! Getter for the "EvapStartStg2" attribute of the "simulation" global variable.
+    integer(int8) :: EvapStartStg2
+
+    EvapStartStg2 = simulation%EvapStartStg2
+end function GetSimulation_EvapStartStg2
+
+function GetSimulation_EvapZ() result(EvapZ)
+    !! Getter for the "EvapZ" attribute of the "simulation" global variable.
+    real(dp) :: EvapZ
+
+    EvapZ = simulation%EvapZ
+end function GetSimulation_EvapZ
+
+function GetSimulation_HIfinal() result(HIfinal)
+    !! Getter for the "HIfinal" attribute of the "simulation" global variable.
+    integer(int32) :: HIfinal
+
+    HIfinal = simulation%HIfinal
+end function GetSimulation_HIfinal
+
+function GetSimulation_DelayedDays() result(DelayedDays)
+    !! Getter for the "DelayedDays" attribute of the "simulation" global variable.
+    integer(int32) :: DelayedDays
+
+    DelayedDays = simulation%DelayedDays
+end function GetSimulation_DelayedDays
+
+function GetSimulation_Germinate() result(Germinate)
+    !! Getter for the "Germinate" attribute of the "simulation" global variable.
+    logical :: Germinate
+
+    Germinate = simulation%Germinate
+end function GetSimulation_Germinate
+
+function GetSimulation_SumEToStress() result(SumEToStress)
+    !! Getter for the "SumEToStress" attribute of the "simulation" global variable.
+    real(dp) :: SumEToStress
+
+    SumEToStress = simulation%SumEToStress
+end function GetSimulation_SumEToStress
+
+function GetSimulation_SumGDD() result(SumGDD)
+    !! Getter for the "SumGDD" attribute of the "simulation" global variable.
+    real(dp) :: SumGDD
+
+    SumGDD = simulation%SumGDD
+end function GetSimulation_SumGDD
+
+function GetSimulation_SumGDDfromDay1() result(SumGDDfromDay1)
+    !! Getter for the "SumGDDfromDay1" attribute of the "simulation" global variable.
+    real(dp) :: SumGDDfromDay1
+
+    SumGDDfromDay1 = simulation%SumGDDfromDay1
+end function GetSimulation_SumGDDfromDay1
+
+function GetSimulation_SCor() result(SCor)
+    !! Getter for the "SCor" attribute of the "simulation" global variable.
+    real(sp) :: SCor
+
+    SCor = simulation%SCor
+end function GetSimulation_SCor
+
+function GetSimulation_MultipleRun() result(MultipleRun)
+    !! Getter for the "MultipleRun" attribute of the "simulation" global variable.
+    logical :: MultipleRun
+
+    MultipleRun = simulation%MultipleRun
+end function GetSimulation_MultipleRun
+
+function GetSimulation_NrRuns() result(NrRuns)
+    !! Getter for the "NrRuns" attribute of the "simulation" global variable.
+    integer(int32) :: NrRuns
+
+    NrRuns = simulation%NrRuns
+end function GetSimulation_NrRuns
+
+function GetSimulation_MultipleRunWithKeepSWC() result(MultipleRunWithKeepSWC)
+    !! Getter for the "MultipleRunWithKeepSWC" attribute of the "simulation" global variable.
+    logical :: MultipleRunWithKeepSWC
+
+    MultipleRunWithKeepSWC = simulation%MultipleRunWithKeepSWC
+end function GetSimulation_MultipleRunWithKeepSWC
+
+function GetSimulation_MultipleRunConstZrx() result(MultipleRunConstZrx)
+    !! Getter for the "MultipleRunConstZrx" attribute of the "simulation" global variable.
+    real(dp) :: MultipleRunConstZrx
+
+    MultipleRunConstZrx = simulation%MultipleRunConstZrx
+end function GetSimulation_MultipleRunConstZrx
+
+function GetSimulation_IrriECw() result(IrriECw)
+    !! Getter for the "IrriECw" attribute of the "simulation" global variable.
+    real(dp) :: IrriECw
+
+    IrriECw = simulation%IrriECw
+end function GetSimulation_IrriECw
+
+function GetSimulation_DayAnaero() result(DayAnaero)
+    !! Getter for the "DayAnaero" attribute of the "simulation" global variable.
+    integer(int8) :: DayAnaero
+
+    DayAnaero = simulation%DayAnaero
+end function GetSimulation_DayAnaero
+
+function GetSimulation_SalinityConsidered() result(SalinityConsidered)
+    !! Getter for the "SalinityConsidered" attribute of the "simulation" global variable.
+    logical :: SalinityConsidered
+
+    SalinityConsidered = simulation%SalinityConsidered
+end function GetSimulation_SalinityConsidered
+
+function GetSimulation_ProtectedSeedling() result(ProtectedSeedling)
+    !! Getter for the "ProtectedSeedling" attribute of the "simulation" global variable.
+    logical :: ProtectedSeedling
+
+    ProtectedSeedling = simulation%ProtectedSeedling
+end function GetSimulation_ProtectedSeedling
+
+function GetSimulation_SWCtopSoilConsidered() result(SWCtopSoilConsidered)
+    !! Getter for the "SWCtopSoilConsidered" attribute of the "simulation" global variable.
+    logical :: SWCtopSoilConsidered
+
+    SWCtopSoilConsidered = simulation%SWCtopSoilConsidered
+end function GetSimulation_SWCtopSoilConsidered
+
+function GetSimulation_LengthCuttingInterval() result(LengthCuttingInterval)
+    !! Getter for the "LengthCuttingInterval" attribute of the "simulation" global variable.
+    integer(int32) :: LengthCuttingInterval
+
+    LengthCuttingInterval = simulation%LengthCuttingInterval
+end function GetSimulation_LengthCuttingInterval
+
+function GetSimulation_YearSeason() result(YearSeason)
+    !! Getter for the "YearSeason" attribute of the "simulation" global variable.
+    integer(int8) :: YearSeason
+
+    YearSeason = simulation%YearSeason
+end function GetSimulation_YearSeason
+
+function GetSimulation_RCadj() result(RCadj)
+    !! Getter for the "RCadj" attribute of the "simulation" global variable.
+    integer(int8) :: RCadj
+
+    RCadj = simulation%RCadj
+end function GetSimulation_RCadj
+
+function GetSimulation_YearStartCropCycle() result(YearStartCropCycle)
+    !! Getter for the "YearStartCropCycle" attribute of the "simulation" global variable.
+    integer(int32) :: YearStartCropCycle
+
+    YearStartCropCycle = simulation%YearStartCropCycle
+end function GetSimulation_YearStartCropCycle
+
+function GetSimulation_CropDay1Previous() result(CropDay1Previous)
+    !! Getter for the "CropDay1Previous" attribute of the "simulation" global variable.
+    integer(int32) :: CropDay1Previous
+
+    CropDay1Previous = simulation%CropDay1Previous
+end function GetSimulation_CropDay1Previous
+
+subroutine SetSimulation(Simulation_in)
+    !! Setter for the "simulation" global variable.
+    type(rep_sim), intent(in) :: Simulation_in
+
+    simulation = Simulation_in
+end subroutine SetSimulation
+
+subroutine SetSimulation_FromDayNr(FromDayNr)
+    !! Setter for the "FromDayNr" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    simulation%FromDayNr = FromDayNr
+end subroutine SetSimulation_FromDayNr
+
+subroutine SetSimulation_ToDayNr(ToDayNr)
+    !! Setter for the "ToDayNr" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    simulation%ToDayNr = ToDayNr
+end subroutine SetSimulation_ToDayNr
+
+subroutine SetSimulation_ThetaIni_i(i, ThetaIni_i)
+    !! Setter for the "ThetaIni" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: ThetaIni_i
+
+    simulation%ThetaIni(i) = ThetaIni_i
+end subroutine SetSimulation_ThetaIni_i
+
+subroutine SetSimulation_ECeIni_i(i, ECeIni_i)
+    !! Setter for the "ECeIni" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: ECeIni_i
+
+    simulation%ECeIni(i) = ECeIni_i
+end subroutine SetSimulation_ECeIni_i
+
+subroutine SetSimulation_SurfaceStorageIni(SurfaceStorageIni)
+    !! Setter for the "SurfaceStorageIni" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SurfaceStorageIni
+
+    simulation%SurfaceStorageIni = SurfaceStorageIni
+end subroutine SetSimulation_SurfaceStorageIni
+
+subroutine SetSimulation_ECStorageIni(ECStorageIni)
+    !! Setter for the "ECStorageIni" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: ECStorageIni
+
+    simulation%ECStorageIni = ECStorageIni
+end subroutine SetSimulation_ECStorageIni
+
+subroutine SetSimulation_CCini(CCini)
+    !! Setter for the "CCini" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: CCini
+
+    simulation%CCini = CCini
+end subroutine SetSimulation_CCini
+
+subroutine SetSimulation_Bini(Bini)
+    !! Setter for the "Bini" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: Bini
+
+    simulation%Bini = Bini
+end subroutine SetSimulation_Bini
+
+subroutine SetSimulation_Zrini(Zrini)
+    !! Setter for the "Zrini" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: Zrini
+
+    simulation%Zrini = Zrini
+end subroutine SetSimulation_Zrini
+
+subroutine SetSimulation_LinkCropToSimPeriod(LinkCropToSimPeriod)
+    !! Setter for the "LinkCropToSimPeriod" attribute of the "simulation" global variable.
+    logical, intent(in) :: LinkCropToSimPeriod
+
+    simulation%LinkCropToSimPeriod = LinkCropToSimPeriod
+end subroutine SetSimulation_LinkCropToSimPeriod
+
+subroutine SetSimulation_ResetIniSWC(ResetIniSWC)
+    !! Setter for the "ResetIniSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: ResetIniSWC
+
+    simulation%ResetIniSWC = ResetIniSWC
+end subroutine SetSimulation_ResetIniSWC
+
+subroutine SetSimulation_InitialStep(InitialStep)
+    !! Setter for the "InitialStep" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: InitialStep
+
+    simulation%InitialStep = InitialStep
+end subroutine SetSimulation_InitialStep
+
+subroutine SetSimulation_EvapLimitON(EvapLimitON)
+    !! Setter for the "EvapLimitON" attribute of the "simulation" global variable.
+    logical, intent(in) :: EvapLimitON
+
+    simulation%EvapLimitON = EvapLimitON
+end subroutine SetSimulation_EvapLimitON
+
+subroutine SetSimulation_EvapWCsurf(EvapWCsurf)
+    !! Setter for the "EvapWCsurf" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: EvapWCsurf
+
+    simulation%EvapWCsurf = EvapWCsurf
+end subroutine SetSimulation_EvapWCsurf
+
+subroutine SetSimulation_EvapStartStg2(EvapStartStg2)
+    !! Setter for the "EvapStartStg2" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: EvapStartStg2
+
+    simulation%EvapStartStg2 = EvapStartStg2
+end subroutine SetSimulation_EvapStartStg2
+
+subroutine SetSimulation_EvapZ(EvapZ)
+    !! Setter for the "EvapZ" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: EvapZ
+
+    simulation%EvapZ = EvapZ
+end subroutine SetSimulation_EvapZ
+
+subroutine SetSimulation_HIfinal(HIfinal)
+    !! Setter for the "HIfinal" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: HIfinal
+
+    simulation%HIfinal = HIfinal
+end subroutine SetSimulation_HIfinal
+
+subroutine SetSimulation_DelayedDays(DelayedDays)
+    !! Setter for the "DelayedDays" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: DelayedDays
+
+    simulation%DelayedDays = DelayedDays
+end subroutine SetSimulation_DelayedDays
+
+subroutine SetSimulation_Germinate(Germinate)
+    !! Setter for the "Germinate" attribute of the "simulation" global variable.
+    logical, intent(in) :: Germinate
+
+    simulation%Germinate = Germinate
+end subroutine SetSimulation_Germinate
+
+subroutine SetSimulation_SumEToStress(SumEToStress)
+    !! Setter for the "SumEToStress" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SumEToStress
+
+    simulation%SumEToStress = SumEToStress
+end subroutine SetSimulation_SumEToStress
+
+subroutine SetSimulation_SumGDD(SumGDD)
+    !! Setter for the "SumGDD" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SumGDD
+
+    simulation%SumGDD = SumGDD
+end subroutine SetSimulation_SumGDD
+
+subroutine SetSimulation_SumGDDfromDay1(SumGDDfromDay1)
+    !! Setter for the "SumGDDfromDay1" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SumGDDfromDay1
+
+    simulation%SumGDDfromDay1 = SumGDDfromDay1
+end subroutine SetSimulation_SumGDDfromDay1
+
+subroutine SetSimulation_SCor(SCor)
+    !! Setter for the "SCor" attribute of the "simulation" global variable.
+    real(sp), intent(in) :: SCor
+
+    simulation%SCor = SCor
+end subroutine SetSimulation_SCor
+
+subroutine SetSimulation_MultipleRun(MultipleRun)
+    !! Setter for the "MultipleRun" attribute of the "simulation" global variable.
+    logical, intent(in) :: MultipleRun
+
+    simulation%MultipleRun = MultipleRun
+end subroutine SetSimulation_MultipleRun
+
+subroutine SetSimulation_NrRuns(NrRuns)
+    !! Setter for the "NrRuns" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: NrRuns
+
+    simulation%NrRuns = NrRuns
+end subroutine SetSimulation_NrRuns
+
+subroutine SetSimulation_MultipleRunWithKeepSWC(MultipleRunWithKeepSWC)
+    !! Setter for the "MultipleRunWithKeepSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: MultipleRunWithKeepSWC
+
+    simulation%MultipleRunWithKeepSWC = MultipleRunWithKeepSWC
+end subroutine SetSimulation_MultipleRunWithKeepSWC
+
+subroutine SetSimulation_MultipleRunConstZrx(MultipleRunConstZrx)
+    !! Setter for the "MultipleRunConstZrx" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: MultipleRunConstZrx
+
+    simulation%MultipleRunConstZrx = MultipleRunConstZrx
+end subroutine SetSimulation_MultipleRunConstZrx
+
+subroutine SetSimulation_IrriECw(IrriECw)
+    !! Setter for the "IrriECw" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: IrriECw
+
+    simulation%IrriECw = IrriECw
+end subroutine SetSimulation_IrriECw
+
+subroutine SetSimulation_DayAnaero(DayAnaero)
+    !! Setter for the "DayAnaero" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: DayAnaero
+
+    simulation%DayAnaero = DayAnaero
+end subroutine SetSimulation_DayAnaero
+
+subroutine SetSimulation_SalinityConsidered(SalinityConsidered)
+    !! Setter for the "SalinityConsidered" attribute of the "simulation" global variable.
+    logical, intent(in) :: SalinityConsidered
+
+    simulation%SalinityConsidered = SalinityConsidered
+end subroutine SetSimulation_SalinityConsidered
+
+subroutine SetSimulation_ProtectedSeedling(ProtectedSeedling)
+    !! Setter for the "ProtectedSeedling" attribute of the "simulation" global variable.
+    logical, intent(in) :: ProtectedSeedling
+
+    simulation%ProtectedSeedling = ProtectedSeedling
+end subroutine SetSimulation_ProtectedSeedling
+
+subroutine SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered)
+    !! Setter for the "SWCtopSoilConsidered" attribute of the "simulation" global variable.
+    logical, intent(in) :: SWCtopSoilConsidered
+
+    simulation%SWCtopSoilConsidered = SWCtopSoilConsidered
+end subroutine SetSimulation_SWCtopSoilConsidered
+
+subroutine SetSimulation_LengthCuttingInterval(LengthCuttingInterval)
+    !! Setter for the "LengthCuttingInterval" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: LengthCuttingInterval
+
+    simulation%LengthCuttingInterval = LengthCuttingInterval
+end subroutine SetSimulation_LengthCuttingInterval
+
+subroutine SetSimulation_YearSeason(YearSeason)
+    !! Setter for the "YearSeason" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: YearSeason
+
+    simulation%YearSeason = YearSeason
+end subroutine SetSimulation_YearSeason
+
+subroutine SetSimulation_RCadj(RCadj)
+    !! Setter for the "RCadj" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RCadj
+
+    simulation%RCadj = RCadj
+end subroutine SetSimulation_RCadj
+
+subroutine SetSimulation_YearStartCropCycle(YearStartCropCycle)
+    !! Setter for the "YearStartCropCycle" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: YearStartCropCycle
+
+    simulation%YearStartCropCycle = YearStartCropCycle
+end subroutine SetSimulation_YearStartCropCycle
+
+subroutine SetSimulation_CropDay1Previous(CropDay1Previous)
+    !! Setter for the "CropDay1Previous" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: CropDay1Previous
+
+    simulation%CropDay1Previous = CropDay1Previous
+end subroutine SetSimulation_CropDay1Previous
+
+function GetSimulation_IniSWC() result(IniSWC)
+    !! Getter for the "IniSWC" attribute of the "simulation" global variable.
+    type(rep_IniSWC) :: IniSWC
+
+    IniSWC = simulation%IniSWC
+end function GetSimulation_IniSWC
+
+function GetSimulation_IniSWC_AtDepths() result(AtDepths)
+    !! Getter for the "AtDepths" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical :: AtDepths
+
+    AtDepths = simulation%IniSWC%AtDepths
+end function GetSimulation_IniSWC_AtDepths
+
+function GetSimulation_IniSWC_NrLoc() result(NrLoc)
+    !! Getter for the "NrLoc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int8) :: NrLoc
+
+    NrLoc = simulation%IniSWC%NrLoc
+end function GetSimulation_IniSWC_NrLoc
+
+function GetSimulation_IniSWC_Loc_i(i) result(Loc_i)
+    !! Getter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable
+    integer(int32), intent(in) :: i
+    real(dp) :: Loc_i
+
+    Loc_i = simulation%IniSWC%Loc(i)
+end function GetSimulation_IniSWC_Loc_i
+
+function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
+    !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
+    integer(int32), intent(in) :: i
+    real(dp) :: VolProc_i
+
+    VolProc_i = simulation%IniSWC%VolProc(i)
+end function GetSimulation_IniSWC_VolProc_i
+
+function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
+    !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
+    integer(int32), intent(in) :: i
+    real(dp) :: SaltECe_i
+
+    SaltECe_i = simulation%IniSWC%SaltECe(i)
+end function GetSimulation_IniSWC_SaltECe_i
+
+function GetSimulation_IniSWC_AtFC() result(AtFC)
+    !! Getter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical :: AtFC
+
+    AtFC = simulation%IniSWC%AtFC
+end function GetSimulation_IniSWC_AtFC
+
+subroutine SetSimulation_IniSWC(IniSWC)
+    !! Setter for the "IniSWC" attribute of the "simulation" global variable.
+    type(rep_IniSWC), intent(in) :: IniSWC
+
+    simulation%IniSWC = IniSWC
+end subroutine SetSimulation_IniSWC
+
+subroutine SetSimulation_IniSWC_AtDepths(AtDepths)
+    !! Setter for the "AtDepths" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: AtDepths
+
+    simulation%IniSWC%AtDepths = AtDepths
+end subroutine SetSimulation_IniSWC_AtDepths
+
+subroutine SetSimulation_IniSWC_NrLoc(NrLoc)
+    !! Setter for the "NrLoc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: NrLoc
+
+    simulation%IniSWC%NrLoc = NrLoc
+end subroutine SetSimulation_IniSWC_NrLoc
+
+subroutine SetSimulation_IniSWC_Loc_i(i, Loc_i)
+    !! Setter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Loc_i
+
+    simulation%IniSWC%Loc(i) = Loc_i
+end subroutine SetSimulation_IniSWC_Loc_i
+
+subroutine SetSimulation_IniSWC_VolProc_i(i, VolProc_i)
+    !! Setter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: VolProc_i
+
+    simulation%IniSWC%VolProc(i) = VolProc_i
+end subroutine SetSimulation_IniSWC_VolProc_i
+
+subroutine SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i)
+    !! Setter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: SaltECe_i
+
+    simulation%IniSWC%SaltECe(i) = SaltECe_i
+end subroutine SetSimulation_IniSWC_SaltECe_i
+!!END ATTEMPT
+
+subroutine SetSimulation_IniSWC_AtFC(AtFC)
+    !! Setter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: AtFC
+
+    simulation%IniSWC%AtFC = AtFC
+end subroutine SetSimulation_IniSWC_AtFC
+
+function GetSimulation_EffectStress() result(EffectStress)
+    !! Getter for the "EffectStress" attribute of the "simulation" global variable.
+    type(rep_EffectStress) :: EffectStress
+
+    EffectStress = simulation%EffectStress
+end function GetSimulation_EffectStress
+
+function GetSimulation_EffectStress_RedCGC() result(RedCGC)
+    !! Getter for the "RedCGC" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedCGC
+
+    RedCGC = simulation%EffectStress%RedCGC
+end function GetSimulation_EffectStress_RedCGC
+
+function GetSimulation_EffectStress_RedCCX() result(RedCCX)
+    !! Getter for the "RedCCX" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedCCX
+
+    RedCCX = simulation%EffectStress%RedCCX
+end function GetSimulation_EffectStress_RedCCX
+
+function GetSimulation_EffectStress_RedWP() result(RedWP)
+    !! Getter for the "RedWP" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedWP
+
+    RedWP = simulation%EffectStress%RedWP
+end function GetSimulation_EffectStress_RedWP
+
+function GetSimulation_EffectStress_CDecline() result(CDecline)
+    !! Getter for the "CDecline" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    real(dp) :: CDecline
+
+    CDecline = simulation%EffectStress%CDecline
+end function GetSimulation_EffectStress_CDecline
+
+function GetSimulation_EffectStress_RedKsSto() result(RedKsSto)
+    !! Getter for the "RedKsSto" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedKsSto
+
+    RedKsSto = simulation%EffectStress%RedKsSto
+end function GetSimulation_EffectStress_RedKsSto
+
+subroutine SetSimulation_EffectStress(EffectStress)
+    !! Setter for the "EffectStress" attribute of the "simulation" global variable.
+    type(rep_EffectStress), intent(in) :: EffectStress
+
+    simulation%EffectStress = EffectStress
+end subroutine SetSimulation_EffectStress
+
+subroutine SetSimulation_EffectStress_RedCGC(RedCGC)
+    !! Setter for the "RedCGC" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedCGC
+
+    simulation%EffectStress%RedCGC = RedCGC
+end subroutine SetSimulation_EffectStress_RedCGC
+
+subroutine SetSimulation_EffectStress_RedCCX(RedCCX)
+    !! Setter for the "RedCCX" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedCCX
+
+    simulation%EffectStress%RedCCX = RedCCX
+end subroutine SetSimulation_EffectStress_RedCCX
+
+subroutine SetSimulation_EffectStress_RedWP(RedWP)
+    !! Setter for the "RedWP" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedWP
+
+    simulation%EffectStress%RedWP = RedWP
+end subroutine SetSimulation_EffectStress_RedWP
+
+subroutine SetSimulation_EffectStress_CDecline(CDecline)
+    !! Setter for the "CDecline" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: CDecline
+
+    simulation%EffectStress%CDecline = CDecline
+end subroutine SetSimulation_EffectStress_CDecline
+
+subroutine SetSimulation_EffectStress_RedKsSto(RedKsSto)
+    !! Setter for the "RedKsSto" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedKsSto
+
+    simulation%EffectStress%RedKsSto = RedKsSto
+end subroutine SetSimulation_EffectStress_RedKsSto
+
+function GetSimulation_Storage() result(Storage)
+    !! Getter for the "Storage" attribute of the "simulation" global variable.
+    type(rep_storage) :: Storage
+
+    Storage = simulation%Storage
+end function GetSimulation_Storage
+
+function GetSimulation_Storage_Btotal() result(Btotal)
+    !! Getter for the "Btotal" attribute of the "Storage" attribute of the "simulation" global variable.
+    real(dp) :: Btotal
+
+    Btotal = simulation%Storage%Btotal
+end function GetSimulation_Storage_Btotal
+
+function GetSimulation_Storage_CropString() result(CropString)
+    !! Getter for the "CropString" attribute of the "Storage" attribute of the "simulation" global variable.
+    character(len=len(simulation%storage%CropString)) :: CropString
+
+    CropString = simulation%Storage%CropString
+end function GetSimulation_Storage_CropString
+
+function GetSimulation_Storage_Season() result(Season)
+    !! Getter for the "Season" attribute of the "Storage" attribute of the "simulation" global variable.
+    integer(int8) :: Season
+
+    Season = simulation%Storage%Season
+end function GetSimulation_Storage_Season
+
+subroutine SetSimulation_Storage(Storage)
+    !! Setter for the "Storage" attribute of the "simulation" global variable.
+    type(rep_storage), intent(in) :: Storage
+
+    simulation%Storage = Storage
+end subroutine SetSimulation_Storage
+
+subroutine SetSimulation_Storage_Btotal(Btotal)
+    !! Setter for the "Btotal" attribute of the "Storage" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: Btotal
+
+    simulation%Storage%Btotal = Btotal
+end subroutine SetSimulation_Storage_Btotal
+
+subroutine SetSimulation_Storage_CropString(CropString)
+    !! Setter for the "CropString" attribute of the "Storage" attribute of the "simulation" global variable.
+    character(len=*), intent(in) :: CropString
+
+    simulation%Storage%CropString = CropString
+end subroutine SetSimulation_Storage_CropString
+
+subroutine SetSimulation_Storage_Season(Season)
+    !! Setter for the "Season" attribute of the "Storage" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: Season
+
+    simulation%Storage%Season = Season
+end subroutine SetSimulation_Storage_Season
 
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.

@@ -65,7 +65,7 @@ VAR Nri : INTEGER;
     READLN(fOut); //units
     // find first day
     //SkipLines := RangeObsMin - Simulation.FromDayNr - 1;
-    SkipLines := RangeObsMin - Simulation.FromDayNr;
+    SkipLines := RangeObsMin - GetSimulation_FromDayNr();
     FOR i := 1 to SkipLines DO READLN(fOut);
 
     // get Sim and Obs in range
