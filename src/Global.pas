@@ -30,7 +30,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     ClimRecord,
     EToRecord,
     RainRecord     : rep_clim;
-    Simulation     : rep_sim;
     SoilLayer      : rep_SoilLayer;
     NrCompartments : INTEGER;
     RootingDepth   : double;
@@ -597,8 +596,8 @@ FOR Nri := 1 TO 5 DO
 SetIrriECw_PostSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 END; (* NoManagementOffSeason *)
 
@@ -663,8 +662,8 @@ IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing per
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriAfterSeason[Nri].DayNr := ROUND(Par1);
-   IrriAfterSeason[Nri].Param := ROUND(Par2);
+   SetIrriAfterSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriAfterSeason_Param(Nri, ROUND(Par2));
    END;
 Close(f0);
 END; (* LoadOffSeason *)

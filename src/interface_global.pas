@@ -1559,11 +1559,6 @@ procedure SetClimateFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimatefilefull_wrap';
 
-(*function GetIrriDescription(): string;
-
-function GetIrriDescription_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getirridescription_wrap';
-*)
 procedure SetIrriDescription(constref str : string);
 
 procedure SetIrriDescription_wrap(
@@ -4914,16 +4909,6 @@ begin;
     SetClimateFileFull_wrap(p, strlen);
 end;
 
-
-(*function GetIrriDescription(): string;
-var
-    p : PChar;
-
-begin;
-    p := GetIrriDescription_wrap();
-    GetIrriDescription := AnsiString(p);
-end;
-*)
 
 procedure SetIrriDescription(constref str : string);
 var

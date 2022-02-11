@@ -2393,7 +2393,7 @@ VAR RepeatToDay : LongInt;
     IF (Dayi > GetCrop().DayN) THEN
        BEGIN
        DNr := Dayi - GetCrop().DayN;
-       IrriEvents := IrriAfterSeason;
+       IrriEvents := GetIrriAfterSeason();
        END;
     IF (DNr < 1)
        THEN IrriOutSeason := 0

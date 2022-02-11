@@ -2468,7 +2468,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     end select
 
     ! 1. Irrigation schedule
-    if ((i == 1) .and. (nint(VersionNr*10,kind=int32) >= 70)) then
+    if ((i == 1) .and. (roundc(VersionNr*10,mold=1_int32) >= 70)) then
         read(fhandle, *, iostat=rc) IrriFirstDayNr ! line 6
     else
         IrriFirstDayNr = undef_int ! start of growing period
