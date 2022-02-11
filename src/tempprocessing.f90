@@ -960,7 +960,8 @@ subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
         else
             GDDi = 5._dp
         end if
-        CCi = CCx * (1._dp - 0.05 * (exp(GDDi*(GDDCDC*3.33)/(CCx+2.29))-1_dp) )
+        CCi = CCx * (1._dp - 0.05_dp  &
+                 * (exp(GDDi*(GDDCDC*3.33_dp)/(CCx+2.29_dp))-1_dp) )
        ! CC at time ti
     end if
     ti = SumCalendarDays(GDDi, (PlantDayNr+D123),&
