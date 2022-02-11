@@ -124,15 +124,15 @@ integer(intEnum), parameter :: IrriMode_Inet = 3
     !! index of inet in IrriMode enumerated type
 
 integer(intEnum), parameter :: IrriMethod_MBasin = 0
-    !! index of MBasin in IrriMode enumerated type
+    !! index of MBasin in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MBorder = 1
-    !! index of MBorder in IrriMode enumerated type
+    !! index of MBorder in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MDrip = 2
-    !! index of MDrip in IrriMode enumerated type
+    !! index of MDrip in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MFurrow = 3
-    !! index of MFurrow in IrriMode enumerated type
+    !! index of MFurrow in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MSprinkler = 4
-    !! index of MSprinkler in IrriMode enumerated type
+    !! index of MSprinkler in IrriMethod enumerated type
 
 integer(intEnum), parameter :: datatype_daily = 0
     !! index of daily in datatype enumerated type
