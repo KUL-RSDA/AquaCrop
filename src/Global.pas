@@ -927,7 +927,7 @@ FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
     END;
 FOR compi := 1 TO NrCompartments DO
-    IF (GetCompartment_Layer(compi) = 0) THEN ind := 1
+    IF (GetCompartment_Layer(compi) = 0) THEN ind := 1 //LB: added an if statement to avoid having index=0
     ELSE ind := GetCompartment_Layer(compi);
     For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
         BEGIN // salinity in cells
