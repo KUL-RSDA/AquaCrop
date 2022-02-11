@@ -466,9 +466,9 @@ type
          GeneratedDayNrOnset,GeneratedDayNrEnd : integer;
          end;
 
-     VAR IrriFirstDayNr : LongInt;
-         IrriBeforeSeason, IrriAfterSeason : rep_IrriOutSeasonEvents;
-
+     VAR IrriFirstDayNr : LongInt; 
+         IrriBeforeSeason,
+         IrriAfterSeason : rep_IrriOutSeasonEvents;
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';
@@ -3454,6 +3454,12 @@ procedure SetIrriAfterSeason_DayNr(constref i : integer;
 procedure SetIrriAfterSeason_Param(constref i : integer;
                                    constref Param : integer);
     external 'aquacrop' name '__ac_global_MOD_setirriafterseason_param';
+
+function GetIrriFirstDayNr() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getirrifirstdaynr';
+
+procedure SetIrriFirstDayNr(constref IrriFirstDayNr : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setirrifirstdaynr';
 
 function GetIrriBeforeSeason_i(constref i : integer) : Rep_DayEventInt;
 

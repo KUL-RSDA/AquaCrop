@@ -1083,9 +1083,9 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    FOR i := 1 TO 6 DO READLN(fIrri);  // irrigation info (already loaded)
    CASE GetIrriMode() OF
         Manual   : BEGIN
-                   IF (IrriFirstDayNr = undef_int)
+                   IF (GetIrriFirstDayNr() = undef_int)
                       THEN DNr := DayNri - GetCrop().Day1 + 1
-                      ELSE DNr := DayNri - IrriFirstDayNr + 1;
+                      ELSE DNr := DayNri - GetIrriFirstDayNr() + 1;
                    REPEAT
                    IF Eof(fIrri)
                       THEN SetIrriInfoRecord1_NoMoreInfo(true)
@@ -2422,9 +2422,9 @@ VAR RepeatToDay : LongInt;
         Ir1,Ir2 : double;
         IrriECw_temp : double;
     BEGIN
-    IF (IrriFirstDayNr = undef_int)
+    IF (GetIrriFirstDayNr() = undef_int)
        THEN DNr := Dayi - GetCrop().Day1 + 1
-       ELSE DNr := Dayi - IrriFirstDayNr + 1;
+       ELSE DNr := Dayi - GetIrriFirstDayNr() + 1;
     IF (GetIrriInfoRecord1_NoMoreInfo())
        THEN IrriManual := 0
        ELSE BEGIN

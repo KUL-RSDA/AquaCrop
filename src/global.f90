@@ -2439,15 +2439,15 @@ subroutine LoadIrriScheduleInfo(FullName)
     ! irrigation method
     read(fhandle, *, iostat=rc) i
     select case (i)
-    case(0)
-        call SetIrriMethod(IrriMethod_MSprinkler)
     case(1)
-        call SetIrriMethod(IrriMethod_MBasin)
+        call SetIrriMethod(IrriMethod_MSprinkler)
     case(2)
-        call SetIrriMethod(IrriMethod_MBorder)
+        call SetIrriMethod(IrriMethod_MBasin)
     case(3)
-        call SetIrriMethod(IrriMethod_MFurrow)
+        call SetIrriMethod(IrriMethod_MBorder)
     case(4)
+        call SetIrriMethod(IrriMethod_MFurrow)
+    case default
         call SetIrriMethod(IrriMethod_MDrip)
     end select
     ! fraction of soil surface wetted
@@ -2463,7 +2463,7 @@ subroutine LoadIrriScheduleInfo(FullName)
         call SetIrriMode(IrriMode_Manual)
     case(2)
         call SetIrriMode(IrriMode_Generate)
-    case(3)
+    case default
         call SetIrriMode(IrriMode_Inet)
     end select
 
@@ -7253,6 +7253,20 @@ subroutine SetIrriBeforeSeason_Param(i, Param)
 
     IrriBeforeSeason(i)%Param = Param
 end subroutine SetIrriBeforeSeason_Param
+
+subroutine SetIrriFirstDayNr(IrriFirstDayNr_in)
+    !! Setter for the "IrriFirstDayNr" global variable.
+    integer(int32), intent(in) :: IrriFirstDayNr_in
+
+    IrriFirstDayNr = IrriFirstDayNr_in
+end subroutine SetIrriFirstDayNr
+
+function GetIrriFirstDayNr() result(IrriFirstDayNr_out)
+    !! Getter for the "IrriFirstDayNr" global variable.
+    integer(int32) :: IrriFirstDayNr_out
+
+    IrriFirstDayNr_out = IrriFirstDayNr
+end function GetIrriFirstDayNr
 
 function GetSimulation() result(Simulation_out)
     !! Getter for the "simulation" global variable.
