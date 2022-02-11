@@ -1224,10 +1224,10 @@ FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO
     Comp.Salt[i] := 0;
     Comp.Depo[i] := 0;
     END;
-FOR i := 1 TO celn DO SumDF := SumDF + GetSoilLayer_i(Comp.Layer).SaltMobility[i];
+FOR i := 1 TO celn DO SumDF := SumDF + GetSoilLayer_SaltMobility_i(Comp.Layer, i);
 FOR i := 1 TO celn DO
     BEGIN
-    Comp.Salt[i] := TotSalt * GetSoilLayer_i(Comp.Layer).SaltMobility[i]/SumDF;
+    Comp.Salt[i] := TotSalt * GetSoilLayer_SaltMobility_i(Comp.Layer, i)/SumDF;
     mm := mm1;
     IF (i = GetSoilLayer_i(Comp.Layer).SCP1) THEN mm := mmN;
     SaltSolutionDeposit(mm,Comp.Salt[i],Comp.Depo[i]);
@@ -1245,11 +1245,11 @@ soillayer_i_temp : SoilLayerIndividual;
 soillayer_temp : rep_SoilLayer;
 BEGIN
 FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO 
-BEGIN
-    soillayer_i_temp := GetSoilLayer_i(i);
-    set_layer_undef(soillayer_i_temp);
-    SetSoilLayer_i(i, soillayer_i_temp);
-END;
+    BEGIN
+        soillayer_i_temp := GetSoilLayer_i(i);
+        set_layer_undef(soillayer_i_temp);
+        SetSoilLayer_i(i, soillayer_i_temp);
+    END;
 Simulation.ResetIniSWC := true; // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
 Compartment_temp := GetCompartment();
@@ -1271,7 +1271,7 @@ VAR f0 : TextFile;
     thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp : double;
     cra_temp, crb_temp, dx_temp : double;
     description_temp : string;
-    penetrability_temp : shortint;
+    penetrability_temp, gravelm_temp : shortint;
     saltmob_temp : rep_salt;
 BEGIN
 Assign(f0,FullName);
@@ -1331,13 +1331,14 @@ FOR i := 1 TO GetSoil().NrSoilLayers DO
                     END
                ELSE BEGIN
                     READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           penetrability_temp, cra_temp, crb_temp,description_temp);
+                           penetrability_temp, gravelm_temp, cra_temp, crb_temp,description_temp);
                     SetSoilLayer_Thickness(i, thickness_temp);
                     SetSoilLayer_SAT(i, SAT_temp);
                     SetSoilLayer_FC(i, FC_temp);
                     SetSoilLayer_WP(i, WP_temp); 
                     SetSoilLayer_InfRate(i, infrate_temp);
                     SetSoilLayer_Penetrability(i, penetrability_temp);
+                    SetSoilLayer_GravelMass(i, gravelm_temp);
                     SetSoilLayer_CRa(i, cra_temp);
                     SetSoilLayer_CRb(i, crb_temp);
                     SetSoilLayer_Description(i, description_temp);
