@@ -2670,6 +2670,205 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     close(fhandle)
 end subroutine LoadCropCalendar
 
+logical function LeapYear(Year)
+    integer(int32), intent(in) :: Year
+
+    LeapYear = .false.
+    if (frac(Year/4._dp) <= 0.01_dp) then
+        LeapYear = .true.
+    end if
+
+    contains
+
+    real(dp) function frac(val)
+        real(dp), intent(in) :: val
+
+        frac = val - floor(val)
+    end function frac 
+end function LeapYear
+
+
+subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
+    character(len=*), intent(in) :: FullNameProjectFile
+    character(len=*), intent(inout) :: DescriptionOfProject
+
+    integer :: fhandle
+
+    open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
+    read(fhandle, *) DescriptionOfProject
+    DescriptionOfProject = trim(DescriptionOfProject)
+    close(fhandle)
+end subroutine LoadProjectDescription
+
+
+subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
+    character(len=*), intent(in) :: TempFullFilename
+    integer(int32), intent(in) :: Runi
+    logical, intent(inout) :: AllOK
+
+    integer :: fhandle
+    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
+    character(len=1024) :: buffer
+    integer(int32) :: i, TotalFiles
+  
+    AllOK = .true.
+    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
+        action='read')
+    read(fhandle, *) ! Description
+    read(fhandle, *)  ! AquaCrop version Nr
+    
+    ! Prepare
+    if (Runi > 1) then
+        do i = 1, 5 
+            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
+        end do
+        do i = 1, 42 
+            read(fhandle, *) ! files previous runs
+        end do
+    end if
+
+    ! Type Year and Simulation and Cropping period of the run
+    do i = 1, 5 
+        read(fhandle, *)
+    end do
+
+    ! Check the 14 files
+    i = 1
+    TotalFiles = 14
+    do while (AllOK .and. (i <= TotalFiles))
+        read(fhandle, *) ! Info
+        read(fhandle, *) buffer  ! FileName
+        TempFileName = trim(buffer)
+        if (trim(TempFileName) == '(None)') then
+            read(fhandle, *)
+        else
+            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
+                read(fhandle, *) ! Keep initial SWC
+            else
+                read(fhandle, *) buffer ! PathName
+                TempPathName = trim(buffer)
+                TempFullName = trim(TempPathName) // trim(TempFileName)
+                if (FileExists(trim(TempFullName)) .eqv. .false.) then
+                    AllOK = .false.
+                end if
+            end if
+        end if
+        i = i + 1
+    end do
+    close(fhandle)
+end subroutine CheckFilesInProject
+
+subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
+                          EToVal, KcVal, KcDeclineVal, CCx, CCxWithered, &
+                          CCeffectProcent, CO2i, GDDayi, TempGDtranspLow, &
+                          TpotVal, EpotVal)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LHarvest
+    integer(int32), intent(in) :: DayLastCut
+    real(dp), intent(in) :: CCi
+    real(dp), intent(in) :: EToVal
+    real(dp), intent(inout) :: KcVal
+    real(dp), intent(in) :: KcDeclineVal
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CCxWithered
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: TempGDtranspLow
+    real(dp), intent(inout) :: TpotVal
+    real(dp), intent(inout) :: EpotVal
+
+    real(dp) :: EpotMin, EpotMax, CCiAdjusted, Multiplier, KsTrCold
+    integer(int32) :: VirtualDay
+
+    ! CalculateETpot
+    VirtualDay = DAP - GetSimulation_DelayedDays()
+    if (((VirtualDay < L0) .and. (roundc(100._dp*CCi, mold=1_int32) == 0)) &
+                          .or. (VirtualDay > LHarvest)) then 
+        ! To handlle Forage crops: Round(100*CCi) = 0
+        TpotVal = 0._dp
+        EpotVal = GetSimulParam_KcWetBare()*EToVal
+    else
+        ! Correction for micro-advection 
+        CCiAdjusted = 1.72_dp*CCi - 1._dp*(CCi*CCi) + 0.30_dp*(CCi*CCi*CCi)
+        if (CCiAdjusted < 0._dp) then
+            CCiAdjusted = 0._dp
+        end if
+        if (CCiAdjusted > 1._dp) then
+            CCiAdjusted = 1._dp
+        end if
+        
+        ! Correction for ageing effects - is a function of calendar days 
+        if ((VirtualDay-DayLastCut) > (L12+5)) then
+            KcVal = KcVal - (VirtualDay-DayLastCut-(L12+5._dp))*(KcDeclineVal/100._dp)*CCxWithered
+        end if
+        
+        ! Correction for elevated atmospheric CO2 concentration 
+        if (CO2i > 369.41_dp) then
+            KcVal = KcVal * (1._dp - 0.05_dp * (CO2i-369.41_dp)/(550._dp-369.41_dp))
+        end if
+        
+        ! Correction for Air temperature stress 
+        if ((CCiAdjusted <= 0.0000001) .or. (roundc(GDDayi, mold=1_int32) < 0)) then
+            KsTrCold = 1._dp
+        else
+            KsTrCold = KsTemperature(0._dp, TempGDtranspLow, GDDayi)
+        end if
+        
+        ! First estimate of Epot and Tpot 
+        TpotVal = CCiAdjusted * KsTrCold * KcVal * EToVal
+        EpotVal = GetSimulParam_KcWetBare() * (1._dp - CCiAdjusted) * EToVal
+        
+        ! Maximum Epot with withered canopy as a result of (early) senescence
+        EpotMax = GetSimulParam_KcWetBare() * EToVal * (1._dp - CCxWithered * CCEffectProcent/100._dp)
+        
+        ! Correction Epot for dying crop in late-season stage 
+        if ((VirtualDay > L123) .and. (CCx > 0._dp)) then
+            if (CCi > (CCx/2._dp)) then
+                ! not yet full effect 
+                if (CCi > CCx) then
+                    Multiplier = 0._dp  ! no effect
+                else
+                    Multiplier = (CCx-CCi)/(CCx/2._dp)
+                end if
+            else
+                Multiplier = 1._dp ! full effect
+            end if
+            EpotVal = EpotVal * (1._dp - CCx * (CCEffectProcent/100._dp) * Multiplier)
+            EpotMin = GetSimulParam_KcWetBare() * (1._dp - 1.72_dp*CCx + 1._dp*(CCx*CCx) &
+                                                   - 0.30_dp*(CCx*CCx*CCx)) * EToVal
+            if (EpotMin < 0._dp) then
+                EpotMin = 0._dp
+            end if
+            if (EpotVal < EpotMin) then
+                EpotVal = EpotMin
+            end if
+            if (EpotVal > EpotMax) then
+                EpotVal = EpotMax
+            end if
+        end if
+        
+        ! Correction for canopy senescence before late-season stage 
+        if (GetSimulation_EvapLimitON()) then
+            if (EpotVal > EpotMax) then
+                EpotVal = EpotMax
+            end if
+            
+            ! Correction for drop in photosynthetic capacity of a dying green canopy 
+            if (CCi < CCxWithered) then
+                if ((CCxWithered > 0.01) .and. (CCi > 0.001)) then
+                    TpotVal = TpotVal * exp(GetSimulParam_ExpFsen()*log(real(CCi/CCxWithered, kind=dp)))
+                end if
+            end if
+        end if
+        ! CalculateETpot 
+    end if
+end subroutine CalculateETpot
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
@@ -2917,96 +3116,6 @@ subroutine SetFullFileNameProgramParameters(str)
     FullFileNameProgramParameters = str
 end subroutine SetFullFileNameProgramParameters
 
-
-logical function LeapYear(Year)
-    integer(int32), intent(in) :: Year
-
-    LeapYear = .false.
-    if (frac(Year/4._dp) <= 0.01_dp) then
-        LeapYear = .true.
-    end if
-
-    contains
-
-    real(dp) function frac(val)
-        real(dp), intent(in) :: val
-
-        frac = val - floor(val)
-    end function frac 
-end function LeapYear
-
-
-subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
-    character(len=*), intent(in) :: FullNameProjectFile
-    character(len=*), intent(inout) :: DescriptionOfProject
-
-    integer :: fhandle
-
-    open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
-    read(fhandle, *) DescriptionOfProject
-    DescriptionOfProject = trim(DescriptionOfProject)
-    close(fhandle)
-end subroutine LoadProjectDescription
-
-
-subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
-    character(len=*), intent(in) :: TempFullFilename
-    integer(int32), intent(in) :: Runi
-    logical, intent(inout) :: AllOK
-
-    integer :: fhandle
-    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
-    character(len=1024) :: buffer
-    integer(int32) :: i, TotalFiles
-  
-    AllOK = .true.
-    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
-        action='read')
-    read(fhandle, *) ! Description
-    read(fhandle, *)  ! AquaCrop version Nr
-    
-    ! Prepare
-    if (Runi > 1) then
-        do i = 1, 5 
-            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
-        end do
-        do i = 1, 42 
-            read(fhandle, *) ! files previous runs
-        end do
-    end if
-
-    ! Type Year and Simulation and Cropping period of the run
-    do i = 1, 5 
-        read(fhandle, *)
-    end do
-
-    ! Check the 14 files
-    i = 1
-    TotalFiles = 14
-    do while (AllOK .and. (i <= TotalFiles))
-        read(fhandle, *) ! Info
-        read(fhandle, *) buffer  ! FileName
-        TempFileName = trim(buffer)
-        if (trim(TempFileName) == '(None)') then
-            read(fhandle, *)
-        else
-            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
-                read(fhandle, *) ! Keep initial SWC
-            else
-                read(fhandle, *) buffer ! PathName
-                TempPathName = trim(buffer)
-                TempFullName = trim(TempPathName) // trim(TempFileName)
-                if (FileExists(trim(TempFullName)) .eqv. .false.) then
-                    AllOK = .false.
-                end if
-            end if
-        end if
-        i = i + 1
-    end do
-    close(fhandle)
-end subroutine CheckFilesInProject
-
-!! Global variables section !!
 
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.

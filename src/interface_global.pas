@@ -3488,6 +3488,13 @@ procedure SetCompartment_Depo(constref i1, i2 : integer;
                                 constref Depo : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_depo';
 
+procedure CalculateETpot(constref DAP,L0,L12,L123,LHarvest,DayLastCut : integer;
+                         constref CCi,EToVal,KcVal,KcDeclineVal,CCx : double;
+                         constref CCxWithered,CCeffectProcent,CO2i : double;
+                         constref GDDayi, TempGDtranspLow : double;
+                         var TpotVal, EpotVal : double);
+    external 'aquacrop' name '__ac_global_MOD_calculateetpot';
+
 
 implementation
 
