@@ -975,7 +975,7 @@ END; (* DesignateSoilLayerToCompartments *)
 
 
 PROCEDURE DeclareInitialCondAtFCandNoSalt;
-VAR layeri,compi,celli : INTEGER;
+VAR layeri,compi,celli, ind : INTEGER;
 BEGIN
 SetSWCiniFile('(None)');
 SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
@@ -996,7 +996,9 @@ FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     Simulation.IniSWC.SaltECe[layeri] := undef_double;
     END;
 FOR compi := 1 TO NrCompartments DO
-    For celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
+    IF (GetCompartment_Layer(compi) = 0) THEN ind := 1
+    ELSE ind := GetCompartment_Layer(compi);
+    For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
         BEGIN // salinity in cells
         SetCompartment_Salt(compi, celli, 0.0);
         SetCompartment_Depo(compi, celli, 0.0);
