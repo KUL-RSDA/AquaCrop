@@ -962,8 +962,8 @@ integer(int32) :: IrriFirstDayNr
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
-type(DayEventInt), dimension(5) :: IrriBeforeSeason
-type(DayEventInt), dimension(5) :: IrriAfterSeason
+type(rep_DayEventInt), dimension(5) :: IrriBeforeSeason
+type(rep_DayEventInt), dimension(5) :: IrriAfterSeason
 
 
 interface roundc
@@ -2400,9 +2400,9 @@ end function FullUndefinedRecord
 subroutine NoIrrigation()
     integer(int32) :: Nri
     call SetIrriMode(IrriMode_NoIrri)
-    IrriDescription = 'Rainfed cropping'
+    call SetIrriDescription('Rainfed cropping')
     call SetIrriMethod(IrriMethod_MSprinkler)
-    call SetSimulation_IrriECw(0.0) ! dS/m
+    call SetSimulation_IrriECw(0.0_dp) ! dS/m
     call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
     call SetGenerateDepthMode(GenerateDepthMode_ToFC)
     IrriFirstDayNr = undef_int
@@ -2412,8 +2412,8 @@ subroutine NoIrrigation()
         call SetIrriAfterSeason_DayNr(Nri, 0)
         call SetIrriAfterSeason_Param(Nri, 0)
     end do
-    call SetIrriECw_PreSeason(0.0) ! dS/m
-    call SetIrriECw_PostSeason(0.0) ! dS/m
+    call SetIrriECw_PreSeason(0.0_dp) ! dS/m
+    call SetIrriECw_PostSeason(0.0_dp) ! dS/m
     ! NoIrrigation 
 end subroutine NoIrrigation
 
@@ -7155,15 +7155,15 @@ end subroutine SetIrriAfterSeason_i
 function GetIrriAfterSeason_DayNr(i) result(DayNr)
     !! Getter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: DayNr
+    integer(int32) :: DayNr
 
-    Param = IrriAfterSeason(i)%DayNr
+    DayNr = IrriAfterSeason(i)%DayNr
 end function GetIrriAfterSeason_DayNr
 
 function GetIrriAfterSeason_Param(i) result(Param)
     !! Getter for the "Param" attribute of the "IrriAfterSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: Param
+    integer(int32) :: Param
 
     Param = IrriAfterSeason(i)%Param
 end function GetIrriAfterSeason_Param
@@ -7178,7 +7178,7 @@ end subroutine SetIrriAfterSeason
 subroutine SetIrriAfterSeason_DayNr(i, DayNr)
     !! Setter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: DayNr
+    integer(int32), intent(in) :: DayNr
 
     IrriAfterSeason(i)%DayNr = DayNr
 end subroutine SetIrriAfterSeason_DayNr
@@ -7186,7 +7186,7 @@ end subroutine SetIrriAfterSeason_DayNr
 subroutine SetIrriAfterSeason_Param(i, Param)
     !! Setter for the "Param" attribute of the "IrriAfterSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: Param
+    integer(int32), intent(in) :: Param
 
     IrriAfterSeason(i)%Param = Param
 end subroutine SetIrriAfterSeason_Param
@@ -7210,15 +7210,15 @@ end subroutine SetIrriBeforeSeason_i
 function GetIrriBeforeSeason_DayNr(i) result(DayNr)
     !! Getter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: DayNr
+    integer(int32) :: DayNr
 
-    Param = IrriBeforeSeason(i)%DayNr
+    DayNr = IrriBeforeSeason(i)%DayNr
 end function GetIrriBeforeSeason_DayNr
 
 function GetIrriBeforeSeason_Param(i) result(Param)
     !! Getter for the "Param" attribute of the "IrriBeforeSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: Param
+    integer(int32) :: Param
 
     Param = IrriBeforeSeason(i)%Param
 end function GetIrriBeforeSeason_Param
@@ -7233,7 +7233,7 @@ end subroutine SetIrriBeforeSeason
 subroutine SetIrriBeforeSeason_DayNr(i, DayNr)
     !! Setter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: DayNr
+    integer(int32), intent(in) :: DayNr
 
     IrriBeforeSeason(i)%DayNr = DayNr
 end subroutine SetIrriBeforeSeason_DayNr
@@ -7241,7 +7241,7 @@ end subroutine SetIrriBeforeSeason_DayNr
 subroutine SetIrriBeforeSeason_Param(i, Param)
     !! Setter for the "Param" attribute of the "IrriBeforeSeason" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: Param
+    integer(int32), intent(in) :: Param
 
     IrriBeforeSeason(i)%Param = Param
 end subroutine SetIrriBeforeSeason_Param

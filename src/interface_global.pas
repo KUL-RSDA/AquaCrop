@@ -238,10 +238,6 @@ type
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
      
-     IrriFirstDayNr : LongInt;
-     
-     IrriBeforeSeason, IrriAfterSeason : rep_IrriOutSeasonEvents;
-
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
 
@@ -470,6 +466,8 @@ type
          GeneratedDayNrOnset,GeneratedDayNrEnd : integer;
          end;
 
+     VAR IrriFirstDayNr : LongInt;
+         IrriBeforeSeason, IrriAfterSeason : rep_IrriOutSeasonEvents;
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -3423,12 +3421,12 @@ procedure LoadCropCalendar_wrap(constref FullName : PChar;
 
 function GetIrriAfterSeason_i(constref i : integer) : Rep_DayEventInt;
 
-function GetIrriAfterSeason() : rep_IrriOutSeasonEvent;
+function GetIrriAfterSeason() : rep_IrriOutSeasonEvents;
 
 procedure SetIrriAfterSeason_i(constref i : integer;
                            constref IrriAfterSeason_i : Rep_DayEventInt);
 
-procedure SetIrriAfterSeason(constref IrriAfterSeason : rep_IrriOutSeasonEvent);
+procedure SetIrriAfterSeason(constref IrriAfterSeason : rep_IrriOutSeasonEvents);
 
 function GetIrriAfterSeason_DayNr(constref i : integer) : integer;
     external 'aquacrop' name '__ac_global_MOD_getirriafterseason_daynr';
@@ -3446,12 +3444,12 @@ procedure SetIrriAfterSeason_Param(constref i : integer;
 
 function GetIrriBeforeSeason_i(constref i : integer) : Rep_DayEventInt;
 
-function GetIrriBeforeSeason() : rep_IrriOutSeasonEvent;
+function GetIrriBeforeSeason() : rep_IrriOutSeasonEvents;
 
 procedure SetIrriBeforeSeason_i(constref i : integer;
                            constref IrriBeforeSeason_i : Rep_DayEventInt);
 
-procedure SetIrriBeforeSeason(constref IrriBeforeSeason : rep_IrriOutSeasonEvent);
+procedure SetIrriBeforeSeason(constref IrriBeforeSeason : rep_IrriOutSeasonEvents);
 
 function GetIrriBeforeSeason_DayNr(constref i : integer) : integer;
     external 'aquacrop' name '__ac_global_MOD_getirribeforeseason_daynr';
@@ -5780,7 +5778,7 @@ begin;
     LoadCropCalendar_wrap(p,strlen,GetOnset,GetOnsetTemp,DayNrStart,YearStart);
 end;
 
-function GetIrriAfterSeason() : Rep_DayEventInt;
+function GetIrriAfterSeason() : rep_IrriOutSeasonEvents;
 var
     i : integer;
 begin;
@@ -5788,7 +5786,7 @@ begin;
 end;
 
 
-procedure SetIrriAfterSeason(constref IrriAfterSeason : rep_Comp);
+procedure SetIrriAfterSeason(constref IrriAfterSeason : rep_IrriOutSeasonEvents);
 var
     i : integer;
 begin;
@@ -5812,7 +5810,7 @@ begin;
     SetIrriAfterSeason_Param(i, IrriAfterSeason_i.Param);
 end;
 
-function GetIrriBeforeSeason() : Rep_DayEventInt;
+function GetIrriBeforeSeason() : rep_IrriOutSeasonEvents;
 var
     i : integer;
 begin;
@@ -5820,7 +5818,7 @@ begin;
 end;
 
 
-procedure SetIrriBeforeSeason(constref IrriBeforeSeason : rep_Comp);
+procedure SetIrriBeforeSeason(constref IrriBeforeSeason : rep_IrriOutSeasonEvents);
 var
     i : integer;
 begin;
