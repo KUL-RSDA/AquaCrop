@@ -1829,13 +1829,14 @@ END; (* calculate_saltcontent *)
 
 
 
-PROCEDURE EffectSoilFertilitySalinityStress(VAR FinalEffectStress : rep_EffectStress);
+PROCEDURE EffectSoilFertilitySalinityStress();
 VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
     SaltStress,CCxRedD : double;
     CCxRed : ShortInt;
     ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
     RedCGC_temp, RedCCX_temp : ShortInt;
     Crop_DaysToFullCanopySF_temp : integer;
+    EffectStress_temp : rep_EffectStress;
 
     PROCEDURE NoEffectStress(VAR TheEffectStress : rep_EffectStress);
     BEGIN
@@ -1867,7 +1868,9 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
     OR (GetSimulation_Germinate() = false)
     OR ((StressSFAdjNEW = 0) AND (SaltStress <= 0.1)))
    THEN BEGIN  // no soil fertility and salinity stress
-        NoEffectStress(FinalEffectStress);
+        EffectStress_temp := GetSimulation_EffectStress();
+        NoEffectStress(EffectStress_temp);
+        SetSimulation_EffectStress(EffectStress_temp);
         SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
         IF (GetCrop_ModeCycle() = GDDays) THEN SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
         END
@@ -1891,17 +1894,17 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
                              GetCrop().GDDaysToHarvest,GetCrop_ModeCycle(),SalinityEffectStress);
                 END;
         // Assign integrated effect of the stresses
-        FinalEffectStress.RedWP := FertilityEffectStress.RedWP;
-        FinalEffectStress.RedKsSto := SalinityEffectStress.RedKsSto;
+        SetSimulation_EffectSTress_RedWP(FertilityEffectStress.RedWP);
+        SetSimulation_EffectSTress_RedKsSto(SalinityEffectStress.RedKsSto);
         IF (FertilityEffectStress.RedCGC > SalinityEffectStress.RedCGC)
-           THEN FinalEffectStress.RedCGC := FertilityEffectStress.RedCGC
-           ELSE FinalEffectStress.RedCGC := SalinityEffectStress.RedCGC;
+           THEN SetSimulation_EffectSTress_RedCGC(FertilityEffectStress.RedCGC)
+           ELSE SetSimulation_EffectSTress_RedCGC(SalinityEffectStress.RedCGC);
         IF (FertilityEffectStress.RedCCX > SalinityEffectStress.RedCCX)
-           THEN FinalEffectStress.RedCCX := FertilityEffectStress.RedCCX
-           ELSE FinalEffectStress.RedCCX := SalinityEffectStress.RedCCX;
+           THEN SetSimulation_EffectSTress_RedCCX(FertilityEffectStress.RedCCX)
+           ELSE SetSimulation_EffectSTress_RedCCX(SalinityEffectStress.RedCCX);
         IF (FertilityEffectStress.CDecline > SalinityEffectStress.CDecline)
-           THEN FinalEffectStress.CDecline := FertilityEffectStress.CDecline
-           ELSE FinalEffectStress.CDecline := SalinityEffectStress.CDecline;
+           THEN SetSimulation_EffectSTress_CDecline(FertilityEffectStress.CDecline)
+           ELSE SetSimulation_EffectSTress_CDecline(SalinityEffectStress.CDecline);
         // adjust time to maximum canopy cover
         RedCGC_temp := GetSimulation_EffectStress_RedCGC();
         RedCCX_temp := GetSimulation_EffectStress_RedCCX();
@@ -3837,11 +3840,7 @@ IF ((GetSimulation_Germinate() = false) AND (dayi >=GetCrop().Day1)) THEN CheckG
 
 // 9. Determine effect of soil fertiltiy and soil salinity stress
 // EffectSoilFertilitySalinityStress(Simulation.EffectStress);
-IF (NoMoreCrop = false) THEN BEGIN
-                             EffectStress_temp := GetSimulation_EffectStress();
-                             EffectSoilFertilitySalinityStress(EffectStress_temp);
-                             SetSimulation_EffectStress(EffectStress_temp);
-                             END;
+IF (NoMoreCrop = false) THEN EffectSoilFertilitySalinityStress();
 
 
 // 10. Canopy Cover (CC)
