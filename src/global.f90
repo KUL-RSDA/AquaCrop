@@ -274,7 +274,22 @@ type rep_Onset
         !! daynumber
     integer(int32) :: LengthSearchPeriod
         !! days
-end type rep_Onset 
+end type rep_Onset
+
+type rep_EndSeason
+    integer(int32) :: ExtraYears
+        !! to add to YearStartCropCycle
+    logical :: GenerateTempOn
+        !! by temperature criterion
+    integer(intEnum) :: AirTCriterion
+        !! Undocumented
+    integer(int32) :: StartSearchDayNr
+        !! daynumber
+    integer(int32) :: StopSearchDayNr
+        !! daynumber
+    integer(int32) :: LengthSearchPeriod
+        !! days
+end type rep_EndSeason
 
 type rep_Content
     real(dp) :: BeginDay
@@ -816,6 +831,7 @@ type(rep_PerennialPeriod) :: perennialperiod
 type(rep_param) :: simulparam
 type(rep_Cuttings) :: Cuttings
 type(rep_Onset) :: onset
+type(rep_EndSeason) :: endseason
 type(rep_Crop) :: crop
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
@@ -6185,6 +6201,104 @@ subroutine SetOnset_LengthSearchPeriod(LengthSearchPeriod)
 
     onset%LengthSearchPeriod = LengthSearchPeriod
 end subroutine SetOnset_LengthSearchPeriod
+
+function GetEndSeason() result(EndSeason_out)
+    !! Getter for the "endseason" global variable.
+    type(rep_EndSeason) :: EndSeason_out
+
+    EndSeason_out = endseason
+end function GetEndSeason
+
+function GetEndSeason_ExtraYears() result(ExtraYears)
+    !! Getter for the "ExtraYears" attribute of the "endseason" global variable.
+    integer(int32) :: ExtraYears
+
+    ExtraYears = endseason%ExtraYears
+end function GetEndSeason_ExtraYears
+
+function GetEndSeason_GenerateTempOn() result(GenerateTempOn)
+    !! Getter for the "GenerateTempOn" attribute of the "endseason" global variable.
+    logical :: GenerateTempOn
+
+    GenerateTempOn = endseason%GenerateTempOn
+end function GetEndSeason_GenerateTempOn
+
+function GetEndSeason_AirTCriterion() result(AirTCriterion)
+    !! Getter for the "AirTCriterion" attribute of the "endseason" global variable.
+    integer(intEnum) :: AirTCriterion
+
+    AirTCriterion = endseason%AirTCriterion
+end function GetEndSeason_AirTCriterion
+
+function GetEndSeason_StartSearchDayNr() result(StartSearchDayNr)
+    !! Getter for the "StartSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32) :: StartSearchDayNr
+
+    StartSearchDayNr = endseason%StartSearchDayNr
+end function GetEndSeason_StartSearchDayNr
+
+function GetEndSeason_StopSearchDayNr() result(StopSearchDayNr)
+    !! Getter for the "StopSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32) :: StopSearchDayNr
+
+    StopSearchDayNr = endseason%StopSearchDayNr
+end function GetEndSeason_StopSearchDayNr
+
+function GetEndSeason_LengthSearchPeriod() result(LengthSearchPeriod)
+    !! Getter for the "LengthSearchPeriod" attribute of the "endseason" global variable.
+    integer(int32) :: LengthSearchPeriod
+
+    LengthSearchPeriod = endseason%LengthSearchPeriod
+end function GetEndSeason_LengthSearchPeriod
+
+subroutine SetEndSeason(EndSeason_in)
+    !! Setter for the "endseason" global variable.
+    type(rep_EndSeason), intent(in) :: EndSeason_in
+
+    endseason = EndSeason_in
+end subroutine SetEndSeason
+
+subroutine SetEndSeason_ExtraYears(ExtraYears)
+    !! Setter for the "ExtraYears" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: ExtraYears
+
+    endseason%ExtraYears = ExtraYears
+end subroutine SetEndSeason_ExtraYears
+
+subroutine SetEndSeason_GenerateTempOn(GenerateTempOn)
+    !! Setter for the "GenerateTempOn" attribute of the "endseason" global variable.
+    logical, intent(in) :: GenerateTempOn
+
+    endseason%GenerateTempOn = GenerateTempOn
+end subroutine SetEndSeason_GenerateTempOn
+
+subroutine SetEndSeason_AirTCriterion(AirTCriterion)
+    !! Setter for the "AirTCriterion" attribute of the "endseason" global variable.
+    integer(intEnum), intent(in) :: AirTCriterion
+
+    endseason%AirTCriterion = AirTCriterion
+end subroutine SetEndSeason_AirTCriterion
+
+subroutine SetEndSeason_StartSearchDayNr(StartSearchDayNr)
+    !! Setter for the "StartSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: StartSearchDayNr
+
+    endseason%StartSearchDayNr = StartSearchDayNr
+end subroutine SetEndSeason_StartSearchDayNr
+
+subroutine SetEndSeason_StopSearchDayNr(StopSearchDayNr)
+    !! Setter for the "StopSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: StopSearchDayNr
+
+    endseason%StopSearchDayNr = StopSearchDayNr
+end subroutine SetEndSeason_StopSearchDayNr
+
+subroutine SetEndSeason_LengthSearchPeriod(LengthSearchPeriod)
+    !! Setter for the "LengthSearchPeriod" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: LengthSearchPeriod
+
+    endseason%LengthSearchPeriod = LengthSearchPeriod
+end subroutine SetEndSeason_LengthSearchPeriod
 
 function GetPerennialPeriod() result(PerennialPeriod_out)
     !! Getter for the "perennialperiod" global variable.
