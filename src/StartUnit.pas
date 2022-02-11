@@ -171,6 +171,7 @@ VAR TheProjectFile,ListProjectsFile,NrString,TestFile : string;
     TotalSimRuns : Integer;
     SimNr : ShortInt;
     f123,fend : TextFile;
+    FullFileNameProgramParametersLocal : string;
 
 
 
@@ -369,8 +370,10 @@ IF (NrProjects > 0) THEN
                               IF CanSelect THEN
                                  BEGIN
                                  ProjectDescription := 'undefined';
-                                 ComposeFileForProgramParameters(GetProjectFile(),FullFileNameProgramParameters);
-                                 LoadProgramParametersProjectPlugIn(FullFileNameProgramParameters,ProgramParametersAvailable);
+                                 FullFileNameProgramParametersLocal := GetFullFileNameProgramParameters();
+                                 ComposeFileForProgramParameters(GetProjectFile(),FullFileNameProgramParametersLocal);
+                                 SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal);
+                                 LoadProgramParametersProjectPlugIn(GetFullFileNameProgramParameters(),ProgramParametersAvailable);
                                  ComposeOutputFileName(GetProjectFile());
                                  END;
                               END;
@@ -392,8 +395,10 @@ IF (NrProjects > 0) THEN
                               IF CanSelect THEN
                                  BEGIN
                                  MultipleProjectDescription := 'undefined';
-                                 ComposeFileForProgramParameters(GetMultipleProjectFile(),FullFileNameProgramParameters);
-                                 LoadProgramParametersProjectPlugIn(FullFileNameProgramParameters,ProgramParametersAvailable);
+                                 FullFileNameProgramParametersLocal := GetFullFileNameProgramParameters();
+                                 ComposeFileForProgramParameters(GetMultipleProjectFile(),FullFileNameProgramParametersLocal);
+                                 SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal);
+                                 LoadProgramParametersProjectPlugIn(GetFullFileNameProgramParameters(),ProgramParametersAvailable);
                                  ComposeOutputFileName(GetMultipleProjectFile());
                                  Simulation.MultipleRun := true;
                                  Simulation.NrRuns := TotalSimRuns;

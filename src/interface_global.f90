@@ -36,6 +36,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetProjectFileFull, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
+                     GetFullFileNameProgramParameters, &
                      GetNumberSimulationRuns, &
                      GetSimulParam_CNcorrection, &
                      GetsimulParam_ConstGwt, &
@@ -110,6 +111,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetProjectFileFull, &
                      SetMultipleProjectFile, &
                      SetMultipleProjectFileFull, &
+                     SetFullFileNameProgramParameters, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetProfDescription, &
@@ -988,6 +990,26 @@ subroutine SetMultipleProjectFileFull_wrap(MultipleProjectFileFull, strlen)
     string = pointer2string(MultipleProjectFileFull, strlen)
     call SetMultipleProjectFileFull(string)
 end subroutine SetMultipleProjectFileFull_wrap
+
+
+function GetFullFileNameProgramParameters_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetFullFileNameProgramParameters]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetFullFileNameProgramParameters())
+end function GetFullFileNameProgramParameters_wrap
+
+
+subroutine SetFullFileNameProgramParameters_wrap(FullFileNameProgramParameters, strlen)
+    !! Wrapper for [[ac_global:SetFullFileNameProgramParameters]] for foreign languages.
+    type(c_ptr), intent(in) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullFileNameProgramParameters, strlen)
+    call SetFullFileNameProgramParameters(string)
+end subroutine SetFullFileNameProgramParameters_wrap
 
 
 function GetRainFile_wrap() result(c_pointer)
