@@ -924,6 +924,7 @@ character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
 character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
+character(len=:), allocatable :: FullFileNameProgramParameters
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -2886,6 +2887,21 @@ subroutine SetMultipleProjectFileFull(str)
     
     MultipleProjectFileFull = str
 end subroutine SetMultipleProjectFileFull
+
+
+function GetFullFileNameProgramParameters() result(str)
+    !! Getter for the "FullFileNameProgramParameters" global variable.
+    character(len=len(FullFileNameProgramParameters)) :: str
+    
+    str = FullFileNameProgramParameters
+end function GetFullFileNameProgramParameters
+
+subroutine SetFullFileNameProgramParameters(str)
+    !! Setter for the "FullFileNameProgramParameters" global variable.
+    character(len=*), intent(in) :: str
+    
+    FullFileNameProgramParameters = str
+end subroutine SetFullFileNameProgramParameters
 
 
 logical function LeapYear(Year)

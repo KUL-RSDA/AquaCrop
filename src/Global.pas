@@ -28,8 +28,7 @@ TYPE
 
 
 VAR DataPath,ObsPath : BOOLEAN;
-    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
-    FullFileNameProgramParameters : string;
+    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ClimDescription,
     IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
