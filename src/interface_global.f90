@@ -25,6 +25,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetIrriDescription, &
                      GetIrriFile, &
                      GetIrriFileFull, &
+                     GetIrriDescription, &
                      GetClimateFile, &
                      GetClimateFileFull, &
                      GetClimateDescription, &
@@ -91,6 +92,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
+                     SetIrriDescription, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimateDescription, &
@@ -685,13 +687,30 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
 
+!function GetIrriDescription_wrap() result(c_pointer)
+!    !! Wrapper for [[ac_global:GetIrriDescription]] for foreign languages.
+!    type(c_ptr) :: c_pointer
+!    
+!    c_pointer = string2pointer(GetIrriDescription())
+!end function GetIrriDescription_wrap
+
+subroutine SetIrriDescription_wrap(IrriDescription, strlen)
+    !! Wrapper for [[ac_global:SetIrriDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriDescription, strlen)
+    call SetIrriDescription(string)
+end subroutine SetIrriDescription_wrap
+
 function GetClimateDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
     type(c_ptr) :: c_pointer
     
     c_pointer = string2pointer(GetClimateDescription())
 end function GetClimateDescription_wrap
-
 
 subroutine SetClimateDescription_wrap(ClimateDescription, strlen)
     !! Wrapper for [[ac_global:SetClimateDescription]] for foreign languages.

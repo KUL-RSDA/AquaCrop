@@ -1559,6 +1559,18 @@ procedure SetClimateFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimatefilefull_wrap';
 
+(*function GetIrriDescription(): string;
+
+function GetIrriDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getirridescription_wrap';
+*)
+procedure SetIrriDescription(constref str : string);
+
+procedure SetIrriDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setirridescription_wrap';
+
 function GetClimateDescription(): string;
 
 function GetClimateDescription_wrap(): PChar;
@@ -2927,6 +2939,12 @@ function __GetIrriMode(): integer;
         external 'aquacrop' name '__ac_global_MOD_getirrimode';
 
 function GetIrriMode(): rep_IrriMode;
+
+procedure NoIrrigation();
+        external 'aquacrop' name '__ac_global_MOD_noirrigation';
+
+procedure LoadIrriScheduleInfo(constref FullName : string);
+        external 'aquacrop' name '__ac_global_MOD_loadirrischeduleinfo';
 
 procedure __SetIrriMode(constref IrriMode : integer);
         external 'aquacrop' name '__ac_global_MOD_setirrimode';
@@ -4896,6 +4914,27 @@ begin;
     SetClimateFileFull_wrap(p, strlen);
 end;
 
+
+(*function GetIrriDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetIrriDescription_wrap();
+    GetIrriDescription := AnsiString(p);
+end;
+*)
+
+procedure SetIrriDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetIrriDescription_wrap(p, strlen);
+end;
 
 function GetClimateDescription(): string;
 var

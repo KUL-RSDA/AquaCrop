@@ -922,6 +922,7 @@ character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimateDescription
+character(len=:), allocatable :: IrriDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
@@ -2540,6 +2541,13 @@ subroutine GetIrriDescription(IrriFileFull, IrriDescription)
     read(fhandle, *) IrriDescription
     close(fhandle)
 end subroutine GetIrriDescription
+
+subroutine SetIrriDescription(str)
+    !! Setter for the "IrriDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    IrriDescription = str
+end subroutine SetIrriDescription
 
 
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)

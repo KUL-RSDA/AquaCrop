@@ -2389,7 +2389,7 @@ VAR RepeatToDay : LongInt;
         TheEnd : BOOLEAN;
     BEGIN
     DNr := Dayi - GetSimulation_FromDayNr() + 1;
-    IrriEvents := IrriBeforeSeason;
+    IrriEvents := GetIrriBeforeSeason();
     IF (Dayi > GetCrop().DayN) THEN
        BEGIN
        DNr := Dayi - GetCrop().DayN;
