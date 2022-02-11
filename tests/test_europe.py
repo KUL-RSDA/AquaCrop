@@ -206,7 +206,6 @@ def test_europe(row, col, use_irrigation):
                         if item_ref != item_out:
                             is_realclose = np.isclose(float(item_ref),
                                                       float(item_out))
-
                             if not is_realclose:
                                 num_not_realclose[icol] += 1
 
@@ -233,6 +232,30 @@ def test_europe(row, col, use_irrigation):
         maxcol = np.argmax(numdevlist)
         print('{0} maxnumdev [%] = {1:.3f} (column index {2})'.format(filename,
                                                                maxdev, maxcol))
+
+        # Now we check that the number of small deviations are within bounds.
+        # Generally, no such small deviations are allowed. But with irrigation,
+        # a few pixels are known to display small deviations in *PRMday.out.
+        special_cases = [
+            (30, 20, True, 'day'),
+            (50, 27, True, 'day'),
+            (7, 39, True, 'day'),
+            (0, 45, True, 'day'),
+            (18, 59, True, 'day'),
+            (18, 60, True, 'day'),
+            (13, 63, True, 'day'),
+            (12, 64, True, 'day'),
+            (39, 8, True, 'day'),
+        ]
+        if (row, col, use_irrigation, suffix) in special_cases:
+            print('One small deviation is currently allowed for this test case')
+            myassert(int(np.sum(num_not_realclose)) <= 1,
+                     'more than 1 small deviation detected for a special case',
+                     cwd)
+        else:
+            myassert(np.all(num_not_realclose) == 0,
+                     'small deviations detected for a non-special case', cwd)
+
         print('{0} checks = OK'.format(filename))
 
     os.chdir(cwd)
