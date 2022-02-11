@@ -17,6 +17,7 @@ use ac_global , only: undef_int, &
                       SplitStringInTwoParams, &
                       KsTemperature, &
                       DegreesDay, &
+                      LengthCanopyDecline, &
                       GetPathNameSimul, &
                       GetTemperatureFile, &                     
                       GetTemperatureFilefull, &
@@ -925,10 +926,52 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             else
                 NrCDays = undef_int
             endif
-       endif
+        endif
     endif
     SumCalendarDays = NrCDays
 end function SumCalendarDays
+
+
+subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
+                       GDDHarvest, CCx, GDDCDC, Tbase, Tupper, &
+                       NoTempFileTMin, NoTempFileTMax, CDC)
+    integer(int32), intent(in) :: PlantDayNr
+    integer(int32), intent(in) :: D123
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDHarvest
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(inout) :: NoTempFileTMin
+    real(dp), intent(inout) :: NoTempFileTMax
+    real(dp), intent(inout) :: CDC
+
+    integer(int32) :: ti, GDDi
+    real(dp) :: CCi
+
+    GDDi = LengthCanopyDecline(CCx, GDDCDC)
+    if ((GDDL123+GDDi) <= GDDHarvest) then
+        CCi = 0._dp ! full decline
+    else
+        ! partly decline
+        if (GDDL123 < GDDHarvest) then
+            GDDi = GDDHarvest - GDDL123
+        else
+            GDDi = 5._dp
+        end if
+        CCi = CCx * (1._dp - 0.05 * (exp(GDDi*(GDDCDC*3.33)/(CCx+2.29))-1_dp) )
+       ! CC at time ti
+    end if
+    ti = SumCalendarDays(GDDi, (PlantDayNr+D123),&
+              Tbase, Tupper, NoTempFileTMin, NoTempFileTMax)
+    if (ti > 0) then
+        CDC = (((CCx+2.29_dp)/ti) &
+                * log(1._dp + ((1._dp-CCi/CCx)/0.05_dp)))/3.33_dp
+    else
+        CDC = undef_int
+    end if
+end subroutine GDDCDCToCDC
 
 
 subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &

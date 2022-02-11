@@ -8,11 +8,6 @@ uses Global, interface_global, SysUtils, interface_tempprocessing;
 FUNCTION MaxAvailableGDD(FromDayNr : LongInt;
                          Tbase,Tupper,TDayMin,TDayMax : double) : Double;
 
-PROCEDURE GDDCDCToCDC(PlantDayNr : LongInt;
-                      D123,GDDL123,GDDHarvest : INTEGER;
-                      CCx,GDDCDC,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
-                      VAR CDC : double);
-
 PROCEDURE AdjustCalendarDays(PlantDayNr : LongInt;
                              InfoCropType : rep_subkind;
                              Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
@@ -243,34 +238,6 @@ IF (GetTemperatureFile() = '(None)')
         END;
 MaxAvailableGDD := MaxGDDays;
 END; (* MaxAvailableGDD *)
-
-
-
-
-PROCEDURE GDDCDCToCDC(PlantDayNr : LongInt;
-                      D123,GDDL123,GDDHarvest : INTEGER;
-                      CCx,GDDCDC,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
-                      VAR CDC : double);
-VAR ti,GDDi : INTEGER;
-    CCi : double;
-BEGIN
-GDDi := LengthCanopyDecline(CCx,GDDCDC);
-IF ((GDDL123+GDDi) <= GDDHarvest)
-   THEN CCi := 0 // full decline
-   ELSE BEGIN // partly decline
-        IF (GDDL123 < GDDHarvest)
-           THEN GDDi := GDDHarvest - GDDL123
-           ELSE GDDi := 5;
-        //CCi := CCx * (1 - 0.05 * (exp(GDDi*GDDCDC/CCx)-1) );  // CC at time ti
-        CCi := CCx * (1 - 0.05 * (exp(GDDi*(GDDCDC*3.33)/(CCx+2.29))-1) );  // CC at time ti
-        END;
-ti := SumCalendarDays(GDDi,(PlantDayNr+D123),Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-IF (ti > 0)
-   //THEN CDC := (CCx/ti) * Ln(1 + ((1-CCi/CCx)/0.05) )
-   THEN CDC := (((CCx+2.29)/ti) * Ln(1 + ((1-CCi/CCx)/0.05) ))/3.33
-   ELSE CDC := undef_int;
-END; (* GDDCDCToCDC *)
-
 
 
 
