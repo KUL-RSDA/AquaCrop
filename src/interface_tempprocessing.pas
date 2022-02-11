@@ -33,6 +33,19 @@ function GrowingDegreeDays(
             constref Tbase,Tupper,TDayMin,TDayMax : double) : integer;
         external 'aquacrop' name '__ac_tempprocessing_MOD_growingdegreedays';
 
+function SumCalendarDays(
+            constref ValGDDays : INTEGER;
+            constref FirstDayCrop : LongInt;
+            constref Tbase,Tupper,TDayMin,TDayMax : double) : integer;
+        external 'aquacrop' name '__ac_tempprocessing_MOD_sumcalendardays';
+
+procedure GDDCDCToCDC(
+            constref PlantDayNr : LongInt;
+            constref D123,GDDL123,GDDHarvest : INTEGER;
+            constref CCx,GDDCDC,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
+            VAR CDC : double);
+        external 'aquacrop' name '__ac_tempprocessing_MOD_gddcdctocdc';
+
 procedure HIadjColdHeat(
             constref TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
             constref TempTmin,TempTmax : double;

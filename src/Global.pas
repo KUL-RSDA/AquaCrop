@@ -17,68 +17,6 @@ TYPE
      rep_string3  = string[3];  (* Read/Write ProfFile *)
 
 TYPE
-     rep_IniComp =  ARRAY[1.. max_No_compartments] of double;
-     rep_IniSWC = RECORD
-         AtDepths : BOOLEAN;    // at specific depths or for specific layers
-         NrLoc    : ShortInt;   // number of depths or layers considered
-         Loc      : rep_IniComp;  //depth or layer thickness [m]
-         VolProc  : rep_IniComp;  //soil water content (vol%)
-         SaltECe  : rep_IniComp; // ECe in dS/m
-         AtFC     : BOOLEAN;     // If iniSWC is at FC
-         end;
-
-     rep_storage = Record
-         Btotal     : double; (* assimilates (ton/ha) stored in root systemn by CropString in Storage-Season *)
-         CropString : string; (* full name of crop file which stores Btotal during Storage-Season *)
-         Season     : ShortInt;(* season in which Btotal is stored *)
-         end;
-
-     rep_sim = Record
-         FromDayNr, ToDayNr : LongInt; //daynumber
-         IniSWC    : rep_IniSWC;
-         ThetaIni,
-         ECeIni    : rep_IniComp; // dS/m
-         SurfaceStorageIni,
-         ECStorageIni       : double;
-         CCini,
-         Bini,
-         Zrini       : double;
-         LinkCropToSimPeriod,
-         ResetIniSWC : BOOLEAN; // soil water and salts
-         InitialStep : INTEGER;
-         EvapLimitON : BOOLEAN; // soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover
-         EvapWCsurf : double; // remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]
-         EvapStartStg2 : ShortInt; // % extra to define upper limit of soil water content at start of stage 2 [100 .. 0]
-         EvapZ  : double; // actual soil depth (m) for water extraction by evaporation  [EvapZmin/100 .. EvapZmax/100]
-         HIfinal : INTEGER; //final Harvest Index might be smaller than HImax due to early canopy decline
-         DelayedDays : INTEGER; //delayed days since sowing/planting due to water stress (crop cannot germinate)
-         Germinate   : BOOLEAN; // germinate is false when crop cannot germinate due to water stress
-         SumEToStress : double; // Sum ETo during stress period to delay canopy senescence
-         SumGDD : double; // Sum of Growing Degree-days
-         SumGDDfromDay1 : double; // Sum of Growing Degree-days since Crop.Day1
-         SCor : single; // correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
-         MultipleRun : BOOLEAN; // Project with a sequence of simulation runs
-         NrRuns : INTEGER;
-         MultipleRunWithKeepSWC : BOOLEAN; // Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
-         MultipleRunConstZrx : double; // Maximum rooting depth for multiple projects with KeepSWC
-         IrriECw : double; //quality of irrigation water (dS/m)
-         DayAnaero : ShortInt; (* number of days under anaerobic conditions *)
-         EffectStress : rep_EffectStress;  // effect of soil fertility and salinity stress on CC, WP and KsSto
-         SalinityConsidered : BOOLEAN;
-
-         ProtectedSeedling : BOOLEAN; // IF protected (before CC = 1.25 CC0), seedling triggering of early senescence is switched off
-         SWCtopSoilConsidered : BOOLEAN; // Top soil is relative wetter than root zone and determines water stresses
-
-         LengthCuttingInterval : INTEGER; // Default length of cutting interval (days)
-
-         YearSeason : ShortInt; // year number for perennials (1 = 1st year, 2, 3, 4, max = 127)
-         RCadj : ShortInt; // adjusted relative cover of weeds with self thinning for perennials
-         Storage : rep_storage;
-
-         YearStartCropCycle : INTEGER; // calendar year in which crop cycle starts
-         CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
-         End;
-
      rep_DayEventInt = Record
          DayNr : Integer;
          Param : Integer;
@@ -86,20 +24,11 @@ TYPE
 
      rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
-     rep_EndSeason = Record
-         ExtraYears : Integer; // to add to YearStartCropCycle
-         GenerateTempOn : BOOLEAN; // by temperature criterion
-         AirTCriterion : repAirTCriterion;
-         StartSearchDayNr, StopSearchDayNr : LongInt; //daynumber
-         LengthSearchPeriod : INTEGER; //days
-         end;
-
-      rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
+     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
 
 VAR DataPath,ObsPath : BOOLEAN;
-    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull,
-    FullFileNameProgramParameters : string;
+    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ClimDescription,
     IrriDescription,ManDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
@@ -107,7 +36,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     ClimRecord,
     EToRecord,
     RainRecord     : rep_clim;
-    Simulation     : rep_sim;
     IrriFirstDayNr : LongInt;
     NrCompartments : INTEGER;
     RootingDepth   : double;
@@ -119,7 +47,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Runoff, Drain, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-    OutputName     : string;
     PreDay         : BOOLEAN;
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
@@ -129,7 +56,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
-    EndSeason : rep_EndSeason;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
     // salinity
     ECstorage      : double; (* EC surface storage dS/m *)
@@ -280,8 +206,7 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
                                         NrComp : INTEGER;
                                         VAR Comp : rep_Comp);
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double;
-                                VAR IniSWCRead : rep_IniSWC);
+                                VAR IniSurfaceStorage : double);
 
 PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
@@ -334,7 +259,7 @@ Var Zini, Zr : double;
 FUNCTION ActualRootingDepthDays(DAP,L0,LZmax,L1234 : INTEGER;
                                 Zmin,Zmax : double) : double;
 BEGIN // Actual rooting depth at the end of Dayi
-VirtualDay := DAP - Simulation.DelayedDays;
+VirtualDay := DAP - GetSimulation_DelayedDays();
 IF ((VirtualDay < 1) OR (VirtualDay > L1234))
    THEN ActualRootingDepthDays := 0
    ELSE IF (VirtualDay >= LZmax)
@@ -363,7 +288,7 @@ FUNCTION ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
                                   SumGDD,Zmin,Zmax : double) : double;
 VAR GDDT0 : double;
 BEGIN // after sowing the crop has roots even when SumGDD = 0
-VirtualDay := DAP - Simulation.DelayedDays;
+VirtualDay := DAP - GetSimulation_DelayedDays();
 IF ((VirtualDay < 1) OR (VirtualDay > L1234))
    THEN ActualRootingDepthGDDays := 0
    ELSE IF (SumGDD >= GDDLZmax)
@@ -396,7 +321,7 @@ CASE TypeDays OF
      else Zr := ActualRootingDepthDays(DAP,L0,LZmax,L1234,Zmin,Zmax);
      end;
 // restrictive soil layer
-Simulation.SCor := 1;
+SetSimulation_SCor(1);
 IF (ROUND(GetSoil().RootMax*1000) < ROUND(Zmax*1000))
    THEN ZrAdjustedToRestrictiveLayers(Zr,GetSoil().NrSoilLayers,GetSoilLayer(),Zr);
 // assign
@@ -413,7 +338,7 @@ VAR EpotMin, EpotMax,CCiAdjusted,Multiplier,KsTrCold : double;
     VirtualDay : INTEGER;
 
 BEGIN (* CalculateETpot*)
-VirtualDay := DAP - Simulation.DelayedDays;
+VirtualDay := DAP - GetSimulation_DelayedDays();
 IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   //To handlle Forage crops: Round(100*CCi) = 0
    THEN BEGIN
         TpotVal := 0;
@@ -463,7 +388,7 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
            END;
 
         (* Correction for canopy senescence before late-season stage *)
-        IF Simulation.EvapLimitON THEN IF (EpotVal > EpotMax) THEN EpotVal := EpotMax;
+        IF GetSimulation_EvapLimitON() THEN IF (EpotVal > EpotMax) THEN EpotVal := EpotMax;
 
         (* Correction for drop in photosynthetic capacity of a dying green canopy *)
         IF (CCi < CCxWithered) THEN
@@ -510,6 +435,7 @@ END; (* GlobalZero *)
 
 
 PROCEDURE NoManagement;
+var EffectStress_temp : rep_EffectStress;
 BEGIN
 ManDescription := 'No specific field management';
 // mulches
@@ -517,11 +443,13 @@ SetManagement_Mulch(0);
 SetManagement_EffectMulchInS(50);
 // soil fertility
 SetManagement_FertilityStress(0);
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+EffectStress_temp := GetSimulation_EffectStress();
+CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
+SetSimulation_EffectStress(EffectStress_temp);
 // soil bunds
 SetManagement_BundHeight(0);
-Simulation.SurfaceStorageIni := 0.0;
-Simulation.ECStorageIni := 0.0;
+SetSimulation_SurfaceStorageIni(0.0);
+SetSimulation_ECStorageIni(0.0);
 // surface run-off
 SetManagement_RunoffOn(true);
 SetManagement_CNcorrection(0);
@@ -550,6 +478,7 @@ VAR f0 : TextFile;
     TempShortInt : shortint;
     TempInt : integer;
     TempDouble : double;
+    EffectStress_temp : rep_EffectStress;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -563,12 +492,14 @@ SetManagement_EffectMulchInS(TempShortInt);
 // soil fertility
 READLN(f0,TempShortInt); // effect is crop specific
 SetManagement_FertilityStress(TempShortInt);
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),Simulation.EffectStress);
+EffectStress_temp := GetSimulation_EffectStress();
+CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
+SetSimulation_EffectStress(EffectStress_temp);
 // soil bunds
 READLN(f0,TempDouble);
 SetManagement_BundHeight(TempDouble);
-Simulation.SurfaceStorageIni := 0.0;
-Simulation.ECStorageIni := 0.0;
+SetSimulation_SurfaceStorageIni(0.0);
+SetSimulation_ECStorageIni(0.0);
 // surface run-off
 READLN(f0,i);
 IF (i = 1)
@@ -666,7 +597,7 @@ BEGIN
  SetIrriMode(NoIrri);
  IrriDescription := 'Rainfed cropping';
  SetIrriMethod(MSprinkler);
- Simulation.IrriECw := 0.0; // dS/m
+ SetSimulation_IrriECw(0.0); // dS/m
  SetGenerateTimeMode(AllRAW);
  SetGenerateDepthMode(ToFC);
  IrriFirstDayNr := undef_int;
@@ -980,20 +911,20 @@ BEGIN
 SetSWCiniFile('(None)');
 SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
 SWCiniDescription := 'Soil water profile at Field Capacity';
-Simulation.IniSWC.AtDepths := false;
-Simulation.IniSWC.NrLoc := GetSoil().NrSoilLayers;
+SetSimulation_IniSWC_AtDepths(false);
+SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO
     BEGIN
-    Simulation.IniSWC.Loc[layeri] := GetSoilLayer_i(layeri).Thickness;
-    Simulation.IniSWC.VolProc[layeri] := GetSoilLayer_i(layeri).FC;
-    Simulation.IniSWC.SaltECe[layeri] := 0;
+    SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
+    SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
+    SetSimulation_IniSWC_SaltECe_i(layeri,0);
     END;
-Simulation.IniSWC.AtFC := true;
+SetSimulation_IniSWC_AtFC(true);
 FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     BEGIN
-    Simulation.IniSWC.Loc[layeri] := undef_double;
-    Simulation.IniSWC.VolProc[layeri] := undef_double;
-    Simulation.IniSWC.SaltECe[layeri] := undef_double;
+    SetSimulation_IniSWC_Loc_i(layeri,undef_double);
+    SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
+    SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
     END;
 FOR compi := 1 TO NrCompartments DO
     IF (GetCompartment_Layer(compi) = 0) THEN ind := 1
@@ -1023,31 +954,30 @@ DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers,Compartment);
 // No salinity in soil layers and compartmens
 // Absence of ground water table (FCadj = FC)
 Total := 0;
-FOR layeri := 1 TO NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
+FOR layeri := 1 TO NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
 FOR compi := 1 TO NrCompartments DO
     BEGIN
-    Compartment[compi].Theta := SoilLayer[Compartment[compi].Layer].FC/100;
-    Compartment[compi].FCadj := SoilLayer[Compartment[compi].Layer].FC;
+    Compartment[compi].Theta := GetSoilLayer_i(Compartment[compi].Layer).FC/100;
+    Compartment[compi].FCadj := GetSoilLayer_i(Compartment[compi].Layer).FC;
     Compartment[compi].DayAnaero := 0;
-    For celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
+    For celli := 1 TO GetSoilLayer_i(Compartment[compi].Layer).SCP1 DO
         BEGIN // salinity in cells
         Compartment[compi].Salt[celli] := 0.0;
         Compartment[compi].Depo[celli] := 0.0;
         END;
-    Simulation.ThetaIni[compi] := Compartment[compi].Theta;
-    Simulation.ECeIni[compi] := 0; // initial soil salinity in dS/m
-    SoilLayer[Compartment[compi].Layer].WaterContent
-     := SoilLayer[Compartment[compi].Layer].WaterContent
-        + Simulation.ThetaIni[compi]*100*10*Compartment[compi].Thickness;
+    SetSimulation_ThetaIni_i(compi,Compartment[compi].Theta);
+    SetSimulation_ECeIni_i(compi,0); // initial soil salinity in dS/m
+    SetSoilLayer_WaterContent(Compartment[compi].Layer, GetSoilLayer_i(Compartment[compi].Layer).WaterContent
+        + GetSimulation_ThetaIni_i(compi)*100*10*Compartment[compi].Thickness);
     END;
-FOR layeri := 1 TO NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
+FOR layeri := 1 TO NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
 SetTotalWaterContent_BeginDay(Total);
 
 // initial soil water content and no salts
 DeclareInitialCondAtFCandNoSalt;
 
 // Number of days with RootZone Anaerobic Conditions
-Simulation.DayAnaero := 0;
+SetSimulation_DayAnaero(0);
 
 END; (* specify_soil_layer *)
 
@@ -1250,7 +1180,7 @@ FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO
         set_layer_undef(soillayer_i_temp);
         SetSoilLayer_i(i, soillayer_i_temp);
     END;
-Simulation.ResetIniSWC := true; // soil water content and soil salinity
+SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
 Compartment_temp := GetCompartment();
 soillayer_temp := GetSoilLayer();
@@ -1283,8 +1213,8 @@ READLN(f0,TempShortInt);
 SetSoil_CNvalue(TempShortInt);
 READLN(f0,TempShortInt);
 SetSoil_REW(TempShortInt);
-Simulation.SurfaceStorageIni := 0.0;
-Simulation.ECStorageIni := 0.0;
+SetSimulation_SurfaceStorageIni(0.0);
+SetSimulation_ECStorageIni(0.0);
 READLN(f0,TempShortInt);
 SetSoil_NrSoilLayers(TempShortInt);
 READLN(f0); // depth of restrictive soil layer which is no longer applicable
@@ -1427,11 +1357,13 @@ END; (* CCiniTotalFromTimeToCCini *)
 PROCEDURE CompleteCropDescription;
 VAR CGCisGiven : BOOLEAN;
     FertStress : shortint;
+    RedCGC_temp, RedCCX_temp :  ShortInt;
     Crop_DaysToSenescence_temp : integer;
     Crop_Length_temp : rep_int_array ;
     Crop_DaysToFullCanopy_temp : integer;
     Crop_CGC_temp : double;
     Crop_DaysToFullCanopySF_temp : integer;
+
 BEGIN
 IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
    THEN BEGIN
@@ -1457,12 +1389,16 @@ IF (GetCrop_ModeCycle() = CalendarDays)
            THEN BEGIN
              FertStress := GetManagement_FertilityStress();
              Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
+             RedCGC_temp := GetSimulation_EffectStress_RedCGC();
+             RedCCX_temp := GetSimulation_EffectStress_RedCCX();
              TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,
                   GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
                   GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
-                  Crop_DaysToFullCanopySF_temp,Simulation.EffectStress.RedCGC,
-                  Simulation.EffectStress.RedCCX,FertStress);
+                  Crop_DaysToFullCanopySF_temp,RedCGC_temp,
+                  RedCCX_temp,FertStress);
              SetManagement_FertilityStress(FertStress);
+             SetSimulation_EffectStress_RedCGC(RedCGC_temp);
+             SetSimulation_EffectStress_RedCCX(RedCCX_temp);
              SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
             END
            ELSE SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
@@ -1506,7 +1442,7 @@ SetSumWaBal_BiomassPot(0);
 SetSumWaBal_BiomassUnlim(0);
 SetSumWaBal_BiomassTot(0); // crop and weeds (for soil fertility stress)
 SetSumWaBal_YieldPart(0);
-Simulation.EvapLimitON := false;
+SetSimulation_EvapLimitON(false);
 END; (* CompleteCropDescription *)
 
 
@@ -2509,7 +2445,7 @@ IF (GetClimFile() <> '(None)') THEN
            END; *)
    IF ((SimDay1 < ClimRecord.FromDayNr) OR (SimDay1 > ClimRecord.ToDayNr)) THEN
       BEGIN
-      Simulation.LinkCropToSimPeriod := false;
+      SetSimulation_LinkCropToSimPeriod(false);
       SimDay1 := ClimRecord.FromDayNr;
       END;
    END;
@@ -2549,36 +2485,36 @@ PROCEDURE ResetSWCToFC;
 VAR Loci,layeri,compi,celli : ShortInt;
 BEGIN
 
-Simulation.IniSWC.AtDepths := false;
+SetSimulation_IniSWC_AtDepths(false);
 IF (ZiAqua < 0) // no ground water table
    THEN BEGIN
-        Simulation.IniSWC.NrLoc := GetSoil().NrSoilLayers;
+        SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
         FOR layeri := 1 TO GetSoil().NrSoilLayers DO
             BEGIN
-            Simulation.IniSWC.Loc[layeri] := GetSoilLayer_i(layeri).Thickness;
-            Simulation.IniSWC.VolProc[layeri] := GetSoilLayer_i(layeri).FC;
-            Simulation.IniSWC.SaltECe[layeri] := 0;
+            SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
+            SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
+            SetSimulation_IniSWC_SaltECe_i(layeri,0);
             END;
         FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
             BEGIN
-            Simulation.IniSWC.Loc[layeri] := undef_double;
-            Simulation.IniSWC.VolProc[layeri] := undef_double;
-            Simulation.IniSWC.SaltECe[layeri] := undef_double;
+            SetSimulation_IniSWC_Loc_i(layeri,undef_double);
+            SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
+            SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
             END;
         END
    ELSE BEGIN
-        Simulation.IniSWC.NrLoc := NrCompartments;
-        FOR Loci := 1 TO Simulation.IniSWC.NrLoc DO
+        SetSimulation_IniSWC_NrLoc(NrCompartments);
+        FOR Loci := 1 TO GetSimulation_IniSWC_NrLoc() DO
             BEGIN
-            Simulation.IniSWC.Loc[Loci] := GetCompartment_Thickness(Loci);
-            Simulation.IniSWC.VolProc[Loci] := GetCompartment_FCadj(Loci);
-            Simulation.IniSWC.SaltECe[Loci] := 0.0;
+            SetSimulation_IniSWC_Loc_i(Loci,GetCompartment_Thickness(Loci));
+            SetSimulation_IniSWC_VolProc_i(Loci,GetCompartment_FCadj(Loci));
+            SetSimulation_IniSWC_SaltECe_i(Loci,0.0);
         END;
     END;
 FOR compi := 1 to NrCompartments DO
     BEGIN
     SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
-    Simulation.ThetaIni[compi] := GetCompartment_Theta(compi);
+    SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
     For celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
         BEGIN // salinity in cells
         SetCompartment_Salt(compi, celli, 0.0);
@@ -2592,21 +2528,25 @@ END; (* ResetSWCToFC *)
 PROCEDURE AdjustSimPeriod;
 VAR IniSimFromDayNr : LongInt;
     FullFileName : string;
+    FromDayNr_temp : integer;
     Compartment_temp : rep_Comp;
+
 BEGIN
-IniSimFromDayNr := Simulation.FromDayNr;
-CASE Simulation.LinkCropToSimPeriod OF
+IniSimFromDayNr := GetSimulation_FromDayNr();
+CASE GetSimulation_LinkCropToSimPeriod() OF
      true : BEGIN
-            DetermineLinkedSimDay1(GetCrop().Day1,Simulation.FromDayNr);
-            IF (GetCrop().Day1 = Simulation.FromDayNr)
-               THEN Simulation.ToDayNr := GetCrop().DayN
-               ELSE Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
+            FromDayNr_temp := GetSimulation_FromDayNr();
+            DetermineLinkedSimDay1(GetCrop().Day1,FromDayNr_temp);
+            SetSimulation_FromDayNr(FromDayNr_temp);
+            IF (GetCrop().Day1 = GetSimulation_FromDayNr())
+               THEN SetSimulation_ToDayNr(GetCrop().DayN)
+               ELSE SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30); // 30 days
             IF (GetClimFile() <> '(None)') THEN
                BEGIN
-               IF (Simulation.ToDayNr > ClimRecord.ToDayNr) THEN
-                   Simulation.ToDayNr := ClimRecord.ToDayNr;
-               IF (Simulation.ToDayNr < ClimRecord.FromDayNr) THEN
-                      Simulation.ToDayNr := ClimRecord.FromDayNr;
+               IF (GetSimulation_ToDayNr() > ClimRecord.ToDayNr) THEN
+                   SetSimulation_ToDayNr(ClimRecord.ToDayNr);
+               IF (GetSimulation_ToDayNr() < ClimRecord.FromDayNr) THEN
+                      SetSimulation_ToDayNr(ClimRecord.FromDayNr);
                END;
             END;
     false : BEGIN
@@ -2616,29 +2556,29 @@ CASE Simulation.LinkCropToSimPeriod OF
                Simulation.FromDayNr := ClimRecord.FromDayNr;
                Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
                END; *)
-            IF (Simulation.FromDayNr > GetCrop().Day1) THEN Simulation.FromDayNr := GetCrop().Day1;
-            Simulation.ToDayNr := GetCrop().DayN;
+            IF (GetSimulation_FromDayNr() > GetCrop().Day1) THEN SetSimulation_FromDayNr(GetCrop().Day1);
+            SetSimulation_ToDayNr(GetCrop().DayN);
             IF ((GetClimFile() <> '(None)') AND
-                ((Simulation.FromDayNr <= ClimRecord.FromDayNr) OR (Simulation.FromDayNr >= ClimRecord.ToDayNr))) THEN
+                ((GetSimulation_FromDayNr() <= ClimRecord.FromDayNr) OR (GetSimulation_FromDayNr() >= ClimRecord.ToDayNr))) THEN
                BEGIN
-               Simulation.FromDayNr := ClimRecord.FromDayNr;
-               Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
+               SetSimulation_FromDayNr(ClimRecord.FromDayNr);
+               SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30); // 30 days
                END;
             END;
     end;
 
 // adjust initial depth and quality of the groundwater when required
-IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> Simulation.FromDayNr)) THEN
+IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDayNr())) THEN
    BEGIN
    IF (GetGroundWaterFile() = '(None)')
        THEN FullFileName := CONCAT(GetPathNameProg(),'GroundWater.AqC')
        ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
-   LoadGroundWater(FullFileName,Simulation.FromDayNr,ZiAqua,ECiAqua);
+   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua,ECiAqua);
    Compartment_temp := GetCompartment();
    CalculateAdjustedFC((ZiAqua/100),Compartment_temp);
    SetCompartment(Compartment_temp);
-   IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
+   IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
    END;
 END; (* AdjustSimPeriod *)
 
@@ -2655,7 +2595,7 @@ IF (GetClimFile() = '(None)')
         //SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
         //SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
         temp_Integer := GetOnset().StartSearchDayNr;
-        DetermineDayNr((1),(1),Simulation.YearStartCropCycle,temp_Integer); // 1 January
+        DetermineDayNr((1),(1),GetSimulation_YearStartCropCycle(),temp_Integer); // 1 January
         SetOnset_StartSearchDayNr(temp_Integer);
         IF (GetOnset().StartSearchDayNr < ClimRecord.FromDayNr) THEN SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
         SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
@@ -3042,7 +2982,7 @@ VAR CC,CCxAdj,CDCadj : double;
 
 BEGIN (* CanopyCoverNoStressDaysSF *)
 CC := 0.0;
-t := DAP - Simulation.DelayedDays;
+t := DAP - GetSimulation_DelayedDays();
 // CC refers to canopy cover at the end of the day
 
 IF ((t >= 1) AND (t <= LMaturity) AND (CCo > 0)) THEN
@@ -3124,7 +3064,7 @@ VAR HIGC,HIday,HIGClinear : double;
     t,tMax,tSwitch : Integer;
 
 BEGIN
-t := DAP - Simulation.DelayedDays - DaysToFlower;
+t := DAP - GetSimulation_DelayedDays() - DaysToFlower;
 //Simulation.WPyON := false;
 PercentLagPhase := 0;
 IF (t <= 0)
@@ -3255,14 +3195,14 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
 VAR ECswRel,LocalKsShapeFactorSalt,
     KsSalti,SaltStressi,StoClosure,KsStoOut : double;
 BEGIN
-IF ((ResponseECsw > 0) AND (Wrel > 0) AND (Simulation.SalinityConsidered = true))
+IF ((ResponseECsw > 0) AND (Wrel > 0) AND (GetSimulation_SalinityConsidered() = true))
    THEN BEGIN  //adjustment to ECsw considered
         ECswRel := ECswi - (ECswFCi - ECei) + (ResponseECsw-100)*Wrel;
         IF ((ECswRel > ECeMin) AND (ECswRel < ECeMax))
            THEN BEGIN
                 // stomatal closure at ECsw relative
                 LocalKsShapeFactorSalt := +3; // CONVEX give best ECsw response
-                KsSalti := KsSalinity(Simulation.SalinityConsidered,ECeMin,ECeMax,ECswRel,LocalKsShapeFactorSalt);
+                KsSalti := KsSalinity(GetSimulation_SalinityConsidered(),ECeMin,ECeMax,ECswRel,LocalKsShapeFactorSalt);
                 SaltStressi := (1-KsSalti)*100;
                 StoClosure := Coeffb0Salt + Coeffb1Salt * SaltStressi + Coeffb2Salt * SaltStressi * SaltStressi;
                 // adjusted KsSto
@@ -3491,7 +3431,7 @@ IF (GetTemperatureFile() <> '(None)') THEN
    END;
 
 // 2. Initialise global settings
-Simulation.DelayedDays := 0; // required for CalculateETpot
+SetSimulation_DelayedDays(0); // required for CalculateETpot
 SumKcPot := 0;
 SumGDDforPlot := undef_int;
 SumGDD := undef_int;
@@ -3803,50 +3743,76 @@ END; (* TranslateIniPointsToSWProfile *)
 
 
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double;
-                                VAR IniSWCRead : rep_IniSWC);
+                                VAR IniSurfaceStorage : double);
 VAR f0 : TextFile;
     i : ShortInt;
     StringParam : string;
     VersionNr : double;
+    CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
+    NrLoc_temp : shortint;
+    Loc_i_temp, VolProc_i_temp, SaltECe_i_temp : double;
 BEGIN
+// IniSWCRead attribute of the function was removed to fix a 
+// bug occurring when the function was called in TempProcessing.pas
+// Keep in mind that this could affect the graphical interface
 Assign(f0,SWCiniFileFull);
 Reset(f0);
 READLN(f0,SWCiniDescription);
 READLN(f0,VersionNr); // AquaCrop Version
 IF (ROUND(10*VersionNr) < 41) // initial CC at start of simulation period
-   THEN Simulation.CCini := undef_int
-   ELSE READLN(f0,Simulation.CCini);
+   THEN SetSimulation_CCini(undef_int)
+   ELSE BEGIN
+        READLN(f0,CCini_temp);
+        SetSimulation_CCini(CCini_temp);
+        end;
 IF (ROUND(10*VersionNr) < 41) // B produced before start of simulation period
-   THEN Simulation.Bini := 0.000
-   ELSE READLN(f0,Simulation.Bini);
+   THEN SetSimulation_Bini(0.000)
+   ELSE BEGIN
+        READLN(f0,Bini_temp);
+        SetSimulation_Bini(Bini_temp);
+        end;
 IF (ROUND(10*VersionNr) < 41) // initial rooting depth at start of simulation period
-   THEN Simulation.Zrini := undef_int
-   ELSE READLN(f0,Simulation.Zrini);
+   THEN SetSimulation_Zrini(undef_int)
+   ELSE BEGIN
+        READLN(f0,Zrini_temp);
+        SetSimulation_Zrini(Zrini_temp);
+        END;
 READLN(f0,IniSurfaceStorage);
 IF (ROUND(10*VersionNr) < 32) // EC of the ini surface storage
-   THEN Simulation.ECStorageIni := 0
-   ELSE READLN(f0,Simulation.ECStorageIni);
+   THEN SetSimulation_ECStorageIni(0)
+   ELSE BEGIN 
+        READLN(f0,ECStorageIni_temp);
+        SetSimulation_ECStorageIni(ECStorageIni_temp);
+        END;
 READLN(f0,i);
 IF (i = 1)
-   THEN IniSWCRead.AtDepths := true
-   ELSE IniSWCRead.AtDepths := false;
-READLN(f0,IniSWCRead.NrLoc);
+   THEN SetSimulation_IniSWC_AtDepths(true)
+   ELSE SetSimulation_IniSWC_AtDepths(false);
+READLN(f0,NrLoc_temp);
+SetSimulation_IniSWC_NrLoc(NrLoc_temp);
 READLN(f0);
 READLN(f0);
 READLN(f0);
-FOR i := 1 TO IniSWCRead.NrLoc DO
+FOR i := 1 TO GetSimulation_IniSWC_NrLoc() DO
     BEGIN
     READLN(f0,StringParam);
+    Loc_i_temp := GetSimulation_IniSWC_Loc_i(i);
+    VolProc_i_temp := GetSimulation_IniSWC_VolProc_i(i);
     IF (ROUND(10*VersionNr) < 32) // ECe at the locations
        THEN BEGIN
-            SplitStringInTwoParams(StringParam,IniSWCRead.Loc[i],IniSWCRead.VolProc[i]);
-            IniSWCRead.SaltECe[i] := 0;
+            SplitStringInTwoParams(StringParam,Loc_i_temp,VolProc_i_temp);
+            SetSimulation_IniSWC_SaltECe_i(i, 0);
             END
-       ELSE SplitStringInThreeParams(StringParam,IniSWCRead.Loc[i],IniSWCRead.VolProc[i],IniSWCRead.SaltECe[i]);
+       ELSE BEGIN
+            SaltECe_i_temp := GetSimulation_IniSWC_SaltECe_i(i);
+            SplitStringInThreeParams(StringParam,Loc_i_temp,VolProc_i_temp,SaltECe_i_temp);
+            SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp);
+            END;
+    SetSimulation_IniSWC_Loc_i(i, Loc_i_temp);
+    SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp);
     END;
 Close(f0);
-Simulation.IniSWC.AtFC := false;
+SetSimulation_IniSWC_AtFC(false);
 END; (* LoadInitialConditions *)
 
 
@@ -3858,7 +3824,7 @@ BEGIN
 TempString := Trim(TheProjectFileName);
 i := Length(TempString);
 Delete(TempString,(i-3),(4));
-OutputName := TempString;
+SetOutputName(TempString);
 END; (* ComposeOutputFileName *)
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
@@ -4000,19 +3966,19 @@ DesignateSoilLayerToCompartments(NrCompartments,GetSoil().NrSoilLayers,Compartme
 SetCompartment(Compartment_temp);
 
 //4. Adjust initial Soil Water Content of soil compartments
-IF Simulation.ResetIniSWC
+IF GetSimulation_ResetIniSWC()
    THEN BEGIN
-        IF Simulation.IniSWC.AtDepths
+        IF GetSimulation_IniSWC_AtDepths()
            THEN BEGIN
                 Compartment_temp := GetCompartment();
-                TranslateIniPointsToSWProfile(Simulation.IniSWC.NrLoc,Simulation.IniSWC.Loc,Simulation.IniSWC.VolProc,
-                                              Simulation.IniSWC.SaltECe,NrCompartments,Compartment_temp);
+                TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
+                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END
            ELSE BEGIN
                 Compartment_temp := GetCompartment();
-                TranslateIniLayersToSWProfile(Simulation.IniSWC.NrLoc,Simulation.IniSWC.Loc,Simulation.IniSWC.VolProc,
-                                              Simulation.IniSWC.SaltECe,NrCompartments,Compartment_temp);
+                TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
+                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END;
         END
@@ -4027,9 +3993,9 @@ Total := 0;
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
 FOR compi := 1 TO NrCompartments DO
     BEGIN
-    Simulation.ThetaIni[compi] := GetCompartment_Theta(compi);
+    SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
     SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
-                                                                + Simulation.ThetaIni[compi]*100*10*GetCompartment_Thickness(compi));
+                                                                + GetSimulation_ThetaIni_i(compi)*100*10*GetCompartment_Thickness(compi));
     END;
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
 SetTotalWaterContent_BeginDay(Total);
@@ -4315,7 +4281,7 @@ SetCalendarFileFull(GetCalendarFile());  (* no file *)
 SetCalendarDescription('');
 SetOnset_GenerateOn(false);
 SetOnset_GenerateTempOn(false);
-EndSeason.GenerateTempOn := false;
+SetEndSeason_GenerateTempOn(false);
 SetCalendarDescription('No calendar for the Seeding/Planting year');
 END; (* NoCropCalendar *)
 

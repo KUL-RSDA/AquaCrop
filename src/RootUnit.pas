@@ -94,7 +94,7 @@ IF (ROUND(Ziprev) = undef_int)
         IF ((CCact <= 0) AND (CCpot > 50)) THEN dZ := 0;
 
         // -- 3.4 correction for no germination
-        IF NOT Simulation.Germinate THEN dZ := 0;
+        IF NOT GetSimulation_Germinate() THEN dZ := 0;
 
         // 4. actual rooting depth (Zi)
         Zi := Ziprev + dZ;
@@ -103,15 +103,15 @@ IF (ROUND(Ziprev) = undef_int)
         IF (ROUND(Zi*1000) < ROUND(ZiMax*1000))
           THEN BEGIN
                // Total extraction in restricted root zone (Zi) and max root zone (ZiMax) should be identical
-               Simulation.SCor := (2*(ZiMax/Zi)*((GetCrop().SmaxTop+GetCrop().SmaxBot)/2)-GetCrop().SmaxTop)/GetCrop().SmaxBot;
+               SetSimulation_SCor((2*(ZiMax/Zi)*((GetCrop().SmaxTop+GetCrop().SmaxBot)/2)-GetCrop().SmaxTop)/GetCrop().SmaxBot);
                // consider part of the restricted deepening due to water stress (= less roots)
                IF (GetSumWaBal_Tpot() > 0) THEN
                   BEGIN
-                  Simulation.SCor := Simulation.SCor * (GetSumWaBal_Tact()/GetSumWaBal_Tpot());
-                  IF (Simulation.SCor < 1) THEN Simulation.SCor := 1;
+                  SetSimulation_SCor(GetSimulation_SCor() * (GetSumWaBal_Tact()/GetSumWaBal_Tpot()));
+                  IF (GetSimulation_SCor() < 1) THEN SetSimulation_SCor(1);
                   END;
                END
-          ELSE Simulation.SCor := 1;
+          ELSE SetSimulation_SCor(1);
         END;
 AdjustedRootingDepth := Zi;
 END; (* AdjustedRootingDepth *)
