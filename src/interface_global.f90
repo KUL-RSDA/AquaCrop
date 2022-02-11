@@ -29,6 +29,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimateFileFull, &
                      GetClimateDescription, &
                      GetClimFile, &
+                     GetEndSeason_GenerateTempOn, &
                      GetSWCiniFile, &
                      GetSWCiniFileFull, &
                      GetProjectFile, &
@@ -92,6 +93,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetClimateFileFull, &
                      SetClimateDescription, &
                      SetClimFile, &
+                     SetEndSeason_GenerateTempOn, &
                      SetEToFile, &
                      SetEToFileFull, &
                      SetEToDescription, &
@@ -950,6 +952,23 @@ subroutine SetOnset_GenerateTempOn_wrap(GenerateTempOn)
     bool = GenerateTempOn
     call SetOnset_GenerateTempOn(bool)
 end subroutine SetOnset_GenerateTempOn_wrap
+
+function GetEndSeason_GenerateTempOn_wrap() result(GenerateTempOn)
+    !! Wrapper for [[ac_global:GetEndSeason_GenerateTempOn]] for foreign languages.
+    logical(1) :: GenerateTempOn
+
+    GenerateTempOn = GetEndSeason_GenerateTempOn()
+end function GetEndSeason_GenerateTempOn_wrap
+
+subroutine SetEndSeason_GenerateTempOn_wrap(GenerateTempOn)
+    !! Wrapper for [[ac_global:SetEndSeason_GenerateTempOn]] for foreign languages.
+    logical(1), intent(in) :: GenerateTempOn
+
+    logical :: bool
+
+    bool = GenerateTempOn
+    call SetEndSeason_GenerateTempOn(bool)
+end subroutine SetEndSeason_GenerateTempOn_wrap
 
 function GetMultipleProjectFileFull_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectFileFull]] for foreign languages.
