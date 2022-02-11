@@ -143,7 +143,9 @@ integer(intEnum), parameter :: datatype_monthly= 2
 
 type rep_DayEventInt
     integer(int32) :: DayNr
+        !! Undocumented
     integer(int32) :: param
+        !! Undocumented
 end type rep_DayEventInt
 
 type CompartmentIndividual 
@@ -834,7 +836,9 @@ integer(int32) :: IrriFirstDayNr
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 
-type(rep_DayEventInt), dimension (5) :: rep_IrriOutSeasonEvents 
+type(DayEventInt), dimension(5) :: IrriBeforeSeason
+type(DayEventInt), dimension(5) :: IrriAfterSeason
+
 
 interface roundc
     module procedure roundc_int8
@@ -2277,10 +2281,10 @@ subroutine NoIrrigation()
     call SetGenerateDepthMode(GenerateDepthMode_ToFC)
     IrriFirstDayNr = undef_int
     do Nri = 1, 5
-        call SetIrriBeforeSeason(Nri)%DayNr = 0
-        call SetIrriBeforeSeason(Nri)%Param = 0
-        call SetIrriAfterSeason(Nri)%DayNr = 0
-        call SetIrriAfterSeason(Nri)%Param = 0
+        call SetIrriBeforeSeason_DayNr(Nri, 0)
+        call SetIrriBeforeSeason_Param(Nri, 0)
+        call SetIrriAfterSeason_DayNr(Nri, 0)
+        call SetIrriAfterSeason_Param(Nri, 0)
     end do
     call SetIrriECw_PreSeason(0.0) ! dS/m
     call SetIrriECw_PostSeason(0.0) ! dS/m
@@ -6881,22 +6885,115 @@ subroutine SetTemperatureRecord_FromString(FromString)
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
 
-function GetCompartment_i(i) result(Compartment_i)
-    !! Getter for individual elements of "Compartment" global variable.
+function GetIrriAfterSeason_i(i) result(IrriAfterSeason_i)
+    !! Getter for individual elements of "IrriAfterSeason" global variable.
     integer(int32), intent(in) :: i
-    type(CompartmentIndividual) :: Compartment_i
+    type(rep_DayEventInt) :: IrriAfterSeason_i
 
-    Compartment_i = Compartment(i)
-end function GetCompartment_i
+    IrriAfterSeason_i = IrriAfterSeason(i)
+end function GetIrriAfterSeason_i
 
-
-subroutine SetCompartment_i(i, Compartment_i)
-    !! Setter for individual elements of "Compartment" global variable.
+subroutine SetIrriAfterSeason_i(i, IrriAfterSeason_i)
+    !! Setter for individual elements of "IrriAfterSeason" global variable.
     integer(int32), intent(in) :: i
-    type(CompartmentIndividual) :: Compartment_i
+    type(rep_DayEventInt) :: IrriAfterSeason_i
 
-    Compartment(i) = Compartment_i
-end subroutine SetCompartment_i
+    IrriAfterSeason(i) = IrriAfterSeason_i
+end subroutine SetIrriAfterSeason_i
+
+function GetIrriAfterSeason_DayNr(i) result(DayNr)
+    !! Getter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: DayNr
+
+    Param = IrriAfterSeason(i)%DayNr
+end function GetIrriAfterSeason_DayNr
+
+function GetIrriAfterSeason_Param(i) result(Param)
+    !! Getter for the "Param" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Param
+
+    Param = IrriAfterSeason(i)%Param
+end function GetIrriAfterSeason_Param
+
+subroutine SetIrriAfterSeason(IrriAfterSeason_in)
+    !! Setter for the "IrriAfterSeason" global variable.
+    type(rep_DayEventInt), intent(in) :: IrriAfterSeason_in
+
+    IrriAfterSeason = IrriAfterSeason_in
+end subroutine SetIrriAfterSeason
+
+subroutine SetIrriAfterSeason_DayNr(i, DayNr)
+    !! Setter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: DayNr
+
+    IrriAfterSeason(i)%DayNr = DayNr
+end subroutine SetIrriAfterSeason_DayNr
+
+subroutine SetIrriAfterSeason_Param(i, Param)
+    !! Setter for the "Param" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param
+
+    IrriAfterSeason(i)%Param = Param
+end subroutine SetIrriAfterSeason_Param
+
+function GetIrriBeforeSeason_i(i) result(IrriBeforeSeason_i)
+    !! Getter for individual elements of "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriBeforeSeason_i
+
+    IrriBeforeSeason_i = IrriBeforeSeason(i)
+end function GetIrriBeforeSeason_i
+
+subroutine SetIrriBeforeSeason_i(i, IrriBeforeSeason_i)
+    !! Setter for individual elements of "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriBeforeSeason_i
+
+    IrriBeforeSeason(i) = IrriBeforeSeason_i
+end subroutine SetIrriBeforeSeason_i
+
+function GetIrriBeforeSeason_DayNr(i) result(DayNr)
+    !! Getter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: DayNr
+
+    Param = IrriBeforeSeason(i)%DayNr
+end function GetIrriBeforeSeason_DayNr
+
+function GetIrriBeforeSeason_Param(i) result(Param)
+    !! Getter for the "Param" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Param
+
+    Param = IrriBeforeSeason(i)%Param
+end function GetIrriBeforeSeason_Param
+
+subroutine SetIrriBeforeSeason(IrriBeforeSeason_in)
+    !! Setter for the "IrriBeforeSeason" global variable.
+    type(rep_DayEventInt), intent(in) :: IrriBeforeSeason_in
+
+    IrriBeforeSeason = IrriBeforeSeason_in
+end subroutine SetIrriBeforeSeason
+
+subroutine SetIrriBeforeSeason_DayNr(i, DayNr)
+    !! Setter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: DayNr
+
+    IrriBeforeSeason(i)%DayNr = DayNr
+end subroutine SetIrriBeforeSeason_DayNr
+
+subroutine SetIrriBeforeSeason_Param(i, Param)
+    !! Setter for the "Param" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param
+
+    IrriBeforeSeason(i)%Param = Param
+end subroutine SetIrriBeforeSeason_Param
 
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
