@@ -2434,6 +2434,7 @@ subroutine LoadIrriScheduleInfo(FullName)
                              status='old', action='read', iostat=rc)
     read(fhandle, *, iostat=rc) 
     read(fhandle, *, iostat=rc) StringREAD ! IrriDescription, not used
+    call SetIrriDescription(StringREAD)
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
 
     ! irrigation method
