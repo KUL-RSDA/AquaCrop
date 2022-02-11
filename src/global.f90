@@ -2803,16 +2803,19 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         
         ! Correction for ageing effects - is a function of calendar days 
         if ((VirtualDay-DayLastCut) > (L12+5)) then
-            KcVal = KcVal - (VirtualDay-DayLastCut-(L12+5._dp))*(KcDeclineVal/100._dp)*CCxWithered
+            KcVal = KcVal - (VirtualDay-DayLastCut-(L12+5)) &
+                        * (KcDeclineVal/100._dp)*CCxWithered
         end if
         
         ! Correction for elevated atmospheric CO2 concentration 
         if (CO2i > 369.41_dp) then
-            KcVal = KcVal * (1._dp - 0.05_dp * (CO2i-369.41_dp)/(550._dp-369.41_dp))
+            KcVal = KcVal * &
+                    (1._dp - 0.05_dp * (CO2i-369.41_dp)/(550._dp-369.41_dp))
         end if
-        
+
         ! Correction for Air temperature stress 
-        if ((CCiAdjusted <= 0.0000001) .or. (roundc(GDDayi, mold=1_int32) < 0)) then
+        if ((CCiAdjusted <= 0.0000001_dp) &
+            .or. (roundc(GDDayi, mold=1_int32) < 0)) then
             KsTrCold = 1._dp
         else
             KsTrCold = KsTemperature(0._dp, TempGDtranspLow, GDDayi)
@@ -2823,7 +2826,8 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         EpotVal = GetSimulParam_KcWetBare() * (1._dp - CCiAdjusted) * EToVal
         
         ! Maximum Epot with withered canopy as a result of (early) senescence
-        EpotMax = GetSimulParam_KcWetBare() * EToVal * (1._dp - CCxWithered * CCEffectProcent/100._dp)
+        EpotMax = GetSimulParam_KcWetBare() * EToVal * &
+                        (1._dp - CCxWithered * CCEffectProcent/100._dp)
         
         ! Correction Epot for dying crop in late-season stage 
         if ((VirtualDay > L123) .and. (CCx > 0._dp)) then
@@ -2838,8 +2842,9 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
                 Multiplier = 1._dp ! full effect
             end if
             EpotVal = EpotVal * (1._dp - CCx * (CCEffectProcent/100._dp) * Multiplier)
-            EpotMin = GetSimulParam_KcWetBare() * (1._dp - 1.72_dp*CCx + 1._dp*(CCx*CCx) &
-                                                   - 0.30_dp*(CCx*CCx*CCx)) * EToVal
+            EpotMin = GetSimulParam_KcWetBare() &
+                      * (1._dp - 1.72_dp*CCx + 1._dp*(CCx*CCx) - 0.30_dp*(CCx*CCx*CCx)) &
+                      * EToVal
             if (EpotMin < 0._dp) then
                 EpotMin = 0._dp
             end if
@@ -2859,8 +2864,9 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
             
             ! Correction for drop in photosynthetic capacity of a dying green canopy 
             if (CCi < CCxWithered) then
-                if ((CCxWithered > 0.01) .and. (CCi > 0.001)) then
-                    TpotVal = TpotVal * exp(GetSimulParam_ExpFsen()*log(real(CCi/CCxWithered, kind=dp)))
+                if ((CCxWithered > 0.01_dp) .and. (CCi > 0.001_dp)) then
+                    TpotVal = TpotVal &
+                               * exp(GetSimulParam_ExpFsen()*log(CCi/CCxWithered))
                 end if
             end if
         end if
