@@ -79,13 +79,6 @@ TYPE
          CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
          End;
 
-     rep_DayEventInt = Record
-         DayNr : Integer;
-         Param : Integer;
-         end;
-
-     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
-
      rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
 
@@ -100,7 +93,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     EToRecord,
     RainRecord     : rep_clim;
     Simulation     : rep_sim;
-    IrriFirstDayNr : LongInt;
     SoilLayer      : rep_SoilLayer;
     NrCompartments : INTEGER;
     RootingDepth   : double;
@@ -118,8 +110,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    IrriBeforeSeason,
-    IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
