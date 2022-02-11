@@ -5865,8 +5865,6 @@ begin;
 end;
 
 function GetIrriBeforeSeason_i(constref i : integer) : Rep_DayEventInt;
-var
-    i2 : integer;
 begin;
     GetIrriBeforeSeason_i.DayNr := GetIrriBeforeSeason_DayNr(i);
     GetIrriBeforeSeason_i.Param := GetIrriBeforeSeason_Param(i);
@@ -5874,8 +5872,6 @@ end;
 
 procedure SetIrriBeforeSeason_i(constref i : integer;
                           constref IrriBeforeSeason_i : Rep_DayEventInt);
-var
-    i2 : integer;
 begin;
     SetIrriBeforeSeason_DayNr(i, IrriBeforeSeason_i.DayNr);
     SetIrriBeforeSeason_Param(i, IrriBeforeSeason_i.Param);
