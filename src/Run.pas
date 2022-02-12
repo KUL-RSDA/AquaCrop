@@ -412,7 +412,7 @@ FOR compi := 1 to NrCompartments DO
     Zi := Ztot - GetCompartment_Thickness(compi)/2;
     IF (Zi >= (ZiAqua/100)) THEN // compartment at or below groundwater table
        BEGIN
-       SetCompartment_Theta(compi, SoilLayer[GetCompartment_Layer(compi)].SAT/100);
+       SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
        Compi_temp := GetCOmpartment_i(compi);
        DetermineSaltContent(ECiAqua,Compi_temp);
        SetCompartment_i(compi, Compi_temp);
@@ -2533,7 +2533,7 @@ VAR RepeatToDay : LongInt;
       compi := compi + 1;
       SumDepth := SumDepth + GetCompartment_Thickness(compi);
       layeri := GetCompartment_Layer(compi);
-      ThetaPercRaw := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(SoilLayer[layeri].FC/100-SoilLayer[layeri].WP/100);
+      ThetaPercRaw := GetSoilLayer_i(layeri).FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(GetSoilLayer_i(layeri).FC/100-GetSoilLayer_i(layeri).WP/100);
       IF (GetCompartment_Theta(compi) < ThetaPercRaw) THEN
          BEGIN
          PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);

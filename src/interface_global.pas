@@ -3488,6 +3488,165 @@ procedure SetCompartment_Depo(constref i1, i2 : integer;
                                 constref Depo : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_depo';
 
+function GetSoilLayer() : rep_SoilLayer;
+
+function GetSoilLayer_i(constref i : integer) : SoilLayerIndividual;
+
+function GetSoilLayer_Description(constref i : integer) : string;
+
+function GetSoilLayer_Description_wrap(constref i : integer) : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsoillayer_description_wrap';
+
+function GetSoilLayer_Thickness(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_thickness';
+
+function GetSoilLayer_SAT(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_sat';
+
+function GetSoilLayer_FC(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_fc';
+
+function GetSoilLayer_WP(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_wp';
+
+function GetSoilLayer_tau(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_tau';
+
+function GetSoilLayer_InfRate(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_infrate';
+
+function GetSoilLayer_Penetrability(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_penetrability';
+
+function GetSoilLayer_GravelMass(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_gravelmass';
+
+function GetSoilLayer_GravelVol(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_gravelvol';
+
+function GetSoilLayer_WaterContent(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_watercontent';
+
+function GetSoilLayer_Macro(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_macro';
+
+function GetSoilLayer_SaltMobility(constref i : integer) : rep_salt;
+
+function GetSoilLayer_SaltMobility_i(constref i1, i2 : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_saltmobility_i';
+
+function GetSoilLayer_SC(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_sc';
+
+function GetSoilLayer_SCP1(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_scp1';
+
+function GetSoilLayer_UL(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_ul';
+
+function GetSoilLayer_Dx(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_dx';
+
+function GetSoilLayer_SoilClass(constref i : integer) : shortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_soilclass';
+
+function GetSoilLayer_CRa(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_cra';
+
+function GetSoilLayer_CRb(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_crb';
+
+procedure SetSoilLayer(constref SoilLayer_in : rep_SoilLayer);
+
+procedure SetSoilLayer_i(constref i : integer;
+                         constref SoilLayer_i : SoilLayerIndividual);
+
+procedure SetSoilLayer_Description(constref i : integer;
+                         constref Description : string);
+
+procedure SetSoilLayer_Description_wrap(constref i : integer;
+                         constref p : PChar);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsoillayer_description_wrap';
+
+procedure SetSoilLayer_Thickness(constref i : integer;
+                         constref Thickness : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_thickness';
+
+procedure SetSoilLayer_SAT(constref i : integer;
+                         constref SAT : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_sat';
+
+procedure SetSoilLayer_FC(constref i : integer;
+                         constref FC : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_fc';
+
+procedure SetSoilLayer_WP(constref i : integer;
+                         constref WP : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_wp';
+
+procedure SetSoilLayer_tau(constref i : integer;
+                         constref tau : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_tau';
+
+procedure SetSoilLayer_InfRate(constref i : integer;
+                         constref InfRate : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_infrate';
+
+procedure SetSoilLayer_Penetrability(constref i : integer;
+                         constref Penetrability : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_penetrability';
+
+procedure SetSoilLayer_GravelMass(constref i : integer;
+                         constref GravelMass : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_gravelmass';
+
+procedure SetSoilLayer_GravelVol(constref i : integer;
+                         constref GravelVol : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_gravelvol';
+
+procedure SetSoilLayer_WaterContent(constref i : integer;
+                         constref WaterContent : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_watercontent';
+
+procedure SetSoilLayer_Macro(constref i : integer;
+                         constref Macro : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_macro';
+
+procedure SetSoilLayer_SaltMobility(constref i : integer;
+                                    constref SaltMobility : rep_salt);
+
+procedure SetSoilLayer_SaltMobility_i(constref i1, i2 : integer;
+                                    constref SaltMobility_i : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_saltmobility_i';
+
+procedure SetSoilLayer_SC(constref i : integer;
+                         constref SC : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_sc';
+
+procedure SetSoilLayer_SCP1(constref i : integer;
+                         constref SCP1 : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_scp1';
+
+procedure SetSoilLayer_UL(constref i : integer;
+                         constref UL : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_ul';
+
+procedure SetSoilLayer_Dx(constref i : integer;
+                         constref Dx : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_dx';
+
+procedure SetSoilLayer_SoilClass(constref i : integer;
+                         constref SoilClass : shortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_soilclass';
+
+procedure SetSoilLayer_CRa(constref i : integer;
+                         constref CRa : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_cra';
+
+procedure SetSoilLayer_CRb(constref i : integer;
+                         constref CRb : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
+
 
 implementation
 
@@ -5769,6 +5928,103 @@ begin;
     SetCompartment_WFactor(i, Compartment_i.WFactor);
     for i2 := 1 to 11 do SetCompartment_Salt(i, i2, Compartment_i.Salt[i2]);
     for i2 := 1 to 11 do SetCompartment_Depo(i, i2, Compartment_i.Depo[i2]);
+end;
+
+function GetSoilLayer() : rep_SoilLayer;
+var
+    i : integer;
+begin;
+    for i := 1 to max_SoilLayers do GetSoilLayer[i] := GetSoilLayer_i(i)
+end;
+
+function GetSoilLayer_i(constref i : integer) : SoilLayerIndividual;
+begin;
+    GetSoilLayer_i.Description := GetSoilLayer_Description(i);
+    GetSoilLayer_i.Thickness := GetSoilLayer_Thickness(i);
+    GetSoilLayer_i.SAT := GetSoilLayer_SAT(i);
+    GetSoilLayer_i.FC := GetSoilLayer_FC(i);
+    GetSoilLayer_i.WP := GetSoilLayer_WP(i);
+    GetSoilLayer_i.tau := GetSoilLayer_tau(i);
+    GetSoilLayer_i.InfRate := GetSoilLayer_InfRate(i);
+    GetSoilLayer_i.Penetrability := GetSoilLayer_Penetrability(i);
+    GetSoilLayer_i.GravelMass := GetSoilLayer_GravelMass(i);
+    GetSoilLayer_i.GravelVol := GetSoilLayer_GravelVol(i);
+    GetSoilLayer_i.WaterContent := GetSoilLayer_WaterContent(i);
+    GetSoilLayer_i.Macro := GetSoilLayer_Macro(i);
+    GetSoilLayer_i.SaltMobility := GetSoilLayer_SaltMobility(i);
+    GetSoilLayer_i.SC := GetSoilLayer_SC(i);
+    GetSoilLayer_i.SCP1 := GetSoilLayer_SCP1(i);
+    GetSoilLayer_i.UL := GetSoilLayer_UL(i);
+    GetSoilLayer_i.Dx := GetSoilLayer_Dx(i);
+    GetSoilLayer_i.SoilClass := GetSoilLayer_SoilClass(i);
+    GetSoilLayer_i.CRa := GetSoilLayer_CRa(i);
+    GetSoilLayer_i.CRb := GetSoilLayer_CRb(i);
+end;
+
+
+function GetSoilLayer_Description(constref i : integer) : string;
+var
+    p : PChar;
+begin;
+    p := GetSoilLayer_Description_wrap(i);
+    GetSoilLayer_Description := AnsiString(p);
+end;
+
+function GetSoilLayer_SaltMobility(constref i : integer) : rep_salt;
+var
+    i2 : integer;
+begin;
+    for i2 := 1 to 11 do GetSoilLayer_SaltMobility[i2] := GetSoilLayer_SaltMobility_i(i, i2)
+end;
+
+procedure SetSoilLayer(constref SoilLayer_in : rep_SoilLayer);
+var
+    i : integer;
+begin;
+    for i := 1 to max_SoilLayers do SetSoilLayer_i(i, SoilLayer_in[i])
+end;
+
+procedure SetSoilLayer_i(constref i : integer;
+                        constref SoilLayer_i : SoilLayerIndividual);
+begin;
+    SetSoilLayer_Description(i, SoilLayer_i.Description);
+    SetSoilLayer_Thickness(i, SoilLayer_i.Thickness);
+    SetSoilLayer_SAT(i, SoilLayer_i.SAT);
+    SetSoilLayer_FC(i, SoilLayer_i.FC);
+    SetSoilLayer_WP(i, SoilLayer_i.WP);
+    SetSoilLayer_tau(i, SoilLayer_i.tau);
+    SetSoilLayer_InfRate(i, SoilLayer_i.InfRate);
+    SetSoilLayer_Penetrability(i, SoilLayer_i.Penetrability);
+    SetSoilLayer_GravelMass(i, SoilLayer_i.GravelMass);
+    SetSoilLayer_GravelVol(i, SoilLayer_i.GravelVol);
+    SetSoilLayer_WaterContent(i, SoilLayer_i.WaterContent);
+    SetSoilLayer_Macro(i, SoilLayer_i.Macro);
+    SetSoilLayer_SaltMobility(i, SoilLayer_i.SaltMobility);
+    SetSoilLayer_SC(i, SoilLayer_i.SC);
+    SetSoilLayer_SCP1(i, SoilLayer_i.SCP1);
+    SetSoilLayer_UL(i, SoilLayer_i.UL);
+    SetSoilLayer_Dx(i, SoilLayer_i.Dx);
+    SetSoilLayer_SoilClass(i, SoilLayer_i.SoilClass);
+    SetSoilLayer_CRa(i, SoilLayer_i.CRa);
+    SetSoilLayer_CRb(i, SoilLayer_i.CRb);
+end;
+
+
+procedure SetSoilLayer_Description(constref i : integer;
+                                   constref Description : string);
+var
+    p : PChar;
+begin;
+    p := PChar(Description);
+    SetSoilLayer_Description_wrap(i, p);
+end;
+
+procedure SetSoilLayer_SaltMobility(constref i : integer;
+                                    constref SaltMobility : rep_salt);
+var
+    i2 : integer;
+begin;
+    for i2 := 1 to 11 do SetSoilLayer_SaltMobility_i(i, i2, SaltMobility[i2])
 end;
 
 

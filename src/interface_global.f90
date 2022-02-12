@@ -144,6 +144,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetTemperatureRecord_FromString, &
                      SetTemperatureRecord_ToString, &
                      GetTemperatureRecord_ToString, &
+                     GetSoilLayer_Description, &
+                     SetSoilLayer_Description, &
                      GetSimulation_LinkCropToSimPeriod, &
                      GetSimulation_ResetIniSWC, &
                      GetSimulation_EvapLimitON, &
@@ -1617,6 +1619,25 @@ function GetTemperatureRecord_FromString_wrap() result(c_pointer)
 
     c_pointer = string2pointer(GetTemperatureRecord_FromString())
 end function GetTemperatureRecord_FromString_wrap
+
+function GetSoilLayer_Description_wrap(i) result(Description)
+    !! Wrapper for [[ac_global:GetSoilLayer_Description]] for foreign languages.
+    integer(int32) :: i
+    type(c_ptr) :: Description
+
+    Description = string2pointer(GetSoilLayer_Description(i))
+end function GetSoilLayer_Description_wrap
+
+subroutine SetSoilLayer_Description_wrap(i, Description)
+    !! Wrapper for [[ac_global:SetSoilLayer_Description]] for foreign languages.
+    integer(int32) :: i
+    type(c_ptr), intent(in) :: Description
+
+    character(len=25) :: string
+
+    string = pointer2string(Description, 25)
+    call SetSoilLayer_Description(i, string)
+end subroutine SetSoilLayer_Description_wrap
 
 function GetSimulation_LinkCropToSimPeriod_wrap() result(LinkCropToSimPeriod)
     !! Wrapper for [[ac_global:GetSimulation_LinkCropToSimPeriod]] for foreign languages.

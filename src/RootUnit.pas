@@ -77,14 +77,14 @@ IF (ROUND(Ziprev) = undef_int)
                compi := compi + 1;
                Zsoil := Zsoil + GetCompartment_Thickness(compi);
                END;
-            TAWcompi := SoilLayer[GetCompartment_Layer(compi)].FC/100 - SoilLayer[GetCompartment_Layer(compi)].WP/100;
-            ThetaTreshold := SoilLayer[GetCompartment_Layer(compi)].FC/100 - pZexp * TAWcompi;
+            TAWcompi := GetSoilLayer_i(GetCompartment_Layer(compi)).FC/100 - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100;
+            ThetaTreshold := GetSoilLayer_i(GetCompartment_Layer(compi)).FC/100 - pZexp * TAWcompi;
             IF (GetCompartment_Theta(compi) < ThetaTreshold) THEN
                BEGIN // expansion is limited due to soil water content at expansion front
-               IF (GetCompartment_Theta(compi) <= SoilLayer[GetCompartment_Layer(compi)].WP/100)
+               IF (GetCompartment_Theta(compi) <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)
                   THEN dZ := 0
                   ELSE BEGIN
-                       Wrel := (SoilLayer[GetCompartment_Layer(compi)].FC/100 - GetCompartment_Layer(compi))/TAWcompi;
+                       Wrel := (GetSoilLayer_i(GetCompartment_Layer(compi)).FC/100 - GetCompartment_Layer(compi))/TAWcompi;
                        dZ := dZ * KsAny(Wrel,pZexp,(1),GetCrop().KsShapeFactorStomata);
                        END;
                END;
