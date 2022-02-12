@@ -1274,7 +1274,7 @@ subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
         ! 3.3 Ks(pollination) cold stress
         KsPolCS = KsTemperature(real(TempTcold-TempRange, kind=dp), &
                       real(TempTcold, kind=dp), Tndayi)
-        if (roundc(10000_dp*KsPolCS, mold=1_int32) < 10000) then
+        if (roundc(10000._dp*KsPolCS, mold=1_int32) < 10000) then
             ColdStress = .true.
         end if
         ! 3.4 Ks(pollination) heat stress

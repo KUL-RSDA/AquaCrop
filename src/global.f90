@@ -1353,7 +1353,7 @@ subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, 
     else
         if (.not. CGCgiven) then ! Length12 is given and CGC has to be determined
             CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))&
-                           /real(Length12-L0, kind-dp)), kind=dp)
+                           /real(Length12-L0, kind=dp)), kind=dp)
             ! Check if CGC < maximum value (0.40) and adjust Length12 if required
             if (CGCVal > 0.40_dp) then
                 CGCVal = 0.40_dp
