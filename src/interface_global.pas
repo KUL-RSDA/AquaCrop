@@ -1345,6 +1345,9 @@ function CanopyCoverNoStressGDDaysSF(
 procedure ReadRainfallSettings();
         external 'aquacrop' name '__ac_global_MOD_readrainfallsettings';
 
+procedure ReadSoilSettings();
+        external 'aquacrop' name '__ac_global_MOD_readsoilsettings';
+
 function fAdjustedForCO2 (
             constref CO2i, WPi : double;
             constref PercentA : ShortInt) : double;
