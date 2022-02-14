@@ -77,10 +77,7 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                            SumGDD,Zmin,Zmax : double;
-                            ShapeFactor : ShortInt;
-                            TypeDays : rep_modeCycle) : double;
+
 PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
@@ -240,91 +237,8 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
+
 implementation
-
-
-FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                            SumGDD,Zmin,Zmax : double;
-                            ShapeFactor : ShortInt;
-                            TypeDays : rep_modeCycle) : double;
-Var Zini, Zr : double;
-    VirtualDay, T0 : INTEGER;
-
-
-
-FUNCTION ActualRootingDepthDays(DAP,L0,LZmax,L1234 : INTEGER;
-                                Zmin,Zmax : double) : double;
-BEGIN // Actual rooting depth at the end of Dayi
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ((VirtualDay < 1) OR (VirtualDay > L1234))
-   THEN ActualRootingDepthDays := 0
-   ELSE IF (VirtualDay >= LZmax)
-        THEN ActualRootingDepthDays := Zmax
-        ELSE IF (Zmin < Zmax)
-                THEN BEGIN
-                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
-                     T0 := ROUND(L0/2);
-                     IF (LZmax <= T0)
-                        THEN Zr := Zini + (Zmax-Zini)*VirtualDay/LZmax
-                        ELSE IF (VirtualDay <= T0)
-                                THEN Zr := Zini
-                                ELSE BEGIN
-                                     Zr := Zini + (Zmax-Zini)
-                                        * TimeRootFunction(VirtualDay,ShapeFactor,LZmax,T0);
-                                     END;
-                     IF (Zr > ZMin) THEN ActualRootingDepthDays := Zr
-                                    ELSE ActualRootingDepthDays := ZMin;
-                     END
-                ELSE ActualRootingDepthDays := ZMax;
-END; (* ActualRootingDepthDays *)
-
-
-
-FUNCTION ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                                  SumGDD,Zmin,Zmax : double) : double;
-VAR GDDT0 : double;
-BEGIN // after sowing the crop has roots even when SumGDD = 0
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ((VirtualDay < 1) OR (VirtualDay > L1234))
-   THEN ActualRootingDepthGDDays := 0
-   ELSE IF (SumGDD >= GDDLZmax)
-        THEN ActualRootingDepthGDDays := Zmax
-        ELSE IF (Zmin < Zmax)
-                THEN BEGIN
-                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
-                     GDDT0 := GDDL0/2;
-                     IF (GDDLZmax <= GDDT0)
-                        THEN Zr := Zini + (Zmax-Zini)*SumGDD/GDDLZmax
-                        ELSE BEGIN
-                             IF (SumGDD <= GDDT0)
-                                THEN Zr := Zini
-                                ELSE BEGIN
-                                     Zr := Zini + (Zmax-Zini)
-                                        * TimeRootFunction(SumGDD,ShapeFactor,GDDLZmax,GDDT0);
-                                     END;
-                             END;
-                     IF (Zr > ZMin) THEN ActualRootingDepthGDDays := Zr
-                                    ELSE ActualRootingDepthGDDays := ZMin;
-                     END
-                ELSE ActualRootingDepthGDDays := ZMax;
-END; (* ActualRootingDepthGDDays *)
-
-
-
-BEGIN  (* ActualRootingDepth *)
-CASE TypeDays OF
-     GDDays  : Zr := ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234,SumGDD,Zmin,Zmax);
-     else Zr := ActualRootingDepthDays(DAP,L0,LZmax,L1234,Zmin,Zmax);
-     end;
-// restrictive soil layer
-SetSimulation_SCor(1);
-IF (ROUND(GetSoil().RootMax*1000) < ROUND(Zmax*1000))
-   THEN ZrAdjustedToRestrictiveLayers(Zr,GetSoil().NrSoilLayers,GetSoilLayer(),Zr);
-// assign
-ActualRootingDepth:= Zr;
-END; (* ActualRootingDepth *)
-
-
 
 
 PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;

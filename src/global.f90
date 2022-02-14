@@ -3228,7 +3228,142 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     close(fhandle)
 end subroutine CheckFilesInProject
 
+
+real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
+                                     SumGDD, Zmin, Zmax, ShapeFactor,&
+                                     TypeDays)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: LZmax
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDLZmax
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: Zmin
+    real(dp), intent(in) :: Zmax
+    integer(int8), intent(in) :: ShapeFactor
+    integer(intEnum), intent(in) :: TypeDays
+
+    real(dp) :: Zini, Zr
+    integer(int32) :: VirtualDay, T0, rootmax_rounded, zmax_rounded
+
+    select case (TypeDays)
+    case (modeCycle_GDDDays)
+        Zr = ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, SumGDD, &
+                                      Zmin, Zmax)
+    case default
+        Zr = ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
+    end select
+
+    ! restrictive soil layer
+    call SetSimulation_SCor(1._sp)
+
+    rootmax_rounded = roundc(real(GetSoil_RootMax()*1000, kind=dp), &
+                             mold=rootmax_rounded)
+    zmax_rounded = roundc(Zmax*1000, mold=zmax_rounded)
+
+    if (rootmax_rounded < zmax_rounded) then
+        call ZrAdjustedToRestrictiveLayers(Zr, GetSoil_NrSoilLayers(), &
+                                           GetSoilLayer(), Zr)
+    end if
+
+    ActualRootingDepth = Zr
+
+
+    contains
+
+
+    real(dp) function ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L0
+        integer(int32), intent(in) :: LZmax
+        integer(int32), intent(in) :: L1234
+        real(dp), intent(in) :: Zmin
+        real(dp), intent(in) :: Zmax
+
+        ! Actual rooting depth at the end of Dayi
+        VirtualDay = DAP - GetSimulation_DelayedDays()
+
+        if ((VirtualDay < 1) .or. (VirtualDay > L1234)) then
+            ActualRootingDepthDays = 0
+        elseif (VirtualDay >= LZmax) then
+            ActualRootingDepthDays = Zmax
+        elseif (Zmin < Zmax) then
+            Zini = ZMin * (GetSimulParam_RootPercentZmin()/100._dp)
+            T0 = roundc(L0/2._dp, mold=T0)
+
+            if (LZmax <= T0) then
+                Zr = Zini + (Zmax-Zini)*VirtualDay*1._dp/LZmax
+            elseif (VirtualDay <= T0) then
+                Zr = Zini
+            else
+                Zr = Zini + (Zmax-Zini) &
+                     * TimeRootFunction(real(VirtualDay, kind=dp), ShapeFactor,&
+                                        real(LZmax, kind=dp), real(T0, kind=dp))
+            end if
+
+            if (Zr > ZMin) then
+                ActualRootingDepthDays = Zr
+            else
+                ActualRootingDepthDays = ZMin
+            end if
+        else
+            ActualRootingDepthDays = ZMax
+        end if
+    end function ActualRootingDepthDays
+
+
+    real(dp) function ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, &
+                                               SumGDD, Zmin, Zmax)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L1234
+        integer(int32), intent(in) :: GDDL0
+        integer(int32), intent(in) :: GDDLZmax
+        real(dp), intent(in) :: SumGDD
+        real(dp), intent(in) :: Zmin
+        real(dp), intent(in) :: Zmax
+
+        real(dp) :: GDDT0
+
+        ! after sowing the crop has roots even when SumGDD = 0
+        VirtualDay = DAP - GetSimulation_DelayedDays()
+
+        if ((VirtualDay < 1) .or. (VirtualDay > L1234)) then
+            ActualRootingDepthGDDays = 0
+        elseif (SumGDD >= GDDLZmax) then
+            ActualRootingDepthGDDays = Zmax
+        elseif (Zmin < Zmax) then
+            Zini = ZMin * (GetSimulParam_RootPercentZmin()/100._dp)
+            GDDT0 = GDDL0/2._dp
+
+            if (GDDLZmax <= GDDT0) then
+                Zr = Zini + (Zmax-Zini)*SumGDD/GDDLZmax
+            else
+                if (SumGDD <= GDDT0) then
+                    Zr = Zini
+                else
+                    Zr = Zini + (Zmax-Zini) &
+                         * TimeRootFunction(SumGDD, ShapeFactor, &
+                                            real(GDDLZmax, kind=dp), GDDT0)
+                end if
+            end if
+
+            if (Zr > ZMin) then
+                ActualRootingDepthGDDays = Zr
+            else
+                ActualRootingDepthGDDays = ZMin
+            end if
+        else
+            ActualRootingDepthGDDays = ZMax
+        end if
+    end function ActualRootingDepthGDDays
+end function ActualRootingDepth
+
+
+
 !! Global variables section !!
+
+
 
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.
@@ -4895,6 +5030,18 @@ type(rep_soil) function GetSoil()
 
     GetSoil = Soil
 end function GetSoil
+
+real(sp) function GetSoil_RootMax()
+    !! Getter for "RootMax" attribute of the "soil" global variable.
+
+    GetSoil_Rootmax = soil%RootMax
+end function GetSoil_RootMax
+
+integer(int8) function GetSoil_NrSoilLayers()
+    !! Getter for "NrSoilLayers" attribute of the "soil" global variable.
+
+    GetSoil_NrSoilLayers = soil%NrSoilLayers
+end function GetSoil_NrSoilLayers
 
 subroutine SetSoil_REW(REW)
     !! Setter for the "Soil" global variable.

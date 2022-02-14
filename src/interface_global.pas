@@ -3671,6 +3671,19 @@ procedure LoadManagement_wrap(constref FullName : string;
                          constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
 
+function __ActualRootingDepth(
+                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                constref SumGDD,Zmin,Zmax : double;
+                constref ShapeFactor : ShortInt;
+                constref int_TypeDays : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_actualrootingdepth';
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+
 
 implementation
 
@@ -6080,6 +6093,21 @@ begin;
     p := PChar(FullName);
     strlen := Length(FullName);
     LoadManagement_wrap(p,strlen);
+end;
+
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+var
+    int_TypeDays: integer;
+begin
+    int_TypeDays := ord(TypeDays);
+    ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
+                                           GDDLZmax, SumGDD, Zmin, Zmax,
+                                           ShapeFactor, int_TypeDays);
 end;
 
 
