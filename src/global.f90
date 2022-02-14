@@ -954,6 +954,7 @@ integer(intEnum) :: IrriMethod
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
 
+
 interface roundc
     module procedure roundc_int8
     module procedure roundc_int32
@@ -1352,7 +1353,8 @@ subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, 
         CGCVal = Undef_int
     else
         if (.not. CGCgiven) then ! Length12 is given and CGC has to be determined
-            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))/(Length12-L0)), kind=dp)
+            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))&
+                           /real(Length12-L0, kind=dp)), kind=dp)
             ! Check if CGC < maximum value (0.40) and adjust Length12 if required
             if (CGCVal > 0.40_dp) then
                 CGCVal = 0.40_dp
@@ -1424,7 +1426,6 @@ subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, 
             end if
         end if
     end if
-
 end subroutine DetermineLengthGrowthStages
 
 
@@ -5018,6 +5019,13 @@ function GetCrop_DayN() result(DayN)
     DayN = crop%DayN
 end function GetCrop_DayN
 
+function GetCrop_Length() result(Length)
+    !! Getter for the "Length" attribute of the "crop" global variable.
+    integer(int32),dimension(4) :: Length
+
+    Length = crop%Length
+end function GetCrop_Length
+
 function GetCrop_RootMin() result(RootMin)
     !! Getter for the "RootMin" attribute of the "crop" global variable.
     real(dp) :: RootMin
@@ -5633,6 +5641,13 @@ subroutine SetCrop_DayN(DayN)
 
     crop%DayN = DayN
 end subroutine SetCrop_DayN
+
+subroutine SetCrop_Length(Length)
+    !! Setter for the "Length" attribute of the "crop" global variable.
+    integer(int32), dimension(4), intent(in) :: Length
+
+    crop%Length = Length
+end subroutine SetCrop_Length
 
 subroutine SetCrop_RootMin(RootMin)
     !! Setter for the "RootMin" attribute of the "crop" global variable.

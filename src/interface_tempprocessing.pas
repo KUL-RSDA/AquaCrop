@@ -46,6 +46,27 @@ procedure GDDCDCToCDC(
             VAR CDC : double);
         external 'aquacrop' name '__ac_tempprocessing_MOD_gddcdctocdc';
 
+PROCEDURE AdjustCalendarDays(
+            constref PlantDayNr : LongInt;
+            constref InfoCropType : rep_subkind;
+            constref Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
+            constref GDDL0,GDDL12,GDDFlor,GDDLengthFlor,GDDL123,GDDHarvest,GDDLZmax : INTEGER;
+            VAR GDDHImax : INTEGER;
+            constref GDDCGC,GDDCDC,CCo,CCx : double;
+            constref IsCGCGiven : BOOLEAN;
+            constref HIndex : INTEGER;
+            constref TheDaysToCCini : INTEGER;
+            constref ThePlanting : rep_planting;
+            VAR D0,D12,DFlor,LengthFlor,D123,DHarvest,DLZmax,LHImax : INTEGER;
+            VAR StLength : rep_int_array;
+            VAR CGC,CDC,dHIdt : double;
+            VAR Succes : BOOLEAN);
+        external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcalendardays';
+
+procedure AdjustCalendarCrop(
+            constref FirstCropDay : LongInt);
+        external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcalendarcrop';
+
 procedure HIadjColdHeat(
             constref TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
             constref TempTmin,TempTmax : double;
