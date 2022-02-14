@@ -85,6 +85,15 @@ procedure TemperatureFileCoveringCropPeriod(
             constref CropFirstDay,CropLastDay : LongInt);
          external 'aquacrop' name '__ac_tempprocessing_MOD_temperaturefilecoveringcropperiod';
 
+procedure AdjustCropFileParameters(
+            constref TheCropFileSet : rep_CropFileSet;
+            constref LseasonDays : INTEGER;
+            constref TheCropDay1 : LongInt;
+            constref TheModeCycle  : rep_modeCycle;
+            constref TheTbase,TheTupper  : double;
+            VAR L123,L1234,GDD123,GDD1234 : INTEGER);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
+
 implementation
 
 
