@@ -2493,7 +2493,7 @@ subroutine ReadSoilSettings()
     open(newunit=fhandle, file=trim(fullname), status='old', action='read')
     read(fhandle,*) simul_rod ! considered depth (m) of soil profile for calculation of mean soil water content
     call SetSimulParam_RunoffDepth(simul_rod)
-    read(fhandle,*) i   ! correction CN for Antecedent Moisture Class
+    read(fhandle, *) i   ! correction CN for Antecedent Moisture Class
     if (i == 1) then
         call SetSimulParam_CNcorrection(.true.)
     else
@@ -2508,7 +2508,7 @@ subroutine ReadSoilSettings()
     ! new Version 4.1
     read(fhandle, *) simul_iniab ! Percentage of S for initial abstraction for surface runoff
     call SetSimulParam_IniAbstract(simul_iniab)
-    call SetSimulParam_IniAbstract(INT(5,1)) ! fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
+    call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
     close(fhandle)
 end subroutine ReadSoilSettings
 
