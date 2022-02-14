@@ -109,25 +109,6 @@ CASE GetCrop().pMethod OF
 END; (* AdjustpStomatalToETo *)
 
 
-
-PROCEDURE AdjustpLeafToETo(EToMean : double;
-                           VAR pLeafULAct, pLeafLLAct : double);
-BEGIN
-pLeafLLAct := GetCrop().pLeafDefLL;
-pLeafULAct := GetCrop().pLeafDefUL;
-IF (GetCrop().pMethod = FAOCorrection) THEN
-   BEGIN
-   pLeafLLAct := GetCrop().pLeafDefLL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pLeafDefLL);
-   IF pLeafLLAct > 1.0 THEN pLeafLLAct := 1.0;
-   IF pLeafLLAct < 0 THEN pLeafLLAct := 0;
-   pLeafULAct := GetCrop().pLeafDefUL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pLeafDefUL);
-   IF pLeafULAct > 1.0 THEN pLeafULAct := 1.0;
-   IF pLeafULAct < 0 THEN pLeafULAct := 0;
-   END;
-END; (* AdjustpLeafToETo *)
-
-
-
 PROCEDURE AdjustpSenescenceToETo(EToMean : double;
                                  TimeSenescence : double; // calendar days or GDDays
                                  WithBeta : BOOLEAN;
