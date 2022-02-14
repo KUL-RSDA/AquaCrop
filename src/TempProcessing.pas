@@ -89,14 +89,6 @@ FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
                       DeltaWeedStress : INTEGER;
                       DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
 
-PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
-                                   LseasonDays : INTEGER;
-                                   TheCropDay1 : LongInt;
-                                   TheModeCycle  : rep_modeCycle;
-                                   TheTbase,TheTupper  : double;
-                                   VAR L123,L1234,GDD123,GDD1234 : INTEGER);
-
-
 
 implementation
 
@@ -1648,32 +1640,6 @@ SumBSF := Bnormalized(TempDaysToCCini,TempGDDaysToCCini,
 
 BiomassRatio := SumBSF/SumBPot;
 END; (* BiomassRatio *)
-
-
-PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
-                                   LseasonDays : INTEGER;
-                                   TheCropDay1 : LongInt;
-                                   TheModeCycle  : rep_modeCycle;
-                                   TheTbase,TheTupper  : double;
-                                   VAR L123,L1234,GDD123,GDD1234 : INTEGER);
-BEGIN  // Adjust some crop parameters (CROP.*) as specified by the generated length season (LseasonDays)
-// time to maturity
-L1234 := LseasonDays; // days
-IF (TheModeCycle = GDDays)
-   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
-   ELSE GDD1234 := undef_int;
-
-// time to senescence  (reference is given in TheCropFileSet
-IF (TheModeCycle = GDDays)
-   THEN BEGIN
-        GDD123 := GDD1234 - TheCropFileSet.GDDaysFromSenescenceToEnd;
-        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
-        END
-   ELSE BEGIN
-        L123 := L1234 - TheCropFileSet.DaysFromSenescenceToEnd;
-        GDD123 := undef_int;
-        END;
-END; (* AdjustCropFileParameters *)
 
 
 end.
