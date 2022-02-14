@@ -3647,6 +3647,19 @@ procedure SetSoilLayer_CRb(constref i : integer;
                          constref CRb : double);
     external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
 
+function __ActualRootingDepth(
+                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : integer;
+                constref SumGDD,Zmin,Zmax : double;
+                constref ShapeFactor : ShortInt;
+                constref int_TypeDays : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_actualrootingdepth';
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+
 
 implementation
 
@@ -6025,6 +6038,21 @@ var
     i2 : integer;
 begin;
     for i2 := 1 to 11 do SetSoilLayer_SaltMobility_i(i, i2, SaltMobility[i2])
+end;
+
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+var
+    int_TypeDays: integer;
+begin
+    int_TypeDays := ord(TypeDays);
+    ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
+                                           GDDLZmax, GDDL1234, SumGDD, Zmin,
+                                           Zmax, ShapeFactor, int_TypeDays);
 end;
 
 
