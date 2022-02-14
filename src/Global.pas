@@ -30,7 +30,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ClimDescription,
-    IrriDescription,ManDescription,SWCiniDescription,
+    IrriDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
     ClimRecord,
@@ -86,8 +86,6 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          VAR TpotVal, EpotVal : double);
 
 PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-
-PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
 
 PROCEDURE NoIrrigation;
@@ -433,44 +431,6 @@ FOR i :=1 to NrCompartments DO
           + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
 END; (* GlobalZero *)
 
-
-PROCEDURE NoManagement;
-var EffectStress_temp : rep_EffectStress;
-BEGIN
-ManDescription := 'No specific field management';
-// mulches
-SetManagement_Mulch(0);
-SetManagement_EffectMulchInS(50);
-// soil fertility
-SetManagement_FertilityStress(0);
-EffectStress_temp := GetSimulation_EffectStress();
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
-SetSimulation_EffectStress(EffectStress_temp);
-// soil bunds
-SetManagement_BundHeight(0);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-// surface run-off
-SetManagement_RunoffOn(true);
-SetManagement_CNcorrection(0);
-// weed infestation
-SetManagement_WeedRC(0);
-SetManagement_WeedDeltaRC(0);
-SetManagement_WeedShape(- 0.01);
-SetManagement_WeedAdj(100);
-// multiple cuttings
-SetManagement_Cuttings_Considered(false);
-SetManagement_Cuttings_CCcut(30);
-SetManagement_Cuttings_CGCPlus(20);
-SetManagement_Cuttings_Day1(1);
-SetManagement_Cuttings_NrDays(undef_int);
-SetManagement_Cuttings_Generate(false);
-SetManagement_Cuttings_Criterion(NA);
-SetManagement_Cuttings_HarvestEnd(false);
-SetManagement_Cuttings_FirstDayNr(undef_int);
-END; (* NoManagement *)
-
-
 PROCEDURE LoadManagement(FullName : string);
 VAR f0 : TextFile;
     i  : ShortInt;
@@ -479,10 +439,12 @@ VAR f0 : TextFile;
     TempInt : integer;
     TempDouble : double;
     EffectStress_temp : rep_EffectStress;
+    mandescription_temp : string;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,ManDescription);
+READLN(f0,mandescription_temp);
+SetManDescription(mandescription_temp);
 READLN(f0,VersionNr); // AquaCrop Version
 // mulches
 READLN(f0,TempShortInt);

@@ -926,6 +926,7 @@ character(len=:), allocatable :: TemperatureFileFull
 character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 character(len=:), allocatable :: FullFileNameProgramParameters
+character(len=:), allocatable :: ManDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -2702,6 +2703,45 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     end if
     close(fhandle)
 end subroutine LoadCropCalendar
+
+subroutine NoManagement()
+
+    type(rep_EffectStress) :: EffectStress_temp
+
+    call SetManDescription('No specific field management')
+    ! mulches
+    call SetManagement_Mulch(0_int8)
+    call SetManagement_EffectMulchInS(50_int8)
+    ! soil fertility
+    call SetManagement_FertilityStress(0_int8)
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                      GetManagement_FertilityStress(), &
+                                      EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    ! soil bunds
+    call SetManagement_BundHeight(0._dp)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    ! surface run-off
+    call SetManagement_RunoffOn(.true.)
+    call SetManagement_CNcorrection(0)
+    ! weed infestation
+    call SetManagement_WeedRC(0_int8)
+    call SetManagement_WeedDeltaRC(0)
+    call SetManagement_WeedShape(-0.01_dp)
+    call SetManagement_WeedAdj(100_int8)
+    ! multiple cuttings
+    call SetManagement_Cuttings_Considered(.false.)
+    call SetManagement_Cuttings_CCcut(30)
+    call SetManagement_Cuttings_CGCPlus(20)
+    call SetManagement_Cuttings_Day1(1)
+    call SetManagement_Cuttings_NrDays(undef_int)
+    call SetManagement_Cuttings_Generate(.false.)
+    call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
+    call SetManagement_Cuttings_HarvestEnd(.false.)
+    call SetManagement_Cuttings_FirstDayNr(undef_int)
+end subroutine NoManagement
 
 !! Global variables section !!
 
@@ -8393,6 +8433,20 @@ subroutine SetSoilLayer_CRb(i, CRb)
 
     soillayer(i)%CRb = CRb
 end subroutine SetSoilLayer_CRb
+
+function GetManDescription() result(str)
+    !! Getter for the "ManDescription" global variable.
+    character(len=len(ManDescription)) :: str
+    
+    str = ManDescription
+end function GetManDescription
+
+subroutine SetManDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    ManDescription = str
+end subroutine SetManDescription
 
 
 end module ac_global
