@@ -3648,14 +3648,14 @@ procedure SetSoilLayer_CRb(constref i : integer;
     external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
 
 function __ActualRootingDepth(
-                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : integer;
+                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
                 constref SumGDD,Zmin,Zmax : double;
                 constref ShapeFactor : ShortInt;
                 constref int_TypeDays : integer) : double;
     external 'aquacrop' name '__ac_global_MOD_actualrootingdepth';
 
 function ActualRootingDepth(
-                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : integer;
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
                 SumGDD,Zmin,Zmax : double;
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
@@ -6042,7 +6042,7 @@ end;
 
 
 function ActualRootingDepth(
-                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : integer;
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
                 SumGDD,Zmin,Zmax : double;
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
@@ -6051,8 +6051,8 @@ var
 begin
     int_TypeDays := ord(TypeDays);
     ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
-                                           GDDLZmax, GDDL1234, SumGDD, Zmin,
-                                           Zmax, ShapeFactor, int_TypeDays);
+                                           GDDLZmax, SumGDD, Zmin, Zmax,
+                                           ShapeFactor, int_TypeDays);
 end;
 
 

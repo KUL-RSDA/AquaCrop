@@ -3010,7 +3010,7 @@ end subroutine CheckFilesInProject
 
 
 real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
-                                     GDDL1234, SumGDD, Zmin, Zmax, ShapeFactor,&
+                                     SumGDD, Zmin, Zmax, ShapeFactor,&
                                      TypeDays)
     integer(int32), intent(in) :: DAP
     integer(int32), intent(in) :: L0
@@ -3018,7 +3018,6 @@ real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
     integer(int32), intent(in) :: L1234
     integer(int32), intent(in) :: GDDL0
     integer(int32), intent(in) :: GDDLZmax
-    integer(int32), intent(in) :: GDDL1234  ! FIXME unused variable
     real(dp), intent(in) :: SumGDD
     real(dp), intent(in) :: Zmin
     real(dp), intent(in) :: Zmax
@@ -3030,8 +3029,8 @@ real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
 
     select case (TypeDays)
     case (modeCycle_GDDDays)
-        Zr = ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, GDDL1234, &
-                                      SumGDD, Zmin, Zmax)
+        Zr = ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, SumGDD, &
+                                      Zmin, Zmax)
     case default
         Zr = ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
     end select
@@ -3095,12 +3094,11 @@ real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
 
 
     real(dp) function ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, &
-                                               GDDL1234, SumGDD, Zmin, Zmax)
+                                               SumGDD, Zmin, Zmax)
         integer(int32), intent(in) :: DAP
         integer(int32), intent(in) :: L1234
         integer(int32), intent(in) :: GDDL0
         integer(int32), intent(in) :: GDDLZmax
-        integer(int32), intent(in) :: GDDL1234  ! FIXME unused variable
         real(dp), intent(in) :: SumGDD
         real(dp), intent(in) :: Zmin
         real(dp), intent(in) :: Zmax

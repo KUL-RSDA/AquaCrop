@@ -1735,9 +1735,17 @@ IF (DayNri <= GetCrop().Day1)
         IF (DayNri > GetCrop().DayN)
            THEN Ziprev := undef_int
            ELSE BEGIN
-                ZiPrev := ActualRootingDepth((DayNri-GetCrop().Day1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,
-                            GetCrop().DaysToHarvest,GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,
-                            SumGDDPrev,GetCrop().RootMin,GetCrop().RootMax,GetCrop().RootShape,GetCrop_ModeCycle());
+                ZiPrev := ActualRootingDepth(DayNri-GetCrop().Day1,
+                                             GetCrop().DaysToGermination,
+                                             GetCrop().DaysToMaxRooting,
+                                             GetCrop().DaysToHarvest,
+                                             GetCrop().GDDaysToGermination,
+                                             GetCrop().GDDaysToMaxRooting,
+                                             SumGDDPrev,
+                                             GetCrop().RootMin,
+                                             GetCrop().RootMax,
+                                             GetCrop().RootShape,
+                                             GetCrop_ModeCycle());
                 END;
         END;
 // 16.2 specified or default Zrini (m)
@@ -1755,11 +1763,17 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
            THEN Ziprev := GetSoil().RootMax;
         RootingDepth := Ziprev;  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
         END
-   ELSE RootingDepth := ActualRootingDepth((DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,
-                      GetCrop().DaysToHarvest,GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,
-                      SumGDDPrev,GetCrop().RootMin,GetCrop().RootMax,GetCrop().RootShape,GetCrop_ModeCycle());
-
-
+   ELSE RootingDepth := ActualRootingDepth(DayNri-GetCrop().Day1+1,
+                                           GetCrop().DaysToGermination,
+                                           GetCrop().DaysToMaxRooting,
+                                           GetCrop().DaysToHarvest,
+                                           GetCrop().GDDaysToGermination,
+                                           GetCrop().GDDaysToMaxRooting,
+                                           SumGDDPrev,
+                                           GetCrop().RootMin,
+                                           GetCrop().RootMax,
+                                           GetCrop().RootShape,
+                                           GetCrop_ModeCycle());
 
 // 17. Multiple cuttings
 NrCut := 0;
