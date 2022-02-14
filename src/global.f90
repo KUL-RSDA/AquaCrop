@@ -10,9 +10,10 @@ use iso_fortran_env, only: iostat_end
 
 implicit none
 
-
+real(dp), parameter :: equiv = 0.64_dp
+    !! conversion factor: 1 dS/m = 0.64 g/l
 integer(int32), parameter :: max_SoilLayers = 5
-integer(int32), parameter :: max_No_compartments = 12;
+integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -2141,6 +2142,48 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+real(dp) function ECeComp(Comp)
+    type(CompartmentIndividual), intent(in) :: Comp
+
+    real(dp) :: volSat, TotSalt
+    integer(int32) :: i
+
+    volSAT = GetSoilLayer_SAT(Comp%Layer)
+    TotSalt = 0
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+    TotSalt = TotSalt/(volSAT*10._dp*Comp%Thickness*(1._dp - &
+                             GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) !g/l
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+    ECeComp = TotSalt/Equiv ! dS/m
+end function ECeComp
+
+real(dp) function ECswComp(Comp, atFC)
+    type(CompartmentIndividual), intent(in) :: Comp
+    logical, intent(in) :: atFC
+
+    real(dp) :: TotSalt
+    integer(int32) :: i
+
+    TotSalt = 0
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+    if (atFC .eqv. .true.) then
+        TotSalt = TotSalt/ (GetSoilLayer_FC(Comp%Layer)*10._dp*Comp%Thickness &
+                    *(1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    else
+        TotSalt = TotSalt/(Comp%theta*1000._dp*Comp%Thickness* &
+                     (1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    end if
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+    ECswComp = TotSalt/Equiv
+end function ECswComp
 
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari

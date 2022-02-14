@@ -7,6 +7,7 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      TimeToMaxCanopySF, &
+                     ECswComp, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -268,6 +269,18 @@ function GetCrop_StressResponse_Calibrated_wrap() result(Calibrated)
 
     Calibrated = GetCrop_StressResponse_Calibrated()
 end function GetCrop_StressResponse_Calibrated_wrap
+
+real(dp) function ECswComp_wrap(Comp, atFC)
+    !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
+
+    type(compartmentindividual), intent(in) :: Comp
+    logical, intent(in) :: atFC
+
+    logical :: atFC_f
+    
+    atFC_f = atFC
+    ECswComp_wrap = ECswComp(Comp, atFC_f)
+end function ECswComp_wrap
 
 subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
     !! Wrapper for [[ac_global:SetCrop_StressResponse_Calibrated]] for foreign languages.

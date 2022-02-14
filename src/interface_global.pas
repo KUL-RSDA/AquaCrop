@@ -5,6 +5,7 @@ interface
 
 
 const
+    Equiv = 0.64;   // conversion factor: 1 dS/m = 0.64 g/l
     max_SoilLayers = 5;
     max_No_compartments = 12;
     undef_double = -9.9;
@@ -1117,6 +1118,15 @@ procedure DetermineDate(
             constref DayNr : longint;
             var Dayi,Monthi,Yeari : integer);
          external 'aquacrop' name '__ac_global_MOD_determinedate';
+
+function ECeComp(
+            constref Comp : compartmentindividual) : double;
+        external 'aquacrop' name '__ac_global_MOD_ececomp';
+
+function ECswComp(
+            constref Comp : compartmentindividual;
+            constref atFC : boolean) : double;
+        external 'aquacrop' name '__ac_global_MOD_ecswcomp';
                         
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;
