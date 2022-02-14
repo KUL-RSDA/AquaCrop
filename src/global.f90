@@ -2704,6 +2704,7 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     close(fhandle)
 end subroutine LoadCropCalendar
 
+
 subroutine NoManagement()
 
     type(rep_EffectStress) :: EffectStress_temp
@@ -2742,6 +2743,154 @@ subroutine NoManagement()
     call SetManagement_Cuttings_HarvestEnd(.false.)
     call SetManagement_Cuttings_FirstDayNr(undef_int)
 end subroutine NoManagement
+
+
+subroutine LoadManagement(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int8) :: i
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt
+    integer(int32) :: TempInt
+    real(dp) :: TempDouble
+    type(rep_EffectStress) :: EffectStress_temp
+    character(len=1025) :: mandescription_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) mandescription_temp
+    call SetManDescription(trim(mandescription_temp))
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    ! mulches
+    read(fhandle, *) TempShortInt
+    call SetManagement_Mulch(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetManagement_EffectMulchInS(TempShortInt)
+    ! soil fertility
+    read(fhandle, *) TempShortInt ! effect is crop specific
+    call SetManagement_FertilityStress(TempShortInt)
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                      GetManagement_FertilityStress(), &
+                                      EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    ! soil bunds
+    read(fhandle, *) TempDouble
+    call SetManagement_BundHeight(TempDouble)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    ! surface run-off
+    read(fhandle, *) i
+    if (i == 1) then
+        call SetManagement_RunoffON(.false.)   ! prevention of surface runoff
+    else
+        call SetManagement_RunoffON(.true.)   ! surface runoff is not prevented
+    end if
+    if (roundc(VersionNr*10, mold=1_int32) < 50) then 
+        ! UPDATE required for CN adjustment
+        call SetManagement_CNcorrection(0)
+    else
+        read(fhandle, *) TempInt ! project increase/decrease of CN
+        call SetManagement_CNcorrection(TempInt)
+    end if
+    ! weed infestation
+    if (roundc(VersionNr*10, mold=1_int32) < 50) then 
+        ! UPDATE required for Version 3.0, 3.1 and 4.0
+        call SetManagement_WeedRC(0_int8) ! relative cover of weeds (%)
+        call SetManagement_WeedDeltaRC(0)
+        call SetManagement_WeedShape(-0.01_dp) ! shape factor of the CC expansion 
+                                          ! function in a weed infested field
+    else
+        read(fhandle, *) TempShortInt ! relative cover of weeds (%)
+        call SetManagement_WeedRC(TempShortInt)
+        if (roundc(VersionNr*10, mold=1_int32) < 51) then
+            call SetManagement_WeedDeltaRC(0)
+        else
+            read(fhandle, *) TempShortInt
+            call SetManagement_WeedDeltaRC(TempInt)
+        end if
+        read(fhandle, *) TempDouble ! shape factor of the CC expansion 
+                                    ! function in a weed infested field
+        call SetManagement_WeedShape(TempDouble)
+    end if
+    if (roundc(VersionNr*10, mold=1_int32) < 70) then 
+        ! UPDATE required for versions below 7
+        call SetManagement_WeedAdj(100_int8) ! replacement (%) by weeds of the 
+                                        ! self-thinned part of the Canopy Cover
+                                        ! - only for perennials
+    else
+        read(fhandle, *) TempShortInt
+        call SetManagement_WeedAdj(TempShortInt)
+    end if
+    ! multiple cuttings
+    if (roundc(VersionNr*10, mold=1_int32) >= 70) then 
+        ! UPDATE required for multiple cuttings
+        read(fhandle, *) i  ! Consider multiple cuttings: True or False
+        if (i == 0) then
+            call SetManagement_Cuttings_Considered(.false.)
+        else
+            call SetManagement_Cuttings_Considered(.true.)
+        end if
+        read(fhandle, *) TempInt  ! Canopy cover (%) after cutting
+        call SetManagement_Cuttings_CCcut(TempInt)
+        read(fhandle, *) TempInt ! Increase (percentage) of CGC after cutting
+        call SetManagement_Cuttings_CGCPlus(TempInt)
+        read(fhandle, *) TempInt ! Considered first day when generating cuttings 
+                                 ! (1 = start of growth cycle)
+        call SetManagement_Cuttings_Day1(TempInt)
+        read(fhandle, *) TempInt  ! Considered number owhen generating cuttings 
+                                  ! (-9 = total growth cycle)
+        call SetManagement_Cuttings_NrDays(TempInt)
+        read(fhandle, *) i  ! Generate multiple cuttings: True or False
+        if (i == 1) then
+            call SetManagement_Cuttings_Generate(.true.)
+        else
+            call SetManagement_Cuttings_Generate(.false.)
+        end if
+        read(fhandle, *) i  ! Time criterion for generating cuttings
+        select case (i)
+            case(0)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_NA) 
+                ! not applicable
+            case(1)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_IntDay) 
+                ! interval in days
+            case(2)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_IntGDD) 
+                ! interval in Growing Degree Days
+            case(3)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_DryB) 
+                ! produced dry above ground biomass (ton/ha)
+            case(4)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_DryY) 
+                ! produced dry yield (ton/ha)
+            case(5)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_FreshY) 
+                ! produced fresh yield (ton/ha)
+        end select
+        read(fhandle, *) i  ! final harvest at crop maturity: 
+                            ! True or False (When generating cuttings)
+        if (i == 1) then
+            call SetManagement_Cuttings_HarvestEnd(.true.)
+        else
+            call SetManagement_Cuttings_HarvestEnd(.false.)
+        end if
+        read(fhandle, *) TempInt ! dayNr for Day 1 of list of cuttings 
+                                 ! (-9 = Day1 is start growing cycle)
+        call SetManagement_Cuttings_FirstDayNr(TempInt)
+    else
+        call SetManagement_Cuttings_Considered(.false.)
+        call SetManagement_Cuttings_CCcut(30)
+        call SetManagement_Cuttings_CGCPlus(20)
+        call SetManagement_Cuttings_Day1(1)
+        call SetManagement_Cuttings_NrDays(undef_int)
+        call SetManagement_Cuttings_Generate(.false.)
+        call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
+        call SetManagement_Cuttings_HarvestEnd(.false.)
+        call SetManagement_Cuttings_FirstDayNr(undef_int)
+    end if
+    close(fhandle)
+end subroutine LoadManagement
 
 !! Global variables section !!
 

@@ -3656,14 +3656,20 @@ procedure NoManagement;
 function GetManDescription(): string;
 
 function GetManDescription_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getmandescription_wrap';
+    external 'aquacrop' name '__ac_interface_global_MOD_getmandescription_wrap';
 
 procedure SetManDescription(constref str : string);
 
 procedure SetManDescription_wrap(
             constref p : PChar;
             constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setmandescription_wrap';  
+    external 'aquacrop' name '__ac_interface_global_MOD_setmandescription_wrap';  
+
+procedure LoadManagement(constref FullName : string);
+
+procedure LoadManagement_wrap(constref FullName : string;
+                         constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
 
 
 implementation
@@ -6063,6 +6069,17 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetManDescription_wrap(p, strlen);
+end;
+
+procedure LoadManagement(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadManagement_wrap(p,strlen);
 end;
 
 
