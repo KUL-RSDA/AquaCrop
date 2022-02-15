@@ -2593,6 +2593,12 @@ procedure SetSumWaBal_CRsalt(constref CRsalt : double);
 function GetSoil(): rep_Soil;
         external 'aquacrop' name '__ac_global_MOD_getsoil';
 
+function GetSoil_REW(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getsoil_rew';
+
+function GetSoil_CNvalue(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getsoil_cnvalue';
+
 procedure SetSoil_REW(constref REW : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
 
@@ -3689,6 +3695,12 @@ procedure SaveCrop(constref totalname : string);
 procedure SaveCrop_wrap(constref totalname : PChar;
                         constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_savecrop_wrap';
+
+procedure SaveProfile(constref totalname : string);
+
+procedure SaveProfile_wrap(constref totalname : PChar;
+                           constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_saveprofile_wrap';
 
 
 implementation
@@ -6125,6 +6137,17 @@ begin;
     p := PChar(totalname);
     strlen := Length(totalname);
     SaveCrop_wrap(p,strlen);
+end;
+
+procedure SaveProfile(constref totalname : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    SaveProfile_wrap(p,strlen);
 end;
 
 

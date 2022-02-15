@@ -3379,6 +3379,43 @@ subroutine SaveCrop(totalname)
     call SetCropFileSet_GDDaysToHarvest(GetCrop_GDDaysToHarvest())
 end subroutine SaveCrop
 
+subroutine SaveProfile(totalname)
+
+    character(len=*), intent(in) :: totalname
+
+    integer :: fhandle
+    integer(int32) :: i
+
+    open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
+    write(fhandle, '(a)') GetProfDescription()
+    write(fhandle, '(a)') &
+    '        7.0                 : AquaCrop Version (June 2021)'    ! AquaCrop version
+    write(fhandle, '(i9, a)') GetSoil_CNvalue(), &
+    '                   : CN (Curve Number)'
+    write(fhandle, '(i9, a)') GetSoil_REW(), &
+    '                   : Readily evaporable water from top layer (mm)'
+    write(fhandle, '(i9, a)') GetSoil_NrSoilLayers(), &
+    '                   : number of soil horizons'
+    write(fhandle, '(i9, a)') undef_int, &
+    '                   : variable no longer applicable'
+    write(fhandle, '(a)') &
+    '  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description'
+    write(fhandle, '(a)') &
+    '  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------'
+    do i = 1, GetSoil_NrSoilLayers()
+        write(fhandle, '(f8.2, f8.1, f6.1, f6.1, f8.1, i11, i10, f14.6, f10.6, a, i15)') &
+                            GetSoilLayer_Thickness(i), GetSoilLayer_SAT(i), &
+                            GetSoilLayer_FC(i), GetSoilLayer_WP(i), &
+                            GetSoilLayer_InfRate(i), GetSoilLayer_Penetrability(i), &
+                            GetSoilLayer_GravelMass(i), GetSoilLayer_CRa(i), &
+                            GetSoilLayer_CRb(i), '   ', GetSoilLayer_Description(i)
+    end do
+    close(fhandle)
+
+    ! maximum rooting depth in  soil profile for given crop
+    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), GetSoil_NrSoilLayers(), GetSoilLayer()))
+end subroutine SaveProfile
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
@@ -5518,6 +5555,12 @@ type(rep_soil) function GetSoil()
     GetSoil = Soil
 end function GetSoil
 
+integer(int8) function GetSoil_REW()
+    !! Getter for "REW" attribute of the "soil" global variable.
+
+    GetSoil_REW = soil%REW
+end function GetSoil_REW
+
 real(sp) function GetSoil_RootMax()
     !! Getter for "RootMax" attribute of the "soil" global variable.
 
@@ -5529,6 +5572,12 @@ integer(int8) function GetSoil_NrSoilLayers()
 
     GetSoil_NrSoilLayers = soil%NrSoilLayers
 end function GetSoil_NrSoilLayers
+
+integer(int8) function GetSoil_CNvalue()
+    !! Getter for "CNvalue" attribute of the "soil" global variable.
+
+    GetSoil_CNvalue = soil%CNvalue
+end function GetSoil_CNvalue
 
 subroutine SetSoil_REW(REW)
     !! Setter for the "Soil" global variable.

@@ -133,7 +133,6 @@ PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
-PROCEDURE SaveProfile(totalname : string);
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
@@ -1693,33 +1692,6 @@ WHILE NOT Eof(f0) DO
 Close(f0);
 CompleteClimateDescription(ClimateRecord);
 END; // LoadClim
-
-
-
-PROCEDURE SaveProfile(totalname : string);
-VAR f : TextFile;
-    i : INTEGER;
-BEGIN
-Assign(f,totalname);
-Rewrite(f);
-WRITELN(f,GetProfDescription());
-WRITELN(f,'        7.0                 : AquaCrop Version (June 2021)');    // AquaCrop version
-WRITELN(f,GetSoil().CNvalue:9,'                   : CN (Curve Number)');
-WRITELN(f,GetSoil().REW:9,'                   : Readily evaporable water from top layer (mm)');
-WRITELN(f,GetSoil().NrSoilLayers:9,'                   : number of soil horizons');
-WRITELN(f,undef_int:9,'                   : variable no longer applicable');
-WRITELN(f,'  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description');
-WRITELN(f,'  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------');
-FOR i := 1 TO GetSoil().NrSoilLayers DO
-    WRITELN(f,GetSoilLayer_i(i).Thickness:8:2,GetSoilLayer_i(i).SAT:8:1,GetSoilLayer_i(i).FC:6:1,
-              GetSoilLayer_i(i).WP:6:1,GetSoilLayer_i(i).InfRate:8:1,GetSoilLayer_i(i).Penetrability:11,
-              GetSoilLayer_i(i).GravelMass:10,GetSoilLayer_i(i).CRa:14:6,GetSoilLayer_i(i).CRb:10:6,
-              '   ',GetSoilLayer_i(i).Description:15);
-Close(f);
-
-// maximum rooting depth in  soil profile for given crop
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
-END; (* SaveProfile *)
 
 
 

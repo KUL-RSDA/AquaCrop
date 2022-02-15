@@ -5,16 +5,26 @@ use ac_kinds, only: int8, &
                     int32, &
                     dp
 
-use ac_global , only:   GetCropFIleFull, &
+use ac_global , only:   GetCropFileFull, &
                         GetCrop_CCo, &
                         GetCrop_PlantingDens, &
                         GetCrop_RootMin, &
                         GetCrop_SizeSeedling, &
                         GetPathNameSimul, &
+                        GetProfFileFull, &
+                        GetSoilLayer_CRa, &
+                        GetSoilLayer_CRb, &
+                        GetSoilLayer_FC, &
+                        GetSoilLayer_InfRate, &
+                        GetSoilLayer_SAT, &
+                        GetSoilLayer_SoilClass, &
+                        GetSoilLayer_WP, &
                         ModeCycle_CalendarDays, &
+                        NumberSoilClass, &
                         plant_Seed, &
                         pMethod_FAOCorrection, &
                         SaveCrop, &
+                        SaveProfile, &
                         SetCropDescription, &
                         SetCropFileFull, &
                         SetCrop_aCoeff, &
@@ -101,6 +111,23 @@ use ac_global , only:   GetCropFIleFull, &
                         SetCrop_WP, &
                         SetCrop_WPy, &
                         SetCrop_YearCCx, &
+                        SetProfFileFull, &
+                        SetProfDescription, &
+                        SetSoil_CNvalue, &
+                        SetSoil_NrSoilLayers, &
+                        SetSoil_REW, &
+                        SetSoilLayer_CRa, &
+                        SetSoilLayer_CRb, &
+                        SetSoilLayer_FC, &
+                        SetSoilLayer_Description, &
+                        SetSoilLayer_GravelMass, &
+                        SetSoilLayer_GravelVol, &
+                        SetSoilLayer_InfRate, &
+                        SetSoilLayer_Penetrability, &
+                        SetSoilLayer_SAT, &
+                        SetSoilLayer_SoilClass, &
+                        SetSoilLayer_Thickness, &
+                        SetSoilLayer_WP, &
                         subkind_Grain, &
                         undef_double, &
                         undef_int
@@ -252,7 +279,37 @@ subroutine ResetDefaultCrop()
 
     call SetCropFilefull(GetPathNameSimul() // 'DEFAULT.CRO')
     call SaveCrop(GetCropFilefull())
-end subroutine ResetDefaultCrop 
+end subroutine ResetDefaultCrop
+
+subroutine ResetDefaultSoil()
+
+    real(dp) :: cra_temp, crb_temp
+
+    call SetProfDescription('deep loamy soil profile')
+    call SetSoil_CNvalue(61_int8) ! for an initial abstraction of 0.05 S
+    call SetSoil_REW(9_int8)
+    call SetSoil_NrSoilLayers(1_int8)
+    call SetSoilLayer_Thickness(1, 4._dp)
+    call SetSoilLayer_SAT(1, 50.0_dp)
+    call SetSoilLayer_FC(1, 30.0_dp)
+    call SetSoilLayer_WP(1, 10.0_dp)
+    call SetSoilLayer_InfRate(1, 500.0_dp)
+    call SetSoilLayer_Penetrability(1, 100_int8)
+    call SetSoilLayer_GravelMass(1, 0_int8)
+    call SetSoilLayer_GravelVol(1, 0._dp)
+    call SetSoilLayer_Description(1, 'Loamy soil horizon')
+    call SetSoilLayer_SoilClass(1, &
+                NumberSoilClass(GetSoilLayer_SAT(1), GetSoilLayer_FC(1), &
+                                GetSoilLayer_WP(1), GetSoilLayer_InfRate(1)))
+    cra_temp = GetSoilLayer_CRa(1)
+    crb_temp = GetSoilLayer_CRb(1)
+    call DetermineParametersCR(GetSoilLayer_SoilClass(1), &
+                                GetSoilLayer_InfRate(1), cra_temp, crb_temp)
+    call SetSoilLayer_CRa(1, cra_temp)
+    call SetSoilLayer_CRb(1, crb_temp)
+    call SetProfFilefull(GetPathNameSimul() // 'DEFAULT.SOL')
+    call SaveProfile(GetProfFilefull())
+end subroutine ResetDefaultSoil
 
 
 

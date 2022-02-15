@@ -1888,5 +1888,16 @@ subroutine SaveCrop_wrap(totalname, strlen)
     call SaveCrop(string)
 end subroutine SaveCrop_wrap
 
+subroutine SaveProfile_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveProfile(string)
+end subroutine SaveProfile_wrap
+
 
 end module ac_interface_global
