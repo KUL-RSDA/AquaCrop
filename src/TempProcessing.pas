@@ -50,14 +50,6 @@ PROCEDURE StressBiomassRelationship(TheDaysToCCini,TheGDDaysToCCini : INTEGER;
                                     VAR b0,b1,b2 : double;
                                     VAR BM10,BM20,BM30,BM40,BM50,BM60,BM70 : double);
 
-PROCEDURE CropStressParametersSoilSalinity(CCxRed,CCdistortion : ShortInt;
-                                           CCo,CCx,CGC,GDDCGC : double;
-                                           CropDeterm : BOOLEAN;
-                                           L12,LFlor,LengthFlor,L123 : INTEGER;
-                                           GDDL12,GDDLFlor,GDDLengthFlor,GDDL123 : INTEGER;
-                                           TheModeCycle : rep_modeCycle;
-                                           VAR StressResponse : rep_EffectStress);
-                                                                   
 PROCEDURE CCxSaltStressRelationship(TheDaysToCCini,TheGDDaysToCCini : INTEGER;
                                     L0,L12,L123,L1234,
                                     LFlor,LengthFlor,GDDFlor,GDDLengthFlor,
@@ -1291,100 +1283,6 @@ IF (abs(ROUND(SUMx1x2*1000)) <> 0)
         b0 := undef_int;
         END;
 END;  (* StressBiomassRelationship *)
-
-
-
-PROCEDURE CropStressParametersSoilSalinity(CCxRed,CCdistortion : ShortInt;
-                                           CCo,CCx,CGC,GDDCGC : double;
-                                           CropDeterm : BOOLEAN;
-                                           L12,LFlor,LengthFlor,L123 : INTEGER;
-                                           GDDL12,GDDLFlor,GDDLengthFlor,GDDL123 : INTEGER;
-                                           TheModeCycle : rep_modeCycle;
-                                           VAR StressResponse : rep_EffectStress);
-VAR CCToReach,CCxAdj,L12Double,L12SS,CGCadjMax,CGCAdjMin,L12SSmax,CGCadj,CCxFinal,
-    GDDL12Double,GDDCGCadjMax,GDDL12SSmax,GDDCGCAdjMin,GDDCGCadj : double;
-BEGIN
-// initialize
-StressResponse.RedCCX := CCxRed;
-StressResponse.RedWP := 0;
-L12Double := L12;
-L12SSmax := L12;
-GDDL12Double := GDDL12;
-
-// CGC reduction
-CCToReach := 0.98 * CCx;
-IF ((CCo > CCToReach) OR (CCo >= CCx) OR (CCxRed = 0))
-   THEN StressResponse.RedCGC := 0
-   ELSE BEGIN
-        StressResponse.RedCGC := undef_int;
-        // reference for no salinity stress
-        IF (TheModeCycle = CalendarDays)
-           THEN BEGIN
-                L12Double := LN((0.25*CCx*CCx/CCo)/(CCx-CCToReach))/CGC;
-                IF (L12Double <= 0) THEN StressResponse.RedCGC := 0;
-                END
-           ELSE BEGIN
-                GDDL12Double := LN((0.25*CCx*CCx/CCo)/(CCx-CCToReach))/GDDCGC;
-                IF (GDDL12Double <= 0) THEN StressResponse.RedCGC := 0;
-                END;
-        // with salinity stress
-        CCxAdj := 0.90 * CCx * (1 - CCxRed/100);
-        CCToReach := 0.98 * CCxAdj;
-        IF ((StressResponse.RedCGC <> 0) AND ((CCxAdj-CCToReach) >= 0.0001))
-           THEN BEGIN
-                IF (TheModeCycle = CalendarDays)
-                   THEN BEGIN
-                        CGCadjMax := LN((0.25*CCxAdj*CCxAdj/CCo)/(CCxAdj-CCToReach))/L12Double;
-                        L12SSmax := L12 + (L123 - L12)/2;
-                        IF (CropDeterm AND (L12SSmax > (LFlor + ROUND(LengthFlor/2))))
-                           THEN L12SSmax := LFlor + ROUND(LengthFlor/2);
-                        IF (L12SSmax > L12Double)
-                           THEN CGCAdjMin := LN((0.25*CCxAdj*CCxAdj/CCo)/(CCxAdj-CCToReach))/L12SSmax
-                           ELSE CGCAdjMin := CGCadjMax;
-                        IF (CCxRed < 10) // smooth start required
-                           THEN CGCadj := CGCadjMax - (CGCadjMax-CGCAdjMin)*(exp(CCxRed*LN(1.5))/exp(10*LN(1.5)))*(CCdistortion/100)
-                           ELSE CGCadj := CGCadjMax - (CGCadjMax-CGCAdjMin)*(CCdistortion/100);
-                        StressResponse.RedCGC := ROUND(100*(CGC-CGCadj)/CGC);
-                        END
-                   ELSE BEGIN
-                        GDDCGCadjMax := LN((0.25*CCxAdj*CCxAdj/CCo)/(CCxAdj-CCToReach))/GDDL12Double;
-                        GDDL12SSmax := GDDL12 + (GDDL123 - GDDL12)/2;
-                        IF (CropDeterm AND (GDDL12SSmax > (GDDLFlor + ROUND(LengthFlor/2))))
-                           THEN GDDL12SSmax := GDDLFlor + ROUND(GDDLengthFlor/2);
-                        IF (GDDL12SSmax > GDDL12Double)
-                           THEN GDDCGCAdjMin := LN((0.25*CCxAdj*CCxAdj/CCo)/(CCxAdj-CCToReach))/GDDL12SSmax
-                           ELSE GDDCGCAdjMin := GDDCGCadjMax;
-                        IF (CCxRed < 10)  // smooth start required
-                           THEN GDDCGCadj := GDDCGCadjMax - (GDDCGCadjMax-GDDCGCAdjMin)*(exp(CCxRed)/exp(10))*(CCdistortion/100)
-                           ELSE GDDCGCadj := GDDCGCadjMax - (GDDCGCadjMax-GDDCGCAdjMin)*(CCdistortion/100);
-                        StressResponse.RedCGC := ROUND(100*(GDDCGC-GDDCGCadj)/GDDCGC);
-                        END;
-                END
-           ELSE StressResponse.RedCGC := 0;
-        END;
-
-// Canopy decline
-IF (CCxRed = 0)
-   THEN StressResponse.CDecline := 0
-   ELSE BEGIN
-        CCxAdj := 0.98*CCx*(1 - CCxRed/100);
-        L12SS := L12SSmax - (L12SSmax-L12Double) * (CCdistortion/100);
-        IF ((L123 > L12SS) AND (CCdistortion > 0))
-           THEN BEGIN
-                IF (CCxRed < 10)  // smooth start required
-                   THEN CCxFinal := CCxAdj - (exp(CCxRed*LN(1.5))/exp(10*LN(1.5)))*(0.5*CCdistortion/100)*(CCxAdj - CCo)
-                   ELSE CCxFinal := CCxAdj - (0.5*CCdistortion/100)*(CCxAdj - CCo);
-                IF (CCxFinal < CCo) THEN CCxFinal := CCo;
-                StressResponse.CDecline := 100*(CCxAdj - CCxFinal)/(L123 - L12SS);
-                IF (StressResponse.CDecline > 1) THEN StressResponse.CDecline := 1.0;
-                IF (StressResponse.CDecline <= 0) THEN StressResponse.CDecline := 0.001;
-                END
-           ELSE StressResponse.CDecline := 0.001; // no shift of maturity
-        END;
-
-// Stomata closure
-StressResponse.RedKsSto := CCxRed;
-END; (* CropStressParametersSoilSalinity *)
 
 
 

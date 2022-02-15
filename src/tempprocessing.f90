@@ -11,9 +11,11 @@ use iso_fortran_env, only: iostat_end
 use ac_global , only: undef_int, &
                       roundc, &
                       modeCycle_GDDDays, &
+                      modeCycle_CalendarDays, &
                       DaysinMonth, &
                       rep_DayEventDbl, &
                       rep_CropFileSet, &
+                      rep_EffectStress, &
                       subkind_Vegetative, &
                       subkind_Grain, &
                       subkind_Tuber, &
@@ -1418,6 +1420,153 @@ integer(int32) function ResetCropDay1(CropDay1IN, SwitchToYear1)
     end if
     ResetCropDay1 = CropDay1OUT
 end function ResetCropDay1
+
+
+subroutine CropStressParametersSoilSalinity(CCxRed, CCdistortion, &
+             CCo, CCx, CGC, GDDCGC, CropDeterm, L12, LFlor, &
+             LengthFlor, L123, GDDL12, GDDLFlor, GDDLengthFlor, &
+             GDDL123, TheModeCycle, StressResponse)
+    integer(int8), intent(in) :: CCxRed
+    integer(int8), intent(in) :: CCdistortion
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    logical, intent(in) :: CropDeterm
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDLFlor
+    integer(int32), intent(in) :: GDDLengthFlor
+    integer(int32), intent(in) :: GDDL123
+    integer(intEnum), intent(in) :: TheModeCycle
+    type(rep_EffectStress), intent(inout) :: StressResponse
+
+    real(dp) :: CCToReach, CCxAdj, L12Double, L12SS, &
+                CGCadjMax, CGCAdjMin, L12SSmax, CGCadj, CCxFinal, &
+                GDDL12Double, GDDCGCadjMax, GDDL12SSmax, GDDCGCAdjMin, GDDCGCadj
+
+    ! initialize
+    StressResponse%RedCCX = CCxRed
+    StressResponse%RedWP = 0_int8
+    L12Double = L12
+    L12SSmax = L12
+    GDDL12Double = GDDL12
+
+    ! CGC reduction
+    CCToReach = 0.98_dp * CCx
+    if ((CCo > CCToReach) .or. (CCo >= CCx) .or. (CCxRed == 0)) then
+        StressResponse%RedCGC = 0_int8
+    else
+        StressResponse%RedCGC = undef_int
+        ! reference for no salinity stress
+        if (TheModeCycle == modeCycle_CalendarDays) then
+            L12Double = log((0.25_dp*CCx*CCx/CCo)/(CCx-CCToReach))/CGC
+            if (L12Double <= 0) then
+                StressResponse%RedCGC = 0_int8
+            end if
+        else
+            GDDL12Double = log((0.25_dp*CCx*CCx/CCo)/(CCx-CCToReach))/GDDCGC
+            if (GDDL12Double <= 0) then
+                StressResponse%RedCGC = 0_int8
+            end if
+        end if
+        ! with salinity stress
+        CCxAdj = 0.90_dp * CCx * (1._dp - CCxRed/100._dp)
+        CCToReach = 0.98_dp * CCxAdj
+        if ((StressResponse%RedCGC /= 0) .and. &
+            ((CCxAdj-CCToReach) >= 0.0001)) then
+            if (TheModeCycle == modeCycle_CalendarDays) then
+                CGCadjMax = log((0.25_dp*CCxAdj*CCxAdj/CCo)&
+                                /(CCxAdj-CCToReach))/L12Double
+                L12SSmax = L12 + (L123 - L12)/2._dp
+                if (CropDeterm .and. (L12SSmax > &
+                       (LFlor + roundc(LengthFlor/2._dp, mold=1_int32)))) then
+                    L12SSmax = LFlor + roundc(LengthFlor/2._dp, mold=1_int32)
+                end if
+                if (L12SSmax > L12Double) then
+                    CGCAdjMin = log((0.25_dp*CCxAdj*CCxAdj/CCo)&
+                                    /(CCxAdj-CCToReach))/L12SSmax
+                else
+                    CGCAdjMin = CGCadjMax
+                end if
+                if (CCxRed < 10) then ! smooth start required
+                    CGCadj = CGCadjMax - (CGCadjMax-CGCAdjMin)&
+                     *(exp(CCxRed*log(1.5_dp))/exp(10*log(1.5_dp)))&
+                     *(CCdistortion/100._dp)
+                else
+                    CGCadj = CGCadjMax - (CGCadjMax-CGCAdjMin)&
+                                         *(CCdistortion/100._dp)
+                end if
+                StressResponse%RedCGC = &
+                  roundc(100._dp*(CGC-CGCadj)/CGC, mold=1_int8)
+            else
+                GDDCGCadjMax = log((0.25_dp*CCxAdj*CCxAdj/CCo) &
+                                   /(CCxAdj-CCToReach))/GDDL12Double
+                GDDL12SSmax = GDDL12 + (GDDL123 - GDDL12)/2._dp
+                if (CropDeterm .and. (GDDL12SSmax > &
+                      (GDDLFlor + roundc(LengthFlor/2._dp, mold=1_int32)))) then
+                    GDDL12SSmax = GDDLFlor + &
+                       roundc(GDDLengthFlor/2._dp, mold=1_int32)
+                end if
+                if (GDDL12SSmax > GDDL12Double) then
+                    GDDCGCAdjMin = log((0.25_dp*CCxAdj*CCxAdj/CCo) &
+                                       /(CCxAdj-CCToReach))/GDDL12SSmax
+                else
+                    GDDCGCAdjMin = GDDCGCadjMax
+                end if
+                if (CCxRed < 10) then ! smooth start required
+                    GDDCGCadj = GDDCGCadjMax - (GDDCGCadjMax-GDDCGCAdjMin)*&
+                                   (exp(real(CCxRed,kind=dp))/&
+                                    exp(10._dp))*(CCdistortion/100._dp)
+                else
+                    GDDCGCadj = GDDCGCadjMax - &
+                      (GDDCGCadjMax-GDDCGCAdjMin)*(CCdistortion/100._dp)
+                end if
+                StressResponse%RedCGC = &
+                      roundc(100._dp*(GDDCGC-GDDCGCadj)/GDDCGC, mold=1_int8)
+           end if
+        else
+            StressResponse%RedCGC = 0_int8
+        end if
+    end if
+
+    ! Canopy decline
+    if (CCxRed == 0) then
+        StressResponse%CDecline = 0._dp
+    else
+        CCxAdj = 0.98_dp*CCx*(1._dp - CCxRed/100._dp)
+        L12SS = L12SSmax - (L12SSmax-L12Double) * (CCdistortion/100._dp)
+        if ((L123 > L12SS) .and. (CCdistortion > 0)) then
+            if (CCxRed < 10) then ! smooth start required
+                CCxFinal = CCxAdj - &
+                  (exp(CCxRed*log(1.5_dp))/exp(10._dp*log(1.5_dp)))* &
+                  (0.5_dp*CCdistortion/100._dp)*(CCxAdj - CCo)
+            else
+                CCxFinal = CCxAdj - (0.5_dp*CCdistortion/100._dp)*(CCxAdj - CCo)
+            end if
+            if (CCxFinal < CCo) then
+                CCxFinal = CCo
+            end if
+            StressResponse%CDecline = &
+                100._dp*(CCxAdj - CCxFinal)/real(L123 - L12SS, kind=dp)
+            if (StressResponse%CDecline > 1) then
+                StressResponse%CDecline = 1.0_dp
+            end if
+            if (StressResponse%CDecline <= 0) then
+                StressResponse%CDecline = 0.001_dp
+            end if
+        else
+            StressResponse%CDecline = 0.001_dp ! no shift of maturity
+        end if
+    end if
+
+    ! Stomata closure
+    StressResponse%RedKsSto = CCxRed
+end subroutine CropStressParametersSoilSalinity
+
 
 subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
     integer(int32), intent(in) :: CropFirstDay
