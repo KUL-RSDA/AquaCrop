@@ -12,10 +12,6 @@ FUNCTION MaxAvailableGDD(FromDayNr : LongInt;
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 
-Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
-                       FirstDayPeriod : LongInt;
-                       TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
-
 PROCEDURE BTransferPeriod(TheDaysToCCini,TheGDDaysToCCini,
                           L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
                           CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
@@ -662,23 +658,6 @@ IF (GetObservationsFile() = '(None)')
 
 Close(f0);
 END; (* LoadSimulationRunProject *)
-
-
-Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
-                       FirstDayPeriod : LongInt;
-                       TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
-VAR DayMatch,PeriodUpdatedGDD : INTEGER;
-BEGIN
-IF (PeriodGDD > 0)
-   THEN BEGIN
-        DayMatch := SumCalendarDays(PeriodGDD,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-        PeriodUpdatedGDD := GrowingDegreeDays(PeriodDay,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-        IF (PeriodDay = DayMatch)
-           THEN RoundedOffGDD := PeriodGDD
-           ELSE RoundedOffGDD := PeriodUpdatedGDD;
-        END
-   ELSE RoundedOffGDD := GrowingDegreeDays(PeriodDay,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-END; (* RoundedOffGDD *)
 
 
 PROCEDURE BTransferPeriod(TheDaysToCCini,TheGDDaysToCCini,
