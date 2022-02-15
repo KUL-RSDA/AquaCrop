@@ -2726,17 +2726,17 @@ subroutine NoManagement()
     call SetSimulation_ECStorageIni(0.0_dp)
     ! surface run-off
     call SetManagement_RunoffOn(.true.)
-    call SetManagement_CNcorrection(0_int32)
+    call SetManagement_CNcorrection(0)
     ! weed infestation
     call SetManagement_WeedRC(0_int8)
-    call SetManagement_WeedDeltaRC(0_int32)
+    call SetManagement_WeedDeltaRC(0)
     call SetManagement_WeedShape(-0.01_dp)
     call SetManagement_WeedAdj(100_int8)
     ! multiple cuttings
     call SetManagement_Cuttings_Considered(.false.)
-    call SetManagement_Cuttings_CCcut(30_int32)
-    call SetManagement_Cuttings_CGCPlus(20_int32)
-    call SetManagement_Cuttings_Day1(1_int32)
+    call SetManagement_Cuttings_CCcut(30)
+    call SetManagement_Cuttings_CGCPlus(20)
+    call SetManagement_Cuttings_Day1(1)
     call SetManagement_Cuttings_NrDays(undef_int)
     call SetManagement_Cuttings_Generate(.false.)
     call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
@@ -2786,25 +2786,25 @@ subroutine LoadManagement(FullName)
     else
         call SetManagement_RunoffON(.true.)   ! surface runoff is not prevented
     end if
-    if (roundc(VersionNr*10, mold=1) < 50) then 
+    if (roundc(VersionNr*10, mold=1_int32) < 50) then 
         ! UPDATE required for CN adjustment
-        call SetManagement_CNcorrection(0_int32)
+        call SetManagement_CNcorrection(0)
     else
         read(fhandle, *) TempInt ! project increase/decrease of CN
         call SetManagement_CNcorrection(TempInt)
     end if
     ! weed infestation
-    if (roundc(VersionNr*10, mold=1) < 50) then 
+    if (roundc(VersionNr*10, mold=1_int32) < 50) then 
         ! UPDATE required for Version 3.0, 3.1 and 4.0
         call SetManagement_WeedRC(0_int8) ! relative cover of weeds (%)
-        call SetManagement_WeedDeltaRC(0_int32)
+        call SetManagement_WeedDeltaRC(0)
         call SetManagement_WeedShape(-0.01_dp) ! shape factor of the CC expansion 
                                           ! function in a weed infested field
     else
         read(fhandle, *) TempShortInt ! relative cover of weeds (%)
         call SetManagement_WeedRC(TempShortInt)
-        if (roundc(VersionNr*10, mold=1) < 51) then
-            call SetManagement_WeedDeltaRC(0_int32)
+        if (roundc(VersionNr*10, mold=1_int32) < 51) then
+            call SetManagement_WeedDeltaRC(0)
         else
             read(fhandle, *) TempShortInt
             call SetManagement_WeedDeltaRC(TempInt)
@@ -2813,7 +2813,7 @@ subroutine LoadManagement(FullName)
                                     ! function in a weed infested field
         call SetManagement_WeedShape(TempDouble)
     end if
-    if (roundc(VersionNr*10, mold=1) < 70) then 
+    if (roundc(VersionNr*10, mold=1_int32) < 70) then 
         ! UPDATE required for versions below 7
         call SetManagement_WeedAdj(100_int8) ! replacement (%) by weeds of the 
                                         ! self-thinned part of the Canopy Cover
@@ -2823,7 +2823,7 @@ subroutine LoadManagement(FullName)
         call SetManagement_WeedAdj(TempShortInt)
     end if
     ! multiple cuttings
-    if (roundc(VersionNr*10, mold=1) >= 70) then 
+    if (roundc(VersionNr*10, mold=1_int32) >= 70) then 
         ! UPDATE required for multiple cuttings
         read(fhandle, *) i  ! Consider multiple cuttings: True or False
         if (i == 0) then
@@ -2880,9 +2880,9 @@ subroutine LoadManagement(FullName)
         call SetManagement_Cuttings_FirstDayNr(TempInt)
     else
         call SetManagement_Cuttings_Considered(.false.)
-        call SetManagement_Cuttings_CCcut(30_int32)
-        call SetManagement_Cuttings_CGCPlus(20_int32)
-        call SetManagement_Cuttings_Day1(1_int32)
+        call SetManagement_Cuttings_CCcut(30)
+        call SetManagement_Cuttings_CGCPlus(20)
+        call SetManagement_Cuttings_Day1(1)
         call SetManagement_Cuttings_NrDays(undef_int)
         call SetManagement_Cuttings_Generate(.false.)
         call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
