@@ -986,6 +986,154 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
 end function SumCalendarDays
 
 
+real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
+    integer(int32), intent(inout) :: FromDayNr
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(inout) :: TDayMin
+    real(dp), intent(inout) :: TDayMax
+
+    integer(int32) :: i
+    integer(int32) :: fhandle, rc
+    real(dp) :: MaxGDDays, DayGDD
+    character(len=:), allocatable :: totalname
+    integer(int32) :: DayNri
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+    character(len=255) :: StringREAD
+    logical :: file_exists
+
+    MaxGDDays = 100000._dp
+    if (GetTemperatureFile() == '(None)') then
+        DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
+                       GetSimulParam_GDDMethod())
+        if (DayGDD <= 0) then
+            MaxGDDays = 0._dp
+        end if
+    else
+        MaxGDDays = 0._dp
+        if (FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+               GetTemperatureRecord_FromD(), GetTemperatureRecord_FromM(),&
+               GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
+            FromDayNr = GetTemperatureRecord_FromDayNr()  ! since we have 365 days anyway
+        else
+            ! DetermineDate(CropDay1,dayi,monthi,yeari);
+            ! yeari := GetTemperatureRecord().FromY;
+            ! DetermineDayNr(dayi,monthi,yeari,CropDay1);
+        end if
+        DayNri = FromDayNr
+        totalname = GetTemperatureFilefull()
+        inquire(file=trim(totalname), exist=file_exists)
+        if (file_exists .and. (GetTemperatureRecord_ToDayNr() > FromDayNr) &
+             .and. (GetTemperatureRecord_FromDayNr() <= FromDayNr)) then
+            select case (GetTemperatureRecord_DataType())
+            case (datatype_daily)
+                open(newunit=fhandle, file=trim(totalname), &
+                status='old', action='read', iostat=rc)
+                read(fhandle, *, iostat=rc) ! description
+                read(fhandle, *, iostat=rc) ! time step
+                read(fhandle, *, iostat=rc) ! day
+                read(fhandle, *, iostat=rc) ! month
+                read(fhandle, *, iostat=rc) ! year
+                read(fhandle, *, iostat=rc)
+                read(fhandle, *, iostat=rc)
+                read(fhandle, *, iostat=rc)
+                do i = GetTemperatureRecord_FromDayNr(), (FromDayNr - 1)
+                    read(fhandle, *, iostat=rc)
+                end do
+                read(fhandle, '(a)', iostat=rc) StringREAD
+                call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                DayNri = DayNri + 1
+                DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
+                            GetSimulParam_GDDMethod())
+                MaxGDDays = MaxGDDays + DayGDD
+                do while (DayNri < GetTemperatureRecord_ToDayNr())
+                    if (rc == iostat_end) then
+                        read(fhandle, *, iostat=rc) ! description
+                        read(fhandle, *, iostat=rc) ! time step
+                        read(fhandle, *, iostat=rc) ! day
+                        read(fhandle, *, iostat=rc) ! month
+                        read(fhandle, *, iostat=rc) ! year
+                        read(fhandle, *, iostat=rc)
+                        read(fhandle, *, iostat=rc)
+                        read(fhandle, *, iostat=rc)
+                        read(fhandle, '(a)', iostat=rc) StringREAD
+                        call SplitStringInTwoParams(StringREAD, &
+                                     TDayMin, TDayMax)
+                    else
+                        read(fhandle, '(a)', iostat=rc) StringREAD
+                        call SplitStringInTwoParams(StringREAD, &
+                                     TDayMin, TDayMax)
+                    end if
+                    DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
+                                GetSimulParam_GDDMethod())
+                    MaxGDDays = MaxGDDays + DayGDD
+                    DayNri = DayNri + 1
+                end do
+            case (datatype_decadely)
+                call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
+                         TmaxDataSet)
+                i = 1
+                do while (TminDataSet(i)%DayNr /= DayNri)
+                    i = i+1
+                end do
+                TDaymin = TminDataSet(i)%Param
+                TDaymax = TmaxDataSet(i)%Param
+                DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
+                              GetSimulParam_GDDMethod())
+                MaxGDDays = MaxGDDays + DayGDD
+                DayNri = DayNri + 1
+                do while(DayNri < GetTemperatureRecord_ToDayNr())
+                    if (DayNri > TminDataSet(31)%DayNr) then
+                        call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
+                                TmaxDataSet)
+                    end if
+                    i = 1
+                    do while (TminDataSet(i)%DayNr /= DayNri)
+                        i = i+1
+                    end do
+                    TDayMin = TminDataSet(i)%Param
+                    TDayMax = TmaxDataSet(i)%Param
+                    DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
+                                 GetSimulParam_GDDMethod())
+                    MaxGDDays = MaxGDDays + DayGDD
+                    DayNri = DayNri + 1
+                end do
+            case (datatype_monthly)
+                call GetMonthlyTemperatureDataSet(DayNri, TminDataSet,&
+                           TmaxDataSet)
+                i = 1
+                do while (TminDataSet(i)%DayNr /= DayNri)
+                    i = i+1
+                end do
+                TDayMin = TminDataSet(i)%Param
+                TDayMax = TmaxDataSet(i)%Param
+                DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
+                             GetSimulParam_GDDMethod())
+                MaxGDDays = MaxGDDays + DayGDD
+                DayNri = DayNri + 1
+                do while (DayNri < GetTemperatureRecord_ToDayNr())
+                    if (DayNri > TminDataSet(31)%DayNr) then
+                        call GetMonthlyTemperatureDataSet(DayNri, TminDataSet,&
+                                  TmaxDataSet)
+                    end if
+                    i = 1
+                    do while (TminDataSet(i)%DayNr /= DayNri)
+                        i = i+1
+                    end do
+                    TDayMin = TminDataSet(i)%Param
+                    TDayMax = TmaxDataSet(i)%Param
+                    DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
+                                 GetSimulParam_GDDMethod())
+                    MaxGDDays = MaxGDDays + DayGDD
+                    DayNri = DayNri + 1
+                end do
+            end select
+        end if
+    end if
+    MaxAvailableGDD = MaxGDDays
+end function MaxAvailableGDD
+
+
 subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
               Tbase, Tupper, NoTempFileTMin, NoTempFileTMax,&
               GDDL0, GDDL12, GDDFlor, GDDLengthFlor, GDDL123,&

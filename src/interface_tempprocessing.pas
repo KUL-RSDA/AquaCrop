@@ -39,6 +39,11 @@ function SumCalendarDays(
             constref Tbase,Tupper,TDayMin,TDayMax : double) : integer;
         external 'aquacrop' name '__ac_tempprocessing_MOD_sumcalendardays';
 
+FUNCTION MaxAvailableGDD(
+            constref FromDayNr : LongInt;
+            constref Tbase,Tupper,TDayMin,TDayMax : double) : Double;
+         external 'aquacrop' name '__ac_tempprocessing_MOD_maxavailablegdd';
+
 procedure GDDCDCToCDC(
             constref PlantDayNr : LongInt;
             constref D123,GDDL123,GDDHarvest : INTEGER;
