@@ -2899,7 +2899,7 @@ subroutine SaveCrop(totalname)
     integer(int32) :: i, j
     character(len=:), allocatable :: TempString
 
-    open(newunit=fhandle, file=trim(totalname), status='new', action='write')
+    open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
     write(fhandle, *) GetCropDescription()
     ! AquaCrop version
     write(fhandle, *) '     7.0       : AquaCrop Version (June 2021)'

@@ -10,7 +10,7 @@ use iso_fortran_env, only: iostat_end
 
 use ac_global , only: undef_int, &
                       roundc, &
-                      modeCycle_GDDDays, &
+                      modeCycle_GDDays, &
                       DaysinMonth, &
                       rep_DayEventDbl, &
                       rep_CropFileSet, &
@@ -1132,7 +1132,7 @@ subroutine AdjustCalendarCrop(FirstCropDay)
     CGCisGiven = .true.
 
     select case (GetCrop_ModeCycle())
-    case (modeCycle_GDDDays)
+    case (modeCycle_GDDays)
         call SetCrop_GDDaysToFullCanopy(GetCrop_GDDaysToGermination() &
            + roundc(log((0.25_dp*GetCrop_CCx()*GetCrop_CCx()/GetCrop_CCo()) &
                /(GetCrop_CCx()-(0.98_dp*GetCrop_CCx())))/GetCrop_GDDCGC(), &
@@ -1551,7 +1551,7 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
     ! season (LseasonDays)
     ! time to maturity
     L1234 = LseasonDays ! days
-    if (TheModeCycle == modeCycle_GDDDays) then
+    if (TheModeCycle == modeCycle_GDDays) then
         Tmin_tmp = GetSimulParam_Tmin()
         Tmax_tmp = GetSimulParam_Tmax()
         GDD1234 = GrowingDegreeDays(LseasonDays, TheCropDay1,&
@@ -1562,7 +1562,7 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
     end if
 
     ! time to senescence  (reference is given in TheCropFileSet
-    if (TheModeCycle == modeCycle_GDDDays) then
+    if (TheModeCycle == modeCycle_GDDays) then
         GDD123 = GDD1234 - TheCropFileSet%GDDaysFromSenescenceToEnd
         Tmin_tmp = GetSimulParam_Tmin()
         Tmax_tmp = GetSimulParam_Tmax()

@@ -5,12 +5,14 @@ use ac_kinds, only: int8, &
                     int32, &
                     dp
 
-use ac_global , only:   GetCrop_CCo, &
+use ac_global , only:   GetCropFIleFull, &
+                        GetCrop_CCo, &
                         GetCrop_PlantingDens, &
                         GetCrop_RootMin, &
                         GetCrop_SizeSeedling, &
                         GetPathNameSimul, &
                         ModeCycle_CalendarDays, &
+                        plant_Seed, &
                         pMethod_FAOCorrection, &
                         SaveCrop, &
                         SetCropDescription, &
@@ -31,12 +33,12 @@ use ac_global , only:   GetCrop_CCo, &
                         SetCrop_CCxRoot, &
                         SetCrop_CDC, &
                         SetCrop_CGC, &
-                        SetCropFileFull
+                        SetCropFileFull, &
                         SetCrop_DaysToCCini, &
                         SetCrop_DaysToFlowering, &
                         SetCrop_DaysToGermination, &
                         SetCrop_DaysToHarvest, &
-                        SetCrop_DaysToHIo
+                        SetCrop_DaysToHIo, &
                         SetCrop_DaysToMaxRooting, &
                         SetCrop_DaysToSenescence, &
                         SetCrop_DeterminancyLinked, &
@@ -47,36 +49,37 @@ use ac_global , only:   GetCrop_CCo, &
                         SetCrop_ECemin, &
                         SetCrop_fExcess, &
                         SetCrop_GDDaysToCCini, &
-                        SetCrop_GDDaysToCDC, &
+                        SetCrop_GDDCDC, &
                         SetCrop_GDDCGC, &
                         SetCrop_GDDaysToFlowering, &
                         SetCrop_GDDaysToGermination, &
                         SetCrop_GDDaysToHarvest, &
-                        SetCrop_GDDaysToHIo
+                        SetCrop_GDDaysToHIo, &
                         SetCrop_GDDaysToMaxRooting, &
                         SetCrop_GDDaysToSenescence, &
                         SetCrop_GDDLengthFlowering, &
                         SetCrop_GDtranspLow, &
                         SetCrop_HI, &
-                        SetCrop_HIincrease
+                        SetCrop_HIincrease, &
                         SetCrop_KcDecline, &
                         SetCrop_KcTop, &
                         SetCrop_KsShapeFactorLeaf, &
+                        SetCrop_KsSHapeFactorSenescence, &
                         SetCrop_KsShapeFactorStomata, &
                         SetCrop_LengthFlowering, &
                         SetCrop_ModeCycle, &
                         SetCrop_Planting, &
                         SetCrop_pdef, &
                         SetCrop_PlantingDens, &
-                        SetCrop_pLeafDeLL, &
-                        SetCrop_pLeafDeUL
-                        SetCrop_pMethod
+                        SetCrop_pLeafDefLL, &
+                        SetCrop_pLeafDefUL, &
+                        SetCrop_pMethod, &
                         SetCrop_pPollination, &
                         SetCrop_pSenescence, &
                         SetCrop_ResponseECsw, &
                         SetCrop_RootMax, &
                         SetCrop_RootMin, &
-                        SetCrop_RootMinYear1
+                        SetCrop_RootMinYear1, &
                         SetCrop_RootShape, &
                         SetCrop_SizePlant, &
                         SetCrop_SizeSeedling, &
@@ -89,8 +92,8 @@ use ac_global , only:   GetCrop_CCo, &
                         SetCrop_StressResponse_ShapeCGC, &
                         SetCrop_StressResponse_ShapeWP, &
                         SetCrop_StressResponse_Stress, &
-                        SetCrop_StressResponse_
                         SetCrop_subkind, &
+                        SetCrop_SumEToDelaySenescence, &
                         SetCrop_Tbase, &
                         SetCrop_Tcold, &
                         SetCrop_Theat, &
@@ -99,7 +102,7 @@ use ac_global , only:   GetCrop_CCo, &
                         SetCrop_WPy, &
                         SetCrop_YearCCx, &
                         subkind_Grain, &
-                        subkind_Seed, &
+                        undef_double, &
                         undef_int
 implicit none
 
@@ -110,7 +113,7 @@ subroutine ResetDefaultCrop()
 
     call SetCropDescription('a generic crop')
     call SetCrop_subkind(subkind_Grain)
-    call SetCrop_Planting(subkind_Seed)
+    call SetCrop_Planting(plant_Seed)
     call SetCrop_SownYear1(.true.) ! for perennials
     call SetCrop_ModeCycle(ModeCycle_CalendarDays)
     call SetCrop_pMethod(pMethod_FAOCorrection)
@@ -133,7 +136,7 @@ subroutine ResetDefaultCrop()
     call SetCrop_KsShapeFactorSenescence(3._dp) ! Shape factor for Water 
                                         ! stress coefficient Canopy 
                                         ! Senescence (0 = straight line)
-    SetCrop_SumEToDelaySenescence(50) ! Sum(ETo) during stress period to be 
+    call SetCrop_SumEToDelaySenescence(50) ! Sum(ETo) during stress period to be 
                                       ! exceeded before senescence is triggered
     call SetCrop_pPollination(0.90_dp)
     call SetCrop_AnaeroPoint(5) ! Vol% for Anaerobiotic point ! (SAT - [vol%])
@@ -192,9 +195,9 @@ subroutine ResetDefaultCrop()
     call SetCrop_CCini(GetCrop_CCo())
     call SetCrop_CGC(0.15_dp) ! Canopy growth coefficient (CGC): Increase in canopy 
                               ! cover (in fraction) per day
-    call SetCrop_YearCCx(undef_int) ! the number of years at which CCx declines to 90% 
+    call SetCrop_YearCCx(int(undef_int, int8)) ! the number of years at which CCx declines to 90% 
                                     ! of its value due to self-thining - Perennials
-    call SetCrop_CCxRoot(undef_int) ! shape factor of the decline of CCx over the 
+    call SetCrop_CCxRoot(undef_double) ! shape factor of the decline of CCx over the 
                                     ! years due to self-thinning - Perennials
     call SetCrop_CCx(0.80_dp) ! Maximum canopy cover (CCx) in fraction
     call SetCrop_CDC(0.1275_dp) ! Canopy decline coefficient (CDC): Decrease in 
@@ -247,7 +250,7 @@ subroutine ResetDefaultCrop()
     call SetCrop_Assimilates_Mobilized(0_int8) ! Percentage stored assimilates,
                                     ! transferred to above ground parts in next season
 
-    call SetCropFilefull(CONCAT(GetPathNameSimul(), 'DEFAULT.CRO'))
+    call SetCropFilefull(GetPathNameSimul() // 'DEFAULT.CRO')
     call SaveCrop(GetCropFilefull())
 end subroutine ResetDefaultCrop 
 

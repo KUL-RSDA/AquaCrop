@@ -1885,7 +1885,7 @@ subroutine SaveCrop_wrap(totalname, strlen)
     character(len=strlen) :: string
 
     string = pointer2string(totalname, strlen)
-    call SaveCrop(totalname)
+    call SaveCrop(string)
 end subroutine SaveCrop_wrap
 
 

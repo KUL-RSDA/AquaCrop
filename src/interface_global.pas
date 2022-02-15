@@ -3667,7 +3667,7 @@ procedure SetManDescription_wrap(
 
 procedure LoadManagement(constref FullName : string);
 
-procedure LoadManagement_wrap(constref FullName : string;
+procedure LoadManagement_wrap(constref FullName : PChar;
                          constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
 
@@ -3686,7 +3686,7 @@ function ActualRootingDepth(
 
 procedure SaveCrop(constref totalname : string);
 
-procedure SaveCrop_wrap(constref totalname : string;
+procedure SaveCrop_wrap(constref totalname : PChar;
                         constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_savecrop_wrap';
 
