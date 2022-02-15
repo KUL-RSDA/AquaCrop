@@ -46,6 +46,33 @@ procedure GDDCDCToCDC(
             VAR CDC : double);
         external 'aquacrop' name '__ac_tempprocessing_MOD_gddcdctocdc';
 
+PROCEDURE AdjustCalendarDays(
+            constref PlantDayNr : LongInt;
+            constref InfoCropType : rep_subkind;
+            constref Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
+            constref GDDL0,GDDL12,GDDFlor,GDDLengthFlor,GDDL123,GDDHarvest,GDDLZmax : INTEGER;
+            VAR GDDHImax : INTEGER;
+            constref GDDCGC,GDDCDC,CCo,CCx : double;
+            constref IsCGCGiven : BOOLEAN;
+            constref HIndex : INTEGER;
+            constref TheDaysToCCini : INTEGER;
+            constref ThePlanting : rep_planting;
+            VAR D0,D12,DFlor,LengthFlor,D123,DHarvest,DLZmax,LHImax : INTEGER;
+            VAR StLength : rep_int_array;
+            VAR CGC,CDC,dHIdt : double;
+            VAR Succes : BOOLEAN);
+        external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcalendardays';
+
+procedure AdjustCalendarCrop(
+            constref FirstCropDay : LongInt);
+        external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcalendarcrop';
+
+function RoundedOffGDD(
+            constref PeriodGDD,PeriodDay : INTEGER;
+            constref FirstDayPeriod : LongInt;
+            constref TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
+         external 'aquacrop' name '__ac_tempprocessing_MOD_roundedoffgdd';
+
 procedure HIadjColdHeat(
             constref TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
             constref TempTmin,TempTmax : double;
@@ -63,6 +90,15 @@ function ResetCropDay1(
 procedure TemperatureFileCoveringCropPeriod(
             constref CropFirstDay,CropLastDay : LongInt);
          external 'aquacrop' name '__ac_tempprocessing_MOD_temperaturefilecoveringcropperiod';
+
+procedure AdjustCropFileParameters(
+            constref TheCropFileSet : rep_CropFileSet;
+            constref LseasonDays : INTEGER;
+            constref TheCropDay1 : LongInt;
+            constref TheModeCycle  : rep_modeCycle;
+            constref TheTbase,TheTupper  : double;
+            VAR L123,L1234,GDD123,GDD1234 : INTEGER);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
 implementation
 

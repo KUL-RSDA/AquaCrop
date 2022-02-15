@@ -8,30 +8,9 @@ uses Global, interface_global, SysUtils, interface_tempprocessing;
 FUNCTION MaxAvailableGDD(FromDayNr : LongInt;
                          Tbase,Tupper,TDayMin,TDayMax : double) : Double;
 
-PROCEDURE AdjustCalendarDays(PlantDayNr : LongInt;
-                             InfoCropType : rep_subkind;
-                             Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
-                             GDDL0,GDDL12,GDDFlor,GDDLengthFlor,GDDL123,GDDHarvest,GDDLZmax : INTEGER;
-                             VAR GDDHImax : INTEGER;
-                             GDDCGC,GDDCDC,CCo,CCx : double;
-                             IsCGCGiven : BOOLEAN;
-                             HIndex : INTEGER;
-                             TheDaysToCCini : INTEGER;
-                             ThePlanting : rep_planting;
-                             VAR D0,D12,DFlor,LengthFlor,D123,DHarvest,DLZmax,LHImax : INTEGER;
-                             VAR StLength : rep_int_array;
-                             VAR CGC,CDC,dHIdt : double;
-                             VAR Succes : BOOLEAN);
-
-
-PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
 
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
-
-Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
-                       FirstDayPeriod : LongInt;
-                       TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
 
 PROCEDURE BTransferPeriod(TheDaysToCCini,TheGDDaysToCCini,
                           L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
@@ -105,14 +84,6 @@ FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
                       SFInfoStress,WeedStress : ShortInt;
                       DeltaWeedStress : INTEGER;
                       DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
-
-PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
-                                   LseasonDays : INTEGER;
-                                   TheCropDay1 : LongInt;
-                                   TheModeCycle  : rep_modeCycle;
-                                   TheTbase,TheTupper  : double;
-                                   VAR L123,L1234,GDD123,GDD1234 : INTEGER);
-
 
 
 implementation
@@ -238,148 +209,6 @@ IF (GetTemperatureFile() = '(None)')
         END;
 MaxAvailableGDD := MaxGDDays;
 END; (* MaxAvailableGDD *)
-
-
-
-PROCEDURE AdjustCalendarDays(PlantDayNr : LongInt;
-                             InfoCropType : rep_subkind;
-                             Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
-                             GDDL0,GDDL12,GDDFlor,GDDLengthFlor,GDDL123,GDDHarvest,GDDLZmax : INTEGER;
-                             VAR GDDHImax : INTEGER;
-                             GDDCGC,GDDCDC,CCo,CCx : double;
-                             IsCGCGiven : BOOLEAN;
-                             HIndex : INTEGER;
-                             TheDaysToCCini : INTEGER;
-                             ThePlanting : rep_planting;
-                             VAR D0,D12,DFlor,LengthFlor,D123,DHarvest,DLZmax,LHImax : INTEGER;
-                             VAR StLength : rep_int_array;
-                             VAR CGC,CDC,dHIdt : double;
-                             VAR Succes : BOOLEAN);
-
-BEGIN
-Succes := true;
-D0 := SumCalendarDays(GDDL0,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-D12 := SumCalendarDays(GDDL12,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-IF (InfoCropType <> Forage) THEN
-   BEGIN
-   D123 := SumCalendarDays(GDDL123,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-   DHarvest := SumCalendarDays(GDDHarvest,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-   END;
-DLZmax := SumCalendarDays(GDDLZmax,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-CASE InfoCropType OF
-     Grain,
-     Tuber : BEGIN
-             DFlor := SumCalendarDays(GDDFlor,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-             IF (DFlor <> undef_int)
-                THEN BEGIN
-                     IF (InfoCropType = Grain)
-                        THEN LengthFlor := SumCalendarDays(GDDLengthFlor,(PlantDayNr+DFlor),Tbase,Tupper,NoTempFileTMin,NoTempFileTMax)
-                        ELSE LengthFlor := 0;
-                     LHImax := SumCalendarDays(GDDHImax,(PlantDayNr+DFlor),Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-                     IF ((LengthFlor = undef_int) OR (LHImax = undef_int)) THEN Succes := false;
-                     END
-                ELSE BEGIN
-                     LengthFlor := undef_int;
-                     LHImax := undef_int;
-                     Succes := false;
-                     END;
-             END;
-     Vegetative,
-     Forage     : BEGIN
-                  LHImax := SumCalendarDays(GDDHImax,PlantDayNr,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax);
-                  END;
-     end;
-
-IF ((D0 = undef_int) OR (D12 = undef_int) OR (D123 = undef_int) OR (DHarvest = undef_int) OR
-    (DLZmax = undef_int)) THEN Succes := false;
-
-IF Succes THEN
-   BEGIN
-   CGC := (GDDL12/D12) * GDDCGC;
-   GDDCDCToCDC(PlantDayNr,D123,GDDL123,GDDHarvest,CCx,GDDCDC,Tbase,Tupper,NoTempFileTMin,NoTempFileTMax,CDC);
-   DetermineLengthGrowthStages(CCo,CCx,CDC,D0,DHarvest,IsCGCGiven,
-       TheDaysToCCini,ThePlanting,D123,StLength,D12,CGC);
-   IF ((InfoCropType = Grain) OR (InfoCropType = Tuber)) THEN dHIdt := HIndex/LHImax;
-   IF ((InfoCropType = Vegetative) OR (InfoCropType = Forage)) THEN
-      BEGIN
-      IF (LHImax > 0)
-         THEN BEGIN
-              IF (LHImax > DHarvest)
-                 THEN dHIdt := HIndex/DHarvest
-                 ELSE dHIdt := HIndex/LHImax;
-              IF (dHIdt > 100) THEN
-                 BEGIN
-                 dHIdt := 100; // 100 is maximum TempdHIdt (See SetdHIdt)
-                 LHImax := 0;
-                 END;
-              END
-         ELSE BEGIN
-              dHIdt := 100; // 100 is maximum TempdHIdt (See SetdHIdt)
-              LHImax := 0;
-              END;
-      END;
-   END;
-END; (* AdjustCalendarDays *)
-
-
-PROCEDURE AdjustCalendarCrop(FirstCropDay : LongInt);
-VAR succes : BOOLEAN;
-    CGCisGiven : BOOLEAN;
-    Crop_GDDaysToHIo_temp : integer;
-    Crop_DaysToGermination_temp, Crop_DaysToFullCanopy_temp, Crop_DaysToFlowering_temp, Crop_LengthFlowering_temp : integer;
-    Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp, Crop_DaysToMaxRooting_temp, Crop_DaysToHIo_temp : integer;
-    Crop_Length_temp : rep_int_array; 
-    Crop_CGC_temp : double;
-    Crop_CDC_temp : double;
-    Crop_dHIdt_temp : double; 
-BEGIN
-CGCisGiven := true;
-CASE GetCrop_ModeCycle() OF
-     GDDays : BEGIN
-              SetCrop_GDDaysToFullCanopy(GetCrop().GDDaysToGermination +
-                 ROUND(LN((0.25*GetCrop().CCx*GetCrop().CCx/GetCrop().CCo)/(GetCrop().CCx-(0.98*GetCrop().CCx)))/GetCrop().GDDCGC));
-              IF (GetCrop().GDDaysToFullCanopy > GetCrop().GDDaysToHarvest)
-                 THEN SetCrop_GDDaysToFullCanopy(GetCrop().GDDaysToHarvest);
-              Crop_GDDaysToHIo_temp := GetCrop().GDDaysToHIo;
-              Crop_DaysToGermination_temp := GetCrop().DaysToGermination;
-              Crop_DaysToFullCanopy_temp := GetCrop().DaysToFullCanopy;
-              Crop_DaysToFlowering_temp := GetCrop().DaysToFlowering;
-              Crop_LengthFlowering_temp := GetCrop().LengthFlowering;
-              Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
-              Crop_DaysToHarvest_temp := GetCrop().DaysToHarvest;
-              Crop_DaysToMaxRooting_temp := GetCrop().DaysToMaxRooting;
-              Crop_DaysToHIo_temp := GetCrop().DaysToHIo;
-              Crop_Length_temp := GetCrop().Length; 
-              Crop_CGC_temp := GetCrop().CGC; 
-              Crop_CDC_temp := GetCrop().CDC; 
-              Crop_dHIdt_temp := GetCrop().dHIdt; 
-              AdjustCalendarDays(FirstCropDay,GetCrop_subkind(),GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),
-                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToFlowering,
-                 GetCrop().GDDLengthFlowering,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,GetCrop().GDDaysToMaxRooting,
-                 Crop_GDDaysToHIo_temp,
-                 GetCrop().GDDCGC,GetCrop().GDDCDC,GetCrop().CCo,GetCrop().CCx,CGCisGiven,GetCrop().HI,
-                 GetCrop().DaysToCCini,GetCrop().Planting,
-                 Crop_DaysToGermination_temp,Crop_DaysToFullCanopy_temp,Crop_DaysToFlowering_temp,Crop_LengthFlowering_temp,
-                 Crop_DaysToSenescence_temp,Crop_DaysToHarvest_temp,Crop_DaysToMaxRooting_temp,Crop_DaysToHIo_temp,
-                 Crop_Length_temp,Crop_CGC_temp,Crop_CDC_temp,Crop_dHIdt_temp,Succes);
-              SetCrop_GDDaysToHIo(Crop_GDDaysToHIo_temp);
-              SetCrop_DaysToGermination(Crop_DaysToGermination_temp);
-              SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp);
-              SetCrop_DaysToFlowering(Crop_DaysToFlowering_temp);
-              SetCrop_LengthFlowering(Crop_LengthFlowering_temp);
-              SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
-              SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp);
-              SetCrop_DaysToMaxRooting(Crop_DaysToMaxRooting_temp);
-              SetCrop_DaysToHIo(Crop_DaysToHIo_temp);
-              SetCrop_Length(Crop_Length_temp); 
-              SetCrop_CGC(Crop_CGC_temp);
-              SetCrop_CDC(Crop_CDC_temp);
-              SetCrop_dHIdt(Crop_dHIdt_temp); 
-              END;
-     else Succes := true;
-     end;
-IF NOT Succes THEN ; // GEEN IDEE WAT TE DOEN
-END; (* AdjustCalendarCrop *)
 
 
 
@@ -829,23 +658,6 @@ IF (GetObservationsFile() = '(None)')
 
 Close(f0);
 END; (* LoadSimulationRunProject *)
-
-
-Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
-                       FirstDayPeriod : LongInt;
-                       TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
-VAR DayMatch,PeriodUpdatedGDD : INTEGER;
-BEGIN
-IF (PeriodGDD > 0)
-   THEN BEGIN
-        DayMatch := SumCalendarDays(PeriodGDD,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-        PeriodUpdatedGDD := GrowingDegreeDays(PeriodDay,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-        IF (PeriodDay = DayMatch)
-           THEN RoundedOffGDD := PeriodGDD
-           ELSE RoundedOffGDD := PeriodUpdatedGDD;
-        END
-   ELSE RoundedOffGDD := GrowingDegreeDays(PeriodDay,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-END; (* RoundedOffGDD *)
 
 
 PROCEDURE BTransferPeriod(TheDaysToCCini,TheGDDaysToCCini,
@@ -1807,32 +1619,6 @@ SumBSF := Bnormalized(TempDaysToCCini,TempGDDaysToCCini,
 
 BiomassRatio := SumBSF/SumBPot;
 END; (* BiomassRatio *)
-
-
-PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
-                                   LseasonDays : INTEGER;
-                                   TheCropDay1 : LongInt;
-                                   TheModeCycle  : rep_modeCycle;
-                                   TheTbase,TheTupper  : double;
-                                   VAR L123,L1234,GDD123,GDD1234 : INTEGER);
-BEGIN  // Adjust some crop parameters (CROP.*) as specified by the generated length season (LseasonDays)
-// time to maturity
-L1234 := LseasonDays; // days
-IF (TheModeCycle = GDDays)
-   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
-   ELSE GDD1234 := undef_int;
-
-// time to senescence  (reference is given in TheCropFileSet
-IF (TheModeCycle = GDDays)
-   THEN BEGIN
-        GDD123 := GDD1234 - TheCropFileSet.GDDaysFromSenescenceToEnd;
-        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
-        END
-   ELSE BEGIN
-        L123 := L1234 - TheCropFileSet.DaysFromSenescenceToEnd;
-        GDD123 := undef_int;
-        END;
-END; (* AdjustCropFileParameters *)
 
 
 end.

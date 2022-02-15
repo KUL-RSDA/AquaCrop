@@ -109,25 +109,6 @@ CASE GetCrop().pMethod OF
 END; (* AdjustpStomatalToETo *)
 
 
-
-PROCEDURE AdjustpLeafToETo(EToMean : double;
-                           VAR pLeafULAct, pLeafLLAct : double);
-BEGIN
-pLeafLLAct := GetCrop().pLeafDefLL;
-pLeafULAct := GetCrop().pLeafDefUL;
-IF (GetCrop().pMethod = FAOCorrection) THEN
-   BEGIN
-   pLeafLLAct := GetCrop().pLeafDefLL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pLeafDefLL);
-   IF pLeafLLAct > 1.0 THEN pLeafLLAct := 1.0;
-   IF pLeafLLAct < 0 THEN pLeafLLAct := 0;
-   pLeafULAct := GetCrop().pLeafDefUL + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pLeafDefUL);
-   IF pLeafULAct > 1.0 THEN pLeafULAct := 1.0;
-   IF pLeafULAct < 0 THEN pLeafULAct := 0;
-   END;
-END; (* AdjustpLeafToETo *)
-
-
-
 PROCEDURE AdjustpSenescenceToETo(EToMean : double;
                                  TimeSenescence : double; // calendar days or GDDays
                                  WithBeta : BOOLEAN;
@@ -607,13 +588,13 @@ VAR  control : rep_control;
 FUNCTION calculate_delta_theta(theta,thetaAdjFC : double; NrLayer : INTEGER) : double;
 VAR DeltaX : double;
 BEGIN
-IF (theta > SoilLayer[NrLayer].SAT/100) THEN theta := SoilLayer[NrLayer].SAT/100;
+IF (theta > GetSoilLayer_i(NrLayer).SAT/100) THEN theta := GetSoilLayer_i(NrLayer).SAT/100;
 IF (theta <= thetaAdjFC/100)
    THEN DeltaX := 0
    ELSE BEGIN
-        DeltaX := SoilLayer[NrLayer].tau * (SoilLayer[NrLayer].SAT/100 - SoilLayer[NrLayer].FC/100)
-            * (EXP(theta - SoilLayer[NrLayer].FC/100) - 1)
-            / (EXP(SoilLayer[NrLayer].SAT/100 - SoilLayer[NrLayer].FC/100) - 1);
+        DeltaX := GetSoilLayer_i(NrLayer).tau * (GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100)
+            * (EXP(theta - GetSoilLayer_i(NrLayer).FC/100) - 1)
+            / (EXP(GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100) - 1);
         IF ((theta - DeltaX) < thetaAdjFC) THEN DeltaX := theta - thetaAdjFC;
         END;
 calculate_delta_theta := DeltaX;
@@ -626,14 +607,14 @@ VAR ThetaX : double;
 BEGIN
 IF (delta_theta <= 0)
    THEN ThetaX := thetaAdjFC
-   ELSE IF (SoilLayer[NrLayer].tau > 0)
+   ELSE IF (GetSoilLayer_i(NrLayer).tau > 0)
            THEN BEGIN
-                ThetaX := SoilLayer[NrLayer].FC/100
-                       + LN(1 + delta_theta * (EXP(SoilLayer[NrLayer].SAT/100 - SoilLayer[NrLayer].FC/100) - 1)
-                       / (SoilLayer[NrLayer].tau * (SoilLayer[NrLayer].SAT/100 - SoilLayer[NrLayer].FC/100)));
+                ThetaX := GetSoilLayer_i(NrLayer).FC/100
+                       + LN(1 + delta_theta * (EXP(GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100) - 1)
+                       / (GetSoilLayer_i(NrLayer).tau * (GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100)));
                 IF (ThetaX < thetaAdjFC) THEN ThetaX := thetaAdjFC;
                 END
-           ELSE ThetaX := SoilLayer[NrLayer].SAT/100 + 0.1;     (* to stop draining *)
+           ELSE ThetaX := GetSoilLayer_i(NrLayer).SAT/100 + 0.1;     (* to stop draining *)
 calculate_theta := ThetaX;
 END; (* calculate_theta *)
 
@@ -679,9 +660,9 @@ CASE control OF
                    BEGIN
                    SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
                    + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
-                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
                    SetCompartment_fluxout(compi, 0);
-                   FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+                   FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
                            SetTotalSaltContent_BeginDay(GetTotalSaltContent().BeginDay
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
@@ -701,7 +682,7 @@ CASE control OF
 
      end_day : BEGIN
                Infiltrated := InfiltratedRain+InfiltratedIrrigation+InfiltratedStorage;
-               FOR layeri := 1 TO GetSoil().NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
+               FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
                SetTotalWaterContent_EndDay(0);
                Surf1 := SurfaceStorage;
                SetTotalSaltContent_EndDay(0);
@@ -718,11 +699,11 @@ CASE control OF
                    BEGIN
                    SetTotalWaterContent_EndDay(GetTotalWaterContent().EndDay
                    + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
-                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
-                   SoilLayer[GetCompartment_Layer(compi)].WaterContent := SoilLayer[GetCompartment_Layer(compi)].WaterContent
+                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
+                   SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
                    + GetCompartment_theta(compi)*1000*GetCompartment_theta(compi)
-                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
-                   FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
+                   FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
                            SetTotalSaltContent_EndDay(GetTotalSaltContent().EndDay
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
@@ -773,10 +754,10 @@ VAR       i,compi,layeri,pre_nr : INTEGER;
 PROCEDURE CheckDrainsum(layeri : INTEGER;
                         VAR drainsum, excess : double);
 BEGIN
-IF (drainsum > SoilLayer[layeri].InfRate) THEN
+IF (drainsum > GetSoilLayer_i(layeri).InfRate) THEN
    BEGIN
-   excess := excess + drainsum - SoilLayer[layeri].InfRate;
-   drainsum := SoilLayer[layeri].InfRate;
+   excess := excess + drainsum - GetSoilLayer_i(layeri).InfRate;
+   drainsum := GetSoilLayer_i(layeri).InfRate;
    END;
 END; (* CheckDrainsum *)
 
@@ -793,7 +774,7 @@ FOR compi:=1 to NrCompartments DO
           THEN delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri)
           ELSE delta_theta := 0;
        drain_comp := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                     * (1 - SoilLayer[layeri].GravelVol/100);
+                     * (1 - GetSoilLayer_i(layeri).GravelVol/100);
 
 
 (*   2. Check drainability
@@ -801,7 +782,7 @@ FOR compi:=1 to NrCompartments DO
        excess := 0;
        pre_thick := 0;
        FOR i := 1 TO (compi-1) DO pre_thick := pre_thick + GetCompartment_Thickness(i);
-       drainmax := delta_theta * 1000 * pre_thick * (1 - SoilLayer[layeri].GravelVol/100);
+       drainmax := delta_theta * 1000 * pre_thick * (1 - GetSoilLayer_i(layeri).GravelVol/100);
        IF drainsum <= drainmax
           THEN drainability := true
           ELSE drainability := false;
@@ -820,14 +801,14 @@ FOR compi:=1 to NrCompartments DO
        IF drainability = false
        (* ------------------*)
           THEN BEGIN
-               delta_theta := drainsum/(1000 * pre_thick * (1 - SoilLayer[layeri].GravelVol/100));
+               delta_theta := drainsum/(1000 * pre_thick * (1 - GetSoilLayer_i(layeri).GravelVol/100));
                theta_x := calculate_theta(delta_theta,(GetCompartment_FCadj(compi)/100),layeri);
 
-               IF theta_x <= SoilLayer[layeri].SAT/100
+               IF theta_x <= GetSoilLayer_i(layeri).SAT/100
                (* ----------------------------------*)
                THEN BEGIN
                     SetCompartment_theta(compi, GetCompartment_theta(compi) + drainsum/
-                              (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[layeri].GravelVol/100)));
+                              (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(layeri).GravelVol/100)));
                     IF GetCompartment_theta(compi) > theta_x
                        THEN BEGIN
                             // OLD
@@ -837,10 +818,10 @@ FOR compi:=1 to NrCompartments DO
 
                             // NEW
                             drainsum := (GetCompartment_theta(compi) - theta_x) * 1000 * GetCompartment_Thickness(compi)
-                                        * (1 - SoilLayer[layeri].GravelVol/100);
+                                        * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                             delta_theta := calculate_delta_theta(theta_x,(GetCompartment_FCadj(compi)/100),layeri);
                             drainsum := drainsum +  delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                        * (1 - SoilLayer[layeri].GravelVol/100);
+                                        * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                             // NEW
 
                             CheckDrainsum(layeri,drainsum,excess);
@@ -852,39 +833,39 @@ FOR compi:=1 to NrCompartments DO
                                     delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
                                     SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
                                     drainsum := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                                * (1 - SoilLayer[layeri].GravelVol/100);
+                                                * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                                     CheckDrainsum(layeri,drainsum,excess);
                                     END
                                ELSE drainsum := 0;
                     END; (* theta_x <= SoilLayer[layeri].SAT/100  *)
 
-               IF theta_x > SoilLayer[layeri].SAT/100
+               IF theta_x > GetSoilLayer_i(layeri).SAT/100
                (* ----------------------------------*)
                THEN BEGIN
                     SetCompartment_theta(compi, GetCompartment_theta(compi) + drainsum/
-                            (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[layeri].GravelVol/100)));
-                    IF GetCompartment_theta(compi) <= SoilLayer[layeri].SAT/100
+                            (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(layeri).GravelVol/100)));
+                    IF GetCompartment_theta(compi) <= GetSoilLayer_i(layeri).SAT/100
                        THEN IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
                                THEN BEGIN
                                     delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
                                     SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
                                     drainsum := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                                * (1 - SoilLayer[layeri].GravelVol/100);
+                                                * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                                     CheckDrainsum(layeri,drainsum,excess);
                                     END
                                ELSE drainsum := 0;
 
-                    IF GetCompartment_theta(compi) > SoilLayer[layeri].SAT/100
+                    IF GetCompartment_theta(compi) > GetSoilLayer_i(layeri).SAT/100
                        THEN BEGIN
-                            excess := (GetCompartment_theta(compi) - SoilLayer[layeri].SAT/100)
+                            excess := (GetCompartment_theta(compi) - GetSoilLayer_i(layeri).SAT/100)
                                       * 1000 * GetCompartment_Thickness(compi)
-                                      * (1 - SoilLayer[layeri].GravelVol/100);
+                                      * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                             delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
-                            SetCompartment_theta(compi, SoilLayer[layeri].SAT/100 - delta_theta);
+                            SetCompartment_theta(compi, GetSoilLayer_i(layeri).SAT/100 - delta_theta);
                             drain_comp := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                          * (1 - SoilLayer[layeri].GravelVol/100);
+                                          * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                             drainmax := delta_theta * 1000 * pre_thick
-                                        * (1 - SoilLayer[layeri].GravelVol/100);
+                                        * (1 - GetSoilLayer_i(layeri).GravelVol/100);
                             IF drainmax > excess THEN drainmax := excess;
                             excess := excess-drainmax;
                             drainsum := drainmax + drain_comp;
@@ -906,12 +887,12 @@ FOR compi:=1 to NrCompartments DO
                layeri := GetCompartment_Layer(pre_nr);
                IF (pre_nr < compi) THEN SetCompartment_fluxout(pre_nr, GetCompartment_fluxout(pre_nr) - excess);
                SetCompartment_theta(pre_nr, GetCompartment_theta(pre_nr) + excess/
-                    (1000*GetCompartment_Thickness(pre_nr)*(1-SoilLayer[GetCompartment_Layer(pre_nr)].GravelVol/100)));
-               IF GetCompartment_theta(pre_nr) > SoilLayer[layeri].SAT/100
+                    (1000*GetCompartment_Thickness(pre_nr)*(1-GetSoilLayer_i(GetCompartment_Layer(pre_nr)).GravelVol/100)));
+               IF GetCompartment_theta(pre_nr) > GetSoilLayer_i(layeri).SAT/100
                   THEN BEGIN
-                       excess := (GetCompartment_theta(pre_nr) - SoilLayer[layeri].SAT/100)*1000*GetCompartment_Thickness(pre_nr)
-                                 * (1 - SoilLayer[GetCompartment_Layer(pre_nr)].GravelVol/100);
-                       SetCompartment_theta(pre_nr, SoilLayer[layeri].SAT/100);
+                       excess := (GetCompartment_theta(pre_nr) - GetSoilLayer_i(layeri).SAT/100)*1000*GetCompartment_Thickness(pre_nr)
+                                 * (1 - GetSoilLayer_i(GetCompartment_Layer(pre_nr)).GravelVol/100);
+                       SetCompartment_theta(pre_nr, GetSoilLayer_i(layeri).SAT/100);
                        END
                   ELSE excess:=0;
              UNTIL (excess = 0) or (pre_nr = 1);
@@ -945,11 +926,11 @@ REPEAT
   compi := compi + 1;
   layeri := GetCompartment_Layer(compi);
   CumDepth := CumDepth + GetCompartment_Thickness(compi);
-  IF GetCompartment_theta(compi) < SoilLayer[layeri].WP/100
-     THEN theta := SoilLayer[layeri].WP/100
+  IF GetCompartment_theta(compi) < GetSoilLayer_i(layeri).WP/100
+     THEN theta := GetSoilLayer_i(layeri).WP/100
      ELSE theta := GetCompartment_theta(compi);
   SUM := SUM + GetCompartment_WFactor(compi)
-         * (theta-SoilLayer[layeri].WP/100)/(SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100);
+         * (theta-GetSoilLayer_i(layeri).WP/100)/(GetSoilLayer_i(layeri).FC/100 - GetSoilLayer_i(layeri).WP/100);
 UNTIL (CumDepth >= MaxDepth) OR (compi = NrCompartments);
 IF SUM < 0 THEN SUM := 0.0;
 IF SUM > 1 THEN SUM := 1.0;
@@ -1024,7 +1005,7 @@ IF (Rain > 0) THEN
    //2. Verify Possibility of SubDrain
    IF (SubDrain > 0) THEN
      BEGIN
-     DrainMax := SoilLayer[1].InfRate;
+     DrainMax := GetSoilLayer_i(1).InfRate;
      IF (SurfaceStorage > 0)
         THEN DrainMax := 0
         ELSE BEGIN
@@ -1036,11 +1017,11 @@ IF (Rain > 0) THEN
              REPEAT
                compi := compi + 1;
                depthi := depthi + GetCompartment_Thickness(compi);
-               RestTheta := SoilLayer[GetCompartment_Layer(compi)].SAT/100
+               RestTheta := GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100
                                          - (GetCompartment_theta(compi) + DTheta);
                IF (RestTheta <= 0) THEN DrainMax := 0;
-               IF (SoilLayer[GetCompartment_Layer(compi)].InfRate < DrainMax)
-                  THEN DrainMax := SoilLayer[GetCompartment_Layer(compi)].InfRate;
+               IF (GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate < DrainMax)
+                  THEN DrainMax := GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate;
              UNTIL ((depthi >= Zr) OR (compi >= NrCompartments));
              END;
      IF (SubDrain > DrainMax) THEN
@@ -1099,17 +1080,17 @@ InfiltratedRain := Rain - Runoff;
 IF (InfiltratedRain > 0)
    THEN FracSubDrain := SubDrain/InfiltratedRain
    ELSE FracSubDrain := 0;
-IF (Irrigation+InfiltratedRain) > SoilLayer[GetCompartment_Layer(1)].InfRate
-   THEN IF (Irrigation > SoilLayer[GetCompartment_Layer(1)].InfRate)
+IF (Irrigation+InfiltratedRain) > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate
+   THEN IF (Irrigation > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
            THEN BEGIN
-                InfiltratedIrrigation := SoilLayer[GetCompartment_Layer(1)].InfRate;
+                InfiltratedIrrigation := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
                 Runoff := Rain + (Irrigation-InfiltratedIrrigation);
                 InfiltratedRain := 0;
                 SubDrain := 0;
                 END
            ELSE BEGIN
                 InfiltratedIrrigation := Irrigation;
-                InfiltratedRain := SoilLayer[GetCompartment_Layer(1)].InfRate - InfiltratedIrrigation;
+                InfiltratedRain := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate - InfiltratedIrrigation;
                 SubDrain := FracSubDrain*InfiltratedRain;
                 Runoff := Rain - InfiltratedRain;
                 END
@@ -1143,9 +1124,9 @@ IF (Sum > 0)
        // quality of infiltrated water (rain and/or irrigation and/or stored surface water)
        ECinfilt := ECstorage;
        // surface storage
-       IF (Sum > SoilLayer[GetCompartment_Layer(1)].InfRate)
+       IF (Sum > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
           THEN BEGIN
-               InfiltratedStorage := SoilLayer[GetCompartment_Layer(1)].InfRate;
+               InfiltratedStorage := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
                SurfaceStorage := Sum - InfiltratedStorage;
                END
           ELSE BEGIN
@@ -1183,10 +1164,10 @@ VAR compi, layeri, pre_comp : INTEGER;
 FUNCTION Calculate_factor(layeri, compi : INTEGER) : double;
 VAR delta_theta_SAT : double;
 BEGIN (* calculate_factor *)
-delta_theta_SAT := calculate_delta_theta(SoilLayer[layeri].SAT/100,SoilLayer[layeri].FC/100,layeri);
+delta_theta_SAT := calculate_delta_theta(GetSoilLayer_i(layeri).SAT/100,GetSoilLayer_i(layeri).FC/100,layeri);
 IF (delta_theta_SAT > 0)
-    THEN Calculate_factor := SoilLayer[layeri].InfRate/
-         (delta_theta_SAT * 1000 * GetCompartment_Thickness(compi) * (1-SoilLayer[layeri].GravelVol/100))
+    THEN Calculate_factor := GetSoilLayer_i(layeri).InfRate/
+         (delta_theta_SAT * 1000 * GetCompartment_Thickness(compi) * (1-GetSoilLayer_i(layeri).GravelVol/100))
     ELSE Calculate_factor := 1;
 END; (* calculate_factor *)
 
@@ -1222,21 +1203,21 @@ THEN BEGIN
    (*2. Calculate theta nul
    ======================== *)
      delta_theta_nul := amount_still_to_store/
-                       (1000 * GetCompartment_Thickness(compi) * (1-SoilLayer[layeri].GravelVol/100));
-     delta_theta_SAT := calculate_delta_theta(SoilLayer[layeri].SAT/100,SoilLayer[layeri].FC/100,layeri);
+                       (1000 * GetCompartment_Thickness(compi) * (1-GetSoilLayer_i(layeri).GravelVol/100));
+     delta_theta_SAT := calculate_delta_theta(GetSoilLayer_i(layeri).SAT/100,GetSoilLayer_i(layeri).FC/100,layeri);
 
      IF (delta_theta_nul < delta_theta_SAT)
         THEN BEGIN
-             theta_nul := calculate_theta(delta_theta_nul,SoilLayer[layeri].FC/100,layeri);
+             theta_nul := calculate_theta(delta_theta_nul,GetSoilLayer_i(layeri).FC/100,layeri);
              IF (theta_nul <= (GetCompartment_FCadj(compi)/100)) THEN
                 BEGIN
                 theta_nul := GetCompartment_FCadj(compi)/100;
-                delta_theta_nul := calculate_delta_theta(theta_nul,SoilLayer[layeri].FC/100,layeri);
+                delta_theta_nul := calculate_delta_theta(theta_nul,GetSoilLayer_i(layeri).FC/100,layeri);
                 END;
-             IF (theta_nul > SoilLayer[layeri].SAT/100) THEN theta_nul := SoilLayer[layeri].SAT/100;
+             IF (theta_nul > GetSoilLayer_i(layeri).SAT/100) THEN theta_nul := GetSoilLayer_i(layeri).SAT/100;
              END
         ELSE BEGIN
-             theta_nul := SoilLayer[layeri].SAT/100;
+             theta_nul := GetSoilLayer_i(layeri).SAT/100;
              delta_theta_nul := delta_theta_SAT;
              END;
 
@@ -1244,9 +1225,9 @@ THEN BEGIN
    (*3. Calculate drain max
    ======================== *)
      drain_max := factor * delta_theta_nul * 1000 * GetCompartment_Thickness(compi)
-                  * (1-SoilLayer[layeri].GravelVol/100);
-     IF ((GetCompartment_fluxout(compi) + drain_max) > SoilLayer[layeri].InfRate)
-        THEN drain_max := SoilLayer[layeri].InfRate - GetCompartment_fluxout(compi);
+                  * (1-GetSoilLayer_i(layeri).GravelVol/100);
+     IF ((GetCompartment_fluxout(compi) + drain_max) > GetSoilLayer_i(layeri).InfRate)
+        THEN drain_max := GetSoilLayer_i(layeri).InfRate - GetCompartment_fluxout(compi);
 
 
    (*4. Store water
@@ -1255,11 +1236,11 @@ THEN BEGIN
      IF (diff > 0) THEN
         BEGIN
         SetCompartment_theta(compi, GetCompartment_theta(compi)+ amount_still_to_store/
-                 (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[layeri].GravelVol/100)));
+                 (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(layeri).GravelVol/100)));
         IF GetCompartment_theta(compi) > theta_nul
            THEN BEGIN
                 amount_still_to_store := (GetCompartment_theta(compi) - theta_nul) * 1000 * GetCompartment_Thickness(compi)
-                                         * (1-SoilLayer[layeri].GravelVol/100);
+                                         * (1-GetSoilLayer_i(layeri).GravelVol/100);
                 SetCompartment_theta(compi, theta_nul);
                 END
            ELSE amount_still_to_store := 0.0;
@@ -1281,13 +1262,13 @@ THEN BEGIN
           layeri := GetCompartment_Layer(pre_comp);
           SetCompartment_fluxout(pre_comp, GetCompartment_fluxout(pre_comp) - excess);
           SetCompartment_theta(pre_comp, GetCompartment_theta(pre_comp)  + excess/
-             (1000 * GetCompartment_Thickness(pre_comp) * (1-SoilLayer[GetCompartment_Layer(pre_comp)].GravelVol/100)));
-          IF (GetCompartment_theta(pre_comp) > SoilLayer[layeri].SAT/100)
+             (1000 * GetCompartment_Thickness(pre_comp) * (1-GetSoilLayer_i(GetCompartment_Layer(pre_comp)).GravelVol/100)));
+          IF (GetCompartment_theta(pre_comp) > GetSoilLayer_i(layeri).SAT/100)
              THEN BEGIN
-                  excess := (GetCompartment_theta(pre_comp) - SoilLayer[layeri].SAT/100)
+                  excess := (GetCompartment_theta(pre_comp) - GetSoilLayer_i(layeri).SAT/100)
                             * 1000 * GetCompartment_Thickness(pre_comp)
-                            * (1-SoilLayer[GetCompartment_Layer(pre_comp)].GravelVol/100);
-                  SetCompartment_theta(pre_comp, SoilLayer[layeri].SAT/100);
+                            * (1-GetSoilLayer_i(GetCompartment_Layer(pre_comp)).GravelVol/100);
+                  SetCompartment_theta(pre_comp, GetSoilLayer_i(layeri).SAT/100);
                   END
              ELSE excess := 0.0;
         UNTIL ((excess = 0) OR (pre_comp = 1));
@@ -1349,25 +1330,25 @@ IF (SubDrain > 0) THEN
         compi := compi + 1;
         DeltaZ := GetCompartment_Thickness(compi);
         END;
-     StorableMM := (SoilLayer[GetCompartment_Layer(compi)].SAT/100 - GetCompartment_Theta(compi)) * 1000 * DeltaZ
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+     StorableMM := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100 - GetCompartment_Theta(compi)) * 1000 * DeltaZ
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
      IF (StorableMM > amount_still_to_store)
         THEN BEGIN
              SetCompartment_theta(compi, GetCompartment_Theta(compi) + (amount_still_to_store)/
-                   (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+                   (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
              amount_still_to_store := 0;
              END
         ELSE BEGIN
              amount_still_to_store := amount_still_to_store - StorableMM;
              SetCompartment_theta(compi, GetCompartment_Theta(compi) + (StorableMM)/
-                   (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+                   (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
              END;
      DeltaZ := 0;
-     IF (amount_still_to_store > SoilLayer[GetCompartment_Layer(compi)].InfRate) THEN
+     IF (amount_still_to_store > GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate) THEN
         BEGIN
-        SubDrain := SubDrain - (amount_still_to_store - SoilLayer[GetCompartment_Layer(compi)].InfRate);
-        EffecRain := EffecRain + (amount_still_to_store - SoilLayer[GetCompartment_Layer(compi)].InfRate);
-        amount_still_to_store := SoilLayer[GetCompartment_Layer(compi)].InfRate;
+        SubDrain := SubDrain - (amount_still_to_store - GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate);
+        EffecRain := EffecRain + (amount_still_to_store - GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate);
+        amount_still_to_store := GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate;
         END;
      END;
 
@@ -1393,18 +1374,18 @@ IF (EffecRain > 0) THEN
                        ELSE DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr);
      //StorableMM := (SoilLayer[Compartment[compi].Layer].FC/100 - Compartment[compi].theta)*1000*DeltaZ;
      StorableMM := (GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi))*1000*DeltaZ
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
      IF (StorableMM < 0) THEN StorableMM := 0;
      IF (StorableMM > amount_still_to_store)
         THEN BEGIN
              SetCompartment_theta(compi, GetCompartment_Theta(compi) + amount_still_to_store/
-                (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+                (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
              amount_still_to_store := 0;
              END
         ELSE IF (StorableMM > 0) THEN
                 BEGIN
                 SetCompartment_theta(compi, GetCompartment_Theta(compi) + StorableMM/
-                   (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+                   (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
                 amount_still_to_store := amount_still_to_store - StorableMM;
                 END;
    UNTIL ((depthi >= Zr) OR (compi >= NrCompartments) OR (amount_still_to_store <= 0));
@@ -1414,19 +1395,19 @@ IF (EffecRain > 0) THEN
       REPEAT
         IF (depthi > Zr) THEN DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr)
                          ELSE DeltaZ := GetCompartment_Thickness(compi);
-        StorableMM := (SoilLayer[GetCompartment_Layer(compi)].SAT/100 - GetCompartment_Theta(compi))*1000*DeltaZ
-                       * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+        StorableMM := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100 - GetCompartment_Theta(compi))*1000*DeltaZ
+                       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
         IF (StorableMM < 0) THEN StorableMM := 0;
         IF (StorableMM > amount_still_to_store)
            THEN BEGIN
                 SetCompartment_theta(compi, GetCompartment_theta(compi) + amount_still_to_store/
-                     (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+                     (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
                 amount_still_to_store := 0;
                 END
            ELSE IF (StorableMM > 0) THEN
                 BEGIN
                 SetCompartment_theta(compi, GetCompartment_Theta(compi) + StorableMM/
-                      (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+                      (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
                 amount_still_to_store := amount_still_to_store - StorableMM;
                 END;
          compi := compi - 1;
@@ -1465,37 +1446,37 @@ FOR compi := 1 TO NrCompartments DO Zbottom := Zbottom + GetCompartment_Thicknes
 
 // start at the bottom of the soil profile
 compi := NrCompartments;
-MaxMM := MaxCRatDepth(SoilLayer[GetCompartment_Layer(compi)].CRa,SoilLayer[GetCompartment_Layer(compi)].CRb,
-                      SoilLayer[GetCompartment_Layer(compi)].InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
+MaxMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
+                      GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
 
 // check restrictions on CR from soil layers below
 ZtopNextLayer := 0;
-FOR layeri := 1 TO GetCompartment_Layer(NrCompartments) DO ZtopNextLayer := ZtopNextLayer + SoilLayer[layeri].Thickness;
+FOR layeri := 1 TO GetCompartment_Layer(NrCompartments) DO ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
 layeri := GetCompartment_Layer(NrCompartments);
 WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
    BEGIN
    layeri := layeri + 1;
-   LimitMM := MaxCRatDepth(SoilLayer[layeri].CRa,SoilLayer[layeri].CRb,SoilLayer[layeri].InfRate,ZtopNextLayer,(ZiAqua/100));
+   LimitMM := MaxCRatDepth(GetSoilLayer_i(layeri).CRa,GetSoilLayer_i(layeri).CRb,GetSoilLayer_i(layeri).InfRate,ZtopNextLayer,(ZiAqua/100));
    IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
-   ZtopNextLayer := ZtopNextLayer + SoilLayer[layeri].Thickness;
+   ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
    END;
 
 WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout(compi)*1000) = 0)) DO
    BEGIN
    // Driving force
-   IF ((GetCompartment_theta(compi) >= SoilLayer[GetCompartment_Layer(compi)].WP/100) AND (GetSimulParam_RootNrDF() > 0))
-      THEN DrivingForce := 1 - (exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_theta(compi)-SoilLayer[GetCompartment_Layer(compi)].WP/100))
-                                     /exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_FCadj(compi)/100-SoilLayer[GetCompartment_Layer(compi)].WP/100)))
+   IF ((GetCompartment_theta(compi) >= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100) AND (GetSimulParam_RootNrDF() > 0))
+      THEN DrivingForce := 1 - (exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_theta(compi)-GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100))
+                                     /exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_FCadj(compi)/100-GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)))
       ELSE DrivingForce := 1;
    // relative hydraulic conductivity
-   ThetaThreshold := (SoilLayer[GetCompartment_Layer(compi)].WP/100 + SoilLayer[GetCompartment_Layer(compi)].FC/100)/2;
+   ThetaThreshold := (GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100 + GetSoilLayer_i(GetCompartment_Layer(compi)).FC/100)/2;
    IF (GetCompartment_Theta(compi) < ThetaThreshold)
       THEN BEGIN
-           IF ((GetCompartment_Theta(compi) <= SoilLayer[GetCompartment_Layer(compi)].WP/100)
-               OR (ThetaThreshold <= SoilLayer[GetCompartment_Layer(compi)].WP/100))
+           IF ((GetCompartment_Theta(compi) <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)
+               OR (ThetaThreshold <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100))
               THEN Krel := 0
-              ELSE Krel := (GetCompartment_Theta(compi) - SoilLayer[GetCompartment_Layer(compi)].WP/100)/
-                           (ThetaThreshold - SoilLayer[GetCompartment_Layer(compi)].WP/100);
+              ELSE Krel := (GetCompartment_Theta(compi) - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)/
+                           (ThetaThreshold - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100);
            END
       ELSE Krel := 1;
 
@@ -1509,13 +1490,13 @@ WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout
          THEN BEGIN
               SetCompartment_Theta(compi, GetCompartment_Theta(compi) + DThetaMax);
               CRcomp := DThetaMax*1000*GetCompartment_Thickness(compi)
-                        * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
               MaxMM := 0;
               END
          ELSE BEGIN
               SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
               CRcomp := DTheta*1000*GetCompartment_Thickness(compi)
-                        * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
               MaxMM := Krel * MaxMM - CRcomp;
               END;
       CRwater := CRwater + CRcomp;
@@ -1529,8 +1510,8 @@ WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout
    compi := compi - 1;
    IF (compi > 0) THEN
       BEGIN
-      LimitMM := MaxCRatDepth(SoilLayer[GetCompartment_Layer(compi)].CRa,SoilLayer[GetCompartment_Layer(compi)].CRb,
-                              SoilLayer[GetCompartment_Layer(compi)].InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
+      LimitMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
+                              GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
       IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
       END;
    END;
@@ -1580,16 +1561,16 @@ VAR   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, mm1, mm2, Dx, limit, Dif, U
     IF (DS >= 0)
        THEN BEGIN
             Compx.Salt[celx] := Compx.Salt[celx] + DS;
-            mmx := SoilLayer[Compx.Layer].Dx*1000*Compx.Thickness
-                  * (1 - SoilLayer[Compx.Layer].GravelVol/100);
-            IF (celx = SoilLayer[Compx.Layer].SCP1) THEN mmx := 2*mmx;
+            mmx := GetSoilLayer_i(Compx.Layer).Dx*1000*Compx.Thickness
+                  * (1 - GetSoilLayer_i(Compx.Layer).GravelVol/100);
+            IF (celx = GetSoilLayer_i(Compx.Layer).SCP1) THEN mmx := 2*mmx;
             SaltSolutionDeposit(mmx,Compx.Salt[celx],Compx.Depo[celx]);
             END
        ELSE BEGIN
-            celx := SoilLayer[Compx.Layer].SCP1;
+            celx := GetSoilLayer_i(Compx.Layer).SCP1;
             Compx.Salt[celx] := Compx.Salt[celx] + DS;
-            mmx := 2*SoilLayer[Compx.Layer].Dx*1000*Compx.Thickness
-                   * (1 - SoilLayer[Compx.Layer].GravelVol/100);
+            mmx := 2*GetSoilLayer_i(Compx.Layer).Dx*1000*Compx.Thickness
+                   * (1 - GetSoilLayer_i(Compx.Layer).GravelVol/100);
             SaltSolutionDeposit(mmx,Compx.Salt[celx],Compx.Depo[celx]);
             mmx := mmx/2;
             WHILE (Compx.Salt[celx] < 0) DO
@@ -1624,13 +1605,13 @@ SaltOut:= 0;
 FOR compi := 1 TO NrCompartments DO
     BEGIN
     //0. Set compartment parameters
-    SAT := (SoilLayer[GetCompartment_Layer(compi)].SAT)/100;  (* m3/m3 *)
-    UL := SoilLayer[GetCompartment_Layer(compi)].UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-    Dx := SoilLayer[GetCompartment_Layer(compi)].Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
+    SAT := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT)/100;  (* m3/m3 *)
+    UL := GetSoilLayer_i(GetCompartment_Layer(compi)).UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
+    Dx := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
 
     //1. Initial situation before drain and infiltration
     DeltaTheta := mmIN/
-                (1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+                (1000*GetCompartment_Thickness(compi)*(1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
     Theta := GetCompartment_theta(compi)-DeltaTheta+GetCompartment_fluxout(compi)/(1000*GetCompartment_Thickness(compi));
 
     //2. Determine active SaltCels and Add IN
@@ -1640,7 +1621,7 @@ FOR compi := 1 TO NrCompartments DO
             celi := 0;
             WHILE (Theta > Dx*celi) DO celi := celi + 1;
             END
-       ELSE celi := SoilLayer[GetCompartment_Layer(compi)].SCP1;
+       ELSE celi := GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1;
     IF (celi = 0) THEN celi := 1;  // XXX would be best to avoid celi=0 to begin with 
     IF (DeltaTheta > 0) THEN SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + SaltIN);
 
@@ -1650,15 +1631,15 @@ FOR compi := 1 TO NrCompartments DO
        FOR Ni := 1 TO (celi-1) DO
            BEGIN
            mm1 := Dx*1000*GetCompartment_Thickness(compi)
-                  * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
-           IF (Ni < SoilLayer[GetCompartment_Layer(compi)].SC)
+                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+           IF (Ni < GetSoilLayer_i(GetCompartment_Layer(compi)).SC)
               THEN mm2 := mm1
               ELSE IF (Theta > SAT)
                       THEN mm2 := (Theta-UL)*1000*GetCompartment_Thickness(compi)
-                                  * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)
+                                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)
                       ELSE mm2 := (SAT-UL)*1000*GetCompartment_Thickness(compi)
-                                  * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
-           Dif := SoilLayer[GetCompartment_Layer(compi)].SaltMobility[Ni];
+                                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+           Dif := GetSoilLayer_i(GetCompartment_Layer(compi)).SaltMobility[Ni];
            Salt_temp := GetCompartment_Salt(compi, Ni);
            Salt2_temp := GetCompartment_Salt(compi, Ni+1);
            Depo_temp := GetCompartment_Depo(compi, Ni);
@@ -1676,10 +1657,10 @@ FOR compi := 1 TO NrCompartments DO
     IF (GetCompartment_fluxout(compi) > 0)
        THEN BEGIN
             DeltaTheta := GetCompartment_fluxout(compi)/
-                       (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+                       (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
             WHILE (DeltaTheta > 0) DO
               BEGIN
-              IF (celi < SoilLayer[GetCompartment_Layer(compi)].SCP1) THEN limit := (celi-1)*Dx
+              IF (celi < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1) THEN limit := (celi-1)*Dx
                                                                    ELSE limit := UL;
               IF (Theta - DeltaTheta) < limit
                  THEN BEGIN
@@ -1687,7 +1668,7 @@ FOR compi := 1 TO NrCompartments DO
                                          + GetCompartment_Depo(compi, celi);
                       SetCompartment_Salt(compi, celi, 0);
                       mm1 := (Theta - limit)*1000*GetCompartment_Thickness(compi)
-                             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
                       IF SaltOut > (GetSimulParam_SaltSolub() * mm1)
                          THEN BEGIN
                               SetCompartment_Depo(compi, celi, SaltOut - (GetSimulParam_SaltSolub() * mm1));
@@ -1704,16 +1685,16 @@ FOR compi := 1 TO NrCompartments DO
                       SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) *(1-DeltaTheta/(Theta-limit)));
                       SetCompartment_Depo(compi, celi, GetCompartment_Depo(compi, celi) *(1-DeltaTheta/(Theta-limit)));
                       mm1 := DeltaTheta*1000*GetCompartment_Thickness(compi)
-                             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
                       IF SaltOut > (GetSimulParam_SaltSolub() * mm1) THEN
                          BEGIN
                          SetCompartment_Depo(compi, celi, GetCompartment_Depo(compi, celi) + (SaltOut - GetSimulParam_SaltSolub() * mm1));
                          SaltOut := (GetSimulParam_SaltSolub() * mm1);
                          END;
                       DeltaTheta := 0;
-                      mm1 := SoilLayer[GetCompartment_Layer(compi)].DX*1000*GetCompartment_Thickness(compi)
-                             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
-                      IF (celi = SoilLayer[GetCompartment_Layer(compi)].SCP1) THEN mm1 := 2*mm1;
+                      mm1 := GetSoilLayer_i(GetCompartment_Layer(compi)).DX*1000*GetCompartment_Thickness(compi)
+                             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+                      IF (celi = GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1) THEN mm1 := 2*mm1;
                       Salt_temp := GetCompartment_Salt(compi, celi);
                       Depo_temp := GetCompartment_Depo(compi, celi);
                       SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
@@ -1732,10 +1713,10 @@ IF (Drain > 0.001) THEN ECdrain := SaltOUT/(Drain*Equiv);
 
 //5. vertical salt diffusion
 celi := ActiveCells(GetCompartment_i(1));
-SM2 := SoilLayer[GetCompartment_Layer(1)].SaltMobility[celi]/4;
+SM2 := GetSoilLayer_i(GetCompartment_Layer(1)).SaltMobility[celi]/4;
 ECsw2 := ECswComp(GetCompartment_i(1),(false)); // not at FC
 mm2 := GetCompartment_Theta(1)*1000*GetCompartment_Thickness(1)
-       * (1 - SoilLayer[GetCompartment_Layer(1)].GravelVol/100);
+       * (1 - GetSoilLayer_i(GetCompartment_Layer(1)).GravelVol/100);
 FOR compi := 2 TO NrCompartments DO
     BEGIN
     celiM1 := celi;
@@ -1743,10 +1724,10 @@ FOR compi := 2 TO NrCompartments DO
     ECsw1 := ECsw2;
     mm1 := mm2;
     celi :=  ActiveCells(GetCompartment_i(compi));
-    SM2 := SoilLayer[GetCompartment_Layer(compi)].SaltMobility[celi]/4;
+    SM2 := GetSoilLayer_i(GetCompartment_Layer(compi)).SaltMobility[celi]/4;
     ECsw2 := ECswComp(GetCompartment_i(compi),(false)); // not at FC
     mm2 := GetCompartment_Theta(compi)*1000*GetCompartment_Thickness(compi)
-           * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
     ECsw := (ECsw1*mm1+ECsw2*mm2)/(mm1+mm2);
     DS1 := (ECsw1 - (ECsw1+(ECsw-ECsw1)*SM1))*mm1*Equiv;
     DS2 := (ECsw2 - (ECsw2+(ECsw-ECsw2)*SM2))*mm2*Equiv;
@@ -1786,11 +1767,11 @@ IF (SubDrain > 0) THEN
         THEN DeltaZ := GetCompartment_Thickness(compi)
         ELSE DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr);
      celi := ActiveCells(GetCompartment_i(compi));
-     IF (celi < SoilLayer[GetCompartment_Layer(compi)].SCP1)
-        THEN mm1 := SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)
-        ELSE mm1 := 2*SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+     IF (celi < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1)
+        THEN mm1 := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)
+        ELSE mm1 := 2*GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
      ECcel := GetCompartment_Salt(compi, celi)/(mm1*Equiv);
      ECsubdrain := (ECcel*mm1*(DeltaZ/GetCompartment_Thickness(compi))+ECsubdrain*SubDrain)
                    /(mm1*(DeltaZ/GetCompartment_Thickness(compi))+SubDrain);
@@ -1812,11 +1793,11 @@ IF (SubDrain > 0) THEN
       ELSE BEGIN
            compi := compi + 1;
            celi := ActiveCells(GetCompartment_i(compi));
-           IF (celi < SoilLayer[GetCompartment_Layer(compi)].SCP1)
-              THEN mm1 := SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
-                          * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)
-              ELSE mm1 := 2*SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
-                          * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           IF (celi < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1)
+              THEN mm1 := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
+                          * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)
+              ELSE mm1 := 2*GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
+                          * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
            SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + ECsubdrain*SubDrain*Equiv);
            Salt_temp := GetCompartment_Salt(compi, celi);
            Depo_temp := GetCompartment_Depo(compi, celi);
@@ -3118,14 +3099,14 @@ WHILE ((ABS(Zlayer-Ztot) > 0.0001) AND (compi < NrCompartments)) DO
          THEN fracZ := (Zlayer - Ztot)/(GetCompartment_Thickness(compi))
          ELSE fracZ := 1;
       CASE AtTheta OF
-           AtSAT  : Wx := Wx + 10 * SoilLayer[GetCompartment_Layer(compi)].SAT * fracZ * GetCompartment_Thickness(compi)
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
-           AtFC   : Wx := Wx + 10 * SoilLayer[GetCompartment_Layer(compi)].FC * fracZ * GetCompartment_Thickness(compi)
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
-           AtWP   : Wx := Wx + 10 * SoilLayer[GetCompartment_Layer(compi)].WP * fracZ * GetCompartment_Thickness(compi)
-                    * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+           AtSAT  : Wx := Wx + 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * fracZ * GetCompartment_Thickness(compi)
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+           AtFC   : Wx := Wx + 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * fracZ * GetCompartment_Thickness(compi)
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+           AtWP   : Wx := Wx + 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * fracZ * GetCompartment_Thickness(compi)
+                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
            else Wx := Wx + 1000 * GetCompartment_Theta(compi) * fracZ * GetCompartment_Thickness(compi)
-                      * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                      * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
            end;
       Ztot := Ztot + fracZ * GetCompartment_Thickness(compi);
       END;
@@ -3191,10 +3172,10 @@ REPEAT
   IF ((Ztot + GetCompartment_Thickness(compi)) > Zact)
      THEN fracZ := (Zact-Ztot)/GetCompartment_Thickness(compi)
      ELSE fracZ := 1;
-  Wairdry := 10 * SoilLayer[GetCompartment_Layer(compi)].WP/2 * GetCompartment_Thickness(compi)
-             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+  Wairdry := 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP/2 * GetCompartment_Thickness(compi)
+             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
   Wx := 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-        * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
   AvailableW := (Wx-Wairdry)*fracZ;
   StillToExtract := (EvapToLose-EvapLost);
   IF (AvailableW > 0) THEN
@@ -3211,7 +3192,7 @@ REPEAT
              Wx := Wx - AvailableW;
              END;
      SetCompartment_Theta(compi, Wx/
-        (1000*GetCompartment_Thickness(compi)*(1-SoilLayer[GetCompartment_Layer(compi)].GravelVol/100)));
+        (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
      END;
   Ztot := Ztot + fracZ * (GetCompartment_Thickness(compi));
 UNTIL ((Compi >= NrCompartments)
@@ -3273,10 +3254,10 @@ VAR AtTheta : rep_WhichTheta;
     FUNCTION SaltTransportFactor(theta : double) : double;
     VAR x : double ;
     BEGIN
-    IF (theta <= SoilLayer[1].WP/200)
+    IF (theta <= GetSoilLayer_i(1).WP/200)
        THEN SaltTransportFactor := 0
        ELSE BEGIN
-            x := (theta*100 - SoilLayer[1].WP/2)/(SoilLayer[1].SAT - SoilLayer[1].WP/2);
+            x := (theta*100 - GetSoilLayer_i(1).WP/2)/(GetSoilLayer_i(1).SAT - GetSoilLayer_i(1).WP/2);
             SaltTransportFactor := EXP(x*LN(10)+LN(x/10));
             END;
     END; (* SaltTransportFactor *)
@@ -3336,8 +3317,8 @@ IF (SX > 0.01) THEN
       BEGIN  // move salt to compartment 1
       SCellEnd := ActiveCells(GetCompartment_i(compi));
       BoolCell := false;
-      UL := SoilLayer[GetCompartment_Layer(compi)].UL;
-      DeltaX := SoilLayer[GetCompartment_Layer(compi)].Dx;
+      UL := GetSoilLayer_i(GetCompartment_Layer(compi)).UL;
+      DeltaX := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx;
       REPEAT
       IF (SCellEnd < SCellIniEvap[compi])
          THEN BEGIN
@@ -3348,7 +3329,7 @@ IF (SX > 0.01) THEN
               END
          ELSE BEGIN
               BoolCell := true;
-              IF (SCellEnd = SoilLayer[GetCompartment_Layer(compi)].SCP1)
+              IF (SCellEnd = GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1)
                  THEN SaltDisplaced := SX * GetCompartment_Salt(compi, SCellIniEvap[compi])
                       * (ThetaIniEvap[compi] - GetCompartment_theta(compi))/(ThetaIniEvap[compi]-UL)
                  ELSE SaltDisplaced := SX * GetCompartment_Salt(compi, SCellIniEvap[compi])
@@ -3386,8 +3367,8 @@ PROCEDURE calculate_theta_critical(layeri : INTEGER;
 VAR theta_TAW : double;
 
 BEGIN
-theta_TAW := SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100;
-theta_critical := SoilLayer[layeri].FC/100 - theta_TAW * GetCrop().pActStom;
+theta_TAW := GetSoilLayer_i(layeri).FC/100 - GetSoilLayer_i(layeri).WP/100;
+theta_critical := GetSoilLayer_i(layeri).FC/100 - theta_TAW * GetCrop().pActStom;
 END; (*calculate_theta_critical*)
 
 
@@ -3460,7 +3441,7 @@ VAR alfaAN : double;
 BEGIN
 IF ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint > 0))
    THEN alfaAN := 0
-   ELSE IF (Comp.theta > (SoilLayer[Comp.Layer].SAT - GetCrop().AnaeroPoint)/100)
+   ELSE IF (Comp.theta > (GetSoilLayer_i(Comp.Layer).SAT - GetCrop().AnaeroPoint)/100)
            THEN BEGIN
                 Comp.DayAnaero := Comp.DayAnaero + 1;
                 IF (Comp.DayAnaero >= GetSimulParam_DelayLowOxygen())
@@ -3469,7 +3450,7 @@ IF ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint 
                         Comp.DayAnaero := GetSimulParam_DelayLowOxygen();
                         END
                    ELSE ini := 1;
-                alfaAN := (SoilLayer[Comp.Layer].SAT/100 - Comp.theta)/(GetCrop().AnaeroPoint/100);
+                alfaAN := (GetSoilLayer_i(Comp.Layer).SAT/100 - Comp.theta)/(GetCrop().AnaeroPoint/100);
                 IF (alfaAN < 0) THEN alfaAN := 0;
                 IF (GetSimulParam_DelayLowOxygen() > 1)
                    THEN alfaAN := (ini+(Comp.DayAnaero-1)*alfaAN)/(ini+Comp.DayAnaero-1);
@@ -3596,12 +3577,12 @@ IF (Tpot > 0) THEN
              // effect of water stress and ECe
              IF (GetCompartment_theta(compi) >= (theta_critical))
                 THEN alfa := (1 - GetSimulation_EffectStress_RedKsSto()/100)
-                ELSE IF (GetCompartment_theta(compi) > (SoilLayer[layeri].WP/100))
+                ELSE IF (GetCompartment_theta(compi) > (GetSoilLayer_i(layeri).WP/100))
                         THEN BEGIN
-                             IF (theta_critical > SoilLayer[layeri].WP/100)
+                             IF (theta_critical > GetSoilLayer_i(layeri).WP/100)
                                 THEN BEGIN
-                                     Wrel := (SoilLayer[layeri].FC/100 - GetCompartment_theta(compi))
-                                             /(SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100);
+                                     Wrel := (GetSoilLayer_i(layeri).FC/100 - GetCompartment_theta(compi))
+                                             /(GetSoilLayer_i(layeri).FC/100 - GetSoilLayer_i(layeri).WP/100);
                                      pStomatLLAct := 1;
                                      alfa := (1 - GetSimulation_EffectStress_RedKsSto()/100) * KsAny(Wrel,GetCrop().pActStom,pStomatLLAct,GetCrop().KsShapeFactorStomata);
                                      END
@@ -3611,8 +3592,8 @@ IF (Tpot > 0) THEN
              // extra effect of ECsw
              IF GetSimulation_SalinityConsidered()
                 THEN BEGIN
-                     WrelSalt := (SoilLayer[layeri].FC/100 - GetCompartment_theta(compi))
-                               /(SoilLayer[layeri].FC/100 - SoilLayer[layeri].WP/100);
+                     WrelSalt := (GetSoilLayer_i(layeri).FC/100 - GetCompartment_theta(compi))
+                               /(GetSoilLayer_i(layeri).FC/100 - GetSoilLayer_i(layeri).WP/100);
                      CompiECe := ECeComp(GetCompartment_i(compi));
                      CompiECsw := ECswComp(GetCompartment_i(compi),(false));
                      CompiECswFC := ECswComp(GetCompartment_i(compi),(true));
@@ -3637,7 +3618,7 @@ IF (Tpot > 0) THEN
      IF (WtoExtract < sinkMM) THEN sinkMM := WtoExtract;
      //Compartment[compi].theta := Compartment[compi].theta - sink;
      SetCompartment_theta(compi, GetCompartment_theta(compi)
-          - sinkMM/(1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[layeri].GravelVol/100)));
+          - sinkMM/(1000*GetCompartment_Thickness(compi)*(1 - GetSoilLayer_i(layeri).GravelVol/100)));
      //theta_to_extract := theta_to_extract - sink;
      WtoExtract := WtoExtract - sinkMM;
      //Tact := Tact + sink * 1000 * Compartment[compi].Thickness;
@@ -3661,15 +3642,15 @@ IF (Tpot > 0) THEN
            IF (layeri > pre_layer) THEN
               BEGIN
               calculate_theta_critical(layeri,theta_critical);
-              InetThreshold := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*(SoilLayer[layeri].FC/100 - theta_critical);
+              InetThreshold := GetSoilLayer_i(layeri).FC/100 - GetSimulParam_PercRAW()/100*(GetSoilLayer_i(layeri).FC/100 - theta_critical);
               pre_layer := layeri;
               END;
            //DeltaWC := Compartment[compi].WFactor * (InetThreshold - Compartment[compi].Theta)*1000*Compartment[compi].Thickness;
            DeltaWC := GetCompartment_WFactor(compi) * (InetThreshold - GetCompartment_Theta(compi))
-                      *1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[layeri].GravelVol/100);
+                      *1000*GetCompartment_Thickness(compi)*(1 - GetSoilLayer_i(layeri).GravelVol/100);
            //Compartment[compi].Theta := Compartment[compi].Theta + DeltaWC/(1000*Compartment[compi].Thickness);
            SetCompartment_Theta(compi, GetCompartment_theta(compi) + DeltaWC
-                                       /(1000*GetCompartment_Thickness(compi)*(1 - SoilLayer[layeri].GravelVol/100)));
+                                       /(1000*GetCompartment_Thickness(compi)*(1 - GetSoilLayer_i(layeri).GravelVol/100)));
            Irrigation := Irrigation + DeltaWC;
            END;
         END;
@@ -3737,24 +3718,24 @@ FOR compi := 1 TO NrCompartments DO
     IF (Zi >= DepthGWTmeter) THEN
        BEGIN
        // soil water content is at saturation
-       IF (GetCompartment_Theta(compi) < SoilLayer[GetCompartment_Layer(compi)].SAT/100) THEN
+       IF (GetCompartment_Theta(compi) < GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100) THEN
           BEGIN
-          DeltaTheta := SoilLayer[GetCompartment_Layer(compi)].SAT/100 - GetCompartment_Theta(compi);
-          SetCompartment_theta(compi, SoilLayer[GetCompartment_Layer(compi)].SAT/100);
+          DeltaTheta := GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100 - GetCompartment_Theta(compi);
+          SetCompartment_theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
           HorizontalWaterFlow := HorizontalWaterFlow + 1000 * DeltaTheta * GetCompartment_Thickness(compi)
-                                 * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+                                 * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
           END;
        // ECe is equal to the EC of the groundwater table
        IF (Abs(ECeComp(GetCompartment_i(compi)) - ECiAqua) > 0.0001) THEN
           BEGIN
           SaltAct := 0;
-          FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+          FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
               SaltAct := SaltAct + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
           Compi_temp := GetCompartment_i(compi);
           DetermineSaltContent(ECiAqua,Compi_temp);
           SetCompartment_i(compi, Compi_temp);
           SaltAdj := 0;
-          FOR celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+          FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
               SaltAdj := SaltAdj + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
           HorizontalSaltFlow := HorizontalSaltFlow + (SaltAdj - SaltAct);
           END;
@@ -3773,7 +3754,7 @@ FOR compi := 1 TO NrCompartments DO
     BEGIN
     SaltTot := 0;
     celWet := ActiveCells(GetCompartment_i(compi));
-    IF (celWet < SoilLayer[GetCompartment_Layer(compi)].SCP1) THEN FOR celi := (celWet+1) TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+    IF (celWet < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1) THEN FOR celi := (celWet+1) TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
        BEGIN
        SaltTot := SaltTot + GetCompartment_Salt(compi, celi) + GetCompartment_Depo(compi, celi);
        SetCompartment_Salt(compi, celi, 0);
@@ -3782,8 +3763,8 @@ FOR compi := 1 TO NrCompartments DO
     IF (SaltTot > 0) THEN
        BEGIN
        SetCompartment_Salt(compi, celWet, GetCompartment_Salt(compi, celWet) + SaltTot);
-       mm := SoilLayer[GetCompartment_Layer(compi)].Dx*1000*GetCompartment_Thickness(compi)
-             * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100);
+       mm := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
+             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
        Salt_temp := GetCompartment_Salt(compi, celWet);
        Depo_temp := GetCompartment_Depo(compi, celWet);
        SaltSolutionDeposit(mm,Salt_temp, Depo_temp);

@@ -31,6 +31,7 @@ VAR DataPath,ObsPath : BOOLEAN;
     EToRecord,
     RainRecord     : rep_clim;
     SoilLayer      : rep_SoilLayer;
+    IrriFirstDayNr : LongInt;
     NrCompartments : INTEGER;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
@@ -69,10 +70,7 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                            SumGDD,Zmin,Zmax : double;
-                            ShapeFactor : ShortInt;
-                            TypeDays : rep_modeCycle) : double;
+
 PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
@@ -155,7 +153,7 @@ FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity 
                                TypeDays : rep_modeCycle;
                                SFRedCGC,SFRedCCx : ShortInt) : double;
 
-PROCEDURE ReadSoilSettings;
+
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
                          dHIdt,CCi,CCxadjusted : double;
@@ -234,91 +232,8 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
+
 implementation
-
-
-FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                            SumGDD,Zmin,Zmax : double;
-                            ShapeFactor : ShortInt;
-                            TypeDays : rep_modeCycle) : double;
-Var Zini, Zr : double;
-    VirtualDay, T0 : INTEGER;
-
-
-
-FUNCTION ActualRootingDepthDays(DAP,L0,LZmax,L1234 : INTEGER;
-                                Zmin,Zmax : double) : double;
-BEGIN // Actual rooting depth at the end of Dayi
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ((VirtualDay < 1) OR (VirtualDay > L1234))
-   THEN ActualRootingDepthDays := 0
-   ELSE IF (VirtualDay >= LZmax)
-        THEN ActualRootingDepthDays := Zmax
-        ELSE IF (Zmin < Zmax)
-                THEN BEGIN
-                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
-                     T0 := ROUND(L0/2);
-                     IF (LZmax <= T0)
-                        THEN Zr := Zini + (Zmax-Zini)*VirtualDay/LZmax
-                        ELSE IF (VirtualDay <= T0)
-                                THEN Zr := Zini
-                                ELSE BEGIN
-                                     Zr := Zini + (Zmax-Zini)
-                                        * TimeRootFunction(VirtualDay,ShapeFactor,LZmax,T0);
-                                     END;
-                     IF (Zr > ZMin) THEN ActualRootingDepthDays := Zr
-                                    ELSE ActualRootingDepthDays := ZMin;
-                     END
-                ELSE ActualRootingDepthDays := ZMax;
-END; (* ActualRootingDepthDays *)
-
-
-
-FUNCTION ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                                  SumGDD,Zmin,Zmax : double) : double;
-VAR GDDT0 : double;
-BEGIN // after sowing the crop has roots even when SumGDD = 0
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ((VirtualDay < 1) OR (VirtualDay > L1234))
-   THEN ActualRootingDepthGDDays := 0
-   ELSE IF (SumGDD >= GDDLZmax)
-        THEN ActualRootingDepthGDDays := Zmax
-        ELSE IF (Zmin < Zmax)
-                THEN BEGIN
-                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
-                     GDDT0 := GDDL0/2;
-                     IF (GDDLZmax <= GDDT0)
-                        THEN Zr := Zini + (Zmax-Zini)*SumGDD/GDDLZmax
-                        ELSE BEGIN
-                             IF (SumGDD <= GDDT0)
-                                THEN Zr := Zini
-                                ELSE BEGIN
-                                     Zr := Zini + (Zmax-Zini)
-                                        * TimeRootFunction(SumGDD,ShapeFactor,GDDLZmax,GDDT0);
-                                     END;
-                             END;
-                     IF (Zr > ZMin) THEN ActualRootingDepthGDDays := Zr
-                                    ELSE ActualRootingDepthGDDays := ZMin;
-                     END
-                ELSE ActualRootingDepthGDDays := ZMax;
-END; (* ActualRootingDepthGDDays *)
-
-
-
-BEGIN  (* ActualRootingDepth *)
-CASE TypeDays OF
-     GDDays  : Zr := ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234,SumGDD,Zmin,Zmax);
-     else Zr := ActualRootingDepthDays(DAP,L0,LZmax,L1234,Zmin,Zmax);
-     end;
-// restrictive soil layer
-SetSimulation_SCor(1);
-IF (ROUND(GetSoil().RootMax*1000) < ROUND(Zmax*1000))
-   THEN ZrAdjustedToRestrictiveLayers(Zr,GetSoil().NrSoilLayers,SoilLayer,Zr);
-// assign
-ActualRootingDepth:= Zr;
-END; (* ActualRootingDepth *)
-
-
 
 
 PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
@@ -674,7 +589,7 @@ VAR TotalDepthL, TotalDepthC, DeltaZ : double;
     i : INTEGER;
 BEGIN
 TotalDepthL := 0;
-FOR i := 1 TO GetSoil().NrSoilLayers DO TotalDepthL := TotalDepthL + SoilLayer[i].Thickness;
+FOR i := 1 TO GetSoil().NrSoilLayers DO TotalDepthL := TotalDepthL + GetSoilLayer_Thickness(i);
 TotalDepthC := 0;
 NrCompartments := 0;
 REPEAT
@@ -737,22 +652,22 @@ compi := NrCompartments;
 REPEAT
   Zi := Depth - CompartAdj[compi].Thickness/2;
   //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
-  Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].FC);
+  Xmax := NoAdjustment(GetSoilLayer_i(CompartAdj[compi].Layer).FC);
   IF ((DepthAquifer < 0) OR ((DepthAquifer - Zi) >= Xmax))
       THEN BEGIN
-           FOR ic := 1 to compi DO CompartAdj[ic].FCadj := SoilLayer[CompartAdj[ic].Layer].FC;
+           FOR ic := 1 to compi DO CompartAdj[ic].FCadj := GetSoilLayer_i(CompartAdj[ic].Layer).FC;
            compi := 0;
            END
       ELSE BEGIN
-           IF (SoilLayer[CompartAdj[compi].Layer].FC >= SoilLayer[CompartAdj[compi].Layer].SAT)
-              THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC
+           IF (GetSoilLayer_i(CompartAdj[compi].Layer).FC >= GetSoilLayer_i(CompartAdj[compi].Layer).SAT)
+              THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC
               ELSE BEGIN
                    IF (Zi >= DepthAquifer)
-                      THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].SAT
+                      THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).SAT
                       ELSE BEGIN
-                           DeltaV := SoilLayer[CompartAdj[compi].Layer].SAT - SoilLayer[CompartAdj[compi].Layer].FC;
+                           DeltaV := GetSoilLayer_i(CompartAdj[compi].Layer).SAT - GetSoilLayer_i(CompartAdj[compi].Layer).FC;
                            DeltaFC := (DeltaV/Sqr(Xmax)) * Sqr(Zi - (DepthAquifer - Xmax));
-                           CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC + DeltaFC;
+                           CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC + DeltaFC;
                            END;
                    END;
            Depth := Depth - CompartAdj[compi].Thickness;
@@ -773,7 +688,7 @@ depthi := 0;
 layeri := 1;
 compi := 1;
 REPEAT
-  depth := depth + SoilLayer[layeri].Thickness;
+  depth := depth + GetSoilLayer_i(layeri).Thickness;
   REPEAT
     depthi := depthi + Compartment[compi].Thickness/2;
     IF (depthi <= depth)
@@ -798,7 +713,7 @@ END; (* DesignateSoilLayerToCompartments *)
 
 
 PROCEDURE DeclareInitialCondAtFCandNoSalt;
-VAR layeri,compi,celli : INTEGER;
+VAR layeri,compi,celli, ind : INTEGER;
 BEGIN
 SetSWCiniFile('(None)');
 SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
@@ -807,8 +722,8 @@ SetSimulation_IniSWC_AtDepths(false);
 SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO
     BEGIN
-    SetSimulation_IniSWC_Loc_i(layeri,SoilLayer[layeri].Thickness);
-    SetSimulation_IniSWC_VolProc_i(layeri,SoilLayer[layeri].FC);
+    SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
+    SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
     SetSimulation_IniSWC_SaltECe_i(layeri,0);
     END;
 SetSimulation_IniSWC_AtFC(true);
@@ -819,7 +734,9 @@ FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
     END;
 FOR compi := 1 TO NrCompartments DO
-    For celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+    IF (GetCompartment_Layer(compi) = 0) THEN ind := 1 //LB: added an if statement to avoid having index=0
+    ELSE ind := GetCompartment_Layer(compi);
+    For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
         BEGIN // salinity in cells
         SetCompartment_Salt(compi, celli, 0.0);
         SetCompartment_Depo(compi, celli, 0.0);
@@ -844,24 +761,23 @@ DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers,Compartment);
 // No salinity in soil layers and compartmens
 // Absence of ground water table (FCadj = FC)
 Total := 0;
-FOR layeri := 1 TO NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
+FOR layeri := 1 TO NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
 FOR compi := 1 TO NrCompartments DO
     BEGIN
-    Compartment[compi].Theta := SoilLayer[Compartment[compi].Layer].FC/100;
-    Compartment[compi].FCadj := SoilLayer[Compartment[compi].Layer].FC;
+    Compartment[compi].Theta := GetSoilLayer_i(Compartment[compi].Layer).FC/100;
+    Compartment[compi].FCadj := GetSoilLayer_i(Compartment[compi].Layer).FC;
     Compartment[compi].DayAnaero := 0;
-    For celli := 1 TO SoilLayer[Compartment[compi].Layer].SCP1 DO
+    For celli := 1 TO GetSoilLayer_i(Compartment[compi].Layer).SCP1 DO
         BEGIN // salinity in cells
         Compartment[compi].Salt[celli] := 0.0;
         Compartment[compi].Depo[celli] := 0.0;
         END;
     SetSimulation_ThetaIni_i(compi,Compartment[compi].Theta);
     SetSimulation_ECeIni_i(compi,0); // initial soil salinity in dS/m
-    SoilLayer[Compartment[compi].Layer].WaterContent
-     := SoilLayer[Compartment[compi].Layer].WaterContent
-        + GetSimulation_ThetaIni_i(compi)*100*10*Compartment[compi].Thickness;
+    SetSoilLayer_WaterContent(Compartment[compi].Layer, GetSoilLayer_i(Compartment[compi].Layer).WaterContent
+        + GetSimulation_ThetaIni_i(compi)*100*10*Compartment[compi].Thickness);
     END;
-FOR layeri := 1 TO NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
+FOR layeri := 1 TO NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
 SetTotalWaterContent_BeginDay(Total);
 
 // initial soil water content and no salts
@@ -908,12 +824,12 @@ FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
 VAR  celi : INTEGER;
 
 BEGIN
-IF (Comp.theta <= SoilLayer[Comp.Layer].UL)
+IF (Comp.theta <= GetSoilLayer_i(Comp.Layer).UL)
    THEN BEGIN
         celi := 0;
-        WHILE (Comp.theta > (SoilLayer[Comp.Layer].Dx) * celi) DO celi := celi + 1;
+        WHILE (Comp.theta > (GetSoilLayer_i(Comp.Layer).Dx) * celi) DO celi := celi + 1;
         END
-   ELSE celi := SoilLayer[Comp.Layer].SCP1;
+   ELSE celi := GetSoilLayer_i(Comp.Layer).SCP1;
 ActiveCells := celi;
 END; (* ActiveCells *)
 
@@ -927,12 +843,12 @@ VAR i, CelMax : INTEGER;
 
 BEGIN
 Mix := SaltDiffusion/100; // global salt mobility expressed as a fraction
-UL := SoilLayer[layer].UL * 100; (* upper limit in VOL% of SC cell *)
+UL := GetSoilLayer_i(layer).UL * 100; (* upper limit in VOL% of SC cell *)
 
 //1. convert Macro (vol%) in SaltCelNumber
 IF (Macro > UL)
-   THEN CelMax := SoilLayer[layer].SCP1
-   ELSE CelMax := ROUND((Macro/UL)*SoilLayer[layer].SC);
+   THEN CelMax := GetSoilLayer_i(layer).SCP1
+   ELSE CelMax := ROUND((Macro/UL)*GetSoilLayer_i(layer).SC);
 IF (CelMax <= 0) THEN CelMax := 1;
 
 //2. find a and b
@@ -968,7 +884,7 @@ FOR i := 1 to (CelMax-1) DO
     END;
 
 //4. Saltmobility between Macro and SAT
-FOR i := CelMax TO SoilLayer[layer].SCP1 DO Mobil[i] := 1;
+FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
 
 END; (* Calculate_Saltmobility *)
 
@@ -978,11 +894,11 @@ FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
 VAR volSat, TotSalt : double;
     i : INTEGER;
 BEGIN
-volSAT := (SoilLayer[Comp.Layer].SAT);
+volSAT := (GetSoilLayer_i(Comp.Layer).SAT);
 TotSalt := 0;
-FOR i := 1 TO SoilLayer[Comp.Layer].SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; //g/m2
+FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; //g/m2
 TotSalt := TotSalt/
-        (volSAT*10*Comp.Thickness*(1-SoilLayer[Comp.Layer].GravelVol/100)); // g/l
+        (volSAT*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
 IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
 ECeComp := TotSalt/Equiv; //dS/m
 END; (* ECeComp *)
@@ -996,12 +912,12 @@ VAR TotSalt : double;
 
 BEGIN
 TotSalt := 0;
-FOR i := 1 TO SoilLayer[Comp.Layer].SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; // g/m2
+FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; // g/m2
 IF (atFC = true)
    THEN TotSalt := TotSalt/
-                (SoilLayer[Comp.Layer].FC*10*Comp.Thickness*(1-SoilLayer[Comp.Layer].GravelVol/100)) // g/l
+                (GetSoilLayer_i(Comp.Layer).FC*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)) // g/l
    ELSE TotSalt := TotSalt/
-                (Comp.theta*1000*Comp.Thickness*(1-SoilLayer[Comp.Layer].GravelVol/100)); // g/l
+                (Comp.theta*1000*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
 IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
 ECswComp := TotSalt/Equiv;
 END; (* ECswComp *)
@@ -1030,27 +946,27 @@ VAR TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN : double;
     celn, i : INTEGER;
 
 BEGIN
-TotSalt := ECe*Equiv*(SoilLayer[Comp.Layer].SAT)*10*Comp.Thickness;
+TotSalt := ECe*Equiv*(GetSoilLayer_i(Comp.Layer).SAT)*10*Comp.Thickness;
 celn := ActiveCells(Comp);
-SAT := (SoilLayer[Comp.Layer].SAT)/100;  (* m3/m3 *)
-UL := SoilLayer[Comp.Layer].UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-Dx := SoilLayer[Comp.Layer].Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
+SAT := (GetSoilLayer_i(Comp.Layer).SAT)/100;  (* m3/m3 *)
+UL := GetSoilLayer_i(Comp.Layer).UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
+Dx := GetSoilLayer_i(Comp.Layer).Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
 mm1 := Dx*1000*Comp.Thickness
-       * (1 - SoilLayer[Comp.Layer].GravelVol/100); // g/l (* volume [mm]=[l/m2] of cells *)
+       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of cells *)
 mmN := (SAT-UL)*1000*Comp.Thickness
-       * (1 - SoilLayer[Comp.Layer].GravelVol/100); // g/l (* volume [mm]=[l/m2] of last cell *)
+       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of last cell *)
 SumDF := 0;
-FOR i := 1 TO SoilLayer[Comp.Layer].SCP1 DO
+FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO
     BEGIN
     Comp.Salt[i] := 0;
     Comp.Depo[i] := 0;
     END;
-FOR i := 1 TO celn DO SumDF := SumDF + SoilLayer[Comp.Layer].SaltMobility[i];
+FOR i := 1 TO celn DO SumDF := SumDF + GetSoilLayer_SaltMobility_i(Comp.Layer, i);
 FOR i := 1 TO celn DO
     BEGIN
-    Comp.Salt[i] := TotSalt * SoilLayer[Comp.Layer].SaltMobility[i]/SumDF;
+    Comp.Salt[i] := TotSalt * GetSoilLayer_SaltMobility_i(Comp.Layer, i)/SumDF;
     mm := mm1;
-    IF (i = SoilLayer[Comp.Layer].SCP1) THEN mm := mmN;
+    IF (i = GetSoilLayer_i(Comp.Layer).SCP1) THEN mm := mmN;
     SaltSolutionDeposit(mm,Comp.Salt[i],Comp.Depo[i]);
     END;
 END; (* DetermineSaltContent *)
@@ -1062,12 +978,21 @@ PROCEDURE CompleteProfileDescription;
 VAR i : INTEGER;
 TotalWaterContent_temp : rep_Content;
 Compartment_temp : rep_Comp;
+soillayer_i_temp : SoilLayerIndividual;
+soillayer_temp : rep_SoilLayer;
 BEGIN
-FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO set_layer_undef(SoilLayer[i]);
+FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO 
+    BEGIN
+        soillayer_i_temp := GetSoilLayer_i(i);
+        set_layer_undef(soillayer_i_temp);
+        SetSoilLayer_i(i, soillayer_i_temp);
+    END;
 SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
 Compartment_temp := GetCompartment();
-specify_soil_layer(NrCompartments,GetSoil().NrSoilLayers,SoilLayer,Compartment_temp,TotalWaterContent_temp);
+soillayer_temp := GetSoilLayer();
+specify_soil_layer(NrCompartments,GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
+SetSoilLayer(soillayer_temp);
 SetTotalWaterContent(TotalWaterContent_temp);
 SetCompartment(Compartment_temp);
 END; (* CompleteProfileDescription *)
@@ -1080,6 +1005,11 @@ VAR f0 : TextFile;
     VersionNr : double;
     TempShortInt : shortint;
     ProfDescriptionLocal : string;
+    thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp : double;
+    cra_temp, crb_temp, dx_temp : double;
+    description_temp : string;
+    penetrability_temp, gravelm_temp : shortint;
+    saltmob_temp : rep_salt;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
@@ -1103,58 +1033,88 @@ FOR i := 1 TO GetSoil().NrSoilLayers DO
     // Parameters for capillary rise missing in Versions 3.0 and 3.1
     IF (ROUND(VersionNr*10) < 40)
        THEN BEGIN
-            READLN(f0,SoilLayer[i].Thickness,SoilLayer[i].SAT,SoilLayer[i].FC,
-              SoilLayer[i].WP,SoilLayer[i].InfRate,blank,SoilLayer[i].Description);
+            READLN(f0,thickness_temp,SAT_temp,FC_temp,
+              WP_temp,infrate_temp,blank,description_temp);
+            SetSoilLayer_Thickness(i, thickness_temp);
+            SetSoilLayer_SAT(i, SAT_temp);
+            SetSoilLayer_FC(i, FC_temp);
+            SetSoilLayer_WP(i, WP_temp); 
+            SetSoilLayer_InfRate(i, infrate_temp);
+            SetSoilLayer_Description(i, description_temp);
             // Default values for Penetrability and Gravel
-            SoilLayer[i].Penetrability := 100;
-            SoilLayer[i].GravelMass := 0;
+            SetSoilLayer_Penetrability(i, 100);
+            SetSoilLayer_GravelMass(i, 0);
             // determine volume gravel
-            SoilLayer[i].GravelVol := 0;
+            SetSoilLayer_GravelVol(i, 0);
             END
        ELSE BEGIN
             IF (ROUND(VersionNr*10) < 60)  // UPDATE required for Version 6.0
                THEN BEGIN
-                    READLN(f0,SoilLayer[i].Thickness,SoilLayer[i].SAT,SoilLayer[i].FC,
-                      SoilLayer[i].WP,SoilLayer[i].InfRate,SoilLayer[i].CRa,SoilLayer[i].CRb,
-                      blank,SoilLayer[i].Description);
+                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
+                           cra_temp, crb_temp,blank, description_temp);
+                    SetSoilLayer_Thickness(i, thickness_temp);
+                    SetSoilLayer_SAT(i, SAT_temp);
+                    SetSoilLayer_FC(i, FC_temp);
+                    SetSoilLayer_WP(i, WP_temp); 
+                    SetSoilLayer_InfRate(i, infrate_temp);
+                    SetSoilLayer_CRa(i, cra_temp);
+                    SetSoilLayer_CRb(i, crb_temp);
+                    SetSoilLayer_Description(i, description_temp);
                     // Default values for Penetrability and Gravel
-                    SoilLayer[i].Penetrability := 100;
-                    SoilLayer[i].GravelMass := 0;
+                    SetSoilLayer_Penetrability(i, 100);
+                    SetSoilLayer_GravelMass(i, 0);
                     // determine volume gravel
-                    SoilLayer[i].GravelVol := 0;
+                    SetSoilLayer_GravelVol(i, 0);
                     END
                ELSE BEGIN
-                    READLN(f0,SoilLayer[i].Thickness,SoilLayer[i].SAT,SoilLayer[i].FC,
-                      SoilLayer[i].WP,SoilLayer[i].InfRate,SoilLayer[i].Penetrability,
-                      SoilLayer[i].GravelMass,SoilLayer[i].CRa,SoilLayer[i].CRb,
-                      blank,SoilLayer[i].Description);
+                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
+                           penetrability_temp, gravelm_temp, cra_temp, crb_temp,description_temp);
+                    SetSoilLayer_Thickness(i, thickness_temp);
+                    SetSoilLayer_SAT(i, SAT_temp);
+                    SetSoilLayer_FC(i, FC_temp);
+                    SetSoilLayer_WP(i, WP_temp); 
+                    SetSoilLayer_InfRate(i, infrate_temp);
+                    SetSoilLayer_Penetrability(i, penetrability_temp);
+                    SetSoilLayer_GravelMass(i, gravelm_temp);
+                    SetSoilLayer_CRa(i, cra_temp);
+                    SetSoilLayer_CRb(i, crb_temp);
+                    SetSoilLayer_Description(i, description_temp);
                     // determine volume gravel
-                    SoilLayer[i].GravelVol := FromGravelMassToGravelVolume(SoilLayer[i].SAT,SoilLayer[i].GravelMass);
+                    SetSoilLayer_GravelVol(i, FromGravelMassToGravelVolume(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).GravelMass));
                     END;
             END;
     // determine drainage coefficient
-    SoilLayer[i].tau := TauFromKsat(SoilLayer[i].InfRate);
+    SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_i(i).InfRate));
     // determine number of salt cells based on infiltration rate
-    IF (SoilLayer[i].InfRate <= 112)
-       THEN SoilLayer[i].SCP1 := 11
+    IF (GetSoilLayer_i(i).InfRate <= 112)
+       THEN SetSoilLayer_SCP1(i, 11)
        ELSE BEGIN
-            SoilLayer[i].SCP1 := ROUND(1.6 + 1000/SoilLayer[i].InfRate);
-            IF (SoilLayer[i].SCP1 < 2) THEN SoilLayer[i].SCP1 := 2
+            SetSoilLayer_SCP1(i, ROUND(1.6 + 1000/GetSoilLayer_i(i).InfRate));
+            IF (GetSoilLayer_i(i).SCP1 < 2) THEN SetSoilLayer_SCP1(i, 2)
             END;
     // determine parameters for soil salinity
-    SoilLayer[i].SC := SoilLayer[i].SCP1 -1;
-    SoilLayer[i].Macro := ROUND(SoilLayer[i].FC);
-    SoilLayer[i].UL := ((SoilLayer[i].SAT)/100) * (SoilLayer[i].SC/(SoilLayer[i].SC+2)); (* m3/m3 *)
-    SoilLayer[i].Dx := (SoilLayer[i].UL)/SoilLayer[i].SC;  (* m3/m3 *)
-    Calculate_SaltMobility(i,GetSimulParam_SaltDiff(),SoilLayer[i].Macro,SoilLayer[i].SaltMobility);
+    SetSoilLayer_SC(i, GetSoilLayer_i(i).SCP1 -1);
+    SetSoilLayer_Macro(i, ROUND(GetSoilLayer_i(i).FC));
+    SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100) * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2))); (* m3/m3 *)
+    dx_temp := (GetSoilLayer_UL(i))/GetSoilLayer_SC(i);
+    SetSoilLayer_Dx(i, dx_temp);  (* m3/m3 *)
+    saltmob_temp := GetSoilLayer_i(i).SaltMobility;
+    Calculate_SaltMobility(i,GetSimulParam_SaltDiff(),GetSoilLayer_i(i).Macro,saltmob_temp);
+    SetSoilLayer_SaltMobility(i, saltmob_temp);
     // determine default parameters for capillary rise if missing
-    SoilLayer[i].SoilClass := NumberSoilClass(SoilLayer[i].SAT,SoilLayer[i].FC,SoilLayer[i].WP,SoilLayer[i].InfRate);
+    SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).FC,GetSoilLayer_i(i).WP,GetSoilLayer_i(i).InfRate));
     IF (ROUND(VersionNr*10) < 40) THEN
-       DetermineParametersCR(SoilLayer[i].SoilClass,SoilLayer[i].InfRate,SoilLayer[i].CRa,SoilLayer[i].CRb);
+       BEGIN
+       cra_temp := GetSoilLayer_i(i).CRa;
+       crb_temp := GetSoilLayer_i(i).CRb;
+       DetermineParametersCR(GetSoilLayer_i(i).SoilClass,GetSoilLayer_i(i).InfRate,cra_temp,crb_temp);
+       SetSoilLayer_CRa(i, cra_temp);
+       SetSoilLayer_CRb(i, crb_temp);
+       END;
     END;
 DetermineNrandThicknessCompartments;
 Close(f0);
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
+SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
 END; // Loadprofile
 
 
@@ -1687,7 +1647,7 @@ IF (GetCrop_subkind() = Forage) THEN
    END;
 Close(f0);
 // maximum rooting depth in given soil profile
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
+SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
 
 // copy to CropFileSet
 SetCropFileSet_DaysFromSenescenceToEnd(GetCrop().DaysToHarvest - GetCrop().DaysToSenescence);
@@ -1807,14 +1767,14 @@ WRITELN(f,undef_int:9,'                   : variable no longer applicable');
 WRITELN(f,'  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description');
 WRITELN(f,'  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------');
 FOR i := 1 TO GetSoil().NrSoilLayers DO
-    WRITELN(f,SoilLayer[i].Thickness:8:2,SoilLayer[i].SAT:8:1,SoilLayer[i].FC:6:1,
-              SoilLayer[i].WP:6:1,SoilLayer[i].InfRate:8:1,SoilLayer[i].Penetrability:11,
-              SoilLayer[i].GravelMass:10,SoilLayer[i].CRa:14:6,SoilLayer[i].CRb:10:6,
-              '   ',SoilLayer[i].Description:15);
+    WRITELN(f,GetSoilLayer_i(i).Thickness:8:2,GetSoilLayer_i(i).SAT:8:1,GetSoilLayer_i(i).FC:6:1,
+              GetSoilLayer_i(i).WP:6:1,GetSoilLayer_i(i).InfRate:8:1,GetSoilLayer_i(i).Penetrability:11,
+              GetSoilLayer_i(i).GravelMass:10,GetSoilLayer_i(i).CRa:14:6,GetSoilLayer_i(i).CRb:10:6,
+              '   ',GetSoilLayer_i(i).Description:15);
 Close(f);
 
 // maximum rooting depth in  soil profile for given crop
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
+SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
 END; (* SaveProfile *)
 
 
@@ -2246,7 +2206,7 @@ IF (GetCrop_Assimilates().On = false)
 Close(f);
 
 // maximum rooting depth in given soil profile
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
+SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
 
 // copy to CropFileSet
 SetCropFileSet_DaysFromSenescenceToEnd(GetCrop().DaysToHarvest - GetCrop().DaysToSenescence);
@@ -2338,8 +2298,8 @@ IF (ZiAqua < 0) // no ground water table
         SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
         FOR layeri := 1 TO GetSoil().NrSoilLayers DO
             BEGIN
-            SetSimulation_IniSWC_Loc_i(layeri,SoilLayer[layeri].Thickness);
-            SetSimulation_IniSWC_VolProc_i(layeri,SoilLayer[layeri].FC);
+            SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
+            SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
             SetSimulation_IniSWC_SaltECe_i(layeri,0);
             END;
         FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
@@ -2362,7 +2322,7 @@ FOR compi := 1 to NrCompartments DO
     BEGIN
     SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
-    For celli := 1 TO SoilLayer[GetCompartment_Layer(compi)].SCP1 DO
+    For celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
         BEGIN // salinity in cells
         SetCompartment_Salt(compi, celli, 0.0);
         SetCompartment_Depo(compi, celli, 0.0);
@@ -2716,28 +2676,28 @@ REPEAT
           END;
   SetRootZoneWC_Actual(GetRootZoneWC().Actual
      + Factor * 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-              * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
   SetRootZoneWC_FC(GetRootZoneWC().FC
-     + Factor * 10 * SoilLayer[GetCompartment_Layer(compi)].FC * GetCompartment_Thickness(compi)
-              * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * GetCompartment_Thickness(compi)
+              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
   SetRootZoneWC_Leaf(GetRootZoneWC().Leaf
-     + Factor * 10 * GetCompartment_Thickness(compi) * (SoilLayer[GetCompartment_Layer(compi)].FC
-     - GetCrop().pLeafAct * (SoilLayer[GetCompartment_Layer(compi)].FC-SoilLayer[GetCompartment_Layer(compi)].WP))
-       * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
+     - GetCrop().pLeafAct * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
+       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
   SetRootZoneWC_Thresh(GetRootZoneWC().Thresh
-     + Factor * 10 * GetCompartment_Thickness(compi) * (SoilLayer[GetCompartment_Layer(compi)].FC
-     - GetCrop().pActStom * (SoilLayer[GetCompartment_Layer(compi)].FC-SoilLayer[GetCompartment_Layer(compi)].WP))
-       * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
+     - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
+       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
   SetRootZoneWC_Sen(GetRootZoneWC().Sen
-     + Factor * 10 * GetCompartment_Thickness(compi) * (SoilLayer[GetCompartment_Layer(compi)].FC
-     - GetCrop().pSenAct * (SoilLayer[GetCompartment_Layer(compi)].FC-SoilLayer[GetCompartment_Layer(compi)].WP))
-       * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
+     - GetCrop().pSenAct * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
+       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
   SetRootZoneWC_WP(GetRootZoneWC().WP
-     + Factor * 10 * SoilLayer[GetCompartment_Layer(compi)].WP * GetCompartment_Thickness(compi)
-              * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * GetCompartment_Thickness(compi)
+              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
   SetRootZoneWC_SAT(GetRootZoneWC().SAT
-     + Factor * 10 * SoilLayer[GetCompartment_Layer(compi)].SAT * GetCompartment_Thickness(compi)
-              * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * GetCompartment_Thickness(compi)
+              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
 UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
 
 // calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
@@ -2769,17 +2729,17 @@ IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
                   END;
           SetRootZoneWC_ZtopAct(GetRootZoneWC().ZtopAct
             + Factor * 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
           SetRootZoneWC_ZtopFC(GetRootZoneWC().ZtopFC
-            + Factor * 10 * SoilLayer[GetCompartment_Layer(compi)].FC * GetCompartment_Thickness(compi)
-                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+            + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * GetCompartment_Thickness(compi)
+                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
           SetRootZoneWC_ZtopWP(GetRootZoneWC().ZtopWP
-            + Factor * 10 * SoilLayer[GetCompartment_Layer(compi)].WP * GetCompartment_Thickness(compi)
-                     * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+            + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * GetCompartment_Thickness(compi)
+                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
           SetRootZoneWC_ZtopThresh(GetRootZoneWC().ZtopThresh
-            + Factor * 10 * GetCompartment_Thickness(compi) * (SoilLayer[GetCompartment_Layer(compi)].FC
-            - GetCrop().pActStom * (SoilLayer[GetCompartment_Layer(compi)].FC-SoilLayer[GetCompartment_Layer(compi)].WP))
-              * (1 - SoilLayer[GetCompartment_Layer(compi)].GravelVol/100));
+            + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
+            - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
+              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
         UNTIL (CumDepth >= TopSoilInMeter) OR (compi = NrCompartments);
         END;
 
@@ -2867,35 +2827,6 @@ CASE TypeDays OF
                                                CCo,CCx,CGC,CDC,SFRedCGC,SFRedCCx);
      end;
 END; (* CanopyCoverNoStressSF *)
-
-
-PROCEDURE ReadSoilSettings;
-VAR f : textfile;
-    FullName : string;
-    i,simul_saltdiff,simul_saltsolub,simul_root,simul_iniab : ShortInt;
-    simul_rod : double;
-
-BEGIN
-FullName := CONCAT(GetPathNameSimul(),'Soil.PAR');
-Assign(f,FullName);
-Reset(f);
-READLN(f,simul_rod); //considered depth (m) of soil profile for calculation of mean soil water content
-SetSimulParam_RunoffDepth(simul_rod);
-READLN(f,i);   // correction CN for Antecedent Moisture Class
-IF (i = 1) THEN SetSimulParam_CNcorrection(true)
-           ELSE SetSimulParam_CNcorrection(false);
-READLN(f,simul_saltdiff); // salt diffusion factor (%)
-READLN(f,simul_saltsolub); // salt solubility (g/liter)
-READLN(f,simul_root); // shape factor capillary rise factor
-SetSimulParam_SaltDiff(simul_saltdiff);
-SetSimulParam_SaltSolub(simul_saltsolub);
-SetSimulParam_RootNrDF(simul_root);
-// new Version 4.1
-READLN(f,simul_iniab); // Percentage of S for initial abstraction for surface runoff
-SetSimulParam_IniAbstract(simul_iniab);
-SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
-Close(f);
-END; (* ReadSoilSettings *)
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
@@ -3488,8 +3419,8 @@ IF (NOT GoOn) THEN
 
 // final check of SWC
 FOR Compi := 1 TO NrComp DO
-    IF (Comp[Compi].Theta > (SoilLayer[Comp[compi].Layer].SAT)/100)
-        THEN Comp[Compi].Theta := (SoilLayer[Comp[compi].Layer].SAT)/100;
+    IF (Comp[Compi].Theta > (GetSoilLayer_i(Comp[compi].Layer).SAT)/100)
+        THEN Comp[Compi].Theta := (GetSoilLayer_i(Comp[compi].Layer).SAT)/100;
 // salt distribution in cellls
 For Compi := 1 TO NrComp DO DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
 END; (* TranslateIniLayersToSWProfile *)
@@ -3553,7 +3484,7 @@ WHILE ((Compi < NrComp) OR ((Compi = NrComp) AND (AddComp = false))) DO
                                  + 10*(Depthi-DTopComp)*((ThTopComp+ThBotComp)/2);
             ECBotComp := EC1 + (EC2-EC1)*(Depthi-D1)/(D2-D1);
             Comp[Compi].WFactor := Comp[Compi].WFactor
-                     + (10*(Depthi-DTopComp)*SoilLayer[Comp[Compi].Layer].SAT)*((ECTopComp+ECbotComp)/2);
+                     + (10*(Depthi-DTopComp)*GetSoilLayer_i(Comp[Compi].Layer).SAT)*((ECTopComp+ECbotComp)/2);
             AddComp := true;
             DTopComp := Depthi;
             IF (Compi = NrComp) THEN TheEnd := true;
@@ -3564,7 +3495,7 @@ WHILE ((Compi < NrComp) OR ((Compi = NrComp) AND (AddComp = false))) DO
             Comp[Compi].Theta := Comp[Compi].Theta
                                  + 10*(D2-DTopComp)*((ThTopComp+ThBotComp)/2);
             Comp[Compi].WFactor := Comp[Compi].WFactor
-                               + (10*(D2-DTopComp)*SoilLayer[Comp[Compi].Layer].SAT)*((ECTopComp+ECbotComp)/2);
+                               + (10*(D2-DTopComp)*GetSoilLayer_i(Comp[Compi].Layer).SAT)*((ECTopComp+ECbotComp)/2);
             IF (Depthi = D2)
                THEN AddComp := true
                ELSE AddComp := false;
@@ -3576,14 +3507,14 @@ WHILE ((Compi < NrComp) OR ((Compi = NrComp) AND (AddComp = false))) DO
 For Compi := 1 TO NrComp DO // from mm(water) to theta and final check
     BEGIN
     Comp[Compi].Theta := Comp[Compi].Theta/(1000*Comp[Compi].Thickness);
-    IF (Comp[Compi].Theta > (SoilLayer[Comp[compi].Layer].SAT)/100)
-        THEN Comp[Compi].Theta := (SoilLayer[Comp[compi].Layer].SAT)/100;
+    IF (Comp[Compi].Theta > (GetSoilLayer_i(Comp[compi].Layer).SAT)/100)
+        THEN Comp[Compi].Theta := (GetSoilLayer_i(Comp[compi].Layer).SAT)/100;
     IF (Comp[Compi].Theta < 0) THEN Comp[Compi].Theta := 0;
     END;
 
 For Compi := 1 TO NrComp DO // from (10*VolSat*dZ * EC) to ECe and distribution in cellls
     BEGIN
-    Comp[Compi].WFactor := Comp[Compi].WFactor/(10*Comp[Compi].Thickness*SoilLayer[Comp[Compi].Layer].SAT);
+    Comp[Compi].WFactor := Comp[Compi].WFactor/(10*Comp[Compi].Thickness*GetSoilLayer_i(Comp[Compi].Layer).SAT);
     DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
     END;
 END; (* TranslateIniPointsToSWProfile *)
@@ -3710,7 +3641,7 @@ PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
 FullFileName := CONCAT(Trim(PathName),Trim(FileName));
 LoadProfile(FullFileName);
 TheNrSoilLayers := GetSoil().NrSoilLayers;
-TheSoilLayer := SoilLayer;
+TheSoilLayer := GetSoilLayer();
 //ZrRestrict := 1000; // assumed not to be so far a restriction
 (*
 Assign(fx,FullFileName);
@@ -3804,8 +3735,8 @@ FOR compi := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thic
 
 //2. Stretch thickness of bottom soil layer if required
 TotDepthL := 0;
-For layeri := 1 to GetSoil().NrSoilLayers DO TotDepthL := TotDepthL + SoilLayer[layeri].Thickness;
-IF (TotDepthC > TotDepthL) THEN SoilLayer[GetSoil().NrSoilLayers].Thickness := SoilLayer[GetSoil().NrSoilLayers].Thickness + (TotDepthC - TotDepthL);
+For layeri := 1 to GetSoil().NrSoilLayers DO TotDepthL := TotDepthL + GetSoilLayer_i(layeri).Thickness;
+IF (TotDepthC > TotDepthL) THEN SetSoilLayer_Thickness(GetSoil().NrSoilLayers, GetSoilLayer_i(GetSoil().NrSoilLayers).Thickness + (TotDepthC - TotDepthL));
 
 //3. Assign a soil layer to each soil compartment
 Compartment_temp := GetCompartment();
@@ -3837,14 +3768,14 @@ IF GetSimulation_ResetIniSWC()
 
 //5. Adjust watercontent in soil layers and determine ThetaIni
 Total := 0;
-FOR layeri := 1 TO GetSoil().NrSoilLayers DO SoilLayer[layeri].WaterContent := 0;
+FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
 FOR compi := 1 TO NrCompartments DO
     BEGIN
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
-    SoilLayer[GetCompartment_Layer(compi)].WaterContent := SoilLayer[GetCompartment_Layer(compi)].WaterContent
-                                                                + GetSimulation_ThetaIni_i(compi)*100*10*GetCompartment_Thickness(compi);
+    SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
+                                                                + GetSimulation_ThetaIni_i(compi)*100*10*GetCompartment_Thickness(compi));
     END;
-FOR layeri := 1 TO GetSoil().NrSoilLayers DO Total := Total + SoilLayer[layeri].WaterContent;
+FOR layeri := 1 TO GetSoil().NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
 SetTotalWaterContent_BeginDay(Total);
 END; (* AdjustThetaInitial *)
 

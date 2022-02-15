@@ -412,7 +412,7 @@ FOR compi := 1 to NrCompartments DO
     Zi := Ztot - GetCompartment_Thickness(compi)/2;
     IF (Zi >= (ZiAqua/100)) THEN // compartment at or below groundwater table
        BEGIN
-       SetCompartment_Theta(compi, SoilLayer[GetCompartment_Layer(compi)].SAT/100);
+       SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
        Compi_temp := GetCOmpartment_i(compi);
        DetermineSaltContent(ECiAqua,Compi_temp);
        SetCompartment_i(compi, Compi_temp);
@@ -1735,9 +1735,17 @@ IF (DayNri <= GetCrop().Day1)
         IF (DayNri > GetCrop().DayN)
            THEN Ziprev := undef_int
            ELSE BEGIN
-                ZiPrev := ActualRootingDepth((DayNri-GetCrop().Day1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,
-                            GetCrop().DaysToHarvest,GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,
-                            SumGDDPrev,GetCrop().RootMin,GetCrop().RootMax,GetCrop().RootShape,GetCrop_ModeCycle());
+                ZiPrev := ActualRootingDepth(DayNri-GetCrop().Day1,
+                                             GetCrop().DaysToGermination,
+                                             GetCrop().DaysToMaxRooting,
+                                             GetCrop().DaysToHarvest,
+                                             GetCrop().GDDaysToGermination,
+                                             GetCrop().GDDaysToMaxRooting,
+                                             SumGDDPrev,
+                                             GetCrop().RootMin,
+                                             GetCrop().RootMax,
+                                             GetCrop().RootShape,
+                                             GetCrop_ModeCycle());
                 END;
         END;
 // 16.2 specified or default Zrini (m)
@@ -1755,11 +1763,17 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
            THEN Ziprev := GetSoil().RootMax;
         RootingDepth := Ziprev;  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
         END
-   ELSE RootingDepth := ActualRootingDepth((DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,
-                      GetCrop().DaysToHarvest,GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,
-                      SumGDDPrev,GetCrop().RootMin,GetCrop().RootMax,GetCrop().RootShape,GetCrop_ModeCycle());
-
-
+   ELSE RootingDepth := ActualRootingDepth(DayNri-GetCrop().Day1+1,
+                                           GetCrop().DaysToGermination,
+                                           GetCrop().DaysToMaxRooting,
+                                           GetCrop().DaysToHarvest,
+                                           GetCrop().GDDaysToGermination,
+                                           GetCrop().GDDaysToMaxRooting,
+                                           SumGDDPrev,
+                                           GetCrop().RootMin,
+                                           GetCrop().RootMax,
+                                           GetCrop().RootShape,
+                                           GetCrop_ModeCycle());
 
 // 17. Multiple cuttings
 NrCut := 0;
@@ -2533,7 +2547,7 @@ VAR RepeatToDay : LongInt;
       compi := compi + 1;
       SumDepth := SumDepth + GetCompartment_Thickness(compi);
       layeri := GetCompartment_Layer(compi);
-      ThetaPercRaw := SoilLayer[layeri].FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(SoilLayer[layeri].FC/100-SoilLayer[layeri].WP/100);
+      ThetaPercRaw := GetSoilLayer_i(layeri).FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(GetSoilLayer_i(layeri).FC/100-GetSoilLayer_i(layeri).WP/100);
       IF (GetCompartment_Theta(compi) < ThetaPercRaw) THEN
          BEGIN
          PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);

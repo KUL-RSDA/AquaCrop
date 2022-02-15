@@ -3,14 +3,24 @@ module ac_tempprocessing
 use ac_kinds,  only: dp, &
                      int8, &
                      int16, &   
-                     int32
+                     int32, &
+                     intEnum
 
 use iso_fortran_env, only: iostat_end
 
 use ac_global , only: undef_int, &
                       roundc, &
+                      modeCycle_GDDDays, &
                       DaysinMonth, &
                       rep_DayEventDbl, &
+                      rep_CropFileSet, &
+                      subkind_Vegetative, &
+                      subkind_Grain, &
+                      subkind_Tuber, &
+                      subkind_Forage, &
+                      datatype_daily, &
+                      datatype_decadely, &
+                      datatype_monthly, &
                       DetermineDayNr, &
                       DetermineDate, &
                       LeapYear, &
@@ -18,6 +28,7 @@ use ac_global , only: undef_int, &
                       KsTemperature, &
                       DegreesDay, &
                       LengthCanopyDecline, &
+                      DetermineLengthGrowthStages, &
                       GetPathNameSimul, &
                       GetTemperatureFile, &                     
                       GetTemperatureFilefull, &
@@ -32,7 +43,47 @@ use ac_global , only: undef_int, &
                       GetTemperatureRecord_FromDayNr, &
                       GetTemperatureRecord_ToDayNr, &
                       GetSimulParam_GDDMethod, &
-                      FullUndefinedRecord
+                      FullUndefinedRecord, &
+                      SetCrop_GDDaysToFullCanopy, &
+                      SetCrop_GDDaysToHIo, &
+                      SetCrop_DaysToHarvest, &
+                      SetCrop_DaysToSenescence, &
+                      SetCrop_CDC, &
+                      SetCrop_DaysToHIo, &
+                      SetCrop_DaysToGermination, &
+                      SetCrop_LengthFlowering, &
+                      SetCrop_Length, &    
+                      SetCrop_DaysToFullCanopy, &
+                      SetCrop_dHIdt, &
+                      SetCrop_DaysToMaxRooting, &
+                      SetCrop_CGC, &
+                      SetCrop_DaysToFlowering, &
+                      GetCrop_GDDaysToGermination, &
+                      GetCrop_GDDaysToFullCanopy, &
+                      GetCrop_GDDaysToHarvest,   GetCrop_GDDaysToHIo, &
+                      GetCrop_GDDaysToFlowering, GetCrop_GDDLengthFlowering, &
+                      GetCrop_GDDaysToSenescence,GetCrop_GDDaysToHarvest, &
+                      GetCrop_GDDaysToMaxRooting, &
+                      GetCrop_DaysToGermination, &
+                      GetCrop_DaysToFullCanopy, &
+                      GetCrop_DaysToFlowering, & 
+                      GetCrop_LengthFlowering, &
+                      GetCrop_DaysToSenescence, &
+                      GetCrop_DaysToHarvest, &
+                      GetCrop_DaysToMaxRooting, &
+                      GetCrop_DaysToHIo, &
+                      GetCrop_Length, &
+                      GetCrop_GDDCGC, GetCrop_GDDCDC, GetCrop_CCo, &
+                      GetCrop_CCx, GetCrop_HI, &
+                      GetCrop_CGC, &
+                      GetCrop_CDC, &
+                      GetCrop_dHIdt, &
+                      GetCrop_DaysToCCini, GetCrop_Planting, &
+                      GetCrop_subkind, &
+                      GetCrop_ModeCycle, &
+                      GetCrop_Tbase, & 
+                      GetCrop_Tupper, &
+                      GetSimulParam_Tmin, GetSimulParam_Tmax
 
 implicit none
 
@@ -368,8 +419,11 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         integer(int32), intent(inout) :: X3
         integer(int32), intent(inout) :: t1
 
+        integer(int32), parameter :: n1 = 30
+        integer(int32), parameter :: n2 = 30
+        integer(int32), parameter :: n3 = 30
         integer(int32) :: fhandle
-        integer(int32) :: Mfile, Yfile, n1, n2, n3, Nri, Obsi, rc
+        integer(int32) :: Mfile, Yfile, Nri, Obsi, rc
         logical :: OK3
 
         ! 1. Prepare record
@@ -617,7 +671,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                 .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingDays = ValPeriod
                 select case (GetTemperatureRecord_DataType())
-                case (0) !Daily
+                case (datatype_daily)
                     open(newunit=fhandle, file=trim(totalname), &
                      status='old', action='read', iostat=rc)
                     read(fhandle, *, iostat=rc) ! description
@@ -669,7 +723,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                         GDDays = undef_int
                     end if
                     close(fhandle)
-                case(1) !Decadely:
+                case(datatype_decadely)
                     call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
                                 TmaxDataSet)
                     i = 1
@@ -706,7 +760,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                     if (RemainingDays > 0) then
                         GDDays = undef_int
                     end if
-                case(2) !Monthly:
+                case(datatype_monthly)
                     call GetMonthlyTemperatureDataSet(DayNri, &
                             TminDataSet, TmaxDataSet)
                     i = 1
@@ -777,7 +831,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             ! given average Tmin and Tmax
             DayGDD = DegreesDay(Tbase, Tupper, &
                        TDayMin, TDayMax, GetSimulParam_GDDMethod())
-            if (DayGDD == 0) then
+            if (abs(DayGDD) < epsilon(1._dp)) then
                 NrCDays = -9
             else
                 NrCDays = roundc(ValGDDays/DayGDD, mold=1_int32)
@@ -798,7 +852,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                 .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingGDDays = ValGDDays
                 select case (GetTemperatureRecord_DataType())
-                case (0) ! Daily 
+                case (datatype_daily)
                     open(newunit=fhandle, file=trim(totalname), &
                          status='old', action='read', iostat=rc)
                     read(fhandle, *, iostat=rc) ! description
@@ -850,7 +904,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                         NrCDays = undef_int
                     end if
                     close(fhandle)
-                case(1) !Decadely
+                case(datatype_decadely)
                     call GetDecadeTemperatureDataSet(DayNri, &
                       TminDataSet, TmaxDataSet)
                     i = 1
@@ -886,7 +940,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                     if (RemainingGDDays > 0) then
                         NrCDays = undef_int
                     end if
-                case(2) !Monthly :
+                case(datatype_monthly)
                     call GetMonthlyTemperatureDataSet(DayNri, &
                            TminDataSet, TmaxDataSet)
                     i = 1
@@ -932,6 +986,212 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
 end function SumCalendarDays
 
 
+subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
+              Tbase, Tupper, NoTempFileTMin, NoTempFileTMax,&
+              GDDL0, GDDL12, GDDFlor, GDDLengthFlor, GDDL123,&
+              GDDHarvest, GDDLZmax, GDDHImax, GDDCGC, GDDCDC,&
+              CCo, CCx, IsCGCGiven, HIndex, TheDaysToCCini,&
+              ThePlanting, D0, D12, DFlor, LengthFlor,&
+              D123, DHarvest, DLZmax, LHImax, StLength,&
+              CGC, CDC, dHIdt, Succes)
+    integer(int32), intent(in) :: PlantDayNr
+    integer(intEnum), intent(in) :: InfoCropType
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: NoTempFileTMin
+    real(dp), intent(in) :: NoTempFileTMax
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDFlor
+    integer(int32), intent(in) :: GDDLengthFlor
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDHarvest
+    integer(int32), intent(in) :: GDDLZmax
+    integer(int32), intent(inout) :: GDDHImax
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    logical, intent(in) :: IsCGCGiven
+    integer(int32), intent(in) :: HIndex
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(intEnum), intent(in) :: ThePlanting
+    integer(int32), intent(inout) :: D0
+    integer(int32), intent(inout) :: D12
+    integer(int32), intent(inout) :: DFlor
+    integer(int32), intent(inout) :: LengthFlor
+    integer(int32), intent(inout) :: D123
+    integer(int32), intent(inout) :: DHarvest
+    integer(int32), intent(inout) :: DLZmax
+    integer(int32), intent(inout) :: LHImax
+    integer(int32), dimension(4), intent(inout) :: StLength
+    real(dp), intent(inout) :: CGC
+    real(dp), intent(inout) :: CDC
+    real(dp), intent(inout) :: dHIdt
+    logical, intent(inout) :: Succes
+
+    real(dp) :: tmp_NoTempFileTMin,tmp_NoTempFileTMax
+
+    tmp_NoTempFileTMin = NoTempFileTMin
+    tmp_NoTempFileTMax = NoTempFileTMax
+
+    Succes = .true.
+    D0 = SumCalendarDays(GDDL0, PlantDayNr, &
+            Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+    D12 = SumCalendarDays(GDDL12, PlantDayNr,&
+            Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+    if (InfoCropType /= subkind_Forage) then
+        D123 = SumCalendarDays(GDDL123, PlantDayNr,&
+                 Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+        DHarvest = SumCalendarDays(GDDHarvest, PlantDayNr,&
+                     Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+    end if
+    DLZmax = SumCalendarDays(GDDLZmax, PlantDayNr,&
+               Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+    select case (InfoCropType)
+    case (subkind_Grain, subkind_Tuber)
+        DFlor = SumCalendarDays(GDDFlor, PlantDayNr,&
+                  Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+        if (DFlor /= undef_int) then
+            if (InfoCropType == subkind_Grain) then 
+                LengthFlor = SumCalendarDays(GDDLengthFlor, (PlantDayNr+DFlor),&
+                   Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+            else
+                LengthFlor = 0
+            end if
+            LHImax = SumCalendarDays(GDDHImax, (PlantDayNr+DFlor),&
+                       Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+            if ((LengthFlor == undef_int) .or. (LHImax == undef_int)) then
+                Succes = .false.
+            end if
+        else
+            LengthFlor = undef_int
+            LHImax = undef_int
+            Succes = .false.
+        end if
+    case (subkind_Vegetative, subkind_Forage)
+        LHImax = SumCalendarDays(GDDHImax, PlantDayNr,&
+                   Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+    end select
+    if ((D0 == undef_int) .or. (D12 == undef_int) .or. &
+        (D123 == undef_int) .or. (DHarvest == undef_int) .or. &
+        (DLZmax == undef_int)) then
+        Succes = .false.
+    end if
+
+    if (Succes) then
+        CGC = (real(GDDL12, kind=dp)/real(D12, kind=dp)) * GDDCGC
+        call GDDCDCToCDC(PlantDayNr, D123, GDDL123, GDDHarvest,&
+               CCx, GDDCDC, Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax, CDC)
+        call DetermineLengthGrowthStages(CCo, CCx, CDC, D0, DHarvest,&
+               IsCGCGiven, TheDaysToCCini, &
+               ThePlanting, D123, StLength, D12, CGC)
+        if ((InfoCropType == subkind_Grain) .or. (InfoCropType == subkind_Tuber)) then
+            dHIdt = real(HIndex, kind=dp)/real(LHImax, kind=dp)
+        end if
+        if ((InfoCropType == subkind_Vegetative) &
+            .or. (InfoCropType == subkind_Forage)) then
+            if (LHImax > 0) then
+                if (LHImax > DHarvest) then
+                    dHIdt = real(HIndex, kind=dp)/real(DHarvest, kind=dp)
+                else
+                    dHIdt = real(HIndex, kind=dp)/real(LHImax, kind=dp)
+                end if
+                if (dHIdt > 100) then
+                    dHIdt = 100 ! 100 is maximum TempdHIdt (See SetdHIdt)
+                    LHImax = 0
+                end if
+            else
+                dHIdt = 100 ! 100 is maximum TempdHIdt (See SetdHIdt)
+                LHImax = 0
+            end if
+        end if
+    end if
+end subroutine AdjustCalendarDays
+
+
+subroutine AdjustCalendarCrop(FirstCropDay)
+    integer(int32), intent(in) :: FirstCropDay
+
+    logical :: succes
+    logical :: CGCisGiven
+    integer(int32) :: Crop_GDDaysToHIo_temp
+    integer(int32) :: Crop_DaysToGermination_temp
+    integer(int32) :: Crop_DaysToFullCanopy_temp
+    integer(int32) :: Crop_DaysToFlowering_temp
+    integer(int32) :: Crop_LengthFlowering_temp
+    integer(int32) :: Crop_DaysToSenescence_temp
+    integer(int32) :: Crop_DaysToHarvest_temp
+    integer(int32) :: Crop_DaysToMaxRooting_temp
+    integer(int32) :: Crop_DaysToHIo_temp
+    integer(int32), dimension(4) :: Crop_Length_temp
+    real(dp) :: Crop_CGC_temp
+    real(dp) :: Crop_CDC_temp
+    real(dp) :: Crop_dHIdt_temp
+
+    CGCisGiven = .true.
+
+    select case (GetCrop_ModeCycle())
+    case (modeCycle_GDDDays)
+        call SetCrop_GDDaysToFullCanopy(GetCrop_GDDaysToGermination() &
+           + roundc(log((0.25_dp*GetCrop_CCx()*GetCrop_CCx()/GetCrop_CCo()) &
+               /(GetCrop_CCx()-(0.98_dp*GetCrop_CCx())))/GetCrop_GDDCGC(), &
+               mold=int32))
+        if (GetCrop_GDDaysToFullCanopy() > GetCrop_GDDaysToHarvest()) then
+            call SetCrop_GDDaysToFullCanopy(GetCrop_GDDaysToHarvest())
+        end if
+        Crop_GDDaysToHIo_temp = GetCrop_GDDaysToHIo()
+        Crop_DaysToGermination_temp = GetCrop_DaysToGermination()
+        Crop_DaysToFullCanopy_temp = GetCrop_DaysToFullCanopy()
+        Crop_DaysToFlowering_temp = GetCrop_DaysToFlowering()
+        Crop_LengthFlowering_temp = GetCrop_LengthFlowering()
+        Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
+        Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
+        Crop_DaysToMaxRooting_temp = GetCrop_DaysToMaxRooting()
+        Crop_DaysToHIo_temp = GetCrop_DaysToHIo()
+        Crop_Length_temp = GetCrop_Length()
+        Crop_CGC_temp = GetCrop_CGC()
+        Crop_CDC_temp = GetCrop_CDC()
+        Crop_dHIdt_temp = GetCrop_dHIdt()
+        call AdjustCalendarDays(FirstCropDay, GetCrop_subkind(), &
+          GetCrop_Tbase(), GetCrop_Tupper(), &
+          GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+          GetCrop_GDDaysToGermination(), GetCrop_GDDaysToFullCanopy(), &
+          GetCrop_GDDaysToFlowering(), GetCrop_GDDLengthFlowering(), &
+          GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
+          GetCrop_GDDaysToMaxRooting(), Crop_GDDaysToHIo_temp, &
+          GetCrop_GDDCGC(), GetCrop_GDDCDC(), GetCrop_CCo(), &
+          GetCrop_CCx(), CGCisGiven, GetCrop_HI(), &
+          GetCrop_DaysToCCini(), GetCrop_Planting(), &
+          Crop_DaysToGermination_temp, Crop_DaysToFullCanopy_temp,&
+          Crop_DaysToFlowering_temp, Crop_LengthFlowering_temp, &
+          Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp, &
+          Crop_DaysToMaxRooting_temp, Crop_DaysToHIo_temp,&
+          Crop_Length_temp, Crop_CGC_temp, &
+          Crop_CDC_temp, Crop_dHIdt_temp, Succes)
+        call SetCrop_GDDaysToHIo(Crop_GDDaysToHIo_temp)
+        call SetCrop_DaysToGermination(Crop_DaysToGermination_temp)
+        call SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp)
+        call SetCrop_DaysToFlowering(Crop_DaysToFlowering_temp)
+        call SetCrop_LengthFlowering(Crop_LengthFlowering_temp)
+        call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
+        call SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp)
+        call SetCrop_DaysToMaxRooting(Crop_DaysToMaxRooting_temp)
+        call SetCrop_DaysToHIo(Crop_DaysToHIo_temp)
+        call SetCrop_Length(Crop_Length_temp)
+        call SetCrop_CGC(Crop_CGC_temp)
+        call SetCrop_CDC(Crop_CDC_temp)
+        call SetCrop_dHIdt(Crop_dHIdt_temp)
+    case default
+        Succes = .true.
+    end select
+    if (.not. Succes) then
+        write(*,*) "ERROR AdjustCalendarCrop: looks like we ran out of ideas"
+        return
+    end if
+end subroutine AdjustCalendarCrop
+
+
 subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
                        GDDHarvest, CCx, GDDCDC, Tbase, Tupper, &
                        NoTempFileTMin, NoTempFileTMax, CDC)
@@ -961,18 +1221,51 @@ subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
             GDDi = 5._dp
         end if
         CCi = CCx * (1._dp - 0.05_dp  &
-                 * (exp(GDDi*(GDDCDC*3.33_dp)/(CCx+2.29_dp))-1_dp) )
+                 * (exp(real(GDDi,kind=dp)*(GDDCDC*3.33_dp)/(CCx+2.29_dp))-1._dp) )
        ! CC at time ti
     end if
     ti = SumCalendarDays(GDDi, (PlantDayNr+D123),&
               Tbase, Tupper, NoTempFileTMin, NoTempFileTMax)
     if (ti > 0) then
-        CDC = (((CCx+2.29_dp)/ti) &
+        CDC = (((CCx+2.29_dp)/real(ti, kind=dp)) &
                 * log(1._dp + ((1._dp-CCi/CCx)/0.05_dp)))/3.33_dp
     else
         CDC = undef_int
     end if
 end subroutine GDDCDCToCDC
+
+
+integer(int32) function RoundedOffGDD(PeriodGDD, PeriodDay,& 
+           FirstDayPeriod, TempTbase, TempTupper, TempTmin, TempTmax)
+    integer(int32), intent(in) :: PeriodGDD
+    integer(int32), intent(in) :: PeriodDay
+    integer(int32), intent(in) :: FirstDayPeriod
+    real(dp), intent(in) :: TempTbase
+    real(dp), intent(in) :: TempTupper
+    real(dp), intent(in) :: TempTmin
+    real(dp), intent(in) :: TempTmax
+
+    integer(int32) :: DayMatch, PeriodUpdatedGDD
+    real(dp) :: TempTmin_t, TempTmax_t
+
+    TempTmin_t = TempTmin
+    TempTmax_t = TempTmax
+
+    if (PeriodGDD > 0) then
+        DayMatch = SumCalendarDays(PeriodGDD, FirstDayPeriod, &
+                     TempTbase, TempTupper, TempTmin_t, TempTmax_t)
+        PeriodUpdatedGDD = GrowingDegreeDays(PeriodDay, FirstDayPeriod, &
+                     TempTbase, TempTupper, TempTmin_t, TempTmax_t)
+        if (PeriodDay == DayMatch) then
+            RoundedOffGDD = PeriodGDD
+        else
+            RoundedOffGDD = PeriodUpdatedGDD
+        end if
+    else
+        RoundedOffGDD = GrowingDegreeDays(PeriodDay, FirstDayPeriod,& 
+                     TempTbase, TempTupper, TempTmin_t, TempTmax_t)
+    end if
+end function RoundedOffGDD
 
 
 subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
@@ -1025,13 +1318,13 @@ subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
         ! 3.3 Ks(pollination) cold stress
         KsPolCS = KsTemperature(real(TempTcold-TempRange, kind=dp), &
                       real(TempTcold, kind=dp), Tndayi)
-        if (roundc(10000*KsPolCS, mold=1_int32) < 10000) then
+        if (roundc(10000._dp*KsPolCS, mold=1_int32) < 10000) then
             ColdStress = .true.
         end if
         ! 3.4 Ks(pollination) heat stress
         KsPolHS = KsTemperature(real(TempTheat+TempRange, kind=dp), &
                      real(TempTheat, kind=dp), Txdayi)
-        if (roundc(10000*KsPolHS, mold=1_int32) < 10000) then
+        if (roundc(10000._dp*KsPolHS, mold=1_int32) < 10000) then
             HeatStress = .true.
         end if
         ! 3.5 Adjust HI
@@ -1143,7 +1436,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
     if (file_exists) then
         ! open file and find first day of cropping period
         select case (GetTemperatureRecord_DataType())
-        case (0) !Daily   
+        case (datatype_daily) 
             open(newunit=fhandle1, file=trim(totalname), &
                      status='old', action='read', iostat=rc)
             read(fhandle1, *, iostat=rc) ! description
@@ -1159,7 +1452,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             end do
             read(fhandle1, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
             call SplitStringInTwoParams(StringREAD, Tlow, Thigh)
-        case (1) !Decadely
+        case (datatype_decadely)
             call GetDecadeTemperatureDataSet(CropFirstDay, TminDataSet, &
                         TmaxDataSet)
             i = 1
@@ -1168,7 +1461,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             end do
             Tlow = TminDataSet(i)%Param
             Thigh = TmaxDataSet(i)%Param
-        case (2) !Monthly 
+        case (datatype_monthly)
             call GetMonthlyTemperatureDataSet(CropFirstDay, TminDataSet, TmaxDataSet)
             i = 1
             do while (TminDataSet(i)%DayNr /= CropFirstDay)
@@ -1185,7 +1478,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
         ! next days of simulation period
         do RunningDay = (CropFirstDay + 1), CropLastDay
             select case (GetTemperatureRecord_DataType())
-            case (0) !Daily   
+            case (datatype_daily)  
                 if (rc == iostat_end) then
                     read(fhandle1, *, iostat=rc) ! description
                     read(fhandle1, *, iostat=rc) ! time step
@@ -1200,7 +1493,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
                 else
                     read(fhandle1, *, iostat=rc) Tlow, Thigh
                 end if
-            case (1) !Decadely:
+            case (datatype_decadely)
                 if (RunningDay > TminDataSet(31)%DayNr) then
                     call GetDecadeTemperatureDataSet(RunningDay, TminDataSet,&
                         TmaxDataSet)
@@ -1211,7 +1504,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
                 end do
                 Tlow = TminDataSet(i)%Param
                 Thigh = TmaxDataSet(i)%Param
-            case (2) !Monthly :
+            case (datatype_monthly)
                if (RunningDay > TminDataSet(31)%DayNr) then
                     call GetMonthlyTemperatureDataSet(RunningDay, TminDataSet,&
                         TmaxDataSet)
@@ -1226,7 +1519,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             write(fhandle2, '(2f10.4)') Tlow, Thigh
         end do
         ! Close files
-        if (GetTemperatureRecord_DataType() == 0) then !Daily
+        if (GetTemperatureRecord_DataType() == datatype_daily) then
            close(fhandle1)
         end if
         close(fhandle2)
@@ -1236,5 +1529,50 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
         ! fatal error if no air temperature file
     endif
 end subroutine TemperatureFileCoveringCropPeriod
+
+
+subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,& 
+                TheCropDay1, TheModeCycle, TheTbase, TheTupper,& 
+                L123, L1234, GDD123, GDD1234)
+    type(rep_CropFileSet), intent(in) :: TheCropFileSet
+    integer(int32), intent(in) :: LseasonDays
+    integer(int32), intent(in) :: TheCropDay1
+    integer(intEnum), intent(in) :: TheModeCycle
+    real(dp), intent(in) :: TheTbase
+    real(dp), intent(in) :: TheTupper
+    integer(int32), intent(inout) :: L123
+    integer(int32), intent(inout) :: L1234
+    integer(int32), intent(inout) :: GDD123
+    integer(int32), intent(inout) :: GDD1234
+
+    real(dp) :: Tmin_tmp, Tmax_tmp
+
+    ! Adjust some crop parameters (CROP.*) as specified by the generated length
+    ! season (LseasonDays)
+    ! time to maturity
+    L1234 = LseasonDays ! days
+    if (TheModeCycle == modeCycle_GDDDays) then
+        Tmin_tmp = GetSimulParam_Tmin()
+        Tmax_tmp = GetSimulParam_Tmax()
+        GDD1234 = GrowingDegreeDays(LseasonDays, TheCropDay1,&
+                       TheTbase, TheTupper, &
+                       Tmin_tmp, Tmax_tmp)
+    else
+        GDD1234 = undef_int
+    end if
+
+    ! time to senescence  (reference is given in TheCropFileSet
+    if (TheModeCycle == modeCycle_GDDDays) then
+        GDD123 = GDD1234 - TheCropFileSet%GDDaysFromSenescenceToEnd
+        Tmin_tmp = GetSimulParam_Tmin()
+        Tmax_tmp = GetSimulParam_Tmax()
+        L123 = SumCalendarDays(GDD123, TheCropDay1,&
+                    TheTbase, TheTupper,&
+                    Tmin_tmp, Tmax_tmp)
+    else
+        L123 = L1234 - TheCropFileSet%DaysFromSenescenceToEnd
+        GDD123 = undef_int
+    end if
+end subroutine AdjustCropFileParameters
 
 end module ac_tempprocessing
