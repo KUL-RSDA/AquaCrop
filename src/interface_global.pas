@@ -3702,6 +3702,11 @@ procedure SaveProfile_wrap(constref totalname : PChar;
                            constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_saveprofile_wrap';
 
+procedure DetermineParametersCR(constref SoilClass : ShortInt;
+                                constref KsatMM : double;
+                                var aParam, bParam : double);
+    external 'aquacrop' name '__ac_global_MOD_determineparameterscr';
+
 
 implementation
 

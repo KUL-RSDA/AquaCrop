@@ -3413,8 +3413,37 @@ subroutine SaveProfile(totalname)
     close(fhandle)
 
     ! maximum rooting depth in  soil profile for given crop
-    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), GetSoil_NrSoilLayers(), GetSoilLayer()))
+    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
+                            GetSoil_NrSoilLayers(), GetSoilLayer()))
 end subroutine SaveProfile
+
+subroutine DetermineParametersCR(SoilClass, KsatMM, aParam, bParam)
+    integer(int8), intent(in) :: SoilClass
+    real(dp), intent(in) :: KsatMM
+    real(dp), intent(inout) :: aParam
+    real(dp), intent(inout) :: bParam
+
+    ! determine parameters
+    if (roundc(KsatMM*1000, mold=1) <= 0) then
+        aParam = undef_int
+        bParam = undef_int
+    else
+        select case (SoilClass)
+            case(1) ! sandy soils
+                aParam = -0.3112_dp - KsatMM/100000._dp
+                bParam = -1.4936_dp + 0.2416_dp*log(KsatMM)
+            case(2) ! loamy soils
+                aParam = -0.4986_dp + 9._dp*KsatMM/100000._dp
+                bParam = -2.1320_dp + 0.4778_dp*log(KsatMM)
+            case(3) ! sandy clayey soils
+                aParam = -0.5677_dp - 4._dp*KsatMM/100000._dp
+                bParam = -3.7189_dp + 0.5922_dp*log(KsatMM)
+            case default ! silty clayey soils
+            aParam = -0.6366_dp + 8._dp*KsatMM/10000._dp
+            bParam = -1.9165_dp + 0.7063_dp*log(KsatMM)
+        end select
+    end if
+end subroutine DetermineParametersCR
 
 !! Global variables section !!
 

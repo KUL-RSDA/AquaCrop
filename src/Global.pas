@@ -99,10 +99,6 @@ PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR Compartment : rep_Comp;
                              //InitialWC : rep_InitialWC;
                              VAR TotalWaterContent : rep_Content);
-
-PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
-                                KsatMM : double;
-                                VAR aParam, bParam : double);
 FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
 PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  SaltDiffusion : ShortInt;  // percentage
@@ -730,37 +726,6 @@ DeclareInitialCondAtFCandNoSalt;
 SetSimulation_DayAnaero(0);
 
 END; (* specify_soil_layer *)
-
-PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
-                                KsatMM : double;
-                                VAR aParam, bParam : double);
-BEGIN
-// determine parameters
-IF (ROUND(KsatMM*1000) <= 0)
-   THEN BEGIN
-        aParam := undef_int;
-        bParam := undef_int;
-        END
-   ELSE CASE SoilClass OF
-             1 : BEGIN  // sandy soils
-                 aParam := -0.3112 - KsatMM/100000;
-                 bParam := -1.4936 + 0.2416*LN(KsatMM);
-                 END;
-             2 : BEGIN // loamy soils
-                 aParam := -0.4986 + 9*KsatMM/100000;
-                 bParam := -2.1320 + 0.4778*LN(KsatMM);
-                 END;
-             3 : BEGIN // sandy clayey soils
-                 aParam := -0.5677 - 4*KsatMM/100000;
-                 bParam := -3.7189 + 0.5922*LN(KsatMM);
-                 END;
-            else BEGIN // silty clayey soils
-                 aParam := -0.6366 + 8*KsatMM/10000;
-                 bParam := -1.9165 + 0.7063*LN(KsatMM);
-                 END;
-            end;
-END; (* DetermineParametersCR *)
-
 
 
 FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;

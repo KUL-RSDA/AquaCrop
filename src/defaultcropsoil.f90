@@ -5,7 +5,8 @@ use ac_kinds, only: int8, &
                     int32, &
                     dp
 
-use ac_global , only:   GetCropFileFull, &
+use ac_global , only:   DetermineParametersCR, &
+                        GetCropFileFull, &
                         GetCrop_CCo, &
                         GetCrop_PlantingDens, &
                         GetCrop_RootMin, &
