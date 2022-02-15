@@ -2428,7 +2428,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     real(dp) :: VersionNr
     integer(int8) :: simul_irri_in
     integer(int32) :: simul_percraw
-    character(len=255) :: StringREAD
+    character(len=1025) :: StringREAD
 
     open(newunit=fhandle, file=trim(FullName), &
                              status='old', action='read', iostat=rc)
@@ -2469,7 +2469,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     end select
 
     ! 1. Irrigation schedule
-    if ((i == 1) .and. (roundc(VersionNr*10,mold=1_int32) >= 70)) then
+    if ((i == 1) .and. (roundc(VersionNr*10,mold=1) >= 70)) then
         read(fhandle, *, iostat=rc) IrriFirstDayNr ! line 6
     else
         IrriFirstDayNr = undef_int ! start of growing period
