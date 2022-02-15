@@ -172,7 +172,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetSimulation_Storage_CropString, &
                      GetManDescription, &
                      SetManDescription, &
-                     LoadManagement
+                     LoadManagement, &
+                     SaveCrop
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -1875,6 +1876,17 @@ subroutine LoadManagement_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadManagement(string)
 end subroutine LoadManagement_wrap
+
+subroutine SaveCrop_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveCrop]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveCrop(totalname)
+end subroutine SaveCrop_wrap
 
 
 end module ac_interface_global

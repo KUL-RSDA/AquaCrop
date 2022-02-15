@@ -248,7 +248,7 @@ subroutine ResetDefaultCrop()
                                     ! transferred to above ground parts in next season
 
     call SetCropFilefull(CONCAT(GetPathNameSimul(), 'DEFAULT.CRO'))
-    SaveCrop(GetCropFilefull())
+    call SaveCrop(GetCropFilefull())
 end subroutine ResetDefaultCrop 
 
 

@@ -3684,6 +3684,12 @@ function ActualRootingDepth(
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
 
+procedure SaveCrop(constref totalname : string);
+
+procedure SaveCrop_wrap(constref totalname : string;
+                        constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_savecrop_wrap';
+
 
 implementation
 
@@ -6108,6 +6114,17 @@ begin
     ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
                                            GDDLZmax, SumGDD, Zmin, Zmax,
                                            ShapeFactor, int_TypeDays);
+end;
+
+procedure SaveCrop(constref totalname : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    SaveCrop_wrap(p,strlen);
 end;
 
 
