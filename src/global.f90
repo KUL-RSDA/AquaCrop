@@ -2786,7 +2786,7 @@ subroutine LoadManagement(FullName)
     else
         call SetManagement_RunoffON(.true.)   ! surface runoff is not prevented
     end if
-    if (roundc(VersionNr*10, mold=1_int32) < 50) then 
+    if (roundc(VersionNr*10, mold=1) < 50) then 
         ! UPDATE required for CN adjustment
         call SetManagement_CNcorrection(0)
     else
@@ -2794,7 +2794,7 @@ subroutine LoadManagement(FullName)
         call SetManagement_CNcorrection(TempInt)
     end if
     ! weed infestation
-    if (roundc(VersionNr*10, mold=1_int32) < 50) then 
+    if (roundc(VersionNr*10, mold=1) < 50) then 
         ! UPDATE required for Version 3.0, 3.1 and 4.0
         call SetManagement_WeedRC(0_int8) ! relative cover of weeds (%)
         call SetManagement_WeedDeltaRC(0)
@@ -2803,7 +2803,7 @@ subroutine LoadManagement(FullName)
     else
         read(fhandle, *) TempShortInt ! relative cover of weeds (%)
         call SetManagement_WeedRC(TempShortInt)
-        if (roundc(VersionNr*10, mold=1_int32) < 51) then
+        if (roundc(VersionNr*10, mold=1) < 51) then
             call SetManagement_WeedDeltaRC(0)
         else
             read(fhandle, *) TempShortInt
@@ -2813,7 +2813,7 @@ subroutine LoadManagement(FullName)
                                     ! function in a weed infested field
         call SetManagement_WeedShape(TempDouble)
     end if
-    if (roundc(VersionNr*10, mold=1_int32) < 70) then 
+    if (roundc(VersionNr*10, mold=1) < 70) then 
         ! UPDATE required for versions below 7
         call SetManagement_WeedAdj(100_int8) ! replacement (%) by weeds of the 
                                         ! self-thinned part of the Canopy Cover
@@ -2823,7 +2823,7 @@ subroutine LoadManagement(FullName)
         call SetManagement_WeedAdj(TempShortInt)
     end if
     ! multiple cuttings
-    if (roundc(VersionNr*10, mold=1_int32) >= 70) then 
+    if (roundc(VersionNr*10, mold=1) >= 70) then 
         ! UPDATE required for multiple cuttings
         read(fhandle, *) i  ! Consider multiple cuttings: True or False
         if (i == 0) then
