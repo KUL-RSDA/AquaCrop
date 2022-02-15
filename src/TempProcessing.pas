@@ -477,7 +477,7 @@ IF (GetManFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathManFile
         SetManFileFull(GetManFile());
-        ManDescription := 'No specific field management';
+        SetManDescription('No specific field management');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathManFile
