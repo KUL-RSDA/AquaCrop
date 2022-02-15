@@ -139,7 +139,7 @@ subroutine ResetDefaultCrop()
     call SetCrop_SumEToDelaySenescence(50) ! Sum(ETo) during stress period to be 
                                       ! exceeded before senescence is triggered
     call SetCrop_pPollination(0.90_dp)
-    call SetCrop_AnaeroPoint(5) ! Vol% for Anaerobiotic point ! (SAT - [vol%])
+    call SetCrop_AnaeroPoint(5) ! Vol% for Anaerobiotic point (* (SAT - [vol%])
                                 ! at which deficient aeration occurs 
 
     call SetCrop_StressResponse_Stress(50_int8)  ! Soil fertility stress at
@@ -197,7 +197,7 @@ subroutine ResetDefaultCrop()
                               ! cover (in fraction) per day
     call SetCrop_YearCCx(int(undef_int, int8)) ! the number of years at which CCx declines to 90% 
                                     ! of its value due to self-thining - Perennials
-    call SetCrop_CCxRoot(undef_double) ! shape factor of the decline of CCx over the 
+    call SetCrop_CCxRoot(dble(undef_int)) ! shape factor of the decline of CCx over the 
                                     ! years due to self-thinning - Perennials
     call SetCrop_CCx(0.80_dp) ! Maximum canopy cover (CCx) in fraction
     call SetCrop_CDC(0.1275_dp) ! Canopy decline coefficient (CDC): Decrease in 

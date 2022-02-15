@@ -2900,10 +2900,10 @@ subroutine SaveCrop(totalname)
     character(len=:), allocatable :: TempString
 
     open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
-    write(fhandle, *) GetCropDescription()
+    write(fhandle, '(a)') GetCropDescription()
     ! AquaCrop version
-    write(fhandle, *) '     7.0       : AquaCrop Version (June 2021)'
-    write(fhandle, *) '     1         : File not protected'
+    write(fhandle, '(a)') '     7.0       : AquaCrop Version (June 2021)'
+    write(fhandle, '(a)') '     1         : File not protected'
 
     ! SubKind
     i = 2
@@ -2987,7 +2987,7 @@ subroutine SaveCrop(totalname)
     '       : Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)'
     write(fhandle, '(f9.2,a)') GetCrop_pdef(), &
     '      : Soil water depletion fraction for stomatal control (p - sto) - Upper threshold'
-    write(fhandle, '(f8.1,a)') GetCrop_KsShapeFactorStomata, &
+    write(fhandle, '(f8.1,a)') GetCrop_KsShapeFactorStomata(), &
     '       : Shape factor for water stress coefficient for stomatal control (0.0 = straight line)'
     write(fhandle, '(f9.2,a)') GetCrop_pSenescence(), &
     '      : Soil water depletion factor for canopy senescence (p - sen) - Upper threshold'
@@ -3003,7 +3003,7 @@ subroutine SaveCrop(totalname)
         '      : Soil water depletion factor for pollination (p - pol) - Upper threshold'
     end if
     write(fhandle, '(i6,a)') GetCrop_AnaeroPoint(), &
-    '         : Vol% for Anaerobiotic point ! (SAT - [vol%]) at which deficient aeration occurs '
+    '         : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)'
 
     ! stress response
     write(fhandle, '(i6,a)') GetCrop_StressResponse_Stress(), &
@@ -3036,7 +3036,7 @@ subroutine SaveCrop(totalname)
         write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCDecline(), &
         '      : Shape factor for the response of decline of canopy cover to soil fertility stress'
     end if
-    write(fhandle, *) '    -9         : dummy - Parameter no Longer required'
+    write(fhandle, '(a)') '    -9         : dummy - Parameter no Longer required'
 
     ! temperature stress
     if (int(GetCrop_Tcold(), int32) == undef_int) then
@@ -3066,7 +3066,7 @@ subroutine SaveCrop(totalname)
     '         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)'
     write(fhandle, '(i6,a)') GetCrop_ECemax(), &
     '         : Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)'
-    write(fhandle, *) '    -9         : Dummy - no longer applicable' ! shape factor Ks(salt)-ECe
+    write(fhandle, '(a)') '    -9         : Dummy - no longer applicable' ! shape factor Ks(salt)-ECe
     write(fhandle, '(i6,a)') GetCrop_CCsaltDistortion(), &
     '         : Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))'
     write(fhandle, '(i6,a)') GetCrop_ResponseECsw(), &
@@ -3074,9 +3074,9 @@ subroutine SaveCrop(totalname)
 
     ! evapotranspiration
     write(fhandle, '(f9.2,a)') GetCrop_KcTop(),  &
-    '      : Crop coefficient when canopy is complete but prior to senescence (KcTr, x)'
+    '      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)'
     write(fhandle, '(f10.3,a)') GetCrop_KcDecline(), &
-    '     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc%'
+    '     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.'
     write(fhandle, '(f9.2,a)') GetCrop_RootMin(), &
     '      : Minimum effective rooting depth (m)'
     write(fhandle, '(f9.2,a)') GetCrop_RootMax(), &
@@ -3084,9 +3084,9 @@ subroutine SaveCrop(totalname)
     write(fhandle, '(i6,a)') GetCrop_RootShape(), &
     '         : Shape factor describing root zone expansion'
     write(fhandle, '(f10.3,a)') GetCrop_SmaxTopQuarter(), &
-    '     : Maximum root water extraction (m3water/m3soil%day) in top quarter of root zone'
+    '     : Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone'
     write(fhandle, '(f10.3,a)') GetCrop_SmaxBotQuarter(), &
-    '     : Maximum root water extraction (m3water/m3soil%day) in bottom quarter of root zone'
+    '     : Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone'
     write(fhandle, '(i6,a)') GetCrop_CCEffectEvapLate(), &
     '         : Effect of canopy cover in reducing soil evaporation in late season stage'
 
@@ -3113,7 +3113,7 @@ subroutine SaveCrop(totalname)
         write(fhandle, '(f9.2,a)') GetCrop_CCxRoot(), &
         '      : Shape factor of the decline of CCx over the years due to self-thinning - for Perennials'
     end if
-    write(fhandle, *) '    -9         : dummy - Parameter no Longer required'
+    write(fhandle, '(a)') '    -9         : dummy - Parameter no Longer required'
 
     write(fhandle, '(f9.2,a)') GetCrop_CCx(), &
     '      : Maximum canopy cover (CCx) in fraction soil cover'
@@ -3190,30 +3190,30 @@ subroutine SaveCrop(totalname)
         write(fhandle, '(i6,a)') undef_int, &
         '         : parameter NO LONGER required' ! Building up of Harvest Index (% of growing cycle)')
     else
-        write(fhandle, '(i6)') GetCrop_fExcess()
         if (GetCrop_fExcess() == undef_int) then
-            write(fhandle, *) '         : Excess of potential fruits - Not Applicable'
+            TempString = '         : Excess of potential fruits - Not Applicable'
         else
-            write(fhandle, *) '         : Excess of potential fruits (%)'
+            TempString = '         : Excess of potential fruits (%)'
         end if
+        write(fhandle, '(i6, a)') GetCrop_fExcess(), TempString
     end if
 
     ! Building-up of Harvest Index
-    write(fhandle, '(i6)') GetCrop_DaysToHIo()
     if (GetCrop_DaysToHIo() == undef_int) then
-        write(fhandle, *) '         : Building up of Harvest Index - Not Applicable'
+        TempString = '         : Building up of Harvest Index - Not Applicable'
     else
         select case (GetCrop_subkind())
             case(subkind_Vegetative, subkind_Forage) 
-                write(fhandle, *) '         : Building up of Harvest Index starting at sowing/transplanting (days)'
+                TempString = '         : Building up of Harvest Index starting at sowing/transplanting (days)'
             case(subkind_Grain)
-                write(fhandle, *) '         : Building up of Harvest Index starting at flowering (days)'
+                TempString = '         : Building up of Harvest Index starting at flowering (days)'
             case(subkind_Tuber) 
-                write(fhandle, *) '         : Building up of Harvest Index starting at root/tuber enlargement (days)'
+                TempString = '         : Building up of Harvest Index starting at root/tuber enlargement (days)'
             case default
-                write(fhandle, *) '         : Building up of Harvest Index during yield formation (days)'
+                TempString = '         : Building up of Harvest Index during yield formation (days)'
         end select
     end if
+    write(fhandle, '(i6, a)') GetCrop_DaysToHIo(), TempString
 
     ! yield response to water
     write(fhandle, '(f8.1,a)') GetCrop_WP(), &
