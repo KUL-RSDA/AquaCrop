@@ -1225,6 +1225,96 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
 end function TimeToReachZroot
 
 
+real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
+       LMaturity, GDDL0, GDDL123, GDDLMaturity, CCo, CCx,&
+       CGC, CDC, GDDCGC, GDDCDC, SumGDD, TypeDays, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LMaturity
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: SumGDD
+    integer(intEnum), intent(in) :: TypeDays
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    select case (TypeDays)
+    case (modeCycle_GDDDays)
+        CanopyCoverNoStressSF = CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123,&
+            GDDLMaturity, SumGDD, CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, SFRedCCx)
+    case default
+        CanopyCoverNoStressSF = CanopyCoverNoStressDaysSF(DAP, L0, L123,&
+            LMaturity, CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+    end select
+
+    contains
+
+    real(dp) function CanopyCoverNoStressDaysSF(DAP, L0, L123,&
+           LMaturity, CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L0
+        integer(int32), intent(in) :: L123
+        integer(int32), intent(in) :: LMaturity
+        real(dp), intent(in) :: CCo
+        real(dp), intent(in) :: CCx
+        real(dp), intent(in) :: CGC
+        real(dp), intent(in) :: CDC
+        integer(int8), intent(in) :: SFRedCGC
+        integer(int8), intent(in) :: SFRedCCx
+
+        real(dp) :: CC, CCxAdj, CDCadj
+        integer(int32) :: t
+
+        ! CanopyCoverNoStressDaysSF 
+        CC = 0.0_dp
+        t = DAP - GetSimulation_DelayedDays()
+        ! CC refers to canopy cover at the end of the day
+
+        if ((t >= 1) .and. (t <= LMaturity) .and. (CCo > 0)) then
+            if (t <= L0) then ! before germination or recovering of transplant
+                CC = 0._dp
+            else
+                if (t < L123) then ! Canopy development and Mid-season stage
+                    CC = CCatTime((t-L0), CCo, ((1._dp-SFRedCGC/100._dp)*CGC),&
+                                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                else
+                   ! Late-season stage  (t <= LMaturity)
+                    if (CCx < 0.001) then
+                        CC = 0._dp
+                    else
+                        CCxAdj = CCatTime((L123-L0), CCo, &
+                                  ((1._dp-SFRedCGC/100._dp)*CGC),&
+                                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                        CDCadj = CDC*(CCxAdj+2.29_dp)/(CCx+2.29_dp)
+                        if (CCxAdj < 0.001) then
+                            CC = 0._dp
+                        else
+                            CC = CCxAdj * (1._dp - 0.05_dp *&
+                                 (exp((t-L123)*3.33_dp*CDCAdj/(CCxAdj+2.29_dp))-1._dp))
+                        end if
+                    end if
+                end if
+            end if
+        end if
+        if (CC > 1) then
+            CC = 1._dp
+        end if
+        if (CC < 0) then
+            CC = 0._dp
+        end if
+        CanopyCoverNoStressDaysSF = CC
+    end function CanopyCoverNoStressDaysSF
+end function CanopyCoverNoStressSF
+
+
 real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
                                                GravelMassPercent)
     real(dp), intent(in)      :: PorosityPercent

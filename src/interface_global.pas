@@ -3684,6 +3684,13 @@ function ActualRootingDepth(
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
 
+function CanopyCoverNoStressSF(
+                constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                constref CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                constref TypeDays : rep_modeCycle;
+                constref SFRedCGC,SFRedCCx : ShortInt) : double;
+     external 'aquacrop' name '__ac_global_MOD_canopycovernostresssf';
+
 
 implementation
 
