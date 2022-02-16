@@ -5,8 +5,7 @@ interface
 uses SysUtils, interface_global;
 
 
-Const Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
-
+Const 
       NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
           'May','June','July','August','September','October','November','December');
 
@@ -29,8 +28,7 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ClimDescription,
-    IrriDescription,SWCiniDescription,
+    ClimDescription,IrriDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
     ClimRecord,
@@ -91,7 +89,7 @@ PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
                                           VAR Compartment : rep_Comp);
-PROCEDURE DeclareInitialCondAtFCandNoSalt;
+
 PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR SoilLayer : rep_SoilLayer;
                              VAR Compartment : rep_Comp;
@@ -106,9 +104,7 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  SaltDiffusion : ShortInt;  // percentage
                                  Macro : ShortInt;
                                  VAR Mobil : rep_salt);
-FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
-FUNCTION ECswComp (Comp : CompartmentIndividual;
-                   atFC : BOOLEAN) : double;
+
 PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
                       VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
 PROCEDURE DetermineSaltContent(ECe : double;
@@ -632,41 +628,6 @@ FOR i := (NrCompartments+1) TO max_No_compartments DO Compartment[i].Thickness :
 END; (* DesignateSoilLayerToCompartments *)
 
 
-PROCEDURE DeclareInitialCondAtFCandNoSalt;
-VAR layeri,compi,celli, ind : INTEGER;
-BEGIN
-SetSWCiniFile('(None)');
-SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
-SWCiniDescription := 'Soil water profile at Field Capacity';
-SetSimulation_IniSWC_AtDepths(false);
-SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
-FOR layeri := 1 TO GetSoil().NrSoilLayers DO
-    BEGIN
-    SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
-    SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
-    SetSimulation_IniSWC_SaltECe_i(layeri,0);
-    END;
-SetSimulation_IniSWC_AtFC(true);
-FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
-    BEGIN
-    SetSimulation_IniSWC_Loc_i(layeri,undef_double);
-    SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
-    SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
-    END;
-FOR compi := 1 TO GetNrCompartments() DO
-    IF (GetCompartment_Layer(compi) = 0) THEN ind := 1 //LB: added an if statement to avoid having index=0
-    ELSE ind := GetCompartment_Layer(compi);
-    For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
-        BEGIN // salinity in cells
-        SetCompartment_Salt(compi, celli, 0.0);
-        SetCompartment_Depo(compi, celli, 0.0);
-        END;
-END;(* DeclareInitialCondAtFCandNoSalt *)
-
-
-
-
-
 PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR SoilLayer : rep_SoilLayer;
                              VAR Compartment : rep_Comp;
@@ -807,40 +768,6 @@ FOR i := 1 to (CelMax-1) DO
 FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
 
 END; (* Calculate_Saltmobility *)
-
-
-
-FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
-VAR volSat, TotSalt : double;
-    i : INTEGER;
-BEGIN
-volSAT := (GetSoilLayer_i(Comp.Layer).SAT);
-TotSalt := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; //g/m2
-TotSalt := TotSalt/
-        (volSAT*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
-IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
-ECeComp := TotSalt/Equiv; //dS/m
-END; (* ECeComp *)
-
-
-
-FUNCTION ECswComp (Comp : CompartmentIndividual;
-                   atFC : BOOLEAN) : double;
-VAR TotSalt : double;
-    i : INTEGER;
-
-BEGIN
-TotSalt := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; // g/m2
-IF (atFC = true)
-   THEN TotSalt := TotSalt/
-                (GetSoilLayer_i(Comp.Layer).FC*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)) // g/l
-   ELSE TotSalt := TotSalt/
-                (Comp.theta*1000*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
-IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
-ECswComp := TotSalt/Equiv;
-END; (* ECswComp *)
 
 
 
@@ -3390,7 +3317,7 @@ PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double);
 VAR f0 : TextFile;
     i : ShortInt;
-    StringParam : string;
+    StringParam,swcinidescr_temp : string;
     VersionNr : double;
     CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
     NrLoc_temp : shortint;
@@ -3401,7 +3328,8 @@ BEGIN
 // Keep in mind that this could affect the graphical interface
 Assign(f0,SWCiniFileFull);
 Reset(f0);
-READLN(f0,SWCiniDescription);
+READLN(f0,swcinidescr_temp);
+setSWCiniDescription(swcinidescr_temp);
 READLN(f0,VersionNr); // AquaCrop Version
 IF (ROUND(10*VersionNr) < 41) // initial CC at start of simulation period
    THEN SetSimulation_CCini(undef_int)

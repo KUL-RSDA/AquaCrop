@@ -39,6 +39,11 @@ function SumCalendarDays(
             constref Tbase,Tupper,TDayMin,TDayMax : double) : integer;
         external 'aquacrop' name '__ac_tempprocessing_MOD_sumcalendardays';
 
+FUNCTION MaxAvailableGDD(
+            constref FromDayNr : LongInt;
+            constref Tbase,Tupper,TDayMin,TDayMax : double) : Double;
+         external 'aquacrop' name '__ac_tempprocessing_MOD_maxavailablegdd';
+
 procedure GDDCDCToCDC(
             constref PlantDayNr : LongInt;
             constref D123,GDDL123,GDDHarvest : INTEGER;
@@ -86,6 +91,16 @@ function ResetCropDay1(
             constref CropDay1IN : LongInt;
             constref SwitchToYear1 : BOOLEAN) : LongInt;
          external 'aquacrop' name '__ac_tempprocessing_MOD_resetcropday1';
+
+procedure CropStressParametersSoilSalinity(
+            constref CCxRed,CCdistortion : ShortInt;
+            constref CCo,CCx,CGC,GDDCGC : double;
+            constref CropDeterm : BOOLEAN;
+            constref L12,LFlor,LengthFlor,L123 : INTEGER;
+            constref GDDL12,GDDLFlor,GDDLengthFlor,GDDL123 : INTEGER;
+            constref TheModeCycle : rep_modeCycle;
+            VAR StressResponse : rep_EffectStress);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_cropstressparameterssoilsalinity';
 
 procedure TemperatureFileCoveringCropPeriod(
             constref CropFirstDay,CropLastDay : LongInt);

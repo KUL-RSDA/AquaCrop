@@ -10,9 +10,10 @@ use iso_fortran_env, only: iostat_end
 
 implicit none
 
-
+real(dp), parameter :: equiv = 0.64_dp
+    !! conversion factor: 1 dS/m = 0.64 g/l
 integer(int32), parameter :: max_SoilLayers = 5
-integer(int32), parameter :: max_No_compartments = 12;
+integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -918,6 +919,7 @@ character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
+character(len=:), allocatable :: SWCiniDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
@@ -951,6 +953,7 @@ integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -1130,6 +1133,39 @@ subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
     end do
 end subroutine ZrAdjustedToRestrictiveLayers
 
+subroutine DeclareInitialCondAtFCandNoSalt()
+
+    integer(int32) :: layeri, compi, celli, ind
+
+    call SetSWCiniFile('(None)')
+    call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+    call SetSWCiniDescription('Soil water profile at Field Capacity')
+    call SetSimulation_IniSWC_AtDepths(.false.)
+    call SetSimulation_IniSWC_NrLoc(GetSoil_NrSoilLayers())
+    do layeri = 1, GetSoil_NrSoilLayers()
+        call SetSimulation_IniSWC_Loc_i(layeri, GetSoilLayer_Thickness(layeri))
+        call SetSimulation_IniSWC_VolProc_i(layeri, GetSoilLayer_FC(layeri))
+        call SetSimulation_IniSWC_SaltECe_i(layeri, 0._dp)
+    end do
+    call SetSimulation_IniSWC_AtFC(.true.)
+    do layeri = (GetSoil_NrSoilLayers()+1), max_No_compartments
+        call SetSimulation_IniSWC_Loc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_VolProc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_SaltECe_i(layeri, undef_double)
+    end do
+    do compi = 1, GetNrCompartments()
+        if (GetCompartment_Layer(compi) == 0) then
+            ind = 1 ! LB: added an if statement to avoid having index=0
+        else
+            ind = GetCompartment_Layer(compi)
+        end if
+        do celli = 1, GetSoilLayer_SCP1(ind)
+            ! salinity in cells
+            call SetCompartment_Salt(compi, celli, 0.0_dp)
+            call SetCompartment_Depo(compi, celli, 0.0_dp)
+        end do
+    end do
+end subroutine DeclareInitialCondAtFCandNoSalt
 
 subroutine set_layer_undef(LayerData)
     type(SoilLayerIndividual), intent(inout) :: LayerData
@@ -2235,6 +2271,55 @@ subroutine DetermineCN_default(Infiltr, CN2)
 end subroutine DetermineCN_default
 
 
+real(dp) function ECeComp(Comp)
+    type(CompartmentIndividual), intent(in) :: Comp
+
+    real(dp) :: volSat, TotSalt, denominator
+    integer(int32) :: i
+
+    volSAT = GetSoilLayer_SAT(Comp%Layer)
+    TotSalt = 0._dp
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+
+    denominator = volSAT*10._dp * Comp%Thickness * &
+                  (1._dp - GetSoilLayer_GravelVol(Comp%Layer)/100._dp)
+    TotSalt = TotSalt / denominator  ! g/l
+
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+
+    ECeComp = TotSalt / Equiv ! dS/m
+end function ECeComp
+
+
+real(dp) function ECswComp(Comp, atFC)
+    type(CompartmentIndividual), intent(in) :: Comp
+    logical, intent(in) :: atFC
+
+    real(dp) :: TotSalt
+    integer(int32) :: i
+
+    TotSalt = 0
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+    if (atFC .eqv. .true.) then
+        TotSalt = TotSalt/ (GetSoilLayer_FC(Comp%Layer)*10._dp*Comp%Thickness &
+                    *(1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    else
+        TotSalt = TotSalt/(Comp%theta*1000._dp*Comp%Thickness* &
+                     (1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    end if
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+    ECswComp = TotSalt/Equiv
+end function ECswComp
+
+
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari
     integer(int32), intent(in) :: Yearx
@@ -3113,6 +3198,20 @@ subroutine SetSWCiniFile(str)
     SWCiniFile = str
 end subroutine SetSWCiniFile
 
+function GetSWCiniDescription() result(str)
+    !! Getter for the "SWCiniDescription" global variable.
+    character(len=len(SWCiniDescription)) :: str
+    
+    str = SWCiniDescription
+end function GetSWCiniDescription
+
+subroutine SetSWCiniDescription(str)
+    !! Setter for the "SWCiniDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    SWCiniDescription = str
+end subroutine SetSWCiniDescription
+
 
 function GetSWCiniFileFull() result(str)
     !! Getter for the "SWCiniFileFull" global variable.
@@ -3968,7 +4067,6 @@ function GetRainFile() result(str)
 
     str = RainFile
 end function GetRainFile
-
 
 subroutine SetRainFile(str)
     !! Setter for the "RainFile" global variable.
