@@ -147,10 +147,6 @@ PROCEDURE SetClimData;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 FUNCTION DayString(DNr : LongInt) : repstring17;
-FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                               CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                               TypeDays : rep_modeCycle;
-                               SFRedCGC,SFRedCCx : ShortInt) : double;
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
@@ -2624,60 +2620,6 @@ StrB := CONCAT(TRIM(strA),' ',Trim(NameMonth[monthi]),' ',Trim(strB));
 WHILE (Length(StrB) < 17) DO StrB := CONCAT(StrB,' ');
 DayString := StrB;
 END; (* DayString *)
-
-
-FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                               CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                               TypeDays : rep_modeCycle;
-                               SFRedCGC,SFRedCCx : ShortInt) : double;
-
-
-FUNCTION CanopyCoverNoStressDaysSF(DAP,L0,L123,LMaturity : INTEGER;
-                                 CCo,CCx,CGC,CDC : double;
-                                 SFRedCGC,SFRedCCx : ShortInt) : double;
-VAR CC,CCxAdj,CDCadj : double;
-    t : INTEGER;
-
-BEGIN (* CanopyCoverNoStressDaysSF *)
-CC := 0.0;
-t := DAP - GetSimulation_DelayedDays();
-// CC refers to canopy cover at the end of the day
-
-IF ((t >= 1) AND (t <= LMaturity) AND (CCo > 0)) THEN
-   BEGIN
-   IF (t <= L0) // before germination or recovering of transplant
-      THEN CC := 0
-      ELSE BEGIN
-           IF (t < L123) // Canopy development and Mid-season stage
-              THEN CC := CCatTime((t-L0),CCo,((1-SFRedCGC/100)*CGC),((1-SFRedCCx/100)*CCx))
-              ELSE BEGIN // Late-season stage  (t <= LMaturity)
-                   IF (CCx < 0.001)
-                      THEN CC := 0
-                      ELSE BEGIN
-                           CCxAdj := CCatTime((L123-L0),CCo,((1-SFRedCGC/100)*CGC),((1-SFRedCCx/100)*CCx));
-                           CDCadj := CDC*(CCxAdj+2.29)/(CCx+2.29);
-                           IF (CCxAdj < 0.001)
-                              THEN CC := 0
-                              //ELSE CC := CCxAdj * (1 - 0.05*(exp((t-L123)*CDC*3.33*((CCxAdj+2.29)/(CCx+2.29))/(CCxAdj+2.29))-1));
-                              ELSE CC := CCxAdj * (1 - 0.05*(exp((t-L123)*3.33*CDCAdj/(CCxAdj+2.29))-1));
-                           END;
-                   END;
-           END;
-   END;
-IF (CC > 1) THEN CC := 1;
-IF (CC < 0) THEN CC := 0;
-CanopyCoverNoStressDaysSF := CC;
-END; (* CanopyCoverNoStressDaysSF *)
-
-
-BEGIN (* CanopyCoverNoStressSF *)
-CASE TypeDays OF
-     GDDays : CanopyCoverNoStressSF := CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity,
-                                                  SumGDD,CCo,CCx,GDDCGC,GDDCDC,SFRedCGC,SFRedCCx);
-     else CanopyCoverNoStressSF := CanopyCoverNoStressDaysSF(DAP,L0,L123,LMaturity,
-                                               CCo,CCx,CGC,CDC,SFRedCGC,SFRedCCx);
-     end;
-END; (* CanopyCoverNoStressSF *)
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;

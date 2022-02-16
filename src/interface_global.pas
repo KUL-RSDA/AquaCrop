@@ -3731,6 +3731,19 @@ function ActualRootingDepth(
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
 
+function __CanopyCoverNoStressSF(
+                constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                constref CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                constref int_TypeDays : ShortInt;
+                constref SFRedCGC,SFRedCCx : ShortInt) : double;
+     external 'aquacrop' name '__ac_global_MOD_canopycovernostresssf';
+
+function CanopyCoverNoStressSF(
+                DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                TypeDays : rep_modeCycle;
+                SFRedCGC,SFRedCCx : ShortInt) : double;
+
 procedure DetermineNrandThicknessCompartments();
     external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
 
@@ -6185,6 +6198,22 @@ begin
     ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
                                            GDDLZmax, SumGDD, Zmin, Zmax,
                                            ShapeFactor, int_TypeDays);
+end;
+
+
+function CanopyCoverNoStressSF(
+                DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                TypeDays : rep_modeCycle;
+                SFRedCGC,SFRedCCx : ShortInt) : double;
+var
+    int_TypeDays: integer;
+begin
+    int_TypeDays := ord(TypeDays);
+    CanopyCoverNoStressSF := __CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,
+                                     GDDL0,GDDL123,GDDLMaturity, 
+                                     CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD,
+                                     int_TypeDays, SFRedCGC,SFRedCCx);
 end;
 
 
