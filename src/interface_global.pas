@@ -3684,6 +3684,14 @@ function ActualRootingDepth(
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
 
+procedure DetermineNrandThicknessCompartments();
+    external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
+
+function GetNrCompartments() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getnrcompartments';
+
+procedure SetNrCompartments(constref NrCompartments_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
 implementation
 

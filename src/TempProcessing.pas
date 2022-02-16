@@ -549,7 +549,7 @@ IF (Trim(TempString) = 'KeepSWC')
 
         //Adjust size of compartments if required
         TotDepth := 0;
-        FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
+        FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
         IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
            THEN BEGIN
                 IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
@@ -583,16 +583,16 @@ IF (Trim(TempString) = 'KeepSWC')
         Compartment_temp := GetCompartment();
         CASE GetSimulation_IniSWC_AtDepths() OF
              true : TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                                  GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                                  GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
              else TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                                GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                                GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
              end;
         SetCompartment(Compartment_temp);
 
 
         IF GetSimulation_ResetIniSWC() THEN // to reset SWC and SALT at end of simulation run
            BEGIN
-           FOR i := 1 TO NrCompartments DO
+           FOR i := 1 TO GetNrCompartments() DO
                BEGIN
                SetSimulation_ThetaIni_i(i,GetCompartment_Theta(i));
                SetSimulation_ECeIni_i(i,ECeComp(GetCompartment_i(i)));

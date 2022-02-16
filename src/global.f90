@@ -955,6 +955,8 @@ integer(intEnum) :: IrriMethod
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
 
+integer(int32) :: NrCompartments
+
 
 interface roundc
     module procedure roundc_int8
@@ -2891,6 +2893,31 @@ subroutine LoadManagement(FullName)
     end if
     close(fhandle)
 end subroutine LoadManagement
+
+subroutine DetermineNrandThicknessCompartments()
+
+    real(dp) :: TotalDepthL, TotalDepthC, DeltaZ
+    integer(int32) :: i
+
+    TotalDepthL = 0._dp
+    do i = 1, GetSoil_NrSoilLayers()
+        TotalDepthL = TotalDepthL + GetSoilLayer_Thickness(i)
+    end do
+    TotalDepthC = 0._dp
+    call SetNrCompartments(0)
+    loop: do 
+        DeltaZ = (TotalDepthL - TotalDepthC)
+        call SetNrCompartments(GetNrCompartments() + 1)
+        if (DeltaZ > GetSimulParam_CompDefThick()) then
+            call SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+        else
+            call SetCompartment_Thickness(GetNrCompartments(), DeltaZ)
+        end if
+        TotalDepthC = TotalDepthC + GetCompartment_Thickness(GetNrCompartments())
+        if ((GetNrCompartments() == max_No_compartments) &
+                .or. (abs(TotalDepthC - TotalDepthL) < 0.0001_dp)) exit loop
+        end do loop
+end subroutine DetermineNrandThicknessCompartments
 
 !! Global variables section !!
 
@@ -8743,6 +8770,19 @@ subroutine SetManDescription(str)
     
     ManDescription = str
 end subroutine SetManDescription
+
+integer(int32) function GetNrCompartments()
+    !! Getter for the "NrCompartments" global variable.
+
+    GetNrCompartments = NrCompartments
+end function GetNrCompartments
+
+subroutine SetNrCompartments(NrCompartments_in)
+    !! Setter for the "NrCompartments" global variable.
+    integer(int32), intent(in) :: NrCompartments_in
+
+    NrCompartments = NrCompartments_in
+end subroutine SetNrCompartments
 
 
 end module ac_global

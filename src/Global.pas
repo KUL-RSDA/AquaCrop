@@ -37,7 +37,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     EToRecord,
     RainRecord     : rep_clim;
     IrriFirstDayNr : LongInt;
-    NrCompartments : INTEGER;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -88,7 +87,6 @@ PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
-PROCEDURE DetermineNrandThicknessCompartments;
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
@@ -338,7 +336,7 @@ WITH SumWabal DO
   CRsalt := 0;
   END;
 SetTotalWaterContent_BeginDay(0);
-FOR i :=1 to NrCompartments DO
+FOR i :=1 to GetNrCompartments() DO
         SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
           + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
 END; (* GlobalZero *)
@@ -529,25 +527,6 @@ Close(f0);
 END; (* LoadIrriScheduleInfo *)
 
 
-PROCEDURE DetermineNrandThicknessCompartments;
-VAR TotalDepthL, TotalDepthC, DeltaZ : double;
-    i : INTEGER;
-BEGIN
-TotalDepthL := 0;
-FOR i := 1 TO GetSoil().NrSoilLayers DO TotalDepthL := TotalDepthL + GetSoilLayer_Thickness(i);
-TotalDepthC := 0;
-NrCompartments := 0;
-REPEAT
-  DeltaZ := (TotalDepthL - TotalDepthC);
-  NrCompartments := NrCompartments + 1;
-  IF (DeltaZ > GetSimulParam_CompDefThick())
-     THEN SetCompartment_Thickness(NrCompartments, GetSimulParam_CompDefThick())
-     ELSE SetCompartment_Thickness(NrCompartments, DeltaZ);
-  TotalDepthC := TotalDepthC + GetCompartment_Thickness(NrCompartments);
-UNTIL ((NrCompartments = max_No_compartments) OR (Abs(TotalDepthC - TotalDepthL) < 0.0001));
-END; (* DetermineNrandThicknessCompartments *)
-
-
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 VAR compi,ic : INTEGER;
@@ -592,8 +571,8 @@ FOR compi := 1 TO NrCompartments DO
 
 
 Depth := 0;
-FOR compi := 1 TO NrCompartments DO Depth := Depth + CompartAdj[compi].Thickness;
-compi := NrCompartments;
+FOR compi := 1 TO GetNrCompartments() DO Depth := Depth + CompartAdj[compi].Thickness;
+compi := GetNrCompartments();
 REPEAT
   Zi := Depth - CompartAdj[compi].Thickness/2;
   //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
@@ -678,7 +657,7 @@ FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
     SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
     END;
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     IF (GetCompartment_Layer(compi) = 0) THEN ind := 1 //LB: added an if statement to avoid having index=0
     ELSE ind := GetCompartment_Layer(compi);
     For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
@@ -936,7 +915,7 @@ SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
 Compartment_temp := GetCompartment();
 soillayer_temp := GetSoilLayer();
-specify_soil_layer(NrCompartments,GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
+specify_soil_layer(GetNrCompartments(),GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
 SetSoilLayer(soillayer_temp);
 SetTotalWaterContent(TotalWaterContent_temp);
 SetCompartment(Compartment_temp);
@@ -2255,7 +2234,7 @@ IF (ZiAqua < 0) // no ground water table
             END;
         END
    ELSE BEGIN
-        SetSimulation_IniSWC_NrLoc(NrCompartments);
+        SetSimulation_IniSWC_NrLoc(GetNrCompartments());
         FOR Loci := 1 TO GetSimulation_IniSWC_NrLoc() DO
             BEGIN
             SetSimulation_IniSWC_Loc_i(Loci,GetCompartment_Thickness(Loci));
@@ -2263,7 +2242,7 @@ IF (ZiAqua < 0) // no ground water table
             SetSimulation_IniSWC_SaltECe_i(Loci,0.0);
         END;
     END;
-FOR compi := 1 to NrCompartments DO
+FOR compi := 1 to GetNrCompartments() DO
     BEGIN
     SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
@@ -2643,7 +2622,7 @@ REPEAT
   SetRootZoneWC_SAT(GetRootZoneWC().SAT
      + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * GetCompartment_Thickness(compi)
               * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
+UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
 
 // calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
 IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
@@ -2685,7 +2664,7 @@ IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
             + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
             - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
               * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = NrCompartments);
+        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = GetNrCompartments());
         END;
 
 // Relative depletion in rootzone and in top soil
@@ -2974,7 +2953,7 @@ IF (RootingDepth >= GetCrop().RootMin)
         ZrECe := ZrECe + Factor * ECeComp(GetCompartment_i(compi));
         ZrECsw := ZrECsw + Factor * ECswComp(GetCompartment_i(compi),(false)); // not at FC
         ZrECswFC := ZrECswFC + Factor * ECswComp(GetCompartment_i(compi),(true)); // at FC
-        UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
+        UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
         IF (((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax))
            THEN ZrKsSalt := KsSalinity((true),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0))
            ELSE ZrKsSalt := KsSalinity((false),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0));
@@ -3676,7 +3655,7 @@ VAR layeri,compi : INTEGER;
 BEGIN
 //1. Actual total depth of compartments
 TotDepthC := 0;
-FOR compi := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
+FOR compi := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
 
 //2. Stretch thickness of bottom soil layer if required
 TotDepthL := 0;
@@ -3685,7 +3664,7 @@ IF (TotDepthC > TotDepthL) THEN SetSoilLayer_Thickness(GetSoil().NrSoilLayers, G
 
 //3. Assign a soil layer to each soil compartment
 Compartment_temp := GetCompartment();
-DesignateSoilLayerToCompartments(NrCompartments,GetSoil().NrSoilLayers,Compartment_temp);
+DesignateSoilLayerToCompartments(GetNrCompartments(),GetSoil().NrSoilLayers,Compartment_temp);
 SetCompartment(Compartment_temp);
 
 //4. Adjust initial Soil Water Content of soil compartments
@@ -3695,26 +3674,26 @@ IF GetSimulation_ResetIniSWC()
            THEN BEGIN
                 Compartment_temp := GetCompartment();
                 TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END
            ELSE BEGIN
                 Compartment_temp := GetCompartment();
                 TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END;
         END
    ELSE BEGIN
         Compartment_temp := GetCompartment();
-        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,NrCompartments,Compartment_temp);
+        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,GetNrCompartments(),Compartment_temp);
         SetCompartment(Compartment_temp);
         END;
 
 //5. Adjust watercontent in soil layers and determine ThetaIni
 Total := 0;
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
     SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
@@ -3735,7 +3714,7 @@ VAR i ,compi : INTEGER;
 BEGIN
 
 //1. Save intial soil water profile (required when initial soil water profile is NOT reset at start simulation - see 7.)
-PrevNrComp := NrCompartments;
+PrevNrComp := GetNrCompartments();
 FOR compi := 1 To prevnrComp DO
     BEGIN
     PrevThickComp[compi] := GetCompartment_Thickness(compi);
@@ -3744,22 +3723,22 @@ FOR compi := 1 To prevnrComp DO
 
 //2. Actual total depth of compartments
 TotDepthC := 0;
-FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
+FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
 
 //3. Increase number of compartments (if less than 12)
-IF (NrCompartments < 12) THEN
+IF (GetNrCompartments() < 12) THEN
    REPEAT
-   NrCompartments := NrCompartments + 1;
+   SetNrCompartments(GetNrCompartments() + 1);
    IF ((CropZx - TotDepthC) > GetSimulParam_CompDefThick())
-      THEN SetCompartment_Thickness(NrCompartments, GetSimulParam_CompDefThick())
-      ELSE SetCompartment_Thickness(NrCompartments, CropZx - TotDepthC);
-   TotDepthC := TotDepthC + GetCompartment_Thickness(NrCompartments);
-   UNTIL ((NrCompartments = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
+      THEN SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+      ELSE SetCompartment_Thickness(GetNrCompartments(), CropZx - TotDepthC);
+   TotDepthC := TotDepthC + GetCompartment_Thickness(GetNrCompartments());
+   UNTIL ((GetNrCompartments() = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
 
 //4. Adjust size of compartments (if total depth of compartments < rooting depth)
 IF ((TotDepthC + 0.00001) < CropZx) THEN
    BEGIN
-   NrCompartments := 12;
+   SetNrCompartments(12);
    fAdd := (CropZx/0.1 - 12)/78;
    FOR i := 1 TO 12 DO
        BEGIN
@@ -3767,7 +3746,7 @@ IF ((TotDepthC + 0.00001) < CropZx) THEN
        SetCompartment_Thickness(i, 0.05 * ROUND(GetCompartment_Thickness(i) * 20));
        END;
    TotDepthC := 0;
-   FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
+   FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
    IF (TotDepthC < CropZx)
       THEN REPEAT
            SetCompartment_Thickness(12, GetCompartment_Thickness(12) + 0.05);
@@ -3800,7 +3779,7 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    Ztot := Ztot + ProfileComp[compi].Thickness;
    Zi := Ztot - ProfileComp[compi].Thickness/2;
    IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
+   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
 END; (* CheckForWaterTableInProfile *)
 
 
