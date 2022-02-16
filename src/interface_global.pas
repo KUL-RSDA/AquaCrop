@@ -5,6 +5,7 @@ interface
 
 
 const
+    Equiv = 0.64;   // conversion factor: 1 dS/m = 0.64 g/l
     max_SoilLayers = 5;
     max_No_compartments = 12;
     undef_double = -9.9;
@@ -15,6 +16,8 @@ const
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
 
 type
+    Pdouble = ^double;
+
     rep_string25 = string[25]; (* Description SoilLayer *)
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
@@ -1117,7 +1120,7 @@ procedure DetermineDate(
             constref DayNr : longint;
             var Dayi,Monthi,Yeari : integer);
          external 'aquacrop' name '__ac_global_MOD_determinedate';
-                        
+
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;
             constref ShapeRootDeepening : shortint;
@@ -3650,6 +3653,32 @@ procedure SetSoilLayer_CRb(constref i : integer;
                          constref CRb : double);
     external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
 
+function ECeComp(constref Comp : CompartmentIndividual) : double;
+
+function ECeComp_wrap(
+            constref Thickness : double;
+            constref Layer : integer;
+            constref Salt_ptr : Pdouble;
+            constref Salt_len : integer;
+            constref Depo_ptr : Pdouble;
+            constref Depo_len : integer) : double;
+    external 'aquacrop' name '__ac_interface_global_MOD_ececomp_wrap';
+
+function ECswComp(
+            constref Comp : CompartmentIndividual;
+            constref atFC : boolean) : double;
+
+function ECswComp_wrap(
+            constref Thickness : double;
+            constref theta :  double;
+            constref Layer : integer;
+            constref Salt_ptr : Pdouble;
+            constref Salt_len : integer;
+            constref Depo_ptr : Pdouble;
+            constref Depo_len : integer;
+            constref atFC : boolean) : double;
+    external 'aquacrop' name '__ac_interface_global_MOD_ecswcomp_wrap';
+
 procedure NoManagement;
     external 'aquacrop' name '__ac_global_MOD_nomanagement';
 
@@ -3692,6 +3721,7 @@ function GetNrCompartments() : integer;
 
 procedure SetNrCompartments(constref NrCompartments_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
+
 
 implementation
 
@@ -6116,6 +6146,36 @@ begin
     ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
                                            GDDLZmax, SumGDD, Zmin, Zmax,
                                            ShapeFactor, int_TypeDays);
+end;
+
+
+function ECeComp(constref Comp : CompartmentIndividual) : double;
+var
+    Salt_ptr, Depo_ptr : Pdouble;
+    Salt_len, Depo_len : integer;
+begin
+    Salt_ptr := @Comp.Salt[1];
+    Salt_len := Length(Comp.Salt);
+    Depo_ptr := @Comp.Depo[1];
+    Depo_len := Length(Comp.Depo);
+    ECeComp := ECeComp_wrap(Comp.Thickness, Comp.Layer, Salt_ptr, Salt_len,
+                            Depo_ptr, Depo_len);
+end;
+
+
+function ECswComp(
+            constref Comp : CompartmentIndividual;
+            constref atFC : boolean) : double;
+var
+    Salt_ptr, Depo_ptr : Pdouble;
+    Salt_len, Depo_len : integer;
+begin
+    Salt_ptr := @Comp.Salt[1];
+    Salt_len := Length(Comp.Salt);
+    Depo_ptr := @Comp.Depo[1];
+    Depo_len := Length(Comp.Depo);
+    ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
+                              Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
 end;
 
 

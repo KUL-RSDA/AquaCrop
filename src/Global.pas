@@ -5,8 +5,7 @@ interface
 uses SysUtils, interface_global;
 
 
-Const Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
-
+Const 
       NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
           'May','June','July','August','September','October','November','December');
 
@@ -106,9 +105,7 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  SaltDiffusion : ShortInt;  // percentage
                                  Macro : ShortInt;
                                  VAR Mobil : rep_salt);
-FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
-FUNCTION ECswComp (Comp : CompartmentIndividual;
-                   atFC : BOOLEAN) : double;
+
 PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
                       VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
 PROCEDURE DetermineSaltContent(ECe : double;
@@ -811,40 +808,6 @@ FOR i := 1 to (CelMax-1) DO
 FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
 
 END; (* Calculate_Saltmobility *)
-
-
-
-FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
-VAR volSat, TotSalt : double;
-    i : INTEGER;
-BEGIN
-volSAT := (GetSoilLayer_i(Comp.Layer).SAT);
-TotSalt := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; //g/m2
-TotSalt := TotSalt/
-        (volSAT*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
-IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
-ECeComp := TotSalt/Equiv; //dS/m
-END; (* ECeComp *)
-
-
-
-FUNCTION ECswComp (Comp : CompartmentIndividual;
-                   atFC : BOOLEAN) : double;
-VAR TotSalt : double;
-    i : INTEGER;
-
-BEGIN
-TotSalt := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; // g/m2
-IF (atFC = true)
-   THEN TotSalt := TotSalt/
-                (GetSoilLayer_i(Comp.Layer).FC*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)) // g/l
-   ELSE TotSalt := TotSalt/
-                (Comp.theta*1000*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
-IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
-ECswComp := TotSalt/Equiv;
-END; (* ECswComp *)
 
 
 
