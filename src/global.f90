@@ -2142,24 +2142,30 @@ subroutine DetermineCN_default(Infiltr, CN2)
     end if
 end subroutine DetermineCN_default
 
+
 real(dp) function ECeComp(Comp)
     type(CompartmentIndividual), intent(in) :: Comp
 
-    real(dp) :: volSat, TotSalt
+    real(dp) :: volSat, TotSalt, denominator
     integer(int32) :: i
 
     volSAT = GetSoilLayer_SAT(Comp%Layer)
-    TotSalt = 0
+    TotSalt = 0._dp
     do i = 1, GetSoilLayer_SCP1(Comp%Layer)
         TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
     end do
-    TotSalt = TotSalt/(volSAT*10._dp*Comp%Thickness*(1._dp - &
-                             GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) !g/l
+
+    denominator = volSAT*10._dp * Comp%Thickness * &
+                  (1._dp - GetSoilLayer_GravelVol(Comp%Layer)/100._dp)
+    TotSalt = TotSalt / denominator  ! g/l
+
     if (TotSalt > GetSimulParam_SaltSolub()) then
         TotSalt = GetSimulParam_SaltSolub()
     end if
-    ECeComp = TotSalt/Equiv ! dS/m
+
+    ECeComp = TotSalt / Equiv ! dS/m
 end function ECeComp
+
 
 real(dp) function ECswComp(Comp, atFC)
     type(CompartmentIndividual), intent(in) :: Comp
@@ -2184,6 +2190,7 @@ real(dp) function ECswComp(Comp, atFC)
     end if
     ECswComp = TotSalt/Equiv
 end function ECswComp
+
 
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari

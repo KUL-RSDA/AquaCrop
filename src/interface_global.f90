@@ -170,7 +170,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetSimulation_IniSWC_AtDepths, &
                      SetSimulation_IniSWC_AtFC, &
                      GetSimulation_Storage_CropString, &
-                     SetSimulation_Storage_CropString
+                     SetSimulation_Storage_CropString, &
+                     CompartmentIndividual, &
+                     ECeComp, &
+                     ECswComp
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -179,7 +182,30 @@ use ac_kinds, only: dp, &
 implicit none
 
 
+
+interface pointer2array
+    module procedure pointer2array_dp
+end interface pointer2array
+
+
 contains
+
+
+function pointer2array_dp(c_pointer, arrlen, mold) result(array)
+    !! Returns a Fortran string from a C-pointer plus the array length.
+    type(c_ptr), intent(in) :: c_pointer
+        !! C-style pointer
+    integer(int32), intent(in) :: arrlen
+        !! Length of the array
+    real(dp), intent(in) :: mold
+        !! Defines the type of array
+    real(dp), dimension(arrlen) :: array
+
+    real(dp), pointer, dimension(:) :: f_pointer
+
+    call c_f_pointer(c_pointer, f_pointer, [arrlen])
+    array(:) = f_pointer(:)
+end function pointer2array_dp
 
 
 function pointer2string(c_pointer, strlen) result(string)
@@ -269,18 +295,6 @@ function GetCrop_StressResponse_Calibrated_wrap() result(Calibrated)
 
     Calibrated = GetCrop_StressResponse_Calibrated()
 end function GetCrop_StressResponse_Calibrated_wrap
-
-real(dp) function ECswComp_wrap(Comp, atFC)
-    !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
-
-    type(compartmentindividual), intent(in) :: Comp
-    logical, intent(in) :: atFC
-
-    logical :: atFC_f
-    
-    atFC_f = atFC
-    ECswComp_wrap = ECswComp(Comp, atFC_f)
-end function ECswComp_wrap
 
 subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
     !! Wrapper for [[ac_global:SetCrop_StressResponse_Calibrated]] for foreign languages.
@@ -1857,5 +1871,49 @@ subroutine SetSimulation_Storage_CropString_wrap(CropString, strlen)
     call SetSimulation_Storage_CropString(string)
 end subroutine SetSimulation_Storage_CropString_wrap
 
+
+real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
+                               Depo_len)
+    !! Wrapper for [[ac_global:ECeComp]] for foreign languages.
+    real(dp), intent(in) :: Thickness
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+
+    type(CompartmentIndividual) :: comp
+
+    comp%Thickness = Thickness
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    ECeComp_wrap = ECeComp(comp)
+end function ECeComp_wrap
+
+
+real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
+                                Depo_ptr, Depo_len, atFC)
+    !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
+    real(dp), intent(in) :: Thickness
+    real(dp), intent(in) :: theta
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+    logical(1), intent(in) :: atFC
+
+    type(CompartmentIndividual) :: comp
+    logical :: atFC_f
+
+    comp%Thickness = Thickness
+    comp%theta = theta
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    atFC_f = logical(atFC)
+    ECswComp_wrap = ECswComp(comp, atFC_f)
+end function ECswComp_wrap
 
 end module ac_interface_global
