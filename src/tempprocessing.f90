@@ -1008,7 +1008,7 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
     if (GetTemperatureFile() == '(None)') then
         DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                        GetSimulParam_GDDMethod())
-        if (DayGDD <= 0) then
+        if (DayGDD <= epsilon(1._dp)) then
             MaxGDDays = 0._dp
         end if
     else
