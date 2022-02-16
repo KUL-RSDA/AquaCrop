@@ -486,6 +486,9 @@ function TimeRootFunction(
             constref tmax, t0 : double) : double;
          external 'aquacrop' name '__ac_global_MOD_timerootfunction';
 
+procedure DeclareInitialCondAtFCandNoSalt();
+         external 'aquacrop' name '__ac_global_MOD_declareinitialcondatfcandnosalt';
+
 procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
          external 'aquacrop' name '__ac_global_MOD_set_layer_undef';
@@ -1604,6 +1607,18 @@ procedure SetSWCiniFileFull_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setswcinifilefull_wrap';
 
+function GetSWCiniDescription(): string;
+
+function GetSWCiniDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getswcinidescription_wrap';
+
+procedure SetSWCiniDescription(constref str : string);
+
+procedure SetSWCiniDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinidescription_wrap';
+
 function Geteffectiverain() : rep_EffectiveRain;
 
 function Geteffectiverain_Method() : rep_EffectiveRainMethod;
@@ -2598,6 +2613,9 @@ function GetSoil(): rep_Soil;
 
 procedure SetSoil_REW(constref REW : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
+
+function GetSoil_NrSoilLayers() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoil_nrsoillayers';
 
 procedure SetSoil_NrSoilLayers(constref NrSoilLayers : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_nrsoillayers';
@@ -5160,6 +5178,27 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetSWCiniFileFull_wrap(p, strlen);
+end;
+
+function GetSWCiniDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetSWCiniDescription_wrap();
+    GetSWCiniDescription := AnsiString(p);
+end;
+
+
+procedure SetSWCiniDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetSWCiniDescription_wrap(p, strlen);
 end;
 
 

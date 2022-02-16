@@ -405,7 +405,7 @@ IF (Trim(TempString) = 'KeepSWC')
    THEN BEGIN
         // No load of soil file (which reset thickness compartments and Soil water content to FC)
         SetSWCIniFile('KeepSWC');
-        SWCIniDescription := 'Keep soil water profile of previous run';
+        SetSWCIniDescription('Keep soil water profile of previous run');
         READLN(f0);  //PathSWCIniFile
         END
    ELSE BEGIN
@@ -438,7 +438,7 @@ IF (Trim(TempString) = 'KeepSWC')
            THEN BEGIN
                 READLN(f0);  //PathSWCIniFile
                 SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
-                SWCiniDescription := 'Soil water profile at Field Capacity';
+                SetSWCiniDescription('Soil water profile at Field Capacity');
                 END
            ELSE BEGIN
                 READLN(f0,TempString);  //PathSWCIniFile
