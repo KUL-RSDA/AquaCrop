@@ -1280,7 +1280,7 @@ real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
         t = DAP - GetSimulation_DelayedDays()
         ! CC refers to canopy cover at the end of the day
 
-        if ((t >= 1) .and. (t <= LMaturity) .and. (CCo > 0)) then
+        if ((t >= 1) .and. (t <= LMaturity) .and. (CCo > epsilon(1._dp))) then
             if (t <= L0) then ! before germination or recovering of transplant
                 CC = 0._dp
             else
@@ -1309,7 +1309,7 @@ real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
         if (CC > 1) then
             CC = 1._dp
         end if
-        if (CC < 0) then
+        if (CC < epsilon(1._dp)) then
             CC = 0._dp
         end if
         CanopyCoverNoStressDaysSF = CC
