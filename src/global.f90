@@ -1852,6 +1852,7 @@ real(dp) function MaxCRatDepth(ParamCRa, ParamCRb, Ksat, Zi, DepthGWT)
         if (Zi >= DepthGWT) then
             CRmax = 99._dp
         else
+            write(*,*) "is", ParamCRa
             CRmax = exp((log(DepthGWT - Zi) - ParamCRb)/ParamCRa)
             if (CRmax > 99._dp) then
                 CRmax = 99._dp
