@@ -3403,12 +3403,12 @@ subroutine SaveProfile(totalname)
     write(fhandle, '(a)') &
     '  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------'
     do i = 1, GetSoil_NrSoilLayers()
-        write(fhandle, '(f8.2, f8.1, f6.1, f6.1, f8.1, i11, i10, f14.6, f10.6, a, i15)') &
+        write(fhandle, '(f8.2, f8.1, f6.1, f6.1, f8.1, i11, i10, f14.6, f10.6, a, a)') &
                             GetSoilLayer_Thickness(i), GetSoilLayer_SAT(i), &
                             GetSoilLayer_FC(i), GetSoilLayer_WP(i), &
                             GetSoilLayer_InfRate(i), GetSoilLayer_Penetrability(i), &
                             GetSoilLayer_GravelMass(i), GetSoilLayer_CRa(i), &
-                            GetSoilLayer_CRb(i), '   ', GetSoilLayer_Description(i)
+                            GetSoilLayer_CRb(i), '   ', trim(GetSoilLayer_Description(i))
     end do
     close(fhandle)
 

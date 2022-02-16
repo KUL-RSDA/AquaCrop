@@ -285,6 +285,7 @@ end subroutine ResetDefaultCrop
 subroutine ResetDefaultSoil()
 
     real(dp) :: cra_temp, crb_temp
+    character(len=25) :: TempString
 
     call SetProfDescription('deep loamy soil profile')
     call SetSoil_CNvalue(61_int8) ! for an initial abstraction of 0.05 S
@@ -298,7 +299,8 @@ subroutine ResetDefaultSoil()
     call SetSoilLayer_Penetrability(1, 100_int8)
     call SetSoilLayer_GravelMass(1, 0_int8)
     call SetSoilLayer_GravelVol(1, 0._dp)
-    call SetSoilLayer_Description(1, 'Loamy soil horizon')
+    TempString = 'Loamy soil horizon'
+    call SetSoilLayer_Description(1, TempString)
     call SetSoilLayer_SoilClass(1, &
                 NumberSoilClass(GetSoilLayer_SAT(1), GetSoilLayer_FC(1), &
                                 GetSoilLayer_WP(1), GetSoilLayer_InfRate(1)))
