@@ -134,7 +134,7 @@ IF (TheProjectType = TypePRM) THEN
 IF ((Out1Wabal) OR (Out3Prof = true) OR (Out4Salt = true)) THEN
    BEGIN
    Zprof := 0;
-   FOR compi :=1 to NrCompartments DO Zprof := Zprof + GetCompartment_Thickness(compi);
+   FOR compi :=1 to GetNrCompartments() DO Zprof := Zprof + GetCompartment_Thickness(compi);
    Str(Zprof:4:2,Str1);
    IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
       THEN Str(GetCrop().RootMax:4:2,Str2)
@@ -181,12 +181,12 @@ IF Out4Salt THEN
 IF Out5CompWC THEN
    BEGIN
    WRITE(fDaily,'       WC01');
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        Str(Compi:2,Str1);
        WRITE(fDaily,'       WC',Str1);
        END;
-   Str(NrCompartments:2,Str1);
+   Str(GetNrCompartments():2,Str1);
    IF ((Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,'       WC',Str1)
       ELSE WRITELN(fDaily,'       WC',Str1);
@@ -195,12 +195,12 @@ IF Out5CompWC THEN
 IF Out6CompEC THEN
    BEGIN
    WRITE(fDaily,'      ECe01');
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        Str(Compi:2,Str1);
        WRITE(fDaily,'      ECe',Str1);
        END;
-   Str(NrCompartments:2,Str1);
+   Str(GetNrCompartments():2,Str1);
    IF (Out7Clim = true)
       THEN WRITE(fDaily,'      ECe',Str1)
       ELSE WRITELN(fDaily,'      ECe',Str1);
@@ -248,12 +248,12 @@ IF Out5CompWC THEN
    BEGIN
    NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(Compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
-   NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
+   NodeD := NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2 + GetCompartment_Thickness(GetNrCompartments())/2;
    IF ((Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,NodeD:11:2)
       ELSE WRITELN(fDaily,NodeD:11:2);
@@ -263,12 +263,12 @@ IF Out6CompEC THEN
    BEGIN
    NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
-   NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
+   NodeD := NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2 + GetCompartment_Thickness(GetNrCompartments())/2;
    IF (Out7Clim = true)
       THEN WRITE(fDaily,NodeD:11:2)
       ELSE WRITELN(fDaily,NodeD:11:2);
@@ -406,7 +406,7 @@ Var Ztot, Zi : double;
     Compi_temp : CompartmentIndividual;
 BEGIN
 Ztot := 0;
-FOR compi := 1 to NrCompartments DO
+FOR compi := 1 to GetNrCompartments() DO
     BEGIN
     Ztot := Ztot + GetCompartment_Thickness(compi);
     Zi := Ztot - GetCompartment_Thickness(compi)/2;
@@ -2247,10 +2247,10 @@ IF Out4Salt THEN
 IF Out5CompWC THEN
    BEGIN
    WRITE(fDaily,(GetCompartment_Theta(1)*100):11:1);
-   FOR Nr := 2 TO (NrCompartments-1) DO WRITE(fDaily,(GetCompartment_Theta(Nr)*100):11:1);
+   FOR Nr := 2 TO (GetNrCompartments()-1) DO WRITE(fDaily,(GetCompartment_Theta(Nr)*100):11:1);
    IF ((Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,(GetCompartment_Theta(NrCompartments)*100):11:1)
-      ELSE WRITELN(fDaily,(GetCompartment_Theta(NrCompartments)*100):11:1);
+      THEN WRITE(fDaily,(GetCompartment_Theta(GetNrCompartments())*100):11:1)
+      ELSE WRITELN(fDaily,(GetCompartment_Theta(GetNrCompartments())*100):11:1);
    END;
 
 // 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
@@ -2258,12 +2258,12 @@ IF Out6CompEC THEN
    BEGIN
    SaltVal := ECeComp(GetCompartment_i(1));
    WRITE(fDaily,SaltVal:11:1);
-   FOR Nr := 2 TO (NrCompartments-1) DO
+   FOR Nr := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        SaltVal := ECeComp(GetCompartment_i(Nr));
        WRITE(fDaily,SaltVal:11:1);
        END;
-   SaltVal := ECeComp(GetCompartment_i(NrCompartments));
+   SaltVal := ECeComp(GetCompartment_i(GetNrCompartments()));
    IF (Out7Clim = true)
       THEN WRITE(fDaily,SaltVal:11:1)
       ELSE WRITELN(fDaily,SaltVal:11:1);
@@ -2306,7 +2306,7 @@ VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
               END;
       SWCact := SWCact + Factor * 10 * (GetCompartment_Theta(compi)*100) * GetCompartment_Thickness(compi);
 
-    UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = NrCompartments));
+    UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = GetNrCompartments()));
     SWCZsoil := SWCact;
     END; (* SWCZsoil *)
 
@@ -2553,7 +2553,7 @@ VAR RepeatToDay : LongInt;
          PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
          SetCompartment_Theta(compi, ThetaPercRaw);
          END;
-    UNTIL ((SumDepth >= RootingDepth) OR (compi = NrCompartments))
+    UNTIL ((SumDepth >= RootingDepth) OR (compi = GetNrCompartments()))
     END; (* AdjustSWCRootZone *)
 
 
@@ -3092,7 +3092,7 @@ VAR NrRun : ShortInt;
     BEGIN
     //Adjust size of compartments if required
     TotDepth := 0;
-    FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
+    FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
     IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
        THEN BEGIN
             IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
