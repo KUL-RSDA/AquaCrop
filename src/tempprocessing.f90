@@ -419,8 +419,11 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         integer(int32), intent(inout) :: X3
         integer(int32), intent(inout) :: t1
 
+        integer(int32), parameter :: n1 = 30
+        integer(int32), parameter :: n2 = 30
+        integer(int32), parameter :: n3 = 30
         integer(int32) :: fhandle
-        integer(int32) :: Mfile, Yfile, n1, n2, n3, Nri, Obsi, rc
+        integer(int32) :: Mfile, Yfile, Nri, Obsi, rc
         logical :: OK3
 
         ! 1. Prepare record
@@ -828,7 +831,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             ! given average Tmin and Tmax
             DayGDD = DegreesDay(Tbase, Tupper, &
                        TDayMin, TDayMax, GetSimulParam_GDDMethod())
-            if (DayGDD == 0) then
+            if (abs(DayGDD) < epsilon(1._dp)) then
                 NrCDays = -9
             else
                 NrCDays = roundc(ValGDDays/DayGDD, mold=1_int32)
@@ -1230,6 +1233,39 @@ subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
         CDC = undef_int
     end if
 end subroutine GDDCDCToCDC
+
+
+integer(int32) function RoundedOffGDD(PeriodGDD, PeriodDay,& 
+           FirstDayPeriod, TempTbase, TempTupper, TempTmin, TempTmax)
+    integer(int32), intent(in) :: PeriodGDD
+    integer(int32), intent(in) :: PeriodDay
+    integer(int32), intent(in) :: FirstDayPeriod
+    real(dp), intent(in) :: TempTbase
+    real(dp), intent(in) :: TempTupper
+    real(dp), intent(in) :: TempTmin
+    real(dp), intent(in) :: TempTmax
+
+    integer(int32) :: DayMatch, PeriodUpdatedGDD
+    real(dp) :: TempTmin_t, TempTmax_t
+
+    TempTmin_t = TempTmin
+    TempTmax_t = TempTmax
+
+    if (PeriodGDD > 0) then
+        DayMatch = SumCalendarDays(PeriodGDD, FirstDayPeriod, &
+                     TempTbase, TempTupper, TempTmin_t, TempTmax_t)
+        PeriodUpdatedGDD = GrowingDegreeDays(PeriodDay, FirstDayPeriod, &
+                     TempTbase, TempTupper, TempTmin_t, TempTmax_t)
+        if (PeriodDay == DayMatch) then
+            RoundedOffGDD = PeriodGDD
+        else
+            RoundedOffGDD = PeriodUpdatedGDD
+        end if
+    else
+        RoundedOffGDD = GrowingDegreeDays(PeriodDay, FirstDayPeriod,& 
+                     TempTbase, TempTupper, TempTmin_t, TempTmax_t)
+    end if
+end function RoundedOffGDD
 
 
 subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
