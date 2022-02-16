@@ -25,7 +25,6 @@ use ac_global, only: CheckFilesInProject, &
                      GetIrriDescription, &
                      GetIrriFile, &
                      GetIrriFileFull, &
-                     GetIrriDescription, &
                      GetClimateFile, &
                      GetClimateFileFull, &
                      GetClimateDescription, &

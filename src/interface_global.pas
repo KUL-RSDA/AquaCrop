@@ -3445,7 +3445,7 @@ function GetIrriAfterSeason_DayNr(constref i : integer) : integer;
     external 'aquacrop' name '__ac_global_MOD_getirriafterseason_daynr';
 
 function GetIrriAfterSeason_Param(constref i : integer) : integer;
-    external 'aquacrop' name '__ac_global_MOD_getirriafterseason_daynr';
+    external 'aquacrop' name '__ac_global_MOD_getirriafterseason_param';
 
 procedure SetIrriAfterSeason_DayNr(constref i : integer;
                                    constref DayNr : integer);
@@ -3474,7 +3474,7 @@ function GetIrriBeforeSeason_DayNr(constref i : integer) : integer;
     external 'aquacrop' name '__ac_global_MOD_getirribeforeseason_daynr';
 
 function GetIrriBeforeSeason_Param(constref i : integer) : integer;
-    external 'aquacrop' name '__ac_global_MOD_getirribeforeseason_daynr';
+    external 'aquacrop' name '__ac_global_MOD_getirribeforeseason_param';
 
 procedure SetIrriBeforeSeason_DayNr(constref i : integer;
                                    constref DayNr : integer);
