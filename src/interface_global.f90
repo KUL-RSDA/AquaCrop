@@ -171,7 +171,10 @@ use ac_global, only: CheckFilesInProject, &
                      SetSimulation_IniSWC_AtDepths, &
                      SetSimulation_IniSWC_AtFC, &
                      GetSimulation_Storage_CropString, &
-                     SetSimulation_Storage_CropString
+                     SetSimulation_Storage_CropString, &
+                     GetManDescription, &
+                     SetManDescription, &
+                     LoadManagement
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -1862,6 +1865,35 @@ subroutine SetSimulation_Storage_CropString_wrap(CropString, strlen)
     string = pointer2string(CropString, strlen)
     call SetSimulation_Storage_CropString(string)
 end subroutine SetSimulation_Storage_CropString_wrap
+
+function GetManDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManDescription())
+end function GetManDescription_wrap
+
+subroutine SetManDescription_wrap(ManDescription, strlen)
+    !! Wrapper for [[ac_global:SetManDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ManDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManDescription, strlen)
+    call SetManDescription(string)
+end subroutine SetManDescription_wrap
+
+subroutine LoadManagement_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadManagement]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadManagement(string)
+end subroutine LoadManagement_wrap
 
 
 end module ac_interface_global

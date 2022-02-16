@@ -24,7 +24,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ClimDescription,
-    IrriDescription,ManDescription,SWCiniDescription,
+    IrriDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
     ClimRecord,
@@ -80,6 +80,7 @@ PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
 PROCEDURE NoManagement;
 PROCEDURE LoadManagement(FullName : string);
 
+PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
@@ -338,7 +339,6 @@ FOR i :=1 to NrCompartments DO
           + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
 END; (* GlobalZero *)
 
-
 PROCEDURE NoManagement;
 var EffectStress_temp : rep_EffectStress;
 BEGIN
@@ -490,6 +490,27 @@ IF (ROUND(VersionNr*10) >= 70)  // UPDATE required for multiple cuttings
         END;
 Close(f0);
 END; (* LoadManagement *)
+
+PROCEDURE NoIrrigation;
+VAR Nri : INTEGER;
+BEGIN
+ SetIrriMode(NoIrri);
+ IrriDescription := 'Rainfed cropping';
+ SetIrriMethod(MSprinkler);
+ SetSimulation_IrriECw(0.0); // dS/m
+ SetGenerateTimeMode(AllRAW);
+ SetGenerateDepthMode(ToFC);
+ IrriFirstDayNr := undef_int;
+ FOR Nri := 1 TO 5 DO
+     BEGIN
+     IrriBeforeSeason[Nri].DayNr := 0;
+     IrriBeforeSeason[Nri].Param := 0;
+     IrriAfterSeason[Nri].DayNr := 0;
+     IrriAfterSeason[Nri].Param := 0;
+     END;
+ SetIrriECw_PreSeason(0.0); //dS/m
+ SetIrriECw_PostSeason(0.0); //dS/m
+END; (* NoIrrigation *)
 
 
 PROCEDURE NoManagementOffSeason;
