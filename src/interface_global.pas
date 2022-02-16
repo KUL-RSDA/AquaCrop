@@ -3684,6 +3684,7 @@ function ActualRootingDepth(
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
 
+<<<<<<< HEAD
 function __CanopyCoverNoStressSF(
                 constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
                 constref CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
@@ -3696,6 +3697,16 @@ function CanopyCoverNoStressSF(
                 CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
                 TypeDays : rep_modeCycle;
                 SFRedCGC,SFRedCCx : ShortInt) : double;
+=======
+procedure DetermineNrandThicknessCompartments();
+    external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
+
+function GetNrCompartments() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getnrcompartments';
+
+procedure SetNrCompartments(constref NrCompartments_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
+>>>>>>> 3d9cd5cb88a5ac19cd8cb5e5bd003840039cb26b
 
 implementation
 

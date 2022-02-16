@@ -72,7 +72,7 @@ IF (ROUND(Ziprev) = undef_int)
             ZiTest := Ziprev + dZ; // restrictive soil layer is considered by ActualRootingDepth
             compi := 0;
             Zsoil := 0;
-            While ((Zsoil < ZiTest) AND (compi < NrCompartments)) DO
+            While ((Zsoil < ZiTest) AND (compi < GetNrCompartments())) DO
                BEGIN
                compi := compi + 1;
                Zsoil := Zsoil + GetCompartment_Thickness(compi);
