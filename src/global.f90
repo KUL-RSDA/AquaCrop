@@ -918,6 +918,7 @@ character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
+character(len=:), allocatable :: SWCiniDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
@@ -950,6 +951,8 @@ integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
+
+integer(int32) :: NrCompartments
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -1127,6 +1130,39 @@ subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
     end do
 end subroutine ZrAdjustedToRestrictiveLayers
 
+subroutine DeclareInitialCondAtFCandNoSalt()
+
+    integer(int32) :: layeri, compi, celli, ind
+
+    call SetSWCiniFile('(None)')
+    call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+    call SetSWCiniDescription('Soil water profile at Field Capacity')
+    call SetSimulation_IniSWC_AtDepths(.false.)
+    call SetSimulation_IniSWC_NrLoc(GetSoil_NrSoilLayers())
+    do layeri = 1, GetSoil_NrSoilLayers()
+        call SetSimulation_IniSWC_Loc_i(layeri, GetSoilLayer_Thickness(layeri))
+        call SetSimulation_IniSWC_VolProc_i(layeri, GetSoilLayer_FC(layeri))
+        call SetSimulation_IniSWC_SaltECe_i(layeri, 0._dp)
+    end do
+    call SetSimulation_IniSWC_AtFC(.true.)
+    do layeri = (GetSoil_NrSoilLayers()+1), max_No_compartments
+        call SetSimulation_IniSWC_Loc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_VolProc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_SaltECe_i(layeri, undef_double)
+    end do
+    do compi = 1, NrCompartments
+        if (GetCompartment_Layer(compi) == 0) then
+            ind = 1 ! LB: added an if statement to avoid having index=0
+        else
+            ind = GetCompartment_Layer(compi)
+        end if
+        do celli = 1, GetSoilLayer_SCP1(ind)
+            ! salinity in cells
+            call SetCompartment_Salt(compi, celli, 0.0_dp)
+            call SetCompartment_Depo(compi, celli, 0.0_dp)
+        end do
+    end do
+end subroutine DeclareInitialCondAtFCandNoSalt
 
 subroutine set_layer_undef(LayerData)
     type(SoilLayerIndividual), intent(inout) :: LayerData
@@ -2807,6 +2843,20 @@ subroutine SetSWCiniFile(str)
     SWCiniFile = str
 end subroutine SetSWCiniFile
 
+function GetSWCiniDescription() result(str)
+    !! Getter for the "SWCiniDescription" global variable.
+    character(len=len(SWCiniDescription)) :: str
+    
+    str = SWCiniDescription
+end function GetSWCiniDescription
+
+subroutine SetSWCiniDescription(str)
+    !! Setter for the "SWCiniDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    SWCiniDescription = str
+end subroutine SetSWCiniDescription
+
 
 function GetSWCiniFileFull() result(str)
     !! Getter for the "SWCiniFileFull" global variable.
@@ -3520,6 +3570,19 @@ subroutine SetEToDescription(str)
     EToDescription = str
 end subroutine SetEToDescription
 
+function GetNrCompartments() result(i)
+    !! Getter for the "NrCompartments" global variable.
+    integer(int32) :: i
+
+    i = NrCompartments
+end function GetNrCompartments
+
+subroutine SetNrCompartments(i)
+    !! Setter for the "NrCompartments" global variable.
+    integer(int32) :: i
+
+    i = NrCompartments
+end subroutine SetNrCompartments
 
 function GetRainFile() result(str)
     !! Getter for the "RainFile" global variable.
@@ -3527,7 +3590,6 @@ function GetRainFile() result(str)
 
     str = RainFile
 end function GetRainFile
-
 
 subroutine SetRainFile(str)
     !! Setter for the "RainFile" global variable.
@@ -4713,6 +4775,14 @@ subroutine SetSoil_REW(REW)
 
     Soil%REW = REW
 end subroutine SetSoil_REW
+
+
+function GetSoil_NrSoilLayers() result(NrSoilLayers)
+    !! Getter for the "NrSoilLayer" global variable.
+    integer(int8) :: NrSoilLayers
+
+    NrSoilLayers = soil%NrSoilLayers
+end function GetSoil_NrSoilLayers
 
 subroutine SetSoil_NrSoilLayers(NrSoilLayers)
     !! Setter for the "Soil" global variable.

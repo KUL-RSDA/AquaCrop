@@ -32,6 +32,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetEndSeason_GenerateTempOn, &
                      GetSWCiniFile, &
                      GetSWCiniFileFull, &
+                     GetSWCiniDescription, &
                      GetProjectFile, &
                      GetProjectFileFull, &
                      GetMultipleProjectFile, &
@@ -101,6 +102,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToDescription, &
                      setSWCiniFile, &
                      setSWCiniFileFull, &
+                     SetSWCiniDescription, &
                      SetSimulParam_CNcorrection, &
                      SetSimulParam_ConstGwt, &
                      SetPathNameProg, &
@@ -764,6 +766,25 @@ subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
     string = pointer2string(SWCiniFileFull, strlen)
     call SetSWCiniFileFull(string)
 end subroutine SetSWCiniFileFull_wrap
+
+function GetSWCiniDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetSWCiniDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetSWCiniDescription())
+end function GetSWCiniDescription_wrap
+
+subroutine SetSWCiniDescription_wrap(SWCiniDescription, strlen)
+    !! Wrapper for [[ac_global:SetSWCiniDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: SWCiniDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniDescription, strlen)
+    call SetSWCiniDescription(string)
+end subroutine SetSWCiniDescription_wrap
+
 
 function GetSimulParam_CNcorrection_wrap() result(CNcorrection)
     !! Wrapper for [[ac_global:GetSimulParam_CNcorrection]] for foreign languages.
