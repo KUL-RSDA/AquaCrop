@@ -89,6 +89,8 @@ VAR f0,fClim : TextFile;
     VersionNr : double;
     FertStress : shortint;
     temperature_record : rep_clim;
+    rain_record : rep_clim;
+    ETo_record : rep_clim;
     YearSeason_temp, RedCGC_temp, RedCCX_temp : ShortInt;
     Compartment_temp : rep_Comp;
     TempInt : integer;
@@ -195,9 +197,11 @@ IF (GetEToFile() = '(None)')
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetEToFilefull(CONCAT(Trim(TempString),GetEToFile()));
         eto_descr := GetEToDescription();
-        LoadClim(GetEToFilefull(),eto_descr,EToRecord);
+        ETo_record := GetEToRecord();
+        LoadClim(GetEToFilefull(),eto_descr,ETo_record);
         SetEToDescription(eto_descr); 
-        CompleteClimateDescription(EToRecord);
+        CompleteClimateDescription(ETo_record);
+        SetEToRecord(ETo_record);
         END;
 // 1.3 Rain
 READLN(f0); // Info Rain
@@ -214,9 +218,11 @@ IF (GetRainFile() = '(None)')
         TempString := StringReplace(TempString, '"', '', [rfReplaceAll]);
         SetRainFileFull(CONCAT(Trim(TempString),GetRainFile()));
         rain_descr := Getraindescription();
-        LoadClim(GetRainFilefull(),rain_descr,RainRecord);
+        rain_record := GetRainRecord();
+        LoadClim(GetRainFilefull(),rain_descr,rain_record);
         SetRainDescription(rain_descr);
-        CompleteClimateDescription(RainRecord);
+        CompleteClimateDescription(rain_record);
+        SetRainRecord(rain_record);
         END;
 // 1.4 CO2
 READLN(f0); // Info CO2
@@ -312,8 +318,8 @@ IF (GetClimFile() = '(None)')
    ELSE SetCrop_DayN(GetCrop().Day1 + GetCrop().DaysToHarvest - 1);
 
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
-IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
-   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
+IF ((GetClimFile() <> '(None)') AND (GetClimRecord_FromY() = 1901)
+   AND (GetClimRecord_NrObs() = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
 (* adjusting simulation period *)
 AdjustSimPeriod;
 

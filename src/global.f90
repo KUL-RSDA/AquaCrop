@@ -946,7 +946,7 @@ type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
-type(rep_clim)  :: TemperatureRecord
+type(rep_clim)  :: TemperatureRecord, ClimRecord, RainRecord, EToRecord
 type(rep_sim) :: Simulation
 
 integer(intEnum) :: GenerateTimeMode
@@ -7608,6 +7608,498 @@ subroutine SetTemperatureRecord_FromString(FromString)
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
+
+type(rep_clim) function GetClimRecord()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord = ClimRecord
+end function GetClimRecord
+
+integer(intEnum) function GetClimRecord_DataType()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_DataType = ClimRecord%DataType
+end function GetClimRecord_DataType
+
+integer(int32) function GetClimRecord_FromD()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromD = ClimRecord%FromD
+end function GetClimRecord_FromD
+
+integer(int32) function GetClimRecord_FromM()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromM = ClimRecord%FromM
+end function GetClimRecord_FromM
+
+integer(int32) function GetClimRecord_FromY()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromY = ClimRecord%FromY
+end function GetClimRecord_FromY
+
+integer(int32) function GetClimRecord_ToD()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToD = ClimRecord%ToD
+end function GetClimRecord_ToD
+
+integer(int32) function GetClimRecord_ToM()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToM = ClimRecord%ToM
+end function GetClimRecord_ToM
+
+integer(int32) function GetClimRecord_ToY()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToY = ClimRecord%ToY
+end function GetClimRecord_ToY
+
+integer(int32) function GetClimRecord_FromDayNr()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromDayNr = ClimRecord%FromDayNr
+end function GetClimRecord_FromDayNr
+
+integer(int32) function GetClimRecord_ToDayNr()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToDayNr = ClimRecord%ToDayNr
+end function GetClimRecord_ToDayNr
+
+function GetClimRecord_FromString() result(str)
+    !! Getter for the "ClimRecord" global variable.
+    character(len=len(ClimRecord%FromString)) :: str 
+
+    str = ClimRecord%FromString
+end function GetClimRecord_FromString
+
+function GetClimRecord_ToString() result(str)
+    !! Getter for the "ClimRecord" global variable.
+    character(len=len(ClimRecord%ToString)) :: str 
+
+    str = ClimRecord%ToString
+end function GetClimRecord_ToString
+
+integer(int32) function GetClimRecord_NrObs()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_NrObs = ClimRecord%NrObs
+end function GetClimRecord_NrObs
+
+subroutine SetClimRecord_DataType(DataType)
+    !! Setter for the "ClimRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    ClimRecord%DataType = DataType
+end subroutine SetClimRecord_DataType
+
+subroutine SetClimRecord_FromD(FromD)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    ClimRecord%FromD = FromD
+end subroutine SetClimRecord_FromD
+
+subroutine SetClimRecord_FromM(FromM)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    ClimRecord%FromM = FromM
+end subroutine SetClimRecord_FromM
+
+subroutine SetClimRecord_FromY(FromY)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    ClimRecord%FromY = FromY
+end subroutine SetClimRecord_FromY
+
+subroutine SetClimRecord_ToD(ToD)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    ClimRecord%ToD = ToD
+end subroutine SetClimRecord_ToD
+
+subroutine SetClimRecord_ToM(ToM)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    ClimRecord%ToM = ToM
+end subroutine SetClimRecord_ToM
+
+subroutine SetClimRecord_TOY(ToY)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    ClimRecord%ToY = ToY
+end subroutine SetClimRecord_ToY
+
+subroutine SetClimRecord_ToDayNr(ToDayNr)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    ClimRecord%ToDayNr = ToDayNr
+end subroutine SetClimRecord_ToDayNr
+
+subroutine SetClimRecord_FromDayNr(FromDayNr)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    ClimRecord%FromDayNr = FromDayNr
+end subroutine SetClimRecord_FromDayNr
+
+subroutine SetClimRecord_NrObs(NrObs)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    ClimRecord%NrObs = NrObs
+end subroutine SetClimRecord_NrObs
+
+subroutine SetClimRecord_ToString(ToString)
+    !! Setter for the "ClimRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    ClimRecord%ToString = ToString
+end subroutine SetClimRecord_ToString
+
+subroutine SetClimRecord_FromString(FromString)
+    !! Setter for the "ClimRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    ClimRecord%FromString = FromString
+end subroutine SetClimRecord_FromString
+
+type(rep_clim) function GetRainRecord()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord = RainRecord
+end function GetRainRecord
+
+integer(intEnum) function GetRainRecord_DataType()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_DataType = RainRecord%DataType
+end function GetRainRecord_DataType
+
+integer(int32) function GetRainRecord_FromD()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromD = RainRecord%FromD
+end function GetRainRecord_FromD
+
+integer(int32) function GetRainRecord_FromM()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromM = RainRecord%FromM
+end function GetRainRecord_FromM
+
+integer(int32) function GetRainRecord_FromY()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromY = RainRecord%FromY
+end function GetRainRecord_FromY
+
+integer(int32) function GetRainRecord_ToD()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToD = RainRecord%ToD
+end function GetRainRecord_ToD
+
+integer(int32) function GetRainRecord_ToM()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToM = RainRecord%ToM
+end function GetRainRecord_ToM
+
+integer(int32) function GetRainRecord_ToY()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToY = RainRecord%ToY
+end function GetRainRecord_ToY
+
+integer(int32) function GetRainRecord_FromDayNr()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromDayNr = RainRecord%FromDayNr
+end function GetRainRecord_FromDayNr
+
+integer(int32) function GetRainRecord_ToDayNr()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToDayNr = RainRecord%ToDayNr
+end function GetRainRecord_ToDayNr
+
+function GetRainRecord_FromString() result(str)
+    !! Getter for the "RainRecord" global variable.
+    character(len=len(RainRecord%FromString)) :: str 
+
+    str = RainRecord%FromString
+end function GetRainRecord_FromString
+
+function GetRainRecord_ToString() result(str)
+    !! Getter for the "RainRecord" global variable.
+    character(len=len(RainRecord%ToString)) :: str 
+
+    str = RainRecord%ToString
+end function GetRainRecord_ToString
+
+integer(int32) function GetRainRecord_NrObs()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_NrObs = RainRecord%NrObs
+end function GetRainRecord_NrObs
+
+subroutine SetRainRecord_DataType(DataType)
+    !! Setter for the "RainRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    RainRecord%DataType = DataType
+end subroutine SetRainRecord_DataType
+
+subroutine SetRainRecord_FromD(FromD)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    RainRecord%FromD = FromD
+end subroutine SetRainRecord_FromD
+
+subroutine SetRainRecord_FromM(FromM)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    RainRecord%FromM = FromM
+end subroutine SetRainRecord_FromM
+
+subroutine SetRainRecord_FromY(FromY)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    RainRecord%FromY = FromY
+end subroutine SetRainRecord_FromY
+
+subroutine SetRainRecord_ToD(ToD)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    RainRecord%ToD = ToD
+end subroutine SetRainRecord_ToD
+
+subroutine SetRainRecord_ToM(ToM)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    RainRecord%ToM = ToM
+end subroutine SetRainRecord_ToM
+
+subroutine SetRainRecord_TOY(ToY)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    RainRecord%ToY = ToY
+end subroutine SetRainRecord_ToY
+
+subroutine SetRainRecord_ToDayNr(ToDayNr)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    RainRecord%ToDayNr = ToDayNr
+end subroutine SetRainRecord_ToDayNr
+
+subroutine SetRainRecord_FromDayNr(FromDayNr)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    RainRecord%FromDayNr = FromDayNr
+end subroutine SetRainRecord_FromDayNr
+
+subroutine SetRainRecord_NrObs(NrObs)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    RainRecord%NrObs = NrObs
+end subroutine SetRainRecord_NrObs
+
+subroutine SetRainRecord_ToString(ToString)
+    !! Setter for the "RainRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    RainRecord%ToString = ToString
+end subroutine SetRainRecord_ToString
+
+subroutine SetRainRecord_FromString(FromString)
+    !! Setter for the "RainRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    RainRecord%FromString = FromString
+end subroutine SetRainRecord_FromString
+
+type(rep_clim) function GetEToRecord()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord = EToRecord
+end function GetEToRecord
+
+integer(intEnum) function GetEToRecord_DataType()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_DataType = EToRecord%DataType
+end function GetEToRecord_DataType
+
+integer(int32) function GetEToRecord_FromD()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromD = EToRecord%FromD
+end function GetEToRecord_FromD
+
+integer(int32) function GetEToRecord_FromM()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromM = EToRecord%FromM
+end function GetEToRecord_FromM
+
+integer(int32) function GetEToRecord_FromY()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromY = EToRecord%FromY
+end function GetEToRecord_FromY
+
+integer(int32) function GetEToRecord_ToD()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToD = EToRecord%ToD
+end function GetEToRecord_ToD
+
+integer(int32) function GetEToRecord_ToM()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToM = EToRecord%ToM
+end function GetEToRecord_ToM
+
+integer(int32) function GetEToRecord_ToY()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToY = EToRecord%ToY
+end function GetEToRecord_ToY
+
+integer(int32) function GetEToRecord_FromDayNr()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromDayNr = EToRecord%FromDayNr
+end function GetEToRecord_FromDayNr
+
+integer(int32) function GetEToRecord_ToDayNr()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToDayNr = EToRecord%ToDayNr
+end function GetEToRecord_ToDayNr
+
+function GetEToRecord_FromString() result(str)
+    !! Getter for the "EToRecord" global variable.
+    character(len=len(EToRecord%FromString)) :: str
+
+    str = EToRecord%FromString
+end function GetEToRecord_FromString
+
+function GetEToRecord_ToString() result(str)
+    !! Getter for the "EToRecord" global variable.
+    character(len=len(EToRecord%ToString)) :: str
+
+    str = EToRecord%ToString
+end function GetEToRecord_ToString
+
+integer(int32) function GetEToRecord_NrObs()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_NrObs = EToRecord%NrObs
+end function GetEToRecord_NrObs
+
+subroutine SetEToRecord_DataType(DataType)
+    !! Setter for the "EToRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    EToRecord%DataType = DataType
+end subroutine SetEToRecord_DataType
+
+subroutine SetEToRecord_FromD(FromD)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    EToRecord%FromD = FromD
+end subroutine SetEToRecord_FromD
+
+subroutine SetEToRecord_FromM(FromM)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    EToRecord%FromM = FromM
+end subroutine SetEToRecord_FromM
+
+subroutine SetEToRecord_FromY(FromY)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    EToRecord%FromY = FromY
+end subroutine SetEToRecord_FromY
+
+subroutine SetEToRecord_ToD(ToD)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    EToRecord%ToD = ToD
+end subroutine SetEToRecord_ToD
+
+subroutine SetEToRecord_ToM(ToM)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    EToRecord%ToM = ToM
+end subroutine SetEToRecord_ToM
+
+subroutine SetEToRecord_TOY(ToY)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    EToRecord%ToY = ToY
+end subroutine SetEToRecord_ToY
+
+subroutine SetEToRecord_ToDayNr(ToDayNr)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    EToRecord%ToDayNr = ToDayNr
+end subroutine SetEToRecord_ToDayNr
+
+subroutine SetEToRecord_FromDayNr(FromDayNr)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    EToRecord%FromDayNr = FromDayNr
+end subroutine SetEToRecord_FromDayNr
+
+subroutine SetEToRecord_NrObs(NrObs)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    EToRecord%NrObs = NrObs
+end subroutine SetEToRecord_NrObs
+
+subroutine SetEToRecord_ToString(ToString)
+    !! Setter for the "EToRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    EToRecord%ToString = ToString
+end subroutine SetEToRecord_ToString
+
+subroutine SetEToRecord_FromString(FromString)
+    !! Setter for the "EToRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    EToRecord%FromString = FromString
+end subroutine SetEToRecord_FromString
 
 function GetSimulation() result(Simulation_out)
     !! Getter for the "simulation" global variable.
