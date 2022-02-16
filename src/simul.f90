@@ -1,9 +1,18 @@
 module ac_simul
 
-use ac_kinds, only:  dp
-use ac_global, only: GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
+use ac_kinds, only:  dp, int16, int32
+use ac_global, only: CompartmentIndividual, &
+                     GetCompartment_Thickness, &
+                     GetCompartment_WFactor, &
+                     GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
-                     GetSimulParam_pAdjFAO
+                     GetSimulParam_pAdjFAO, &
+                     GetSoilLayer_FC, &
+                     GetSoilLayer_SAT, &
+                     GetSoilLayer_tau, &
+                     max_No_compartments, &
+                     roundc, &
+                     SetCompartment_WFactor
 
 implicit none
 
@@ -20,7 +29,7 @@ real(dp) function GetCDCadjustedNoStressNew(CCx, CDC, CCxAdjusted)
 
     CDCadjusted = CDC * ((CCxadjusted+2.29_dp)/(CCx+2.29_dp))
     GetCDCadjustedNoStressNew = CDCadjusted
-    
+
 end function GetCDCadjustedNoStressNew
 
 subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
@@ -52,5 +61,55 @@ subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
 end subroutine AdjustpLeafToETo
 
 
+real(dp) function calculate_delta_theta(theta_in, thetaAdjFC, NrLayer_in)
+    real(dp), intent(in) :: theta_in
+    real(dp), intent(in) :: thetaAdjFC
+    integer(int16), intent(in) :: NrLayer_in
+
+    integer(int32) :: NrLayer
+    real(dp) :: DeltaX, theta
+
+    NrLayer = int(NrLayer_in, kind=int32)
+    theta = theta_in
+    if (theta > GetSoilLayer_SAT(NrLayer)/100.0_dp) then
+        theta = GetSoilLayer_SAT(NrLayer)/100.0_dp
+    end if
+    if (theta <= thetaAdjFC/100.0_dp) then
+        DeltaX = 0.0_dp
+    else
+        DeltaX = GetSoilLayer_tau(NrLayer) * (GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp) &
+        * (exp(theta - GetSoilLayer_FC(NrLayer)/100.0_dp) - 1.0_dp) &
+        / (exp(GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp) - 1.0_dp)
+        if ((theta - DeltaX) < thetaAdjFC) then
+            DeltaX = theta - thetaAdjFC
+        end if
+    end if
+    calculate_delta_theta = DeltaX
+end function calculate_delta_theta
+
+
+real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer_in)
+    real(dp), intent(in) :: delta_theta
+    real(dp), intent(in) :: thetaAdjFC
+    integer(int16), intent(in) :: NrLayer_in
+
+    integer(int32) :: NrLayer
+    real(dp) :: ThetaX
+
+    NrLayer = int(NrLayer_in, kind=int32)
+    if (delta_theta <= 0.0_dp) then
+        ThetaX = thetaAdjFC
+    elseif (GetSoilLayer_tau(NrLayer) > 0.0_dp) then
+        ThetaX = GetSoilLayer_FC(NrLayer)/100.0_dp + log(1.0_dp + &
+                     delta_theta * (exp(GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp) - 1.0_dp) &
+                     / (GetSoilLayer_tau(NrLayer) * (GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp)))
+        if (ThetaX < thetaAdjFC) then
+            ThetaX = thetaAdjFC
+        end if
+    else
+        ThetaX = GetSoilLayer_SAT(NrLayer)/100.0_dp + 0.1_dp     ! to stop draining
+    end if
+    calculate_theta = ThetaX
+end function calculate_theta
 
 end module ac_simul
