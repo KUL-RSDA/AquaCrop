@@ -6153,13 +6153,10 @@ function ECeComp(constref Comp : CompartmentIndividual) : double;
 var
     Salt_ptr, Depo_ptr : Pdouble;
     Salt_len, Depo_len : integer;
-    Salt, Depo : rep_salt;
 begin
-    Salt := Comp.Salt;
-    Salt_ptr := @Salt[1];
+    Salt_ptr := @Comp.Salt[1];
     Salt_len := Length(Comp.Salt);
-    Depo := Comp.Depo;
-    Depo_ptr := @Depo[1];
+    Depo_ptr := @Comp.Depo[1];
     Depo_len := Length(Comp.Depo);
     ECeComp := ECeComp_wrap(Comp.Thickness, Comp.Layer, Salt_ptr, Salt_len,
                             Depo_ptr, Depo_len);
@@ -6172,13 +6169,10 @@ function ECswComp(
 var
     Salt_ptr, Depo_ptr : Pdouble;
     Salt_len, Depo_len : integer;
-    Salt, Depo : rep_salt;
 begin
-    Salt := Comp.Salt;
-    Salt_ptr := @Salt[1];
+    Salt_ptr := @Comp.Salt[1];
     Salt_len := Length(Comp.Salt);
-    Depo := Comp.Depo;
-    Depo_ptr := @Depo[1];
+    Depo_ptr := @Comp.Depo[1];
     Depo_len := Length(Comp.Depo);
     ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
                               Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
