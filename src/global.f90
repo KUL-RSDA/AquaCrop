@@ -927,6 +927,7 @@ character(len=:), allocatable :: TemperatureFileFull
 character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 character(len=:), allocatable :: FullFileNameProgramParameters
+character(len=:), allocatable :: ManDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -952,10 +953,11 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
-integer(int32) :: NrCompartments
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
+
+integer(int32) :: NrCompartments
 
 
 interface roundc
@@ -1150,7 +1152,7 @@ subroutine DeclareInitialCondAtFCandNoSalt()
         call SetSimulation_IniSWC_VolProc_i(layeri, undef_double)
         call SetSimulation_IniSWC_SaltECe_i(layeri, undef_double)
     end do
-    do compi = 1, NrCompartments
+    do compi = 1, GetNrCompartments()
         if (GetCompartment_Layer(compi) == 0) then
             ind = 1 ! LB: added an if statement to avoid having index=0
         else
@@ -2739,6 +2741,219 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     close(fhandle)
 end subroutine LoadCropCalendar
 
+
+subroutine NoManagement()
+
+    type(rep_EffectStress) :: EffectStress_temp
+
+    call SetManDescription('No specific field management')
+    ! mulches
+    call SetManagement_Mulch(0_int8)
+    call SetManagement_EffectMulchInS(50_int8)
+    ! soil fertility
+    call SetManagement_FertilityStress(0_int8)
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                      GetManagement_FertilityStress(), &
+                                      EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    ! soil bunds
+    call SetManagement_BundHeight(0._dp)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    ! surface run-off
+    call SetManagement_RunoffOn(.true.)
+    call SetManagement_CNcorrection(0)
+    ! weed infestation
+    call SetManagement_WeedRC(0_int8)
+    call SetManagement_WeedDeltaRC(0)
+    call SetManagement_WeedShape(-0.01_dp)
+    call SetManagement_WeedAdj(100_int8)
+    ! multiple cuttings
+    call SetManagement_Cuttings_Considered(.false.)
+    call SetManagement_Cuttings_CCcut(30)
+    call SetManagement_Cuttings_CGCPlus(20)
+    call SetManagement_Cuttings_Day1(1)
+    call SetManagement_Cuttings_NrDays(undef_int)
+    call SetManagement_Cuttings_Generate(.false.)
+    call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
+    call SetManagement_Cuttings_HarvestEnd(.false.)
+    call SetManagement_Cuttings_FirstDayNr(undef_int)
+end subroutine NoManagement
+
+
+subroutine LoadManagement(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int8) :: i
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt
+    integer(int32) :: TempInt
+    real(dp) :: TempDouble
+    type(rep_EffectStress) :: EffectStress_temp
+    character(len=1025) :: mandescription_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) mandescription_temp
+    call SetManDescription(trim(mandescription_temp))
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    ! mulches
+    read(fhandle, *) TempShortInt
+    call SetManagement_Mulch(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetManagement_EffectMulchInS(TempShortInt)
+    ! soil fertility
+    read(fhandle, *) TempShortInt ! effect is crop specific
+    call SetManagement_FertilityStress(TempShortInt)
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                      GetManagement_FertilityStress(), &
+                                      EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    ! soil bunds
+    read(fhandle, *) TempDouble
+    call SetManagement_BundHeight(TempDouble)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    ! surface run-off
+    read(fhandle, *) i
+    if (i == 1) then
+        call SetManagement_RunoffON(.false.)   ! prevention of surface runoff
+    else
+        call SetManagement_RunoffON(.true.)   ! surface runoff is not prevented
+    end if
+    if (roundc(VersionNr*10, mold=1) < 50) then 
+        ! UPDATE required for CN adjustment
+        call SetManagement_CNcorrection(0)
+    else
+        read(fhandle, *) TempInt ! project increase/decrease of CN
+        call SetManagement_CNcorrection(TempInt)
+    end if
+    ! weed infestation
+    if (roundc(VersionNr*10, mold=1) < 50) then 
+        ! UPDATE required for Version 3.0, 3.1 and 4.0
+        call SetManagement_WeedRC(0_int8) ! relative cover of weeds (%)
+        call SetManagement_WeedDeltaRC(0)
+        call SetManagement_WeedShape(-0.01_dp) ! shape factor of the CC expansion 
+                                          ! function in a weed infested field
+    else
+        read(fhandle, *) TempShortInt ! relative cover of weeds (%)
+        call SetManagement_WeedRC(TempShortInt)
+        if (roundc(VersionNr*10, mold=1) < 51) then
+            call SetManagement_WeedDeltaRC(0)
+        else
+            read(fhandle, *) TempShortInt
+            call SetManagement_WeedDeltaRC(TempInt)
+        end if
+        read(fhandle, *) TempDouble ! shape factor of the CC expansion 
+                                    ! function in a weed infested field
+        call SetManagement_WeedShape(TempDouble)
+    end if
+    if (roundc(VersionNr*10, mold=1) < 70) then 
+        ! UPDATE required for versions below 7
+        call SetManagement_WeedAdj(100_int8) ! replacement (%) by weeds of the 
+                                        ! self-thinned part of the Canopy Cover
+                                        ! - only for perennials
+    else
+        read(fhandle, *) TempShortInt
+        call SetManagement_WeedAdj(TempShortInt)
+    end if
+    ! multiple cuttings
+    if (roundc(VersionNr*10, mold=1) >= 70) then 
+        ! UPDATE required for multiple cuttings
+        read(fhandle, *) i  ! Consider multiple cuttings: True or False
+        if (i == 0) then
+            call SetManagement_Cuttings_Considered(.false.)
+        else
+            call SetManagement_Cuttings_Considered(.true.)
+        end if
+        read(fhandle, *) TempInt  ! Canopy cover (%) after cutting
+        call SetManagement_Cuttings_CCcut(TempInt)
+        read(fhandle, *) TempInt ! Increase (percentage) of CGC after cutting
+        call SetManagement_Cuttings_CGCPlus(TempInt)
+        read(fhandle, *) TempInt ! Considered first day when generating cuttings 
+                                 ! (1 = start of growth cycle)
+        call SetManagement_Cuttings_Day1(TempInt)
+        read(fhandle, *) TempInt  ! Considered number owhen generating cuttings 
+                                  ! (-9 = total growth cycle)
+        call SetManagement_Cuttings_NrDays(TempInt)
+        read(fhandle, *) i  ! Generate multiple cuttings: True or False
+        if (i == 1) then
+            call SetManagement_Cuttings_Generate(.true.)
+        else
+            call SetManagement_Cuttings_Generate(.false.)
+        end if
+        read(fhandle, *) i  ! Time criterion for generating cuttings
+        select case (i)
+            case(0)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_NA) 
+                ! not applicable
+            case(1)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_IntDay) 
+                ! interval in days
+            case(2)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_IntGDD) 
+                ! interval in Growing Degree Days
+            case(3)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_DryB) 
+                ! produced dry above ground biomass (ton/ha)
+            case(4)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_DryY) 
+                ! produced dry yield (ton/ha)
+            case(5)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_FreshY) 
+                ! produced fresh yield (ton/ha)
+        end select
+        read(fhandle, *) i  ! final harvest at crop maturity: 
+                            ! True or False (When generating cuttings)
+        if (i == 1) then
+            call SetManagement_Cuttings_HarvestEnd(.true.)
+        else
+            call SetManagement_Cuttings_HarvestEnd(.false.)
+        end if
+        read(fhandle, *) TempInt ! dayNr for Day 1 of list of cuttings 
+                                 ! (-9 = Day1 is start growing cycle)
+        call SetManagement_Cuttings_FirstDayNr(TempInt)
+    else
+        call SetManagement_Cuttings_Considered(.false.)
+        call SetManagement_Cuttings_CCcut(30)
+        call SetManagement_Cuttings_CGCPlus(20)
+        call SetManagement_Cuttings_Day1(1)
+        call SetManagement_Cuttings_NrDays(undef_int)
+        call SetManagement_Cuttings_Generate(.false.)
+        call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
+        call SetManagement_Cuttings_HarvestEnd(.false.)
+        call SetManagement_Cuttings_FirstDayNr(undef_int)
+    end if
+    close(fhandle)
+end subroutine LoadManagement
+
+subroutine DetermineNrandThicknessCompartments()
+
+    real(dp) :: TotalDepthL, TotalDepthC, DeltaZ
+    integer(int32) :: i
+
+    TotalDepthL = 0._dp
+    do i = 1, GetSoil_NrSoilLayers()
+        TotalDepthL = TotalDepthL + GetSoilLayer_Thickness(i)
+    end do
+    TotalDepthC = 0._dp
+    call SetNrCompartments(0)
+    loop: do 
+        DeltaZ = (TotalDepthL - TotalDepthC)
+        call SetNrCompartments(GetNrCompartments() + 1)
+        if (DeltaZ > GetSimulParam_CompDefThick()) then
+            call SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+        else
+            call SetCompartment_Thickness(GetNrCompartments(), DeltaZ)
+        end if
+        TotalDepthC = TotalDepthC + GetCompartment_Thickness(GetNrCompartments())
+        if ((GetNrCompartments() == max_No_compartments) &
+                .or. (abs(TotalDepthC - TotalDepthL) < 0.0001_dp)) exit loop
+        end do loop
+end subroutine DetermineNrandThicknessCompartments
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
@@ -3089,7 +3304,142 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     close(fhandle)
 end subroutine CheckFilesInProject
 
+
+real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
+                                     SumGDD, Zmin, Zmax, ShapeFactor,&
+                                     TypeDays)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: LZmax
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDLZmax
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: Zmin
+    real(dp), intent(in) :: Zmax
+    integer(int8), intent(in) :: ShapeFactor
+    integer(intEnum), intent(in) :: TypeDays
+
+    real(dp) :: Zini, Zr
+    integer(int32) :: VirtualDay, T0, rootmax_rounded, zmax_rounded
+
+    select case (TypeDays)
+    case (modeCycle_GDDDays)
+        Zr = ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, SumGDD, &
+                                      Zmin, Zmax)
+    case default
+        Zr = ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
+    end select
+
+    ! restrictive soil layer
+    call SetSimulation_SCor(1._sp)
+
+    rootmax_rounded = roundc(real(GetSoil_RootMax()*1000, kind=dp), &
+                             mold=rootmax_rounded)
+    zmax_rounded = roundc(Zmax*1000, mold=zmax_rounded)
+
+    if (rootmax_rounded < zmax_rounded) then
+        call ZrAdjustedToRestrictiveLayers(Zr, GetSoil_NrSoilLayers(), &
+                                           GetSoilLayer(), Zr)
+    end if
+
+    ActualRootingDepth = Zr
+
+
+    contains
+
+
+    real(dp) function ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L0
+        integer(int32), intent(in) :: LZmax
+        integer(int32), intent(in) :: L1234
+        real(dp), intent(in) :: Zmin
+        real(dp), intent(in) :: Zmax
+
+        ! Actual rooting depth at the end of Dayi
+        VirtualDay = DAP - GetSimulation_DelayedDays()
+
+        if ((VirtualDay < 1) .or. (VirtualDay > L1234)) then
+            ActualRootingDepthDays = 0
+        elseif (VirtualDay >= LZmax) then
+            ActualRootingDepthDays = Zmax
+        elseif (Zmin < Zmax) then
+            Zini = ZMin * (GetSimulParam_RootPercentZmin()/100._dp)
+            T0 = roundc(L0/2._dp, mold=T0)
+
+            if (LZmax <= T0) then
+                Zr = Zini + (Zmax-Zini)*VirtualDay*1._dp/LZmax
+            elseif (VirtualDay <= T0) then
+                Zr = Zini
+            else
+                Zr = Zini + (Zmax-Zini) &
+                     * TimeRootFunction(real(VirtualDay, kind=dp), ShapeFactor,&
+                                        real(LZmax, kind=dp), real(T0, kind=dp))
+            end if
+
+            if (Zr > ZMin) then
+                ActualRootingDepthDays = Zr
+            else
+                ActualRootingDepthDays = ZMin
+            end if
+        else
+            ActualRootingDepthDays = ZMax
+        end if
+    end function ActualRootingDepthDays
+
+
+    real(dp) function ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, &
+                                               SumGDD, Zmin, Zmax)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L1234
+        integer(int32), intent(in) :: GDDL0
+        integer(int32), intent(in) :: GDDLZmax
+        real(dp), intent(in) :: SumGDD
+        real(dp), intent(in) :: Zmin
+        real(dp), intent(in) :: Zmax
+
+        real(dp) :: GDDT0
+
+        ! after sowing the crop has roots even when SumGDD = 0
+        VirtualDay = DAP - GetSimulation_DelayedDays()
+
+        if ((VirtualDay < 1) .or. (VirtualDay > L1234)) then
+            ActualRootingDepthGDDays = 0
+        elseif (SumGDD >= GDDLZmax) then
+            ActualRootingDepthGDDays = Zmax
+        elseif (Zmin < Zmax) then
+            Zini = ZMin * (GetSimulParam_RootPercentZmin()/100._dp)
+            GDDT0 = GDDL0/2._dp
+
+            if (GDDLZmax <= GDDT0) then
+                Zr = Zini + (Zmax-Zini)*SumGDD/GDDLZmax
+            else
+                if (SumGDD <= GDDT0) then
+                    Zr = Zini
+                else
+                    Zr = Zini + (Zmax-Zini) &
+                         * TimeRootFunction(SumGDD, ShapeFactor, &
+                                            real(GDDLZmax, kind=dp), GDDT0)
+                end if
+            end if
+
+            if (Zr > ZMin) then
+                ActualRootingDepthGDDays = Zr
+            else
+                ActualRootingDepthGDDays = ZMin
+            end if
+        else
+            ActualRootingDepthGDDays = ZMax
+        end if
+    end function ActualRootingDepthGDDays
+end function ActualRootingDepth
+
+
+
 !! Global variables section !!
+
+
 
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.
@@ -3570,19 +3920,6 @@ subroutine SetEToDescription(str)
     EToDescription = str
 end subroutine SetEToDescription
 
-function GetNrCompartments() result(i)
-    !! Getter for the "NrCompartments" global variable.
-    integer(int32) :: i
-
-    i = NrCompartments
-end function GetNrCompartments
-
-subroutine SetNrCompartments(i)
-    !! Setter for the "NrCompartments" global variable.
-    integer(int32) :: i
-
-    i = NrCompartments
-end subroutine SetNrCompartments
 
 function GetRainFile() result(str)
     !! Getter for the "RainFile" global variable.
@@ -4769,20 +5106,24 @@ type(rep_soil) function GetSoil()
     GetSoil = Soil
 end function GetSoil
 
+real(sp) function GetSoil_RootMax()
+    !! Getter for "RootMax" attribute of the "soil" global variable.
+
+    GetSoil_Rootmax = soil%RootMax
+end function GetSoil_RootMax
+
+integer(int8) function GetSoil_NrSoilLayers()
+    !! Getter for "NrSoilLayers" attribute of the "soil" global variable.
+
+    GetSoil_NrSoilLayers = soil%NrSoilLayers
+end function GetSoil_NrSoilLayers
+
 subroutine SetSoil_REW(REW)
     !! Setter for the "Soil" global variable.
     integer(int8), intent(in) :: REW
 
     Soil%REW = REW
 end subroutine SetSoil_REW
-
-
-function GetSoil_NrSoilLayers() result(NrSoilLayers)
-    !! Getter for the "NrSoilLayer" global variable.
-    integer(int8) :: NrSoilLayers
-
-    NrSoilLayers = soil%NrSoilLayers
-end function GetSoil_NrSoilLayers
 
 subroutine SetSoil_NrSoilLayers(NrSoilLayers)
     !! Setter for the "Soil" global variable.
@@ -8463,6 +8804,33 @@ subroutine SetSoilLayer_CRb(i, CRb)
 
     soillayer(i)%CRb = CRb
 end subroutine SetSoilLayer_CRb
+
+function GetManDescription() result(str)
+    !! Getter for the "ManDescription" global variable.
+    character(len=len(ManDescription)) :: str
+    
+    str = ManDescription
+end function GetManDescription
+
+subroutine SetManDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    ManDescription = str
+end subroutine SetManDescription
+
+integer(int32) function GetNrCompartments()
+    !! Getter for the "NrCompartments" global variable.
+
+    GetNrCompartments = NrCompartments
+end function GetNrCompartments
+
+subroutine SetNrCompartments(NrCompartments_in)
+    !! Setter for the "NrCompartments" global variable.
+    integer(int32), intent(in) :: NrCompartments_in
+
+    NrCompartments = NrCompartments_in
+end subroutine SetNrCompartments
 
 
 end module ac_global

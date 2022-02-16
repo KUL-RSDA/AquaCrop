@@ -1858,11 +1858,6 @@ procedure SetSimulParam_EffectiveRain_ShowersInDecade(constref ShowersInDecade :
 procedure SetSimulParam_EffectiveRain_RootNrEvap(constref RootNrEvap : shortint);
     external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
 
-function GetNrcompartments(): integer;
-    external 'aquacrop' name '__ac_global_MOD_getnrcompartments';
-
-procedure SetNrCompartments(constref NrCompartments : integer);
-    external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
 function GetPathNameProg(): string;
 
@@ -3673,6 +3668,48 @@ procedure SetSoilLayer_CRb(constref i : integer;
                          constref CRb : double);
     external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
 
+procedure NoManagement;
+    external 'aquacrop' name '__ac_global_MOD_nomanagement';
+
+function GetManDescription(): string;
+
+function GetManDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getmandescription_wrap';
+
+procedure SetManDescription(constref str : string);
+
+procedure SetManDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setmandescription_wrap';  
+
+procedure LoadManagement(constref FullName : string);
+
+procedure LoadManagement_wrap(constref FullName : string;
+                         constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
+
+function __ActualRootingDepth(
+                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                constref SumGDD,Zmin,Zmax : double;
+                constref ShapeFactor : ShortInt;
+                constref int_TypeDays : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_actualrootingdepth';
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+
+procedure DetermineNrandThicknessCompartments();
+    external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
+
+function GetNrCompartments() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getnrcompartments';
+
+procedure SetNrCompartments(constref NrCompartments_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
 implementation
 
@@ -6072,6 +6109,52 @@ var
     i2 : integer;
 begin;
     for i2 := 1 to 11 do SetSoilLayer_SaltMobility_i(i, i2, SaltMobility[i2])
+end;
+
+function GetManDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetManDescription_wrap();
+    GetManDescription := AnsiString(p);
+end;
+
+procedure SetManDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetManDescription_wrap(p, strlen);
+end;
+
+procedure LoadManagement(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadManagement_wrap(p,strlen);
+end;
+
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+var
+    int_TypeDays: integer;
+begin
+    int_TypeDays := ord(TypeDays);
+    ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
+                                           GDDLZmax, SumGDD, Zmin, Zmax,
+                                           ShapeFactor, int_TypeDays);
 end;
 
 

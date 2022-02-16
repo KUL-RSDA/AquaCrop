@@ -12,10 +12,6 @@ FUNCTION MaxAvailableGDD(FromDayNr : LongInt;
 PROCEDURE LoadSimulationRunProject(NameFileFull : string;
                                    NrRun : INTEGER);
 
-Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
-                       FirstDayPeriod : LongInt;
-                       TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
-
 PROCEDURE BTransferPeriod(TheDaysToCCini,TheGDDaysToCCini,
                           L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
                           CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
@@ -88,14 +84,6 @@ FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
                       SFInfoStress,WeedStress : ShortInt;
                       DeltaWeedStress : INTEGER;
                       DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
-
-PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
-                                   LseasonDays : INTEGER;
-                                   TheCropDay1 : LongInt;
-                                   TheModeCycle  : rep_modeCycle;
-                                   TheTbase,TheTupper  : double;
-                                   VAR L123,L1234,GDD123,GDD1234 : INTEGER);
-
 
 
 implementation
@@ -489,7 +477,7 @@ IF (GetManFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathManFile
         SetManFileFull(GetManFile());
-        ManDescription := 'No specific field management';
+        SetManDescription('No specific field management');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathManFile
@@ -551,7 +539,7 @@ IF (Trim(TempString) = 'KeepSWC')
    THEN BEGIN
         // No load of soil file (which reset thickness compartments and Soil water content to FC)
         SetSWCIniFile('KeepSWC');
-        SWCIniDescription := 'Keep soil water profile of previous run';
+        SetSWCIniDescription('Keep soil water profile of previous run');
         READLN(f0);  //PathSWCIniFile
         END
    ELSE BEGIN
@@ -561,7 +549,7 @@ IF (Trim(TempString) = 'KeepSWC')
 
         //Adjust size of compartments if required
         TotDepth := 0;
-        FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
+        FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
         IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
            THEN BEGIN
                 IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
@@ -584,7 +572,7 @@ IF (Trim(TempString) = 'KeepSWC')
            THEN BEGIN
                 READLN(f0);  //PathSWCIniFile
                 SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
-                SWCiniDescription := 'Soil water profile at Field Capacity';
+                SetSWCiniDescription('Soil water profile at Field Capacity');
                 END
            ELSE BEGIN
                 READLN(f0,TempString);  //PathSWCIniFile
@@ -595,16 +583,16 @@ IF (Trim(TempString) = 'KeepSWC')
         Compartment_temp := GetCompartment();
         CASE GetSimulation_IniSWC_AtDepths() OF
              true : TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                                  GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                                  GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
              else TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                                GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                                GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
              end;
         SetCompartment(Compartment_temp);
 
 
         IF GetSimulation_ResetIniSWC() THEN // to reset SWC and SALT at end of simulation run
            BEGIN
-           FOR i := 1 TO NrCompartments DO
+           FOR i := 1 TO GetNrCompartments() DO
                BEGIN
                SetSimulation_ThetaIni_i(i,GetCompartment_Theta(i));
                SetSimulation_ECeIni_i(i,ECeComp(GetCompartment_i(i)));
@@ -670,23 +658,6 @@ IF (GetObservationsFile() = '(None)')
 
 Close(f0);
 END; (* LoadSimulationRunProject *)
-
-
-Function RoundedOffGDD(PeriodGDD,PeriodDay : INTEGER;
-                       FirstDayPeriod : LongInt;
-                       TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
-VAR DayMatch,PeriodUpdatedGDD : INTEGER;
-BEGIN
-IF (PeriodGDD > 0)
-   THEN BEGIN
-        DayMatch := SumCalendarDays(PeriodGDD,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-        PeriodUpdatedGDD := GrowingDegreeDays(PeriodDay,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-        IF (PeriodDay = DayMatch)
-           THEN RoundedOffGDD := PeriodGDD
-           ELSE RoundedOffGDD := PeriodUpdatedGDD;
-        END
-   ELSE RoundedOffGDD := GrowingDegreeDays(PeriodDay,FirstDayPeriod,TempTbase,TempTupper,TempTmin,TempTmax);
-END; (* RoundedOffGDD *)
 
 
 PROCEDURE BTransferPeriod(TheDaysToCCini,TheGDDaysToCCini,
@@ -1648,32 +1619,6 @@ SumBSF := Bnormalized(TempDaysToCCini,TempGDDaysToCCini,
 
 BiomassRatio := SumBSF/SumBPot;
 END; (* BiomassRatio *)
-
-
-PROCEDURE AdjustCropFileParameters(TheCropFileSet : rep_CropFileSet;
-                                   LseasonDays : INTEGER;
-                                   TheCropDay1 : LongInt;
-                                   TheModeCycle  : rep_modeCycle;
-                                   TheTbase,TheTupper  : double;
-                                   VAR L123,L1234,GDD123,GDD1234 : INTEGER);
-BEGIN  // Adjust some crop parameters (CROP.*) as specified by the generated length season (LseasonDays)
-// time to maturity
-L1234 := LseasonDays; // days
-IF (TheModeCycle = GDDays)
-   THEN GDD1234 := GrowingDegreeDays(LseasonDays,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax())
-   ELSE GDD1234 := undef_int;
-
-// time to senescence  (reference is given in TheCropFileSet
-IF (TheModeCycle = GDDays)
-   THEN BEGIN
-        GDD123 := GDD1234 - TheCropFileSet.GDDaysFromSenescenceToEnd;
-        L123 := SumCalendarDays(GDD123,TheCropDay1,TheTbase,TheTupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
-        END
-   ELSE BEGIN
-        L123 := L1234 - TheCropFileSet.DaysFromSenescenceToEnd;
-        GDD123 := undef_int;
-        END;
-END; (* AdjustCropFileParameters *)
 
 
 end.

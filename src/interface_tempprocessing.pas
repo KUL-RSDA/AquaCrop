@@ -67,6 +67,12 @@ procedure AdjustCalendarCrop(
             constref FirstCropDay : LongInt);
         external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcalendarcrop';
 
+function RoundedOffGDD(
+            constref PeriodGDD,PeriodDay : INTEGER;
+            constref FirstDayPeriod : LongInt;
+            constref TempTbase,TempTupper,TempTmin,TempTmax : double) : INTEGER;
+         external 'aquacrop' name '__ac_tempprocessing_MOD_roundedoffgdd';
+
 procedure HIadjColdHeat(
             constref TempHarvest,TempFlower,TempLengthFlowering,TempHI : INTEGER;
             constref TempTmin,TempTmax : double;
@@ -84,6 +90,15 @@ function ResetCropDay1(
 procedure TemperatureFileCoveringCropPeriod(
             constref CropFirstDay,CropLastDay : LongInt);
          external 'aquacrop' name '__ac_tempprocessing_MOD_temperaturefilecoveringcropperiod';
+
+procedure AdjustCropFileParameters(
+            constref TheCropFileSet : rep_CropFileSet;
+            constref LseasonDays : INTEGER;
+            constref TheCropDay1 : LongInt;
+            constref TheModeCycle  : rep_modeCycle;
+            constref TheTbase,TheTupper  : double;
+            VAR L123,L1234,GDD123,GDD1234 : INTEGER);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
 implementation
 
