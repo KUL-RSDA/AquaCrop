@@ -1464,12 +1464,12 @@ subroutine CropStressParametersSoilSalinity(CCxRed, CCdistortion, &
         ! reference for no salinity stress
         if (TheModeCycle == modeCycle_CalendarDays) then
             L12Double = log((0.25_dp*CCx*CCx/CCo)/(CCx-CCToReach))/CGC
-            if (L12Double <= 0) then
+            if (L12Double <= epsilon(1._dp)) then
                 StressResponse%RedCGC = 0_int8
             end if
         else
             GDDL12Double = log((0.25_dp*CCx*CCx/CCo)/(CCx-CCToReach))/GDDCGC
-            if (GDDL12Double <= 0) then
+            if (GDDL12Double <= epsilon(1._dp)) then
                 StressResponse%RedCGC = 0_int8
             end if
         end if
@@ -1477,7 +1477,7 @@ subroutine CropStressParametersSoilSalinity(CCxRed, CCdistortion, &
         CCxAdj = 0.90_dp * CCx * (1._dp - CCxRed/100._dp)
         CCToReach = 0.98_dp * CCxAdj
         if ((StressResponse%RedCGC /= 0) .and. &
-            ((CCxAdj-CCToReach) >= 0.0001)) then
+            ((CCxAdj-CCToReach) >= 0.0001_dp)) then
             if (TheModeCycle == modeCycle_CalendarDays) then
                 CGCadjMax = log((0.25_dp*CCxAdj*CCxAdj/CCo)&
                                 /(CCxAdj-CCToReach))/L12Double
@@ -1519,7 +1519,7 @@ subroutine CropStressParametersSoilSalinity(CCxRed, CCdistortion, &
                 end if
                 if (CCxRed < 10) then ! smooth start required
                     GDDCGCadj = GDDCGCadjMax - (GDDCGCadjMax-GDDCGCAdjMin)*&
-                                   (exp(real(CCxRed,kind=dp))/&
+                                   (exp(real(CCxRed, kind=dp))/&
                                     exp(10._dp))*(CCdistortion/100._dp)
                 else
                     GDDCGCadj = GDDCGCadjMax - &
