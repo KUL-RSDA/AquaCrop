@@ -3069,6 +3069,7 @@ subroutine LoadManagement(FullName)
     close(fhandle)
 end subroutine LoadManagement
 
+
 subroutine DetermineNrandThicknessCompartments()
 
     real(dp) :: TotalDepthL, TotalDepthC, DeltaZ
@@ -3093,6 +3094,34 @@ subroutine DetermineNrandThicknessCompartments()
                 .or. (abs(TotalDepthC - TotalDepthL) < 0.0001_dp)) exit loop
         end do loop
 end subroutine DetermineNrandThicknessCompartments
+
+
+subroutine AdjustOnsetSearchPeriod()
+
+    integer(int32) :: temp_Integer
+
+    if (GetClimFile() == '(None)') then
+        call SetOnset_StartSearchDayNr(1)
+        call SetOnset_StopSearchDayNr(GetOnset_StartSearchDayNr() &
+               + GetOnset_LengthSearchPeriod() - 1)
+    else
+        temp_Integer = GetOnset_StartSearchDayNr()
+        call DetermineDayNr((1), (1), GetSimulation_YearStartCropCycle(), &
+                              temp_Integer) ! 1 January
+        call SetOnset_StartSearchDayNr(temp_Integer)
+        if (GetOnset_StartSearchDayNr() < GetClimRecord_FromDayNr()) then
+            call SetOnset_StartSearchDayNr(GetClimRecord_FromDayNr())
+        end if
+        call SetOnset_StopSearchDayNr(GetOnset_StartSearchDayNr() &
+                        + GetOnset_LengthSearchPeriod() - 1)
+        if (GetOnset_StopSearchDayNr() > GetClimRecord_ToDayNr()) then
+            call SetOnset_StopSearchDayNr(GetClimRecord_ToDayNr())
+            call SetOnset_LengthSearchPeriod(GetOnset_StopSearchDayNr() &
+                     - GetOnset_StartSearchDayNr() + 1)
+        end if
+    end if
+end subroutine AdjustOnsetSearchPeriod
+
 
 !! Global variables section !!
 

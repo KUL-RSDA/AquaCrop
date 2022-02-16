@@ -139,7 +139,6 @@ PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE ResetSWCToFC;
 PROCEDURE AdjustSimPeriod;
-PROCEDURE AdjustOnsetSearchPeriod;
 PROCEDURE SetClimData;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
@@ -2234,31 +2233,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
    IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
    END;
 END; (* AdjustSimPeriod *)
-
-PROCEDURE AdjustOnsetSearchPeriod;
-VAR temp_Integer : Integer;
-BEGIN
-IF (GetClimFile() = '(None)')
-   THEN BEGIN
-        SetOnset_StartSearchDayNr(1);
-        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
-        //SetOnset_StopSearchDayNr(365);
-        END
-   ELSE BEGIN
-        //SetOnset_StartSearchDayNr(GetClimRecord_FromDayNr());
-        //SetOnset_StopSearchDayNr(GetClimRecord_ToDayNr());
-        temp_Integer := GetOnset().StartSearchDayNr;
-        DetermineDayNr((1),(1),GetSimulation_YearStartCropCycle(),temp_Integer); // 1 January
-        SetOnset_StartSearchDayNr(temp_Integer);
-        IF (GetOnset().StartSearchDayNr < GetClimRecord_FromDayNr()) THEN SetOnset_StartSearchDayNr(GetClimRecord_FromDayNr());
-        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
-        IF (GetOnset().StopSearchDayNr > GetClimRecord_ToDayNr()) THEN
-           BEGIN
-           SetOnset_StopSearchDayNr(GetClimRecord_ToDayNr());
-           SetOnset_LengthSearchPeriod(GetOnset().StopSearchDayNr - GetOnset().StartSearchDayNr + 1);
-           END;
-        END;
-END; (* AdjustOnsetSearchPeriod *)
 
 
 PROCEDURE SetClimData;
