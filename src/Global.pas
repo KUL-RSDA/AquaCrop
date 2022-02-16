@@ -29,14 +29,13 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ClimDescription,
-    IrriDescription,ManDescription,SWCiniDescription,
+    IrriDescription,SWCiniDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
     ClimRecord,
     EToRecord,
     RainRecord     : rep_clim;
     IrriFirstDayNr : LongInt;
-    NrCompartments : INTEGER;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -76,25 +75,17 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                            SumGDD,Zmin,Zmax : double;
-                            ShapeFactor : ShortInt;
-                            TypeDays : rep_modeCycle) : double;
+
 PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
 
 PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-
-PROCEDURE NoManagement;
-PROCEDURE LoadManagement(FullName : string);
-
 PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
-PROCEDURE DetermineNrandThicknessCompartments;
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
@@ -241,91 +232,8 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
+
 implementation
-
-
-FUNCTION ActualRootingDepth(DAP,L0,LZmax,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                            SumGDD,Zmin,Zmax : double;
-                            ShapeFactor : ShortInt;
-                            TypeDays : rep_modeCycle) : double;
-Var Zini, Zr : double;
-    VirtualDay, T0 : INTEGER;
-
-
-
-FUNCTION ActualRootingDepthDays(DAP,L0,LZmax,L1234 : INTEGER;
-                                Zmin,Zmax : double) : double;
-BEGIN // Actual rooting depth at the end of Dayi
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ((VirtualDay < 1) OR (VirtualDay > L1234))
-   THEN ActualRootingDepthDays := 0
-   ELSE IF (VirtualDay >= LZmax)
-        THEN ActualRootingDepthDays := Zmax
-        ELSE IF (Zmin < Zmax)
-                THEN BEGIN
-                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
-                     T0 := ROUND(L0/2);
-                     IF (LZmax <= T0)
-                        THEN Zr := Zini + (Zmax-Zini)*VirtualDay/LZmax
-                        ELSE IF (VirtualDay <= T0)
-                                THEN Zr := Zini
-                                ELSE BEGIN
-                                     Zr := Zini + (Zmax-Zini)
-                                        * TimeRootFunction(VirtualDay,ShapeFactor,LZmax,T0);
-                                     END;
-                     IF (Zr > ZMin) THEN ActualRootingDepthDays := Zr
-                                    ELSE ActualRootingDepthDays := ZMin;
-                     END
-                ELSE ActualRootingDepthDays := ZMax;
-END; (* ActualRootingDepthDays *)
-
-
-
-FUNCTION ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234 : INTEGER;
-                                  SumGDD,Zmin,Zmax : double) : double;
-VAR GDDT0 : double;
-BEGIN // after sowing the crop has roots even when SumGDD = 0
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ((VirtualDay < 1) OR (VirtualDay > L1234))
-   THEN ActualRootingDepthGDDays := 0
-   ELSE IF (SumGDD >= GDDLZmax)
-        THEN ActualRootingDepthGDDays := Zmax
-        ELSE IF (Zmin < Zmax)
-                THEN BEGIN
-                     Zini := ZMin * (GetSimulParam_RootPercentZmin()/100);
-                     GDDT0 := GDDL0/2;
-                     IF (GDDLZmax <= GDDT0)
-                        THEN Zr := Zini + (Zmax-Zini)*SumGDD/GDDLZmax
-                        ELSE BEGIN
-                             IF (SumGDD <= GDDT0)
-                                THEN Zr := Zini
-                                ELSE BEGIN
-                                     Zr := Zini + (Zmax-Zini)
-                                        * TimeRootFunction(SumGDD,ShapeFactor,GDDLZmax,GDDT0);
-                                     END;
-                             END;
-                     IF (Zr > ZMin) THEN ActualRootingDepthGDDays := Zr
-                                    ELSE ActualRootingDepthGDDays := ZMin;
-                     END
-                ELSE ActualRootingDepthGDDays := ZMax;
-END; (* ActualRootingDepthGDDays *)
-
-
-
-BEGIN  (* ActualRootingDepth *)
-CASE TypeDays OF
-     GDDays  : Zr := ActualRootingDepthGDDays(DAP,L1234,GDDL0,GDDLZmax,GDDL1234,SumGDD,Zmin,Zmax);
-     else Zr := ActualRootingDepthDays(DAP,L0,LZmax,L1234,Zmin,Zmax);
-     end;
-// restrictive soil layer
-SetSimulation_SCor(1);
-IF (ROUND(GetSoil().RootMax*1000) < ROUND(Zmax*1000))
-   THEN ZrAdjustedToRestrictiveLayers(Zr,GetSoil().NrSoilLayers,GetSoilLayer(),Zr);
-// assign
-ActualRootingDepth:= Zr;
-END; (* ActualRootingDepth *)
-
-
 
 
 PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
@@ -425,168 +333,10 @@ WITH SumWabal DO
   CRsalt := 0;
   END;
 SetTotalWaterContent_BeginDay(0);
-FOR i :=1 to NrCompartments DO
+FOR i :=1 to GetNrCompartments() DO
         SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
           + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
 END; (* GlobalZero *)
-
-
-PROCEDURE NoManagement;
-var EffectStress_temp : rep_EffectStress;
-BEGIN
-ManDescription := 'No specific field management';
-// mulches
-SetManagement_Mulch(0);
-SetManagement_EffectMulchInS(50);
-// soil fertility
-SetManagement_FertilityStress(0);
-EffectStress_temp := GetSimulation_EffectStress();
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
-SetSimulation_EffectStress(EffectStress_temp);
-// soil bunds
-SetManagement_BundHeight(0);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-// surface run-off
-SetManagement_RunoffOn(true);
-SetManagement_CNcorrection(0);
-// weed infestation
-SetManagement_WeedRC(0);
-SetManagement_WeedDeltaRC(0);
-SetManagement_WeedShape(- 0.01);
-SetManagement_WeedAdj(100);
-// multiple cuttings
-SetManagement_Cuttings_Considered(false);
-SetManagement_Cuttings_CCcut(30);
-SetManagement_Cuttings_CGCPlus(20);
-SetManagement_Cuttings_Day1(1);
-SetManagement_Cuttings_NrDays(undef_int);
-SetManagement_Cuttings_Generate(false);
-SetManagement_Cuttings_Criterion(NA);
-SetManagement_Cuttings_HarvestEnd(false);
-SetManagement_Cuttings_FirstDayNr(undef_int);
-END; (* NoManagement *)
-
-
-PROCEDURE LoadManagement(FullName : string);
-VAR f0 : TextFile;
-    i  : ShortInt;
-    VersionNr : double;
-    TempShortInt : shortint;
-    TempInt : integer;
-    TempDouble : double;
-    EffectStress_temp : rep_EffectStress;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,ManDescription);
-READLN(f0,VersionNr); // AquaCrop Version
-// mulches
-READLN(f0,TempShortInt);
-SetManagement_Mulch(TempShortInt);
-READLN(f0,TempShortInt);
-SetManagement_EffectMulchInS(TempShortInt);
-// soil fertility
-READLN(f0,TempShortInt); // effect is crop specific
-SetManagement_FertilityStress(TempShortInt);
-EffectStress_temp := GetSimulation_EffectStress();
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
-SetSimulation_EffectStress(EffectStress_temp);
-// soil bunds
-READLN(f0,TempDouble);
-SetManagement_BundHeight(TempDouble);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-// surface run-off
-READLN(f0,i);
-IF (i = 1)
-   THEN SetManagement_RunoffON(false)   // prevention of surface runoff
-   ELSE SetManagement_RunoffON(true);   // surface runoff is not prevented
-IF (ROUND(VersionNr*10) < 50) // UPDATE required for CN adjustment
-   THEN SetManagement_CNcorrection(0)
-   ELSE BEGIN
-     READLN(f0,TempInt); // project increase/decrease of CN
-     SetManagement_CNcorrection(TempInt);
-     END;
-// weed infestation
-IF (ROUND(VersionNr*10) < 50)  // UPDATE required for Version 3.0, 3.1 and 4.0
-   THEN BEGIN
-        SetManagement_WeedRC(0); // relative cover of weeds (%)
-        SetManagement_WeedDeltaRC(0);
-        SetManagement_WeedShape(-0.01); //shape factor of the CC expansion fucntion in a weed infested field
-        END
-   ELSE BEGIN
-        READLN(f0,TempShortInt); //relative cover of weeds (%)
-        SetManagement_WeedRC(TempShortInt);
-        IF (ROUND(VersionNr*10) < 51)
-           THEN SetManagement_WeedDeltaRC(0)
-           ELSE BEGIN
-             READLN(f0,TempInt);
-             SetManagement_WeedDeltaRC(TempInt);
-             END;
-        READLN(f0,TempDouble); //shape factor of the CC expansion fucntion in a weed infested field
-          SetManagement_WeedShape(TempDouble);
-        END;
-IF (ROUND(VersionNr*10) < 70)  // UPDATE required for versions below 7
-   THEN SetManagement_WeedAdj(100) // replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials
-   ELSE BEGIN
-     READLN(f0,TempShortInt);
-     SetManagement_WeedAdj(TempShortInt);
-     END;
-  // multiple cuttings
-IF (ROUND(VersionNr*10) >= 70)  // UPDATE required for multiple cuttings
-   THEN BEGIN
-        READLN(f0,i);  // Consider multiple cuttings: True or False
-        IF (i = 0)
-           THEN SetManagement_Cuttings_Considered(false)
-           ELSE SetManagement_Cuttings_Considered(true);
-        READLN(f0,TempInt);  // Canopy cover (%) after cutting
-        SetManagement_Cuttings_CCcut(TempInt);
-        READLN(f0,TempInt); // Increase (percentage) of CGC after cutting
-        SetManagement_Cuttings_CGCPlus(TempInt);
-        READLN(f0,TempInt);  // Considered first day when generating cuttings (1 = start of growth cycle)
-        SetManagement_Cuttings_Day1(TempInt);
-        READLN(f0,TempInt);  // Considered number owhen generating cuttings (-9 = total growth cycle)
-        SetManagement_Cuttings_NrDays(TempInt);
-        READLN(f0,i);  // Generate multiple cuttings: True or False
-        IF (i = 1)
-           THEN SetManagement_Cuttings_Generate(true)
-           ELSE SetManagement_Cuttings_Generate(false);
-        READLN(f0,i);  // Time criterion for generating cuttings
-        CASE i OF
-           0  : SetManagement_Cuttings_Criterion(NA); // not applicable
-           1  : SetManagement_Cuttings_Criterion(IntDay); // interval in days
-           2  : SetManagement_Cuttings_Criterion(IntGDD); // interval in Growing Degree Days
-           3  : SetManagement_Cuttings_Criterion(DryB); // produced dry above ground biomass (ton/ha)
-           4  : SetManagement_Cuttings_Criterion(DryY); // produced dry yield (ton/ha)
-           5  : SetManagement_Cuttings_Criterion(FreshY); // produced fresh yield (ton/ha)
-          else  SetManagement_Cuttings_Criterion(NA); // not applicable
-          end;
-        READLN(f0,i);  // final harvest at crop maturity: True or False (When generating cuttings)
-        IF (i = 1)
-           THEN SetManagement_Cuttings_HarvestEnd(true)
-           ELSE SetManagement_Cuttings_HarvestEnd(false);
-        READLN(f0,TempInt); // dayNr for Day 1 of list of cuttings (-9 = Day1 is start growing cycle)
-        SetManagement_Cuttings_FirstDayNr(TempInt);
-        END
-   ELSE BEGIN
-        SetManagement_Cuttings_Considered(false);
-        SetManagement_Cuttings_CCcut(30);
-        SetManagement_Cuttings_CGCPlus(20);
-        SetManagement_Cuttings_Day1(1);
-        SetManagement_Cuttings_NrDays(undef_int);
-        SetManagement_Cuttings_Generate(false);
-        SetManagement_Cuttings_Criterion(NA);
-        SetManagement_Cuttings_HarvestEnd(false);
-        SetManagement_Cuttings_FirstDayNr(undef_int);
-        END;
-Close(f0);
-END; (* LoadManagement *)
-
-
-
-
-
 
 PROCEDURE NoIrrigation;
 VAR Nri : INTEGER;
@@ -774,25 +524,6 @@ Close(f0);
 END; (* LoadIrriScheduleInfo *)
 
 
-PROCEDURE DetermineNrandThicknessCompartments;
-VAR TotalDepthL, TotalDepthC, DeltaZ : double;
-    i : INTEGER;
-BEGIN
-TotalDepthL := 0;
-FOR i := 1 TO GetSoil().NrSoilLayers DO TotalDepthL := TotalDepthL + GetSoilLayer_Thickness(i);
-TotalDepthC := 0;
-NrCompartments := 0;
-REPEAT
-  DeltaZ := (TotalDepthL - TotalDepthC);
-  NrCompartments := NrCompartments + 1;
-  IF (DeltaZ > GetSimulParam_CompDefThick())
-     THEN SetCompartment_Thickness(NrCompartments, GetSimulParam_CompDefThick())
-     ELSE SetCompartment_Thickness(NrCompartments, DeltaZ);
-  TotalDepthC := TotalDepthC + GetCompartment_Thickness(NrCompartments);
-UNTIL ((NrCompartments = max_No_compartments) OR (Abs(TotalDepthC - TotalDepthL) < 0.0001));
-END; (* DetermineNrandThicknessCompartments *)
-
-
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 VAR compi,ic : INTEGER;
@@ -837,8 +568,8 @@ FOR compi := 1 TO NrCompartments DO
 
 
 Depth := 0;
-FOR compi := 1 TO NrCompartments DO Depth := Depth + CompartAdj[compi].Thickness;
-compi := NrCompartments;
+FOR compi := 1 TO GetNrCompartments() DO Depth := Depth + CompartAdj[compi].Thickness;
+compi := GetNrCompartments();
 REPEAT
   Zi := Depth - CompartAdj[compi].Thickness/2;
   //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
@@ -923,7 +654,7 @@ FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
     SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
     SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
     END;
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     IF (GetCompartment_Layer(compi) = 0) THEN ind := 1 //LB: added an if statement to avoid having index=0
     ELSE ind := GetCompartment_Layer(compi);
     For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
@@ -1147,7 +878,7 @@ SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
 Compartment_temp := GetCompartment();
 soillayer_temp := GetSoilLayer();
-specify_soil_layer(NrCompartments,GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
+specify_soil_layer(GetNrCompartments(),GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
 SetSoilLayer(soillayer_temp);
 SetTotalWaterContent(TotalWaterContent_temp);
 SetCompartment(Compartment_temp);
@@ -2466,7 +2197,7 @@ IF (ZiAqua < 0) // no ground water table
             END;
         END
    ELSE BEGIN
-        SetSimulation_IniSWC_NrLoc(NrCompartments);
+        SetSimulation_IniSWC_NrLoc(GetNrCompartments());
         FOR Loci := 1 TO GetSimulation_IniSWC_NrLoc() DO
             BEGIN
             SetSimulation_IniSWC_Loc_i(Loci,GetCompartment_Thickness(Loci));
@@ -2474,7 +2205,7 @@ IF (ZiAqua < 0) // no ground water table
             SetSimulation_IniSWC_SaltECe_i(Loci,0.0);
         END;
     END;
-FOR compi := 1 to NrCompartments DO
+FOR compi := 1 to GetNrCompartments() DO
     BEGIN
     SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
@@ -2854,7 +2585,7 @@ REPEAT
   SetRootZoneWC_SAT(GetRootZoneWC().SAT
      + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * GetCompartment_Thickness(compi)
               * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
+UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
 
 // calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
 IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
@@ -2896,7 +2627,7 @@ IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
             + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
             - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
               * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = NrCompartments);
+        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = GetNrCompartments());
         END;
 
 // Relative depletion in rootzone and in top soil
@@ -3185,7 +2916,7 @@ IF (RootingDepth >= GetCrop().RootMin)
         ZrECe := ZrECe + Factor * ECeComp(GetCompartment_i(compi));
         ZrECsw := ZrECsw + Factor * ECswComp(GetCompartment_i(compi),(false)); // not at FC
         ZrECswFC := ZrECswFC + Factor * ECswComp(GetCompartment_i(compi),(true)); // at FC
-        UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
+        UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
         IF (((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax))
            THEN ZrKsSalt := KsSalinity((true),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0))
            ELSE ZrKsSalt := KsSalinity((false),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0));
@@ -3887,7 +3618,7 @@ VAR layeri,compi : INTEGER;
 BEGIN
 //1. Actual total depth of compartments
 TotDepthC := 0;
-FOR compi := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
+FOR compi := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
 
 //2. Stretch thickness of bottom soil layer if required
 TotDepthL := 0;
@@ -3896,7 +3627,7 @@ IF (TotDepthC > TotDepthL) THEN SetSoilLayer_Thickness(GetSoil().NrSoilLayers, G
 
 //3. Assign a soil layer to each soil compartment
 Compartment_temp := GetCompartment();
-DesignateSoilLayerToCompartments(NrCompartments,GetSoil().NrSoilLayers,Compartment_temp);
+DesignateSoilLayerToCompartments(GetNrCompartments(),GetSoil().NrSoilLayers,Compartment_temp);
 SetCompartment(Compartment_temp);
 
 //4. Adjust initial Soil Water Content of soil compartments
@@ -3906,26 +3637,26 @@ IF GetSimulation_ResetIniSWC()
            THEN BEGIN
                 Compartment_temp := GetCompartment();
                 TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END
            ELSE BEGIN
                 Compartment_temp := GetCompartment();
                 TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END;
         END
    ELSE BEGIN
         Compartment_temp := GetCompartment();
-        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,NrCompartments,Compartment_temp);
+        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,GetNrCompartments(),Compartment_temp);
         SetCompartment(Compartment_temp);
         END;
 
 //5. Adjust watercontent in soil layers and determine ThetaIni
 Total := 0;
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
     SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
@@ -3946,7 +3677,7 @@ VAR i ,compi : INTEGER;
 BEGIN
 
 //1. Save intial soil water profile (required when initial soil water profile is NOT reset at start simulation - see 7.)
-PrevNrComp := NrCompartments;
+PrevNrComp := GetNrCompartments();
 FOR compi := 1 To prevnrComp DO
     BEGIN
     PrevThickComp[compi] := GetCompartment_Thickness(compi);
@@ -3955,22 +3686,22 @@ FOR compi := 1 To prevnrComp DO
 
 //2. Actual total depth of compartments
 TotDepthC := 0;
-FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
+FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
 
 //3. Increase number of compartments (if less than 12)
-IF (NrCompartments < 12) THEN
+IF (GetNrCompartments() < 12) THEN
    REPEAT
-   NrCompartments := NrCompartments + 1;
+   SetNrCompartments(GetNrCompartments() + 1);
    IF ((CropZx - TotDepthC) > GetSimulParam_CompDefThick())
-      THEN SetCompartment_Thickness(NrCompartments, GetSimulParam_CompDefThick())
-      ELSE SetCompartment_Thickness(NrCompartments, CropZx - TotDepthC);
-   TotDepthC := TotDepthC + GetCompartment_Thickness(NrCompartments);
-   UNTIL ((NrCompartments = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
+      THEN SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+      ELSE SetCompartment_Thickness(GetNrCompartments(), CropZx - TotDepthC);
+   TotDepthC := TotDepthC + GetCompartment_Thickness(GetNrCompartments());
+   UNTIL ((GetNrCompartments() = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
 
 //4. Adjust size of compartments (if total depth of compartments < rooting depth)
 IF ((TotDepthC + 0.00001) < CropZx) THEN
    BEGIN
-   NrCompartments := 12;
+   SetNrCompartments(12);
    fAdd := (CropZx/0.1 - 12)/78;
    FOR i := 1 TO 12 DO
        BEGIN
@@ -3978,7 +3709,7 @@ IF ((TotDepthC + 0.00001) < CropZx) THEN
        SetCompartment_Thickness(i, 0.05 * ROUND(GetCompartment_Thickness(i) * 20));
        END;
    TotDepthC := 0;
-   FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
+   FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
    IF (TotDepthC < CropZx)
       THEN REPEAT
            SetCompartment_Thickness(12, GetCompartment_Thickness(12) + 0.05);
@@ -4011,7 +3742,7 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    Ztot := Ztot + ProfileComp[compi].Thickness;
    Zi := Ztot - ProfileComp[compi].Thickness/2;
    IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
+   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
 END; (* CheckForWaterTableInProfile *)
 
 
