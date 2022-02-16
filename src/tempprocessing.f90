@@ -1555,7 +1555,7 @@ subroutine CropStressParametersSoilSalinity(CCxRed, CCdistortion, &
             if (StressResponse%CDecline > 1) then
                 StressResponse%CDecline = 1.0_dp
             end if
-            if (StressResponse%CDecline <= 0) then
+            if (StressResponse%CDecline <= epsilon(1._dp)) then
                 StressResponse%CDecline = 0.001_dp
             end if
         else
