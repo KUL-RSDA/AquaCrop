@@ -696,6 +696,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
                         if (rc == iostat_end) then
+                            rewind(fhandle)
                             read(fhandle, *, iostat=rc) ! description
                             read(fhandle, *, iostat=rc) ! time step
                             read(fhandle, *, iostat=rc) ! day
@@ -877,6 +878,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
                         if (rc == iostat_end) then
+                            rewind(fhandle)
                             read(fhandle, *, iostat=rc) ! description
                             read(fhandle, *, iostat=rc) ! time step
                             read(fhandle, *, iostat=rc) ! day
@@ -1015,10 +1017,6 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
                GetTemperatureRecord_FromD(), GetTemperatureRecord_FromM(),&
                GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
             FromDayNr = GetTemperatureRecord_FromDayNr()  ! since we have 365 days anyway
-        else
-            ! DetermineDate(CropDay1,dayi,monthi,yeari);
-            ! yeari := GetTemperatureRecord().FromY;
-            ! DetermineDayNr(dayi,monthi,yeari,CropDay1);
         end if
         DayNri = FromDayNr
         totalname = GetTemperatureFilefull()
@@ -1048,6 +1046,7 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
                 MaxGDDays = MaxGDDays + DayGDD
                 do while (DayNri < GetTemperatureRecord_ToDayNr())
                     if (rc == iostat_end) then
+                        rewind(fhandle)
                         read(fhandle, *, iostat=rc) ! description
                         read(fhandle, *, iostat=rc) ! time step
                         read(fhandle, *, iostat=rc) ! day
@@ -1628,6 +1627,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             select case (GetTemperatureRecord_DataType())
             case (datatype_daily)  
                 if (rc == iostat_end) then
+                    rewind(fhandle1)
                     read(fhandle1, *, iostat=rc) ! description
                     read(fhandle1, *, iostat=rc) ! time step
                     read(fhandle1, *, iostat=rc) ! day
