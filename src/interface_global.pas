@@ -466,9 +466,6 @@ type
          GeneratedDayNrOnset,GeneratedDayNrEnd : integer;
          end;
 
-     VAR IrriFirstDayNr : LongInt; 
-         IrriBeforeSeason,
-         IrriAfterSeason : rep_IrriOutSeasonEvents;
 
 function AquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_aquacropversion';

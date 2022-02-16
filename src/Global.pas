@@ -30,7 +30,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     ClimRecord,
     EToRecord,
     RainRecord     : rep_clim;
-    SoilLayer      : rep_SoilLayer;
     IrriFirstDayNr : LongInt;
     NrCompartments : INTEGER;
     RootingDepth   : double;
@@ -76,10 +75,6 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          VAR TpotVal, EpotVal : double);
 
 PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-
-PROCEDURE NoManagement;
-PROCEDURE LoadManagement(FullName : string);
-
 PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
@@ -339,158 +334,6 @@ FOR i :=1 to NrCompartments DO
           + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
 END; (* GlobalZero *)
 
-PROCEDURE NoManagement;
-var EffectStress_temp : rep_EffectStress;
-BEGIN
-ManDescription := 'No specific field management';
-// mulches
-SetManagement_Mulch(0);
-SetManagement_EffectMulchInS(50);
-// soil fertility
-SetManagement_FertilityStress(0);
-EffectStress_temp := GetSimulation_EffectStress();
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
-SetSimulation_EffectStress(EffectStress_temp);
-// soil bunds
-SetManagement_BundHeight(0);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-// surface run-off
-SetManagement_RunoffOn(true);
-SetManagement_CNcorrection(0);
-// weed infestation
-SetManagement_WeedRC(0);
-SetManagement_WeedDeltaRC(0);
-SetManagement_WeedShape(- 0.01);
-SetManagement_WeedAdj(100);
-// multiple cuttings
-SetManagement_Cuttings_Considered(false);
-SetManagement_Cuttings_CCcut(30);
-SetManagement_Cuttings_CGCPlus(20);
-SetManagement_Cuttings_Day1(1);
-SetManagement_Cuttings_NrDays(undef_int);
-SetManagement_Cuttings_Generate(false);
-SetManagement_Cuttings_Criterion(NA);
-SetManagement_Cuttings_HarvestEnd(false);
-SetManagement_Cuttings_FirstDayNr(undef_int);
-END; (* NoManagement *)
-
-
-PROCEDURE LoadManagement(FullName : string);
-VAR f0 : TextFile;
-    i  : ShortInt;
-    VersionNr : double;
-    TempShortInt : shortint;
-    TempInt : integer;
-    TempDouble : double;
-    EffectStress_temp : rep_EffectStress;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,ManDescription);
-READLN(f0,VersionNr); // AquaCrop Version
-// mulches
-READLN(f0,TempShortInt);
-SetManagement_Mulch(TempShortInt);
-READLN(f0,TempShortInt);
-SetManagement_EffectMulchInS(TempShortInt);
-// soil fertility
-READLN(f0,TempShortInt); // effect is crop specific
-SetManagement_FertilityStress(TempShortInt);
-EffectStress_temp := GetSimulation_EffectStress();
-CropStressParametersSoilFertility(GetCrop().StressResponse,GetManagement_FertilityStress(),EffectStress_temp);
-SetSimulation_EffectStress(EffectStress_temp);
-// soil bunds
-READLN(f0,TempDouble);
-SetManagement_BundHeight(TempDouble);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-// surface run-off
-READLN(f0,i);
-IF (i = 1)
-   THEN SetManagement_RunoffON(false)   // prevention of surface runoff
-   ELSE SetManagement_RunoffON(true);   // surface runoff is not prevented
-IF (ROUND(VersionNr*10) < 50) // UPDATE required for CN adjustment
-   THEN SetManagement_CNcorrection(0)
-   ELSE BEGIN
-     READLN(f0,TempInt); // project increase/decrease of CN
-     SetManagement_CNcorrection(TempInt);
-     END;
-// weed infestation
-IF (ROUND(VersionNr*10) < 50)  // UPDATE required for Version 3.0, 3.1 and 4.0
-   THEN BEGIN
-        SetManagement_WeedRC(0); // relative cover of weeds (%)
-        SetManagement_WeedDeltaRC(0);
-        SetManagement_WeedShape(-0.01); //shape factor of the CC expansion fucntion in a weed infested field
-        END
-   ELSE BEGIN
-        READLN(f0,TempShortInt); //relative cover of weeds (%)
-        SetManagement_WeedRC(TempShortInt);
-        IF (ROUND(VersionNr*10) < 51)
-           THEN SetManagement_WeedDeltaRC(0)
-           ELSE BEGIN
-             READLN(f0,TempInt);
-             SetManagement_WeedDeltaRC(TempInt);
-             END;
-        READLN(f0,TempDouble); //shape factor of the CC expansion fucntion in a weed infested field
-          SetManagement_WeedShape(TempDouble);
-        END;
-IF (ROUND(VersionNr*10) < 70)  // UPDATE required for versions below 7
-   THEN SetManagement_WeedAdj(100) // replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials
-   ELSE BEGIN
-     READLN(f0,TempShortInt);
-     SetManagement_WeedAdj(TempShortInt);
-     END;
-  // multiple cuttings
-IF (ROUND(VersionNr*10) >= 70)  // UPDATE required for multiple cuttings
-   THEN BEGIN
-        READLN(f0,i);  // Consider multiple cuttings: True or False
-        IF (i = 0)
-           THEN SetManagement_Cuttings_Considered(false)
-           ELSE SetManagement_Cuttings_Considered(true);
-        READLN(f0,TempInt);  // Canopy cover (%) after cutting
-        SetManagement_Cuttings_CCcut(TempInt);
-        READLN(f0,TempInt); // Increase (percentage) of CGC after cutting
-        SetManagement_Cuttings_CGCPlus(TempInt);
-        READLN(f0,TempInt);  // Considered first day when generating cuttings (1 = start of growth cycle)
-        SetManagement_Cuttings_Day1(TempInt);
-        READLN(f0,TempInt);  // Considered number owhen generating cuttings (-9 = total growth cycle)
-        SetManagement_Cuttings_NrDays(TempInt);
-        READLN(f0,i);  // Generate multiple cuttings: True or False
-        IF (i = 1)
-           THEN SetManagement_Cuttings_Generate(true)
-           ELSE SetManagement_Cuttings_Generate(false);
-        READLN(f0,i);  // Time criterion for generating cuttings
-        CASE i OF
-           0  : SetManagement_Cuttings_Criterion(NA); // not applicable
-           1  : SetManagement_Cuttings_Criterion(IntDay); // interval in days
-           2  : SetManagement_Cuttings_Criterion(IntGDD); // interval in Growing Degree Days
-           3  : SetManagement_Cuttings_Criterion(DryB); // produced dry above ground biomass (ton/ha)
-           4  : SetManagement_Cuttings_Criterion(DryY); // produced dry yield (ton/ha)
-           5  : SetManagement_Cuttings_Criterion(FreshY); // produced fresh yield (ton/ha)
-          else  SetManagement_Cuttings_Criterion(NA); // not applicable
-          end;
-        READLN(f0,i);  // final harvest at crop maturity: True or False (When generating cuttings)
-        IF (i = 1)
-           THEN SetManagement_Cuttings_HarvestEnd(true)
-           ELSE SetManagement_Cuttings_HarvestEnd(false);
-        READLN(f0,TempInt); // dayNr for Day 1 of list of cuttings (-9 = Day1 is start growing cycle)
-        SetManagement_Cuttings_FirstDayNr(TempInt);
-        END
-   ELSE BEGIN
-        SetManagement_Cuttings_Considered(false);
-        SetManagement_Cuttings_CCcut(30);
-        SetManagement_Cuttings_CGCPlus(20);
-        SetManagement_Cuttings_Day1(1);
-        SetManagement_Cuttings_NrDays(undef_int);
-        SetManagement_Cuttings_Generate(false);
-        SetManagement_Cuttings_Criterion(NA);
-        SetManagement_Cuttings_HarvestEnd(false);
-        SetManagement_Cuttings_FirstDayNr(undef_int);
-        END;
-Close(f0);
-END; (* LoadManagement *)
-
 PROCEDURE NoIrrigation;
 VAR Nri : INTEGER;
 BEGIN
@@ -503,10 +346,10 @@ BEGIN
  IrriFirstDayNr := undef_int;
  FOR Nri := 1 TO 5 DO
      BEGIN
-     IrriBeforeSeason[Nri].DayNr := 0;
-     IrriBeforeSeason[Nri].Param := 0;
-     IrriAfterSeason[Nri].DayNr := 0;
-     IrriAfterSeason[Nri].Param := 0;
+     SetIrriBeforeSeason_DayNr(Nri, 0);
+     SetIrriBeforeSeason_Param(Nri, 0);
+     SetIrriAfterSeason_DayNr(Nri, 0);
+     SetIrriAfterSeason_Param(Nri, 0);
      END;
  SetIrriECw_PreSeason(0.0); //dS/m
  SetIrriECw_PostSeason(0.0); //dS/m

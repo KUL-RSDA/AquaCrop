@@ -692,13 +692,6 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
 
-!function GetIrriDescription_wrap() result(c_pointer)
-!    !! Wrapper for [[ac_global:GetIrriDescription]] for foreign languages.
-!    type(c_ptr) :: c_pointer
-!    
-!    c_pointer = string2pointer(GetIrriDescription())
-!end function GetIrriDescription_wrap
-
 subroutine SetIrriDescription_wrap(IrriDescription, strlen)
     !! Wrapper for [[ac_global:SetIrriDescription]] for foreign languages.
     type(c_ptr), intent(in) :: IrriDescription
