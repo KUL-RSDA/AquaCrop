@@ -2852,7 +2852,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
 
         ! Correction for Air temperature stress 
         if ((CCiAdjusted <= 0.0000001_dp) &
-            .or. (roundc(GDDayi, mold=1_int32) < 0)) then
+            .or. (roundc(GDDayi, mold=1) < 0)) then
             KsTrCold = 1._dp
         else
             KsTrCold = KsTemperature(0._dp, TempGDtranspLow, GDDayi)
@@ -2905,7 +2905,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
             if ((CCxWithered > 0.01_dp) .and. (CCi > 0.001_dp)) then
                 TpotVal = TpotVal &
                            * exp(GetSimulParam_ExpFsen() & 
-                                * log(real(CCi/CCxWithered, kind=dp)))
+                                * log(CCi/CCxWithered))
             end if
         end if
     end if
