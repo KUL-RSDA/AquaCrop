@@ -2829,7 +2829,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
     else
         ! Correction for micro-advection 
         CCiAdjusted = 1.72_dp*CCi - 1._dp*(CCi*CCi) + 0.30_dp*(CCi*CCi*CCi)
-        if (CCiAdjusted < 0._dp) then
+        if (CCiAdjusted < epsilon(1._dp)) then
             CCiAdjusted = 0._dp
         end if
         if (CCiAdjusted > 1._dp) then
@@ -2838,7 +2838,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         
         ! Correction for ageing effects - is a function of calendar days 
         if ((VirtualDay-DayLastCut) > (L12+5)) then
-            KcVal_local = KcVal - (VirtualDay-DayLastCut-(L12+5)) &
+            KcVal_local = KcVal - (VirtualDay-DayLastCut-(L12+5._dp)) &
                         * (KcDeclineVal/100._dp)*CCxWithered
         else
             KcVal_local = KcVal
@@ -2867,7 +2867,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
                         (1._dp - CCxWithered * CCEffectProcent/100._dp)
 
         ! Correction Epot for dying crop in late-season stage 
-        if ((VirtualDay > L123) .and. (CCx > 0._dp)) then
+        if ((VirtualDay > L123) .and. (CCx > epsilon(1._dp))) then
             if (CCi > (CCx/2._dp)) then
                 ! not yet full effect 
                 if (CCi > CCx) then
@@ -2882,7 +2882,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
             EpotMin = GetSimulParam_KcWetBare() &
                       * (1._dp - 1.72_dp*CCx + 1._dp*(CCx*CCx) &
                             - 0.30_dp*(CCx*CCx*CCx)) * EToVal
-            if (EpotMin < 0._dp) then
+            if (EpotMin < epsilon(1._dp)) then
                 EpotMin = 0._dp
             end if
             if (EpotVal < EpotMin) then
