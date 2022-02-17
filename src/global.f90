@@ -3138,6 +3138,50 @@ subroutine AdjustOnsetSearchPeriod()
 end subroutine AdjustOnsetSearchPeriod
 
 
+subroutine DesignateSoilLayerToCompartments(NrCompartments, NrSoilLayers, &
+                                                Compartment)
+    integer(int32), intent(in) :: NrCompartments
+    integer(int32), intent(in) :: NrSoilLayers
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                        intent(inout) :: Compartment
+
+    integer(int32) :: i, layeri, compi
+    real(dp) :: depth, depthi
+    logical :: finished, NextLayer
+
+    depth = 0._dp
+    depthi = 0._dp
+    layeri = 1
+    compi = 1
+    outer_loop: do
+        depth = depth + GetSoilLayer_Thickness(layeri)
+        inner_loop: do
+            depthi = depthi + Compartment(compi)%Thickness/2._dp
+            if (depthi <= depth) then
+                Compartment(compi)%Layer = layeri
+                NextLayer = .false.
+                depthi = depthi + Compartment(compi)%Thickness/2._dp
+                compi = compi + 1
+                finished = (compi > NrCompartments)
+            else
+                depthi = depthi - Compartment(compi)%Thickness/2._dp
+                NextLayer = .true.
+                layeri = layeri + 1
+                finished = (layeri > NrSoilLayers)
+            end if
+            if (finished .or. NextLayer) exit inner_loop
+            end do inner_loop
+        if (finished) exit outer_loop
+        end do outer_loop
+    do i = compi, NrCompartments 
+        Compartment(i)%Layer = NrSoilLayers
+    end do
+    do i = (NrCompartments+1), max_No_compartments 
+        Compartment(i)%Thickness = undef_double
+    end do
+end subroutine DesignateSoilLayerToCompartments
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)

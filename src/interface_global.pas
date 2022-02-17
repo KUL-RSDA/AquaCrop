@@ -4052,6 +4052,11 @@ procedure SetNrCompartments(constref NrCompartments_in : integer);
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
 
+procedure DesignateSoilLayerToCompartments(constref NrCompartments : integer;
+                                           constref NrSoilLayers : integer;
+                                           var Compartment : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_designatesoillayertocompartments';
+
 implementation
 
 

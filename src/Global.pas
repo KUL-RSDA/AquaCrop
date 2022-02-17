@@ -83,8 +83,6 @@ PROCEDURE LoadOffSeason(FullName : string);
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
-PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
-                                          VAR Compartment : rep_Comp);
 
 PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR SoilLayer : rep_SoilLayer;
@@ -551,41 +549,6 @@ REPEAT
            END;
 UNTIL (compi < 1);
 END; (*  CalculateAdjustedFC *)
-
-
-PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
-                                          VAR Compartment : rep_Comp);
-VAR i, layeri, compi : INTEGER;
-    depth, depthi : double;
-    finished, NextLayer : BOOLEAN;
-BEGIN
-depth := 0;
-depthi := 0;
-layeri := 1;
-compi := 1;
-REPEAT
-  depth := depth + GetSoilLayer_i(layeri).Thickness;
-  REPEAT
-    depthi := depthi + Compartment[compi].Thickness/2;
-    IF (depthi <= depth)
-       THEN BEGIN
-            Compartment[compi].Layer := layeri;
-            NextLayer := false;
-            depthi := depthi + Compartment[compi].Thickness/2;
-            compi := compi + 1;
-            finished := (compi > NrCompartments);
-            END
-       ELSE BEGIN
-            depthi := depthi - Compartment[compi].Thickness/2;
-            NextLayer := true;
-            layeri := layeri + 1;
-            finished := (layeri > NrSoilLayers);
-            END;
-  UNTIL finished or NextLayer;
-UNTIL finished;
-FOR i := compi to NrCompartments DO Compartment[i].Layer := NrSoilLayers;
-FOR i := (NrCompartments+1) TO max_No_compartments DO Compartment[i].Thickness := undef_double;
-END; (* DesignateSoilLayerToCompartments *)
 
 
 PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
