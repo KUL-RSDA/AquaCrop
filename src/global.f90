@@ -3232,6 +3232,7 @@ subroutine AppendCropFilePerennials(totalname, GenrateTheOnset, GenerateTheEnd, 
     integer :: occurrenceend_local
     logical :: genrateonset_local
     logical :: genrateend_local
+
     criterionNronset_local = CriterionNrOnset
     criterionNrend_local = CriterionNrEnd
     genrateonset_local = GenrateTheOnset
@@ -3239,12 +3240,13 @@ subroutine AppendCropFilePerennials(totalname, GenrateTheOnset, GenerateTheEnd, 
     occurrenceonset_local = OccurrenceOnset
     occurrenceend_local = OccurrenceEnd
 
-    open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
+    open(newunit=fhandle, file=trim(totalname),  status='old', position='append', action='write')
+    print *, totalname
 
     ! 1. Title
     write(fhandle,  '(a)') ! empty line
     write(fhandle,  '(a)') ' Internal crop calendar'
-    write(fhandle,  '(a)')' ========================================================'
+    write(fhandle,  '(a)') ' ========================================================'
 
     ! 2. ONSET
     ! criterion number
