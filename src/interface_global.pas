@@ -2960,7 +2960,10 @@ procedure NoIrrigation();
         external 'aquacrop' name '__ac_global_MOD_noirrigation';
 
 procedure LoadIrriScheduleInfo(constref FullName : string);
-        external 'aquacrop' name '__ac_global_MOD_loadirrischeduleinfo';
+
+procedure LoadIrriScheduleInfo_wrap(constref FullName : PChar;
+                           constref strlen1 : integer);  
+        external 'aquacrop' name '__ac_interface_global_MOD_loadirrischeduleinfo_wrap';
 
 procedure __SetIrriMode(constref IrriMode : integer);
         external 'aquacrop' name '__ac_global_MOD_setirrimode';
@@ -6590,6 +6593,17 @@ begin;
     SetSimulation_Storage_CropString_wrap(p, strlen);
 end;
 
+procedure LoadIrriScheduleInfo(
+            constref FullName : string);
+var
+    p1 : PChar;
+    strlen1 : integer;
+
+begin;
+    p1 := PChar(FullName);
+    strlen1 := Length(FullName);
+    LoadIrriScheduleInfo_wrap(p1, strlen1);
+end;
 
 procedure LoadClimate(
             constref FullName : string;

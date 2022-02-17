@@ -2607,13 +2607,8 @@ subroutine LoadIrriScheduleInfo(FullName)
     integer(int8) :: simul_irri_in
     integer(int32) :: simul_percraw
     character(len=1025) :: StringREAD
-    write(*,*) 'FullName', trim(FullName)
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, *, iostat=rc) IrriDescription
-    !read(fhandle, *, iostat=rc) StringREAD 
-    !write(*,*) StringREAD
-    !call SetIrriDescription(StringREAD)
-    write(*,*) IrriDescription
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
 
     ! irrigation method
@@ -2636,7 +2631,6 @@ subroutine LoadIrriScheduleInfo(FullName)
 
     ! irrigation mode and parameters
     read(fhandle, *, iostat=rc) i
-    write(*,*) 'IrriMode', i
     select case (i)
     case(0)
         call SetIrriMode(IrriMode_NoIrri) ! rainfed
@@ -2687,8 +2681,6 @@ subroutine LoadIrriScheduleInfo(FullName)
         call SetSimulParam_PercRAW(simul_percraw)
         IrriFirstDayNr = undef_int  ! start of growing period
     end if
-    write (*,*) 'IrriMode: ', GetIrriMode()
-    write (*,*) 'IrriFirstDayNr: ', IrriFirstDayNr
     close(fhandle)
     ! LoadIrriScheduleInfo 
 end subroutine LoadIrriScheduleInfo

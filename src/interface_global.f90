@@ -75,6 +75,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainDescription, &
                      LoadClimate, &
                      LoadCropCalendar, &
+                     LoadIrriScheduleInfo, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -470,6 +471,17 @@ subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                                      CGCgiven_f, TheDaysToCCini, ThePlanting, &
                                      Length123, StLength, Length12, CGCVal)
 end subroutine DetermineLengthGrowthStages_wrap
+
+subroutine LoadIrriScheduleInfo_wrap(FullName, strlen1)
+    !! Wrapper for [[ac_global:LoadIrriScheduleInfo]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen1
+
+    character(len=strlen1) :: string1
+
+    string1 = pointer2string(FullName, strlen1)
+    call LoadIrriScheduleInfo(string1)
+end subroutine LoadIrriScheduleInfo_wrap
 
 subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
                             TempFile, strlen3, EToFile, strlen4, &
