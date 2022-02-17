@@ -1198,8 +1198,11 @@ function HImultiplier(
 
 procedure ComposeOutputFileName(
             constref TheProjectFileName : string);
-         external 'aquacrop' name '__ac_global_MOD_composeoutputfilename';
 
+procedure ComposeOutputFileName_wrap(
+            constref TheProjectFileName : string;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_composeoutputfilename_wrap';
 
 function NumberSoilClass (
             constref SatvolPro : double;
@@ -1809,18 +1812,6 @@ procedure SetPathNameSimul_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setpathnamesimul_wrap'; 
-
-function GetOutputName(): string;
-
-function GetOutputName_wrap(): PChar;
-        external 'aquacrop' name '__ac_interface_global_MOD_getoutputname_wrap';
-
-procedure SetOutputName(constref str : string);
-
-procedure SetOutputName_wrap(
-            constref p : PChar;
-            constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_setoutputname_wrap';             
 
 function GetProjectFile(): string;
 
@@ -3253,6 +3244,18 @@ begin;
     FileExists := FileExists_wrap(p, strlen);
 end;
 
+procedure ComposeOutputFileName(
+            constref  TheProjectFileName: string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TheProjectFileName);
+    strlen := Length(TheProjectFileName);
+    ComposeOutputFileName_wrap(p, strlen);
+end;
+
 procedure SplitStringInTwoParams(
             constref StringIN : string;
             var Par1,Par2 : double);
@@ -4548,26 +4551,6 @@ var
 begin;
     p := GetPathNameSimul_wrap();
     GetPathNameSimul := AnsiString(p);
-end;
-
-function GetOutputName(): string;
-var
-    p : PChar;
-
-begin;
-    p := GetOutputName_wrap();
-    GetOutputName := AnsiString(p);
-end;
-
-procedure SetOutputName(constref str : string);
-var
-    p : PChar;
-    strlen : integer;
-
-begin;
-    p := PChar(str);
-    strlen := Length(str);
-    SetOutputName_wrap(p, strlen);
 end;
 
 procedure SetPathNameSimul(constref str : string);

@@ -777,7 +777,6 @@ character(len=:), allocatable :: CropDescription
 character(len=:), allocatable :: PathNameProg
 character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
-character(len=:), allocatable :: OutputName
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ProfDescription
@@ -2373,16 +2372,15 @@ end function FileExists
 
 subroutine ComposeOutputFileName(TheProjectFileName)
     character(len=*), intent(in) :: TheProjectFileName
-    
     character(len=len(TheProjectFileName)) :: TempString
     integer(int8) :: i
     
     TempString = Trim(TheProjectFileName)
     i = len(TempString)
-    
     TempString = TempString(1:i-4)
     OutputName = TempString
 end subroutine ComposeOutputFileName
+
 
 subroutine SplitStringInTwoParams(StringIN, Par1, Par2)
     character(len=*), intent(in) :: StringIN
@@ -2719,20 +2717,6 @@ subroutine SetPathNameSimul(str)
     
     PathNameSimul = str
 end subroutine SetPathNameSimul
-
-function GetOutputName() result(str)
-    !! Getter for the "OutputName" global variable.
-    character(len=len(OutputName)) :: str
-    
-    str = OutputName
-end function GetOutputName
-
-subroutine SetOutputName(str)
-    !! Setter for the "OutputName" global variable.
-    character(len=*), intent(in) :: str
-    
-    OutputName = str
-end subroutine SetOutputName
 
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.

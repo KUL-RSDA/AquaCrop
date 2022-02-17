@@ -8,6 +8,7 @@ use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      TimeToMaxCanopySF, &
                      FileExists, &
+                     ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
                      GetCalendarDescription, &
@@ -41,7 +42,6 @@ use ac_global, only: CheckFilesInProject, &
                      GetPathNameProg, &
                      GetPathNameOutp, &
                      GetPathNameSimul, &
-                     GetOutputName, &
                      GetPerennialPeriod_GenerateOnset, &
                      GetPerennialPeriod_GenerateEnd, &
                      GetProfFile, &
@@ -103,7 +103,6 @@ use ac_global, only: CheckFilesInProject, &
                      SetPathNameProg, &
                      SetPathNameOutp, &
                      SetPathNameSimul, &
-                     SetOutputName, &
                      SetPerennialPeriod_GenerateOnset, &
                      SetPerennialPeriod_GenerateEnd, &
                      SetProjectFile, &
@@ -271,6 +270,18 @@ logical function FileExists_wrap(full_name, strlen)
     string = pointer2string(full_name, strlen)
     FileExists_wrap = FileExists(string)
 end function FileExists_wrap
+
+
+subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
+    !! Wrapper for [[ac_global:ComposeOutputFileName]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFileName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFileName, strlen)
+    call ComposeOutputFileName(string)
+end subroutine ComposeOutputFileName_wrap
 
 
 subroutine SplitStringInTwoParams_wrap(StringIN, strlen, Par1, Par2)
@@ -824,24 +835,6 @@ subroutine SetPathNameSimul_wrap(PathNameSimul, strlen)
     string = pointer2string(PathNameSimul, strlen)
     call SetPathNameSimul(string)
 end subroutine SetPathNameSimul_wrap
-
-function GetOutputName_wrap() result(c_pointer)
-    !! Wrapper for [[ac_global:GetOutputName]] for foreign languages.
-    type(c_ptr) :: c_pointer
-    
-    c_pointer = string2pointer(GetOutputName())
-end function GetOutputName_wrap
-
-subroutine SetOutputName_wrap(OutputName, strlen)
-    !! Wrapper for [[ac_global:SetOutputName]] for foreign languages.
-    type(c_ptr), intent(in) :: OutputName
-    integer(int32), intent(in) :: strlen
-
-    character(len=strlen) :: string
-
-    string = pointer2string(OutputName, strlen)
-    call SetOutputName(string)
-end subroutine SetOutputName_wrap
 
 function GetPerennialPeriod_GenerateOnset_wrap() result(GenerateOnset)
     !! Wrapper for [[ac_global:GetPerennialPeriod_GenerateOnset]] for foreign languages.
