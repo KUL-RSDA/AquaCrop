@@ -23,7 +23,7 @@ implementation
  // 1a. General.PAR
 
  SetSimulParam_PercRAW(50); //Threshold [% of RAW] for determination of Inet
- NrCompartments := 12; //Number of soil compartments (maximum is 12) (not a program parameter)
+ SetNrCompartments(12); //Number of soil compartments (maximum is 12) (not a program parameter)
  SetSimulParam_CompDefThick(0.10); //Default thickness of soil compartments [m]
  SetSimulParam_CropDay1(81); //DayNumber of first day cropping period (1..365)
  SetSimulParam_Tbase(10.0);  //Default base temperature (degC) below which no crop development
@@ -74,8 +74,8 @@ implementation
  IniPercTAW := 50; // Default Value for Percentage TAW for Display in Initial Soil Water Content Menu
 
  // Default for soil compartments
- IF (NrCompartments > max_No_compartments) //Savety check of value in General.PAR;
-    THEN NrCompartments := max_No_compartments;
+ IF (GetNrCompartments() > max_No_compartments) //Savety check of value in General.PAR;
+    THEN SetNrCompartments(max_No_compartments);
  FOR Nri := 1 TO max_No_compartments DO  // required for formactivate ParamNew
      SetCompartment_Thickness(Nri, GetSimulParam_CompDefThick());
  // Default CropDay1 - Savety check of value in General.PAR
@@ -103,9 +103,9 @@ implementation
                              // in which SWCiniFile := '(None)', and settings for Soil water and Salinity content
 
  // 2c. Complete initial conditions (crop development)
- Simulation.CCini := undef_int;
- Simulation.Bini := 0.000;
- Simulation.Zrini := undef_int;
+ SetSimulation_CCini(undef_int);
+ SetSimulation_Bini(0.000);
+ SetSimulation_Zrini(undef_int);
 
 
  // 3. Crop characteristics and cropping period
@@ -116,11 +116,11 @@ implementation
  SetCrop_CCo((GetCrop().PlantingDens/10000) * (GetCrop().SizeSeedling/10000));
  SetCrop_CCini((GetCrop().PlantingDens/10000) * (GetCrop().SizePlant/10000));
  // maximum rooting depth in given soil profile
- SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,SoilLayer));
+ SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
  // determine miscellaneous
  SetCrop_Day1(GetSimulParam_CropDay1());
  CompleteCropDescription;
- Simulation.YearSeason := 1;
+ SetSimulation_YearSeason(1);
  NoCropCalendar;
 
  // 4. Field Management
@@ -182,7 +182,7 @@ implementation
 
  // 5.6 Set Climate and Simulation Period
  SetClimData;
- Simulation.LinkCropToSimPeriod := true;
+ SetSimulation_LinkCropToSimPeriod(true);
 (* adjusting Crop.Day1 and Crop.DayN to ClimFile *)
 Crop_Day1_temp := GetCrop().Day1;
 Crop_DayN_temp := GetCrop().DayN;
@@ -209,10 +209,10 @@ SetCrop_DayN(Crop_DayN_temp);
  SetProjectFile('(None)');
  SetProjectFileFull(GetProjectFile());
  ProjectDescription := 'No specific project';
- Simulation.MultipleRun := false; // No sequence of simulation runs in the project
- Simulation.NrRuns := 1;
- Simulation.MultipleRunWithKeepSWC := false;
- Simulation.MultipleRunConstZrx := undef_int;
+ SetSimulation_MultipleRun(false); // No sequence of simulation runs in the project
+ SetSimulation_NrRuns(1);
+ SetSimulation_MultipleRunWithKeepSWC(false);
+ SetSimulation_MultipleRunConstZrx(undef_int);
  SetMultipleProjectFile(GetProjectFile());
  SetMultipleProjectFileFull(GetProjectFileFull());
  MultipleProjectDescription := ProjectDescription;
@@ -246,12 +246,12 @@ SetCrop_DayN(Crop_DayN_temp);
  Infiltrated := 0.0; // added 4.0
  CRwater := 0; // added 4.0
  CRsalt := 0; // added 4.0
- Simulation.ResetIniSWC := true;
- Simulation.EvapLimitON := false;
+ SetSimulation_ResetIniSWC(true);
+ SetSimulation_EvapLimitON(false);
  MaxPlotNew := 50;
  MaxPlotTr := 10;
- Simulation.InitialStep := 10; // Length of period (days) for displaying intermediate results during simulation run
- Simulation.LengthCuttingInterval := 40; // Default length of cutting interval (days)
+ SetSimulation_InitialStep(10); // Length of period (days) for displaying intermediate results during simulation run
+ SetSimulation_LengthCuttingInterval(40); // Default length of cutting interval (days)
  END; (* InitializeSettings *)
 
 

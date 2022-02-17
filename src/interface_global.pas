@@ -5,6 +5,7 @@ interface
 
 
 const
+    Equiv = 0.64;   // conversion factor: 1 dS/m = 0.64 g/l
     max_SoilLayers = 5;
     max_No_compartments = 12;
     undef_double = -9.9;
@@ -15,6 +16,8 @@ const
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
 
 type
+    Pdouble = ^double;
+
     rep_string25 = string[25]; (* Description SoilLayer *)
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
@@ -101,6 +104,14 @@ type
         StopSearchDayNr : LongInt; // daynumber
         LengthSearchPeriod : INTEGER; // days
         end;
+
+     rep_EndSeason = Record
+         ExtraYears : Integer; // to add to YearStartCropCycle
+         GenerateTempOn : BOOLEAN; // by temperature criterion
+         AirTCriterion : repAirTCriterion;
+         StartSearchDayNr, StopSearchDayNr : integer; //daynumber
+         LengthSearchPeriod : INTEGER; //days
+         end;
 
     rep_datatype = (Daily,Decadely, Monthly);
 
@@ -319,6 +330,70 @@ type
      rep_IrriMode = (NoIrri,Manual,Generate,Inet);
      rep_IrriMethod = (MBasin,MBorder,MDrip,MFurrow,MSprinkler);
 
+     rep_IniComp =  ARRAY[1.. max_No_compartments] of double;
+     rep_IniSWC = RECORD
+         AtDepths : BOOLEAN;    // at specific depths or for specific layers
+         NrLoc    : ShortInt;   // number of depths or layers considered
+         Loc      : rep_IniComp;  //depth or layer thickness [m]
+         VolProc  : rep_IniComp;  //soil water content (vol%)
+         SaltECe  : rep_IniComp; // ECe in dS/m
+         AtFC     : BOOLEAN;     // If iniSWC is at FC
+         end;
+
+     rep_storage = Record
+         Btotal     : double; (* assimilates (ton/ha) stored in root systemn by CropString in Storage-Season *)
+         CropString : string; (* full name of crop file which stores Btotal during Storage-Season *)
+         Season     : ShortInt;(* season in which Btotal is stored *)
+         end;
+
+     rep_sim = Record
+         FromDayNr, ToDayNr : LongInt; //daynumber
+         IniSWC    : rep_IniSWC;
+         ThetaIni,
+         ECeIni    : rep_IniComp; // dS/m
+         SurfaceStorageIni,
+         ECStorageIni       : double;
+         CCini,
+         Bini,
+         Zrini       : double;
+         LinkCropToSimPeriod,
+         ResetIniSWC : BOOLEAN; // soil water and salts
+         InitialStep : INTEGER;
+         EvapLimitON : BOOLEAN; // soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover
+         EvapWCsurf : double; // remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]
+         EvapStartStg2 : ShortInt; // % extra to define upper limit of soil water content at start of stage 2 [100 .. 0]
+         EvapZ  : double; // actual soil depth (m) for water extraction by evaporation  [EvapZmin/100 .. EvapZmax/100]
+         HIfinal : INTEGER; //final Harvest Index might be smaller than HImax due to early canopy decline
+         DelayedDays : INTEGER; //delayed days since sowing/planting due to water stress (crop cannot germinate)
+         Germinate   : BOOLEAN; // germinate is false when crop cannot germinate due to water stress
+         SumEToStress : double; // Sum ETo during stress period to delay canopy senescence
+         SumGDD : double; // Sum of Growing Degree-days
+         SumGDDfromDay1 : double; // Sum of Growing Degree-days since Crop.Day1
+         SCor : single; // correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
+         MultipleRun : BOOLEAN; // Project with a sequence of simulation runs
+         NrRuns : INTEGER;
+         MultipleRunWithKeepSWC : BOOLEAN; // Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
+         MultipleRunConstZrx : double; // Maximum rooting depth for multiple projects with KeepSWC
+         IrriECw : double; //quality of irrigation water (dS/m)
+         DayAnaero : ShortInt; (* number of days under anaerobic conditions *)
+         EffectStress : rep_EffectStress;  // effect of soil fertility and salinity stress on CC, WP and KsSto
+         SalinityConsidered : BOOLEAN;
+
+         ProtectedSeedling : BOOLEAN; // IF protected (before CC = 1.25 CC0), seedling triggering of early senescence is switched off
+         SWCtopSoilConsidered : BOOLEAN; // Top soil is relative wetter than root zone and determines water stresses
+
+         LengthCuttingInterval : INTEGER; // Default length of cutting interval (days)
+
+         YearSeason : ShortInt; // year number for perennials (1 = 1st year, 2, 3, 4, max = 127)
+         RCadj : ShortInt; // adjusted relative cover of weeds with self thinning for perennials
+         Storage : rep_storage;
+
+         YearStartCropCycle : INTEGER; // calendar year in which crop cycle starts
+         CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
+         End;
+
+
+
 
      rep_MonthInteger = ARRAY[1..12] OF INTEGER;
 
@@ -410,6 +485,9 @@ function TimeRootFunction(
             constref ShapeFactor : shortint;
             constref tmax, t0 : double) : double;
          external 'aquacrop' name '__ac_global_MOD_timerootfunction';
+
+procedure DeclareInitialCondAtFCandNoSalt();
+         external 'aquacrop' name '__ac_global_MOD_declareinitialcondatfcandnosalt';
 
 procedure set_layer_undef(
             var LayerData : SoilLayerIndividual);
@@ -1045,7 +1123,7 @@ procedure DetermineDate(
             constref DayNr : longint;
             var Dayi,Monthi,Yeari : integer);
          external 'aquacrop' name '__ac_global_MOD_determinedate';
-                        
+
 function TimeToReachZroot(
             constref Zi, Zo, Zx : double;
             constref ShapeRootDeepening : shortint;
@@ -1277,6 +1355,9 @@ function CanopyCoverNoStressGDDaysSF(
 
 procedure ReadRainfallSettings();
         external 'aquacrop' name '__ac_global_MOD_readrainfallsettings';
+
+procedure ReadSoilSettings();
+        external 'aquacrop' name '__ac_global_MOD_readsoilsettings';
 
 function fAdjustedForCO2 (
             constref CO2i, WPi : double;
@@ -1530,6 +1611,18 @@ procedure SetSWCiniFileFull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setswcinifilefull_wrap';
+
+function GetSWCiniDescription(): string;
+
+function GetSWCiniDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getswcinidescription_wrap';
+
+procedure SetSWCiniDescription(constref str : string);
+
+procedure SetSWCiniDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setswcinidescription_wrap';
 
 function Geteffectiverain() : rep_EffectiveRain;
 
@@ -1872,6 +1965,19 @@ procedure SetMultipleProjectFileFull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectfilefull_wrap';
+
+
+function GetFullFileNameProgramParameters(): string;
+
+function GetFullFileNameProgramParameters_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getfullfilenameprogramparameters_wrap';
+
+procedure SetFullFileNameProgramParameters(constref str : string);
+
+procedure SetFullFileNameProgramParameters_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setfullfilenameprogramparameters_wrap';
                 
 
 function FileExists(constref full_name : string) : boolean;
@@ -2513,6 +2619,9 @@ function GetSoil(): rep_Soil;
 procedure SetSoil_REW(constref REW : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
 
+function GetSoil_NrSoilLayers() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoil_nrsoillayers';
+
 procedure SetSoil_NrSoilLayers(constref NrSoilLayers : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_nrsoillayers';
 
@@ -2575,6 +2684,50 @@ procedure SetOnset_StopSearchDayNr(constref StopSearchDayNr : LongInt);
 
 procedure SetOnset_LengthSearchPeriod(constref LengthSearchPeriod : INTEGER);
     external 'aquacrop' name '__ac_global_MOD_setonset_lengthsearchperiod';
+
+function GetEndSeason() : rep_EndSeason;
+
+function GetEndSeason_ExtraYears() : Integer;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_extrayears';
+
+function GetEndSeason_GenerateTempOn() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getendseason_generatetempon_wrap';
+
+function GetEndSeason_AirTCriterion() : repAirTCriterion;
+
+function __GetEndSeason_AirTCriterion() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_airtcriterion';
+
+function GetEndSeason_StartSearchDayNr() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_startsearchdaynr';
+
+function GetEndSeason_StopSearchDayNr() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_stopsearchdaynr';
+
+function GetEndSeason_LengthSearchPeriod() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getendseason_lengthsearchperiod';
+
+procedure SetEndSeason(constref EndSeason : rep_EndSeason);
+
+procedure SetEndSeason_ExtraYears(constref ExtraYears : Integer);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_extrayears';
+
+procedure SetEndSeason_GenerateTempOn(constref GenerateTempOn : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setendseason_generatetempon_wrap';
+
+procedure SetEndSeason_AirTCriterion(constref AirTCriterion : repAirTCriterion);
+
+procedure __SetEndSeason_AirTCriterion(constref AirTCriterion : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_airtcriterion';
+
+procedure SetEndSeason_StartSearchDayNr(constref StartSearchDayNr : integer);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_startsearchdaynr';
+
+procedure SetEndSeason_StopSearchDayNr(constref StopSearchDayNr : integer);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_stopsearchdaynr';
+
+procedure SetEndSeason_LengthSearchPeriod(constref LengthSearchPeriod : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setendseason_lengthsearchperiod';
 
 
 function GetPerennialPeriod() : rep_PerennialPeriod;
@@ -2901,6 +3054,359 @@ procedure SetTemperatureRecord_ToString_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
+function GetSimulation() : rep_sim;
+
+function GetSimulation_FromDayNr() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_fromdaynr';
+
+function GetSimulation_ToDayNr() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_todaynr';
+
+function GetSimulation_SurfaceStorageIni() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_surfacestorageini';
+
+function GetSimulation_ECStorageIni() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_ecstorageini';
+
+function GetSimulation_CCini() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_ccini';
+
+function GetSimulation_Bini() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_bini';
+
+function GetSimulation_Zrini() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_zrini';
+
+function GetSimulation_LinkCropToSimPeriod() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_linkcroptosimperiod_wrap';
+
+function GetSimulation_ResetIniSWC() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_resetiniswc_wrap';
+
+function GetSimulation_InitialStep() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_initialstep';
+
+function GetSimulation_EvapLimitON() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_evaplimiton_wrap';
+
+function GetSimulation_EvapWCsurf() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_evapwcsurf';
+
+function GetSimulation_EvapStartStg2() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_evapstartstg2';
+
+function GetSimulation_EvapZ() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_evapz';
+
+function GetSimulation_HIfinal() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_hifinal';
+
+function GetSimulation_DelayedDays() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_delayeddays';
+
+function GetSimulation_Germinate() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_germinate_wrap';
+
+function GetSimulation_SumEToStress() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_sumetostress';
+
+function GetSimulation_SumGDD() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_sumgdd';
+
+function GetSimulation_SumGDDfromDay1() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_sumgddfromday1';
+
+function GetSimulation_SCor() : single;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_scor';
+
+function GetSimulation_MultipleRun() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_multiplerun_wrap';
+
+function GetSimulation_NrRuns() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_nrruns';
+
+function GetSimulation_MultipleRunWithKeepSWC() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_multiplerunwithkeepswc_wrap';
+
+function GetSimulation_MultipleRunConstZrx() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_multiplerunconstzrx';
+
+function GetSimulation_IrriECw() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_irriecw';
+
+function GetSimulation_DayAnaero() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_dayanaero';
+
+function GetSimulation_SalinityConsidered() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_salinityconsidered_wrap';
+
+function GetSimulation_ProtectedSeedling() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_protectedseedling_wrap';
+
+function GetSimulation_SWCtopSoilConsidered() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_swctopsoilconsidered_wrap';
+
+function GetSimulation_LengthCuttingInterval() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_lengthcuttinginterval';
+
+function GetSimulation_YearSeason() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_yearseason';
+
+function GetSimulation_RCadj() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_rcadj';
+
+function GetSimulation_YearStartCropCycle() : INTEGER;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_yearstartcropcycle';
+
+function GetSimulation_CropDay1Previous() : LongInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_cropday1previous';
+
+procedure SetSimulation(constref Simulation : rep_sim);
+
+procedure SetSimulation_FromDayNr(constref FromDayNr : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_fromdaynr';
+
+procedure SetSimulation_ToDayNr(constref ToDayNr : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_todaynr';
+
+procedure SetSimulation_SurfaceStorageIni(constref SurfaceStorageIni : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_surfacestorageini';
+
+procedure SetSimulation_ECStorageIni(constref ECStorageIni : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_ecstorageini';
+
+procedure SetSimulation_CCini(constref CCini : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_ccini';
+
+procedure SetSimulation_Bini(constref Bini : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_bini';
+
+procedure SetSimulation_Zrini(constref Zrini : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_zrini';
+
+procedure SetSimulation_LinkCropToSimPeriod(constref LinkCropToSimPeriod : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_linkcroptosimperiod_wrap';
+
+procedure SetSimulation_ResetIniSWC(constref ResetIniSWC : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_resetiniswc_wrap';
+
+procedure SetSimulation_InitialStep(constref InitialStep : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_initialstep';
+
+procedure SetSimulation_EvapLimitON(constref EvapLimitON : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_evaplimiton_wrap';
+
+procedure SetSimulation_EvapWCsurf(constref EvapWCsurf : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_evapwcsurf';
+
+procedure SetSimulation_EvapStartStg2(constref EvapStartStg2 : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_evapstartstg2';
+
+procedure SetSimulation_EvapZ(constref EvapZ : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_evapz';
+
+procedure SetSimulation_HIfinal(constref HIfinal : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_hifinal';
+
+procedure SetSimulation_DelayedDays(constref DelayedDays : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_delayeddays';
+
+procedure SetSimulation_Germinate(constref Germinate : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_germinate_wrap';
+
+procedure SetSimulation_SumEToStress(constref SumEToStress : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_sumetostress';
+
+procedure SetSimulation_SumGDD(constref SumGDD : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_sumgdd';
+
+procedure SetSimulation_SumGDDfromDay1(constref SumGDDfromDay1 : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_sumgddfromday1';
+
+procedure SetSimulation_SCor(constref SCor : single);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_scor';
+
+procedure SetSimulation_MultipleRun(constref MultipleRun : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_multiplerun_wrap';
+
+procedure SetSimulation_NrRuns(constref NrRuns : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_nrruns';
+
+procedure SetSimulation_MultipleRunWithKeepSWC(constref MultipleRunWithKeepSWC : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_multiplerunwithkeepswc_wrap';
+
+procedure SetSimulation_MultipleRunConstZrx(constref MultipleRunConstZrx : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_multiplerunconstzrx';
+
+procedure SetSimulation_IrriECw(constref IrriECw : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_irriecw';
+
+procedure SetSimulation_DayAnaero(constref DayAnaero : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_dayanaero';
+
+procedure SetSimulation_SalinityConsidered(constref SalinityConsidered : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_salinityconsidered_wrap';
+
+procedure SetSimulation_ProtectedSeedling(constref ProtectedSeedling : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_protectedseedling_wrap';
+
+procedure SetSimulation_SWCtopSoilConsidered(constref SWCtopSoilConsidered : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_swctopsoilconsidered_wrap';
+
+procedure SetSimulation_LengthCuttingInterval(constref LengthCuttingInterval : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_lengthcuttinginterval';
+
+procedure SetSimulation_YearSeason(constref YearSeason : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_yearseason';
+
+procedure SetSimulation_RCadj(constref RCadj : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_rcadj';
+
+procedure SetSimulation_YearStartCropCycle(constref YearStartCropCycle : INTEGER);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_yearstartcropcycle';
+
+procedure SetSimulation_CropDay1Previous(constref CropDay1Previous : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_cropday1previous';
+
+function GetSimulation_IniSWC() : rep_IniSWC;
+
+function GetSimulation_IniSWC_AtDepths() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_iniswc_atdepths_wrap';
+
+function GetSimulation_IniSWC_NrLoc() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_nrloc';
+
+function GetSimulation_IniSWC_AtFC() : BOOLEAN;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_iniswc_atfc_wrap';
+
+procedure SetSimulation_IniSWC(constref Simulation_IniSWC : rep_IniSWC);
+
+procedure SetSimulation_IniSWC_AtDepths(constref AtDepths : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_iniswc_atdepths_wrap';
+
+procedure SetSimulation_IniSWC_NrLoc(constref NrLoc : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_nrloc';
+
+procedure SetSimulation_IniSWC_AtFC(constref AtFC : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_iniswc_atfc_wrap';
+
+function GetSimulation_EffectStress() : rep_EffectStress;
+
+function GetSimulation_EffectStress_RedCGC() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_effectstress_redcgc';
+
+function GetSimulation_EffectStress_RedCCX() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_effectstress_redccx';
+
+function GetSimulation_EffectStress_RedWP() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_effectstress_redwp';
+
+function GetSimulation_EffectStress_CDecline() : Double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_effectstress_cdecline';
+
+function GetSimulation_EffectStress_RedKsSto() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_effectstress_redkssto';
+
+procedure SetSimulation_EffectStress(constref Simulation_EffectStress : rep_EffectStress);
+
+procedure SetSimulation_EffectStress_RedCGC(constref RedCGC : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_effectstress_redcgc';
+
+procedure SetSimulation_EffectStress_RedCCX(constref RedCCX : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_effectstress_redccx';
+
+procedure SetSimulation_EffectStress_RedWP(constref RedWP : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_effectstress_redwp';
+
+procedure SetSimulation_EffectStress_CDecline(constref CDecline : Double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_effectstress_cdecline';
+
+procedure SetSimulation_EffectStress_RedKsSto(constref RedKsSto : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_effectstress_redkssto';
+
+function GetSimulation_ThetaIni() : rep_IniComp;
+
+function GetSimulation_ThetaIni_i(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_thetaini_i';
+
+function GetSimulation_ECeIni() : rep_IniComp;
+
+function GetSimulation_ECeIni_i(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_eceini_i';
+
+procedure SetSimulation_ThetaIni(constref ThetaIni : rep_IniComp);
+
+procedure SetSimulation_ThetaIni_i(constref i : integer;
+                                   constref ThetaIni_i : double)
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_thetaini_i';
+
+procedure SetSimulation_ECeIni(constref ECeIni : rep_IniComp);
+
+procedure SetSimulation_ECeIni_i(constref i : integer;
+                              constref ECeIni_i : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_eceini_i';
+
+function GetSimulation_IniSWC_Loc() : rep_IniComp;
+
+function GetSimulation_IniSWC_Loc_i(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_loc_i';
+
+function GetSimulation_IniSWC_VolProc() : rep_IniComp;
+
+function GetSimulation_IniSWC_VolProc_i(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_volproc_i';
+
+function GetSimulation_IniSWC_SaltECe() : rep_IniComp;
+
+function GetSimulation_IniSWC_SaltECe_i(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_iniswc_saltece_i';
+
+procedure SetSimulation_IniSWC_Loc(constref Loc : rep_IniComp);
+
+procedure SetSimulation_IniSWC_Loc_i(constref i : integer;
+                                     constref Loc_i : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_loc_i';
+
+procedure SetSimulation_IniSWC_VolProc(constref VolProc : rep_IniComp);
+
+procedure SetSimulation_IniSWC_VolProc_i(constref i : integer; 
+                                         constref VolProc_i : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_volproc_i';
+
+procedure SetSimulation_IniSWC_SaltECe(constref SaltECe : rep_IniComp);
+
+procedure SetSimulation_IniSWC_SaltECe_i(constref i : integer; 
+                                         constref SaltECe_i : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_iniswc_saltece_i';
+
+function GetSimulation_Storage() : rep_storage;
+
+function GetSimulation_Storage_Btotal() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_storage_btotal';
+
+function GetSimulation_Storage_CropString() : string;
+
+function GetSimulation_Storage_CropString_wrap() : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsimulation_storage_cropstring_wrap';
+
+function GetSimulation_Storage_Season() : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsimulation_storage_season';
+
+procedure SetSimulation_Storage(constref Simulation_Storage : rep_storage);
+
+procedure SetSimulation_Storage_Btotal(constref Btotal : double);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_storage_btotal';
+
+procedure SetSimulation_Storage_CropString(constref CropString : string);
+
+procedure SetSimulation_Storage_CropString_wrap(
+    constref p : PChar;
+    constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsimulation_storage_cropstring_wrap';
+
+procedure SetSimulation_Storage_Season(constref Season : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsimulation_storage_season';
+
 procedure LoadClimate(constref FullName : string;
                       var ClimateDescription : string;
                       var TempFile,EToFile,RainFile,CO2File: string);
@@ -3010,6 +3516,247 @@ procedure SetCompartment_Salt(constref i1, i2 : integer;
 procedure SetCompartment_Depo(constref i1, i2 : integer;
                                 constref Depo : double);
     external 'aquacrop' name '__ac_global_MOD_setcompartment_depo';
+
+function GetSoilLayer() : rep_SoilLayer;
+
+function GetSoilLayer_i(constref i : integer) : SoilLayerIndividual;
+
+function GetSoilLayer_Description(constref i : integer) : string;
+
+function GetSoilLayer_Description_wrap(constref i : integer) : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getsoillayer_description_wrap';
+
+function GetSoilLayer_Thickness(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_thickness';
+
+function GetSoilLayer_SAT(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_sat';
+
+function GetSoilLayer_FC(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_fc';
+
+function GetSoilLayer_WP(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_wp';
+
+function GetSoilLayer_tau(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_tau';
+
+function GetSoilLayer_InfRate(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_infrate';
+
+function GetSoilLayer_Penetrability(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_penetrability';
+
+function GetSoilLayer_GravelMass(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_gravelmass';
+
+function GetSoilLayer_GravelVol(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_gravelvol';
+
+function GetSoilLayer_WaterContent(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_watercontent';
+
+function GetSoilLayer_Macro(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_macro';
+
+function GetSoilLayer_SaltMobility(constref i : integer) : rep_salt;
+
+function GetSoilLayer_SaltMobility_i(constref i1, i2 : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_saltmobility_i';
+
+function GetSoilLayer_SC(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_sc';
+
+function GetSoilLayer_SCP1(constref i : integer) : ShortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_scp1';
+
+function GetSoilLayer_UL(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_ul';
+
+function GetSoilLayer_Dx(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_dx';
+
+function GetSoilLayer_SoilClass(constref i : integer) : shortInt;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_soilclass';
+
+function GetSoilLayer_CRa(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_cra';
+
+function GetSoilLayer_CRb(constref i : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_getsoillayer_crb';
+
+procedure SetSoilLayer(constref SoilLayer_in : rep_SoilLayer);
+
+procedure SetSoilLayer_i(constref i : integer;
+                         constref SoilLayer_i : SoilLayerIndividual);
+
+procedure SetSoilLayer_Description(constref i : integer;
+                         constref Description : string);
+
+procedure SetSoilLayer_Description_wrap(constref i : integer;
+                         constref p : PChar);
+    external 'aquacrop' name '__ac_interface_global_MOD_setsoillayer_description_wrap';
+
+procedure SetSoilLayer_Thickness(constref i : integer;
+                         constref Thickness : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_thickness';
+
+procedure SetSoilLayer_SAT(constref i : integer;
+                         constref SAT : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_sat';
+
+procedure SetSoilLayer_FC(constref i : integer;
+                         constref FC : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_fc';
+
+procedure SetSoilLayer_WP(constref i : integer;
+                         constref WP : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_wp';
+
+procedure SetSoilLayer_tau(constref i : integer;
+                         constref tau : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_tau';
+
+procedure SetSoilLayer_InfRate(constref i : integer;
+                         constref InfRate : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_infrate';
+
+procedure SetSoilLayer_Penetrability(constref i : integer;
+                         constref Penetrability : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_penetrability';
+
+procedure SetSoilLayer_GravelMass(constref i : integer;
+                         constref GravelMass : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_gravelmass';
+
+procedure SetSoilLayer_GravelVol(constref i : integer;
+                         constref GravelVol : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_gravelvol';
+
+procedure SetSoilLayer_WaterContent(constref i : integer;
+                         constref WaterContent : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_watercontent';
+
+procedure SetSoilLayer_Macro(constref i : integer;
+                         constref Macro : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_macro';
+
+procedure SetSoilLayer_SaltMobility(constref i : integer;
+                                    constref SaltMobility : rep_salt);
+
+procedure SetSoilLayer_SaltMobility_i(constref i1, i2 : integer;
+                                    constref SaltMobility_i : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_saltmobility_i';
+
+procedure SetSoilLayer_SC(constref i : integer;
+                         constref SC : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_sc';
+
+procedure SetSoilLayer_SCP1(constref i : integer;
+                         constref SCP1 : ShortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_scp1';
+
+procedure SetSoilLayer_UL(constref i : integer;
+                         constref UL : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_ul';
+
+procedure SetSoilLayer_Dx(constref i : integer;
+                         constref Dx : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_dx';
+
+procedure SetSoilLayer_SoilClass(constref i : integer;
+                         constref SoilClass : shortInt);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_soilclass';
+
+procedure SetSoilLayer_CRa(constref i : integer;
+                         constref CRa : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_cra';
+
+procedure SetSoilLayer_CRb(constref i : integer;
+                         constref CRb : double);
+    external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
+
+function ECeComp(constref Comp : CompartmentIndividual) : double;
+
+function ECeComp_wrap(
+            constref Thickness : double;
+            constref Layer : integer;
+            constref Salt_ptr : Pdouble;
+            constref Salt_len : integer;
+            constref Depo_ptr : Pdouble;
+            constref Depo_len : integer) : double;
+    external 'aquacrop' name '__ac_interface_global_MOD_ececomp_wrap';
+
+function ECswComp(
+            constref Comp : CompartmentIndividual;
+            constref atFC : boolean) : double;
+
+function ECswComp_wrap(
+            constref Thickness : double;
+            constref theta :  double;
+            constref Layer : integer;
+            constref Salt_ptr : Pdouble;
+            constref Salt_len : integer;
+            constref Depo_ptr : Pdouble;
+            constref Depo_len : integer;
+            constref atFC : boolean) : double;
+    external 'aquacrop' name '__ac_interface_global_MOD_ecswcomp_wrap';
+
+procedure NoManagement;
+    external 'aquacrop' name '__ac_global_MOD_nomanagement';
+
+function GetManDescription(): string;
+
+function GetManDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getmandescription_wrap';
+
+procedure SetManDescription(constref str : string);
+
+procedure SetManDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setmandescription_wrap';  
+
+procedure LoadManagement(constref FullName : string);
+
+procedure LoadManagement_wrap(constref FullName : string;
+                         constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
+
+function __ActualRootingDepth(
+                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                constref SumGDD,Zmin,Zmax : double;
+                constref ShapeFactor : ShortInt;
+                constref int_TypeDays : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_actualrootingdepth';
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+
+function __CanopyCoverNoStressSF(
+                constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                constref CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                constref int_TypeDays : ShortInt;
+                constref SFRedCGC,SFRedCCx : ShortInt) : double;
+     external 'aquacrop' name '__ac_global_MOD_canopycovernostresssf';
+
+function CanopyCoverNoStressSF(
+                DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                TypeDays : rep_modeCycle;
+                SFRedCGC,SFRedCCx : ShortInt) : double;
+
+procedure DetermineNrandThicknessCompartments();
+    external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
+
+function GetNrCompartments() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getnrcompartments';
+
+procedure SetNrCompartments(constref NrCompartments_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
 
 implementation
@@ -3647,6 +4394,45 @@ var
 begin;
     index := ord(AirTCriterion);
     __SetOnset_AirTCriterion(index);
+end;
+
+function GetEndSeason() : rep_EndSeason;
+begin;
+    GetEndSeason.ExtraYears := GetEndSeason_ExtraYears();
+    GetEndSeason.GenerateTempOn := GetEndSeason_GenerateTempOn();
+    GetEndSeason.AirTCriterion := GetEndSeason_AirTCriterion();
+    GetEndSeason.StartSearchDayNr := GetEndSeason_StartSearchDayNr();
+    GetEndSeason.StopSearchDayNr := GetEndSeason_StopSearchDayNr();
+    GetEndSeason.LengthSearchPeriod := GetEndSeason_LengthSearchPeriod();
+end;
+
+
+function GetEndSeason_AirTCriterion() : repAirTCriterion;
+var
+    index : shortint;
+begin;
+    index := __GetEndSeason_AirTCriterion();
+    GetEndSeason_AirTCriterion := repAirTCriterion(index);
+end;
+
+
+procedure SetEndSeason(constref EndSeason : rep_EndSeason);
+begin;
+    SetEndSeason_ExtraYears(EndSeason.ExtraYears);
+    SetEndSeason_GenerateTempOn(EndSeason.GenerateTempOn);
+    SetEndSeason_AirTCriterion(EndSeason.AirTCriterion);
+    SetEndSeason_StartSearchDayNr(EndSeason.StartSearchDayNr);
+    SetEndSeason_StopSearchDayNr(EndSeason.StopSearchDayNr);
+    SetEndSeason_LengthSearchPeriod(EndSeason.LengthSearchPeriod);
+end;
+
+
+procedure SetEndSeason_AirTCriterion(constref AirTCriterion : repAirTCriterion);
+var
+    index : shortint;
+begin;
+    index := ord(AirTCriterion);
+    __SetEndSeason_AirTCriterion(index);
 end;
 
 
@@ -4412,6 +5198,27 @@ begin;
     SetSWCiniFileFull_wrap(p, strlen);
 end;
 
+function GetSWCiniDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetSWCiniDescription_wrap();
+    GetSWCiniDescription := AnsiString(p);
+end;
+
+
+procedure SetSWCiniDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetSWCiniDescription_wrap(p, strlen);
+end;
+
 
 function GetProjectFile(): string;
 var
@@ -4496,6 +5303,28 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetMultipleProjectFileFull_wrap(p, strlen);
+end;
+
+
+function GetFullFileNameProgramParameters(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetFullFileNameProgramParameters_wrap();
+    GetFullFileNameProgramParameters := AnsiString(p);
+end;
+
+
+procedure SetFullFileNameProgramParameters(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetFullFileNameProgramParameters_wrap(p, strlen);
 end;
 
 
@@ -4911,6 +5740,239 @@ begin
     SetTemperatureRecord_ToString(TemperatureRecord.ToString);
 end;
 
+function GetSimulation_ThetaIni() : rep_IniComp;
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do GetSimulation_ThetaIni[i] := GetSimulation_ThetaIni_i(i)
+end;
+
+function GetSimulation_ECeIni() : rep_IniComp;
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do GetSimulation_ECeIni[i] := GetSimulation_ECeIni_i(i)
+end;
+
+function GetSimulation() : rep_sim;
+begin;
+    GetSimulation.FromDayNr := GetSimulation_FromDayNr();
+    GetSimulation.ToDayNr := GetSimulation_ToDayNr();
+    GetSimulation.ThetaIni := GetSimulation_ThetaIni();
+    GetSimulation.ECeIni := GetSimulation_ECeIni();
+    GetSimulation.IniSWC := GetSimulation_IniSWC();
+    GetSimulation.SurfaceStorageIni := GetSimulation_SurfaceStorageIni();
+    GetSimulation.ECStorageIni := GetSimulation_ECStorageIni();
+    GetSimulation.CCini := GetSimulation_CCini();
+    GetSimulation.Bini := GetSimulation_Bini();
+    GetSimulation.Zrini := GetSimulation_Zrini();
+    GetSimulation.LinkCropToSimPeriod := GetSimulation_LinkCropToSimPeriod();
+    GetSimulation.ResetIniSWC := GetSimulation_ResetIniSWC();
+    GetSimulation.InitialStep := GetSimulation_InitialStep();
+    GetSimulation.EvapLimitON := GetSimulation_EvapLimitON();
+    GetSimulation.EvapWCsurf := GetSimulation_EvapWCsurf();
+    GetSimulation.EvapStartStg2 := GetSimulation_EvapStartStg2();
+    GetSimulation.EvapZ := GetSimulation_EvapZ();
+    GetSimulation.HIfinal := GetSimulation_HIfinal();
+    GetSimulation.DelayedDays := GetSimulation_DelayedDays();
+    GetSimulation.Germinate := GetSimulation_Germinate();
+    GetSimulation.SumEToStress := GetSimulation_SumEToStress();
+    GetSimulation.SumGDD := GetSimulation_SumGDD();
+    GetSimulation.SumGDDfromDay1 := GetSimulation_SumGDDfromDay1();
+    GetSimulation.SCor := GetSimulation_SCor();
+    GetSimulation.MultipleRun := GetSimulation_MultipleRun();
+    GetSimulation.NrRuns := GetSimulation_NrRuns();
+    GetSimulation.MultipleRunWithKeepSWC := GetSimulation_MultipleRunWithKeepSWC();
+    GetSimulation.MultipleRunConstZrx := GetSimulation_MultipleRunConstZrx();
+    GetSimulation.IrriECw := GetSimulation_IrriECw();
+    GetSimulation.DayAnaero := GetSimulation_DayAnaero();
+    GetSimulation.EffectStress := GetSimulation_EffectStress();
+    GetSimulation.SalinityConsidered := GetSimulation_SalinityConsidered();
+    GetSimulation.ProtectedSeedling := GetSimulation_ProtectedSeedling();
+    GetSimulation.SWCtopSoilConsidered := GetSimulation_SWCtopSoilConsidered();
+    GetSimulation.LengthCuttingInterval := GetSimulation_LengthCuttingInterval();
+    GetSimulation.YearSeason := GetSimulation_YearSeason();
+    GetSimulation.RCadj := GetSimulation_RCadj();
+    GetSimulation.Storage := GetSimulation_Storage();
+    GetSimulation.YearStartCropCycle := GetSimulation_YearStartCropCycle();
+    GetSimulation.CropDay1Previous := GetSimulation_CropDay1Previous();
+end;
+
+procedure SetSimulation_ThetaIni(constref ThetaIni : rep_IniComp);
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do SetSimulation_ThetaIni_i(i, ThetaIni[i])
+end;
+
+procedure SetSimulation_ECeIni(constref ECeIni : rep_IniComp);
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do SetSimulation_ECeIni_i(i, ECeIni[i])
+end;
+
+procedure SetSimulation(constref Simulation : rep_sim);
+begin;
+    SetSimulation_FromDayNr(Simulation.FromDayNr);
+    SetSimulation_ToDayNr(Simulation.ToDayNr);
+    SetSimulation_ThetaIni(Simulation.ThetaIni);
+    SetSimulation_ECeIni(Simulation.ECeIni);
+    SetSimulation_IniSWC(Simulation.IniSWC);
+    SetSimulation_SurfaceStorageIni(Simulation.SurfaceStorageIni);
+    SetSimulation_ECStorageIni(Simulation.ECStorageIni);
+    SetSimulation_CCini(Simulation.CCini);
+    SetSimulation_Bini(Simulation.Bini);
+    SetSimulation_Zrini(Simulation.Zrini);
+    SetSimulation_LinkCropToSimPeriod(Simulation.LinkCropToSimPeriod);
+    SetSimulation_ResetIniSWC(Simulation.ResetIniSWC);
+    SetSimulation_InitialStep(Simulation.InitialStep);
+    SetSimulation_EvapLimitON(Simulation.EvapLimitON);
+    SetSimulation_EvapWCsurf(Simulation.EvapWCsurf);
+    SetSimulation_EvapStartStg2(Simulation.EvapStartStg2);
+    SetSimulation_EvapZ(Simulation.EvapZ);
+    SetSimulation_HIfinal(Simulation.HIfinal);
+    SetSimulation_DelayedDays(Simulation.DelayedDays);
+    SetSimulation_Germinate(Simulation.Germinate);
+    SetSimulation_SumEToStress(Simulation.SumEToStress);
+    SetSimulation_SumGDD(Simulation.SumGDD);
+    SetSimulation_SumGDDfromDay1(Simulation.SumGDDfromDay1);
+    SetSimulation_SCor(Simulation.SCor);
+    SetSimulation_MultipleRun(Simulation.MultipleRun);
+    SetSimulation_NrRuns(Simulation.NrRuns);
+    SetSimulation_MultipleRunWithKeepSWC(Simulation.MultipleRunWithKeepSWC);
+    SetSimulation_MultipleRunConstZrx(Simulation.MultipleRunConstZrx);
+    SetSimulation_IrriECw(Simulation.IrriECw);
+    SetSimulation_DayAnaero(Simulation.DayAnaero);
+    SetSimulation_EffectStress(Simulation.EffectStress);
+    SetSimulation_SalinityConsidered(Simulation.SalinityConsidered);
+    SetSimulation_ProtectedSeedling(Simulation.ProtectedSeedling);
+    SetSimulation_SWCtopSoilConsidered(Simulation.SWCtopSoilConsidered);
+    SetSimulation_LengthCuttingInterval(Simulation.LengthCuttingInterval);
+    SetSimulation_YearSeason(Simulation.YearSeason);
+    SetSimulation_RCadj(Simulation.RCadj);
+    SetSimulation_Storage(Simulation.Storage);
+    SetSimulation_YearStartCropCycle(Simulation.YearStartCropCycle);
+    SetSimulation_CropDay1Previous(Simulation.CropDay1Previous);
+end;
+
+function GetSimulation_IniSWC_Loc() : rep_IniComp;
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do GetSimulation_IniSWC_Loc[i] := GetSimulation_IniSWC_Loc_i(i)
+end;
+
+function GetSimulation_IniSWC_VolProc() : rep_IniComp;
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do GetSimulation_IniSWC_VolProc[i] := GetSimulation_IniSWC_VolProc_i(i)
+end;
+
+function GetSimulation_IniSWC_SaltECe() : rep_IniComp;
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do GetSimulation_IniSWC_SaltECe[i] := GetSimulation_IniSWC_SaltECe_i(i)
+end;
+
+function GetSimulation_IniSWC() : rep_IniSWC;
+begin;
+    GetSimulation_IniSWC.AtDepths := GetSimulation_IniSWC_AtDepths();
+    GetSimulation_IniSWC.NrLoc := GetSimulation_IniSWC_NrLoc();
+    GetSimulation_IniSWC.Loc := GetSimulation_IniSWC_Loc();
+    GetSimulation_IniSWC.VolProc := GetSimulation_IniSWC_VolProc();
+    GetSimulation_IniSWC.SaltECe := GetSimulation_IniSWC_SaltECe();
+    GetSimulation_IniSWC.AtFC := GetSimulation_IniSWC_AtFC();
+end;
+
+procedure SetSimulation_IniSWC_Loc(constref Loc : rep_IniComp);
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do SetSimulation_IniSWC_Loc_i(i, Loc[i]);
+end;
+
+procedure SetSimulation_IniSWC_VolProc(constref VolProc : rep_IniComp);
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do SetSimulation_IniSWC_VolProc_i(i, VolProc[i])
+end;
+
+procedure SetSimulation_IniSWC_SaltECe(constref SaltECe : rep_IniComp);
+var
+    i : integer;
+begin;
+    for i := 1 to max_No_compartments do SetSimulation_IniSWC_SaltECe_i(i, SaltECe[i])
+end;
+
+procedure SetSimulation_IniSWC(constref Simulation_IniSWC : rep_IniSWC);
+begin;
+    SetSimulation_IniSWC_AtDepths(Simulation_IniSWC.AtDepths);
+    SetSimulation_IniSWC_Loc(Simulation_IniSWC.Loc);
+    SetSimulation_IniSWC_VolProc(Simulation_IniSWC.VolProc);
+    SetSimulation_IniSWC_SaltECe(Simulation_IniSWC.SaltECe);
+    SetSimulation_IniSWC_NrLoc(Simulation_IniSWC.NrLoc);
+    SetSimulation_IniSWC_AtFC(Simulation_IniSWC.AtFC);
+end;
+
+
+function GetSimulation_EffectStress() : rep_EffectStress;
+begin;
+    GetSimulation_EffectStress.RedCGC := GetSimulation_EffectStress_RedCGC();
+    GetSimulation_EffectStress.RedCCX := GetSimulation_EffectStress_RedCCX();
+    GetSimulation_EffectStress.RedWP := GetSimulation_EffectStress_RedWP();
+    GetSimulation_EffectStress.CDecline := GetSimulation_EffectStress_CDecline();
+    GetSimulation_EffectStress.RedKsSto := GetSimulation_EffectStress_RedKsSto();
+end;
+
+
+procedure SetSimulation_EffectStress(constref Simulation_EffectStress : rep_EffectStress);
+begin;
+    SetSimulation_EffectStress_RedCGC(Simulation_EffectStress.RedCGC);
+    SetSimulation_EffectStress_RedCCX(Simulation_EffectStress.RedCCX);
+    SetSimulation_EffectStress_RedWP(Simulation_EffectStress.RedWP);
+    SetSimulation_EffectStress_CDecline(Simulation_EffectStress.CDecline);
+    SetSimulation_EffectStress_RedKsSto(Simulation_EffectStress.RedKsSto);
+end;
+
+function GetSimulation_Storage() : rep_storage;
+begin;
+    GetSimulation_Storage.Btotal := GetSimulation_Storage_Btotal();
+    GetSimulation_Storage.CropString := GetSimulation_Storage_CropString();
+    GetSimulation_Storage.Season := GetSimulation_Storage_Season();
+end;
+
+
+function GetSimulation_Storage_CropString() : string;
+var
+    p : PChar;
+begin;
+    p := GetSimulation_Storage_CropString_wrap();
+    GetSimulation_Storage_CropString := AnsiString(p);
+end;
+
+
+procedure SetSimulation_Storage(constref Simulation_Storage : rep_storage);
+begin;
+    SetSimulation_Storage_Btotal(Simulation_Storage.Btotal);
+    SetSimulation_Storage_CropString(Simulation_Storage.CropString);
+    SetSimulation_Storage_Season(Simulation_Storage.Season);
+end;
+
+
+procedure SetSimulation_Storage_CropString(constref CropString : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(CropString);
+    strlen := Length(CropString);
+    SetSimulation_Storage_CropString_wrap(p, strlen);
+end;
+
 
 procedure LoadClimate(
             constref FullName : string;
@@ -4998,6 +6060,195 @@ begin;
     SetCompartment_WFactor(i, Compartment_i.WFactor);
     for i2 := 1 to 11 do SetCompartment_Salt(i, i2, Compartment_i.Salt[i2]);
     for i2 := 1 to 11 do SetCompartment_Depo(i, i2, Compartment_i.Depo[i2]);
+end;
+
+function GetSoilLayer() : rep_SoilLayer;
+var
+    i : integer;
+begin;
+    for i := 1 to max_SoilLayers do GetSoilLayer[i] := GetSoilLayer_i(i)
+end;
+
+function GetSoilLayer_i(constref i : integer) : SoilLayerIndividual;
+begin;
+    GetSoilLayer_i.Description := GetSoilLayer_Description(i);
+    GetSoilLayer_i.Thickness := GetSoilLayer_Thickness(i);
+    GetSoilLayer_i.SAT := GetSoilLayer_SAT(i);
+    GetSoilLayer_i.FC := GetSoilLayer_FC(i);
+    GetSoilLayer_i.WP := GetSoilLayer_WP(i);
+    GetSoilLayer_i.tau := GetSoilLayer_tau(i);
+    GetSoilLayer_i.InfRate := GetSoilLayer_InfRate(i);
+    GetSoilLayer_i.Penetrability := GetSoilLayer_Penetrability(i);
+    GetSoilLayer_i.GravelMass := GetSoilLayer_GravelMass(i);
+    GetSoilLayer_i.GravelVol := GetSoilLayer_GravelVol(i);
+    GetSoilLayer_i.WaterContent := GetSoilLayer_WaterContent(i);
+    GetSoilLayer_i.Macro := GetSoilLayer_Macro(i);
+    GetSoilLayer_i.SaltMobility := GetSoilLayer_SaltMobility(i);
+    GetSoilLayer_i.SC := GetSoilLayer_SC(i);
+    GetSoilLayer_i.SCP1 := GetSoilLayer_SCP1(i);
+    GetSoilLayer_i.UL := GetSoilLayer_UL(i);
+    GetSoilLayer_i.Dx := GetSoilLayer_Dx(i);
+    GetSoilLayer_i.SoilClass := GetSoilLayer_SoilClass(i);
+    GetSoilLayer_i.CRa := GetSoilLayer_CRa(i);
+    GetSoilLayer_i.CRb := GetSoilLayer_CRb(i);
+end;
+
+
+function GetSoilLayer_Description(constref i : integer) : string;
+var
+    p : PChar;
+begin;
+    p := GetSoilLayer_Description_wrap(i);
+    GetSoilLayer_Description := AnsiString(p);
+end;
+
+function GetSoilLayer_SaltMobility(constref i : integer) : rep_salt;
+var
+    i2 : integer;
+begin;
+    for i2 := 1 to 11 do GetSoilLayer_SaltMobility[i2] := GetSoilLayer_SaltMobility_i(i, i2)
+end;
+
+procedure SetSoilLayer(constref SoilLayer_in : rep_SoilLayer);
+var
+    i : integer;
+begin;
+    for i := 1 to max_SoilLayers do SetSoilLayer_i(i, SoilLayer_in[i])
+end;
+
+procedure SetSoilLayer_i(constref i : integer;
+                        constref SoilLayer_i : SoilLayerIndividual);
+begin;
+    SetSoilLayer_Description(i, SoilLayer_i.Description);
+    SetSoilLayer_Thickness(i, SoilLayer_i.Thickness);
+    SetSoilLayer_SAT(i, SoilLayer_i.SAT);
+    SetSoilLayer_FC(i, SoilLayer_i.FC);
+    SetSoilLayer_WP(i, SoilLayer_i.WP);
+    SetSoilLayer_tau(i, SoilLayer_i.tau);
+    SetSoilLayer_InfRate(i, SoilLayer_i.InfRate);
+    SetSoilLayer_Penetrability(i, SoilLayer_i.Penetrability);
+    SetSoilLayer_GravelMass(i, SoilLayer_i.GravelMass);
+    SetSoilLayer_GravelVol(i, SoilLayer_i.GravelVol);
+    SetSoilLayer_WaterContent(i, SoilLayer_i.WaterContent);
+    SetSoilLayer_Macro(i, SoilLayer_i.Macro);
+    SetSoilLayer_SaltMobility(i, SoilLayer_i.SaltMobility);
+    SetSoilLayer_SC(i, SoilLayer_i.SC);
+    SetSoilLayer_SCP1(i, SoilLayer_i.SCP1);
+    SetSoilLayer_UL(i, SoilLayer_i.UL);
+    SetSoilLayer_Dx(i, SoilLayer_i.Dx);
+    SetSoilLayer_SoilClass(i, SoilLayer_i.SoilClass);
+    SetSoilLayer_CRa(i, SoilLayer_i.CRa);
+    SetSoilLayer_CRb(i, SoilLayer_i.CRb);
+end;
+
+
+procedure SetSoilLayer_Description(constref i : integer;
+                                   constref Description : string);
+var
+    p : PChar;
+begin;
+    p := PChar(Description);
+    SetSoilLayer_Description_wrap(i, p);
+end;
+
+procedure SetSoilLayer_SaltMobility(constref i : integer;
+                                    constref SaltMobility : rep_salt);
+var
+    i2 : integer;
+begin;
+    for i2 := 1 to 11 do SetSoilLayer_SaltMobility_i(i, i2, SaltMobility[i2])
+end;
+
+function GetManDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetManDescription_wrap();
+    GetManDescription := AnsiString(p);
+end;
+
+procedure SetManDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetManDescription_wrap(p, strlen);
+end;
+
+procedure LoadManagement(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadManagement_wrap(p,strlen);
+end;
+
+
+function ActualRootingDepth(
+                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                SumGDD,Zmin,Zmax : double;
+                ShapeFactor : ShortInt;
+                TypeDays : rep_modeCycle) : double;
+var
+    int_TypeDays: integer;
+begin
+    int_TypeDays := ord(TypeDays);
+    ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
+                                           GDDLZmax, SumGDD, Zmin, Zmax,
+                                           ShapeFactor, int_TypeDays);
+end;
+
+
+function CanopyCoverNoStressSF(
+                DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                TypeDays : rep_modeCycle;
+                SFRedCGC,SFRedCCx : ShortInt) : double;
+var
+    int_TypeDays: integer;
+begin
+    int_TypeDays := ord(TypeDays);
+    CanopyCoverNoStressSF := __CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,
+                                     GDDL0,GDDL123,GDDLMaturity, 
+                                     CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD,
+                                     int_TypeDays, SFRedCGC,SFRedCCx);
+end;
+
+
+function ECeComp(constref Comp : CompartmentIndividual) : double;
+var
+    Salt_ptr, Depo_ptr : Pdouble;
+    Salt_len, Depo_len : integer;
+begin
+    Salt_ptr := @Comp.Salt[1];
+    Salt_len := Length(Comp.Salt);
+    Depo_ptr := @Comp.Depo[1];
+    Depo_len := Length(Comp.Depo);
+    ECeComp := ECeComp_wrap(Comp.Thickness, Comp.Layer, Salt_ptr, Salt_len,
+                            Depo_ptr, Depo_len);
+end;
+
+
+function ECswComp(
+            constref Comp : CompartmentIndividual;
+            constref atFC : boolean) : double;
+var
+    Salt_ptr, Depo_ptr : Pdouble;
+    Salt_len, Depo_len : integer;
+begin
+    Salt_ptr := @Comp.Salt[1];
+    Salt_len := Length(Comp.Salt);
+    Depo_ptr := @Comp.Depo[1];
+    Depo_len := Length(Comp.Depo);
+    ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
+                              Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
 end;
 
 
