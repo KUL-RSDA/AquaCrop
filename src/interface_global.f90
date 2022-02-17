@@ -4,7 +4,8 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: CheckFilesInProject, &
+use ac_global, only: AppendCropFilePerennials, &
+                     CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      TimeToMaxCanopySF, &
                      FileExists, &
@@ -477,6 +478,45 @@ subroutine LoadCropCalendar_wrap(FullName, strlen, GetOnset,GetOnsetTemp,DayNrSt
     call LoadCropCalendar(string,GetOnset,GetOnsetTemp,DayNrStart,YearStart)
 end subroutine LoadCropCalendar_wrap
 
+subroutine AppendCropFilePerennials_wrap(totalname, strlen,GenrateTheOnset, &
+                                    GenerateTheEnd, &
+                                    CriterionNrOnset, Day1Onset, Month1Onset, &
+                                    LengthOnset, SuccessiveDaysOnset, &
+                                    OccurrenceOnset, CriterionNrEnd, DayNEnd, &
+                                    MonthNEnd, ExtraYearEnd, LengthEnd, &
+                                    SuccessiveDaysEnd, OccurrenceEnd, &
+                                                  ThresholdOnset, ThresholdEnd)
+    !! Wrapper for [[ac_global:AppendCropFilePerennials]] for foreign languages.
+    type(c_ptr), intent(in) ::  totalname
+    integer(int32), intent(in) :: strlen
+    logical, intent(in) :: GenrateTheOnset
+    logical, intent(in) :: GenerateTheEnd
+    integer(int32), intent(in) :: CriterionNrOnset
+    integer(int32), intent(in) :: Day1Onset
+    integer(int32), intent(in) :: Month1Onset
+    integer(int32), intent(in) :: LengthOnset
+    integer(int32), intent(in) :: SuccessiveDaysOnset
+    integer(int32), intent(in) :: OccurrenceOnset
+    integer(int32), intent(in) :: CriterionNrEnd
+    integer(int32), intent(in) :: DayNEnd
+    integer(int32), intent(in) :: MonthNEnd
+    integer(int32), intent(in) :: ExtraYearEnd
+    integer(int32), intent(in) :: LengthEnd
+    integer(int32), intent(in) :: SuccessiveDaysEnd
+    integer(int32), intent(in) :: OccurrenceEnd
+    real(dp), intent(in) :: ThresholdOnset
+    real(dp), intent(in) :: ThresholdEnd
+
+    character(len=strlen) :: string
+    string = pointer2string(totalname, strlen)
+    call AppendCropFilePerennials(string, GenrateTheOnset, GenerateTheEnd, &
+                                    CriterionNrOnset, Day1Onset, Month1Onset, &
+                                    LengthOnset, SuccessiveDaysOnset, &
+                                    OccurrenceOnset, CriterionNrEnd, DayNEnd, &
+                                    MonthNEnd, ExtraYearEnd, LengthEnd, &
+                                    SuccessiveDaysEnd, OccurrenceEnd, &
+                                                  ThresholdOnset, ThresholdEnd)
+end subroutine AppendCropFilePerennials_wrap
 
 function GetCO2File_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCO2File]] for foreign languages.

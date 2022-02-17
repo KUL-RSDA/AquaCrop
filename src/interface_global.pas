@@ -3412,6 +3412,23 @@ procedure LoadCropCalendar_wrap(constref FullName : PChar;
                                 constref YearStart : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_loadcropcalendar_wrap';
 
+procedure AppendCropFilePerennials(
+                constref totalname : string;
+                constref GenrateTheOnset,GenerateTheEnd : boolean;
+                constref CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : integer;
+                constref CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : integer;
+                constref ThresholdOnset,ThresholdEnd : double);
+
+procedure AppendCropFilePerennials_wrap(
+                constref totalname : PChar;
+                constref strlen : integer;
+                constref GenrateTheOnset,GenerateTheEnd : boolean;
+                constref CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : integer;
+                constref CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : integer;
+                constref ThresholdOnset,ThresholdEnd : double);
+        external 'aquacrop' name '__ac_global_MOD_appendcropfileperennials';
+
+
 function GetCompartment_i(constref i : integer) : CompartmentIndividual;
 
 function GetCompartment() : rep_Comp;
@@ -5925,6 +5942,28 @@ begin;
     strlen := Length(FullName);
     LoadCropCalendar_wrap(p,strlen,GetOnset,GetOnsetTemp,DayNrStart,YearStart);
 end;
+
+procedure AppendCropFilePerennials(
+                constref totalname : string;
+                constref GenrateTheOnset,GenerateTheEnd : boolean;
+                constref CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : integer;
+                constref CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : integer;
+                constref ThresholdOnset,ThresholdEnd : double);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    AppendCropFilePerennials_wrap(p,strlen,genrateTheOnset,GenerateTheEnd,
+                                  CriterionNrOnset,Day1Onset,Month1Onset,
+                                  LengthOnset,SuccessiveDaysOnset,OccurrenceOnset,
+                                  CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,
+                                   LengthEnd,SuccessiveDaysEnd,OccurrenceEnd,
+                                                ThresholdOnset,ThresholdEnd );
+end;
+
 
 
 function GetCompartment() : rep_Comp;
