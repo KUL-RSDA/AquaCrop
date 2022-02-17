@@ -101,8 +101,7 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  Macro : ShortInt;
                                  VAR Mobil : rep_salt);
 
-PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
-                      VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
+
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 
@@ -729,22 +728,6 @@ FOR i := 1 to (CelMax-1) DO
 FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
 
 END; (* Calculate_Saltmobility *)
-
-
-
-
-PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
-                      VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
-BEGIN
-SaltSolution := SaltSolution + SaltDeposit;
-IF (SaltSolution > GetSimulParam_SaltSolub() * mm)
-    THEN BEGIN
-         SaltDeposit := SaltSolution - GetSimulParam_SaltSolub() * mm;
-         SaltSolution := GetSimulParam_SaltSolub() * mm;
-         END
-    ELSE SaltDeposit := 0;
-END; (* SaltSolutionDeposit *)
-
 
 
 
