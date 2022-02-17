@@ -59,17 +59,17 @@ READLN(fETo);
 READLN(fETo);
 READLN(fETo);
 
-Mfile := EToRecord.FromM;
-IF (EToRecord.FromY = 1901) THEN Yfile := Yeari
-                            ELSE Yfile := EToRecord.FromY;
+Mfile := GetEToRecord_FromM();
+IF (GetEToRecord_FromY() = 1901) THEN Yfile := Yeari
+                            ELSE Yfile := GetEToRecord_FromY();
 OK3 := false;
 
 //2. IF 3 or less records
-IF (EToRecord.NrObs <= 3) THEN
+IF (GetEToRecord_NrObs() <= 3) THEN
    BEGIN
    ReadMonth(Mfile,Yfile,n1,C1);
    X1 := n1;
-   CASE EToRecord.NrObs OF
+   CASE GetEToRecord_NrObs() OF
      1 : BEGIN
          t1 := X1;
          X2 := X1 + n1;
@@ -129,10 +129,10 @@ IF ((NOT OK3) AND ((Monthi = Mfile) AND (Yeari = Yfile))) THEN
    END;
 
 //4. If last observation
-IF ((NOT OK3) AND (Monthi = EToRecord.ToM)) THEN
-   IF ((EToRecord.FromY = 1901) OR (Yeari = EToRecord.ToY)) THEN
+IF ((NOT OK3) AND (Monthi = GetEToRecord_ToM())) THEN
+   IF ((GetEToRecord_FromY() = 1901) OR (Yeari = GetEToRecord_ToY())) THEN
       BEGIN
-      FOR Nri := 1 TO (EToRecord.NrObs-3) DO
+      FOR Nri := 1 TO (GetEToRecord_NrObs()-3) DO
           BEGIN
           READLN(fETo);
           Mfile := Mfile + 1;
@@ -165,7 +165,7 @@ IF (NOT OK3) THEN
              Obsi := Obsi + 1;
              END;
    UNTIL (OK3);
-   Mfile := EToRecord.FromM;
+   Mfile := GetEToRecord_FromM();
    FOR Nri := 1 TO (Obsi-2) DO
        BEGIN
        Readln(fETo);
@@ -247,20 +247,20 @@ READLN(fETo);
 READLN(fETo);
 READLN(fETo);
 
-IF (EToRecord.FromD > 20)
+IF (GetEToRecord_FromD() > 20)
    THEN DecFile := 3
-   ELSE IF (EToRecord.FromD > 10)
+   ELSE IF (GetEToRecord_FromD() > 10)
            THEN DecFile := 2
            ELSE DecFile := 1;
-Mfile := EToRecord.FromM;
-IF (EToRecord.FromY = 1901) THEN Yfile := Yeari
-                            ELSE Yfile := EToRecord.FromY;
+Mfile := GetEToRecord_FromM();
+IF (GetEToRecord_FromY() = 1901) THEN Yfile := Yeari
+                            ELSE Yfile := GetEToRecord_FromY();
 OK3 := false;
 
-IF (EToRecord.NrObs <= 2) THEN
+IF (GetEToRecord_NrObs() <= 2) THEN
    BEGIN
    READLN(fETo,C1);
-   CASE EToRecord.NrObs OF
+   CASE GetEToRecord_NrObs() OF
      1 : BEGIN
          C2 := C1;
          C3 := C1;
@@ -290,10 +290,10 @@ IF ((NOT OK3) AND ((Deci = DecFile) AND (Monthi = Mfile) AND (Yeari = Yfile))) T
    C1 := C2 + (C2-C3)/4;
    OK3 := true;
    END;
-IF ((NOT OK3) AND ((DayN = EToRecord.ToD) AND (Monthi = EToRecord.ToM))) THEN
-   IF ((EToRecord.FromY = 1901) OR (Yeari = EToRecord.ToY)) THEN
+IF ((NOT OK3) AND ((DayN = GetEToRecord_ToD()) AND (Monthi = GetEToRecord_ToM()))) THEN
+   IF ((GetEToRecord_FromY() = 1901) OR (Yeari = GetEToRecord_ToY())) THEN
       BEGIN
-      FOR Nri := 1 TO (EToRecord.NrObs-2) DO READLN(fETo);
+      FOR Nri := 1 TO (GetEToRecord_NrObs()-2) DO READLN(fETo);
       READLN(fETo,C1);
       READLN(fETo,C2);
       C3 := C2+(C2-C1)/4;
@@ -311,9 +311,9 @@ IF (NOT OK3) THEN
              Obsi := Obsi + 1;
              END;
    UNTIL (OK3);
-   IF (EToRecord.FromD > 20)
+   IF (GetEToRecord_FromD() > 20)
       THEN DecFile := 3
-      ELSE IF (EToRecord.FromD > 10)
+      ELSE IF (GetEToRecord_FromD() > 10)
               THEN DecFile := 2
               ELSE DecFile := 1;
    FOR Nri := 1 TO (Obsi-2) DO Readln(fETo);
@@ -429,14 +429,14 @@ READLN(fRain); // year
 READLN(fRain);
 READLN(fRain);
 READLN(fRain);
-IF (RainRecord.FromD > 20)
+IF (GetRainRecord_FromD() > 20)
    THEN DecFile := 3
-   ELSE IF (RainRecord.FromD > 10)
+   ELSE IF (GetRainRecord_FromD() > 10)
            THEN DecFile := 2
            ELSE DecFile := 1;
-Mfile := RainRecord.FromM;
-IF (RainRecord.FromY = 1901) THEN Yfile := Yeari
-                             ELSE Yfile := RainRecord.FromY;
+Mfile := GetRainRecord_FromM();
+IF (GetRainRecord_FromY() = 1901) THEN Yfile := Yeari
+                             ELSE Yfile := GetRainRecord_FromY();
 
 // 3. Find decade
 OKRain := false;
@@ -498,16 +498,16 @@ READLN(fRain); // year
 READLN(fRain);
 READLN(fRain);
 READLN(fRain);
-Mfile := RainRecord.FromM;
-IF (RainRecord.FromY = 1901) THEN Yfile := Yeari
-                             ELSE Yfile := RainRecord.FromY;
+Mfile := GetRainRecord_FromM();
+IF (GetRainRecord_FromY() = 1901) THEN Yfile := Yeari
+                             ELSE Yfile := GetRainRecord_FromY();
 OK3 := false;
 
 //2. IF 2 or less records
-IF (RainRecord.NrObs <= 2) THEN
+IF (GetRainRecord_NrObs() <= 2) THEN
    BEGIN
    READLN(fRain,C1);
-   CASE RainRecord.NrObs OF
+   CASE GetRainRecord_NrObs() OF
      1 : BEGIN
          C2 := C1;
          C3 := C1;
@@ -534,14 +534,14 @@ IF ((NOT OK3) AND ((Monthi = Mfile) AND (Yeari = Yfile))) THEN
    END;
 
 //4. If last observation
-IF ((NOT OK3) AND (Monthi = RainRecord.ToM)) THEN
-   IF ((RainRecord.FromY = 1901) OR (Yeari = RainRecord.ToY)) THEN
+IF ((NOT OK3) AND (Monthi = GetRainRecord_ToM())) THEN
+   IF ((GetRainRecord_FromY() = 1901) OR (Yeari = GetRainRecord_ToY())) THEN
       BEGIN
-//      FOR Nri := 1 TO (RainRecord.NrObs-3) DO READLN(fRain);
+//      FOR Nri := 1 TO (GetRainRecord_NrObs()-3) DO READLN(fRain);
 //      READLN(fRain,C1);
 //      READLN(fRain,C2);
 //      READLN(fRain,C3);
-      FOR Nri := 1 TO (RainRecord.NrObs-2) DO READLN(fRain);
+      FOR Nri := 1 TO (GetRainRecord_NrObs()-2) DO READLN(fRain);
       READLN(fRain,C1);
       READLN(fRain,C2);
       C3 := C2;
@@ -561,7 +561,7 @@ IF (NOT OK3) THEN
              Obsi := Obsi + 1;
              END;
    UNTIL (OK3);
-   Mfile := RainRecord.FromM;
+   Mfile := GetRainRecord_FromM();
    FOR Nri := 1 TO (Obsi-2) DO
        BEGIN
        Readln(fRain);
