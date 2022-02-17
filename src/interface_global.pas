@@ -1348,6 +1348,11 @@ function CanopyCoverNoStressGDDaysSF(
             constref SFRedCGC,SFRedCCx : shortint) : double;
          external 'aquacrop' name '__ac_global_MOD_canopycovernostressgddayssf';
 
+procedure SaltSolutionDeposit(
+            constref mm : double; (* mm = l/m2 *)
+            VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
+         external 'aquacrop' name '__ac_global_MOD_saltsolutiondeposit';
+
 procedure ReadRainfallSettings();
         external 'aquacrop' name '__ac_global_MOD_readrainfallsettings';
 

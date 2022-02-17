@@ -2319,6 +2319,21 @@ real(dp) function ECswComp(Comp, atFC)
     ECswComp = TotSalt/Equiv
 end function ECswComp
 
+subroutine SaltSolutionDeposit(mm, SaltSolution, SaltDeposit) ! mm = l/m2, SaltSol/Saltdepo = g/m2 
+    real(dp), intent(in) :: mm
+    real(dp), intent(inout) :: SaltSolution
+    real(dp), intent(inout) :: SaltDeposit
+
+
+    SaltSolution = SaltSolution + SaltDeposit
+    if (SaltSolution > GetSimulParam_SaltSolub() * mm) then
+        SaltDeposit = SaltSolution - GetSimulParam_SaltSolub() * mm
+        SaltSolution = GetSimulParam_SaltSolub() * mm
+    else
+        SaltDeposit = 0
+    end if
+end subroutine SaltSolutionDeposit
+
 
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari
