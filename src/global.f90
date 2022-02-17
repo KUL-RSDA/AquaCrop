@@ -3441,11 +3441,11 @@ character(len=17) function DayString(DNr)
         end do
     end if
     call DetermineDate(DNr_t, dayi, monthi, yeari)
-    write(strA, '(i2.2)') dayi
+    write(strA, '(i2)') dayi
     if (GetClimRecord_FromY() == 1901) then
         strB = ''
     else
-        write(strB, '(i4.4)') yeari
+        write(strB, '(i4)') yeari
     end if
     strB = trim(strA)//' '//trim(NameMonth(monthi))//' '//trim(strB)
     do while (len(strB) < 17)
