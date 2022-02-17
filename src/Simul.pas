@@ -585,6 +585,24 @@ VAR  control : rep_control;
      Crop_pActStom_temp : double;
 
 
+FUNCTION calculate_delta_theta(theta,thetaAdjFC : double; NrLayer : INTEGER) : double;
+VAR DeltaX, theta_sat, theta_fc : double;
+BEGIN
+theta_sat := GetSoilLayer_i(NrLayer).SAT/100;
+theta_fc := GetSoilLayer_i(NrLayer).FC/100;
+IF (theta > theta_sat) THEN theta := theta_sat;
+IF (theta <= thetaAdjFC/100)
+   THEN DeltaX := 0
+   ELSE BEGIN
+        DeltaX := GetSoilLayer_i(NrLayer).tau * (theta_sat - theta_fc)
+            * (EXP(theta - theta_fc) - 1)
+            / (EXP(theta_sat - theta_fc) - 1);
+        IF ((theta - DeltaX) < thetaAdjFC) THEN DeltaX := theta - thetaAdjFC;
+        END;
+calculate_delta_theta := DeltaX;
+END; (* calculate_delta_theta *)
+
+
 PROCEDURE calculate_weighting_factors(Depth : double;
                                       VAR Compartment : rep_Comp);
 VAR i, compi : INTEGER;

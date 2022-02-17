@@ -43,43 +43,44 @@ subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
     if (GetCrop_pMethod() == pMethod_FAOCorrection) then
         pLeafLLAct = GetCrop_pLeafDefLL() + GetSimulParam_pAdjFAO()* 0.04_dp &
                         *(5._dp-EToMean)*log10(10._dp-9._dp*GetCrop_pLeafDefLL())
-        if (pLeafLLAct > 1.0) then
+        if (pLeafLLAct > 1.0_dp) then
             pLeafLLAct = 1.0_dp
         end if
-        if (pLeafLLAct < 0) then
+        if (pLeafLLAct < 0.0_dp) then
             pLeafLLAct = 0._dp
         end if
         pLeafULAct = GetCrop_pLeafDefUL() + GetSimulParam_pAdjFAO()* 0.04_dp &
                         *(5._dp-EToMean)*log10(10._dp-9._dp*GetCrop_pLeafDefUL())
-        if (pLeafULAct > 1.0) then
+        if (pLeafULAct > 1.0_dp) then
             pLeafULAct = 1.0_dp
         end if
-        if (pLeafULAct < 0) then
+        if (pLeafULAct < 0.0_dp) then
             pLeafULAct = 0._dp
         end if
     end if
 end subroutine AdjustpLeafToETo
 
 
-real(dp) function calculate_delta_theta(theta_in, thetaAdjFC, NrLayer_in)
+real(dp) function calculate_delta_theta(theta_in, thetaAdjFC, NrLayer)
     real(dp), intent(in) :: theta_in
     real(dp), intent(in) :: thetaAdjFC
-    integer(int16), intent(in) :: NrLayer_in
+    integer(int32), intent(in) :: NrLayer
 
-    integer(int32) :: NrLayer
-    real(dp) :: DeltaX, theta
-
-    NrLayer = int(NrLayer_in, kind=int32)
+    real(dp) :: DeltaX, theta, theta_sat, theta_fc
+    
     theta = theta_in
-    if (theta > GetSoilLayer_SAT(NrLayer)/100.0_dp) then
-        theta = GetSoilLayer_SAT(NrLayer)/100.0_dp
+    theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
+    theta_fc = GetSoilLayer_FC(NrLayer) / 100.0_dp
+    if (theta > theta_sat) then
+        theta = theta_sat
     end if
     if (theta <= thetaAdjFC/100.0_dp) then
         DeltaX = 0.0_dp
     else
-        DeltaX = GetSoilLayer_tau(NrLayer) * (GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp) &
-        * (exp(theta - GetSoilLayer_FC(NrLayer)/100.0_dp) - 1.0_dp) &
-        / (exp(GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp) - 1.0_dp)
+        DeltaX = GetSoilLayer_tau(NrLayer)&
+                 * (theta_sat - theta_fc)&
+                 * (exp(theta - theta_fc) - 1.0_dp)&
+                 / (exp(theta_sat - theta_fc) - 1.0_dp)
         if ((theta - DeltaX) < thetaAdjFC) then
             DeltaX = theta - thetaAdjFC
         end if
@@ -88,26 +89,30 @@ real(dp) function calculate_delta_theta(theta_in, thetaAdjFC, NrLayer_in)
 end function calculate_delta_theta
 
 
-real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer_in)
+real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer)
     real(dp), intent(in) :: delta_theta
     real(dp), intent(in) :: thetaAdjFC
-    integer(int16), intent(in) :: NrLayer_in
+    integer(int32), intent(in) :: NrLayer
 
-    integer(int32) :: NrLayer
-    real(dp) :: ThetaX
+    real(dp) :: ThetaX, theta_sat, theta_fc, tau
 
-    NrLayer = int(NrLayer_in, kind=int32)
-    if (delta_theta <= 0.0_dp) then
+    theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
+    theta_fc = GetSoilLayer_FC(NrLayer) / 100.0_dp
+    tau = GetSoilLayer_tau(NrLayer)
+    if (delta_theta <= epsilon(0.0_dp)) then
         ThetaX = thetaAdjFC
-    elseif (GetSoilLayer_tau(NrLayer) > 0.0_dp) then
-        ThetaX = GetSoilLayer_FC(NrLayer)/100.0_dp + log(1.0_dp + &
-                     delta_theta * (exp(GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp) - 1.0_dp) &
-                     / (GetSoilLayer_tau(NrLayer) * (GetSoilLayer_SAT(NrLayer)/100.0_dp - GetSoilLayer_FC(NrLayer)/100.0_dp)))
+    elseif (tau > 0.0_dp) then
+        ThetaX = theta_fc&
+            + log(1.0_dp&
+                  + delta_theta&
+                  * (exp(theta_sat - theta_fc) - 1.0_dp)&
+                  / (tau * (theta_sat - theta_fc)))
         if (ThetaX < thetaAdjFC) then
             ThetaX = thetaAdjFC
         end if
     else
-        ThetaX = GetSoilLayer_SAT(NrLayer)/100.0_dp + 0.1_dp     ! to stop draining
+        ! to stop draining
+        ThetaX = theta_sat + 0.1_dp
     end if
     calculate_theta = ThetaX
 end function calculate_theta
