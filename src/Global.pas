@@ -5,8 +5,7 @@ interface
 uses SysUtils, interface_global;
 
 
-Const Equiv = 0.64; // conversion factor: 1 dS/m = 0.64 g/l
-
+Const 
       NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
           'May','June','July','August','September','October','November','December');
 
@@ -29,15 +28,10 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ClimDescription,
-    IrriDescription,SWCiniDescription,
+    ClimDescription,IrriDescription,
     ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
 
-    ClimRecord,
-    EToRecord,
-    RainRecord     : rep_clim;
     IrriFirstDayNr : LongInt;
-    NrCompartments : INTEGER;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -88,12 +82,11 @@ PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
 PROCEDURE LoadIrriScheduleInfo(FullName : string);
-PROCEDURE DetermineNrandThicknessCompartments;
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
                                           VAR Compartment : rep_Comp);
-PROCEDURE DeclareInitialCondAtFCandNoSalt;
+
 PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR SoilLayer : rep_SoilLayer;
                              VAR Compartment : rep_Comp;
@@ -104,9 +97,7 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  SaltDiffusion : ShortInt;  // percentage
                                  Macro : ShortInt;
                                  VAR Mobil : rep_salt);
-FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
-FUNCTION ECswComp (Comp : CompartmentIndividual;
-                   atFC : BOOLEAN) : double;
+
 PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
                       VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
 PROCEDURE DetermineSaltContent(ECe : double;
@@ -142,15 +133,10 @@ PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE ResetSWCToFC;
 PROCEDURE AdjustSimPeriod;
-PROCEDURE AdjustOnsetSearchPeriod;
 PROCEDURE SetClimData;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 FUNCTION DayString(DNr : LongInt) : repstring17;
-FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                               CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                               TypeDays : rep_modeCycle;
-                               SFRedCGC,SFRedCCx : ShortInt) : double;
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
@@ -332,7 +318,7 @@ WITH SumWabal DO
   CRsalt := 0;
   END;
 SetTotalWaterContent_BeginDay(0);
-FOR i :=1 to NrCompartments DO
+FOR i :=1 to GetNrCompartments() DO
         SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
           + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
 END; (* GlobalZero *)
@@ -523,25 +509,6 @@ Close(f0);
 END; (* LoadIrriScheduleInfo *)
 
 
-PROCEDURE DetermineNrandThicknessCompartments;
-VAR TotalDepthL, TotalDepthC, DeltaZ : double;
-    i : INTEGER;
-BEGIN
-TotalDepthL := 0;
-FOR i := 1 TO GetSoil().NrSoilLayers DO TotalDepthL := TotalDepthL + GetSoilLayer_Thickness(i);
-TotalDepthC := 0;
-NrCompartments := 0;
-REPEAT
-  DeltaZ := (TotalDepthL - TotalDepthC);
-  NrCompartments := NrCompartments + 1;
-  IF (DeltaZ > GetSimulParam_CompDefThick())
-     THEN SetCompartment_Thickness(NrCompartments, GetSimulParam_CompDefThick())
-     ELSE SetCompartment_Thickness(NrCompartments, DeltaZ);
-  TotalDepthC := TotalDepthC + GetCompartment_Thickness(NrCompartments);
-UNTIL ((NrCompartments = max_No_compartments) OR (Abs(TotalDepthC - TotalDepthL) < 0.0001));
-END; (* DetermineNrandThicknessCompartments *)
-
-
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 VAR compi,ic : INTEGER;
@@ -586,8 +553,8 @@ FOR compi := 1 TO NrCompartments DO
 
 
 Depth := 0;
-FOR compi := 1 TO NrCompartments DO Depth := Depth + CompartAdj[compi].Thickness;
-compi := NrCompartments;
+FOR compi := 1 TO GetNrCompartments() DO Depth := Depth + CompartAdj[compi].Thickness;
+compi := GetNrCompartments();
 REPEAT
   Zi := Depth - CompartAdj[compi].Thickness/2;
   //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
@@ -651,41 +618,6 @@ FOR i := (NrCompartments+1) TO max_No_compartments DO Compartment[i].Thickness :
 END; (* DesignateSoilLayerToCompartments *)
 
 
-PROCEDURE DeclareInitialCondAtFCandNoSalt;
-VAR layeri,compi,celli, ind : INTEGER;
-BEGIN
-SetSWCiniFile('(None)');
-SetSWCiniFileFull(GetSWCiniFile()); (* no file *)
-SWCiniDescription := 'Soil water profile at Field Capacity';
-SetSimulation_IniSWC_AtDepths(false);
-SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
-FOR layeri := 1 TO GetSoil().NrSoilLayers DO
-    BEGIN
-    SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
-    SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
-    SetSimulation_IniSWC_SaltECe_i(layeri,0);
-    END;
-SetSimulation_IniSWC_AtFC(true);
-FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
-    BEGIN
-    SetSimulation_IniSWC_Loc_i(layeri,undef_double);
-    SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
-    SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
-    END;
-FOR compi := 1 TO NrCompartments DO
-    IF (GetCompartment_Layer(compi) = 0) THEN ind := 1 //LB: added an if statement to avoid having index=0
-    ELSE ind := GetCompartment_Layer(compi);
-    For celli := 1 TO GetSoilLayer_i(ind).SCP1 DO
-        BEGIN // salinity in cells
-        SetCompartment_Salt(compi, celli, 0.0);
-        SetCompartment_Depo(compi, celli, 0.0);
-        END;
-END;(* DeclareInitialCondAtFCandNoSalt *)
-
-
-
-
-
 PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
                              VAR SoilLayer : rep_SoilLayer;
                              VAR Compartment : rep_Comp;
@@ -798,40 +730,6 @@ END; (* Calculate_Saltmobility *)
 
 
 
-FUNCTION ECeComp (Comp : CompartmentIndividual) : double;
-VAR volSat, TotSalt : double;
-    i : INTEGER;
-BEGIN
-volSAT := (GetSoilLayer_i(Comp.Layer).SAT);
-TotSalt := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; //g/m2
-TotSalt := TotSalt/
-        (volSAT*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
-IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
-ECeComp := TotSalt/Equiv; //dS/m
-END; (* ECeComp *)
-
-
-
-FUNCTION ECswComp (Comp : CompartmentIndividual;
-                   atFC : BOOLEAN) : double;
-VAR TotSalt : double;
-    i : INTEGER;
-
-BEGIN
-TotSalt := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO TotSalt := TotSalt + Comp.Salt[i] + Comp.Depo[i]; // g/m2
-IF (atFC = true)
-   THEN TotSalt := TotSalt/
-                (GetSoilLayer_i(Comp.Layer).FC*10*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)) // g/l
-   ELSE TotSalt := TotSalt/
-                (Comp.theta*1000*Comp.Thickness*(1-GetSoilLayer_i(Comp.Layer).GravelVol/100)); // g/l
-IF (TotSalt > GetSimulParam_SaltSolub()) THEN TotSalt := GetSimulParam_SaltSolub();
-ECswComp := TotSalt/Equiv;
-END; (* ECswComp *)
-
-
-
 
 PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
                       VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
@@ -899,7 +797,7 @@ SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
 TotalWaterContent_temp := GetTotalWaterContent();
 Compartment_temp := GetCompartment();
 soillayer_temp := GetSoilLayer();
-specify_soil_layer(NrCompartments,GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
+specify_soil_layer(GetNrCompartments(),GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
 SetSoilLayer(soillayer_temp);
 SetTotalWaterContent(TotalWaterContent_temp);
 SetCompartment(Compartment_temp);
@@ -1790,16 +1688,16 @@ SimDay1 := CropDay1;
 IF (GetClimFile() <> '(None)') THEN
    BEGIN
    (*
-   IF SimDay1 < ClimRecord.FromDayNr THEN SimDay1 := ClimRecord.FromDayNr;
-   IF SimDay1 > ClimRecord.ToDayNr
+   IF SimDay1 < GetClimRecord_FromDayNr() THEN SimDay1 := GetClimRecord_FromDayNr();
+   IF SimDay1 > GetClimRecord_ToDayNr()
       THEN BEGIN
            Simulation.LinkCropToSimPeriod := false;
-           SimDay1 := ClimRecord.FromDayNr;
+           SimDay1 := GetClimRecord_FromDayNr();
            END; *)
-   IF ((SimDay1 < ClimRecord.FromDayNr) OR (SimDay1 > ClimRecord.ToDayNr)) THEN
+   IF ((SimDay1 < GetClimRecord_FromDayNr()) OR (SimDay1 > GetClimRecord_ToDayNr())) THEN
       BEGIN
       SetSimulation_LinkCropToSimPeriod(false);
-      SimDay1 := ClimRecord.FromDayNr;
+      SimDay1 := GetClimRecord_FromDayNr();
       END;
    END;
 END; (* DetermineLinkedSimDay1 *)
@@ -1812,11 +1710,11 @@ BEGIN
 DetermineDate(CDay1,dayi,monthi,yeari);
 IF (GetClimFile() = '(None)')
    THEN yeari := 1901  // yeari = 1901 if undefined year
-   ELSE yeari := ClimRecord.FromY; // yeari = 1901 if undefined year
+   ELSE yeari := GetClimRecord_FromY(); // yeari = 1901 if undefined year
    (*
    ELSE BEGIN
         yeari := Simulation.YearStartCropCycle;
-        IF (CDay1 > ClimRecord.ToY) THEN yeari := ClimRecord.FromY;
+        IF (CDay1 > GetClimRecord_ToY()) THEN yeari := GetClimRecord_FromY();
         END; *)
 DetermineDayNr(dayi,monthi,yeari,CDay1);
 temp_str := EndGrowingPeriod(CDay1,CDayN);
@@ -1825,12 +1723,14 @@ END; (* AdjustCropYearToClimFile *)
 
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 VAR dayi,monthi,yeari : INTEGER;
+    ToDayNr_tmp : INTEGER;
 BEGIN
 DetermineDate(CDayN,dayi,monthi,yeari);
-ClimRecord.ToD := 31;
-ClimRecord.ToM := 12;
-ClimRecord.ToY := yeari;
-DetermineDayNr(ClimRecord.ToD,ClimRecord.ToM,ClimRecord.ToY,ClimRecord.ToDayNr);
+SetClimRecord_ToD(31);
+SetClimRecord_ToM(12);
+SetClimRecord_ToY(yeari);
+DetermineDayNr(GetClimRecord_ToD(),GetClimRecord_ToM(),GetClimRecord_ToY(),ToDayNr_tmp);
+SetClimRecord_ToDayNr(ToDayNr_tmp)
 END; (* AdjustClimRecordTo *)
 
 
@@ -1856,7 +1756,7 @@ IF (ZiAqua < 0) // no ground water table
             END;
         END
    ELSE BEGIN
-        SetSimulation_IniSWC_NrLoc(NrCompartments);
+        SetSimulation_IniSWC_NrLoc(GetNrCompartments());
         FOR Loci := 1 TO GetSimulation_IniSWC_NrLoc() DO
             BEGIN
             SetSimulation_IniSWC_Loc_i(Loci,GetCompartment_Thickness(Loci));
@@ -1864,7 +1764,7 @@ IF (ZiAqua < 0) // no ground water table
             SetSimulation_IniSWC_SaltECe_i(Loci,0.0);
         END;
     END;
-FOR compi := 1 to NrCompartments DO
+FOR compi := 1 to GetNrCompartments() DO
     BEGIN
     SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
@@ -1896,25 +1796,25 @@ CASE GetSimulation_LinkCropToSimPeriod() OF
                ELSE SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30); // 30 days
             IF (GetClimFile() <> '(None)') THEN
                BEGIN
-               IF (GetSimulation_ToDayNr() > ClimRecord.ToDayNr) THEN
-                   SetSimulation_ToDayNr(ClimRecord.ToDayNr);
-               IF (GetSimulation_ToDayNr() < ClimRecord.FromDayNr) THEN
-                      SetSimulation_ToDayNr(ClimRecord.FromDayNr);
+               IF (GetSimulation_ToDayNr() > GetClimRecord_ToDayNr()) THEN
+                   SetSimulation_ToDayNr(GetClimRecord_ToDayNr());
+               IF (GetSimulation_ToDayNr() < GetClimRecord_FromDayNr()) THEN
+                      SetSimulation_ToDayNr(GetClimRecord_FromDayNr());
                END;
             END;
     false : BEGIN
             (*
-            IF ((GetClimFile() <> '(None)') AND (Simulation.FromDayNr < ClimRecord.FromDayNr)) THEN
+            IF ((GetClimFile() <> '(None)') AND (Simulation.FromDayNr < GetClimRecord_FromDayNr())) THEN
                BEGIN
-               Simulation.FromDayNr := ClimRecord.FromDayNr;
+               Simulation.FromDayNr := GetClimRecord_FromDayNr();
                Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
                END; *)
             IF (GetSimulation_FromDayNr() > GetCrop().Day1) THEN SetSimulation_FromDayNr(GetCrop().Day1);
             SetSimulation_ToDayNr(GetCrop().DayN);
             IF ((GetClimFile() <> '(None)') AND
-                ((GetSimulation_FromDayNr() <= ClimRecord.FromDayNr) OR (GetSimulation_FromDayNr() >= ClimRecord.ToDayNr))) THEN
+                ((GetSimulation_FromDayNr() <= GetClimRecord_FromDayNr()) OR (GetSimulation_FromDayNr() >= GetClimRecord_ToDayNr()))) THEN
                BEGIN
-               SetSimulation_FromDayNr(ClimRecord.FromDayNr);
+               SetSimulation_FromDayNr(GetClimRecord_FromDayNr());
                SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30); // 30 days
                END;
             END;
@@ -1935,37 +1835,13 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
    END;
 END; (* AdjustSimPeriod *)
 
-PROCEDURE AdjustOnsetSearchPeriod;
-VAR temp_Integer : Integer;
-BEGIN
-IF (GetClimFile() = '(None)')
-   THEN BEGIN
-        SetOnset_StartSearchDayNr(1);
-        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
-        //SetOnset_StopSearchDayNr(365);
-        END
-   ELSE BEGIN
-        //SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
-        //SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
-        temp_Integer := GetOnset().StartSearchDayNr;
-        DetermineDayNr((1),(1),GetSimulation_YearStartCropCycle(),temp_Integer); // 1 January
-        SetOnset_StartSearchDayNr(temp_Integer);
-        IF (GetOnset().StartSearchDayNr < ClimRecord.FromDayNr) THEN SetOnset_StartSearchDayNr(ClimRecord.FromDayNr);
-        SetOnset_StopSearchDayNr(GetOnset().StartSearchDayNr + GetOnset().LengthSearchPeriod - 1);
-        IF (GetOnset().StopSearchDayNr > ClimRecord.ToDayNr) THEN
-           BEGIN
-           SetOnset_StopSearchDayNr(ClimRecord.ToDayNr);
-           SetOnset_LengthSearchPeriod(GetOnset().StopSearchDayNr - GetOnset().StartSearchDayNr + 1);
-           END;
-        END;
-END; (* AdjustOnsetSearchPeriod *)
-
 
 PROCEDURE SetClimData;
 VAR SetARecord, SetBRecord : rep_clim;
-
+    tmptoD, tmpToM, tmpToY : integer;
+    tmpFromD, tmpFromM, tmpFromY : integer;
 BEGIN
-ClimRecord.NrObs := 999; //(heeft geen belang)
+SetClimRecord_NrObs(999); //(heeft geen belang)
                          // IF 365 (= full undefined year)
 
 //Part A - ETo and Rain files --> ClimFile
@@ -1973,92 +1849,87 @@ IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
    THEN BEGIN
         SetClimFile('(None)');
         ClimDescription := 'Specify Climatic data when Running AquaCrop';
-        WITH ClimRecord DO
-          BEGIN
-          DataType := Daily;
-          FromString := 'any date';
-          ToString := 'any date';
-          FromY := 1901;
-          END;
+        SetClimRecord_DataType(Daily);
+        SetClimRecord_FromString('any date');
+        SetClimRecord_ToString('any date');
+        SetClimRecord_FromY(1901);
         END
    ELSE BEGIN
         SetClimFile('EToRainTempFile');
         ClimDescription := 'Read ETo/RAIN/TEMP data set';
         IF (GetEToFile() = '(None)') THEN
-           WITH ClimRecord DO
            BEGIN
-           FromY := RainRecord.FromY;
-           FromDayNr := RainRecord.FromDayNr;
-           ToDayNr := RainRecord.ToDayNr;
-           FromString := RainRecord.FromString;
-           ToString := RainRecord.ToString;
-           IF FullUndefinedRecord(RainRecord.FromY,RainRecord.FromD,RainRecord.FromM,RainRecord.ToD,RainRecord.ToM)
-              THEN NrObs := 365;
+           SetClimRecord_FromY(GetRainRecord_FromY());
+           SetClimRecord_FromDayNr(GetRainRecord_FromDayNr());
+           SetClimRecord_ToDayNr(GetRainRecord_ToDayNr());
+           SetClimRecord_FromString(GetRainRecord_FromString());
+           SetClimRecord_ToString(GetRainRecord_ToString());
+           IF FullUndefinedRecord(GetRainRecord_FromY(),GetRainRecord_FromD(),GetRainRecord_FromM(),GetRainRecord_ToD(),GetRainRecord_ToM())
+              THEN SetClimRecord_NrObs(365);
            END;
         IF (GetRainFile() = '(None)') THEN
-           WITH ClimRecord DO
            BEGIN
-           FromY := EToRecord.FromY;
-           FromDayNr := EToRecord.FromDayNr;
-           ToDayNr := EToRecord.ToDayNr;
-           FromString := EToRecord.FromString;
-           ToString := EToRecord.ToString;
-           IF FullUndefinedRecord(EToRecord.FromY,EToRecord.FromD,EToRecord.FromM,EToRecord.ToD,EToRecord.ToM)
-              THEN NrObs := 365;
+           SetClimRecord_FromY(GetEToRecord_FromY());
+           SetClimRecord_FromDayNr(GetEToRecord_FromDayNr());
+           SetClimRecord_ToDayNr(GetEToRecord_ToDayNr());
+           SetClimRecord_FromString(GetEToRecord_FromString());
+           SetClimRecord_ToString(GetEToRecord_ToString());
+           IF FullUndefinedRecord(GetEToRecord_FromY(),GetEToRecord_FromD(),GetEToRecord_FromM(),GetEToRecord_ToD(),GetEToRecord_ToM())
+              THEN SetClimRecord_NrObs(365);
            END;
 
         IF ((GetEToFile() <> '(None)') AND (GetRainFile() <> '(None)')) THEN
            BEGIN
-           SetARecord := EToRecord;
-           SetBRecord := RainRecord;
-           IF ((EToRecord.FromY = 1901)
-               AND FullUndefinedRecord(EToRecord.FromY,EToRecord.FromD,EToRecord.FromM,EToRecord.ToD,EToRecord.ToM))
-               AND ((RainRecord.FromY = 1901)
-               AND FullUndefinedRecord(RainRecord.FromY,RainRecord.FromD,RainRecord.FromM,RainRecord.ToD,RainRecord.ToM))
-               THEN ClimRecord.NrObs := 365;
+           SetARecord := GetEToRecord();
+           SetBRecord := GetRainRecord();
+           IF ((GetEToRecord_FromY() = 1901)
+               AND FullUndefinedRecord(GetEToRecord_FromY(),GetEToRecord_FromD(),GetEToRecord_FromM(),GetEToRecord_ToD(),GetEToRecord_ToM()))
+               AND ((GetRainRecord_FromY() = 1901)
+               AND FullUndefinedRecord(GetRainRecord_FromY(),GetRainRecord_FromD(),GetRainRecord_FromM(),GetRainRecord_ToD(),GetRainRecord_ToM()))
+               THEN SetClimRecord_NrObs(365);
 
-           IF ((EToRecord.FromY = 1901) AND (RainRecord.FromY <> 1901)) THEN
+           IF ((GetEToRecord_FromY() = 1901) AND (GetRainRecord_FromY() <> 1901)) THEN
               BEGIN  // Jaartal van RainRecord ---> SetARecord (= EToRecord)
                      // FromY + adjust FromDayNr and FromString
-              SetARecord.FromY := RainRecord.FromY;
-              DetermineDayNr(EToRecord.FromD,EToRecord.FromM,SetARecord.FromY,SetARecord.FromDayNr);
-              IF (((SetARecord.FromDayNr < RainRecord.FromDayNr)) AND (RainRecord.FromY < RainRecord.ToY)) THEN
+              SetARecord.FromY := GetRainRecord_FromY();
+              DetermineDayNr(GetEToRecord_FromD(),GetEToRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
+              IF (((SetARecord.FromDayNr < GetRainRecord_FromDayNr())) AND (GetRainRecord_FromY() < GetRainRecord_ToY())) THEN
                  BEGIN
-                 SetARecord.FromY := RainRecord.FromY + 1;
-                 DetermineDayNr(EToRecord.FromD,EToRecord.FromM,SetARecord.FromY,SetARecord.FromDayNr);
+                 SetARecord.FromY := GetRainRecord_FromY() + 1;
+                 DetermineDayNr(GetEToRecord_FromD(),GetEToRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
                  END;
-              ClimRecord.FromY := SetARecord.FromY; // nodig voor DayString (werkt met ClimRecord)
+              SetClimRecord_FromY(SetARecord.FromY); // nodig voor DayString (werkt met ClimRecord)
               SetARecord.FromString := DayString(SetARecord.FromDayNr);
                      // ToY + adjust ToDayNr and ToString
-              IF (FullUndefinedRecord(EToRecord.FromY,EToRecord.FromD,EToRecord.FromM,EToRecord.ToD,EToRecord.ToM))
-                 THEN SetARecord.ToY := RainRecord.ToY
+              IF (FullUndefinedRecord(GetEToRecord_FromY(),GetEToRecord_FromD(),GetEToRecord_FromM(),GetEToRecord_ToD(),GetEToRecord_ToM()))
+                 THEN SetARecord.ToY := GetRainRecord_ToY()
                  ELSE SetARecord.ToY := SetARecord.FromY;
-              DetermineDayNr(EToRecord.ToD,EToRecord.ToM,SetARecord.ToY,SetARecord.ToDayNr);
+              DetermineDayNr(GetEToRecord_ToD(),GetEToRecord_ToM(),SetARecord.ToY,SetARecord.ToDayNr);
               SetARecord.ToString := DayString(SetARecord.ToDayNr);
               END;
 
-           IF ((EToRecord.FromY <> 1901) AND (RainRecord.FromY = 1901)) THEN
+           IF ((GetEToRecord_FromY() <> 1901) AND (GetRainRecord_FromY() = 1901)) THEN
               BEGIN  // Jaartal van EToRecord ---> SetBRecord (= RainRecord)
                      // FromY + adjust FromDayNr and FromString
-              SetBRecord.FromY := EToRecord.FromY;
-              DetermineDayNr(RainRecord.FromD,RainRecord.FromM,SetBRecord.FromY,SetBRecord.FromDayNr);
-              IF (((SetBRecord.FromDayNr < EToRecord.FromDayNr)) AND (EToRecord.FromY < EToRecord.ToY)) THEN
+              SetBRecord.FromY := GetEToRecord_FromY();
+              DetermineDayNr(GetRainRecord_FromD(),GetRainRecord_FromM(),SetBRecord.FromY,SetBRecord.FromDayNr);
+              IF (((SetBRecord.FromDayNr < GetEToRecord_FromDayNr())) AND (GetEToRecord_FromY() < GetEToRecord_ToY())) THEN
                  BEGIN
-                 SetBRecord.FromY := EToRecord.FromY + 1;
-                 DetermineDayNr(RainRecord.FromD,RainRecord.FromM,SetBRecord.FromY,SetBRecord.FromDayNr);
+                 SetBRecord.FromY := GetEToRecord_FromY() + 1;
+                 DetermineDayNr(GetRainRecord_FromD(),GetRainRecord_FromM(),SetBRecord.FromY,SetBRecord.FromDayNr);
                  END;
-              ClimRecord.FromY := SetBRecord.FromY; // nodig voor DayString (werkt met ClimRecord)
+              SetClimRecord_FromY(SetBRecord.FromY); // nodig voor DayString (werkt met ClimRecord)
               SetBRecord.FromString := DayString(SetBRecord.FromDayNr);
                      // ToY + adjust ToDayNr and ToString
-              IF (FullUndefinedRecord(RainRecord.FromY,RainRecord.FromD,RainRecord.FromM,RainRecord.ToD,RainRecord.ToM))
-                 THEN SetBRecord.ToY := EToRecord.ToY
+              IF (FullUndefinedRecord(GetRainRecord_FromY(),GetRainRecord_FromD(),GetRainRecord_FromM(),GetRainRecord_ToD(),GetRainRecord_ToM()))
+                 THEN SetBRecord.ToY := GetEToRecord_ToY()
                  ELSE SetBRecord.ToY := SetBRecord.FromY;
-              DetermineDayNr(RainRecord.ToD,RainRecord.ToM,SetBRecord.ToY,SetBRecord.ToDayNr);
+              DetermineDayNr(GetRainRecord_ToD(),GetRainRecord_ToM(),SetBRecord.ToY,SetBRecord.ToDayNr);
               SetBRecord.ToString := DayString(SetBRecord.ToDayNr);
               END;
 
            // bepaal characteristieken van ClimRecord
-           WITH ClimRecord DO
+           WITH GetClimRecord() DO
                 BEGIN
                 FromY := SetARecord.FromY;
                 FromDayNr := SetARecord.FromDayNr;
@@ -2098,72 +1969,75 @@ IF (GetTemperatureFile() = '(None)')
            THEN BEGIN
                 SetClimFile('EToRainTempFile');
                 ClimDescription := 'Read ETo/RAIN/TEMP data set';
-                WITH ClimRecord DO
-                     BEGIN
-                     FromY := GetTemperatureRecord().FromY;
-                     FromDayNr := GetTemperatureRecord().FromDayNr;
-                     ToDayNr := GetTemperatureRecord().ToDayNr;
-                     FromString := GetTemperatureRecord().FromString;
-                     ToString := GetTemperatureRecord().ToString;
-                     IF ((GetTemperatureRecord().FromY = 1901) AND FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
-                        THEN NrObs := 365
-                        ELSE NrObs := GetTemperatureRecord().ToDayNr - GetTemperatureRecord().FromDayNr + 1;
-                     END;
+                SetClimRecord_FromY(GetTemperatureRecord().FromY);
+                SetClimRecord_FromDayNr(GetTemperatureRecord().FromDayNr);
+                SetClimRecord_ToDayNr(GetTemperatureRecord().ToDayNr);
+                SetClimRecord_FromString(GetTemperatureRecord().FromString);
+                SetClimRecord_ToString(GetTemperatureRecord().ToString);
+                IF ((GetTemperatureRecord().FromY = 1901) AND FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
+                   THEN SetClimRecord_NrObs(365)
+                   ELSE SetClimRecord_NrObs(GetTemperatureRecord().ToDayNr - GetTemperatureRecord().FromDayNr + 1);
                 END
            ELSE BEGIN
-                DetermineDate(ClimRecord.FromDayNr,ClimRecord.FromD, ClimRecord.FromM, ClimRecord.FromY);
-                DetermineDate(ClimRecord.ToDayNr,ClimRecord.ToD, ClimRecord.ToM, ClimRecord.ToY);
-                SetARecord := ClimRecord;
+                DetermineDate(GetClimRecord_FromDayNr(),tmpFromD, tmpFromM, tmpFromY);
+                SetClimRecord_FromD(tmpFromD);
+                SetClimRecord_FromM(tmpFromM);
+                SetClimRecord_FromY(tmpFromY);
+                DetermineDate(GetClimRecord_ToDayNr(), tmpToD, tmpToM, tmpToY);
+                SetClimRecord_ToD(tmpToD);
+                SetClimRecord_ToM(tmpToM);
+                SetClimRecord_ToY(tmpToY);
+                SetARecord := GetClimRecord();
                 SetBRecord := GetTemperatureRecord();
 
-                IF ((ClimRecord.FromY = 1901) AND (GetTemperatureRecord().FromY = 1901)
-                   AND (ClimRecord.NrObs = 365)
+                IF ((GetClimRecord_FromY() = 1901) AND (GetTemperatureRecord().FromY = 1901)
+                   AND (GetClimRecord_NrObs() = 365)
                    AND FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
-                       THEN ClimRecord.NrObs := 365
-                       ELSE ClimRecord.NrObs := GetTemperatureRecord().ToDayNr - GetTemperatureRecord().FromDayNr + 1;
+                       THEN SetClimRecord_NrObs(365)
+                       ELSE SetClimRecord_NrObs(GetTemperatureRecord_ToDayNr() - GetTemperatureRecord().FromDayNr + 1);
 
-                IF ((ClimRecord.FromY = 1901) AND (GetTemperatureRecord().FromY <> 1901)) THEN
+                IF ((GetClimRecord_FromY() = 1901) AND (GetTemperatureRecord().FromY <> 1901)) THEN
                    BEGIN  // Jaartal van TemperatureRecord ---> SetARecord (= ClimRecord)
                      // FromY + adjust FromDayNr and FromString
                    SetARecord.FromY := GetTemperatureRecord().FromY;
-                   DetermineDayNr(ClimRecord.FromD,ClimRecord.FromM,SetARecord.FromY,SetARecord.FromDayNr);
+                   DetermineDayNr(GetClimRecord_FromD(),GetClimRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
                    IF (((SetARecord.FromDayNr < GetTemperatureRecord().FromDayNr)) AND (GetTemperatureRecord().FromY < GetTemperatureRecord().ToY)) THEN
                       BEGIN
                       SetARecord.FromY := GetTemperatureRecord().FromY + 1;
-                      DetermineDayNr(ClimRecord.FromD,ClimRecord.FromM,SetARecord.FromY,SetARecord.FromDayNr);
+                      DetermineDayNr(GetClimRecord_FromD(),GetClimRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
                       END;
-                   //ClimRecord.FromY := SetARecord.FromY; // nodig voor DayString (werkt met ClimRecord)
+                   //SetClimRecord_FromY(SetARecord.FromY); // nodig voor DayString (werkt met ClimRecord)
                    SetARecord.FromString := DayString(SetARecord.FromDayNr);
                      // ToY + adjust ToDayNr and ToString
-                   IF (FullUndefinedRecord(ClimRecord.FromY,ClimRecord.FromD,ClimRecord.FromM,ClimRecord.ToD,ClimRecord.ToM))
+                   IF (FullUndefinedRecord(GetClimRecord_FromY(),GetClimRecord_FromD(),GetClimRecord_FromM(),GetClimRecord_ToD(),GetClimRecord_ToM()))
                       THEN SetARecord.ToY := GetTemperatureRecord().ToY
                       ELSE SetARecord.ToY := SetARecord.FromY;
-                   DetermineDayNr(ClimRecord.ToD,ClimRecord.ToM,SetARecord.ToY,SetARecord.ToDayNr);
+                   DetermineDayNr(GetClimRecord_ToD(),GetClimRecord_ToM(),SetARecord.ToY,SetARecord.ToDayNr);
                    SetARecord.ToString := DayString(SetARecord.ToDayNr);
                    END;
 
-                IF ((ClimRecord.FromY <> 1901) AND (GetTemperatureRecord().FromY = 1901)) THEN
+                IF ((GetClimRecord_FromY() <> 1901) AND (GetTemperatureRecord().FromY = 1901)) THEN
                    BEGIN  // Jaartal van ClimRecord ---> SetBRecord (= GetTemperatureRecord())
                      // FromY + adjust FromDayNr and FromString
-                   SetBRecord.FromY := ClimRecord.FromY;
+                   SetBRecord.FromY := GetClimRecord_FromY();
                    DetermineDayNr(GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,SetBRecord.FromY,SetBRecord.FromDayNr);
-                   IF (((SetBRecord.FromDayNr < ClimRecord.FromDayNr)) AND (ClimRecord.FromY < ClimRecord.ToY)) THEN
+                   IF (((SetBRecord.FromDayNr < GetClimRecord_FromDayNr())) AND (GetClimRecord_FromY() < GetClimRecord_ToY())) THEN
                       BEGIN
-                      SetBRecord.FromY := ClimRecord.FromY + 1;
+                      SetBRecord.FromY := GetClimRecord_FromY() + 1;
                       DetermineDayNr(GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,SetBRecord.FromY,SetBRecord.FromDayNr);
                       END;
-                   //ClimRecord.FromY := SetBRecord.FromY; // nodig voor DayString (werkt met ClimRecord)
+                   //SetClimRecord_FromY(SetBRecord.FromY); // nodig voor DayString (werkt met ClimRecord)
                    SetBRecord.FromString := DayString(SetBRecord.FromDayNr);
                      // ToY + adjust ToDayNr and ToString
                    IF (FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
-                      THEN SetBRecord.ToY := ClimRecord.ToY
+                      THEN SetBRecord.ToY := GetClimRecord_ToY()
                       ELSE SetBRecord.ToY := SetBRecord.FromY;
                    DetermineDayNr(GetTemperatureRecord().ToD,GetTemperatureRecord().ToM,SetBRecord.ToY,SetBRecord.ToDayNr);
                    SetBRecord.ToString := DayString(SetBRecord.ToDayNr);
                    END;
 
                 // bepaal nieuwe characteristieken van ClimRecord
-                WITH ClimRecord DO
+                WITH GetClimRecord() DO
                    BEGIN
                    FromY := SetARecord.FromY;
                    FromDayNr := SetARecord.FromDayNr;
@@ -2244,7 +2118,7 @@ REPEAT
   SetRootZoneWC_SAT(GetRootZoneWC().SAT
      + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * GetCompartment_Thickness(compi)
               * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
+UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
 
 // calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
 IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
@@ -2286,7 +2160,7 @@ IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
             + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
             - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
               * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = NrCompartments);
+        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = GetNrCompartments());
         END;
 
 // Relative depletion in rootzone and in top soil
@@ -2312,67 +2186,13 @@ BEGIN
 IF (GetClimFile() = '(None)') THEN WHILE (DNr > 365) DO DNr := DNr - 365;
 DetermineDate(DNr,dayi,monthi,yeari);
 Str(dayi:2,strA);
-IF (ClimRecord.FromY = 1901)
+IF (GetClimRecord_FromY() = 1901)
    THEN strB := ''
    ELSE Str(yeari:4,strB);
 StrB := CONCAT(TRIM(strA),' ',Trim(NameMonth[monthi]),' ',Trim(strB));
 WHILE (Length(StrB) < 17) DO StrB := CONCAT(StrB,' ');
 DayString := StrB;
 END; (* DayString *)
-
-
-FUNCTION CanopyCoverNoStressSF(DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                               CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                               TypeDays : rep_modeCycle;
-                               SFRedCGC,SFRedCCx : ShortInt) : double;
-
-
-FUNCTION CanopyCoverNoStressDaysSF(DAP,L0,L123,LMaturity : INTEGER;
-                                 CCo,CCx,CGC,CDC : double;
-                                 SFRedCGC,SFRedCCx : ShortInt) : double;
-VAR CC,CCxAdj,CDCadj : double;
-    t : INTEGER;
-
-BEGIN (* CanopyCoverNoStressDaysSF *)
-CC := 0.0;
-t := DAP - GetSimulation_DelayedDays();
-// CC refers to canopy cover at the end of the day
-
-IF ((t >= 1) AND (t <= LMaturity) AND (CCo > 0)) THEN
-   BEGIN
-   IF (t <= L0) // before germination or recovering of transplant
-      THEN CC := 0
-      ELSE BEGIN
-           IF (t < L123) // Canopy development and Mid-season stage
-              THEN CC := CCatTime((t-L0),CCo,((1-SFRedCGC/100)*CGC),((1-SFRedCCx/100)*CCx))
-              ELSE BEGIN // Late-season stage  (t <= LMaturity)
-                   IF (CCx < 0.001)
-                      THEN CC := 0
-                      ELSE BEGIN
-                           CCxAdj := CCatTime((L123-L0),CCo,((1-SFRedCGC/100)*CGC),((1-SFRedCCx/100)*CCx));
-                           CDCadj := CDC*(CCxAdj+2.29)/(CCx+2.29);
-                           IF (CCxAdj < 0.001)
-                              THEN CC := 0
-                              //ELSE CC := CCxAdj * (1 - 0.05*(exp((t-L123)*CDC*3.33*((CCxAdj+2.29)/(CCx+2.29))/(CCxAdj+2.29))-1));
-                              ELSE CC := CCxAdj * (1 - 0.05*(exp((t-L123)*3.33*CDCAdj/(CCxAdj+2.29))-1));
-                           END;
-                   END;
-           END;
-   END;
-IF (CC > 1) THEN CC := 1;
-IF (CC < 0) THEN CC := 0;
-CanopyCoverNoStressDaysSF := CC;
-END; (* CanopyCoverNoStressDaysSF *)
-
-
-BEGIN (* CanopyCoverNoStressSF *)
-CASE TypeDays OF
-     GDDays : CanopyCoverNoStressSF := CanopyCoverNoStressGDDaysSF(GDDL0,GDDL123,GDDLMaturity,
-                                                  SumGDD,CCo,CCx,GDDCGC,GDDCDC,SFRedCGC,SFRedCCx);
-     else CanopyCoverNoStressSF := CanopyCoverNoStressDaysSF(DAP,L0,L123,LMaturity,
-                                               CCo,CCx,CGC,CDC,SFRedCGC,SFRedCCx);
-     end;
-END; (* CanopyCoverNoStressSF *)
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
@@ -2575,7 +2395,7 @@ IF (RootingDepth >= GetCrop().RootMin)
         ZrECe := ZrECe + Factor * ECeComp(GetCompartment_i(compi));
         ZrECsw := ZrECsw + Factor * ECswComp(GetCompartment_i(compi),(false)); // not at FC
         ZrECswFC := ZrECswFC + Factor * ECswComp(GetCompartment_i(compi),(true)); // at FC
-        UNTIL (CumDepth >= RootingDepth) OR (compi = NrCompartments);
+        UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
         IF (((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax))
            THEN ZrKsSalt := KsSalinity((true),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0))
            ELSE ZrKsSalt := KsSalinity((false),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0));
@@ -3070,7 +2890,7 @@ PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double);
 VAR f0 : TextFile;
     i : ShortInt;
-    StringParam : string;
+    StringParam,swcinidescr_temp : string;
     VersionNr : double;
     CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
     NrLoc_temp : shortint;
@@ -3081,7 +2901,8 @@ BEGIN
 // Keep in mind that this could affect the graphical interface
 Assign(f0,SWCiniFileFull);
 Reset(f0);
-READLN(f0,SWCiniDescription);
+READLN(f0,swcinidescr_temp);
+setSWCiniDescription(swcinidescr_temp);
 READLN(f0,VersionNr); // AquaCrop Version
 IF (ROUND(10*VersionNr) < 41) // initial CC at start of simulation period
    THEN SetSimulation_CCini(undef_int)
@@ -3277,7 +3098,7 @@ VAR layeri,compi : INTEGER;
 BEGIN
 //1. Actual total depth of compartments
 TotDepthC := 0;
-FOR compi := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
+FOR compi := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
 
 //2. Stretch thickness of bottom soil layer if required
 TotDepthL := 0;
@@ -3286,7 +3107,7 @@ IF (TotDepthC > TotDepthL) THEN SetSoilLayer_Thickness(GetSoil().NrSoilLayers, G
 
 //3. Assign a soil layer to each soil compartment
 Compartment_temp := GetCompartment();
-DesignateSoilLayerToCompartments(NrCompartments,GetSoil().NrSoilLayers,Compartment_temp);
+DesignateSoilLayerToCompartments(GetNrCompartments(),GetSoil().NrSoilLayers,Compartment_temp);
 SetCompartment(Compartment_temp);
 
 //4. Adjust initial Soil Water Content of soil compartments
@@ -3296,26 +3117,26 @@ IF GetSimulation_ResetIniSWC()
            THEN BEGIN
                 Compartment_temp := GetCompartment();
                 TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END
            ELSE BEGIN
                 Compartment_temp := GetCompartment();
                 TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),NrCompartments,Compartment_temp);
+                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
                 SetCompartment(Compartment_temp);
                 END;
         END
    ELSE BEGIN
         Compartment_temp := GetCompartment();
-        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,NrCompartments,Compartment_temp);
+        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,GetNrCompartments(),Compartment_temp);
         SetCompartment(Compartment_temp);
         END;
 
 //5. Adjust watercontent in soil layers and determine ThetaIni
 Total := 0;
 FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
     SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
@@ -3336,7 +3157,7 @@ VAR i ,compi : INTEGER;
 BEGIN
 
 //1. Save intial soil water profile (required when initial soil water profile is NOT reset at start simulation - see 7.)
-PrevNrComp := NrCompartments;
+PrevNrComp := GetNrCompartments();
 FOR compi := 1 To prevnrComp DO
     BEGIN
     PrevThickComp[compi] := GetCompartment_Thickness(compi);
@@ -3345,22 +3166,22 @@ FOR compi := 1 To prevnrComp DO
 
 //2. Actual total depth of compartments
 TotDepthC := 0;
-FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
+FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
 
 //3. Increase number of compartments (if less than 12)
-IF (NrCompartments < 12) THEN
+IF (GetNrCompartments() < 12) THEN
    REPEAT
-   NrCompartments := NrCompartments + 1;
+   SetNrCompartments(GetNrCompartments() + 1);
    IF ((CropZx - TotDepthC) > GetSimulParam_CompDefThick())
-      THEN SetCompartment_Thickness(NrCompartments, GetSimulParam_CompDefThick())
-      ELSE SetCompartment_Thickness(NrCompartments, CropZx - TotDepthC);
-   TotDepthC := TotDepthC + GetCompartment_Thickness(NrCompartments);
-   UNTIL ((NrCompartments = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
+      THEN SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+      ELSE SetCompartment_Thickness(GetNrCompartments(), CropZx - TotDepthC);
+   TotDepthC := TotDepthC + GetCompartment_Thickness(GetNrCompartments());
+   UNTIL ((GetNrCompartments() = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
 
 //4. Adjust size of compartments (if total depth of compartments < rooting depth)
 IF ((TotDepthC + 0.00001) < CropZx) THEN
    BEGIN
-   NrCompartments := 12;
+   SetNrCompartments(12);
    fAdd := (CropZx/0.1 - 12)/78;
    FOR i := 1 TO 12 DO
        BEGIN
@@ -3368,7 +3189,7 @@ IF ((TotDepthC + 0.00001) < CropZx) THEN
        SetCompartment_Thickness(i, 0.05 * ROUND(GetCompartment_Thickness(i) * 20));
        END;
    TotDepthC := 0;
-   FOR i := 1 to NrCompartments DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
+   FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
    IF (TotDepthC < CropZx)
       THEN REPEAT
            SetCompartment_Thickness(12, GetCompartment_Thickness(12) + 0.05);
@@ -3401,7 +3222,7 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    Ztot := Ztot + ProfileComp[compi].Thickness;
    Zi := Ztot - ProfileComp[compi].Thickness/2;
    IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= NrCompartments));
+   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
 END; (* CheckForWaterTableInProfile *)
 
 

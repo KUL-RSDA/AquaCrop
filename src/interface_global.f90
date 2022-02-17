@@ -7,6 +7,7 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      TimeToMaxCanopySF, &
+                     ECswComp, &
                      FileExists, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -32,6 +33,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetEndSeason_GenerateTempOn, &
                      GetSWCiniFile, &
                      GetSWCiniFileFull, &
+                     GetSWCiniDescription, &
                      GetProjectFile, &
                      GetProjectFileFull, &
                      GetMultipleProjectFile, &
@@ -101,6 +103,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetEToDescription, &
                      setSWCiniFile, &
                      setSWCiniFileFull, &
+                     SetSWCiniDescription, &
                      SetSimulParam_CNcorrection, &
                      SetSimulParam_ConstGwt, &
                      SetPathNameProg, &
@@ -144,6 +147,18 @@ use ac_global, only: CheckFilesInProject, &
                      GetTemperatureRecord_FromString, &
                      SetTemperatureRecord_ToString, &
                      GetTemperatureRecord_ToString, &
+                     SetClimRecord_FromString, &
+                     GetClimRecord_FromString, &
+                     SetClimRecord_ToString, &
+                     GetClimRecord_ToString, &
+                     SetRainRecord_FromString, &
+                     GetRainRecord_FromString, &
+                     SetRainRecord_ToString, &
+                     GetRainRecord_ToString, &
+                     SetEToRecord_FromString, &
+                     GetEToRecord_FromString, &
+                     SetEToRecord_ToString, &
+                     GetEToRecord_ToString, &
                      GetSoilLayer_Description, &
                      SetSoilLayer_Description, &
                      GetSimulation_LinkCropToSimPeriod, &
@@ -170,6 +185,9 @@ use ac_global, only: CheckFilesInProject, &
                      SetSimulation_IniSWC_AtFC, &
                      GetSimulation_Storage_CropString, &
                      SetSimulation_Storage_CropString, &
+                     CompartmentIndividual, &
+                     ECeComp, &
+                     ECswComp, &
                      GetManDescription, &
                      SetManDescription, &
                      LoadManagement, &
@@ -183,7 +201,30 @@ use ac_kinds, only: dp, &
 implicit none
 
 
+
+interface pointer2array
+    module procedure pointer2array_dp
+end interface pointer2array
+
+
 contains
+
+
+function pointer2array_dp(c_pointer, arrlen, mold) result(array)
+    !! Returns a Fortran string from a C-pointer plus the array length.
+    type(c_ptr), intent(in) :: c_pointer
+        !! C-style pointer
+    integer(int32), intent(in) :: arrlen
+        !! Length of the array
+    real(dp), intent(in) :: mold
+        !! Defines the type of array
+    real(dp), dimension(arrlen) :: array
+
+    real(dp), pointer, dimension(:) :: f_pointer
+
+    call c_f_pointer(c_pointer, f_pointer, [arrlen])
+    array(:) = f_pointer(:)
+end function pointer2array_dp
 
 
 function pointer2string(c_pointer, strlen) result(string)
@@ -769,6 +810,25 @@ subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
     string = pointer2string(SWCiniFileFull, strlen)
     call SetSWCiniFileFull(string)
 end subroutine SetSWCiniFileFull_wrap
+
+function GetSWCiniDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetSWCiniDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetSWCiniDescription())
+end function GetSWCiniDescription_wrap
+
+subroutine SetSWCiniDescription_wrap(SWCiniDescription, strlen)
+    !! Wrapper for [[ac_global:SetSWCiniDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: SWCiniDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniDescription, strlen)
+    call SetSWCiniDescription(string)
+end subroutine SetSWCiniDescription_wrap
+
 
 function GetSimulParam_CNcorrection_wrap() result(CNcorrection)
     !! Wrapper for [[ac_global:GetSimulParam_CNcorrection]] for foreign languages.
@@ -1625,6 +1685,141 @@ function GetTemperatureRecord_FromString_wrap() result(c_pointer)
     c_pointer = string2pointer(GetTemperatureRecord_FromString())
 end function GetTemperatureRecord_FromString_wrap
 
+subroutine SetClimRecord_ToString_wrap(&
+                     ClimRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:ClimRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: ClimRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimRecord_ToString, strlen)
+    call SetClimRecord_ToString(string)
+end subroutine SetClimRecord_ToString_wrap
+
+function GetClimRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimRecord_ToString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetClimRecord_ToString())
+end function GetClimRecord_ToString_wrap
+
+subroutine SetClimRecord_FromString_wrap(&
+                     ClimRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:ClimRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr), intent(in) :: ClimRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimRecord_FromString, strlen)
+    call SetClimRecord_FromString(string)
+end subroutine SetClimRecord_FromString_wrap
+
+function GetClimRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetClimRecord_FromString())
+end function GetClimRecord_FromString_wrap
+
+subroutine SetRainRecord_ToString_wrap(&
+                     RainRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:RainRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: RainRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(RainRecord_ToString, strlen)
+    call SetRainRecord_ToString(string)
+end subroutine SetRainRecord_ToString_wrap
+
+function GetRainRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainRecord_ToString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainRecord_ToString())
+end function GetRainRecord_ToString_wrap
+
+subroutine SetRainRecord_FromString_wrap(&
+                     RainRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:RainRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr), intent(in) :: RainRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(RainRecord_FromString, strlen)
+    call SetRainRecord_FromString(string)
+end subroutine SetRainRecord_FromString_wrap
+
+function GetRainRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainRecord_FromString())
+end function GetRainRecord_FromString_wrap
+
+subroutine SetEToRecord_ToString_wrap(&
+                     EToRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:EToRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: EToRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(EToRecord_ToString, strlen)
+    call SetEToRecord_ToString(string)
+end subroutine SetEToRecord_ToString_wrap
+
+function GetEToRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToRecord_ToString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToRecord_ToString())
+end function GetEToRecord_ToString_wrap
+
+subroutine SetEToRecord_FromString_wrap(&
+                     EToRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:EToRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr), intent(in) :: EToRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(EToRecord_FromString, strlen)
+    call SetEToRecord_FromString(string)
+end subroutine SetEToRecord_FromString_wrap
+
+function GetEToRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToRecord_FromString())
+end function GetEToRecord_FromString_wrap
+
 function GetSoilLayer_Description_wrap(i) result(Description)
     !! Wrapper for [[ac_global:GetSoilLayer_Description]] for foreign languages.
     integer(int32) :: i
@@ -1900,5 +2095,49 @@ subroutine SaveProfile_wrap(totalname, strlen)
     call SaveProfile(string)
 end subroutine SaveProfile_wrap
 
+
+real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
+                               Depo_len)
+    !! Wrapper for [[ac_global:ECeComp]] for foreign languages.
+    real(dp), intent(in) :: Thickness
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+
+    type(CompartmentIndividual) :: comp
+
+    comp%Thickness = Thickness
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    ECeComp_wrap = ECeComp(comp)
+end function ECeComp_wrap
+
+
+real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
+                                Depo_ptr, Depo_len, atFC)
+    !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
+    real(dp), intent(in) :: Thickness
+    real(dp), intent(in) :: theta
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+    logical(1), intent(in) :: atFC
+
+    type(CompartmentIndividual) :: comp
+    logical :: atFC_f
+
+    comp%Thickness = Thickness
+    comp%theta = theta
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    atFC_f = logical(atFC)
+    ECswComp_wrap = ECswComp(comp, atFC_f)
+end function ECswComp_wrap
 
 end module ac_interface_global

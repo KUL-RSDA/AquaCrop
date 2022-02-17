@@ -10,9 +10,10 @@ use iso_fortran_env, only: iostat_end
 
 implicit none
 
-
+real(dp), parameter :: equiv = 0.64_dp
+    !! conversion factor: 1 dS/m = 0.64 g/l
 integer(int32), parameter :: max_SoilLayers = 5
-integer(int32), parameter :: max_No_compartments = 12;
+integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
     !! value for 'undefined' real(dp) variables
 integer(int32), parameter :: undef_int = -9
@@ -918,6 +919,7 @@ character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
+character(len=:), allocatable :: SWCiniDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
@@ -944,7 +946,7 @@ type(rep_RootZoneWC) :: RootZoneWC
 type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
-type(rep_clim)  :: TemperatureRecord
+type(rep_clim)  :: TemperatureRecord, ClimRecord, RainRecord, EToRecord
 type(rep_sim) :: Simulation
 
 integer(intEnum) :: GenerateTimeMode
@@ -952,8 +954,11 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
+
+integer(int32) :: NrCompartments
 
 
 interface roundc
@@ -1128,6 +1133,39 @@ subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
     end do
 end subroutine ZrAdjustedToRestrictiveLayers
 
+subroutine DeclareInitialCondAtFCandNoSalt()
+
+    integer(int32) :: layeri, compi, celli, ind
+
+    call SetSWCiniFile('(None)')
+    call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+    call SetSWCiniDescription('Soil water profile at Field Capacity')
+    call SetSimulation_IniSWC_AtDepths(.false.)
+    call SetSimulation_IniSWC_NrLoc(GetSoil_NrSoilLayers())
+    do layeri = 1, GetSoil_NrSoilLayers()
+        call SetSimulation_IniSWC_Loc_i(layeri, GetSoilLayer_Thickness(layeri))
+        call SetSimulation_IniSWC_VolProc_i(layeri, GetSoilLayer_FC(layeri))
+        call SetSimulation_IniSWC_SaltECe_i(layeri, 0._dp)
+    end do
+    call SetSimulation_IniSWC_AtFC(.true.)
+    do layeri = (GetSoil_NrSoilLayers()+1), max_No_compartments
+        call SetSimulation_IniSWC_Loc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_VolProc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_SaltECe_i(layeri, undef_double)
+    end do
+    do compi = 1, GetNrCompartments()
+        if (GetCompartment_Layer(compi) == 0) then
+            ind = 1 ! LB: added an if statement to avoid having index=0
+        else
+            ind = GetCompartment_Layer(compi)
+        end if
+        do celli = 1, GetSoilLayer_SCP1(ind)
+            ! salinity in cells
+            call SetCompartment_Salt(compi, celli, 0.0_dp)
+            call SetCompartment_Depo(compi, celli, 0.0_dp)
+        end do
+    end do
+end subroutine DeclareInitialCondAtFCandNoSalt
 
 subroutine set_layer_undef(LayerData)
     type(SoilLayerIndividual), intent(inout) :: LayerData
@@ -1223,6 +1261,96 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
 
     TimeToReachZroot = ti
 end function TimeToReachZroot
+
+
+real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
+       LMaturity, GDDL0, GDDL123, GDDLMaturity, CCo, CCx,&
+       CGC, CDC, GDDCGC, GDDCDC, SumGDD, TypeDays, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LMaturity
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: SumGDD
+    integer(intEnum), intent(in) :: TypeDays
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    select case (TypeDays)
+    case (modeCycle_GDDays)
+        CanopyCoverNoStressSF = CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123,&
+            GDDLMaturity, SumGDD, CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, SFRedCCx)
+    case default
+        CanopyCoverNoStressSF = CanopyCoverNoStressDaysSF(DAP, L0, L123,&
+            LMaturity, CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+    end select
+
+    contains
+
+    real(dp) function CanopyCoverNoStressDaysSF(DAP, L0, L123,&
+           LMaturity, CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L0
+        integer(int32), intent(in) :: L123
+        integer(int32), intent(in) :: LMaturity
+        real(dp), intent(in) :: CCo
+        real(dp), intent(in) :: CCx
+        real(dp), intent(in) :: CGC
+        real(dp), intent(in) :: CDC
+        integer(int8), intent(in) :: SFRedCGC
+        integer(int8), intent(in) :: SFRedCCx
+
+        real(dp) :: CC, CCxAdj, CDCadj
+        integer(int32) :: t
+
+        ! CanopyCoverNoStressDaysSF 
+        CC = 0.0_dp
+        t = DAP - GetSimulation_DelayedDays()
+        ! CC refers to canopy cover at the end of the day
+
+        if ((t >= 1) .and. (t <= LMaturity) .and. (CCo > epsilon(1._dp))) then
+            if (t <= L0) then ! before germination or recovering of transplant
+                CC = 0._dp
+            else
+                if (t < L123) then ! Canopy development and Mid-season stage
+                    CC = CCatTime((t-L0), CCo, ((1._dp-SFRedCGC/100._dp)*CGC),&
+                                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                else
+                   ! Late-season stage  (t <= LMaturity)
+                    if (CCx < 0.001) then
+                        CC = 0._dp
+                    else
+                        CCxAdj = CCatTime((L123-L0), CCo, &
+                                  ((1._dp-SFRedCGC/100._dp)*CGC),&
+                                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                        CDCadj = CDC*(CCxAdj+2.29_dp)/(CCx+2.29_dp)
+                        if (CCxAdj < 0.001) then
+                            CC = 0._dp
+                        else
+                            CC = CCxAdj * (1._dp - 0.05_dp *&
+                                 (exp((t-L123)*3.33_dp*CDCAdj/(CCxAdj+2.29_dp))-1._dp))
+                        end if
+                    end if
+                end if
+            end if
+        end if
+        if (CC > 1) then
+            CC = 1._dp
+        end if
+        if (CC < epsilon(1._dp)) then
+            CC = 0._dp
+        end if
+        CanopyCoverNoStressDaysSF = CC
+    end function CanopyCoverNoStressDaysSF
+end function CanopyCoverNoStressSF
 
 
 real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
@@ -2143,6 +2271,55 @@ subroutine DetermineCN_default(Infiltr, CN2)
 end subroutine DetermineCN_default
 
 
+real(dp) function ECeComp(Comp)
+    type(CompartmentIndividual), intent(in) :: Comp
+
+    real(dp) :: volSat, TotSalt, denominator
+    integer(int32) :: i
+
+    volSAT = GetSoilLayer_SAT(Comp%Layer)
+    TotSalt = 0._dp
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+
+    denominator = volSAT*10._dp * Comp%Thickness * &
+                  (1._dp - GetSoilLayer_GravelVol(Comp%Layer)/100._dp)
+    TotSalt = TotSalt / denominator  ! g/l
+
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+
+    ECeComp = TotSalt / Equiv ! dS/m
+end function ECeComp
+
+
+real(dp) function ECswComp(Comp, atFC)
+    type(CompartmentIndividual), intent(in) :: Comp
+    logical, intent(in) :: atFC
+
+    real(dp) :: TotSalt
+    integer(int32) :: i
+
+    TotSalt = 0
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+    if (atFC .eqv. .true.) then
+        TotSalt = TotSalt/ (GetSoilLayer_FC(Comp%Layer)*10._dp*Comp%Thickness &
+                    *(1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    else
+        TotSalt = TotSalt/(Comp%theta*1000._dp*Comp%Thickness* &
+                     (1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    end if
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+    ECswComp = TotSalt/Equiv
+end function ECswComp
+
+
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari
     integer(int32), intent(in) :: Yearx
@@ -2892,6 +3069,7 @@ subroutine LoadManagement(FullName)
     close(fhandle)
 end subroutine LoadManagement
 
+
 subroutine SaveCrop(totalname)
     character(len=*), intent(in) :: totalname
 
@@ -3446,6 +3624,60 @@ subroutine DetermineParametersCR(SoilClass, KsatMM, aParam, bParam)
     end if
 end subroutine DetermineParametersCR
 
+
+subroutine DetermineNrandThicknessCompartments()
+
+    real(dp) :: TotalDepthL, TotalDepthC, DeltaZ
+    integer(int32) :: i
+
+    TotalDepthL = 0._dp
+    do i = 1, GetSoil_NrSoilLayers()
+        TotalDepthL = TotalDepthL + GetSoilLayer_Thickness(i)
+    end do
+    TotalDepthC = 0._dp
+    call SetNrCompartments(0)
+    loop: do 
+        DeltaZ = (TotalDepthL - TotalDepthC)
+        call SetNrCompartments(GetNrCompartments() + 1)
+        if (DeltaZ > GetSimulParam_CompDefThick()) then
+            call SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+        else
+            call SetCompartment_Thickness(GetNrCompartments(), DeltaZ)
+        end if
+        TotalDepthC = TotalDepthC + GetCompartment_Thickness(GetNrCompartments())
+        if ((GetNrCompartments() == max_No_compartments) &
+                .or. (abs(TotalDepthC - TotalDepthL) < 0.0001_dp)) exit loop
+        end do loop
+end subroutine DetermineNrandThicknessCompartments
+
+
+subroutine AdjustOnsetSearchPeriod()
+
+    integer(int32) :: temp_Integer
+
+    if (GetClimFile() == '(None)') then
+        call SetOnset_StartSearchDayNr(1)
+        call SetOnset_StopSearchDayNr(GetOnset_StartSearchDayNr() &
+               + GetOnset_LengthSearchPeriod() - 1)
+    else
+        temp_Integer = GetOnset_StartSearchDayNr()
+        call DetermineDayNr((1), (1), GetSimulation_YearStartCropCycle(), &
+                              temp_Integer) ! 1 January
+        call SetOnset_StartSearchDayNr(temp_Integer)
+        if (GetOnset_StartSearchDayNr() < GetClimRecord_FromDayNr()) then
+            call SetOnset_StartSearchDayNr(GetClimRecord_FromDayNr())
+        end if
+        call SetOnset_StopSearchDayNr(GetOnset_StartSearchDayNr() &
+                        + GetOnset_LengthSearchPeriod() - 1)
+        if (GetOnset_StopSearchDayNr() > GetClimRecord_ToDayNr()) then
+            call SetOnset_StopSearchDayNr(GetClimRecord_ToDayNr())
+            call SetOnset_LengthSearchPeriod(GetOnset_StopSearchDayNr() &
+                     - GetOnset_StartSearchDayNr() + 1)
+        end if
+    end if
+end subroutine AdjustOnsetSearchPeriod
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
@@ -3549,6 +3781,20 @@ subroutine SetSWCiniFile(str)
     
     SWCiniFile = str
 end subroutine SetSWCiniFile
+
+function GetSWCiniDescription() result(str)
+    !! Getter for the "SWCiniDescription" global variable.
+    character(len=len(SWCiniDescription)) :: str
+    
+    str = SWCiniDescription
+end function GetSWCiniDescription
+
+subroutine SetSWCiniDescription(str)
+    !! Setter for the "SWCiniDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    SWCiniDescription = str
+end subroutine SetSWCiniDescription
 
 
 function GetSWCiniFileFull() result(str)
@@ -4405,7 +4651,6 @@ function GetRainFile() result(str)
 
     str = RainFile
 end function GetRainFile
-
 
 subroutine SetRainFile(str)
     !! Setter for the "RainFile" global variable.
@@ -7960,6 +8205,498 @@ subroutine SetTemperatureRecord_FromString(FromString)
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
 
+type(rep_clim) function GetClimRecord()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord = ClimRecord
+end function GetClimRecord
+
+integer(intEnum) function GetClimRecord_DataType()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_DataType = ClimRecord%DataType
+end function GetClimRecord_DataType
+
+integer(int32) function GetClimRecord_FromD()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromD = ClimRecord%FromD
+end function GetClimRecord_FromD
+
+integer(int32) function GetClimRecord_FromM()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromM = ClimRecord%FromM
+end function GetClimRecord_FromM
+
+integer(int32) function GetClimRecord_FromY()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromY = ClimRecord%FromY
+end function GetClimRecord_FromY
+
+integer(int32) function GetClimRecord_ToD()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToD = ClimRecord%ToD
+end function GetClimRecord_ToD
+
+integer(int32) function GetClimRecord_ToM()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToM = ClimRecord%ToM
+end function GetClimRecord_ToM
+
+integer(int32) function GetClimRecord_ToY()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToY = ClimRecord%ToY
+end function GetClimRecord_ToY
+
+integer(int32) function GetClimRecord_FromDayNr()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_FromDayNr = ClimRecord%FromDayNr
+end function GetClimRecord_FromDayNr
+
+integer(int32) function GetClimRecord_ToDayNr()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_ToDayNr = ClimRecord%ToDayNr
+end function GetClimRecord_ToDayNr
+
+function GetClimRecord_FromString() result(str)
+    !! Getter for the "ClimRecord" global variable.
+    character(len=len(ClimRecord%FromString)) :: str 
+
+    str = ClimRecord%FromString
+end function GetClimRecord_FromString
+
+function GetClimRecord_ToString() result(str)
+    !! Getter for the "ClimRecord" global variable.
+    character(len=len(ClimRecord%ToString)) :: str 
+
+    str = ClimRecord%ToString
+end function GetClimRecord_ToString
+
+integer(int32) function GetClimRecord_NrObs()
+    !! Getter for the "ClimRecord" global variable.
+
+    GetClimRecord_NrObs = ClimRecord%NrObs
+end function GetClimRecord_NrObs
+
+subroutine SetClimRecord_DataType(DataType)
+    !! Setter for the "ClimRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    ClimRecord%DataType = DataType
+end subroutine SetClimRecord_DataType
+
+subroutine SetClimRecord_FromD(FromD)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    ClimRecord%FromD = FromD
+end subroutine SetClimRecord_FromD
+
+subroutine SetClimRecord_FromM(FromM)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    ClimRecord%FromM = FromM
+end subroutine SetClimRecord_FromM
+
+subroutine SetClimRecord_FromY(FromY)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    ClimRecord%FromY = FromY
+end subroutine SetClimRecord_FromY
+
+subroutine SetClimRecord_ToD(ToD)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    ClimRecord%ToD = ToD
+end subroutine SetClimRecord_ToD
+
+subroutine SetClimRecord_ToM(ToM)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    ClimRecord%ToM = ToM
+end subroutine SetClimRecord_ToM
+
+subroutine SetClimRecord_TOY(ToY)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    ClimRecord%ToY = ToY
+end subroutine SetClimRecord_ToY
+
+subroutine SetClimRecord_ToDayNr(ToDayNr)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    ClimRecord%ToDayNr = ToDayNr
+end subroutine SetClimRecord_ToDayNr
+
+subroutine SetClimRecord_FromDayNr(FromDayNr)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    ClimRecord%FromDayNr = FromDayNr
+end subroutine SetClimRecord_FromDayNr
+
+subroutine SetClimRecord_NrObs(NrObs)
+    !! Setter for the "ClimRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    ClimRecord%NrObs = NrObs
+end subroutine SetClimRecord_NrObs
+
+subroutine SetClimRecord_ToString(ToString)
+    !! Setter for the "ClimRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    ClimRecord%ToString = ToString
+end subroutine SetClimRecord_ToString
+
+subroutine SetClimRecord_FromString(FromString)
+    !! Setter for the "ClimRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    ClimRecord%FromString = FromString
+end subroutine SetClimRecord_FromString
+
+type(rep_clim) function GetRainRecord()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord = RainRecord
+end function GetRainRecord
+
+integer(intEnum) function GetRainRecord_DataType()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_DataType = RainRecord%DataType
+end function GetRainRecord_DataType
+
+integer(int32) function GetRainRecord_FromD()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromD = RainRecord%FromD
+end function GetRainRecord_FromD
+
+integer(int32) function GetRainRecord_FromM()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromM = RainRecord%FromM
+end function GetRainRecord_FromM
+
+integer(int32) function GetRainRecord_FromY()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromY = RainRecord%FromY
+end function GetRainRecord_FromY
+
+integer(int32) function GetRainRecord_ToD()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToD = RainRecord%ToD
+end function GetRainRecord_ToD
+
+integer(int32) function GetRainRecord_ToM()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToM = RainRecord%ToM
+end function GetRainRecord_ToM
+
+integer(int32) function GetRainRecord_ToY()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToY = RainRecord%ToY
+end function GetRainRecord_ToY
+
+integer(int32) function GetRainRecord_FromDayNr()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_FromDayNr = RainRecord%FromDayNr
+end function GetRainRecord_FromDayNr
+
+integer(int32) function GetRainRecord_ToDayNr()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_ToDayNr = RainRecord%ToDayNr
+end function GetRainRecord_ToDayNr
+
+function GetRainRecord_FromString() result(str)
+    !! Getter for the "RainRecord" global variable.
+    character(len=len(RainRecord%FromString)) :: str 
+
+    str = RainRecord%FromString
+end function GetRainRecord_FromString
+
+function GetRainRecord_ToString() result(str)
+    !! Getter for the "RainRecord" global variable.
+    character(len=len(RainRecord%ToString)) :: str 
+
+    str = RainRecord%ToString
+end function GetRainRecord_ToString
+
+integer(int32) function GetRainRecord_NrObs()
+    !! Getter for the "RainRecord" global variable.
+
+    GetRainRecord_NrObs = RainRecord%NrObs
+end function GetRainRecord_NrObs
+
+subroutine SetRainRecord_DataType(DataType)
+    !! Setter for the "RainRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    RainRecord%DataType = DataType
+end subroutine SetRainRecord_DataType
+
+subroutine SetRainRecord_FromD(FromD)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    RainRecord%FromD = FromD
+end subroutine SetRainRecord_FromD
+
+subroutine SetRainRecord_FromM(FromM)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    RainRecord%FromM = FromM
+end subroutine SetRainRecord_FromM
+
+subroutine SetRainRecord_FromY(FromY)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    RainRecord%FromY = FromY
+end subroutine SetRainRecord_FromY
+
+subroutine SetRainRecord_ToD(ToD)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    RainRecord%ToD = ToD
+end subroutine SetRainRecord_ToD
+
+subroutine SetRainRecord_ToM(ToM)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    RainRecord%ToM = ToM
+end subroutine SetRainRecord_ToM
+
+subroutine SetRainRecord_TOY(ToY)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    RainRecord%ToY = ToY
+end subroutine SetRainRecord_ToY
+
+subroutine SetRainRecord_ToDayNr(ToDayNr)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    RainRecord%ToDayNr = ToDayNr
+end subroutine SetRainRecord_ToDayNr
+
+subroutine SetRainRecord_FromDayNr(FromDayNr)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    RainRecord%FromDayNr = FromDayNr
+end subroutine SetRainRecord_FromDayNr
+
+subroutine SetRainRecord_NrObs(NrObs)
+    !! Setter for the "RainRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    RainRecord%NrObs = NrObs
+end subroutine SetRainRecord_NrObs
+
+subroutine SetRainRecord_ToString(ToString)
+    !! Setter for the "RainRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    RainRecord%ToString = ToString
+end subroutine SetRainRecord_ToString
+
+subroutine SetRainRecord_FromString(FromString)
+    !! Setter for the "RainRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    RainRecord%FromString = FromString
+end subroutine SetRainRecord_FromString
+
+type(rep_clim) function GetEToRecord()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord = EToRecord
+end function GetEToRecord
+
+integer(intEnum) function GetEToRecord_DataType()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_DataType = EToRecord%DataType
+end function GetEToRecord_DataType
+
+integer(int32) function GetEToRecord_FromD()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromD = EToRecord%FromD
+end function GetEToRecord_FromD
+
+integer(int32) function GetEToRecord_FromM()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromM = EToRecord%FromM
+end function GetEToRecord_FromM
+
+integer(int32) function GetEToRecord_FromY()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromY = EToRecord%FromY
+end function GetEToRecord_FromY
+
+integer(int32) function GetEToRecord_ToD()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToD = EToRecord%ToD
+end function GetEToRecord_ToD
+
+integer(int32) function GetEToRecord_ToM()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToM = EToRecord%ToM
+end function GetEToRecord_ToM
+
+integer(int32) function GetEToRecord_ToY()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToY = EToRecord%ToY
+end function GetEToRecord_ToY
+
+integer(int32) function GetEToRecord_FromDayNr()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_FromDayNr = EToRecord%FromDayNr
+end function GetEToRecord_FromDayNr
+
+integer(int32) function GetEToRecord_ToDayNr()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_ToDayNr = EToRecord%ToDayNr
+end function GetEToRecord_ToDayNr
+
+function GetEToRecord_FromString() result(str)
+    !! Getter for the "EToRecord" global variable.
+    character(len=len(EToRecord%FromString)) :: str
+
+    str = EToRecord%FromString
+end function GetEToRecord_FromString
+
+function GetEToRecord_ToString() result(str)
+    !! Getter for the "EToRecord" global variable.
+    character(len=len(EToRecord%ToString)) :: str
+
+    str = EToRecord%ToString
+end function GetEToRecord_ToString
+
+integer(int32) function GetEToRecord_NrObs()
+    !! Getter for the "EToRecord" global variable.
+
+    GetEToRecord_NrObs = EToRecord%NrObs
+end function GetEToRecord_NrObs
+
+subroutine SetEToRecord_DataType(DataType)
+    !! Setter for the "EToRecord" global variable.
+    integer(intEnum), intent(in) :: DataType
+
+    EToRecord%DataType = DataType
+end subroutine SetEToRecord_DataType
+
+subroutine SetEToRecord_FromD(FromD)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromD
+
+    EToRecord%FromD = FromD
+end subroutine SetEToRecord_FromD
+
+subroutine SetEToRecord_FromM(FromM)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromM
+
+    EToRecord%FromM = FromM
+end subroutine SetEToRecord_FromM
+
+subroutine SetEToRecord_FromY(FromY)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromY
+
+    EToRecord%FromY = FromY
+end subroutine SetEToRecord_FromY
+
+subroutine SetEToRecord_ToD(ToD)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToD
+
+    EToRecord%ToD = ToD
+end subroutine SetEToRecord_ToD
+
+subroutine SetEToRecord_ToM(ToM)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToM
+
+    EToRecord%ToM = ToM
+end subroutine SetEToRecord_ToM
+
+subroutine SetEToRecord_TOY(ToY)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToY
+
+    EToRecord%ToY = ToY
+end subroutine SetEToRecord_ToY
+
+subroutine SetEToRecord_ToDayNr(ToDayNr)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    EToRecord%ToDayNr = ToDayNr
+end subroutine SetEToRecord_ToDayNr
+
+subroutine SetEToRecord_FromDayNr(FromDayNr)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    EToRecord%FromDayNr = FromDayNr
+end subroutine SetEToRecord_FromDayNr
+
+subroutine SetEToRecord_NrObs(NrObs)
+    !! Setter for the "EToRecord" global variable.
+    integer(int32), intent(in) :: NrObs
+
+    EToRecord%NrObs = NrObs
+end subroutine SetEToRecord_NrObs
+
+subroutine SetEToRecord_ToString(ToString)
+    !! Setter for the "EToRecord" global variable.
+    character(len=*), intent(in) :: ToString
+
+    EToRecord%ToString = ToString
+end subroutine SetEToRecord_ToString
+
+subroutine SetEToRecord_FromString(FromString)
+    !! Setter for the "EToRecord" global variable.
+    character(len=*), intent(in) :: FromString
+
+    EToRecord%FromString = FromString
+end subroutine SetEToRecord_FromString
+
 function GetSimulation() result(Simulation_out)
     !! Getter for the "simulation" global variable.
     type(rep_sim) :: Simulation_out
@@ -9309,6 +10046,19 @@ subroutine SetManDescription(str)
     
     ManDescription = str
 end subroutine SetManDescription
+
+integer(int32) function GetNrCompartments()
+    !! Getter for the "NrCompartments" global variable.
+
+    GetNrCompartments = NrCompartments
+end function GetNrCompartments
+
+subroutine SetNrCompartments(NrCompartments_in)
+    !! Setter for the "NrCompartments" global variable.
+    integer(int32), intent(in) :: NrCompartments_in
+
+    NrCompartments = NrCompartments_in
+end subroutine SetNrCompartments
 
 
 end module ac_global

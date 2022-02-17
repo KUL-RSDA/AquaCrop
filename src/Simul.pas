@@ -638,8 +638,8 @@ REPEAT
   IF (Compartment[compi].WFactor > 1) THEN Compartment[compi].WFactor := 1;
   IF (Compartment[compi].WFactor < 0) THEN Compartment[compi].WFactor := 0;
   xx := wx;
-UNTIL (CumDepth >= Depth) OR (compi = NrCompartments);
-FOR i := (compi + 1) TO NrCompartments DO Compartment[i].WFactor := 0;
+UNTIL (CumDepth >= Depth) OR (compi = GetNrCompartments());
+FOR i := (compi + 1) TO GetNrCompartments() DO Compartment[i].WFactor := 0;
 END; (* calculate_weighting_factors *)
 
 
@@ -656,7 +656,7 @@ CASE control OF
                SetTotalWaterContent_BeginDay(0); // mm
                Surf0 := SurfaceStorage; // mm
                SetTotalSaltContent_BeginDay(0); // Mg/ha
-               FOR compi :=1 to NrCompartments DO
+               FOR compi :=1 to GetNrCompartments() DO
                    BEGIN
                    SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
                    + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
@@ -695,7 +695,7 @@ CASE control OF
                        IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
                        END;
 
-               FOR compi :=1 to NrCompartments DO
+               FOR compi :=1 to GetNrCompartments() DO
                    BEGIN
                    SetTotalWaterContent_EndDay(GetTotalWaterContent().EndDay
                    + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
@@ -764,7 +764,7 @@ END; (* CheckDrainsum *)
 
 BEGIN (* calculate_drainage *)
 drainsum:=0;
-FOR compi:=1 to NrCompartments DO
+FOR compi:=1 to GetNrCompartments() DO
     BEGIN
 (*   1. Calculate drainage of compartment
      ===================================== *)
@@ -931,7 +931,7 @@ REPEAT
      ELSE theta := GetCompartment_theta(compi);
   SUM := SUM + GetCompartment_WFactor(compi)
          * (theta-GetSoilLayer_i(layeri).WP/100)/(GetSoilLayer_i(layeri).FC/100 - GetSoilLayer_i(layeri).WP/100);
-UNTIL (CumDepth >= MaxDepth) OR (compi = NrCompartments);
+UNTIL (CumDepth >= MaxDepth) OR (compi = GetNrCompartments());
 IF SUM < 0 THEN SUM := 0.0;
 IF SUM > 1 THEN SUM := 1.0;
 END; (*calculate_relative_wetness_topsoil*)
@@ -940,7 +940,7 @@ END; (*calculate_relative_wetness_topsoil*)
 BEGIN
 //CN2 := GetSoil().CNvalue;
 CN2 := ROUND(GetSoil().CNvalue * (100 + GetManagement_CNcorrection())/100);
-IF (RainRecord.DataType = Daily)
+IF (GetRainRecord_DataType() = Daily)
    THEN BEGIN
         IF (GetSimulParam_CNcorrection())
            THEN BEGIN
@@ -961,7 +961,7 @@ term := Shower - (GetSimulParam_IniAbstract()/100) * S;
 IF term <= 0 THEN Runoff := 0.0
              //ELSE Runoff := SQR(term)/(Shower + 0.8 * S);
              ELSE Runoff := SQR(term)/(Shower + (1-(GetSimulParam_IniAbstract()/100)) * S);
-IF ((Runoff > 0) AND ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))) THEN
+IF ((Runoff > 0) AND ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))) THEN
    BEGIN
    IF (Runoff >= Shower)
       THEN Runoff := Rain
@@ -1022,7 +1022,7 @@ IF (Rain > 0) THEN
                IF (RestTheta <= 0) THEN DrainMax := 0;
                IF (GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate < DrainMax)
                   THEN DrainMax := GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate;
-             UNTIL ((depthi >= Zr) OR (compi >= NrCompartments));
+             UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()));
              END;
      IF (SubDrain > DrainMax) THEN
         BEGIN
@@ -1107,7 +1107,7 @@ VAR Sum : double;
 BEGIN
 InfiltratedRain := 0;
 InfiltratedIrrigation := 0;
-IF (RainRecord.DataType = Daily)
+IF (GetRainRecord_DataType() = Daily)
     THEN Sum := SurfaceStorage + Irrigation + Rain
     ELSE Sum := SurfaceStorage + Irrigation + Rain - Runoff - SubDrain;
 IF (Sum > 0)
@@ -1130,7 +1130,7 @@ IF (Sum > 0)
                SurfaceStorage := Sum - InfiltratedStorage;
                END
           ELSE BEGIN
-               IF (RainRecord.DataType = Daily)
+               IF (GetRainRecord_DataType() = Daily)
                   THEN InfiltratedStorage := Sum
                   ELSE BEGIN
                        InfiltratedStorage := SurfaceStorage + Irrigation;
@@ -1174,7 +1174,7 @@ END; (* calculate_factor *)
 
 BEGIN (* calculate_infiltration *)
 // A -  INFILTRATION versus STORAGE in Rootzone (= EffecRain)
-IF (RainRecord.DataType = Daily)
+IF (GetRainRecord_DataType() = Daily)
    THEN BEGIN
         amount_still_to_store := InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage;
         EffecRain := 0;
@@ -1275,7 +1275,7 @@ THEN BEGIN
         IF (excess > 0) THEN Runoff := Runoff + excess;
         END;
 
-     UNTIL ((amount_still_to_store <= 0) or (compi = NrCompartments));
+     UNTIL ((amount_still_to_store <= 0) or (compi = GetNrCompartments()));
      IF (amount_still_to_store > 0) THEN Drain := Drain + amount_still_to_store;
 
    (*6. Adjust infiltrated water
@@ -1318,12 +1318,12 @@ IF (SubDrain > 0) THEN
    REPEAT
      compi := compi + 1;
      depthi := depthi + GetCompartment_Thickness(compi);
-   UNTIL ((depthi >= Zr) OR (compi >= NrCompartments));
+   UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()));
    IF (depthi > Zr) THEN DeltaZ := (depthi - Zr)
                     ELSE DeltaZ := 0;
 
    (* Store *)
-   WHILE((amount_still_to_store > 0) AND ((compi < NrCompartments) OR (DeltaZ > 0))) DO
+   WHILE((amount_still_to_store > 0) AND ((compi < GetNrCompartments()) OR (DeltaZ > 0))) DO
      BEGIN
      IF (DeltaZ = 0) THEN
         BEGIN
@@ -1388,7 +1388,7 @@ IF (EffecRain > 0) THEN
                    (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
                 amount_still_to_store := amount_still_to_store - StorableMM;
                 END;
-   UNTIL ((depthi >= Zr) OR (compi >= NrCompartments) OR (amount_still_to_store <= 0));
+   UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()) OR (amount_still_to_store <= 0));
 
    (* step 2 fill to SATURATION (from bottom to top) *)
    IF (amount_still_to_store > 0) THEN
@@ -1442,17 +1442,17 @@ VAR Zbottom,MaxMM,DThetaMax,DTheta,LimitMM,CRcomp,SaltCRi,DrivingForce,ZtopNextL
     compi,SCellAct,layeri : INTEGER;
 BEGIN
 Zbottom := 0;
-FOR compi := 1 TO NrCompartments DO Zbottom := Zbottom + GetCompartment_Thickness(compi);
+FOR compi := 1 TO GetNrCompartments() DO Zbottom := Zbottom + GetCompartment_Thickness(compi);
 
 // start at the bottom of the soil profile
-compi := NrCompartments;
+compi := GetNrCompartments();
 MaxMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
                       GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
 
 // check restrictions on CR from soil layers below
 ZtopNextLayer := 0;
-FOR layeri := 1 TO GetCompartment_Layer(NrCompartments) DO ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
-layeri := GetCompartment_Layer(NrCompartments);
+FOR layeri := 1 TO GetCompartment_Layer(GetNrCompartments()) DO ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
+layeri := GetCompartment_Layer(GetNrCompartments());
 WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
    BEGIN
    layeri := layeri + 1;
@@ -1602,7 +1602,7 @@ SaltInfiltr := SaltIN/100; (* salt infiltrated in soil profile kg/ha *)
 SaltOut:= 0;
 
 
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     //0. Set compartment parameters
     SAT := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT)/100;  (* m3/m3 *)
@@ -1717,7 +1717,7 @@ SM2 := GetSoilLayer_i(GetCompartment_Layer(1)).SaltMobility[celi]/4;
 ECsw2 := ECswComp(GetCompartment_i(1),(false)); // not at FC
 mm2 := GetCompartment_Theta(1)*1000*GetCompartment_Thickness(1)
        * (1 - GetSoilLayer_i(GetCompartment_Layer(1)).GravelVol/100);
-FOR compi := 2 TO NrCompartments DO
+FOR compi := 2 TO GetNrCompartments() DO
     BEGIN
     celiM1 := celi;
     SM1 := SM2;
@@ -1782,10 +1782,10 @@ IF (SubDrain > 0) THEN
      SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
      SetCompartment_Salt(compi, celi, Salt_temp);
      SetCompartment_Depo(compi, celi, Depo_temp);
-   UNTIl (depthi >= Zr) OR (compi >= NrCompartments);
+   UNTIl (depthi >= Zr) OR (compi >= GetNrCompartments());
 
    //dump
-   IF (compi >= NrCompartments)
+   IF (compi >= GetNrCompartments())
       THEN BEGIN
            SaltOUT := ECdrain*(Drain*Equiv) + ECsubdrain*SubDrain*Equiv;
            ECdrain := SaltOUT/(Drain*Equiv);
@@ -3092,7 +3092,7 @@ BEGIN
 Wx := 0.0;
 Ztot := 0.0;
 compi := 0;
-WHILE ((ABS(Zlayer-Ztot) > 0.0001) AND (compi < NrCompartments)) DO
+WHILE ((ABS(Zlayer-Ztot) > 0.0001) AND (compi < GetNrCompartments())) DO
       BEGIN
       compi := compi + 1;
       IF ((Ztot + GetCompartment_Thickness(compi)) > Zlayer)
@@ -3195,7 +3195,7 @@ REPEAT
         (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
      END;
   Ztot := Ztot + fracZ * (GetCompartment_Thickness(compi));
-UNTIL ((Compi >= NrCompartments)
+UNTIL ((Compi >= GetNrCompartments())
        OR (Abs(StillToExtract) < 0.0000001)
        OR (Ztot >= 0.999999*Zact));
 IF Stg1 THEN
@@ -3269,7 +3269,7 @@ BEGIN (* CalculateSoilEvaporationStage2 *)
 // Step 1. Conditions before soil evaporation
 compi := 1;
 MaxSaltExDepth := GetCompartment_Thickness(1);
-WHILE ((MaxSaltExDepth < GetSimulParam_EvapZmax()) AND (compi < NrCompartments)) DO
+WHILE ((MaxSaltExDepth < GetSimulParam_EvapZmax()) AND (compi < GetNrCompartments())) DO
   BEGIN
   compi := compi + 1;
   ThetaIniEvap[compi] := GetCompartment_Theta(compi);
@@ -3312,7 +3312,7 @@ IF (SX > 0.01) THEN
    SCell1 := ActiveCells(GetCompartment_i(1));
    compi := 2;
    Zi := GetCompartment_Thickness(1) + GetCompartment_Thickness(2);
-   WHILE ((ROUND(Zi*100) <= ROUND(MaxSaltExDepth*100)) AND (compi <= NrCompartments)
+   WHILE ((ROUND(Zi*100) <= ROUND(MaxSaltExDepth*100)) AND (compi <= GetNrCompartments())
           AND (ROUND(ThetaIniEvap[compi]*100000) <> ROUND(GetCompartment_theta(compi)*100000))) DO
       BEGIN  // move salt to compartment 1
       SCellEnd := ActiveCells(GetCompartment_i(compi));
@@ -3339,7 +3339,7 @@ IF (SX > 0.01) THEN
       SetCompartment_Salt(1, SCell1, GetCompartment_Salt(1, SCell1) + SaltDisplaced);
       UNTIL BoolCell;
       compi := compi + 1;
-      IF (compi <= NrCompartments) THEN Zi := Zi + GetCompartment_Thickness(compi);
+      IF (compi <= GetNrCompartments()) THEN Zi := Zi + GetCompartment_Thickness(compi);
       END;
    END;
 
@@ -3393,8 +3393,8 @@ REPEAT
              THEN Compartment[compi].WFactor := frac_value/Compartment[compi].Thickness
              ELSE Compartment[compi].WFactor := 0;
           END;
-UNTIL (cumdepth >= RootingDepth) OR (compi = NrCompartments);
-FOR i := compi+1 TO Nrcompartments DO Compartment[i].WFactor := 0;
+UNTIL (cumdepth >= RootingDepth) OR (compi = GetNrCompartments());
+FOR i := compi+1 TO GetNrCompartments() DO Compartment[i].WFactor := 0;
 END; (* calculate_rootfraction_compartment *)
 
 
@@ -3411,7 +3411,7 @@ BEGIN
 IF (GetIrriMode() = Inet)
    THEN BEGIN
         sink_value := (GetCrop().SmaxTop + GetCrop().SmaxBot)/2;
-        for compi := 1 to NrCompartments DO Compartment[compi].Smax := sink_value;
+        for compi := 1 to GetNrCompartments() DO Compartment[compi].Smax := sink_value;
         END
    ELSE BEGIN
         cumdepth := 0;
@@ -3427,8 +3427,8 @@ IF (GetIrriMode() = Inet)
               ELSE SbotComp := GetCrop().SmaxBot*GetSimulation_SCor();
            Compartment[compi].Smax := ((StopComp + SbotComp)/2);
            IF (Compartment[compi].Smax > 0.06) THEN Compartment[compi].Smax := 0.06;
-        UNTIL (cumdepth >= RootingDepth) OR (compi = NrCompartments);
-        FOR i := (compi + 1) TO NrCompartments DO Compartment[i].Smax := 0;
+        UNTIL (cumdepth >= RootingDepth) OR (compi = GetNrCompartments());
+        FOR i := (compi + 1) TO GetNrCompartments() DO Compartment[i].Smax := 0;
         END;
 END; (* calculate_sink_values *)
 
@@ -3624,7 +3624,7 @@ IF (Tpot > 0) THEN
      //Tact := Tact + sink * 1000 * Compartment[compi].Thickness;
      Tact := Tact + sinkMM;
    //UNTIL ((theta_to_extract <= 0) OR (compi = Nrcompartments));
-   UNTIL ((WtoExtract <= 0) OR (compi = Nrcompartments));
+   UNTIL ((WtoExtract <= 0) OR (compi = GetNrCompartments()));
 
    // 3. add net irrigation water requirement
    IF (GetIrriMode() = Inet) THEN
@@ -3636,7 +3636,7 @@ IF (Tpot > 0) THEN
      IF (GetRootZoneWC().Actual < InetThreshold) THEN
         BEGIN
         pre_layer := 0;
-        FOR compi := 1 TO NrCompartments DO
+        FOR compi := 1 TO GetNrCompartments() DO
            BEGIN
            layeri := GetCompartment_Layer(compi);
            IF (layeri > pre_layer) THEN
@@ -3666,7 +3666,7 @@ VAR Textra, Part : double;
     KsReduction,SaltSurface : double;
 BEGIN
 DaySubmerged := DaySubmerged + 1;
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SetCompartment_DayAnaero(compi, GetCompartment_DayAnaero(compi) + 1);
     IF (GetCompartment_DayAnaero(compi) > GetSimulParam_DelayLowOxygen())
@@ -3711,7 +3711,7 @@ Var Ztot, Zi, DeltaTheta, SaltAct,SaltAdj : double;
     Compi_temp : CompartmentIndividual;
 BEGIN
 Ztot := 0;
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     Ztot := Ztot + GetCompartment_Thickness(compi);
     Zi := Ztot - GetCompartment_Thickness(compi)/2;
@@ -3750,7 +3750,7 @@ Var compi, celWet, celi : INTEGER;
     SaltTot, mm : Double;
     Salt_temp, Depo_temp : double;
 BEGIN
-FOR compi := 1 TO NrCompartments DO
+FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SaltTot := 0;
     celWet := ActiveCells(GetCompartment_i(compi));
@@ -3800,7 +3800,7 @@ IF (GetManagement_Bundheight() < 0.001) THEN
    END;
 
 // 5. Infiltration (Rain and Irrigation)
-IF ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
+IF ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    THEN CalculateEffectiveRainfall;
 IF (((GetIrriMode() = Generate) AND (Irrigation = 0)) AND (TargetTimeVal <> -999))
    THEN Calculate_irrigation;
@@ -3865,7 +3865,7 @@ IF ((Rain > 0) OR
 EvapWCsurf_temp := GetSimulation_EvapWCsurf();
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,EvapWCsurf_temp);
 SetSimulation_EvapWCsurf(EvapWCsurf_temp);
-IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
+IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) // reduction soil evaporation
  THEN Epot := Epot * (exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 // actual evaporation
@@ -3881,7 +3881,7 @@ IF (Epot > 0) THEN
    IF (ABS(Epot - Eact) > 0.0000001) THEN CalculateSoilEvaporationStage2;
    END;
 // Reset redcution Epot for 10-day or monthly rainfall data
-IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
+IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0))
  THEN Epot := Epot/(exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 
