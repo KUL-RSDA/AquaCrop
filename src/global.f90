@@ -900,7 +900,6 @@ character(len=:), allocatable :: CropDescription
 character(len=:), allocatable :: PathNameProg
 character(len=:), allocatable :: PathNameOutp
 character(len=:), allocatable :: PathNameSimul
-character(len=:), allocatable :: OutputName
 character(len=:), allocatable :: ProfFile
 character(len=:), allocatable :: ProfFilefull
 character(len=:), allocatable :: ProfDescription
@@ -911,6 +910,7 @@ character(len=:), allocatable :: ObservationsFilefull
 character(len=:), allocatable :: ObservationsDescription
 character(len=:), allocatable :: OffSeasonFile
 character(len=:), allocatable :: OffSeasonFilefull
+character(len=:), allocatable :: OutputName
 character(len=:), allocatable :: GroundWaterFile
 character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
@@ -3299,20 +3299,6 @@ subroutine SetPathNameSimul(str)
     PathNameSimul = str
 end subroutine SetPathNameSimul
 
-function GetOutputName() result(str)
-    !! Getter for the "OutputName" global variable.
-    character(len=len(OutputName)) :: str
-    
-    str = OutputName
-end function GetOutputName
-
-subroutine SetOutputName(str)
-    !! Setter for the "OutputName" global variable.
-    character(len=*), intent(in) :: str
-    
-    OutputName = str
-end subroutine SetOutputName
-
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.
     character(len=len(ProjectFile)) :: str
@@ -3405,14 +3391,15 @@ end function LeapYear
 
 subroutine ComposeOutputFileName(TheProjectFileName)
     character(len=*), intent(in) :: TheProjectFileName
-    character(len=len(TheProjectFileName)) :: TempString
+    
+    character(len=len(Trim(TheProjectFileName))) :: TempString
+    character(len=4) :: TempString2
     integer(int8) :: i
     
     TempString = Trim(TheProjectFileName)
     i = len(TempString)
-    TempString = TempString(1:i-4)
-    TempString = Trim(TempString)
-    OutputName = TempString
+    TempString2 = TempString(1:i-4)
+    call SetOutputName(TempString2)
 end subroutine ComposeOutputFileName
 
 
@@ -3621,7 +3608,19 @@ end function ActualRootingDepth
 
 !! Global variables section !!
 
+function GetOutputName() result(str)
+    !! Getter for the "OutputName" global variable.
+    character(len=len(OutputName)) :: str
+    
+    str = OutputName
+end function GetOutputName
 
+subroutine SetOutputName(str)
+    !! Setter for the "OutputName" global variable.
+    character(len=*), intent(in) :: str
+    
+    OutputName = str
+end subroutine SetOutputName
 
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.
