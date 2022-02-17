@@ -645,7 +645,7 @@ IF (GetEToFile() <> '(None)')
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
-                CASE EToRecord.DataType OF
+                CASE GetEToRecord_DataType() OF
                   Daily   : BEGIN
                             Assign(fETo,totalname);
                             Reset(fETo);
@@ -657,7 +657,7 @@ IF (GetEToFile() <> '(None)')
                             READLN(fETo);
                             READLN(fETo);
                             READLN(fETo);
-                            FOR i := EToRecord.FromDayNr TO (FromSimDay - 1) DO READLN(fETo);
+                            FOR i := GetEToRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fETo);
                             READLN(fETo,ETo);
                             END;
                   Decadely: BEGIN
@@ -681,7 +681,7 @@ IF (GetEToFile() <> '(None)')
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
-                    CASE EToRecord.DataType OF
+                    CASE GetEToRecord_DataType() OF
                          Daily   : BEGIN
                                    IF Eof(fETo)
                                       THEN BEGIN
@@ -714,7 +714,7 @@ IF (GetEToFile() <> '(None)')
                     WRITELN(fEToS,ETo:10:4);
                     END;
                 // Close files
-                IF (EToRecord.DataType = Daily) THEN Close(fETo);
+                IF (GetEToRecord_DataType() = Daily) THEN Close(fETo);
                 Close(fEToS);
                 END
            ELSE BEGIN
@@ -728,7 +728,7 @@ IF (GetRainFile() <> '(None)')
         IF FileExists(totalname)
         THEN BEGIN
              // open file and find first day of simulation period
-             CASE RainRecord.DataType OF
+             CASE GetRainRecord_DataType() OF
                   Daily   : BEGIN
                             Assign(fRain,totalname);
                             Reset(fRain);
@@ -740,7 +740,7 @@ IF (GetRainFile() <> '(None)')
                             READLN(fRain);
                             READLN(fRain);
                             READLN(fRain);
-                            FOR i := RainRecord.FromDayNr TO (FromSimDay - 1) DO READLN(fRain);
+                            FOR i := GetRainRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fRain);
                             READLN(fRain,Rain);
                             END;
                   Decadely: BEGIN
@@ -764,7 +764,7 @@ IF (GetRainFile() <> '(None)')
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
-                    CASE RainRecord.DataType OF
+                    CASE GetRainRecord_DataType() OF
                          Daily   : BEGIN
                                    IF Eof(fRain)
                                       THEN BEGIN
@@ -797,7 +797,7 @@ IF (GetRainFile() <> '(None)')
                     WRITELN(fRainS,Rain:10:4);
                     END;
              // Close files
-             IF (RainRecord.DataType = Daily) THEN Close(fRain);
+             IF (GetRainRecord_DataType() = Daily) THEN Close(fRain);
              Close(fRainS);
              END
         ELSE BEGIN
@@ -2090,7 +2090,7 @@ VAR Di,Mi,Yi,StrExp,StrSto,StrSalt,StrTr,StrW,Brel,Nr : INTEGER;
     SWCtopSoilConsidered_temp : boolean;
 BEGIN
 DetermineDate(DayNri,Di,Mi,Yi);
-IF (ClimRecord.FromY = 1901) THEN Yi := Yi - 1901 + 1;
+IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 
 // 0. info day
@@ -2338,7 +2338,7 @@ IF ((LineNrEval <> undef_int) AND (DayNrEval = DayNri)) THEN
    END;
 //2. Date
 DetermineDate(DayNri,Di,Mi,Yi);
-IF (ClimRecord.FromY = 1901) THEN Yi := Yi - 1901 + 1;
+IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);

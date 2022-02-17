@@ -146,6 +146,18 @@ use ac_global, only: CheckFilesInProject, &
                      GetTemperatureRecord_FromString, &
                      SetTemperatureRecord_ToString, &
                      GetTemperatureRecord_ToString, &
+                     SetClimRecord_FromString, &
+                     GetClimRecord_FromString, &
+                     SetClimRecord_ToString, &
+                     GetClimRecord_ToString, &
+                     SetRainRecord_FromString, &
+                     GetRainRecord_FromString, &
+                     SetRainRecord_ToString, &
+                     GetRainRecord_ToString, &
+                     SetEToRecord_FromString, &
+                     GetEToRecord_FromString, &
+                     SetEToRecord_ToString, &
+                     GetEToRecord_ToString, &
                      GetSoilLayer_Description, &
                      SetSoilLayer_Description, &
                      GetSimulation_LinkCropToSimPeriod, &
@@ -1663,6 +1675,141 @@ function GetTemperatureRecord_FromString_wrap() result(c_pointer)
 
     c_pointer = string2pointer(GetTemperatureRecord_FromString())
 end function GetTemperatureRecord_FromString_wrap
+
+subroutine SetClimRecord_ToString_wrap(&
+                     ClimRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:ClimRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: ClimRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimRecord_ToString, strlen)
+    call SetClimRecord_ToString(string)
+end subroutine SetClimRecord_ToString_wrap
+
+function GetClimRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimRecord_ToString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetClimRecord_ToString())
+end function GetClimRecord_ToString_wrap
+
+subroutine SetClimRecord_FromString_wrap(&
+                     ClimRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:ClimRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr), intent(in) :: ClimRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimRecord_FromString, strlen)
+    call SetClimRecord_FromString(string)
+end subroutine SetClimRecord_FromString_wrap
+
+function GetClimRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetClimRecord_FromString())
+end function GetClimRecord_FromString_wrap
+
+subroutine SetRainRecord_ToString_wrap(&
+                     RainRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:RainRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: RainRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(RainRecord_ToString, strlen)
+    call SetRainRecord_ToString(string)
+end subroutine SetRainRecord_ToString_wrap
+
+function GetRainRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainRecord_ToString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainRecord_ToString())
+end function GetRainRecord_ToString_wrap
+
+subroutine SetRainRecord_FromString_wrap(&
+                     RainRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:RainRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr), intent(in) :: RainRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(RainRecord_FromString, strlen)
+    call SetRainRecord_FromString(string)
+end subroutine SetRainRecord_FromString_wrap
+
+function GetRainRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetRainRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetRainRecord_FromString())
+end function GetRainRecord_FromString_wrap
+
+subroutine SetEToRecord_ToString_wrap(&
+                     EToRecord_ToString, strlen)
+    !! Wrapper for [[ac_global:EToRecord_ToString]] for foreign
+    !languages.
+    type(c_ptr), intent(in) :: EToRecord_ToString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(EToRecord_ToString, strlen)
+    call SetEToRecord_ToString(string)
+end subroutine SetEToRecord_ToString_wrap
+
+function GetEToRecord_ToString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToRecord_ToString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToRecord_ToString())
+end function GetEToRecord_ToString_wrap
+
+subroutine SetEToRecord_FromString_wrap(&
+                     EToRecord_FromString, strlen)
+    !! Wrapper for [[ac_global:EToRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr), intent(in) :: EToRecord_FromString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(EToRecord_FromString, strlen)
+    call SetEToRecord_FromString(string)
+end subroutine SetEToRecord_FromString_wrap
+
+function GetEToRecord_FromString_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetEToRecord_FromString]] for
+    !foreign
+    !languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetEToRecord_FromString())
+end function GetEToRecord_FromString_wrap
 
 function GetSoilLayer_Description_wrap(i) result(Description)
     !! Wrapper for [[ac_global:GetSoilLayer_Description]] for foreign languages.

@@ -940,7 +940,7 @@ END; (*calculate_relative_wetness_topsoil*)
 BEGIN
 //CN2 := GetSoil().CNvalue;
 CN2 := ROUND(GetSoil().CNvalue * (100 + GetManagement_CNcorrection())/100);
-IF (RainRecord.DataType = Daily)
+IF (GetRainRecord_DataType() = Daily)
    THEN BEGIN
         IF (GetSimulParam_CNcorrection())
            THEN BEGIN
@@ -961,7 +961,7 @@ term := Shower - (GetSimulParam_IniAbstract()/100) * S;
 IF term <= 0 THEN Runoff := 0.0
              //ELSE Runoff := SQR(term)/(Shower + 0.8 * S);
              ELSE Runoff := SQR(term)/(Shower + (1-(GetSimulParam_IniAbstract()/100)) * S);
-IF ((Runoff > 0) AND ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))) THEN
+IF ((Runoff > 0) AND ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))) THEN
    BEGIN
    IF (Runoff >= Shower)
       THEN Runoff := Rain
@@ -1107,7 +1107,7 @@ VAR Sum : double;
 BEGIN
 InfiltratedRain := 0;
 InfiltratedIrrigation := 0;
-IF (RainRecord.DataType = Daily)
+IF (GetRainRecord_DataType() = Daily)
     THEN Sum := SurfaceStorage + Irrigation + Rain
     ELSE Sum := SurfaceStorage + Irrigation + Rain - Runoff - SubDrain;
 IF (Sum > 0)
@@ -1130,7 +1130,7 @@ IF (Sum > 0)
                SurfaceStorage := Sum - InfiltratedStorage;
                END
           ELSE BEGIN
-               IF (RainRecord.DataType = Daily)
+               IF (GetRainRecord_DataType() = Daily)
                   THEN InfiltratedStorage := Sum
                   ELSE BEGIN
                        InfiltratedStorage := SurfaceStorage + Irrigation;
@@ -1174,7 +1174,7 @@ END; (* calculate_factor *)
 
 BEGIN (* calculate_infiltration *)
 // A -  INFILTRATION versus STORAGE in Rootzone (= EffecRain)
-IF (RainRecord.DataType = Daily)
+IF (GetRainRecord_DataType() = Daily)
    THEN BEGIN
         amount_still_to_store := InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage;
         EffecRain := 0;
@@ -3800,7 +3800,7 @@ IF (GetManagement_Bundheight() < 0.001) THEN
    END;
 
 // 5. Infiltration (Rain and Irrigation)
-IF ((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
+IF ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    THEN CalculateEffectiveRainfall;
 IF (((GetIrriMode() = Generate) AND (Irrigation = 0)) AND (TargetTimeVal <> -999))
    THEN Calculate_irrigation;
@@ -3865,7 +3865,7 @@ IF ((Rain > 0) OR
 EvapWCsurf_temp := GetSimulation_EvapWCsurf();
 AdjustEpotMulchWettedSurface(dayi,EpotTot,Epot,EvapWCsurf_temp);
 SetSimulation_EvapWCsurf(EvapWCsurf_temp);
-IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
+IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) // reduction soil evaporation
  THEN Epot := Epot * (exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 // actual evaporation
@@ -3881,7 +3881,7 @@ IF (Epot > 0) THEN
    IF (ABS(Epot - Eact) > 0.0000001) THEN CalculateSoilEvaporationStage2;
    END;
 // Reset redcution Epot for 10-day or monthly rainfall data
-IF (((RainRecord.DataType = Decadely) OR (RainRecord.DataType = Monthly))
+IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    AND (GetSimulParam_EffectiveRain_RootNrEvap() > 0))
  THEN Epot := Epot/(exp((1/GetSimulParam_EffectiveRain_RootNrEvap())*ln((GetSoil().REW+1)/20)));
 
