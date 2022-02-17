@@ -3418,19 +3418,20 @@ subroutine GlobalZero(SumWabal)
     SumWabal%Tact = 0.0_dp
     SumWabal%TrW = 0.0_dp
     SumWabal%ECropCycle = 0.0_dp
-    SumWabal%Biomass = 0
-    SumWabal%BiomassPot = 0
-    SumWabal%BiomassUnlim = 0
-    SumWabal%BiomassTot = 0 ! crop and weeds (for soil fertility stress)
-    SumWabal%YieldPart = 0
-    SumWabal%SaltIn = 0
-    SumWabal%SaltOut = 0
-    SumWabal%CRwater = 0
-    SumWabal%CRsalt = 0
-    TotalWaterContent%BeginDay = 0
+    SumWabal%Biomass = 0._dp
+    SumWabal%BiomassPot = 0._dp
+    SumWabal%BiomassUnlim = 0._dp
+    SumWabal%BiomassTot = 0._dp ! crop and weeds (for soil fertility stress)
+    SumWabal%YieldPart = 0._dp
+    SumWabal%SaltIn = 0._dp
+    SumWabal%SaltOut = 0._dp
+    SumWabal%CRwater = 0._dp
+    SumWabal%CRsalt = 0._dp
+    call SetTotalWaterContent_BeginDay(0._dp)
     
-    do i =1, NrCompartments
-        TotalWaterContent%BeginDay = TotalWaterContent%BeginDay + Compartment(i)%theta*1000._dp*Compartment(i)%Thickness
+    do i =1, GetNrCompartments()
+        call SetTotalWaterContent_BeginDay(TotalWaterContent%BeginDay + &
+        GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
     end do
 end subroutine GlobalZero 
 
