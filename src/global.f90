@@ -30,6 +30,11 @@ real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
 integer(int32), dimension (12), parameter :: DaysInMonth = [31,28,31,30,31,30, &
                                                             31,31,30,31,30,31]
 
+character(len=10), dimension(12), parameter :: NameMonth = & 
+    [character(len=10) :: 'January','February','March','April','May','June',&
+                'July','August','September','October','November','December']
+
+
 integer(intEnum), parameter :: modeCycle_GDDDays = 0
     !! index of GDDDays in modeCycle enumerated type
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
@@ -929,6 +934,7 @@ character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 character(len=:), allocatable :: FullFileNameProgramParameters
 character(len=:), allocatable :: ManDescription
+character(len=:), allocatable :: ClimDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -3121,6 +3127,314 @@ subroutine AdjustOnsetSearchPeriod()
         end if
     end if
 end subroutine AdjustOnsetSearchPeriod
+
+
+subroutine SetClimData()
+
+    type(rep_clim) :: SetARecord, SetBRecord
+    integer(int32) :: tmptoD, tmpToM, tmpToY
+    integer(int32) :: tmpFromD, tmpFromM, tmpFromY
+
+    call SetClimRecord_NrObs(999) ! (heeft geen belang)
+
+    ! Part A - ETo and Rain files --> ClimFile
+    if ((GetEToFile() == '(None)') .and. (GetRainFile() == '(None)')) then
+        call SetClimFile('(None)')
+        call SetClimDescription('Specify Climatic data when Running AquaCrop')
+        call SetClimRecord_DataType(datatype_daily)
+        call SetClimRecord_FromString('any date')
+        call SetClimRecord_ToString('any date')
+        call SetClimRecord_FromY(1901)
+    else
+        call SetClimFile('EToRainTempFile')
+        call SetClimDescription('Read ETo/RAIN/TEMP data set')
+        if (GetEToFile() == '(None)') then
+            call SetClimRecord_FromY(GetRainRecord_FromY())
+            call SetClimRecord_FromDayNr(GetRainRecord_FromDayNr())
+            call SetClimRecord_ToDayNr(GetRainRecord_ToDayNr())
+            call SetClimRecord_FromString(GetRainRecord_FromString())
+            call SetClimRecord_ToString(GetRainRecord_ToString())
+            if (FullUndefinedRecord(GetRainRecord_FromY(), &
+                    GetRainRecord_FromD(), GetRainRecord_FromM(),&
+                    GetRainRecord_ToD(), GetRainRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            end if
+        end if
+        if (GetRainFile() == '(None)') then
+            call SetClimRecord_FromY(GetEToRecord_FromY())
+            call SetClimRecord_FromDayNr(GetEToRecord_FromDayNr())
+            call SetClimRecord_ToDayNr(GetEToRecord_ToDayNr())
+            call SetClimRecord_FromString(GetEToRecord_FromString())
+            call SetClimRecord_ToString(GetEToRecord_ToString())
+            if (FullUndefinedRecord(GetEToRecord_FromY(), &
+                    GetEToRecord_FromD(), GetEToRecord_FromM(), &
+                    GetEToRecord_ToD(), GetEToRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            end if
+        end if
+
+        if ((GetEToFile() /= '(None)') .and. (GetRainFile() /= '(None)')) then
+            SetARecord = GetEToRecord()
+            SetBRecord = GetRainRecord()
+            if (((GetEToRecord_FromY() == 1901) &
+                 .and. FullUndefinedRecord(GetEToRecord_FromY(),&
+                         GetEToRecord_FromD(), GetEToRecord_FromM(), &
+                         GetEToRecord_ToD(), GetEToRecord_ToM())) &
+                .and. ((GetRainRecord_FromY() == 1901) &
+                  .and. FullUndefinedRecord(GetRainRecord_FromY(),&
+                          GetRainRecord_FromD(), GetRainRecord_FromM(), &
+                          GetRainRecord_ToD(), GetRainRecord_ToM()))) then
+                call SetClimRecord_NrObs(365)
+            end if
+
+           if ((GetEToRecord_FromY() == 1901) .and. &
+               (GetRainRecord_FromY() /= 1901)) then
+                ! Jaartal van RainRecord ---> SetARecord (= EToRecord)
+                ! FromY + adjust FromDayNr and FromString
+                SetARecord%FromY = GetRainRecord_FromY()
+                call DetermineDayNr(GetEToRecord_FromD(), GetEToRecord_FromM(), &
+                               SetARecord%FromY, SetARecord%FromDayNr)
+                if (((SetARecord%FromDayNr < GetRainRecord_FromDayNr())) &
+                   .and. (GetRainRecord_FromY() < GetRainRecord_ToY())) then
+                    SetARecord%FromY = GetRainRecord_FromY() + 1
+                    call DetermineDayNr(GetEToRecord_FromD(), GetEToRecord_FromM(),&
+                          SetARecord%FromY, SetARecord%FromDayNr)
+                end if
+                call SetClimRecord_FromY(SetARecord%FromY) ! nodig voor DayString (werkt met ClimRecord)
+                SetARecord%FromString = DayString(SetARecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetEToRecord_FromY(),&
+                        GetEToRecord_FromD(), &
+                        GetEToRecord_FromM(), GetEToRecord_ToD(),&
+                        GetEToRecord_ToM())) then
+                    SetARecord%ToY = GetRainRecord_ToY()
+                else
+                    SetARecord%ToY = SetARecord%FromY
+                end if
+                call DetermineDayNr(GetEToRecord_ToD(), GetEToRecord_ToM(), &
+                               SetARecord%ToY, SetARecord%ToDayNr)
+                SetARecord%ToString = DayString(SetARecord%ToDayNr)
+            end if
+
+            if ((GetEToRecord_FromY() /= 1901) .and. &
+                (GetRainRecord_FromY() == 1901)) then
+                ! Jaartal van EToRecord ---> SetBRecord (= RainRecord)
+                ! FromY + adjust FromDayNr and FromString
+                SetBRecord%FromY = GetEToRecord_FromY()
+                call DetermineDayNr(GetRainRecord_FromD(), GetRainRecord_FromM(),&
+                               SetBRecord%FromY, SetBRecord%FromDayNr)
+                if (((SetBRecord%FromDayNr < GetEToRecord_FromDayNr())) &
+                    .and. (GetEToRecord_FromY() < GetEToRecord_ToY())) then
+                    SetBRecord%FromY = GetEToRecord_FromY() + 1
+                    call DetermineDayNr(GetRainRecord_FromD(),&
+                                   GetRainRecord_FromM(),&
+                                   SetBRecord%FromY, SetBRecord%FromDayNr)
+                end if
+                call SetClimRecord_FromY(SetBRecord%FromY) ! nodig voor DayString (werkt met ClimRecord)
+                SetBRecord%FromString = DayString(SetBRecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetRainRecord_FromY(), &
+                      GetRainRecord_FromD(), &
+                      GetRainRecord_FromM(), GetRainRecord_ToD(),&
+                      GetRainRecord_ToM())) then
+                    SetBRecord%ToY = GetEToRecord_ToY()
+                else
+                    SetBRecord%ToY = SetBRecord%FromY
+                end if
+                call DetermineDayNr(GetRainRecord_ToD(), GetRainRecord_ToM(), &
+                               SetBRecord%ToY, SetBRecord%ToDayNr)
+                SetBRecord%ToString = DayString(SetBRecord%ToDayNr)
+            end if
+            ! bepaal characteristieken van ClimRecord
+            call SetClimRecord_FromY(SetARecord%FromY)
+            call SetClimRecord_FromDayNr(SetARecord%FromDayNr)
+            call SetClimRecord_FromString(SetARecord%FromString)
+            if (GetClimRecord_FromDayNr() < SetBRecord%FromDayNr) then
+                call SetClimRecord_FromY(SetBRecord%FromY)
+                call SetClimRecord_FromDayNr(SetBRecord%FromDayNr)
+                call SetClimRecord_FromString(SetBRecord%FromString)
+            end if
+            call SetClimRecord_ToDayNr(SetARecord%ToDayNr)
+            call SetClimRecord_ToString(SetARecord%ToString)
+            if (GetClimRecord_ToDayNr() > SetBRecord%ToDayNr) then
+                call SetClimRecord_ToDayNr(SetBRecord%ToDayNr)
+                call SetClimRecord_ToString(SetBRecord%ToString)
+            end if
+            if (GetClimRecord_ToDayNr() < GetClimRecord_FromDayNr()) then
+                call SetClimFile('(None)')
+                call SetClimDescription(&
+                       'ETo data set <--NO OVERLAP--> RAIN data set')
+                call SetClimRecord_NrObs(0)
+                call SetClimRecord_FromY(1901)
+            end if
+        end if
+    end if
+
+    ! Part B - ClimFile and Temperature files --> ClimFile
+    if (GetTemperatureFile() == '(None)') then
+        ! no adjustments are required
+    else
+        if (GetClimFile() == '(None)') then
+            call SetClimFile('EToRainTempFile')
+            call SetClimDescription('Read ETo/RAIN/TEMP data set')
+            call SetClimRecord_FromY(GetTemperatureRecord_FromY())
+            call SetClimRecord_FromDayNr(GetTemperatureRecord_FromDayNr())
+            call SetClimRecord_ToDayNr(GetTemperatureRecord_ToDayNr())
+            call SetClimRecord_FromString(GetTemperatureRecord_FromString())
+            call SetClimRecord_ToString(GetTemperatureRecord_ToString())
+            if ((GetTemperatureRecord_FromY() == 1901) .and.&
+                 FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+                     GetTemperatureRecord_FromD(),&
+                     GetTemperatureRecord_FromM(),&
+                     GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            else
+                call SetClimRecord_NrObs(GetTemperatureRecord_ToDayNr() -&
+                       GetTemperatureRecord_FromDayNr() + 1)
+            end if
+        else
+            call DetermineDate(GetClimRecord_FromDayNr(), &
+                       tmpFromD, tmpFromM, tmpFromY)
+            call SetClimRecord_FromD(tmpFromD)
+            call SetClimRecord_FromM(tmpFromM)
+            call SetClimRecord_FromY(tmpFromY)
+            call DetermineDate(GetClimRecord_ToDayNr(), tmpToD, tmpToM, tmpToY)
+            call SetClimRecord_ToD(tmpToD)
+            call SetClimRecord_ToM(tmpToM)
+            call SetClimRecord_ToY(tmpToY)
+            SetARecord = GetClimRecord()
+            SetBRecord = GetTemperatureRecord()
+
+            if ((GetClimRecord_FromY() == 1901) .and.&
+                (GetTemperatureRecord_FromY() == 1901) &
+                .and. (GetClimRecord_NrObs() == 365) &
+                .and. FullUndefinedRecord(GetTemperatureRecord_FromY(), &
+                           GetTemperatureRecord_FromD(),&
+                           GetTemperatureRecord_FromM(), &
+                           GetTemperatureRecord_ToD(),&
+                           GetTemperatureRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            else
+                call SetClimRecord_NrObs(GetTemperatureRecord_ToDayNr() - &
+                       GetTemperatureRecord_FromDayNr() + 1)
+            end if
+            if ((GetClimRecord_FromY() == 1901) .and.&
+                (GetTemperatureRecord_FromY() /= 1901)) then
+                ! Jaartal van TemperatureRecord ---> SetARecord (= ClimRecord)
+                ! FromY + adjust FromDayNr and FromString
+                SetARecord%FromY = GetTemperatureRecord_FromY()
+                call DetermineDayNr(GetClimRecord_FromD(),&
+                                    GetClimRecord_FromM(), &
+                                    SetARecord%FromY, SetARecord%FromDayNr)
+                if ((SetARecord%FromDayNr < GetTemperatureRecord_FromDayNr())&
+                   .and. (GetTemperatureRecord_FromY() < GetTemperatureRecord_ToY())) then
+                    SetARecord%FromY = GetTemperatureRecord_FromY() + 1
+                    call DetermineDayNr(GetClimRecord_FromD(), GetClimRecord_FromM(),&
+                                   SetARecord%FromY, SetARecord%FromDayNr)
+                end if
+                SetARecord%FromString = DayString(SetARecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetClimRecord_FromY(),&
+                     GetClimRecord_FromD(), &
+                     GetClimRecord_FromM(), GetClimRecord_ToD(),&
+                     GetClimRecord_ToM())) then
+                    SetARecord%ToY = GetTemperatureRecord_ToY()
+                else
+                    SetARecord%ToY = SetARecord%FromY
+                end if
+                call DetermineDayNr(GetClimRecord_ToD(), GetClimRecord_ToM(), &
+                          SetARecord%ToY, SetARecord%ToDayNr)
+                SetARecord%ToString = DayString(SetARecord%ToDayNr)
+            end if
+
+            if ((GetClimRecord_FromY() /= 1901) .and.&
+                (GetTemperatureRecord_FromY() == 1901)) then
+                ! Jaartal van ClimRecord ---> SetBRecord (=
+                ! GetTemperatureRecord())
+                ! FromY + adjust FromDayNr and FromString
+                SetBRecord%FromY = GetClimRecord_FromY()
+                call DetermineDayNr(GetTemperatureRecord_FromD(), &
+                       GetTemperatureRecord_FromM(), SetBRecord%FromY,&
+                       SetBRecord%FromDayNr)
+                if (((SetBRecord%FromDayNr < GetClimRecord_FromDayNr())) .and.&
+                     (GetClimRecord_FromY() < GetClimRecord_ToY())) then
+                    SetBRecord%FromY = GetClimRecord_FromY() + 1
+                    call DetermineDayNr(GetTemperatureRecord_FromD(), &
+                           GetTemperatureRecord_FromM(), SetBRecord%FromY,&
+                           SetBRecord%FromDayNr)
+                end if
+                ! SetClimRecord_FromY(SetBRecord.FromY); ! nodig voor DayString
+                ! (werkt met ClimRecord)
+                SetBRecord%FromString = DayString(SetBRecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+                      GetTemperatureRecord_FromD(),&
+                      GetTemperatureRecord_FromM(), &
+                      GetTemperatureRecord_ToD(), &
+                      GetTemperatureRecord_ToM())) then
+                    SetBRecord%ToY = GetClimRecord_ToY()
+                else
+                    SetBRecord%ToY = SetBRecord%FromY
+                end if
+                call DetermineDayNr(GetTemperatureRecord_ToD(), &
+                       GetTemperatureRecord_ToM(), SetBRecord%ToY, &
+                       SetBRecord%ToDayNr)
+                SetBRecord%ToString = DayString(SetBRecord%ToDayNr)
+            end if
+
+            ! bepaal nieuwe characteristieken van ClimRecord
+            call SetClimRecord_FromY(SetARecord%FromY)
+            call SetClimRecord_FromDayNr(SetARecord%FromDayNr)
+            call SetClimRecord_FromString(SetARecord%FromString)
+            if (GetClimRecord_FromDayNr() < SetBRecord%FromDayNr) then
+                call SetClimRecord_FromY(SetBRecord%FromY)
+                call SetClimRecord_FromDayNr(SetBRecord%FromDayNr)
+                call SetClimRecord_FromString(SetBRecord%FromString)
+            end if
+            call SetClimRecord_ToDayNr(SetARecord%ToDayNr)
+            call SetClimRecord_ToString(SetARecord%ToString)
+            if (GetClimRecord_ToDayNr() > SetBRecord%ToDayNr) then
+                call SetClimRecord_ToDayNr(SetBRecord%ToDayNr)
+                call SetClimRecord_ToString(SetBRecord%ToString)
+            end if
+            if (GetClimRecord_ToDayNr() < GetClimRecord_FromDayNr()) then
+                call SetClimFile('(None)')
+                call SetClimDescription(&
+                        'Clim data <--NO OVERLAP--> TEMPERATURE data')
+                call SetClimRecord_NrObs(0)
+                call SetClimRecord_FromY(1901)
+            end if
+        end if
+    end if
+end subroutine SetClimData
+
+
+character(len=17) function DayString(DNr)
+    integer(int32), intent(in) :: DNr
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=:), allocatable :: strA, strB
+    integer(int32) :: DNr_t
+
+    DNr_t = DNr
+    if (GetClimFile() == '(None)') then
+        do while (DNr_t > 365)
+            DNr_t = DNr_t - 365
+        end do
+        call DetermineDate(DNr_t, dayi, monthi, yeari)
+    end if
+    write(strA, '(i2)') dayi
+    if (GetClimRecord_FromY() == 1901) then
+        strB = ''
+    else
+        write(strB, '(i4)') yeari
+    end if
+    StrB = trim(strA)//' '//trim(NameMonth(monthi))//' '//trim(strB)
+    do while (len(StrB) < 17)
+        StrB = trim(StrB)//' '
+    end do
+    DayString = StrB
+end function DayString
 
 
 !! Global variables section !!
@@ -7469,6 +7783,20 @@ subroutine SetTemperatureDescription(str)
 
     TemperatureDescription = str
 end subroutine SetTemperatureDescription
+
+function GetClimDescription() result(str)
+    !! Getter for the "ClimDescription" global variable.
+    character(len=len(ClimDescription)) :: str 
+
+    str = ClimDescription
+end function GetClimDescription
+
+subroutine SetClimDescription(str)
+    !! Setter for the "ClimDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ClimDescription = str
+end subroutine SetClimDescription
 
 function GetCrop_Length_i(i) result(Length_i)
     !! Getter for the "Length" attribute of "Crop" global variable.
