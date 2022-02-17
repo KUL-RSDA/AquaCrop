@@ -2325,6 +2325,21 @@ real(dp) function ECswComp(Comp, atFC)
     ECswComp = TotSalt/Equiv
 end function ECswComp
 
+subroutine SaltSolutionDeposit(mm, SaltSolution, SaltDeposit) ! mm = l/m2, SaltSol/Saltdepo = g/m2 
+    real(dp), intent(in) :: mm
+    real(dp), intent(inout) :: SaltSolution
+    real(dp), intent(inout) :: SaltDeposit
+
+
+    SaltSolution = SaltSolution + SaltDeposit
+    if (SaltSolution > GetSimulParam_SaltSolub() * mm) then
+        SaltDeposit = SaltSolution - GetSimulParam_SaltSolub() * mm
+        SaltSolution = GetSimulParam_SaltSolub() * mm
+    else
+        SaltDeposit = 0._dp
+    end if
+end subroutine SaltSolutionDeposit
+
 
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
     integer(int32), intent(in) :: Yeari
@@ -3707,7 +3722,7 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     character(len=*), intent(in) :: TheProjectFileName
     
     character(len=len(Trim(TheProjectFileName))) :: TempString
-    character(len=4) :: TempString2
+    character(len=:), allocatable :: TempString2
     integer(int8) :: i
     
     TempString = Trim(TheProjectFileName)
@@ -3716,6 +3731,38 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     call SetOutputName(TempString2)
 end subroutine ComposeOutputFileName
 
+subroutine GlobalZero(SumWabal)
+    type(rep_sum), intent(inout) :: SumWabal
+
+    integer(int32) :: i
+    
+    SumWabal%Epot = 0.0_dp
+    SumWabal%Tpot = 0.0_dp
+    SumWabal%Rain = 0.0_dp
+    SumWabal%Irrigation = 0.0_dp
+    SumWabal%Infiltrated = 0.0_dp
+    SumWabal%Runoff = 0.0_dp
+    SumWabal%Drain = 0.0_dp
+    SumWabal%Eact = 0.0_dp
+    SumWabal%Tact = 0.0_dp
+    SumWabal%TrW = 0.0_dp
+    SumWabal%ECropCycle = 0.0_dp
+    SumWabal%Biomass = 0._dp
+    SumWabal%BiomassPot = 0._dp
+    SumWabal%BiomassUnlim = 0._dp
+    SumWabal%BiomassTot = 0._dp ! crop and weeds (for soil fertility stress)
+    SumWabal%YieldPart = 0._dp
+    SumWabal%SaltIn = 0._dp
+    SumWabal%SaltOut = 0._dp
+    SumWabal%CRwater = 0._dp
+    SumWabal%CRsalt = 0._dp
+    call SetTotalWaterContent_BeginDay(0._dp)
+    
+    do i =1, GetNrCompartments()
+        call SetTotalWaterContent_BeginDay(GetTotalWaterContent_BeginDay() + &
+        GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
+    end do
+end subroutine GlobalZero 
 
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
@@ -7633,6 +7680,12 @@ type(rep_Content) function GetTotalWaterContent()
 
     GetTotalWaterContent = TotalWaterContent
 end function GetTotalWaterContent
+
+type(real) function GetTotalWaterContent_BeginDay()
+    !! Getter for the "TotalWaterContent_BeginDay" global variable.
+
+    GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
+end function GetTotalWaterContent_BeginDay
 
 subroutine SetTotalWaterContent_BeginDay(BeginDay)
     !! Setter for the "TotalWaterContent" global variable.

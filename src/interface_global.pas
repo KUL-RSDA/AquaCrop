@@ -1359,6 +1359,11 @@ function CanopyCoverNoStressGDDaysSF(
             constref SFRedCGC,SFRedCCx : shortint) : double;
          external 'aquacrop' name '__ac_global_MOD_canopycovernostressgddayssf';
 
+procedure SaltSolutionDeposit(
+            constref mm : double; (* mm = l/m2 *)
+            VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
+         external 'aquacrop' name '__ac_global_MOD_saltsolutiondeposit';
+
 procedure ReadRainfallSettings();
         external 'aquacrop' name '__ac_global_MOD_readrainfallsettings';
 
@@ -2913,6 +2918,9 @@ procedure SetTotalSaltContent_ErrorDay(constref ErrorDay : double);
 
 function GetTotalWaterContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
+        
+function GetTotalWaterContent_BeginDay(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 
@@ -3072,6 +3080,10 @@ procedure SetTemperatureRecord_ToString_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
+PROCEDURE GlobalZero(
+        VAR SumWabal : rep_sum);
+     external 'aquacrop' name '__ac_global_MOD_globalzero'; 
+     
 function GetClimRecord(): rep_clim;
 
 function __GetClimRecord_DataType() : shortint;

@@ -72,7 +72,6 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
 
-PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
 PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
@@ -98,8 +97,7 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  Macro : ShortInt;
                                  VAR Mobil : rep_salt);
 
-PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
-                      VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
+
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 
@@ -288,39 +286,6 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
         END;
 END; (* CalculateETpot *)
 
-
-
-PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-VAR i : INTEGER;
-BEGIN
-WITH SumWabal DO
-  BEGIN
-  Epot := 0.0;
-  Tpot := 0.0;
-  Rain := 0.0;
-  Irrigation := 0.0;
-  Infiltrated := 0.0;
-  Runoff := 0.0;
-  Drain := 0.0;
-  Eact := 0.0;
-  Tact := 0.0;
-  TrW := 0.0;
-  ECropCycle := 0.0;
-  Biomass := 0;
-  BiomassPot := 0;
-  BiomassUnlim := 0;
-  BiomassTot := 0; // crop and weeds (for soil fertility stress)
-  YieldPart := 0;
-  SaltIn := 0;
-  SaltOut := 0;
-  CRwater := 0;
-  CRsalt := 0;
-  END;
-SetTotalWaterContent_BeginDay(0);
-FOR i :=1 to GetNrCompartments() DO
-        SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
-          + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
-END; (* GlobalZero *)
 
 PROCEDURE NoIrrigation;
 VAR Nri : INTEGER;
@@ -757,22 +722,6 @@ FOR i := 1 to (CelMax-1) DO
 FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
 
 END; (* Calculate_Saltmobility *)
-
-
-
-
-PROCEDURE SaltSolutionDeposit(mm : double; (* mm = l/m2 *)
-                      VAR SaltSolution,SaltDeposit : double); (* g/m2 *)
-BEGIN
-SaltSolution := SaltSolution + SaltDeposit;
-IF (SaltSolution > GetSimulParam_SaltSolub() * mm)
-    THEN BEGIN
-         SaltDeposit := SaltSolution - GetSimulParam_SaltSolub() * mm;
-         SaltSolution := GetSimulParam_SaltSolub() * mm;
-         END
-    ELSE SaltDeposit := 0;
-END; (* SaltSolutionDeposit *)
-
 
 
 
