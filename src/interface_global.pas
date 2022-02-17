@@ -4055,6 +4055,10 @@ procedure AdjustOnsetSearchPeriod;
 function ActiveCells(Comp : CompartmentIndividual) : integer;
     external 'aquacrop' name '__ac_global_MOD_activecells';
 
+procedure DetermineSaltContent(constref ECe : double;
+                               var Comp : CompartmentIndividual);
+    external 'aquacrop' name '__ac_global_MOD_determinesaltcontent';
+
 implementation
 
 

@@ -100,10 +100,6 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  Macro : ShortInt;
                                  VAR Mobil : rep_salt);
 
-
-PROCEDURE DetermineSaltContent(ECe : double;
-                               VAR Comp : CompartmentIndividual);
-
 PROCEDURE CompleteProfileDescription;
 PROCEDURE LoadProfile(FullName : string);
 
@@ -713,40 +709,6 @@ FOR i := 1 to (CelMax-1) DO
 FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
 
 END; (* Calculate_Saltmobility *)
-
-
-
-PROCEDURE DetermineSaltContent(ECe : double;
-                               VAR Comp : CompartmentIndividual);
-VAR TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN : double;
-    celn, i : INTEGER;
-
-BEGIN
-TotSalt := ECe*Equiv*(GetSoilLayer_i(Comp.Layer).SAT)*10*Comp.Thickness;
-celn := ActiveCells(Comp);
-SAT := (GetSoilLayer_i(Comp.Layer).SAT)/100;  (* m3/m3 *)
-UL := GetSoilLayer_i(Comp.Layer).UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-Dx := GetSoilLayer_i(Comp.Layer).Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
-mm1 := Dx*1000*Comp.Thickness
-       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of cells *)
-mmN := (SAT-UL)*1000*Comp.Thickness
-       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of last cell *)
-SumDF := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO
-    BEGIN
-    Comp.Salt[i] := 0;
-    Comp.Depo[i] := 0;
-    END;
-FOR i := 1 TO celn DO SumDF := SumDF + GetSoilLayer_SaltMobility_i(Comp.Layer, i);
-FOR i := 1 TO celn DO
-    BEGIN
-    Comp.Salt[i] := TotSalt * GetSoilLayer_SaltMobility_i(Comp.Layer, i)/SumDF;
-    mm := mm1;
-    IF (i = GetSoilLayer_i(Comp.Layer).SCP1) THEN mm := mmN;
-    SaltSolutionDeposit(mm,Comp.Salt[i],Comp.Depo[i]);
-    END;
-END; (* DetermineSaltContent *)
-
 
 
 
