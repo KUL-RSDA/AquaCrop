@@ -142,6 +142,13 @@ integer(intEnum), parameter :: datatype_decadely = 1
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
 
+type rep_DayEventInt
+    integer(int32) :: DayNr
+        !! Undocumented
+    integer(int32) :: param
+        !! Undocumented
+end type rep_DayEventInt
+
 type CompartmentIndividual 
     real(dp) :: Thickness
         !! meter
@@ -916,6 +923,7 @@ character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimateDescription
+character(len=:), allocatable :: IrriDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
@@ -954,11 +962,16 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int32) :: IrriFirstDayNr
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
 
 integer(int32) :: NrCompartments
+
+
+type(rep_DayEventInt), dimension(5) :: IrriBeforeSeason
+type(rep_DayEventInt), dimension(5) :: IrriAfterSeason
 
 
 interface roundc
@@ -2565,6 +2578,121 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
 
+subroutine NoIrrigation()
+    integer(int32) :: Nri
+    call SetIrriMode(IrriMode_NoIrri)
+    call SetIrriDescription('Rainfed cropping')
+    call SetIrriMethod(IrriMethod_MSprinkler)
+    call SetSimulation_IrriECw(0.0_dp) ! dS/m
+    call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+    call SetGenerateDepthMode(GenerateDepthMode_ToFC)
+    IrriFirstDayNr = undef_int
+    do Nri = 1, 5
+        call SetIrriBeforeSeason_DayNr(Nri, 0)
+        call SetIrriBeforeSeason_Param(Nri, 0)
+        call SetIrriAfterSeason_DayNr(Nri, 0)
+        call SetIrriAfterSeason_Param(Nri, 0)
+    end do
+    call SetIrriECw_PreSeason(0.0_dp) ! dS/m
+    call SetIrriECw_PostSeason(0.0_dp) ! dS/m
+    ! NoIrrigation 
+end subroutine NoIrrigation
+
+subroutine LoadIrriScheduleInfo(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer(int32) :: fhandle
+    integer(int32) :: i, rc
+    real(dp) :: VersionNr
+    integer(int8) :: simul_irri_in
+    integer(int32) :: simul_percraw
+    character(len=1025) :: StringREAD
+    write(*,*) 'FullName', trim(FullName)
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *, iostat=rc) IrriDescription
+    !read(fhandle, *, iostat=rc) StringREAD 
+    !write(*,*) StringREAD
+    !call SetIrriDescription(StringREAD)
+    write(*,*) IrriDescription
+    read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
+
+    ! irrigation method
+    read(fhandle, *, iostat=rc) i
+    select case (i)
+    case(1)
+        call SetIrriMethod(IrriMethod_MSprinkler)
+    case(2)
+        call SetIrriMethod(IrriMethod_MBasin)
+    case(3)
+        call SetIrriMethod(IrriMethod_MBorder)
+    case(4)
+        call SetIrriMethod(IrriMethod_MFurrow)
+    case default
+        call SetIrriMethod(IrriMethod_MDrip)
+    end select
+    ! fraction of soil surface wetted
+    read(fhandle, *, iostat=rc) simul_irri_in
+    call SetSimulParam_IrriFwInSeason(simul_irri_in)
+
+    ! irrigation mode and parameters
+    read(fhandle, *, iostat=rc) i
+    write(*,*) 'IrriMode', i
+    select case (i)
+    case(0)
+        call SetIrriMode(IrriMode_NoIrri) ! rainfed
+    case(1)
+        call SetIrriMode(IrriMode_Manual)
+    case(2)
+        call SetIrriMode(IrriMode_Generate)
+    case default
+        call SetIrriMode(IrriMode_Inet)
+    end select
+
+    ! 1. Irrigation schedule
+    if ((i == 1) .and. (roundc(VersionNr*10,mold=1) >= 70)) then
+        read(fhandle, *, iostat=rc) IrriFirstDayNr ! line 6
+    else
+        IrriFirstDayNr = undef_int ! start of growing period
+    end if
+
+
+    ! 2. Generate
+    if (GetIrriMode() == IrriMode_Generate) then
+        read(fhandle, *, iostat=rc) i ! time criterion
+        select case (i)
+        case(1)
+            call SetGenerateTimeMode(GenerateTimeMode_FixInt)
+        case(2)
+            call SetGenerateTimeMode(GenerateTimeMode_AllDepl)
+        case(3)
+            call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+        case(4)
+            call SetGenerateTimeMode(GenerateTimeMode_WaterBetweenBunds)
+        case default
+            call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+        end select
+        read(fhandle, *, iostat=rc) i ! depth criterion
+        select case (i)
+        case(1)
+            call SetGenerateDepthMode(GenerateDepthMode_ToFc)
+        case default
+            call SetGenerateDepthMode(GenerateDepthMode_FixDepth)
+        end select
+        IrriFirstDayNr = undef_int ! start of growing period
+    end if
+
+    ! 3. Net irrigation requirement
+    if (GetIrriMode() == IrriMode_Inet) then
+        read(fhandle, *, iostat=rc) simul_percraw
+        call SetSimulParam_PercRAW(simul_percraw)
+        IrriFirstDayNr = undef_int  ! start of growing period
+    end if
+    write (*,*) 'IrriMode: ', GetIrriMode()
+    write (*,*) 'IrriFirstDayNr: ', IrriFirstDayNr
+    close(fhandle)
+    ! LoadIrriScheduleInfo 
+end subroutine LoadIrriScheduleInfo
+
 
 subroutine GenerateCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(in) :: CO2FileFull
@@ -2595,6 +2723,13 @@ subroutine GetIrriDescription(IrriFileFull, IrriDescription)
     read(fhandle, *) IrriDescription
     close(fhandle)
 end subroutine GetIrriDescription
+
+subroutine SetIrriDescription(str)
+    !! Setter for the "IrriDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    IrriDescription = str
+end subroutine SetIrriDescription
 
 
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
@@ -7637,6 +7772,129 @@ subroutine SetTemperatureRecord_FromString(FromString)
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
+
+function GetIrriAfterSeason_i(i) result(IrriAfterSeason_i)
+    !! Getter for individual elements of "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriAfterSeason_i
+
+    IrriAfterSeason_i = IrriAfterSeason(i)
+end function GetIrriAfterSeason_i
+
+subroutine SetIrriAfterSeason_i(i, IrriAfterSeason_i)
+    !! Setter for individual elements of "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriAfterSeason_i
+
+    IrriAfterSeason(i) = IrriAfterSeason_i
+end subroutine SetIrriAfterSeason_i
+
+function GetIrriAfterSeason_DayNr(i) result(DayNr)
+    !! Getter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: DayNr
+
+    DayNr = IrriAfterSeason(i)%DayNr
+end function GetIrriAfterSeason_DayNr
+
+function GetIrriAfterSeason_Param(i) result(Param)
+    !! Getter for the "Param" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Param
+
+    Param = IrriAfterSeason(i)%Param
+end function GetIrriAfterSeason_Param
+
+subroutine SetIrriAfterSeason(IrriAfterSeason_in)
+    !! Setter for the "IrriAfterSeason" global variable.
+    type(rep_DayEventInt), intent(in) :: IrriAfterSeason_in
+
+    IrriAfterSeason = IrriAfterSeason_in
+end subroutine SetIrriAfterSeason
+
+subroutine SetIrriAfterSeason_DayNr(i, DayNr)
+    !! Setter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr
+
+    IrriAfterSeason(i)%DayNr = DayNr
+end subroutine SetIrriAfterSeason_DayNr
+
+subroutine SetIrriAfterSeason_Param(i, Param)
+    !! Setter for the "Param" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Param
+
+    IrriAfterSeason(i)%Param = Param
+end subroutine SetIrriAfterSeason_Param
+
+function GetIrriBeforeSeason_i(i) result(IrriBeforeSeason_i)
+    !! Getter for individual elements of "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriBeforeSeason_i
+
+    IrriBeforeSeason_i = IrriBeforeSeason(i)
+end function GetIrriBeforeSeason_i
+
+subroutine SetIrriBeforeSeason_i(i, IrriBeforeSeason_i)
+    !! Setter for individual elements of "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriBeforeSeason_i
+
+    IrriBeforeSeason(i) = IrriBeforeSeason_i
+end subroutine SetIrriBeforeSeason_i
+
+function GetIrriBeforeSeason_DayNr(i) result(DayNr)
+    !! Getter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: DayNr
+
+    DayNr = IrriBeforeSeason(i)%DayNr
+end function GetIrriBeforeSeason_DayNr
+
+function GetIrriBeforeSeason_Param(i) result(Param)
+    !! Getter for the "Param" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Param
+
+    Param = IrriBeforeSeason(i)%Param
+end function GetIrriBeforeSeason_Param
+
+subroutine SetIrriBeforeSeason(IrriBeforeSeason_in)
+    !! Setter for the "IrriBeforeSeason" global variable.
+    type(rep_DayEventInt), intent(in) :: IrriBeforeSeason_in
+
+    IrriBeforeSeason = IrriBeforeSeason_in
+end subroutine SetIrriBeforeSeason
+
+subroutine SetIrriBeforeSeason_DayNr(i, DayNr)
+    !! Setter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr
+
+    IrriBeforeSeason(i)%DayNr = DayNr
+end subroutine SetIrriBeforeSeason_DayNr
+
+subroutine SetIrriBeforeSeason_Param(i, Param)
+    !! Setter for the "Param" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Param
+
+    IrriBeforeSeason(i)%Param = Param
+end subroutine SetIrriBeforeSeason_Param
+
+integer(int32) function GetIrriFirstDayNr()
+    !! Getter for the "IrriFirstDayNr" global variable.
+
+    GetIrriFirstDayNr = IrriFirstDayNr
+end function GetIrriFirstDayNr
+
+subroutine SetIrriFirstDayNr(IrriFirstDayNr_in)
+    !! Setter for the "IrriFirstDayNr" global variable.
+    integer(int32), intent(in) :: IrriFirstDayNr_in
+
+    IrriFirstDayNr = IrriFirstDayNr_in
+end subroutine SetIrriFirstDayNr
 
 type(rep_clim) function GetClimRecord()
     !! Getter for the "ClimRecord" global variable.

@@ -227,12 +227,19 @@ type
          KsSalt : double;   // stress coefficient for salinity
          end;
 
+     rep_DayEventInt = Record
+         DayNr : Integer;
+         Param : Integer;
+         end;
+
      rep_DayEventDbl = Record
          DayNr : Integer;
          Param : Double;
          end;
      rep_SimulationEventsDbl = ARRAY[1..31] OF Rep_DayEventDbl; // for processing 10-day monthly climatic data
 
+     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
+     
      rep_GenerateTimeMode = (FixInt,AllDepl,AllRAW,WaterBetweenBunds);
      rep_GenerateDepthMode = (ToFC,FixDepth);
 
@@ -1557,6 +1564,13 @@ procedure SetClimateFileFull_wrap(
             constref p : PChar;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setclimatefilefull_wrap';
+
+procedure SetIrriDescription(constref str : string);
+
+procedure SetIrriDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setirridescription_wrap';
 
 function GetClimateDescription(): string;
 
@@ -2942,6 +2956,12 @@ function __GetIrriMode(): integer;
 
 function GetIrriMode(): rep_IrriMode;
 
+procedure NoIrrigation();
+        external 'aquacrop' name '__ac_global_MOD_noirrigation';
+
+procedure LoadIrriScheduleInfo(constref FullName : string);
+        external 'aquacrop' name '__ac_global_MOD_loadirrischeduleinfo';
+
 procedure __SetIrriMode(constref IrriMode : integer);
         external 'aquacrop' name '__ac_global_MOD_setirrimode';
 
@@ -3708,6 +3728,58 @@ procedure LoadCropCalendar_wrap(constref FullName : PChar;
                                 var DayNrStart : integer;
                                 constref YearStart : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_loadcropcalendar_wrap';
+
+function GetIrriAfterSeason_i(constref i : integer) : Rep_DayEventInt;
+
+function GetIrriAfterSeason() : rep_IrriOutSeasonEvents;
+
+procedure SetIrriAfterSeason_i(constref i : integer;
+                           constref IrriAfterSeason_i : Rep_DayEventInt);
+
+procedure SetIrriAfterSeason(constref IrriAfterSeason : rep_IrriOutSeasonEvents);
+
+function GetIrriAfterSeason_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_global_MOD_getirriafterseason_daynr';
+
+function GetIrriAfterSeason_Param(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_global_MOD_getirriafterseason_param';
+
+procedure SetIrriAfterSeason_DayNr(constref i : integer;
+                                   constref DayNr : integer);
+    external 'aquacrop' name '__ac_global_MOD_setirriafterseason_daynr';
+
+procedure SetIrriAfterSeason_Param(constref i : integer;
+                                   constref Param : integer);
+    external 'aquacrop' name '__ac_global_MOD_setirriafterseason_param';
+
+function GetIrriFirstDayNr() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getirrifirstdaynr';
+
+procedure SetIrriFirstDayNr(constref IrriFirstDayNr : LongInt);
+    external 'aquacrop' name '__ac_global_MOD_setirrifirstdaynr';
+
+function GetIrriBeforeSeason_i(constref i : integer) : Rep_DayEventInt;
+
+function GetIrriBeforeSeason() : rep_IrriOutSeasonEvents;
+
+procedure SetIrriBeforeSeason_i(constref i : integer;
+                           constref IrriBeforeSeason_i : Rep_DayEventInt);
+
+procedure SetIrriBeforeSeason(constref IrriBeforeSeason : rep_IrriOutSeasonEvents);
+
+function GetIrriBeforeSeason_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_global_MOD_getirribeforeseason_daynr';
+
+function GetIrriBeforeSeason_Param(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_global_MOD_getirribeforeseason_param';
+
+procedure SetIrriBeforeSeason_DayNr(constref i : integer;
+                                   constref DayNr : integer);
+    external 'aquacrop' name '__ac_global_MOD_setirribeforeseason_daynr';
+
+procedure SetIrriBeforeSeason_Param(constref i : integer;
+                                   constref Param : integer);
+    external 'aquacrop' name '__ac_global_MOD_setirribeforeseason_param';
 
 function GetCompartment_i(constref i : integer) : CompartmentIndividual;
 
@@ -5549,6 +5621,17 @@ begin;
 end;
 
 
+procedure SetIrriDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetIrriDescription_wrap(p, strlen);
+end;
+
 function GetClimateDescription(): string;
 var
     p : PChar;
@@ -6545,6 +6628,62 @@ begin;
     p := PChar(FullName);
     strlen := Length(FullName);
     LoadCropCalendar_wrap(p,strlen,GetOnset,GetOnsetTemp,DayNrStart,YearStart);
+end;
+
+function GetIrriAfterSeason() : rep_IrriOutSeasonEvents;
+var
+    i : integer;
+begin;
+    for i := 1 to 5 do GetIrriAfterSeason[i] := GetIrriAfterSeason_i(i)
+end;
+
+
+procedure SetIrriAfterSeason(constref IrriAfterSeason : rep_IrriOutSeasonEvents);
+var
+    i : integer;
+begin;
+    for i := 1 to 5 do SetIrriAfterSeason_i(i, IrriAfterSeason[i])
+end;
+
+function GetIrriAfterSeason_i(constref i : integer) : Rep_DayEventInt;
+begin;
+    GetIrriAfterSeason_i.DayNr := GetIrriAfterSeason_DayNr(i);
+    GetIrriAfterSeason_i.Param := GetIrriAfterSeason_Param(i);
+end;
+
+procedure SetIrriAfterSeason_i(constref i : integer;
+                          constref IrriAfterSeason_i : Rep_DayEventInt);
+begin;
+    SetIrriAfterSeason_DayNr(i, IrriAfterSeason_i.DayNr);
+    SetIrriAfterSeason_Param(i, IrriAfterSeason_i.Param);
+end;
+
+function GetIrriBeforeSeason() : rep_IrriOutSeasonEvents;
+var
+    i : integer;
+begin;
+    for i := 1 to 5 do GetIrriBeforeSeason[i] := GetIrriBeforeSeason_i(i)
+end;
+
+
+procedure SetIrriBeforeSeason(constref IrriBeforeSeason : rep_IrriOutSeasonEvents);
+var
+    i : integer;
+begin;
+    for i := 1 to 5 do SetIrriBeforeSeason_i(i, IrriBeforeSeason[i])
+end;
+
+function GetIrriBeforeSeason_i(constref i : integer) : Rep_DayEventInt;
+begin;
+    GetIrriBeforeSeason_i.DayNr := GetIrriBeforeSeason_DayNr(i);
+    GetIrriBeforeSeason_i.Param := GetIrriBeforeSeason_Param(i);
+end;
+
+procedure SetIrriBeforeSeason_i(constref i : integer;
+                          constref IrriBeforeSeason_i : Rep_DayEventInt);
+begin;
+    SetIrriBeforeSeason_DayNr(i, IrriBeforeSeason_i.DayNr);
+    SetIrriBeforeSeason_Param(i, IrriBeforeSeason_i.Param);
 end;
 
 

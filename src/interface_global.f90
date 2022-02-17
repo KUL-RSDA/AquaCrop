@@ -93,6 +93,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
+                     SetIrriDescription, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimateDescription, &
@@ -730,6 +731,17 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     string = pointer2string(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
+
+subroutine SetIrriDescription_wrap(IrriDescription, strlen)
+    !! Wrapper for [[ac_global:SetIrriDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriDescription, strlen)
+    call SetIrriDescription(string)
+end subroutine SetIrriDescription_wrap
 
 function GetClimateDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
