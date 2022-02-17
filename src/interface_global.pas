@@ -2639,6 +2639,12 @@ procedure SetSumWaBal_CRsalt(constref CRsalt : double);
 function GetSoil(): rep_Soil;
         external 'aquacrop' name '__ac_global_MOD_getsoil';
 
+function GetSoil_REW(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getsoil_rew';
+
+function GetSoil_CNvalue(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getsoil_cnvalue';
+
 procedure SetSoil_REW(constref REW : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
 
@@ -4025,7 +4031,7 @@ procedure SetManDescription_wrap(
 
 procedure LoadManagement(constref FullName : string);
 
-procedure LoadManagement_wrap(constref FullName : string;
+procedure LoadManagement_wrap(constref FullName : PChar;
                          constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
 
@@ -4041,6 +4047,23 @@ function ActualRootingDepth(
                 constref SumGDD,Zmin,Zmax : double;
                 constref ShapeFactor : ShortInt;
                 constref TypeDays : rep_modeCycle) : double;
+
+procedure SaveCrop(constref totalname : string);
+
+procedure SaveCrop_wrap(constref totalname : PChar;
+                        constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_savecrop_wrap';
+
+procedure SaveProfile(constref totalname : string);
+
+procedure SaveProfile_wrap(constref totalname : PChar;
+                           constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_saveprofile_wrap';
+
+procedure DetermineParametersCR(constref SoilClass : ShortInt;
+                                constref KsatMM : double;
+                                var aParam, bParam : double);
+    external 'aquacrop' name '__ac_global_MOD_determineparameterscr';
 
 function __CanopyCoverNoStressSF(
                 constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
@@ -6836,6 +6859,28 @@ begin
     ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
                                            GDDLZmax, SumGDD, Zmin, Zmax,
                                            ShapeFactor, int_TypeDays);
+end;
+
+procedure SaveCrop(constref totalname : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    SaveCrop_wrap(p,strlen);
+end;
+
+procedure SaveProfile(constref totalname : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    SaveProfile_wrap(p,strlen);
 end;
 
 
