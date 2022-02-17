@@ -9,6 +9,7 @@ use ac_global, only: CheckFilesInProject, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
+                     ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
                      GetCalendarDescription, &
@@ -335,6 +336,16 @@ subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     call GetNumberSimulationRuns(string, NrRuns)
 end subroutine GetNumberSimulationRuns_wrap
 
+subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
+    !! Wrapper for [[ac_global:ComposeOutputFileName]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFileName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFileName, strlen)
+    call ComposeOutputFileName(string)
+end subroutine ComposeOutputFileName_wrap
 
 logical function FileExists_wrap(full_name, strlen)
     !! Wrapper for [[ac_global:FileExists]] for foreign languages.

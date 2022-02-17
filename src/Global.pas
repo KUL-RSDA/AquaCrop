@@ -187,7 +187,6 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double);
 
-PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -3359,17 +3358,6 @@ Close(f0);
 SetSimulation_IniSWC_AtFC(false);
 END; (* LoadInitialConditions *)
 
-
-
-PROCEDURE ComposeOutputFileName(TheProjectFileName : string);
-VAR TempString : string;
-    i : ShortInt;
-BEGIN
-TempString := Trim(TheProjectFileName);
-i := Length(TempString);
-Delete(TempString,(i-3),(4));
-SetOutputName(TempString);
-END; (* ComposeOutputFileName *)
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;

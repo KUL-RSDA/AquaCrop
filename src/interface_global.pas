@@ -1274,6 +1274,14 @@ function HImultiplier(
             constref HIadj : ShortInt) : double;
          external 'aquacrop' name '__ac_global_MOD_himultiplier';
 
+procedure ComposeOutputFileName(
+            constref TheProjectFileName : string);
+
+procedure ComposeOutputFileName_wrap(
+            constref TheProjectFileName : string;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_composeoutputfilename_wrap';
+
 function NumberSoilClass (
             constref SatvolPro : double;
             constref FCvolPro : double;
@@ -4864,6 +4872,18 @@ begin;
     p := PChar(str);
     strlen := Length(str);
     SetCO2FileFull_wrap(p, strlen);
+end;
+
+procedure ComposeOutputFileName(
+            constref  TheProjectFileName: string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(TheProjectFileName);
+    strlen := Length(TheProjectFileName);
+    ComposeOutputFileName_wrap(p, strlen);
 end;
 
 function GetCO2Description(): string;

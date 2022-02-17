@@ -3403,6 +3403,19 @@ logical function LeapYear(Year)
 end function LeapYear
 
 
+subroutine ComposeOutputFileName(TheProjectFileName)
+    character(len=*), intent(in) :: TheProjectFileName
+    character(len=len(TheProjectFileName)) :: TempString
+    integer(int8) :: i
+    
+    TempString = Trim(TheProjectFileName)
+    i = len(TempString)
+    TempString = TempString(1:i-4)
+    TempString = Trim(TempString)
+    OutputName = TempString
+end subroutine ComposeOutputFileName
+
+
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
     character(len=*), intent(inout) :: DescriptionOfProject
