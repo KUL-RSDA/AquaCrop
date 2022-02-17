@@ -3408,7 +3408,7 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     character(len=*), intent(in) :: TheProjectFileName
     
     character(len=len(Trim(TheProjectFileName))) :: TempString
-    character(len=4) :: TempString2
+    character(len=:), allocatable :: TempString2
     integer(int8) :: i
     
     TempString = Trim(TheProjectFileName)
