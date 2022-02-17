@@ -7,6 +7,7 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      TimeToMaxCanopySF, &
+                     ECswComp, &
                      FileExists, &
                      ComposeOutputFileName, &
                      GetCalendarFile, &
@@ -30,12 +31,15 @@ use ac_global, only: CheckFilesInProject, &
                      GetClimateFileFull, &
                      GetClimateDescription, &
                      GetClimFile, &
+                     GetEndSeason_GenerateTempOn, &
                      GetSWCiniFile, &
                      GetSWCiniFileFull, &
+                     GetSWCiniDescription, &
                      GetProjectFile, &
                      GetProjectFileFull, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
+                     GetFullFileNameProgramParameters, &
                      GetNumberSimulationRuns, &
                      GetSimulParam_CNcorrection, &
                      GetsimulParam_ConstGwt, &
@@ -93,11 +97,13 @@ use ac_global, only: CheckFilesInProject, &
                      SetClimateFileFull, &
                      SetClimateDescription, &
                      SetClimFile, &
+                     SetEndSeason_GenerateTempOn, &
                      SetEToFile, &
                      SetEToFileFull, &
                      SetEToDescription, &
                      setSWCiniFile, &
                      setSWCiniFileFull, &
+                     SetSWCiniDescription, &
                      SetSimulParam_CNcorrection, &
                      SetSimulParam_ConstGwt, &
                      SetPathNameProg, &
@@ -109,6 +115,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetProjectFileFull, &
                      SetMultipleProjectFile, &
                      SetMultipleProjectFileFull, &
+                     SetFullFileNameProgramParameters, &
                      SetProfFile, &
                      SetProfFilefull, &
                      SetProfDescription, &
@@ -138,7 +145,40 @@ use ac_global, only: CheckFilesInProject, &
                      SetTemperatureRecord_FromString, &
                      GetTemperatureRecord_FromString, &
                      SetTemperatureRecord_ToString, &
-                     GetTemperatureRecord_ToString
+                     GetTemperatureRecord_ToString, &
+                     GetSoilLayer_Description, &
+                     SetSoilLayer_Description, &
+                     GetSimulation_LinkCropToSimPeriod, &
+                     GetSimulation_ResetIniSWC, &
+                     GetSimulation_EvapLimitON, &
+                     GetSimulation_Germinate, &
+                     GetSimulation_MultipleRun, &
+                     GetSimulation_MultipleRunWithKeepSWC, &
+                     GetSimulation_SalinityConsidered, &
+                     GetSimulation_ProtectedSeedling, &
+                     GetSimulation_SWCtopSoilConsidered, &
+                     SetSimulation_LinkCropToSimPeriod, &
+                     SetSimulation_ResetIniSWC, &
+                     SetSimulation_EvapLimitON, &
+                     SetSimulation_Germinate, &
+                     SetSimulation_MultipleRun, &
+                     SetSimulation_MultipleRunWithKeepSWC, &
+                     SetSimulation_SalinityConsidered, &
+                     SetSimulation_ProtectedSeedling, &
+                     SetSimulation_SWCtopSoilConsidered, &
+                     GetSimulation_IniSWC_AtDepths, &
+                     GetSimulation_IniSWC_AtFC, &
+                     SetSimulation_IniSWC_AtDepths, &
+                     SetSimulation_IniSWC_AtFC, &
+                     GetSimulation_Storage_CropString, &
+                     SetSimulation_Storage_CropString, &
+                     CompartmentIndividual, &
+                     ECeComp, &
+                     ECswComp, &
+                     GetManDescription, &
+                     SetManDescription, &
+                     LoadManagement
+
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
@@ -146,7 +186,30 @@ use ac_kinds, only: dp, &
 implicit none
 
 
+
+interface pointer2array
+    module procedure pointer2array_dp
+end interface pointer2array
+
+
 contains
+
+
+function pointer2array_dp(c_pointer, arrlen, mold) result(array)
+    !! Returns a Fortran string from a C-pointer plus the array length.
+    type(c_ptr), intent(in) :: c_pointer
+        !! C-style pointer
+    integer(int32), intent(in) :: arrlen
+        !! Length of the array
+    real(dp), intent(in) :: mold
+        !! Defines the type of array
+    real(dp), dimension(arrlen) :: array
+
+    real(dp), pointer, dimension(:) :: f_pointer
+
+    call c_f_pointer(c_pointer, f_pointer, [arrlen])
+    array(:) = f_pointer(:)
+end function pointer2array_dp
 
 
 function pointer2string(c_pointer, strlen) result(string)
@@ -745,6 +808,25 @@ subroutine SetSWCiniFileFull_wrap(SWCiniFileFull, strlen)
     call SetSWCiniFileFull(string)
 end subroutine SetSWCiniFileFull_wrap
 
+function GetSWCiniDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetSWCiniDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetSWCiniDescription())
+end function GetSWCiniDescription_wrap
+
+subroutine SetSWCiniDescription_wrap(SWCiniDescription, strlen)
+    !! Wrapper for [[ac_global:SetSWCiniDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: SWCiniDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniDescription, strlen)
+    call SetSWCiniDescription(string)
+end subroutine SetSWCiniDescription_wrap
+
+
 function GetSimulParam_CNcorrection_wrap() result(CNcorrection)
     !! Wrapper for [[ac_global:GetSimulParam_CNcorrection]] for foreign languages.
     logical(1) :: CNcorrection
@@ -964,6 +1046,23 @@ subroutine SetOnset_GenerateTempOn_wrap(GenerateTempOn)
     call SetOnset_GenerateTempOn(bool)
 end subroutine SetOnset_GenerateTempOn_wrap
 
+function GetEndSeason_GenerateTempOn_wrap() result(GenerateTempOn)
+    !! Wrapper for [[ac_global:GetEndSeason_GenerateTempOn]] for foreign languages.
+    logical(1) :: GenerateTempOn
+
+    GenerateTempOn = GetEndSeason_GenerateTempOn()
+end function GetEndSeason_GenerateTempOn_wrap
+
+subroutine SetEndSeason_GenerateTempOn_wrap(GenerateTempOn)
+    !! Wrapper for [[ac_global:SetEndSeason_GenerateTempOn]] for foreign languages.
+    logical(1), intent(in) :: GenerateTempOn
+
+    logical :: bool
+
+    bool = GenerateTempOn
+    call SetEndSeason_GenerateTempOn(bool)
+end subroutine SetEndSeason_GenerateTempOn_wrap
+
 function GetMultipleProjectFileFull_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectFileFull]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -982,6 +1081,26 @@ subroutine SetMultipleProjectFileFull_wrap(MultipleProjectFileFull, strlen)
     string = pointer2string(MultipleProjectFileFull, strlen)
     call SetMultipleProjectFileFull(string)
 end subroutine SetMultipleProjectFileFull_wrap
+
+
+function GetFullFileNameProgramParameters_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetFullFileNameProgramParameters]] for foreign languages.
+    type(c_ptr) :: c_pointer
+    
+    c_pointer = string2pointer(GetFullFileNameProgramParameters())
+end function GetFullFileNameProgramParameters_wrap
+
+
+subroutine SetFullFileNameProgramParameters_wrap(FullFileNameProgramParameters, strlen)
+    !! Wrapper for [[ac_global:SetFullFileNameProgramParameters]] for foreign languages.
+    type(c_ptr), intent(in) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullFileNameProgramParameters, strlen)
+    call SetFullFileNameProgramParameters(string)
+end subroutine SetFullFileNameProgramParameters_wrap
 
 
 function GetRainFile_wrap() result(c_pointer)
@@ -1545,5 +1664,302 @@ function GetTemperatureRecord_FromString_wrap() result(c_pointer)
     c_pointer = string2pointer(GetTemperatureRecord_FromString())
 end function GetTemperatureRecord_FromString_wrap
 
+function GetSoilLayer_Description_wrap(i) result(Description)
+    !! Wrapper for [[ac_global:GetSoilLayer_Description]] for foreign languages.
+    integer(int32) :: i
+    type(c_ptr) :: Description
+
+    Description = string2pointer(GetSoilLayer_Description(i))
+end function GetSoilLayer_Description_wrap
+
+subroutine SetSoilLayer_Description_wrap(i, Description)
+    !! Wrapper for [[ac_global:SetSoilLayer_Description]] for foreign languages.
+    integer(int32) :: i
+    type(c_ptr), intent(in) :: Description
+
+    character(len=25) :: string
+
+    string = pointer2string(Description, 25)
+    call SetSoilLayer_Description(i, string)
+end subroutine SetSoilLayer_Description_wrap
+
+function GetSimulation_LinkCropToSimPeriod_wrap() result(LinkCropToSimPeriod)
+    !! Wrapper for [[ac_global:GetSimulation_LinkCropToSimPeriod]] for foreign languages.
+    logical(1) :: LinkCropToSimPeriod
+
+    LinkCropToSimPeriod = GetSimulation_LinkCropToSimPeriod()
+end function GetSimulation_LinkCropToSimPeriod_wrap
+
+function GetSimulation_ResetIniSWC_wrap() result(ResetIniSWC)
+    !! Wrapper for [[ac_global:GetSimulation_ResetIniSWC]] for foreign languages.
+    logical(1) :: ResetIniSWC
+
+    ResetIniSWC = GetSimulation_ResetIniSWC()
+end function GetSimulation_ResetIniSWC_wrap
+
+function GetSimulation_EvapLimitON_wrap() result(EvapLimitON)
+    !! Wrapper for [[ac_global:GetSimulation_EvapLimitON]] for foreign languages.
+    logical(1) :: EvapLimitON
+
+    EvapLimitON = GetSimulation_EvapLimitON()
+end function GetSimulation_EvapLimitON_wrap
+
+function GetSimulation_Germinate_wrap() result(Germinate)
+    !! Wrapper for [[ac_global:GetSimulation_Germinate]] for foreign languages.
+    logical(1) :: Germinate
+
+    Germinate = GetSimulation_Germinate()
+end function GetSimulation_Germinate_wrap
+
+function GetSimulation_MultipleRun_wrap() result(MultipleRun)
+    !! Wrapper for [[ac_global:GetSimulation_MultipleRun]] for foreign languages.
+    logical(1) :: MultipleRun
+
+    MultipleRun = GetSimulation_MultipleRun()
+end function GetSimulation_MultipleRun_wrap
+
+function GetSimulation_MultipleRunWithKeepSWC_wrap() result(MultipleRunWithKeepSWC)
+    !! Wrapper for [[ac_global:GetSimulation_MultipleRunWithKeepSWC]] for foreign languages.
+    logical(1) :: MultipleRunWithKeepSWC
+
+    MultipleRunWithKeepSWC = GetSimulation_MultipleRunWithKeepSWC()
+end function GetSimulation_MultipleRunWithKeepSWC_wrap
+
+function GetSimulation_SalinityConsidered_wrap() result(SalinityConsidered)
+    !! Wrapper for [[ac_global:GetSimulation_SalinityConsidered]] for foreign languages.
+    logical(1) :: SalinityConsidered
+
+    SalinityConsidered = GetSimulation_SalinityConsidered()
+end function GetSimulation_SalinityConsidered_wrap
+
+function GetSimulation_ProtectedSeedling_wrap() result(ProtectedSeedling)
+    !! Wrapper for [[ac_global:GetSimulation_ProtectedSeedling]] for foreign languages.
+    logical(1) :: ProtectedSeedling
+
+    ProtectedSeedling = GetSimulation_ProtectedSeedling()
+end function GetSimulation_ProtectedSeedling_wrap
+
+function GetSimulation_SWCtopSoilConsidered_wrap() result(SWCtopSoilConsidered)
+    !! Wrapper for [[ac_global:GetSimulation_SWCtopSoilConsidered]] for foreign languages.
+    logical(1) :: SWCtopSoilConsidered
+
+    SWCtopSoilConsidered = GetSimulation_SWCtopSoilConsidered()
+end function GetSimulation_SWCtopSoilConsidered_wrap
+
+subroutine SetSimulation_LinkCropToSimPeriod_wrap(LinkCropToSimPeriod)
+    !! Wrapper for [[ac_global:SetSimulation_LinkCropToSimPeriod]] for foreign languages.
+    logical(1), intent(in) :: LinkCropToSimPeriod
+
+    logical :: bool
+
+    bool = LinkCropToSimPeriod
+    call SetSimulation_LinkCropToSimPeriod(bool)
+end subroutine SetSimulation_LinkCropToSimPeriod_wrap
+
+subroutine SetSimulation_ResetIniSWC_wrap(ResetIniSWC)
+    !! Wrapper for [[ac_global:SetSimulation_ResetIniSWC]] for foreign languages.
+    logical(1), intent(in) :: ResetIniSWC
+
+    logical :: bool
+
+    bool = ResetIniSWC
+    call SetSimulation_ResetIniSWC(bool)
+end subroutine SetSimulation_ResetIniSWC_wrap
+
+subroutine SetSimulation_EvapLimitON_wrap(EvapLimitON)
+    !! Wrapper for [[ac_global:SetSimulation_EvapLimitON]] for foreign languages.
+    logical(1), intent(in) :: EvapLimitON
+
+    logical :: bool
+
+    bool = EvapLimitON
+    call SetSimulation_EvapLimitON(bool)
+end subroutine SetSimulation_EvapLimitON_wrap
+
+subroutine SetSimulation_Germinate_wrap(Germinate)
+    !! Wrapper for [[ac_global:SetSimulation_Germinate]] for foreign languages.
+    logical(1), intent(in) :: Germinate
+
+    logical :: bool
+
+    bool = Germinate
+    call SetSimulation_Germinate(bool)
+end subroutine SetSimulation_Germinate_wrap
+
+subroutine SetSimulation_MultipleRun_wrap(MultipleRun)
+    !! Wrapper for [[ac_global:SetSimulation_MultipleRun]] for foreign languages.
+    logical(1), intent(in) :: MultipleRun
+
+    logical :: bool
+
+    bool = MultipleRun
+    call SetSimulation_MultipleRun(bool)
+end subroutine SetSimulation_MultipleRun_wrap
+
+subroutine SetSimulation_MultipleRunWithKeepSWC_wrap(MultipleRunWithKeepSWC)
+    !! Wrapper for [[ac_global:SetSimulation_MultipleRunWithKeepSWC]] for foreign languages.
+    logical(1), intent(in) :: MultipleRunWithKeepSWC
+
+    logical :: bool
+
+    bool = MultipleRunWithKeepSWC
+    call SetSimulation_MultipleRunWithKeepSWC(bool)
+end subroutine SetSimulation_MultipleRunWithKeepSWC_wrap
+
+subroutine SetSimulation_SalinityConsidered_wrap(SalinityConsidered)
+    !! Wrapper for [[ac_global:SetSimulation_SalinityConsidered]] for foreign languages.
+    logical(1), intent(in) :: SalinityConsidered
+
+    logical :: bool
+
+    bool = SalinityConsidered
+    call SetSimulation_SalinityConsidered(bool)
+end subroutine SetSimulation_SalinityConsidered_wrap
+
+subroutine SetSimulation_ProtectedSeedling_wrap(ProtectedSeedling)
+    !! Wrapper for [[ac_global:SetSimulation_ProtectedSeedling]] for foreign languages.
+    logical(1), intent(in) :: ProtectedSeedling
+
+    logical :: bool
+
+    bool = ProtectedSeedling
+    call SetSimulation_ProtectedSeedling(bool)
+end subroutine SetSimulation_ProtectedSeedling_wrap
+
+subroutine SetSimulation_SWCtopSoilConsidered_wrap(SWCtopSoilConsidered)
+    !! Wrapper for [[ac_global:SetSimulation_SWCtopSoilConsidered]] for foreign languages.
+    logical(1), intent(in) :: SWCtopSoilConsidered
+
+    logical :: bool
+
+    bool = SWCtopSoilConsidered
+    call SetSimulation_SWCtopSoilConsidered(bool)
+end subroutine SetSimulation_SWCtopSoilConsidered_wrap
+
+function GetSimulation_IniSWC_AtDepths_wrap() result(AtDepths)
+    !! Wrapper for [[ac_global:GetSimulation_IniSWC_AtDepths]] for foreign languages.
+    logical(1) :: AtDepths
+
+    AtDepths = GetSimulation_IniSWC_AtDepths()
+end function GetSimulation_IniSWC_AtDepths_wrap
+
+function GetSimulation_IniSWC_AtFC_wrap() result(AtFC)
+    !! Wrapper for [[ac_global:GetSimulation_IniSWC_AtFC]] for foreign languages.
+    logical(1) :: AtFC
+
+    AtFC = GetSimulation_IniSWC_AtFC()
+end function GetSimulation_IniSWC_AtFC_wrap
+
+subroutine SetSimulation_IniSWC_AtDepths_wrap(AtDepths)
+    !! Wrapper for [[ac_global:SetSimulation_IniSWC_AtDepths]] for foreign languages.
+    logical(1), intent(in) :: AtDepths
+
+    logical :: bool
+
+    bool = AtDepths
+    call SetSimulation_IniSWC_AtDepths(bool)
+end subroutine SetSimulation_IniSWC_AtDepths_wrap
+
+subroutine SetSimulation_IniSWC_AtFC_wrap(AtFC)
+    !! Wrapper for [[ac_global:SetSimulation_IniSWC_AtFC]] for foreign languages.
+    logical(1), intent(in) :: AtFC
+
+    logical :: bool
+
+    bool = AtFC
+    call SetSimulation_IniSWC_AtFC(bool)
+end subroutine SetSimulation_IniSWC_AtFC_wrap
+
+function GetSimulation_Storage_CropString_wrap() result(CropString)
+    !! Wrapper for [[ac_global:GetSimulation_Storage_CropString]] for foreign languages.
+    type(c_ptr) :: CropString
+
+    CropString = string2pointer(GetSimulation_Storage_CropString())
+end function GetSimulation_Storage_CropString_wrap
+
+subroutine SetSimulation_Storage_CropString_wrap(CropString, strlen)
+    !! Wrapper for [[ac_global:SetSimulation_Storage_CropString]] for foreign languages.
+    type(c_ptr), intent(in) :: CropString
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(CropString, strlen)
+    call SetSimulation_Storage_CropString(string)
+end subroutine SetSimulation_Storage_CropString_wrap
+
+function GetManDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetManDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetManDescription())
+end function GetManDescription_wrap
+
+subroutine SetManDescription_wrap(ManDescription, strlen)
+    !! Wrapper for [[ac_global:SetManDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ManDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ManDescription, strlen)
+    call SetManDescription(string)
+end subroutine SetManDescription_wrap
+
+subroutine LoadManagement_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadManagement]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadManagement(string)
+end subroutine LoadManagement_wrap
+
+
+real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
+                               Depo_len)
+    !! Wrapper for [[ac_global:ECeComp]] for foreign languages.
+    real(dp), intent(in) :: Thickness
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+
+    type(CompartmentIndividual) :: comp
+
+    comp%Thickness = Thickness
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    ECeComp_wrap = ECeComp(comp)
+end function ECeComp_wrap
+
+
+real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
+                                Depo_ptr, Depo_len, atFC)
+    !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
+    real(dp), intent(in) :: Thickness
+    real(dp), intent(in) :: theta
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+    logical(1), intent(in) :: atFC
+
+    type(CompartmentIndividual) :: comp
+    logical :: atFC_f
+
+    comp%Thickness = Thickness
+    comp%theta = theta
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    atFC_f = logical(atFC)
+    ECswComp_wrap = ECswComp(comp, atFC_f)
+end function ECswComp_wrap
 
 end module ac_interface_global

@@ -10,7 +10,8 @@ use iso_fortran_env, only: iostat_end
 
 implicit none
 
-
+real(dp), parameter :: equiv = 0.64_dp
+    !! conversion factor: 1 dS/m = 0.64 g/l
 integer(int32), parameter :: max_SoilLayers = 5
 integer(int32), parameter :: max_No_compartments = 12
 real(dp), parameter :: undef_double = -9.9_dp
@@ -267,7 +268,22 @@ type rep_Onset
         !! daynumber
     integer(int32) :: LengthSearchPeriod
         !! days
-end type rep_Onset 
+end type rep_Onset
+
+type rep_EndSeason
+    integer(int32) :: ExtraYears
+        !! to add to YearStartCropCycle
+    logical :: GenerateTempOn
+        !! by temperature criterion
+    integer(intEnum) :: AirTCriterion
+        !! Undocumented
+    integer(int32) :: StartSearchDayNr
+        !! daynumber
+    integer(int32) :: StopSearchDayNr
+        !! daynumber
+    integer(int32) :: LengthSearchPeriod
+        !! days
+end type rep_EndSeason
 
 type rep_Content
     real(dp) :: BeginDay
@@ -516,6 +532,113 @@ type rep_RootZoneSalt
     real(dp) :: KsSalt
         !! stress coefficient for salinity
 end type rep_RootZoneSalt
+
+type rep_IniSWC 
+    logical :: AtDepths
+        !! at specific depths or for specific layers
+    integer(int8) :: NrLoc
+        !! number of depths or layers considered
+    real(dp), dimension(max_No_compartments) :: Loc
+        !! depth or layer thickness [m]
+    real(dp), dimension(max_No_compartments) :: VolProc
+        !! soil water content (vol%)
+    real(dp), dimension(max_No_compartments) :: SaltECe
+        !! ECe in dS/m
+    logical :: AtFC
+        !! If iniSWC is at FC
+end type rep_IniSWC
+
+type rep_storage 
+    real(dp) :: Btotal
+        !! assimilates (ton/ha) stored in root systemn by CropString in Storage-Season
+    character(len=:), allocatable :: CropString
+        !! full name of crop file which stores Btotal during Storage-Season
+    integer(int8) :: Season
+        !! season in which Btotal is stored
+end type rep_storage 
+
+type rep_sim 
+    integer(int32) :: FromDayNr
+        !! daynumber
+    integer(int32) :: ToDayNr
+        !! daynumber
+    type(rep_IniSWC) :: IniSWC
+        !! Undocumented
+    real(dp), dimension(max_No_compartments) :: ThetaIni
+        !! dS/m
+    real(dp), dimension(max_No_compartments) :: ECeIni
+        !! dS/m
+    real(dp) :: SurfaceStorageIni
+        !! Undocumented
+    real(dp) :: ECStorageIni
+        !! Undocumented
+    real(dp) :: CCini
+        !! Undocumented
+    real(dp) :: Bini
+        !! Undocumented
+    real(dp) :: Zrini
+        !! Undocumented
+    logical :: LinkCropToSimPeriod
+        !! Undocumented
+    logical :: ResetIniSWC
+        !! soil water and salts
+    integer(int32) :: InitialStep
+        !! Undocumented
+    logical :: EvapLimitON
+        !! soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover
+    real(dp) :: EvapWCsurf
+        !! remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]
+    integer(int8) :: EvapStartStg2
+        !! % extra to define upper limit of soil water content at start of stage 2 [100 .. 0]
+    real(dp) :: EvapZ
+        !! actual soil depth (m) for water extraction by evaporation  [EvapZmin/100 .. EvapZmax/100]
+    integer(int32) :: HIfinal
+        !! final Harvest Index might be smaller than HImax due to early canopy decline
+    integer(int32) :: DelayedDays
+        !! delayed days since sowing/planting due to water stress (crop cannot germinate)
+    logical :: Germinate
+        !! germinate is false when crop cannot germinate due to water stress
+    real(dp) :: SumEToStress
+        !! Sum ETo during stress period to delay canopy senescence
+    real(dp) :: SumGDD
+        !! Sum of Growing Degree-days
+    real(dp) :: SumGDDfromDay1
+        !! Sum of Growing Degree-days since Crop.Day1
+    real(sp) :: SCor
+        !! correction factor for Crop.SmaxBot if restrictive soil layer inhibit root development
+    logical :: MultipleRun
+        !! Project with a sequence of simulation runs
+    integer(int32) :: NrRuns
+        !! Undocumented
+    logical :: MultipleRunWithKeepSWC
+        !! Project with a sequence of simulation runs and initial SWC is once or more KeepSWC
+    real(dp) :: MultipleRunConstZrx
+        !! Maximum rooting depth for multiple projects with KeepSWC
+    real(dp) :: IrriECw
+        !! quality of irrigation water (dS/m)
+    integer(int8) :: DayAnaero
+        !! number of days under anaerobic conditions
+    type(rep_EffectStress) :: EffectStress
+        !! effect of soil fertility and salinity stress on CC, WP and KsSto
+    logical :: SalinityConsidered
+        !! Undocumented
+    logical :: ProtectedSeedling
+        !! IF protected (before CC = 1.25 CC0), seedling triggering of early senescence is switched off
+    logical :: SWCtopSoilConsidered
+        !! Top soil is relative wetter than root zone and determines water stresses
+    integer(int32) :: LengthCuttingInterval
+        !! Default length of cutting interval (days)
+    integer(int8) :: YearSeason
+        !! year number for perennials (1 = 1st year, 2, 3, 4, max = 127)
+    integer(int8) :: RCadj
+        !! adjusted relative cover of weeds with self thinning for perennials
+    type(rep_storage) :: Storage
+        !! Undocumented
+    integer(int32) :: YearStartCropCycle
+        !! calendar year in which crop cycle starts
+    integer(int32) :: CropDay1Previous
+        !! previous daynumber at the start of teh crop cycle
+end type rep_sim
 
 type rep_DayEventDbl
     integer(int32) :: DayNr
@@ -795,6 +918,7 @@ character(len=:), allocatable :: ClimateDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
+character(len=:), allocatable :: SWCiniDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectFile
@@ -802,6 +926,8 @@ character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
 character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
+character(len=:), allocatable :: FullFileNameProgramParameters
+character(len=:), allocatable :: ManDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -809,6 +935,7 @@ type(rep_PerennialPeriod) :: perennialperiod
 type(rep_param) :: simulparam
 type(rep_Cuttings) :: Cuttings
 type(rep_Onset) :: onset
+type(rep_EndSeason) :: endseason
 type(rep_Crop) :: crop
 type(rep_Content) :: TotalSaltContent
 type(rep_Content) :: TotalWaterContent
@@ -819,13 +946,19 @@ type(rep_CropFileSet) :: CropFileSet
 type(rep_sum) :: SumWaBal
 type(rep_RootZoneSalt) :: RootZoneSalt
 type(rep_clim)  :: TemperatureRecord
+type(rep_sim) :: Simulation
 
 integer(intEnum) :: GenerateTimeMode
 integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
+type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
+
+integer(int32) :: NrCompartments
+
 
 interface roundc
     module procedure roundc_int8
@@ -999,6 +1132,39 @@ subroutine ZrAdjustedToRestrictiveLayers(ZrIN, TheNrSoilLayers, TheLayer, ZrOUT)
     end do
 end subroutine ZrAdjustedToRestrictiveLayers
 
+subroutine DeclareInitialCondAtFCandNoSalt()
+
+    integer(int32) :: layeri, compi, celli, ind
+
+    call SetSWCiniFile('(None)')
+    call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+    call SetSWCiniDescription('Soil water profile at Field Capacity')
+    call SetSimulation_IniSWC_AtDepths(.false.)
+    call SetSimulation_IniSWC_NrLoc(GetSoil_NrSoilLayers())
+    do layeri = 1, GetSoil_NrSoilLayers()
+        call SetSimulation_IniSWC_Loc_i(layeri, GetSoilLayer_Thickness(layeri))
+        call SetSimulation_IniSWC_VolProc_i(layeri, GetSoilLayer_FC(layeri))
+        call SetSimulation_IniSWC_SaltECe_i(layeri, 0._dp)
+    end do
+    call SetSimulation_IniSWC_AtFC(.true.)
+    do layeri = (GetSoil_NrSoilLayers()+1), max_No_compartments
+        call SetSimulation_IniSWC_Loc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_VolProc_i(layeri, undef_double)
+        call SetSimulation_IniSWC_SaltECe_i(layeri, undef_double)
+    end do
+    do compi = 1, GetNrCompartments()
+        if (GetCompartment_Layer(compi) == 0) then
+            ind = 1 ! LB: added an if statement to avoid having index=0
+        else
+            ind = GetCompartment_Layer(compi)
+        end if
+        do celli = 1, GetSoilLayer_SCP1(ind)
+            ! salinity in cells
+            call SetCompartment_Salt(compi, celli, 0.0_dp)
+            call SetCompartment_Depo(compi, celli, 0.0_dp)
+        end do
+    end do
+end subroutine DeclareInitialCondAtFCandNoSalt
 
 subroutine set_layer_undef(LayerData)
     type(SoilLayerIndividual), intent(inout) :: LayerData
@@ -1094,6 +1260,96 @@ real(dp) function TimeToReachZroot(Zi, Zo, Zx, ShapeRootDeepening, Lo, LZxAdj)
 
     TimeToReachZroot = ti
 end function TimeToReachZroot
+
+
+real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
+       LMaturity, GDDL0, GDDL123, GDDLMaturity, CCo, CCx,&
+       CGC, CDC, GDDCGC, GDDCDC, SumGDD, TypeDays, SFRedCGC, SFRedCCx)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: LMaturity
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDLMaturity
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: SumGDD
+    integer(intEnum), intent(in) :: TypeDays
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+
+    select case (TypeDays)
+    case (modeCycle_GDDDays)
+        CanopyCoverNoStressSF = CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123,&
+            GDDLMaturity, SumGDD, CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, SFRedCCx)
+    case default
+        CanopyCoverNoStressSF = CanopyCoverNoStressDaysSF(DAP, L0, L123,&
+            LMaturity, CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+    end select
+
+    contains
+
+    real(dp) function CanopyCoverNoStressDaysSF(DAP, L0, L123,&
+           LMaturity, CCo, CCx, CGC, CDC, SFRedCGC, SFRedCCx)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L0
+        integer(int32), intent(in) :: L123
+        integer(int32), intent(in) :: LMaturity
+        real(dp), intent(in) :: CCo
+        real(dp), intent(in) :: CCx
+        real(dp), intent(in) :: CGC
+        real(dp), intent(in) :: CDC
+        integer(int8), intent(in) :: SFRedCGC
+        integer(int8), intent(in) :: SFRedCCx
+
+        real(dp) :: CC, CCxAdj, CDCadj
+        integer(int32) :: t
+
+        ! CanopyCoverNoStressDaysSF 
+        CC = 0.0_dp
+        t = DAP - GetSimulation_DelayedDays()
+        ! CC refers to canopy cover at the end of the day
+
+        if ((t >= 1) .and. (t <= LMaturity) .and. (CCo > epsilon(1._dp))) then
+            if (t <= L0) then ! before germination or recovering of transplant
+                CC = 0._dp
+            else
+                if (t < L123) then ! Canopy development and Mid-season stage
+                    CC = CCatTime((t-L0), CCo, ((1._dp-SFRedCGC/100._dp)*CGC),&
+                                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                else
+                   ! Late-season stage  (t <= LMaturity)
+                    if (CCx < 0.001) then
+                        CC = 0._dp
+                    else
+                        CCxAdj = CCatTime((L123-L0), CCo, &
+                                  ((1._dp-SFRedCGC/100._dp)*CGC),&
+                                  ((1._dp-SFRedCCx/100._dp)*CCx))
+                        CDCadj = CDC*(CCxAdj+2.29_dp)/(CCx+2.29_dp)
+                        if (CCxAdj < 0.001) then
+                            CC = 0._dp
+                        else
+                            CC = CCxAdj * (1._dp - 0.05_dp *&
+                                 (exp((t-L123)*3.33_dp*CDCAdj/(CCxAdj+2.29_dp))-1._dp))
+                        end if
+                    end if
+                end if
+            end if
+        end if
+        if (CC > 1) then
+            CC = 1._dp
+        end if
+        if (CC < epsilon(1._dp)) then
+            CC = 0._dp
+        end if
+        CanopyCoverNoStressDaysSF = CC
+    end function CanopyCoverNoStressDaysSF
+end function CanopyCoverNoStressSF
 
 
 real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
@@ -1225,7 +1481,8 @@ subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, 
         CGCVal = Undef_int
     else
         if (.not. CGCgiven) then ! Length12 is given and CGC has to be determined
-            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))/(Length12-L0)), kind=dp)
+            CGCVal = real((log((0.25_dp*CCxVal/CCoVal)/(1._dp-0.98_dp))&
+                           /real(Length12-L0, kind=dp)), kind=dp)
             ! Check if CGC < maximum value (0.40) and adjust Length12 if required
             if (CGCVal > 0.40_dp) then
                 CGCVal = 0.40_dp
@@ -1297,7 +1554,6 @@ subroutine DetermineLengthGrowthStages(CCoVal, CCxVal, CDCVal, L0, TotalLength, 
             end if
         end if
     end if
-
 end subroutine DetermineLengthGrowthStages
 
 
@@ -1764,7 +2020,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             ! need for adjustment
             ! step 1 - adjusment of shape factor to degree of crop replacement by weeds
             FshapeMinimum = 10 - 20*( (exp(fCCx*3._dp)-1)/(exp(3._dp)-1) + sqrt(MWeedAdj/100._dp))
-            if (nint(FshapeMinimum*10,kind=int32) == 0) then
+            if (roundc(FshapeMinimum*10,mold=1_int32) == 0) then
                 FshapeMinimum = 0.1
             end if
             FshapeWeed = FshapeWeed;
@@ -1778,7 +2034,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             CCxTot100 = fweedi * CCxCrop
             ! B. Total CC (crop and weeds) when self-thinning and 0% weed take over
             if (fCCx > 0.005) then
-                fweedi = CCmultiplierWeed(nint(fCCx*ProcentWeedCover,kind=int8),&
+                fweedi = CCmultiplierWeed(roundc(fCCx*ProcentWeedCover,mold=1_int8),&
                     (fCCx*CCxCrop), FshapeWeed)
             else
                 fweedi = 1
@@ -1792,7 +2048,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
             if (fCCx > 0.005) then
                 fweedi = CCxTotM/(fCCx*CCxCrop)
                 fweedMax = 1._dp/(fCCx*CCxCrop)
-                if (nint(fweedi*1000,kind=int32) > nint(fWeedMax*1000,kind=int32)) then
+                if (roundc(fweedi*1000,mold=1_int32) > roundc(fWeedMax*1000,mold=1_int32)) then
                     fweedi = fweedMax
                 end if
             end if
@@ -1807,7 +2063,7 @@ real(dp) function CCmultiplierWeedAdjusted(ProcentWeedCover, CCxCrop, FshapeWeed
                     RCadjD = 100*(1- fCCx*CCxCrop*(1-ProcentWeedCover/100._dp)/CCxTotM)
                 end if
             end if
-            RCadj = nint(RCadjD,kind=int8)
+            RCadj = roundc(RCadjD,mold=1_int8)
             if (RCadj > 100) then
                 RCadj = 100
             end if
@@ -2012,6 +2268,55 @@ subroutine DetermineCN_default(Infiltr, CN2)
         CN2 = 77
     end if
 end subroutine DetermineCN_default
+
+
+real(dp) function ECeComp(Comp)
+    type(CompartmentIndividual), intent(in) :: Comp
+
+    real(dp) :: volSat, TotSalt, denominator
+    integer(int32) :: i
+
+    volSAT = GetSoilLayer_SAT(Comp%Layer)
+    TotSalt = 0._dp
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+
+    denominator = volSAT*10._dp * Comp%Thickness * &
+                  (1._dp - GetSoilLayer_GravelVol(Comp%Layer)/100._dp)
+    TotSalt = TotSalt / denominator  ! g/l
+
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+
+    ECeComp = TotSalt / Equiv ! dS/m
+end function ECeComp
+
+
+real(dp) function ECswComp(Comp, atFC)
+    type(CompartmentIndividual), intent(in) :: Comp
+    logical, intent(in) :: atFC
+
+    real(dp) :: TotSalt
+    integer(int32) :: i
+
+    TotSalt = 0
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer)
+        TotSalt = TotSalt + Comp%Salt(i) + Comp%Depo(i) ! g/m2
+    end do
+    if (atFC .eqv. .true.) then
+        TotSalt = TotSalt/ (GetSoilLayer_FC(Comp%Layer)*10._dp*Comp%Thickness &
+                    *(1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    else
+        TotSalt = TotSalt/(Comp%theta*1000._dp*Comp%Thickness* &
+                     (1._dp-GetSoilLayer_GravelVol(Comp%Layer)/100._dp)) ! g/l
+    end if
+    if (TotSalt > GetSimulParam_SaltSolub()) then
+        TotSalt = GetSimulParam_SaltSolub()
+    end if
+    ECswComp = TotSalt/Equiv
+end function ECswComp
 
 
 real(dp) function MultiplierCCoSelfThinning(Yeari, Yearx, ShapeFactor)
@@ -2471,7 +2776,7 @@ subroutine ReadRainfallSettings()
     character :: fullname
     integer(int8) :: NrM, effrainperc,effrainshow,effrainrootE 
 
-    fullName = PathNameSimul // 'Rainfall.PAR'
+    fullName = trim(GetPathNameSimul()) // 'Rainfall.PAR'
 
     open(newunit=fhandle, file=trim(fullname), status='old', action='read')
     read(fhandle, *)! Settings for processing 10-day or monthly rainfall data
@@ -2492,6 +2797,37 @@ subroutine ReadRainfallSettings()
     call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
     close(fhandle)
 end subroutine ReadRainfallSettings
+
+subroutine ReadSoilSettings()
+
+    integer :: fhandle
+    character(len=:), allocatable :: fullName
+    integer(int8) :: i, simul_saltdiff, simul_saltsolub, simul_root, simul_iniab
+    real(dp) :: simul_rod
+
+    fullName = trim(GetPathNameSimul()) // 'Soil.PAR'
+
+    open(newunit=fhandle, file=trim(fullname), status='old', action='read')
+    read(fhandle,*) simul_rod ! considered depth (m) of soil profile for calculation of mean soil water content
+    call SetSimulParam_RunoffDepth(simul_rod)
+    read(fhandle, *) i   ! correction CN for Antecedent Moisture Class
+    if (i == 1) then
+        call SetSimulParam_CNcorrection(.true.)
+    else
+        call SetSimulParam_CNcorrection(.false.)
+    end if
+    read(fhandle, *) simul_saltdiff ! salt diffusion factor (%)
+    read(fhandle, *) simul_saltsolub ! salt solubility (g/liter)
+    read(fhandle, *) simul_root ! shape factor capillary rise factor
+    call SetSimulParam_SaltDiff(simul_saltdiff)
+    call SetSimulParam_SaltSolub(simul_saltsolub)
+    call SetSimulParam_RootNrDF(simul_root)
+    ! new Version 4.1
+    read(fhandle, *) simul_iniab ! Percentage of S for initial abstraction for surface runoff
+    call SetSimulParam_IniAbstract(simul_iniab)
+    call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
+    close(fhandle)
+end subroutine ReadSoilSettings
 
 subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile, CO2File)
     character(len=*), intent(in) :: FullName
@@ -2555,6 +2891,219 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     end if
     close(fhandle)
 end subroutine LoadCropCalendar
+
+
+subroutine NoManagement()
+
+    type(rep_EffectStress) :: EffectStress_temp
+
+    call SetManDescription('No specific field management')
+    ! mulches
+    call SetManagement_Mulch(0_int8)
+    call SetManagement_EffectMulchInS(50_int8)
+    ! soil fertility
+    call SetManagement_FertilityStress(0_int8)
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                      GetManagement_FertilityStress(), &
+                                      EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    ! soil bunds
+    call SetManagement_BundHeight(0._dp)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    ! surface run-off
+    call SetManagement_RunoffOn(.true.)
+    call SetManagement_CNcorrection(0)
+    ! weed infestation
+    call SetManagement_WeedRC(0_int8)
+    call SetManagement_WeedDeltaRC(0)
+    call SetManagement_WeedShape(-0.01_dp)
+    call SetManagement_WeedAdj(100_int8)
+    ! multiple cuttings
+    call SetManagement_Cuttings_Considered(.false.)
+    call SetManagement_Cuttings_CCcut(30)
+    call SetManagement_Cuttings_CGCPlus(20)
+    call SetManagement_Cuttings_Day1(1)
+    call SetManagement_Cuttings_NrDays(undef_int)
+    call SetManagement_Cuttings_Generate(.false.)
+    call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
+    call SetManagement_Cuttings_HarvestEnd(.false.)
+    call SetManagement_Cuttings_FirstDayNr(undef_int)
+end subroutine NoManagement
+
+
+subroutine LoadManagement(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int8) :: i
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt
+    integer(int32) :: TempInt
+    real(dp) :: TempDouble
+    type(rep_EffectStress) :: EffectStress_temp
+    character(len=1025) :: mandescription_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) mandescription_temp
+    call SetManDescription(trim(mandescription_temp))
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    ! mulches
+    read(fhandle, *) TempShortInt
+    call SetManagement_Mulch(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetManagement_EffectMulchInS(TempShortInt)
+    ! soil fertility
+    read(fhandle, *) TempShortInt ! effect is crop specific
+    call SetManagement_FertilityStress(TempShortInt)
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                      GetManagement_FertilityStress(), &
+                                      EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    ! soil bunds
+    read(fhandle, *) TempDouble
+    call SetManagement_BundHeight(TempDouble)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    ! surface run-off
+    read(fhandle, *) i
+    if (i == 1) then
+        call SetManagement_RunoffON(.false.)   ! prevention of surface runoff
+    else
+        call SetManagement_RunoffON(.true.)   ! surface runoff is not prevented
+    end if
+    if (roundc(VersionNr*10, mold=1) < 50) then 
+        ! UPDATE required for CN adjustment
+        call SetManagement_CNcorrection(0)
+    else
+        read(fhandle, *) TempInt ! project increase/decrease of CN
+        call SetManagement_CNcorrection(TempInt)
+    end if
+    ! weed infestation
+    if (roundc(VersionNr*10, mold=1) < 50) then 
+        ! UPDATE required for Version 3.0, 3.1 and 4.0
+        call SetManagement_WeedRC(0_int8) ! relative cover of weeds (%)
+        call SetManagement_WeedDeltaRC(0)
+        call SetManagement_WeedShape(-0.01_dp) ! shape factor of the CC expansion 
+                                          ! function in a weed infested field
+    else
+        read(fhandle, *) TempShortInt ! relative cover of weeds (%)
+        call SetManagement_WeedRC(TempShortInt)
+        if (roundc(VersionNr*10, mold=1) < 51) then
+            call SetManagement_WeedDeltaRC(0)
+        else
+            read(fhandle, *) TempShortInt
+            call SetManagement_WeedDeltaRC(TempInt)
+        end if
+        read(fhandle, *) TempDouble ! shape factor of the CC expansion 
+                                    ! function in a weed infested field
+        call SetManagement_WeedShape(TempDouble)
+    end if
+    if (roundc(VersionNr*10, mold=1) < 70) then 
+        ! UPDATE required for versions below 7
+        call SetManagement_WeedAdj(100_int8) ! replacement (%) by weeds of the 
+                                        ! self-thinned part of the Canopy Cover
+                                        ! - only for perennials
+    else
+        read(fhandle, *) TempShortInt
+        call SetManagement_WeedAdj(TempShortInt)
+    end if
+    ! multiple cuttings
+    if (roundc(VersionNr*10, mold=1) >= 70) then 
+        ! UPDATE required for multiple cuttings
+        read(fhandle, *) i  ! Consider multiple cuttings: True or False
+        if (i == 0) then
+            call SetManagement_Cuttings_Considered(.false.)
+        else
+            call SetManagement_Cuttings_Considered(.true.)
+        end if
+        read(fhandle, *) TempInt  ! Canopy cover (%) after cutting
+        call SetManagement_Cuttings_CCcut(TempInt)
+        read(fhandle, *) TempInt ! Increase (percentage) of CGC after cutting
+        call SetManagement_Cuttings_CGCPlus(TempInt)
+        read(fhandle, *) TempInt ! Considered first day when generating cuttings 
+                                 ! (1 = start of growth cycle)
+        call SetManagement_Cuttings_Day1(TempInt)
+        read(fhandle, *) TempInt  ! Considered number owhen generating cuttings 
+                                  ! (-9 = total growth cycle)
+        call SetManagement_Cuttings_NrDays(TempInt)
+        read(fhandle, *) i  ! Generate multiple cuttings: True or False
+        if (i == 1) then
+            call SetManagement_Cuttings_Generate(.true.)
+        else
+            call SetManagement_Cuttings_Generate(.false.)
+        end if
+        read(fhandle, *) i  ! Time criterion for generating cuttings
+        select case (i)
+            case(0)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_NA) 
+                ! not applicable
+            case(1)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_IntDay) 
+                ! interval in days
+            case(2)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_IntGDD) 
+                ! interval in Growing Degree Days
+            case(3)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_DryB) 
+                ! produced dry above ground biomass (ton/ha)
+            case(4)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_DryY) 
+                ! produced dry yield (ton/ha)
+            case(5)
+                call SetManagement_Cuttings_Criterion(TimeCuttings_FreshY) 
+                ! produced fresh yield (ton/ha)
+        end select
+        read(fhandle, *) i  ! final harvest at crop maturity: 
+                            ! True or False (When generating cuttings)
+        if (i == 1) then
+            call SetManagement_Cuttings_HarvestEnd(.true.)
+        else
+            call SetManagement_Cuttings_HarvestEnd(.false.)
+        end if
+        read(fhandle, *) TempInt ! dayNr for Day 1 of list of cuttings 
+                                 ! (-9 = Day1 is start growing cycle)
+        call SetManagement_Cuttings_FirstDayNr(TempInt)
+    else
+        call SetManagement_Cuttings_Considered(.false.)
+        call SetManagement_Cuttings_CCcut(30)
+        call SetManagement_Cuttings_CGCPlus(20)
+        call SetManagement_Cuttings_Day1(1)
+        call SetManagement_Cuttings_NrDays(undef_int)
+        call SetManagement_Cuttings_Generate(.false.)
+        call SetManagement_Cuttings_Criterion(TimeCuttings_NA)
+        call SetManagement_Cuttings_HarvestEnd(.false.)
+        call SetManagement_Cuttings_FirstDayNr(undef_int)
+    end if
+    close(fhandle)
+end subroutine LoadManagement
+
+subroutine DetermineNrandThicknessCompartments()
+
+    real(dp) :: TotalDepthL, TotalDepthC, DeltaZ
+    integer(int32) :: i
+
+    TotalDepthL = 0._dp
+    do i = 1, GetSoil_NrSoilLayers()
+        TotalDepthL = TotalDepthL + GetSoilLayer_Thickness(i)
+    end do
+    TotalDepthC = 0._dp
+    call SetNrCompartments(0)
+    loop: do 
+        DeltaZ = (TotalDepthL - TotalDepthC)
+        call SetNrCompartments(GetNrCompartments() + 1)
+        if (DeltaZ > GetSimulParam_CompDefThick()) then
+            call SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
+        else
+            call SetCompartment_Thickness(GetNrCompartments(), DeltaZ)
+        end if
+        TotalDepthC = TotalDepthC + GetCompartment_Thickness(GetNrCompartments())
+        if ((GetNrCompartments() == max_No_compartments) &
+                .or. (abs(TotalDepthC - TotalDepthL) < 0.0001_dp)) exit loop
+        end do loop
+end subroutine DetermineNrandThicknessCompartments
 
 !! Global variables section !!
 
@@ -2659,6 +3208,20 @@ subroutine SetSWCiniFile(str)
     
     SWCiniFile = str
 end subroutine SetSWCiniFile
+
+function GetSWCiniDescription() result(str)
+    !! Getter for the "SWCiniDescription" global variable.
+    character(len=len(SWCiniDescription)) :: str
+    
+    str = SWCiniDescription
+end function GetSWCiniDescription
+
+subroutine SetSWCiniDescription(str)
+    !! Setter for the "SWCiniDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    SWCiniDescription = str
+end subroutine SetSWCiniDescription
 
 
 function GetSWCiniFileFull() result(str)
@@ -2775,6 +3338,21 @@ subroutine SetMultipleProjectFileFull(str)
 end subroutine SetMultipleProjectFileFull
 
 
+function GetFullFileNameProgramParameters() result(str)
+    !! Getter for the "FullFileNameProgramParameters" global variable.
+    character(len=len(FullFileNameProgramParameters)) :: str
+    
+    str = FullFileNameProgramParameters
+end function GetFullFileNameProgramParameters
+
+subroutine SetFullFileNameProgramParameters(str)
+    !! Setter for the "FullFileNameProgramParameters" global variable.
+    character(len=*), intent(in) :: str
+    
+    FullFileNameProgramParameters = str
+end subroutine SetFullFileNameProgramParameters
+
+
 logical function LeapYear(Year)
     integer(int32), intent(in) :: Year
 
@@ -2802,7 +3380,6 @@ subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     open(newunit=fhandle, file=trim(FullNameProjectFile), status='old', action='read')
     read(fhandle, *) DescriptionOfProject
     DescriptionOfProject = trim(DescriptionOfProject)
-
     close(fhandle)
 end subroutine LoadProjectDescription
 
@@ -2864,7 +3441,142 @@ subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
     close(fhandle)
 end subroutine CheckFilesInProject
 
+
+real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
+                                     SumGDD, Zmin, Zmax, ShapeFactor,&
+                                     TypeDays)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: LZmax
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDLZmax
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: Zmin
+    real(dp), intent(in) :: Zmax
+    integer(int8), intent(in) :: ShapeFactor
+    integer(intEnum), intent(in) :: TypeDays
+
+    real(dp) :: Zini, Zr
+    integer(int32) :: VirtualDay, T0, rootmax_rounded, zmax_rounded
+
+    select case (TypeDays)
+    case (modeCycle_GDDDays)
+        Zr = ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, SumGDD, &
+                                      Zmin, Zmax)
+    case default
+        Zr = ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
+    end select
+
+    ! restrictive soil layer
+    call SetSimulation_SCor(1._sp)
+
+    rootmax_rounded = roundc(real(GetSoil_RootMax()*1000, kind=dp), &
+                             mold=rootmax_rounded)
+    zmax_rounded = roundc(Zmax*1000, mold=zmax_rounded)
+
+    if (rootmax_rounded < zmax_rounded) then
+        call ZrAdjustedToRestrictiveLayers(Zr, GetSoil_NrSoilLayers(), &
+                                           GetSoilLayer(), Zr)
+    end if
+
+    ActualRootingDepth = Zr
+
+
+    contains
+
+
+    real(dp) function ActualRootingDepthDays(DAP, L0, LZmax, L1234, Zmin, Zmax)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L0
+        integer(int32), intent(in) :: LZmax
+        integer(int32), intent(in) :: L1234
+        real(dp), intent(in) :: Zmin
+        real(dp), intent(in) :: Zmax
+
+        ! Actual rooting depth at the end of Dayi
+        VirtualDay = DAP - GetSimulation_DelayedDays()
+
+        if ((VirtualDay < 1) .or. (VirtualDay > L1234)) then
+            ActualRootingDepthDays = 0
+        elseif (VirtualDay >= LZmax) then
+            ActualRootingDepthDays = Zmax
+        elseif (Zmin < Zmax) then
+            Zini = ZMin * (GetSimulParam_RootPercentZmin()/100._dp)
+            T0 = roundc(L0/2._dp, mold=T0)
+
+            if (LZmax <= T0) then
+                Zr = Zini + (Zmax-Zini)*VirtualDay*1._dp/LZmax
+            elseif (VirtualDay <= T0) then
+                Zr = Zini
+            else
+                Zr = Zini + (Zmax-Zini) &
+                     * TimeRootFunction(real(VirtualDay, kind=dp), ShapeFactor,&
+                                        real(LZmax, kind=dp), real(T0, kind=dp))
+            end if
+
+            if (Zr > ZMin) then
+                ActualRootingDepthDays = Zr
+            else
+                ActualRootingDepthDays = ZMin
+            end if
+        else
+            ActualRootingDepthDays = ZMax
+        end if
+    end function ActualRootingDepthDays
+
+
+    real(dp) function ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, &
+                                               SumGDD, Zmin, Zmax)
+        integer(int32), intent(in) :: DAP
+        integer(int32), intent(in) :: L1234
+        integer(int32), intent(in) :: GDDL0
+        integer(int32), intent(in) :: GDDLZmax
+        real(dp), intent(in) :: SumGDD
+        real(dp), intent(in) :: Zmin
+        real(dp), intent(in) :: Zmax
+
+        real(dp) :: GDDT0
+
+        ! after sowing the crop has roots even when SumGDD = 0
+        VirtualDay = DAP - GetSimulation_DelayedDays()
+
+        if ((VirtualDay < 1) .or. (VirtualDay > L1234)) then
+            ActualRootingDepthGDDays = 0
+        elseif (SumGDD >= GDDLZmax) then
+            ActualRootingDepthGDDays = Zmax
+        elseif (Zmin < Zmax) then
+            Zini = ZMin * (GetSimulParam_RootPercentZmin()/100._dp)
+            GDDT0 = GDDL0/2._dp
+
+            if (GDDLZmax <= GDDT0) then
+                Zr = Zini + (Zmax-Zini)*SumGDD/GDDLZmax
+            else
+                if (SumGDD <= GDDT0) then
+                    Zr = Zini
+                else
+                    Zr = Zini + (Zmax-Zini) &
+                         * TimeRootFunction(SumGDD, ShapeFactor, &
+                                            real(GDDLZmax, kind=dp), GDDT0)
+                end if
+            end if
+
+            if (Zr > ZMin) then
+                ActualRootingDepthGDDays = Zr
+            else
+                ActualRootingDepthGDDays = ZMin
+            end if
+        else
+            ActualRootingDepthGDDays = ZMax
+        end if
+    end function ActualRootingDepthGDDays
+end function ActualRootingDepth
+
+
+
 !! Global variables section !!
+
+
 
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.
@@ -3352,7 +4064,6 @@ function GetRainFile() result(str)
 
     str = RainFile
 end function GetRainFile
-
 
 subroutine SetRainFile(str)
     !! Setter for the "RainFile" global variable.
@@ -4532,6 +5243,18 @@ type(rep_soil) function GetSoil()
     GetSoil = Soil
 end function GetSoil
 
+real(sp) function GetSoil_RootMax()
+    !! Getter for "RootMax" attribute of the "soil" global variable.
+
+    GetSoil_Rootmax = soil%RootMax
+end function GetSoil_RootMax
+
+integer(int8) function GetSoil_NrSoilLayers()
+    !! Getter for "NrSoilLayers" attribute of the "soil" global variable.
+
+    GetSoil_NrSoilLayers = soil%NrSoilLayers
+end function GetSoil_NrSoilLayers
+
 subroutine SetSoil_REW(REW)
     !! Setter for the "Soil" global variable.
     integer(int8), intent(in) :: REW
@@ -4874,6 +5597,13 @@ function GetCrop_DayN() result(DayN)
 
     DayN = crop%DayN
 end function GetCrop_DayN
+
+function GetCrop_Length() result(Length)
+    !! Getter for the "Length" attribute of the "crop" global variable.
+    integer(int32),dimension(4) :: Length
+
+    Length = crop%Length
+end function GetCrop_Length
 
 function GetCrop_RootMin() result(RootMin)
     !! Getter for the "RootMin" attribute of the "crop" global variable.
@@ -5491,6 +6221,13 @@ subroutine SetCrop_DayN(DayN)
     crop%DayN = DayN
 end subroutine SetCrop_DayN
 
+subroutine SetCrop_Length(Length)
+    !! Setter for the "Length" attribute of the "crop" global variable.
+    integer(int32), dimension(4), intent(in) :: Length
+
+    crop%Length = Length
+end subroutine SetCrop_Length
+
 subroutine SetCrop_RootMin(RootMin)
     !! Setter for the "RootMin" attribute of the "crop" global variable.
     real(dp), intent(in) :: RootMin
@@ -6071,6 +6808,104 @@ subroutine SetOnset_LengthSearchPeriod(LengthSearchPeriod)
 
     onset%LengthSearchPeriod = LengthSearchPeriod
 end subroutine SetOnset_LengthSearchPeriod
+
+function GetEndSeason() result(EndSeason_out)
+    !! Getter for the "endseason" global variable.
+    type(rep_EndSeason) :: EndSeason_out
+
+    EndSeason_out = endseason
+end function GetEndSeason
+
+function GetEndSeason_ExtraYears() result(ExtraYears)
+    !! Getter for the "ExtraYears" attribute of the "endseason" global variable.
+    integer(int32) :: ExtraYears
+
+    ExtraYears = endseason%ExtraYears
+end function GetEndSeason_ExtraYears
+
+function GetEndSeason_GenerateTempOn() result(GenerateTempOn)
+    !! Getter for the "GenerateTempOn" attribute of the "endseason" global variable.
+    logical :: GenerateTempOn
+
+    GenerateTempOn = endseason%GenerateTempOn
+end function GetEndSeason_GenerateTempOn
+
+function GetEndSeason_AirTCriterion() result(AirTCriterion)
+    !! Getter for the "AirTCriterion" attribute of the "endseason" global variable.
+    integer(intEnum) :: AirTCriterion
+
+    AirTCriterion = endseason%AirTCriterion
+end function GetEndSeason_AirTCriterion
+
+function GetEndSeason_StartSearchDayNr() result(StartSearchDayNr)
+    !! Getter for the "StartSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32) :: StartSearchDayNr
+
+    StartSearchDayNr = endseason%StartSearchDayNr
+end function GetEndSeason_StartSearchDayNr
+
+function GetEndSeason_StopSearchDayNr() result(StopSearchDayNr)
+    !! Getter for the "StopSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32) :: StopSearchDayNr
+
+    StopSearchDayNr = endseason%StopSearchDayNr
+end function GetEndSeason_StopSearchDayNr
+
+function GetEndSeason_LengthSearchPeriod() result(LengthSearchPeriod)
+    !! Getter for the "LengthSearchPeriod" attribute of the "endseason" global variable.
+    integer(int32) :: LengthSearchPeriod
+
+    LengthSearchPeriod = endseason%LengthSearchPeriod
+end function GetEndSeason_LengthSearchPeriod
+
+subroutine SetEndSeason(EndSeason_in)
+    !! Setter for the "endseason" global variable.
+    type(rep_EndSeason), intent(in) :: EndSeason_in
+
+    endseason = EndSeason_in
+end subroutine SetEndSeason
+
+subroutine SetEndSeason_ExtraYears(ExtraYears)
+    !! Setter for the "ExtraYears" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: ExtraYears
+
+    endseason%ExtraYears = ExtraYears
+end subroutine SetEndSeason_ExtraYears
+
+subroutine SetEndSeason_GenerateTempOn(GenerateTempOn)
+    !! Setter for the "GenerateTempOn" attribute of the "endseason" global variable.
+    logical, intent(in) :: GenerateTempOn
+
+    endseason%GenerateTempOn = GenerateTempOn
+end subroutine SetEndSeason_GenerateTempOn
+
+subroutine SetEndSeason_AirTCriterion(AirTCriterion)
+    !! Setter for the "AirTCriterion" attribute of the "endseason" global variable.
+    integer(intEnum), intent(in) :: AirTCriterion
+
+    endseason%AirTCriterion = AirTCriterion
+end subroutine SetEndSeason_AirTCriterion
+
+subroutine SetEndSeason_StartSearchDayNr(StartSearchDayNr)
+    !! Setter for the "StartSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: StartSearchDayNr
+
+    endseason%StartSearchDayNr = StartSearchDayNr
+end subroutine SetEndSeason_StartSearchDayNr
+
+subroutine SetEndSeason_StopSearchDayNr(StopSearchDayNr)
+    !! Setter for the "StopSearchDayNr" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: StopSearchDayNr
+
+    endseason%StopSearchDayNr = StopSearchDayNr
+end subroutine SetEndSeason_StopSearchDayNr
+
+subroutine SetEndSeason_LengthSearchPeriod(LengthSearchPeriod)
+    !! Setter for the "LengthSearchPeriod" attribute of the "endseason" global variable.
+    integer(int32), intent(in) :: LengthSearchPeriod
+
+    endseason%LengthSearchPeriod = LengthSearchPeriod
+end subroutine SetEndSeason_LengthSearchPeriod
 
 function GetPerennialPeriod() result(PerennialPeriod_out)
     !! Getter for the "perennialperiod" global variable.
@@ -6771,6 +7606,787 @@ subroutine SetTemperatureRecord_FromString(FromString)
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
 
+function GetSimulation() result(Simulation_out)
+    !! Getter for the "simulation" global variable.
+    type(rep_sim) :: Simulation_out
+
+    Simulation_out = simulation
+end function GetSimulation
+
+function GetSimulation_FromDayNr() result(FromDayNr)
+    !! Getter for the "FromDayNr" attribute of the "simulation" global variable.
+    integer(int32) :: FromDayNr
+
+    FromDayNr = simulation%FromDayNr
+end function GetSimulation_FromDayNr
+
+function GetSimulation_ToDayNr() result(ToDayNr)
+    !! Getter for the "ToDayNr" attribute of the "simulation" global variable.
+    integer(int32) :: ToDayNr
+
+    ToDayNr = simulation%ToDayNr
+end function GetSimulation_ToDayNr
+
+function GetSimulation_ThetaIni_i(i) result(ThetaIni_i)
+    !! Getter for the "ThetaIni" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: ThetaIni_i
+
+    ThetaIni_i = simulation%ThetaIni(i)
+end function GetSimulation_ThetaIni_i
+
+function GetSimulation_ECeIni_i(i) result(ECeIni_i)
+    !! Getter for the "ECeIni" attribute of the "simulation" global variable.
+    integer(int32) :: i
+    real(dp) :: ECeIni_i
+
+    ECeIni_i = simulation%ECeIni(i)
+end function GetSimulation_ECeIni_i
+
+function GetSimulation_SurfaceStorageIni() result(SurfaceStorageIni)
+    !! Getter for the "SurfaceStorageIni" attribute of the "simulation" global variable.
+    real(dp) :: SurfaceStorageIni
+
+    SurfaceStorageIni = simulation%SurfaceStorageIni
+end function GetSimulation_SurfaceStorageIni
+
+function GetSimulation_ECStorageIni() result(ECStorageIni)
+    !! Getter for the "ECStorageIni" attribute of the "simulation" global variable.
+    real(dp) :: ECStorageIni
+
+    ECStorageIni = simulation%ECStorageIni
+end function GetSimulation_ECStorageIni
+
+function GetSimulation_CCini() result(CCini)
+    !! Getter for the "CCini" attribute of the "simulation" global variable.
+    real(dp) :: CCini
+
+    CCini = simulation%CCini
+end function GetSimulation_CCini
+
+function GetSimulation_Bini() result(Bini)
+    !! Getter for the "Bini" attribute of the "simulation" global variable.
+    real(dp) :: Bini
+
+    Bini = simulation%Bini
+end function GetSimulation_Bini
+
+function GetSimulation_Zrini() result(Zrini)
+    !! Getter for the "Zrini" attribute of the "simulation" global variable.
+    real(dp) :: Zrini
+
+    Zrini = simulation%Zrini
+end function GetSimulation_Zrini
+
+function GetSimulation_LinkCropToSimPeriod() result(LinkCropToSimPeriod)
+    !! Getter for the "LinkCropToSimPeriod" attribute of the "simulation" global variable.
+    logical :: LinkCropToSimPeriod
+
+    LinkCropToSimPeriod = simulation%LinkCropToSimPeriod
+end function GetSimulation_LinkCropToSimPeriod
+
+function GetSimulation_ResetIniSWC() result(ResetIniSWC)
+    !! Getter for the "ResetIniSWC" attribute of the "simulation" global variable.
+    logical :: ResetIniSWC
+
+    ResetIniSWC = simulation%ResetIniSWC
+end function GetSimulation_ResetIniSWC
+
+function GetSimulation_InitialStep() result(InitialStep)
+    !! Getter for the "InitialStep" attribute of the "simulation" global variable.
+    integer(int32) :: InitialStep
+
+    InitialStep = simulation%InitialStep
+end function GetSimulation_InitialStep
+
+function GetSimulation_EvapLimitON() result(EvapLimitON)
+    !! Getter for the "EvapLimitON" attribute of the "simulation" global variable.
+    logical :: EvapLimitON
+
+    EvapLimitON = simulation%EvapLimitON
+end function GetSimulation_EvapLimitON
+
+function GetSimulation_EvapWCsurf() result(EvapWCsurf)
+    !! Getter for the "EvapWCsurf" attribute of the "simulation" global variable.
+    real(dp) :: EvapWCsurf
+
+    EvapWCsurf = simulation%EvapWCsurf
+end function GetSimulation_EvapWCsurf
+
+function GetSimulation_EvapStartStg2() result(EvapStartStg2)
+    !! Getter for the "EvapStartStg2" attribute of the "simulation" global variable.
+    integer(int8) :: EvapStartStg2
+
+    EvapStartStg2 = simulation%EvapStartStg2
+end function GetSimulation_EvapStartStg2
+
+function GetSimulation_EvapZ() result(EvapZ)
+    !! Getter for the "EvapZ" attribute of the "simulation" global variable.
+    real(dp) :: EvapZ
+
+    EvapZ = simulation%EvapZ
+end function GetSimulation_EvapZ
+
+function GetSimulation_HIfinal() result(HIfinal)
+    !! Getter for the "HIfinal" attribute of the "simulation" global variable.
+    integer(int32) :: HIfinal
+
+    HIfinal = simulation%HIfinal
+end function GetSimulation_HIfinal
+
+function GetSimulation_DelayedDays() result(DelayedDays)
+    !! Getter for the "DelayedDays" attribute of the "simulation" global variable.
+    integer(int32) :: DelayedDays
+
+    DelayedDays = simulation%DelayedDays
+end function GetSimulation_DelayedDays
+
+function GetSimulation_Germinate() result(Germinate)
+    !! Getter for the "Germinate" attribute of the "simulation" global variable.
+    logical :: Germinate
+
+    Germinate = simulation%Germinate
+end function GetSimulation_Germinate
+
+function GetSimulation_SumEToStress() result(SumEToStress)
+    !! Getter for the "SumEToStress" attribute of the "simulation" global variable.
+    real(dp) :: SumEToStress
+
+    SumEToStress = simulation%SumEToStress
+end function GetSimulation_SumEToStress
+
+function GetSimulation_SumGDD() result(SumGDD)
+    !! Getter for the "SumGDD" attribute of the "simulation" global variable.
+    real(dp) :: SumGDD
+
+    SumGDD = simulation%SumGDD
+end function GetSimulation_SumGDD
+
+function GetSimulation_SumGDDfromDay1() result(SumGDDfromDay1)
+    !! Getter for the "SumGDDfromDay1" attribute of the "simulation" global variable.
+    real(dp) :: SumGDDfromDay1
+
+    SumGDDfromDay1 = simulation%SumGDDfromDay1
+end function GetSimulation_SumGDDfromDay1
+
+function GetSimulation_SCor() result(SCor)
+    !! Getter for the "SCor" attribute of the "simulation" global variable.
+    real(sp) :: SCor
+
+    SCor = simulation%SCor
+end function GetSimulation_SCor
+
+function GetSimulation_MultipleRun() result(MultipleRun)
+    !! Getter for the "MultipleRun" attribute of the "simulation" global variable.
+    logical :: MultipleRun
+
+    MultipleRun = simulation%MultipleRun
+end function GetSimulation_MultipleRun
+
+function GetSimulation_NrRuns() result(NrRuns)
+    !! Getter for the "NrRuns" attribute of the "simulation" global variable.
+    integer(int32) :: NrRuns
+
+    NrRuns = simulation%NrRuns
+end function GetSimulation_NrRuns
+
+function GetSimulation_MultipleRunWithKeepSWC() result(MultipleRunWithKeepSWC)
+    !! Getter for the "MultipleRunWithKeepSWC" attribute of the "simulation" global variable.
+    logical :: MultipleRunWithKeepSWC
+
+    MultipleRunWithKeepSWC = simulation%MultipleRunWithKeepSWC
+end function GetSimulation_MultipleRunWithKeepSWC
+
+function GetSimulation_MultipleRunConstZrx() result(MultipleRunConstZrx)
+    !! Getter for the "MultipleRunConstZrx" attribute of the "simulation" global variable.
+    real(dp) :: MultipleRunConstZrx
+
+    MultipleRunConstZrx = simulation%MultipleRunConstZrx
+end function GetSimulation_MultipleRunConstZrx
+
+function GetSimulation_IrriECw() result(IrriECw)
+    !! Getter for the "IrriECw" attribute of the "simulation" global variable.
+    real(dp) :: IrriECw
+
+    IrriECw = simulation%IrriECw
+end function GetSimulation_IrriECw
+
+function GetSimulation_DayAnaero() result(DayAnaero)
+    !! Getter for the "DayAnaero" attribute of the "simulation" global variable.
+    integer(int8) :: DayAnaero
+
+    DayAnaero = simulation%DayAnaero
+end function GetSimulation_DayAnaero
+
+function GetSimulation_SalinityConsidered() result(SalinityConsidered)
+    !! Getter for the "SalinityConsidered" attribute of the "simulation" global variable.
+    logical :: SalinityConsidered
+
+    SalinityConsidered = simulation%SalinityConsidered
+end function GetSimulation_SalinityConsidered
+
+function GetSimulation_ProtectedSeedling() result(ProtectedSeedling)
+    !! Getter for the "ProtectedSeedling" attribute of the "simulation" global variable.
+    logical :: ProtectedSeedling
+
+    ProtectedSeedling = simulation%ProtectedSeedling
+end function GetSimulation_ProtectedSeedling
+
+function GetSimulation_SWCtopSoilConsidered() result(SWCtopSoilConsidered)
+    !! Getter for the "SWCtopSoilConsidered" attribute of the "simulation" global variable.
+    logical :: SWCtopSoilConsidered
+
+    SWCtopSoilConsidered = simulation%SWCtopSoilConsidered
+end function GetSimulation_SWCtopSoilConsidered
+
+function GetSimulation_LengthCuttingInterval() result(LengthCuttingInterval)
+    !! Getter for the "LengthCuttingInterval" attribute of the "simulation" global variable.
+    integer(int32) :: LengthCuttingInterval
+
+    LengthCuttingInterval = simulation%LengthCuttingInterval
+end function GetSimulation_LengthCuttingInterval
+
+function GetSimulation_YearSeason() result(YearSeason)
+    !! Getter for the "YearSeason" attribute of the "simulation" global variable.
+    integer(int8) :: YearSeason
+
+    YearSeason = simulation%YearSeason
+end function GetSimulation_YearSeason
+
+function GetSimulation_RCadj() result(RCadj)
+    !! Getter for the "RCadj" attribute of the "simulation" global variable.
+    integer(int8) :: RCadj
+
+    RCadj = simulation%RCadj
+end function GetSimulation_RCadj
+
+function GetSimulation_YearStartCropCycle() result(YearStartCropCycle)
+    !! Getter for the "YearStartCropCycle" attribute of the "simulation" global variable.
+    integer(int32) :: YearStartCropCycle
+
+    YearStartCropCycle = simulation%YearStartCropCycle
+end function GetSimulation_YearStartCropCycle
+
+function GetSimulation_CropDay1Previous() result(CropDay1Previous)
+    !! Getter for the "CropDay1Previous" attribute of the "simulation" global variable.
+    integer(int32) :: CropDay1Previous
+
+    CropDay1Previous = simulation%CropDay1Previous
+end function GetSimulation_CropDay1Previous
+
+subroutine SetSimulation(Simulation_in)
+    !! Setter for the "simulation" global variable.
+    type(rep_sim), intent(in) :: Simulation_in
+
+    simulation = Simulation_in
+end subroutine SetSimulation
+
+subroutine SetSimulation_FromDayNr(FromDayNr)
+    !! Setter for the "FromDayNr" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: FromDayNr
+
+    simulation%FromDayNr = FromDayNr
+end subroutine SetSimulation_FromDayNr
+
+subroutine SetSimulation_ToDayNr(ToDayNr)
+    !! Setter for the "ToDayNr" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: ToDayNr
+
+    simulation%ToDayNr = ToDayNr
+end subroutine SetSimulation_ToDayNr
+
+subroutine SetSimulation_ThetaIni_i(i, ThetaIni_i)
+    !! Setter for the "ThetaIni" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: ThetaIni_i
+
+    simulation%ThetaIni(i) = ThetaIni_i
+end subroutine SetSimulation_ThetaIni_i
+
+subroutine SetSimulation_ECeIni_i(i, ECeIni_i)
+    !! Setter for the "ECeIni" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: ECeIni_i
+
+    simulation%ECeIni(i) = ECeIni_i
+end subroutine SetSimulation_ECeIni_i
+
+subroutine SetSimulation_SurfaceStorageIni(SurfaceStorageIni)
+    !! Setter for the "SurfaceStorageIni" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SurfaceStorageIni
+
+    simulation%SurfaceStorageIni = SurfaceStorageIni
+end subroutine SetSimulation_SurfaceStorageIni
+
+subroutine SetSimulation_ECStorageIni(ECStorageIni)
+    !! Setter for the "ECStorageIni" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: ECStorageIni
+
+    simulation%ECStorageIni = ECStorageIni
+end subroutine SetSimulation_ECStorageIni
+
+subroutine SetSimulation_CCini(CCini)
+    !! Setter for the "CCini" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: CCini
+
+    simulation%CCini = CCini
+end subroutine SetSimulation_CCini
+
+subroutine SetSimulation_Bini(Bini)
+    !! Setter for the "Bini" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: Bini
+
+    simulation%Bini = Bini
+end subroutine SetSimulation_Bini
+
+subroutine SetSimulation_Zrini(Zrini)
+    !! Setter for the "Zrini" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: Zrini
+
+    simulation%Zrini = Zrini
+end subroutine SetSimulation_Zrini
+
+subroutine SetSimulation_LinkCropToSimPeriod(LinkCropToSimPeriod)
+    !! Setter for the "LinkCropToSimPeriod" attribute of the "simulation" global variable.
+    logical, intent(in) :: LinkCropToSimPeriod
+
+    simulation%LinkCropToSimPeriod = LinkCropToSimPeriod
+end subroutine SetSimulation_LinkCropToSimPeriod
+
+subroutine SetSimulation_ResetIniSWC(ResetIniSWC)
+    !! Setter for the "ResetIniSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: ResetIniSWC
+
+    simulation%ResetIniSWC = ResetIniSWC
+end subroutine SetSimulation_ResetIniSWC
+
+subroutine SetSimulation_InitialStep(InitialStep)
+    !! Setter for the "InitialStep" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: InitialStep
+
+    simulation%InitialStep = InitialStep
+end subroutine SetSimulation_InitialStep
+
+subroutine SetSimulation_EvapLimitON(EvapLimitON)
+    !! Setter for the "EvapLimitON" attribute of the "simulation" global variable.
+    logical, intent(in) :: EvapLimitON
+
+    simulation%EvapLimitON = EvapLimitON
+end subroutine SetSimulation_EvapLimitON
+
+subroutine SetSimulation_EvapWCsurf(EvapWCsurf)
+    !! Setter for the "EvapWCsurf" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: EvapWCsurf
+
+    simulation%EvapWCsurf = EvapWCsurf
+end subroutine SetSimulation_EvapWCsurf
+
+subroutine SetSimulation_EvapStartStg2(EvapStartStg2)
+    !! Setter for the "EvapStartStg2" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: EvapStartStg2
+
+    simulation%EvapStartStg2 = EvapStartStg2
+end subroutine SetSimulation_EvapStartStg2
+
+subroutine SetSimulation_EvapZ(EvapZ)
+    !! Setter for the "EvapZ" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: EvapZ
+
+    simulation%EvapZ = EvapZ
+end subroutine SetSimulation_EvapZ
+
+subroutine SetSimulation_HIfinal(HIfinal)
+    !! Setter for the "HIfinal" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: HIfinal
+
+    simulation%HIfinal = HIfinal
+end subroutine SetSimulation_HIfinal
+
+subroutine SetSimulation_DelayedDays(DelayedDays)
+    !! Setter for the "DelayedDays" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: DelayedDays
+
+    simulation%DelayedDays = DelayedDays
+end subroutine SetSimulation_DelayedDays
+
+subroutine SetSimulation_Germinate(Germinate)
+    !! Setter for the "Germinate" attribute of the "simulation" global variable.
+    logical, intent(in) :: Germinate
+
+    simulation%Germinate = Germinate
+end subroutine SetSimulation_Germinate
+
+subroutine SetSimulation_SumEToStress(SumEToStress)
+    !! Setter for the "SumEToStress" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SumEToStress
+
+    simulation%SumEToStress = SumEToStress
+end subroutine SetSimulation_SumEToStress
+
+subroutine SetSimulation_SumGDD(SumGDD)
+    !! Setter for the "SumGDD" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SumGDD
+
+    simulation%SumGDD = SumGDD
+end subroutine SetSimulation_SumGDD
+
+subroutine SetSimulation_SumGDDfromDay1(SumGDDfromDay1)
+    !! Setter for the "SumGDDfromDay1" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: SumGDDfromDay1
+
+    simulation%SumGDDfromDay1 = SumGDDfromDay1
+end subroutine SetSimulation_SumGDDfromDay1
+
+subroutine SetSimulation_SCor(SCor)
+    !! Setter for the "SCor" attribute of the "simulation" global variable.
+    real(sp), intent(in) :: SCor
+
+    simulation%SCor = SCor
+end subroutine SetSimulation_SCor
+
+subroutine SetSimulation_MultipleRun(MultipleRun)
+    !! Setter for the "MultipleRun" attribute of the "simulation" global variable.
+    logical, intent(in) :: MultipleRun
+
+    simulation%MultipleRun = MultipleRun
+end subroutine SetSimulation_MultipleRun
+
+subroutine SetSimulation_NrRuns(NrRuns)
+    !! Setter for the "NrRuns" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: NrRuns
+
+    simulation%NrRuns = NrRuns
+end subroutine SetSimulation_NrRuns
+
+subroutine SetSimulation_MultipleRunWithKeepSWC(MultipleRunWithKeepSWC)
+    !! Setter for the "MultipleRunWithKeepSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: MultipleRunWithKeepSWC
+
+    simulation%MultipleRunWithKeepSWC = MultipleRunWithKeepSWC
+end subroutine SetSimulation_MultipleRunWithKeepSWC
+
+subroutine SetSimulation_MultipleRunConstZrx(MultipleRunConstZrx)
+    !! Setter for the "MultipleRunConstZrx" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: MultipleRunConstZrx
+
+    simulation%MultipleRunConstZrx = MultipleRunConstZrx
+end subroutine SetSimulation_MultipleRunConstZrx
+
+subroutine SetSimulation_IrriECw(IrriECw)
+    !! Setter for the "IrriECw" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: IrriECw
+
+    simulation%IrriECw = IrriECw
+end subroutine SetSimulation_IrriECw
+
+subroutine SetSimulation_DayAnaero(DayAnaero)
+    !! Setter for the "DayAnaero" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: DayAnaero
+
+    simulation%DayAnaero = DayAnaero
+end subroutine SetSimulation_DayAnaero
+
+subroutine SetSimulation_SalinityConsidered(SalinityConsidered)
+    !! Setter for the "SalinityConsidered" attribute of the "simulation" global variable.
+    logical, intent(in) :: SalinityConsidered
+
+    simulation%SalinityConsidered = SalinityConsidered
+end subroutine SetSimulation_SalinityConsidered
+
+subroutine SetSimulation_ProtectedSeedling(ProtectedSeedling)
+    !! Setter for the "ProtectedSeedling" attribute of the "simulation" global variable.
+    logical, intent(in) :: ProtectedSeedling
+
+    simulation%ProtectedSeedling = ProtectedSeedling
+end subroutine SetSimulation_ProtectedSeedling
+
+subroutine SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered)
+    !! Setter for the "SWCtopSoilConsidered" attribute of the "simulation" global variable.
+    logical, intent(in) :: SWCtopSoilConsidered
+
+    simulation%SWCtopSoilConsidered = SWCtopSoilConsidered
+end subroutine SetSimulation_SWCtopSoilConsidered
+
+subroutine SetSimulation_LengthCuttingInterval(LengthCuttingInterval)
+    !! Setter for the "LengthCuttingInterval" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: LengthCuttingInterval
+
+    simulation%LengthCuttingInterval = LengthCuttingInterval
+end subroutine SetSimulation_LengthCuttingInterval
+
+subroutine SetSimulation_YearSeason(YearSeason)
+    !! Setter for the "YearSeason" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: YearSeason
+
+    simulation%YearSeason = YearSeason
+end subroutine SetSimulation_YearSeason
+
+subroutine SetSimulation_RCadj(RCadj)
+    !! Setter for the "RCadj" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RCadj
+
+    simulation%RCadj = RCadj
+end subroutine SetSimulation_RCadj
+
+subroutine SetSimulation_YearStartCropCycle(YearStartCropCycle)
+    !! Setter for the "YearStartCropCycle" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: YearStartCropCycle
+
+    simulation%YearStartCropCycle = YearStartCropCycle
+end subroutine SetSimulation_YearStartCropCycle
+
+subroutine SetSimulation_CropDay1Previous(CropDay1Previous)
+    !! Setter for the "CropDay1Previous" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: CropDay1Previous
+
+    simulation%CropDay1Previous = CropDay1Previous
+end subroutine SetSimulation_CropDay1Previous
+
+function GetSimulation_IniSWC() result(IniSWC)
+    !! Getter for the "IniSWC" attribute of the "simulation" global variable.
+    type(rep_IniSWC) :: IniSWC
+
+    IniSWC = simulation%IniSWC
+end function GetSimulation_IniSWC
+
+function GetSimulation_IniSWC_AtDepths() result(AtDepths)
+    !! Getter for the "AtDepths" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical :: AtDepths
+
+    AtDepths = simulation%IniSWC%AtDepths
+end function GetSimulation_IniSWC_AtDepths
+
+function GetSimulation_IniSWC_NrLoc() result(NrLoc)
+    !! Getter for the "NrLoc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int8) :: NrLoc
+
+    NrLoc = simulation%IniSWC%NrLoc
+end function GetSimulation_IniSWC_NrLoc
+
+function GetSimulation_IniSWC_Loc_i(i) result(Loc_i)
+    !! Getter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable
+    integer(int32), intent(in) :: i
+    real(dp) :: Loc_i
+
+    Loc_i = simulation%IniSWC%Loc(i)
+end function GetSimulation_IniSWC_Loc_i
+
+function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
+    !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
+    integer(int32), intent(in) :: i
+    real(dp) :: VolProc_i
+
+    VolProc_i = simulation%IniSWC%VolProc(i)
+end function GetSimulation_IniSWC_VolProc_i
+
+function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
+    !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
+    integer(int32), intent(in) :: i
+    real(dp) :: SaltECe_i
+
+    SaltECe_i = simulation%IniSWC%SaltECe(i)
+end function GetSimulation_IniSWC_SaltECe_i
+
+function GetSimulation_IniSWC_AtFC() result(AtFC)
+    !! Getter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical :: AtFC
+
+    AtFC = simulation%IniSWC%AtFC
+end function GetSimulation_IniSWC_AtFC
+
+subroutine SetSimulation_IniSWC(IniSWC)
+    !! Setter for the "IniSWC" attribute of the "simulation" global variable.
+    type(rep_IniSWC), intent(in) :: IniSWC
+
+    simulation%IniSWC = IniSWC
+end subroutine SetSimulation_IniSWC
+
+subroutine SetSimulation_IniSWC_AtDepths(AtDepths)
+    !! Setter for the "AtDepths" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: AtDepths
+
+    simulation%IniSWC%AtDepths = AtDepths
+end subroutine SetSimulation_IniSWC_AtDepths
+
+subroutine SetSimulation_IniSWC_NrLoc(NrLoc)
+    !! Setter for the "NrLoc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: NrLoc
+
+    simulation%IniSWC%NrLoc = NrLoc
+end subroutine SetSimulation_IniSWC_NrLoc
+
+subroutine SetSimulation_IniSWC_Loc_i(i, Loc_i)
+    !! Setter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Loc_i
+
+    simulation%IniSWC%Loc(i) = Loc_i
+end subroutine SetSimulation_IniSWC_Loc_i
+
+subroutine SetSimulation_IniSWC_VolProc_i(i, VolProc_i)
+    !! Setter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: VolProc_i
+
+    simulation%IniSWC%VolProc(i) = VolProc_i
+end subroutine SetSimulation_IniSWC_VolProc_i
+
+subroutine SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i)
+    !! Setter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: SaltECe_i
+
+    simulation%IniSWC%SaltECe(i) = SaltECe_i
+end subroutine SetSimulation_IniSWC_SaltECe_i
+!!END ATTEMPT
+
+subroutine SetSimulation_IniSWC_AtFC(AtFC)
+    !! Setter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.
+    logical, intent(in) :: AtFC
+
+    simulation%IniSWC%AtFC = AtFC
+end subroutine SetSimulation_IniSWC_AtFC
+
+function GetSimulation_EffectStress() result(EffectStress)
+    !! Getter for the "EffectStress" attribute of the "simulation" global variable.
+    type(rep_EffectStress) :: EffectStress
+
+    EffectStress = simulation%EffectStress
+end function GetSimulation_EffectStress
+
+function GetSimulation_EffectStress_RedCGC() result(RedCGC)
+    !! Getter for the "RedCGC" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedCGC
+
+    RedCGC = simulation%EffectStress%RedCGC
+end function GetSimulation_EffectStress_RedCGC
+
+function GetSimulation_EffectStress_RedCCX() result(RedCCX)
+    !! Getter for the "RedCCX" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedCCX
+
+    RedCCX = simulation%EffectStress%RedCCX
+end function GetSimulation_EffectStress_RedCCX
+
+function GetSimulation_EffectStress_RedWP() result(RedWP)
+    !! Getter for the "RedWP" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedWP
+
+    RedWP = simulation%EffectStress%RedWP
+end function GetSimulation_EffectStress_RedWP
+
+function GetSimulation_EffectStress_CDecline() result(CDecline)
+    !! Getter for the "CDecline" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    real(dp) :: CDecline
+
+    CDecline = simulation%EffectStress%CDecline
+end function GetSimulation_EffectStress_CDecline
+
+function GetSimulation_EffectStress_RedKsSto() result(RedKsSto)
+    !! Getter for the "RedKsSto" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8) :: RedKsSto
+
+    RedKsSto = simulation%EffectStress%RedKsSto
+end function GetSimulation_EffectStress_RedKsSto
+
+subroutine SetSimulation_EffectStress(EffectStress)
+    !! Setter for the "EffectStress" attribute of the "simulation" global variable.
+    type(rep_EffectStress), intent(in) :: EffectStress
+
+    simulation%EffectStress = EffectStress
+end subroutine SetSimulation_EffectStress
+
+subroutine SetSimulation_EffectStress_RedCGC(RedCGC)
+    !! Setter for the "RedCGC" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedCGC
+
+    simulation%EffectStress%RedCGC = RedCGC
+end subroutine SetSimulation_EffectStress_RedCGC
+
+subroutine SetSimulation_EffectStress_RedCCX(RedCCX)
+    !! Setter for the "RedCCX" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedCCX
+
+    simulation%EffectStress%RedCCX = RedCCX
+end subroutine SetSimulation_EffectStress_RedCCX
+
+subroutine SetSimulation_EffectStress_RedWP(RedWP)
+    !! Setter for the "RedWP" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedWP
+
+    simulation%EffectStress%RedWP = RedWP
+end subroutine SetSimulation_EffectStress_RedWP
+
+subroutine SetSimulation_EffectStress_CDecline(CDecline)
+    !! Setter for the "CDecline" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: CDecline
+
+    simulation%EffectStress%CDecline = CDecline
+end subroutine SetSimulation_EffectStress_CDecline
+
+subroutine SetSimulation_EffectStress_RedKsSto(RedKsSto)
+    !! Setter for the "RedKsSto" attribute of the "EffectStress" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: RedKsSto
+
+    simulation%EffectStress%RedKsSto = RedKsSto
+end subroutine SetSimulation_EffectStress_RedKsSto
+
+function GetSimulation_Storage() result(Storage)
+    !! Getter for the "Storage" attribute of the "simulation" global variable.
+    type(rep_storage) :: Storage
+
+    Storage = simulation%Storage
+end function GetSimulation_Storage
+
+function GetSimulation_Storage_Btotal() result(Btotal)
+    !! Getter for the "Btotal" attribute of the "Storage" attribute of the "simulation" global variable.
+    real(dp) :: Btotal
+
+    Btotal = simulation%Storage%Btotal
+end function GetSimulation_Storage_Btotal
+
+function GetSimulation_Storage_CropString() result(CropString)
+    !! Getter for the "CropString" attribute of the "Storage" attribute of the "simulation" global variable.
+    character(len=len(simulation%storage%CropString)) :: CropString
+
+    CropString = simulation%Storage%CropString
+end function GetSimulation_Storage_CropString
+
+function GetSimulation_Storage_Season() result(Season)
+    !! Getter for the "Season" attribute of the "Storage" attribute of the "simulation" global variable.
+    integer(int8) :: Season
+
+    Season = simulation%Storage%Season
+end function GetSimulation_Storage_Season
+
+subroutine SetSimulation_Storage(Storage)
+    !! Setter for the "Storage" attribute of the "simulation" global variable.
+    type(rep_storage), intent(in) :: Storage
+
+    simulation%Storage = Storage
+end subroutine SetSimulation_Storage
+
+subroutine SetSimulation_Storage_Btotal(Btotal)
+    !! Setter for the "Btotal" attribute of the "Storage" attribute of the "simulation" global variable.
+    real(dp), intent(in) :: Btotal
+
+    simulation%Storage%Btotal = Btotal
+end subroutine SetSimulation_Storage_Btotal
+
+subroutine SetSimulation_Storage_CropString(CropString)
+    !! Setter for the "CropString" attribute of the "Storage" attribute of the "simulation" global variable.
+    character(len=*), intent(in) :: CropString
+
+    simulation%Storage%CropString = CropString
+end subroutine SetSimulation_Storage_CropString
+
+subroutine SetSimulation_Storage_Season(Season)
+    !! Setter for the "Season" attribute of the "Storage" attribute of the "simulation" global variable.
+    integer(int8), intent(in) :: Season
+
+    simulation%Storage%Season = Season
+end subroutine SetSimulation_Storage_Season
+
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
     integer(int32), intent(in) :: i
@@ -6959,6 +8575,399 @@ subroutine SetCompartment_Depo(i1, i2, Depo)
 
     compartment(i1)%Depo(i2) = Depo
 end subroutine SetCompartment_Depo
+
+function GetSoilLayer() result(SoilLayer_out)
+    !! Getter for the "soillayer" global variable.
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: SoilLayer_out
+
+    SoilLayer_out = soillayer
+end function GetSoilLayer
+
+function GetSoilLayer_i(i) result(SoilLayer_i)
+    !! Getter for the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i
+    type(SoilLayerIndividual) :: SoilLayer_i
+
+    SoilLayer_i = soillayer(i)
+end function GetSoilLayer_i
+
+function GetSoilLayer_Description(i) result(Description)
+    !! Getter for the "Description" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    character(len=25) :: Description
+
+    Description = soillayer(i)%Description
+end function GetSoilLayer_Description
+
+function GetSoilLayer_Thickness(i) result(Thickness)
+    !! Getter for the "Thickness" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Thickness
+
+    Thickness = soillayer(i)%Thickness
+end function GetSoilLayer_Thickness
+
+function GetSoilLayer_SAT(i) result(SAT)
+    !! Getter for the "SAT" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: SAT
+
+    SAT = soillayer(i)%SAT
+end function GetSoilLayer_SAT
+
+function GetSoilLayer_FC(i) result(FC)
+    !! Getter for the "FC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: FC
+
+    FC = soillayer(i)%FC
+end function GetSoilLayer_FC
+
+function GetSoilLayer_WP(i) result(WP)
+    !! Getter for the "WP" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: WP
+
+    WP = soillayer(i)%WP
+end function GetSoilLayer_WP
+
+function GetSoilLayer_tau(i) result(tau)
+    !! Getter for the "tau" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: tau
+
+    tau = soillayer(i)%tau
+end function GetSoilLayer_tau
+
+function GetSoilLayer_InfRate(i) result(InfRate)
+    !! Getter for the "InfRate" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: InfRate
+
+    InfRate = soillayer(i)%InfRate
+end function GetSoilLayer_InfRate
+
+function GetSoilLayer_Penetrability(i) result(Penetrability)
+    !! Getter for the "Penetrability" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: Penetrability
+
+    Penetrability = soillayer(i)%Penetrability
+end function GetSoilLayer_Penetrability
+
+function GetSoilLayer_GravelMass(i) result(GravelMass)
+    !! Getter for the "GravelMass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: GravelMass
+
+    GravelMass = soillayer(i)%GravelMass
+end function GetSoilLayer_GravelMass
+
+function GetSoilLayer_GravelVol(i) result(GravelVol)
+    !! Getter for the "GravelVol" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: GravelVol
+
+    GravelVol = soillayer(i)%GravelVol
+end function GetSoilLayer_GravelVol
+
+function GetSoilLayer_WaterContent(i) result(WaterContent)
+    !! Getter for the "WaterContent" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: WaterContent
+
+    WaterContent = soillayer(i)%WaterContent
+end function GetSoilLayer_WaterContent
+
+function GetSoilLayer_Macro(i) result(Macro)
+    !! Getter for the "Macro" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: Macro
+
+    Macro = soillayer(i)%Macro
+end function GetSoilLayer_Macro
+
+function GetSoilLayer_SaltMobility(i) result(SaltMobility)
+    !! Getter for the "SaltMobility" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), dimension(11) :: SaltMobility
+
+    SaltMobility  = soillayer(i)%SaltMobility
+end function GetSoilLayer_SaltMobility
+
+function GetSoilLayer_SaltMobility_i(i1, i2) result(SaltMobility_i)
+    !! Getter for the "SaltMobility" attribute of the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i1, i2
+    real(dp) :: SaltMobility_i
+
+    SaltMobility_i = soillayer(i1)%SaltMobility(i2)
+end function GetSoilLayer_SaltMobility_i
+
+function GetSoilLayer_SC(i) result(SC)
+    !! Getter for the "SC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: SC
+
+    SC = soillayer(i)%SC
+end function GetSoilLayer_SC
+
+function GetSoilLayer_SCP1(i) result(SCP1)
+    !! Getter for the "SCP1" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: SCP1
+
+    SCP1 = soillayer(i)%SCP1
+end function GetSoilLayer_SCP1
+
+function GetSoilLayer_UL(i) result(UL)
+    !! Getter for the "UL" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: UL
+
+    UL = soillayer(i)%UL
+end function GetSoilLayer_UL
+
+function GetSoilLayer_Dx(i) result(Dx)
+    !! Getter for the "Dx" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: Dx
+
+    Dx = soillayer(i)%Dx
+end function GetSoilLayer_Dx
+
+function GetSoilLayer_SoilClass(i) result(SoilClass)
+    !! Getter for the "SoilClass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8) :: SoilClass
+
+    SoilClass = soillayer(i)%SoilClass
+end function GetSoilLayer_SoilClass
+
+function GetSoilLayer_CRa(i) result(CRa)
+    !! Getter for the "CRa" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: CRa
+
+    CRa = soillayer(i)%CRa
+end function GetSoilLayer_CRa
+
+function GetSoilLayer_CRb(i) result(CRb)
+    !! Getter for the "CRb" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp) :: CRb
+
+    CRb = soillayer(i)%CRb
+end function GetSoilLayer_CRb
+
+subroutine SetSoilLayer(SoilLayer_in)
+    !! Setter for the "soillayer" global variable.
+    type(SoilLayerIndividual), dimension(max_SoilLayers), intent(in) :: SoilLayer_in
+
+    soillayer = SoilLayer_in
+end subroutine SetSoilLayer
+
+subroutine SetSoilLayer_i(i, SoilLayer_i)
+    !! Setter for the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i
+    type(SoilLayerIndividual), intent(in) :: SoilLayer_i
+
+    soillayer(i) = SoilLayer_i
+end subroutine SetSoilLayer_i
+
+subroutine SetSoilLayer_Description(i, Description)
+    !! Setter for the "Description" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    character(len=25), intent(in) :: Description
+
+    soillayer(i)%Description = Description
+end subroutine SetSoilLayer_Description
+
+subroutine SetSoilLayer_Thickness(i, Thickness)
+    !! Setter for the "Thickness" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Thickness
+
+    soillayer(i)%Thickness = Thickness
+end subroutine SetSoilLayer_Thickness
+
+subroutine SetSoilLayer_SAT(i, SAT)
+    !! Setter for the "SAT" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: SAT
+
+    soillayer(i)%SAT = SAT
+end subroutine SetSoilLayer_SAT
+
+subroutine SetSoilLayer_FC(i, FC)
+    !! Setter for the "FC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: FC
+
+    soillayer(i)%FC = FC
+end subroutine SetSoilLayer_FC
+
+subroutine SetSoilLayer_WP(i, WP)
+    !! Setter for the "WP" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: WP
+
+    soillayer(i)%WP = WP
+end subroutine SetSoilLayer_WP
+
+subroutine SetSoilLayer_tau(i, tau)
+    !! Setter for the "tau" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: tau
+
+    soillayer(i)%tau = tau
+end subroutine SetSoilLayer_tau
+
+subroutine SetSoilLayer_InfRate(i, InfRate)
+    !! Setter for the "InfRate" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: InfRate
+
+    soillayer(i)%InfRate = InfRate
+end subroutine SetSoilLayer_InfRate
+
+subroutine SetSoilLayer_Penetrability(i, Penetrability)
+    !! Setter for the "Penetrability" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: Penetrability
+
+    soillayer(i)%Penetrability = Penetrability
+end subroutine SetSoilLayer_Penetrability
+
+subroutine SetSoilLayer_GravelMass(i, GravelMass)
+    !! Setter for the "GravelMass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: GravelMass
+
+    soillayer(i)%GravelMass = GravelMass
+end subroutine SetSoilLayer_GravelMass
+
+subroutine SetSoilLayer_GravelVol(i, GravelVol)
+    !! Setter for the "GravelVol" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: GravelVol
+
+    soillayer(i)%GravelVol = GravelVol
+end subroutine SetSoilLayer_GravelVol
+
+subroutine SetSoilLayer_WaterContent(i, WaterContent)
+    !! Setter for the "WaterContent" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: WaterContent
+
+    soillayer(i)%WaterContent = WaterContent
+end subroutine SetSoilLayer_WaterContent
+
+subroutine SetSoilLayer_Macro(i, Macro)
+    !! Setter for the "Macro" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: Macro
+
+    soillayer(i)%Macro = Macro
+end subroutine SetSoilLayer_Macro
+
+subroutine SetSoilLayer_SaltMobility(i, SaltMobility)
+    !! Setter for the "SaltMobility" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), dimension(11) :: SaltMobility
+
+    soillayer(i)%SaltMobility = SaltMobility
+end subroutine SetSoilLayer_SaltMobility
+
+subroutine SetSoilLayer_SaltMobility_i(i1, i2, SaltMobility_i)
+    !! Setter for the "SaltMobility" attribute of the "soillayer" global variable (individual element)
+    integer(int32), intent(in) :: i1, i2
+    real(dp) :: SaltMobility_i
+
+    soillayer(i1)%SaltMobility(i2) = SaltMobility_i
+end subroutine SetSoilLayer_SaltMobility_i
+
+subroutine SetSoilLayer_SC(i, SC)
+    !! Setter for the "SC" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: SC
+
+    soillayer(i)%SC = SC
+end subroutine SetSoilLayer_SC
+
+subroutine SetSoilLayer_SCP1(i, SCP1)
+    !! Setter for the "SCP1" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: SCP1
+
+    soillayer(i)%SCP1 = SCP1
+end subroutine SetSoilLayer_SCP1
+
+subroutine SetSoilLayer_UL(i, UL)
+    !! Setter for the "UL" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: UL
+
+    soillayer(i)%UL = UL
+end subroutine SetSoilLayer_UL
+
+subroutine SetSoilLayer_Dx(i, Dx)
+    !! Setter for the "Dx" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Dx
+
+    soillayer(i)%Dx = Dx
+end subroutine SetSoilLayer_Dx
+
+subroutine SetSoilLayer_SoilClass(i, SoilClass)
+    !! Setter for the "SoilClass" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    integer(int8), intent(in) :: SoilClass
+
+    soillayer(i)%SoilClass = SoilClass
+end subroutine SetSoilLayer_SoilClass
+
+subroutine SetSoilLayer_CRa(i, CRa)
+    !! Setter for the "CRa" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: CRa
+
+    soillayer(i)%CRa = CRa
+end subroutine SetSoilLayer_CRa
+
+subroutine SetSoilLayer_CRb(i, CRb)
+    !! Setter for the "CRb" attribute of the "soillayer" global variable.
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: CRb
+
+    soillayer(i)%CRb = CRb
+end subroutine SetSoilLayer_CRb
+
+function GetManDescription() result(str)
+    !! Getter for the "ManDescription" global variable.
+    character(len=len(ManDescription)) :: str
+    
+    str = ManDescription
+end function GetManDescription
+
+subroutine SetManDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    ManDescription = str
+end subroutine SetManDescription
+
+integer(int32) function GetNrCompartments()
+    !! Getter for the "NrCompartments" global variable.
+
+    GetNrCompartments = NrCompartments
+end function GetNrCompartments
+
+subroutine SetNrCompartments(NrCompartments_in)
+    !! Setter for the "NrCompartments" global variable.
+    integer(int32), intent(in) :: NrCompartments_in
+
+    NrCompartments = NrCompartments_in
+end subroutine SetNrCompartments
 
 
 end module ac_global
