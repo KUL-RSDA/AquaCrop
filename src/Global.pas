@@ -95,7 +95,6 @@ PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
 PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
                                 KsatMM : double;
                                 VAR aParam, bParam : double);
-FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
 PROCEDURE Calculate_Saltmobility(layer : INTEGER;
                                  SaltDiffusion : ShortInt;  // percentage
                                  Macro : ShortInt;
@@ -659,20 +658,6 @@ IF (ROUND(KsatMM*1000) <= 0)
             end;
 END; (* DetermineParametersCR *)
 
-
-
-FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-VAR  celi : INTEGER;
-
-BEGIN
-IF (Comp.theta <= GetSoilLayer_i(Comp.Layer).UL)
-   THEN BEGIN
-        celi := 0;
-        WHILE (Comp.theta > (GetSoilLayer_i(Comp.Layer).Dx) * celi) DO celi := celi + 1;
-        END
-   ELSE celi := GetSoilLayer_i(Comp.Layer).SCP1;
-ActiveCells := celi;
-END; (* ActiveCells *)
 
 
 PROCEDURE Calculate_Saltmobility(layer : INTEGER;

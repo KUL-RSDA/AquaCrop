@@ -4052,6 +4052,9 @@ procedure SetNrCompartments(constref NrCompartments_in : integer);
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
 
+function ActiveCells(Comp : CompartmentIndividual) : integer;
+    external 'aquacrop' name '__ac_global_MOD_activecells';
+
 implementation
 
 

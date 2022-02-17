@@ -3138,6 +3138,23 @@ subroutine AdjustOnsetSearchPeriod()
 end subroutine AdjustOnsetSearchPeriod
 
 
+integer(int32) function ActiveCells(Comp)
+    type(CompartmentIndividual), intent(in) :: Comp
+
+    integer(int32) ::  celi
+
+    if (Comp%theta <= GetSoilLayer_UL(Comp%Layer)) then
+        celi = 0
+        do while (Comp%theta > (GetSoilLayer_Dx(Comp%Layer)) * celi) 
+            celi = celi + 1
+        end do
+    else
+        celi = GetSoilLayer_SCP1(Comp%Layer)
+    end if
+    ActiveCells = celi
+end function ActiveCells
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
