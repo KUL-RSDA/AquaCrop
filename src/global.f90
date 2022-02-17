@@ -3455,6 +3455,73 @@ character(len=17) function DayString(DNr)
 end function DayString
 
 
+subroutine AdjustYearPerennials(TheYearSeason, Sown1stYear, TheCycleMode, &
+          Zmax, ZminYear1, TheCCo, TheSizeSeedling, TheCGC, TheCCx, TheGDDCGC, &
+          ThePlantingDens, TypeOfPlanting, Zmin, TheSizePlant, TheCCini,&
+          TheDaysToCCini, TheGDDaysToCCini)
+    integer(int8), intent(in) :: TheYearSeason
+    logical, intent(in) :: Sown1stYear
+    integer(intEnum), intent(in) :: TheCycleMode
+    real(dp), intent(in) :: Zmax
+    real(dp), intent(in) :: ZminYear1
+    real(dp), intent(in) :: TheCCo
+    real(dp), intent(in) :: TheSizeSeedling
+    real(dp), intent(in) :: TheCGC
+    real(dp), intent(in) :: TheCCx
+    real(dp), intent(in) :: TheGDDCGC
+    integer(int32), intent(in) :: ThePlantingDens
+    integer(intEnum), intent(inout) :: TypeOfPlanting
+    real(dp), intent(inout) :: Zmin
+    real(dp), intent(inout) :: TheSizePlant
+    real(dp), intent(inout) :: TheCCini
+    integer(int32), intent(inout) :: TheDaysToCCini
+    integer(int32), intent(inout) :: TheGDDaysToCCini
+
+    if (TheYearSeason == 1) then
+        if (Sown1stYear .eqv. .true.) then ! planting
+            TypeOfPlanting = plant_seed
+        else
+            TypeOfPlanting = plant_transplant
+        end if
+        Zmin = ZminYear1  ! rooting depth
+    else
+        TypeOfPlanting = plant_regrowth ! planting
+        Zmin = Zmax  ! rooting depth
+        ! plant size by regrowth
+        if (roundc(100._dp*TheSizePlant,mold=1_int32) < &
+            roundc(100._dp*TheSizeSeedling,mold=1_int32)) then
+            TheSizePlant = 10._dp * TheSizeSeedling
+        end if
+        if (roundc(100._dp*TheSizePlant,mold=1_int32) > &
+            roundc((100._dp*TheCCx*10000._dp)/&
+                   (ThePlantingDens/10000._dp),mold=1_int32)) then
+            TheSizePlant = (TheCCx*10000._dp)/(ThePlantingDens/10000._dp)
+            ! adjust size plant to maximum possible
+        end if
+    end if
+    TheCCini = (ThePlantingDens/10000._dp) * (TheSizePlant/10000._dp)
+    TheDaysToCCini = TimeToCCini(TypeOfPlanting, ThePlantingDens, &
+                       TheSizeSeedling, TheSizePlant, TheCCx, TheCGC)
+    if (TheCycleMode == modeCycle_GDDDays) then
+        TheGDDaysToCCini = TimeToCCini(TypeOfPlanting, ThePlantingDens, &
+                       TheSizeSeedling, TheSizePlant, TheCCx, TheGDDCGC)
+    else
+        TheGDDaysToCCini = undef_int
+    end if
+end subroutine AdjustYearPerennials
+
+
+subroutine NoCropCalendar()
+    call SetCalendarFile('(None)')
+    call SetCalendarFileFull(GetCalendarFile())  ! no file 
+    call SetCalendarDescription('')
+    call SetOnset_GenerateOn(.false.)
+    call SetOnset_GenerateTempOn(.false.)
+    call SetEndSeason_GenerateTempOn(.false.)
+    call SetCalendarDescription('No calendar for the Seeding/Planting year')
+end subroutine NoCropCalendar
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)

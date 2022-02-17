@@ -194,22 +194,6 @@ PROCEDURE LoadGroundWater(FullName : string;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
 
-PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
-                               Sown1stYear : BOOLEAN;
-                               TheCycleMode : rep_modeCycle;
-                               Zmax,ZminYear1,TheCCo,TheSizeSeedling,
-                               TheCGC,TheCCx,TheGDDCGC : double;
-                               ThePlantingDens : LongInt;
-                               VAR TypeOfPlanting : rep_Planting;
-                               VAR Zmin,TheSizePlant,TheCCini : double;
-                               VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
-
-
-
-
-
-PROCEDURE NoCropCalendar;
-
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
@@ -3462,56 +3446,6 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
-
-
-PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
-                               Sown1stYear : BOOLEAN;
-                               TheCycleMode : rep_modeCycle;
-                               Zmax,ZminYear1,TheCCo,TheSizeSeedling,
-                               TheCGC,TheCCx,TheGDDCGC : double;
-                               ThePlantingDens : INTEGER;
-                               VAR TypeOfPlanting : rep_Planting;
-                               VAR Zmin,TheSizePlant,TheCCini : double;
-                               VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
-BEGIN
-IF (TheYearSeason = 1)
-   THEN BEGIN
-        IF (Sown1stYear = true) // planting
-           THEN TypeOfPlanting := Seed
-           ELSE TypeOfPlanting := Transplant;
-        Zmin := ZminYear1;  // rooting depth
-        END
-   ELSE BEGIN
-        TypeOfPlanting := Regrowth; // planting
-        Zmin := Zmax;  // rooting depth
-        // plant size by regrowth
-        IF (ROUND(100*TheSizePlant) < ROUND(100*TheSizeSeedling))
-           THEN TheSizePlant := 10 * TheSizeSeedling;
-        IF (ROUND(100*TheSizePlant) > ROUND((100*TheCCx*10000)/(ThePlantingDens/10000)))
-           THEN TheSizePlant := (TheCCx*10000)/(ThePlantingDens/10000); // adjust size plant to maximum possible
-        END;
-TheCCini := (ThePlantingDens/10000) * (TheSizePlant/10000);
-TheDaysToCCini := TimeToCCini(TypeOfPlanting,ThePlantingDens,TheSizeSeedling,TheSizePlant,TheCCx,TheCGC);
-IF (TheCycleMode = GDDays)
-   THEN TheGDDaysToCCini := TimeToCCini(TypeOfPlanting,ThePlantingDens,TheSizeSeedling,TheSizePlant,TheCCx,TheGDDCGC)
-   ELSE TheGDDaysToCCini := undef_int;
-END;  (* AdjustYearPerennials *)
-
-
-
-
-PROCEDURE NoCropCalendar;
-BEGIN
-SetCalendarFile('(None)');
-SetCalendarFileFull(GetCalendarFile());  (* no file *)
-SetCalendarDescription('');
-SetOnset_GenerateOn(false);
-SetOnset_GenerateTempOn(false);
-SetEndSeason_GenerateTempOn(false);
-SetCalendarDescription('No calendar for the Seeding/Planting year');
-END; (* NoCropCalendar *)
-
-
 
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
