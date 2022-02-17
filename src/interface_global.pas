@@ -14,11 +14,14 @@ const
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
+    NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
+          'May','June','July','August','September','October','November','December');
 
 type
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)
+    repstring17 = string[17]; (* Date string *)
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
 
@@ -2310,6 +2313,18 @@ procedure SetTemperatureDescription_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturedescription_wrap';
 
+function GetClimDescription(): string;
+
+function GetClimDescription_wrap(): PChar; 
+        external 'aquacrop' name '__ac_interface_global_MOD_getclimdescription_wrap';
+
+procedure SetClimDescription(constref str : string);
+
+procedure SetClimDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setclimdescription_wrap';
+
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
@@ -4051,6 +4066,14 @@ procedure SetNrCompartments(constref NrCompartments_in : integer);
 
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
+
+procedure SetClimData;
+    external 'aquacrop' name '__ac_global_MOD_setclimdata';
+
+function DayString(
+            constref DNr : LongInt) : repstring17;
+    external 'aquacrop' name '__ac_global_MOD_daystring';
+
 
 implementation
 
@@ -6175,6 +6198,26 @@ begin;
      p := PChar(str);
      strlen := Length(str);
      SetTemperatureDescription_wrap(p, strlen);
+end;
+
+
+function GetClimDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetClimDescription_wrap();
+     GetClimDescription := AnsiString(p);
+end;
+
+
+procedure SetClimDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetClimDescription_wrap(p, strlen);
 end;
 
 
