@@ -84,12 +84,6 @@ PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 
-PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
-                             VAR SoilLayer : rep_SoilLayer;
-                             VAR Compartment : rep_Comp;
-                             //InitialWC : rep_InitialWC;
-                             VAR TotalWaterContent : rep_Content);
-
 PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
                                 KsatMM : double;
                                 VAR aParam, bParam : double);
@@ -550,47 +544,6 @@ REPEAT
 UNTIL (compi < 1);
 END; (*  CalculateAdjustedFC *)
 
-
-PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
-                             VAR SoilLayer : rep_SoilLayer;
-                             VAR Compartment : rep_Comp;
-                             VAR TotalWaterContent : rep_Content);
-VAR layeri, compi, celli : INTEGER;
-    Total : double;
-
-BEGIN
-DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers,Compartment);
-
-// Set soil layers and compartments at Field Capacity and determine Watercontent (mm)
-// No salinity in soil layers and compartmens
-// Absence of ground water table (FCadj = FC)
-Total := 0;
-FOR layeri := 1 TO NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-FOR compi := 1 TO NrCompartments DO
-    BEGIN
-    Compartment[compi].Theta := GetSoilLayer_i(Compartment[compi].Layer).FC/100;
-    Compartment[compi].FCadj := GetSoilLayer_i(Compartment[compi].Layer).FC;
-    Compartment[compi].DayAnaero := 0;
-    For celli := 1 TO GetSoilLayer_i(Compartment[compi].Layer).SCP1 DO
-        BEGIN // salinity in cells
-        Compartment[compi].Salt[celli] := 0.0;
-        Compartment[compi].Depo[celli] := 0.0;
-        END;
-    SetSimulation_ThetaIni_i(compi,Compartment[compi].Theta);
-    SetSimulation_ECeIni_i(compi,0); // initial soil salinity in dS/m
-    SetSoilLayer_WaterContent(Compartment[compi].Layer, GetSoilLayer_i(Compartment[compi].Layer).WaterContent
-        + GetSimulation_ThetaIni_i(compi)*100*10*Compartment[compi].Thickness);
-    END;
-FOR layeri := 1 TO NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
-SetTotalWaterContent_BeginDay(Total);
-
-// initial soil water content and no salts
-DeclareInitialCondAtFCandNoSalt;
-
-// Number of days with RootZone Anaerobic Conditions
-SetSimulation_DayAnaero(0);
-
-END; (* specify_soil_layer *)
 
 PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
                                 KsatMM : double;
