@@ -30,8 +30,13 @@ real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
 integer(int32), dimension (12), parameter :: DaysInMonth = [31,28,31,30,31,30, &
                                                             31,31,30,31,30,31]
 
-integer(intEnum), parameter :: modeCycle_GDDDays = 0
-    !! index of GDDDays in modeCycle enumerated type
+character(len=10), dimension(12), parameter :: NameMonth = & 
+    [character(len=10) :: 'January','February','March','April','May','June',&
+                'July','August','September','October','November','December']
+
+
+integer(intEnum), parameter :: modeCycle_GDDays = 0
+    !! index of GDDays in modeCycle enumerated type
 integer(intEnum), parameter :: modeCycle_CalendarDays = 1
     !! index of CalendarDays in modeCycle enumerated type
 
@@ -929,6 +934,7 @@ character(len=:), allocatable :: TemperatureDescription
 character(len=:), allocatable :: MultipleProjectFileFull
 character(len=:), allocatable :: FullFileNameProgramParameters
 character(len=:), allocatable :: ManDescription
+character(len=:), allocatable :: ClimDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -1285,7 +1291,7 @@ real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
     integer(int8), intent(in) :: SFRedCCx
 
     select case (TypeDays)
-    case (modeCycle_GDDDays)
+    case (modeCycle_GDDays)
         CanopyCoverNoStressSF = CanopyCoverNoStressGDDaysSF(GDDL0, GDDL123,&
             GDDLMaturity, SumGDD, CCo, CCx, GDDCGC, GDDCDC, SFRedCGC, SFRedCCx)
     case default
@@ -3085,6 +3091,561 @@ subroutine LoadManagement(FullName)
 end subroutine LoadManagement
 
 
+subroutine SaveCrop(totalname)
+    character(len=*), intent(in) :: totalname
+
+    integer :: fhandle
+    integer(int32) :: i, j
+    character(len=:), allocatable :: TempString
+
+    open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
+    write(fhandle, '(a)') GetCropDescription()
+    ! AquaCrop version
+    write(fhandle, '(a)') '     7.0       : AquaCrop Version (June 2021)'
+    write(fhandle, '(a)') '     1         : File not protected'
+
+    ! SubKind
+    i = 2
+    select case (GetCrop_subkind())
+        case(subkind_Vegetative)
+            i = 1
+            TempString = '         : leafy vegetable crop'
+        case(subkind_Grain)
+            i = 2
+            TempString = '         : fruit/grain producing crop'
+        case(subkind_Tuber)
+            i = 3
+            TempString = '         : root/tuber crop'
+        case(subkind_Forage)
+            i = 4
+            TempString = '         : forage crop'
+    end select
+    write(fhandle, '(i6,a)') i, TempString
+
+    ! Sown, transplanting or regrowth
+    if (GetCrop_Planting() == plant_Seed) then
+        i = 1
+        if (GetCrop_subkind() == subkind_Forage) then
+            write(fhandle, '(i6,a)') i, '         : Crop is sown in 1st year'
+        else
+            write(fhandle, '(i6,a)') i, '         : Crop is sown'
+        end if
+    else
+        if (GetCrop_Planting() == plant_Transplant) then
+            i = 0
+            if (GetCrop_subkind() == subkind_Forage) then
+                write(fhandle, '(i6,a)') i, &
+                                    '         : Crop is transplanted in 1st year'
+            else
+                write(fhandle, '(i6,a)') i, &
+                                    '         : Crop is transplanted'
+            end if
+        else
+            i = -9
+            write(fhandle, '(i6,a)') i, &
+                                    '         : Crop is regrowth'
+        end if
+    end if
+
+    ! Mode (description crop cycle)
+    i = 1
+    TempString = '         : Determination of crop cycle : by calendar days'
+    if (GetCrop_ModeCycle() == ModeCycle_GDDays) then
+        i = 0
+        TempString = '         : Determination of crop cycle : by growing degree-days'
+    end if
+    write(fhandle, '(i6,a)') i, TempString
+
+    ! p correction for ET
+    if (GetCrop_pMethod() == pMethod_NoCorrection) then
+        j = 0
+        write(fhandle, '(i6,a)') j, & 
+            '         : No adjustment by ETo of soil water depletion factors (p)'
+    else
+        j = 1
+        write(fhandle, '(i6,a)') j, & 
+            '         : Soil water depletion factors (p) are adjusted by ETo'
+    end if
+
+    ! temperatures controlling crop development
+    write(fhandle, '(f8.1,a)') GetCrop_Tbase(), & 
+    '       : Base temperature (degC) below which crop development does not progress'
+    write(fhandle, '(f8.1,a)') GetCrop_Tupper(), &
+    '       : Upper temperature (degC) above which crop development no longer increases with an increase in temperature'
+
+    ! required growing degree days to complete the crop cycle (is identical as to maturity)
+    write(fhandle, '(i6,a)') GetCrop_GDDaysToHarvest(), &
+    '         : Total length of crop cycle in growing degree-days'
+
+    ! water stress
+    write(fhandle, '(f9.2,a)') GetCrop_pLeafDefUL(), &
+    '      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold'
+    write(fhandle, '(f9.2,a)') GetCrop_pLeafDefLL(), &
+    '      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold'
+    write(fhandle, '(f8.1,a)') GetCrop_KsShapeFactorLeaf(), &
+    '       : Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)'
+    write(fhandle, '(f9.2,a)') GetCrop_pdef(), &
+    '      : Soil water depletion fraction for stomatal control (p - sto) - Upper threshold'
+    write(fhandle, '(f8.1,a)') GetCrop_KsShapeFactorStomata(), &
+    '       : Shape factor for water stress coefficient for stomatal control (0.0 = straight line)'
+    write(fhandle, '(f9.2,a)') GetCrop_pSenescence(), &
+    '      : Soil water depletion factor for canopy senescence (p - sen) - Upper threshold'
+    write(fhandle, '(f8.1,a)') GetCrop_KsShapeFactorSenescence(), &
+    '       : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)'
+    write(fhandle, '(i6,a)') GetCrop_SumEToDelaySenescence(), &
+    '         : Sum(ETo) during dormant period to be exceeded before crop is permanently wilted'
+    if (GetCrop_pPollination() == undef_int) then
+        write(fhandle, '(f9.2,a)') GetCrop_pPollination(), &
+        '      : Soil water depletion factor for pollination - Not Applicable'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_pPollination(), &
+        '      : Soil water depletion factor for pollination (p - pol) - Upper threshold'
+    end if
+    write(fhandle, '(i6,a)') GetCrop_AnaeroPoint(), &
+    '         : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)'
+
+    ! stress response
+    write(fhandle, '(i6,a)') GetCrop_StressResponse_Stress(), &
+    '         : Considered soil fertility stress for calibration of stress response (%)'
+    if (GetCrop_StressResponse_ShapeCGC() > 24.9_dp) then
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCGC(), &
+        '      : Response of canopy expansion is not considered'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCGC(), &
+        '      : Shape factor for the response of canopy expansion to soil fertility stress'
+    end if
+    if (GetCrop_StressResponse_ShapeCCX() > 24.9_dp) then
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCCX(), &
+        '      : Response of maximum canopy cover is not considered'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCCX(), &
+        '      : Shape factor for the response of maximum canopy cover to soil fertility stress'
+    end if
+    if (GetCrop_StressResponse_ShapeWP() > 24.9_dp) then
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeWP(), &
+        '      : Response of crop Water Productivity is not considered'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeWP(), &
+        '      : Shape factor for the response of crop Water Productivity to soil fertility stress'
+    end if
+    if (GetCrop_StressResponse_ShapeCDecline() > 24.9_dp) then
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCDecline(), &
+        '      : Response of decline of canopy cover is not considered'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCDecline(), &
+        '      : Shape factor for the response of decline of canopy cover to soil fertility stress'
+    end if
+    write(fhandle, '(a)') '    -9         : dummy - Parameter no Longer required'
+
+    ! temperature stress
+    if (int(GetCrop_Tcold(), int32) == undef_int) then
+        write(fhandle, '(i6,a)') GetCrop_Tcold(), &
+        '         : Cold (air temperature) stress affecting pollination - not considered'
+    else
+        write(fhandle, '(i6,a)') GetCrop_Tcold(), &
+        '         : Minimum air temperature below which pollination starts to fail (cold stress) (degC)'
+    end if
+    if (int(GetCrop_Theat(), int32) == undef_int) then
+        write(fhandle, '(i6,a)') GetCrop_Theat(), &
+        '         : Heat (air temperature) stress affecting pollination - not considered'
+    else
+        write(fhandle, '(i6,a)') GetCrop_Theat(), &
+        '         : Maximum air temperature above which pollination starts to fail (heat stress) (degC)'
+    end if
+    if (roundc(GetCrop_GDtranspLow(), mold=1) == undef_int) then
+        write(fhandle, '(f8.1,a)') GetCrop_GDtranspLow(), &
+        '       : Cold (air temperature) stress on crop transpiration not considered'
+    else
+        write(fhandle, '(f8.1,a)') GetCrop_GDtranspLow(), &
+        '       : Minimum growing degrees required for full crop transpiration (degC - day)'
+    end if
+
+    ! salinity stress
+    write(fhandle, '(i6,a)') GetCrop_ECemin(), &
+    '         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)'
+    write(fhandle, '(i6,a)') GetCrop_ECemax(), &
+    '         : Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)'
+    write(fhandle, '(a)') '    -9         : Dummy - no longer applicable' ! shape factor Ks(salt)-ECe
+    write(fhandle, '(i6,a)') GetCrop_CCsaltDistortion(), &
+    '         : Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))'
+    write(fhandle, '(i6,a)') GetCrop_ResponseECsw(), &
+    '         : Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))'
+
+    ! evapotranspiration
+    write(fhandle, '(f9.2,a)') GetCrop_KcTop(),  &
+    '      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)'
+    write(fhandle, '(f10.3,a)') GetCrop_KcDecline(), &
+    '     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.'
+    write(fhandle, '(f9.2,a)') GetCrop_RootMin(), &
+    '      : Minimum effective rooting depth (m)'
+    write(fhandle, '(f9.2,a)') GetCrop_RootMax(), &
+    '      : Maximum effective rooting depth (m)'
+    write(fhandle, '(i6,a)') GetCrop_RootShape(), &
+    '         : Shape factor describing root zone expansion'
+    write(fhandle, '(f10.3,a)') GetCrop_SmaxTopQuarter(), &
+    '     : Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone'
+    write(fhandle, '(f10.3,a)') GetCrop_SmaxBotQuarter(), &
+    '     : Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone'
+    write(fhandle, '(i6,a)') GetCrop_CCEffectEvapLate(), &
+    '         : Effect of canopy cover in reducing soil evaporation in late season stage'
+
+    ! canopy development
+    write(fhandle, '(f9.2,a)') GetCrop_SizeSeedling(), &
+    '      : Soil surface covered by an individual seedling at 90 % emergence (cm2)'
+    write(fhandle, '(f9.2,a)') GetCrop_SizePlant(), &
+    '      : Canopy size of individual plant (re-growth) at 1st day (cm2)'
+    write(fhandle, '(i9,a)') GetCrop_PlantingDens(), &
+    '      : Number of plants per hectare'
+    write(fhandle, '(f12.5,a)') GetCrop_CGC(), &
+    '   : Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)'
+    if (GetCrop_YearCCx() == undef_int) then
+        write(fhandle, '(i6,a)') GetCrop_YearCCx(), &
+        '         : Number of years at which CCx declines to 90 % of its value due to self-thinning - Not Applicable'
+    else
+        write(fhandle, '(i6,a)') GetCrop_YearCCx(), &
+        '         : Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials'
+    end if
+    if (roundc(GetCrop_CCxRoot(), mold=1) == undef_int) then
+        write(fhandle, '(f9.2,a)') GetCrop_CCxRoot(), &
+        '      : Shape factor of the decline of CCx over the years due to self-thinning - Not Applicable'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_CCxRoot(), &
+        '      : Shape factor of the decline of CCx over the years due to self-thinning - for Perennials'
+    end if
+    write(fhandle, '(a)') '    -9         : dummy - Parameter no Longer required'
+
+    write(fhandle, '(f9.2,a)') GetCrop_CCx(), &
+    '      : Maximum canopy cover (CCx) in fraction soil cover'
+    write(fhandle, '(f12.5,a)') GetCrop_CDC(), &
+    '   : Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)'
+    if (GetCrop_Planting() == plant_Seed) then
+        write(fhandle, '(i6,a)') GetCrop_DaysToGermination(), &
+        '         : Calendar Days: from sowing to emergence'
+        write(fhandle, '(i6,a)') GetCrop_DaysToMaxRooting(), &
+        '         : Calendar Days: from sowing to maximum rooting depth'
+        write(fhandle, '(i6,a)') GetCrop_DaysToSenescence(), &
+        '         : Calendar Days: from sowing to start senescence'
+        write(fhandle, '(i6,a)') GetCrop_DaysToHarvest(), &
+        '         : Calendar Days: from sowing to maturity (length of crop cycle)'
+        if (GetCrop_subkind() == subkind_Tuber) then
+            write(fhandle, '(i6,a)') GetCrop_DaysToFlowering(), &
+            '         : Calendar Days: from sowing to start of yield formation'
+        else
+            write(fhandle, '(i6,a)') GetCrop_DaysToFlowering(), &
+            '         : Calendar Days: from sowing to flowering'
+        end if
+    else
+        if (GetCrop_Planting() == plant_Transplant) then
+            write(fhandle, '(i6,a)') GetCrop_DaysToGermination(), &
+            '         : Calendar Days: from transplanting to recovered transplant'
+            write(fhandle, '(i6,a)') GetCrop_DaysToMaxRooting(), &
+            '         : Calendar Days: from transplanting to maximum rooting depth'
+            write(fhandle, '(i6,a)') GetCrop_DaysToSenescence(), &
+            '         : Calendar Days: from transplanting to start senescence'
+            write(fhandle, '(i6,a)') GetCrop_DaysToHarvest(), &
+            '         : Calendar Days: from transplanting to maturity'
+            if (GetCrop_subkind() == subkind_Tuber) then
+                write(fhandle, '(i6,a)') GetCrop_DaysToFlowering(), &
+                '         : Calendar Days: from transplanting to start of yield formation'
+            else
+                write(fhandle, '(i6,a)') GetCrop_DaysToFlowering(), &
+                '         : Calendar Days: from transplanting to flowering'
+            end if
+        else
+            ! planting = regrowth
+            write(fhandle, '(i6,a)') GetCrop_DaysToGermination(), &
+            '         : Calendar Days: from regrowth to recovering'
+            write(fhandle, '(i6,a)') GetCrop_DaysToMaxRooting(), &
+            '         : Calendar Days: from regrowth to maximum rooting depth'
+            write(fhandle, '(i6,a)') GetCrop_DaysToSenescence(), &
+            '         : Calendar Days: from regrowth to start senescence'
+            write(fhandle, '(i6,a)') GetCrop_DaysToHarvest(), &
+            '         : Calendar Days: from regrowth to maturity'
+            if (GetCrop_subkind() == subkind_Tuber) then
+                write(fhandle, '(i6,a)') GetCrop_DaysToFlowering(), &
+                '         : Calendar Days: from regrowth to start of yield formation'
+            else
+                write(fhandle, '(i6,a)') GetCrop_DaysToFlowering(), &
+                '         : Calendar Days: from regrowth to flowering'
+            end if
+        end if
+    end if
+    write(fhandle, '(i6,a)') GetCrop_LengthFlowering(), &
+    '         : Length of the flowering stage (days)'
+
+    ! Crop.DeterminancyLinked
+    if (GetCrop_DeterminancyLinked() .eqv. .true.) then
+        i = 1
+        TempString = '         : Crop determinancy linked with flowering'
+    else
+        i = 0
+        TempString = '         : Crop determinancy unlinked with flowering'
+    end if
+    write(fhandle, '(i6,a)') i, TempString
+
+    ! Potential excess of fruits (%)
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+                        .or. (GetCrop_subkind() == subkind_Forage)) then
+        write(fhandle, '(i6,a)') undef_int, &
+        '         : parameter NO LONGER required' ! Building up of Harvest Index (% of growing cycle)')
+    else
+        if (GetCrop_fExcess() == undef_int) then
+            TempString = '         : Excess of potential fruits - Not Applicable'
+        else
+            TempString = '         : Excess of potential fruits (%)'
+        end if
+        write(fhandle, '(i6, a)') GetCrop_fExcess(), TempString
+    end if
+
+    ! Building-up of Harvest Index
+    if (GetCrop_DaysToHIo() == undef_int) then
+        TempString = '         : Building up of Harvest Index - Not Applicable'
+    else
+        select case (GetCrop_subkind())
+            case(subkind_Vegetative, subkind_Forage) 
+                TempString = '         : Building up of Harvest Index starting at sowing/transplanting (days)'
+            case(subkind_Grain)
+                TempString = '         : Building up of Harvest Index starting at flowering (days)'
+            case(subkind_Tuber) 
+                TempString = '         : Building up of Harvest Index starting at root/tuber enlargement (days)'
+            case default
+                TempString = '         : Building up of Harvest Index during yield formation (days)'
+        end select
+    end if
+    write(fhandle, '(i6, a)') GetCrop_DaysToHIo(), TempString
+
+    ! yield response to water
+    write(fhandle, '(f8.1,a)') GetCrop_WP(), &
+    '       : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)'
+    write(fhandle, '(i6,a)') GetCrop_WPy(), &
+    '         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)'
+    write(fhandle, '(i6,a)') GetCrop_AdaptedToCO2(), &
+    '         : Crop performance under elevated atmospheric CO2 concentration (%)'
+    write(fhandle, '(i6,a)') GetCrop_HI(), &
+    '         : Reference Harvest Index (HIo) (%)'
+    if (GetCrop_subkind() == subkind_Tuber) then
+        write(fhandle, '(i6,a)') GetCrop_HIincrease(), &
+        '         : Possible increase (%) of HI due to water stress before start of yield formation'
+    else
+        write(fhandle, '(i6,a)') GetCrop_HIincrease(), &
+        '         : Possible increase (%) of HI due to water stress before flowering'
+    end if
+    if (roundc(GetCrop_aCoeff(), mold=1) == undef_int) then
+        write(fhandle, '(f8.1,a)') GetCrop_aCoeff(), &
+            '       : No impact on HI of restricted vegetative growth during yield formation '
+    else
+        write(fhandle, '(f8.1,a)') GetCrop_aCoeff(), &
+        '       : Coefficient describing positive impact on HI of restricted vegetative growth during yield formation'
+    end if
+    if (roundc(GetCrop_bCoeff(), mold=1) == undef_int) then
+        write(fhandle, '(f8.1,a)') GetCrop_bCoeff(), &
+        '       : No effect on HI of stomatal closure during yield formation'
+    else
+        write(fhandle, '(f8.1,a)') GetCrop_bCoeff(), &
+        '       : Coefficient describing negative impact on HI of stomatal closure during yield formation'
+    end if
+    write(fhandle, '(i6,a)') GetCrop_DHImax(), &
+    '         : Allowable maximum increase (%) of specified HI'
+
+    ! growing degree days
+    if (GetCrop_Planting() == plant_Seed) then
+        write(fhandle, '(i6,a)') GetCrop_GDDaysToGermination(), &
+        '         : GDDays: from sowing to emergence'
+        write(fhandle, '(i6,a)') GetCrop_GDDaysToMaxRooting(), &
+        '         : GDDays: from sowing to maximum rooting depth'
+        write(fhandle, '(i6,a)') GetCrop_GDDaysToSenescence(), &
+        '         : GDDays: from sowing to start senescence'
+        write(fhandle, '(i6,a)') GetCrop_GDDaysToHarvest(), &
+        '         : GDDays: from sowing to maturity (length of crop cycle)'
+        if (GetCrop_subkind() == subkind_Tuber) then
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToFlowering(), &
+            '         : GDDays: from sowing to start tuber formation'
+        else
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToFlowering(), &
+            '         : GDDays: from sowing to flowering'
+        end if
+    else
+        if (GetCrop_Planting() == plant_Transplant) then
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToGermination(), &
+            '         : GDDays: from transplanting to recovered transplant'
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToMaxRooting(), &
+            '         : GDDays: from transplanting to maximum rooting depth'
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToSenescence(), &
+            '         : GDDays: from transplanting to start senescence'
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToHarvest(), &
+            '         : GDDays: from transplanting to maturity'
+            if (GetCrop_subkind() == subkind_Tuber) then
+                write(fhandle, '(i6,a)') GetCrop_GDDaysToFlowering(), &
+                '         : GDDays: from transplanting to start yield formation'
+            else
+                write(fhandle, '(i6,a)') GetCrop_GDDaysToFlowering(), &
+                '         : GDDays: from transplanting to flowering'
+            end if
+        else
+            ! Crop.Planting = regrowth
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToGermination(), &
+            '         : GDDays: from regrowth to recovering'
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToMaxRooting(), &
+            '         : GDDays: from regrowth to maximum rooting depth'
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToSenescence(), &
+            '         : GDDays: from regrowth to start senescence'
+            write(fhandle, '(i6,a)') GetCrop_GDDaysToHarvest(), &
+            '         : GDDays: from regrowth to maturity'
+            if (GetCrop_subkind() == subkind_Tuber) then
+                write(fhandle, '(i6,a)') GetCrop_GDDaysToFlowering(), &
+                '         : GDDays: from regrowth to start yield formation'
+            else
+                write(fhandle, '(i6,a)') GetCrop_GDDaysToFlowering(), &
+                '         : GDDays: from regrowth to flowering'
+            end if
+        end if
+    end if
+    write(fhandle, '(i6,a)') GetCrop_GDDLengthFlowering(), &
+    '         : Length of the flowering stage (growing degree days)'
+    write(fhandle, '(f13.6,a)') GetCrop_GDDCGC(), &
+    '  : CGC for GGDays: Increase in canopy cover (in fraction soil cover per growing-degree day)'
+    write(fhandle, '(f13.6,a)') GetCrop_GDDCDC(), &
+    '  : CDC for GGDays: Decrease in canopy cover (in fraction per growing-degree day)'
+    write(fhandle, '(i6,a)') GetCrop_GDDaysToHIo(), &
+    '         : GDDays: building-up of Harvest Index during yield formation'
+
+    ! added to 6.2
+    write(fhandle, '(i6,a)') GetCrop_DryMatter(), &
+    '         : dry matter content (%) of fresh yield'
+
+    ! added to 7.0 - Perennial crops
+    if (GetCrop_subkind() == subkind_Forage) then
+        write(fhandle, '(f9.2,a)') GetCrop_RootMinYear1(), &
+        '      : Minimum effective rooting depth (m) in first year (for perennials)'
+    else
+        write(fhandle, '(f9.2,a)') GetCrop_RootMinYear1(), &
+        '      : Minimum effective rooting depth (m) in first year - required only in case of regrowth'
+    end if
+    if (GetCrop_SownYear1() .eqv. .true.) then
+        i = 1
+        if (GetCrop_subkind() == subkind_Forage) then
+            write(fhandle, '(i6,a)') i, &
+            '         : Crop is sown in 1st year (for perennials)'
+        else
+            write(fhandle, '(i6,a)') i, &
+            '         : Crop is sown in 1st year - required only in case of regrowth'
+        end if
+    else
+        i = 0
+        if (GetCrop_subkind() == subkind_Forage) then
+            write(fhandle, '(i6,a)') i, &
+            '         : Crop is transplanted in 1st year (for perennials)'
+        else
+            write(fhandle, '(i6,a)') i, &
+            '         : Crop is transplanted in 1st year - required only in case of regrowth'
+        end if
+    end if
+
+    ! added to 7.0 - Assimilates
+    if (GetCrop_Assimilates_On() .eqv. .false.) then
+        i = 0
+        write(fhandle, '(i6,a)') i, &
+        '         : Transfer of assimilates from above ground parts to root system is NOT considered'
+        write(fhandle, '(i6,a)') i, &
+        '         : Number of days at end of season during which assimilates are stored in root system'
+        write(fhandle, '(i6,a)') i, &
+        '         : Percentage of assimilates transferred to root system at last day of season'
+        write(fhandle, '(i6,a)') i, &
+        '         : Percentage of stored assimilates transferred to above ground parts in next season'
+    else
+        i = 1
+        write(fhandle, '(i6,a)') i, &
+        '         : Transfer of assimilates from above ground parts to root system is considered'
+        write(fhandle, '(i6,a)') GetCrop_Assimilates_Period(), &
+        '         : Number of days at end of season during which assimilates are stored in root system'
+        write(fhandle, '(i6,a)') GetCrop_Assimilates_Stored(), &
+        '         : Percentage of assimilates transferred to root system at last day of season'
+        write(fhandle, '(i6,a)') GetCrop_Assimilates_Mobilized(), &
+        '         : Percentage of stored assimilates transferred to above ground parts in next season'
+    end if
+    close(fhandle)
+
+    ! maximum rooting depth in given soil profile
+    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
+                                    GetSoil_NrSoilLayers(), GetSoilLayer()))
+
+    ! copy to CropFileSet
+    call SetCropFileSet_DaysFromSenescenceToEnd(GetCrop_DaysToHarvest() &
+                                            - GetCrop_DaysToSenescence())
+    call SetCropFileSet_DaysToHarvest(GetCrop_DaysToHarvest())
+    call SetCropFileSet_GDDaysFromSenescenceToEnd(GetCrop_GDDaysToHarvest() &
+                                            - GetCrop_GDDaysToSenescence())
+    call SetCropFileSet_GDDaysToHarvest(GetCrop_GDDaysToHarvest())
+end subroutine SaveCrop
+
+
+subroutine SaveProfile(totalname)
+
+    character(len=*), intent(in) :: totalname
+
+    integer :: fhandle
+    integer(int32) :: i
+
+    open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
+    write(fhandle, '(a)') GetProfDescription()
+    write(fhandle, '(a)') &
+    '        7.0                 : AquaCrop Version (June 2021)'    ! AquaCrop version
+    write(fhandle, '(i9, a)') GetSoil_CNvalue(), &
+    '                   : CN (Curve Number)'
+    write(fhandle, '(i9, a)') GetSoil_REW(), &
+    '                   : Readily evaporable water from top layer (mm)'
+    write(fhandle, '(i9, a)') GetSoil_NrSoilLayers(), &
+    '                   : number of soil horizons'
+    write(fhandle, '(i9, a)') undef_int, &
+    '                   : variable no longer applicable'
+    write(fhandle, '(a)') &
+    '  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description'
+    write(fhandle, '(a)') &
+    '  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------'
+    do i = 1, GetSoil_NrSoilLayers()
+        write(fhandle, '(f8.2, f8.1, f6.1, f6.1, f8.1, i11, i10, f14.6, f10.6, a, a)') &
+                            GetSoilLayer_Thickness(i), GetSoilLayer_SAT(i), &
+                            GetSoilLayer_FC(i), GetSoilLayer_WP(i), &
+                            GetSoilLayer_InfRate(i), GetSoilLayer_Penetrability(i), &
+                            GetSoilLayer_GravelMass(i), GetSoilLayer_CRa(i), &
+                            GetSoilLayer_CRb(i), '   ', trim(GetSoilLayer_Description(i))
+    end do
+    close(fhandle)
+
+    ! maximum rooting depth in  soil profile for given crop
+    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
+                            GetSoil_NrSoilLayers(), GetSoilLayer()))
+end subroutine SaveProfile
+
+subroutine DetermineParametersCR(SoilClass, KsatMM, aParam, bParam)
+    integer(int8), intent(in) :: SoilClass
+    real(dp), intent(in) :: KsatMM
+    real(dp), intent(inout) :: aParam
+    real(dp), intent(inout) :: bParam
+
+    ! determine parameters
+    if (roundc(KsatMM*1000, mold=1) <= 0) then
+        aParam = undef_int
+        bParam = undef_int
+    else
+        select case (SoilClass)
+            case(1) ! sandy soils
+                aParam = -0.3112_dp - KsatMM/100000._dp
+                bParam = -1.4936_dp + 0.2416_dp*log(KsatMM)
+            case(2) ! loamy soils
+                aParam = -0.4986_dp + 9._dp*KsatMM/100000._dp
+                bParam = -2.1320_dp + 0.4778_dp*log(KsatMM)
+            case(3) ! sandy clayey soils
+                aParam = -0.5677_dp - 4._dp*KsatMM/100000._dp
+                bParam = -3.7189_dp + 0.5922_dp*log(KsatMM)
+            case default ! silty clayey soils
+            aParam = -0.6366_dp + 8._dp*KsatMM/10000._dp
+            bParam = -1.9165_dp + 0.7063_dp*log(KsatMM)
+        end select
+    end if
+end subroutine DetermineParametersCR
+
+
 subroutine DetermineNrandThicknessCompartments()
 
     real(dp) :: TotalDepthL, TotalDepthC, DeltaZ
@@ -3231,6 +3792,320 @@ subroutine specify_soil_layer(NrCompartments, NrSoilLayers, SoilLayer, &
     call SetSimulation_DayAnaero(0_int8)
 
 end subroutine specify_soil_layer
+
+
+subroutine SetClimData()
+
+    type(rep_clim) :: SetARecord, SetBRecord
+    integer(int32) :: tmptoD, tmpToM, tmpToY
+    integer(int32) :: tmpFromD, tmpFromM, tmpFromY
+    character(len=:), allocatable :: tmpstr
+
+    call SetClimRecord_NrObs(999) ! (heeft geen belang)
+
+    ! Part A - ETo and Rain files --> ClimFile
+    if ((GetEToFile() == '(None)') .and. (GetRainFile() == '(None)')) then
+        call SetClimFile('(None)')
+        call SetClimDescription('Specify Climatic data when Running AquaCrop')
+        call SetClimRecord_DataType(datatype_daily)
+        call SetClimRecord_FromString('any date')
+        call SetClimRecord_ToString('any date')
+        call SetClimRecord_FromY(1901)
+    else
+        call SetClimFile('EToRainTempFile')
+        call SetClimDescription('Read ETo/RAIN/TEMP data set')
+        if (GetEToFile() == '(None)') then
+            call SetClimRecord_FromY(GetRainRecord_FromY())
+            call SetClimRecord_FromDayNr(GetRainRecord_FromDayNr())
+            call SetClimRecord_ToDayNr(GetRainRecord_ToDayNr())
+            call SetClimRecord_FromString(GetRainRecord_FromString())
+            call SetClimRecord_ToString(GetRainRecord_ToString())
+            if (FullUndefinedRecord(GetRainRecord_FromY(), &
+                    GetRainRecord_FromD(), GetRainRecord_FromM(),&
+                    GetRainRecord_ToD(), GetRainRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            end if
+        end if
+        if (GetRainFile() == '(None)') then
+            call SetClimRecord_FromY(GetEToRecord_FromY())
+            call SetClimRecord_FromDayNr(GetEToRecord_FromDayNr())
+            call SetClimRecord_ToDayNr(GetEToRecord_ToDayNr())
+            call SetClimRecord_FromString(GetEToRecord_FromString())
+            call SetClimRecord_ToString(GetEToRecord_ToString())
+            if (FullUndefinedRecord(GetEToRecord_FromY(), &
+                    GetEToRecord_FromD(), GetEToRecord_FromM(), &
+                    GetEToRecord_ToD(), GetEToRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            end if
+        end if
+
+        if ((GetEToFile() /= '(None)') .and. (GetRainFile() /= '(None)')) then
+            SetARecord = GetEToRecord()
+            SetBRecord = GetRainRecord()
+            if (((GetEToRecord_FromY() == 1901) &
+                 .and. FullUndefinedRecord(GetEToRecord_FromY(),&
+                         GetEToRecord_FromD(), GetEToRecord_FromM(), &
+                         GetEToRecord_ToD(), GetEToRecord_ToM())) &
+                .and. ((GetRainRecord_FromY() == 1901) &
+                  .and. FullUndefinedRecord(GetRainRecord_FromY(),&
+                          GetRainRecord_FromD(), GetRainRecord_FromM(), &
+                          GetRainRecord_ToD(), GetRainRecord_ToM()))) then
+                call SetClimRecord_NrObs(365)
+            end if
+
+           if ((GetEToRecord_FromY() == 1901) .and. &
+               (GetRainRecord_FromY() /= 1901)) then
+                ! Jaartal van RainRecord ---> SetARecord (= EToRecord)
+                ! FromY + adjust FromDayNr and FromString
+                SetARecord%FromY = GetRainRecord_FromY()
+                call DetermineDayNr(GetEToRecord_FromD(), GetEToRecord_FromM(), &
+                               SetARecord%FromY, SetARecord%FromDayNr)
+                if (((SetARecord%FromDayNr < GetRainRecord_FromDayNr())) &
+                   .and. (GetRainRecord_FromY() < GetRainRecord_ToY())) then
+                    SetARecord%FromY = GetRainRecord_FromY() + 1
+                    call DetermineDayNr(GetEToRecord_FromD(), GetEToRecord_FromM(),&
+                          SetARecord%FromY, SetARecord%FromDayNr)
+                end if
+                call SetClimRecord_FromY(SetARecord%FromY) 
+                ! nodig voor DayString (werkt met ClimRecord)
+                SetARecord%FromString = DayString(SetARecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetEToRecord_FromY(),&
+                        GetEToRecord_FromD(), &
+                        GetEToRecord_FromM(), GetEToRecord_ToD(),&
+                        GetEToRecord_ToM())) then
+                    SetARecord%ToY = GetRainRecord_ToY()
+                else
+                    SetARecord%ToY = SetARecord%FromY
+                end if
+                call DetermineDayNr(GetEToRecord_ToD(), GetEToRecord_ToM(), &
+                               SetARecord%ToY, SetARecord%ToDayNr)
+                SetARecord%ToString = DayString(SetARecord%ToDayNr)
+            end if
+
+            if ((GetEToRecord_FromY() /= 1901) .and. &
+                (GetRainRecord_FromY() == 1901)) then
+                ! Jaartal van EToRecord ---> SetBRecord (= RainRecord)
+                ! FromY + adjust FromDayNr and FromString
+                SetBRecord%FromY = GetEToRecord_FromY()
+                call DetermineDayNr(GetRainRecord_FromD(), GetRainRecord_FromM(),&
+                               SetBRecord%FromY, SetBRecord%FromDayNr)
+                if (((SetBRecord%FromDayNr < GetEToRecord_FromDayNr())) &
+                    .and. (GetEToRecord_FromY() < GetEToRecord_ToY())) then
+                    SetBRecord%FromY = GetEToRecord_FromY() + 1
+                    call DetermineDayNr(GetRainRecord_FromD(),&
+                                   GetRainRecord_FromM(),&
+                                   SetBRecord%FromY, SetBRecord%FromDayNr)
+                end if
+                call SetClimRecord_FromY(SetBRecord%FromY) 
+                ! nodig voor DayString (werkt met ClimRecord)
+                SetBRecord%FromString = DayString(SetBRecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetRainRecord_FromY(), &
+                      GetRainRecord_FromD(), &
+                      GetRainRecord_FromM(), GetRainRecord_ToD(),&
+                      GetRainRecord_ToM())) then
+                    SetBRecord%ToY = GetEToRecord_ToY()
+                else
+                    SetBRecord%ToY = SetBRecord%FromY
+                end if
+                call DetermineDayNr(GetRainRecord_ToD(), GetRainRecord_ToM(), &
+                               SetBRecord%ToY, SetBRecord%ToDayNr)
+                SetBRecord%ToString = DayString(SetBRecord%ToDayNr)
+            end if
+            ! bepaal characteristieken van ClimRecord
+            call SetClimRecord_FromY(SetARecord%FromY)
+            call SetClimRecord_FromDayNr(SetARecord%FromDayNr)
+            tmpstr = SetARecord%FromString
+            call SetClimRecord_FromString(tmpstr)
+            if (GetClimRecord_FromDayNr() < SetBRecord%FromDayNr) then
+                call SetClimRecord_FromY(SetBRecord%FromY)
+                call SetClimRecord_FromDayNr(SetBRecord%FromDayNr)
+                call SetClimRecord_FromString(SetBRecord%FromString)
+            end if
+            call SetClimRecord_ToDayNr(SetARecord%ToDayNr)
+            tmpstr = SetARecord%ToString
+            call SetClimRecord_ToString(tmpstr)
+            if (GetClimRecord_ToDayNr() > SetBRecord%ToDayNr) then
+                call SetClimRecord_ToDayNr(SetBRecord%ToDayNr)
+                call SetClimRecord_ToString(SetBRecord%ToString)
+            end if
+            if (GetClimRecord_ToDayNr() < GetClimRecord_FromDayNr()) then
+                call SetClimFile('(None)')
+                call SetClimDescription(&
+                       'ETo data set <--NO OVERLAP--> RAIN data set')
+                call SetClimRecord_NrObs(0)
+                call SetClimRecord_FromY(1901)
+            end if
+        end if
+    end if
+
+    ! Part B - ClimFile and Temperature files --> ClimFile
+    if (GetTemperatureFile() == '(None)') then
+        ! no adjustments are required
+    else
+        if (GetClimFile() == '(None)') then
+            call SetClimFile('EToRainTempFile')
+            call SetClimDescription('Read ETo/RAIN/TEMP data set')
+            call SetClimRecord_FromY(GetTemperatureRecord_FromY())
+            call SetClimRecord_FromDayNr(GetTemperatureRecord_FromDayNr())
+            call SetClimRecord_ToDayNr(GetTemperatureRecord_ToDayNr())
+            call SetClimRecord_FromString(GetTemperatureRecord_FromString())
+            call SetClimRecord_ToString(GetTemperatureRecord_ToString())
+            if ((GetTemperatureRecord_FromY() == 1901) .and.&
+                 FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+                     GetTemperatureRecord_FromD(),&
+                     GetTemperatureRecord_FromM(),&
+                     GetTemperatureRecord_ToD(), GetTemperatureRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            else
+                call SetClimRecord_NrObs(GetTemperatureRecord_ToDayNr() -&
+                       GetTemperatureRecord_FromDayNr() + 1)
+            end if
+        else
+            call DetermineDate(GetClimRecord_FromDayNr(), &
+                       tmpFromD, tmpFromM, tmpFromY)
+            call SetClimRecord_FromD(tmpFromD)
+            call SetClimRecord_FromM(tmpFromM)
+            call SetClimRecord_FromY(tmpFromY)
+            call DetermineDate(GetClimRecord_ToDayNr(), tmpToD, tmpToM, tmpToY)
+            call SetClimRecord_ToD(tmpToD)
+            call SetClimRecord_ToM(tmpToM)
+            call SetClimRecord_ToY(tmpToY)
+            SetARecord = GetClimRecord()
+            SetBRecord = GetTemperatureRecord()
+
+            if ((GetClimRecord_FromY() == 1901) .and.&
+                (GetTemperatureRecord_FromY() == 1901) &
+                .and. (GetClimRecord_NrObs() == 365) &
+                .and. FullUndefinedRecord(GetTemperatureRecord_FromY(), &
+                           GetTemperatureRecord_FromD(),&
+                           GetTemperatureRecord_FromM(), &
+                           GetTemperatureRecord_ToD(),&
+                           GetTemperatureRecord_ToM())) then
+                call SetClimRecord_NrObs(365)
+            else
+                call SetClimRecord_NrObs(GetTemperatureRecord_ToDayNr() - &
+                       GetTemperatureRecord_FromDayNr() + 1)
+            end if
+            if ((GetClimRecord_FromY() == 1901) .and.&
+                (GetTemperatureRecord_FromY() /= 1901)) then
+                ! Jaartal van TemperatureRecord ---> SetARecord (= ClimRecord)
+                ! FromY + adjust FromDayNr and FromString
+                SetARecord%FromY = GetTemperatureRecord_FromY()
+                call DetermineDayNr(GetClimRecord_FromD(),&
+                                    GetClimRecord_FromM(), &
+                                    SetARecord%FromY, SetARecord%FromDayNr)
+                if ((SetARecord%FromDayNr < GetTemperatureRecord_FromDayNr())&
+                   .and. (GetTemperatureRecord_FromY() < GetTemperatureRecord_ToY())) then
+                    SetARecord%FromY = GetTemperatureRecord_FromY() + 1
+                    call DetermineDayNr(GetClimRecord_FromD(), GetClimRecord_FromM(),&
+                                   SetARecord%FromY, SetARecord%FromDayNr)
+                end if
+                SetARecord%FromString = DayString(SetARecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetClimRecord_FromY(),&
+                     GetClimRecord_FromD(), &
+                     GetClimRecord_FromM(), GetClimRecord_ToD(),&
+                     GetClimRecord_ToM())) then
+                    SetARecord%ToY = GetTemperatureRecord_ToY()
+                else
+                    SetARecord%ToY = SetARecord%FromY
+                end if
+                call DetermineDayNr(GetClimRecord_ToD(), GetClimRecord_ToM(), &
+                          SetARecord%ToY, SetARecord%ToDayNr)
+                SetARecord%ToString = DayString(SetARecord%ToDayNr)
+            end if
+
+            if ((GetClimRecord_FromY() /= 1901) .and.&
+                (GetTemperatureRecord_FromY() == 1901)) then
+                ! Jaartal van ClimRecord ---> SetBRecord (=
+                ! GetTemperatureRecord())
+                ! FromY + adjust FromDayNr and FromString
+                SetBRecord%FromY = GetClimRecord_FromY()
+                call DetermineDayNr(GetTemperatureRecord_FromD(), &
+                       GetTemperatureRecord_FromM(), SetBRecord%FromY,&
+                       SetBRecord%FromDayNr)
+                if (((SetBRecord%FromDayNr < GetClimRecord_FromDayNr())) .and.&
+                     (GetClimRecord_FromY() < GetClimRecord_ToY())) then
+                    SetBRecord%FromY = GetClimRecord_FromY() + 1
+                    call DetermineDayNr(GetTemperatureRecord_FromD(), &
+                           GetTemperatureRecord_FromM(), SetBRecord%FromY,&
+                           SetBRecord%FromDayNr)
+                end if
+                ! SetClimRecord_FromY(SetBRecord.FromY); ! nodig voor DayString
+                ! (werkt met ClimRecord)
+                SetBRecord%FromString = DayString(SetBRecord%FromDayNr)
+                ! ToY + adjust ToDayNr and ToString
+                if (FullUndefinedRecord(GetTemperatureRecord_FromY(),&
+                      GetTemperatureRecord_FromD(),&
+                      GetTemperatureRecord_FromM(), &
+                      GetTemperatureRecord_ToD(), &
+                      GetTemperatureRecord_ToM())) then
+                    SetBRecord%ToY = GetClimRecord_ToY()
+                else
+                    SetBRecord%ToY = SetBRecord%FromY
+                end if
+                call DetermineDayNr(GetTemperatureRecord_ToD(), &
+                       GetTemperatureRecord_ToM(), SetBRecord%ToY, &
+                       SetBRecord%ToDayNr)
+                SetBRecord%ToString = DayString(SetBRecord%ToDayNr)
+            end if
+
+            ! bepaal nieuwe characteristieken van ClimRecord
+            call SetClimRecord_FromY(SetARecord%FromY)
+            call SetClimRecord_FromDayNr(SetARecord%FromDayNr)
+            call SetClimRecord_FromString(SetARecord%FromString)
+            if (GetClimRecord_FromDayNr() < SetBRecord%FromDayNr) then
+                call SetClimRecord_FromY(SetBRecord%FromY)
+                call SetClimRecord_FromDayNr(SetBRecord%FromDayNr)
+                call SetClimRecord_FromString(SetBRecord%FromString)
+            end if
+            call SetClimRecord_ToDayNr(SetARecord%ToDayNr)
+            call SetClimRecord_ToString(SetARecord%ToString)
+            if (GetClimRecord_ToDayNr() > SetBRecord%ToDayNr) then
+                call SetClimRecord_ToDayNr(SetBRecord%ToDayNr)
+                call SetClimRecord_ToString(SetBRecord%ToString)
+            end if
+            if (GetClimRecord_ToDayNr() < GetClimRecord_FromDayNr()) then
+                call SetClimFile('(None)')
+                call SetClimDescription(&
+                        'Clim data <--NO OVERLAP--> TEMPERATURE data')
+                call SetClimRecord_NrObs(0)
+                call SetClimRecord_FromY(1901)
+            end if
+        end if
+    end if
+end subroutine SetClimData
+
+
+character(len=17) function DayString(DNr)
+    integer(int32), intent(in) :: DNr
+
+    integer(int32) :: dayi, monthi, yeari
+    character(2) :: strA
+    character(len=:), allocatable :: strB
+    integer(int32) :: DNr_t
+
+    DNr_t = DNr
+    if (GetClimFile() == '(None)') then
+        do while (DNr_t > 365)
+            DNr_t = DNr_t - 365
+        end do
+    end if
+    call DetermineDate(DNr_t, dayi, monthi, yeari)
+    write(strA, '(i2)') dayi
+    if (GetClimRecord_FromY() == 1901) then
+        strB = ''
+    else
+        write(strB, '(i4)') yeari
+    end if
+    strB = trim(strA)//' '//trim(NameMonth(monthi))//' '//trim(strB)
+    do while (len(strB) < 17)
+        strB = strB//' '
+    end do
+    DayString = strB
+end function DayString
 
 
 !! Global variables section !!
@@ -3635,7 +4510,7 @@ real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
     integer(int32) :: VirtualDay, T0, rootmax_rounded, zmax_rounded
 
     select case (TypeDays)
-    case (modeCycle_GDDDays)
+    case (modeCycle_GDDays)
         Zr = ActualRootingDepthGDDays(DAP, L1234, GDDL0, GDDLZmax, SumGDD, &
                                       Zmin, Zmax)
     case default
@@ -5429,6 +6304,12 @@ type(rep_soil) function GetSoil()
     GetSoil = Soil
 end function GetSoil
 
+integer(int8) function GetSoil_REW()
+    !! Getter for "REW" attribute of the "soil" global variable.
+
+    GetSoil_REW = soil%REW
+end function GetSoil_REW
+
 real(sp) function GetSoil_RootMax()
     !! Getter for "RootMax" attribute of the "soil" global variable.
 
@@ -5440,6 +6321,12 @@ integer(int8) function GetSoil_NrSoilLayers()
 
     GetSoil_NrSoilLayers = soil%NrSoilLayers
 end function GetSoil_NrSoilLayers
+
+integer(int8) function GetSoil_CNvalue()
+    !! Getter for "CNvalue" attribute of the "soil" global variable.
+
+    GetSoil_CNvalue = soil%CNvalue
+end function GetSoil_CNvalue
 
 subroutine SetSoil_REW(REW)
     !! Setter for the "Soil" global variable.
@@ -7617,6 +8504,20 @@ subroutine SetTemperatureDescription(str)
 
     TemperatureDescription = str
 end subroutine SetTemperatureDescription
+
+function GetClimDescription() result(str)
+    !! Getter for the "ClimDescription" global variable.
+    character(len=len(ClimDescription)) :: str 
+
+    str = ClimDescription
+end function GetClimDescription
+
+subroutine SetClimDescription(str)
+    !! Setter for the "ClimDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ClimDescription = str
+end subroutine SetClimDescription
 
 function GetCrop_Length_i(i) result(Length_i)
     !! Getter for the "Length" attribute of "Crop" global variable.

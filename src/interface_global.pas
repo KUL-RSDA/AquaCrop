@@ -14,11 +14,14 @@ const
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
+    NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
+          'May','June','July','August','September','October','November','December');
 
 type
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)
+    repstring17 = string[17]; (* Date string *)
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
 
@@ -2310,6 +2313,18 @@ procedure SetTemperatureDescription_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturedescription_wrap';
 
+function GetClimDescription(): string;
+
+function GetClimDescription_wrap(): PChar; 
+        external 'aquacrop' name '__ac_interface_global_MOD_getclimdescription_wrap';
+
+procedure SetClimDescription(constref str : string);
+
+procedure SetClimDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setclimdescription_wrap';
+
 function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
@@ -2623,6 +2638,12 @@ procedure SetSumWaBal_CRsalt(constref CRsalt : double);
 
 function GetSoil(): rep_Soil;
         external 'aquacrop' name '__ac_global_MOD_getsoil';
+
+function GetSoil_REW(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getsoil_rew';
+
+function GetSoil_CNvalue(): shortint;
+        external 'aquacrop' name '__ac_global_MOD_getsoil_cnvalue';
 
 procedure SetSoil_REW(constref REW : ShortInt);
         external 'aquacrop' name '__ac_global_MOD_setsoil_rew';
@@ -4010,7 +4031,7 @@ procedure SetManDescription_wrap(
 
 procedure LoadManagement(constref FullName : string);
 
-procedure LoadManagement_wrap(constref FullName : string;
+procedure LoadManagement_wrap(constref FullName : PChar;
                          constref strlen : integer);
    external 'aquacrop' name '__ac_interface_global_MOD_loadmanagement_wrap';
 
@@ -4026,6 +4047,23 @@ function ActualRootingDepth(
                 SumGDD,Zmin,Zmax : double;
                 ShapeFactor : ShortInt;
                 TypeDays : rep_modeCycle) : double;
+
+procedure SaveCrop(constref totalname : string);
+
+procedure SaveCrop_wrap(constref totalname : PChar;
+                        constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_savecrop_wrap';
+
+procedure SaveProfile(constref totalname : string);
+
+procedure SaveProfile_wrap(constref totalname : PChar;
+                           constref strlen : integer);
+   external 'aquacrop' name '__ac_interface_global_MOD_saveprofile_wrap';
+
+procedure DetermineParametersCR(constref SoilClass : ShortInt;
+                                constref KsatMM : double;
+                                var aParam, bParam : double);
+    external 'aquacrop' name '__ac_global_MOD_determineparameterscr';
 
 function __CanopyCoverNoStressSF(
                 constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
@@ -4062,6 +4100,14 @@ procedure specify_soil_layer(constref NrCompartments,NrSoilLayers : integer;
                              var Compartment : rep_Comp;
                              var TotalWaterContent : rep_Content);
     external 'aquacrop' name '__ac_global_MOD_specify_soil_layer';
+
+procedure SetClimData;
+    external 'aquacrop' name '__ac_global_MOD_setclimdata';
+
+function DayString(
+            constref DNr : LongInt) : repstring17;
+    external 'aquacrop' name '__ac_global_MOD_daystring';
+
 
 implementation
 
@@ -6189,6 +6235,26 @@ begin;
 end;
 
 
+function GetClimDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetClimDescription_wrap();
+     GetClimDescription := AnsiString(p);
+end;
+
+
+procedure SetClimDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetClimDescription_wrap(p, strlen);
+end;
+
+
 function GetTemperatureRecord() : rep_clim;
 begin
     GetTemperatureRecord.DataType := GetTemperatureRecord_DataType();
@@ -6780,6 +6846,28 @@ begin
     ActualRootingDepth := __ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0,
                                            GDDLZmax, SumGDD, Zmin, Zmax,
                                            ShapeFactor, int_TypeDays);
+end;
+
+procedure SaveCrop(constref totalname : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    SaveCrop_wrap(p,strlen);
+end;
+
+procedure SaveProfile(constref totalname : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(totalname);
+    strlen := Length(totalname);
+    SaveProfile_wrap(p,strlen);
 end;
 
 
