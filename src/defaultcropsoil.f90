@@ -218,14 +218,14 @@ subroutine ResetDefaultCrop()
     call SetCrop_SizePlant(GetCrop_SizeSeedling()) ! Canopy cover when regrowth (cm2)
     call SetCrop_PlantingDens(185000) ! Number of plants per hectare
     call SetCrop_CCo((GetCrop_SizeSeedling()/10000) &
-                        * (GetCrop_PlantingDens()/10000)) ! Starting canopy size
-                                                          ! (CCo) in fraction
+                        * (GetCrop_PlantingDens()/10000._dp)) ! Starting canopy size
+                                                              ! (CCo) in fraction
     call SetCrop_CCini(GetCrop_CCo())
     call SetCrop_CGC(0.15_dp) ! Canopy growth coefficient (CGC): Increase in canopy 
                               ! cover (in fraction) per day
     call SetCrop_YearCCx(int(undef_int, int8)) ! the number of years at which CCx declines to 90% 
                                     ! of its value due to self-thining - Perennials
-    call SetCrop_CCxRoot(dble(undef_int)) ! shape factor of the decline of CCx over the 
+    call SetCrop_CCxRoot(real(undef_int, kind=dp)) ! shape factor of the decline of CCx over the 
                                     ! years due to self-thinning - Perennials
     call SetCrop_CCx(0.80_dp) ! Maximum canopy cover (CCx) in fraction
     call SetCrop_CDC(0.1275_dp) ! Canopy decline coefficient (CDC): Decrease in 
@@ -281,6 +281,7 @@ subroutine ResetDefaultCrop()
     call SetCropFilefull(GetPathNameSimul() // 'DEFAULT.CRO')
     call SaveCrop(GetCropFilefull())
 end subroutine ResetDefaultCrop
+
 
 subroutine ResetDefaultSoil()
 
