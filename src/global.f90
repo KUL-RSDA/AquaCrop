@@ -3430,7 +3430,7 @@ subroutine GlobalZero(SumWabal)
     call SetTotalWaterContent_BeginDay(0._dp)
     
     do i =1, GetNrCompartments()
-        call SetTotalWaterContent_BeginDay(TotalWaterContent%BeginDay + &
+        call SetTotalWaterContent_BeginDay(GetTotalWaterContent_BeginDay() + &
         GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
     end do
 end subroutine GlobalZero 
@@ -7351,6 +7351,12 @@ type(rep_Content) function GetTotalWaterContent()
 
     GetTotalWaterContent = TotalWaterContent
 end function GetTotalWaterContent
+
+type(real) function GetTotalWaterContent_BeginDay()
+    !! Getter for the "TotalWaterContent_BeginDay" global variable.
+
+    GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
+end function GetTotalWaterContent_BeginDay
 
 subroutine SetTotalWaterContent_BeginDay(BeginDay)
     !! Setter for the "TotalWaterContent" global variable.

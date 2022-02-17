@@ -2898,6 +2898,9 @@ procedure SetTotalSaltContent_ErrorDay(constref ErrorDay : double);
 
 function GetTotalWaterContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
+        
+function GetTotalWaterContent_BeginDay(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 
