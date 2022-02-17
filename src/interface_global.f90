@@ -193,7 +193,9 @@ use ac_global, only: CheckFilesInProject, &
                      ECswComp, &
                      GetManDescription, &
                      SetManDescription, &
-                     LoadManagement
+                     LoadManagement, &
+                     SaveCrop, &
+                     SaveProfile
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2103,6 +2105,28 @@ subroutine LoadManagement_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadManagement(string)
 end subroutine LoadManagement_wrap
+
+subroutine SaveCrop_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveCrop]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveCrop(string)
+end subroutine SaveCrop_wrap
+
+subroutine SaveProfile_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveProfile(string)
+end subroutine SaveProfile_wrap
 
 
 real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &

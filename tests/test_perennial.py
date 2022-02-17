@@ -109,5 +109,26 @@ def test_perennial():
 
         print('{0} checks = OK'.format(filename))
 
+
+    # Now check the DEFAULT.CRO and DEFAULT.SOL files
+    for filename in ['DEFAULT.CRO', 'DEFAULT.SOL']:
+        reference_file = os.path.join(input_dir, 'SIMUL', filename)
+        with open(reference_file, 'r', encoding='ISO-8859-1') as f:
+            ref_lines = f.readlines()
+
+        output_file = os.path.join(work_dir, 'SIMUL', filename)
+        with open(output_file, 'r', encoding='ISO-8859-1') as f:
+            out_lines = f.readlines()
+
+        assert len(ref_lines) == len(out_lines), \
+               ('Different number of lines in output and reference files ',
+                reference_file, output_file)
+
+        for i, (ref_line, out_line) in enumerate(zip(ref_lines, out_lines)):
+            ref_line = ref_line.replace('°C', 'degC')
+            assert ref_line == out_line, (i, ref_line, out_line)
+
+        print('{0} checks = OK'.format(filename))
+
     os.chdir(cwd)
     shutil.rmtree(work_dir)
