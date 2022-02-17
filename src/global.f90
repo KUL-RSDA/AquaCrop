@@ -2963,7 +2963,6 @@ subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
         end if
         if (compi < 1) exit loop
     end do loop
-    write(*, '(f6.2)') CompartAdj(1)%FCadj
 
 
     contains
