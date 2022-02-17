@@ -3215,7 +3215,8 @@ subroutine SetClimData()
                     call DetermineDayNr(GetEToRecord_FromD(), GetEToRecord_FromM(),&
                           SetARecord%FromY, SetARecord%FromDayNr)
                 end if
-                call SetClimRecord_FromY(SetARecord%FromY) ! nodig voor DayString (werkt met ClimRecord)
+                call SetClimRecord_FromY(SetARecord%FromY) 
+                ! nodig voor DayString (werkt met ClimRecord)
                 SetARecord%FromString = DayString(SetARecord%FromDayNr)
                 ! ToY + adjust ToDayNr and ToString
                 if (FullUndefinedRecord(GetEToRecord_FromY(),&
@@ -3245,7 +3246,8 @@ subroutine SetClimData()
                                    GetRainRecord_FromM(),&
                                    SetBRecord%FromY, SetBRecord%FromDayNr)
                 end if
-                call SetClimRecord_FromY(SetBRecord%FromY) ! nodig voor DayString (werkt met ClimRecord)
+                call SetClimRecord_FromY(SetBRecord%FromY) 
+                ! nodig voor DayString (werkt met ClimRecord)
                 SetBRecord%FromString = DayString(SetBRecord%FromDayNr)
                 ! ToY + adjust ToDayNr and ToString
                 if (FullUndefinedRecord(GetRainRecord_FromY(), &
@@ -3428,7 +3430,8 @@ character(len=17) function DayString(DNr)
     integer(int32), intent(in) :: DNr
 
     integer(int32) :: dayi, monthi, yeari
-    character(len=:), allocatable :: strA, strB
+    character(2) :: strA
+    character(len=:), allocatable :: strB
     integer(int32) :: DNr_t
 
     DNr_t = DNr
@@ -3436,19 +3439,19 @@ character(len=17) function DayString(DNr)
         do while (DNr_t > 365)
             DNr_t = DNr_t - 365
         end do
-        call DetermineDate(DNr_t, dayi, monthi, yeari)
     end if
-    write(strA, '(i2)') dayi
+    call DetermineDate(DNr_t, dayi, monthi, yeari)
+    write(strA, '(i2.2)') dayi
     if (GetClimRecord_FromY() == 1901) then
         strB = ''
     else
-        write(strB, '(i4)') yeari
+        write(strB, '(i4.4)') yeari
     end if
-    StrB = trim(strA)//' '//trim(NameMonth(monthi))//' '//trim(strB)
-    do while (len(StrB) < 17)
-        StrB = trim(StrB)//' '
+    strB = trim(strA)//' '//trim(NameMonth(monthi))//' '//trim(strB)
+    do while (len(strB) < 17)
+        strB = strB//' '
     end do
-    DayString = StrB
+    DayString = strB
 end function DayString
 
 
