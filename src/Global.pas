@@ -76,7 +76,6 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
 
-PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
 PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
@@ -294,39 +293,6 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
         END;
 END; (* CalculateETpot *)
 
-
-
-PROCEDURE GlobalZero(VAR SumWabal : rep_sum);
-VAR i : INTEGER;
-BEGIN
-WITH SumWabal DO
-  BEGIN
-  Epot := 0.0;
-  Tpot := 0.0;
-  Rain := 0.0;
-  Irrigation := 0.0;
-  Infiltrated := 0.0;
-  Runoff := 0.0;
-  Drain := 0.0;
-  Eact := 0.0;
-  Tact := 0.0;
-  TrW := 0.0;
-  ECropCycle := 0.0;
-  Biomass := 0;
-  BiomassPot := 0;
-  BiomassUnlim := 0;
-  BiomassTot := 0; // crop and weeds (for soil fertility stress)
-  YieldPart := 0;
-  SaltIn := 0;
-  SaltOut := 0;
-  CRwater := 0;
-  CRsalt := 0;
-  END;
-SetTotalWaterContent_BeginDay(0);
-FOR i :=1 to GetNrCompartments() DO
-        SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
-          + GetCompartment_theta(i)*1000*GetCompartment_Thickness(i));
-END; (* GlobalZero *)
 
 PROCEDURE NoIrrigation;
 VAR Nri : INTEGER;
