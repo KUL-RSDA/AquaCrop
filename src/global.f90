@@ -2330,7 +2330,7 @@ subroutine SaltSolutionDeposit(mm, SaltSolution, SaltDeposit) ! mm = l/m2, SaltS
         SaltDeposit = SaltSolution - GetSimulParam_SaltSolub() * mm
         SaltSolution = GetSimulParam_SaltSolub() * mm
     else
-        SaltDeposit = 0
+        SaltDeposit = 0._dp
     end if
 end subroutine SaltSolutionDeposit
 
