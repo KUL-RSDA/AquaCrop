@@ -88,8 +88,6 @@ PROCEDURE Calculate_Saltmobility(layer : INTEGER;
 
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
-
-PROCEDURE CompleteProfileDescription;
 PROCEDURE LoadProfile(FullName : string);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
@@ -634,31 +632,6 @@ FOR i := 1 TO celn DO
     END;
 END; (* DetermineSaltContent *)
 
-
-
-
-PROCEDURE CompleteProfileDescription;
-VAR i : INTEGER;
-TotalWaterContent_temp : rep_Content;
-Compartment_temp : rep_Comp;
-soillayer_i_temp : SoilLayerIndividual;
-soillayer_temp : rep_SoilLayer;
-BEGIN
-FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO 
-    BEGIN
-        soillayer_i_temp := GetSoilLayer_i(i);
-        set_layer_undef(soillayer_i_temp);
-        SetSoilLayer_i(i, soillayer_i_temp);
-    END;
-SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
-TotalWaterContent_temp := GetTotalWaterContent();
-Compartment_temp := GetCompartment();
-soillayer_temp := GetSoilLayer();
-specify_soil_layer(GetNrCompartments(),GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
-SetSoilLayer(soillayer_temp);
-SetTotalWaterContent(TotalWaterContent_temp);
-SetCompartment(Compartment_temp);
-END; (* CompleteProfileDescription *)
 
 
 PROCEDURE LoadProfile(FullName : string);

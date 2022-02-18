@@ -4108,6 +4108,33 @@ character(len=17) function DayString(DNr)
 end function DayString
 
 
+subroutine CompleteProfileDescription()
+
+    integer(int32) :: i
+    type(rep_Content) :: TotalWaterContent_temp
+    type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Compartment_temp
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_i_temp
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_temp
+
+    do i= (GetSoil_NrSoilLayers()+1), max_SoilLayers 
+        soillayer_i_temp = GetSoilLayer_i(i)
+        call set_layer_undef(soillayer_i_temp)
+        call SetSoilLayer_i(i, soillayer_i_temp)
+    end do
+    call SetSimulation_ResetIniSWC(.true.) ! soil water content and soil salinity
+    TotalWaterContent_temp = GetTotalWaterContent()
+    Compartment_temp = GetCompartment()
+    soillayer_temp = GetSoilLayer()
+    call specify_soil_layer(GetNrCompartments(), GetSoil_NrSoilLayers(), &
+                        soillayer_temp, Compartment_temp, TotalWaterContent_temp)
+    call SetSoilLayer(soillayer_temp)
+    call SetTotalWaterContent(TotalWaterContent_temp)
+    call SetCompartment(Compartment_temp)
+end subroutine CompleteProfileDescription
+
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)

@@ -4108,6 +4108,9 @@ function DayString(
             constref DNr : LongInt) : repstring17;
     external 'aquacrop' name '__ac_global_MOD_daystring';
 
+procedure CompleteProfileDescription();
+    external 'aquacrop' name '__ac_global_MOD_completeprofiledescription';
+
 
 implementation
 
