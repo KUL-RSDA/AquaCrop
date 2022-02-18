@@ -9,6 +9,7 @@ use ac_global, only: CheckFilesInProject, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
+                     ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
                      GetCalendarDescription, &
@@ -143,6 +144,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetTemperatureFile, &
                      SetTemperatureFilefull, &
                      SetTemperatureDescription, &
+                     GetClimDescription, &
+                     SetClimDescription, & 
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      SetTemperatureRecord_FromString, &
@@ -192,7 +195,9 @@ use ac_global, only: CheckFilesInProject, &
                      ECswComp, &
                      GetManDescription, &
                      SetManDescription, &
-                     LoadManagement
+                     LoadManagement, &
+                     SaveCrop, &
+                     SaveProfile
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -337,6 +342,16 @@ subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
     call GetNumberSimulationRuns(string, NrRuns)
 end subroutine GetNumberSimulationRuns_wrap
 
+subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
+    !! Wrapper for [[ac_global:ComposeOutputFileName]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFileName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFileName, strlen)
+    call ComposeOutputFileName(string)
+end subroutine ComposeOutputFileName_wrap
 
 logical function FileExists_wrap(full_name, strlen)
     !! Wrapper for [[ac_global:FileExists]] for foreign languages.
@@ -1665,6 +1680,26 @@ subroutine SetTemperatureDescription_wrap(TemperatureDescription, strlen)
 end subroutine SetTemperatureDescription_wrap
 
 
+function GetClimDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetClimDescription())
+end function GetClimDescription_wrap
+
+
+subroutine SetClimDescription_wrap(ClimDescription, strlen)
+    !! Wrapper for [[ac_global:SetClimDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimDescription, strlen)
+    call SetClimDescription(string)
+end subroutine SetClimDescription_wrap
+
+
 subroutine SetTemperatureRecord_ToString_wrap(&
                      TemperatureRecord_ToString, strlen)
     !! Wrapper for [[ac_global:TemperatureRecord_ToString]] for foreign
@@ -2094,6 +2129,28 @@ subroutine LoadManagement_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadManagement(string)
 end subroutine LoadManagement_wrap
+
+subroutine SaveCrop_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveCrop]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveCrop(string)
+end subroutine SaveCrop_wrap
+
+subroutine SaveProfile_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveProfile(string)
+end subroutine SaveProfile_wrap
 
 
 real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
