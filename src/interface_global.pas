@@ -4043,10 +4043,10 @@ function __ActualRootingDepth(
     external 'aquacrop' name '__ac_global_MOD_actualrootingdepth';
 
 function ActualRootingDepth(
-                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
-                SumGDD,Zmin,Zmax : double;
-                ShapeFactor : ShortInt;
-                TypeDays : rep_modeCycle) : double;
+                constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+                constref SumGDD,Zmin,Zmax : double;
+                constref ShapeFactor : ShortInt;
+                constref TypeDays : rep_modeCycle) : double;
 
 procedure SaveCrop(constref totalname : string);
 
@@ -4073,10 +4073,10 @@ function __CanopyCoverNoStressSF(
      external 'aquacrop' name '__ac_global_MOD_canopycovernostresssf';
 
 function CanopyCoverNoStressSF(
-                DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                TypeDays : rep_modeCycle;
-                SFRedCGC,SFRedCCx : ShortInt) : double;
+                constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+                constref CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+                constref TypeDays : rep_modeCycle;
+                constref SFRedCGC,SFRedCCx : ShortInt) : double;
 
 procedure DetermineNrandThicknessCompartments();
     external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
@@ -4107,6 +4107,30 @@ procedure SetClimData;
 function DayString(
             constref DNr : LongInt) : repstring17;
     external 'aquacrop' name '__ac_global_MOD_daystring';
+
+procedure AdjustYearPerennials_wrap(
+            constref TheYearSeason: ShortInt;
+            constref Sown1stYear : BOOLEAN;
+            constref int_cyclemode : integer;
+            constref Zmax,ZminYear1,TheCCo,TheSizeSeedling, TheCGC,TheCCx,TheGDDCGC : double;
+            constref ThePlantingDens : LongInt;
+            VAR int_plant : integer;
+            VAR Zmin,TheSizePlant,TheCCini : double;
+            VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
+     external 'aquacrop' name '__ac_global_MOD_adjustyearperennials';
+
+procedure AdjustYearPerennials(
+            constref TheYearSeason: ShortInt;
+            constref Sown1stYear : BOOLEAN;
+            constref TheCycleMode : rep_modeCycle;
+            constref Zmax,ZminYear1,TheCCo,TheSizeSeedling,TheCGC,TheCCx,TheGDDCGC : double;
+            constref ThePlantingDens : LongInt;
+            VAR TypeOfPlanting : rep_Planting;
+            VAR Zmin,TheSizePlant,TheCCini : double;
+            VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
+
+procedure NoCropCalendar;
+    external 'aquacrop' name '__ac_global_MOD_nocropcalendar';
 
 
 implementation
@@ -6835,10 +6859,10 @@ end;
 
 
 function ActualRootingDepth(
-                DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
-                SumGDD,Zmin,Zmax : double;
-                ShapeFactor : ShortInt;
-                TypeDays : rep_modeCycle) : double;
+               constref DAP,L0,LZmax,L1234,GDDL0,GDDLZmax : integer;
+               constref SumGDD,Zmin,Zmax : double;
+               constref ShapeFactor : ShortInt;
+               constref TypeDays : rep_modeCycle) : double;
 var
     int_TypeDays: integer;
 begin
@@ -6872,10 +6896,10 @@ end;
 
 
 function CanopyCoverNoStressSF(
-                DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
-                CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
-                TypeDays : rep_modeCycle;
-                SFRedCGC,SFRedCCx : ShortInt) : double;
+               constref DAP,L0,L123,LMaturity,GDDL0,GDDL123,GDDLMaturity : INTEGER;
+               constref CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD : double;
+               constref TypeDays : rep_modeCycle;
+               constref SFRedCGC,SFRedCCx : ShortInt) : double;
 var
     int_TypeDays: integer;
 begin
@@ -6914,6 +6938,30 @@ begin
     Depo_len := Length(Comp.Depo);
     ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
                               Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
+end;
+
+
+procedure AdjustYearPerennials(
+            constref TheYearSeason: ShortInt;
+            constref Sown1stYear : BOOLEAN;
+            constref TheCycleMode : rep_modeCycle;
+            constref Zmax,ZminYear1,TheCCo,TheSizeSeedling, TheCGC,TheCCx,TheGDDCGC : double;
+            constref ThePlantingDens : LongInt;
+            VAR TypeOfPlanting : rep_planting;
+            VAR Zmin,TheSizePlant,TheCCini : double;
+            VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
+var
+  int_cyclemode : integer;
+  int_plant : integer;
+begin;
+  int_cyclemode := ord(TheCycleMode);
+  int_plant := ord(TypeOfPlanting);
+  AdjustYearPerennials_wrap(TheYearSeason, Sown1stYear,
+                            int_cyclemode,Zmax,ZminYear1,TheCCo,TheSizeSeedling, 
+                            TheCGC,TheCCx,TheGDDCGC, ThePlantingDens,
+                            int_plant, Zmin,TheSizePlant,TheCCini,
+                            TheDaysToCCini,TheGDDaysToCCini);
+  TypeOfPlanting := rep_planting(int_plant);
 end;
 
 

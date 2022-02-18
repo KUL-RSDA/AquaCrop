@@ -278,7 +278,7 @@ IF (GetCrop_subkind() = Forage) THEN
    Crop_SizePlant_temp := GetCrop().SizePlant;
    Crop_CCini_temp := GetCrop().CCini;
    Crop_DaysToCCini_temp := GetCrop().DaysToCCini;
-   Crop_GDDaysToCCini_temp := GetCrop().GDDaysToCCini;
+   Crop_GDDaysToCCini_temp := GetCrop_GDDaysToCCini();
    AdjustYearPerennials(GetSimulation_YearSeason(),GetCrop().SownYear1,GetCrop_ModeCycle(),GetCrop().RootMax,GetCrop().RootMinYear1,
                      GetCrop().CCo,GetCrop().SizeSeedling,GetCrop().CGC,GetCrop().CCx,GetCrop().GDDCGC,GetCrop().PlantingDens,
                      Crop_Planting_temp,Crop_RootMin_temp,Crop_SizePlant_temp,Crop_CCini_temp,
