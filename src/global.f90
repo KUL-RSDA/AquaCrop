@@ -4114,7 +4114,7 @@ subroutine CompleteProfileDescription()
     type(rep_Content) :: TotalWaterContent_temp
     type(CompartmentIndividual), &
                 dimension(max_No_compartments) :: Compartment_temp
-    type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_i_temp
+    type(SoilLayerIndividual) :: soillayer_i_temp
     type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_temp
 
     do i= (GetSoil_NrSoilLayers()+1), max_SoilLayers 
@@ -4126,8 +4126,10 @@ subroutine CompleteProfileDescription()
     TotalWaterContent_temp = GetTotalWaterContent()
     Compartment_temp = GetCompartment()
     soillayer_temp = GetSoilLayer()
-    call specify_soil_layer(GetNrCompartments(), GetSoil_NrSoilLayers(), &
-                        soillayer_temp, Compartment_temp, TotalWaterContent_temp)
+    call specify_soil_layer(GetNrCompartments(), &
+                            int(GetSoil_NrSoilLayers(), kind=int32), &
+                            soillayer_temp, Compartment_temp, &
+                            TotalWaterContent_temp)
     call SetSoilLayer(soillayer_temp)
     call SetTotalWaterContent(TotalWaterContent_temp)
     call SetCompartment(Compartment_temp)
@@ -4406,7 +4408,7 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     
     character(len=len(Trim(TheProjectFileName))) :: TempString
     character(len=:), allocatable :: TempString2
-    integer(int8) :: i
+    integer(int32) :: i
     
     TempString = Trim(TheProjectFileName)
     i = len(TempString)
@@ -8376,11 +8378,18 @@ type(rep_Content) function GetTotalWaterContent()
     GetTotalWaterContent = TotalWaterContent
 end function GetTotalWaterContent
 
-type(real) function GetTotalWaterContent_BeginDay()
+real(dp) function GetTotalWaterContent_BeginDay()
     !! Getter for the "TotalWaterContent_BeginDay" global variable.
 
     GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
 end function GetTotalWaterContent_BeginDay
+
+subroutine SetTotalWaterContent(TotalWaterContent_in)
+    !! Setter for the TotalWaterContent global variable.
+    type(rep_content), intent(in) :: TotalWaterContent_in
+
+    TotalWaterContent = TotalWaterContent_in
+end subroutine SetTotalWaterContent
 
 subroutine SetTotalWaterContent_BeginDay(BeginDay)
     !! Setter for the "TotalWaterContent" global variable.
@@ -9999,6 +10008,14 @@ subroutine SetSimulation_Storage_Season(Season)
     simulation%Storage%Season = Season
 end subroutine SetSimulation_Storage_Season
 
+function GetCompartment() result(Compartment_out)
+    !! Getter for "Compartment" global variable.
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_out
+
+    Compartment_out = Compartment
+end function GetCompartment
+
+
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
     integer(int32), intent(in) :: i
@@ -10101,7 +10118,8 @@ end function GetCompartment_Depo
 
 subroutine SetCompartment(Compartment_in)
     !! Setter for the "compartment" global variable.
-    type(CompartmentIndividual), intent(in) :: Compartment_in
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                    intent(in) :: Compartment_in
 
     compartment = Compartment_in
 end subroutine SetCompartment
