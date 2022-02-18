@@ -3699,6 +3699,101 @@ subroutine AdjustOnsetSearchPeriod()
 end subroutine AdjustOnsetSearchPeriod
 
 
+subroutine DesignateSoilLayerToCompartments(NrCompartments, NrSoilLayers, &
+                                                Compartment)
+    integer(int32), intent(in) :: NrCompartments
+    integer(int32), intent(in) :: NrSoilLayers
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                        intent(inout) :: Compartment
+
+    integer(int32) :: i, layeri, compi
+    real(dp) :: depth, depthi
+    logical :: finished, NextLayer
+
+    depth = 0._dp
+    depthi = 0._dp
+    layeri = 1
+    compi = 1
+    outer_loop: do
+        depth = depth + GetSoilLayer_Thickness(layeri)
+        inner_loop: do
+            depthi = depthi + Compartment(compi)%Thickness/2._dp
+            if (depthi <= depth) then
+                Compartment(compi)%Layer = layeri
+                NextLayer = .false.
+                depthi = depthi + Compartment(compi)%Thickness/2._dp
+                compi = compi + 1
+                finished = (compi > NrCompartments)
+            else
+                depthi = depthi - Compartment(compi)%Thickness/2._dp
+                NextLayer = .true.
+                layeri = layeri + 1
+                finished = (layeri > NrSoilLayers)
+            end if
+            if (finished .or. NextLayer) exit inner_loop
+            end do inner_loop
+        if (finished) exit outer_loop
+        end do outer_loop
+    do i = compi, NrCompartments 
+        Compartment(i)%Layer = NrSoilLayers
+    end do
+    do i = (NrCompartments+1), max_No_compartments 
+        Compartment(i)%Thickness = undef_double
+    end do
+end subroutine DesignateSoilLayerToCompartments
+
+
+subroutine specify_soil_layer(NrCompartments, NrSoilLayers, SoilLayer, &
+                                Compartment, TotalWaterContent)
+    integer(int32), intent(in) :: NrCompartments
+    integer(int32), intent(in) :: NrSoilLayers
+    type(SoilLayerIndividual), dimension(max_SoilLayers), intent(inout) :: SoilLayer
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                        intent(inout) :: Compartment
+    type(rep_Content), intent(inout) :: TotalWaterContent
+
+    integer(int32) :: layeri, compi, celli
+    real(dp) :: Total
+
+    call DesignateSoilLayerToCompartments(NrCompartments, NrSoilLayers, Compartment)
+
+    ! Set soil layers and compartments at Field Capacity and determine Watercontent (mm)
+    ! No salinity in soil layers and compartmens
+    ! Absence of ground water table (FCadj = FC)
+    Total = 0._dp
+    do layeri = 1, NrSoilLayers 
+        SoilLayer(layeri)%WaterContent = 0._dp
+    end do
+    do compi = 1, NrCompartments 
+        Compartment(compi)%Theta = SoilLayer(Compartment(compi)%Layer)%FC/100._dp
+        Compartment(compi)%FCadj = SoilLayer(Compartment(compi)%Layer)%FC
+        Compartment(compi)%DayAnaero = 0
+        do celli = 1, SoilLayer(Compartment(compi)%Layer)%SCP1
+            ! salinity in cells
+            Compartment(compi)%Salt(celli) = 0.0_dp
+            Compartment(compi)%Depo(celli) = 0.0_dp
+        end do
+        call SetSimulation_ThetaIni_i(compi, Compartment(compi)%Theta)
+        call SetSimulation_ECeIni_i(compi, 0._dp) ! initial soil salinity in dS/m
+        SoilLayer(Compartment(compi)%Layer)%WaterContent = &
+                SoilLayer(Compartment(compi)%Layer)%WaterContent &
+                + GetSimulation_ThetaIni_i(compi)*100._dp &
+                             *10._dp*Compartment(compi)%Thickness
+    end do
+    do layeri = 1, NrSoilLayers 
+        Total = Total + SoilLayer(layeri)%WaterContent
+    end do
+    call SetTotalWaterContent_BeginDay(Total)
+
+    ! initial soil water content and no salts
+    call DeclareInitialCondAtFCandNoSalt()
+
+    ! Number of days with RootZone Anaerobic Conditions
+    call SetSimulation_DayAnaero(0_int8)
+
+end subroutine specify_soil_layer
+
+
 subroutine SetClimData()
 
     type(rep_clim) :: SetARecord, SetBRecord

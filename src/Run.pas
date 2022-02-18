@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_tempprocessing;
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
