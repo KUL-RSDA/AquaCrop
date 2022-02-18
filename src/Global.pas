@@ -102,12 +102,9 @@ PROCEDURE AppendCropFilePerennials(totalname : string;
                                    ThresholdOnset,ThresholdEnd : double);
 FUNCTION EndGrowingPeriod(Day1 : longint;
                           VAR DayN : longint) : string;
-PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
-                                 VAR SimDay1 :LongInt);
 PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE ResetSWCToFC;
-PROCEDURE AdjustSimPeriod;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 
@@ -1417,28 +1414,6 @@ EndGrowingPeriod := CONCAT(Strday,' ',StrMonth,'  ');
 END; (* EndGrowingPeriod *)
 
 
-PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
-                                 VAR SimDay1 :LongInt);
-BEGIN
-SimDay1 := CropDay1;
-IF (GetClimFile() <> '(None)') THEN
-   BEGIN
-   (*
-   IF SimDay1 < GetClimRecord_FromDayNr() THEN SimDay1 := GetClimRecord_FromDayNr();
-   IF SimDay1 > GetClimRecord_ToDayNr()
-      THEN BEGIN
-           Simulation.LinkCropToSimPeriod := false;
-           SimDay1 := GetClimRecord_FromDayNr();
-           END; *)
-   IF ((SimDay1 < GetClimRecord_FromDayNr()) OR (SimDay1 > GetClimRecord_ToDayNr())) THEN
-      BEGIN
-      SetSimulation_LinkCropToSimPeriod(false);
-      SimDay1 := GetClimRecord_FromDayNr();
-      END;
-   END;
-END; (* DetermineLinkedSimDay1 *)
-
-
 PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 VAR dayi,monthi,yeari : INTEGER;
     temp_str : string;
@@ -1511,65 +1486,6 @@ FOR compi := 1 to GetNrCompartments() DO
         END;
     END;
 END; (* ResetSWCToFC *)
-
-
-
-PROCEDURE AdjustSimPeriod;
-VAR IniSimFromDayNr : LongInt;
-    FullFileName : string;
-    FromDayNr_temp : integer;
-    Compartment_temp : rep_Comp;
-
-BEGIN
-IniSimFromDayNr := GetSimulation_FromDayNr();
-CASE GetSimulation_LinkCropToSimPeriod() OF
-     true : BEGIN
-            FromDayNr_temp := GetSimulation_FromDayNr();
-            DetermineLinkedSimDay1(GetCrop().Day1,FromDayNr_temp);
-            SetSimulation_FromDayNr(FromDayNr_temp);
-            IF (GetCrop().Day1 = GetSimulation_FromDayNr())
-               THEN SetSimulation_ToDayNr(GetCrop().DayN)
-               ELSE SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30); // 30 days
-            IF (GetClimFile() <> '(None)') THEN
-               BEGIN
-               IF (GetSimulation_ToDayNr() > GetClimRecord_ToDayNr()) THEN
-                   SetSimulation_ToDayNr(GetClimRecord_ToDayNr());
-               IF (GetSimulation_ToDayNr() < GetClimRecord_FromDayNr()) THEN
-                      SetSimulation_ToDayNr(GetClimRecord_FromDayNr());
-               END;
-            END;
-    false : BEGIN
-            (*
-            IF ((GetClimFile() <> '(None)') AND (Simulation.FromDayNr < GetClimRecord_FromDayNr())) THEN
-               BEGIN
-               Simulation.FromDayNr := GetClimRecord_FromDayNr();
-               Simulation.ToDayNr := Simulation.FromDayNr + 30; // 30 days
-               END; *)
-            IF (GetSimulation_FromDayNr() > GetCrop().Day1) THEN SetSimulation_FromDayNr(GetCrop().Day1);
-            SetSimulation_ToDayNr(GetCrop().DayN);
-            IF ((GetClimFile() <> '(None)') AND
-                ((GetSimulation_FromDayNr() <= GetClimRecord_FromDayNr()) OR (GetSimulation_FromDayNr() >= GetClimRecord_ToDayNr()))) THEN
-               BEGIN
-               SetSimulation_FromDayNr(GetClimRecord_FromDayNr());
-               SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30); // 30 days
-               END;
-            END;
-    end;
-
-// adjust initial depth and quality of the groundwater when required
-IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDayNr())) THEN
-   BEGIN
-   IF (GetGroundWaterFile() = '(None)')
-       THEN FullFileName := CONCAT(GetPathNameProg(),'GroundWater.AqC')
-       ELSE FullFileName := GetGroundWaterFileFull();
-   // initialize ZiAqua and ECiAqua
-   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua,ECiAqua);
-   Compartment_temp := GetCompartment();
-   CalculateAdjustedFC((ZiAqua/100),Compartment_temp);
-   SetCompartment(Compartment_temp);
-   IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
-   END;
-END; (* AdjustSimPeriod *)
 
 
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;

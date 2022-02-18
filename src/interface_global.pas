@@ -4208,6 +4208,16 @@ procedure NoCropCalendar;
     external 'aquacrop' name '__ac_global_MOD_nocropcalendar';
 
 
+procedure DetermineLinkedSimDay1(
+            constref CropDay1 : LongInt;
+            VAR SimDay1 :LongInt);
+    external 'aquacrop' name '__ac_global_MOD_determinelinkedsimday1';
+
+
+procedure AdjustSimPeriod;
+    external 'aquacrop' name '__ac_global_MOD_adjustsimperiod';
+
+
 implementation
 
 
