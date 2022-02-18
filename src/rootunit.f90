@@ -92,7 +92,7 @@ contains
             !    in ActualRootingDepth
 
             ! -- 3.2 correction for stomatal closure
-            if ((Tpot > epsilon(0.0_dp)) .and. (Tact < Tpot)&
+            if ((Tpot > 0.0_dp) .and. (Tact < Tpot)&
                     .and. (GetSimulParam_KsShapeFactorRoot() /= undef_int)) then
                 if (GetSimulParam_KsShapeFactorRoot() >= 0) then
                     dZ = dZ * (Tact/Tpot)   ! linear
@@ -136,7 +136,7 @@ contains
             end if
 
             ! -- 3.3 correction for early senescence
-            if ((CCact <= epsilon(0.0_dp)) .and. (CCpot > 50.0_dp)) then
+            if ((CCact <= 0.0_dp) .and. (CCpot > 50.0_dp)) then
                 dZ = 0.0_dp
             end if
 
@@ -158,7 +158,7 @@ contains
                               - GetCrop_SmaxTop())/GetCrop_SmaxBot(), kind=sp))
                 ! consider part of the restricted deepening due to water stress
                 ! (= less roots)
-                if (GetSumWaBal_Tpot() > epsilon(0.0_dp)) then
+                if (GetSumWaBal_Tpot() > 0.0_dp) then
                     call SetSimulation_SCor(real(GetSimulation_SCor()&
                           * (GetSumWaBal_Tact()/GetSumWaBal_Tpot()), kind=sp))
                     if (GetSimulation_SCor() < 1.0_dp) then
