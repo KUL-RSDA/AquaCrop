@@ -3800,6 +3800,57 @@ subroutine DetermineNrandThicknessCompartments()
         end do loop
 end subroutine DetermineNrandThicknessCompartments
 
+subroutine DetermineRootZoneSaltContent(RootingDepth, ZrECe, ZrECsw, ZrECswFC, ZrKsSalt)
+    real(dp), intent(in) :: RootingDepth
+    real(dp), intent(inout) :: ZrECe
+    real(dp), intent(inout) :: ZrECsw
+    real(dp), intent(inout) :: ZrECswFC
+    real(dp), intent(inout) :: ZrKsSalt
+
+
+    real(dp) :: CumDepth, Factor, frac_value
+    integer(int32) :: compi
+
+    CumDepth = 0._dp
+    compi = 0._dp
+    ZrECe = 0._dp
+    ZrECsw = 0._dp
+    ZrECswFC = 0._dp
+    ZrKsSalt = 1._dp
+    if (RootingDepth >= GetCrop_RootMin()) then
+        loop: do
+            compi = compi + 1
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if (CumDepth <= RootingDepth) then
+                Factor = 1._dp
+            else
+                frac_value = RootingDepth - (CumDepth - GetCompartment_Thickness(compi))
+                if (frac_value > 0._dp) then
+                    Factor = frac_value/GetCompartment_Thickness(compi)
+                else
+                    Factor = 0._dp
+                end if
+            end if
+            Factor = Factor * (GetCompartment_Thickness(compi))/RootingDepth ! weighting factor
+            ZrECe = ZrECe + Factor * ECeComp(GetCompartment_i(compi))
+            ZrECsw = ZrECsw + Factor * ECswComp(GetCompartment_i(compi), (.false.)) ! not at FC
+            ZrECswFC = ZrECswFC + Factor * ECswComp(GetCompartment_i(compi), (.true.)) ! at FC
+            if ((CumDepth >= RootingDepth) .or. (compi == NrCompartments)) exit loop
+        end do loop
+        if (((GetCrop_ECemin() /= undef_int) .and. (GetCrop_ECemax() /= undef_int)) .and. &
+                                    (GetCrop_ECemin() < GetCrop_ECemax())) then
+            ZrKsSalt = KsSalinity((.true.), GetCrop_ECemin(), GetCrop_ECemax(), ZrECe, (0.0_dp))
+        else
+            ZrKsSalt = KsSalinity((.false.), GetCrop_ECemin(), GetCrop_ECemax(), ZrECe, (0.0_dp))
+        end if
+    else
+        ZrECe = undef_int
+        ZrECsw = undef_int
+        ZrECswFC = undef_int
+        ZrKsSalt = undef_int
+    end if
+end subroutine DetermineRootZoneSaltContent
+
 
 subroutine AdjustOnsetSearchPeriod()
 
