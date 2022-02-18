@@ -2579,7 +2579,9 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
 end function FullUndefinedRecord
 
 subroutine NoIrrigation()
+
     integer(int32) :: Nri
+    
     call SetIrriMode(IrriMode_NoIrri)
     call SetIrriDescription('Rainfed cropping')
     call SetIrriMethod(IrriMethod_MSprinkler)
@@ -2595,7 +2597,6 @@ subroutine NoIrrigation()
     end do
     call SetIrriECw_PreSeason(0.0_dp) ! dS/m
     call SetIrriECw_PostSeason(0.0_dp) ! dS/m
-    ! NoIrrigation 
 end subroutine NoIrrigation
 
 subroutine LoadIrriScheduleInfo(FullName)
@@ -2607,6 +2608,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     integer(int8) :: simul_irri_in
     integer(int32) :: simul_percraw
     character(len=1025) :: StringREAD
+    
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, *, iostat=rc) IrriDescription
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
