@@ -1208,6 +1208,11 @@ procedure DetermineLengthGrowthStages(
             VAR Length12 : integer;
             VAR CGCVal : double);
 
+procedure DetermineRootZoneWC(
+            constref RootingDepth : double;
+            VAR ZtopSWCconsidered : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
 function __TimeToCCini(
             constref ThePlantingType : integer;
             constref TheCropPlantingDens : integer;

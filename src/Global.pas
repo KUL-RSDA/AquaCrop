@@ -119,8 +119,6 @@ PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE ResetSWCToFC;
 PROCEDURE AdjustSimPeriod;
-PROCEDURE DetermineRootZoneWC(RootingDepth : double;
-                              VAR ZtopSWCconsidered : BOOLEAN);
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
@@ -1692,115 +1690,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
    END;
 END; (* AdjustSimPeriod *)
 
-
-PROCEDURE DetermineRootZoneWC(RootingDepth : double;
-                              VAR ZtopSWCconsidered : BOOLEAN);
-VAR CumDepth, Factor,frac_value,DrRel,DZtopRel,TopSoilInMeter : double;
-    compi : INTEGER;
-BEGIN
-// calculate SWC in root zone
-CumDepth := 0;
-compi := 0;
-SetRootZoneWC_Actual(0);
-SetRootZoneWC_FC(0);
-SetRootZoneWC_WP(0);
-SetRootZoneWC_SAT(0);
-SetRootZoneWC_Leaf(0);
-SetRootZoneWC_Thresh(0);
-SetRootZoneWC_Sen(0);
-REPEAT
-  compi := compi + 1;
-  CumDepth := CumDepth + GetCompartment_Thickness(compi);
-  IF (CumDepth <= RootingDepth)
-     THEN Factor := 1
-     ELSE BEGIN
-          frac_value := RootingDepth - (CumDepth - GetCompartment_Thickness(compi));
-          IF (frac_value > 0)
-             THEN Factor := frac_value/GetCompartment_Thickness(compi)
-             ELSE Factor := 0;
-          END;
-  SetRootZoneWC_Actual(GetRootZoneWC().Actual
-     + Factor * 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_FC(GetRootZoneWC().FC
-     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_Leaf(GetRootZoneWC().Leaf
-     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-     - GetCrop().pLeafAct * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_Thresh(GetRootZoneWC().Thresh
-     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-     - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_Sen(GetRootZoneWC().Sen
-     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-     - GetCrop().pSenAct * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_WP(GetRootZoneWC().WP
-     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_SAT(GetRootZoneWC().SAT
-     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
-
-// calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
-IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
-   THEN BEGIN
-        SetRootZoneWC_ZtopAct(GetRootZoneWC().Actual);
-        SetRootZoneWC_ZtopFC(GetRootZoneWC().FC);
-        SetRootZoneWC_ZtopWP(GetRootZoneWC().WP);
-        SetRootZoneWC_ZtopThresh(GetRootZoneWC().Thresh);
-        END
-   ELSE BEGIN
-        CumDepth := 0;
-        compi := 0;
-        SetRootZoneWC_ZtopAct(0);
-        SetRootZoneWC_ZtopFC(0);
-        SetRootZoneWC_ZtopWP(0);
-        SetRootZoneWC_ZtopThresh(0);
-        TopSoilInMeter := GetSimulParam_ThicknessTopSWC()/100;
-        REPEAT
-          compi := compi + 1;
-          CumDepth := CumDepth + GetCompartment_Thickness(compi);
-          IF ((CumDepth*100) <= GetSimulParam_ThicknessTopSWC())
-             THEN Factor := 1
-             ELSE BEGIN
-                  frac_value := TopSoilInMeter - (CumDepth - GetCompartment_Thickness(compi));
-                  IF (frac_value > 0)
-                     THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                     ELSE Factor := 0;
-                  END;
-          SetRootZoneWC_ZtopAct(GetRootZoneWC().ZtopAct
-            + Factor * 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-          SetRootZoneWC_ZtopFC(GetRootZoneWC().ZtopFC
-            + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-          SetRootZoneWC_ZtopWP(GetRootZoneWC().ZtopWP
-            + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-          SetRootZoneWC_ZtopThresh(GetRootZoneWC().ZtopThresh
-            + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-            - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = GetNrCompartments());
-        END;
-
-// Relative depletion in rootzone and in top soil
-IF ROUND(1000*(GetRootZoneWc().FC - GetRootZoneWc().WP)) > 0
-   THEN DrRel := (GetRootZoneWc().FC - GetRootZoneWC().Actual)/(GetRootZoneWc().FC - GetRootZoneWc().WP)
-   ELSE DrRel := 0;
-IF ROUND(1000*(GetRootZoneWC().ZtopFC - GetRootZoneWc().ZtopWP)) > 0
-   THEN DZtopRel := (GetRootZoneWC().ZtopFC - GetRootZoneWc().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWc().ZtopWP)
-   ELSE DZtopRel := 0;
-
-// Zone in soil profile considered for determining stress response
-IF (DZtopRel < DrRel)
-   THEN ZtopSWCconsidered := true  // top soil is relative wetter than root zone
-   ELSE ZtopSWCconsidered := false;
-END; (* DetermineRootZoneWC *)
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
