@@ -4060,12 +4060,13 @@ subroutine AdjustYearPerennials(TheYearSeason, Sown1stYear, TheCycleMode, &
     TheCCini = (ThePlantingDens/10000._dp) * (TheSizePlant/10000._dp)
     TheDaysToCCini = TimeToCCini(TypeOfPlanting, ThePlantingDens, &
                        TheSizeSeedling, TheSizePlant, TheCCx, TheCGC)
-    if (TheCycleMode == modeCycle_GDDDays) then
+    if (TheCycleMode == modeCycle_GDDays) then
         TheGDDaysToCCini = TimeToCCini(TypeOfPlanting, ThePlantingDens, &
                        TheSizeSeedling, TheSizePlant, TheCCx, TheGDDCGC)
     else
         TheGDDaysToCCini = undef_int
     end if
+
 end subroutine AdjustYearPerennials
 
 

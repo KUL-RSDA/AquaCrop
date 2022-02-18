@@ -6950,6 +6950,9 @@ begin;
                             TheCGC,TheCCx,TheGDDCGC, ThePlantingDens,
                             int_plant, Zmin,TheSizePlant,TheCCini,
                             TheDaysToCCini,TheGDDaysToCCini);
+  if (int_plant = 0) then TypeOfPlanting := Seed;
+  if (int_plant = 1) then TypeOfPlanting := Transplant;
+  if (int_plant = 2) then TypeOfPlanting := Regrowth;
 end;
 
 
