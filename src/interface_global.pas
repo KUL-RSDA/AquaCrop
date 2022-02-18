@@ -4165,6 +4165,23 @@ function CanopyCoverNoStressSF(
                 constref TypeDays : rep_modeCycle;
                 constref SFRedCGC,SFRedCCx : ShortInt) : double;
 
+function __CCiNoWaterStressSF(
+                constref Dayi,L0,L12SF,L123,L1234 : integer;
+                constref GDDL0,GDDL12SF,GDDL123,GDDL1234  : integer;
+                constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+                constref SFRedCGC,SFRedCCx : ShortInt;
+                constref SFCDecline : Double;
+                constref TheModeCycle : ShortInt) : double;
+     external 'aquacrop' name '__ac_global_MOD_ccinowaterstresssf';
+
+function CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
+                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
+                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+                            SFRedCGC,SFRedCCx : ShortInt;
+                            SFCDecline : Double;
+                            TheModeCycle : rep_modeCycle) : double;
+
+
 procedure DetermineNrandThicknessCompartments();
     external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
 
@@ -7086,6 +7103,22 @@ begin
                                      CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD,
                                      int_TypeDays, SFRedCGC,SFRedCCx);
 end;
+
+function CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
+                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
+                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+                            SFRedCGC,SFRedCCx : ShortInt;
+                            SFCDecline : Double;
+                            TheModeCycle : rep_modeCycle) : double;
+var
+    int_TheModeCycle: integer;
+begin
+    int_TheModeCycle := ord(TheModeCycle);
+    CCiNoWaterStressSF :=  __CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,GDDL0,
+        GDDL12SF,GDDL123,GDDL1234, CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD,
+        SFRedCGC,SFRedCCx, SFCDecline, int_TheModeCycle);
+end;
+
 
 
 function ECeComp(constref Comp : CompartmentIndividual) : double;
