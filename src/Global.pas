@@ -12,12 +12,6 @@ TYPE
      rep_string3  = string[3];  (* Read/Write ProfFile *)
 
 TYPE
-     rep_DayEventInt = Record
-         DayNr : Integer;
-         Param : Integer;
-         end;
-
-     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
      rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
@@ -25,9 +19,8 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ProjectDescription, MultipleProjectDescription,
-    IrriDescription,OffSeasonDescription,GroundWaterDescription: string;
+    OffSeasonDescription,GroundWaterDescription: string;
 
-    IrriFirstDayNr : LongInt;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -42,8 +35,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    IrriBeforeSeason,
-    IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
@@ -72,11 +63,9 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
 
-PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
@@ -257,28 +246,6 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
 END; (* CalculateETpot *)
 
 
-PROCEDURE NoIrrigation;
-VAR Nri : INTEGER;
-BEGIN
- SetIrriMode(NoIrri);
- IrriDescription := 'Rainfed cropping';
- SetIrriMethod(MSprinkler);
- SetSimulation_IrriECw(0.0); // dS/m
- SetGenerateTimeMode(AllRAW);
- SetGenerateDepthMode(ToFC);
- IrriFirstDayNr := undef_int;
- FOR Nri := 1 TO 5 DO
-     BEGIN
-     IrriBeforeSeason[Nri].DayNr := 0;
-     IrriBeforeSeason[Nri].Param := 0;
-     IrriAfterSeason[Nri].DayNr := 0;
-     IrriAfterSeason[Nri].Param := 0;
-     END;
- SetIrriECw_PreSeason(0.0); //dS/m
- SetIrriECw_PostSeason(0.0); //dS/m
-END; (* NoIrrigation *)
-
-
 PROCEDURE NoManagementOffSeason;
 VAR Nri : INTEGER;
 BEGIN
@@ -292,14 +259,14 @@ SetSimulParam_IrriFwOffSeason(100);
 SetIrriECw_PreSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriBeforeSeason[Nri].DayNr := 0;
-    IrriBeforeSeason[Nri].Param := 0;
+    SetIrriBeforeSeason_DayNr(Nri, 0);
+    SetIrriBeforeSeason_Param(Nri, 0);
     END;
 SetIrriECw_PostSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 END; (* NoManagementOffSeason *)
 
@@ -330,10 +297,10 @@ SetManagement_EffectMulchOffS(TempShortInt);
 // irrigation events - initialise
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriBeforeSeason[Nri].DayNr := 0;
-    IrriBeforeSeason[Nri].Param := 0;
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriBeforeSeason_DayNr(Nri, 0);
+    SetIrriBeforeSeason_Param(Nri, 0);
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
@@ -357,90 +324,18 @@ IF (NrEvents1 > 0) THEN FOR Nri := 1 TO NrEvents1 DO // events BEFORE growing pe
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriBeforeSeason[Nri].DayNr := ROUND(Par1);
-   IrriBeforeSeason[Nri].Param := ROUND(Par2);
+   SetIrriBeforeSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriBeforeSeason_Param(Nri, ROUND(Par2));
    END;
 IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing period
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriAfterSeason[Nri].DayNr := ROUND(Par1);
-   IrriAfterSeason[Nri].Param := ROUND(Par2);
+   SetIrriAfterSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriAfterSeason_Param(Nri, ROUND(Par2));
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
-VAR f0 : TextFile;
-    i : INTEGER;
-    VersionNr : double;
-    simul_irri_in,simul_percraw : shortint; 
-
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,IrriDescription);
-READLN(f0,VersionNr);  // AquaCrop version
-
-// irrigation method
-READLN(f0,i);
-CASE i OF
-     1 : SetIrriMethod(MSprinkler);
-     2 : SetIrriMethod(MBasin);
-     3 : SetIrriMethod(MBorder);
-     4 : SetIrriMethod(MFurrow);
-     else  SetIrriMethod(MDrip);
-     end;
-
-// fraction of soil surface wetted
-READLN(f0,simul_irri_in);
-SetSimulParam_IrriFwInSeason(simul_irri_in);
-
-// irrigation mode and parameters
-READLN(f0,i);
-CASE i OF
-     0 : SetIrriMode(NoIrri); // rainfed
-     1 : SetIrriMode(Manual);
-     2 : SetIrriMode(Generate);
-     else SetIrriMode(Inet);
-     end;
-
-// 1. Irrigation schedule
-IF ((i = 1) AND (ROUND(VersionNr*10) >= 70))
-   THEN READLN(f0,IrriFirstDayNr) // line 6
-   ELSE IrriFirstDayNr := undef_int; // start of growing period
-
-
-// 2. Generate
-IF (GetIrriMode() = Generate) THEN
-   BEGIN
-   READLN(f0,i); // time criterion
-   Case i OF
-        1 : SetGenerateTimeMode(FixInt);
-        2 : SetGenerateTimeMode(AllDepl);
-        3 : SetGenerateTimeMode(AllRAW);
-        4 : SetGenerateTimeMode(WaterBetweenBunds);
-        else SetGenerateTimeMode(AllRAW);
-     end;
-   READLN(f0,i); // depth criterion
-   Case i OF
-        1 : SetGenerateDepthMode(ToFc);
-        else SetGenerateDepthMode(FixDepth);
-     end;
-   IrriFirstDayNr := undef_int; // start of growing period
-   END;
-
-// 3. Net irrigation requirement
-IF (GetIrriMode() = Inet) THEN
-   BEGIN
-   READLN(f0,simul_percraw);
-   SetSimulParam_PercRAW(simul_percraw);
-   IrriFirstDayNr := undef_int;  // start of growing period
-   END;
-
-Close(f0);
-END; (* LoadIrriScheduleInfo *)
 
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
