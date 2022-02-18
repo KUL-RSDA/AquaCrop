@@ -145,27 +145,21 @@ implementation
  SetEToFile('(None)');
  SetEToFilefull(GetEToFile());  (* no file *)
  SetEToDescription('');
- WITH EToRecord DO
-   BEGIN
-   DataType := Daily;
-   NrObs := 0;
-   FromString := 'any date';
-   ToString := 'any date';
-   FromY := 1901;
-   END;
+ SetEToRecord_DataType(Daily);
+ SetEToRecord_NrObs(0);
+ SetEToRecord_FromString('any date');
+ SetEToRecord_ToString('any date');
+ SetEToRecord_FromY(1901);
 
  // 5.3 Rain
  SetRainFile('(None)');
  SetRainFilefull(GetRainFile());  (* no file *)
  SetRainDescription('');
- WITH RainRecord DO
-   BEGIN
-   DataType := Daily;
-   NrObs := 0;
-   FromString := 'any date';
-   ToString := 'any date';
-   FromY := 1901;
-   END;
+ SetRainRecord_DataType(Daily);
+ SetRainRecord_NrObs(0);
+ SetRainRecord_FromString('any date');
+ SetRainRecord_ToString('any date');
+ SetRainRecord_FromY(1901);
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
@@ -190,8 +184,8 @@ Crop_DayN_temp := GetCrop().DayN;
 SetCrop_Day1(Crop_Day1_temp);
 SetCrop_DayN(Crop_DayN_temp);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
- IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
-   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
+ IF ((GetClimFile() <> '(None)') AND (GetClimRecord_FromY() = 1901)
+   AND (GetClimRecord_NrObs() = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
 (* adjusting simulation period *)
  AdjustSimPeriod;
 
