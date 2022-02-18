@@ -127,8 +127,7 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
 
-PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
-                                       VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
+
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -1850,50 +1849,6 @@ IF ((ResponseECsw > 0) AND (Wrel > 0) AND (GetSimulation_SalinityConsidered() = 
    ELSE KsStoOut := KsStoIN;  // no adjustment to ECsw
 AdjustedKsStoToECsw := KsStoOut;
 END; (* AdjustedKsStoToECsw *)
-
-
-
-
-PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
-                                       VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
-VAR CumDepth, Factor,frac_value : double;
-    compi : INTEGER;
-BEGIN
-CumDepth := 0;
-compi := 0;
-ZrECe := 0;
-ZrECsw := 0;
-ZrECswFC := 0;
-ZrKsSalt := 1;
-IF (RootingDepth >= GetCrop().RootMin)
-   THEN BEGIN
-        REPEAT
-        compi := compi + 1;
-        CumDepth := CumDepth + GetCompartment_Thickness(compi);
-        IF (CumDepth <= RootingDepth)
-           THEN Factor := 1
-           ELSE BEGIN
-                frac_value := RootingDepth - (CumDepth - GetCompartment_Thickness(compi));
-                IF (frac_value > 0)
-                   THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                   ELSE Factor := 0;
-                END;
-        Factor := Factor * (GetCompartment_Thickness(compi))/RootingDepth; // weighting factor
-        ZrECe := ZrECe + Factor * ECeComp(GetCompartment_i(compi));
-        ZrECsw := ZrECsw + Factor * ECswComp(GetCompartment_i(compi),(false)); // not at FC
-        ZrECswFC := ZrECswFC + Factor * ECswComp(GetCompartment_i(compi),(true)); // at FC
-        UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
-        IF (((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax))
-           THEN ZrKsSalt := KsSalinity((true),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0))
-           ELSE ZrKsSalt := KsSalinity((false),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0));
-        END
-   ELSE BEGIN
-        ZrECe := undef_int;
-        ZrECsw := undef_int;
-        ZrECswFC := undef_int;
-        ZrKsSalt := undef_int;
-        END;
-END;  (* DetermineRootZoneSaltContent *)
 
 
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;

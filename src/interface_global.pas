@@ -1232,6 +1232,13 @@ function TimeToCCini(
             constref TheCropCCx : double;
             constref TheCropCGC : double) : Integer;
 
+procedure DetermineRootZoneSaltContent(
+            constref RootingDepth : double;
+            var ZrECe : double;
+            var ZrECsw : double;
+            var ZrECswFC: double;
+            var ZrKsSalt : double);
+        external 'aquacrop' name '__ac_global_MOD_determinerootzonesaltcontent';
 
 function MultiplierCCxSelfThinning(
             constref Yeari : integer;
