@@ -20,6 +20,7 @@ const
 type
     Pdouble = ^double;
 
+    rep_string3  = string[3];  (* Read/Write ProfFile *)
     rep_string25 = string[25]; (* Description SoilLayer *)
     repstring17 = string[17]; (* Date string *)
 
@@ -4111,6 +4112,18 @@ function DayString(
 procedure CompleteProfileDescription();
     external 'aquacrop' name '__ac_global_MOD_completeprofiledescription';
 
+procedure LoadProfile(FullName : string);
+
+procedure LoadProfile_wrap(constref FullName : PChar;
+                           constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadprofile_wrap';
+
+procedure Calculate_Saltmobility(constref layer : integer;
+                                 constref SaltDiffusion : shortint;  // percentage
+                                 constref Macro : shortint;
+                                 var Mobil : rep_salt);
+    external 'aquacrop' name '__ac_global_MOD_calculate_saltmobility';
+
 
 implementation
 
@@ -6917,6 +6930,17 @@ begin
     Depo_len := Length(Comp.Depo);
     ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
                               Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
+end;
+
+procedure LoadProfile(FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadProfile_wrap(p,strlen);
 end;
 
 

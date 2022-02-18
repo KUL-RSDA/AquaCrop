@@ -76,6 +76,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainDescription, &
                      LoadClimate, &
                      LoadCropCalendar, &
+                     LoadProfile, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -2172,5 +2173,17 @@ real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
     atFC_f = logical(atFC)
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
+
+
+subroutine LoadProfile_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadProfile(string)
+end subroutine LoadProfile_wrap
 
 end module ac_interface_global

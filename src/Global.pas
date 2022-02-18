@@ -8,8 +8,6 @@ uses SysUtils, interface_global;
 Const 
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
 
-TYPE
-     rep_string3  = string[3];  (* Read/Write ProfFile *)
 
 TYPE
      rep_DayEventInt = Record
@@ -80,15 +78,8 @@ PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-
-
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
-PROCEDURE LoadProfile(FullName : string);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
@@ -545,62 +536,6 @@ ActiveCells := celi;
 END; (* ActiveCells *)
 
 
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-VAR i, CelMax : INTEGER;
-    Mix, a, b, xi, yi, UL : double;
-
-BEGIN
-Mix := SaltDiffusion/100; // global salt mobility expressed as a fraction
-UL := GetSoilLayer_i(layer).UL * 100; (* upper limit in VOL% of SC cell *)
-
-//1. convert Macro (vol%) in SaltCelNumber
-IF (Macro > UL)
-   THEN CelMax := GetSoilLayer_i(layer).SCP1
-   ELSE CelMax := ROUND((Macro/UL)*GetSoilLayer_i(layer).SC);
-IF (CelMax <= 0) THEN CelMax := 1;
-
-//2. find a and b
-IF (Mix < 0.5)
-   THEN BEGIN
-        a := Mix * 2;
-        b := EXP(10*(0.5-Mix)*LN(10));
-        END
-   ELSE BEGIN
-        a := 2 * (1- Mix);
-        b := EXP(10*(Mix-0.5)*LN(10));
-        END;
-
-//3. calculate mobility for cells = 1 to Macro
-FOR i := 1 to (CelMax-1) DO
-    BEGIN
-    xi := i/(CelMax-1);
-    IF (Mix > 0)
-       THEN IF (Mix < 0.5)
-               THEN BEGIN
-                    yi := EXP(LN(a)+xi*LN(b));
-                    Mobil[i] := (yi-a)/(a*b-a);
-                    END
-               ELSE IF (Mix = 0.5)
-                       THEN Mobil[i] := xi
-                       ELSE IF (Mix < 1)
-                               THEN BEGIN
-                                    yi := EXP(LN(a)+(1-xi)*LN(b));
-                                    Mobil[i] := 1- (yi-a)/(a*b-a);
-                                    END
-                               ELSE Mobil[i] := 1
-       ELSE Mobil[i] := 0;
-    END;
-
-//4. Saltmobility between Macro and SAT
-FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
-
-END; (* Calculate_Saltmobility *)
-
-
-
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 VAR TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN : double;
@@ -632,126 +567,6 @@ FOR i := 1 TO celn DO
     END;
 END; (* DetermineSaltContent *)
 
-
-
-PROCEDURE LoadProfile(FullName : string);
-VAR f0 : TextFile;
-    i  : INTEGER;
-    blank : rep_string3;
-    VersionNr : double;
-    TempShortInt : shortint;
-    ProfDescriptionLocal : string;
-    thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp : double;
-    cra_temp, crb_temp, dx_temp : double;
-    description_temp : string;
-    penetrability_temp, gravelm_temp : shortint;
-    saltmob_temp : rep_salt;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,ProfDescriptionLocal);
-SetProfDescription(ProfDescriptionLocal);
-READLN(f0,VersionNr);  // AquaCrop version
-READLN(f0,TempShortInt);
-SetSoil_CNvalue(TempShortInt);
-READLN(f0,TempShortInt);
-SetSoil_REW(TempShortInt);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-READLN(f0,TempShortInt);
-SetSoil_NrSoilLayers(TempShortInt);
-READLN(f0); // depth of restrictive soil layer which is no longer applicable
-READLN(f0);
-READLN(f0);
-// Load characteristics of each soil layer
-FOR i := 1 TO GetSoil().NrSoilLayers DO
-    BEGIN
-    // Parameters for capillary rise missing in Versions 3.0 and 3.1
-    IF (ROUND(VersionNr*10) < 40)
-       THEN BEGIN
-            READLN(f0,thickness_temp,SAT_temp,FC_temp,
-              WP_temp,infrate_temp,blank,description_temp);
-            SetSoilLayer_Thickness(i, thickness_temp);
-            SetSoilLayer_SAT(i, SAT_temp);
-            SetSoilLayer_FC(i, FC_temp);
-            SetSoilLayer_WP(i, WP_temp); 
-            SetSoilLayer_InfRate(i, infrate_temp);
-            SetSoilLayer_Description(i, description_temp);
-            // Default values for Penetrability and Gravel
-            SetSoilLayer_Penetrability(i, 100);
-            SetSoilLayer_GravelMass(i, 0);
-            // determine volume gravel
-            SetSoilLayer_GravelVol(i, 0);
-            END
-       ELSE BEGIN
-            IF (ROUND(VersionNr*10) < 60)  // UPDATE required for Version 6.0
-               THEN BEGIN
-                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           cra_temp, crb_temp,blank, description_temp);
-                    SetSoilLayer_Thickness(i, thickness_temp);
-                    SetSoilLayer_SAT(i, SAT_temp);
-                    SetSoilLayer_FC(i, FC_temp);
-                    SetSoilLayer_WP(i, WP_temp); 
-                    SetSoilLayer_InfRate(i, infrate_temp);
-                    SetSoilLayer_CRa(i, cra_temp);
-                    SetSoilLayer_CRb(i, crb_temp);
-                    SetSoilLayer_Description(i, description_temp);
-                    // Default values for Penetrability and Gravel
-                    SetSoilLayer_Penetrability(i, 100);
-                    SetSoilLayer_GravelMass(i, 0);
-                    // determine volume gravel
-                    SetSoilLayer_GravelVol(i, 0);
-                    END
-               ELSE BEGIN
-                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           penetrability_temp, gravelm_temp, cra_temp, crb_temp,description_temp);
-                    SetSoilLayer_Thickness(i, thickness_temp);
-                    SetSoilLayer_SAT(i, SAT_temp);
-                    SetSoilLayer_FC(i, FC_temp);
-                    SetSoilLayer_WP(i, WP_temp); 
-                    SetSoilLayer_InfRate(i, infrate_temp);
-                    SetSoilLayer_Penetrability(i, penetrability_temp);
-                    SetSoilLayer_GravelMass(i, gravelm_temp);
-                    SetSoilLayer_CRa(i, cra_temp);
-                    SetSoilLayer_CRb(i, crb_temp);
-                    SetSoilLayer_Description(i, description_temp);
-                    // determine volume gravel
-                    SetSoilLayer_GravelVol(i, FromGravelMassToGravelVolume(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).GravelMass));
-                    END;
-            END;
-    // determine drainage coefficient
-    SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_i(i).InfRate));
-    // determine number of salt cells based on infiltration rate
-    IF (GetSoilLayer_i(i).InfRate <= 112)
-       THEN SetSoilLayer_SCP1(i, 11)
-       ELSE BEGIN
-            SetSoilLayer_SCP1(i, ROUND(1.6 + 1000/GetSoilLayer_i(i).InfRate));
-            IF (GetSoilLayer_i(i).SCP1 < 2) THEN SetSoilLayer_SCP1(i, 2)
-            END;
-    // determine parameters for soil salinity
-    SetSoilLayer_SC(i, GetSoilLayer_i(i).SCP1 -1);
-    SetSoilLayer_Macro(i, ROUND(GetSoilLayer_i(i).FC));
-    SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100) * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2))); (* m3/m3 *)
-    dx_temp := (GetSoilLayer_UL(i))/GetSoilLayer_SC(i);
-    SetSoilLayer_Dx(i, dx_temp);  (* m3/m3 *)
-    saltmob_temp := GetSoilLayer_i(i).SaltMobility;
-    Calculate_SaltMobility(i,GetSimulParam_SaltDiff(),GetSoilLayer_i(i).Macro,saltmob_temp);
-    SetSoilLayer_SaltMobility(i, saltmob_temp);
-    // determine default parameters for capillary rise if missing
-    SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).FC,GetSoilLayer_i(i).WP,GetSoilLayer_i(i).InfRate));
-    IF (ROUND(VersionNr*10) < 40) THEN
-       BEGIN
-       cra_temp := GetSoilLayer_i(i).CRa;
-       crb_temp := GetSoilLayer_i(i).CRb;
-       DetermineParametersCR(GetSoilLayer_i(i).SoilClass,GetSoilLayer_i(i).InfRate,cra_temp,crb_temp);
-       SetSoilLayer_CRa(i, cra_temp);
-       SetSoilLayer_CRb(i, crb_temp);
-       END;
-    END;
-DetermineNrandThicknessCompartments;
-Close(f0);
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
-END; // Loadprofile
 
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
