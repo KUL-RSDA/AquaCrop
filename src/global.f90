@@ -4436,7 +4436,8 @@ subroutine Calculate_Saltmobility(layer, SaltDiffusion, Macro, Mobil)
             if (Mix < 0.5_dp) then
                 yi = exp(log(a)+xi*log(b))
                 Mobil(i) = (yi-a)/(a*b-a)
-            elseif (Mix == 0.5_dp) then
+            elseif ((Mix >= 0.5_dp - epsilon(0.0_dp)) &
+                       .and. (Mix <= 0.5_dp + epsilon(0.0_dp)))  then
                 Mobil(i) = xi
             elseif (Mix < 1._dp) then
                 yi = exp(log(a)+(1._dp-xi)*log(b))
