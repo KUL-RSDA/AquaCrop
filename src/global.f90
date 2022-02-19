@@ -4288,6 +4288,226 @@ character(len=17) function DayString(DNr)
 end function DayString
 
 
+subroutine CompleteProfileDescription()
+
+    integer(int32) :: i
+    type(rep_Content) :: TotalWaterContent_temp
+    type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Compartment_temp
+    type(SoilLayerIndividual) :: soillayer_i_temp
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_temp
+
+    do i= (GetSoil_NrSoilLayers()+1), max_SoilLayers 
+        soillayer_i_temp = GetSoilLayer_i(i)
+        call set_layer_undef(soillayer_i_temp)
+        call SetSoilLayer_i(i, soillayer_i_temp)
+    end do
+    call SetSimulation_ResetIniSWC(.true.) ! soil water content and soil salinity
+    TotalWaterContent_temp = GetTotalWaterContent()
+    Compartment_temp = GetCompartment()
+    soillayer_temp = GetSoilLayer()
+    call specify_soil_layer(GetNrCompartments(), &
+                            int(GetSoil_NrSoilLayers(), kind=int32), &
+                            soillayer_temp, Compartment_temp, &
+                            TotalWaterContent_temp)
+    call SetSoilLayer(soillayer_temp)
+    call SetTotalWaterContent(TotalWaterContent_temp)
+    call SetCompartment(Compartment_temp)
+end subroutine CompleteProfileDescription
+
+
+subroutine LoadProfile(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int32) :: i
+    character(len=3) :: blank
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt
+    character(len=1024) :: ProfDescriptionLocal
+    real(dp) :: thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp
+    real(dp) :: cra_temp, crb_temp, dx_temp
+    character(len=25) :: description_temp
+    integer(int8) :: penetrability_temp, gravelm_temp
+    real(dp), dimension(11) :: saltmob_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) ProfDescriptionLocal
+    call SetProfDescription(trim(ProfDescriptionLocal))
+    read(fhandle, *) VersionNr  ! AquaCrop version
+    read(fhandle, *) TempShortInt
+    call SetSoil_CNvalue(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetSoil_REW(TempShortInt)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    read(fhandle, *) TempShortInt
+    call SetSoil_NrSoilLayers(TempShortInt)
+    read(fhandle, *) ! depth of restrictive soil layer which is no longer applicable
+    read(fhandle, *)
+    read(fhandle, *)
+    ! Load characteristics of each soil layer
+    do i = 1, GetSoil_NrSoilLayers() 
+        ! Parameters for capillary rise missing in Versions 3.0 and 3.1
+        if (roundc(VersionNr*10, mold=1) < 40) then
+            read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
+                             WP_temp, infrate_temp, blank, description_temp
+            call SetSoilLayer_Thickness(i, thickness_temp)
+            call SetSoilLayer_SAT(i, SAT_temp)
+            call SetSoilLayer_FC(i, FC_temp)
+            call SetSoilLayer_WP(i, WP_temp)
+            call SetSoilLayer_InfRate(i, infrate_temp)
+            call SetSoilLayer_Description(i, description_temp)
+            ! Default values for Penetrability and Gravel
+            call SetSoilLayer_Penetrability(i, 100_int8)
+            call SetSoilLayer_GravelMass(i, 0_int8)
+            ! determine volume gravel
+            call SetSoilLayer_GravelVol(i, 0._dp)
+        else
+            if (roundc(VersionNr*10, mold=1) < 60) then 
+                            ! UPDATE required for Version 6.0
+                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
+                                 WP_temp, infrate_temp, cra_temp, &
+                                 crb_temp, blank, description_temp
+                call SetSoilLayer_Thickness(i, thickness_temp)
+                call SetSoilLayer_SAT(i, SAT_temp)
+                call SetSoilLayer_FC(i, FC_temp)
+                call SetSoilLayer_WP(i, WP_temp)
+                call SetSoilLayer_InfRate(i, infrate_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+                call SetSoilLayer_Description(i, description_temp)
+                ! Default values for Penetrability and Gravel
+                call SetSoilLayer_Penetrability(i, 100_int8)
+                call SetSoilLayer_GravelMass(i, 0_int8)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, 0._dp)
+            else
+                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, WP_temp, &
+                                 infrate_temp, penetrability_temp, &
+                                 gravelm_temp, cra_temp, crb_temp, &
+                                 description_temp
+                call SetSoilLayer_Thickness(i, thickness_temp)
+                call SetSoilLayer_SAT(i, SAT_temp)
+                call SetSoilLayer_FC(i, FC_temp)
+                call SetSoilLayer_WP(i, WP_temp)
+                call SetSoilLayer_InfRate(i, infrate_temp)
+                call SetSoilLayer_Penetrability(i, penetrability_temp)
+                call SetSoilLayer_GravelMass(i, gravelm_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+                call SetSoilLayer_Description(i, description_temp)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, &
+                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
+                                                    GetSoilLayer_GravelMass(i)))
+            end if
+        end if
+        ! determine drainage coefficient
+        call SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_InfRate(i)))
+        ! determine number of salt cells based on infiltration rate
+        if (GetSoilLayer_InfRate(i) <= 112._dp) then
+            call SetSoilLayer_SCP1(i, 11_int8)
+        else
+            call SetSoilLayer_SCP1(i, &
+                        roundc(1.6_dp + 1000._dp/GetSoilLayer_InfRate(i), mold=1_int8))
+            if (GetSoilLayer_SCP1(i) < 2_int8) then
+                call SetSoilLayer_SCP1(i, 2_int8)
+            end if
+            ! determine parameters for soil salinity
+            call SetSoilLayer_SC(i, GetSoilLayer_SCP1(i) - 1_int8)
+            call SetSoilLayer_Macro(i, roundc(GetSoilLayer_FC(i), mold=1_int8))
+            call SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100._dp) &
+                            * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2._dp))) 
+                                                                       ! m3/m3 
+            dx_temp = (GetSoilLayer_UL(i))/GetSoilLayer_SC(i)
+            call SetSoilLayer_Dx(i, dx_temp)  ! m3/m3 
+            saltmob_temp = GetSoilLayer_SaltMobility(i)
+            call Calculate_SaltMobility(i, GetSimulParam_SaltDiff(), &
+                                        GetSoilLayer_Macro(i), saltmob_temp)
+            call SetSoilLayer_SaltMobility(i, saltmob_temp)
+            ! determine default parameters for capillary rise if missing
+            call SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_SAT(i), &
+                                        GetSoilLayer_FC(i), GetSoilLayer_WP(i), &
+                                        GetSoilLayer_InfRate(i)))
+            if (roundc(VersionNr*10, mold=1) < 40) then
+                cra_temp = GetSoilLayer_CRa(i)
+                crb_temp = GetSoilLayer_CRb(i)
+                call DetermineParametersCR(GetSoilLayer_SoilClass(i), &
+                                            GetSoilLayer_InfRate(i), &
+                                            cra_temp, crb_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+            end if
+        end if
+        call DetermineNrandThicknessCompartments()
+        call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
+                                                  GetSoil_NrSoilLayers(), &
+                                                  GetSoilLayer()))
+    end do
+    close(fhandle)
+end subroutine LoadProfile
+
+
+subroutine Calculate_Saltmobility(layer, SaltDiffusion, Macro, Mobil)
+    integer(int32), intent(in) :: layer
+    integer(int8), intent(in) :: SaltDiffusion
+    integer(int8), intent(in) :: Macro
+    real(dp), dimension(11), intent(inout) :: Mobil
+
+    integer(int32) :: i, CelMax
+    real(dp) :: Mix, a, b, xi, yi, UL
+
+    Mix = SaltDiffusion/100._dp ! global salt mobility expressed as a fraction
+    UL = GetSoilLayer_UL(layer) * 100._dp ! upper limit in VOL% of SC cell 
+
+    ! 1. convert Macro (vol%) in SaltCelNumber
+    if (Macro > UL) then
+        CelMax = GetSoilLayer_SCP1(layer)
+    else
+        CelMax = roundc((Macro/UL)*GetSoilLayer_SC(layer), mold=1)
+    end if
+    if (CelMax <= 0) then
+        CelMax = 1
+    end if
+
+    ! 2. find a and b
+    if (Mix < 0.5_dp) then
+        a = Mix * 2._dp
+        b = exp(10._dp*(0.5_dp-Mix)*log(10._dp))
+    else
+        a = 2._dp * (1._dp - Mix)
+        b = exp(10._dp*(Mix-0.5_dp)*log(10._dp))
+    end if
+
+    ! 3. calculate mobility for cells = 1 to Macro
+    do i = 1, (CelMax-1) 
+        xi = i/(real(CelMax-1, kind=dp))
+        if (Mix > 0._dp) then
+            if (Mix < 0.5_dp) then
+                yi = exp(log(a)+xi*log(b))
+                Mobil(i) = (yi-a)/(a*b-a)
+            elseif ((Mix >= 0.5_dp - epsilon(0.0_dp)) &
+                       .and. (Mix <= 0.5_dp + epsilon(0.0_dp)))  then
+                Mobil(i) = xi
+            elseif (Mix < 1._dp) then
+                yi = exp(log(a)+(1._dp-xi)*log(b))
+                Mobil(i) = 1._dp - (yi-a)/(a*b-a)
+            else
+                Mobil(i) = 1._dp
+            end if
+        else
+            Mobil(i) = 0._dp
+        end if
+    end do
+        
+    ! 4. Saltmobility between Macro and SAT
+    do i = CelMax, GetSoilLayer_SCP1(layer) 
+        Mobil(i) = 1._dp
+    end do 
+end subroutine Calculate_Saltmobility
+
+
 subroutine AdjustYearPerennials(TheYearSeason, Sown1stYear, TheCycleMode, &
           Zmax, ZminYear1, TheCCo, TheSizeSeedling, TheCGC, TheCCx, TheGDDCGC, &
           ThePlantingDens, TypeOfPlanting, Zmin, TheSizePlant, TheCCini,&
@@ -4354,6 +4574,7 @@ subroutine NoCropCalendar()
     call SetEndSeason_GenerateTempOn(.false.)
     call SetCalendarDescription('No calendar for the Seeding/Planting year')
 end subroutine NoCropCalendar
+
 
 
 !! Global variables section !!
@@ -4627,7 +4848,7 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     
     character(len=len(Trim(TheProjectFileName))) :: TempString
     character(len=:), allocatable :: TempString2
-    integer(int8) :: i
+    integer(int32) :: i
     
     TempString = Trim(TheProjectFileName)
     i = len(TempString)
@@ -8597,11 +8818,18 @@ type(rep_Content) function GetTotalWaterContent()
     GetTotalWaterContent = TotalWaterContent
 end function GetTotalWaterContent
 
-type(real) function GetTotalWaterContent_BeginDay()
+real(dp) function GetTotalWaterContent_BeginDay()
     !! Getter for the "TotalWaterContent_BeginDay" global variable.
 
     GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
 end function GetTotalWaterContent_BeginDay
+
+subroutine SetTotalWaterContent(TotalWaterContent_in)
+    !! Setter for the TotalWaterContent global variable.
+    type(rep_content), intent(in) :: TotalWaterContent_in
+
+    TotalWaterContent = TotalWaterContent_in
+end subroutine SetTotalWaterContent
 
 subroutine SetTotalWaterContent_BeginDay(BeginDay)
     !! Setter for the "TotalWaterContent" global variable.
@@ -10343,6 +10571,14 @@ subroutine SetSimulation_Storage_Season(Season)
     simulation%Storage%Season = Season
 end subroutine SetSimulation_Storage_Season
 
+function GetCompartment() result(Compartment_out)
+    !! Getter for "Compartment" global variable.
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_out
+
+    Compartment_out = Compartment
+end function GetCompartment
+
+
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
     integer(int32), intent(in) :: i
@@ -10445,7 +10681,8 @@ end function GetCompartment_Depo
 
 subroutine SetCompartment(Compartment_in)
     !! Setter for the "compartment" global variable.
-    type(CompartmentIndividual), intent(in) :: Compartment_in
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                    intent(in) :: Compartment_in
 
     compartment = Compartment_in
 end subroutine SetCompartment
