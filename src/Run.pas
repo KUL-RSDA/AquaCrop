@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_tempprocessing;
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -134,7 +134,7 @@ IF (TheProjectType = TypePRM) THEN
 IF ((Out1Wabal) OR (Out3Prof = true) OR (Out4Salt = true)) THEN
    BEGIN
    Zprof := 0;
-   FOR compi :=1 to NrCompartments DO Zprof := Zprof + GetCompartment_Thickness(compi);
+   FOR compi :=1 to GetNrCompartments() DO Zprof := Zprof + GetCompartment_Thickness(compi);
    Str(Zprof:4:2,Str1);
    IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
       THEN Str(GetCrop().RootMax:4:2,Str2)
@@ -181,12 +181,12 @@ IF Out4Salt THEN
 IF Out5CompWC THEN
    BEGIN
    WRITE(fDaily,'       WC01');
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        Str(Compi:2,Str1);
        WRITE(fDaily,'       WC',Str1);
        END;
-   Str(NrCompartments:2,Str1);
+   Str(GetNrCompartments():2,Str1);
    IF ((Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,'       WC',Str1)
       ELSE WRITELN(fDaily,'       WC',Str1);
@@ -195,12 +195,12 @@ IF Out5CompWC THEN
 IF Out6CompEC THEN
    BEGIN
    WRITE(fDaily,'      ECe01');
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        Str(Compi:2,Str1);
        WRITE(fDaily,'      ECe',Str1);
        END;
-   Str(NrCompartments:2,Str1);
+   Str(GetNrCompartments():2,Str1);
    IF (Out7Clim = true)
       THEN WRITE(fDaily,'      ECe',Str1)
       ELSE WRITELN(fDaily,'      ECe',Str1);
@@ -248,12 +248,12 @@ IF Out5CompWC THEN
    BEGIN
    NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(Compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
-   NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
+   NodeD := NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2 + GetCompartment_Thickness(GetNrCompartments())/2;
    IF ((Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,NodeD:11:2)
       ELSE WRITELN(fDaily,NodeD:11:2);
@@ -263,12 +263,12 @@ IF Out6CompEC THEN
    BEGIN
    NodeD := GetCompartment_Thickness(1)/2;
    WRITE(fDaily,NodeD:11:2);
-   FOR Compi := 2 TO (NrCompartments-1) DO
+   FOR Compi := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(compi)/2;
        WRITE(fDaily,NodeD:11:2);
        END;
-   NodeD := NodeD + GetCompartment_Thickness(NrCompartments-1)/2 + GetCompartment_Thickness(NrCompartments)/2;
+   NodeD := NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2 + GetCompartment_Thickness(GetNrCompartments())/2;
    IF (Out7Clim = true)
       THEN WRITE(fDaily,NodeD:11:2)
       ELSE WRITELN(fDaily,NodeD:11:2);
@@ -406,7 +406,7 @@ Var Ztot, Zi : double;
     Compi_temp : CompartmentIndividual;
 BEGIN
 Ztot := 0;
-FOR compi := 1 to NrCompartments DO
+FOR compi := 1 to GetNrCompartments() DO
     BEGIN
     Ztot := Ztot + GetCompartment_Thickness(compi);
     Zi := Ztot - GetCompartment_Thickness(compi)/2;
@@ -645,7 +645,7 @@ IF (GetEToFile() <> '(None)')
         IF FileExists(totalname)
            THEN BEGIN
                 // open file and find first day of simulation period
-                CASE EToRecord.DataType OF
+                CASE GetEToRecord_DataType() OF
                   Daily   : BEGIN
                             Assign(fETo,totalname);
                             Reset(fETo);
@@ -657,7 +657,7 @@ IF (GetEToFile() <> '(None)')
                             READLN(fETo);
                             READLN(fETo);
                             READLN(fETo);
-                            FOR i := EToRecord.FromDayNr TO (FromSimDay - 1) DO READLN(fETo);
+                            FOR i := GetEToRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fETo);
                             READLN(fETo,ETo);
                             END;
                   Decadely: BEGIN
@@ -681,7 +681,7 @@ IF (GetEToFile() <> '(None)')
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
-                    CASE EToRecord.DataType OF
+                    CASE GetEToRecord_DataType() OF
                          Daily   : BEGIN
                                    IF Eof(fETo)
                                       THEN BEGIN
@@ -714,7 +714,7 @@ IF (GetEToFile() <> '(None)')
                     WRITELN(fEToS,ETo:10:4);
                     END;
                 // Close files
-                IF (EToRecord.DataType = Daily) THEN Close(fETo);
+                IF (GetEToRecord_DataType() = Daily) THEN Close(fETo);
                 Close(fEToS);
                 END
            ELSE BEGIN
@@ -728,7 +728,7 @@ IF (GetRainFile() <> '(None)')
         IF FileExists(totalname)
         THEN BEGIN
              // open file and find first day of simulation period
-             CASE RainRecord.DataType OF
+             CASE GetRainRecord_DataType() OF
                   Daily   : BEGIN
                             Assign(fRain,totalname);
                             Reset(fRain);
@@ -740,7 +740,7 @@ IF (GetRainFile() <> '(None)')
                             READLN(fRain);
                             READLN(fRain);
                             READLN(fRain);
-                            FOR i := RainRecord.FromDayNr TO (FromSimDay - 1) DO READLN(fRain);
+                            FOR i := GetRainRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fRain);
                             READLN(fRain,Rain);
                             END;
                   Decadely: BEGIN
@@ -764,7 +764,7 @@ IF (GetRainFile() <> '(None)')
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
-                    CASE RainRecord.DataType OF
+                    CASE GetRainRecord_DataType() OF
                          Daily   : BEGIN
                                    IF Eof(fRain)
                                       THEN BEGIN
@@ -797,7 +797,7 @@ IF (GetRainFile() <> '(None)')
                     WRITELN(fRainS,Rain:10:4);
                     END;
              // Close files
-             IF (RainRecord.DataType = Daily) THEN Close(fRain);
+             IF (GetRainRecord_DataType() = Daily) THEN Close(fRain);
              Close(fRainS);
              END
         ELSE BEGIN
@@ -1083,9 +1083,9 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    FOR i := 1 TO 6 DO READLN(fIrri);  // irrigation info (already loaded)
    CASE GetIrriMode() OF
         Manual   : BEGIN
-                   IF (IrriFirstDayNr = undef_int)
+                   IF (GetIrriFirstDayNr() = undef_int)
                       THEN DNr := DayNri - GetCrop().Day1 + 1
-                      ELSE DNr := DayNri - IrriFirstDayNr + 1;
+                      ELSE DNr := DayNri - GetIrriFirstDayNr() + 1;
                    REPEAT
                    IF Eof(fIrri)
                       THEN SetIrriInfoRecord1_NoMoreInfo(true)
@@ -2090,7 +2090,7 @@ VAR Di,Mi,Yi,StrExp,StrSto,StrSalt,StrTr,StrW,Brel,Nr : INTEGER;
     SWCtopSoilConsidered_temp : boolean;
 BEGIN
 DetermineDate(DayNri,Di,Mi,Yi);
-IF (ClimRecord.FromY = 1901) THEN Yi := Yi - 1901 + 1;
+IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 
 // 0. info day
@@ -2247,10 +2247,10 @@ IF Out4Salt THEN
 IF Out5CompWC THEN
    BEGIN
    WRITE(fDaily,(GetCompartment_Theta(1)*100):11:1);
-   FOR Nr := 2 TO (NrCompartments-1) DO WRITE(fDaily,(GetCompartment_Theta(Nr)*100):11:1);
+   FOR Nr := 2 TO (GetNrCompartments()-1) DO WRITE(fDaily,(GetCompartment_Theta(Nr)*100):11:1);
    IF ((Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,(GetCompartment_Theta(NrCompartments)*100):11:1)
-      ELSE WRITELN(fDaily,(GetCompartment_Theta(NrCompartments)*100):11:1);
+      THEN WRITE(fDaily,(GetCompartment_Theta(GetNrCompartments())*100):11:1)
+      ELSE WRITELN(fDaily,(GetCompartment_Theta(GetNrCompartments())*100):11:1);
    END;
 
 // 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
@@ -2258,12 +2258,12 @@ IF Out6CompEC THEN
    BEGIN
    SaltVal := ECeComp(GetCompartment_i(1));
    WRITE(fDaily,SaltVal:11:1);
-   FOR Nr := 2 TO (NrCompartments-1) DO
+   FOR Nr := 2 TO (GetNrCompartments()-1) DO
        BEGIN
        SaltVal := ECeComp(GetCompartment_i(Nr));
        WRITE(fDaily,SaltVal:11:1);
        END;
-   SaltVal := ECeComp(GetCompartment_i(NrCompartments));
+   SaltVal := ECeComp(GetCompartment_i(GetNrCompartments()));
    IF (Out7Clim = true)
       THEN WRITE(fDaily,SaltVal:11:1)
       ELSE WRITELN(fDaily,SaltVal:11:1);
@@ -2306,7 +2306,7 @@ VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
               END;
       SWCact := SWCact + Factor * 10 * (GetCompartment_Theta(compi)*100) * GetCompartment_Thickness(compi);
 
-    UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = NrCompartments));
+    UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = GetNrCompartments()));
     SWCZsoil := SWCact;
     END; (* SWCZsoil *)
 
@@ -2338,7 +2338,7 @@ IF ((LineNrEval <> undef_int) AND (DayNrEval = DayNri)) THEN
    END;
 //2. Date
 DetermineDate(DayNri,Di,Mi,Yi);
-IF (ClimRecord.FromY = 1901) THEN Yi := Yi - 1901 + 1;
+IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);
@@ -2403,11 +2403,11 @@ VAR RepeatToDay : LongInt;
         TheEnd : BOOLEAN;
     BEGIN
     DNr := Dayi - GetSimulation_FromDayNr() + 1;
-    IrriEvents := IrriBeforeSeason;
+    IrriEvents := GetIrriBeforeSeason();
     IF (Dayi > GetCrop().DayN) THEN
        BEGIN
        DNr := Dayi - GetCrop().DayN;
-       IrriEvents := IrriAfterSeason;
+       IrriEvents := GetIrriAfterSeason();
        END;
     IF (DNr < 1)
        THEN IrriOutSeason := 0
@@ -2436,9 +2436,9 @@ VAR RepeatToDay : LongInt;
         Ir1,Ir2 : double;
         IrriECw_temp : double;
     BEGIN
-    IF (IrriFirstDayNr = undef_int)
+    IF (GetIrriFirstDayNr() = undef_int)
        THEN DNr := Dayi - GetCrop().Day1 + 1
-       ELSE DNr := Dayi - IrriFirstDayNr + 1;
+       ELSE DNr := Dayi - GetIrriFirstDayNr() + 1;
     IF (GetIrriInfoRecord1_NoMoreInfo())
        THEN IrriManual := 0
        ELSE BEGIN
@@ -2553,7 +2553,7 @@ VAR RepeatToDay : LongInt;
          PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
          SetCompartment_Theta(compi, ThetaPercRaw);
          END;
-    UNTIL ((SumDepth >= RootingDepth) OR (compi = NrCompartments))
+    UNTIL ((SumDepth >= RootingDepth) OR (compi = GetNrCompartments()))
     END; (* AdjustSWCRootZone *)
 
 
@@ -3092,7 +3092,7 @@ VAR NrRun : ShortInt;
     BEGIN
     //Adjust size of compartments if required
     TotDepth := 0;
-    FOR i := 1 to NrCompartments DO TotDepth := TotDepth + GetCompartment_Thickness(i);
+    FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
     IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
        THEN BEGIN
             IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))

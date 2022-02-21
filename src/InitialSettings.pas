@@ -23,7 +23,7 @@ implementation
  // 1a. General.PAR
 
  SetSimulParam_PercRAW(50); //Threshold [% of RAW] for determination of Inet
- NrCompartments := 12; //Number of soil compartments (maximum is 12) (not a program parameter)
+ SetNrCompartments(12); //Number of soil compartments (maximum is 12) (not a program parameter)
  SetSimulParam_CompDefThick(0.10); //Default thickness of soil compartments [m]
  SetSimulParam_CropDay1(81); //DayNumber of first day cropping period (1..365)
  SetSimulParam_Tbase(10.0);  //Default base temperature (degC) below which no crop development
@@ -74,8 +74,8 @@ implementation
  IniPercTAW := 50; // Default Value for Percentage TAW for Display in Initial Soil Water Content Menu
 
  // Default for soil compartments
- IF (NrCompartments > max_No_compartments) //Savety check of value in General.PAR;
-    THEN NrCompartments := max_No_compartments;
+ IF (GetNrCompartments() > max_No_compartments) //Savety check of value in General.PAR;
+    THEN SetNrCompartments(max_No_compartments);
  FOR Nri := 1 TO max_No_compartments DO  // required for formactivate ParamNew
      SetCompartment_Thickness(Nri, GetSimulParam_CompDefThick());
  // Default CropDay1 - Savety check of value in General.PAR
@@ -145,27 +145,21 @@ implementation
  SetEToFile('(None)');
  SetEToFilefull(GetEToFile());  (* no file *)
  SetEToDescription('');
- WITH EToRecord DO
-   BEGIN
-   DataType := Daily;
-   NrObs := 0;
-   FromString := 'any date';
-   ToString := 'any date';
-   FromY := 1901;
-   END;
+ SetEToRecord_DataType(Daily);
+ SetEToRecord_NrObs(0);
+ SetEToRecord_FromString('any date');
+ SetEToRecord_ToString('any date');
+ SetEToRecord_FromY(1901);
 
  // 5.3 Rain
  SetRainFile('(None)');
  SetRainFilefull(GetRainFile());  (* no file *)
  SetRainDescription('');
- WITH RainRecord DO
-   BEGIN
-   DataType := Daily;
-   NrObs := 0;
-   FromString := 'any date';
-   ToString := 'any date';
-   FromY := 1901;
-   END;
+ SetRainRecord_DataType(Daily);
+ SetRainRecord_NrObs(0);
+ SetRainRecord_FromString('any date');
+ SetRainRecord_ToString('any date');
+ SetRainRecord_FromY(1901);
 
  // 5.4 CO2
  SetCO2File('MaunaLoa.CO2');
@@ -190,8 +184,8 @@ Crop_DayN_temp := GetCrop().DayN;
 SetCrop_Day1(Crop_Day1_temp);
 SetCrop_DayN(Crop_DayN_temp);
 (* adjusting ClimRecord.'TO' for undefined year with 365 days *)
- IF ((GetClimFile() <> '(None)') AND (ClimRecord.FromY = 1901)
-   AND (ClimRecord.NrObs = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
+ IF ((GetClimFile() <> '(None)') AND (GetClimRecord_FromY() = 1901)
+   AND (GetClimRecord_NrObs() = 365)) THEN AdjustClimRecordTo(GetCrop().DayN);
 (* adjusting simulation period *)
  AdjustSimPeriod;
 
