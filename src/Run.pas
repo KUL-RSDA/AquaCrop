@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_tempprocessing;
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -1083,9 +1083,9 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    FOR i := 1 TO 6 DO READLN(fIrri);  // irrigation info (already loaded)
    CASE GetIrriMode() OF
         Manual   : BEGIN
-                   IF (IrriFirstDayNr = undef_int)
+                   IF (GetIrriFirstDayNr() = undef_int)
                       THEN DNr := DayNri - GetCrop().Day1 + 1
-                      ELSE DNr := DayNri - IrriFirstDayNr + 1;
+                      ELSE DNr := DayNri - GetIrriFirstDayNr() + 1;
                    REPEAT
                    IF Eof(fIrri)
                       THEN SetIrriInfoRecord1_NoMoreInfo(true)
@@ -2403,11 +2403,11 @@ VAR RepeatToDay : LongInt;
         TheEnd : BOOLEAN;
     BEGIN
     DNr := Dayi - GetSimulation_FromDayNr() + 1;
-    IrriEvents := IrriBeforeSeason;
+    IrriEvents := GetIrriBeforeSeason();
     IF (Dayi > GetCrop().DayN) THEN
        BEGIN
        DNr := Dayi - GetCrop().DayN;
-       IrriEvents := IrriAfterSeason;
+       IrriEvents := GetIrriAfterSeason();
        END;
     IF (DNr < 1)
        THEN IrriOutSeason := 0
@@ -2436,9 +2436,9 @@ VAR RepeatToDay : LongInt;
         Ir1,Ir2 : double;
         IrriECw_temp : double;
     BEGIN
-    IF (IrriFirstDayNr = undef_int)
+    IF (GetIrriFirstDayNr() = undef_int)
        THEN DNr := Dayi - GetCrop().Day1 + 1
-       ELSE DNr := Dayi - IrriFirstDayNr + 1;
+       ELSE DNr := Dayi - GetIrriFirstDayNr() + 1;
     IF (GetIrriInfoRecord1_NoMoreInfo())
        THEN IrriManual := 0
        ELSE BEGIN

@@ -6,32 +6,19 @@ uses SysUtils, interface_global;
 
 
 Const 
-      NameMonth : ARRAY[1..12] of string = ('January','February','March','April',
-          'May','June','July','August','September','October','November','December');
-
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
 
-TYPE
-     repstring17 = string[17]; (* Date string *)
-     rep_string3  = string[3];  (* Read/Write ProfFile *)
 
 TYPE
-     rep_DayEventInt = Record
-         DayNr : Integer;
-         Param : Integer;
-         end;
-
-     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
      rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ClimDescription,IrriDescription,
-    ProjectDescription,MultipleProjectDescription,OffSeasonDescription,GroundWaterDescription: string;
+    ProjectDescription, MultipleProjectDescription,
+    OffSeasonDescription,GroundWaterDescription: string;
 
-    IrriFirstDayNr : LongInt;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -46,8 +33,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    IrriBeforeSeason,
-    IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
@@ -76,32 +61,11 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
 
-PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
-PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
-                                          VAR Compartment : rep_Comp);
-
-PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
-                             VAR SoilLayer : rep_SoilLayer;
-                             VAR Compartment : rep_Comp;
-                             //InitialWC : rep_InitialWC;
-                             VAR TotalWaterContent : rep_Content);
-
-PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
-                                KsatMM : double;
-                                VAR aParam, bParam : double);
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-
-PROCEDURE CompleteProfileDescription;
-PROCEDURE LoadProfile(FullName : string);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
@@ -117,13 +81,11 @@ PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
-PROCEDURE SaveProfile(totalname : string);
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
                                    CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : INTEGER;
                                    ThresholdOnset,ThresholdEnd : double);
-PROCEDURE SaveCrop(totalname : string);
 FUNCTION EndGrowingPeriod(Day1 : longint;
                           VAR DayN : longint) : string;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
@@ -132,10 +94,6 @@ PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE ResetSWCToFC;
 PROCEDURE AdjustSimPeriod;
-PROCEDURE SetClimData;
-PROCEDURE DetermineRootZoneWC(RootingDepth : double;
-                              VAR ZtopSWCconsidered : BOOLEAN);
-FUNCTION DayString(DNr : LongInt) : repstring17;
 
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
@@ -153,8 +111,7 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
 
-PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
-                                       VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
+
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -194,22 +151,6 @@ PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
-
-PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
-                               Sown1stYear : BOOLEAN;
-                               TheCycleMode : rep_modeCycle;
-                               Zmax,ZminYear1,TheCCo,TheSizeSeedling,
-                               TheCGC,TheCCx,TheGDDCGC : double;
-                               ThePlantingDens : LongInt;
-                               VAR TypeOfPlanting : rep_Planting;
-                               VAR Zmin,TheSizePlant,TheCCini : double;
-                               VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
-
-
-
-
-
-PROCEDURE NoCropCalendar;
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
@@ -288,28 +229,6 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
 END; (* CalculateETpot *)
 
 
-PROCEDURE NoIrrigation;
-VAR Nri : INTEGER;
-BEGIN
- SetIrriMode(NoIrri);
- IrriDescription := 'Rainfed cropping';
- SetIrriMethod(MSprinkler);
- SetSimulation_IrriECw(0.0); // dS/m
- SetGenerateTimeMode(AllRAW);
- SetGenerateDepthMode(ToFC);
- IrriFirstDayNr := undef_int;
- FOR Nri := 1 TO 5 DO
-     BEGIN
-     IrriBeforeSeason[Nri].DayNr := 0;
-     IrriBeforeSeason[Nri].Param := 0;
-     IrriAfterSeason[Nri].DayNr := 0;
-     IrriAfterSeason[Nri].Param := 0;
-     END;
- SetIrriECw_PreSeason(0.0); //dS/m
- SetIrriECw_PostSeason(0.0); //dS/m
-END; (* NoIrrigation *)
-
-
 PROCEDURE NoManagementOffSeason;
 VAR Nri : INTEGER;
 BEGIN
@@ -323,14 +242,14 @@ SetSimulParam_IrriFwOffSeason(100);
 SetIrriECw_PreSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriBeforeSeason[Nri].DayNr := 0;
-    IrriBeforeSeason[Nri].Param := 0;
+    SetIrriBeforeSeason_DayNr(Nri, 0);
+    SetIrriBeforeSeason_Param(Nri, 0);
     END;
 SetIrriECw_PostSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 END; (* NoManagementOffSeason *)
 
@@ -361,10 +280,10 @@ SetManagement_EffectMulchOffS(TempShortInt);
 // irrigation events - initialise
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriBeforeSeason[Nri].DayNr := 0;
-    IrriBeforeSeason[Nri].Param := 0;
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriBeforeSeason_DayNr(Nri, 0);
+    SetIrriBeforeSeason_Param(Nri, 0);
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
@@ -388,90 +307,18 @@ IF (NrEvents1 > 0) THEN FOR Nri := 1 TO NrEvents1 DO // events BEFORE growing pe
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriBeforeSeason[Nri].DayNr := ROUND(Par1);
-   IrriBeforeSeason[Nri].Param := ROUND(Par2);
+   SetIrriBeforeSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriBeforeSeason_Param(Nri, ROUND(Par2));
    END;
 IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing period
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriAfterSeason[Nri].DayNr := ROUND(Par1);
-   IrriAfterSeason[Nri].Param := ROUND(Par2);
+   SetIrriAfterSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriAfterSeason_Param(Nri, ROUND(Par2));
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
-VAR f0 : TextFile;
-    i : INTEGER;
-    VersionNr : double;
-    simul_irri_in,simul_percraw : shortint; 
-
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,IrriDescription);
-READLN(f0,VersionNr);  // AquaCrop version
-
-// irrigation method
-READLN(f0,i);
-CASE i OF
-     1 : SetIrriMethod(MSprinkler);
-     2 : SetIrriMethod(MBasin);
-     3 : SetIrriMethod(MBorder);
-     4 : SetIrriMethod(MFurrow);
-     else  SetIrriMethod(MDrip);
-     end;
-
-// fraction of soil surface wetted
-READLN(f0,simul_irri_in);
-SetSimulParam_IrriFwInSeason(simul_irri_in);
-
-// irrigation mode and parameters
-READLN(f0,i);
-CASE i OF
-     0 : SetIrriMode(NoIrri); // rainfed
-     1 : SetIrriMode(Manual);
-     2 : SetIrriMode(Generate);
-     else SetIrriMode(Inet);
-     end;
-
-// 1. Irrigation schedule
-IF ((i = 1) AND (ROUND(VersionNr*10) >= 70))
-   THEN READLN(f0,IrriFirstDayNr) // line 6
-   ELSE IrriFirstDayNr := undef_int; // start of growing period
-
-
-// 2. Generate
-IF (GetIrriMode() = Generate) THEN
-   BEGIN
-   READLN(f0,i); // time criterion
-   Case i OF
-        1 : SetGenerateTimeMode(FixInt);
-        2 : SetGenerateTimeMode(AllDepl);
-        3 : SetGenerateTimeMode(AllRAW);
-        4 : SetGenerateTimeMode(WaterBetweenBunds);
-        else SetGenerateTimeMode(AllRAW);
-     end;
-   READLN(f0,i); // depth criterion
-   Case i OF
-        1 : SetGenerateDepthMode(ToFc);
-        else SetGenerateDepthMode(FixDepth);
-     end;
-   IrriFirstDayNr := undef_int; // start of growing period
-   END;
-
-// 3. Net irrigation requirement
-IF (GetIrriMode() = Inet) THEN
-   BEGIN
-   READLN(f0,simul_percraw);
-   SetSimulParam_PercRAW(simul_percraw);
-   IrriFirstDayNr := undef_int;  // start of growing period
-   END;
-
-Close(f0);
-END; (* LoadIrriScheduleInfo *)
 
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
@@ -547,313 +394,6 @@ REPEAT
 UNTIL (compi < 1);
 END; (*  CalculateAdjustedFC *)
 
-
-PROCEDURE DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers : INTEGER;
-                                          VAR Compartment : rep_Comp);
-VAR i, layeri, compi : INTEGER;
-    depth, depthi : double;
-    finished, NextLayer : BOOLEAN;
-BEGIN
-depth := 0;
-depthi := 0;
-layeri := 1;
-compi := 1;
-REPEAT
-  depth := depth + GetSoilLayer_i(layeri).Thickness;
-  REPEAT
-    depthi := depthi + Compartment[compi].Thickness/2;
-    IF (depthi <= depth)
-       THEN BEGIN
-            Compartment[compi].Layer := layeri;
-            NextLayer := false;
-            depthi := depthi + Compartment[compi].Thickness/2;
-            compi := compi + 1;
-            finished := (compi > NrCompartments);
-            END
-       ELSE BEGIN
-            depthi := depthi - Compartment[compi].Thickness/2;
-            NextLayer := true;
-            layeri := layeri + 1;
-            finished := (layeri > NrSoilLayers);
-            END;
-  UNTIL finished or NextLayer;
-UNTIL finished;
-FOR i := compi to NrCompartments DO Compartment[i].Layer := NrSoilLayers;
-FOR i := (NrCompartments+1) TO max_No_compartments DO Compartment[i].Thickness := undef_double;
-END; (* DesignateSoilLayerToCompartments *)
-
-
-PROCEDURE specify_soil_layer(NrCompartments,NrSoilLayers : INTEGER;
-                             VAR SoilLayer : rep_SoilLayer;
-                             VAR Compartment : rep_Comp;
-                             VAR TotalWaterContent : rep_Content);
-VAR layeri, compi, celli : INTEGER;
-    Total : double;
-
-BEGIN
-DesignateSoilLayerToCompartments(NrCompartments,NrSoilLayers,Compartment);
-
-// Set soil layers and compartments at Field Capacity and determine Watercontent (mm)
-// No salinity in soil layers and compartmens
-// Absence of ground water table (FCadj = FC)
-Total := 0;
-FOR layeri := 1 TO NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-FOR compi := 1 TO NrCompartments DO
-    BEGIN
-    Compartment[compi].Theta := GetSoilLayer_i(Compartment[compi].Layer).FC/100;
-    Compartment[compi].FCadj := GetSoilLayer_i(Compartment[compi].Layer).FC;
-    Compartment[compi].DayAnaero := 0;
-    For celli := 1 TO GetSoilLayer_i(Compartment[compi].Layer).SCP1 DO
-        BEGIN // salinity in cells
-        Compartment[compi].Salt[celli] := 0.0;
-        Compartment[compi].Depo[celli] := 0.0;
-        END;
-    SetSimulation_ThetaIni_i(compi,Compartment[compi].Theta);
-    SetSimulation_ECeIni_i(compi,0); // initial soil salinity in dS/m
-    SetSoilLayer_WaterContent(Compartment[compi].Layer, GetSoilLayer_i(Compartment[compi].Layer).WaterContent
-        + GetSimulation_ThetaIni_i(compi)*100*10*Compartment[compi].Thickness);
-    END;
-FOR layeri := 1 TO NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
-SetTotalWaterContent_BeginDay(Total);
-
-// initial soil water content and no salts
-DeclareInitialCondAtFCandNoSalt;
-
-// Number of days with RootZone Anaerobic Conditions
-SetSimulation_DayAnaero(0);
-
-END; (* specify_soil_layer *)
-
-PROCEDURE DetermineParametersCR(SoilClass : ShortInt;
-                                KsatMM : double;
-                                VAR aParam, bParam : double);
-BEGIN
-// determine parameters
-IF (ROUND(KsatMM*1000) <= 0)
-   THEN BEGIN
-        aParam := undef_int;
-        bParam := undef_int;
-        END
-   ELSE CASE SoilClass OF
-             1 : BEGIN  // sandy soils
-                 aParam := -0.3112 - KsatMM/100000;
-                 bParam := -1.4936 + 0.2416*LN(KsatMM);
-                 END;
-             2 : BEGIN // loamy soils
-                 aParam := -0.4986 + 9*KsatMM/100000;
-                 bParam := -2.1320 + 0.4778*LN(KsatMM);
-                 END;
-             3 : BEGIN // sandy clayey soils
-                 aParam := -0.5677 - 4*KsatMM/100000;
-                 bParam := -3.7189 + 0.5922*LN(KsatMM);
-                 END;
-            else BEGIN // silty clayey soils
-                 aParam := -0.6366 + 8*KsatMM/10000;
-                 bParam := -1.9165 + 0.7063*LN(KsatMM);
-                 END;
-            end;
-END; (* DetermineParametersCR *)
-
-
-
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-VAR i, CelMax : INTEGER;
-    Mix, a, b, xi, yi, UL : double;
-
-BEGIN
-Mix := SaltDiffusion/100; // global salt mobility expressed as a fraction
-UL := GetSoilLayer_i(layer).UL * 100; (* upper limit in VOL% of SC cell *)
-
-//1. convert Macro (vol%) in SaltCelNumber
-IF (Macro > UL)
-   THEN CelMax := GetSoilLayer_i(layer).SCP1
-   ELSE CelMax := ROUND((Macro/UL)*GetSoilLayer_i(layer).SC);
-IF (CelMax <= 0) THEN CelMax := 1;
-
-//2. find a and b
-IF (Mix < 0.5)
-   THEN BEGIN
-        a := Mix * 2;
-        b := EXP(10*(0.5-Mix)*LN(10));
-        END
-   ELSE BEGIN
-        a := 2 * (1- Mix);
-        b := EXP(10*(Mix-0.5)*LN(10));
-        END;
-
-//3. calculate mobility for cells = 1 to Macro
-FOR i := 1 to (CelMax-1) DO
-    BEGIN
-    xi := i/(CelMax-1);
-    IF (Mix > 0)
-       THEN IF (Mix < 0.5)
-               THEN BEGIN
-                    yi := EXP(LN(a)+xi*LN(b));
-                    Mobil[i] := (yi-a)/(a*b-a);
-                    END
-               ELSE IF (Mix = 0.5)
-                       THEN Mobil[i] := xi
-                       ELSE IF (Mix < 1)
-                               THEN BEGIN
-                                    yi := EXP(LN(a)+(1-xi)*LN(b));
-                                    Mobil[i] := 1- (yi-a)/(a*b-a);
-                                    END
-                               ELSE Mobil[i] := 1
-       ELSE Mobil[i] := 0;
-    END;
-
-//4. Saltmobility between Macro and SAT
-FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
-
-END; (* Calculate_Saltmobility *)
-
-
-
-PROCEDURE CompleteProfileDescription;
-VAR i : INTEGER;
-TotalWaterContent_temp : rep_Content;
-Compartment_temp : rep_Comp;
-soillayer_i_temp : SoilLayerIndividual;
-soillayer_temp : rep_SoilLayer;
-BEGIN
-FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO 
-    BEGIN
-        soillayer_i_temp := GetSoilLayer_i(i);
-        set_layer_undef(soillayer_i_temp);
-        SetSoilLayer_i(i, soillayer_i_temp);
-    END;
-SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
-TotalWaterContent_temp := GetTotalWaterContent();
-Compartment_temp := GetCompartment();
-soillayer_temp := GetSoilLayer();
-specify_soil_layer(GetNrCompartments(),GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
-SetSoilLayer(soillayer_temp);
-SetTotalWaterContent(TotalWaterContent_temp);
-SetCompartment(Compartment_temp);
-END; (* CompleteProfileDescription *)
-
-
-PROCEDURE LoadProfile(FullName : string);
-VAR f0 : TextFile;
-    i  : INTEGER;
-    blank : rep_string3;
-    VersionNr : double;
-    TempShortInt : shortint;
-    ProfDescriptionLocal : string;
-    thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp : double;
-    cra_temp, crb_temp, dx_temp : double;
-    description_temp : string;
-    penetrability_temp, gravelm_temp : shortint;
-    saltmob_temp : rep_salt;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,ProfDescriptionLocal);
-SetProfDescription(ProfDescriptionLocal);
-READLN(f0,VersionNr);  // AquaCrop version
-READLN(f0,TempShortInt);
-SetSoil_CNvalue(TempShortInt);
-READLN(f0,TempShortInt);
-SetSoil_REW(TempShortInt);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-READLN(f0,TempShortInt);
-SetSoil_NrSoilLayers(TempShortInt);
-READLN(f0); // depth of restrictive soil layer which is no longer applicable
-READLN(f0);
-READLN(f0);
-// Load characteristics of each soil layer
-FOR i := 1 TO GetSoil().NrSoilLayers DO
-    BEGIN
-    // Parameters for capillary rise missing in Versions 3.0 and 3.1
-    IF (ROUND(VersionNr*10) < 40)
-       THEN BEGIN
-            READLN(f0,thickness_temp,SAT_temp,FC_temp,
-              WP_temp,infrate_temp,blank,description_temp);
-            SetSoilLayer_Thickness(i, thickness_temp);
-            SetSoilLayer_SAT(i, SAT_temp);
-            SetSoilLayer_FC(i, FC_temp);
-            SetSoilLayer_WP(i, WP_temp); 
-            SetSoilLayer_InfRate(i, infrate_temp);
-            SetSoilLayer_Description(i, description_temp);
-            // Default values for Penetrability and Gravel
-            SetSoilLayer_Penetrability(i, 100);
-            SetSoilLayer_GravelMass(i, 0);
-            // determine volume gravel
-            SetSoilLayer_GravelVol(i, 0);
-            END
-       ELSE BEGIN
-            IF (ROUND(VersionNr*10) < 60)  // UPDATE required for Version 6.0
-               THEN BEGIN
-                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           cra_temp, crb_temp,blank, description_temp);
-                    SetSoilLayer_Thickness(i, thickness_temp);
-                    SetSoilLayer_SAT(i, SAT_temp);
-                    SetSoilLayer_FC(i, FC_temp);
-                    SetSoilLayer_WP(i, WP_temp); 
-                    SetSoilLayer_InfRate(i, infrate_temp);
-                    SetSoilLayer_CRa(i, cra_temp);
-                    SetSoilLayer_CRb(i, crb_temp);
-                    SetSoilLayer_Description(i, description_temp);
-                    // Default values for Penetrability and Gravel
-                    SetSoilLayer_Penetrability(i, 100);
-                    SetSoilLayer_GravelMass(i, 0);
-                    // determine volume gravel
-                    SetSoilLayer_GravelVol(i, 0);
-                    END
-               ELSE BEGIN
-                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           penetrability_temp, gravelm_temp, cra_temp, crb_temp,description_temp);
-                    SetSoilLayer_Thickness(i, thickness_temp);
-                    SetSoilLayer_SAT(i, SAT_temp);
-                    SetSoilLayer_FC(i, FC_temp);
-                    SetSoilLayer_WP(i, WP_temp); 
-                    SetSoilLayer_InfRate(i, infrate_temp);
-                    SetSoilLayer_Penetrability(i, penetrability_temp);
-                    SetSoilLayer_GravelMass(i, gravelm_temp);
-                    SetSoilLayer_CRa(i, cra_temp);
-                    SetSoilLayer_CRb(i, crb_temp);
-                    SetSoilLayer_Description(i, description_temp);
-                    // determine volume gravel
-                    SetSoilLayer_GravelVol(i, FromGravelMassToGravelVolume(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).GravelMass));
-                    END;
-            END;
-    // determine drainage coefficient
-    SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_i(i).InfRate));
-    // determine number of salt cells based on infiltration rate
-    IF (GetSoilLayer_i(i).InfRate <= 112)
-       THEN SetSoilLayer_SCP1(i, 11)
-       ELSE BEGIN
-            SetSoilLayer_SCP1(i, ROUND(1.6 + 1000/GetSoilLayer_i(i).InfRate));
-            IF (GetSoilLayer_i(i).SCP1 < 2) THEN SetSoilLayer_SCP1(i, 2)
-            END;
-    // determine parameters for soil salinity
-    SetSoilLayer_SC(i, GetSoilLayer_i(i).SCP1 -1);
-    SetSoilLayer_Macro(i, ROUND(GetSoilLayer_i(i).FC));
-    SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100) * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2))); (* m3/m3 *)
-    dx_temp := (GetSoilLayer_UL(i))/GetSoilLayer_SC(i);
-    SetSoilLayer_Dx(i, dx_temp);  (* m3/m3 *)
-    saltmob_temp := GetSoilLayer_i(i).SaltMobility;
-    Calculate_SaltMobility(i,GetSimulParam_SaltDiff(),GetSoilLayer_i(i).Macro,saltmob_temp);
-    SetSoilLayer_SaltMobility(i, saltmob_temp);
-    // determine default parameters for capillary rise if missing
-    SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).FC,GetSoilLayer_i(i).WP,GetSoilLayer_i(i).InfRate));
-    IF (ROUND(VersionNr*10) < 40) THEN
-       BEGIN
-       cra_temp := GetSoilLayer_i(i).CRa;
-       crb_temp := GetSoilLayer_i(i).CRb;
-       DetermineParametersCR(GetSoilLayer_i(i).SoilClass,GetSoilLayer_i(i).InfRate,cra_temp,crb_temp);
-       SetSoilLayer_CRa(i, cra_temp);
-       SetSoilLayer_CRb(i, crb_temp);
-       END;
-    END;
-DetermineNrandThicknessCompartments;
-Close(f0);
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
-END; // Loadprofile
 
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
@@ -1490,33 +1030,6 @@ END; // LoadClim
 
 
 
-PROCEDURE SaveProfile(totalname : string);
-VAR f : TextFile;
-    i : INTEGER;
-BEGIN
-Assign(f,totalname);
-Rewrite(f);
-WRITELN(f,GetProfDescription());
-WRITELN(f,'        7.0                 : AquaCrop Version (June 2021)');    // AquaCrop version
-WRITELN(f,GetSoil().CNvalue:9,'                   : CN (Curve Number)');
-WRITELN(f,GetSoil().REW:9,'                   : Readily evaporable water from top layer (mm)');
-WRITELN(f,GetSoil().NrSoilLayers:9,'                   : number of soil horizons');
-WRITELN(f,undef_int:9,'                   : variable no longer applicable');
-WRITELN(f,'  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description');
-WRITELN(f,'  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------');
-FOR i := 1 TO GetSoil().NrSoilLayers DO
-    WRITELN(f,GetSoilLayer_i(i).Thickness:8:2,GetSoilLayer_i(i).SAT:8:1,GetSoilLayer_i(i).FC:6:1,
-              GetSoilLayer_i(i).WP:6:1,GetSoilLayer_i(i).InfRate:8:1,GetSoilLayer_i(i).Penetrability:11,
-              GetSoilLayer_i(i).GravelMass:10,GetSoilLayer_i(i).CRa:14:6,GetSoilLayer_i(i).CRb:10:6,
-              '   ',GetSoilLayer_i(i).Description:15);
-Close(f);
-
-// maximum rooting depth in  soil profile for given crop
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
-END; (* SaveProfile *)
-
-
-
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
@@ -1623,341 +1136,6 @@ IF (GenerateTheEnd = false)
         END;
 Close(f);
 END; (* AppendCropFilePerennials *)
-
-
-PROCEDURE SaveCrop(totalname : string);
-VAR f : TextFile;
-    i,j : INTEGER;
-    TempString : string;
-BEGIN
-Assign(f,totalname);
-Rewrite(f);
-WRITELN(f,GetCropDescription());
-// AquaCrop version
-WRITELN(f,'     7.0       : AquaCrop Version (June 2021)');
-WRITELN(f,'     1         : File not protected');
-
-//SubKind
-i := 2;
-CASE GetCrop_subkind() OF
-     Vegetative : BEGIN
-                  i := 1;
-                  TempString := '         : leafy vegetable crop';
-                  END;
-     Grain      : BEGIN
-                  i := 2;
-                  TempString := '         : fruit/grain producing crop';
-                  END;
-     Tuber      : BEGIN
-                  i := 3;
-                  TempString := '         : root/tuber crop';
-                  END;
-     Forage     : BEGIN
-                  i := 4;
-                  TempString := '         : forage crop';
-                  END;
-     end;
-WRITELN(f,i:6,TempString);
-
-//Sown, transplanting or regrowth
-IF (GetCrop().Planting = Seed)
-   THEN BEGIN
-        i := 1;
-        IF (GetCrop_subkind() = Forage)
-           THEN WRITELN(f,i:6,'         : Crop is sown in 1st year')
-           ELSE WRITELN(f,i:6,'         : Crop is sown');
-        END
-   ELSE BEGIN
-        IF (GetCrop().Planting = Transplant)
-           THEN BEGIN
-                i := 0;
-                IF (GetCrop_subkind() = Forage)
-                   THEN WRITELN(f,i:6,'         : Crop is transplanted in 1st year')
-                   ELSE WRITELN(f,i:6,'         : Crop is transplanted');
-                END
-           ELSE BEGIN
-                i := -9;
-                WRITELN(f,i:6,'         : Crop is regrowth');
-                END;
-        END;
-
-//Mode (description crop cycle)
-i := 1;
-TempString := '         : Determination of crop cycle : by calendar days';
-IF (GetCrop_ModeCycle() = GDDays) THEN
-   BEGIN
-   i := 0;
-   TempString := '         : Determination of crop cycle : by growing degree-days';
-   END;
-WRITELN(f,i:6,TempString);
-
-//p correction for ET
-IF (GetCrop().pMethod = NoCorrection)
-   THEN BEGIN
-        j := 0;
-        WRITELN(f,j:6,'         : No adjustment by ETo of soil water depletion factors (p)');
-        END
-   ELSE BEGIN
-        j := 1;
-        WRITELN(f,j:6,'         : Soil water depletion factors (p) are adjusted by ETo');
-        END;
-
-// temperatures controlling crop development
-WRITELN(f,GetCrop().Tbase:8:1,'       : Base temperature (degC) below which crop development does not progress');
-WRITELN(f,GetCrop().Tupper:8:1,'       : Upper temperature (degC) above which crop development no longer increases with an increase in temperature');
-
-// required growing degree days to complete the crop cycle (is identical as to maturity)
-WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : Total length of crop cycle in growing degree-days');
-
-// water stress
-WRITELN(f,GetCrop().pLeafDefUL:9:2,'      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold');
-WRITELN(f,GetCrop().pLeafDefLL:9:2,'      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold');
-WRITELN(f,GetCrop().KsShapeFactorLeaf:8:1,'       : Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)');
-WRITELN(f,GetCrop().pdef:9:2,'      : Soil water depletion fraction for stomatal control (p - sto) - Upper threshold');
-WRITELN(f,GetCrop().KsShapeFactorStomata:8:1,'       : Shape factor for water stress coefficient for stomatal control (0.0 = straight line)');
-WRITELN(f,GetCrop().pSenescence:9:2,'      : Soil water depletion factor for canopy senescence (p - sen) - Upper threshold');
-WRITELN(f,GetCrop().KsShapeFactorSenescence:8:1,'       : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)');
-WRITELN(f,GetCrop().SumEToDelaySenescence:6,'         : Sum(ETo) during dormant period to be exceeded before crop is permanently wilted');
-IF (GetCrop().pPollination = undef_int)
-   THEN WRITELN(f,GetCrop().pPollination:9:2,'      : Soil water depletion factor for pollination - Not Applicable')
-   ELSE WRITELN(f,GetCrop().pPollination:9:2,'      : Soil water depletion factor for pollination (p - pol) - Upper threshold');
-WRITELN(f,GetCrop().AnaeroPoint:6,'         : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)');
-
-// stress response
-WRITELN(f,GetCrop_StressResponse().Stress:6,'         : Considered soil fertility stress for calibration of stress response (%)');
-IF (GetCrop_StressResponse().ShapeCGC > 24.9)
-   THEN WRITELN(f,GetCrop_StressResponse().ShapeCGC:9:2,'      : Response of canopy expansion is not considered')
-   ELSE WRITELN(f,GetCrop_StressResponse().ShapeCGC:9:2,'      : Shape factor for the response of canopy expansion to soil fertility stress');
-IF (GetCrop_StressResponse().ShapeCCX > 24.9)
-   THEN WRITELN(f,GetCrop_StressResponse().ShapeCCX:9:2,'      : Response of maximum canopy cover is not considered')
-   ELSE WRITELN(f,GetCrop_StressResponse().ShapeCCX:9:2,'      : Shape factor for the response of maximum canopy cover to soil fertility stress');
-IF (GetCrop_StressResponse().ShapeWP > 24.9)
-   THEN WRITELN(f,GetCrop_StressResponse().ShapeWP:9:2,'      : Response of crop Water Productivity is not considered')
-   ELSE WRITELN(f,GetCrop_StressResponse().ShapeWP:9:2,'      : Shape factor for the response of crop Water Productivity to soil fertility stress');
-IF (GetCrop_StressResponse().ShapeCDecline > 24.9)
-   THEN WRITELN(f,GetCrop_StressResponse().ShapeCDecline:9:2,'      : Response of decline of canopy cover is not considered')
-   ELSE WRITELN(f,GetCrop_StressResponse().ShapeCDecline:9:2,'      : Shape factor for the response of decline of canopy cover to soil fertility stress');
-WRITELN(f,'    -9         : dummy - Parameter no Longer required');
-
-// temperature stress
-IF (Round(GetCrop().Tcold) = undef_int)
-   THEN WRITELN(f,GetCrop().Tcold:6,'         : Cold (air temperature) stress affecting pollination - not considered')
-   ELSE WRITELN(f,GetCrop().Tcold:6,'         : Minimum air temperature below which pollination starts to fail (cold stress) (degC)');
-IF (Round(GetCrop().Theat) = undef_int)
-   THEN WRITELN(f,GetCrop().Theat:6,'         : Heat (air temperature) stress affecting pollination - not considered')
-   ELSE WRITELN(f,GetCrop().Theat:6,'         : Maximum air temperature above which pollination starts to fail (heat stress) (degC)');
-IF (Round(GetCrop().GDtranspLow) = undef_int)
-   THEN WRITELN(f,GetCrop().GDtranspLow:8:1,'       : Cold (air temperature) stress on crop transpiration not considered')
-   ELSE WRITELN(f,GetCrop().GDtranspLow:8:1,'       : Minimum growing degrees required for full crop transpiration (degC - day)');
-
-// salinity stress
-WRITELN(f,GetCrop().ECemin:6,'         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)');
-WRITELN(f,GetCrop().ECemax:6,'         : Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)');
-WRITELN(f,'    -9         : Dummy - no longer applicable'); // shape factor Ks(salt)-ECe
-WRITELN(f,GetCrop().CCsaltDistortion:6,'         : Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))');
-WRITELN(f,GetCrop().ResponseECsw:6,'         : Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))');
-
-//evapotranspiration
-WRITELN(f,GetCrop().KcTop:9:2,'      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)');
-WRITELN(f,GetCrop().KcDecline:10:3,'     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.');
-WRITELN(f,GetCrop().RootMin:9:2,'      : Minimum effective rooting depth (m)');
-WRITELN(f,GetCrop().RootMax:9:2,'      : Maximum effective rooting depth (m)');
-WRITELN(f,GetCrop().RootShape:6,'         : Shape factor describing root zone expansion');
-WRITELN(f,GetCrop().SmaxTopQuarter:10:3,'     : Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone');
-WRITELN(f,GetCrop().SmaxBotQuarter:10:3,'     : Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone');
-WRITELN(f,GetCrop().CCEffectEvapLate:6,'         : Effect of canopy cover in reducing soil evaporation in late season stage');
-
-//canopy development
-WRITELN(f,GetCrop().SizeSeedling:9:2,'      : Soil surface covered by an individual seedling at 90 % emergence (cm2)');
-WRITELN(f,GetCrop().SizePlant:9:2,'      : Canopy size of individual plant (re-growth) at 1st day (cm2)');
-WRITELN(f,GetCrop().PlantingDens:9,'      : Number of plants per hectare');
-WRITELN(f,GetCrop().CGC:12:5,'   : Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)');
-IF (GetCrop().YearCCx = undef_int)
-   THEN WRITELN(f,GetCrop().YearCCx:6,'         : Number of years at which CCx declines to 90 % of its value due to self-thinning - Not Applicable')
-   ELSE WRITELN(f,GetCrop().YearCCx:6,'         : Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials');
-IF (Round(GetCrop().CCxRoot) = undef_int)
-   THEN WRITELN(f,GetCrop().CCxRoot:9:2,'      : Shape factor of the decline of CCx over the years due to self-thinning - Not Applicable')
-   ELSE WRITELN(f,GetCrop().CCxRoot:9:2,'      : Shape factor of the decline of CCx over the years due to self-thinning - for Perennials');
-WRITELN(f,'    -9         : dummy - Parameter no Longer required');
-
-WRITELN(f,GetCrop().CCx:9:2,'      : Maximum canopy cover (CCx) in fraction soil cover');
-WRITELN(f,GetCrop().CDC:12:5,'   : Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)');
-IF (GetCrop().Planting = Seed)
-   THEN BEGIN
-        WRITELN(f,GetCrop().DaysToGermination:6,'         : Calendar Days: from sowing to emergence');
-        WRITELN(f,GetCrop().DaysToMaxRooting:6,'         : Calendar Days: from sowing to maximum rooting depth');
-        WRITELN(f,GetCrop().DaysToSenescence:6,'         : Calendar Days: from sowing to start senescence');
-        WRITELN(f,GetCrop().DaysToHarvest:6,'         : Calendar Days: from sowing to maturity (length of crop cycle)');
-        IF (GetCrop_subkind() = Tuber)
-           THEN WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from sowing to start of yield formation')
-           ELSE WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from sowing to flowering');
-        END
-   ELSE BEGIN
-        IF (GetCrop().Planting = Transplant)
-           THEN BEGIN
-                WRITELN(f,GetCrop().DaysToGermination:6,'         : Calendar Days: from transplanting to recovered transplant');
-                WRITELN(f,GetCrop().DaysToMaxRooting:6,'         : Calendar Days: from transplanting to maximum rooting depth');
-                WRITELN(f,GetCrop().DaysToSenescence:6,'         : Calendar Days: from transplanting to start senescence');
-                WRITELN(f,GetCrop().DaysToHarvest:6,'         : Calendar Days: from transplanting to maturity');
-                IF (GetCrop_subkind() = Tuber)
-                   THEN WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from transplanting to start of yield formation')
-                   ELSE WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from transplanting to flowering');
-                END
-           ELSE BEGIN  // planting = regrowth
-                WRITELN(f,GetCrop().DaysToGermination:6,'         : Calendar Days: from regrowth to recovering');
-                WRITELN(f,GetCrop().DaysToMaxRooting:6,'         : Calendar Days: from regrowth to maximum rooting depth');
-                WRITELN(f,GetCrop().DaysToSenescence:6,'         : Calendar Days: from regrowth to start senescence');
-                WRITELN(f,GetCrop().DaysToHarvest:6,'         : Calendar Days: from regrowth to maturity');
-                IF (GetCrop_subkind() = Tuber)
-                   THEN WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from regrowth to start of yield formation')
-                   ELSE WRITELN(f,GetCrop().DaysToFlowering:6,'         : Calendar Days: from regrowth to flowering');
-                END;
-        END;
-WRITELN(f,GetCrop().LengthFlowering:6,'         : Length of the flowering stage (days)');
-
-// Crop.DeterminancyLinked
-IF (GetCrop().DeterminancyLinked = true)
-   THEN BEGIN
-        i := 1;
-        TempString := '         : Crop determinancy linked with flowering';
-        END
-   ELSE BEGIN
-        i := 0;
-        TempString := '         : Crop determinancy unlinked with flowering';
-        END;
-WRITELN(f,i:6,TempString);
-
-// Potential excess of fruits (%)
-IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
-   THEN WRITELN(f,undef_int:6,'         : parameter NO LONGER required') // Building up of Harvest Index (% of growing cycle)')
-   ELSE BEGIN
-        WRITE(f,GetCrop().fExcess:6);
-        IF (GetCrop().fExcess = undef_int)
-           THEN WRITELN(f,'         : Excess of potential fruits - Not Applicable')
-           ELSE WRITELN(f,'         : Excess of potential fruits (%)');
-        END;
-
-// Building-up of Harvest Index
-WRITE(f,GetCrop().DaysToHIo:6);
-IF (GetCrop().DaysToHIo = undef_int)
-   THEN WRITELN(f,'         : Building up of Harvest Index - Not Applicable')
-   ELSE BEGIN
-        CASE GetCrop_subkind() OF
-             Vegetative,
-             Forage     : WRITELN(f,'         : Building up of Harvest Index starting at sowing/transplanting (days)');
-             Grain      : WRITELN(f,'         : Building up of Harvest Index starting at flowering (days)');
-             Tuber      : WRITELN(f,'         : Building up of Harvest Index starting at root/tuber enlargement (days)');
-             else WRITELN(f,'         : Building up of Harvest Index during yield formation (days)');
-             end;
-        END;
-
-//yield response to water
-WRITELN(f,GetCrop().WP:8:1,'       : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)');
-WRITELN(f,GetCrop().WPy:6,'         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)');
-WRITELN(f,GetCrop().AdaptedToCO2:6,'         : Crop performance under elevated atmospheric CO2 concentration (%)');
-WRITELN(f,GetCrop().HI:6,'         : Reference Harvest Index (HIo) (%)');
-IF (GetCrop_subkind() = Tuber)
-   THEN WRITELN(f,GetCrop().HIincrease:6,'         : Possible increase (%) of HI due to water stress before start of yield formation')
-   ELSE WRITELN(f,GetCrop().HIincrease:6,'         : Possible increase (%) of HI due to water stress before flowering');
-IF (ROUND(GetCrop().aCoeff) = undef_int)
-   THEN WRITELN(f,GetCrop().aCoeff:8:1,'       : No impact on HI of restricted vegetative growth during yield formation ')
-   ELSE WRITELN(f,GetCrop().aCoeff:8:1,'       : Coefficient describing positive impact on HI of restricted vegetative growth during yield formation');
-IF (ROUND(GetCrop().bCoeff) = undef_int)
-   THEN WRITELN(f,GetCrop().bCoeff:8:1,'       : No effect on HI of stomatal closure during yield formation')
-   ELSE WRITELN(f,GetCrop().bCoeff:8:1,'       : Coefficient describing negative impact on HI of stomatal closure during yield formation');
-WRITELN(f,GetCrop().DHImax:6,'         : Allowable maximum increase (%) of specified HI');
-
-// growing degree days
-IF (GetCrop().Planting = Seed)
-   THEN BEGIN
-        WRITELN(f,GetCrop().GDDaysToGermination:6,'         : GDDays: from sowing to emergence');
-        WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from sowing to maximum rooting depth');
-        WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from sowing to start senescence');
-        WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : GDDays: from sowing to maturity (length of crop cycle)');
-        IF (GetCrop_subkind() = Tuber)
-           THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from sowing to start tuber formation')
-           ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from sowing to flowering');
-        END
-   ELSE BEGIN
-        IF (GetCrop().Planting = Transplant)
-           THEN BEGIN
-                WRITELN(f,GetCrop().GDDaysToGermination:6,'         : GDDays: from transplanting to recovered transplant');
-                WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from transplanting to maximum rooting depth');
-                WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from transplanting to start senescence');
-                WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : GDDays: from transplanting to maturity');
-                IF (GetCrop_subkind() = Tuber)
-                   THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from transplanting to start yield formation')
-                   ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from transplanting to flowering');
-                END
-           ELSE BEGIN // Crop.Planting = regrowth
-                WRITELN(f,GetCrop().GDDaysToGermination:6,'         : GDDays: from regrowth to recovering');
-                WRITELN(f,GetCrop().GDDaysToMaxRooting:6,'         : GDDays: from regrowth to maximum rooting depth');
-                WRITELN(f,GetCrop().GDDaysToSenescence:6,'         : GDDays: from regrowth to start senescence');
-                WRITELN(f,GetCrop().GDDaysToHarvest:6,'         : GDDays: from regrowth to maturity');
-                IF (GetCrop_subkind() = Tuber)
-                   THEN WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from regrowth to start yield formation')
-                   ELSE WRITELN(f,GetCrop().GDDaysToFlowering:6,'         : GDDays: from regrowth to flowering');
-                END;
-        END;
-WRITELN(f,GetCrop().GDDLengthFlowering:6,'         : Length of the flowering stage (growing degree days)');
-WRITELN(f,GetCrop().GDDCGC:13:6,'  : CGC for GGDays: Increase in canopy cover (in fraction soil cover per growing-degree day)');
-WRITELN(f,GetCrop().GDDCDC:13:6,'  : CDC for GGDays: Decrease in canopy cover (in fraction per growing-degree day)');
-WRITELN(f,GetCrop().GDDaysToHIo:6,'         : GDDays: building-up of Harvest Index during yield formation');
-
-// added to 6.2
-WRITELN(f,GetCrop().DryMatter:6,'         : dry matter content (%) of fresh yield');
-
-// added to 7.0 - Perennial crops
-IF (GetCrop_subkind() = Forage)
-   THEN WRITELN(f,GetCrop().RootMinYear1:9:2,'      : Minimum effective rooting depth (m) in first year (for perennials)')
-   ELSE WRITELN(f,GetCrop().RootMinYear1:9:2,'      : Minimum effective rooting depth (m) in first year - required only in case of regrowth');
-IF (GetCrop().SownYear1 = true)
-   THEN BEGIN
-        i := 1;
-        IF (GetCrop_subkind() = Forage)
-           THEN WRITELN(f,i:6,'         : Crop is sown in 1st year (for perennials)')
-           ELSE WRITELN(f,i:6,'         : Crop is sown in 1st year - required only in case of regrowth');
-        END
-   ELSE BEGIN
-        i := 0;
-        IF (GetCrop_subkind() = Forage)
-           THEN WRITELN(f,i:6,'         : Crop is transplanted in 1st year (for perennials)')
-           ELSE WRITELN(f,i:6,'         : Crop is transplanted in 1st year - required only in case of regrowth');
-        END;
-
-// added to 7.0 - Assimilates
-IF (GetCrop_Assimilates().On = false)
-   THEN BEGIN
-        i := 0;
-        WRITELN(f,i:6,'         : Transfer of assimilates from above ground parts to root system is NOT considered');
-        WRITELN(f,i:6,'         : Number of days at end of season during which assimilates are stored in root system');
-        WRITELN(f,i:6,'         : Percentage of assimilates transferred to root system at last day of season');
-        WRITELN(f,i:6,'         : Percentage of stored assimilates transferred to above ground parts in next season');
-        END
-   ELSE BEGIN
-        i := 1;
-        WRITELN(f,i:6,'         : Transfer of assimilates from above ground parts to root system is considered');
-        WRITELN(f,GetCrop_Assimilates().Period:6,'         : Number of days at end of season during which assimilates are stored in root system');
-        WRITELN(f,GetCrop_Assimilates().Stored:6,'         : Percentage of assimilates transferred to root system at last day of season');
-        WRITELN(f,GetCrop_Assimilates().Mobilized:6,'         : Percentage of stored assimilates transferred to above ground parts in next season');
-        END;
-Close(f);
-
-// maximum rooting depth in given soil profile
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
-
-// copy to CropFileSet
-SetCropFileSet_DaysFromSenescenceToEnd(GetCrop().DaysToHarvest - GetCrop().DaysToSenescence);
-SetCropFileSet_DaysToHarvest(GetCrop().DaysToHarvest);
-SetCropFileSet_GDDaysFromSenescenceToEnd(GetCrop().GDDaysToHarvest - GetCrop().GDDaysToSenescence);
-SetCropFileSet_GDDaysToHarvest(GetCrop().GDDaysToHarvest);
-END; (* SaveCrop *)
-
-
-
-
-
-
 
 
 FUNCTION EndGrowingPeriod(Day1 : longint;
@@ -2130,364 +1308,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
 END; (* AdjustSimPeriod *)
 
 
-PROCEDURE SetClimData;
-VAR SetARecord, SetBRecord : rep_clim;
-    tmptoD, tmpToM, tmpToY : integer;
-    tmpFromD, tmpFromM, tmpFromY : integer;
-BEGIN
-SetClimRecord_NrObs(999); //(heeft geen belang)
-                         // IF 365 (= full undefined year)
-
-//Part A - ETo and Rain files --> ClimFile
-IF ((GetEToFile() = '(None)') AND (GetRainFile() = '(None)'))
-   THEN BEGIN
-        SetClimFile('(None)');
-        ClimDescription := 'Specify Climatic data when Running AquaCrop';
-        SetClimRecord_DataType(Daily);
-        SetClimRecord_FromString('any date');
-        SetClimRecord_ToString('any date');
-        SetClimRecord_FromY(1901);
-        END
-   ELSE BEGIN
-        SetClimFile('EToRainTempFile');
-        ClimDescription := 'Read ETo/RAIN/TEMP data set';
-        IF (GetEToFile() = '(None)') THEN
-           BEGIN
-           SetClimRecord_FromY(GetRainRecord_FromY());
-           SetClimRecord_FromDayNr(GetRainRecord_FromDayNr());
-           SetClimRecord_ToDayNr(GetRainRecord_ToDayNr());
-           SetClimRecord_FromString(GetRainRecord_FromString());
-           SetClimRecord_ToString(GetRainRecord_ToString());
-           IF FullUndefinedRecord(GetRainRecord_FromY(),GetRainRecord_FromD(),GetRainRecord_FromM(),GetRainRecord_ToD(),GetRainRecord_ToM())
-              THEN SetClimRecord_NrObs(365);
-           END;
-        IF (GetRainFile() = '(None)') THEN
-           BEGIN
-           SetClimRecord_FromY(GetEToRecord_FromY());
-           SetClimRecord_FromDayNr(GetEToRecord_FromDayNr());
-           SetClimRecord_ToDayNr(GetEToRecord_ToDayNr());
-           SetClimRecord_FromString(GetEToRecord_FromString());
-           SetClimRecord_ToString(GetEToRecord_ToString());
-           IF FullUndefinedRecord(GetEToRecord_FromY(),GetEToRecord_FromD(),GetEToRecord_FromM(),GetEToRecord_ToD(),GetEToRecord_ToM())
-              THEN SetClimRecord_NrObs(365);
-           END;
-
-        IF ((GetEToFile() <> '(None)') AND (GetRainFile() <> '(None)')) THEN
-           BEGIN
-           SetARecord := GetEToRecord();
-           SetBRecord := GetRainRecord();
-           IF ((GetEToRecord_FromY() = 1901)
-               AND FullUndefinedRecord(GetEToRecord_FromY(),GetEToRecord_FromD(),GetEToRecord_FromM(),GetEToRecord_ToD(),GetEToRecord_ToM()))
-               AND ((GetRainRecord_FromY() = 1901)
-               AND FullUndefinedRecord(GetRainRecord_FromY(),GetRainRecord_FromD(),GetRainRecord_FromM(),GetRainRecord_ToD(),GetRainRecord_ToM()))
-               THEN SetClimRecord_NrObs(365);
-
-           IF ((GetEToRecord_FromY() = 1901) AND (GetRainRecord_FromY() <> 1901)) THEN
-              BEGIN  // Jaartal van RainRecord ---> SetARecord (= EToRecord)
-                     // FromY + adjust FromDayNr and FromString
-              SetARecord.FromY := GetRainRecord_FromY();
-              DetermineDayNr(GetEToRecord_FromD(),GetEToRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
-              IF (((SetARecord.FromDayNr < GetRainRecord_FromDayNr())) AND (GetRainRecord_FromY() < GetRainRecord_ToY())) THEN
-                 BEGIN
-                 SetARecord.FromY := GetRainRecord_FromY() + 1;
-                 DetermineDayNr(GetEToRecord_FromD(),GetEToRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
-                 END;
-              SetClimRecord_FromY(SetARecord.FromY); // nodig voor DayString (werkt met ClimRecord)
-              SetARecord.FromString := DayString(SetARecord.FromDayNr);
-                     // ToY + adjust ToDayNr and ToString
-              IF (FullUndefinedRecord(GetEToRecord_FromY(),GetEToRecord_FromD(),GetEToRecord_FromM(),GetEToRecord_ToD(),GetEToRecord_ToM()))
-                 THEN SetARecord.ToY := GetRainRecord_ToY()
-                 ELSE SetARecord.ToY := SetARecord.FromY;
-              DetermineDayNr(GetEToRecord_ToD(),GetEToRecord_ToM(),SetARecord.ToY,SetARecord.ToDayNr);
-              SetARecord.ToString := DayString(SetARecord.ToDayNr);
-              END;
-
-           IF ((GetEToRecord_FromY() <> 1901) AND (GetRainRecord_FromY() = 1901)) THEN
-              BEGIN  // Jaartal van EToRecord ---> SetBRecord (= RainRecord)
-                     // FromY + adjust FromDayNr and FromString
-              SetBRecord.FromY := GetEToRecord_FromY();
-              DetermineDayNr(GetRainRecord_FromD(),GetRainRecord_FromM(),SetBRecord.FromY,SetBRecord.FromDayNr);
-              IF (((SetBRecord.FromDayNr < GetEToRecord_FromDayNr())) AND (GetEToRecord_FromY() < GetEToRecord_ToY())) THEN
-                 BEGIN
-                 SetBRecord.FromY := GetEToRecord_FromY() + 1;
-                 DetermineDayNr(GetRainRecord_FromD(),GetRainRecord_FromM(),SetBRecord.FromY,SetBRecord.FromDayNr);
-                 END;
-              SetClimRecord_FromY(SetBRecord.FromY); // nodig voor DayString (werkt met ClimRecord)
-              SetBRecord.FromString := DayString(SetBRecord.FromDayNr);
-                     // ToY + adjust ToDayNr and ToString
-              IF (FullUndefinedRecord(GetRainRecord_FromY(),GetRainRecord_FromD(),GetRainRecord_FromM(),GetRainRecord_ToD(),GetRainRecord_ToM()))
-                 THEN SetBRecord.ToY := GetEToRecord_ToY()
-                 ELSE SetBRecord.ToY := SetBRecord.FromY;
-              DetermineDayNr(GetRainRecord_ToD(),GetRainRecord_ToM(),SetBRecord.ToY,SetBRecord.ToDayNr);
-              SetBRecord.ToString := DayString(SetBRecord.ToDayNr);
-              END;
-
-           // bepaal characteristieken van ClimRecord
-           WITH GetClimRecord() DO
-                BEGIN
-                FromY := SetARecord.FromY;
-                FromDayNr := SetARecord.FromDayNr;
-                FromString := SetARecord.FromString;
-                IF (FromDayNr < SetBRecord.FromDayNr) THEN
-                        BEGIN
-                        FromY := SetBRecord.FromY;
-                        FromDayNr := SetBRecord.FromDayNr;
-                        FromString := SetBRecord.FromString;
-                        END;
-                ToDayNr := SetARecord.ToDayNr;
-                ToString := SetARecord.ToString;
-                IF (ToDayNr > SetBRecord.ToDayNr) THEN
-                        BEGIN
-                        ToDayNr := SetBRecord.ToDayNr;
-                        ToString := SetBRecord.ToString;
-                        END;
-                IF (ToDayNr < FromDayNr) THEN
-                        BEGIN
-                        SetClimFile('(None)');
-                        ClimDescription := 'ETo data set <--NO OVERLAP--> RAIN data set';
-                        NrObs := 0;
-                        FromY := 1901;
-                        END;
-                END;
-           END;
-        END;
-
-
-//Part B - ClimFile and Temperature files --> ClimFile
-IF (GetTemperatureFile() = '(None)')
-   THEN BEGIN
-        // no adjustments are required
-        END
-   ELSE BEGIN
-        IF (GetClimFile() = '(None)')
-           THEN BEGIN
-                SetClimFile('EToRainTempFile');
-                ClimDescription := 'Read ETo/RAIN/TEMP data set';
-                SetClimRecord_FromY(GetTemperatureRecord().FromY);
-                SetClimRecord_FromDayNr(GetTemperatureRecord().FromDayNr);
-                SetClimRecord_ToDayNr(GetTemperatureRecord().ToDayNr);
-                SetClimRecord_FromString(GetTemperatureRecord().FromString);
-                SetClimRecord_ToString(GetTemperatureRecord().ToString);
-                IF ((GetTemperatureRecord().FromY = 1901) AND FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
-                   THEN SetClimRecord_NrObs(365)
-                   ELSE SetClimRecord_NrObs(GetTemperatureRecord().ToDayNr - GetTemperatureRecord().FromDayNr + 1);
-                END
-           ELSE BEGIN
-                DetermineDate(GetClimRecord_FromDayNr(),tmpFromD, tmpFromM, tmpFromY);
-                SetClimRecord_FromD(tmpFromD);
-                SetClimRecord_FromM(tmpFromM);
-                SetClimRecord_FromY(tmpFromY);
-                DetermineDate(GetClimRecord_ToDayNr(), tmpToD, tmpToM, tmpToY);
-                SetClimRecord_ToD(tmpToD);
-                SetClimRecord_ToM(tmpToM);
-                SetClimRecord_ToY(tmpToY);
-                SetARecord := GetClimRecord();
-                SetBRecord := GetTemperatureRecord();
-
-                IF ((GetClimRecord_FromY() = 1901) AND (GetTemperatureRecord().FromY = 1901)
-                   AND (GetClimRecord_NrObs() = 365)
-                   AND FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
-                       THEN SetClimRecord_NrObs(365)
-                       ELSE SetClimRecord_NrObs(GetTemperatureRecord_ToDayNr() - GetTemperatureRecord().FromDayNr + 1);
-
-                IF ((GetClimRecord_FromY() = 1901) AND (GetTemperatureRecord().FromY <> 1901)) THEN
-                   BEGIN  // Jaartal van TemperatureRecord ---> SetARecord (= ClimRecord)
-                     // FromY + adjust FromDayNr and FromString
-                   SetARecord.FromY := GetTemperatureRecord().FromY;
-                   DetermineDayNr(GetClimRecord_FromD(),GetClimRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
-                   IF (((SetARecord.FromDayNr < GetTemperatureRecord().FromDayNr)) AND (GetTemperatureRecord().FromY < GetTemperatureRecord().ToY)) THEN
-                      BEGIN
-                      SetARecord.FromY := GetTemperatureRecord().FromY + 1;
-                      DetermineDayNr(GetClimRecord_FromD(),GetClimRecord_FromM(),SetARecord.FromY,SetARecord.FromDayNr);
-                      END;
-                   //SetClimRecord_FromY(SetARecord.FromY); // nodig voor DayString (werkt met ClimRecord)
-                   SetARecord.FromString := DayString(SetARecord.FromDayNr);
-                     // ToY + adjust ToDayNr and ToString
-                   IF (FullUndefinedRecord(GetClimRecord_FromY(),GetClimRecord_FromD(),GetClimRecord_FromM(),GetClimRecord_ToD(),GetClimRecord_ToM()))
-                      THEN SetARecord.ToY := GetTemperatureRecord().ToY
-                      ELSE SetARecord.ToY := SetARecord.FromY;
-                   DetermineDayNr(GetClimRecord_ToD(),GetClimRecord_ToM(),SetARecord.ToY,SetARecord.ToDayNr);
-                   SetARecord.ToString := DayString(SetARecord.ToDayNr);
-                   END;
-
-                IF ((GetClimRecord_FromY() <> 1901) AND (GetTemperatureRecord().FromY = 1901)) THEN
-                   BEGIN  // Jaartal van ClimRecord ---> SetBRecord (= GetTemperatureRecord())
-                     // FromY + adjust FromDayNr and FromString
-                   SetBRecord.FromY := GetClimRecord_FromY();
-                   DetermineDayNr(GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,SetBRecord.FromY,SetBRecord.FromDayNr);
-                   IF (((SetBRecord.FromDayNr < GetClimRecord_FromDayNr())) AND (GetClimRecord_FromY() < GetClimRecord_ToY())) THEN
-                      BEGIN
-                      SetBRecord.FromY := GetClimRecord_FromY() + 1;
-                      DetermineDayNr(GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,SetBRecord.FromY,SetBRecord.FromDayNr);
-                      END;
-                   //SetClimRecord_FromY(SetBRecord.FromY); // nodig voor DayString (werkt met ClimRecord)
-                   SetBRecord.FromString := DayString(SetBRecord.FromDayNr);
-                     // ToY + adjust ToDayNr and ToString
-                   IF (FullUndefinedRecord(GetTemperatureRecord().FromY,GetTemperatureRecord().FromD,GetTemperatureRecord().FromM,GetTemperatureRecord().ToD,GetTemperatureRecord().ToM))
-                      THEN SetBRecord.ToY := GetClimRecord_ToY()
-                      ELSE SetBRecord.ToY := SetBRecord.FromY;
-                   DetermineDayNr(GetTemperatureRecord().ToD,GetTemperatureRecord().ToM,SetBRecord.ToY,SetBRecord.ToDayNr);
-                   SetBRecord.ToString := DayString(SetBRecord.ToDayNr);
-                   END;
-
-                // bepaal nieuwe characteristieken van ClimRecord
-                WITH GetClimRecord() DO
-                   BEGIN
-                   FromY := SetARecord.FromY;
-                   FromDayNr := SetARecord.FromDayNr;
-                   FromString := SetARecord.FromString;
-                   IF (FromDayNr < SetBRecord.FromDayNr) THEN
-                        BEGIN
-                        FromY := SetBRecord.FromY;
-                        FromDayNr := SetBRecord.FromDayNr;
-                        FromString := SetBRecord.FromString;
-                        END;
-                   ToDayNr := SetARecord.ToDayNr;
-                   ToString := SetARecord.ToString;
-                   IF (ToDayNr > SetBRecord.ToDayNr) THEN
-                        BEGIN
-                        ToDayNr := SetBRecord.ToDayNr;
-                        ToString := SetBRecord.ToString;
-                        END;
-                   IF (ToDayNr < FromDayNr) THEN
-                        BEGIN
-                        SetClimFile('(None)');
-                        ClimDescription := 'Clim data <--NO OVERLAP--> TEMPERATURE data';
-                        NrObs := 0;
-                        FromY := 1901;
-                        END;
-                   END;
-                END;
-        END;
-END; (* SetClimData *)
-
-
-PROCEDURE DetermineRootZoneWC(RootingDepth : double;
-                              VAR ZtopSWCconsidered : BOOLEAN);
-VAR CumDepth, Factor,frac_value,DrRel,DZtopRel,TopSoilInMeter : double;
-    compi : INTEGER;
-BEGIN
-// calculate SWC in root zone
-CumDepth := 0;
-compi := 0;
-SetRootZoneWC_Actual(0);
-SetRootZoneWC_FC(0);
-SetRootZoneWC_WP(0);
-SetRootZoneWC_SAT(0);
-SetRootZoneWC_Leaf(0);
-SetRootZoneWC_Thresh(0);
-SetRootZoneWC_Sen(0);
-REPEAT
-  compi := compi + 1;
-  CumDepth := CumDepth + GetCompartment_Thickness(compi);
-  IF (CumDepth <= RootingDepth)
-     THEN Factor := 1
-     ELSE BEGIN
-          frac_value := RootingDepth - (CumDepth - GetCompartment_Thickness(compi));
-          IF (frac_value > 0)
-             THEN Factor := frac_value/GetCompartment_Thickness(compi)
-             ELSE Factor := 0;
-          END;
-  SetRootZoneWC_Actual(GetRootZoneWC().Actual
-     + Factor * 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_FC(GetRootZoneWC().FC
-     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_Leaf(GetRootZoneWC().Leaf
-     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-     - GetCrop().pLeafAct * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_Thresh(GetRootZoneWC().Thresh
-     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-     - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_Sen(GetRootZoneWC().Sen
-     + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-     - GetCrop().pSenAct * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_WP(GetRootZoneWC().WP
-     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-  SetRootZoneWC_SAT(GetRootZoneWC().SAT
-     + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * GetCompartment_Thickness(compi)
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
-
-// calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
-IF ((RootingDepth*100) <= GetSimulParam_ThicknessTopSWC())
-   THEN BEGIN
-        SetRootZoneWC_ZtopAct(GetRootZoneWC().Actual);
-        SetRootZoneWC_ZtopFC(GetRootZoneWC().FC);
-        SetRootZoneWC_ZtopWP(GetRootZoneWC().WP);
-        SetRootZoneWC_ZtopThresh(GetRootZoneWC().Thresh);
-        END
-   ELSE BEGIN
-        CumDepth := 0;
-        compi := 0;
-        SetRootZoneWC_ZtopAct(0);
-        SetRootZoneWC_ZtopFC(0);
-        SetRootZoneWC_ZtopWP(0);
-        SetRootZoneWC_ZtopThresh(0);
-        TopSoilInMeter := GetSimulParam_ThicknessTopSWC()/100;
-        REPEAT
-          compi := compi + 1;
-          CumDepth := CumDepth + GetCompartment_Thickness(compi);
-          IF ((CumDepth*100) <= GetSimulParam_ThicknessTopSWC())
-             THEN Factor := 1
-             ELSE BEGIN
-                  frac_value := TopSoilInMeter - (CumDepth - GetCompartment_Thickness(compi));
-                  IF (frac_value > 0)
-                     THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                     ELSE Factor := 0;
-                  END;
-          SetRootZoneWC_ZtopAct(GetRootZoneWC().ZtopAct
-            + Factor * 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-          SetRootZoneWC_ZtopFC(GetRootZoneWC().ZtopFC
-            + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-          SetRootZoneWC_ZtopWP(GetRootZoneWC().ZtopWP
-            + Factor * 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-          SetRootZoneWC_ZtopThresh(GetRootZoneWC().ZtopThresh
-            + Factor * 10 * GetCompartment_Thickness(compi) * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC
-            - GetCrop().pActStom * (GetSoilLayer_i(GetCompartment_Layer(compi)).FC-GetSoilLayer_i(GetCompartment_Layer(compi)).WP))
-              * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-        UNTIL (CumDepth >= TopSoilInMeter) OR (compi = GetNrCompartments());
-        END;
-
-// Relative depletion in rootzone and in top soil
-IF ROUND(1000*(GetRootZoneWc().FC - GetRootZoneWc().WP)) > 0
-   THEN DrRel := (GetRootZoneWc().FC - GetRootZoneWC().Actual)/(GetRootZoneWc().FC - GetRootZoneWc().WP)
-   ELSE DrRel := 0;
-IF ROUND(1000*(GetRootZoneWC().ZtopFC - GetRootZoneWc().ZtopWP)) > 0
-   THEN DZtopRel := (GetRootZoneWC().ZtopFC - GetRootZoneWc().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWc().ZtopWP)
-   ELSE DZtopRel := 0;
-
-// Zone in soil profile considered for determining stress response
-IF (DZtopRel < DrRel)
-   THEN ZtopSWCconsidered := true  // top soil is relative wetter than root zone
-   ELSE ZtopSWCconsidered := false;
-END; (* DetermineRootZoneWC *)
-
-
-
-FUNCTION DayString(DNr : LongInt) : repstring17;
-VAR dayi,monthi,yeari : INTEGER;
-    strA, strB : string;
-BEGIN
-IF (GetClimFile() = '(None)') THEN WHILE (DNr > 365) DO DNr := DNr - 365;
-DetermineDate(DNr,dayi,monthi,yeari);
-Str(dayi:2,strA);
-IF (GetClimRecord_FromY() = 1901)
-   THEN strB := ''
-   ELSE Str(yeari:4,strB);
-StrB := CONCAT(TRIM(strA),' ',Trim(NameMonth[monthi]),' ',Trim(strB));
-WHILE (Length(StrB) < 17) DO StrB := CONCAT(StrB,' ');
-DayString := StrB;
-END; (* DayString *)
-
 
 FUNCTION HarvestIndexDay(DAP  : LongInt;
                          DaysToFlower,HImax : integer;
@@ -2657,50 +1477,6 @@ IF ((ResponseECsw > 0) AND (Wrel > 0) AND (GetSimulation_SalinityConsidered() = 
    ELSE KsStoOut := KsStoIN;  // no adjustment to ECsw
 AdjustedKsStoToECsw := KsStoOut;
 END; (* AdjustedKsStoToECsw *)
-
-
-
-
-PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
-                                       VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
-VAR CumDepth, Factor,frac_value : double;
-    compi : INTEGER;
-BEGIN
-CumDepth := 0;
-compi := 0;
-ZrECe := 0;
-ZrECsw := 0;
-ZrECswFC := 0;
-ZrKsSalt := 1;
-IF (RootingDepth >= GetCrop().RootMin)
-   THEN BEGIN
-        REPEAT
-        compi := compi + 1;
-        CumDepth := CumDepth + GetCompartment_Thickness(compi);
-        IF (CumDepth <= RootingDepth)
-           THEN Factor := 1
-           ELSE BEGIN
-                frac_value := RootingDepth - (CumDepth - GetCompartment_Thickness(compi));
-                IF (frac_value > 0)
-                   THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                   ELSE Factor := 0;
-                END;
-        Factor := Factor * (GetCompartment_Thickness(compi))/RootingDepth; // weighting factor
-        ZrECe := ZrECe + Factor * ECeComp(GetCompartment_i(compi));
-        ZrECsw := ZrECsw + Factor * ECswComp(GetCompartment_i(compi),(false)); // not at FC
-        ZrECswFC := ZrECswFC + Factor * ECswComp(GetCompartment_i(compi),(true)); // at FC
-        UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
-        IF (((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax))
-           THEN ZrKsSalt := KsSalinity((true),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0))
-           ELSE ZrKsSalt := KsSalinity((false),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0));
-        END
-   ELSE BEGIN
-        ZrECe := undef_int;
-        ZrECsw := undef_int;
-        ZrECswFC := undef_int;
-        ZrKsSalt := undef_int;
-        END;
-END;  (* DetermineRootZoneSaltContent *)
 
 
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
@@ -3664,56 +2440,6 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
-
-
-PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
-                               Sown1stYear : BOOLEAN;
-                               TheCycleMode : rep_modeCycle;
-                               Zmax,ZminYear1,TheCCo,TheSizeSeedling,
-                               TheCGC,TheCCx,TheGDDCGC : double;
-                               ThePlantingDens : INTEGER;
-                               VAR TypeOfPlanting : rep_Planting;
-                               VAR Zmin,TheSizePlant,TheCCini : double;
-                               VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
-BEGIN
-IF (TheYearSeason = 1)
-   THEN BEGIN
-        IF (Sown1stYear = true) // planting
-           THEN TypeOfPlanting := Seed
-           ELSE TypeOfPlanting := Transplant;
-        Zmin := ZminYear1;  // rooting depth
-        END
-   ELSE BEGIN
-        TypeOfPlanting := Regrowth; // planting
-        Zmin := Zmax;  // rooting depth
-        // plant size by regrowth
-        IF (ROUND(100*TheSizePlant) < ROUND(100*TheSizeSeedling))
-           THEN TheSizePlant := 10 * TheSizeSeedling;
-        IF (ROUND(100*TheSizePlant) > ROUND((100*TheCCx*10000)/(ThePlantingDens/10000)))
-           THEN TheSizePlant := (TheCCx*10000)/(ThePlantingDens/10000); // adjust size plant to maximum possible
-        END;
-TheCCini := (ThePlantingDens/10000) * (TheSizePlant/10000);
-TheDaysToCCini := TimeToCCini(TypeOfPlanting,ThePlantingDens,TheSizeSeedling,TheSizePlant,TheCCx,TheCGC);
-IF (TheCycleMode = GDDays)
-   THEN TheGDDaysToCCini := TimeToCCini(TypeOfPlanting,ThePlantingDens,TheSizeSeedling,TheSizePlant,TheCCx,TheGDDCGC)
-   ELSE TheGDDaysToCCini := undef_int;
-END;  (* AdjustYearPerennials *)
-
-
-
-
-PROCEDURE NoCropCalendar;
-BEGIN
-SetCalendarFile('(None)');
-SetCalendarFileFull(GetCalendarFile());  (* no file *)
-SetCalendarDescription('');
-SetOnset_GenerateOn(false);
-SetOnset_GenerateTempOn(false);
-SetEndSeason_GenerateTempOn(false);
-SetCalendarDescription('No calendar for the Seeding/Planting year');
-END; (* NoCropCalendar *)
-
-
 
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;

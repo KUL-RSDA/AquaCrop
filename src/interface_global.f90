@@ -8,6 +8,7 @@ use ac_global, only: ActiveCells, &
                      CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      DetermineSaltContent, &
+                     DetermineRootZoneWC, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
@@ -78,6 +79,8 @@ use ac_global, only: ActiveCells, &
                      GetRainDescription, &
                      LoadClimate, &
                      LoadCropCalendar, &
+                     LoadProfile, &
+                     LoadIrriScheduleInfo, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -96,6 +99,7 @@ use ac_global, only: ActiveCells, &
                      SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
+                     SetIrriDescription, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimateDescription, &
@@ -144,6 +148,8 @@ use ac_global, only: ActiveCells, &
                      SetTemperatureFile, &
                      SetTemperatureFilefull, &
                      SetTemperatureDescription, &
+                     GetClimDescription, &
+                     SetClimDescription, & 
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      SetTemperatureRecord_FromString, &
@@ -193,7 +199,9 @@ use ac_global, only: ActiveCells, &
                      ECswComp, &
                      GetManDescription, &
                      SetManDescription, &
-                     LoadManagement
+                     LoadManagement, &
+                     SaveCrop, &
+                     SaveProfile
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -483,6 +491,29 @@ subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                                      Length123, StLength, Length12, CGCVal)
 end subroutine DetermineLengthGrowthStages_wrap
 
+
+subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
+    real(dp), intent(in) :: RootingDepth
+    logical(1), intent(inout) :: ZtopSWCconsidered
+
+    logical :: ZtopSWCconsidered_f
+
+    ZtopSWCconsidered_f = ZtopSWCconsidered
+    call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
+end subroutine DetermineRootZoneWC_wrap
+
+subroutine LoadIrriScheduleInfo_wrap(FullName, strlen1)
+    !! Wrapper for [[ac_global:LoadIrriScheduleInfo]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen1
+
+    character(len=strlen1) :: string1
+
+    string1 = pointer2string(FullName, strlen1)
+    call LoadIrriScheduleInfo(string1)
+end subroutine LoadIrriScheduleInfo_wrap
+
+
 subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
                             TempFile, strlen3, EToFile, strlen4, &
                             RainFile, strlen5, CO2File, strlen6)
@@ -743,6 +774,17 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     string = pointer2string(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
+
+subroutine SetIrriDescription_wrap(IrriDescription, strlen)
+    !! Wrapper for [[ac_global:SetIrriDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriDescription, strlen)
+    call SetIrriDescription(string)
+end subroutine SetIrriDescription_wrap
 
 function GetClimateDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
@@ -1654,6 +1696,26 @@ subroutine SetTemperatureDescription_wrap(TemperatureDescription, strlen)
 end subroutine SetTemperatureDescription_wrap
 
 
+function GetClimDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetClimDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetClimDescription())
+end function GetClimDescription_wrap
+
+
+subroutine SetClimDescription_wrap(ClimDescription, strlen)
+    !! Wrapper for [[ac_global:SetClimDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ClimDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ClimDescription, strlen)
+    call SetClimDescription(string)
+end subroutine SetClimDescription_wrap
+
+
 subroutine SetTemperatureRecord_ToString_wrap(&
                      TemperatureRecord_ToString, strlen)
     !! Wrapper for [[ac_global:TemperatureRecord_ToString]] for foreign
@@ -2084,6 +2146,28 @@ subroutine LoadManagement_wrap(FullName, strlen)
     call LoadManagement(string)
 end subroutine LoadManagement_wrap
 
+subroutine SaveCrop_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveCrop]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveCrop(string)
+end subroutine SaveCrop_wrap
+
+subroutine SaveProfile_wrap(totalname, strlen)
+    !! Wrapper for [[ac_global:SaveProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: totalname
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(totalname, strlen)
+    call SaveProfile(string)
+end subroutine SaveProfile_wrap
+
 
 real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
                                Depo_len)
@@ -2129,6 +2213,7 @@ real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
 
+
 integer(int32) function ActiveCells_wrap(theta, Layer)
     !! Wrapper for [[ac_global:ActiveCells]] for foreign languages.
     real(dp), intent(in) :: theta
@@ -2140,6 +2225,7 @@ integer(int32) function ActiveCells_wrap(theta, Layer)
     comp%Layer = Layer
     ActiveCells_wrap = ActiveCells(comp)
 end function ActiveCells_wrap
+
 
 subroutine DetermineSaltContent_wrap(ECe, Thickness, Layer, Salt_ptr, Salt_len, &
                                      Depo_ptr, Depo_len)
@@ -2161,6 +2247,17 @@ subroutine DetermineSaltContent_wrap(ECe, Thickness, Layer, Salt_ptr, Salt_len, 
     call DetermineSaltContent(ECe, comp)
 end subroutine DetermineSaltContent_wrap
 
+
+subroutine LoadProfile_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadProfile(string)
+end subroutine LoadProfile_wrap
 
 
 end module ac_interface_global
