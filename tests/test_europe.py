@@ -30,15 +30,28 @@ def is_within_one_significant_digit(str_ref, str_val):
     return is_ok
 
 
-def myassert(condition, message, root_dir):
+def myassert(condition, message, root_dir, logger):
     """
     Wrapper for the 'assert' function, where the current working
     directory is changed before raising the AssertionError.
     """
     if not condition:
+        logger.print('ERR:', message)
         os.chdir(root_dir)
     assert condition, message
     return
+
+
+class Logger:
+    def __init__(self, filename):
+        self.fh = open(filename, 'a')
+
+    def print(self, *args, **kwargs):
+        print(*args, file=self.fh, **kwargs)
+        return
+
+    def __del__(self):
+        self.fh.close()
 
 
 @pytest.mark.parametrize('param', [
@@ -56,11 +69,12 @@ def myassert(condition, message, root_dir):
     ('15.371', '15.361', False),
 ])
 def test_digits_check(param):
+    log = Logger('log_europe_digits.txt')
     str_ref, str_val, expected = param
     result = is_within_one_significant_digit(str_ref, str_val)
     is_ok = result == expected
-    print('Checking {0} vs {1}: {2} == {3} = {4}'.format(
-                str_ref, str_val, expected, result, 'OK' if is_ok else 'FAIL'))
+    log.print('Checking {0} vs {1}: {2} == {3} = {4}'.format(
+                 str_ref, str_val, expected, result, 'OK' if is_ok else 'FAIL'))
     assert is_ok, (str_ref, str_val, expected, result)
     return
 
@@ -69,7 +83,10 @@ def test_digits_check(param):
 @pytest.mark.parametrize('col', range(105))
 @pytest.mark.parametrize('use_irrigation', [False, True])
 def test_europe(row, col, use_irrigation):
-    print('=========', row, col, use_irrigation, '=========')
+    filename = 'log_europe_{0}-{1}-{2}.txt'.format(use_irrigation, col, row)
+    log = Logger(filename)
+
+    log.print('=========', row, col, use_irrigation, '=========')
     cwd = os.getcwd()
 
     # AquaCrop executable
@@ -86,8 +103,8 @@ def test_europe(row, col, use_irrigation):
     soil_name = str(row) + '_' + str(col) + '.SOL'
     soil_file = os.path.join(soil_dir, soil_name)
     if not os.path.exists(soil_file):
-        print('SKIP: missing soil file for {0}: {1}'.format(pixel_name,
-                                                            soil_file))
+        log.print('SKIP: missing soil file for {0}: {1}'.format(pixel_name,
+                                                                soil_file))
         return
 
     # Create a temporary working directory for the current test
@@ -146,10 +163,10 @@ def test_europe(row, col, use_irrigation):
     t_start = time.time()
     exitcode = os.system(cmd)
     t_stop = time.time()
-    print('Runtime: {0:.1f} seconds'.format(t_stop - t_start))
+    log.print('Runtime: {0:.1f} seconds'.format(t_stop - t_start))
     myassert(exitcode == 0,
              'AquaCrop exited with exit code {0}'.format(exitcode),
-             cwd)
+             cwd, log)
 
     # Remove extra files and directories: only save PRM and output file
     shutil.rmtree(os.path.join(pixel_dir, 'SIMUL'))
@@ -173,7 +190,7 @@ def test_europe(row, col, use_irrigation):
         myassert(len(ref_lines) == len(out_lines), \
                  ('Different number of lines in output and reference files ',
                   reference_file, output_file),
-                 cwd)
+                 cwd, log)
 
         num_col = {'day': 114, 'season': 41}[suffix]
         num_not_realclose = [0] * num_col
@@ -183,13 +200,13 @@ def test_europe(row, col, use_irrigation):
             if i == 0:
                 # Only elementary checks for the header line
                 myassert(ref_line.startswith('AquaCrop'),
-                         (i, ref_line, out_line), cwd)
+                         (i, ref_line, out_line), cwd, log)
                 myassert(out_line.startswith('AquaCrop'),
-                         (i, ref_line, out_line), cwd)
+                         (i, ref_line, out_line), cwd, log)
                 myassert('Output created on' in out_line,
-                         (i, ref_line, out_line), cwd)
+                         (i, ref_line, out_line), cwd, log)
                 myassert('Output created on' in ref_line,
-                         (i, ref_line, out_line), cwd)
+                         (i, ref_line, out_line), cwd, log)
             else:
                 items_ref = ref_line.split()
                 for i in range(len(items_ref)):
@@ -198,7 +215,7 @@ def test_europe(row, col, use_irrigation):
                 try:
                     assert ref_line == out_line, (i, ref_line, out_line)
                 except AssertionError:
-                    print('WARN: need item-by-item check (line {0})'.format(i))
+                    log.print('WARN: need item-by-item check (line {0})'.format(i))
                     items_out = out_line.split()
 
                     for icol, (item_ref, item_out) in enumerate(zip(items_ref,
@@ -214,24 +231,24 @@ def test_europe(row, col, use_irrigation):
                                                             item_ref, item_out)
                                 except AssertionError:
                                     myassert(False, ('failure checking digits',
-                                             icol, item_ref, item_out), cwd)
+                                             icol, item_ref, item_out), cwd, log)
                                 else:
                                     myassert(is_close, (icol, item_ref,
-                                             item_out), cwd)
+                                             item_out), cwd, log)
 
 
-        print('{0} num_items_total = {1}'.format(filename,
-                                                 sum(num_items_total)))
-        print('{0} num_not_realclose = {1}'.format(filename,
-                                                   sum(num_not_realclose)))
+        log.print('{0} num_items_total = {1}'.format(filename,
+                                                   sum(num_items_total)))
+        log.print('{0} num_not_realclose = {1}'.format(filename,
+                                                     sum(num_not_realclose)))
         numdevlist = [i * 100. / j for (i, j) in zip(num_not_realclose,
-                                                 num_items_total)]
-        print('{0} numdevlist [%] = {1}'.format(filename,
+                                                     num_items_total)]
+        log.print('{0} numdevlist [%] = {1}'.format(filename,
                         ' '.join(map(lambda x: '%.3f' % x, numdevlist))))
         maxdev = np.max(numdevlist)
         maxcol = np.argmax(numdevlist)
-        print('{0} maxnumdev [%] = {1:.3f} (column index {2})'.format(filename,
-                                                               maxdev, maxcol))
+        log.print('{0} maxnumdev [%] = {1:.3f} (column index {2})'.format(
+                                                    filename, maxdev, maxcol))
 
         # Now we check that the number of small deviations are within bounds.
         # Generally, no such small deviations are allowed. But with irrigation,
@@ -248,15 +265,16 @@ def test_europe(row, col, use_irrigation):
             (39, 8, True, 'day'),
         ]
         if (row, col, use_irrigation, suffix) in special_cases:
-            print('One small deviation is currently allowed for this test case')
+            log.print('One small deviation is currently allowed for this test case')
             myassert(int(np.sum(num_not_realclose)) <= 1,
                      'more than 1 small deviation detected for a special case',
-                     cwd)
+                     cwd, log)
         else:
             myassert(np.all(num_not_realclose) == 0,
-                     'small deviations detected for a non-special case', cwd)
+                     'small deviations detected for a non-special case',
+                     cwd, log)
 
-        print('{0} checks = OK'.format(filename))
+        log.print('{0} checks = OK'.format(filename))
 
     os.chdir(cwd)
     shutil.rmtree(work_dir)
