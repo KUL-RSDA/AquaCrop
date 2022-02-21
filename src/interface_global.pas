@@ -4052,12 +4052,25 @@ procedure SetNrCompartments(constref NrCompartments_in : integer);
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
 
-function ActiveCells(Comp : CompartmentIndividual) : integer;
-    external 'aquacrop' name '__ac_global_MOD_activecells';
+function ActiveCells(constref Comp : CompartmentIndividual) : integer;
+
+function ActiveCells_wrap(
+                        constref theta : double;
+                        constref Layer : integer) : integer;
+    external 'aquacrop' name '__ac_interface_global_MOD_activecells_wrap';
 
 procedure DetermineSaltContent(constref ECe : double;
                                var Comp : CompartmentIndividual);
-    external 'aquacrop' name '__ac_global_MOD_determinesaltcontent';
+
+procedure DetermineSaltContent_wrap(
+                                constref ECe : double;
+                                constref Thickness : double;
+                                constref Layer : integer;
+                                constref Salt_ptr : Pdouble;
+                                constref Salt_len : integer;
+                                constref Depo_ptr : Pdouble;
+                                constref Depo_len : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_determinesaltcontent_wrap';
 
 implementation
 
@@ -6822,6 +6835,27 @@ begin
     Depo_len := Length(Comp.Depo);
     ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
                               Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
+end;
+
+
+function ActiveCells(constref Comp : CompartmentIndividual) : integer;
+begin
+    ActiveCells := ActiveCells_wrap(Comp.theta, Comp.Layer);
+end;
+
+
+procedure DetermineSaltContent(constref ECe : double;
+                               var Comp : CompartmentIndividual);
+var
+    Salt_ptr, Depo_ptr : Pdouble;
+    Salt_len, Depo_len : integer;
+begin
+    Salt_ptr := @Comp.Salt[1];
+    Salt_len := Length(Comp.Salt);
+    Depo_ptr := @Comp.Depo[1];
+    Depo_len := Length(Comp.Depo);
+    DetermineSaltContent_wrap(ECe, Comp.Thickness, Comp.Layer, Salt_ptr, Salt_len, 
+                              Depo_ptr, Depo_len);
 end;
 
 

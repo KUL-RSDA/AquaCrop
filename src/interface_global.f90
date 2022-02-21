@@ -4,8 +4,10 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
-use ac_global, only: CheckFilesInProject, &
+use ac_global, only: ActiveCells, &
+                     CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
+                     DetermineSaltContent, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
@@ -2126,5 +2128,39 @@ real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
     atFC_f = logical(atFC)
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
+
+integer(int32) function ActiveCells_wrap(theta, Layer)
+    !! Wrapper for [[ac_global:ActiveCells]] for foreign languages.
+    real(dp), intent(in) :: theta
+    integer(int32), intent(in) :: Layer
+
+    type(CompartmentIndividual) :: comp
+
+    comp%theta = theta
+    comp%Layer = Layer
+    ActiveCells_wrap = ActiveCells(comp)
+end function ActiveCells_wrap
+
+subroutine DetermineSaltContent_wrap(ECe, Thickness, Layer, Salt_ptr, Salt_len, &
+                                     Depo_ptr, Depo_len)
+    !! Wrapper for [[ac_global:DetermineSaltContent]] for foreign languages.
+    real(dp), intent(in) :: ECe
+    real(dp), intent(in) :: Thickness
+    integer(int32), intent(in) :: Layer
+    type(c_ptr), intent(in) :: Salt_ptr
+    integer(int32), intent(in) :: Salt_len
+    type(c_ptr), intent(in) :: Depo_ptr
+    integer(int32), intent(in) :: Depo_len
+
+    type(CompartmentIndividual) :: comp
+
+    comp%Thickness = Thickness
+    comp%Layer = Layer
+    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
+    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
+    call DetermineSaltContent(ECe, comp)
+end subroutine DetermineSaltContent_wrap
+
+
 
 end module ac_interface_global
