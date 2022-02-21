@@ -1292,6 +1292,20 @@ function HImultiplier(
             constref HIadj : ShortInt) : double;
          external 'aquacrop' name '__ac_global_MOD_himultiplier';
 
+function AdjustedKsStoToECsw(
+            constref ECeMin : ShortInt;
+            constref ECeMax : ShortInt;
+            constref ResponseECsw : integer;
+            constref ECei : double;
+            constref ECswi : double;
+            constref ECswFCi : double;
+            constref Wrel : double;
+            constref Coeffb0Salt : double;
+            constref Coeffb1Salt : double;
+            constref Coeffb2Salt : double;
+            constref KsStoIN : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_adjustedksstotoecsw';
+
 procedure ComposeOutputFileName(
             constref TheProjectFileName : string);
 
