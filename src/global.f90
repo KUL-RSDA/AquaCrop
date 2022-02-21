@@ -112,8 +112,8 @@ integer(intEnum), parameter :: GenerateTimeMode_AllDepl = 1
     !! index of AllDepl in GenerateTimeMode enumerated type
 integer(intEnum), parameter :: GenerateTimeMode_AllRAW = 2
     !! index of AllRAW in GenerateTimeMode enumerated type
-integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBuns = 3
-    !! index of WaterBetweenBuns in GenerateTimeMode enumerated type
+integer(intEnum), parameter :: GenerateTimeMode_WaterBetweenBunds = 3
+    !! index of WaterBetweenBunds in GenerateTimeMode enumerated type
 
 integer(intEnum), parameter :: GenerateDepthMode_ToFC = 0
     !! index of ToFC in GenerateDepthMode enumerated type
@@ -130,15 +130,15 @@ integer(intEnum), parameter :: IrriMode_Inet = 3
     !! index of inet in IrriMode enumerated type
 
 integer(intEnum), parameter :: IrriMethod_MBasin = 0
-    !! index of MBasin in IrriMode enumerated type
+    !! index of MBasin in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MBorder = 1
-    !! index of MBorder in IrriMode enumerated type
+    !! index of MBorder in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MDrip = 2
-    !! index of MDrip in IrriMode enumerated type
+    !! index of MDrip in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MFurrow = 3
-    !! index of MFurrow in IrriMode enumerated type
+    !! index of MFurrow in IrriMethod enumerated type
 integer(intEnum), parameter :: IrriMethod_MSprinkler = 4
-    !! index of MSprinkler in IrriMode enumerated type
+    !! index of MSprinkler in IrriMethod enumerated type
 
 integer(intEnum), parameter :: datatype_daily = 0
     !! index of daily in datatype enumerated type
@@ -146,6 +146,13 @@ integer(intEnum), parameter :: datatype_decadely = 1
     !! index of decadely in datatype enumerated type
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
+
+type rep_DayEventInt
+    integer(int32) :: DayNr
+        !! Undocumented
+    integer(int32) :: param
+        !! Undocumented
+end type rep_DayEventInt
 
 type CompartmentIndividual 
     real(dp) :: Thickness
@@ -921,6 +928,7 @@ character(len=:), allocatable :: GroundWaterFilefull
 character(len=:), allocatable :: ClimateFile
 character(len=:), allocatable :: ClimateFileFull
 character(len=:), allocatable :: ClimateDescription
+character(len=:), allocatable :: IrriDescription
 character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
@@ -960,11 +968,16 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int32) :: IrriFirstDayNr
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
 
 integer(int32) :: NrCompartments
+
+
+type(rep_DayEventInt), dimension(5) :: IrriBeforeSeason
+type(rep_DayEventInt), dimension(5) :: IrriAfterSeason
 
 
 interface roundc
@@ -2723,6 +2736,115 @@ logical function FullUndefinedRecord(FromY, FromD, FromM, ToD, ToM)
         .and. (FromM == 1) .and. (ToD == 31) .and. (ToM == 12))
 end function FullUndefinedRecord
 
+subroutine NoIrrigation()
+
+    integer(int32) :: Nri
+    
+    call SetIrriMode(IrriMode_NoIrri)
+    call SetIrriDescription('Rainfed cropping')
+    call SetIrriMethod(IrriMethod_MSprinkler)
+    call SetSimulation_IrriECw(0.0_dp) ! dS/m
+    call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+    call SetGenerateDepthMode(GenerateDepthMode_ToFC)
+    IrriFirstDayNr = undef_int
+    do Nri = 1, 5
+        call SetIrriBeforeSeason_DayNr(Nri, 0)
+        call SetIrriBeforeSeason_Param(Nri, 0)
+        call SetIrriAfterSeason_DayNr(Nri, 0)
+        call SetIrriAfterSeason_Param(Nri, 0)
+    end do
+    call SetIrriECw_PreSeason(0.0_dp) ! dS/m
+    call SetIrriECw_PostSeason(0.0_dp) ! dS/m
+end subroutine NoIrrigation
+
+subroutine LoadIrriScheduleInfo(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer(int32) :: fhandle
+    integer(int32) :: i, rc
+    real(dp) :: VersionNr
+    integer(int8) :: simul_irri_in
+    integer(int32) :: simul_percraw
+    character(len=1025) :: StringREAD
+    
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *, iostat=rc) IrriDescription
+    read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
+
+    ! irrigation method
+    read(fhandle, *, iostat=rc) i
+    select case (i)
+    case(1)
+        call SetIrriMethod(IrriMethod_MSprinkler)
+    case(2)
+        call SetIrriMethod(IrriMethod_MBasin)
+    case(3)
+        call SetIrriMethod(IrriMethod_MBorder)
+    case(4)
+        call SetIrriMethod(IrriMethod_MFurrow)
+    case default
+        call SetIrriMethod(IrriMethod_MDrip)
+    end select
+    ! fraction of soil surface wetted
+    read(fhandle, *, iostat=rc) simul_irri_in
+    call SetSimulParam_IrriFwInSeason(simul_irri_in)
+
+    ! irrigation mode and parameters
+    read(fhandle, *, iostat=rc) i
+    select case (i)
+    case(0)
+        call SetIrriMode(IrriMode_NoIrri) ! rainfed
+    case(1)
+        call SetIrriMode(IrriMode_Manual)
+    case(2)
+        call SetIrriMode(IrriMode_Generate)
+    case default
+        call SetIrriMode(IrriMode_Inet)
+    end select
+
+    ! 1. Irrigation schedule
+    if ((i == 1) .and. (roundc(VersionNr*10,mold=1) >= 70)) then
+        read(fhandle, *, iostat=rc) IrriFirstDayNr ! line 6
+    else
+        IrriFirstDayNr = undef_int ! start of growing period
+    end if
+
+
+    ! 2. Generate
+    if (GetIrriMode() == IrriMode_Generate) then
+        read(fhandle, *, iostat=rc) i ! time criterion
+        select case (i)
+        case(1)
+            call SetGenerateTimeMode(GenerateTimeMode_FixInt)
+        case(2)
+            call SetGenerateTimeMode(GenerateTimeMode_AllDepl)
+        case(3)
+            call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+        case(4)
+            call SetGenerateTimeMode(GenerateTimeMode_WaterBetweenBunds)
+        case default
+            call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
+        end select
+        read(fhandle, *, iostat=rc) i ! depth criterion
+        select case (i)
+        case(1)
+            call SetGenerateDepthMode(GenerateDepthMode_ToFc)
+        case default
+            call SetGenerateDepthMode(GenerateDepthMode_FixDepth)
+        end select
+        IrriFirstDayNr = undef_int ! start of growing period
+    end if
+
+    ! 3. Net irrigation requirement
+    if (GetIrriMode() == IrriMode_Inet) then
+        read(fhandle, *, iostat=rc) simul_percraw
+        call SetSimulParam_PercRAW(simul_percraw)
+        IrriFirstDayNr = undef_int  ! start of growing period
+    end if
+    close(fhandle)
+    ! LoadIrriScheduleInfo 
+end subroutine LoadIrriScheduleInfo
+
 
 subroutine GenerateCO2Description(CO2FileFull, CO2Description)
     character(len=*), intent(in) :: CO2FileFull
@@ -2753,6 +2875,13 @@ subroutine GetIrriDescription(IrriFileFull, IrriDescription)
     read(fhandle, *) IrriDescription
     close(fhandle)
 end subroutine GetIrriDescription
+
+subroutine SetIrriDescription(str)
+    !! Setter for the "IrriDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    IrriDescription = str
+end subroutine SetIrriDescription
 
 
 subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
@@ -3808,6 +3937,57 @@ subroutine DetermineNrandThicknessCompartments()
         end do loop
 end subroutine DetermineNrandThicknessCompartments
 
+subroutine DetermineRootZoneSaltContent(RootingDepth, ZrECe, ZrECsw, ZrECswFC, ZrKsSalt)
+    real(dp), intent(in) :: RootingDepth
+    real(dp), intent(inout) :: ZrECe
+    real(dp), intent(inout) :: ZrECsw
+    real(dp), intent(inout) :: ZrECswFC
+    real(dp), intent(inout) :: ZrKsSalt
+
+
+    real(dp) :: CumDepth, Factor, frac_value
+    integer(int32) :: compi
+
+    CumDepth = 0._dp
+    compi = 0._dp
+    ZrECe = 0._dp
+    ZrECsw = 0._dp
+    ZrECswFC = 0._dp
+    ZrKsSalt = 1._dp
+    if (RootingDepth >= GetCrop_RootMin()) then
+        loop: do
+            compi = compi + 1
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if (CumDepth <= RootingDepth) then
+                Factor = 1._dp
+            else
+                frac_value = RootingDepth - (CumDepth - GetCompartment_Thickness(compi))
+                if (frac_value > 0._dp) then
+                    Factor = frac_value/GetCompartment_Thickness(compi)
+                else
+                    Factor = 0._dp
+                end if
+            end if
+            Factor = Factor * (GetCompartment_Thickness(compi))/RootingDepth ! weighting factor
+            ZrECe = ZrECe + Factor * ECeComp(GetCompartment_i(compi))
+            ZrECsw = ZrECsw + Factor * ECswComp(GetCompartment_i(compi), (.false.)) ! not at FC
+            ZrECswFC = ZrECswFC + Factor * ECswComp(GetCompartment_i(compi), (.true.)) ! at FC
+            if ((CumDepth >= RootingDepth) .or. (compi == NrCompartments)) exit loop
+        end do loop
+        if (((GetCrop_ECemin() /= undef_int) .and. (GetCrop_ECemax() /= undef_int)) .and. &
+                                    (GetCrop_ECemin() < GetCrop_ECemax())) then
+            ZrKsSalt = KsSalinity((.true.), GetCrop_ECemin(), GetCrop_ECemax(), ZrECe, (0.0_dp))
+        else
+            ZrKsSalt = KsSalinity((.false.), GetCrop_ECemin(), GetCrop_ECemax(), ZrECe, (0.0_dp))
+        end if
+    else
+        ZrECe = undef_int
+        ZrECsw = undef_int
+        ZrECswFC = undef_int
+        ZrKsSalt = undef_int
+    end if
+end subroutine DetermineRootZoneSaltContent
+
 
 subroutine AdjustOnsetSearchPeriod()
 
@@ -4245,6 +4425,295 @@ character(len=17) function DayString(DNr)
 end function DayString
 
 
+subroutine CompleteProfileDescription()
+
+    integer(int32) :: i
+    type(rep_Content) :: TotalWaterContent_temp
+    type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Compartment_temp
+    type(SoilLayerIndividual) :: soillayer_i_temp
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_temp
+
+    do i= (GetSoil_NrSoilLayers()+1), max_SoilLayers 
+        soillayer_i_temp = GetSoilLayer_i(i)
+        call set_layer_undef(soillayer_i_temp)
+        call SetSoilLayer_i(i, soillayer_i_temp)
+    end do
+    call SetSimulation_ResetIniSWC(.true.) ! soil water content and soil salinity
+    TotalWaterContent_temp = GetTotalWaterContent()
+    Compartment_temp = GetCompartment()
+    soillayer_temp = GetSoilLayer()
+    call specify_soil_layer(GetNrCompartments(), &
+                            int(GetSoil_NrSoilLayers(), kind=int32), &
+                            soillayer_temp, Compartment_temp, &
+                            TotalWaterContent_temp)
+    call SetSoilLayer(soillayer_temp)
+    call SetTotalWaterContent(TotalWaterContent_temp)
+    call SetCompartment(Compartment_temp)
+end subroutine CompleteProfileDescription
+
+
+subroutine LoadProfile(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int32) :: i
+    character(len=3) :: blank
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt
+    character(len=1024) :: ProfDescriptionLocal
+    real(dp) :: thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp
+    real(dp) :: cra_temp, crb_temp, dx_temp
+    character(len=25) :: description_temp
+    integer(int8) :: penetrability_temp, gravelm_temp
+    real(dp), dimension(11) :: saltmob_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) ProfDescriptionLocal
+    call SetProfDescription(trim(ProfDescriptionLocal))
+    read(fhandle, *) VersionNr  ! AquaCrop version
+    read(fhandle, *) TempShortInt
+    call SetSoil_CNvalue(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetSoil_REW(TempShortInt)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    read(fhandle, *) TempShortInt
+    call SetSoil_NrSoilLayers(TempShortInt)
+    read(fhandle, *) ! depth of restrictive soil layer which is no longer applicable
+    read(fhandle, *)
+    read(fhandle, *)
+    ! Load characteristics of each soil layer
+    do i = 1, GetSoil_NrSoilLayers() 
+        ! Parameters for capillary rise missing in Versions 3.0 and 3.1
+        if (roundc(VersionNr*10, mold=1) < 40) then
+            read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
+                             WP_temp, infrate_temp, blank, description_temp
+            call SetSoilLayer_Thickness(i, thickness_temp)
+            call SetSoilLayer_SAT(i, SAT_temp)
+            call SetSoilLayer_FC(i, FC_temp)
+            call SetSoilLayer_WP(i, WP_temp)
+            call SetSoilLayer_InfRate(i, infrate_temp)
+            call SetSoilLayer_Description(i, description_temp)
+            ! Default values for Penetrability and Gravel
+            call SetSoilLayer_Penetrability(i, 100_int8)
+            call SetSoilLayer_GravelMass(i, 0_int8)
+            ! determine volume gravel
+            call SetSoilLayer_GravelVol(i, 0._dp)
+        else
+            if (roundc(VersionNr*10, mold=1) < 60) then 
+                            ! UPDATE required for Version 6.0
+                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
+                                 WP_temp, infrate_temp, cra_temp, &
+                                 crb_temp, blank, description_temp
+                call SetSoilLayer_Thickness(i, thickness_temp)
+                call SetSoilLayer_SAT(i, SAT_temp)
+                call SetSoilLayer_FC(i, FC_temp)
+                call SetSoilLayer_WP(i, WP_temp)
+                call SetSoilLayer_InfRate(i, infrate_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+                call SetSoilLayer_Description(i, description_temp)
+                ! Default values for Penetrability and Gravel
+                call SetSoilLayer_Penetrability(i, 100_int8)
+                call SetSoilLayer_GravelMass(i, 0_int8)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, 0._dp)
+            else
+                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, WP_temp, &
+                                 infrate_temp, penetrability_temp, &
+                                 gravelm_temp, cra_temp, crb_temp, &
+                                 description_temp
+                call SetSoilLayer_Thickness(i, thickness_temp)
+                call SetSoilLayer_SAT(i, SAT_temp)
+                call SetSoilLayer_FC(i, FC_temp)
+                call SetSoilLayer_WP(i, WP_temp)
+                call SetSoilLayer_InfRate(i, infrate_temp)
+                call SetSoilLayer_Penetrability(i, penetrability_temp)
+                call SetSoilLayer_GravelMass(i, gravelm_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+                call SetSoilLayer_Description(i, description_temp)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, &
+                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
+                                                    GetSoilLayer_GravelMass(i)))
+            end if
+        end if
+        ! determine drainage coefficient
+        call SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_InfRate(i)))
+        ! determine number of salt cells based on infiltration rate
+        if (GetSoilLayer_InfRate(i) <= 112._dp) then
+            call SetSoilLayer_SCP1(i, 11_int8)
+        else
+            call SetSoilLayer_SCP1(i, &
+                        roundc(1.6_dp + 1000._dp/GetSoilLayer_InfRate(i), mold=1_int8))
+            if (GetSoilLayer_SCP1(i) < 2_int8) then
+                call SetSoilLayer_SCP1(i, 2_int8)
+            end if
+            ! determine parameters for soil salinity
+            call SetSoilLayer_SC(i, GetSoilLayer_SCP1(i) - 1_int8)
+            call SetSoilLayer_Macro(i, roundc(GetSoilLayer_FC(i), mold=1_int8))
+            call SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100._dp) &
+                            * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2._dp))) 
+                                                                       ! m3/m3 
+            dx_temp = (GetSoilLayer_UL(i))/GetSoilLayer_SC(i)
+            call SetSoilLayer_Dx(i, dx_temp)  ! m3/m3 
+            saltmob_temp = GetSoilLayer_SaltMobility(i)
+            call Calculate_SaltMobility(i, GetSimulParam_SaltDiff(), &
+                                        GetSoilLayer_Macro(i), saltmob_temp)
+            call SetSoilLayer_SaltMobility(i, saltmob_temp)
+            ! determine default parameters for capillary rise if missing
+            call SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_SAT(i), &
+                                        GetSoilLayer_FC(i), GetSoilLayer_WP(i), &
+                                        GetSoilLayer_InfRate(i)))
+            if (roundc(VersionNr*10, mold=1) < 40) then
+                cra_temp = GetSoilLayer_CRa(i)
+                crb_temp = GetSoilLayer_CRb(i)
+                call DetermineParametersCR(GetSoilLayer_SoilClass(i), &
+                                            GetSoilLayer_InfRate(i), &
+                                            cra_temp, crb_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+            end if
+        end if
+        call DetermineNrandThicknessCompartments()
+        call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
+                                                  GetSoil_NrSoilLayers(), &
+                                                  GetSoilLayer()))
+    end do
+    close(fhandle)
+end subroutine LoadProfile
+
+
+subroutine Calculate_Saltmobility(layer, SaltDiffusion, Macro, Mobil)
+    integer(int32), intent(in) :: layer
+    integer(int8), intent(in) :: SaltDiffusion
+    integer(int8), intent(in) :: Macro
+    real(dp), dimension(11), intent(inout) :: Mobil
+
+    integer(int32) :: i, CelMax
+    real(dp) :: Mix, a, b, xi, yi, UL
+
+    Mix = SaltDiffusion/100._dp ! global salt mobility expressed as a fraction
+    UL = GetSoilLayer_UL(layer) * 100._dp ! upper limit in VOL% of SC cell 
+
+    ! 1. convert Macro (vol%) in SaltCelNumber
+    if (Macro > UL) then
+        CelMax = GetSoilLayer_SCP1(layer)
+    else
+        CelMax = roundc((Macro/UL)*GetSoilLayer_SC(layer), mold=1)
+    end if
+    if (CelMax <= 0) then
+        CelMax = 1
+    end if
+
+    ! 2. find a and b
+    if (Mix < 0.5_dp) then
+        a = Mix * 2._dp
+        b = exp(10._dp*(0.5_dp-Mix)*log(10._dp))
+    else
+        a = 2._dp * (1._dp - Mix)
+        b = exp(10._dp*(Mix-0.5_dp)*log(10._dp))
+    end if
+
+    ! 3. calculate mobility for cells = 1 to Macro
+    do i = 1, (CelMax-1) 
+        xi = i/(real(CelMax-1, kind=dp))
+        if (Mix > 0._dp) then
+            if (Mix < 0.5_dp) then
+                yi = exp(log(a)+xi*log(b))
+                Mobil(i) = (yi-a)/(a*b-a)
+            elseif ((Mix >= 0.5_dp - epsilon(0.0_dp)) &
+                       .and. (Mix <= 0.5_dp + epsilon(0.0_dp)))  then
+                Mobil(i) = xi
+            elseif (Mix < 1._dp) then
+                yi = exp(log(a)+(1._dp-xi)*log(b))
+                Mobil(i) = 1._dp - (yi-a)/(a*b-a)
+            else
+                Mobil(i) = 1._dp
+            end if
+        else
+            Mobil(i) = 0._dp
+        end if
+    end do
+        
+    ! 4. Saltmobility between Macro and SAT
+    do i = CelMax, GetSoilLayer_SCP1(layer) 
+        Mobil(i) = 1._dp
+    end do 
+end subroutine Calculate_Saltmobility
+
+
+subroutine AdjustYearPerennials(TheYearSeason, Sown1stYear, TheCycleMode, &
+          Zmax, ZminYear1, TheCCo, TheSizeSeedling, TheCGC, TheCCx, TheGDDCGC, &
+          ThePlantingDens, TypeOfPlanting, Zmin, TheSizePlant, TheCCini,&
+          TheDaysToCCini, TheGDDaysToCCini)
+    integer(int8), intent(in) :: TheYearSeason
+    logical, intent(in) :: Sown1stYear
+    integer(intEnum), intent(in) :: TheCycleMode
+    real(dp), intent(in) :: Zmax
+    real(dp), intent(in) :: ZminYear1
+    real(dp), intent(in) :: TheCCo
+    real(dp), intent(in) :: TheSizeSeedling
+    real(dp), intent(in) :: TheCGC
+    real(dp), intent(in) :: TheCCx
+    real(dp), intent(in) :: TheGDDCGC
+    integer(int32), intent(in) :: ThePlantingDens
+    integer(intEnum), intent(inout) :: TypeOfPlanting
+    real(dp), intent(inout) :: Zmin
+    real(dp), intent(inout) :: TheSizePlant
+    real(dp), intent(inout) :: TheCCini
+    integer(int32), intent(inout) :: TheDaysToCCini
+    integer(int32), intent(inout) :: TheGDDaysToCCini
+
+    if (TheYearSeason == 1) then
+        if (Sown1stYear .eqv. .true.) then ! planting
+            TypeOfPlanting = plant_seed
+        else
+            TypeOfPlanting = plant_transplant
+        end if
+        Zmin = ZminYear1  ! rooting depth
+    else
+        TypeOfPlanting = plant_regrowth ! planting
+        Zmin = Zmax  ! rooting depth
+        ! plant size by regrowth
+        if (roundc(100._dp*TheSizePlant,mold=1_int32) < &
+            roundc(100._dp*TheSizeSeedling,mold=1_int32)) then
+            TheSizePlant = 10._dp * TheSizeSeedling
+        end if
+        if (roundc(100._dp*TheSizePlant,mold=1_int32) > &
+            roundc((100._dp*TheCCx*10000._dp)/&
+                   (ThePlantingDens/10000._dp),mold=1_int32)) then
+            TheSizePlant = (TheCCx*10000._dp)/(ThePlantingDens/10000._dp)
+            ! adjust size plant to maximum possible
+        end if
+    end if
+    TheCCini = (ThePlantingDens/10000._dp) * (TheSizePlant/10000._dp)
+    TheDaysToCCini = TimeToCCini(TypeOfPlanting, ThePlantingDens, &
+                       TheSizeSeedling, TheSizePlant, TheCCx, TheCGC)
+    if (TheCycleMode == modeCycle_GDDays) then
+        TheGDDaysToCCini = TimeToCCini(TypeOfPlanting, ThePlantingDens, &
+                       TheSizeSeedling, TheSizePlant, TheCCx, TheGDDCGC)
+    else
+        TheGDDaysToCCini = undef_int
+    end if
+
+end subroutine AdjustYearPerennials
+
+
+subroutine NoCropCalendar()
+    call SetCalendarFile('(None)')
+    call SetCalendarFileFull(GetCalendarFile())  ! no file 
+    call SetCalendarDescription('')
+    call SetOnset_GenerateOn(.false.)
+    call SetOnset_GenerateTempOn(.false.)
+    call SetEndSeason_GenerateTempOn(.false.)
+    call SetCalendarDescription('No calendar for the Seeding/Planting year')
+end subroutine NoCropCalendar
+
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
@@ -4516,7 +4985,7 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     
     character(len=len(Trim(TheProjectFileName))) :: TempString
     character(len=:), allocatable :: TempString2
-    integer(int8) :: i
+    integer(int32) :: i
     
     TempString = Trim(TheProjectFileName)
     i = len(TempString)
@@ -8553,11 +9022,18 @@ type(rep_Content) function GetTotalWaterContent()
     GetTotalWaterContent = TotalWaterContent
 end function GetTotalWaterContent
 
-type(real) function GetTotalWaterContent_BeginDay()
+real(dp) function GetTotalWaterContent_BeginDay()
     !! Getter for the "TotalWaterContent_BeginDay" global variable.
 
     GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
 end function GetTotalWaterContent_BeginDay
+
+subroutine SetTotalWaterContent(TotalWaterContent_in)
+    !! Setter for the TotalWaterContent global variable.
+    type(rep_content), intent(in) :: TotalWaterContent_in
+
+    TotalWaterContent = TotalWaterContent_in
+end subroutine SetTotalWaterContent
 
 subroutine SetTotalWaterContent_BeginDay(BeginDay)
     !! Setter for the "TotalWaterContent" global variable.
@@ -8902,6 +9378,129 @@ subroutine SetTemperatureRecord_FromString(FromString)
 
     TemperatureRecord%FromString = FromString
 end subroutine SetTemperatureRecord_FromString
+
+function GetIrriAfterSeason_i(i) result(IrriAfterSeason_i)
+    !! Getter for individual elements of "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriAfterSeason_i
+
+    IrriAfterSeason_i = IrriAfterSeason(i)
+end function GetIrriAfterSeason_i
+
+subroutine SetIrriAfterSeason_i(i, IrriAfterSeason_i)
+    !! Setter for individual elements of "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriAfterSeason_i
+
+    IrriAfterSeason(i) = IrriAfterSeason_i
+end subroutine SetIrriAfterSeason_i
+
+function GetIrriAfterSeason_DayNr(i) result(DayNr)
+    !! Getter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: DayNr
+
+    DayNr = IrriAfterSeason(i)%DayNr
+end function GetIrriAfterSeason_DayNr
+
+function GetIrriAfterSeason_Param(i) result(Param)
+    !! Getter for the "Param" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Param
+
+    Param = IrriAfterSeason(i)%Param
+end function GetIrriAfterSeason_Param
+
+subroutine SetIrriAfterSeason(IrriAfterSeason_in)
+    !! Setter for the "IrriAfterSeason" global variable.
+    type(rep_DayEventInt), intent(in) :: IrriAfterSeason_in
+
+    IrriAfterSeason = IrriAfterSeason_in
+end subroutine SetIrriAfterSeason
+
+subroutine SetIrriAfterSeason_DayNr(i, DayNr)
+    !! Setter for the "DayNr" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr
+
+    IrriAfterSeason(i)%DayNr = DayNr
+end subroutine SetIrriAfterSeason_DayNr
+
+subroutine SetIrriAfterSeason_Param(i, Param)
+    !! Setter for the "Param" attribute of the "IrriAfterSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Param
+
+    IrriAfterSeason(i)%Param = Param
+end subroutine SetIrriAfterSeason_Param
+
+function GetIrriBeforeSeason_i(i) result(IrriBeforeSeason_i)
+    !! Getter for individual elements of "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriBeforeSeason_i
+
+    IrriBeforeSeason_i = IrriBeforeSeason(i)
+end function GetIrriBeforeSeason_i
+
+subroutine SetIrriBeforeSeason_i(i, IrriBeforeSeason_i)
+    !! Setter for individual elements of "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventInt) :: IrriBeforeSeason_i
+
+    IrriBeforeSeason(i) = IrriBeforeSeason_i
+end subroutine SetIrriBeforeSeason_i
+
+function GetIrriBeforeSeason_DayNr(i) result(DayNr)
+    !! Getter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: DayNr
+
+    DayNr = IrriBeforeSeason(i)%DayNr
+end function GetIrriBeforeSeason_DayNr
+
+function GetIrriBeforeSeason_Param(i) result(Param)
+    !! Getter for the "Param" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32) :: Param
+
+    Param = IrriBeforeSeason(i)%Param
+end function GetIrriBeforeSeason_Param
+
+subroutine SetIrriBeforeSeason(IrriBeforeSeason_in)
+    !! Setter for the "IrriBeforeSeason" global variable.
+    type(rep_DayEventInt), intent(in) :: IrriBeforeSeason_in
+
+    IrriBeforeSeason = IrriBeforeSeason_in
+end subroutine SetIrriBeforeSeason
+
+subroutine SetIrriBeforeSeason_DayNr(i, DayNr)
+    !! Setter for the "DayNr" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr
+
+    IrriBeforeSeason(i)%DayNr = DayNr
+end subroutine SetIrriBeforeSeason_DayNr
+
+subroutine SetIrriBeforeSeason_Param(i, Param)
+    !! Setter for the "Param" attribute of the "IrriBeforeSeason" global variable.
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: Param
+
+    IrriBeforeSeason(i)%Param = Param
+end subroutine SetIrriBeforeSeason_Param
+
+integer(int32) function GetIrriFirstDayNr()
+    !! Getter for the "IrriFirstDayNr" global variable.
+
+    GetIrriFirstDayNr = IrriFirstDayNr
+end function GetIrriFirstDayNr
+
+subroutine SetIrriFirstDayNr(IrriFirstDayNr_in)
+    !! Setter for the "IrriFirstDayNr" global variable.
+    integer(int32), intent(in) :: IrriFirstDayNr_in
+
+    IrriFirstDayNr = IrriFirstDayNr_in
+end subroutine SetIrriFirstDayNr
 
 type(rep_clim) function GetClimRecord()
     !! Getter for the "ClimRecord" global variable.
@@ -10176,6 +10775,14 @@ subroutine SetSimulation_Storage_Season(Season)
     simulation%Storage%Season = Season
 end subroutine SetSimulation_Storage_Season
 
+function GetCompartment() result(Compartment_out)
+    !! Getter for "Compartment" global variable.
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_out
+
+    Compartment_out = Compartment
+end function GetCompartment
+
+
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
     integer(int32), intent(in) :: i
@@ -10278,7 +10885,8 @@ end function GetCompartment_Depo
 
 subroutine SetCompartment(Compartment_in)
     !! Setter for the "compartment" global variable.
-    type(CompartmentIndividual), intent(in) :: Compartment_in
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                    intent(in) :: Compartment_in
 
     compartment = Compartment_in
 end subroutine SetCompartment

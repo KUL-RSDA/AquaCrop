@@ -8,16 +8,8 @@ uses SysUtils, interface_global;
 Const 
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
 
-TYPE
-     rep_string3  = string[3];  (* Read/Write ProfFile *)
 
 TYPE
-     rep_DayEventInt = Record
-         DayNr : Integer;
-         Param : Integer;
-         end;
-
-     rep_IrriOutSeasonEvents = ARRAY[1..5] OF Rep_DayEventInt;
 
      rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
 
@@ -25,9 +17,8 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ProjectDescription, MultipleProjectDescription,
-    IrriDescription,OffSeasonDescription,GroundWaterDescription: string;
+    OffSeasonDescription,GroundWaterDescription: string;
 
-    IrriFirstDayNr : LongInt;
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
@@ -42,8 +33,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    IrriBeforeSeason,
-    IrriAfterSeason : rep_IrriOutSeasonEvents;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
     IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
@@ -72,25 +61,14 @@ PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
                          CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
                          VAR TpotVal, EpotVal : double);
 
-PROCEDURE NoIrrigation;
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-
-
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
-
-PROCEDURE CompleteProfileDescription;
-PROCEDURE LoadProfile(FullName : string);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
@@ -136,8 +114,7 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ResponseECsw : INTEGER;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
 
-PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
-                                       VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
+
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
@@ -177,22 +154,6 @@ PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
-
-PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
-                               Sown1stYear : BOOLEAN;
-                               TheCycleMode : rep_modeCycle;
-                               Zmax,ZminYear1,TheCCo,TheSizeSeedling,
-                               TheCGC,TheCCx,TheGDDCGC : double;
-                               ThePlantingDens : LongInt;
-                               VAR TypeOfPlanting : rep_Planting;
-                               VAR Zmin,TheSizePlant,TheCCini : double;
-                               VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
-
-
-
-
-
-PROCEDURE NoCropCalendar;
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
@@ -271,28 +232,6 @@ IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   
 END; (* CalculateETpot *)
 
 
-PROCEDURE NoIrrigation;
-VAR Nri : INTEGER;
-BEGIN
- SetIrriMode(NoIrri);
- IrriDescription := 'Rainfed cropping';
- SetIrriMethod(MSprinkler);
- SetSimulation_IrriECw(0.0); // dS/m
- SetGenerateTimeMode(AllRAW);
- SetGenerateDepthMode(ToFC);
- IrriFirstDayNr := undef_int;
- FOR Nri := 1 TO 5 DO
-     BEGIN
-     IrriBeforeSeason[Nri].DayNr := 0;
-     IrriBeforeSeason[Nri].Param := 0;
-     IrriAfterSeason[Nri].DayNr := 0;
-     IrriAfterSeason[Nri].Param := 0;
-     END;
- SetIrriECw_PreSeason(0.0); //dS/m
- SetIrriECw_PostSeason(0.0); //dS/m
-END; (* NoIrrigation *)
-
-
 PROCEDURE NoManagementOffSeason;
 VAR Nri : INTEGER;
 BEGIN
@@ -306,14 +245,14 @@ SetSimulParam_IrriFwOffSeason(100);
 SetIrriECw_PreSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriBeforeSeason[Nri].DayNr := 0;
-    IrriBeforeSeason[Nri].Param := 0;
+    SetIrriBeforeSeason_DayNr(Nri, 0);
+    SetIrriBeforeSeason_Param(Nri, 0);
     END;
 SetIrriECw_PostSeason(0.0); // dS/m
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 END; (* NoManagementOffSeason *)
 
@@ -344,10 +283,10 @@ SetManagement_EffectMulchOffS(TempShortInt);
 // irrigation events - initialise
 FOR Nri := 1 TO 5 DO
     BEGIN
-    IrriBeforeSeason[Nri].DayNr := 0;
-    IrriBeforeSeason[Nri].Param := 0;
-    IrriAfterSeason[Nri].DayNr := 0;
-    IrriAfterSeason[Nri].Param := 0;
+    SetIrriBeforeSeason_DayNr(Nri, 0);
+    SetIrriBeforeSeason_Param(Nri, 0);
+    SetIrriAfterSeason_DayNr(Nri, 0);
+    SetIrriAfterSeason_Param(Nri, 0);
     END;
 READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
 IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
@@ -371,90 +310,18 @@ IF (NrEvents1 > 0) THEN FOR Nri := 1 TO NrEvents1 DO // events BEFORE growing pe
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriBeforeSeason[Nri].DayNr := ROUND(Par1);
-   IrriBeforeSeason[Nri].Param := ROUND(Par2);
+   SetIrriBeforeSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriBeforeSeason_Param(Nri, ROUND(Par2));
    END;
 IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing period
    BEGIN
    READLN(f0,ParamString);
    SplitStringInTwoParams(ParamString,Par1,Par2);
-   IrriAfterSeason[Nri].DayNr := ROUND(Par1);
-   IrriAfterSeason[Nri].Param := ROUND(Par2);
+   SetIrriAfterSeason_DayNr(Nri, ROUND(Par1));
+   SetIrriAfterSeason_Param(Nri, ROUND(Par2));
    END;
 Close(f0);
 END; (* LoadOffSeason *)
-
-
-PROCEDURE LoadIrriScheduleInfo(FullName : string);
-VAR f0 : TextFile;
-    i : INTEGER;
-    VersionNr : double;
-    simul_irri_in,simul_percraw : shortint; 
-
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,IrriDescription);
-READLN(f0,VersionNr);  // AquaCrop version
-
-// irrigation method
-READLN(f0,i);
-CASE i OF
-     1 : SetIrriMethod(MSprinkler);
-     2 : SetIrriMethod(MBasin);
-     3 : SetIrriMethod(MBorder);
-     4 : SetIrriMethod(MFurrow);
-     else  SetIrriMethod(MDrip);
-     end;
-
-// fraction of soil surface wetted
-READLN(f0,simul_irri_in);
-SetSimulParam_IrriFwInSeason(simul_irri_in);
-
-// irrigation mode and parameters
-READLN(f0,i);
-CASE i OF
-     0 : SetIrriMode(NoIrri); // rainfed
-     1 : SetIrriMode(Manual);
-     2 : SetIrriMode(Generate);
-     else SetIrriMode(Inet);
-     end;
-
-// 1. Irrigation schedule
-IF ((i = 1) AND (ROUND(VersionNr*10) >= 70))
-   THEN READLN(f0,IrriFirstDayNr) // line 6
-   ELSE IrriFirstDayNr := undef_int; // start of growing period
-
-
-// 2. Generate
-IF (GetIrriMode() = Generate) THEN
-   BEGIN
-   READLN(f0,i); // time criterion
-   Case i OF
-        1 : SetGenerateTimeMode(FixInt);
-        2 : SetGenerateTimeMode(AllDepl);
-        3 : SetGenerateTimeMode(AllRAW);
-        4 : SetGenerateTimeMode(WaterBetweenBunds);
-        else SetGenerateTimeMode(AllRAW);
-     end;
-   READLN(f0,i); // depth criterion
-   Case i OF
-        1 : SetGenerateDepthMode(ToFc);
-        else SetGenerateDepthMode(FixDepth);
-     end;
-   IrriFirstDayNr := undef_int; // start of growing period
-   END;
-
-// 3. Net irrigation requirement
-IF (GetIrriMode() = Inet) THEN
-   BEGIN
-   READLN(f0,simul_percraw);
-   SetSimulParam_PercRAW(simul_percraw);
-   IrriFirstDayNr := undef_int;  // start of growing period
-   END;
-
-Close(f0);
-END; (* LoadIrriScheduleInfo *)
 
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
@@ -545,62 +412,6 @@ ActiveCells := celi;
 END; (* ActiveCells *)
 
 
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-VAR i, CelMax : INTEGER;
-    Mix, a, b, xi, yi, UL : double;
-
-BEGIN
-Mix := SaltDiffusion/100; // global salt mobility expressed as a fraction
-UL := GetSoilLayer_i(layer).UL * 100; (* upper limit in VOL% of SC cell *)
-
-//1. convert Macro (vol%) in SaltCelNumber
-IF (Macro > UL)
-   THEN CelMax := GetSoilLayer_i(layer).SCP1
-   ELSE CelMax := ROUND((Macro/UL)*GetSoilLayer_i(layer).SC);
-IF (CelMax <= 0) THEN CelMax := 1;
-
-//2. find a and b
-IF (Mix < 0.5)
-   THEN BEGIN
-        a := Mix * 2;
-        b := EXP(10*(0.5-Mix)*LN(10));
-        END
-   ELSE BEGIN
-        a := 2 * (1- Mix);
-        b := EXP(10*(Mix-0.5)*LN(10));
-        END;
-
-//3. calculate mobility for cells = 1 to Macro
-FOR i := 1 to (CelMax-1) DO
-    BEGIN
-    xi := i/(CelMax-1);
-    IF (Mix > 0)
-       THEN IF (Mix < 0.5)
-               THEN BEGIN
-                    yi := EXP(LN(a)+xi*LN(b));
-                    Mobil[i] := (yi-a)/(a*b-a);
-                    END
-               ELSE IF (Mix = 0.5)
-                       THEN Mobil[i] := xi
-                       ELSE IF (Mix < 1)
-                               THEN BEGIN
-                                    yi := EXP(LN(a)+(1-xi)*LN(b));
-                                    Mobil[i] := 1- (yi-a)/(a*b-a);
-                                    END
-                               ELSE Mobil[i] := 1
-       ELSE Mobil[i] := 0;
-    END;
-
-//4. Saltmobility between Macro and SAT
-FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
-
-END; (* Calculate_Saltmobility *)
-
-
-
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 VAR TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN : double;
@@ -632,151 +443,6 @@ FOR i := 1 TO celn DO
     END;
 END; (* DetermineSaltContent *)
 
-
-
-
-PROCEDURE CompleteProfileDescription;
-VAR i : INTEGER;
-TotalWaterContent_temp : rep_Content;
-Compartment_temp : rep_Comp;
-soillayer_i_temp : SoilLayerIndividual;
-soillayer_temp : rep_SoilLayer;
-BEGIN
-FOR i:= (GetSoil().NrSoilLayers+1) to max_SoilLayers DO 
-    BEGIN
-        soillayer_i_temp := GetSoilLayer_i(i);
-        set_layer_undef(soillayer_i_temp);
-        SetSoilLayer_i(i, soillayer_i_temp);
-    END;
-SetSimulation_ResetIniSWC(true); // soil water content and soil salinity
-TotalWaterContent_temp := GetTotalWaterContent();
-Compartment_temp := GetCompartment();
-soillayer_temp := GetSoilLayer();
-specify_soil_layer(GetNrCompartments(),GetSoil().NrSoilLayers,soillayer_temp,Compartment_temp,TotalWaterContent_temp);
-SetSoilLayer(soillayer_temp);
-SetTotalWaterContent(TotalWaterContent_temp);
-SetCompartment(Compartment_temp);
-END; (* CompleteProfileDescription *)
-
-
-PROCEDURE LoadProfile(FullName : string);
-VAR f0 : TextFile;
-    i  : INTEGER;
-    blank : rep_string3;
-    VersionNr : double;
-    TempShortInt : shortint;
-    ProfDescriptionLocal : string;
-    thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp : double;
-    cra_temp, crb_temp, dx_temp : double;
-    description_temp : string;
-    penetrability_temp, gravelm_temp : shortint;
-    saltmob_temp : rep_salt;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,ProfDescriptionLocal);
-SetProfDescription(ProfDescriptionLocal);
-READLN(f0,VersionNr);  // AquaCrop version
-READLN(f0,TempShortInt);
-SetSoil_CNvalue(TempShortInt);
-READLN(f0,TempShortInt);
-SetSoil_REW(TempShortInt);
-SetSimulation_SurfaceStorageIni(0.0);
-SetSimulation_ECStorageIni(0.0);
-READLN(f0,TempShortInt);
-SetSoil_NrSoilLayers(TempShortInt);
-READLN(f0); // depth of restrictive soil layer which is no longer applicable
-READLN(f0);
-READLN(f0);
-// Load characteristics of each soil layer
-FOR i := 1 TO GetSoil().NrSoilLayers DO
-    BEGIN
-    // Parameters for capillary rise missing in Versions 3.0 and 3.1
-    IF (ROUND(VersionNr*10) < 40)
-       THEN BEGIN
-            READLN(f0,thickness_temp,SAT_temp,FC_temp,
-              WP_temp,infrate_temp,blank,description_temp);
-            SetSoilLayer_Thickness(i, thickness_temp);
-            SetSoilLayer_SAT(i, SAT_temp);
-            SetSoilLayer_FC(i, FC_temp);
-            SetSoilLayer_WP(i, WP_temp); 
-            SetSoilLayer_InfRate(i, infrate_temp);
-            SetSoilLayer_Description(i, description_temp);
-            // Default values for Penetrability and Gravel
-            SetSoilLayer_Penetrability(i, 100);
-            SetSoilLayer_GravelMass(i, 0);
-            // determine volume gravel
-            SetSoilLayer_GravelVol(i, 0);
-            END
-       ELSE BEGIN
-            IF (ROUND(VersionNr*10) < 60)  // UPDATE required for Version 6.0
-               THEN BEGIN
-                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           cra_temp, crb_temp,blank, description_temp);
-                    SetSoilLayer_Thickness(i, thickness_temp);
-                    SetSoilLayer_SAT(i, SAT_temp);
-                    SetSoilLayer_FC(i, FC_temp);
-                    SetSoilLayer_WP(i, WP_temp); 
-                    SetSoilLayer_InfRate(i, infrate_temp);
-                    SetSoilLayer_CRa(i, cra_temp);
-                    SetSoilLayer_CRb(i, crb_temp);
-                    SetSoilLayer_Description(i, description_temp);
-                    // Default values for Penetrability and Gravel
-                    SetSoilLayer_Penetrability(i, 100);
-                    SetSoilLayer_GravelMass(i, 0);
-                    // determine volume gravel
-                    SetSoilLayer_GravelVol(i, 0);
-                    END
-               ELSE BEGIN
-                    READLN(f0,thickness_temp,SAT_temp,FC_temp, WP_temp,infrate_temp,
-                           penetrability_temp, gravelm_temp, cra_temp, crb_temp,description_temp);
-                    SetSoilLayer_Thickness(i, thickness_temp);
-                    SetSoilLayer_SAT(i, SAT_temp);
-                    SetSoilLayer_FC(i, FC_temp);
-                    SetSoilLayer_WP(i, WP_temp); 
-                    SetSoilLayer_InfRate(i, infrate_temp);
-                    SetSoilLayer_Penetrability(i, penetrability_temp);
-                    SetSoilLayer_GravelMass(i, gravelm_temp);
-                    SetSoilLayer_CRa(i, cra_temp);
-                    SetSoilLayer_CRb(i, crb_temp);
-                    SetSoilLayer_Description(i, description_temp);
-                    // determine volume gravel
-                    SetSoilLayer_GravelVol(i, FromGravelMassToGravelVolume(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).GravelMass));
-                    END;
-            END;
-    // determine drainage coefficient
-    SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_i(i).InfRate));
-    // determine number of salt cells based on infiltration rate
-    IF (GetSoilLayer_i(i).InfRate <= 112)
-       THEN SetSoilLayer_SCP1(i, 11)
-       ELSE BEGIN
-            SetSoilLayer_SCP1(i, ROUND(1.6 + 1000/GetSoilLayer_i(i).InfRate));
-            IF (GetSoilLayer_i(i).SCP1 < 2) THEN SetSoilLayer_SCP1(i, 2)
-            END;
-    // determine parameters for soil salinity
-    SetSoilLayer_SC(i, GetSoilLayer_i(i).SCP1 -1);
-    SetSoilLayer_Macro(i, ROUND(GetSoilLayer_i(i).FC));
-    SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100) * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2))); (* m3/m3 *)
-    dx_temp := (GetSoilLayer_UL(i))/GetSoilLayer_SC(i);
-    SetSoilLayer_Dx(i, dx_temp);  (* m3/m3 *)
-    saltmob_temp := GetSoilLayer_i(i).SaltMobility;
-    Calculate_SaltMobility(i,GetSimulParam_SaltDiff(),GetSoilLayer_i(i).Macro,saltmob_temp);
-    SetSoilLayer_SaltMobility(i, saltmob_temp);
-    // determine default parameters for capillary rise if missing
-    SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_i(i).SAT,GetSoilLayer_i(i).FC,GetSoilLayer_i(i).WP,GetSoilLayer_i(i).InfRate));
-    IF (ROUND(VersionNr*10) < 40) THEN
-       BEGIN
-       cra_temp := GetSoilLayer_i(i).CRa;
-       crb_temp := GetSoilLayer_i(i).CRb;
-       DetermineParametersCR(GetSoilLayer_i(i).SoilClass,GetSoilLayer_i(i).InfRate,cra_temp,crb_temp);
-       SetSoilLayer_CRa(i, cra_temp);
-       SetSoilLayer_CRb(i, crb_temp);
-       END;
-    END;
-DetermineNrandThicknessCompartments;
-Close(f0);
-SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,GetSoil().NrSoilLayers,GetSoilLayer()));
-END; // Loadprofile
 
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
@@ -1862,50 +1528,6 @@ AdjustedKsStoToECsw := KsStoOut;
 END; (* AdjustedKsStoToECsw *)
 
 
-
-
-PROCEDURE DetermineRootZoneSaltContent(RootingDepth : double;
-                                       VAR ZrECe,ZrECsw,ZrECswFC,ZrKsSalt : double);
-VAR CumDepth, Factor,frac_value : double;
-    compi : INTEGER;
-BEGIN
-CumDepth := 0;
-compi := 0;
-ZrECe := 0;
-ZrECsw := 0;
-ZrECswFC := 0;
-ZrKsSalt := 1;
-IF (RootingDepth >= GetCrop().RootMin)
-   THEN BEGIN
-        REPEAT
-        compi := compi + 1;
-        CumDepth := CumDepth + GetCompartment_Thickness(compi);
-        IF (CumDepth <= RootingDepth)
-           THEN Factor := 1
-           ELSE BEGIN
-                frac_value := RootingDepth - (CumDepth - GetCompartment_Thickness(compi));
-                IF (frac_value > 0)
-                   THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                   ELSE Factor := 0;
-                END;
-        Factor := Factor * (GetCompartment_Thickness(compi))/RootingDepth; // weighting factor
-        ZrECe := ZrECe + Factor * ECeComp(GetCompartment_i(compi));
-        ZrECsw := ZrECsw + Factor * ECswComp(GetCompartment_i(compi),(false)); // not at FC
-        ZrECswFC := ZrECswFC + Factor * ECswComp(GetCompartment_i(compi),(true)); // at FC
-        UNTIL (CumDepth >= RootingDepth) OR (compi = GetNrCompartments());
-        IF (((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax))
-           THEN ZrKsSalt := KsSalinity((true),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0))
-           ELSE ZrKsSalt := KsSalinity((false),GetCrop().ECemin,GetCrop().ECemax,ZrECe,(0.0));
-        END
-   ELSE BEGIN
-        ZrECe := undef_int;
-        ZrECsw := undef_int;
-        ZrECswFC := undef_int;
-        ZrKsSalt := undef_int;
-        END;
-END;  (* DetermineRootZoneSaltContent *)
-
-
 FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
 VAR i,Dayi,Monthi,FromYi,ToYi : INTEGER;
     f0 : textfile;
@@ -2867,56 +2489,6 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
-
-
-PROCEDURE AdjustYearPerennials(TheYearSeason: ShortInt;
-                               Sown1stYear : BOOLEAN;
-                               TheCycleMode : rep_modeCycle;
-                               Zmax,ZminYear1,TheCCo,TheSizeSeedling,
-                               TheCGC,TheCCx,TheGDDCGC : double;
-                               ThePlantingDens : INTEGER;
-                               VAR TypeOfPlanting : rep_Planting;
-                               VAR Zmin,TheSizePlant,TheCCini : double;
-                               VAR TheDaysToCCini,TheGDDaysToCCini : INTEGER);
-BEGIN
-IF (TheYearSeason = 1)
-   THEN BEGIN
-        IF (Sown1stYear = true) // planting
-           THEN TypeOfPlanting := Seed
-           ELSE TypeOfPlanting := Transplant;
-        Zmin := ZminYear1;  // rooting depth
-        END
-   ELSE BEGIN
-        TypeOfPlanting := Regrowth; // planting
-        Zmin := Zmax;  // rooting depth
-        // plant size by regrowth
-        IF (ROUND(100*TheSizePlant) < ROUND(100*TheSizeSeedling))
-           THEN TheSizePlant := 10 * TheSizeSeedling;
-        IF (ROUND(100*TheSizePlant) > ROUND((100*TheCCx*10000)/(ThePlantingDens/10000)))
-           THEN TheSizePlant := (TheCCx*10000)/(ThePlantingDens/10000); // adjust size plant to maximum possible
-        END;
-TheCCini := (ThePlantingDens/10000) * (TheSizePlant/10000);
-TheDaysToCCini := TimeToCCini(TypeOfPlanting,ThePlantingDens,TheSizeSeedling,TheSizePlant,TheCCx,TheCGC);
-IF (TheCycleMode = GDDays)
-   THEN TheGDDaysToCCini := TimeToCCini(TypeOfPlanting,ThePlantingDens,TheSizeSeedling,TheSizePlant,TheCCx,TheGDDCGC)
-   ELSE TheGDDaysToCCini := undef_int;
-END;  (* AdjustYearPerennials *)
-
-
-
-
-PROCEDURE NoCropCalendar;
-BEGIN
-SetCalendarFile('(None)');
-SetCalendarFileFull(GetCalendarFile());  (* no file *)
-SetCalendarDescription('');
-SetOnset_GenerateOn(false);
-SetOnset_GenerateTempOn(false);
-SetEndSeason_GenerateTempOn(false);
-SetCalendarDescription('No calendar for the Seeding/Planting year');
-END; (* NoCropCalendar *)
-
-
 
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;

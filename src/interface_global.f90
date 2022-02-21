@@ -77,6 +77,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainDescription, &
                      LoadClimate, &
                      LoadCropCalendar, &
+                     LoadProfile, &
+                     LoadIrriScheduleInfo, &
                      LoadProjectDescription, &
                      setRainFileFull, &
                      setRainDescription, &
@@ -95,6 +97,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetCrop_Assimilates_On, &
                      SetIrriFile, &
                      SetIrriFileFull, &
+                     SetIrriDescription, &
                      SetClimateFile, &
                      SetClimateFileFull, &
                      SetClimateDescription, &
@@ -486,6 +489,7 @@ subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                                      Length123, StLength, Length12, CGCVal)
 end subroutine DetermineLengthGrowthStages_wrap
 
+
 subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
     real(dp), intent(in) :: RootingDepth
     logical(1), intent(inout) :: ZtopSWCconsidered
@@ -495,6 +499,18 @@ subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
     ZtopSWCconsidered_f = ZtopSWCconsidered
     call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
 end subroutine DetermineRootZoneWC_wrap
+
+subroutine LoadIrriScheduleInfo_wrap(FullName, strlen1)
+    !! Wrapper for [[ac_global:LoadIrriScheduleInfo]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen1
+
+    character(len=strlen1) :: string1
+
+    string1 = pointer2string(FullName, strlen1)
+    call LoadIrriScheduleInfo(string1)
+end subroutine LoadIrriScheduleInfo_wrap
+
 
 subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
                             TempFile, strlen3, EToFile, strlen4, &
@@ -756,6 +772,17 @@ subroutine SetClimateFileFull_wrap(ClimateFileFull, strlen)
     string = pointer2string(ClimateFileFull, strlen)
     call SetClimateFileFull(string)
 end subroutine SetClimateFileFull_wrap
+
+subroutine SetIrriDescription_wrap(IrriDescription, strlen)
+    !! Wrapper for [[ac_global:SetIrriDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: IrriDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(IrriDescription, strlen)
+    call SetIrriDescription(string)
+end subroutine SetIrriDescription_wrap
 
 function GetClimateDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
@@ -2183,5 +2210,17 @@ real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
     atFC_f = logical(atFC)
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
+
+
+subroutine LoadProfile_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadProfile(string)
+end subroutine LoadProfile_wrap
 
 end module ac_interface_global
