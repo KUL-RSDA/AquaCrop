@@ -1964,7 +1964,7 @@ subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
         compi = compi + 1
         CumDepth = CumDepth + GetCompartment_Thickness(compi)
         if (CumDepth <= RootingDepth) then
-            Factor = 1
+            Factor = 1._dp
         else
             frac_value = RootingDepth - (CumDepth - GetCompartment_Thickness(compi))
             if (frac_value > 0._dp) then
@@ -2000,7 +2000,7 @@ subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
              GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
         call SetRootZoneWC_WP(GetRootZoneWC_WP() + Factor * 10._dp * &
              GetSoilLayer_WP(GetCompartment_Layer(compi))* &
-             GetCompartment_Thickness(compi)* (1 - &
+             GetCompartment_Thickness(compi)* (1._dp - &
              GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
         call SetRootZoneWC_SAT(GetRootZoneWC_SAT()+ Factor * 10._dp * &
              GetSoilLayer_SAT(GetCompartment_Layer(compi)) * &
@@ -2058,13 +2058,13 @@ subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
     end if
 
     ! Relative depletion in rootzone and in top soil
-    if (nint(1000._dp*(GetRootZoneWc_FC() - GetRootZoneWc_WP())) > 0) then
+    if (roundc(1000._dp*(GetRootZoneWc_FC() - GetRootZoneWc_WP()), mold=1) > 0) then
         DrRel = (GetRootZoneWc_FC() - GetRootZoneWC_Actual())/(GetRootZoneWc_FC() &
                                                           - GetRootZoneWc_WP())
     else
         DrRel = 0._dp
     end if
-    if (nint(1000._dp*(GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP())) > 0) then
+    if (roundc(1000._dp*(GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP()),mold=1) > 0) then
         DZtopRel = (GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopAct())/ &
                               (GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP())
     else
