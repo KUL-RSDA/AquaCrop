@@ -20,7 +20,6 @@ const
 type
     Pdouble = ^double;
 
-    rep_string3  = string[3];  (* Read/Write ProfFile *)
     rep_string25 = string[25]; (* Description SoilLayer *)
     repstring17 = string[17]; (* Date string *)
 
@@ -1215,11 +1214,6 @@ procedure DetermineLengthGrowthStages(
             VAR StLength : rep_int_array;
             VAR Length12 : integer;
             VAR CGCVal : double);
-
-procedure DetermineRootZoneWC(
-            constref RootingDepth : double;
-            VAR ZtopSWCconsidered : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
 
 function __TimeToCCini(
             constref ThePlantingType : integer;
@@ -4178,38 +4172,12 @@ procedure SetNrCompartments(constref NrCompartments_in : integer);
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
 
-procedure DesignateSoilLayerToCompartments(constref NrCompartments : integer;
-                                           constref NrSoilLayers : integer;
-                                           var Compartment : rep_Comp);
-    external 'aquacrop' name '__ac_global_MOD_designatesoillayertocompartments';
-
-procedure specify_soil_layer(constref NrCompartments,NrSoilLayers : integer;
-                             var SoilLayer : rep_SoilLayer;
-                             var Compartment : rep_Comp;
-                             var TotalWaterContent : rep_Content);
-    external 'aquacrop' name '__ac_global_MOD_specify_soil_layer';
-
 procedure SetClimData;
     external 'aquacrop' name '__ac_global_MOD_setclimdata';
 
 function DayString(
             constref DNr : LongInt) : repstring17;
     external 'aquacrop' name '__ac_global_MOD_daystring';
-
-procedure CompleteProfileDescription();
-    external 'aquacrop' name '__ac_global_MOD_completeprofiledescription';
-
-procedure LoadProfile(FullName : string);
-
-procedure LoadProfile_wrap(constref FullName : PChar;
-                           constref strlen : integer);
-    external 'aquacrop' name '__ac_interface_global_MOD_loadprofile_wrap';
-
-procedure Calculate_Saltmobility(constref layer : integer;
-                                 constref SaltDiffusion : shortint;  // percentage
-                                 constref Macro : shortint;
-                                 var Mobil : rep_salt);
-    external 'aquacrop' name '__ac_global_MOD_calculate_saltmobility';
 
 procedure AdjustYearPerennials_wrap(
             constref TheYearSeason: ShortInt;
@@ -4234,7 +4202,6 @@ procedure AdjustYearPerennials(
 
 procedure NoCropCalendar;
     external 'aquacrop' name '__ac_global_MOD_nocropcalendar';
-
 
 
 implementation
@@ -7120,17 +7087,6 @@ begin
     Depo_len := Length(Comp.Depo);
     ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
                               Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
-end;
-
-procedure LoadProfile(FullName : string);
-var
-    p : PChar;
-    strlen : integer;
-
-begin;
-    p := PChar(FullName);
-    strlen := Length(FullName);
-    LoadProfile_wrap(p,strlen);
 end;
 
 
