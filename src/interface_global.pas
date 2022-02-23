@@ -4204,6 +4204,19 @@ procedure NoCropCalendar;
     external 'aquacrop' name '__ac_global_MOD_nocropcalendar';
 
 
+procedure DesignateSoilLayerToCompartments(constref NrCompartments : integer;
+                                           constref NrSoilLayers : integer;
+                                           var Compartment : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_designatesoillayertocompartments';
+
+
+procedure specify_soil_layer(constref NrCompartments,NrSoilLayers : integer;
+                             var SoilLayer : rep_SoilLayer;
+                             var Compartment : rep_Comp;
+                             var TotalWaterContent : rep_Content);
+    external 'aquacrop' name '__ac_global_MOD_specify_soil_layer';
+
+
 implementation
 
 
