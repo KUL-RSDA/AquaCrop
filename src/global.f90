@@ -4261,6 +4261,519 @@ subroutine NoCropCalendar()
 end subroutine NoCropCalendar
 
 
+subroutine LoadCrop(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int32) :: XX, YY
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt, perenperiod_onsetOcc_temp 
+    integer(int8) :: perenperiod_endOcc_temp
+    integer(int32) :: TempInt, perenperiod_onsetFD_temp
+    integer(int32) :: perenperiod_onsetFM_temp, perenperiod_onsetLSP_temp
+    integer(int32) :: perenperiod_onsetPV_temp, perenperiod_endLD_temp
+    integer(int32) :: perenperiod_endLM_temp, perenperiod_extrayears_temp
+    integer(int32) :: perenperiod_endLSP_temp, perenperiod_endPV_temp
+    real(dp) :: TempDouble
+    logical :: TempBoolean
+    real(dp) :: perenperiod_onsetTV_temp, perenperiod_endTV_temp
+    real(dp) :: Crop_SmaxTop_temp, Crop_SmaxBot_temp
+    character(len=:), allocatable :: CropDescriptionLocal
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) CropDescriptionLocal
+    call SetCropDescription(CropDescriptionLocal)
+    read(fhandle, *) VersionNr ! AquaCrop version
+    read(fhandle, *)  ! Protected or Open file
+
+    ! subkind
+    read(fhandle, *) XX
+    select case (XX)
+        case(1)
+            call SetCrop_subkind(subkind_Vegetative)
+        case(2)
+            call SetCrop_subkind(subkind_Grain)
+        case(3)
+            call SetCrop_subkind(subkind_Tuber)
+        case(4)
+            call SetCrop_subkind(subkind_Forage)
+    end select
+
+    ! type of planting
+    read(fhandle, *) XX
+    select case (XX)
+        case(1)
+            call SetCrop_Planting(plant_Seed)
+        case(0)
+            call SetCrop_Planting(plant_Transplant)
+        case(-9) 
+            call SetCrop_Planting(plant_Regrowth)
+        case default
+            call SetCrop_Planting(plant_Seed)
+    end select
+
+    ! mode
+    read(fhandle, *) XX
+    if (XX == 0) then
+        call SetCrop_ModeCycle(ModeCycle_GDDays)
+    else
+        call SetCrop_ModeCycle(ModeCycle_CalendarDays)
+    end if
+
+    ! adjustment p to ETo
+    read(fhandle, *) YY
+    if (YY == 0) then
+        call SetCrop_pMethod(pMethod_NoCorrection)
+    elseif (YY == 1) then
+        call SetCrop_pMethod(pMethod_FAOCorrection)
+    end if
+
+    ! temperatures controlling crop development
+    read(fhandle, *) TempDouble
+    call SetCrop_Tbase(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_Tupper(TempDouble)
+
+    ! required growing degree days to complete the crop cycle 
+    ! (is identical as to maturity)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDaysToHarvest(TempInt)
+
+    ! water stress
+    read(fhandle, *) TempDouble
+    call SetCrop_pLeafDefUL(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_pLeafDefLL(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_KsShapeFactorLeaf(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_pdef(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_KsShapeFactorStomata(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_pSenescence(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_KsShapeFactorSenescence(TempDouble)
+    read(fhandle, *) TempInt
+    call SetCrop_SumEToDelaySenescence(TempInt)
+    read(fhandle, *) TempDouble
+    call SetCrop_pPollination(TempDouble)
+    read(fhandle, *) TempInt
+    call SetCrop_AnaeroPoint(TempInt)
+
+    ! soil fertility/salinity stress
+    read(fhandle, *) TempShortInt   ! Soil fertility stress at calibration (%)
+    call SetCrop_StressResponse_Stress(TempShortInt)
+    read(fhandle, *) TempDouble     ! Shape factor for the response of Canopy 
+                                    ! Growth Coefficient to soil 
+                                    ! fertility/salinity stress
+    call SetCrop_StressResponse_ShapeCGC(TempDouble)
+    read(fhandle, *) TempDouble     ! Shape factor for the response of Maximum 
+                                    ! Canopy Cover to soil 
+                                    ! fertility/salinity stress
+    call SetCrop_StressResponse_ShapeCCX(TempDouble)
+    read(fhandle, *) TempDouble     ! Shape factor for the response of Crop 
+                                    ! Water Producitity to soil 
+                                    ! fertility stress
+    call SetCrop_StressResponse_ShapeWP(TempDouble)
+    read(fhandle, *) TempDouble     ! Shape factor for the response of Decline
+                                    ! of Canopy Cover to soil 
+                                    ! fertility/salinity stress
+    call SetCrop_StressResponse_ShapeCDecline(TempDouble)
+
+    if (roundc(VersionNr*10, mold=1) >= 40) then 
+    ! UPDATE required for Version 4.0 and next
+        read(fhandle, *)  ! Shape factor for the response of Stomatal Closure 
+                          ! to soil salinity stress NO LONGER VALID
+    end if
+
+    ! continue with soil fertility/salinity stress
+    if ((GetCrop_StressResponse_ShapeCGC() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeCCX() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeWP() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeCDecline() > 24.9_dp)) then
+        call SetCrop_StressResponse_Calibrated(.false.)
+    else
+        call SetCrop_StressResponse_Calibrated(.true.)
+    end if
+
+    ! temperature stress
+    read(fhandle, *) TempShortInt   ! Minimum air temperature below which 
+                                    ! pollination starts to fail 
+                                    ! (cold stress) (degC)
+    call SetCrop_Tcold(TempShortInt)
+    read(fhandle, *) TempShortInt   ! Maximum air temperature above which
+                                    ! pollination starts to fail 
+                                    ! (heat stress) (degC)
+    call SetCrop_Theat(TempShortInt)
+    read(fhandle, *) TempDouble     ! Minimum growing degrees required for full
+                                    ! biomass production (degC - day)
+    call SetCrop_GDtranspLow(TempDouble)
+
+    ! salinity stress (Version 3.2 and higher)
+    ! -----  UPDATE salinity stress
+    if (roundc(VersionNr*10, mold=1) < 32) then 
+    ! UPDATE required for Version 3.0 and 3.1
+        call SetCrop_ECemin(2_int8)     ! upper threshold ECe
+        call SetCrop_ECemax(15_int8)    ! lower threhsold ECe
+    else
+        read(fhandle, *) TempShortInt       ! upper threshold ECe
+        call SetCrop_ECemin(TempShortInt)   ! upper threshold ECe
+        read(fhandle, *) TempShortInt       ! lower threhsold ECe
+        call SetCrop_ECemax(TempShortInt)   ! upper threshold ECe
+        read(fhandle, *) ! WAS shape factor of the Ks(salinity) - soil 
+                         ! saturation extract (ECe) relationship
+    end if
+    ! -----  UPDATE salinity stress (Version 5.1 and higher)
+    if (roundc(VersionNr*10, mold=1) < 51) then 
+    ! UPDATE required for previous versions
+        call SetCrop_CCsaltDistortion(25_int8)   ! distortion canopy cover for 
+                                            ! simulation of effect of 
+                                            ! salinity stress (%)
+        call SetCrop_ResponseECsw(100) ! Response of Ks stomata to ECsw: 
+                                       ! From 0 (none) to +200 (very strong)
+    else
+        read(fhandle, *) TempShortInt
+        call SetCrop_CCsaltDistortion(TempShortInt)
+        read(fhandle, *) TempInt
+        call SetCrop_ResponseECsw(TempInt)
+    end if
+
+    ! evapotranspiration
+    read(fhandle, *) TempDouble
+    call SetCrop_KcTop(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_KcDecline(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_RootMin(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_RootMax(TempDouble)
+    if (GetCrop_RootMin() > GetCrop_RootMax()) then
+        call SetCrop_RootMin(GetCrop_RootMax()) ! security for sine function
+    end if
+    read(fhandle, *) TempShortInt
+    call SetCrop_RootShape(TempShortInt)
+    read(fhandle, *) TempDouble
+    call SetCrop_SmaxTopQuarter(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_SmaxBotQuarter(TempDouble)
+    Crop_SmaxTop_temp = GetCrop_SmaxTop()
+    Crop_SmaxBot_temp = GetCrop_SmaxBot()
+    call DeriveSmaxTopBottom(GetCrop_SmaxTopQuarter(), &
+                             GetCrop_SmaxBotQuarter(), &
+                             Crop_SmaxTop_temp, Crop_SmaxBot_temp)
+    call SetCrop_SmaxTop(Crop_SmaxTop_temp)
+    call SetCrop_SmaxBot(Crop_SmaxBot_temp)
+    read(fhandle, *) TempInt
+    call SetCrop_CCEffectEvapLate(TempInt)
+
+    ! crop development
+    read(fhandle, *) TempDouble
+    call SetCrop_SizeSeedling(TempDouble)
+    if (roundc(VersionNr*10, mold=1) < 50) then 
+    ! UPDATE required for Version not yet 5.0
+        call SetCrop_SizePlant(GetCrop_SizeSeedling())
+    else
+        read(fhandle, *) TempDouble ! Canopy size of individual plant 
+                                    ! (re-growth) at 1st day (cm2)
+        call SetCrop_SizePlant(TempDouble)
+    end if
+    read(fhandle, *) TempInt
+    call SetCrop_PlantingDens(TempInt)
+    call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
+                        * (GetCrop_SizeSeedling()/10000._dp))
+    call SetCrop_CCini((GetCrop_PlantingDens()/10000._dp) &
+                        * (GetCrop_SizePlant()/10000._dp))
+    read(fhandle, *) TempDouble
+    call SetCrop_CGC(TempDouble)
+
+    read(fhandle, *) TempShortInt   ! Number of years at which CCx declines 
+                                    ! to 90 % of its value due to 
+                                    ! self-thinning - for Perennials
+    call SetCrop_YearCCx(TempShortInt)
+    read(fhandle, *) TempDouble     ! Shape factor of the decline of CCx over 
+                                    ! the years due to self-thinning 
+                                    ! for Perennials
+    call SetCrop_CCxRoot(TempDouble)
+    read(fhandle, *)
+
+    read(fhandle, *) TempDouble
+    call SetCrop_CCx(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_CDC(TempDouble)
+    read(fhandle, *) TempInt
+    call SetCrop_DaysToGermination(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_DaysToMaxRooting(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_DaysToSenescence(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_DaysToHarvest(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_DaysToFlowering(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_LengthFlowering(TempInt)
+    ! -----  UPDATE crop development for Version 3.1
+    ! leafy vegetable crop has an Harvest Index which builds up starting from sowing
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+            .or. (GetCrop_subkind() == subkind_Forage)) then
+        call SetCrop_DaysToFlowering(0)
+        call SetCrop_LengthFlowering(0)
+    end if
+
+    ! Crop.DeterminancyLinked
+    read(fhandle, *) XX
+    select case (XX)
+        case(1)
+            call SetCrop_DeterminancyLinked(.true.)
+        case default
+            call SetCrop_DeterminancyLinked(.false.)
+    end select
+
+    ! Potential excess of fruits (%) and building up HI
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+            .or. (GetCrop_subkind() == subkind_Forage)) then
+        read(fhandle, *)  ! PercCycle no longer considered
+        call SetCrop_fExcess(int(undef_int, kind=int16))
+    else
+        read(fhandle, *) TempInt
+        call SetCrop_fExcess(int(TempInt, kind=int16))
+    end if
+    read(fhandle, *) TempInt
+    call SetCrop_DaysToHIo(TempInt)
+
+    ! yield response to water
+    read(fhandle, *) TempDouble
+    call SetCrop_WP(TempDouble)
+    read(fhandle, *) TempInt
+    call SetCrop_WPy(TempInt)
+    ! adaptation to elevated CO2 (Version 3.2 and higher)
+    ! -----  UPDATE Crop performance under elevated atmospheric CO2 concentration (%)
+    if (roundc(VersionNr*10, mold=1) < 32) then ! UPDATE required for Version 3.0 and 3.1
+        call SetCrop_AdaptedToCO2(50_int8)
+    else
+        read(fhandle, *) TempShortInt
+        call SetCrop_AdaptedToCO2(TempShortInt)
+    end if
+    read(fhandle, *) TempInt
+    call SetCrop_HI(TempInt)
+    read(fhandle, *) TempShortInt
+    call SetCrop_HIincrease(TempShortInt)   ! possible increase (%) of HI due 
+                                            ! to water stress before flowering
+    read(fhandle, *) TempDouble
+    call SetCrop_aCoeff(TempDouble)     ! coefficient describing impact of 
+                                        ! restricted vegetative growth at 
+                                        ! flowering on HI
+    read(fhandle, *) TempDouble
+    call SetCrop_bCoeff(TempDouble)     ! coefficient describing impact of 
+                                        ! stomatal closure at flowering on HI
+    read(fhandle, *) TempShortInt
+    call SetCrop_DHImax(TempShortInt)   ! allowable maximum increase (%) of 
+                                        ! specified HI
+    ! -----  UPDATE yield response to water for Version 3.1
+    ! leafy vegetable crop has an Harvest Index (default is 85 %)
+    if ((roundc(VersionNr*10, mold=1) == 30) &
+                .and. ((GetCrop_subkind() == subkind_Vegetative) &
+                        .or. (GetCrop_subkind() == subkind_Forage))) then
+        if (GetCrop_HI() == undef_int) then
+            call SetCrop_HI(85)
+        end if
+        
+        ! growing degree days
+        read(fhandle, *) TempInt
+    end if
+    call SetCrop_GDDaysToGermination(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDaysToMaxRooting(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDaysToSenescence(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDaysToHarvest(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDaysToFlowering(TempInt)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDLengthFlowering(TempInt)
+    read(fhandle, *) TempDouble
+    call SetCrop_GDDCGC(TempDouble)
+    read(fhandle, *) TempDouble
+    call SetCrop_GDDCDC(TempDouble)
+    read(fhandle, *) TempInt
+    call SetCrop_GDDaysToHIo(TempInt)
+
+    ! -----  UPDATE yield response to water for Version 3.1
+    ! leafy vegetable crop has an Harvest Index which builds up 
+    ! starting from sowing
+    if ((GetCrop_ModeCycle() == ModeCycle_GDDays) &
+            .and. ((GetCrop_subkind() == subkind_Vegetative) &
+                .or. (GetCrop_subkind() == subkind_Forage))) then
+        call SetCrop_GDDaysToFlowering(0)
+        call SetCrop_GDDLengthFlowering(0)
+    end if
+
+    ! extra version 6.2
+    if (roundc(VersionNr*10, mold=1) < 62) then 
+    ! UPDATE required for Version 6.2
+        call SetCrop_DryMatter(int(undef_int, kind=int8)) ! undefined
+    else
+        read(fhandle, *) TempShortInt
+        call SetCrop_DryMatter(TempShortInt) ! dry matter content (%) 
+                                             ! of fresh yield
+    end if
+
+    ! extra version 7.0
+    if (roundc(VersionNr*10, mold=1) < 62) then
+    ! UPDATE required for Version 7.0
+        call SetCrop_RootMinYear1(GetCrop_RootMin()) ! regrowth not yet possible
+        TempBoolean = (GetCrop_Planting() == plant_Seed)
+        call SetCrop_SownYear1(TempBoolean)  ! type of planting first year
+        ! transfer of assimilates
+        call SetCrop_Assimilates_On(.false.) ! Transfer of assimilates between
+                                             ! root system and above ground 
+                                             ! parts is NOT considered
+        call SetCrop_Assimilates_Period(0)
+        call SetCrop_Assimilates_Stored(0_int8)
+        call SetCrop_Assimilates_Mobilized(0_int8)
+    else
+        read(fhandle, *) TempDouble
+        call SetCrop_RootMinYear1(TempDouble) ! Minimum rooting depth in first
+                                              ! year in meter (for regrowth)
+        read(fhandle, *) XX
+        select case (XX)
+            case(1)
+                call SetCrop_SownYear1(.true.)  ! crop is sown in 1 st year 
+                                                ! (for perennials)
+            case default
+                call SetCrop_SownYear1(.false.) ! crop is transplanted in 
+        end select                                ! 1st year (for regrowth)
+    end if
+    ! transfer of assimilates
+    read(fhandle, *) XX
+    select case (XX)
+        case(1)
+            call SetCrop_Assimilates_On(.true.) ! Transfer of assimilates from
+                                                ! above ground parts to root 
+                                                ! system is considered
+        case default
+            call SetCrop_Assimilates_On(.false.) ! Transfer of assimilates from
+                                                 ! above ground parts to root 
+                                                 ! system is NOT considered
+    end select
+    read(fhandle, *) TempInt
+    call SetCrop_Assimilates_Period(TempInt) ! Number of days at end of season
+                                             ! during which assimilates are 
+                                             ! stored in root system
+    read(fhandle, *) TempShortInt
+    call SetCrop_Assimilates_Stored(TempShortInt) ! Percentage of assimilates,
+                                                  ! transferred to root system 
+                                                  ! at last day of season
+    read(fhandle, *) TempShortInt
+    call SetCrop_Assimilates_Mobilized(TempShortInt) ! Percentage of stored
+                                    ! assimilates, transferred to above ground
+                                    ! parts in next season
+
+    if (GetCrop_subkind() == subkind_Forage) then
+        ! data for the determination of the growing period
+        ! 1. Title
+        do XX = 1, 3 
+            read(fhandle, *)
+        end do
+        ! 2. ONSET
+        read(fhandle, *) XX
+        if (XX == 0) then
+            call SetPerennialPeriod_GenerateOnset(.false.) ! onset is fixed on
+                                                           ! a specific day
+        else
+            ! onset is generated by an air temperature criterion
+            call SetPerennialPeriod_GenerateOnset(.true.)
+            select case (XX)
+                case(12)
+                    call SetPerennialPeriod_OnsetCriterion(AirTCriterion_TMeanPeriod) 
+                            ! Criterion: mean air temperature
+                case(13)
+                    call SetPerennialPeriod_OnsetCriterion(AirTCriterion_GDDPeriod) 
+                            ! Criterion: growing-degree days
+                case default
+                    call SetPerennialPeriod_GenerateOnset(.false.)
+            end select
+        end if
+    end if
+    read(fhandle, *) perenperiod_onsetFD_temp
+    call SetPerennialPeriod_OnsetFirstDay(perenperiod_onsetFD_temp)
+    read(fhandle, *) perenperiod_onsetFM_temp
+    call SetPerennialPeriod_OnsetFirstMonth(perenperiod_onsetFM_temp)
+    read(fhandle, *) perenperiod_onsetLSP_temp
+    call  SetPerennialPeriod_OnsetLengthSearchPeriod(perenperiod_onsetLSP_temp)
+    read(fhandle, *) perenperiod_onsetTV_temp ! Mean air temperature 
+                                              ! or Growing-degree days
+    call SetPerennialPeriod_OnsetThresholdValue(perenperiod_onsetTV_temp)
+    read(fhandle, *) perenperiod_onsetPV_temp ! number of succesive days
+    call SetPerennialPeriod_OnsetPeriodValue(perenperiod_onsetPV_temp)
+    read(fhandle, *) perenperiod_onsetOcc_temp  ! number of occurrence
+    call SetPerennialPeriod_OnsetOccurrence(perenperiod_onsetOcc_temp)
+    if (GetPerennialPeriod_OnsetOccurrence() > 3_int8) then
+        call SetPerennialPeriod_OnsetOccurrence(3_int8)
+    end if
+    ! 3. END of growing period
+    read(fhandle, *) XX
+    if (XX == 0) then
+        call SetPerennialPeriod_GenerateEnd(.false.)  ! end is fixed on a 
+                                                      ! specific day
+    else
+        ! end is generated by an air temperature criterion
+        call SetPerennialPeriod_GenerateEnd(.true.)
+        select case (XX)
+            case(62)
+                call SetPerennialPeriod_EndCriterion(AirTCriterion_TMeanPeriod)
+                                            ! Criterion: mean air temperature
+            case(63) 
+                call SetPerennialPeriod_EndCriterion(AirTCriterion_GDDPeriod) 
+                                            ! Criterion: growing-degree days
+            case default
+                call SetPerennialPeriod_GenerateEnd(.false.)
+        end select
+    end if
+    read(fhandle, *) perenperiod_endLD_temp
+    call SetPerennialPeriod_EndLastDay(perenperiod_endLD_temp)
+    read(fhandle, *) perenperiod_endLM_temp
+    call SetPerennialPeriod_EndLastMonth(perenperiod_endLM_temp)
+    read(fhandle, *) perenperiod_extrayears_temp
+    call SetPerennialPeriod_ExtraYears(perenperiod_extrayears_temp)
+    read(fhandle, *) perenperiod_endLSP_temp
+    call SetPerennialPeriod_EndLengthSearchPeriod(perenperiod_endLSP_temp)
+    read(fhandle, *) perenperiod_endTV_temp ! Mean air temperature 
+                                            ! or Growing-degree days
+    call SetPerennialPeriod_EndThresholdValue(perenperiod_endTV_temp)
+    read(fhandle, *) perenperiod_endPV_temp ! number of succesive days
+    call SetPerennialPeriod_EndPeriodValue(perenperiod_endPV_temp)
+    read(fhandle, *) perenperiod_endOcc_temp ! number of occurrence
+    call SetPerennialPeriod_EndOccurrence(perenperiod_endOcc_temp)
+    if (GetPerennialPeriod_EndOccurrence() > 3_int8) then
+        call SetPerennialPeriod_EndOccurrence(3_int8)
+    end if
+    close(fhandle)
+    ! maximum rooting depth in given soil profile
+    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(),&
+                                              GetSoil_NrSoilLayers(),&
+                                              GetSoilLayer()))
+
+    ! copy to CropFileSet
+    call SetCropFileSet_DaysFromSenescenceToEnd(GetCrop_DaysToHarvest() &
+                                                - GetCrop_DaysToSenescence())
+    call SetCropFileSet_DaysToHarvest(GetCrop_DaysToHarvest())
+    if (GetCrop_ModeCycle() == ModeCycle_GDDays) then
+        call SetCropFileSet_GDDaysFromSenescenceToEnd(GetCrop_GDDaysToHarvest() &
+                                                  - GetCrop_GDDaysToSenescence())
+        call SetCropFileSet_GDDaysToHarvest(GetCrop_GDDaysToHarvest())
+    else
+        call SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int)
+        call SetCropFileSet_GDDaysToHarvest(undef_int)
+    end if
+
+end subroutine LoadCrop
+
+
+
+
 !! Global variables section !!
 
 function GetIrriFile() result(str)
