@@ -268,8 +268,9 @@ def test_europe(row, col, use_irrigation):
             (39, 8, True, 'day'):   1,
         }
         if (row, col, use_irrigation, suffix) in special_cases:
-            log.print('One small deviation is currently allowed for this test case')
             tolerated_deviations = special_cases.get((row, col, use_irrigation, suffix))
+            msg = '{0} small deviation(s) currently allowed for this test case'
+            log.print(msg.format(tolerated_deviations))
             myassert(int(np.sum(num_not_realclose)) <= tolerated_deviations,
                      'more than allowed number of small deviation detected for a special case',
                      cwd, log)
