@@ -2151,10 +2151,10 @@ real(dp) function AdjustedKsStoToECsw(ECeMin, ECeMax, ResponseECsw, ECei, &
 
 
     real(dp) :: ECswRel, LocalKsShapeFactorSalt, KsSalti, SaltStressi, StoClosure, KsStoOut
-    if ((ResponseECsw > 0) .and. (Wrel > 0) .and. &
+    if ((ResponseECsw > 0) .and. (Wrel > epsilon(1._dp)) .and. &
                             (GetSimulation_SalinityConsidered() .eqv. .true.)) then
         ! adjustment to ECsw considered
-        ECswRel = ECswi - (ECswFCi - ECei) + (ResponseECsw-100)*Wrel
+        ECswRel = ECswi - (ECswFCi - ECei) + (ResponseECsw-100._dp)*Wrel
         if ((ECswRel > ECeMin) .and. (ECswRel < ECeMax)) then
             ! stomatal closure at ECsw relative
             LocalKsShapeFactorSalt = 3._dp ! CONVEX give best ECsw response
