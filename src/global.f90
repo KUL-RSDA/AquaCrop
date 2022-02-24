@@ -2149,8 +2149,8 @@ real(dp) function AdjustedKsStoToECsw(ECeMin, ECeMax, ResponseECsw, ECei, &
     real(dp), intent(in) :: Coeffb2Salt
     real(dp), intent(in) :: KsStoIN
 
-
     real(dp) :: ECswRel, LocalKsShapeFactorSalt, KsSalti, SaltStressi, StoClosure, KsStoOut
+
     if ((ResponseECsw > 0) .and. (Wrel > epsilon(1._dp)) .and. &
                             (GetSimulation_SalinityConsidered() .eqv. .true.)) then
         ! adjustment to ECsw considered
