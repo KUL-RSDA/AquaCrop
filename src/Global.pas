@@ -70,11 +70,6 @@ PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
 
 FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-
 
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
@@ -424,62 +419,6 @@ IF (Comp.theta <= GetSoilLayer_i(Comp.Layer).UL)
    ELSE celi := GetSoilLayer_i(Comp.Layer).SCP1;
 ActiveCells := celi;
 END; (* ActiveCells *)
-
-
-PROCEDURE Calculate_Saltmobility(layer : INTEGER;
-                                 SaltDiffusion : ShortInt;  // percentage
-                                 Macro : ShortInt;
-                                 VAR Mobil : rep_salt);
-VAR i, CelMax : INTEGER;
-    Mix, a, b, xi, yi, UL : double;
-
-BEGIN
-Mix := SaltDiffusion/100; // global salt mobility expressed as a fraction
-UL := GetSoilLayer_i(layer).UL * 100; (* upper limit in VOL% of SC cell *)
-
-//1. convert Macro (vol%) in SaltCelNumber
-IF (Macro > UL)
-   THEN CelMax := GetSoilLayer_i(layer).SCP1
-   ELSE CelMax := ROUND((Macro/UL)*GetSoilLayer_i(layer).SC);
-IF (CelMax <= 0) THEN CelMax := 1;
-
-//2. find a and b
-IF (Mix < 0.5)
-   THEN BEGIN
-        a := Mix * 2;
-        b := EXP(10*(0.5-Mix)*LN(10));
-        END
-   ELSE BEGIN
-        a := 2 * (1- Mix);
-        b := EXP(10*(Mix-0.5)*LN(10));
-        END;
-
-//3. calculate mobility for cells = 1 to Macro
-FOR i := 1 to (CelMax-1) DO
-    BEGIN
-    xi := i/(CelMax-1);
-    IF (Mix > 0)
-       THEN IF (Mix < 0.5)
-               THEN BEGIN
-                    yi := EXP(LN(a)+xi*LN(b));
-                    Mobil[i] := (yi-a)/(a*b-a);
-                    END
-               ELSE IF (Mix = 0.5)
-                       THEN Mobil[i] := xi
-                       ELSE IF (Mix < 1)
-                               THEN BEGIN
-                                    yi := EXP(LN(a)+(1-xi)*LN(b));
-                                    Mobil[i] := 1- (yi-a)/(a*b-a);
-                                    END
-                               ELSE Mobil[i] := 1
-       ELSE Mobil[i] := 0;
-    END;
-
-//4. Saltmobility between Macro and SAT
-FOR i := CelMax TO GetSoilLayer_i(layer).SCP1 DO Mobil[i] := 1;
-
-END; (* Calculate_Saltmobility *)
-
 
 
 PROCEDURE DetermineSaltContent(ECe : double;

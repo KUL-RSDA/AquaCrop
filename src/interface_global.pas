@@ -4217,6 +4217,13 @@ procedure specify_soil_layer(constref NrCompartments,NrSoilLayers : integer;
     external 'aquacrop' name '__ac_global_MOD_specify_soil_layer';
 
 
+procedure Calculate_Saltmobility(constref layer : integer;
+                                 constref SaltDiffusion : shortint;  // percentage
+                                 constref Macro : shortint;
+                                 var Mobil : rep_salt);
+    external 'aquacrop' name '__ac_global_MOD_calculate_saltmobility';
+
+
 implementation
 
 

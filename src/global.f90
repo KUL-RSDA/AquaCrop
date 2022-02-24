@@ -4882,6 +4882,67 @@ subroutine specify_soil_layer(NrCompartments, NrSoilLayers, SoilLayer, &
 end subroutine specify_soil_layer
 
 
+subroutine Calculate_Saltmobility(layer, SaltDiffusion, Macro, Mobil)
+    integer(int32), intent(in) :: layer
+    integer(int8), intent(in) :: SaltDiffusion
+    integer(int8), intent(in) :: Macro
+    real(dp), dimension(11), intent(inout) :: Mobil
+
+    integer(int32) :: i, CelMax
+    real(dp) :: Mix, a, b, xi, yi, UL
+
+    Mix = SaltDiffusion/100._dp ! global salt mobility expressed as a fraction
+    UL = GetSoilLayer_UL(layer) * 100._dp ! upper limit in VOL% of SC cell
+
+    ! 1. convert Macro (vol%) in SaltCelNumber
+    if (Macro > UL) then
+        CelMax = GetSoilLayer_SCP1(layer)
+    else
+        CelMax = roundc((Macro/UL)*GetSoilLayer_SC(layer), mold=1)
+    end if
+
+    if (CelMax <= 0) then
+        CelMax = 1
+    end if
+
+    ! 2. find a and b
+    if (Mix < 0.5_dp) then
+        a = Mix * 2._dp
+        b = exp(10._dp*(0.5_dp-Mix)*log(10._dp))
+    else
+        a = 2._dp * (1._dp - Mix)
+        b = exp(10._dp*(Mix-0.5_dp)*log(10._dp))
+    end if
+
+    ! 3. calculate mobility for cells = 1 to Macro
+    do i = 1, CelMax-1
+        xi = i *1._dp / (CelMax-1)
+
+        if (Mix > 0._dp) then
+            if (Mix < 0.5_dp) then
+                yi = exp(log(a)+xi*log(b))
+                Mobil(i) = (yi-a)/(a*b-a)
+            elseif ((Mix >= 0.5_dp - epsilon(0.0_dp)) &
+                    .and. (Mix <= 0.5_dp + epsilon(0.0_dp)))  then
+                Mobil(i) = xi
+            elseif (Mix < 1._dp) then
+                yi = exp(log(a)+(1._dp-xi)*log(b))
+                Mobil(i) = 1._dp - (yi-a)/(a*b-a)
+            else
+                Mobil(i) = 1._dp
+            end if
+        else
+            Mobil(i) = 0._dp
+        end if
+    end do
+
+    ! 4. Saltmobility between Macro and SAT
+    do i = CelMax, GetSoilLayer_SCP1(layer)
+        Mobil(i) = 1._dp
+    end do
+end subroutine Calculate_Saltmobility
+
+
 !! Global variables section !!
 
 function GetOutputName() result(str)
