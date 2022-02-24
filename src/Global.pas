@@ -58,11 +58,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-
-PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
-                         CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
-                         VAR TpotVal, EpotVal : double);
-
 PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
@@ -181,76 +176,6 @@ PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
 
 implementation
-
-
-PROCEDURE CalculateETpot(DAP,L0,L12,L123,LHarvest,DayLastCut : INTEGER;
-                         CCi,EToVal,KcVal,KcDeclineVal,CCx,CCxWithered,CCeffectProcent,CO2i,GDDayi,TempGDtranspLow : double;
-                         VAR TpotVal, EpotVal : double);
-VAR EpotMin, EpotMax,CCiAdjusted,Multiplier,KsTrCold : double;
-    VirtualDay : INTEGER;
-
-BEGIN (* CalculateETpot*)
-VirtualDay := DAP - GetSimulation_DelayedDays();
-IF ( ((VirtualDay < L0) AND (Round(100*CCi) = 0)) OR (VirtualDay > LHarvest))   //To handlle Forage crops: Round(100*CCi) = 0
-   THEN BEGIN
-        TpotVal := 0;
-        EpotVal := GetSimulParam_KcWetBare()*EToVal;
-        END
-   ELSE BEGIN
-        (* Correction for micro-advection *)
-        CCiAdjusted := 1.72*CCi - 1*(CCi*CCi) + 0.30*(CCi*CCi*CCi);
-        IF (CCiAdjusted < 0) THEN CCiAdjusted := 0;
-        IF (CCiAdjusted > 1) THEN CCiAdjusted := 1;
-
-        (* Correction for ageing effects - is a function of calendar days *)
-        //IF (VirtualDay > (L12+5)) THEN KcVal := KcVal - (VirtualDay-(L12+5))*(KcDeclineVal/100)*CCxWithered;
-        IF ((VirtualDay-DayLastCut) > (L12+5))
-           THEN KcVal := KcVal - (VirtualDay-DayLastCut-(L12+5))*(KcDeclineVal/100)*CCxWithered;
-
-        (* Correction for elevated atmospheric CO2 concentration *)
-        IF (CO2i > 369.41) THEN KcVal := KcVal * (1 - 0.05 * (CO2i-369.41)/(550-369.41));
-
-        (* Correction for Air temperature stress *)
-        IF ((CCiAdjusted <= 0.0000001) OR (ROUND(GDDayi) < 0))
-           THEN KsTrCold := 1
-           ELSE KsTrCold := KsTemperature((0),TempGDtranspLow,GDDayi);
-
-        (* First estimate of Epot and Tpot *)
-        TpotVal := CCiAdjusted * KsTrCold * KcVal * EToVal;
-        EpotVal := GetSimulParam_KcWetBare() * (1 - CCiAdjusted) * EToVal;
-
-        (* Maximum Epot with withered canopy as a result of (early) senescence*)
-        EpotMax := GetSimulParam_KcWetBare() * EToVal * (1 - CCxWithered * CCEffectProcent/100);
-
-        (* Correction Epot for dying crop in late-season stage *)
-        IF ((VirtualDay > L123) AND (CCx > 0)) THEN
-           BEGIN
-           IF (CCi > (CCx/2))
-              THEN BEGIN (* not yet full effect *)
-                   IF (CCi > CCx)
-                      THEN Multiplier := 0  // no effect
-                      ELSE Multiplier := (CCx-CCi)/(CCx/2);
-                   END
-              ELSE Multiplier := 1; // full effect
-           EpotVal := EpotVal * (1 - CCx * (CCEffectProcent/100) * Multiplier);
-           EpotMin := GetSimulParam_KcWetBare() * (1 - 1.72*CCx + 1*(CCx*CCx) - 0.30*(CCx*CCx*CCx)) * EToVal;
-           IF (EpotMin < 0) THEN EpotMin := 0;
-           IF (EpotVal < EpotMin) THEN EpotVal := EpotMin;
-           IF (EpotVal > EpotMax) THEN EpotVal := EpotMax;
-           END;
-
-        (* Correction for canopy senescence before late-season stage *)
-        IF GetSimulation_EvapLimitON() THEN IF (EpotVal > EpotMax) THEN EpotVal := EpotMax;
-
-        (* Correction for drop in photosynthetic capacity of a dying green canopy *)
-        IF (CCi < CCxWithered) THEN
-           BEGIN
-           IF (CCxWithered > 0.01) AND (CCi > 0.001)
-              THEN TpotVal := TpotVal * Exp(GetSimulParam_ExpFsen()*Ln(CCi/CCxWithered));
-           END;
-        END;
-END; (* CalculateETpot *)
-
 
 PROCEDURE NoManagementOffSeason;
 VAR Nri : INTEGER;
