@@ -4578,10 +4578,10 @@ subroutine LoadCrop(FullName)
         if (GetCrop_HI() == undef_int) then
             call SetCrop_HI(85)
         end if
-        
-        ! growing degree days
-        read(fhandle, *) TempInt
     end if
+        
+    ! growing degree days
+    read(fhandle, *) TempInt
     call SetCrop_GDDaysToGermination(TempInt)
     read(fhandle, *) TempInt
     call SetCrop_GDDaysToMaxRooting(TempInt)
@@ -4645,31 +4645,36 @@ subroutine LoadCrop(FullName)
             case default
                 call SetCrop_SownYear1(.false.) ! crop is transplanted in 
         end select                                ! 1st year (for regrowth)
-    end if
-    ! transfer of assimilates
-    read(fhandle, *) XX
-    select case (XX)
-        case(1)
-            call SetCrop_Assimilates_On(.true.) ! Transfer of assimilates from
+        ! transfer of assimilates
+        read(fhandle, *) XX
+        select case (XX)
+            case(1)
+                call SetCrop_Assimilates_On(.true.) 
+                                                ! Transfer of assimilates from
                                                 ! above ground parts to root 
                                                 ! system is considered
-        case default
-            call SetCrop_Assimilates_On(.false.) ! Transfer of assimilates from
-                                                 ! above ground parts to root 
-                                                 ! system is NOT considered
-    end select
-    read(fhandle, *) TempInt
-    call SetCrop_Assimilates_Period(TempInt) ! Number of days at end of season
-                                             ! during which assimilates are 
-                                             ! stored in root system
-    read(fhandle, *) TempShortInt
-    call SetCrop_Assimilates_Stored(TempShortInt) ! Percentage of assimilates,
-                                                  ! transferred to root system 
-                                                  ! at last day of season
-    read(fhandle, *) TempShortInt
-    call SetCrop_Assimilates_Mobilized(TempShortInt) ! Percentage of stored
-                                    ! assimilates, transferred to above ground
-                                    ! parts in next season
+            case default
+                call SetCrop_Assimilates_On(.false.) 
+                                                ! Transfer of assimilates from
+                                                ! above ground parts to root 
+                                                ! system is NOT considered
+        end select
+        read(fhandle, *) TempInt
+        call SetCrop_Assimilates_Period(TempInt) 
+                                                ! Number of days at end of season
+                                                ! during which assimilates are 
+                                                ! stored in root system
+        read(fhandle, *) TempShortInt
+        call SetCrop_Assimilates_Stored(TempShortInt) 
+                                                ! Percentage of assimilates,
+                                                ! transferred to root system 
+                                                ! at last day of season
+        read(fhandle, *) TempShortInt
+        call SetCrop_Assimilates_Mobilized(TempShortInt) 
+                                        ! Percentage of stored
+                                        ! assimilates, transferred to above 
+                                        ! ground parts in next season
+    end if
 
     if (GetCrop_subkind() == subkind_Forage) then
         ! data for the determination of the growing period
@@ -4696,59 +4701,59 @@ subroutine LoadCrop(FullName)
                     call SetPerennialPeriod_GenerateOnset(.false.)
             end select
         end if
-    end if
-    read(fhandle, *) perenperiod_onsetFD_temp
-    call SetPerennialPeriod_OnsetFirstDay(perenperiod_onsetFD_temp)
-    read(fhandle, *) perenperiod_onsetFM_temp
-    call SetPerennialPeriod_OnsetFirstMonth(perenperiod_onsetFM_temp)
-    read(fhandle, *) perenperiod_onsetLSP_temp
-    call  SetPerennialPeriod_OnsetLengthSearchPeriod(perenperiod_onsetLSP_temp)
-    read(fhandle, *) perenperiod_onsetTV_temp ! Mean air temperature 
-                                              ! or Growing-degree days
-    call SetPerennialPeriod_OnsetThresholdValue(perenperiod_onsetTV_temp)
-    read(fhandle, *) perenperiod_onsetPV_temp ! number of succesive days
-    call SetPerennialPeriod_OnsetPeriodValue(perenperiod_onsetPV_temp)
-    read(fhandle, *) perenperiod_onsetOcc_temp  ! number of occurrence
-    call SetPerennialPeriod_OnsetOccurrence(perenperiod_onsetOcc_temp)
-    if (GetPerennialPeriod_OnsetOccurrence() > 3_int8) then
-        call SetPerennialPeriod_OnsetOccurrence(3_int8)
-    end if
-    ! 3. END of growing period
-    read(fhandle, *) XX
-    if (XX == 0) then
-        call SetPerennialPeriod_GenerateEnd(.false.)  ! end is fixed on a 
-                                                      ! specific day
-    else
-        ! end is generated by an air temperature criterion
-        call SetPerennialPeriod_GenerateEnd(.true.)
-        select case (XX)
-            case(62)
-                call SetPerennialPeriod_EndCriterion(AirTCriterion_TMeanPeriod)
-                                            ! Criterion: mean air temperature
-            case(63) 
-                call SetPerennialPeriod_EndCriterion(AirTCriterion_GDDPeriod) 
-                                            ! Criterion: growing-degree days
-            case default
-                call SetPerennialPeriod_GenerateEnd(.false.)
-        end select
-    end if
-    read(fhandle, *) perenperiod_endLD_temp
-    call SetPerennialPeriod_EndLastDay(perenperiod_endLD_temp)
-    read(fhandle, *) perenperiod_endLM_temp
-    call SetPerennialPeriod_EndLastMonth(perenperiod_endLM_temp)
-    read(fhandle, *) perenperiod_extrayears_temp
-    call SetPerennialPeriod_ExtraYears(perenperiod_extrayears_temp)
-    read(fhandle, *) perenperiod_endLSP_temp
-    call SetPerennialPeriod_EndLengthSearchPeriod(perenperiod_endLSP_temp)
-    read(fhandle, *) perenperiod_endTV_temp ! Mean air temperature 
-                                            ! or Growing-degree days
-    call SetPerennialPeriod_EndThresholdValue(perenperiod_endTV_temp)
-    read(fhandle, *) perenperiod_endPV_temp ! number of succesive days
-    call SetPerennialPeriod_EndPeriodValue(perenperiod_endPV_temp)
-    read(fhandle, *) perenperiod_endOcc_temp ! number of occurrence
-    call SetPerennialPeriod_EndOccurrence(perenperiod_endOcc_temp)
-    if (GetPerennialPeriod_EndOccurrence() > 3_int8) then
-        call SetPerennialPeriod_EndOccurrence(3_int8)
+        read(fhandle, *) perenperiod_onsetFD_temp
+        call SetPerennialPeriod_OnsetFirstDay(perenperiod_onsetFD_temp)
+        read(fhandle, *) perenperiod_onsetFM_temp
+        call SetPerennialPeriod_OnsetFirstMonth(perenperiod_onsetFM_temp)
+        read(fhandle, *) perenperiod_onsetLSP_temp
+        call  SetPerennialPeriod_OnsetLengthSearchPeriod(perenperiod_onsetLSP_temp)
+        read(fhandle, *) perenperiod_onsetTV_temp ! Mean air temperature 
+                                                  ! or Growing-degree days
+        call SetPerennialPeriod_OnsetThresholdValue(perenperiod_onsetTV_temp)
+        read(fhandle, *) perenperiod_onsetPV_temp ! number of succesive days
+        call SetPerennialPeriod_OnsetPeriodValue(perenperiod_onsetPV_temp)
+        read(fhandle, *) perenperiod_onsetOcc_temp  ! number of occurrence
+        call SetPerennialPeriod_OnsetOccurrence(perenperiod_onsetOcc_temp)
+        if (GetPerennialPeriod_OnsetOccurrence() > 3_int8) then
+            call SetPerennialPeriod_OnsetOccurrence(3_int8)
+        end if
+        ! 3. END of growing period
+        read(fhandle, *) XX
+        if (XX == 0) then
+            call SetPerennialPeriod_GenerateEnd(.false.)  ! end is fixed on a 
+                                                          ! specific day
+        else
+            ! end is generated by an air temperature criterion
+            call SetPerennialPeriod_GenerateEnd(.true.)
+            select case (XX)
+                case(62)
+                    call SetPerennialPeriod_EndCriterion(AirTCriterion_TMeanPeriod)
+                                                ! Criterion: mean air temperature
+                case(63) 
+                    call SetPerennialPeriod_EndCriterion(AirTCriterion_GDDPeriod) 
+                                                ! Criterion: growing-degree days
+                case default
+                    call SetPerennialPeriod_GenerateEnd(.false.)
+            end select
+        end if
+        read(fhandle, *) perenperiod_endLD_temp
+        call SetPerennialPeriod_EndLastDay(perenperiod_endLD_temp)
+        read(fhandle, *) perenperiod_endLM_temp
+        call SetPerennialPeriod_EndLastMonth(perenperiod_endLM_temp)
+        read(fhandle, *) perenperiod_extrayears_temp
+        call SetPerennialPeriod_ExtraYears(perenperiod_extrayears_temp)
+        read(fhandle, *) perenperiod_endLSP_temp
+        call SetPerennialPeriod_EndLengthSearchPeriod(perenperiod_endLSP_temp)
+        read(fhandle, *) perenperiod_endTV_temp ! Mean air temperature 
+                                                ! or Growing-degree days
+        call SetPerennialPeriod_EndThresholdValue(perenperiod_endTV_temp)
+        read(fhandle, *) perenperiod_endPV_temp ! number of succesive days
+        call SetPerennialPeriod_EndPeriodValue(perenperiod_endPV_temp)
+        read(fhandle, *) perenperiod_endOcc_temp ! number of occurrence
+        call SetPerennialPeriod_EndOccurrence(perenperiod_endOcc_temp)
+        if (GetPerennialPeriod_EndOccurrence() > 3_int8) then
+            call SetPerennialPeriod_EndOccurrence(3_int8)
+        end if
     end if
     close(fhandle)
     ! maximum rooting depth in given soil profile
