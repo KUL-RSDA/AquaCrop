@@ -4214,6 +4214,13 @@ procedure AdjustYearPerennials(
 procedure NoCropCalendar;
     external 'aquacrop' name '__ac_global_MOD_nocropcalendar';
 
+procedure CalculateETpot(constref DAP,L0,L12,L123,LHarvest,DayLastCut : integer;
+                         constref CCi,EToVal,KcVal,KcDeclineVal,CCx : double;
+                         constref CCxWithered,CCeffectProcent,CO2i : double;
+                         constref GDDayi, TempGDtranspLow : double;
+                         var TpotVal, EpotVal : double);
+    external 'aquacrop' name '__ac_global_MOD_calculateetpot';
+
 
 implementation
 
