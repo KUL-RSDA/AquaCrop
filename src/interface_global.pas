@@ -4221,6 +4221,15 @@ procedure CalculateETpot(constref DAP,L0,L12,L123,LHarvest,DayLastCut : integer;
                          var TpotVal, EpotVal : double);
     external 'aquacrop' name '__ac_global_MOD_calculateetpot';
 
+procedure ResetSWCToFC();
+    external 'aquacrop' name '__ac_global_MOD_resetswctofc';
+
+function GetZiAqua() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getziaqua';
+
+procedure SetZiAqua(constref ZiAqua_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setziaqua';
+
 
 
 implementation

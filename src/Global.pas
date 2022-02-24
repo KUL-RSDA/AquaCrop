@@ -43,7 +43,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
     CRsalt         : double; // gram/m2
-    ZiAqua         : Integer;  // Depth of Groundwater table below soil surface in centimeter
     ECiAqua        : double; //  EC of the groundwater table in dS/m
 
 
@@ -108,7 +107,6 @@ PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
-PROCEDURE ResetSWCToFC;
 PROCEDURE AdjustSimPeriod;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
@@ -1065,54 +1063,10 @@ SetClimRecord_ToDayNr(ToDayNr_tmp)
 END; (* AdjustClimRecordTo *)
 
 
-PROCEDURE ResetSWCToFC;
-VAR Loci,layeri,compi,celli : ShortInt;
-BEGIN
-
-SetSimulation_IniSWC_AtDepths(false);
-IF (ZiAqua < 0) // no ground water table
-   THEN BEGIN
-        SetSimulation_IniSWC_NrLoc(GetSoil().NrSoilLayers);
-        FOR layeri := 1 TO GetSoil().NrSoilLayers DO
-            BEGIN
-            SetSimulation_IniSWC_Loc_i(layeri,GetSoilLayer_i(layeri).Thickness);
-            SetSimulation_IniSWC_VolProc_i(layeri,GetSoilLayer_i(layeri).FC);
-            SetSimulation_IniSWC_SaltECe_i(layeri,0);
-            END;
-        FOR layeri := (GetSoil().NrSoilLayers+1) TO max_No_compartments DO
-            BEGIN
-            SetSimulation_IniSWC_Loc_i(layeri,undef_double);
-            SetSimulation_IniSWC_VolProc_i(layeri,undef_double);
-            SetSimulation_IniSWC_SaltECe_i(layeri,undef_double);
-            END;
-        END
-   ELSE BEGIN
-        SetSimulation_IniSWC_NrLoc(GetNrCompartments());
-        FOR Loci := 1 TO GetSimulation_IniSWC_NrLoc() DO
-            BEGIN
-            SetSimulation_IniSWC_Loc_i(Loci,GetCompartment_Thickness(Loci));
-            SetSimulation_IniSWC_VolProc_i(Loci,GetCompartment_FCadj(Loci));
-            SetSimulation_IniSWC_SaltECe_i(Loci,0.0);
-        END;
-    END;
-FOR compi := 1 to GetNrCompartments() DO
-    BEGIN
-    SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
-    SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
-    For celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
-        BEGIN // salinity in cells
-        SetCompartment_Salt(compi, celli, 0.0);
-        SetCompartment_Depo(compi, celli, 0.0);
-        END;
-    END;
-END; (* ResetSWCToFC *)
-
-
-
 PROCEDURE AdjustSimPeriod;
 VAR IniSimFromDayNr : LongInt;
     FullFileName : string;
-    FromDayNr_temp : integer;
+    FromDayNr_temp, ZiAqua_temp : integer;
     Compartment_temp : rep_Comp;
 
 BEGIN
@@ -1158,9 +1112,11 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
        THEN FullFileName := CONCAT(GetPathNameProg(),'GroundWater.AqC')
        ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
-   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua,ECiAqua);
+   ZiAqua_temp := GetZiAqua();
+   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua_temp,ECiAqua);
+   SetZiAqua(ZiAqua_temp);
    Compartment_temp := GetCompartment();
-   CalculateAdjustedFC((ZiAqua/100),Compartment_temp);
+   CalculateAdjustedFC((GetZiAqua()/100),Compartment_temp);
    SetCompartment(Compartment_temp);
    IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
    END;

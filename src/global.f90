@@ -968,12 +968,13 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
+integer(int32) :: ZiAqua ! Depth of Groundwater table below 
+                         ! soil surface in centimeter
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
-
-integer(int32) :: NrCompartments
 
 
 type(rep_DayEventInt), dimension(5) :: IrriBeforeSeason
@@ -4329,6 +4330,47 @@ subroutine NoCropCalendar()
     call SetEndSeason_GenerateTempOn(.false.)
     call SetCalendarDescription('No calendar for the Seeding/Planting year')
 end subroutine NoCropCalendar
+
+
+subroutine ResetSWCToFC()
+
+    integer(int32) :: layeri, Loci, compi, celli
+
+    call SetSimulation_IniSWC_AtDepths(.false.)
+    if (GetZiAqua() < 0) then ! no ground water table
+        call SetSimulation_IniSWC_NrLoc(GetSoil_NrSoilLayers())
+        do layeri = 1, GetSoil_NrSoilLayers() 
+            call SetSimulation_IniSWC_Loc_i(layeri, &
+                                            GetSoilLayer_Thickness(layeri))
+            call SetSimulation_IniSWC_VolProc_i(layeri, &
+                                                GetSoilLayer_FC(layeri))
+            call SetSimulation_IniSWC_SaltECe_i(layeri, 0._dp)
+        end do
+        do layeri = (GetSoil_NrSoilLayers() + 1), max_No_compartments 
+            call SetSimulation_IniSWC_Loc_i(layeri, undef_double)
+            call SetSimulation_IniSWC_VolProc_i(layeri, undef_double)
+            call SetSimulation_IniSWC_SaltECe_i(layeri, undef_double)
+        end do
+    else
+        call SetSimulation_IniSWC_NrLoc(int(GetNrCompartments(), kind=int8))
+        do Loci = 1, GetSimulation_IniSWC_NrLoc() 
+            call SetSimulation_IniSWC_Loc_i(Loci, &
+                                            GetCompartment_Thickness(Loci))
+            call SetSimulation_IniSWC_VolProc_i(Loci, &
+                                                GetCompartment_FCadj(Loci))
+            call SetSimulation_IniSWC_SaltECe_i(Loci, 0.0_dp)
+        end do
+    end if
+    do compi = 1, GetNrCompartments() 
+        call SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100._dp)
+        call SetSimulation_ThetaIni_i(compi, GetCompartment_Theta(compi))
+        do celli = 1, GetSoilLayer_SCP1(GetCompartment_Layer(compi)) 
+            ! salinity in cells
+            call SetCompartment_Salt(compi, celli, 0.0_dp)
+            call SetCompartment_Depo(compi, celli, 0.0_dp)
+        end do
+    end do
+end subroutine ResetSWCToFC
 
 
 subroutine LoadCrop(FullName)
@@ -11537,5 +11579,17 @@ subroutine SetNrCompartments(NrCompartments_in)
     NrCompartments = NrCompartments_in
 end subroutine SetNrCompartments
 
+integer(int32) function GetZiAqua()
+    !! Getter for the "ZiAqua" global variable.
+
+    GetZiAqua = ZiAqua
+end function GetZiAqua
+
+subroutine SetZiAqua(ZiAqua_in)
+    !! Setter for the "ZiAqua" global variable.
+    integer(int32), intent(in) :: ZiAqua_in
+
+    ZiAqua = ZiAqua_in
+end subroutine SetZiAqua
 
 end module ac_global
