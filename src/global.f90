@@ -4278,11 +4278,11 @@ subroutine LoadCrop(FullName)
     logical :: TempBoolean
     real(dp) :: perenperiod_onsetTV_temp, perenperiod_endTV_temp
     real(dp) :: Crop_SmaxTop_temp, Crop_SmaxBot_temp
-    character(len=:), allocatable :: CropDescriptionLocal
+    character(len=1024) :: CropDescriptionLocal
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, *) CropDescriptionLocal
-    call SetCropDescription(CropDescriptionLocal)
+    call SetCropDescription(trim(CropDescriptionLocal))
     read(fhandle, *) VersionNr ! AquaCrop version
     read(fhandle, *)  ! Protected or Open file
 
