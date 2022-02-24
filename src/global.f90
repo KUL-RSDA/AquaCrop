@@ -4547,15 +4547,15 @@ subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgr
     integer(int32) :: TheLength
     character(len=:), allocatable :: TheExtension
     
-    call SetFullFileNameProgramParameters('')
+    FullFileNameProgramParameters = ''
     TheLength = len(TheFullFileNameProgram)
     TheExtension = TheFullFileNameProgram(TheLength-3:TheLength) ! PRO or PRM
     
-    call SetFullFileNameProgramParameters(TheFullFileNameProgram(1:(TheLength-3)))
+    FullFileNameProgramParameters = TheFullFileNameProgram(1:(TheLength-3))
     if (TheExtension == 'PRO') then
-        call SetFullFileNameProgramParameters(Trim(GetFullFileNameProgramParameters())//'PP1')
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PP1'
     else
-        call SetFullFileNameProgramParameters(Trim(GetFullFileNameProgramParameters())//'PPn')
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PPn'
     end if
 end subroutine GetFileForProgramParameters
 

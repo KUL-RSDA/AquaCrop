@@ -1274,7 +1274,7 @@ function CCmultiplierWeedAdjusted(
             constref MWeedAdj : shortint;
             constref RCadj : shortint) : shortint;
          external 'aquacrop' name '__ac_global_MOD_ccmultiplierweedadjusted';
-                                  
+
 function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;
         external 'aquacrop' name '__ac_global_MOD_harvestindexgrowthcoefficient';
