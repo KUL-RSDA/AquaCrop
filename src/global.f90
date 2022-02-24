@@ -2909,6 +2909,78 @@ subroutine SplitStringInThreeParams(StringIN, Par1, Par2, Par3)
     end do
 end subroutine SplitStringInThreeParams
 
+real(dp) function CO2ForSimulationPeriod(FromDayNr, ToDayNr)
+    integer(int32), intent(in) :: FromDayNr
+    integer(int32), intent(in) :: ToDayNr
+
+    integer(int32) :: i, Dayi, Monthi, FromYi, ToYi, rc
+
+    
+    integer :: fhandle
+    character(len=1025) :: TempString
+    real(dp) :: CO2From, CO2To, CO2a, CO2b, YearA, YearB
+
+    call DetermineDate(FromDayNr, Dayi, Monthi, FromYi)
+    call DetermineDate(ToDayNr, Dayi, Monthi, ToYi)
+
+    if ((FromYi == 1901) .or. (ToYi == 1901)) then
+        CO2ForSimulationPeriod = CO2Ref
+    else
+        open(newunit=fhandle, file=trim(GetCO2FileFull()), status='old', &
+                                                    action='read',iostat=rc)
+        do i= 1, 3
+            read(fhandle, *, iostat=rc) ! Description and Title
+        end do
+        ! from year
+        read(fhandle, *, iostat=rc) TempString
+        call SplitStringInTwoParams(TempString, YearB, CO2b)
+        if (roundc(YearB, mold=1) >= FromYi) then
+            CO2From = CO2b
+            YearA = YearB
+            CO2a = CO2b
+        else
+            loop: do
+                YearA = YearB
+                CO2a = Co2b
+                read(fhandle, *, iostat=rc) TempString
+                call SplitStringInTwoParams(TempString, YearB, CO2b)
+            if (((roundc(YearB, mold=1) >= FromYi) .or. (rc == iostat_end))) exit loop
+            end do loop
+            if (FromYi > roundc(YearB, mold=1)) then
+                CO2From = CO2b
+            else
+                CO2From = CO2a + (CO2b-CO2a)* (FromYi - &
+                roundc(YearA, mold=1))/(roundc(YearB, mold=1)-roundc(YearA, mold=1))
+            end if
+        end if
+        ! to year
+        CO2To = CO2From
+        if ((ToYi > FromYi) .and. (ToYi > roundc(YearA, mold=1))) then
+            if (roundc(YearB, mold=1) >= ToYi) then
+                CO2To = CO2a + (CO2b-CO2a)* (ToYi - &
+                roundc(YearA, mold=1))/(roundc(YearB, mold=1)-roundc(YearA, mold=1))
+            elseif (.not. (rc == iostat_end)) then
+                loop_2: do
+                    YearA = YearB
+                    CO2a = Co2b
+                    read(fhandle, *, iostat=rc) TempString
+                    call SplitStringInTwoParams(TempString, YearB, CO2b)
+                if (((roundc(YearB, mold=1) >= ToYi) .or. (rc == iostat_end))) &
+                                                                    exit loop_2
+                end do loop_2
+                if (ToYi > roundc(YearB, mold=1)) then
+                    CO2To = CO2b
+                else
+                    CO2To = CO2a + (CO2b-CO2a)* (ToYi - &
+                    roundc(YearA, mold=1))/(roundc(YearB, mold=1)-roundc(YearA, mold=1))
+                end if
+            end if
+        end if
+        Close(fhandle)
+        CO2ForSimulationPeriod = (CO2From+CO2To)/2._dp
+    end if
+end function CO2ForSimulationPeriod
+
 subroutine ReadRainfallSettings()
 
     integer :: fhandle
