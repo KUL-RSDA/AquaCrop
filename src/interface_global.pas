@@ -1274,7 +1274,7 @@ function CCmultiplierWeedAdjusted(
             constref MWeedAdj : shortint;
             constref RCadj : shortint) : shortint;
          external 'aquacrop' name '__ac_global_MOD_ccmultiplierweedadjusted';
-
+                                  
 function HarvestIndexGrowthCoefficient(
         constref HImax,dHIdt : double) : double;
         external 'aquacrop' name '__ac_global_MOD_harvestindexgrowthcoefficient';
@@ -1298,6 +1298,17 @@ procedure ComposeOutputFileName_wrap(
             constref TheProjectFileName : string;
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_composeoutputfilename_wrap';
+
+procedure GetFileForProgramParameters(
+            constref TheFullFileNameProgram : string;
+            var FullFileNameProgramParameters: string);
+
+procedure GetFileForProgramParameters_wrap(
+            constref TheFullFileNameProgram : PChar;
+            constref strlen1 : integer;
+            var FullFileNameProgramParameters: PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getfileforprogramparameters_wrap';
 
 function NumberSoilClass (
             constref SatvolPro : double;
@@ -5960,6 +5971,21 @@ begin;
     SetFullFileNameProgramParameters_wrap(p, strlen);
 end;
 
+procedure GetFileForProgramParameters(
+            constref  TheFullFileNameProgram: string;
+            var FullFileNameProgramParameters: string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(TheFullFileNameProgram);
+    p2 := PChar(FullFileNameProgramParameters);
+    strlen1 := Length(TheFullFileNameProgram);
+    strlen2 := Length(FullFileNameProgramParameters);
+    GetFileForProgramParameters_wrap(p1, strlen1, p2, strlen2);
+    FullFileNameProgramParameters := AnsiString(p2);
+end;
 
 function GetPathNameProg(): string;
 var
