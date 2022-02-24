@@ -4224,6 +4224,10 @@ procedure Calculate_Saltmobility(constref layer : integer;
     external 'aquacrop' name '__ac_global_MOD_calculate_saltmobility';
 
 
+procedure CompleteProfileDescription();
+    external 'aquacrop' name '__ac_global_MOD_completeprofiledescription';
+
+
 implementation
 
 
