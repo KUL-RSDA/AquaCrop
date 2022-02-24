@@ -102,6 +102,7 @@ VAR f0,fClim : TextFile;
     Crop_Day1_temp : INTEGER;
     Crop_DayN_temp : INTEGER;
     Crop_DaysToFullCanopySF_temp : INTEGER;
+    ZiAqua_temp : integer;
 
     PROCEDURE GetFileDescription(TheFileFullName : string;
                                  VAR TheDescription : string);
@@ -480,14 +481,18 @@ IF (Trim(TempString) = 'KeepSWC')
 
 // 10. load the groundwater file if it exists (only possible for Version 4.0 and higher)
 IF ((ROUND(10*VersionNr) >= 40) AND (GetGroundWaterFile() <> '(None)')) // the groundwater file is only available in Version 4.0 or higher
-   THEN LoadGroundWater(GetGroundWaterFilefull(),GetSimulation_FromDayNr(),ZiAqua,ECiAqua)
+   THEN BEGIN
+        ZiAqua_temp := GetZiAqua();
+        LoadGroundWater(GetGroundWaterFilefull(),GetSimulation_FromDayNr(),ZiAqua_temp,ECiAqua);
+        SetZiAqua(ZiAqua_temp);
+        END
    ELSE BEGIN
-        ZiAqua := undef_int;
+        SetZiAqua(undef_int);
         ECiAqua := undef_int;
         SetSimulParam_ConstGwt(true);
         END;
 Compartment_temp := GetCompartment();
-CalculateAdjustedFC((ZiAqua/100),Compartment_temp);
+CalculateAdjustedFC((GetZiAqua()/100),Compartment_temp);
 SetCompartment(Compartment_temp);
 //IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
 IF (GetSimulation_IniSWC_AtFC() AND (GetSWCIniFile() <> 'KeepSWC')) THEN ResetSWCToFC;
