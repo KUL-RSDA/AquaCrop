@@ -131,8 +131,6 @@ FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
                              ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
 
 
-FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
-
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
                             GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
                             CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
@@ -1860,64 +1858,6 @@ IF ((ResponseECsw > 0) AND (Wrel > 0) AND (GetSimulation_SalinityConsidered() = 
 AdjustedKsStoToECsw := KsStoOut;
 END; (* AdjustedKsStoToECsw *)
 
-
-FUNCTION CO2ForSimulationPeriod(FromDayNr,ToDayNr : LongInt) : double;
-VAR i,Dayi,Monthi,FromYi,ToYi : INTEGER;
-    f0 : textfile;
-    TempString : string;
-    CO2From,CO2To,CO2a,CO2b,YearA,YearB : double;
-BEGIN
-DetermineDate(FromDayNr,Dayi,Monthi,FromYi);
-DetermineDate(ToDayNr,Dayi,Monthi,ToYi);
-IF ((FromYi = 1901) OR (ToYi = 1901))
-   THEN CO2ForSimulationPeriod := CO2Ref
-   ELSE BEGIN
-        Assign(f0,GetCO2FileFull());
-        Reset(f0);
-        FOR i:= 1 TO 3 DO Readln(f0); // Description and Title
-        // from year
-        Readln(f0,TempString);
-        SplitStringInTwoParams(TempString,YearB,CO2b);
-        IF (ROUND(YearB) >= FromYi)
-           THEN BEGIN
-                CO2From := CO2b;
-                YearA := YearB;
-                CO2a := CO2b;
-                END
-           ELSE BEGIN
-                REPEAT
-                  YearA := YearB;
-                  CO2a := Co2b;
-                  Readln(f0,TempString);
-                  SplitStringInTwoParams(TempString,YearB,CO2b);
-                UNTIL ((ROUND(YearB) >= FromYi) OR EoF(f0));
-                IF (FromYi > ROUND(YearB))
-                   THEN CO2From := CO2b
-                   ELSE CO2From := CO2a + (CO2b-CO2a)*(ROUND(FromYi)-ROUND(YearA))/(ROUND(YearB)-ROUND(YearA));
-                END;
-        // to year
-        CO2To := CO2From;
-        IF (ToYi > FromYi) AND (ToYi > ROUND(YearA)) THEN
-           BEGIN
-           IF (ROUND(YearB) >= ToYi)
-              THEN CO2To := CO2a + (CO2b-CO2a)*(ROUND(ToYi)-ROUND(YearA))/(ROUND(YearB)-ROUND(YearA))
-              ELSE IF (NOT EoF(f0))THEN
-                     BEGIN
-                     REPEAT
-                       YearA := YearB;
-                       CO2a := Co2b;
-                       Readln(f0,TempString);
-                       SplitStringInTwoParams(TempString,YearB,CO2b);
-                     UNTIL ((ROUND(YearB) >= ToYi) OR EoF(f0));
-                     IF (ToYi > ROUND(YearB))
-                        THEN CO2To := CO2b
-                        ELSE CO2To := CO2a + (CO2b-CO2a)*(ROUND(ToYi)-ROUND(YearA))/(ROUND(YearB)-ROUND(YearA));
-                     END;
-           END;
-        Close(f0);
-        CO2ForSimulationPeriod := (CO2From+CO2To)/2;
-        END;
-END; (* CO2ForSimulationPeriod *)
 
 
 FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,

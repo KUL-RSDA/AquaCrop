@@ -2045,6 +2045,11 @@ procedure SplitStringInThreeParams_wrap(
             var Par1,Par2,Par3 : double);
         external 'aquacrop' name '__ac_interface_global_MOD_splitstringinthreeparams_wrap';
 
+function CO2ForSimulationPeriod(
+            constref FromDayNr: integer;
+            constref ToDayNr : integer) : double;
+        external 'aquacrop' name '__ac_global_MOD_co2forsimulationperiod';
+
 function GetRootZoneWC(): rep_RootZoneWC;
         external 'aquacrop' name '__ac_global_MOD_getrootzonewc';
 
