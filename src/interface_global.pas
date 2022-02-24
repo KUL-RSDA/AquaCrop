@@ -4208,12 +4208,19 @@ procedure AdjustYearPerennials(
 procedure NoCropCalendar;
     external 'aquacrop' name '__ac_global_MOD_nocropcalendar';
 
+procedure LoadCrop(constref FullName : string);
+
+procedure LoadCrop_wrap(constref FullName : PChar;
+                        constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadcrop_wrap';
+
 procedure CalculateETpot(constref DAP,L0,L12,L123,LHarvest,DayLastCut : integer;
                          constref CCi,EToVal,KcVal,KcDeclineVal,CCx : double;
                          constref CCxWithered,CCeffectProcent,CO2i : double;
                          constref GDDayi, TempGDtranspLow : double;
                          var TpotVal, EpotVal : double);
     external 'aquacrop' name '__ac_global_MOD_calculateetpot';
+
 
 
 implementation
@@ -7123,6 +7130,18 @@ begin;
                             int_plant, Zmin,TheSizePlant,TheCCini,
                             TheDaysToCCini,TheGDDaysToCCini);
   TypeOfPlanting := rep_planting(int_plant);
+end;
+
+
+procedure LoadCrop(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadCrop_wrap(p,strlen);
 end;
 
 
