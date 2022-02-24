@@ -128,7 +128,8 @@ contains
                             <= GetSoilLayer_WP(layer)/100.0_dp) then
                         dZ = 0.0_dp
                     else
-                        Wrel = (GetSoilLayer_FC(layer)/100.0_dp - layer)/TAWcompi
+                        Wrel = (GetSoilLayer_FC(layer)/100.0_dp - &
+                                    GetCompartment_theta(compi))/TAWcompi
                         dZ = dZ * KsAny(Wrel, pZexp, 1.0_dp,&
                                         GetCrop_KsShapeFactorStomata())
                     end if
