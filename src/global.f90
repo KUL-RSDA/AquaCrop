@@ -2914,11 +2914,9 @@ real(dp) function CO2ForSimulationPeriod(FromDayNr, ToDayNr)
     integer(int32), intent(in) :: ToDayNr
 
     integer(int32) :: i, Dayi, Monthi, FromYi, ToYi, rc
-
-    
+    real(dp) :: CO2From, CO2To, CO2a, CO2b, YearA, YearB
     integer :: fhandle
     character(len=1025) :: TempString
-    real(dp) :: CO2From, CO2To, CO2a, CO2b, YearA, YearB
 
     call DetermineDate(FromDayNr, Dayi, Monthi, FromYi)
     call DetermineDate(ToDayNr, Dayi, Monthi, ToYi)
@@ -2933,7 +2931,7 @@ real(dp) function CO2ForSimulationPeriod(FromDayNr, ToDayNr)
         end do
         ! from year
         read(fhandle, *, iostat=rc) TempString
-        call SplitStringInTwoParams(TempString, YearB, CO2b)
+        call SplitStringInTwoParams(trim(TempString), YearB, CO2b)
         if (roundc(YearB, mold=1) >= FromYi) then
             CO2From = CO2b
             YearA = YearB
@@ -2943,8 +2941,8 @@ real(dp) function CO2ForSimulationPeriod(FromDayNr, ToDayNr)
                 YearA = YearB
                 CO2a = Co2b
                 read(fhandle, *, iostat=rc) TempString
-                call SplitStringInTwoParams(TempString, YearB, CO2b)
-            if (((roundc(YearB, mold=1) >= FromYi) .or. (rc == iostat_end))) exit loop
+                call SplitStringInTwoParams(trim(TempString), YearB, CO2b)
+            if ((roundc(YearB, mold=1) >= FromYi) .or. (rc == iostat_end)) exit loop
             end do loop
             if (FromYi > roundc(YearB, mold=1)) then
                 CO2From = CO2b
@@ -2964,7 +2962,7 @@ real(dp) function CO2ForSimulationPeriod(FromDayNr, ToDayNr)
                     YearA = YearB
                     CO2a = Co2b
                     read(fhandle, *, iostat=rc) TempString
-                    call SplitStringInTwoParams(TempString, YearB, CO2b)
+                    call SplitStringInTwoParams(trim(TempString), YearB, CO2b)
                 if (((roundc(YearB, mold=1) >= ToYi) .or. (rc == iostat_end))) &
                                                                     exit loop_2
                 end do loop_2
