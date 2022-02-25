@@ -4278,6 +4278,12 @@ function __HarvestIndexDay(constref DAP  : LongInt;
                          var HIfinal : integer)   : double;
     external 'aquacrop' name '__ac_global_MOD_harvestindexday';
 
+procedure LoadProgramParametersProject(constref FullFileNameProgramParameters : string);
+
+procedure LoadProgramParametersProject_wrap(constref FullFileNameProgramParameters : PChar;
+                                            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadprogramparametersproject_wrap';
+
 
 
 implementation
@@ -7232,6 +7238,18 @@ begin;
     p := PChar(FullName);
     strlen := Length(FullName);
     LoadCrop_wrap(p,strlen);
+end;
+
+
+procedure LoadProgramParametersProject(constref FullFileNameProgramParameters : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullFileNameProgramParameters);
+    strlen := Length(FullFileNameProgramParameters);
+    LoadProgramParametersProject_wrap(p,strlen);
 end;
 
 

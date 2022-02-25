@@ -2211,5 +2211,19 @@ subroutine LoadCrop_wrap(FullName, strlen)
 end subroutine LoadCrop_wrap
 
 
+subroutine LoadProgramParametersProject_wrap(FullFileNameProgramParameters, &
+                                             strlen)
+    !! Wrapper for [[ac_global:LoadProgramParametersProject_]] 
+    !! for foreign languages.
+    type(c_ptr), intent(in) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullFileNameProgramParameters, strlen)
+    call LoadProgramParametersProject(string)
+end subroutine LoadProgramParametersProject_wrap
+
+
 
 end module ac_interface_global
