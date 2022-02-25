@@ -5439,6 +5439,25 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     call SetOutputName(TempString2)
 end subroutine ComposeOutputFileName
 
+subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgramParameters)
+    character(len=*), intent(in) :: TheFullFileNameProgram
+    character(len=*), intent(inout) :: FullFileNameProgramParameters
+
+    integer(int32) :: TheLength
+    character(len=:), allocatable :: TheExtension
+    
+    FullFileNameProgramParameters = ''
+    TheLength = len(TheFullFileNameProgram)
+    TheExtension = TheFullFileNameProgram(TheLength-3:TheLength) ! PRO or PRM
+    
+    FullFileNameProgramParameters = TheFullFileNameProgram(1:(TheLength-3))
+    if (TheExtension == 'PRO') then
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PP1'
+    else
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PPn'
+    end if
+end subroutine GetFileForProgramParameters
+
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 

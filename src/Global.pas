@@ -147,8 +147,6 @@ PROCEDURE LoadGroundWater(FullName : string;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
 
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
 
@@ -2110,21 +2108,6 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
-
-
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
-VAR TheLength : INTEGER;
-    TheExtension : STRING;
-BEGIN
-FullFileNameProgramParameters := '';
-TheLength := Length(TheFullFileNameProgram);
-TheExtension := Copy(TheFullFileNameProgram,(TheLength-2),3); // PRO or PRM
-FullFileNameProgramParameters := Copy(TheFullFileNameProgram,1,(TheLength-3));
-IF (TheExtension = 'PRO')
-   THEN FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PP1')
-   ELSE FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PPn');
-END; (* GetFileForProgramParameters *)
 
 
 PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
