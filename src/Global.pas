@@ -123,9 +123,6 @@ FUNCTION HarvestIndexDay(DAP  : LongInt;
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
-FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
-                             ResponseECsw : INTEGER;
-                             ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
 
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
@@ -1364,36 +1361,7 @@ IF (GetSimulParam_GDDMethod() < 1) THEN SetSimulParam_GDDMethod(1);
 Close(f0);
 END; (* ReadTemperatureSettingsParameters *)
 
-FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
-                             ResponseECsw : INTEGER;
-                             ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
-VAR ECswRel,LocalKsShapeFactorSalt,
-    KsSalti,SaltStressi,StoClosure,KsStoOut : double;
-BEGIN
-IF ((ResponseECsw > 0) AND (Wrel > 0) AND (GetSimulation_SalinityConsidered() = true))
-   THEN BEGIN  //adjustment to ECsw considered
-        ECswRel := ECswi - (ECswFCi - ECei) + (ResponseECsw-100)*Wrel;
-        IF ((ECswRel > ECeMin) AND (ECswRel < ECeMax))
-           THEN BEGIN
-                // stomatal closure at ECsw relative
-                LocalKsShapeFactorSalt := +3; // CONVEX give best ECsw response
-                KsSalti := KsSalinity(GetSimulation_SalinityConsidered(),ECeMin,ECeMax,ECswRel,LocalKsShapeFactorSalt);
-                SaltStressi := (1-KsSalti)*100;
-                StoClosure := Coeffb0Salt + Coeffb1Salt * SaltStressi + Coeffb2Salt * SaltStressi * SaltStressi;
-                // adjusted KsSto
-                KsStoOut := (1 - StoClosure/100);
-                IF (KsStoOut < 0) THEN KsStoOut := 0;
-                IF (KsStoOut > KsStoIN) THEN KsStoOut := KsStoIN;
-                END
-           ELSE BEGIN
-                IF (ECswRel >= ECeMax)
-                   THEN KsStoOut := 0 // full stress
-                   ELSE KsStoOut := KsStoIN; // no extra stress
-                END;
-        END
-   ELSE KsStoOut := KsStoIN;  // no adjustment to ECsw
-AdjustedKsStoToECsw := KsStoOut;
-END; (* AdjustedKsStoToECsw *)
+
 
 
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
