@@ -2136,6 +2136,55 @@ real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
     end if
 end function HImultiplier
 
+real(dp) function AdjustedKsStoToECsw(ECeMin, ECeMax, ResponseECsw, ECei, &
+            ECswi, ECswFCi, Wrel, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, KsStoIN)
+    integer(int8), intent(in) :: ECeMin
+    integer(int8), intent(in) :: ECeMax
+    integer(int32), intent(in) :: ResponseECsw
+    real(dp), intent(in) :: ECei
+    real(dp), intent(in) :: ECswi
+    real(dp), intent(in) :: ECswFCi
+    real(dp), intent(in) :: Wrel
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: KsStoIN
+
+    real(dp) :: ECswRel, LocalKsShapeFactorSalt, KsSalti, SaltStressi, StoClosure, KsStoOut
+
+    if ((ResponseECsw > 0) .and. (Wrel > epsilon(1._dp)) .and. &
+                            (GetSimulation_SalinityConsidered() .eqv. .true.)) then
+        ! adjustment to ECsw considered
+        ECswRel = ECswi - (ECswFCi - ECei) + (ResponseECsw-100._dp)*Wrel
+        if ((ECswRel > ECeMin) .and. (ECswRel < ECeMax)) then
+            ! stomatal closure at ECsw relative
+            LocalKsShapeFactorSalt = 3._dp ! CONVEX give best ECsw response
+            KsSalti = KsSalinity(GetSimulation_SalinityConsidered(), ECeMin, &
+                                        ECeMax, ECswRel, LocalKsShapeFactorSalt)
+            SaltStressi = (1._dp-KsSalti)*100._dp
+            StoClosure = Coeffb0Salt + Coeffb1Salt * SaltStressi + Coeffb2Salt &
+                                                    * SaltStressi * SaltStressi
+            ! adjusted KsSto
+            KsStoOut = (1._dp - StoClosure/100._dp)
+            if (KsStoOut < 0.0_dp) then
+                KsStoOut = 0._dp
+            end if
+            if (KsStoOut > KsStoIN) then
+                KsStoOut = KsStoIN
+            end if
+        else
+            if (ECswRel >= ECeMax) then
+                KsStoOut = 0._dp ! full stress
+            else
+                KsStoOut = KsStoIN ! no extra stress
+            end if
+        end if
+    else
+        KsStoOut = KsStoIN  ! no adjustment to ECsw
+    end if
+    AdjustedKsStoToECsw = KsStoOut
+end function AdjustedKsStoToECsw
+
 
 real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
     integer(int32), intent(in) :: Dayi
