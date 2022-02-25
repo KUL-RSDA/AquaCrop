@@ -377,7 +377,7 @@ WITH PreviousSum DO
   Irrigation := 0.0;
   Infiltrated := 0.0;
   Runoff := 0.0;
-  Drain := 0.0;
+  SetDrain(0.0);
   Eact := 0.0;
   Tact := 0.0;
   TrW := 0.0;
@@ -2056,7 +2056,7 @@ CASE OutputAggregate OF
         CRsalt := GetSumWaBal_CRsalt() - PreviousSum.CRsalt;
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
                        Rain,ETo,GDDayi,
-                       Irrigation,Infiltrated,Runoff,Drain,CRwater,
+                       Irrigation,Infiltrated,Runoff,GetDrain(),CRwater,
                        Eact,Epot,Tact,TactWeedInfested,Tpot,
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,Bin,Bout,
@@ -2101,9 +2101,9 @@ IF Out1Wabal THEN
    BEGIN
    IF (GetZiAqua() = undef_int)
       THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
-               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,undef_double:8:2)
+               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,GetDrain():9:1,CRwater:9:1,undef_double:8:2)
       ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
-               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,(GetZiAqua()/100):8:2);
+               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,GetDrain():9:1,CRwater:9:1,(GetZiAqua()/100):8:2);
    IF (Tpot > 0) THEN Ratio1 := 100*Tact/Tpot
                  ELSE Ratio1 := 100.0;
    IF ((Epot+Tpot) > 0) THEN Ratio2 := 100*(Eact+Tact)/(Epot+Tpot)
@@ -2224,7 +2224,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(Drain*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,GetTotalSaltContent().EndDay:10:3);
+   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;

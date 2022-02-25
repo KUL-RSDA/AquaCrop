@@ -2,11 +2,14 @@ module ac_simul
 
 use ac_kinds, only:  dp, int32
 use ac_global, only: GetCompartment_FCadj, &
+                     GetCompartment_fluxout, &
                      GetCompartment_Layer, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
+                     GetDrain, &
+                     GetNrCompartments, &
                      GetSimulParam_pAdjFAO, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
@@ -14,7 +17,8 @@ use ac_global, only: GetCompartment_FCadj, &
                      GetSoilLayer_SAT, &
                      GetSoilLayer_tau, &
                      SetCompartment_fluxout, &
-                     SetCompartment_theta
+                     SetCompartment_theta, &
+                     SetDrain
 
 implicit none
 
@@ -137,7 +141,7 @@ subroutine calculate_drainage()
         ! 1. Calculate drainage of compartment
         ! =====================================
         layeri = GetCompartment_Layer(compi)
-        if (GetCompartment_theta(compi) 
+        if (GetCompartment_theta(compi) &
                  > GetCompartment_FCadj(compi)/100.0_dp) then
             delta_theta = calculate_delta_theta(GetCompartment_theta(compi), &
                 (GetCompartment_FCadj(compi)/100.0_dp), layeri)
@@ -165,7 +169,7 @@ subroutine calculate_drainage()
 
         ! 3. Drain compartment
         ! ====================
-        if (drainability == .true.) then
+        if (drainability) then
             call SetCompartment_theta(compi, &
                      GetCompartment_theta(compi)-delta_theta)
             drainsum = drainsum + drain_comp
@@ -208,7 +212,7 @@ subroutine calculate_drainage()
                         GetCompartment_theta(compi), &
                         (GetCompartment_FCadj(compi)/100.0_dp), &
                         layeri)
-                    call SetCompartment_theta(compi, 
+                    call SetCompartment_theta(compi, &
                              GetCompartment_theta(compi) - delta_theta)
                     drainsum = delta_theta * 1000.0_dp &
                                * GetCompartment_Thickness(compi) &
@@ -220,7 +224,7 @@ subroutine calculate_drainage()
             end if ! theta_x <= SoilLayer[layeri].SAT/100  
 
             if (theta_x > GetSoilLayer_SAT(layeri)/100.0_dp) then
-                call SetCompartment_theta(compi, 
+                call SetCompartment_theta(compi,&
                          GetCompartment_theta(compi)&
                          + drainsum/(1000.0_dp*GetCompartment_Thickness(compi) &
                                      *(1-GetSoilLayer_GravelVol(layeri)/100.0_dp)))
@@ -231,12 +235,12 @@ subroutine calculate_drainage()
                         delta_theta = calculate_delta_theta(&
                             GetCompartment_theta(compi), &
                             (GetCompartment_FCadj(compi)/100.0_dp),&
-                            layeri)&
+                            layeri)
                         call SetCompartment_theta(compi, &
                                  GetCompartment_theta(compi) - delta_theta)
                         drainsum = delta_theta * 1000.0_dp &
                                    * GetCompartment_Thickness(compi) &
-                                   *(1-GetSoilLayer_GravelVol(layeri)/100.0_dp)&
+                                   *(1-GetSoilLayer_GravelVol(layeri)/100.0_dp)
                         call CheckDrainsum(layeri, drainsum, excess)
                     else
                         drainsum = 0.0_dp
@@ -292,15 +296,15 @@ subroutine calculate_drainage()
                 call SetCompartment_theta(pre_nr,&
                     GetCompartment_theta(pre_nr)&
                     + excess&
-                    / (1000.0_dp*GetCompartment_Thickness(pre_nr)
+                    / (1000.0_dp*GetCompartment_Thickness(pre_nr)&
                        *(1-GetSoilLayer_GravelVol(GetCompartment_Layer(pre_nr))&
                            /100.0_dp)))
                 if (GetCompartment_theta(pre_nr) &
-                        > GetSoilLayer_SAT(layeri)/100.0_dp then
+                        > GetSoilLayer_SAT(layeri)/100.0_dp) then
                     excess = (GetCompartment_theta(pre_nr) &
-                              - GetSoilLayer_i(layeri)%SAT/100) &
+                              - GetSoilLayer_SAT(layeri)/100) &
                              * 1000.0_dp * GetCompartment_Thickness(pre_nr) &
-                             * (1-GetSoilLayer_GravelVol(GetCompartment_Layer(pre_nr))
+                             * (1-GetSoilLayer_GravelVol(GetCompartment_Layer(pre_nr))&
                                     /100.0_dp)
                     call SetCompartment_theta(pre_nr,&
                              GetSoilLayer_SAT(layeri)/100.0_dp)
@@ -313,8 +317,7 @@ subroutine calculate_drainage()
 
     !Do-loop
     end do
-    Drain = drainsum
-
+    call SetDrain(drainsum)
 contains
 
     subroutine CheckDrainsum(layeri, drainsum, excess)

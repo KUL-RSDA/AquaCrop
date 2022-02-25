@@ -972,6 +972,7 @@ integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
+real(dp) :: Drain  ! mm/day
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -11591,5 +11592,18 @@ subroutine SetZiAqua(ZiAqua_in)
 
     ZiAqua = ZiAqua_in
 end subroutine SetZiAqua
+
+real(dp) function GetDrain()
+    !! Getter for the "Drain" global variable.
+
+    GetDrain = Drain
+end function GetDrain
+
+subroutine SetDrain(Drain_in)
+    !! Setter for the "Drain" global variable.
+    real(dp), intent(in) :: Drain_in
+
+    Drain = Drain_in
+end subroutine SetDrain
 
 end module ac_global

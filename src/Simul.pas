@@ -632,7 +632,7 @@ CASE control OF
                            SetTotalSaltContent_BeginDay(GetTotalSaltContent().BeginDay
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
-               Drain:=0.0;
+               SetDrain(0.0);
                Runoff:=0.0;
                //Eact:=0.0; at the beginning of the evaporation process it is put at zero
                Tact:=0.0;
@@ -674,11 +674,11 @@ CASE control OF
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
                SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
-                              -(GetTotalWaterContent().EndDay+Drain+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow));
+                              -(GetTotalWaterContent().EndDay+GetDrain()+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow));
                SetTotalSaltContent_ErrorDay(GetTotalSaltContent().BeginDay - GetTotalSaltContent().EndDay // Mg/ha
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
-                                            - Drain*ECdrain*Equiv/100
+                                            - GetDrain()*ECdrain*Equiv/100
                                             + CRsalt/100
                                             + HorizontalSaltFlow);
                SetSumWaBal_Epot(GetSumWaBal_Epot() + Epot);
@@ -687,7 +687,7 @@ CASE control OF
                SetSumWaBal_Irrigation(GetSumWaBal_Irrigation() + Irrigation);
                SetSumWaBal_Infiltrated(GetSumWaBal_Infiltrated() + Infiltrated);
                SetSumWaBal_Runoff(GetSumWaBal_Runoff() + Runoff);
-               SetSumWaBal_Drain(GetSumWaBal_Drain() + Drain);
+               SetSumWaBal_Drain(GetSumWaBal_Drain() + GetDrain());
                SetSumWaBal_Eact(GetSumWaBal_Eact() + Eact);
                SetSumWaBal_Tact(GetSumWaBal_Tact() + Tact);
                SetSumWaBal_TrW(GetSumWaBal_TrW() + TactWeedInfested);
@@ -703,171 +703,10 @@ CASE control OF
                   END;
                SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + CRsalt/100);
                SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100);
-               SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  Drain*ECdrain*Equiv/100);
+               SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  GetDrain()*ECdrain*Equiv/100);
                END;
      END;
 END; (* CheckWaterSaltBalance *)
-
-
-PROCEDURE calculate_drainage;
-
-VAR       i,compi,layeri,pre_nr : INTEGER;
-          drainsum,delta_theta,drain_comp,drainmax,theta_x,excess,pre_thick : double;
-          drainability : BOOLEAN;
-
-
-
-PROCEDURE CheckDrainsum(layeri : INTEGER;
-                        VAR drainsum, excess : double);
-BEGIN
-IF (drainsum > GetSoilLayer_i(layeri).InfRate) THEN
-   BEGIN
-   excess := excess + drainsum - GetSoilLayer_i(layeri).InfRate;
-   drainsum := GetSoilLayer_i(layeri).InfRate;
-   END;
-END; (* CheckDrainsum *)
-
-
-BEGIN (* calculate_drainage *)
-drainsum:=0;
-FOR compi:=1 to GetNrCompartments() DO
-    BEGIN
-(*   1. Calculate drainage of compartment
-     ===================================== *)
-       layeri := GetCompartment_Layer(compi);
-       // IF Compartment[compi].theta > SoilLayer[layeri].FC/100
-       IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
-          THEN delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri)
-          ELSE delta_theta := 0;
-       drain_comp := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-
-
-(*   2. Check drainability
-     ======================   *)
-       excess := 0;
-       pre_thick := 0;
-       FOR i := 1 TO (compi-1) DO pre_thick := pre_thick + GetCompartment_Thickness(i);
-       drainmax := delta_theta * 1000 * pre_thick * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-       IF drainsum <= drainmax
-          THEN drainability := true
-          ELSE drainability := false;
-
-
-(*   3. Drain compartment
-     =====================  *)
-       IF drainability = true
-       (* -----------------*)
-          THEN BEGIN
-               SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
-               drainsum := drainsum + drain_comp;
-               CheckDrainsum(layeri,drainsum,excess);
-               END;
-
-       IF drainability = false
-       (* ------------------*)
-          THEN BEGIN
-               delta_theta := drainsum/(1000 * pre_thick * (1 - GetSoilLayer_i(layeri).GravelVol/100));
-               theta_x := calculate_theta(delta_theta,(GetCompartment_FCadj(compi)/100),layeri);
-
-               IF theta_x <= GetSoilLayer_i(layeri).SAT/100
-               (* ----------------------------------*)
-               THEN BEGIN
-                    SetCompartment_theta(compi, GetCompartment_theta(compi) + drainsum/
-                              (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(layeri).GravelVol/100)));
-                    IF GetCompartment_theta(compi) > theta_x
-                       THEN BEGIN
-                            // OLD
-                            drainsum := ((GetCompartment_theta(compi) - theta_x) + delta_theta)
-                                        * 1000 * GetCompartment_Thickness(compi);
-                            // OLD
-
-                            // NEW
-                            drainsum := (GetCompartment_theta(compi) - theta_x) * 1000 * GetCompartment_Thickness(compi)
-                                        * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                            delta_theta := calculate_delta_theta(theta_x,(GetCompartment_FCadj(compi)/100),layeri);
-                            drainsum := drainsum +  delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                        * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                            // NEW
-
-                            CheckDrainsum(layeri,drainsum,excess);
-                            SetCompartment_theta(compi, theta_x - delta_theta);
-                            END
-                       //ELSE IF Compartment[compi].theta > SoilLayer[layeri].FC/100
-                       ELSE IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
-                               THEN BEGIN
-                                    delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
-                                    SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
-                                    drainsum := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                                * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                                    CheckDrainsum(layeri,drainsum,excess);
-                                    END
-                               ELSE drainsum := 0;
-                    END; (* theta_x <= SoilLayer[layeri].SAT/100  *)
-
-               IF theta_x > GetSoilLayer_i(layeri).SAT/100
-               (* ----------------------------------*)
-               THEN BEGIN
-                    SetCompartment_theta(compi, GetCompartment_theta(compi) + drainsum/
-                            (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(layeri).GravelVol/100)));
-                    IF GetCompartment_theta(compi) <= GetSoilLayer_i(layeri).SAT/100
-                       THEN IF GetCompartment_theta(compi) > GetCompartment_FCadj(compi)/100
-                               THEN BEGIN
-                                    delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
-                                    SetCompartment_theta(compi, GetCompartment_theta(compi) - delta_theta);
-                                    drainsum := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                                * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                                    CheckDrainsum(layeri,drainsum,excess);
-                                    END
-                               ELSE drainsum := 0;
-
-                    IF GetCompartment_theta(compi) > GetSoilLayer_i(layeri).SAT/100
-                       THEN BEGIN
-                            excess := (GetCompartment_theta(compi) - GetSoilLayer_i(layeri).SAT/100)
-                                      * 1000 * GetCompartment_Thickness(compi)
-                                      * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                            delta_theta := calculate_delta_theta(GetCompartment_theta(compi),(GetCompartment_FCadj(compi)/100),layeri);
-                            SetCompartment_theta(compi, GetSoilLayer_i(layeri).SAT/100 - delta_theta);
-                            drain_comp := delta_theta * 1000 * GetCompartment_Thickness(compi)
-                                          * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                            drainmax := delta_theta * 1000 * pre_thick
-                                        * (1 - GetSoilLayer_i(layeri).GravelVol/100);
-                            IF drainmax > excess THEN drainmax := excess;
-                            excess := excess-drainmax;
-                            drainsum := drainmax + drain_comp;
-                            CheckDrainsum(layeri,drainsum,excess);
-                            END;
-                    END; (* theta_x > SoilLayer[layeri].SAT/100  *)
-               END; (* drainability = false *)
-
-        SetCompartment_fluxout(compi, drainsum);
-
-
-(*   4. Redistribute excess
-     =======================  *)
-        IF excess > 0
-        THEN BEGIN
-             pre_nr := compi + 1;
-             REPEAT
-               pre_nr := pre_nr - 1;
-               layeri := GetCompartment_Layer(pre_nr);
-               IF (pre_nr < compi) THEN SetCompartment_fluxout(pre_nr, GetCompartment_fluxout(pre_nr) - excess);
-               SetCompartment_theta(pre_nr, GetCompartment_theta(pre_nr) + excess/
-                    (1000*GetCompartment_Thickness(pre_nr)*(1-GetSoilLayer_i(GetCompartment_Layer(pre_nr)).GravelVol/100)));
-               IF GetCompartment_theta(pre_nr) > GetSoilLayer_i(layeri).SAT/100
-                  THEN BEGIN
-                       excess := (GetCompartment_theta(pre_nr) - GetSoilLayer_i(layeri).SAT/100)*1000*GetCompartment_Thickness(pre_nr)
-                                 * (1 - GetSoilLayer_i(GetCompartment_Layer(pre_nr)).GravelVol/100);
-                       SetCompartment_theta(pre_nr, GetSoilLayer_i(layeri).SAT/100);
-                       END
-                  ELSE excess:=0;
-             UNTIL (excess = 0) or (pre_nr = 1);
-             END; (* redistribute excess *)
-
-    END; (*Do-loop*)
-Drain := drainsum;
-END; (* calculate_drainage *)
-
 
 
 PROCEDURE calculate_runoff(MaxDepth : double);
@@ -1242,7 +1081,7 @@ THEN BEGIN
         END;
 
      UNTIL ((amount_still_to_store <= 0) or (compi = GetNrCompartments()));
-     IF (amount_still_to_store > 0) THEN Drain := Drain + amount_still_to_store;
+     IF (amount_still_to_store > 0) THEN SetDrain(GetDrain() + amount_still_to_store);
 
    (*6. Adjust infiltrated water
    ============================= *)
@@ -1319,7 +1158,7 @@ IF (SubDrain > 0) THEN
      END;
 
    (* excess *)
-   IF (amount_still_to_store > 0) THEN Drain := Drain + amount_still_to_store;
+   IF (amount_still_to_store > 0) THEN SetDrain(GetDrain() + amount_still_to_store);
    END; (* STORAGE in Subsoil (= SubDrain) *)
 
 // D - STORAGE in Rootzone (= EffecRain)
@@ -1674,7 +1513,7 @@ FOR compi := 1 TO GetNrCompartments() DO
     SaltIN := SaltOUT;
     END;
 
-IF (Drain > 0.001) THEN ECdrain := SaltOUT/(Drain*Equiv);
+IF (GetDrain() > 0.001) THEN ECdrain := SaltOUT/(GetDrain()*Equiv);
 
 
 //5. vertical salt diffusion
@@ -1753,8 +1592,8 @@ IF (SubDrain > 0) THEN
    //dump
    IF (compi >= GetNrCompartments())
       THEN BEGIN
-           SaltOUT := ECdrain*(Drain*Equiv) + ECsubdrain*SubDrain*Equiv;
-           ECdrain := SaltOUT/(Drain*Equiv);
+           SaltOUT := ECdrain*(GetDrain()*Equiv) + ECsubdrain*SubDrain*Equiv;
+           ECdrain := SaltOUT/(GetDrain()*Equiv);
            END
       ELSE BEGIN
            compi := compi + 1;
