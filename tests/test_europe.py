@@ -264,7 +264,7 @@ def test_europe(row, col, use_irrigation):
             (18, 59, True, 'day'):  1,
             (18, 60, True, 'day'):  2,
             (13, 63, True, 'day'):  1,
-            (12, 64, True, 'day'):  1,
+            (12, 64, True, 'day'):  2,
             (39, 8, True, 'day'):   1,
         }
         if (row, col, use_irrigation, suffix) in special_cases:
