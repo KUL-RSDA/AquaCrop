@@ -4932,7 +4932,8 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
             call GetDaySwitchToLinear(HImax, dHIdt_local, HIGC, &
                                       tSwitch, HIGClinear)
             if (t < tSwitch) then
-                PercentLagPhase = int(100 * (t/tSwitch), kind=int8)
+                PercentLagPhase = roundc(100._dp &
+                                     * (t/real(tSwitch, kind=dp)), mold=1_int8)
                 HIday = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t))
             else
                 PercentLagPhase = 100_int8
