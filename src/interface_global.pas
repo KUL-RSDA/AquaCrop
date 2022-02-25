@@ -4261,9 +4261,43 @@ function GetZiAqua() : integer;
 procedure SetZiAqua(constref ZiAqua_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setziaqua';
 
+function HarvestIndexDay(constref DAP  : LongInt;
+                         constref DaysToFlower,HImax : integer;
+                         constref dHIdt,CCi,CCxadjusted : double;
+                         constref PercCCxHIfinal        : ShortInt;
+                         constref TempPlanting : rep_Planting;
+                         var PercentLagPhase : ShortInt;
+                         var HIfinal : INTEGER)   : double;
+
+function __HarvestIndexDay(constref DAP  : LongInt;
+                         constref DaysToFlower,HImax : integer;
+                         constref dHIdt,CCi,CCxadjusted : double;
+                         constref PercCCxHIfinal        : ShortInt;
+                         constref int_planting : integer;
+                         var PercentLagPhase : ShortInt;
+                         var HIfinal : integer)   : double;
+    external 'aquacrop' name '__ac_global_MOD_harvestindexday';
+
 
 
 implementation
+
+function HarvestIndexDay(constref DAP  : LongInt;
+                         constref DaysToFlower,HImax : integer;
+                         constref dHIdt,CCi,CCxadjusted : double;
+                         constref PercCCxHIfinal        : ShortInt;
+                         constref TempPlanting : rep_Planting;
+                         var PercentLagPhase : ShortInt;
+                         var HIfinal : INTEGER)   : double;
+var
+    int_planting : integer;
+begin
+    int_planting := ord(TempPlanting);
+    HarvestIndexDay := __HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt,
+                                         CCi, CCxadjusted, PercCCxHIfinal, 
+                                         int_planting, PercentLagPhase,
+                                         HIfinal);
+end;
 
 
 function GetWeedRC(
