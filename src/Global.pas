@@ -111,15 +111,6 @@ PROCEDURE AdjustSimPeriod;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 
-
-FUNCTION HarvestIndexDay(DAP  : LongInt;
-                         DaysToFlower,HImax : integer;
-                         dHIdt,CCi,CCxadjusted : double;
-                         PercCCxHIfinal        : ShortInt;
-                         TempPlanting : rep_Planting;
-                         VAR PercentLagPhase : ShortInt;
-                         VAR HIfinal : INTEGER)   : double;
-
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
@@ -1231,69 +1222,6 @@ IF (DZtopRel < DrRel)
    THEN ZtopSWCconsidered := true  // top soil is relative wetter than root zone
    ELSE ZtopSWCconsidered := false;
 END; (* DetermineRootZoneWC *)
-
-
-FUNCTION HarvestIndexDay(DAP  : LongInt;
-                         DaysToFlower,HImax : integer;
-                         dHIdt,CCi,CCxadjusted : double;
-                         PercCCxHIfinal        : ShortInt;
-                         TempPlanting : rep_Planting;
-                         VAR PercentLagPhase : ShortInt;
-                         VAR HIfinal : INTEGER)   : double;
-
-CONST HIo = 1;
-VAR HIGC,HIday,HIGClinear : double;
-    t,tMax,tSwitch : Integer;
-
-BEGIN
-t := DAP - GetSimulation_DelayedDays() - DaysToFlower;
-//Simulation.WPyON := false;
-PercentLagPhase := 0;
-IF (t <= 0)
-   THEN HIday := 0
-   ELSE BEGIN
-        IF ((GetCrop().Subkind = Vegetative) AND (TempPlanting = Regrowth)) THEN dHIdt := 100;
-        IF ((GetCrop().Subkind = Forage) AND (TempPlanting = Regrowth)) THEN dHIdt := 100;
-        IF (dHIdt > 99)
-           THEN BEGIN
-                HIday := HImax;
-                PercentLagPhase := 100;
-                END
-           ELSE BEGIN
-                HIGC := HarvestIndexGrowthCoefficient(HImax,dHIdt);
-                GetDaySwitchToLinear(HImax,dHIdt,HIGC,tSwitch,HIGClinear);
-                IF (t < tSwitch)
-                   THEN BEGIN
-                        PercentLagPhase := ROUND(100 * (t/tSwitch));
-                        HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t));
-                        END
-                   ELSE BEGIN
-                        PercentLagPhase := 100;
-                        IF ((GetCrop_subkind() = Tuber) OR (GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
-                           THEN BEGIN // continue with logistic equation
-                                HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t));
-                                IF (HIday >= 0.9799*HImax) THEN HIday := HImax;
-                                END
-                           ELSE BEGIN // switch to linear increase
-                                HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch));
-                                HIday := Hiday + HIGClinear*(t-tSwitch);
-                                END;
-                        END;
-                IF (HIday > HImax) THEN HIday := HImax;
-                IF (HIday <= (HIo + 0.4)) THEN HIday := 0;
-                IF ((HImax - HIday) < 0.4) THEN HIday := HImax;
-                END;
-
-        // adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
-        tMax := ROUND(HImax/dHIdt);
-        IF ((HIfinal = HImax) AND (t <= tmax) AND (CCi <= (PercCCxHIfinal/100))
-            AND (GetCrop_subkind() <> Vegetative) AND (GetCrop_subkind() <> Forage))
-                THEN HIfinal := ROUND(HIday);
-        IF (HIday > HIfinal) THEN HIday := HIfinal;
-        END;
-HarvestIndexDay := HIday;
-
-END; (* HarvestIndexDay *)
 
 
 
