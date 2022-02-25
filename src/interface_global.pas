@@ -1291,6 +1291,20 @@ function HImultiplier(
             constref HIadj : ShortInt) : double;
          external 'aquacrop' name '__ac_global_MOD_himultiplier';
 
+function AdjustedKsStoToECsw(
+            constref ECeMin : ShortInt;
+            constref ECeMax : ShortInt;
+            constref ResponseECsw : integer;
+            constref ECei : double;
+            constref ECswi : double;
+            constref ECswFCi : double;
+            constref Wrel : double;
+            constref Coeffb0Salt : double;
+            constref Coeffb1Salt : double;
+            constref Coeffb2Salt : double;
+            constref KsStoIN : double) : double;
+         external 'aquacrop' name '__ac_global_MOD_adjustedksstotoecsw';
+
 procedure ComposeOutputFileName(
             constref TheProjectFileName : string);
 
@@ -4165,6 +4179,23 @@ function CanopyCoverNoStressSF(
                 constref TypeDays : rep_modeCycle;
                 constref SFRedCGC,SFRedCCx : ShortInt) : double;
 
+function __CCiNoWaterStressSF(
+                constref Dayi,L0,L12SF,L123,L1234 : integer;
+                constref GDDL0,GDDL12SF,GDDL123,GDDL1234  : integer;
+                constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+                constref SFRedCGC,SFRedCCx : ShortInt;
+                constref SFCDecline : Double;
+                constref TheModeCycle : ShortInt) : double;
+     external 'aquacrop' name '__ac_global_MOD_ccinowaterstresssf';
+
+function CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
+                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
+                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+                            SFRedCGC,SFRedCCx : ShortInt;
+                            SFCDecline : Double;
+                            TheModeCycle : rep_modeCycle) : double;
+
+
 procedure DetermineNrandThicknessCompartments();
     external 'aquacrop' name '__ac_global_MOD_determinenrandthicknesscompartments';
 
@@ -4236,9 +4267,43 @@ function GetZiAqua() : integer;
 procedure SetZiAqua(constref ZiAqua_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setziaqua';
 
+function HarvestIndexDay(constref DAP  : LongInt;
+                         constref DaysToFlower,HImax : integer;
+                         constref dHIdt,CCi,CCxadjusted : double;
+                         constref PercCCxHIfinal        : ShortInt;
+                         constref TempPlanting : rep_Planting;
+                         var PercentLagPhase : ShortInt;
+                         var HIfinal : INTEGER)   : double;
+
+function __HarvestIndexDay(constref DAP  : LongInt;
+                         constref DaysToFlower,HImax : integer;
+                         constref dHIdt,CCi,CCxadjusted : double;
+                         constref PercCCxHIfinal        : ShortInt;
+                         constref int_planting : integer;
+                         var PercentLagPhase : ShortInt;
+                         var HIfinal : integer)   : double;
+    external 'aquacrop' name '__ac_global_MOD_harvestindexday';
+
 
 
 implementation
+
+function HarvestIndexDay(constref DAP  : LongInt;
+                         constref DaysToFlower,HImax : integer;
+                         constref dHIdt,CCi,CCxadjusted : double;
+                         constref PercCCxHIfinal        : ShortInt;
+                         constref TempPlanting : rep_Planting;
+                         var PercentLagPhase : ShortInt;
+                         var HIfinal : INTEGER)   : double;
+var
+    int_planting : integer;
+begin
+    int_planting := ord(TempPlanting);
+    HarvestIndexDay := __HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt,
+                                         CCi, CCxadjusted, PercCCxHIfinal, 
+                                         int_planting, PercentLagPhase,
+                                         HIfinal);
+end;
 
 
 function GetWeedRC(
@@ -7092,6 +7157,22 @@ begin
                                      CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD,
                                      int_TypeDays, SFRedCGC,SFRedCCx);
 end;
+
+function CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
+                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
+                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
+                            SFRedCGC,SFRedCCx : ShortInt;
+                            SFCDecline : Double;
+                            TheModeCycle : rep_modeCycle) : double;
+var
+    int_TheModeCycle: integer;
+begin
+    int_TheModeCycle := ord(TheModeCycle);
+    CCiNoWaterStressSF :=  __CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,GDDL0,
+        GDDL12SF,GDDL123,GDDL1234, CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD,
+        SFRedCGC,SFRedCCx, SFCDecline, int_TheModeCycle);
+end;
+
 
 
 function ECeComp(constref Comp : CompartmentIndividual) : double;

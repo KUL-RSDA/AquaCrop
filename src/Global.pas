@@ -111,29 +111,10 @@ PROCEDURE AdjustSimPeriod;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
 
-
-FUNCTION HarvestIndexDay(DAP  : LongInt;
-                         DaysToFlower,HImax : integer;
-                         dHIdt,CCi,CCxadjusted : double;
-                         PercCCxHIfinal        : ShortInt;
-                         TempPlanting : rep_Planting;
-                         VAR PercentLagPhase : ShortInt;
-                         VAR HIfinal : INTEGER)   : double;
-
 PROCEDURE ReadCropSettingsParameters;
 PROCEDURE ReadFieldSettingsParameters;
 PROCEDURE ReadTemperatureSettingsParameters;
-FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
-                             ResponseECsw : INTEGER;
-                             ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
 
-
-FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
-                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
-                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
-                            SFRedCGC,SFRedCCx : ShortInt;
-                            SFCDecline : Double;
-                            TheModeCycle : rep_modeCycle) : double;
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
                             CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,
@@ -1233,69 +1214,6 @@ IF (DZtopRel < DrRel)
 END; (* DetermineRootZoneWC *)
 
 
-FUNCTION HarvestIndexDay(DAP  : LongInt;
-                         DaysToFlower,HImax : integer;
-                         dHIdt,CCi,CCxadjusted : double;
-                         PercCCxHIfinal        : ShortInt;
-                         TempPlanting : rep_Planting;
-                         VAR PercentLagPhase : ShortInt;
-                         VAR HIfinal : INTEGER)   : double;
-
-CONST HIo = 1;
-VAR HIGC,HIday,HIGClinear : double;
-    t,tMax,tSwitch : Integer;
-
-BEGIN
-t := DAP - GetSimulation_DelayedDays() - DaysToFlower;
-//Simulation.WPyON := false;
-PercentLagPhase := 0;
-IF (t <= 0)
-   THEN HIday := 0
-   ELSE BEGIN
-        IF ((GetCrop().Subkind = Vegetative) AND (TempPlanting = Regrowth)) THEN dHIdt := 100;
-        IF ((GetCrop().Subkind = Forage) AND (TempPlanting = Regrowth)) THEN dHIdt := 100;
-        IF (dHIdt > 99)
-           THEN BEGIN
-                HIday := HImax;
-                PercentLagPhase := 100;
-                END
-           ELSE BEGIN
-                HIGC := HarvestIndexGrowthCoefficient(HImax,dHIdt);
-                GetDaySwitchToLinear(HImax,dHIdt,HIGC,tSwitch,HIGClinear);
-                IF (t < tSwitch)
-                   THEN BEGIN
-                        PercentLagPhase := ROUND(100 * (t/tSwitch));
-                        HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t));
-                        END
-                   ELSE BEGIN
-                        PercentLagPhase := 100;
-                        IF ((GetCrop_subkind() = Tuber) OR (GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
-                           THEN BEGIN // continue with logistic equation
-                                HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t));
-                                IF (HIday >= 0.9799*HImax) THEN HIday := HImax;
-                                END
-                           ELSE BEGIN // switch to linear increase
-                                HIday := (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch));
-                                HIday := Hiday + HIGClinear*(t-tSwitch);
-                                END;
-                        END;
-                IF (HIday > HImax) THEN HIday := HImax;
-                IF (HIday <= (HIo + 0.4)) THEN HIday := 0;
-                IF ((HImax - HIday) < 0.4) THEN HIday := HImax;
-                END;
-
-        // adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
-        tMax := ROUND(HImax/dHIdt);
-        IF ((HIfinal = HImax) AND (t <= tmax) AND (CCi <= (PercCCxHIfinal/100))
-            AND (GetCrop_subkind() <> Vegetative) AND (GetCrop_subkind() <> Forage))
-                THEN HIfinal := ROUND(HIday);
-        IF (HIday > HIfinal) THEN HIday := HIfinal;
-        END;
-HarvestIndexDay := HIday;
-
-END; (* HarvestIndexDay *)
-
-
 
 PROCEDURE ReadCropSettingsParameters;
 VAR f : textfile;
@@ -1371,120 +1289,6 @@ IF (GetSimulParam_GDDMethod() < 1) THEN SetSimulParam_GDDMethod(1);
 Close(f0);
 END; (* ReadTemperatureSettingsParameters *)
 
-FUNCTION AdjustedKsStoToECsw(ECeMin,ECeMax : ShortInt;
-                             ResponseECsw : INTEGER;
-                             ECei,ECswi,ECswFCi,Wrel,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,KsStoIN : double) : double;
-VAR ECswRel,LocalKsShapeFactorSalt,
-    KsSalti,SaltStressi,StoClosure,KsStoOut : double;
-BEGIN
-IF ((ResponseECsw > 0) AND (Wrel > 0) AND (GetSimulation_SalinityConsidered() = true))
-   THEN BEGIN  //adjustment to ECsw considered
-        ECswRel := ECswi - (ECswFCi - ECei) + (ResponseECsw-100)*Wrel;
-        IF ((ECswRel > ECeMin) AND (ECswRel < ECeMax))
-           THEN BEGIN
-                // stomatal closure at ECsw relative
-                LocalKsShapeFactorSalt := +3; // CONVEX give best ECsw response
-                KsSalti := KsSalinity(GetSimulation_SalinityConsidered(),ECeMin,ECeMax,ECswRel,LocalKsShapeFactorSalt);
-                SaltStressi := (1-KsSalti)*100;
-                StoClosure := Coeffb0Salt + Coeffb1Salt * SaltStressi + Coeffb2Salt * SaltStressi * SaltStressi;
-                // adjusted KsSto
-                KsStoOut := (1 - StoClosure/100);
-                IF (KsStoOut < 0) THEN KsStoOut := 0;
-                IF (KsStoOut > KsStoIN) THEN KsStoOut := KsStoIN;
-                END
-           ELSE BEGIN
-                IF (ECswRel >= ECeMax)
-                   THEN KsStoOut := 0 // full stress
-                   ELSE KsStoOut := KsStoIN; // no extra stress
-                END;
-        END
-   ELSE KsStoOut := KsStoIN;  // no adjustment to ECsw
-AdjustedKsStoToECsw := KsStoOut;
-END; (* AdjustedKsStoToECsw *)
-
-
-
-FUNCTION CCiNoWaterStressSF(Dayi,L0,L12SF,L123,L1234,
-                            GDDL0,GDDL12SF,GDDL123,GDDL1234  : INTEGER;
-                            CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,SumGDD,RatDGDD : double;
-                            SFRedCGC,SFRedCCx : ShortInt;
-                            SFCDecline : Double;
-                            TheModeCycle : rep_modeCycle) : double;
-
-VAR CCi,CCibis,CCxAdj,CDCadj,GDDCDCadj : double;
-
-BEGIN
-// Calculate CCi
-CCi := CanopyCoverNoStressSF(Dayi,L0,L123,L1234,GDDL0,GDDL123,GDDL1234,
-                             CCo,CCx,CGC,CDC,GDDCGC,GDDCDC,SumGDD,TheModeCycle,
-                             SFRedCGC,SFRedCCX);
-
-// Consider CDecline for limited soil fertiltiy
-//IF ((Dayi > L12SF) AND (SFCDecline > 0.000001))
-IF ((Dayi > L12SF) AND (SFCDecline > 0.000001) AND (L12SF < L123))
-   THEN BEGIN
-        IF (Dayi < L123)
-           THEN BEGIN
-                IF (TheModeCycle = CalendarDays)
-                   THEN CCi := CCi - (SFCDecline/100) * exp(2*Ln(Dayi-L12SF))/(L123-L12SF)
-                   ELSE BEGIN
-                        IF ((SumGDD > GDDL12SF) AND (GDDL123 > GDDL12SF)) THEN
-                        CCi := CCi - (RatDGDD*SFCDecline/100)
-                              * exp(2*Ln(SumGDD-GDDL12SF))/(GDDL123-GDDL12SF);
-                        END;
-                IF (CCi < 0) THEN CCi := 0;
-                END
-           ELSE BEGIN
-                IF (TheModeCycle = CalendarDays)
-                   THEN BEGIN
-                        CCi := CCatTime((L123-L0),CCo,(CGC*(1-SFRedCGC/100)),((1-SFRedCCX/100)*CCx));
-                        // CCibis is CC in late season when Canopy decline continues
-                        CCibis := CCi  - (SFCDecline/100) * (exp(2*Ln(Dayi-L12SF))/(L123-L12SF));
-                        IF (CCibis < 0)
-                           THEN CCi := 0
-                           ELSE CCi := CCi  - ((SFCDecline/100) * (L123-L12SF));
-                        IF (CCi < 0.001)
-                         THEN CCi := 0
-                         ELSE BEGIN
-                              CCxAdj := CCi; // is CCx at start of late season, adjusted for canopy decline with soil fertility stress
-                              CDCadj := CDC * (CCxAdj + 2.29)/(CCx + 2.29);
-                              IF (Dayi < (L123 + LengthCanopyDecline(CCxAdj,CDCadj)))
-                                 THEN BEGIN
-                                      CCi := CCxAdj * (1 - 0.05*(exp((Dayi-L123)*3.33*CDCadj/(CCxAdj+2.29))-1));
-                                      IF (CCibis < CCi) THEN CCi := CCibis; // accept smallest Canopy Cover
-                                      END
-                                 ELSE CCi := 0;
-                              END;
-                        END
-                   ELSE BEGIN
-                        CCi := CCatTime((GDDL123-GDDL0),CCo,(GDDCGC*(1-SFRedCGC/100)),((1-SFRedCCX/100)*CCx));
-                        // CCibis is CC in late season when Canopy decline continues
-                        IF ((SumGDD > GDDL12SF) AND (GDDL123 > GDDL12SF))
-                           THEN CCibis := CCi  -
-                               (RatDGDD*SFCDecline/100) * (exp(2*Ln(SumGDD-GDDL12SF))/(GDDL123-GDDL12SF))
-                           ELSE CCibis := CCi;
-                        IF (CCibis < 0)
-                           THEN CCi := 0
-                           ELSE CCi := CCi - ((RatDGDD*SFCDecline/100) * (GDDL123-GDDL12SF));
-                        IF (CCi < 0.001)
-                           THEN CCi := 0
-                           ELSE BEGIN
-                                CCxAdj := CCi; // is CCx at start of late season, adjusted for canopy decline with soil fertility stress
-                                GDDCDCadj := GDDCDC * (CCxAdj + 2.29)/(CCx + 2.29);
-                                IF (SumGDD < (GDDL123 + LengthCanopyDecline(CCxAdj,GDDCDCadj)))
-                                   THEN BEGIN
-                                        CCi := CCxAdj * (1 - 0.05*(exp((SumGDD-GDDL123)*3.33*GDDCDCadj/(CCxAdj+2.29))-1));
-                                        IF (CCibis < CCi) THEN CCi := CCibis; // accept smallest Canopy Cover
-                                        END
-                                   ELSE CCi := 0;
-                                END;
-                        END;
-                IF (CCi < 0) THEN CCi := 0;
-                END;
-        END;
-
-CCiNoWaterStressSF := CCi;
-END; (* CCiNoWaterStressSF *)
 
 
 

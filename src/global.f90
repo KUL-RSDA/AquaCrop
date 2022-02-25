@@ -1363,7 +1363,7 @@ real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
                 end if
             end if
         end if
-        if (CC > 1) then
+        if (CC > 1._dp) then
             CC = 1._dp
         end if
         if (CC < epsilon(1._dp)) then
@@ -1372,6 +1372,136 @@ real(dp) function CanopyCoverNoStressSF(DAP, L0, L123, &
         CanopyCoverNoStressDaysSF = CC
     end function CanopyCoverNoStressDaysSF
 end function CanopyCoverNoStressSF
+
+
+real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
+    GDDL12SF, GDDL123, GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, SumGDD,&
+    RatDGDD, SFRedCGC, SFRedCCx, SFCDecline, TheModeCycle)
+
+    integer(int32), intent(in) :: Dayi
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: SumGDD
+    real(dp), intent(in) :: RatDGDD
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+    real(dp), intent(in) :: SFCDecline
+    integer(intEnum), intent(in) :: TheModeCycle
+
+    real(dp) :: CCi, CCibis, CCxAdj, CDCadj, GDDCDCadj
+
+    ! Calculate CCi
+    CCi = CanopyCoverNoStressSF(Dayi, L0, L123, L1234, GDDL0, GDDL123,&
+                                GDDL1234, CCo, CCx, CGC, CDC, GDDCGC,&
+                                GDDCDC, SumGDD, TheModeCycle, SFRedCGC,&
+                                SFRedCCX)
+
+    ! Consider CDecline for limited soil fertiltiy
+    ! IF ((Dayi > L12SF) AND (SFCDecline > 0.000001))
+    if ((Dayi > L12SF) .and. (SFCDecline > 0.000001_dp) .and. (L12SF < L123)) then
+        if (Dayi < L123) then
+            if (TheModeCycle == modeCycle_CalendarDays) then
+                CCi = CCi - (SFCDecline/100.0_dp)&
+                            * exp(2.0_dp*log(real(Dayi-L12SF, kind=dp)))&
+                            / real(L123-L12SF, kind=dp)
+            else
+                if ((SumGDD > GDDL12SF) .and. (GDDL123 > GDDL12SF)) then
+                    CCi = CCi - (RatDGDD*SFCDecline/100.0_dp)&
+                                * exp(2.0_dp*log(SumGDD-GDDL12SF))&
+                                / real(GDDL123-GDDL12SF, kind=dp)
+                end if
+            end if
+            if (CCi < 0.0_dp) then
+                CCi = 0.0_dp
+            end if
+        else
+            if (TheModeCycle == modeCycle_CalendarDays) then
+                CCi = CCatTime((L123-L0), CCo, (CGC*(1.0_dp-SFRedCGC/100.0_dp)),&
+                               ((1.0_dp-SFRedCCX/100.0_dp)*CCx))
+                ! CCibis is CC in late season when Canopy decline continues
+                CCibis = CCi  - (SFCDecline/100.0_dp)&
+                                * (exp(2.0_dp*log(real(Dayi-L12SF, kind=dp)))&
+                                   / real(L123-L12SF, kind=dp))
+                if (CCibis < 0.0_dp) then
+                    CCi = 0.0_dp
+                else
+                    CCi = CCi  - ((SFCDecline/100.0_dp) * (L123-L12SF))
+                end if
+                if (CCi < 0.001_dp) then
+                    CCi = 0.0_dp
+                else
+                    ! is CCx at start of late season, adjusted for canopy
+                    ! decline with soil fertility stress
+                    CCxAdj = CCi
+                    CDCadj = CDC * (CCxAdj + 2.29_dp)/(CCx + 2.29_dp)
+                    if (Dayi < (L123 + LengthCanopyDecline(CCxAdj, CDCadj))) then
+                        CCi = CCxAdj * (1.0_dp &
+                                        - 0.05_dp*(exp((Dayi-L123)*3.33_dp*CDCadj&
+                                                       /(CCxAdj+2.29_dp))&
+                                                   -1.0_dp))
+                        if (CCibis < CCi) then
+                            CCi = CCibis ! accept smallest Canopy Cover
+                        end if
+                    else
+                        CCi = 0.0_dp
+                    end if
+                end if
+            else
+                CCi = CCatTime((GDDL123-GDDL0), CCo,&
+                               (GDDCGC*(1.0_dp-SFRedCGC/100.0_dp)),&
+                               ((1.0_dp-SFRedCCX/100.0_dp)*CCx))
+                ! CCibis is CC in late season when Canopy decline continues
+                if ((SumGDD > GDDL12SF) .and. (GDDL123 > GDDL12SF)) then
+                    CCibis = CCi  - (RatDGDD*SFCDecline/100.0_dp)&
+                                    * (exp(2.0_dp*log(SumGDD-GDDL12SF))&
+                                      /real(GDDL123-GDDL12SF, kind=dp))
+                else
+                    CCibis = CCi
+                end if
+                if (CCibis < 0.0_dp) then
+                    CCi = 0.0_dp
+                else
+                    CCi = CCi - ((RatDGDD*SFCDecline/100.0_dp) * (GDDL123-GDDL12SF))
+                end if
+                if (CCi < 0.001_dp) then
+                    CCi = 0.0_dp
+                else
+                    ! is CCx at start of late season, adjusted for canopy
+                    ! decline with soil fertility stress
+                    CCxAdj = CCi
+                    GDDCDCadj = GDDCDC * (CCxAdj + 2.29_dp)/(CCx + 2.29_dp)
+                    if (SumGDD < (GDDL123 + LengthCanopyDecline(CCxAdj, GDDCDCadj))) then
+                        CCi = CCxAdj * (1.0_dp&
+                                        - 0.05_dp*(exp((SumGDD-GDDL123)*3.33_dp&
+                                                        *GDDCDCadj/(CCxAdj+2.29_dp))&
+                                                    -1.0_dp))
+                        if (CCibis < CCi) then
+                            CCi = CCibis ! accept smallest Canopy Cover
+                        end if
+                    else
+                        CCi = 0.0_dp
+                    end if
+                end if
+            end if
+            if (CCi < 0.0_dp) then
+                CCi = 0.0_dp
+            end if
+        end if
+    end if
+    CCiNoWaterStressSF = CCi
+end function CCiNoWaterStressSF
 
 
 real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
@@ -2136,6 +2266,55 @@ real(dp) function HImultiplier(RatioBM, RangeBM, HIadj)
         HImultiplier = 1.0_dp
     end if
 end function HImultiplier
+
+real(dp) function AdjustedKsStoToECsw(ECeMin, ECeMax, ResponseECsw, ECei, &
+            ECswi, ECswFCi, Wrel, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, KsStoIN)
+    integer(int8), intent(in) :: ECeMin
+    integer(int8), intent(in) :: ECeMax
+    integer(int32), intent(in) :: ResponseECsw
+    real(dp), intent(in) :: ECei
+    real(dp), intent(in) :: ECswi
+    real(dp), intent(in) :: ECswFCi
+    real(dp), intent(in) :: Wrel
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: KsStoIN
+
+    real(dp) :: ECswRel, LocalKsShapeFactorSalt, KsSalti, SaltStressi, StoClosure, KsStoOut
+
+    if ((ResponseECsw > 0) .and. (Wrel > epsilon(1._dp)) .and. &
+                            (GetSimulation_SalinityConsidered() .eqv. .true.)) then
+        ! adjustment to ECsw considered
+        ECswRel = ECswi - (ECswFCi - ECei) + (ResponseECsw-100._dp)*Wrel
+        if ((ECswRel > ECeMin) .and. (ECswRel < ECeMax)) then
+            ! stomatal closure at ECsw relative
+            LocalKsShapeFactorSalt = 3._dp ! CONVEX give best ECsw response
+            KsSalti = KsSalinity(GetSimulation_SalinityConsidered(), ECeMin, &
+                                        ECeMax, ECswRel, LocalKsShapeFactorSalt)
+            SaltStressi = (1._dp-KsSalti)*100._dp
+            StoClosure = Coeffb0Salt + Coeffb1Salt * SaltStressi + Coeffb2Salt &
+                                                    * SaltStressi * SaltStressi
+            ! adjusted KsSto
+            KsStoOut = (1._dp - StoClosure/100._dp)
+            if (KsStoOut < 0.0_dp) then
+                KsStoOut = 0._dp
+            end if
+            if (KsStoOut > KsStoIN) then
+                KsStoOut = KsStoIN
+            end if
+        else
+            if (ECswRel >= ECeMax) then
+                KsStoOut = 0._dp ! full stress
+            else
+                KsStoOut = KsStoIN ! no extra stress
+            end if
+        end if
+    else
+        KsStoOut = KsStoIN  ! no adjustment to ECsw
+    end if
+    AdjustedKsStoToECsw = KsStoOut
+end function AdjustedKsStoToECsw
 
 
 real(dp) function CCatTime(Dayi, CCoIN, CGCIN, CCxIN)
@@ -4888,6 +5067,96 @@ subroutine LoadCrop(FullName)
     end if
 
 end subroutine LoadCrop
+
+
+real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
+                                  CCxadjusted, PercCCxHIfinal, TempPlanting, &
+                                  PercentLagPhase, HIfinal)
+    integer(int32), intent(in) :: DAP
+    integer(int32), intent(in) :: DaysToFlower
+    integer(int32), intent(in) :: HImax
+    real(dp), intent(in) :: dHIdt
+    real(dp), intent(in) :: CCi
+    real(dp), intent(in) :: CCxadjusted
+    integer(int8), intent(in) :: PercCCxHIfinal
+    integer(intEnum), intent(in) :: TempPlanting
+    integer(int8), intent(inout) :: PercentLagPhase
+    integer(int32), intent(inout) :: HIfinal
+
+
+    integer(int32), parameter :: HIo = 1
+    real(dp) :: HIGC, HIday, HIGClinear, dHIdt_local
+    integer(int32) :: t, tMax, tSwitch
+
+    dHIdt_local = dHIdt
+    t = DAP - GetSimulation_DelayedDays() - DaysToFlower
+    ! Simulation.WPyON := false;
+    PercentLagPhase = 0_int8
+    if (t <= 0) then
+        HIday = 0._dp
+    else
+        if ((GetCrop_Subkind() == subkind_Vegetative) &
+                            .and. (TempPlanting == plant_Regrowth)) then
+            dHIdt_local = 100._dp
+        end if
+        if ((GetCrop_Subkind() == subkind_Forage) &
+                            .and. (TempPlanting == plant_Regrowth)) then
+            dHIdt_local = 100._dp
+        end if
+        if (dHIdt_local > 99._dp) then
+            HIday = HImax
+            PercentLagPhase = 100_int8
+        else
+            HIGC = HarvestIndexGrowthCoefficient(real(HImax, kind=dp), &
+                                                 dHIdt_local)
+            call GetDaySwitchToLinear(HImax, dHIdt_local, HIGC, &
+                                      tSwitch, HIGClinear)
+            if (t < tSwitch) then
+                PercentLagPhase = roundc(100._dp &
+                                     * (t/real(tSwitch, kind=dp)), mold=1_int8)
+                HIday = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t))
+            else
+                PercentLagPhase = 100_int8
+                if ((GetCrop_subkind() == subkind_Tuber) &
+                            .or. (GetCrop_subkind() == subkind_Vegetative) &
+                            .or. (GetCrop_subkind() == subkind_Forage)) then
+                    ! continue with logistic equation
+                    HIday = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*t))
+                    if (HIday >= 0.9799_dp*HImax) then
+                        HIday = HImax
+                    end if
+                else
+                    ! switch to linear increase
+                    HIday = (HIo*HImax)/ (HIo+(HImax-HIo)*exp(-HIGC*tSwitch))
+                    HIday = Hiday + HIGClinear*(t-tSwitch)
+                end if
+            end if
+            if (HIday > HImax) then
+                HIday = HImax
+            end if
+            if (HIday <= (HIo + 0.4_dp)) then
+                HIday = 0._dp
+            end if
+            if ((HImax - HIday) < 0.4_dp) then
+                HIday = HImax
+            end if
+        end if
+        
+        ! adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
+        tMax = roundc(HImax/dHIdt_local, mold=1)
+        if ((HIfinal == HImax) .and. (t <= tmax) &
+                              .and. (CCi <= (PercCCxHIfinal/100._dp)) &
+                              .and. (GetCrop_subkind() /= subkind_Vegetative) &
+                              .and. (GetCrop_subkind() /= subkind_Forage)) then
+            HIfinal = roundc(HIday, mold=1)
+        end if
+        if (HIday > HIfinal) then
+            HIday = HIfinal
+        end if
+    end if
+    HarvestIndexDay = HIday
+
+end function HarvestIndexDay
 
 
 
