@@ -4230,9 +4230,48 @@ function GetZiAqua() : integer;
 procedure SetZiAqua(constref ZiAqua_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setziaqua';
 
+function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : rep_modeCycle) : double;
+
+function __SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_seasonalsumofkcpot';
 
 
 implementation
+
+function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle : integer;
+begin
+    int_modeCycle := ord(TheModeCycle);
+    SeasonalSumOfKcPot := __SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,
+                                               L0, L12, L123, L1234, GDDL0,
+                                               GDDL12, GDDL123, GDDL1234, CCo,
+                                               CCx, CGC, GDDCGC, CDC, GDDCDC,
+                                               KcTop, KcDeclAgeing, CCeffectProcent,
+                                               Tbase, Tupper, TDayMin, TDayMax, 
+                                               GDtranspLow, CO2i, int_modeCycle);
+end;
 
 
 function GetWeedRC(
