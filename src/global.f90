@@ -5811,7 +5811,7 @@ subroutine LoadProgramParametersProject(FullFileNameProgramParameters)
     if (file_exists) then
         ! load set of program parameters
         open(newunit=fhandle, file=trim(FullFileNameProgramParameters), &
-             status='old', action='read)
+             status='old', action='read')
         ! crop
         read(fhandle, *) simul_ed ! evaporation decline factor in stage 2
         call SetSimulParam_EvapDeclineFactor(simul_ed)
@@ -5881,10 +5881,10 @@ subroutine LoadProgramParametersProject(FullFileNameProgramParameters)
         read(fhandle, *) simul_GDD ! Default method for GDD calculations
         call SetSimulParam_GDDMethod(simul_GDD)
         if (GetSimulParam_GDDMethod() > 3_int8) then
-            SetSimulParam_GDDMethod(3_int8)
+            call SetSimulParam_GDDMethod(3_int8)
         end if
         if (GetSimulParam_GDDMethod()< 1_int8) then
-            SetSimulParam_GDDMethod(3_int8)
+            call SetSimulParam_GDDMethod(3_int8)
         end if
         ! Rainfall
         read(fhandle, *) i
@@ -5913,6 +5913,100 @@ subroutine LoadProgramParametersProject(FullFileNameProgramParameters)
         call ReadTemperatureSettingsParameters
     end if
 end subroutine LoadProgramParametersProject
+
+
+subroutine ReadCropSettingsParameters()
+
+    integer :: fhandle
+    character(len=:), allocatable :: FullName
+    integer(int8) :: simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
+                     simul_beta, simul_Tswc
+    real(dp) :: simul_kcWB, simul_RZEma, simul_pfao, simul_expFsen
+    integer(int32) :: simul_RpZmi, simul_lowox
+
+    FullName = GetPathNameSimul() // 'Crop.PAR'
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) simul_ed ! evaporation decline factor in stage 2
+    call SetSimulParam_EvapDeclineFactor(simul_ed)
+    read(fhandle, *) simul_kcWB ! Kc wet bare soil [-]
+    call SetSimulParam_KcWetBare(simul_kcWB)
+    read(fhandle, *) simul_pCCHIf ! CC threshold below which HI no 
+                                  ! longer increase(% of 100)
+    call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
+    read(fhandle, *) simul_RpZmi ! Starting depth of root sine function
+                                 ! (% of Zmin)
+    call SetSimulParam_RootPercentZmin(simul_RpZmi)
+    read(fhandle, *) simul_RZEma ! cm/day
+    call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
+    call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
+    read(fhandle, *) simul_SFR ! Shape factor for effect water stress on 
+                               ! rootzone expansion
+    call SetSimulParam_KsShapeFactorRoot(simul_SFR)
+    read(fhandle, *) simul_TAWg  ! Soil water content (% TAW) required 
+                                 ! at sowing depth for germination
+    call SetSimulParam_TAWGermination(simul_TAWg)
+    read(fhandle, *) simul_pfao ! Adjustment factor for FAO-adjustment soil
+                                ! water depletion (p) for various ET
+    call SetSimulParam_pAdjFAO(simul_pfao)
+    read(fhandle, *) simul_lowox ! number of days for full effect of 
+                                 ! deficient aeration
+    call SetSimulParam_DelayLowOxygen(simul_lowox)
+    read(fhandle, *) simul_expFsen ! exponent of senescence factor adjusting 
+                               ! drop in photosynthetic activity of dying crop
+    call SetSimulParam_ExpFsen(simul_expFsen)
+    read(fhandle, *) simul_beta ! Decrease (percentage) of p(senescence) once
+                                ! early canopy senescence is triggered
+    call SetSimulParam_Beta(simul_beta)
+    read(fhandle, *) simul_Tswc ! Thickness top soil (cm) in which soil water
+                                ! depletion has to be determined
+    call SetSimulParam_ThicknessTopSWC(simul_Tswc)
+    close(fhandle)
+end subroutine ReadCropSettingsParameters
+
+
+subroutine ReadFieldSettingsParameters()
+
+    integer :: fhandle
+    character(len=:), allocatable :: FullName
+    integer(int8) :: simul_evmax
+
+    FullName = GetPathNameSimul() // 'Field.PAR'
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) simul_evmax ! maximum water extraction depth by 
+                                 ! soil evaporation [cm]
+    call SetSimulParam_EvapZmax(simul_evmax)
+    close(fhandle)
+end subroutine ReadFieldSettingsParameters
+
+
+subroutine ReadTemperatureSettingsParameters()
+
+    integer :: fhandle
+    character(len=:), allocatable :: FullName
+    integer(int8) :: simul_GDD
+    real(dp) :: simul_Tmi, simul_Tma
+
+    FullName = GetPathNameSimul() // 'Temperature.PAR'
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *)
+    read(fhandle, *) simul_Tmi ! Default minimum temperature (degC) if no 
+                               ! temperature file is specified
+    call SetSimulParam_Tmin(simul_Tmi)
+    read(fhandle, *) simul_Tma ! Default maximum temperature (degC) if no 
+                               ! temperature file is specified
+    call SetSimulParam_Tmax(simul_Tma)
+    read(fhandle, *) simul_GDD ! Default method for GDD calculations
+    call SetSimulParam_GDDMethod(simul_GDD)
+    if (GetSimulParam_GDDMethod() > 3_int8) then
+        call SetSimulParam_GDDMethod(3_int8)
+    end if
+    if (GetSimulParam_GDDMethod() < 1_int8) then
+        call SetSimulParam_GDDMethod(1_int8)
+    end if
+    close(fhandle)
+end subroutine ReadTemperatureSettingsParameters
+
+
 
 
 !! Global variables section !!

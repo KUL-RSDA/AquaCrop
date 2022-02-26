@@ -198,7 +198,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetManDescription, &
                      LoadManagement, &
                      SaveCrop, &
-                     SaveProfile
+                     SaveProfile, &
+                     LoadProgramParametersProject
 
 use ac_kinds, only: dp, &
                     int32, &

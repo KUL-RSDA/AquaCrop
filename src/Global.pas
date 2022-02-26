@@ -110,11 +110,6 @@ PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE AdjustSimPeriod;
 PROCEDURE DetermineRootZoneWC(RootingDepth : double;
                               VAR ZtopSWCconsidered : BOOLEAN);
-
-PROCEDURE ReadCropSettingsParameters;
-PROCEDURE ReadFieldSettingsParameters;
-PROCEDURE ReadTemperatureSettingsParameters;
-
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
                             CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,
@@ -149,7 +144,6 @@ PROCEDURE LoadGroundWater(FullName : string;
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
-PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
 
 implementation
@@ -1213,45 +1207,6 @@ IF (DZtopRel < DrRel)
    ELSE ZtopSWCconsidered := false;
 END; (* DetermineRootZoneWC *)
 
-
-
-PROCEDURE ReadCropSettingsParameters;
-VAR f : textfile;
-    FullName : string;
-    simul_ed,simul_pCCHIf,simul_SFR,simul_TAWg,simul_beta,simul_Tswc : Shortint;
-    simul_kcWB,simul_RZEma,simul_pfao,simul_expFsen : double;
-    simul_RpZmi,simul_lowox : integer;
-BEGIN
-FullName := CONCAT(GetPathNameSimul(),'Crop.PAR');
-Assign(f,FullName);
-Reset(f);
-Readln(f,simul_ed); // evaporation decline factor in stage 2
-SetSimulParam_EvapDeclineFactor(simul_ed);
-Readln(f,simul_kcWB); //Kc wet bare soil [-]
-SetSimulParam_KcWetBare(simul_kcWB);
-Readln(f,simul_pCCHIf); // CC threshold below which HI no longer increase(% of 100)
-SetSimulParam_PercCCxHIfinal(simul_pCCHIf);
-Readln(f,simul_RpZmi); //Starting depth of root sine function (% of Zmin)
-SetSimulParam_RootPercentZmin(simul_RpZmi);
-Readln(f,simul_RZEma); // cm/day
-SetSimulParam_MaxRootZoneExpansion(simul_RZEma);
-SetSimulParam_MaxRootZoneExpansion(5.00); // fixed at 5 cm/day
-Readln(f,simul_SFR); // Shape factor for effect water stress on rootzone expansion
-SetSimulParam_KsShapeFactorRoot(simul_SFR);
-Readln(f,simul_TAWg);  // Soil water content (% TAW) required at sowing depth for germination
-SetSimulParam_TAWGermination(simul_TAWg);
-Readln(f,simul_pfao); //Adjustment factor for FAO-adjustment soil water depletion (p) for various ET
-SetSimulParam_pAdjFAO(simul_pfao);
-Readln(f,simul_lowox); //number of days for full effect of deficient aeration
-SetSimulParam_DelayLowOxygen(simul_lowox);
-Readln(f,simul_expFsen); // exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
-SetSimulParam_ExpFsen(simul_expFsen);
-Readln(f,simul_beta); // Decrease (percentage) of p(senescence) once early canopy senescence is triggered
-SetSimulParam_Beta(simul_beta);
-Readln(f,simul_Tswc); // Thickness top soil (cm) in which soil water depletion has to be determined
-SetSimulParam_ThicknessTopSWC(simul_Tswc);
-Close(f);
-END; (* ReadCropSettingsParameters *)
 
 
 PROCEDURE ReadFieldSettingsParameters;

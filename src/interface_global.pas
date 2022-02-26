@@ -4284,6 +4284,14 @@ procedure LoadProgramParametersProject_wrap(constref FullFileNameProgramParamete
                                             constref strlen : integer);
     external 'aquacrop' name '__ac_interface_global_MOD_loadprogramparametersproject_wrap';
 
+procedure ReadCropSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readcropsettingparameters';
+
+procedure ReadFieldSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readfieldsettingparameters';
+
+procedure ReadTemperatureSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readtemperaturesettingparameters';
 
 
 implementation
