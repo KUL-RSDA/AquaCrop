@@ -4291,9 +4291,13 @@ procedure SetOffSeasonDescription(constref str : string);
 procedure SetOffSeasonDescription_wrap(
             constref p : PChar;
             constref strlen : integer);
-    external 'aquacrop' name '__ac_interface_global_MOD_setoffseasondescription_wrap';  
+    external 'aquacrop' name '__ac_interface_global_MOD_setoffseasondescription_wrap';
 
+procedure LoadOffSeason(constref FullName : string);
 
+procedure LoadOffSeason_wrap(constref FullName : PChar;
+                             constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadoffseason_wrap';
 
 
 implementation
@@ -7270,6 +7274,19 @@ begin;
     strlen := Length(str);
     SetOffSeasonDescription_wrap(p, strlen);
 end;
+
+
+procedure LoadOffSeason(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadOffSeason_wrap(p,strlen);
+end;
+
 
 
 initialization

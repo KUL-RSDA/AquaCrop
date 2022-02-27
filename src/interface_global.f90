@@ -200,7 +200,8 @@ use ac_global, only: CheckFilesInProject, &
                      SaveCrop, &
                      SaveProfile, &
                      GetOffSeasonDescription, &
-                     SetOffSeasonDescription
+                     SetOffSeasonDescription, &
+                     LoadOffSeason
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2231,6 +2232,17 @@ subroutine SetOffSeasonDescription_wrap(OffSeasonDescription, strlen)
     call SetOffSeasonDescription(string)
 end subroutine SetOffSeasonDescription_wrap
 
+
+subroutine LoadOffSeason_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadOffSeason]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadOffSeason(string)
+end subroutine LoadOffSeason_wrap
 
 
 end module ac_interface_global
