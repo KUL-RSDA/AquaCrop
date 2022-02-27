@@ -19,7 +19,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ProjectDescription, MultipleProjectDescription,
-    OffSeasonDescription,GroundWaterDescription: string;
+    GroundWaterDescription: string;
 
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
@@ -57,7 +57,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-PROCEDURE NoManagementOffSeason;
 PROCEDURE LoadOffSeason(FullName : string);
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
@@ -154,31 +153,6 @@ PROCEDURE LoadProgramParametersProject(FullFileNameProgramParameters : string);
 
 implementation
 
-PROCEDURE NoManagementOffSeason;
-VAR Nri : INTEGER;
-BEGIN
-OffSeasonDescription := 'No specific off-season conditions';
-// mulches
-SetManagement_SoilCoverBefore(0);
-SetManagement_SoilCoverAfter(0);
-SetManagement_EffectMulchOffS(50);
-// off-season irrigation
-SetSimulParam_IrriFwOffSeason(100);
-SetIrriECw_PreSeason(0.0); // dS/m
-FOR Nri := 1 TO 5 DO
-    BEGIN
-    SetIrriBeforeSeason_DayNr(Nri, 0);
-    SetIrriBeforeSeason_Param(Nri, 0);
-    END;
-SetIrriECw_PostSeason(0.0); // dS/m
-FOR Nri := 1 TO 5 DO
-    BEGIN
-    SetIrriAfterSeason_DayNr(Nri, 0);
-    SetIrriAfterSeason_Param(Nri, 0);
-    END;
-END; (* NoManagementOffSeason *)
-
-
 
 PROCEDURE LoadOffSeason(FullName : string);
 VAR f0 : TextFile;
@@ -189,10 +163,12 @@ VAR f0 : TextFile;
     PreSeason_in : double;
     PostSeason_in : double;
     TempShortInt, simul_irri_of: shortint;
+    OffSeasonDescr_temp : string;
 BEGIN
 Assign(f0,FullName);
 Reset(f0);
-READLN(f0,OffSeasonDescription);
+READLN(f0,OffSeasonDescr_temp);
+SetOffSeasonDescription(OffSeasonDescr_temp);
 READLN(f0,VersionNr); // AquaCrop Version
 // mulches
 READLN(f0,TempShortInt);

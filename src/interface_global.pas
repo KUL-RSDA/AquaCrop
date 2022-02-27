@@ -4278,6 +4278,22 @@ function __HarvestIndexDay(constref DAP  : LongInt;
                          var HIfinal : integer)   : double;
     external 'aquacrop' name '__ac_global_MOD_harvestindexday';
 
+procedure NoManagementOffSeason;
+    external 'aquacrop' name '__ac_global_MOD_nomanagementoffseason';
+
+function GetOffSeasonDescription(): string;
+
+function GetOffSeasonDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getoffseasondescription_wrap';
+
+procedure SetOffSeasonDescription(constref str : string);
+
+procedure SetOffSeasonDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setoffseasondescription_wrap';  
+
+
 
 
 implementation
@@ -7232,6 +7248,27 @@ begin;
     p := PChar(FullName);
     strlen := Length(FullName);
     LoadCrop_wrap(p,strlen);
+end;
+
+
+function GetOffSeasonDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetOffSeasonDescription_wrap();
+    GetOffSeasonDescription := AnsiString(p);
+end;
+
+procedure SetOffSeasonDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetOffSeasonDescription_wrap(p, strlen);
 end;
 
 

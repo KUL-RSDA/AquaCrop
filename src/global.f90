@@ -943,6 +943,7 @@ character(len=:), allocatable :: MultipleProjectFileFull
 character(len=:), allocatable :: FullFileNameProgramParameters
 character(len=:), allocatable :: ManDescription
 character(len=:), allocatable :: ClimDescription
+character(len=:), allocatable :: OffSeasonDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -5158,6 +5159,30 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
 end function HarvestIndexDay
 
 
+subroutine NoManagementOffSeason()
+
+    integer(int32) :: Nri
+
+    call SetOffSeasonDescription('No specific off-season conditions')
+    ! mulches
+    call SetManagement_SoilCoverBefore(0_int8)
+    call SetManagement_SoilCoverAfter(0_int8)
+    call SetManagement_EffectMulchOffS(50_int8)
+    ! off-season irrigation
+    call SetSimulParam_IrriFwOffSeason(100_int8)
+    call SetIrriECw_PreSeason(0.0_dp) ! dS/m
+    do Nri = 1, 5 
+        call SetIrriBeforeSeason_DayNr(Nri, 0)
+        call SetIrriBeforeSeason_Param(Nri, 0)
+    end do
+    call SetIrriECw_PostSeason(0.0_dp) ! dS/m
+    do Nri = 1, 5 
+        call SetIrriAfterSeason_DayNr(Nri, 0)
+        call SetIrriAfterSeason_Param(Nri, 0)
+    end do
+end subroutine NoManagementOffSeason
+
+
 
 
 !! Global variables section !!
@@ -5792,6 +5817,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         end if
     end if
 end subroutine CalculateETpot
+
 
 
 !! Global variables section !!
@@ -11860,5 +11886,22 @@ subroutine SetZiAqua(ZiAqua_in)
 
     ZiAqua = ZiAqua_in
 end subroutine SetZiAqua
+
+function GetOffSeasonDescription() result(str)
+    !! Getter for the "OffSeasonDescription" global variable.
+    character(len=len(OffSeasonDescription)) :: str
+    
+    str = OffSeasonDescription
+end function GetOffSeasonDescription
+
+subroutine SetOffSeasonDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    OffSeasonDescription = str
+end subroutine SetOffSeasonDescription
+
+
+
 
 end module ac_global

@@ -198,7 +198,9 @@ use ac_global, only: CheckFilesInProject, &
                      SetManDescription, &
                      LoadManagement, &
                      SaveCrop, &
-                     SaveProfile
+                     SaveProfile, &
+                     GetOffSeasonDescription, &
+                     SetOffSeasonDescription
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2209,6 +2211,25 @@ subroutine LoadCrop_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadCrop(string)
 end subroutine LoadCrop_wrap
+
+
+function GetOffSeasonDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonDescription())
+end function GetOffSeasonDescription_wrap
+
+subroutine SetOffSeasonDescription_wrap(OffSeasonDescription, strlen)
+    !! Wrapper for [[ac_global:SetOffSeasonDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonDescription, strlen)
+    call SetOffSeasonDescription(string)
+end subroutine SetOffSeasonDescription_wrap
 
 
 
