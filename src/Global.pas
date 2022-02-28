@@ -87,8 +87,6 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    SFCDecline,fWeed : Double;
                                    TheModeCycle : rep_modeCycle) : double;
 
-
-PROCEDURE CompleteCropDescription;
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
@@ -583,97 +581,6 @@ CCiniTotalFromTimeToCCini := TempCCini;
 END; (* CCiniTotalFromTimeToCCini *)
 
 
-
-PROCEDURE CompleteCropDescription;
-VAR CGCisGiven : BOOLEAN;
-    FertStress : shortint;
-    RedCGC_temp, RedCCX_temp :  ShortInt;
-    Crop_DaysToSenescence_temp : integer;
-    Crop_Length_temp : rep_int_array ;
-    Crop_DaysToFullCanopy_temp : integer;
-    Crop_CGC_temp : double;
-    Crop_DaysToFullCanopySF_temp : integer;
-
-BEGIN
-IF ((GetCrop_subkind() = Vegetative) OR (GetCrop_subkind() = Forage))
-   THEN BEGIN
-        IF (GetCrop().DaysToHIo > 0)
-           THEN BEGIN
-                IF (GetCrop().DaysToHIo > GetCrop().DaysToHarvest)
-                   THEN SetCrop_dHIdt(GetCrop().HI/GetCrop().DaysToHarvest)
-                   ELSE SetCrop_dHIdt(GetCrop().HI/GetCrop().DaysToHIo);
-                IF (GetCrop().dHIdt > 100) THEN SetCrop_dHIdt(100);
-                END
-           ELSE SetCrop_dHIdt(100);
-        END
-   ELSE BEGIN  //  grain or tuber crops
-        IF (GetCrop().DaysToHIo > 0)
-           THEN SetCrop_dHIdt(GetCrop().HI/GetCrop().DaysToHIo)
-           ELSE SetCrop_dHIdt(undef_int);
-        END;
-IF (GetCrop_ModeCycle() = CalendarDays)
-   THEN BEGIN
-        SetCrop_DaysToCCini(TimeToCCini(GetCrop().Planting,GetCrop().PlantingDens,GetCrop().SizeSeedling,GetCrop().SizePlant,GetCrop().CCx,GetCrop().CGC));
-        SetCrop_DaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * GetCrop().CCx),GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().DaysToGermination));
-        IF (GetManagement_FertilityStress() <> 0)
-           THEN BEGIN
-             FertStress := GetManagement_FertilityStress();
-             Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
-             RedCGC_temp := GetSimulation_EffectStress_RedCGC();
-             RedCCX_temp := GetSimulation_EffectStress_RedCCX();
-             TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,
-                  GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
-                  GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
-                  Crop_DaysToFullCanopySF_temp,RedCGC_temp,
-                  RedCCX_temp,FertStress);
-             SetManagement_FertilityStress(FertStress);
-             SetSimulation_EffectStress_RedCGC(RedCGC_temp);
-             SetSimulation_EffectStress_RedCCX(RedCCX_temp);
-             SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
-            END
-           ELSE SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
-        SetCrop_GDDaysToCCini(undef_int);
-        SetCrop_GDDaysToGermination(undef_int);
-        SetCrop_GDDaysToFullCanopy(undef_int);
-        SetCrop_GDDaysToFullCanopySF(undef_int);
-        SetCrop_GDDaysToFlowering(undef_int);
-        SetCrop_GDDLengthFlowering(undef_int);
-        SetCrop_GDDaysToSenescence(undef_int);
-        SetCrop_GDDaysToHarvest(undef_int);
-        SetCrop_GDDaysToMaxRooting(undef_int);
-        SetCrop_GDDCGC(undef_int);
-        SetCrop_GDDCDC(undef_int);
-        END
-   ELSE BEGIN
-        SetCrop_GDDaysToCCini(TimeToCCini(GetCrop().Planting,GetCrop().PlantingDens,GetCrop().SizeSeedling,GetCrop().SizePlant,GetCrop().CCx,GetCrop().GDDCGC));
-        SetCrop_DaysToCCini(TimeToCCini(GetCrop().Planting,GetCrop().PlantingDens,GetCrop().SizeSeedling,GetCrop().SizePlant,GetCrop().CCx,GetCrop().CGC));
-        SetCrop_GDDaysToFullCanopy(DaysToReachCCwithGivenCGC((0.98 * GetCrop().CCx),GetCrop().CCo,GetCrop().CCx,GetCrop().GDDCGC,GetCrop().GDDaysToGermination));
-        //Crop.GDDaysToFullCanopySF is determined in RUN or ManagementUnit if required
-        END;
-
-CGCisGiven := true; // required to adjust Crop.DaysToFullCanopy (does not exist)
-Crop_DaysToSenescence_temp := GetCrop().DaysToSenescence;
-Crop_Length_temp := GetCrop().Length;
-Crop_DaysToFullCanopy_temp := GetCrop().DaysToFullCanopy;
-Crop_CGC_temp := GetCrop().CGC;
-DetermineLengthGrowthStages(GetCrop().CCo,GetCrop().CCx,GetCrop().CDC,GetCrop().DaysToGermination,GetCrop().DaysToHarvest,CGCisGiven,
-                            GetCrop().DaysToCCini,GetCrop().Planting,Crop_DaysToSenescence_temp,
-                            Crop_Length_temp,Crop_DaysToFullCanopy_temp,Crop_CGC_temp);
-SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp);
-SetCrop_Length(Crop_Length_temp);
-SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp);
-SetCrop_CGC(Crop_CGC_temp);
-
-SetCrop_CCoAdjusted(GetCrop().CCo);
-SetCrop_CCxAdjusted(GetCrop().CCx);
-SetCrop_CCxWithered(GetCrop().CCx);
-SetSumWaBal_Biomass(0);
-SetSumWaBal_BiomassPot(0);
-SetSumWaBal_BiomassUnlim(0);
-SetSumWaBal_BiomassTot(0); // crop and weeds (for soil fertility stress)
-SetSumWaBal_YieldPart(0);
-SetSimulation_EvapLimitON(false);
-END; (* CompleteCropDescription *)
 
 
 

@@ -1769,23 +1769,27 @@ end function MultiplierCCxSelfThinning
 
 integer(int32) function DaysToReachCCwithGivenCGC(CCToReach, CCoVal, &
                                                         CCxVal, CGCVal, L0)
-    real(dp), intent(inout) :: CCToReach
+    real(dp), intent(in) :: CCToReach
     real(dp), intent(in) :: CCoVal
     real(dp), intent(in) :: CCxVal
     real(dp), intent(in) :: CGCVal
     integer(int32), intent(in) :: L0
 
     real(dp) :: L
-    if ((CCoVal > CCToReach) .or. (CCoVal >= CCxVal)) then
+    real(dp) :: CCToReach_local
+
+    CCToReach_local = CCToReach
+    if ((CCoVal > CCToReach_local) .or. (CCoVal >= CCxVal)) then
         L = 0
     else
-        if (CCToReach > (0.98_dp*CCxVal)) then
-            CCToReach = 0.98_dp*CCxVal
+        if (CCToReach_local > (0.98_dp*CCxVal)) then
+            CCToReach_local = 0.98_dp*CCxVal
         end if
-        if (CCToReach <= CCxVal/2._dp) then
-            L = log(CCToReach/CCoVal)/CGCVal
+        if (CCToReach_local <= CCxVal/2._dp) then
+            L = log(CCToReach_local/CCoVal)/CGCVal
         else
-            L = log((0.25_dp*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach))/CGCVal
+            L = log((0.25_dp*CCxVal*CCxVal/CCoVal)/(CCxVal-CCToReach_local))&
+                                                                        /CGCVal
         end if
 
     end if
@@ -5376,6 +5380,129 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
 end function HarvestIndexDay
 
 
+
+subroutine CompleteCropDescription()
+
+    logical :: CGCisGiven
+    integer(int8) :: FertStress
+    integer(int8) :: RedCGC_temp, RedCCX_temp
+    integer(int32) :: Crop_DaysToSenescence_temp
+    integer(int32), dimension(4) :: Crop_Length_temp
+    integer(int32) :: Crop_DaysToFullCanopy_temp
+    real(dp) :: Crop_CGC_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+                    .or. (GetCrop_subkind() == subkind_Forage)) then
+        if (GetCrop_DaysToHIo() > 0) then
+            if (GetCrop_DaysToHIo() > GetCrop_DaysToHarvest()) then
+                call SetCrop_dHIdt(GetCrop_HI()&
+                                /real(GetCrop_DaysToHarvest(), kind=dp))
+            else
+                call SetCrop_dHIdt(GetCrop_HI()&
+                                /real(GetCrop_DaysToHIo(), kind=dp))
+            end if
+            if (GetCrop_dHIdt() > 100._dp) then
+                call SetCrop_dHIdt(100._dp)
+            end if
+        else
+            call SetCrop_dHIdt(100._dp)
+        end if
+    else
+        !  grain or tuber crops
+        if (GetCrop_DaysToHIo() > 0) then
+            call SetCrop_dHIdt(GetCrop_HI()&
+                                /real(GetCrop_DaysToHIo(), kind=dp))
+        else
+            call SetCrop_dHIdt(real(undef_int, kind=dp))
+        end if
+    end if
+    if (GetCrop_ModeCycle() == modeCycle_CalendarDays) then
+        call SetCrop_DaysToCCini(TimeToCCini(GetCrop_Planting(), &
+                                             GetCrop_PlantingDens(), &
+                                             GetCrop_SizeSeedling(), &
+                                             GetCrop_SizePlant(), &
+                                             GetCrop_CCx(), GetCrop_CGC()))
+        call SetCrop_DaysToFullCanopy(DaysToReachCCwithGivenCGC(&
+                (0.98_dp * GetCrop_CCx()), GetCrop_CCo(), &
+                     GetCrop_CCx(), GetCrop_CGC(), GetCrop_DaysToGermination()))
+        if (GetManagement_FertilityStress() /= 0_int8) then
+            FertStress = GetManagement_FertilityStress()
+            Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+            RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+            RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+            call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
+                                   GetCrop_DaysToGermination(), &
+                                   GetCrop_DaysToFullCanopy(), &
+                                   GetCrop_DaysToSenescence(), &
+                                   GetCrop_DaysToFlowering(), &
+                                   GetCrop_LengthFlowering(), &
+                                   GetCrop_DeterminancyLinked(), &
+                                   Crop_DaysToFullCanopySF_temp, RedCGC_temp, &
+                                   RedCCX_temp, FertStress)
+            call SetManagement_FertilityStress(FertStress)
+            call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+            call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+            call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+        else
+            call SetCrop_DaysToFullCanopySF(GetCrop_DaysToFullCanopy())
+        end if
+        call SetCrop_GDDaysToCCini(undef_int)
+        call SetCrop_GDDaysToGermination(undef_int)
+        call SetCrop_GDDaysToFullCanopy(undef_int)
+        call SetCrop_GDDaysToFullCanopySF(undef_int)
+        call SetCrop_GDDaysToFlowering(undef_int)
+        call SetCrop_GDDLengthFlowering(undef_int)
+        call SetCrop_GDDaysToSenescence(undef_int)
+        call SetCrop_GDDaysToHarvest(undef_int)
+        call SetCrop_GDDaysToMaxRooting(undef_int)
+        call SetCrop_GDDCGC(real(undef_int, kind=dp))
+        call SetCrop_GDDCDC(real(undef_int, kind=dp))
+    else
+        call SetCrop_GDDaysToCCini(TimeToCCini(GetCrop_Planting(), &
+                           GetCrop_PlantingDens(), GetCrop_SizeSeedling(), &
+                           GetCrop_SizePlant(), &
+                           GetCrop_CCx(), GetCrop_GDDCGC()))
+        call SetCrop_DaysToCCini(TimeToCCini(GetCrop_Planting(), &
+                           GetCrop_PlantingDens(), GetCrop_SizeSeedling(), &
+                           GetCrop_SizePlant(), GetCrop_CCx(), GetCrop_CGC()))
+        call SetCrop_GDDaysToFullCanopy(DaysToReachCCwithGivenCGC(&
+                    (0.98_dp * GetCrop_CCx()), GetCrop_CCo(), GetCrop_CCx(), &
+                    GetCrop_GDDCGC(), GetCrop_GDDaysToGermination()))
+        ! Crop.GDDaysToFullCanopySF is determined in RUN or ManagementUnit if required
+    end if
+
+    CGCisGiven = .true. ! required to adjust Crop.DaysToFullCanopy (does not exist)
+    Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
+    Crop_Length_temp = GetCrop_Length()
+    Crop_DaysToFullCanopy_temp = GetCrop_DaysToFullCanopy()
+    Crop_CGC_temp = GetCrop_CGC()
+    call DetermineLengthGrowthStages(GetCrop_CCo(), GetCrop_CCx(), &
+                                     GetCrop_CDC(), &
+                                     GetCrop_DaysToGermination(), &
+                                     GetCrop_DaysToHarvest(), CGCisGiven, &
+                                     GetCrop_DaysToCCini(), GetCrop_Planting(), &
+                                     Crop_DaysToSenescence_temp, &
+                                     Crop_Length_temp, &
+                                     Crop_DaysToFullCanopy_temp, Crop_CGC_temp)
+    call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
+    call SetCrop_Length(Crop_Length_temp)
+    call SetCrop_DaysToFullCanopy(Crop_DaysToFullCanopy_temp)
+    call SetCrop_CGC(Crop_CGC_temp)
+    
+    call SetCrop_CCoAdjusted(GetCrop_CCo())
+    call SetCrop_CCxAdjusted(GetCrop_CCx())
+    call SetCrop_CCxWithered(GetCrop_CCx())
+    call SetSumWaBal_Biomass(0._dp)
+    call SetSumWaBal_BiomassPot(0._dp)
+    call SetSumWaBal_BiomassUnlim(0._dp)
+    call SetSumWaBal_BiomassTot(0._dp) ! crop and weeds (for soil fertility stress)
+    call SetSumWaBal_YieldPart(0._dp)
+    call SetSimulation_EvapLimitON(.false.)
+end subroutine CompleteCropDescription 
+
+
+
 subroutine NoManagementOffSeason()
 
     integer(int32) :: Nri
@@ -6110,6 +6237,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         end if
     end if
 end subroutine CalculateETpot
+
 
 
 subroutine LoadProgramParametersProject(FullFileNameProgramParameters)

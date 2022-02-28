@@ -4333,6 +4333,10 @@ procedure ReadFieldSettingsParameters();
 procedure ReadTemperatureSettingsParameters();
     external 'aquacrop' name '__ac_global_MOD_readtemperaturesettingparameters';
 
+procedure CompleteCropDescription;
+    external 'aquacrop' name '__ac_global_MOD_completecropdescription';
+
+
 
 implementation
 
