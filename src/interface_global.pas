@@ -4261,6 +4261,25 @@ function GetZiAqua() : integer;
 procedure SetZiAqua(constref ZiAqua_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setziaqua';
 
+function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : rep_modeCycle) : double;
+
+function __SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_seasonalsumofkcpot';
+
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
@@ -4278,6 +4297,41 @@ function __HarvestIndexDay(constref DAP  : LongInt;
                          var HIfinal : integer)   : double;
     external 'aquacrop' name '__ac_global_MOD_harvestindexday';
 
+procedure NoManagementOffSeason;
+    external 'aquacrop' name '__ac_global_MOD_nomanagementoffseason';
+
+function GetOffSeasonDescription(): string;
+
+function GetOffSeasonDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getoffseasondescription_wrap';
+
+procedure SetOffSeasonDescription(constref str : string);
+
+procedure SetOffSeasonDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setoffseasondescription_wrap';
+
+procedure LoadOffSeason(constref FullName : string);
+
+procedure LoadOffSeason_wrap(constref FullName : PChar;
+                             constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadoffseason_wrap';
+
+procedure LoadProgramParametersProject(constref FullFileNameProgramParameters : string);
+
+procedure LoadProgramParametersProject_wrap(constref FullFileNameProgramParameters : PChar;
+                                            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadprogramparametersproject_wrap';
+
+procedure ReadCropSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readcropsettingparameters';
+
+procedure ReadFieldSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readfieldsettingparameters';
+
+procedure ReadTemperatureSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readtemperaturesettingparameters';
 
 procedure CompleteCropDescription;
     external 'aquacrop' name '__ac_global_MOD_completecropdescription';
@@ -4285,6 +4339,29 @@ procedure CompleteCropDescription;
 
 
 implementation
+
+
+function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle : integer;
+begin
+    int_modeCycle := ord(TheModeCycle);
+    SeasonalSumOfKcPot := __SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,
+                                               L0, L12, L123, L1234, GDDL0,
+                                               GDDL12, GDDL123, GDDL1234, CCo,
+                                               CCx, CGC, GDDCGC, CDC, GDDCDC,
+                                               KcTop, KcDeclAgeing, CCeffectProcent,
+                                               Tbase, Tupper, TDayMin, TDayMax, 
+                                               GDtranspLow, CO2i, int_modeCycle);
+end;
+
 
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
@@ -7237,6 +7314,54 @@ begin;
     strlen := Length(FullName);
     LoadCrop_wrap(p,strlen);
 end;
+
+
+function GetOffSeasonDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetOffSeasonDescription_wrap();
+    GetOffSeasonDescription := AnsiString(p);
+end;
+
+
+
+procedure SetOffSeasonDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetOffSeasonDescription_wrap(p, strlen);
+end;
+
+
+
+procedure LoadOffSeason(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadOffSeason_wrap(p,strlen);
+end;
+
+
+
+procedure LoadProgramParametersProject(constref FullFileNameProgramParameters : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(FullFileNameProgramParameters);
+    strlen := Length(FullFileNameProgramParameters);
+    LoadProgramParametersProject_wrap(p,strlen);
+end;
+
 
 
 initialization
