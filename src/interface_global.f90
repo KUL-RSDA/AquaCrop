@@ -198,7 +198,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetManDescription, &
                      LoadManagement, &
                      SaveCrop, &
-                     SaveProfile
+                     SaveProfile, &
+                     LoadProgramParametersProject
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2209,6 +2210,20 @@ subroutine LoadCrop_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadCrop(string)
 end subroutine LoadCrop_wrap
+
+
+subroutine LoadProgramParametersProject_wrap(FullFileNameProgramParameters, &
+                                             strlen)
+    !! Wrapper for [[ac_global:LoadProgramParametersProject_]] 
+    !! for foreign languages.
+    type(c_ptr), intent(in) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullFileNameProgramParameters, strlen)
+    call LoadProgramParametersProject(string)
+end subroutine LoadProgramParametersProject_wrap
 
 
 
