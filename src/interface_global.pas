@@ -4337,7 +4337,16 @@ procedure CompleteCropDescription;
     external 'aquacrop' name '__ac_global_MOD_completecropdescription';
 
 procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
-    external 'aquacrop' name '__ac_global_MOD_completeclimatedescription';
+
+procedure CompleteClimateDescription_wrap(
+                            constref FromD, FromM, FromY, FromDayNr : integer;
+                            constref DataType : integer;
+                            constref ToDayNr, NrObs, ToD, ToM, ToY : integer;
+                            constref FromString : PChar;
+                            constref strlen1 : integer;
+                            constref ToString : PChar;
+                            constref strlen2 : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_completeclimatedescription_wrap';
 
 
 
@@ -7365,6 +7374,34 @@ begin;
     LoadProgramParametersProject_wrap(p,strlen);
 end;
 
+
+procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
+var
+    int_datatype : integer;
+    FromString_ptr, ToString_ptr : PChar;
+    strlen1, strlen2 : integer;
+begin
+    int_datatype := ord(ClimateRecord.DataType);
+    FromString_ptr := PChar(ClimateRecord.FromString);
+    ToString_ptr := PChar(ClimateRecord.ToString);
+    strlen1 := Length(ClimateRecord.FromString);
+    strlen2 := Length(ClimateRecord.ToString);
+
+    CompleteClimateDescription_wrap(ClimateRecord.FromD, 
+                                    ClimateRecord.FromM,
+                                    ClimateRecord.FromY,
+                                    ClimateRecord.FromDayNr,
+                                    int_datatype, 
+                                    ClimateRecord.ToDayNr,
+                                    ClimateRecord.NrObs,
+                                    ClimateRecord.ToD,
+                                    ClimateRecord.ToM,
+                                    ClimateRecord.ToY,
+                                    FromString_ptr, strlen1,
+                                    ToString_ptr, strlen2);
+    ClimateRecord.FromString := AnsiString(FromString_ptr);
+    ClimateRecord.ToString := AnsiString(ToString_ptr);
+end;
 
 
 initialization

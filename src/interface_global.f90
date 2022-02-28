@@ -202,7 +202,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
-                     LoadProgramParametersProject
+                     LoadProgramParametersProject, &
+                     CompleteClimateDescription, &
+                     rep_clim
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2261,6 +2263,56 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
 
+
+
+subroutine CompleteClimateDescription_wrap(FromD, FromM, FromY, FromDayNr, &
+                                           DataType, ToDayNr, NrObs, ToD, &
+                                           ToM, ToY, FromString, &
+                                           strlen1, ToString, strlen2)
+    !! Wrapper for [[ac_global:CompleteClimateDescription]] for foreign languages
+    integer(int32), intent(inout) :: FromD
+    integer(int32), intent(inout) :: FromM
+    integer(int32), intent(inout) :: FromY
+    integer(int32), intent(inout) :: FromDayNr
+    integer(intEnum), intent(in) :: DataType
+    integer(int32), intent(inout) :: ToDayNr
+    integer(int32), intent(inout) :: NrObs
+    integer(int32), intent(inout) :: ToD
+    integer(int32), intent(inout) :: ToM
+    integer(int32), intent(inout) :: ToY
+    type(c_ptr), intent(inout) :: FromString
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: ToString
+    integer(int32), intent(in) :: strlen2
+
+    type(rep_clim) :: ClimateRecord
+
+    ClimateRecord%FromD = FromD
+    ClimateRecord%FromM = FromM
+    ClimateRecord%FromY = FromY
+    ClimateRecord%FromDayNr = FromDayNr
+    ClimateRecord%DataType = DataType
+    ClimateRecord%ToDayNr = ToDayNr
+    ClimateRecord%NrObs = NrObs
+    ClimateRecord%ToD = ToD
+    ClimateRecord%ToM = ToM
+    ClimateRecord%ToY = ToY
+    ClimateRecord%FromString = pointer2string(FromString, strlen1)
+    ClimateRecord%ToString = pointer2string(ToString, strlen2)
+    call CompleteClimateDescription(ClimateRecord)
+    FromD = ClimateRecord%FromD
+    FromM = ClimateRecord%FromM
+    FromY = ClimateRecord%FromY
+    FromDayNr = ClimateRecord%FromDayNr
+    ToDayNr = ClimateRecord%ToDayNr
+    NrObs = ClimateRecord%NrObs
+    ToD = ClimateRecord%ToD
+    ToM = ClimateRecord%ToM
+    ToY = ClimateRecord%ToY
+    FromString = string2pointer(ClimateRecord%FromString)
+    ToString = string2pointer(ClimateRecord%ToString)
+
+end subroutine CompleteClimateDescription_wrap
 
 
 end module ac_interface_global
