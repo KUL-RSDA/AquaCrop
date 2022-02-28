@@ -4141,7 +4141,6 @@ subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
                                                                 + DeltaFC
                 end if
             end if
-            write(*, '(f30.25)') CompartAdj(compi)%FCadj
             Depth = Depth - CompartAdj(compi)%Thickness
             compi = compi - 1
         end if
