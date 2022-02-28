@@ -505,7 +505,7 @@ IF (GetOffSeasonFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathOffSeasonFile
         SetOffSeasonFileFull(GetOffSeasonFile());
-        OffSeasonDescription := 'No specific off-season conditions';
+        SetOffSeasonDescription('No specific off-season conditions');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathOffSeasonFile

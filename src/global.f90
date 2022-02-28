@@ -943,6 +943,7 @@ character(len=:), allocatable :: MultipleProjectFileFull
 character(len=:), allocatable :: FullFileNameProgramParameters
 character(len=:), allocatable :: ManDescription
 character(len=:), allocatable :: ClimDescription
+character(len=:), allocatable :: OffSeasonDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -5375,6 +5376,106 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
 end function HarvestIndexDay
 
 
+subroutine NoManagementOffSeason()
+
+    integer(int32) :: Nri
+
+    call SetOffSeasonDescription('No specific off-season conditions')
+    ! mulches
+    call SetManagement_SoilCoverBefore(0_int8)
+    call SetManagement_SoilCoverAfter(0_int8)
+    call SetManagement_EffectMulchOffS(50_int8)
+    ! off-season irrigation
+    call SetSimulParam_IrriFwOffSeason(100_int8)
+    call SetIrriECw_PreSeason(0.0_dp) ! dS/m
+    do Nri = 1, 5 
+        call SetIrriBeforeSeason_DayNr(Nri, 0)
+        call SetIrriBeforeSeason_Param(Nri, 0)
+    end do
+    call SetIrriECw_PostSeason(0.0_dp) ! dS/m
+    do Nri = 1, 5 
+        call SetIrriAfterSeason_DayNr(Nri, 0)
+        call SetIrriAfterSeason_Param(Nri, 0)
+    end do
+end subroutine NoManagementOffSeason
+
+
+
+subroutine LoadOffSeason(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int32) :: Nri, NrEvents1, NrEvents2
+    character(len=:), allocatable :: ParamString
+    real(dp) :: Par1, Par2
+    real(dp) :: VersionNr
+    real(dp) :: PreSeason_in
+    real(dp) :: PostSeason_in
+    integer(int8) :: TempShortInt, simul_irri_of
+    character(len=1025) :: OffSeasonDescr_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) OffSeasonDescr_temp
+    call SetOffSeasonDescription(trim(OffSeasonDescr_temp))
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    ! mulches
+    read(fhandle, *) TempShortInt
+    call SetManagement_SoilCoverBefore(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetManagement_SoilCoverAfter(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetManagement_EffectMulchOffS(TempShortInt)
+
+    ! irrigation events - initialise
+    do Nri = 1, 5 
+        call SetIrriBeforeSeason_DayNr(Nri, 0)
+        call SetIrriBeforeSeason_Param(Nri, 0)
+        call SetIrriAfterSeason_DayNr(Nri, 0)
+        call SetIrriAfterSeason_Param(Nri, 0)
+    end do
+    read(fhandle, *) NrEvents1 ! number of irrigation events BEFORE growing period
+    if (roundc(10*VersionNr, mold=1) < 32) then ! irrigation water quality BEFORE growing period
+        call SetIrriECw_PreSeason(0.0_dp)
+    else
+        read(fhandle, *) PreSeason_in
+        call SetIrriECw_PreSeason(PreSeason_in)
+    end if
+    read(fhandle, *) NrEvents2 ! number of irrigation events AFTER growing period
+    if (roundc(10*VersionNr, mold=1) < 32) then ! irrigation water quality AFTER growing period
+        call SetIrriECw_PostSeason(0.0_dp)
+    else
+        read(fhandle, *) PostSeason_in
+        call SetIrriECw_PostSeason(PostSeason_in)
+    end if
+    read(fhandle, *) simul_irri_of ! percentage of soil surface wetted
+    call SetSimulParam_IrriFwOffSeason(simul_irri_of)
+    ! irrigation events - get events before and after season
+    if ((NrEvents1 > 0) .or. (NrEvents2 > 0)) then
+        do Nri = 1, 3 
+            read(fhandle, *) ! title
+        end do
+    end if
+    if (NrEvents1 > 0) then
+        do Nri = 1, NrEvents1 
+            ! events BEFORE growing period
+            read(fhandle, '(a)') ParamString
+            call SplitStringInTwoParams(ParamString, Par1, Par2)
+            call SetIrriBeforeSeason_DayNr(Nri, roundc(Par1, mold=1))
+            call SetIrriBeforeSeason_Param(Nri, roundc(Par2, mold=1))
+        end do
+    end if
+    if (NrEvents2 > 0) then
+        do Nri = 1, NrEvents2 
+            ! events AFTER growing period
+            read(fhandle, '(a)') ParamString
+            call SplitStringInTwoParams(ParamString, Par1, Par2)
+            call SetIrriAfterSeason_DayNr(Nri, roundc(Par1, mold=1))
+            call SetIrriAfterSeason_Param(Nri, roundc(Par2, mold=1))
+        end do
+    end if
+    close(fhandle)
+end subroutine LoadOffSeason
+
 
 
 !! Global variables section !!
@@ -6222,7 +6323,6 @@ subroutine ReadTemperatureSettingsParameters()
     end if
     close(fhandle)
 end subroutine ReadTemperatureSettingsParameters
-
 
 
 
@@ -12292,5 +12392,22 @@ subroutine SetZiAqua(ZiAqua_in)
 
     ZiAqua = ZiAqua_in
 end subroutine SetZiAqua
+
+function GetOffSeasonDescription() result(str)
+    !! Getter for the "OffSeasonDescription" global variable.
+    character(len=len(OffSeasonDescription)) :: str
+    
+    str = OffSeasonDescription
+end function GetOffSeasonDescription
+
+subroutine SetOffSeasonDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    OffSeasonDescription = str
+end subroutine SetOffSeasonDescription
+
+
+
 
 end module ac_global

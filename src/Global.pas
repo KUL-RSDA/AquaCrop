@@ -19,7 +19,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ProjectDescription, MultipleProjectDescription,
-    OffSeasonDescription,GroundWaterDescription: string;
+    GroundWaterDescription: string;
 
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
@@ -56,9 +56,6 @@ VAR DataPath,ObsPath : BOOLEAN;
 
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
-
-PROCEDURE NoManagementOffSeason;
-PROCEDURE LoadOffSeason(FullName : string);
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
                               VAR CompartAdj   : rep_Comp);
@@ -143,96 +140,6 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
 
 implementation
 
-PROCEDURE NoManagementOffSeason;
-VAR Nri : INTEGER;
-BEGIN
-OffSeasonDescription := 'No specific off-season conditions';
-// mulches
-SetManagement_SoilCoverBefore(0);
-SetManagement_SoilCoverAfter(0);
-SetManagement_EffectMulchOffS(50);
-// off-season irrigation
-SetSimulParam_IrriFwOffSeason(100);
-SetIrriECw_PreSeason(0.0); // dS/m
-FOR Nri := 1 TO 5 DO
-    BEGIN
-    SetIrriBeforeSeason_DayNr(Nri, 0);
-    SetIrriBeforeSeason_Param(Nri, 0);
-    END;
-SetIrriECw_PostSeason(0.0); // dS/m
-FOR Nri := 1 TO 5 DO
-    BEGIN
-    SetIrriAfterSeason_DayNr(Nri, 0);
-    SetIrriAfterSeason_Param(Nri, 0);
-    END;
-END; (* NoManagementOffSeason *)
-
-
-
-PROCEDURE LoadOffSeason(FullName : string);
-VAR f0 : TextFile;
-    Nri,NrEvents1,NrEvents2 : INTEGER;
-    ParamString : string;
-    Par1,Par2 : double;
-    VersionNr : double;
-    PreSeason_in : double;
-    PostSeason_in : double;
-    TempShortInt, simul_irri_of: shortint;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,OffSeasonDescription);
-READLN(f0,VersionNr); // AquaCrop Version
-// mulches
-READLN(f0,TempShortInt);
-SetManagement_SoilCoverBefore(TempShortInt);
-READLN(f0,TempShortInt);
-SetManagement_SoilCoverAfter(TempShortInt);
-READLN(f0,TempShortInt);
-SetManagement_EffectMulchOffS(TempShortInt);
-
-// irrigation events - initialise
-FOR Nri := 1 TO 5 DO
-    BEGIN
-    SetIrriBeforeSeason_DayNr(Nri, 0);
-    SetIrriBeforeSeason_Param(Nri, 0);
-    SetIrriAfterSeason_DayNr(Nri, 0);
-    SetIrriAfterSeason_Param(Nri, 0);
-    END;
-READLN(f0,NrEvents1); //number of irrigation events BEFORE growing period
-IF (ROUND(10*VersionNr) < 32) // irrigation water quality BEFORE growing period
-   THEN SetIrriECw_PreSeason(0.0)
-   ELSE BEGIN
-    READLN(f0,PreSeason_in);
-    SetIrriECw_PreSeason(PreSeason_in);
-    END;
-READLN(f0,NrEvents2); //number of irrigation events AFTER growing period
-IF (ROUND(10*VersionNr) < 32) // irrigation water quality AFTER growing period
-   THEN SetIrriECw_PostSeason(0.0)
-   ELSE BEGIN
-    READLN(f0,PostSeason_in);
-    SetIrriECw_PostSeason(PostSeason_in);
-    END;
-READLN(f0,simul_irri_of); // percentage of soil surface wetted
-SetSimulParam_IrriFwOffSeason(simul_irri_of);
-// irrigation events - get events before and after season
-IF (NrEvents1 > 0) OR (NrEvents2 > 0) THEN FOR Nri := 1 TO 3 DO READLN(f0); // title
-IF (NrEvents1 > 0) THEN FOR Nri := 1 TO NrEvents1 DO // events BEFORE growing period
-   BEGIN
-   READLN(f0,ParamString);
-   SplitStringInTwoParams(ParamString,Par1,Par2);
-   SetIrriBeforeSeason_DayNr(Nri, ROUND(Par1));
-   SetIrriBeforeSeason_Param(Nri, ROUND(Par2));
-   END;
-IF (NrEvents2 > 0) THEN FOR Nri := 1 TO NrEvents2 DO // events AFTER growing period
-   BEGIN
-   READLN(f0,ParamString);
-   SplitStringInTwoParams(ParamString,Par1,Par2);
-   SetIrriAfterSeason_DayNr(Nri, ROUND(Par1));
-   SetIrriAfterSeason_Param(Nri, ROUND(Par2));
-   END;
-Close(f0);
-END; (* LoadOffSeason *)
 
 
 PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
