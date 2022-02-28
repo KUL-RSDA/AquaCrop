@@ -410,7 +410,7 @@ FOR compi := 1 to GetNrCompartments() DO
     BEGIN
     Ztot := Ztot + GetCompartment_Thickness(compi);
     Zi := Ztot - GetCompartment_Thickness(compi)/2;
-    IF (Zi >= (ZiAqua/100)) THEN // compartment at or below groundwater table
+    IF (Zi >= (GetZiAqua()/100)) THEN // compartment at or below groundwater table
        BEGIN
        SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
        Compi_temp := GetCOmpartment_i(compi);
@@ -1343,7 +1343,7 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
-CheckForWaterTableInProfile((ZiAqua/100),GetCompartment(),WaterTableInProfile);
+CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
 IF WaterTableInProfile THEN AdjustForWatertable;
 IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
@@ -2099,11 +2099,11 @@ WRITE(fDaily,Di:6,Mi:6,Yi:6,DAP:6,StageCode:6);
 // 1. Water balance
 IF Out1Wabal THEN
    BEGIN
-   IF (ZiAqua = undef_int)
+   IF (GetZiAqua() = undef_int)
       THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
                SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,undef_double:8:2)
       ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
-               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,(ZiAqua/100):8:2);
+               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,Drain:9:1,CRwater:9:1,(GetZiAqua()/100):8:2);
    IF (Tpot > 0) THEN Ratio1 := 100*Tact/Tpot
                  ELSE Ratio1 := 100.0;
    IF ((Epot+Tpot) > 0) THEN Ratio2 := 100*(Eact+Tact)/(Epot+Tpot)
@@ -2233,11 +2233,11 @@ IF Out4Salt THEN
            SetRootZoneSalt_KsSalt(1);
            END
       ELSE SaltVal := (GetRootZoneWC().SAT*GetRootZoneSalt().ECe*Equiv)/100;
-   IF (ZiAqua = undef_int)
+   IF (GetZiAqua() = undef_int)
       THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,undef_double:8:2)
       ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
-                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,(ZiAqua/100):8:2);
+                 (100*(1-GetRootZoneSalt().KsSalt)):7:0,(GetZiAqua()/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,ECiAqua:8:2)
       ELSE WRITELN(fDaily,ECiAqua:8:2);
@@ -2372,6 +2372,7 @@ VAR RepeatToDay : LongInt;
     ToMobilize_temp, Bmobilized_temp : double;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
+    ZiAqua_temp : integer;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2668,8 +2669,10 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
         GetGwtSet(DayNri,GwTable_temp);
         SetGwTable(GwTable_temp);
         END;
-   GetZandECgwt(DayNri,ZiAqua,ECiAqua);
-   CheckForWaterTableInProfile((ZiAqua/100),GetCompartment(),WaterTableInProfile);
+   ZiAqua_temp := GetZiAqua();
+   GetZandECgwt(DayNri,ZiAqua_temp,ECiAqua);
+   SetZiAqua(ZiAqua_temp);
+   CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
    IF WaterTableInProfile THEN AdjustForWatertable;
    END;
 
@@ -2750,9 +2753,9 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((DayNri-GetCrop().Day1+1) < GetCr
                                 (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
                                 GetCrop().ModeCycle);
                 ZiPrev := RootingDepth;  // IN CASE rootzone drops below groundwate table
-                IF ((ZiAqua >= 0) AND (RootingDepth > (ZiAqua/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
+                IF ((GetZiAqua() >= 0) AND (RootingDepth > (GetZiAqua()/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
                    BEGIN
-                   RootingDepth := ZiAqua/100;
+                   RootingDepth := GetZiAqua()/100;
                    IF (RootingDepth < GetCrop().RootMin) THEN RootingDepth := GetCrop().RootMin;
                    END;
                 END
@@ -3106,7 +3109,7 @@ VAR NrRun : ShortInt;
                        AdjustSizeCompartments(GetCrop().RootMax);
                        // adjust soil water content
                        Comp_temp := GetCompartment();
-                       CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                       CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
                        SetCompartment(Comp_temp);
                        IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
                        END
@@ -3116,7 +3119,7 @@ VAR NrRun : ShortInt;
                           AdjustSizeCompartments(GetSoil().RootMax);
                           // adjust soil water content
                           Comp_temp := GetCompartment();
-                          CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+                          CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
                           SetCompartment(Comp_temp);
                           IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
                           END

@@ -76,6 +76,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainFileFull, &
                      GetRainDescription, &
                      LoadClimate, &
+                     LoadCrop, &
                      LoadCropCalendar, &
                      LoadIrriScheduleInfo, &
                      LoadProjectDescription, &
@@ -198,7 +199,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetManDescription, &
                      LoadManagement, &
                      SaveCrop, &
-                     SaveProfile, &
+                     SaveProfile
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2199,18 +2200,17 @@ real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
 end function ECswComp_wrap
 
 
-subroutine CalculateAdjustedFC_wrap(DepthAquifer, comp_len, comp_ptr)
-    !! Wrapper for [[ac_global:CalculateAdjustedFC]] for foreign languages.
-    real(dp), intent(in) :: DepthAquifer
-    integer(int32), intent(in) :: comp_len
-    type(c_ptr), intent(in) :: comp_ptr
+subroutine LoadCrop_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadCrop]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
 
-    type(CompartmentIndividual), dimension(comp_len) :: compadj
+    character(len=strlen) :: string
 
-    compadj = pointer2array(comp_ptr, comp_len, mold=????)
+    string = pointer2string(FullName, strlen)
+    call LoadCrop(string)
+end subroutine LoadCrop_wrap
 
-    call CalculateAdjustedFC(DepthAquifer, compadj)
-end subroutine CalculateAdjustedFC_wrap
 
 
 end module ac_interface_global
