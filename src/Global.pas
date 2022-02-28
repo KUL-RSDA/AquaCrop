@@ -86,8 +86,6 @@ FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    SFRedCGC,SFRedCCx : ShortInt;
                                    SFCDecline,fWeed : Double;
                                    TheModeCycle : rep_modeCycle) : double;
-
-PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -581,63 +579,6 @@ CCiniTotalFromTimeToCCini := TempCCini;
 END; (* CCiniTotalFromTimeToCCini *)
 
 
-
-
-
-PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
-VAR dayStr,yearStr : STRING;
-    Deci : INTEGER;
-BEGIN
-DetermineDayNr(ClimateRecord.FromD,ClimateRecord.FromM,ClimateRecord.FromY,ClimateRecord.FromDayNr);
-CASE ClimateRecord.DataType OF
-   Daily    : BEGIN
-              ClimateRecord.ToDayNr := ClimateRecord.FromDayNr + ClimateRecord.NrObs - 1;
-              DetermineDate(ClimateRecord.ToDayNr,ClimateRecord.ToD,ClimateRecord.ToM,ClimateRecord.ToY);
-              END;
-   Decadely : BEGIN
-              Deci := ROUND((ClimateRecord.FromD+9)/10) + ClimateRecord.NrObs - 1;
-              ClimateRecord.ToM := ClimateRecord.FromM;
-              ClimateRecord.ToY := ClimateRecord.FromY;
-              WHILE (Deci > 3) DO
-                BEGIN
-                Deci := Deci - 3;
-                ClimateRecord.ToM := ClimateRecord.ToM + 1;
-                IF (ClimateRecord.ToM > 12) THEN BEGIN
-                                                 ClimateRecord.ToM := 1;
-                                                 ClimateRecord.ToY := ClimateRecord.ToY  + 1;
-                                                 END;
-                END;
-              ClimateRecord.ToD := 10;
-              IF (Deci = 2) THEN ClimateRecord.ToD := 20;
-              IF (Deci = 3) THEN
-                 BEGIN
-                 ClimateRecord.ToD := DaysInMonth[ClimateRecord.ToM];
-                 IF ((ClimateRecord.ToM = 2) AND LeapYear(ClimateRecord.ToY)) THEN ClimateRecord.ToD := ClimateRecord.ToD + 1;
-                 END;
-              DetermineDayNr(ClimateRecord.ToD,ClimateRecord.ToM,ClimateRecord.ToY,ClimateRecord.ToDayNr);
-              END;
-   Monthly  : BEGIN
-              ClimateRecord.ToY := ClimateRecord.FromY;
-              ClimateRecord.ToM := ClimateRecord.FromM + ClimateRecord.NrObs - 1;
-              WHILE (ClimateRecord.ToM > 12) DO
-                    BEGIN
-                    ClimateRecord.ToY := ClimateRecord.ToY + 1;
-                    ClimateRecord.ToM := ClimateRecord.ToM - 12;
-                    END;
-              ClimateRecord.ToD := DaysInMonth[ClimateRecord.ToM];
-              IF ((ClimateRecord.ToM = 2) AND LeapYear(ClimateRecord.ToY)) THEN ClimateRecord.ToD := ClimateRecord.ToD + 1;
-              DetermineDayNr(ClimateRecord.ToD,ClimateRecord.ToM,ClimateRecord.ToY,ClimateRecord.ToDayNr);
-              END;
-   end;
-Str(ClimateRecord.FromD:2,dayStr);
-IF ClimateRecord.FromY = 1901 THEN yearStr := ''
-                              ELSE Str(ClimateRecord.FromY:4,yearStr);
-ClimateRecord.FromString := CONCAT(dayStr,' ',NameMonth[ClimateRecord.FromM],' ',yearStr);
-Str(ClimateRecord.ToD:2,dayStr);
-IF ClimateRecord.FromY = 1901 THEN yearStr := ''
-                              ELSE Str(ClimateRecord.ToY:4,yearStr);
-ClimateRecord.ToString := CONCAT(dayStr,' ',NameMonth[ClimateRecord.ToM],' ',yearStr);
-END; (* CompleteClimateDescription *)
 
 
 PROCEDURE LoadClim (FullName : string;

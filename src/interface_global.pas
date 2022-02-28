@@ -4336,6 +4336,9 @@ procedure ReadTemperatureSettingsParameters();
 procedure CompleteCropDescription;
     external 'aquacrop' name '__ac_global_MOD_completecropdescription';
 
+procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
+    external 'aquacrop' name '__ac_global_MOD_completeclimatedescription';
+
 
 
 implementation
