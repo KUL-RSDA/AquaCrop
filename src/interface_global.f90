@@ -198,7 +198,8 @@ use ac_global, only: CheckFilesInProject, &
                      LoadManagement, &
                      SaveCrop, &
                      SaveProfile, &
-                     LoadProfile
+                     LoadProfile, &
+                     DetermineRootZoneWC
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2209,5 +2210,17 @@ subroutine LoadProfile_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadProfile(string)
 end subroutine LoadProfile_wrap
+
+
+subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
+    real(dp), intent(in) :: RootingDepth
+    logical(1), intent(inout) :: ZtopSWCconsidered
+
+    logical :: ZtopSWCconsidered_f
+
+    ZtopSWCconsidered_f = ZtopSWCconsidered
+    call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
+    ZtopSWCconsidered = ZtopSWCconsidered_f
+end subroutine DetermineRootZoneWC_wrap
 
 end module ac_interface_global

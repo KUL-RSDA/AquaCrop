@@ -5115,6 +5115,144 @@ subroutine LoadProfile(FullName)
 end subroutine LoadProfile
 
 
+subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
+    real(dp), intent(in) :: RootingDepth
+    logical, intent(inout) :: ZtopSWCconsidered
+
+
+    real(dp) :: CumDepth, Factor, frac_value, DrRel, DZtopRel, TopSoilInMeter
+    integer(int32) :: compi
+
+    ! calculate SWC in root zone
+    CumDepth = 0._dp
+    compi = 0
+    call SetRootZoneWC_Actual(0._dp)
+    call SetRootZoneWC_FC(0._dp)
+    call SetRootZoneWC_WP(0._dp)
+    call SetRootZoneWC_SAT(0._dp)
+    call SetRootZoneWC_Leaf(0._dp)
+    call SetRootZoneWC_Thresh(0._dp)
+    call SetRootZoneWC_Sen(0._dp)
+    loop: do
+        compi = compi + 1
+        CumDepth = CumDepth + GetCompartment_Thickness(compi)
+        if (CumDepth <= RootingDepth) then
+            Factor = 1._dp
+        else
+            frac_value = RootingDepth - (CumDepth - GetCompartment_Thickness(compi))
+            if (frac_value > 0._dp) then
+                Factor = frac_value/GetCompartment_Thickness(compi)
+            else
+                Factor = 0._dp
+            end if
+        end if
+        call SetRootZoneWC_Actual(GetRootZoneWC_Actual() + Factor * 1000._dp * &
+             GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)* &
+             (1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_FC(GetRootZoneWC_FC() + Factor * 10._dp * &
+             GetSoilLayer_FC(GetCompartment_Layer(compi)) * &
+             GetCompartment_Thickness(compi) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_Leaf(GetRootZoneWC_Leaf() + Factor * 10._dp * &
+             GetCompartment_Thickness(compi) * &
+             (GetSoilLayer_FC(GetCompartment_Layer(compi)) - GetCrop_pLeafAct() &
+             * (GetSoilLayer_FC(GetCompartment_Layer(compi))- &
+             GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp &
+             - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_Thresh(GetRootZoneWC_Thresh() + Factor * 10._dp * &
+             GetCompartment_Thickness(compi) * &
+             (GetSoilLayer_FC(GetCompartment_Layer(compi)) - GetCrop_pActStom() &
+             * (GetSoilLayer_FC(GetCompartment_Layer(compi))- &
+             GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_Sen(GetRootZoneWC_Sen() + Factor * 10._dp * &
+             GetCompartment_Thickness(compi) * &
+             (GetSoilLayer_FC(GetCompartment_Layer(compi)) - GetCrop_pSenAct() &
+             * (GetSoilLayer_FC(GetCompartment_Layer(compi))- &
+             GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_WP(GetRootZoneWC_WP() + Factor * 10._dp * &
+             GetSoilLayer_WP(GetCompartment_Layer(compi))* &
+             GetCompartment_Thickness(compi)* (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_SAT(GetRootZoneWC_SAT()+ Factor * 10._dp * &
+             GetSoilLayer_SAT(GetCompartment_Layer(compi)) * &
+             GetCompartment_Thickness(compi) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        if ((CumDepth >= RootingDepth) .or. (compi == NrCompartments)) exit loop
+    end do loop
+    ! calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
+    if ((RootingDepth*100._dp) <= GetSimulParam_ThicknessTopSWC()) then
+        call SetRootZoneWC_ZtopAct(GetRootZoneWC_Actual())
+        call SetRootZoneWC_ZtopFC(GetRootZoneWC_FC())
+        call SetRootZoneWC_ZtopWP(GetRootZoneWC_WP())
+        call SetRootZoneWC_ZtopThresh(GetRootZoneWC_Thresh())
+    else
+        CumDepth = 0._dp
+        compi = 0
+        call SetRootZoneWC_ZtopAct(0._dp)
+        call SetRootZoneWC_ZtopFC(0._dp)
+        call SetRootZoneWC_ZtopWP(0._dp)
+        call SetRootZoneWC_ZtopThresh(0._dp)
+        TopSoilInMeter = GetSimulParam_ThicknessTopSWC()/100._dp
+        loop_2: do
+            compi = compi + 1
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if ((CumDepth*100._dp) <= GetSimulParam_ThicknessTopSWC()) then
+                Factor = 1._dp
+            else
+                frac_value = TopSoilInMeter - (CumDepth - GetCompartment_Thickness(compi))
+                if (frac_value > 0._dp) then
+                    Factor = frac_value/GetCompartment_Thickness(compi)
+                else
+                    Factor = 0._dp
+                end if
+            end if
+            call SetRootZoneWC_ZtopAct(GetRootZoneWC_ZtopAct() + Factor * &
+                 1000._dp * GetCompartment_Theta(compi) * &
+                 GetCompartment_Thickness(compi) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetRootZoneWC_ZtopFC(GetRootZoneWC_ZtopFC() + Factor * 10._dp &
+                 * GetSoilLayer_FC(GetCompartment_Layer(compi)) * &
+                 GetCompartment_Thickness(compi) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetRootZoneWC_ZtopWP(GetRootZoneWC_ZtopWP() + Factor * 10._dp &
+                 * GetSoilLayer_WP(GetCompartment_Layer(compi)) * &
+                 GetCompartment_Thickness(compi) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetRootZoneWC_ZtopThresh(GetRootZoneWC_ZtopThresh() + Factor * &
+                 10._dp * GetCompartment_Thickness(compi) * &
+                 (GetSoilLayer_FC(GetCompartment_Layer(compi))  - &
+                 GetCrop_pActStom() * (GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                 -GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            if ((CumDepth >= TopSoilInMeter) .or. (compi == NrCompartments)) exit loop_2
+        end do loop_2
+    end if
+
+    ! Relative depletion in rootzone and in top soil
+    if (roundc(1000._dp*(GetRootZoneWc_FC() - GetRootZoneWc_WP()), mold=1) > 0) then
+        DrRel = (GetRootZoneWc_FC() - GetRootZoneWC_Actual())/(GetRootZoneWc_FC() &
+                                                          - GetRootZoneWc_WP())
+    else
+        DrRel = 0._dp
+    end if
+    if (roundc(1000._dp*(GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP()),mold=1) > 0) then
+        DZtopRel = (GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopAct())/ &
+                              (GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP())
+    else
+        DZtopRel = 0._dp
+    end if
+
+    ! Zone in soil profile considered for determining stress response
+    if (DZtopRel < DrRel) then
+        ZtopSWCconsidered = .true.  ! top soil is relative wetter than root zone
+    else
+        ZtopSWCconsidered = .false.
+    end if
+end subroutine DetermineRootZoneWC
+
+
 !! Global variables section !!
 
 
@@ -5179,6 +5317,72 @@ type(rep_RootZoneWC) function GetRootZoneWC()
 
     GetRootZoneWC = RootZoneWC
 end function GetRootZoneWC
+
+real(dp) function GetRootZoneWC_Actual()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Actual = RootZoneWC%Actual
+end function GetRootZoneWC_Actual
+
+real(dp) function GetRootZoneWC_FC()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_FC = RootZoneWC%FC
+end function GetRootZoneWC_FC
+
+real(dp) function GetRootZoneWC_WP()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_WP = RootZoneWC%WP
+end function GetRootZoneWC_WP
+
+real(dp) function GetRootZoneWC_SAT()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_SAT = RootZoneWC%SAT
+end function GetRootZoneWC_SAT
+
+real(dp) function GetRootZoneWC_Leaf()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Leaf = RootZoneWC%Leaf
+end function GetRootZoneWC_Leaf
+
+real(dp) function GetRootZoneWC_Thresh()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Thresh = RootZoneWC%Thresh
+end function GetRootZoneWC_Thresh
+
+real(dp) function GetRootZoneWC_Sen()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Sen = RootZoneWC%Sen
+end function GetRootZoneWC_Sen
+
+real(dp) function GetRootZoneWC_ZtopAct()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopAct = RootZoneWC%ZtopAct
+end function GetRootZoneWC_ZtopAct
+
+real(dp) function GetRootZoneWC_ZtopFC()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopFC = RootZoneWC%ZtopFC
+end function GetRootZoneWC_ZtopFC
+
+real(dp) function GetRootZoneWC_ZtopWP()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopWP = RootZoneWC%ZtopWP
+end function GetRootZoneWC_ZtopWP
+
+real(dp) function GetRootZoneWC_ZtopThresh()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopThresh = RootZoneWC%ZtopThresh
+end function GetRootZoneWC_ZtopThresh
 
 subroutine SetRootZoneWC_Actual(Actual)
     !! Setter for the "RootZoneWC" global variable.

@@ -4235,6 +4235,12 @@ procedure LoadProfile_wrap(constref FullName : PChar;
     external 'aquacrop' name '__ac_interface_global_MOD_loadprofile_wrap';
 
 
+procedure DetermineRootZoneWC(
+            constref RootingDepth : double;
+            VAR ZtopSWCconsidered : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
+
 implementation
 
 
