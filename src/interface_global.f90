@@ -2155,47 +2155,14 @@ subroutine SaveProfile_wrap(totalname, strlen)
 end subroutine SaveProfile_wrap
 
 
-real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
-                               Depo_len)
-    !! Wrapper for [[ac_global:ECeComp]] for foreign languages.
-    real(dp), intent(in) :: Thickness
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
-
-    type(CompartmentIndividual) :: comp
-
-    comp%Thickness = Thickness
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    ECeComp_wrap = ECeComp(comp)
-end function ECeComp_wrap
-
-
-real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
-                                Depo_ptr, Depo_len, atFC)
+real(dp) function ECswComp_wrap(Comp, atFC)
     !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
-    real(dp), intent(in) :: Thickness
-    real(dp), intent(in) :: theta
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
+    type(CompartmentIndividual), intent(in) :: comp
     logical(1), intent(in) :: atFC
 
-    type(CompartmentIndividual) :: comp
     logical :: atFC_f
 
-    comp%Thickness = Thickness
-    comp%theta = theta
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    atFC_f = logical(atFC)
+    atFC_f = atFC
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
 
