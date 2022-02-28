@@ -5069,6 +5069,223 @@ subroutine LoadCrop(FullName)
 end subroutine LoadCrop
 
 
+
+real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, &
+                                     L123, L1234, GDDL0, GDDL12, GDDL123, &
+                                     GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, &
+                                     GDDCDC, KcTop, KcDeclAgeing, &
+                                     CCeffectProcent, Tbase, Tupper, TDayMin, &
+                                     TDayMax, GDtranspLow, CO2i, TheModeCycle)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDtranspLow
+    real(dp), intent(in) :: CO2i
+    integer(intEnum), intent(in) :: TheModeCycle
+
+    integer(int32), parameter :: EToStandard = 5
+    real(dp) :: SumGDD, GDDi, SumKcPot, SumGDDforPlot, SumGDDfromDay1
+    real(dp) :: Tndayi, Txdayi, CCi, CCxWitheredForB, TpotForB, EpotTotForB
+    real(dp) :: CCinitial, DayFraction, GDDayFraction
+    integer(int32) :: DayCC, Tadj, GDDTadj
+    integer :: fhandle
+    integer(int32) :: Dayi
+    logical :: GrowthON
+
+    ! 1. Open Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        open(newunit=fhandle, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
+             status='old', action='read')
+    end if
+
+    ! 2. Initialise global settings
+    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+    SumKcPot = 0._dp
+    SumGDDforPlot = real(undef_int, kind=dp)
+    SumGDD = real(undef_int, kind=dp)
+    SumGDDfromDay1 = 0._dp
+    GrowthON = .false.
+    GDDTadj = undef_int
+    DayFraction = real(undef_int, kind=dp)
+    GDDayFraction = real(undef_int, kind=dp)
+    ! 2.bis Initialise 1st day
+    if (TheDaysToCCini /= 0) then
+        ! regrowth
+        if (TheDaysToCCini == undef_int) then
+            ! CCx on 1st day
+            Tadj = L12 - L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = GDDL12 - GDDL0
+                SumGDD = GDDL12
+            end if
+            CCinitial = CCx
+        else
+            ! CC on 1st day is < CCx
+            Tadj = TheDaysToCCini
+            DayCC = Tadj + L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = TheGDDaysToCCini
+                SumGDD = GDDL0 + TheGDDaysToCCini
+                SumGDDforPlot = SumGDD
+            end if
+            CCinitial = CanopyCoverNoStressSF(DayCC, L0, L123, L1234, GDDL0, &
+                                              GDDL123, GDDL1234, CCo, CCx, &
+                                              CGC, CDC, GDDCGC, GDDCDC, &
+                                              SumGDDforPlot, TheModeCycle, &
+                                              (0_int8), (0_int8))
+        end if
+        ! Time reduction for days between L12 and L123
+        DayFraction = (L123-L12)/real(Tadj + L0 + (L123-L12), kind=dp)
+        if (TheModeCycle == modeCycle_GDDays) then
+            GDDayFraction = (GDDL123-GDDL12)/real(GDDTadj + GDDL0 + &
+                                                  (GDDL123-GDDL12), kind=dp)
+        end if
+    else
+        ! sowing or transplanting
+        Tadj = 0
+        if (TheModeCycle == modeCycle_GDDays) then
+            GDDTadj = 0
+            SumGDD = 0._dp
+        end if
+        CCinitial = CCo
+    end if
+
+    ! 3. Calculate Sum
+    do Dayi = 1, L1234 
+        ! 3.1 calculate growing degrees for the day
+        if (GetTemperatureFile() /= '(None)') then
+            read(fhandle, *) Tndayi, Txdayi
+            GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
+                                    GetSimulParam_GDDMethod())
+        else
+            GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
+                                    GetSimulParam_GDDMethod())
+        end if
+        if (TheModeCycle == modeCycle_GDDays) then
+            SumGDD = SumGDD + GDDi
+            SumGDDfromDay1 = SumGDDfromDay1 + GDDi
+        end if
+        
+        ! 3.2 calculate CCi
+        if (GrowthON .eqv. .false.) then
+            ! not yet canopy development
+            CCi = 0._dp
+            DayCC = Dayi
+            if (TheDaysToCCini /= 0) then
+                ! regrowth on 1st day
+                CCi = CCinitial
+                GrowthON = .true.
+            else
+                ! wait for day of germination or recover of transplant
+                if (TheModeCycle == modeCycle_CalendarDays) then
+                    if (Dayi == (L0+1)) then
+                        CCi = CCinitial
+                        GrowthON = .true.
+                    end if
+                else
+                    if (SumGDD > GDDL0) then
+                        CCi = CCinitial
+                        GrowthON = .true.
+                    end if
+                end if
+            end if
+        else
+            if (TheDaysToCCini == 0) then
+                DayCC = Dayi
+            else
+                DayCC = Dayi + Tadj + L0 ! adjusted time scale
+                if (DayCC > L1234) then
+                    DayCC = L1234 ! special case where L123 > L1234
+                end if
+                if (DayCC > L12) then
+                    if (Dayi <= L123) then
+                        DayCC = L12 + roundc(DayFraction & ! slow down
+                                            * (Dayi+Tadj+L0 - L12), mold=1)
+                    else
+                        DayCC = Dayi ! switch time scale
+                    end if
+                end if
+            end if
+            if (TheModeCycle == modeCycle_GDDays) then
+                if (TheGDDaysToCCini == 0) then
+                    SumGDDforPlot = SumGDDfromDay1
+                else
+                    SumGDDforPlot = SumGDD
+                    if (SumGDDforPlot > GDDL1234) then
+                        SumGDDforPlot = GDDL1234 ! special case 
+                                                 ! where L123 > L1234
+                    end if
+                    if (SumGDDforPlot > GDDL12) then
+                        if (SumGDDfromDay1 <= GDDL123) then
+                            SumGDDforPlot = GDDL12 + roundc(GDDayFraction &
+                                   * (SumGDDfromDay1+GDDTadj+GDDL0 - GDDL12), &
+                                      mold=1) ! slow down
+                        else
+                            SumGDDforPlot = SumGDDfromDay1 ! switch time scale
+                        end if
+                    end if
+                end if
+            end if
+            CCi = CanopyCoverNoStressSF(DayCC, L0, L123, L1234, GDDL0, &
+                                        GDDL123, GDDL1234, CCo, CCx, &
+                                        CGC, CDC, GDDCGC, GDDCDC, &
+                                        SumGDDforPlot, TheModeCycle, &
+                                        (0_int8), (0_int8))
+        end if
+                
+        ! 3.3 calculate CCxWithered
+        CCxWitheredForB = CCi
+        if (Dayi >= L12) then
+            CCxWitheredForB = CCx
+        end if
+        
+        ! 3.4 Calculate Tpot + Adjust for Low temperature 
+        ! (no transpiration)
+        if (CCi > 0.0001_dp) then
+            call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
+                           real(EToStandard, kind=dp), KcTop, &
+                           KcDeclAgeing, CCx, CCxWitheredForB, &
+                           CCeffectProcent, CO2i, &
+                           GDDi, GDtranspLow, TpotForB, EpotTotForB)
+        else
+            TpotForB = 0._dp
+        end if
+        
+        ! 3.5 Sum of Sum Of KcPot
+        SumKcPot = SumKcPot + (TpotForB/EToStandard)
+    end do
+            
+    ! 5. Close Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        close(fhandle)
+    end if
+    
+    ! 6. final sum
+    SeasonalSumOfKcPot = SumKcPot  
+end function SeasonalSumOfKcPot
+
+
+
 real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
                                   CCxadjusted, PercCCxHIfinal, TempPlanting, &
                                   PercentLagPhase, HIfinal)
@@ -5893,6 +6110,219 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         end if
     end if
 end subroutine CalculateETpot
+
+
+subroutine LoadProgramParametersProject(FullFileNameProgramParameters)
+    character(len=*), intent(in) :: FullFileNameProgramParameters
+
+    integer :: fhandle
+    integer(int32) :: i, simul_RpZmi, simul_lowox
+    integer(int8) :: simul_ed, effrainperc, effrainshow, effrainrootE, &
+                     simul_saltdiff, simul_saltsolub, simul_root, simul_pCCHIf, &
+                     simul_SFR, simul_TAWg, simul_beta, simul_Tswc, simul_GDD, &
+                     simul_EZma
+    real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, simul_expFsen, &
+                simul_Tmi, simul_Tma
+    logical :: file_exists
+
+    inquire(file=trim(FullFileNameProgramParameters), exist=file_exists)
+    if (file_exists) then
+        ! load set of program parameters
+        open(newunit=fhandle, file=trim(FullFileNameProgramParameters), &
+             status='old', action='read')
+        ! crop
+        read(fhandle, *) simul_ed ! evaporation decline factor in stage 2
+        call SetSimulParam_EvapDeclineFactor(simul_ed)
+        read(fhandle, *) simul_kcWB ! Kc wet bare soil [-]
+        call SetSimulParam_KcWetBare(simul_kcWB)
+        read(fhandle, *) simul_pCCHIf ! CC threshold below which HI no longer
+                                      ! increase(% of 100)
+        call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
+        read(fhandle, *) simul_RpZmi ! Starting depth of root sine function 
+                                     ! (% of Zmin)
+        call SetSimulParam_RootPercentZmin(simul_RpZmi)
+        read(fhandle, *) simul_RZEma ! cm/day
+        call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
+        call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
+        read(fhandle, *) simul_SFR ! Shape factor for effect water stress 
+                                   ! on rootzone expansion
+        call SetSimulParam_KsShapeFactorRoot(simul_SFR)
+        read(fhandle, *) simul_TAWg  ! Soil water content (% TAW) required 
+                                     ! at sowing depth for germination
+        call SetSimulParam_TAWGermination(simul_TAWg)
+        read(fhandle, *) simul_pfao ! Adjustment factor for FAO-adjustment 
+                                    ! soil water depletion (p) for various ET
+        call SetSimulParam_pAdjFAO(simul_pfao)
+        read(fhandle, *) simul_lowox ! number of days for full effect of 
+                                     ! deficient aeration
+        call SetSimulParam_DelayLowOxygen(simul_lowox)
+        read(fhandle, *) simul_expFsen ! exponent of senescence factor 
+                                       ! adjusting drop in photosynthetic 
+                                       ! activity of dying crop
+        call SetSimulParam_ExpFsen(simul_expFsen)
+        read(fhandle, *) simul_beta ! Decrease (percentage) of p(senescence) 
+                                    ! once early canopy senescence is triggered
+        call SetSimulParam_Beta(simul_beta)
+        read(fhandle, *) simul_Tswc  ! Thickness top soil (cm) in which soil 
+                                     ! water depletion has to be determined
+        call SetSimulParam_ThicknessTopSWC(simul_Tswc)
+        ! field
+        read(fhandle, *) simul_EZma ! maximum water extraction depth by soil 
+                                    ! evaporation [cm]
+        call SetSimulParam_EvapZmax(simul_EZma)
+        ! soil
+        read(fhandle, *) simul_rod ! considered depth (m) of soil profile for 
+                                   ! calculation of mean soil water content
+        call SetSimulParam_RunoffDepth(simul_rod)
+        read(fhandle, *) i   ! correction CN for Antecedent Moisture Class
+        if (i == 1) then
+            call SetSimulParam_CNcorrection(.true.)
+        else
+            call SetSimulParam_CNcorrection(.false.)
+        end if
+        read(fhandle, *) simul_saltdiff ! salt diffusion factor (%)
+        read(fhandle, *) simul_saltsolub ! salt solubility (g/liter)
+        read(fhandle, *) simul_root ! shape factor capillary rise factor
+        call SetSimulParam_SaltDiff(simul_saltdiff)
+        call SetSimulParam_SaltSolub(simul_saltsolub)
+        call SetSimulParam_RootNrDF(simul_root)
+        call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be &
+                                     ! changed since linked with equations for 
+                                     ! CN AMCII and CN converions
+        ! Temperature
+        read(fhandle, *) simul_Tmi   ! Default minimum temperature (degC) if no &
+                                     ! temperature file is specified
+        call SetSimulParam_Tmin(simul_Tmi)
+        read(fhandle, *) simul_Tma   ! Default maximum temperature (degC) if no &
+                                     ! temperature file is specified
+        call SetSimulParam_Tmax(simul_Tma)
+        read(fhandle, *) simul_GDD ! Default method for GDD calculations
+        call SetSimulParam_GDDMethod(simul_GDD)
+        if (GetSimulParam_GDDMethod() > 3_int8) then
+            call SetSimulParam_GDDMethod(3_int8)
+        end if
+        if (GetSimulParam_GDDMethod()< 1_int8) then
+            call SetSimulParam_GDDMethod(3_int8)
+        end if
+        ! Rainfall
+        read(fhandle, *) i
+        select case (i)
+            case (0)
+                call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_Full)
+            case (1)
+                call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_USDA)
+            case (2)
+                call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_Percentage)
+        end select
+        read(fhandle, *) effrainperc ! IF Method is Percentage
+        call SetSimulParam_EffectiveRain_PercentEffRain(effrainperc)
+        read(fhandle, *) effrainshow  ! For estimation of surface run-off
+        call SetSimulParam_EffectiveRain_ShowersInDecade(effrainshow)
+        read(fhandle, *) effrainrootE ! For reduction of soil evaporation
+        call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
+        ! close
+        Close(fhandle)
+    else
+        ! take the default set of program parameters
+        call ReadSoilSettings
+        call ReadRainfallSettings
+        call ReadCropSettingsParameters
+        call ReadFieldSettingsParameters
+        call ReadTemperatureSettingsParameters
+    end if
+end subroutine LoadProgramParametersProject
+
+
+subroutine ReadCropSettingsParameters()
+
+    integer :: fhandle
+    character(len=:), allocatable :: FullName
+    integer(int8) :: simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
+                     simul_beta, simul_Tswc
+    real(dp) :: simul_kcWB, simul_RZEma, simul_pfao, simul_expFsen
+    integer(int32) :: simul_RpZmi, simul_lowox
+
+    FullName = GetPathNameSimul() // 'Crop.PAR'
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) simul_ed ! evaporation decline factor in stage 2
+    call SetSimulParam_EvapDeclineFactor(simul_ed)
+    read(fhandle, *) simul_kcWB ! Kc wet bare soil [-]
+    call SetSimulParam_KcWetBare(simul_kcWB)
+    read(fhandle, *) simul_pCCHIf ! CC threshold below which HI no 
+                                  ! longer increase(% of 100)
+    call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
+    read(fhandle, *) simul_RpZmi ! Starting depth of root sine function
+                                 ! (% of Zmin)
+    call SetSimulParam_RootPercentZmin(simul_RpZmi)
+    read(fhandle, *) simul_RZEma ! cm/day
+    call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
+    call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
+    read(fhandle, *) simul_SFR ! Shape factor for effect water stress on 
+                               ! rootzone expansion
+    call SetSimulParam_KsShapeFactorRoot(simul_SFR)
+    read(fhandle, *) simul_TAWg  ! Soil water content (% TAW) required 
+                                 ! at sowing depth for germination
+    call SetSimulParam_TAWGermination(simul_TAWg)
+    read(fhandle, *) simul_pfao ! Adjustment factor for FAO-adjustment soil
+                                ! water depletion (p) for various ET
+    call SetSimulParam_pAdjFAO(simul_pfao)
+    read(fhandle, *) simul_lowox ! number of days for full effect of 
+                                 ! deficient aeration
+    call SetSimulParam_DelayLowOxygen(simul_lowox)
+    read(fhandle, *) simul_expFsen ! exponent of senescence factor adjusting 
+                               ! drop in photosynthetic activity of dying crop
+    call SetSimulParam_ExpFsen(simul_expFsen)
+    read(fhandle, *) simul_beta ! Decrease (percentage) of p(senescence) once
+                                ! early canopy senescence is triggered
+    call SetSimulParam_Beta(simul_beta)
+    read(fhandle, *) simul_Tswc ! Thickness top soil (cm) in which soil water
+                                ! depletion has to be determined
+    call SetSimulParam_ThicknessTopSWC(simul_Tswc)
+    close(fhandle)
+end subroutine ReadCropSettingsParameters
+
+
+subroutine ReadFieldSettingsParameters()
+
+    integer :: fhandle
+    character(len=:), allocatable :: FullName
+    integer(int8) :: simul_evmax
+
+    FullName = GetPathNameSimul() // 'Field.PAR'
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) simul_evmax ! maximum water extraction depth by 
+                                 ! soil evaporation [cm]
+    call SetSimulParam_EvapZmax(simul_evmax)
+    close(fhandle)
+end subroutine ReadFieldSettingsParameters
+
+
+subroutine ReadTemperatureSettingsParameters()
+
+    integer :: fhandle
+    character(len=:), allocatable :: FullName
+    integer(int8) :: simul_GDD
+    real(dp) :: simul_Tmi, simul_Tma
+
+    FullName = GetPathNameSimul() // 'Temperature.PAR'
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *)
+    read(fhandle, *) simul_Tmi ! Default minimum temperature (degC) if no 
+                               ! temperature file is specified
+    call SetSimulParam_Tmin(simul_Tmi)
+    read(fhandle, *) simul_Tma ! Default maximum temperature (degC) if no 
+                               ! temperature file is specified
+    call SetSimulParam_Tmax(simul_Tma)
+    read(fhandle, *) simul_GDD ! Default method for GDD calculations
+    call SetSimulParam_GDDMethod(simul_GDD)
+    if (GetSimulParam_GDDMethod() > 3_int8) then
+        call SetSimulParam_GDDMethod(3_int8)
+    end if
+    if (GetSimulParam_GDDMethod() < 1_int8) then
+        call SetSimulParam_GDDMethod(1_int8)
+    end if
+    close(fhandle)
+end subroutine ReadTemperatureSettingsParameters
 
 
 
