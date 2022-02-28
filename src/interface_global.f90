@@ -7,8 +7,6 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
 use ac_global, only: ActiveCells, &
                      CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
-                     DetermineSaltContent, &
-                     DetermineRootZoneWC, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
@@ -78,8 +76,8 @@ use ac_global, only: ActiveCells, &
                      GetRainFileFull, &
                      GetRainDescription, &
                      LoadClimate, &
+                     LoadCrop, &
                      LoadCropCalendar, &
-                     LoadProfile, &
                      LoadIrriScheduleInfo, &
                      LoadProjectDescription, &
                      setRainFileFull, &
@@ -201,7 +199,11 @@ use ac_global, only: ActiveCells, &
                      SetManDescription, &
                      LoadManagement, &
                      SaveCrop, &
-                     SaveProfile
+                     SaveProfile, &
+                     GetOffSeasonDescription, &
+                     SetOffSeasonDescription, &
+                     LoadOffSeason, &
+                     LoadProgramParametersProject
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -491,17 +493,6 @@ subroutine DetermineLengthGrowthStages_wrap(CCoVal, CCxVal, CDCVal, L0, &
                                      Length123, StLength, Length12, CGCVal)
 end subroutine DetermineLengthGrowthStages_wrap
 
-
-subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
-    real(dp), intent(in) :: RootingDepth
-    logical(1), intent(inout) :: ZtopSWCconsidered
-
-    logical :: ZtopSWCconsidered_f
-
-    ZtopSWCconsidered_f = ZtopSWCconsidered
-    call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
-end subroutine DetermineRootZoneWC_wrap
-
 subroutine LoadIrriScheduleInfo_wrap(FullName, strlen1)
     !! Wrapper for [[ac_global:LoadIrriScheduleInfo]] for foreign languages.
     type(c_ptr), intent(in) :: FullName
@@ -512,7 +503,6 @@ subroutine LoadIrriScheduleInfo_wrap(FullName, strlen1)
     string1 = pointer2string(FullName, strlen1)
     call LoadIrriScheduleInfo(string1)
 end subroutine LoadIrriScheduleInfo_wrap
-
 
 subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
                             TempFile, strlen3, EToFile, strlen4, &
@@ -2214,50 +2204,66 @@ real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
 end function ECswComp_wrap
 
 
-integer(int32) function ActiveCells_wrap(theta, Layer)
-    !! Wrapper for [[ac_global:ActiveCells]] for foreign languages.
-    real(dp), intent(in) :: theta
-    integer(int32), intent(in) :: Layer
 
-    type(CompartmentIndividual) :: comp
-
-    comp%theta = theta
-    comp%Layer = Layer
-    ActiveCells_wrap = ActiveCells(comp)
-end function ActiveCells_wrap
-
-
-subroutine DetermineSaltContent_wrap(ECe, Thickness, Layer, Salt_ptr, Salt_len, &
-                                     Depo_ptr, Depo_len)
-    !! Wrapper for [[ac_global:DetermineSaltContent]] for foreign languages.
-    real(dp), intent(in) :: ECe
-    real(dp), intent(in) :: Thickness
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
-
-    type(CompartmentIndividual) :: comp
-
-    comp%Thickness = Thickness
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    call DetermineSaltContent(ECe, comp)
-end subroutine DetermineSaltContent_wrap
-
-
-subroutine LoadProfile_wrap(FullName, strlen)
-    !! Wrapper for [[ac_global:LoadProfile]] for foreign languages.
+subroutine LoadCrop_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadCrop]] for foreign languages.
     type(c_ptr), intent(in) :: FullName
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
 
     string = pointer2string(FullName, strlen)
-    call LoadProfile(string)
-end subroutine LoadProfile_wrap
+    call LoadCrop(string)
+end subroutine LoadCrop_wrap
+
+
+
+function GetOffSeasonDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonDescription())
+end function GetOffSeasonDescription_wrap
+
+
+subroutine SetOffSeasonDescription_wrap(OffSeasonDescription, strlen)
+    !! Wrapper for [[ac_global:SetOffSeasonDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonDescription, strlen)
+    call SetOffSeasonDescription(string)
+end subroutine SetOffSeasonDescription_wrap
+
+
+subroutine LoadProgramParametersProject_wrap(FullFileNameProgramParameters, &
+                                             strlen)
+    !! Wrapper for [[ac_global:LoadProgramParametersProject_]] 
+    !! for foreign languages.
+    type(c_ptr), intent(in) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullFileNameProgramParameters, strlen)
+    call LoadProgramParametersProject(string)
+end subroutine LoadProgramParametersProject_wrap
+
+
+subroutine LoadOffSeason_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadOffSeason]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadOffSeason(string)
+end subroutine LoadOffSeason_wrap
+
+
 
 
 end module ac_interface_global
