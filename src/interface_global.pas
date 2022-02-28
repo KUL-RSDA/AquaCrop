@@ -4228,6 +4228,13 @@ procedure CompleteProfileDescription();
     external 'aquacrop' name '__ac_global_MOD_completeprofiledescription';
 
 
+procedure LoadProfile(FullName : string);
+
+procedure LoadProfile_wrap(constref FullName : PChar;
+                           constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadprofile_wrap';
+
+
 implementation
 
 
@@ -7135,6 +7142,18 @@ begin;
                             int_plant, Zmin,TheSizePlant,TheCCini,
                             TheDaysToCCini,TheGDDaysToCCini);
   TypeOfPlanting := rep_planting(int_plant);
+end;
+
+
+procedure LoadProfile(FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadProfile_wrap(p,strlen);
 end;
 
 
