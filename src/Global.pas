@@ -1209,43 +1209,6 @@ END; (* DetermineRootZoneWC *)
 
 
 
-PROCEDURE ReadFieldSettingsParameters;
-VAR f : textfile;
-    FullName : string;
-    simul_evmax : Shortint;
-BEGIN
-FullName := CONCAT(GetPathNameSimul(),'Field.PAR');
-Assign(f,FullName);
-Reset(f);
-Readln(f,simul_evmax); //maximum water extraction depth by soil evaporation [cm]
-SetSimulParam_EvapZmax(simul_evmax);
-Close(f);
-END; (* ReadFieldSettingsParameters *)
-
-
-PROCEDURE ReadTemperatureSettingsParameters;
-VAR f0 : text;
-    FullName : string;
-    simul_GDD : Shortint;
-    simul_Tmi, simul_Tma : double; 
-BEGIN
-FullName := CONCAT(GetPathNameSimul(),'Temperature.PAR');
-Assign(f0,FullName);
-Reset(f0);
-Readln(f0);
-Readln(f0,simul_Tmi);   //Default minimum temperature (degC) if no temperature file is specified
-SetSimulParam_Tmin(simul_Tmi);
-Readln(f0,simul_Tma);   //Default maximum temperature (degC) if no temperature file is specified
-SetSimulParam_Tmax(simul_Tma);
-Readln(f0,simul_GDD); //Default method for GDD calculations
-SetSimulParam_GDDMethod(simul_GDD);
-IF (GetSimulParam_GDDMethod() > 3) THEN SetSimulParam_GDDMethod(3);
-IF (GetSimulParam_GDDMethod() < 1) THEN SetSimulParam_GDDMethod(1);
-Close(f0);
-END; (* ReadTemperatureSettingsParameters *)
-
-
-
 
 FUNCTION SeasonalSumOfKcPot(TheDaysToCCini,TheGDDaysToCCini,
                             L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
