@@ -75,6 +75,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetRainFileFull, &
                      GetRainDescription, &
                      LoadClimate, &
+                     LoadCrop, &
                      LoadCropCalendar, &
                      LoadIrriScheduleInfo, &
                      LoadProjectDescription, &
@@ -199,7 +200,11 @@ use ac_global, only: CheckFilesInProject, &
                      SaveCrop, &
                      SaveProfile, &
                      LoadProfile, &
-                     DetermineRootZoneWC
+                     DetermineRootZoneWC, &
+                     GetOffSeasonDescription, &
+                     SetOffSeasonDescription, &
+                     LoadOffSeason, &
+                     LoadProgramParametersProject
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2179,6 +2184,18 @@ subroutine LoadProfile_wrap(FullName, strlen)
 end subroutine LoadProfile_wrap
 
 
+subroutine LoadCrop_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadCrop]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadCrop(string)
+end subroutine LoadCrop_wrap
+
+
 subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
     real(dp), intent(in) :: RootingDepth
     logical(1), intent(inout) :: ZtopSWCconsidered
@@ -2189,5 +2206,51 @@ subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
     call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
     ZtopSWCconsidered = ZtopSWCconsidered_f
 end subroutine DetermineRootZoneWC_wrap
+
+
+function GetOffSeasonDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetOffSeasonDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetOffSeasonDescription())
+end function GetOffSeasonDescription_wrap
+
+
+subroutine SetOffSeasonDescription_wrap(OffSeasonDescription, strlen)
+    !! Wrapper for [[ac_global:SetOffSeasonDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: OffSeasonDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(OffSeasonDescription, strlen)
+    call SetOffSeasonDescription(string)
+end subroutine SetOffSeasonDescription_wrap
+
+
+subroutine LoadProgramParametersProject_wrap(FullFileNameProgramParameters, &
+                                             strlen)
+    !! Wrapper for [[ac_global:LoadProgramParametersProject_]] 
+    !! for foreign languages.
+    type(c_ptr), intent(in) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullFileNameProgramParameters, strlen)
+    call LoadProgramParametersProject(string)
+end subroutine LoadProgramParametersProject_wrap
+
+
+subroutine LoadOffSeason_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadOffSeason]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadOffSeason(string)
+end subroutine LoadOffSeason_wrap
 
 end module ac_interface_global

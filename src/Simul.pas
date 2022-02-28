@@ -1447,16 +1447,16 @@ FOR compi := 1 TO GetNrCompartments() DO Zbottom := Zbottom + GetCompartment_Thi
 // start at the bottom of the soil profile
 compi := GetNrCompartments();
 MaxMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
-                      GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
+                      GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(GetZiAqua()/100));
 
 // check restrictions on CR from soil layers below
 ZtopNextLayer := 0;
 FOR layeri := 1 TO GetCompartment_Layer(GetNrCompartments()) DO ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
 layeri := GetCompartment_Layer(GetNrCompartments());
-WHILE ((ZtopNextLayer < (ZiAqua/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
+WHILE ((ZtopNextLayer < (GetZiAqua()/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
    BEGIN
    layeri := layeri + 1;
-   LimitMM := MaxCRatDepth(GetSoilLayer_i(layeri).CRa,GetSoilLayer_i(layeri).CRb,GetSoilLayer_i(layeri).InfRate,ZtopNextLayer,(ZiAqua/100));
+   LimitMM := MaxCRatDepth(GetSoilLayer_i(layeri).CRa,GetSoilLayer_i(layeri).CRb,GetSoilLayer_i(layeri).InfRate,ZtopNextLayer,(GetZiAqua()/100));
    IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
    ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
    END;
@@ -1482,7 +1482,7 @@ WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout
 
    // room available to store water
    DTheta := GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi);
-   IF ((DTheta > 0) AND ((Zbottom - GetCompartment_Thickness(compi)/2) < (ZiAqua/100))) THEN
+   IF ((DTheta > 0) AND ((Zbottom - GetCompartment_Thickness(compi)/2) < (GetZiAqua()/100))) THEN
       BEGIN
       // water stored
       DThetaMax := Krel * DrivingForce * MaxMM/(1000*GetCompartment_Thickness(compi));
@@ -1511,7 +1511,7 @@ WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout
    IF (compi > 0) THEN
       BEGIN
       LimitMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
-                              GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(ZiAqua/100));
+                              GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(GetZiAqua()/100));
       IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
       END;
    END;
@@ -3784,9 +3784,9 @@ control := begin_day;
 CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain);
 
 // 2. Adjustments in presence of Groundwater table
-CheckForWaterTableInProfile((ZiAqua/100),GetCompartment(),WaterTableInProfile);
+CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
 Comp_temp := GetCompartment();
-CalculateAdjustedFC((ZiAqua/100),Comp_temp);
+CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
 SetCompartment(Comp_temp);
 
 // 3. Drainage
@@ -3898,7 +3898,7 @@ IF (SurfaceStorage <= 0) THEN DaySubmerged := 0;
 FeedbackCC;
 
 // 14. Adjustment to groundwater table
-IF WaterTableInProfile THEN HorizontalInflowGWTable(ZiAqua/100);
+IF WaterTableInProfile THEN HorizontalInflowGWTable(GetZiAqua()/100);
 
 // 15. Salt concentration
 ConcentrateSalts;
