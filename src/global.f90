@@ -5068,6 +5068,223 @@ subroutine LoadCrop(FullName)
 end subroutine LoadCrop
 
 
+
+real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, &
+                                     L123, L1234, GDDL0, GDDL12, GDDL123, &
+                                     GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, &
+                                     GDDCDC, KcTop, KcDeclAgeing, &
+                                     CCeffectProcent, Tbase, Tupper, TDayMin, &
+                                     TDayMax, GDtranspLow, CO2i, TheModeCycle)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDtranspLow
+    real(dp), intent(in) :: CO2i
+    integer(intEnum), intent(in) :: TheModeCycle
+
+    integer(int32), parameter :: EToStandard = 5
+    real(dp) :: SumGDD, GDDi, SumKcPot, SumGDDforPlot, SumGDDfromDay1
+    real(dp) :: Tndayi, Txdayi, CCi, CCxWitheredForB, TpotForB, EpotTotForB
+    real(dp) :: CCinitial, DayFraction, GDDayFraction
+    integer(int32) :: DayCC, Tadj, GDDTadj
+    integer :: fhandle
+    integer(int32) :: Dayi
+    logical :: GrowthON
+
+    ! 1. Open Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        open(newunit=fhandle, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
+             status='old', action='read')
+    end if
+
+    ! 2. Initialise global settings
+    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+    SumKcPot = 0._dp
+    SumGDDforPlot = real(undef_int, kind=dp)
+    SumGDD = real(undef_int, kind=dp)
+    SumGDDfromDay1 = 0._dp
+    GrowthON = .false.
+    GDDTadj = undef_int
+    DayFraction = real(undef_int, kind=dp)
+    GDDayFraction = real(undef_int, kind=dp)
+    ! 2.bis Initialise 1st day
+    if (TheDaysToCCini /= 0) then
+        ! regrowth
+        if (TheDaysToCCini == undef_int) then
+            ! CCx on 1st day
+            Tadj = L12 - L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = GDDL12 - GDDL0
+                SumGDD = GDDL12
+            end if
+            CCinitial = CCx
+        else
+            ! CC on 1st day is < CCx
+            Tadj = TheDaysToCCini
+            DayCC = Tadj + L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = TheGDDaysToCCini
+                SumGDD = GDDL0 + TheGDDaysToCCini
+                SumGDDforPlot = SumGDD
+            end if
+            CCinitial = CanopyCoverNoStressSF(DayCC, L0, L123, L1234, GDDL0, &
+                                              GDDL123, GDDL1234, CCo, CCx, &
+                                              CGC, CDC, GDDCGC, GDDCDC, &
+                                              SumGDDforPlot, TheModeCycle, &
+                                              (0_int8), (0_int8))
+        end if
+        ! Time reduction for days between L12 and L123
+        DayFraction = (L123-L12)/real(Tadj + L0 + (L123-L12), kind=dp)
+        if (TheModeCycle == modeCycle_GDDays) then
+            GDDayFraction = (GDDL123-GDDL12)/real(GDDTadj + GDDL0 + &
+                                                  (GDDL123-GDDL12), kind=dp)
+        end if
+    else
+        ! sowing or transplanting
+        Tadj = 0
+        if (TheModeCycle == modeCycle_GDDays) then
+            GDDTadj = 0
+            SumGDD = 0._dp
+        end if
+        CCinitial = CCo
+    end if
+
+    ! 3. Calculate Sum
+    do Dayi = 1, L1234 
+        ! 3.1 calculate growing degrees for the day
+        if (GetTemperatureFile() /= '(None)') then
+            read(fhandle, *) Tndayi, Txdayi
+            GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
+                                    GetSimulParam_GDDMethod())
+        else
+            GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
+                                    GetSimulParam_GDDMethod())
+        end if
+        if (TheModeCycle == modeCycle_GDDays) then
+            SumGDD = SumGDD + GDDi
+            SumGDDfromDay1 = SumGDDfromDay1 + GDDi
+        end if
+        
+        ! 3.2 calculate CCi
+        if (GrowthON .eqv. .false.) then
+            ! not yet canopy development
+            CCi = 0._dp
+            DayCC = Dayi
+            if (TheDaysToCCini /= 0) then
+                ! regrowth on 1st day
+                CCi = CCinitial
+                GrowthON = .true.
+            else
+                ! wait for day of germination or recover of transplant
+                if (TheModeCycle == modeCycle_CalendarDays) then
+                    if (Dayi == (L0+1)) then
+                        CCi = CCinitial
+                        GrowthON = .true.
+                    end if
+                else
+                    if (SumGDD > GDDL0) then
+                        CCi = CCinitial
+                        GrowthON = .true.
+                    end if
+                end if
+            end if
+        else
+            if (TheDaysToCCini == 0) then
+                DayCC = Dayi
+            else
+                DayCC = Dayi + Tadj + L0 ! adjusted time scale
+                if (DayCC > L1234) then
+                    DayCC = L1234 ! special case where L123 > L1234
+                end if
+                if (DayCC > L12) then
+                    if (Dayi <= L123) then
+                        DayCC = L12 + roundc(DayFraction & ! slow down
+                                            * (Dayi+Tadj+L0 - L12), mold=1)
+                    else
+                        DayCC = Dayi ! switch time scale
+                    end if
+                end if
+            end if
+            if (TheModeCycle == modeCycle_GDDays) then
+                if (TheGDDaysToCCini == 0) then
+                    SumGDDforPlot = SumGDDfromDay1
+                else
+                    SumGDDforPlot = SumGDD
+                    if (SumGDDforPlot > GDDL1234) then
+                        SumGDDforPlot = GDDL1234 ! special case 
+                                                 ! where L123 > L1234
+                    end if
+                    if (SumGDDforPlot > GDDL12) then
+                        if (SumGDDfromDay1 <= GDDL123) then
+                            SumGDDforPlot = GDDL12 + roundc(GDDayFraction &
+                                   * (SumGDDfromDay1+GDDTadj+GDDL0 - GDDL12), &
+                                      mold=1) ! slow down
+                        else
+                            SumGDDforPlot = SumGDDfromDay1 ! switch time scale
+                        end if
+                    end if
+                end if
+            end if
+            CCi = CanopyCoverNoStressSF(DayCC, L0, L123, L1234, GDDL0, &
+                                        GDDL123, GDDL1234, CCo, CCx, &
+                                        CGC, CDC, GDDCGC, GDDCDC, &
+                                        SumGDDforPlot, TheModeCycle, &
+                                        (0_int8), (0_int8))
+        end if
+                
+        ! 3.3 calculate CCxWithered
+        CCxWitheredForB = CCi
+        if (Dayi >= L12) then
+            CCxWitheredForB = CCx
+        end if
+        
+        ! 3.4 Calculate Tpot + Adjust for Low temperature 
+        ! (no transpiration)
+        if (CCi > 0.0001_dp) then
+            call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
+                           real(EToStandard, kind=dp), KcTop, &
+                           KcDeclAgeing, CCx, CCxWitheredForB, &
+                           CCeffectProcent, CO2i, &
+                           GDDi, GDtranspLow, TpotForB, EpotTotForB)
+        else
+            TpotForB = 0._dp
+        end if
+        
+        ! 3.5 Sum of Sum Of KcPot
+        SumKcPot = SumKcPot + (TpotForB/EToStandard)
+    end do
+            
+    ! 5. Close Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        close(fhandle)
+    end if
+    
+    ! 6. final sum
+    SeasonalSumOfKcPot = SumKcPot  
+end function SeasonalSumOfKcPot
+
+
+
 real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
                                   CCxadjusted, PercCCxHIfinal, TempPlanting, &
                                   PercentLagPhase, HIfinal)
