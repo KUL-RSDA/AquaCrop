@@ -199,6 +199,8 @@ use ac_global, only: CheckFilesInProject, &
                      LoadManagement, &
                      SaveCrop, &
                      SaveProfile, &
+                     LoadProfile, &
+                     DetermineRootZoneWC, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
@@ -2158,49 +2160,28 @@ subroutine SaveProfile_wrap(totalname, strlen)
 end subroutine SaveProfile_wrap
 
 
-real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
-                               Depo_len)
-    !! Wrapper for [[ac_global:ECeComp]] for foreign languages.
-    real(dp), intent(in) :: Thickness
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
-
-    type(CompartmentIndividual) :: comp
-
-    comp%Thickness = Thickness
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    ECeComp_wrap = ECeComp(comp)
-end function ECeComp_wrap
-
-
-real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
-                                Depo_ptr, Depo_len, atFC)
+real(dp) function ECswComp_wrap(Comp, atFC)
     !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
-    real(dp), intent(in) :: Thickness
-    real(dp), intent(in) :: theta
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
+    type(CompartmentIndividual), intent(in) :: comp
     logical(1), intent(in) :: atFC
 
-    type(CompartmentIndividual) :: comp
     logical :: atFC_f
 
-    comp%Thickness = Thickness
-    comp%theta = theta
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    atFC_f = logical(atFC)
+    atFC_f = atFC
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
+
+
+subroutine LoadProfile_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadProfile(string)
+end subroutine LoadProfile_wrap
 
 
 subroutine LoadCrop_wrap(FullName, strlen)
@@ -2214,6 +2195,17 @@ subroutine LoadCrop_wrap(FullName, strlen)
     call LoadCrop(string)
 end subroutine LoadCrop_wrap
 
+
+subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
+    real(dp), intent(in) :: RootingDepth
+    logical(1), intent(inout) :: ZtopSWCconsidered
+
+    logical :: ZtopSWCconsidered_f
+
+    ZtopSWCconsidered_f = ZtopSWCconsidered
+    call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
+    ZtopSWCconsidered = ZtopSWCconsidered_f
+end subroutine DetermineRootZoneWC_wrap
 
 
 function GetOffSeasonDescription_wrap() result(c_pointer)
@@ -2260,7 +2252,5 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
-
-
 
 end module ac_interface_global

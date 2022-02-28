@@ -5607,6 +5607,7 @@ end subroutine LoadOffSeason
 
 !! Global variables section !!
 
+
 function GetIrriFile() result(str)
     !! Getter for the "IrriFile" global variable.
     character(len=len(IrriFile)) :: str
@@ -5876,7 +5877,7 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     
     character(len=len(Trim(TheProjectFileName))) :: TempString
     character(len=:), allocatable :: TempString2
-    integer(int8) :: i
+    integer(int32) :: i
     
     TempString = Trim(TheProjectFileName)
     i = len(TempString)
@@ -6117,6 +6118,483 @@ real(dp) function ActualRootingDepth(DAP, L0, LZmax, L1234, GDDL0, GDDLZmax, &
         end if
     end function ActualRootingDepthGDDays
 end function ActualRootingDepth
+
+
+subroutine DesignateSoilLayerToCompartments(NrCompartments, NrSoilLayers, &
+                                            Compartment)
+    integer(int32), intent(in) :: NrCompartments
+    integer(int32), intent(in) :: NrSoilLayers
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                        intent(inout) :: Compartment
+
+    integer(int32) :: i, layeri, compi
+    real(dp) :: depth, depthi
+    logical :: finished, NextLayer
+
+    depth = 0._dp
+    depthi = 0._dp
+    layeri = 1
+    compi = 1
+
+    outer_loop: do
+        depth = depth + GetSoilLayer_Thickness(layeri)
+        inner_loop: do
+            depthi = depthi + Compartment(compi)%Thickness/2._dp
+
+            if (depthi <= depth) then
+                Compartment(compi)%Layer = layeri
+                NextLayer = .false.
+                depthi = depthi + Compartment(compi)%Thickness/2._dp
+                compi = compi + 1
+                finished = (compi > NrCompartments)
+            else
+                depthi = depthi - Compartment(compi)%Thickness/2._dp
+                NextLayer = .true.
+                layeri = layeri + 1
+                finished = (layeri > NrSoilLayers)
+            end if
+
+            if (finished .or. NextLayer) exit inner_loop
+            end do inner_loop
+
+        if (finished) exit outer_loop
+        end do outer_loop
+
+    do i = compi, NrCompartments
+        Compartment(i)%Layer = NrSoilLayers
+    end do
+
+    do i = (NrCompartments+1), max_No_compartments
+        Compartment(i)%Thickness = undef_double
+    end do
+end subroutine DesignateSoilLayerToCompartments
+
+
+subroutine specify_soil_layer(NrCompartments, NrSoilLayers, SoilLayer, &
+                              Compartment, TotalWaterContent)
+    integer(int32), intent(in) :: NrCompartments
+    integer(int32), intent(in) :: NrSoilLayers
+    type(SoilLayerIndividual), dimension(max_SoilLayers), &
+                                                intent(inout) :: SoilLayer
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                                intent(inout) :: Compartment
+    type(rep_Content), intent(inout) :: TotalWaterContent
+
+    integer(int32) :: layeri, compi, celli
+    real(dp) :: Total
+
+    call DesignateSoilLayerToCompartments(NrCompartments, NrSoilLayers, &
+                                          Compartment)
+
+    ! Set soil layers and compartments at Field Capacity and determine Watercontent (mm)
+    ! No salinity in soil layers and compartmens
+    ! Absence of ground water table (FCadj = FC)
+    Total = 0._dp
+    do layeri = 1, NrSoilLayers
+        SoilLayer(layeri)%WaterContent = 0._dp
+    end do
+
+    do compi = 1, NrCompartments
+        Compartment(compi)%Theta = SoilLayer(Compartment(compi)%Layer)%FC/100._dp
+        Compartment(compi)%FCadj = SoilLayer(Compartment(compi)%Layer)%FC
+        Compartment(compi)%DayAnaero = 0
+
+        do celli = 1, SoilLayer(Compartment(compi)%Layer)%SCP1
+            ! salinity in cells
+            Compartment(compi)%Salt(celli) = 0.0_dp
+            Compartment(compi)%Depo(celli) = 0.0_dp
+        end do
+
+        call SetSimulation_ThetaIni_i(compi, Compartment(compi)%Theta)
+        call SetSimulation_ECeIni_i(compi, 0._dp) ! initial soil salinity in dS/m
+
+        SoilLayer(Compartment(compi)%Layer)%WaterContent = &
+                SoilLayer(Compartment(compi)%Layer)%WaterContent &
+                + GetSimulation_ThetaIni_i(compi)*100._dp &
+                             *10._dp*Compartment(compi)%Thickness
+    end do
+
+    do layeri = 1, NrSoilLayers
+        Total = Total + SoilLayer(layeri)%WaterContent
+    end do
+    call SetTotalWaterContent_BeginDay(Total)
+
+    ! initial soil water content and no salts
+    call DeclareInitialCondAtFCandNoSalt()
+
+    ! Number of days with RootZone Anaerobic Conditions
+    call SetSimulation_DayAnaero(0_int8)
+end subroutine specify_soil_layer
+
+
+subroutine Calculate_Saltmobility(layer, SaltDiffusion, Macro, Mobil)
+    integer(int32), intent(in) :: layer
+    integer(int8), intent(in) :: SaltDiffusion
+    integer(int8), intent(in) :: Macro
+    real(dp), dimension(11), intent(inout) :: Mobil
+
+    integer(int32) :: i, CelMax
+    real(dp) :: Mix, a, b, xi, yi, UL
+
+    Mix = SaltDiffusion/100._dp ! global salt mobility expressed as a fraction
+    UL = GetSoilLayer_UL(layer) * 100._dp ! upper limit in VOL% of SC cell
+
+    ! 1. convert Macro (vol%) in SaltCelNumber
+    if (Macro > UL) then
+        CelMax = GetSoilLayer_SCP1(layer)
+    else
+        CelMax = roundc((Macro/UL)*GetSoilLayer_SC(layer), mold=1)
+    end if
+
+    if (CelMax <= 0) then
+        CelMax = 1
+    end if
+
+    ! 2. find a and b
+    if (Mix < 0.5_dp) then
+        a = Mix * 2._dp
+        b = exp(10._dp*(0.5_dp-Mix)*log(10._dp))
+    else
+        a = 2._dp * (1._dp - Mix)
+        b = exp(10._dp*(Mix-0.5_dp)*log(10._dp))
+    end if
+
+    ! 3. calculate mobility for cells = 1 to Macro
+    do i = 1, CelMax-1
+        xi = i *1._dp / (CelMax-1)
+
+        if (Mix > 0._dp) then
+            if (Mix < 0.5_dp) then
+                yi = exp(log(a)+xi*log(b))
+                Mobil(i) = (yi-a)/(a*b-a)
+            elseif ((Mix >= 0.5_dp - epsilon(0.0_dp)) &
+                    .and. (Mix <= 0.5_dp + epsilon(0.0_dp)))  then
+                Mobil(i) = xi
+            elseif (Mix < 1._dp) then
+                yi = exp(log(a)+(1._dp-xi)*log(b))
+                Mobil(i) = 1._dp - (yi-a)/(a*b-a)
+            else
+                Mobil(i) = 1._dp
+            end if
+        else
+            Mobil(i) = 0._dp
+        end if
+    end do
+
+    ! 4. Saltmobility between Macro and SAT
+    do i = CelMax, GetSoilLayer_SCP1(layer)
+        Mobil(i) = 1._dp
+    end do
+end subroutine Calculate_Saltmobility
+
+
+subroutine CompleteProfileDescription()
+
+    integer(int32) :: i
+    type(rep_Content) :: TotalWaterContent_temp
+    type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Compartment_temp
+    type(SoilLayerIndividual) :: soillayer_i_temp
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer_temp
+
+    do i = GetSoil_NrSoilLayers()+1, max_SoilLayers
+        soillayer_i_temp = GetSoilLayer_i(i)
+        call set_layer_undef(soillayer_i_temp)
+        call SetSoilLayer_i(i, soillayer_i_temp)
+    end do
+
+    call SetSimulation_ResetIniSWC(.true.) ! soil water content and soil salinity
+    TotalWaterContent_temp = GetTotalWaterContent()
+    Compartment_temp = GetCompartment()
+    soillayer_temp = GetSoilLayer()
+    call specify_soil_layer(GetNrCompartments(), &
+                            int(GetSoil_NrSoilLayers(), kind=int32), &
+                            soillayer_temp, Compartment_temp, &
+                            TotalWaterContent_temp)
+    call SetSoilLayer(soillayer_temp)
+    call SetTotalWaterContent(TotalWaterContent_temp)
+    call SetCompartment(Compartment_temp)
+end subroutine CompleteProfileDescription
+
+
+subroutine LoadProfile(FullName)
+    character(len=*), intent(in) :: FullName
+
+    integer :: fhandle
+    integer(int32) :: i
+    character(len=3) :: blank
+    real(dp) :: VersionNr
+    integer(int8) :: TempShortInt
+    character(len=1024) :: ProfDescriptionLocal
+    real(dp) :: thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp
+    real(dp) :: cra_temp, crb_temp, dx_temp
+    character(len=25) :: description_temp
+    integer(int8) :: penetrability_temp, gravelm_temp
+    real(dp), dimension(11) :: saltmob_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) ProfDescriptionLocal
+    call SetProfDescription(trim(ProfDescriptionLocal))
+    read(fhandle, *) VersionNr  ! AquaCrop version
+    read(fhandle, *) TempShortInt
+    call SetSoil_CNvalue(TempShortInt)
+    read(fhandle, *) TempShortInt
+    call SetSoil_REW(TempShortInt)
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+    read(fhandle, *) TempShortInt
+    call SetSoil_NrSoilLayers(TempShortInt)
+    read(fhandle, *) ! depth of restrictive soil layer which is no longer applicable
+    read(fhandle, *)
+    read(fhandle, *)
+
+    ! Load characteristics of each soil layer
+    do i = 1, GetSoil_NrSoilLayers()
+        ! Parameters for capillary rise missing in Versions 3.0 and 3.1
+        if (roundc(VersionNr*10, mold=1) < 40) then
+            read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
+                             WP_temp, infrate_temp, blank, description_temp
+            call SetSoilLayer_Thickness(i, thickness_temp)
+            call SetSoilLayer_SAT(i, SAT_temp)
+            call SetSoilLayer_FC(i, FC_temp)
+            call SetSoilLayer_WP(i, WP_temp)
+            call SetSoilLayer_InfRate(i, infrate_temp)
+            call SetSoilLayer_Description(i, description_temp)
+            ! Default values for Penetrability and Gravel
+            call SetSoilLayer_Penetrability(i, 100_int8)
+            call SetSoilLayer_GravelMass(i, 0_int8)
+            ! determine volume gravel
+            call SetSoilLayer_GravelVol(i, 0._dp)
+        else
+            if (roundc(VersionNr*10, mold=1) < 60) then
+                            ! UPDATE required for Version 6.0
+                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
+                                 WP_temp, infrate_temp, cra_temp, &
+                                 crb_temp, blank, description_temp
+                call SetSoilLayer_Thickness(i, thickness_temp)
+                call SetSoilLayer_SAT(i, SAT_temp)
+                call SetSoilLayer_FC(i, FC_temp)
+                call SetSoilLayer_WP(i, WP_temp)
+                call SetSoilLayer_InfRate(i, infrate_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+                call SetSoilLayer_Description(i, description_temp)
+                ! Default values for Penetrability and Gravel
+                call SetSoilLayer_Penetrability(i, 100_int8)
+                call SetSoilLayer_GravelMass(i, 0_int8)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, 0._dp)
+            else
+                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, WP_temp, &
+                                 infrate_temp, penetrability_temp, &
+                                 gravelm_temp, cra_temp, crb_temp, &
+                                 description_temp
+                call SetSoilLayer_Thickness(i, thickness_temp)
+                call SetSoilLayer_SAT(i, SAT_temp)
+                call SetSoilLayer_FC(i, FC_temp)
+                call SetSoilLayer_WP(i, WP_temp)
+                call SetSoilLayer_InfRate(i, infrate_temp)
+                call SetSoilLayer_Penetrability(i, penetrability_temp)
+                call SetSoilLayer_GravelMass(i, gravelm_temp)
+                call SetSoilLayer_CRa(i, cra_temp)
+                call SetSoilLayer_CRb(i, crb_temp)
+                call SetSoilLayer_Description(i, description_temp)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, &
+                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
+                                                    GetSoilLayer_GravelMass(i)))
+            end if
+        end if
+
+        ! determine drainage coefficient
+        call SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_InfRate(i)))
+
+        ! determine number of salt cells based on infiltration rate
+        if (GetSoilLayer_InfRate(i) <= 112._dp) then
+            call SetSoilLayer_SCP1(i, 11_int8)
+        else
+            call SetSoilLayer_SCP1(i, &
+                            roundc(1.6_dp + 1000._dp/GetSoilLayer_InfRate(i), &
+                                   mold=1_int8))
+            if (GetSoilLayer_SCP1(i) < 2_int8) then
+                call SetSoilLayer_SCP1(i, 2_int8)
+            end if
+        end if
+
+        ! determine parameters for soil salinity
+        call SetSoilLayer_SC(i, GetSoilLayer_SCP1(i) - 1_int8)
+        call SetSoilLayer_Macro(i, roundc(GetSoilLayer_FC(i), mold=1_int8))
+        call SetSoilLayer_UL(i, ((GetSoilLayer_SAT(i))/100._dp) &
+                    * (GetSoilLayer_SC(i)/(GetSoilLayer_SC(i)+2._dp))) ! m3/m3
+        dx_temp = (GetSoilLayer_UL(i))/GetSoilLayer_SC(i)
+        call SetSoilLayer_Dx(i, dx_temp)  ! m3/m3
+
+        saltmob_temp = GetSoilLayer_SaltMobility(i)
+        call Calculate_SaltMobility(i, GetSimulParam_SaltDiff(), &
+                                    GetSoilLayer_Macro(i), saltmob_temp)
+        call SetSoilLayer_SaltMobility(i, saltmob_temp)
+
+
+        ! determine default parameters for capillary rise if missing
+        call SetSoilLayer_SoilClass(i, NumberSoilClass(GetSoilLayer_SAT(i), &
+                                    GetSoilLayer_FC(i), GetSoilLayer_WP(i), &
+                                    GetSoilLayer_InfRate(i)))
+
+        if (roundc(VersionNr*10, mold=1) < 40) then
+            cra_temp = GetSoilLayer_CRa(i)
+            crb_temp = GetSoilLayer_CRb(i)
+            call DetermineParametersCR(GetSoilLayer_SoilClass(i), &
+                                       GetSoilLayer_InfRate(i), &
+                                       cra_temp, crb_temp)
+            call SetSoilLayer_CRa(i, cra_temp)
+            call SetSoilLayer_CRb(i, crb_temp)
+        end if
+    end do
+
+    close(fhandle)
+    call DetermineNrandThicknessCompartments()
+    call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
+                                              GetSoil_NrSoilLayers(), &
+                                              GetSoilLayer()))
+end subroutine LoadProfile
+
+
+subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
+    real(dp), intent(in) :: RootingDepth
+    logical, intent(inout) :: ZtopSWCconsidered
+
+
+    real(dp) :: CumDepth, Factor, frac_value, DrRel, DZtopRel, TopSoilInMeter
+    integer(int32) :: compi
+
+    ! calculate SWC in root zone
+    CumDepth = 0._dp
+    compi = 0
+    call SetRootZoneWC_Actual(0._dp)
+    call SetRootZoneWC_FC(0._dp)
+    call SetRootZoneWC_WP(0._dp)
+    call SetRootZoneWC_SAT(0._dp)
+    call SetRootZoneWC_Leaf(0._dp)
+    call SetRootZoneWC_Thresh(0._dp)
+    call SetRootZoneWC_Sen(0._dp)
+    loop: do
+        compi = compi + 1
+        CumDepth = CumDepth + GetCompartment_Thickness(compi)
+        if (CumDepth <= RootingDepth) then
+            Factor = 1._dp
+        else
+            frac_value = RootingDepth - (CumDepth - GetCompartment_Thickness(compi))
+            if (frac_value > 0._dp) then
+                Factor = frac_value/GetCompartment_Thickness(compi)
+            else
+                Factor = 0._dp
+            end if
+        end if
+        call SetRootZoneWC_Actual(GetRootZoneWC_Actual() + Factor * 1000._dp * &
+             GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)* &
+             (1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_FC(GetRootZoneWC_FC() + Factor * 10._dp * &
+             GetSoilLayer_FC(GetCompartment_Layer(compi)) * &
+             GetCompartment_Thickness(compi) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_Leaf(GetRootZoneWC_Leaf() + Factor * 10._dp * &
+             GetCompartment_Thickness(compi) * &
+             (GetSoilLayer_FC(GetCompartment_Layer(compi)) - GetCrop_pLeafAct() &
+             * (GetSoilLayer_FC(GetCompartment_Layer(compi))- &
+             GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp &
+             - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_Thresh(GetRootZoneWC_Thresh() + Factor * 10._dp * &
+             GetCompartment_Thickness(compi) * &
+             (GetSoilLayer_FC(GetCompartment_Layer(compi)) - GetCrop_pActStom() &
+             * (GetSoilLayer_FC(GetCompartment_Layer(compi))- &
+             GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_Sen(GetRootZoneWC_Sen() + Factor * 10._dp * &
+             GetCompartment_Thickness(compi) * &
+             (GetSoilLayer_FC(GetCompartment_Layer(compi)) - GetCrop_pSenAct() &
+             * (GetSoilLayer_FC(GetCompartment_Layer(compi))- &
+             GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_WP(GetRootZoneWC_WP() + Factor * 10._dp * &
+             GetSoilLayer_WP(GetCompartment_Layer(compi))* &
+             GetCompartment_Thickness(compi)* (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        call SetRootZoneWC_SAT(GetRootZoneWC_SAT()+ Factor * 10._dp * &
+             GetSoilLayer_SAT(GetCompartment_Layer(compi)) * &
+             GetCompartment_Thickness(compi) * (1._dp - &
+             GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+        if ((CumDepth >= RootingDepth) .or. (compi == NrCompartments)) exit loop
+    end do loop
+    ! calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
+    if ((RootingDepth*100._dp) <= GetSimulParam_ThicknessTopSWC()) then
+        call SetRootZoneWC_ZtopAct(GetRootZoneWC_Actual())
+        call SetRootZoneWC_ZtopFC(GetRootZoneWC_FC())
+        call SetRootZoneWC_ZtopWP(GetRootZoneWC_WP())
+        call SetRootZoneWC_ZtopThresh(GetRootZoneWC_Thresh())
+    else
+        CumDepth = 0._dp
+        compi = 0
+        call SetRootZoneWC_ZtopAct(0._dp)
+        call SetRootZoneWC_ZtopFC(0._dp)
+        call SetRootZoneWC_ZtopWP(0._dp)
+        call SetRootZoneWC_ZtopThresh(0._dp)
+        TopSoilInMeter = GetSimulParam_ThicknessTopSWC()/100._dp
+        loop_2: do
+            compi = compi + 1
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if ((CumDepth*100._dp) <= GetSimulParam_ThicknessTopSWC()) then
+                Factor = 1._dp
+            else
+                frac_value = TopSoilInMeter - (CumDepth - GetCompartment_Thickness(compi))
+                if (frac_value > 0._dp) then
+                    Factor = frac_value/GetCompartment_Thickness(compi)
+                else
+                    Factor = 0._dp
+                end if
+            end if
+            call SetRootZoneWC_ZtopAct(GetRootZoneWC_ZtopAct() + Factor * &
+                 1000._dp * GetCompartment_Theta(compi) * &
+                 GetCompartment_Thickness(compi) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetRootZoneWC_ZtopFC(GetRootZoneWC_ZtopFC() + Factor * 10._dp &
+                 * GetSoilLayer_FC(GetCompartment_Layer(compi)) * &
+                 GetCompartment_Thickness(compi) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetRootZoneWC_ZtopWP(GetRootZoneWC_ZtopWP() + Factor * 10._dp &
+                 * GetSoilLayer_WP(GetCompartment_Layer(compi)) * &
+                 GetCompartment_Thickness(compi) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetRootZoneWC_ZtopThresh(GetRootZoneWC_ZtopThresh() + Factor * &
+                 10._dp * GetCompartment_Thickness(compi) * &
+                 (GetSoilLayer_FC(GetCompartment_Layer(compi))  - &
+                 GetCrop_pActStom() * (GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                 -GetSoilLayer_WP(GetCompartment_Layer(compi)))) * (1._dp - &
+                 GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            if ((CumDepth >= TopSoilInMeter) .or. (compi == NrCompartments)) exit loop_2
+        end do loop_2
+    end if
+
+    ! Relative depletion in rootzone and in top soil
+    if (roundc(1000._dp*(GetRootZoneWc_FC() - GetRootZoneWc_WP()), mold=1) > 0) then
+        DrRel = (GetRootZoneWc_FC() - GetRootZoneWC_Actual())/(GetRootZoneWc_FC() &
+                                                          - GetRootZoneWc_WP())
+    else
+        DrRel = 0._dp
+    end if
+    if (roundc(1000._dp*(GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP()),mold=1) > 0) then
+        DZtopRel = (GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopAct())/ &
+                              (GetRootZoneWC_ZtopFC() - GetRootZoneWc_ZtopWP())
+    else
+        DZtopRel = 0._dp
+    end if
+
+    ! Zone in soil profile considered for determining stress response
+    if (DZtopRel < DrRel) then
+        ZtopSWCconsidered = .true.  ! top soil is relative wetter than root zone
+    else
+        ZtopSWCconsidered = .false.
+    end if
+end subroutine DetermineRootZoneWC
 
 
 subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
@@ -6453,8 +6931,8 @@ subroutine ReadTemperatureSettingsParameters()
 end subroutine ReadTemperatureSettingsParameters
 
 
-
 !! Global variables section !!
+
 
 function GetOutputName() result(str)
     !! Getter for the "OutputName" global variable.
@@ -6517,6 +6995,72 @@ type(rep_RootZoneWC) function GetRootZoneWC()
 
     GetRootZoneWC = RootZoneWC
 end function GetRootZoneWC
+
+real(dp) function GetRootZoneWC_Actual()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Actual = RootZoneWC%Actual
+end function GetRootZoneWC_Actual
+
+real(dp) function GetRootZoneWC_FC()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_FC = RootZoneWC%FC
+end function GetRootZoneWC_FC
+
+real(dp) function GetRootZoneWC_WP()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_WP = RootZoneWC%WP
+end function GetRootZoneWC_WP
+
+real(dp) function GetRootZoneWC_SAT()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_SAT = RootZoneWC%SAT
+end function GetRootZoneWC_SAT
+
+real(dp) function GetRootZoneWC_Leaf()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Leaf = RootZoneWC%Leaf
+end function GetRootZoneWC_Leaf
+
+real(dp) function GetRootZoneWC_Thresh()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Thresh = RootZoneWC%Thresh
+end function GetRootZoneWC_Thresh
+
+real(dp) function GetRootZoneWC_Sen()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_Sen = RootZoneWC%Sen
+end function GetRootZoneWC_Sen
+
+real(dp) function GetRootZoneWC_ZtopAct()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopAct = RootZoneWC%ZtopAct
+end function GetRootZoneWC_ZtopAct
+
+real(dp) function GetRootZoneWC_ZtopFC()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopFC = RootZoneWC%ZtopFC
+end function GetRootZoneWC_ZtopFC
+
+real(dp) function GetRootZoneWC_ZtopWP()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopWP = RootZoneWC%ZtopWP
+end function GetRootZoneWC_ZtopWP
+
+real(dp) function GetRootZoneWC_ZtopThresh()
+    !! Getter for the "Rootzonewc" global variable.
+
+    GetRootZoneWC_ZtopThresh = RootZoneWC%ZtopThresh
+end function GetRootZoneWC_ZtopThresh
 
 subroutine SetRootZoneWC_Actual(Actual)
     !! Setter for the "RootZoneWC" global variable.
@@ -10180,11 +10724,18 @@ type(rep_Content) function GetTotalWaterContent()
     GetTotalWaterContent = TotalWaterContent
 end function GetTotalWaterContent
 
-type(real) function GetTotalWaterContent_BeginDay()
+real(dp) function GetTotalWaterContent_BeginDay()
     !! Getter for the "TotalWaterContent_BeginDay" global variable.
 
     GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
 end function GetTotalWaterContent_BeginDay
+
+subroutine SetTotalWaterContent(TotalWaterContent_in)
+    !! Setter for the TotalWaterContent global variable.
+    type(rep_content), intent(in) :: TotalWaterContent_in
+
+    TotalWaterContent = TotalWaterContent_in
+end subroutine SetTotalWaterContent
 
 subroutine SetTotalWaterContent_BeginDay(BeginDay)
     !! Setter for the "TotalWaterContent" global variable.
@@ -11926,6 +12477,15 @@ subroutine SetSimulation_Storage_Season(Season)
     simulation%Storage%Season = Season
 end subroutine SetSimulation_Storage_Season
 
+
+function GetCompartment() result(Compartment_out)
+    !! Getter for "Compartment" global variable.
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_out
+
+    Compartment_out = Compartment
+end function GetCompartment
+
+
 function GetCompartment_i(i) result(Compartment_i)
     !! Getter for individual elements of "Compartment" global variable.
     integer(int32), intent(in) :: i
@@ -11942,7 +12502,6 @@ subroutine SetCompartment_i(i, Compartment_i)
 
     Compartment(i) = Compartment_i
 end subroutine SetCompartment_i
-
 
 function GetCompartment_Thickness(i) result(Thickness)
     !! Getter for the "Thickness" attribute of the "compartment" global variable.
@@ -12028,7 +12587,8 @@ end function GetCompartment_Depo
 
 subroutine SetCompartment(Compartment_in)
     !! Setter for the "compartment" global variable.
-    type(CompartmentIndividual), intent(in) :: Compartment_in
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(in) :: &
+                                                                Compartment_in
 
     compartment = Compartment_in
 end subroutine SetCompartment
@@ -12534,8 +13094,5 @@ subroutine SetOffSeasonDescription(str)
     
     OffSeasonDescription = str
 end subroutine SetOffSeasonDescription
-
-
-
 
 end module ac_global
