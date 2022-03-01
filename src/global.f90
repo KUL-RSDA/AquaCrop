@@ -5660,11 +5660,12 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     ! 4. Check if runs with KeepSWC exist
     Runi = 1
     do while ((RunWithKeepSWC .eqv. .false.) .and. (Runi <= TotalNrOfRuns))
+        print *, FullNameProjectFile
         if (Runi > 1) then
             do i = 1, 47 
                 read(fhandle0, *)  ! 5 + 42 lines with files
             end do
-            end if
+        end if
         read(fhandle0, *) ! info Initial Conditions file
         read(fhandle0, *) FileName
         read(fhandle0, *) ! Pathname
@@ -5676,10 +5677,10 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     if (RunWithKeepSWC .eqv. .false.) then
         ConstZrxForRun = real(undef_int, kind=dp) ! reset
     end if
-    close(fhandle0)
 
     ! 5. Look for maximum root zone depth IF RunWithKeepSWC
     if (RunWithKeepSWC .eqv. .true.) then
+        close(fhandle0)
         open(newunit=fhandle0, file=trim(FullNameProjectFile), status='old', &
                                                              action ='read')
         read(fhandle0, *)
@@ -5706,7 +5707,7 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
             read(fhandle0, *) FileName
             read(fhandle0, *) PathName
             FullFileName = trim(PathName) // trim(FileName)
-            open(newunit=fhandle0, file=trim(FullNameProjectFile), &
+            open(newunit=fhandle0, file=trim(FullFileName), &
                                     status='old', action ='read')
             read(fhandlex, *) ! description
             read(fhandlex, *) VersionNrCrop

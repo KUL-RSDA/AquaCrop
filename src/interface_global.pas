@@ -4365,6 +4365,7 @@ procedure CheckForKeepSWC(
 procedure CheckForKeepSWC_wrap(
                     constref FullNameProjectFile : PChar;
                     constref strlen : integer;
+                    constref TotalNrRuns : integer;
                     var RunWithKeepSWC : boolean;
                     var ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
@@ -4386,8 +4387,8 @@ var
 begin
     FullNameProjectFile_ptr := PChar(FullNameProjectFile);
     strlen := Length(FullNameProjectFile);
-    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, RunWithKeepSWC,
-                         ConstZrxForRun);
+    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns,
+                         RunWithKeepSWC, ConstZrxForRun);
 end;
 
 
