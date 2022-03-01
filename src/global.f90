@@ -5660,7 +5660,6 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     ! 4. Check if runs with KeepSWC exist
     Runi = 1
     do while ((RunWithKeepSWC .eqv. .false.) .and. (Runi <= TotalNrOfRuns))
-        print *, FullNameProjectFile
         if (Runi > 1) then
             do i = 1, 47 
                 read(fhandle0, *)  ! 5 + 42 lines with files
