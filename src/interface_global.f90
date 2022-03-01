@@ -204,7 +204,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
-                     LoadProgramParametersProject
+                     LoadProgramParametersProject, &
+                     CheckForKeepSWC
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2252,5 +2253,24 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
+
+
+subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, &
+                                RunwithKeepSWC, ConstZrxForRun)
+    type(c_ptr), intent(in) :: FullNameProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: TotalNrOfRuns
+    logical(1), intent(inout) :: RunWithKeepSWC
+    real(dp), intent(inout) :: ConstZrxForRun
+
+    character(len=strlen) :: FullNameProjectFile
+    logical :: RunWithKeepSWC_f
+
+    FullNameprojectFile = pointer2string(FullNameProjectFile_ptr, strlen)
+    RunWithKeepSWC_f = RunWithKeepSWC
+    call CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, &
+                         RunWithKeepSWC_f, ConstZrxForRun)
+    RunWithKeepSWC = RunWithKeepSWC_f
+end subroutine CheckForKeepSWC_wrap
 
 end module ac_interface_global

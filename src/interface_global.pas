@@ -4354,10 +4354,42 @@ procedure LoadProfile_wrap(constref FullName : PChar;
 procedure DetermineRootZoneWC(
             constref RootingDepth : double;
             VAR ZtopSWCconsidered : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+    external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+
+procedure CheckForKeepSWC_wrap(
+                    constref FullNameProjectFile : PChar;
+                    constref strlen : integer;
+                    var RunWithKeepSWC : boolean;
+                    var ConstZrxForRun : double);
+    external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
+
 
 
 implementation
+
+
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+var
+    FullNameProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    FullNameProjectFile_ptr := PChar(FullNameProjectFile);
+    strlen := Length(FullNameProjectFile);
+    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, RunWithKeepSWC,
+                         ConstZrxForRun);
+end;
+
 
 
 function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
