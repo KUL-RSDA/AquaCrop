@@ -4354,7 +4354,21 @@ procedure LoadProfile_wrap(constref FullName : PChar;
 procedure DetermineRootZoneWC(
             constref RootingDepth : double;
             VAR ZtopSWCconsidered : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+    external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
+procedure LoadClim (
+            constref FullName : string;
+            VAR ClimateDescription : string;
+            VAR ClimateRecord : rep_clim);
+
+procedure LoadClim_wrap(
+            constref FullName : PChar;
+            constref strlen1 : integer;
+            var ClimateDescription : PChar;
+            constref strlen2 : integer;
+            var ClimateRecord : rep_clim;
+            var int_datatype : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadclim_wrap';
 
 
 implementation
@@ -7361,6 +7375,28 @@ begin;
     LoadProgramParametersProject_wrap(p,strlen);
 end;
 
+
+
+procedure LoadClim(constref FullName : string;
+                   var ClimateDescription : string;
+                   var ClimateRecord : rep_clim);
+var
+    int_datatype : integer;
+    FullName_ptr, ClimateDescription_ptr : PChar;
+    strlen1, strlen2 : integer;
+begin
+    int_datatype := ord(ClimateRecord.DataType);
+    FullName_ptr := PChar(FullName);
+    ClimateDescription_ptr := PChar(ClimateDescription);
+    strlen1 := Length(FullName);
+    strlen2 := Length(ClimateDescription);
+
+    LoadClim_wrap(FullName_ptr, strlen1, ClimateDescription_ptr, 
+                  strlen2, ClimateRecord, int_datatype);
+    ClimateDescription := AnsiString(ClimateDescription_ptr);
+    ClimateRecord.DataType := rep_datatype(int_datatype);
+end;
+    
 
 initialization
 

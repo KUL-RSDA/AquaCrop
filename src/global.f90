@@ -5605,6 +5605,41 @@ end subroutine LoadOffSeason
 
 
 
+subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
+    character(len=*), intent(in) :: FullName
+    character(len=*), intent(inout) :: ClimateDescription
+    type(rep_clim), intent(inout) :: ClimateRecord
+
+    integer :: fhandle
+    integer(int32) :: Ni, rc
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
+        iostat=rc)
+    read(fhandle, *, iostat=rc) CLimateDescription
+    read(fhandle, *, iostat=rc) Ni
+    if (Ni == 1) then
+        ClimateRecord%DataType = datatype_Daily
+    elseif (Ni == 2) then
+        ClimateRecord%DataType = datatype_Decadely
+    else
+        ClimateRecord%DataType = datatype_Monthly
+    end if
+    read(fhandle, *, iostat=rc) ClimateRecord%FromD
+    read(fhandle, *, iostat=rc) ClimateRecord%FromM
+    read(fhandle, *, iostat=rc) ClimateRecord%FromY
+    read(fhandle, *, iostat=rc)
+    read(fhandle, *, iostat=rc)
+    read(fhandle, *, iostat=rc)
+    ClimateRecord%NrObs = 0
+    do while (rc /= iostat_end) 
+        ClimateRecord%NrObs = ClimateRecord%NrObs + 1
+        read(fhandle, *, iostat=rc)
+    end do
+    close(fhandle)
+    call CompleteClimateDescription(ClimateRecord)
+end subroutine LoadClim
+
+
 !! Global variables section !!
 
 

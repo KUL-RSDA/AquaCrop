@@ -204,7 +204,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
-                     LoadProgramParametersProject
+                     LoadProgramParametersProject, &
+                     LoadCLim, &
+                     rep_clim
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2252,5 +2254,32 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
+
+
+
+subroutine LoadClim_wrap(FullName_ptr, strlen1, ClimateDescription_ptr, &
+                         strlen2, ClimateRecord, int_datatype)
+    type(c_ptr), intent(in) :: FullName_ptr
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: ClimateDescription_ptr
+    integer(int32), intent(in) :: strlen2
+    type(rep_clim), intent(inout) :: ClimateRecord
+    integer(intEnum), intent(inout) :: int_datatype
+
+    character(len=strlen1) :: FullName
+    character(len=strlen2) :: Climatedescription
+
+    FullName = pointer2string(FullName_ptr, strlen1)
+    ClimateDescription = pointer2string(ClimateDescription_ptr, &
+                                                strlen2)
+    ClimateRecord%DataType = int_datatype
+
+    call LoadClim(FullName, ClimateDescription, ClimateRecord)
+    ClimateDescription_ptr = string2pointer(ClimateDescription)
+    int_datatype = ClimateRecord%DataType
+end subroutine LoadClim_wrap
+
+
+
 
 end module ac_interface_global
