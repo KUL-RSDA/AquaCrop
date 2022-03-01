@@ -83,11 +83,6 @@ PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
 PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustSimPeriod;
 
-PROCEDURE TranslateIniLayersToSWProfile(NrLay : ShortInt;
-                                        LayThickness,LayVolPr,LayECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-
 PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
                                         LocDepth,LocVolPr,LocECdS : rep_IniComp;
                                         NrComp : INTEGER;
@@ -592,71 +587,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
    IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
    END;
 END; (* AdjustSimPeriod *)
-
-
-PROCEDURE TranslateIniLayersToSWProfile(NrLay : ShortInt;
-                                        LayThickness,LayVolPr,LayECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-VAR Compi,Layeri,i : ShortInt;
-    SDLay,SDComp,FracC : double;
-    GoOn : BOOLEAN;
-
-BEGIN // from specific layers to Compartments
-FOR Compi := 1 TO NrComp DO
-    BEGIN
-    Comp[Compi].Theta := 0;
-    Comp[Compi].WFactor := 0;  // used for ECe in this procedure
-    END;
-Compi := 0;
-SDComp := 0;
-Layeri := 1;
-SDLay := LayThickness[1];
-GoOn := true;
-WHILE (Compi < NrComp) DO
-  BEGIN
-  FracC := 0;
-  Compi := Compi + 1;
-  SDComp := SDComp + Comp[compi].Thickness;
-  IF (SDLay >= SDComp)
-     THEN BEGIN
-          Comp[Compi].Theta := Comp[Compi].Theta + (1-FracC)*LayVolPr[Layeri]/100;
-          Comp[Compi].WFactor := Comp[Compi].WFactor + (1-FracC)*LayECdS[Layeri];
-          END
-     ELSE BEGIN // go to next layer
-          WHILE ((SDLay < SDComp) AND GoOn) DO
-            BEGIN
-            //finish handling previous layer
-            FracC := (SDLay - (SDComp-Comp[Compi].Thickness))/(Comp[Compi].Thickness) - FracC;
-            Comp[Compi].Theta := Comp[Compi].Theta + FracC*LayVolPr[Layeri]/100;
-            Comp[Compi].WFactor := Comp[Compi].WFactor + FracC*LayECdS[Layeri];
-            FracC := (SDLay - (SDComp-Comp[Compi].Thickness))/(Comp[Compi].Thickness);
-            //add next layer
-            IF (Layeri < NrLay)
-               THEN BEGIN
-                    Layeri := Layeri + 1;
-                    SDLay := SDLay + LayThickness[Layeri];
-                    END
-               ELSE GoOn := false;
-            END;
-          Comp[Compi].Theta := Comp[Compi].Theta + (1-FracC)*LayVolPr[Layeri]/100;
-          Comp[Compi].WFactor := Comp[Compi].WFactor + (1-FracC)*LayECdS[Layeri];
-          END;
-  END; // next Compartment
-IF (NOT GoOn) THEN
-   FOR i := (Compi+1) TO NrComp DO
-       BEGIN
-       Comp[i].Theta := LayVolPr[NrLay]/100;
-       Comp[i].WFactor := LayECdS[NrLay];
-       END;
-
-// final check of SWC
-FOR Compi := 1 TO NrComp DO
-    IF (Comp[Compi].Theta > (GetSoilLayer_i(Comp[compi].Layer).SAT)/100)
-        THEN Comp[Compi].Theta := (GetSoilLayer_i(Comp[compi].Layer).SAT)/100;
-// salt distribution in cellls
-For Compi := 1 TO NrComp DO DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
-END; (* TranslateIniLayersToSWProfile *)
 
 
 

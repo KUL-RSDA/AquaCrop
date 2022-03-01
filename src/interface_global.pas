@@ -4359,6 +4359,13 @@ procedure DetermineRootZoneWC(
 procedure AdjustClimRecordTo(CDayN : longint);
     external 'aquacrop' name '__ac_global_MOD_adjustclimrecordto';
 
+procedure TranslateIniLayersToSWProfile(constref NrLay : ShortInt;
+                                        constref LayThickness,LayVolPr,LayECdS : rep_IniComp;
+                                        constref NrComp : INTEGER;
+                                        VAR Comp : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_translateinilayerstoswprofile';
+
+
 
 implementation
 

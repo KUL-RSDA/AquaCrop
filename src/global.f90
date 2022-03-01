@@ -5621,6 +5621,86 @@ subroutine AdjustClimRecordTo(CDayN)
 end subroutine AdjustClimRecordTo
 
 
+
+subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS, NrComp, Comp)
+    integer(int8), intent(in) :: NrLay
+    real(dp), dimension(max_No_compartments), intent(in) :: LayThickness
+    real(dp), dimension(max_No_compartments), intent(in) :: LayVolPr
+    real(dp), dimension(max_No_compartments), intent(in) :: LayECdS
+    integer(int32), intent(in) :: NrComp
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(inout) :: Comp
+
+    integer(int8) :: Compi, Layeri, i
+    real(dp) :: SDLay, SDComp, FracC
+    logical :: GoOn
+
+    ! from specific layers to Compartments
+    do Compi = 1, NrComp 
+        Comp(Compi)%Theta = 0._dp
+        Comp(Compi)%WFactor = 0._dp  ! used for ECe in this procedure
+    end do
+    Compi = 0_int8
+    SDComp = 0._dp
+    Layeri = 1_int8
+    SDLay = LayThickness(1)
+    GoOn = .true.
+    do while (Compi < NrComp) 
+        FracC = 0._dp
+        Compi = Compi + 1_int8
+        SDComp = SDComp + Comp(compi)%Thickness
+        if (SDLay >= SDComp) then
+            Comp(Compi)%Theta = Comp(Compi)%Theta + (1._dp-FracC) &
+                                                *LayVolPr(Layeri)/100._dp
+            Comp(Compi)%WFactor = Comp(Compi)%WFactor + (1._dp-FracC) &
+                                                *LayECdS(Layeri)
+        else
+            ! go to next layer
+            do while ((SDLay < SDComp) .and. GoOn) 
+                ! finish handling previous layer
+                FracC = (SDLay - (SDComp-Comp(Compi)%Thickness)) &
+                                /(Comp(Compi)%Thickness) - FracC
+                Comp(Compi)%Theta = Comp(Compi)%Theta + &
+                                    FracC*LayVolPr(Layeri)/100._dp
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor + FracC*LayECdS(Layeri)
+                FracC = (SDLay - (SDComp-Comp(Compi)%Thickness)) &
+                                    /(Comp(Compi)%Thickness)
+                ! add next layer
+                if (Layeri < NrLay) then
+                    Layeri = Layeri + 1
+                    SDLay = SDLay + LayThickness(Layeri)
+                else
+                    GoOn = .false.
+                end if
+            end do
+            Comp(Compi)%Theta = Comp(Compi)%Theta + (1._dp-FracC) &
+                                                    *LayVolPr(Layeri)/100._dp
+            Comp(Compi)%WFactor = Comp(Compi)%WFactor + (1._dp-FracC) &
+                                                    *LayECdS(Layeri)
+        end if
+        ! next Compartment
+    end do
+    if (.not. GoOn) then
+        do i = (Compi+1), NrComp 
+            Comp(i)%Theta = LayVolPr(NrLay)/100._dp
+            Comp(i)%WFactor = LayECdS(NrLay)
+        end do
+    end if
+        
+    ! final check of SWC
+    do Compi = 1, NrComp 
+        if (Comp(Compi)%Theta > &
+                (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
+            Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer)) &
+                                                            /100._dp
+        end if
+    end do
+    ! salt distribution in cellls
+    do Compi = 1, NrComp 
+        call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
+    end do
+end subroutine TranslateIniLayersToSWProfile
+
+
 !! Global variables section !!
 
 
