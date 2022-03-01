@@ -5721,6 +5721,83 @@ end function EndGrowingPeriod
 
 
 
+subroutine LoadInitialConditions(SWCiniFileFull, IniSurfaceStorage)
+    character(len=*), intent(in) :: SWCiniFileFull
+    real(dp), intent(inout) :: IniSurfaceStorage
+
+    integer :: fhandle
+    integer(int32) :: i
+    character(len=1025) :: StringParam, swcinidescr_temp
+    real(dp) :: VersionNr
+    real(dp) :: CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp
+    integer(int8) :: NrLoc_temp
+    real(dp) :: Loc_i_temp, VolProc_i_temp, SaltECe_i_temp
+    ! IniSWCRead attribute of the function was removed to fix a
+    ! bug occurring when the function was called in TempProcessing.pas
+    ! Keep in mind that this could affect the graphical interface
+    open(newunit=fhandle, file=trim(SWCiniFileFull), status='old', action='read')
+    read(fhandle, '(a)') swcinidescr_temp
+    call SetSWCiniDescription(swcinidescr_temp)
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    if (roundc(10*VersionNr, mold=1) < 41) then ! initial CC at start of simulation period
+        call SetSimulation_CCini(real(undef_int, kind=dp))
+    else
+        read(fhandle, *) CCini_temp
+        call SetSimulation_CCini(CCini_temp)
+    end if
+    if (roundc(10*VersionNr, mold=1) < 41) then ! B produced before start of simulation period
+        call SetSimulation_Bini(0.000_dp)
+    else
+        read(fhandle, *) Bini_temp
+        call SetSimulation_Bini(Bini_temp)
+    end if
+    if (roundc(10*VersionNr, mold=1) < 41) then ! initial rooting depth at start of simulation period
+        call SetSimulation_Zrini(real(undef_int, kind=dp))
+    else
+        read(fhandle, *) Zrini_temp
+        call SetSimulation_Zrini(Zrini_temp)
+    end if
+    read(fhandle, *) IniSurfaceStorage
+    if (roundc(10*VersionNr, mold=1) < 32) then ! EC of the ini surface storage
+        call SetSimulation_ECStorageIni(0._dp)
+    else
+        read(fhandle, *) ECStorageIni_temp
+        call SetSimulation_ECStorageIni(ECStorageIni_temp)
+    end if
+    read(fhandle, *) i
+    if (i == 1) then
+        call SetSimulation_IniSWC_AtDepths(.true.)
+    else
+        call SetSimulation_IniSWC_AtDepths(.false.)
+    end if
+    read(fhandle, *) NrLoc_temp
+    call SetSimulation_IniSWC_NrLoc(NrLoc_temp)
+    read(fhandle, *)
+    read(fhandle, *)
+    read(fhandle, *)
+    do i = 1, GetSimulation_IniSWC_NrLoc() 
+        read(fhandle, '(a)') StringParam
+        Loc_i_temp = GetSimulation_IniSWC_Loc_i(i)
+        VolProc_i_temp = GetSimulation_IniSWC_VolProc_i(i)
+        if (roundc(10*VersionNr, mold=1) < 32) then ! ECe at the locations
+            call SplitStringInTwoParams(StringParam, Loc_i_temp, &
+                                                    VolProc_i_temp)
+            call SetSimulation_IniSWC_SaltECe_i(i, 0._dp)
+        else
+            SaltECe_i_temp = GetSimulation_IniSWC_SaltECe_i(i)
+            call SplitStringInThreeParams(StringParam, Loc_i_temp, &
+                                          VolProc_i_temp, SaltECe_i_temp)
+            call SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp)
+        end if
+        call SetSimulation_IniSWC_Loc_i(i, Loc_i_temp)
+        call SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp)
+    end do
+    close(fhandle)
+    call SetSimulation_IniSWC_AtFC(.false.)
+end subroutine LoadInitialConditions
+
+
+
 !! Global variables section !!
 
 

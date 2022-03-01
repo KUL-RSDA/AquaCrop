@@ -205,7 +205,8 @@ use ac_global, only: CheckFilesInProject, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
                      LoadProgramParametersProject, &
-                     EndGrowingPeriod
+                     EndGrowingPeriod, &
+                     LoadInitialConditions
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2266,5 +2267,18 @@ function EndGrowingPeriod_wrap(Day1, DayN) result(EndGrowingPeriod_ptr)
     string = EndGrowingPeriod(Day1, DayN)
     EndGrowingPeriod_ptr = string2pointer(string)
 end function EndGrowingPeriod_wrap
+
+
+subroutine LoadInitialConditions_wrap(SWCiniFileFull_ptr, strlen, &
+                                     IniSurfaceStorage)
+    type(c_ptr), intent(in) :: SWCiniFileFull_ptr
+    integer(int32), intent(in) :: strlen
+    real(dp), intent(inout) :: IniSurfaceStorage
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniFileFull_ptr, strlen)
+    call LoadInitialConditions(string, IniSurfaceStorage)
+end subroutine LoadInitialConditions_wrap
 
 end module ac_interface_global
