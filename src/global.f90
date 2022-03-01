@@ -5682,6 +5682,25 @@ end function CCiniTotalFromTimeToCCini
 
 
 
+subroutine AdjustCropYearToClimFile(CDay1, CDayN)
+    integer(int32), intent(inout) :: CDay1
+    integer(int32), intent(inout) :: CDayN
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=:), allocatable :: temp_str
+
+    call DetermineDate(CDay1, dayi, monthi, yeari)
+    if (GetClimFile() == '(None)') then
+        yeari = 1901  ! yeari = 1901 if undefined year
+    else
+        yeari = GetClimRecord_FromY() ! yeari = 1901 if undefined year
+    end if
+    call DetermineDayNr(dayi, monthi, yeari, CDay1)
+    temp_str = EndGrowingPeriod(CDay1, CDayN)
+end subroutine AdjustCropYearToClimFile
+
+
+
 !! Global variables section !!
 
 

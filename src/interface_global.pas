@@ -4378,6 +4378,11 @@ function __CCiniTotalFromTimeToCCini(
     external 'aquacrop' name '__ac_global_MOD_ccinitotalfromtimetoccini';
 
 
+procedure AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustcropyeartoclimfile';
+
+
+
 implementation
 
 

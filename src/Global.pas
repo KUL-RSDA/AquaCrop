@@ -73,7 +73,6 @@ FUNCTION EndGrowingPeriod(Day1 : longint;
                           VAR DayN : longint) : string;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE AdjustSimPeriod;
 
@@ -467,22 +466,6 @@ IF (GetClimFile() <> '(None)') THEN
 END; (* DetermineLinkedSimDay1 *)
 
 
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
-VAR dayi,monthi,yeari : INTEGER;
-    temp_str : string;
-BEGIN
-DetermineDate(CDay1,dayi,monthi,yeari);
-IF (GetClimFile() = '(None)')
-   THEN yeari := 1901  // yeari = 1901 if undefined year
-   ELSE yeari := GetClimRecord_FromY(); // yeari = 1901 if undefined year
-   (*
-   ELSE BEGIN
-        yeari := Simulation.YearStartCropCycle;
-        IF (CDay1 > GetClimRecord_ToY()) THEN yeari := GetClimRecord_FromY();
-        END; *)
-DetermineDayNr(dayi,monthi,yeari,CDay1);
-temp_str := EndGrowingPeriod(CDay1,CDayN);
-END; (* AdjustCropYearToClimFile *)
 
 
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
