@@ -81,7 +81,6 @@ FUNCTION EndGrowingPeriod(Day1 : longint;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
-PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE AdjustSimPeriod;
 
 PROCEDURE TranslateIniLayersToSWProfile(NrLay : ShortInt;
@@ -533,18 +532,6 @@ DetermineDayNr(dayi,monthi,yeari,CDay1);
 temp_str := EndGrowingPeriod(CDay1,CDayN);
 END; (* AdjustCropYearToClimFile *)
 
-
-PROCEDURE AdjustClimRecordTo(CDayN : longint);
-VAR dayi,monthi,yeari : INTEGER;
-    ToDayNr_tmp : INTEGER;
-BEGIN
-DetermineDate(CDayN,dayi,monthi,yeari);
-SetClimRecord_ToD(31);
-SetClimRecord_ToM(12);
-SetClimRecord_ToY(yeari);
-DetermineDayNr(GetClimRecord_ToD(),GetClimRecord_ToM(),GetClimRecord_ToY(),ToDayNr_tmp);
-SetClimRecord_ToDayNr(ToDayNr_tmp)
-END; (* AdjustClimRecordTo *)
 
 
 PROCEDURE AdjustSimPeriod;

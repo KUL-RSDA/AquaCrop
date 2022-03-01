@@ -4354,7 +4354,10 @@ procedure LoadProfile_wrap(constref FullName : PChar;
 procedure DetermineRootZoneWC(
             constref RootingDepth : double;
             VAR ZtopSWCconsidered : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+    external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
+procedure AdjustClimRecordTo(CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustclimrecordto';
 
 
 implementation

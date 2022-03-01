@@ -5605,6 +5605,22 @@ end subroutine LoadOffSeason
 
 
 
+subroutine AdjustClimRecordTo(CDayN)
+    integer(int32), intent(in) :: CDayN
+
+    integer(int32) :: dayi, monthi, yeari
+    integer(int32) :: ToDayNr_tmp
+
+    call DetermineDate(CDayN, dayi, monthi, yeari)
+    call SetClimRecord_ToD(31)
+    call SetClimRecord_ToM(12)
+    call SetClimRecord_ToY(yeari)
+    call DetermineDayNr(GetClimRecord_ToD(), GetClimRecord_ToM(), &
+                        GetClimRecord_ToY(), ToDayNr_tmp)
+    call SetClimRecord_ToDayNr(ToDayNr_tmp)
+end subroutine AdjustClimRecordTo
+
+
 !! Global variables section !!
 
 
