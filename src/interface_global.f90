@@ -2253,4 +2253,21 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
 
+
+
+subroutine LoadGroundwater_wrap(FullName_ptr, strlen, AtDayNr, Zcm, ECdSm)
+    !! Wrapper for [[ac_global:LoadGroundwater]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName_ptr
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: AtDayNr
+    integer(int32), intent(inout) :: Zcm
+    real(dp), intent(inout) :: ECdSm
+
+    character(len=strlen) :: FullName
+
+    FullName = pointer2string(FullName_ptr, strlen)
+    call LoadGroundwater(FullName, AtDayNr, Zcm, ECdSm)
+end subroutine LoadGroundwater_wrap
+
+
 end module ac_interface_global

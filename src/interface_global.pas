@@ -4357,7 +4357,39 @@ procedure DetermineRootZoneWC(
         external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
 
 
+procedure LoadGroundWater(
+                    constref FullName : string;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+
+procedure LoadGroundwater_wrap(
+                    constref FullName_ptr : PChar;
+                    constref strlen : integer;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadgroundwater_wrap';
+
+
 implementation
+
+
+
+procedure LoadGroundWater(
+                    constref FullName : string;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+var
+    FullName_ptr : PChar;
+    strlen : integer;
+begin
+    FullName_ptr := PChar(FullName);
+    strlen := Length(FullName)
+    LoadGroundwater_wrap(Fullname_ptr, strlen, AtDayNr, Zcm, ECdSm)
+end;
+
 
 
 function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
