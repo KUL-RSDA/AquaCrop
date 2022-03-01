@@ -5605,6 +5605,83 @@ end subroutine LoadOffSeason
 
 
 
+real(dp) function CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini, &
+                                            L0, L12, L12SF, L123, L1234, GDDL0, &
+                                            GDDL12, GDDL12SF, GDDL123, &
+                                            GDDL1234, CCo, CCx, CGC, GDDCGC, &
+                                            CDC, GDDCDC, RatDGDD, SFRedCGC, &
+                                            SFRedCCx, SFCDecline, fWeed, &
+                                            TheModeCycle)
+    integer(int32), intent(in) :: TempDaysToCCini
+    integer(int32), intent(in) :: TempGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: RatDGDD
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+    real(dp), intent(in) :: SFCDecline
+    real(dp), intent(in) :: fWeed
+    integer(intEnum), intent(in) :: TheModeCycle
+
+
+    integer(int32) :: DayCC
+    real(dp) :: SumGDDforCCini, TempCCini
+    integer(int32) :: Tadj, GDDTadj
+
+    if (TempDaysToCCini /= 0) then
+        ! regrowth
+        SumGDDforCCini = real(undef_int, kind=dp)
+        GDDTadj = undef_int
+        ! find adjusted calendar and GDD time
+        if (TempDaysToCCini == undef_int) then
+            ! CCx on 1st day
+            Tadj = L12 - L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = GDDL12 - GDDL0
+            end if
+        else
+            ! CC on 1st day is < CCx
+            Tadj = TempDaysToCCini
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = TempGDDaysToCCini
+            end if
+        end if
+        ! calculate CCini with adjusted time
+        DayCC = L0 + Tadj
+        if (TheModeCycle == modeCycle_GDDays) then
+            SumGDDforCCini = GDDL0 + GDDTadj
+        end if
+        TempCCini = CCiNoWaterStressSF(DayCC, L0, L12SF, L123, L1234, GDDL0, &
+                                       GDDL12SF, GDDL123, GDDL1234, &
+                                       (CCo*fWeed), (CCx*fWeed), CGC, GDDCGC, &
+                                       (CDC*(fWeed*CCx+2.29_dp)/(CCx+2.29_dp)), &
+                                       (GDDCDC*(fWeed*CCx+2.29_dp)/(CCx+2.29_dp)), &
+                                       SumGDDforCCini, RatDGDD, SFRedCGC, &
+                                       SFRedCCx, SFCDecline, TheModeCycle)
+        ! correction for fWeed is already in TempCCini (since DayCC > 0);
+    else
+        TempCCini = (CCo*fWeed) ! sowing or transplanting
+    end if
+
+    CCiniTotalFromTimeToCCini = TempCCini
+end function CCiniTotalFromTimeToCCini
+
+
+
 !! Global variables section !!
 
 

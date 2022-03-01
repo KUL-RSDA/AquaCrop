@@ -60,13 +60,6 @@ FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
 PROCEDURE DetermineSaltContent(ECe : double;
                                VAR Comp : CompartmentIndividual);
 
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
-
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
@@ -237,48 +230,6 @@ FOR i := 1 TO celn DO
     SaltSolutionDeposit(mm,Comp.Salt[i],Comp.Depo[i]);
     END;
 END; (* DetermineSaltContent *)
-
-
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
-
-VAR DayCC : INTEGER;
-    SumGDDforCCini,TempCCini : double;
-    Tadj, GDDTadj : INTEGER;
-BEGIN
-IF (TempDaysToCCini <> 0)
-   THEN BEGIN  // regrowth
-        SumGDDforCCini := undef_int;
-        GDDTadj := undef_int;
-        // find adjusted calendar and GDD time
-        IF (TempDaysToCCini = undef_int)
-             THEN BEGIN // CCx on 1st day
-                  Tadj := L12 - L0;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := GDDL12 - GDDL0;
-                  END
-             ELSE BEGIN // CC on 1st day is < CCx
-                  Tadj := TempDaysToCCini;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := TempGDDaysToCCini;
-                  END;
-        // calculate CCini with adjusted time
-        DayCC := L0 + Tadj;
-        IF (TheModeCycle = GDDays) THEN SumGDDforCCini := GDDL0 + GDDTadj;
-        TempCCini := CCiNoWaterStressSF(DayCC,L0,L12SF,L123,L1234,
-                               GDDL0,GDDL12SF,GDDL123,GDDL1234,
-                               (CCo*fWeed),(CCx*fWeed),CGC,GDDCGC,
-                               (CDC*(fWeed*CCx+2.29)/(CCx+2.29)),
-                               (GDDCDC*(fWeed*CCx+2.29)/(CCx+2.29)),SumGDDforCCini,RatDGDD,
-                               SFRedCGC,SFRedCCx,SFCDecline,TheModeCycle);
-        // correction for fWeed is already in TempCCini (since DayCC > 0);
-        END
-   ELSE TempCCini := (CCo*fWeed); // sowing or transplanting
-
-CCiniTotalFromTimeToCCini := TempCCini;
-END; (* CCiniTotalFromTimeToCCini *)
 
 
 
