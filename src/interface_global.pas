@@ -4382,8 +4382,28 @@ procedure AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
     external 'aquacrop' name '__ac_global_MOD_adjustcropyeartoclimfile';
 
 
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+
+function EndGrowingPeriod_wrap(
+                          constref Day1 : longint;
+                          VAR DayN : longint) : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_endgrowingperiod_wrap';
+
 
 implementation
+
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+var
+    p : PChar;
+begin
+    p := EndGrowingperiod_wrap(Day1, DayN);
+    EndGrowingPeriod := AnsiString(p);
+end;
+    
 
 
 function CCiniTotalFromTimeToCCini(

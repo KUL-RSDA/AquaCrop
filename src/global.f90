@@ -5700,6 +5700,26 @@ subroutine AdjustCropYearToClimFile(CDay1, CDayN)
 end subroutine AdjustCropYearToClimFile
 
 
+function EndGrowingPeriod(Day1, DayN) result(EndGrowingPeriod_out)
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(inout) :: DayN
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=2) :: Strday
+    character(len=:), allocatable :: StrMonth
+    character(len=:), allocatable :: EndGrowingPeriod_out
+    ! This function determines Crop.DayN and the string
+    DayN = Day1 + GetCrop_DaysToHarvest() - 1
+    if (DayN < Day1) then
+        DayN = Day1
+    end if
+    call DetermineDate(DayN, dayi, monthi, yeari)
+    write(Strday, '(i2)') dayi
+    StrMonth = NameMonth(monthi)
+    EndGrowingPeriod_out = Strday // ' ' // StrMonth // '  '
+end function EndGrowingPeriod
+
+
 
 !! Global variables section !!
 

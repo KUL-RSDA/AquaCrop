@@ -69,8 +69,6 @@ PROCEDURE AppendCropFilePerennials(totalname : string;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
                                    CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : INTEGER;
                                    ThresholdOnset,ThresholdEnd : double);
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);

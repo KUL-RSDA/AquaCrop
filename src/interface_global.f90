@@ -204,7 +204,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
-                     LoadProgramParametersProject
+                     LoadProgramParametersProject, &
+                     EndGrowingPeriod
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2252,5 +2253,18 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
+
+
+function EndGrowingPeriod_wrap(Day1, DayN) result(EndGrowingPeriod_ptr)
+    !! Wrapper for [[ac_global::EndGrowingPeriod]] for foreign languages.
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(inout) :: DayN
+
+    type(c_ptr) :: EndGrowingPeriod_ptr
+    character(len=:), allocatable :: string
+
+    string = EndGrowingPeriod(Day1, DayN)
+    EndGrowingPeriod_ptr = string2pointer(string)
+end function EndGrowingPeriod_wrap
 
 end module ac_interface_global
