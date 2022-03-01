@@ -389,7 +389,7 @@ IF (GetGroundWaterFile() = '(None)')
    THEN BEGIN
         READLN(f0);  //PathGroundWaterFile
         SetGroundWaterFilefull(GetGroundWaterFile());
-        GroundWaterDescription := 'no shallow groundwater table';
+        SetGroundWaterDescription('no shallow groundwater table');
         END
    ELSE BEGIN
         READLN(f0,TempString);  //PathGroundWaterFile

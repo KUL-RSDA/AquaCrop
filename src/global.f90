@@ -944,6 +944,7 @@ character(len=:), allocatable :: FullFileNameProgramParameters
 character(len=:), allocatable :: ManDescription
 character(len=:), allocatable :: ClimDescription
 character(len=:), allocatable :: OffSeasonDescription
+character(len=:), allocatable :: GroundwaterDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -5613,11 +5614,12 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
 
     integer :: fhandle
     integer(int32) :: i, dayi, monthi, yeari, Year1Gwt, rc
-    integer(int32) :: DayNr1Gwt, DayNr1, DayNr2, DayNrN
+    integer(int32) :: DayNr1Gwt, DayNr1, DayNr2, DayNrN, AtDayNr_local
     character(len=255) :: StringREAD
     real(dp) :: DayDouble, Z1, EC1, Z2, EC2, ZN, ECN
     logical :: TheEnd 
 
+    AtDayNr_local = AtDayNr
     ! initialize
     TheEnd = .false.
     Year1Gwt = 1901
@@ -5638,7 +5640,7 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
             TheEnd = .true.
         case(1)
             ! constant groundwater table
-            call SetSimulParam_ConstGwt(true)
+            call SetSimulParam_ConstGwt(.true.)
         case default
             call SetSimulParam_ConstGwt(.false.)
     end select
@@ -5657,7 +5659,7 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
         read(fhandle, *)
         read(fhandle, *)
         read(fhandle, *)
-        read(fhandle, *, iostat=rc) StringREAD
+        read(fhandle, '(a)', iostat=rc) StringREAD
         call SplitStringInThreeParams(StringREAD, DayDouble, Z2, EC2)
         if ((i == 1) .or. (rc == iostat_end)) then
             ! Constant groundwater table or single observation
@@ -5673,19 +5675,19 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
     if (.not. TheEnd) then
         ! variable groundwater table with more than 1 observation
         ! adjust AtDayNr
-        call DetermineDate(AtDayNr, dayi, monthi, yeari)
+        call DetermineDate(AtDayNr_local, dayi, monthi, yeari)
         if ((yeari == 1901) .and. (Year1Gwt /= 1901)) then
             ! Make AtDayNr defined
-            call DetermineDayNr(dayi, monthi, Year1Gwt, AtDayNr)
+            call DetermineDayNr(dayi, monthi, Year1Gwt, AtDayNr_local)
         end if
         if ((yeari /= 1901) .and. (Year1Gwt == 1901)) then
             ! Make AtDayNr undefined
-            call DetermineDayNr(dayi, monthi, Year1Gwt, AtDayNr)
+            call DetermineDayNr(dayi, monthi, Year1Gwt, AtDayNr_local)
         end if
         ! get observation at AtDayNr
         if (Year1Gwt /= 1901) then
             ! year is defined
-            if (AtDayNr <= DayNr2) then
+            if (AtDayNr_local <= DayNr2) then
                 Zcm = roundc(100._dp*Z2, mold=1)
                 ECdSm = EC2
             else
@@ -5693,12 +5695,12 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
                     DayNr1 = DayNr2
                     Z1 = Z2
                     EC1 = EC2
-                    read(fhandle, *, iostat=rc) StringREAD
+                    read(fhandle, '(a)', iostat=rc) StringREAD
                     call SplitStringInThreeParams(StringREAD, DayDouble, &
                                                                 Z2, EC2)
                     DayNr2 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
-                    if (AtDayNr <= DayNr2) then
-                        call FindValues(AtDayNr, DayNr1, DayNr2, Z1, &
+                    if (AtDayNr_local <= DayNr2) then
+                        call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, &
                                         EC1, Z2, EC2, Zcm, ECdSm)
                         TheEnd = .true.
                     end if
@@ -5711,16 +5713,16 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
             end if
         else
             ! year is undefined
-            if (AtDayNr <= DayNr2) then
+            if (AtDayNr_local <= DayNr2) then
                 DayNr2 = DayNr2 + 365
-                AtDayNr = AtDayNr + 365
+                AtDayNr_local = AtDayNr_local + 365
                 do while (rc /= iostat_end) 
-                    read(fhandle, *) StringREAD
+                    read(fhandle, '(a)') StringREAD
                     call SplitStringInThreeParams(StringREAD, DayDouble, &
                                                                 Z1, EC1)
                     DayNr1 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
                 end do
-                call FindValues(AtDayNr, DayNr1, DayNr2, Z1, EC1, Z2, EC2, &
+                call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, EC1, Z2, EC2, &
                                                                Zcm, ECdSm)
             else
                 DayNrN = DayNr2 + 365
@@ -5730,17 +5732,17 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
                     DayNr1 = DayNr2
                     Z1 = Z2
                     EC1 = EC2
-                    read(fhandle, *, iostat=rc) StringREAD
+                    read(fhandle, '(a)', iostat=rc) StringREAD
                     call SplitStringInThreeParams(StringREAD, DayDouble, &
                                                                 Z2, EC2)
                     DayNr2 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
-                    if (AtDayNr <= DayNr2) then
-                        call FindValues(AtDayNr, DayNr1, DayNr2, Z1, EC1, &
+                    if (AtDayNr_local <= DayNr2) then
+                        call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, EC1, &
                                                      Z2, EC2, Zcm, ECdSm)
                         TheEnd = .true.
                     end if
                     if ((rc == iostat_end) .and. (.not. TheEnd)) then
-                        call FindValues(AtDayNr, DayNr2, DayNrN, Z2, EC2, &
+                        call FindValues(AtDayNr_local, DayNr2, DayNrN, Z2, EC2, &
                                                      ZN, ECN, Zcm, ECdSm)
                         TheEnd = .true.
                     end if
@@ -5767,7 +5769,7 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
         real(dp), intent(inout) :: ECdSm
 
         Zcm = roundc(100._dp * (Z1 + (Z2-Z1) &
-                    * (AtDayNr-DayNr1)/(DayNr2-Daynr1)), mold=1)
+                    * (AtDayNr-DayNr1)/real(DayNr2-Daynr1, kind=dp)), mold=1)
         ECdSm = EC1 + (EC2-EC1)*(AtDayNr-DayNr1)/real(DayNr2-Daynr1, kind=dp)
         end subroutine FindValues
 
@@ -13264,5 +13266,19 @@ subroutine SetOffSeasonDescription(str)
     
     OffSeasonDescription = str
 end subroutine SetOffSeasonDescription
+
+function GetGroundwaterDescription() result(str)
+    !! Getter for the "GroundwaterDescription" global variable.
+    character(len=len(GroundwaterDescription)) :: str
+    
+    str = GroundwaterDescription
+end function GetGroundwaterDescription
+
+subroutine SetGroundwaterDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    GroundwaterDescription = str
+end subroutine SetGroundwaterDescription
 
 end module ac_global

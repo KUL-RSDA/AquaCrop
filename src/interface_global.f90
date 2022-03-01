@@ -204,7 +204,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
-                     LoadProgramParametersProject
+                     LoadProgramParametersProject,&
+                     LoadGroundwater, &
+                     GetGroundwaterDescription, &
+                     SetGroundwaterDescription
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2268,6 +2271,27 @@ subroutine LoadGroundwater_wrap(FullName_ptr, strlen, AtDayNr, Zcm, ECdSm)
     FullName = pointer2string(FullName_ptr, strlen)
     call LoadGroundwater(FullName, AtDayNr, Zcm, ECdSm)
 end subroutine LoadGroundwater_wrap
+
+
+
+function GetGroundwaterDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundwaterDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundwaterDescription())
+end function GetGroundwaterDescription_wrap
+
+
+subroutine SetGroundwaterDescription_wrap(GroundwaterDescription, strlen)
+    !! Wrapper for [[ac_global:SetGroundwaterDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundwaterDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundwaterDescription, strlen)
+    call SetGroundwaterDescription(string)
+end subroutine SetGroundwaterDescription_wrap
 
 
 end module ac_interface_global

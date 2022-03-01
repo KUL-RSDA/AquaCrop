@@ -13,8 +13,7 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ProjectDescription, MultipleProjectDescription,
-    GroundWaterDescription: string;
+    ProjectDescription, MultipleProjectDescription : string;
 
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
@@ -106,10 +105,6 @@ PROCEDURE AdjustSizeCompartments(CropZx : double);
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
-PROCEDURE LoadGroundWater(FullName : string;
-                          AtDayNr : LongInt;
-                          VAR Zcm : INTEGER;
-                          VAR ECdSm : double);
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
