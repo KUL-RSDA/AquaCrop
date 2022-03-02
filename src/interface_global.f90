@@ -9,6 +9,7 @@ use ac_global, only: CheckFilesInProject, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
+                     CalculateAdjustedFC, &
                      ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &

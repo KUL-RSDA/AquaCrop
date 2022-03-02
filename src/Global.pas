@@ -52,8 +52,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
-                              VAR CompartAdj   : rep_Comp);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
@@ -113,79 +111,6 @@ PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
 implementation
 
 
-
-PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
-                              VAR CompartAdj   : rep_Comp);
-VAR compi,ic : INTEGER;
-    Zi,Depth,DeltaV,DeltaFC,Xmax : double;
-
-    FUNCTION NoAdjustment(FCvolPr : Double) : double;
-    VAR pF : double;
-    BEGIN
-    IF (FCvolPr <= 10)
-       THEN NoAdjustment := 1
-       ELSE BEGIN
-            IF (FCvolPr >= 30)
-               THEN NoAdjustment := 2
-               ELSE BEGIN
-                    pF := 2 + 0.3 * (FCvolPr-10)/20;
-                    NoAdjustment := (exp(pF*ln(10)))/100;
-                    END;
-            END;
-    END; (* NoAdjustment *)
-
-BEGIN
-(*
-Depth := 0;
-FOR compi := 1 TO NrCompartments DO
-    BEGIN
-    Depth := Depth + CompartAdj[compi].Thickness;
-    Zi := Depth - CompartAdj[compi].Thickness/2;
-    IF ((DepthAquifer < 0)
-        OR ((DepthAquifer - Zi) >= 2)
-        OR (SoilLayer[CompartAdj[compi].Layer].FC >= SoilLayer[CompartAdj[compi].Layer].SAT))
-           THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC
-           ELSE BEGIN
-                IF (Zi >= DepthAquifer)
-                   THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].SAT
-                   ELSE BEGIN
-                        DeltaV := SoilLayer[CompartAdj[compi].Layer].SAT - SoilLayer[CompartAdj[compi].Layer].FC;
-                        DeltaFC := (DeltaV/4) * (Zi - (DepthAquifer - 2)) * (Zi - (DepthAquifer - 2));
-                        CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC + DeltaFC;
-                        END;
-                END;
-    END;  *)
-
-
-Depth := 0;
-FOR compi := 1 TO GetNrCompartments() DO Depth := Depth + CompartAdj[compi].Thickness;
-compi := GetNrCompartments();
-REPEAT
-  Zi := Depth - CompartAdj[compi].Thickness/2;
-  //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
-  Xmax := NoAdjustment(GetSoilLayer_i(CompartAdj[compi].Layer).FC);
-  IF ((DepthAquifer < 0) OR ((DepthAquifer - Zi) >= Xmax))
-      THEN BEGIN
-           FOR ic := 1 to compi DO CompartAdj[ic].FCadj := GetSoilLayer_i(CompartAdj[ic].Layer).FC;
-           compi := 0;
-           END
-      ELSE BEGIN
-           IF (GetSoilLayer_i(CompartAdj[compi].Layer).FC >= GetSoilLayer_i(CompartAdj[compi].Layer).SAT)
-              THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC
-              ELSE BEGIN
-                   IF (Zi >= DepthAquifer)
-                      THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).SAT
-                      ELSE BEGIN
-                           DeltaV := GetSoilLayer_i(CompartAdj[compi].Layer).SAT - GetSoilLayer_i(CompartAdj[compi].Layer).FC;
-                           DeltaFC := (DeltaV/Sqr(Xmax)) * Sqr(Zi - (DepthAquifer - Xmax));
-                           CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC + DeltaFC;
-                           END;
-                   END;
-           Depth := Depth - CompartAdj[compi].Thickness;
-           compi := compi - 1;
-           END;
-UNTIL (compi < 1);
-END; (*  CalculateAdjustedFC *)
 
 
 
