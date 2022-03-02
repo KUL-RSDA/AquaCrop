@@ -9,6 +9,7 @@ use ac_global, only: CheckFilesInProject, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
+                     CalculateAdjustedFC, &
                      ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -206,6 +207,7 @@ use ac_global, only: CheckFilesInProject, &
                      LoadOffSeason, &
                      LoadProgramParametersProject, &
                      LoadCLim, &
+                     CompleteClimateDescription, &
                      rep_clim
 
 use ac_kinds, only: dp, &
@@ -270,6 +272,50 @@ function string2pointer(string) result(c_pointer)
     f_string = string // c_null_char
     c_pointer = c_loc(f_string)
 end function string2pointer
+
+
+subroutine twostrings2twopointers(string1, string2, c_pointer1, c_pointer2)
+    !! Returns two C-pointers for two Fortran strings.
+    character(len=*), intent(in) :: string1
+    character(len=*), intent(in) :: string2
+    type(c_ptr), intent(inout) :: c_pointer1
+    type(c_ptr), intent(inout) :: c_pointer2
+
+    character(len=:), allocatable, target, save :: f_string1
+    character(len=:), allocatable, target, save :: f_string2
+
+    f_string1 = string1 // c_null_char
+    c_pointer1 = c_loc(f_string1)
+
+    f_string2 = string2 // c_null_char
+    c_pointer2 = c_loc(f_string2)
+end subroutine twostrings2twopointers
+
+
+subroutine twostrings2threepointers(string1, string2, string3, &
+                                    c_pointer1, c_pointer2, c_pointer3)
+    !! Returns three C-pointers for two Fortran strings.
+    character(len=*), intent(in) :: string1
+    character(len=*), intent(in) :: string2
+    character(len=*), intent(in) :: string3
+    type(c_ptr), intent(inout) :: c_pointer1
+    type(c_ptr), intent(inout) :: c_pointer2
+    type(c_ptr), intent(inout) :: c_pointer3
+
+    character(len=:), allocatable, target, save :: f_string1
+    character(len=:), allocatable, target, save :: f_string2
+    character(len=:), allocatable, target, save :: f_string3
+
+    f_string1 = string1 // c_null_char
+    c_pointer1 = c_loc(f_string1)
+
+    f_string2 = string2 // c_null_char
+    c_pointer2 = c_loc(f_string2)
+
+    f_string3 = string3 // c_null_char
+    c_pointer3 = c_loc(f_string3)
+end subroutine twostrings2threepointers
+
 
 function GetCrop_Assimilates_On_wrap() result(On)
     !! Wrapper for [[ac_global:GetCrop_Assimilates_On]] for foreign languages.
@@ -2258,26 +2304,117 @@ end subroutine LoadOffSeason_wrap
 
 
 subroutine LoadClim_wrap(FullName_ptr, strlen1, ClimateDescription_ptr, &
-                         strlen2, ClimateRecord, int_datatype)
+                         strlen2, DataType, FromD, FromM, FromY, &
+                         ToD, ToM, ToY, FromDayNr, ToDayNr, FromString, &
+                         strlen3, ToString, strlen4, NrObs)
     type(c_ptr), intent(in) :: FullName_ptr
     integer(int32), intent(in) :: strlen1
     type(c_ptr), intent(inout) :: ClimateDescription_ptr
     integer(int32), intent(in) :: strlen2
-    type(rep_clim), intent(inout) :: ClimateRecord
-    integer(intEnum), intent(inout) :: int_datatype
+    integer(intEnum), intent(inout) :: DataType
+    integer(int32), intent(inout) :: FromD
+    integer(int32), intent(inout) :: FromM
+    integer(int32), intent(inout) :: FromY
+    integer(int32), intent(inout) :: ToD
+    integer(int32), intent(inout) :: ToM
+    integer(int32), intent(inout) :: ToY
+    integer(int32), intent(inout) :: FromDayNr
+    integer(int32), intent(inout) :: ToDayNr
+    type(c_ptr), intent(inout) :: FromString
+    integer(int32), intent(in) :: strlen3
+    type(c_ptr), intent(inout) :: ToString
+    integer(int32), intent(in) :: strlen4
+    integer(int32), intent(inout) :: NrObs
 
     character(len=strlen1) :: FullName
     character(len=strlen2) :: Climatedescription
+    type(rep_clim) :: ClimateRecord
 
     FullName = pointer2string(FullName_ptr, strlen1)
     ClimateDescription = pointer2string(ClimateDescription_ptr, &
                                                 strlen2)
-    ClimateRecord%DataType = int_datatype
+    ClimateRecord%DataType = DataType
+    ClimateRecord%FromD = FromD
+    ClimateRecord%FromM = FromM
+    ClimateRecord%FromY = FromY
+    ClimateRecord%ToD = ToD
+    ClimateRecord%ToM = ToM
+    ClimateRecord%ToY = ToY
+    ClimateRecord%FromDayNr = FromDayNr
+    ClimateRecord%ToDayNr = ToDayNr
+    ClimateRecord%FromString = pointer2string(FromString, strlen3)
+    ClimateRecord%ToString = pointer2string(ToString, strlen4)
+    ClimateRecord%NrObs = NrObs
 
     call LoadClim(FullName, ClimateDescription, ClimateRecord)
-    ClimateDescription_ptr = string2pointer(ClimateDescription)
-    int_datatype = ClimateRecord%DataType
+    DataType = ClimateRecord%DataType
+    FromD = ClimateRecord%FromD
+    FromM = ClimateRecord%FromM
+    FromY = ClimateRecord%FromY   
+    ToDayNr = ClimateRecord%ToDayNr
+    call twostrings2threepointers(ClimateRecord%FromString, &
+                                  ClimateRecord%ToString, &
+                                  ClimateDescription, &
+                                  FromString, ToString, &
+                                  ClimateDescription_ptr)
+    NrObs = ClimateRecord%NrObs
 end subroutine LoadClim_wrap
+
+
+
+subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
+                                           ToD, ToM, ToY, FromDayNr, &
+                                           ToDayNr, FromString, strlen1, &
+                                           ToString, strlen2, NrObs)
+    !! Wrapper for [[ac_global:CompleteClimateDescription]] for foreign languages
+    integer(intEnum), intent(inout) :: DataType
+    integer(int32), intent(inout) :: FromD
+    integer(int32), intent(inout) :: FromM
+    integer(int32), intent(inout) :: FromY
+    integer(int32), intent(inout) :: ToD
+    integer(int32), intent(inout) :: ToM
+    integer(int32), intent(inout) :: ToY
+    integer(int32), intent(inout) :: FromDayNr
+    integer(int32), intent(inout) :: ToDayNr
+    type(c_ptr), intent(inout) :: FromString
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: ToString
+    integer(int32), intent(in) :: strlen2
+    integer(int32), intent(inout) :: NrObs
+
+    type(rep_clim) :: ClimateRecord
+
+    ClimateRecord%DataType = DataType
+    ClimateRecord%FromD = FromD
+    ClimateRecord%FromM = FromM
+    ClimateRecord%FromY = FromY
+    ClimateRecord%ToD = ToD
+    ClimateRecord%ToM = ToM
+    ClimateRecord%ToY = ToY
+    ClimateRecord%FromDayNr = FromDayNr
+    ClimateRecord%ToDayNr = ToDayNr
+    ClimateRecord%FromString = pointer2string(FromString, strlen1)
+    ClimateRecord%ToString = pointer2string(ToString, strlen2)
+    ClimateRecord%NrObs = NrObs
+
+    call CompleteClimateDescription(ClimateRecord)
+
+    DataType = ClimateRecord%DataType
+    FromD = ClimateRecord%FromD
+    FromM = ClimateRecord%FromM
+    FromY = ClimateRecord%FromY
+    ToD = ClimateRecord%ToD
+    ToM = ClimateRecord%ToM
+    ToY = ClimateRecord%ToY
+    FromDayNr = ClimateRecord%FromDayNr
+    ToDayNr = ClimateRecord%ToDayNr
+    call twostrings2twopointers(ClimateRecord%FromString, &
+                                ClimateRecord%ToString, &
+                                FromString, ToString)
+    NrObs = ClimateRecord%NrObs
+end subroutine CompleteClimateDescription_wrap
+
+
 
 
 
