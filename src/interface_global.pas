@@ -4205,6 +4205,12 @@ function GetNrCompartments() : integer;
 procedure SetNrCompartments(constref NrCompartments_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
+function GetETo() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteto';
+
+procedure SetETo(constref ETo_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteto';
+
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
 

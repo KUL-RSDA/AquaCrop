@@ -65,6 +65,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonFilefull, &
                      GetGroundWaterFile, &
                      GetGroundWaterFilefull, &
+                     GetETo, &
+                     SetETo, &
                      GetEToFile, &
                      GetEToFileFull, &
                      GetEToDescription, &

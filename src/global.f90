@@ -973,6 +973,7 @@ integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
+real(dp) :: ETo !(* mm/day *)
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -12379,6 +12380,19 @@ subroutine SetNrCompartments(NrCompartments_in)
 
     NrCompartments = NrCompartments_in
 end subroutine SetNrCompartments
+
+real(dp) function GetETo()
+    !! Getter for the "ETo" global variable.
+
+    GetETo = ETo
+end function GetETo
+
+subroutine SetETo(ETo_in)
+    !! Setter for the "ETo" global variable.
+    real(dp), intent(in) :: ETo_in
+
+    ETo = ETo_in
+end subroutine SetETo
 
 integer(int32) function GetZiAqua()
     !! Getter for the "ZiAqua" global variable.

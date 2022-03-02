@@ -26,7 +26,7 @@ VAR DataPath,ObsPath : BOOLEAN;
 
     SenStage       : INTEGER;
     DaySubmerged   : INTEGER;
-    ETo, Epot, Tpot, Rain, Irrigation, Infiltrated, CRwater : double;   (* mm/day *)
+    Epot, Tpot, Rain, Irrigation, Infiltrated, CRwater : double;   (* mm/day *)
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Runoff, Drain, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)

@@ -4,9 +4,6 @@ interface
 
 uses Global, interface_global, Math, TempProcessing, interface_tempprocessing, interface_simul;
 
-PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
-                                    SumGDDadjCC,CO2i,GDDayi : double;
-                                    VAR CCxWitheredTpotNoS,BiomassUnlim : double);
 
 PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    ETo,TminOnDay,TmaxOnDay,CO2i,GDDayi,Tact,SumKcTop,
@@ -38,61 +35,6 @@ PROCEDURE BUDGET_module(dayi : LongInt;
 implementation
 
 
-PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
-                                    SumGDDadjCC,CO2i,GDDayi : double;
-                                    VAR CCxWitheredTpotNoS,BiomassUnlim : double);
-VAR CCiPot,TpotForB,EpotTotForB,WPi,fSwitch : double;
-    DAP,DaysYieldFormation,DayiAfterFlowering : INTEGER;
-
-BEGIN   // potential biomass - unlimited soil fertiltiy
-// 1. - CCi
-CCiPot := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
-             GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-             GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-             GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().CDC,GetCrop().GDDCGC,GetCrop().GDDCDC,
-             SumGDDadjCC,GetCrop().ModeCycle,
-             (0),(0));
-IF (CCiPot < 0) THEN CCiPot := 0;
-IF (CCiPot > CCxWitheredTpotNoS) THEN CCxWitheredTpotNoS := CCiPot;
-
-// 2. - Calculation of Tpot
-IF (GetCrop_ModeCycle() = Calendardays)
-   THEN DAP := VirtualTimeCC
-   ELSE BEGIN // growing degree days
-        DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                               GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
-        DAP := DAP + GetSimulation_DelayedDays(); // are not considered when working with GDDays
-        END;
-CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
-               GetCrop().DaysToHarvest,(0),CCiPot,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCx,CCxWitheredTpotNoS,GetCrop().CCEffectEvapLate,
-               //GetCrop().DaysToHarvest,CCiPot,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,
-               CO2i,GDDayi,GetCrop().GDtranspLow,TpotForB,EpotTotForB);
-
-// 3. - WPi for that day
-// 3a - given WPi
-WPi := (GetCrop().WP/100);
-// 3b - WPi decline in reproductive stage  (works with calendar days)
-IF (((GetCrop_subkind() = Grain) OR (GetCrop_subkind() = Tuber))
-    AND (GetCrop().WPy < 100) AND (GetCrop().dHIdt > 0)
-    AND (VirtualTimeCC >= GetCrop().DaysToFlowering)) THEN
-  BEGIN
-  // WPi in reproductive stage
-  fSwitch := 1;
-  DaysYieldFormation := ROUND(GetCrop().HI/GetCrop().dHIdt);
-  DayiAfterFlowering := VirtualTimeCC - GetCrop().DaysToFlowering;
-  IF ((DaysYieldFormation > 0) AND (DayiAfterFlowering < (DaysYieldFormation/3)))
-     THEN fSwitch := DayiAfterFlowering/(DaysYieldFormation/3);
-  WPi :=  WPi * (1 - (1-GetCrop().WPy/100)*fSwitch)
-  END;
-// 3c - adjustment WPi for CO2
-IF ROUND(100*CO2i) <> ROUND(100*CO2Ref) THEN
-   WPi := WPi * fAdjustedForCO2(CO2i,GetCrop().WP,GetCrop().AdaptedToCO2);
-
-// 4. - Potential Biomass
-IF (ETo > 0) THEN BiomassUnlim := BiomassUnlim + WPi * TpotForB/ETo; (* ton/ha*)
-//BiomassUnlim := BiomassUnlim + Bin - Bout; // correction for transferred assimilates
-
-END; (* DeterminePotentialBiomass *)
 
 
 PROCEDURE AdjustpStomatalToETo(MeanETo : double;
@@ -2046,7 +1988,7 @@ IF (GetSimulation_SWCtopSoilConsidered() = true) // top soil is relative wetter 
    THEN Wrelative := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
    ELSE Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 WithBeta := false;
-AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,pSenAct);
+AdjustpSenescenceToETo(GetETo(),TimeSenescence,WithBeta,pSenAct);
 IF (Wrelative <= pSenAct)
    THEN BEGIN
         CDCadjusted := 0.001; // extreme small decline
@@ -2176,11 +2118,11 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
 
         // Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
         Crop_pLeafAct_temp := GetCrop().pLeafAct;
-        AdjustpLeafToETo(ETo,Crop_pLeafAct_temp,pLeafLLAct);
+        AdjustpLeafToETo(GetETo(),Crop_pLeafAct_temp,pLeafLLAct);
         SetCrop_pLeafAct(Crop_pLeafAct_temp);
         WithBeta := true;
         Crop_pSenAct_temp := GetCrop().pSenAct;
-        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+        AdjustpSenescenceToETo(GetETo(),TimeSenescence,WithBeta,Crop_pSenAct_temp);
         SetCrop_pSenAct(Crop_pSenAct_temp);
 
         //2. Canopy can still develop (stretched to tFinalCCx)
@@ -2339,7 +2281,7 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
                 StressSenescence := 0;
                 WithBeta := true;
                 Crop_pSenAct_temp := GetCrop().pSenAct;
-                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+                AdjustpSenescenceToETo(GetETo(),TimeSenescence,WithBeta,Crop_pSenAct_temp);
                 SetCrop_pSenAct(Crop_pSenAct_temp);
                 KsRED := 1;  // effect of soil salinity on the threshold for senescence
                 IF (GetSimulation_SWCtopSoilConsidered() = true)
@@ -2425,7 +2367,7 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
                         //IF (CCiSen <= GetCrop().CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
                         IF ((ROUND(10000*CCiSen) <= (10000*CCdormant))
                            OR (ROUND(10000*CCiSen) <= ROUND(10000*GetCrop().CCo)))
-                              THEN SetSimulation_SumEToStress(GetSimulation_SumEToStress() + ETo);
+                              THEN SetSimulation_SumEToStress(GetSimulation_SumEToStress() + GetETo());
                         END
                    ELSE BEGIN // no water stress, resulting in canopy senescence
                         TimeSenescence := 0;  // No early senescence or back to normal
@@ -2631,7 +2573,7 @@ IF (GetSimulation_SWCtopSoilConsidered() = true) // top soil is relative wetter 
    ELSE Wrelative := (GetRootZoneWC().FC - GetRootZoneWC().Actual)/(GetRootZoneWC().FC - GetRootZoneWC().WP); // total root zone
 
 WithBeta := false;
-AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,pSenAct);
+AdjustpSenescenceToETo(GetETo(),TimeSenescence,WithBeta,pSenAct);
 IF (Wrelative <= pSenAct)
    THEN BEGIN
         GDDCDCadjusted := 0.0001; // extreme small decline
@@ -2725,11 +2667,11 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
 
         //Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
         Crop_pLeafAct_temp := GetCrop().pLeafAct;
-        AdjustpLeafToETo(ETo,Crop_pLeafAct_temp,pLeafLLAct);
+        AdjustpLeafToETo(GetETo(),Crop_pLeafAct_temp,pLeafLLAct);
         SetCrop_pLeafAct(Crop_pLeafAct_temp);
         WithBeta := true;
         Crop_pSenAct_temp := GetCrop().pSenAct;
-        AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+        AdjustpSenescenceToETo(GetETo(),TimeSenescence,WithBeta,Crop_pSenAct_temp);
         SetCrop_pSenAct(Crop_pSenAct_temp);
 
         //2. Canopy can still develop (stretched to GDDtFinalCCx)
@@ -2892,7 +2834,7 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
                 StressSenescence := 0;
                 WithBeta := true;
                 Crop_pSenAct_temp := GetCrop().pSenAct;
-                AdjustpSenescenceToETo(ETo,TimeSenescence,WithBeta,Crop_pSenAct_temp);
+                AdjustpSenescenceToETo(GetETo(),TimeSenescence,WithBeta,Crop_pSenAct_temp);
                 SetCrop_pSenAct(Crop_pSenAct_temp);
                 KsRED := 1; // effect of soil salinity on the threshold for senescence
                 IF (GetSimulation_SWCtopSoilConsidered() = true)
@@ -2978,7 +2920,7 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
                         //IF (CCiSen <= GetCrop().CCo) THEN Simulation.SumEToStress := Simulation.SumEToStress + ETo;
                         IF ((ROUND(10000*CCiSen) <= (10000*CCdormant))
                            OR (ROUND(10000*CCiSen) <= ROUND(10000*GetCrop().CCo)))
-                              THEN SetSimulation_SumEToStress(GetSimulation_SumEToStress() + ETo);
+                              THEN SetSimulation_SumEToStress(GetSimulation_SumEToStress() + GetETo());
                         END
                    ELSE BEGIN // no water stress, resulting in canopy senescence
                         IF ((TimeSenescence > 0) AND (SumGDDadjCC > GetCrop().GDDaysToSenescence)) THEN
@@ -3297,7 +3239,7 @@ FOR i := 1 TO NrOfStepsInDay DO
           Wrel := (Wact-Wlower)/(Wupper-Wlower);
           END;
     Kr := SoilEvaporationReductionCoefficient(Wrel,GetSimulParam_EvapDeclineFactor());
-    IF (Abs(ETo - 5) > 0.01) THEN // correction for evaporative demand
+    IF (Abs(getETo() - 5) > 0.01) THEN // correction for evaporative demand
        BEGIN
        // adjustment of Kr (not considered yet)
        END;
@@ -3849,11 +3791,11 @@ IF (GetCrop_ModeCycle() = Calendardays)
         END;
 // 11.2 Calculation
 CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,DayLastCut,
-               CCiActual,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,CO2i,
+               CCiActual,GetETo(),GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,CO2i,
                GDDayi,GetCrop().GDtranspLow,Tpot,EpotTot);
 Epot := EpotTot;    // adjustment Epot for mulch and partial wetting in next step
 Crop_pActStom_temp := GetCrop().pActStom;
-AdjustpStomatalToETo(ETo,Crop_pActStom_temp);
+AdjustpStomatalToETo(GetETo(),Crop_pActStom_temp);
 SetCrop_pActStom(Crop_pActStom_temp);
 
 

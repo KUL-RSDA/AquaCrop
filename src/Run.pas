@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing;
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_simul;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -637,6 +637,7 @@ VAR totalname,totalnameOUT : string;
     StringREAD : ShortString;
     i : INTEGER;
     RunningDay : LongInt;
+    ETo_tmp : double;
 BEGIN
 // 1. ETo file
 IF (GetEToFile() <> '(None)')
@@ -658,26 +659,27 @@ IF (GetEToFile() <> '(None)')
                             READLN(fETo);
                             READLN(fETo);
                             FOR i := GetEToRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fETo);
-                            READLN(fETo,ETo);
+                            READLN(fETo,ETo_tmp);
+                            SetETo(ETo_tmp);
                             END;
                   Decadely: BEGIN
                             GetDecadeEToDataSet(FromSimDay,EToDataSet);
                             i := 1;
                             While (EToDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            ETo := EToDataSet[i].Param;
+                            SetETo(EToDataSet[i].Param);
                             END;
                   Monthly : BEGIN
                             GetMonthlyEToDataSet(FromSimDay,EToDataSet);
                             i := 1;
                             While (EToDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            ETo := EToDataSet[i].Param;
+                            setETo(EToDataSet[i].Param);
                             END;
                   end;
                 // create SIM file and record first day
                 totalnameOUT := CONCAT(GetPathNameSimul(),'EToData.SIM');
                 Assign(fEToS,totalnameOUT);
                 Rewrite(fEToS);
-                WRITELN(fEToS,ETo:10:4);
+                WRITELN(fEToS,GetETo():10:4);
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
@@ -694,24 +696,26 @@ IF (GetEToFile() <> '(None)')
                                            READLN(fETo);
                                            READLN(fETo);
                                            READLN(fETo);
-                                           READLN(fETo,ETo);
+                                           READLN(fETo,ETo_tmp);
+                                           SetETo(ETo_tmp);
                                            END
-                                      ELSE READLN(fETo,ETo);
+                                      ELSE READLN(fETo,ETo_tmp);
+                                      SetETo(ETo_tmp);
                                    END;
                          Decadely: BEGIN
                                    IF (RunningDay > EToDataSet[31].DayNr) THEN GetDecadeEToDataSet(RunningDay,EToDataSet);
                                    i := 1;
                                    While (EToDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   ETo := EToDataSet[i].Param;
+                                   setETo(EToDataSet[i].Param);
                                    END;
                          Monthly : BEGIN
                                    IF (RunningDay > EToDataSet[31].DayNr) THEN GetMonthlyEToDataSet(RunningDay,EToDataSet);
                                    i := 1;
                                    While (EToDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   ETo := EToDataSet[i].Param;
+                                   SetETo(EToDataSet[i].Param);
                                    END;
                          end;
-                    WRITELN(fEToS,ETo:10:4);
+                    WRITELN(fEToS,ETo_tmp:10:4);
                     END;
                 // Close files
                 IF (GetEToRecord_DataType() = Daily) THEN Close(fETo);
@@ -901,6 +905,7 @@ PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
                                           VAR fEToSIM,fRainSIM,fTempSIM : text);
 VAR totalname : string;
     i : LongInt;
+    ETo_tmp : double;
 BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
@@ -909,10 +914,13 @@ IF (GetEToFile() <> '(None)') THEN
    Assign(fEToSIM,totalname);
    Reset(fEToSIM);
    IF (FirstDayNr = GetSimulation_FromDayNr())
-      THEN READLN(fEToSIM,ETo)
+      THEN READLN(fEToSIM,ETo_tmp)
+      //SetETo(ETo_tmp);
       ELSE BEGIN
-           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO READLN(fEToSIM,ETo);
-           READLN(fEToSIM,ETo);
+           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO READLN(fEToSIM,ETo_tmp);
+           SetETo(ETo_tmp);
+           READLN(fEToSIM,ETo_tmp);
+           SetETo(ETo_tmp);
            END;
    END;
 // Rain file
@@ -2055,7 +2063,7 @@ CASE OutputAggregate OF
         SaltOut := GetSumWaBal_SaltOut() - PreviousSum.SaltOut;
         CRsalt := GetSumWaBal_CRsalt() - PreviousSum.CRsalt;
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
-                       Rain,ETo,GDDayi,
+                       Rain,GetETo(),GDDayi,
                        Irrigation,Infiltrated,Runoff,Drain,CRwater,
                        Eact,Epot,Tact,TactWeedInfested,Tpot,
                        SaltIn,SaltOut,CRsalt,
@@ -2158,8 +2166,8 @@ IF Out2Crop THEN
            END
       ELSE Brel := undef_int;
    //9. Kc coefficient
-   IF ((ETo > 0) AND (Tpot > 0) AND (StrTr < 100))
-      THEN KcVal := Tpot/(ETo*KsTr)
+   IF ((GetETo() > 0) AND (Tpot > 0) AND (StrTr < 100))
+      THEN KcVal := Tpot/(GetETo()*KsTr)
       ELSE KcVal := undef_int;
    //10. Water Use Efficiency yield
    IF (((GetSumWaBal_Tact() > 0) OR (GetSumWaBal_ECropCycle() > 0)) AND (GetSumWaBal_YieldPart() > 0))
@@ -2273,7 +2281,7 @@ IF Out6CompEC THEN
 IF Out7Clim THEN
    BEGIN
    Ratio1 := (Tmin + Tmax)/2;
-   WRITELN(fDaily,Rain:9:1,ETo:10:1,Tmin:10:1,Ratio1:10:1,Tmax:10:1,CO2i:10:2);
+   WRITELN(fDaily,Rain:9:1,GetETo():10:1,Tmin:10:1,Ratio1:10:1,Tmax:10:1,CO2i:10:2);
    END;
 END; (* WriteDailyResults *)
 
@@ -2369,7 +2377,7 @@ VAR RepeatToDay : LongInt;
     FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
     GwTable_temp : rep_GwTable;
     Store_temp, Mobilize_temp : boolean;
-    ToMobilize_temp, Bmobilized_temp : double;
+    ToMobilize_temp, Bmobilized_temp, ETo_tmp : double;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
     ZiAqua_temp : integer;
@@ -2651,9 +2659,10 @@ VAR RepeatToDay : LongInt;
 BEGIN (* FileManagement *)
 RepeatToDay := GetSimulation_ToDayNr();
 
+
 REPEAT
 (* 1. Get ETo *)
-IF (GetEToFile() = '(None)') THEN ETo := 5;
+IF (GetEToFile() = '(None)') THEN SetETo(5);
 
 (* 2. Get Rain *)
 IF (GetRainFile() = '(None)') THEN Rain := 0;
@@ -2845,7 +2854,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
         BiomassTot_temp := GetSumWaBal_BiomassTot();
         YieldPart_temp := GetSumWaBal_YieldPart();
-        DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
+        DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
                                  Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,CCiActual,FracAssim,
                                  VirtualTimeCC,SumInterval,
@@ -2972,7 +2981,7 @@ IF GetManagement_Cuttings_Considered() THEN
 
 (* 14. Write results *)
 //14.a Summation
-SumETo := SumETo + ETo;
+SumETo := SumETo + GetETo();
 SumGDD := SumGDD + GDDayi;
 //14.b Stress totals
 IF (CCiActual > 0) THEN
@@ -3034,7 +3043,8 @@ IF (GetSimulation_SumEToStress() >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= GetSimulation_ToDayNr()) THEN
    BEGIN
-   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
+   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo_tmp);
+   SetETo(Eto_tmp);
    IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (GetTemperatureFile() = '(None)')
       THEN BEGIN

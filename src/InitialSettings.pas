@@ -226,7 +226,7 @@ SetCrop_DayN(Crop_DayN_temp);
  AdjustOnsetSearchPeriod;
 
  // 12. Simulation run
- ETo := 5.0;
+ setETo(5.0);
  Rain := 0;
  Irrigation := 0;
  SurfaceStorage := 0;
