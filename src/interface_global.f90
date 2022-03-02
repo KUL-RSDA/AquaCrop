@@ -2269,7 +2269,7 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
                                            ToDayNr, FromString, strlen1, &
                                            ToString, strlen2, NrObs)
     !! Wrapper for [[ac_global:CompleteClimateDescription]] for foreign languages
-    integer(intEnum), intent(in) :: DataType
+    integer(intEnum), intent(inout) :: DataType
     integer(int32), intent(inout) :: FromD
     integer(int32), intent(inout) :: FromM
     integer(int32), intent(inout) :: FromY
@@ -2301,6 +2301,7 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
 
     call CompleteClimateDescription(ClimateRecord)
 
+    DataType = ClimateRecord%DataType
     FromD = ClimateRecord%FromD
     FromM = ClimateRecord%FromM
     FromY = ClimateRecord%FromY

@@ -7401,6 +7401,7 @@ begin
                                     ToString_ptr, strlen2,
                                     ClimateRecord.NrObs);
 
+    ClimateRecord.DataType := rep_datatype(int_datatype);
     ClimateRecord.FromString := AnsiString(FromString_ptr);
     ClimateRecord.ToString := AnsiString(ToString_ptr);
 end;
