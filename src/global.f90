@@ -4120,15 +4120,19 @@ subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
     do compi = 1, GetNrCompartments() 
         Depth = Depth + CompartAdj(compi)%Thickness
     end do
+
     compi = GetNrCompartments()
+
     loop: do
         Zi = Depth - CompartAdj(compi)%Thickness/2._dp
         Xmax = NoAdjustment(GetSoilLayer_FC(CompartAdj(compi)%Layer))
+
         if ((DepthAquifer < 0._dp) &
-                    .or. ((DepthAquifer - Zi) >= Xmax)) then
+            .or. ((DepthAquifer - Zi) >= Xmax)) then
             do ic = 1, compi 
                 CompartAdj(ic)%FCadj = GetSoilLayer_FC(CompartAdj(ic)%Layer)
             end do
+
             compi = 0
         else
             if (GetSoilLayer_FC(CompartAdj(compi)%Layer) &
@@ -4139,21 +4143,24 @@ subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
                     CompartAdj(compi)%FCadj = GetSoilLayer_SAT(CompartAdj(compi)%Layer)
                 else
                     DeltaV = GetSoilLayer_SAT(CompartAdj(compi)%Layer) &
-                                - GetSoilLayer_FC(CompartAdj(compi)%Layer)
-                    DeltaFC = (DeltaV/(Xmax**2._dp)) * (Zi - (DepthAquifer - &
-                                                                Xmax))**2._dp
+                             - GetSoilLayer_FC(CompartAdj(compi)%Layer)
+                    DeltaFC = (DeltaV/(Xmax**2._dp)) &
+                              * (Zi - (DepthAquifer - Xmax))**2._dp
                     CompartAdj(compi)%FCadj = GetSoilLayer_FC(CompartAdj(compi)%Layer) &
-                                                                + DeltaFC
+                                              + DeltaFC
                 end if
             end if
+
             Depth = Depth - CompartAdj(compi)%Thickness
             compi = compi - 1
         end if
+
         if (compi < 1) exit loop
     end do loop
 
 
     contains
+
 
     real(dp) function NoAdjustment(FCvolPr)
         real(dp), intent(in) :: FCvolPr
@@ -4171,7 +4178,6 @@ subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
             end if
         end if
     end function NoAdjustment
-
 end subroutine CalculateAdjustedFC
 
 
