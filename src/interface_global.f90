@@ -269,6 +269,25 @@ function string2pointer(string) result(c_pointer)
     c_pointer = c_loc(f_string)
 end function string2pointer
 
+
+subroutine twostrings2twopointers(string1, string2, c_pointer1, c_pointer2)
+    !! Returns two C-pointers for two Fortran strings.
+    character(len=*), intent(in) :: string1
+    character(len=*), intent(in) :: string2
+    type(c_ptr), intent(inout) :: c_pointer1
+    type(c_ptr), intent(inout) :: c_pointer2
+
+    character(len=:), allocatable, target, save :: f_string1
+    character(len=:), allocatable, target, save :: f_string2
+
+    f_string1 = string1 // c_null_char
+    c_pointer1 = c_loc(f_string1)
+
+    f_string2 = string2 // c_null_char
+    c_pointer2 = c_loc(f_string2)
+end subroutine twostrings2twopointers
+
+
 function GetCrop_Assimilates_On_wrap() result(On)
     !! Wrapper for [[ac_global:GetCrop_Assimilates_On]] for foreign languages.
     logical(1) :: On
@@ -2305,14 +2324,15 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
     FromD = ClimateRecord%FromD
     FromM = ClimateRecord%FromM
     FromY = ClimateRecord%FromY
-    FromDayNr = ClimateRecord%FromDayNr
-    ToDayNr = ClimateRecord%ToDayNr
-    NrObs = ClimateRecord%NrObs
     ToD = ClimateRecord%ToD
     ToM = ClimateRecord%ToM
     ToY = ClimateRecord%ToY
-    FromString = string2pointer(ClimateRecord%FromString)
-    ToString = string2pointer(ClimateRecord%ToString)
+    FromDayNr = ClimateRecord%FromDayNr
+    ToDayNr = ClimateRecord%ToDayNr
+    call twostrings2twopointers(ClimateRecord%FromString, &
+                                ClimateRecord%ToString, &
+                                FromString, ToString)
+    NrObs = ClimateRecord%NrObs
 end subroutine CompleteClimateDescription_wrap
 
 
