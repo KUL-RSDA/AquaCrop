@@ -1,9 +1,12 @@
 module ac_simul
 
-use ac_kinds, only:  dp
+use ac_kinds, only:  dp, int32
 use ac_global, only: GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
-                     GetSimulParam_pAdjFAO
+                     GetSimulParam_pAdjFAO, &
+                     GetSoilLayer_SAT, &
+                     GetSoilLayer_FC, &
+                     GetSoilLayer_tau
 
 implicit none
 
@@ -52,5 +55,60 @@ subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
 end subroutine AdjustpLeafToETo
 
 
+real(dp) function calculate_delta_theta(theta_in, thetaAdjFC, NrLayer)
+    real(dp), intent(in) :: theta_in
+    real(dp), intent(in) :: thetaAdjFC
+    integer(int32), intent(in) :: NrLayer
+
+    real(dp) :: DeltaX, theta, theta_sat, theta_fc
+
+    theta = theta_in
+    theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
+    theta_fc = GetSoilLayer_FC(NrLayer) / 100.0_dp
+    if (theta > theta_sat) then
+        theta = theta_sat
+    end if
+    if (theta <= thetaAdjFC/100.0_dp) then
+        DeltaX = 0.0_dp
+    else
+        DeltaX = GetSoilLayer_tau(NrLayer)&
+                 * (theta_sat - theta_fc)&
+                 * (exp(theta - theta_fc) - 1.0_dp)&
+                 / (exp(theta_sat - theta_fc) - 1.0_dp)
+        if ((theta - DeltaX) < thetaAdjFC) then
+            DeltaX = theta - thetaAdjFC
+        end if
+    end if
+    calculate_delta_theta = DeltaX
+end function calculate_delta_theta
+
+
+real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer)
+    real(dp), intent(in) :: delta_theta
+    real(dp), intent(in) :: thetaAdjFC
+    integer(int32), intent(in) :: NrLayer
+
+    real(dp) :: ThetaX, theta_sat, theta_fc, tau
+
+    theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
+    theta_fc = GetSoilLayer_FC(NrLayer) / 100.0_dp
+    tau = GetSoilLayer_tau(NrLayer)
+    if (delta_theta <= epsilon(0.0_dp)) then
+        ThetaX = thetaAdjFC
+    elseif (tau > 0.0_dp) then
+        ThetaX = theta_fc&
+            + log(1.0_dp&
+                  + delta_theta&
+                  * (exp(theta_sat - theta_fc) - 1.0_dp)&
+                  / (tau * (theta_sat - theta_fc)))
+        if (ThetaX < thetaAdjFC) then
+            ThetaX = thetaAdjFC
+        end if
+    else
+        ! to stop draining
+        ThetaX = theta_sat + 0.1_dp
+    end if
+    calculate_theta = ThetaX
+end function calculate_theta
 
 end module ac_simul
