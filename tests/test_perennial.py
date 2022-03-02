@@ -152,6 +152,7 @@ def test_perennial():
                                            icol, item_ref, item_out)
                                 else:
                                     assert is_close, (icol, item_ref, item_out)
+
         print('{0} num_items_total = {1}'.format(filename,
                                                  sum(num_items_total)))
         print('{0} num_not_realclose = {1}'.format(filename,
@@ -165,15 +166,13 @@ def test_perennial():
         print('{0} maxnumdev [%] = {1:.3f} (column index {2})'.format(
                                             filename, maxdev, maxcol))
 
+        # Certain small deviations are tolerated in the daily output
+        tolerated_deviations = {'day': 35, 'season': 0}[suffix]
+        msg = '{0} small deviation(s) currently allowed for this test case'
+        print(msg.format(tolerated_deviations))
 
-        # Number of currently allowed small deviations for daily output
-        if (suffix == 'day'):
-            tolerated_deviations = 35
-            msg = '{0} small deviation(s) currently allowed for this test case'
-            print(msg.format(tolerated_deviations))
-
-            assert int(np.sum(num_not_realclose)) <= tolerated_deviations, \
-                        'more than allowed number of small deviation detected'
+        assert int(np.sum(num_not_realclose)) <= tolerated_deviations, \
+                   'more than allowed number of small deviation detected'
 
         print('{0} checks = OK'.format(filename))
 
