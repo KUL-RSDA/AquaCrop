@@ -4107,6 +4107,80 @@ subroutine DetermineRootZoneSaltContent(RootingDepth, ZrECe, ZrECsw, ZrECswFC, Z
 end subroutine DetermineRootZoneSaltContent
 
 
+
+subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
+    real(dp), intent(in) :: DepthAquifer
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                    intent(inout) :: CompartAdj
+
+    integer(int32) :: compi, ic
+    real(dp) :: Zi, Depth, DeltaV, DeltaFC, Xmax        
+        
+    Depth = 0._dp
+    do compi = 1, GetNrCompartments() 
+        Depth = Depth + CompartAdj(compi)%Thickness
+    end do
+
+    compi = GetNrCompartments()
+
+    loop: do
+        Zi = Depth - CompartAdj(compi)%Thickness/2._dp
+        Xmax = NoAdjustment(GetSoilLayer_FC(CompartAdj(compi)%Layer))
+
+        if ((DepthAquifer < 0._dp) &
+            .or. ((DepthAquifer - Zi) >= Xmax)) then
+            do ic = 1, compi 
+                CompartAdj(ic)%FCadj = GetSoilLayer_FC(CompartAdj(ic)%Layer)
+            end do
+
+            compi = 0
+        else
+            if (GetSoilLayer_FC(CompartAdj(compi)%Layer) &
+                    >= GetSoilLayer_SAT(CompartAdj(compi)%Layer)) then
+                CompartAdj(compi)%FCadj = GetSoilLayer_FC(CompartAdj(compi)%Layer)
+            else
+                if (Zi >= DepthAquifer) then
+                    CompartAdj(compi)%FCadj = GetSoilLayer_SAT(CompartAdj(compi)%Layer)
+                else
+                    DeltaV = GetSoilLayer_SAT(CompartAdj(compi)%Layer) &
+                             - GetSoilLayer_FC(CompartAdj(compi)%Layer)
+                    DeltaFC = (DeltaV/(Xmax**2)) &
+                              * (Zi - (DepthAquifer - Xmax))**2
+                    CompartAdj(compi)%FCadj = GetSoilLayer_FC(CompartAdj(compi)%Layer) &
+                                              + DeltaFC
+                end if
+            end if
+
+            Depth = Depth - CompartAdj(compi)%Thickness
+            compi = compi - 1
+        end if
+
+        if (compi < 1) exit loop
+    end do loop
+
+
+    contains
+
+
+    real(dp) function NoAdjustment(FCvolPr)
+        real(dp), intent(in) :: FCvolPr
+
+        real(dp) :: pF
+
+        if (FCvolPr <= 10._dp) then
+            NoAdjustment = 1._dp
+        else
+            if (FCvolPr >= 30._dp) then
+                NoAdjustment = 2._dp
+            else
+                pF = 2._dp + 0.3_dp * (FCvolPr-10._dp)/20._dp
+                NoAdjustment = (exp(pF*log(10._dp)))/100._dp
+            end if
+        end if
+    end function NoAdjustment
+end subroutine CalculateAdjustedFC
+
+
 subroutine AdjustOnsetSearchPeriod()
 
     integer(int32) :: temp_Integer
@@ -4132,6 +4206,61 @@ subroutine AdjustOnsetSearchPeriod()
         end if
     end if
 end subroutine AdjustOnsetSearchPeriod
+
+
+
+integer(int32) function ActiveCells(Comp)
+    type(CompartmentIndividual), intent(in) :: Comp
+
+    integer(int32) ::  celi
+
+    if (Comp%theta <= GetSoilLayer_UL(Comp%Layer)) then
+        celi = 0
+        do while (Comp%theta > (GetSoilLayer_Dx(Comp%Layer)) * celi) 
+            celi = celi + 1
+        end do
+    else
+        celi = GetSoilLayer_SCP1(Comp%Layer)
+    end if
+    ActiveCells = celi
+end function ActiveCells
+
+
+subroutine DetermineSaltContent(ECe, Comp)
+    real(dp), intent(in) :: ECe
+    type(CompartmentIndividual), intent(inout) :: Comp
+
+    real(dp) :: TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN
+    integer(int32) :: celn, i
+
+    TotSalt = ECe*Equiv*(GetSoilLayer_SAT(Comp%Layer))*10._dp*Comp%Thickness
+    celn = ActiveCells(Comp)
+    SAT = (GetSoilLayer_SAT(Comp%Layer))/100._dp  ! m3/m3 
+    UL = GetSoilLayer_UL(Comp%Layer) ! m3/m3   ! Upper limit of SC salt cel 
+    Dx = GetSoilLayer_Dx(Comp%Layer)  ! m3/m3  ! Size of salts cel (expect last one) 
+    mm1 = Dx*1000._dp*Comp%Thickness &
+                    * (1._dp - GetSoilLayer_GravelVol(Comp%Layer)/100._dp) 
+                     ! g/l ! volume [mm]=[l/m2] of cells 
+    mmN = (SAT-UL)*1000._dp*Comp%Thickness &
+                    * (1._dp - GetSoilLayer_GravelVol(Comp%Layer)/100._dp) 
+                     ! g/l ! volume [mm]=[l/m2] of last cell 
+    SumDF = 0._dp
+    do i = 1, GetSoilLayer_SCP1(Comp%Layer) 
+        Comp%Salt(i) = 0._dp
+        Comp%Depo(i) = 0._dp
+    end do
+    do i = 1, celn 
+        SumDF = SumDF + GetSoilLayer_SaltMobility_i(Comp%Layer, i)
+    end do
+    do i = 1, celn 
+        Comp%Salt(i) = TotSalt * GetSoilLayer_SaltMobility_i(Comp%Layer, i)/SumDF
+        mm = mm1
+        if (i == GetSoilLayer_SCP1(Comp%Layer)) then
+            mm = mmN
+        end if
+        call SaltSolutionDeposit(mm, Comp%Salt(i), Comp%Depo(i))
+    end do
+end subroutine DetermineSaltContent
 
 
 subroutine SetClimData()
@@ -4514,6 +4643,7 @@ subroutine NoCropCalendar()
     call SetEndSeason_GenerateTempOn(.false.)
     call SetCalendarDescription('No calendar for the Seeding/Planting year')
 end subroutine NoCropCalendar
+
 
 
 subroutine ResetSWCToFC()
@@ -7124,6 +7254,7 @@ subroutine ReadTemperatureSettingsParameters()
     end if
     close(fhandle)
 end subroutine ReadTemperatureSettingsParameters
+
 
 
 !! Global variables section !!

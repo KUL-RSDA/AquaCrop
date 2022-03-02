@@ -4187,8 +4187,20 @@ function GetNrCompartments() : integer;
 procedure SetNrCompartments(constref NrCompartments_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
+procedure CalculateAdjustedFC(constref DepthAquifer : double;
+                              var CompartAdj   : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
+
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
+
+function ActiveCells(constref Comp : CompartmentIndividual) : integer;
+    external 'aquacrop' name '__ac_global_MOD_activecells';
+
+
+procedure DetermineSaltContent(constref ECe : double;
+                               var Comp : CompartmentIndividual);
+    external 'aquacrop' name '__ac_global_MOD_determinesaltcontent';
 
 procedure SetClimData;
     external 'aquacrop' name '__ac_global_MOD_setclimdata';

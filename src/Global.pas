@@ -52,13 +52,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
-                              VAR CompartAdj   : rep_Comp);
-
-FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-
-PROCEDURE DetermineSaltContent(ECe : double;
-                               VAR Comp : CompartmentIndividual);
 
 PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
@@ -106,124 +99,6 @@ implementation
 
 
 
-PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
-                              VAR CompartAdj   : rep_Comp);
-VAR compi,ic : INTEGER;
-    Zi,Depth,DeltaV,DeltaFC,Xmax : double;
-
-    FUNCTION NoAdjustment(FCvolPr : Double) : double;
-    VAR pF : double;
-    BEGIN
-    IF (FCvolPr <= 10)
-       THEN NoAdjustment := 1
-       ELSE BEGIN
-            IF (FCvolPr >= 30)
-               THEN NoAdjustment := 2
-               ELSE BEGIN
-                    pF := 2 + 0.3 * (FCvolPr-10)/20;
-                    NoAdjustment := (exp(pF*ln(10)))/100;
-                    END;
-            END;
-    END; (* NoAdjustment *)
-
-BEGIN
-(*
-Depth := 0;
-FOR compi := 1 TO NrCompartments DO
-    BEGIN
-    Depth := Depth + CompartAdj[compi].Thickness;
-    Zi := Depth - CompartAdj[compi].Thickness/2;
-    IF ((DepthAquifer < 0)
-        OR ((DepthAquifer - Zi) >= 2)
-        OR (SoilLayer[CompartAdj[compi].Layer].FC >= SoilLayer[CompartAdj[compi].Layer].SAT))
-           THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC
-           ELSE BEGIN
-                IF (Zi >= DepthAquifer)
-                   THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].SAT
-                   ELSE BEGIN
-                        DeltaV := SoilLayer[CompartAdj[compi].Layer].SAT - SoilLayer[CompartAdj[compi].Layer].FC;
-                        DeltaFC := (DeltaV/4) * (Zi - (DepthAquifer - 2)) * (Zi - (DepthAquifer - 2));
-                        CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC + DeltaFC;
-                        END;
-                END;
-    END;  *)
-
-
-Depth := 0;
-FOR compi := 1 TO GetNrCompartments() DO Depth := Depth + CompartAdj[compi].Thickness;
-compi := GetNrCompartments();
-REPEAT
-  Zi := Depth - CompartAdj[compi].Thickness/2;
-  //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
-  Xmax := NoAdjustment(GetSoilLayer_i(CompartAdj[compi].Layer).FC);
-  IF ((DepthAquifer < 0) OR ((DepthAquifer - Zi) >= Xmax))
-      THEN BEGIN
-           FOR ic := 1 to compi DO CompartAdj[ic].FCadj := GetSoilLayer_i(CompartAdj[ic].Layer).FC;
-           compi := 0;
-           END
-      ELSE BEGIN
-           IF (GetSoilLayer_i(CompartAdj[compi].Layer).FC >= GetSoilLayer_i(CompartAdj[compi].Layer).SAT)
-              THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC
-              ELSE BEGIN
-                   IF (Zi >= DepthAquifer)
-                      THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).SAT
-                      ELSE BEGIN
-                           DeltaV := GetSoilLayer_i(CompartAdj[compi].Layer).SAT - GetSoilLayer_i(CompartAdj[compi].Layer).FC;
-                           DeltaFC := (DeltaV/Sqr(Xmax)) * Sqr(Zi - (DepthAquifer - Xmax));
-                           CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC + DeltaFC;
-                           END;
-                   END;
-           Depth := Depth - CompartAdj[compi].Thickness;
-           compi := compi - 1;
-           END;
-UNTIL (compi < 1);
-END; (*  CalculateAdjustedFC *)
-
-
-FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-VAR  celi : INTEGER;
-
-BEGIN
-IF (Comp.theta <= GetSoilLayer_i(Comp.Layer).UL)
-   THEN BEGIN
-        celi := 0;
-        WHILE (Comp.theta > (GetSoilLayer_i(Comp.Layer).Dx) * celi) DO celi := celi + 1;
-        END
-   ELSE celi := GetSoilLayer_i(Comp.Layer).SCP1;
-ActiveCells := celi;
-END; (* ActiveCells *)
-
-
-PROCEDURE DetermineSaltContent(ECe : double;
-                               VAR Comp : CompartmentIndividual);
-VAR TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN : double;
-    celn, i : INTEGER;
-
-BEGIN
-TotSalt := ECe*Equiv*(GetSoilLayer_i(Comp.Layer).SAT)*10*Comp.Thickness;
-celn := ActiveCells(Comp);
-SAT := (GetSoilLayer_i(Comp.Layer).SAT)/100;  (* m3/m3 *)
-UL := GetSoilLayer_i(Comp.Layer).UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-Dx := GetSoilLayer_i(Comp.Layer).Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
-mm1 := Dx*1000*Comp.Thickness
-       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of cells *)
-mmN := (SAT-UL)*1000*Comp.Thickness
-       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of last cell *)
-SumDF := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO
-    BEGIN
-    Comp.Salt[i] := 0;
-    Comp.Depo[i] := 0;
-    END;
-FOR i := 1 TO celn DO SumDF := SumDF + GetSoilLayer_SaltMobility_i(Comp.Layer, i);
-FOR i := 1 TO celn DO
-    BEGIN
-    Comp.Salt[i] := TotSalt * GetSoilLayer_SaltMobility_i(Comp.Layer, i)/SumDF;
-    mm := mm1;
-    IF (i = GetSoilLayer_i(Comp.Layer).SCP1) THEN mm := mmN;
-    SaltSolutionDeposit(mm,Comp.Salt[i],Comp.Depo[i]);
-    END;
-END; (* DetermineSaltContent *)
 
 
 

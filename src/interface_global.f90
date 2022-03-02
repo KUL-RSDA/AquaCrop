@@ -9,6 +9,7 @@ use ac_global, only: CheckFilesInProject, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
+                     CalculateAdjustedFC, &
                      ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -2280,5 +2281,7 @@ subroutine LoadInitialConditions_wrap(SWCiniFileFull_ptr, strlen, &
     string = pointer2string(SWCiniFileFull_ptr, strlen)
     call LoadInitialConditions(string, IniSurfaceStorage)
 end subroutine LoadInitialConditions_wrap
+
+
 
 end module ac_interface_global
