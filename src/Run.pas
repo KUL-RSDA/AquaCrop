@@ -716,6 +716,7 @@ IF (GetEToFile() <> '(None)')
                                    END;
                          end;
                     WRITELN(fEToS,ETo_tmp:10:4);
+                    SetETo(ETo_tmp);
                     END;
                 // Close files
                 IF (GetEToRecord_DataType() = Daily) THEN Close(fETo);
@@ -914,8 +915,10 @@ IF (GetEToFile() <> '(None)') THEN
    Assign(fEToSIM,totalname);
    Reset(fEToSIM);
    IF (FirstDayNr = GetSimulation_FromDayNr())
-      THEN READLN(fEToSIM,ETo_tmp)
-      //SetETo(ETo_tmp);
+      THEN BEGIN
+      READLN(fEToSIM,ETo_tmp);
+      SetETo(ETo_tmp);
+      END
       ELSE BEGIN
            FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO READLN(fEToSIM,ETo_tmp);
            SetETo(ETo_tmp);

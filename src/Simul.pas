@@ -527,40 +527,6 @@ VAR  control : rep_control;
      Crop_pActStom_temp : double;
 
 
-FUNCTION calculate_delta_theta(theta,thetaAdjFC : double; NrLayer : INTEGER) : double;
-VAR DeltaX : double;
-BEGIN
-IF (theta > GetSoilLayer_i(NrLayer).SAT/100) THEN theta := GetSoilLayer_i(NrLayer).SAT/100;
-IF (theta <= thetaAdjFC/100)
-   THEN DeltaX := 0
-   ELSE BEGIN
-        DeltaX := GetSoilLayer_i(NrLayer).tau * (GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100)
-            * (EXP(theta - GetSoilLayer_i(NrLayer).FC/100) - 1)
-            / (EXP(GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100) - 1);
-        IF ((theta - DeltaX) < thetaAdjFC) THEN DeltaX := theta - thetaAdjFC;
-        END;
-calculate_delta_theta := DeltaX;
-END; (* calculate_delta_theta *)
-
-
-
-FUNCTION calculate_theta(delta_theta,thetaAdjFC : double; NrLayer : INTEGER) : double;
-VAR ThetaX : double;
-BEGIN
-IF (delta_theta <= 0)
-   THEN ThetaX := thetaAdjFC
-   ELSE IF (GetSoilLayer_i(NrLayer).tau > 0)
-           THEN BEGIN
-                ThetaX := GetSoilLayer_i(NrLayer).FC/100
-                       + LN(1 + delta_theta * (EXP(GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100) - 1)
-                       / (GetSoilLayer_i(NrLayer).tau * (GetSoilLayer_i(NrLayer).SAT/100 - GetSoilLayer_i(NrLayer).FC/100)));
-                IF (ThetaX < thetaAdjFC) THEN ThetaX := thetaAdjFC;
-                END
-           ELSE ThetaX := GetSoilLayer_i(NrLayer).SAT/100 + 0.1;     (* to stop draining *)
-calculate_theta := ThetaX;
-END; (* calculate_theta *)
-
-
 
 PROCEDURE calculate_weighting_factors(Depth : double;
                                       VAR Compartment : rep_Comp);

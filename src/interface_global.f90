@@ -9,6 +9,7 @@ use ac_global, only: CheckFilesInProject, &
                      TimeToMaxCanopySF, &
                      ECswComp, &
                      FileExists, &
+                     CalculateAdjustedFC, &
                      ComposeOutputFileName, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
@@ -201,10 +202,14 @@ use ac_global, only: CheckFilesInProject, &
                      LoadManagement, &
                      SaveCrop, &
                      SaveProfile, &
+                     LoadProfile, &
+                     DetermineRootZoneWC, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
-                     LoadProgramParametersProject
+                     LoadProgramParametersProject, &
+                     CompleteClimateDescription, &
+                     rep_clim
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -268,6 +273,25 @@ function string2pointer(string) result(c_pointer)
     f_string = string // c_null_char
     c_pointer = c_loc(f_string)
 end function string2pointer
+
+
+subroutine twostrings2twopointers(string1, string2, c_pointer1, c_pointer2)
+    !! Returns two C-pointers for two Fortran strings.
+    character(len=*), intent(in) :: string1
+    character(len=*), intent(in) :: string2
+    type(c_ptr), intent(inout) :: c_pointer1
+    type(c_ptr), intent(inout) :: c_pointer2
+
+    character(len=:), allocatable, target, save :: f_string1
+    character(len=:), allocatable, target, save :: f_string2
+
+    f_string1 = string1 // c_null_char
+    c_pointer1 = c_loc(f_string1)
+
+    f_string2 = string2 // c_null_char
+    c_pointer2 = c_loc(f_string2)
+end subroutine twostrings2twopointers
+
 
 function GetCrop_Assimilates_On_wrap() result(On)
     !! Wrapper for [[ac_global:GetCrop_Assimilates_On]] for foreign languages.
@@ -2160,49 +2184,28 @@ subroutine SaveProfile_wrap(totalname, strlen)
 end subroutine SaveProfile_wrap
 
 
-real(dp) function ECeComp_wrap(Thickness, Layer, Salt_ptr, Salt_len, Depo_ptr, &
-                               Depo_len)
-    !! Wrapper for [[ac_global:ECeComp]] for foreign languages.
-    real(dp), intent(in) :: Thickness
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
-
-    type(CompartmentIndividual) :: comp
-
-    comp%Thickness = Thickness
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    ECeComp_wrap = ECeComp(comp)
-end function ECeComp_wrap
-
-
-real(dp) function ECswComp_wrap(Thickness, theta, Layer, Salt_ptr, Salt_len, &
-                                Depo_ptr, Depo_len, atFC)
+real(dp) function ECswComp_wrap(Comp, atFC)
     !! Wrapper for [[ac_global:ECswComp]] for foreign languages.
-    real(dp), intent(in) :: Thickness
-    real(dp), intent(in) :: theta
-    integer(int32), intent(in) :: Layer
-    type(c_ptr), intent(in) :: Salt_ptr
-    integer(int32), intent(in) :: Salt_len
-    type(c_ptr), intent(in) :: Depo_ptr
-    integer(int32), intent(in) :: Depo_len
+    type(CompartmentIndividual), intent(in) :: comp
     logical(1), intent(in) :: atFC
 
-    type(CompartmentIndividual) :: comp
     logical :: atFC_f
 
-    comp%Thickness = Thickness
-    comp%theta = theta
-    comp%Layer = Layer
-    comp%Salt = pointer2array(Salt_ptr, Salt_len, mold=1._dp)
-    comp%Depo = pointer2array(Depo_ptr, Depo_len, mold=1._dp)
-    atFC_f = logical(atFC)
+    atFC_f = atFC
     ECswComp_wrap = ECswComp(comp, atFC_f)
 end function ECswComp_wrap
+
+
+subroutine LoadProfile_wrap(FullName, strlen)
+    !! Wrapper for [[ac_global:LoadProfile]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(FullName, strlen)
+    call LoadProfile(string)
+end subroutine LoadProfile_wrap
 
 
 subroutine LoadCrop_wrap(FullName, strlen)
@@ -2216,6 +2219,17 @@ subroutine LoadCrop_wrap(FullName, strlen)
     call LoadCrop(string)
 end subroutine LoadCrop_wrap
 
+
+subroutine DetermineRootZoneWC_wrap(RootingDepth, ZtopSWCconsidered)
+    real(dp), intent(in) :: RootingDepth
+    logical(1), intent(inout) :: ZtopSWCconsidered
+
+    logical :: ZtopSWCconsidered_f
+
+    ZtopSWCconsidered_f = ZtopSWCconsidered
+    call DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered_f)
+    ZtopSWCconsidered = ZtopSWCconsidered_f
+end subroutine DetermineRootZoneWC_wrap
 
 
 function GetOffSeasonDescription_wrap() result(c_pointer)
@@ -2262,6 +2276,59 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
+
+
+subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
+                                           ToD, ToM, ToY, FromDayNr, &
+                                           ToDayNr, FromString, strlen1, &
+                                           ToString, strlen2, NrObs)
+    !! Wrapper for [[ac_global:CompleteClimateDescription]] for foreign languages
+    integer(intEnum), intent(inout) :: DataType
+    integer(int32), intent(inout) :: FromD
+    integer(int32), intent(inout) :: FromM
+    integer(int32), intent(inout) :: FromY
+    integer(int32), intent(inout) :: ToD
+    integer(int32), intent(inout) :: ToM
+    integer(int32), intent(inout) :: ToY
+    integer(int32), intent(inout) :: FromDayNr
+    integer(int32), intent(inout) :: ToDayNr
+    type(c_ptr), intent(inout) :: FromString
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: ToString
+    integer(int32), intent(in) :: strlen2
+    integer(int32), intent(inout) :: NrObs
+
+    type(rep_clim) :: ClimateRecord
+
+    ClimateRecord%DataType = DataType
+    ClimateRecord%FromD = FromD
+    ClimateRecord%FromM = FromM
+    ClimateRecord%FromY = FromY
+    ClimateRecord%ToD = ToD
+    ClimateRecord%ToM = ToM
+    ClimateRecord%ToY = ToY
+    ClimateRecord%FromDayNr = FromDayNr
+    ClimateRecord%ToDayNr = ToDayNr
+    ClimateRecord%FromString = pointer2string(FromString, strlen1)
+    ClimateRecord%ToString = pointer2string(ToString, strlen2)
+    ClimateRecord%NrObs = NrObs
+
+    call CompleteClimateDescription(ClimateRecord)
+
+    DataType = ClimateRecord%DataType
+    FromD = ClimateRecord%FromD
+    FromM = ClimateRecord%FromM
+    FromY = ClimateRecord%FromY
+    ToD = ClimateRecord%ToD
+    ToM = ClimateRecord%ToM
+    ToY = ClimateRecord%ToY
+    FromDayNr = ClimateRecord%FromDayNr
+    ToDayNr = ClimateRecord%ToDayNr
+    call twostrings2twopointers(ClimateRecord%FromString, &
+                                ClimateRecord%ToString, &
+                                FromString, ToString)
+    NrObs = ClimateRecord%NrObs
+end subroutine CompleteClimateDescription_wrap
 
 
 

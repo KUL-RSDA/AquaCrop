@@ -14,6 +14,7 @@ procedure AdjustpLeafToETo(
             VAR pLeafLLAct : double);
      external 'aquacrop' name '__ac_simul_MOD_adjustpleaftoeto';
 
+
 procedure DeterminePotentialBiomass(
             constref VirtualTimeCC : integer;
             constref cumGDDadjCC : double;
@@ -22,6 +23,17 @@ procedure DeterminePotentialBiomass(
             VAR CCxWitheredTpotNoS : double;
             VAR BiomassUnlim : double);
      external 'aquacrop' name '__ac_simul_MOD_determinepotentialbiomass';
+
+function calculate_delta_theta(
+             constref theta, thetaAdjFC : double;
+             constref NrLayer : integer): double;
+     external 'aquacrop' name '__ac_simul_MOD_calculate_delta_theta';
+
+function calculate_theta(
+             constref delta_theta, thetaAdjFC : double;
+             constref NrLayer : integer): double;
+     external 'aquacrop' name '__ac_simul_MOD_calculate_theta';
+
 
 implementation
 
