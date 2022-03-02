@@ -4144,8 +4144,8 @@ subroutine CalculateAdjustedFC(DepthAquifer, CompartAdj)
                 else
                     DeltaV = GetSoilLayer_SAT(CompartAdj(compi)%Layer) &
                              - GetSoilLayer_FC(CompartAdj(compi)%Layer)
-                    DeltaFC = (DeltaV/(Xmax**2._dp)) &
-                              * (Zi - (DepthAquifer - Xmax))**2._dp
+                    DeltaFC = (DeltaV/(Xmax**2)) &
+                              * (Zi - (DepthAquifer - Xmax))**2
                     CompartAdj(compi)%FCadj = GetSoilLayer_FC(CompartAdj(compi)%Layer) &
                                               + DeltaFC
                 end if
