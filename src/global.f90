@@ -5708,6 +5708,7 @@ function EndGrowingPeriod(Day1, DayN) result(EndGrowingPeriod_out)
     character(len=2) :: Strday
     character(len=:), allocatable :: StrMonth
     character(len=:), allocatable :: EndGrowingPeriod_out
+
     ! This function determines Crop.DayN and the string
     DayN = Day1 + GetCrop_DaysToHarvest() - 1
     if (DayN < Day1) then
@@ -5732,6 +5733,7 @@ subroutine LoadInitialConditions(SWCiniFileFull, IniSurfaceStorage)
     real(dp) :: CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp
     integer(int8) :: NrLoc_temp
     real(dp) :: Loc_i_temp, VolProc_i_temp, SaltECe_i_temp
+
     ! IniSWCRead attribute of the function was removed to fix a
     ! bug occurring when the function was called in TempProcessing.pas
     ! Keep in mind that this could affect the graphical interface

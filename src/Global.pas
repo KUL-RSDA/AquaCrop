@@ -424,21 +424,6 @@ Close(f);
 END; (* AppendCropFilePerennials *)
 
 
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
-VAR dayi,monthi,yeari : integer;
-    Strday,StrMonth : string;
-BEGIN
-// This function determines Crop.DayN and the string
-DayN := Day1 + GetCrop().DaysToHarvest - 1;
-IF (DayN < Day1) THEN DayN := Day1;
-DetermineDate(DayN,dayi,monthi,yeari);
-Str(dayi:2,Strday);
-StrMonth := NameMonth[monthi];
-EndGrowingPeriod := CONCAT(Strday,' ',StrMonth,'  ');
-END; (* EndGrowingPeriod *)
-
-
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 BEGIN
