@@ -52,10 +52,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-
-PROCEDURE DetermineSaltContent(ECe : double;
-                               VAR Comp : CompartmentIndividual);
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
                                    L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
@@ -116,51 +112,6 @@ implementation
 
 
 
-
-FUNCTION ActiveCells(Comp : CompartmentIndividual) : INTEGER;
-VAR  celi : INTEGER;
-
-BEGIN
-IF (Comp.theta <= GetSoilLayer_i(Comp.Layer).UL)
-   THEN BEGIN
-        celi := 0;
-        WHILE (Comp.theta > (GetSoilLayer_i(Comp.Layer).Dx) * celi) DO celi := celi + 1;
-        END
-   ELSE celi := GetSoilLayer_i(Comp.Layer).SCP1;
-ActiveCells := celi;
-END; (* ActiveCells *)
-
-
-PROCEDURE DetermineSaltContent(ECe : double;
-                               VAR Comp : CompartmentIndividual);
-VAR TotSalt, SumDF, SAT, UL, Dx, mm, mm1, mmN : double;
-    celn, i : INTEGER;
-
-BEGIN
-TotSalt := ECe*Equiv*(GetSoilLayer_i(Comp.Layer).SAT)*10*Comp.Thickness;
-celn := ActiveCells(Comp);
-SAT := (GetSoilLayer_i(Comp.Layer).SAT)/100;  (* m3/m3 *)
-UL := GetSoilLayer_i(Comp.Layer).UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-Dx := GetSoilLayer_i(Comp.Layer).Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
-mm1 := Dx*1000*Comp.Thickness
-       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of cells *)
-mmN := (SAT-UL)*1000*Comp.Thickness
-       * (1 - GetSoilLayer_i(Comp.Layer).GravelVol/100); // g/l (* volume [mm]=[l/m2] of last cell *)
-SumDF := 0;
-FOR i := 1 TO GetSoilLayer_i(Comp.Layer).SCP1 DO
-    BEGIN
-    Comp.Salt[i] := 0;
-    Comp.Depo[i] := 0;
-    END;
-FOR i := 1 TO celn DO SumDF := SumDF + GetSoilLayer_SaltMobility_i(Comp.Layer, i);
-FOR i := 1 TO celn DO
-    BEGIN
-    Comp.Salt[i] := TotSalt * GetSoilLayer_SaltMobility_i(Comp.Layer, i)/SumDF;
-    mm := mm1;
-    IF (i = GetSoilLayer_i(Comp.Layer).SCP1) THEN mm := mmN;
-    SaltSolutionDeposit(mm,Comp.Salt[i],Comp.Depo[i]);
-    END;
-END; (* DetermineSaltContent *)
 
 
 FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
