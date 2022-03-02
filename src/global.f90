@@ -5756,6 +5756,121 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
 end subroutine TranslateIniLayersToSWProfile
 
 
+
+subroutine TranslateIniPointsToSWProfile(NrLoc, LocDepth, LocVolPr, LocECdS, &
+                                                               NrComp, Comp)
+    integer(int8), intent(in) :: NrLoc
+    real(dp), dimension(max_No_compartments), intent(in) :: LocDepth
+    real(dp), dimension(max_No_compartments), intent(in) :: LocVolPr
+    real(dp), dimension(max_No_compartments), intent(in) :: LocECdS
+    integer(int32), intent(in) :: NrComp
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                              intent(inout) :: Comp
+
+    integer(int32) :: Compi, Loci
+    real(dp) :: TotD, Depthi, D1, D2, Th1, Th2, DTopComp, &
+                ThTopComp, ThBotComp
+    real(dp) :: EC1, EC2, ECTopComp, ECBotComp
+    logical :: AddComp, TheEnd
+
+    TotD = 0
+    do Compi = 1, NrComp 
+        Comp(Compi)%Theta = 0._dp
+        Comp(Compi)%WFactor = 0._dp ! used for salt in (10*VolSat*dZ * EC)
+        TotD = TotD + Comp(Compi)%Thickness
+    end do
+    Compi = 0
+    Depthi = 0._dp
+    AddComp = .true.
+    Th2 = LocVolPr(1)
+    EC2 = LocECds(1)
+    D2 = 0._dp
+    Loci = 0
+    do while ((Compi < NrComp) .or. &
+                ((Compi == NrComp) .and. (AddComp .eqv. .false.))) 
+        ! upper and lower boundaries location
+        D1 = D2
+        Th1 = Th2
+        EC1 = EC2
+        if (Loci < NrLoc) then
+            Loci = Loci + 1
+            D2 = LocDepth(Loci)
+            Th2 = LocVolPr(Loci)
+            EC2 = LocECdS(Loci)
+        else
+            D2 = TotD
+        end if
+        ! transfer water to compartment (SWC in mm) and salt in (10*VolSat*dZ * EC)
+        TheEnd = .false.
+        DTopComp = D1  ! Depthi is the bottom depth
+        ThBotComp = Th1
+        ECBotComp = EC1
+        loop: do
+            ThTopComp = ThBotComp
+            ECTopComp = ECBotComp
+            if (AddComp) then
+                Compi = Compi + 1
+                Depthi = Depthi + Comp(Compi)%Thickness
+            end if
+            if (Depthi < D2) then
+                ThBotComp = Th1 + (Th2-Th1)*(Depthi-D1)/real(D2-D1, kind=dp)
+                Comp(Compi)%Theta = Comp(Compi)%Theta &
+                                   + 10._dp*(Depthi-DTopComp) &
+                                           * ((ThTopComp+ThBotComp)/2._dp)
+                ECBotComp = EC1 + (EC2-EC1)*(Depthi-D1)/real(D2-D1, kind=dp)
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                      + (10._dp*(Depthi-DTopComp) &
+                                       *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
+                                       *((ECTopComp+ECbotComp)/2._dp)
+                AddComp = .true.
+                DTopComp = Depthi
+                if (Compi == NrComp) then
+                    TheEnd = .true.
+                end if
+            else
+                ThBotComp = Th2
+                ECBotComp = EC2
+                Comp(Compi)%Theta = Comp(Compi)%Theta &
+                                  + 10._dp*(D2-DTopComp) &
+                                          * ((ThTopComp+ThBotComp)/2._dp)
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                      + (10._dp*(D2-DTopComp) &
+                                         *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
+                                         *((ECTopComp+ECbotComp)/2._dp)
+                if (Depthi == D2) then
+                    AddComp = .true.
+                else
+                    AddComp = .false.
+                end if
+                TheEnd = .true.
+            end if
+            if (TheEnd) exit loop
+        end do loop
+    end do
+
+    do Compi = 1, NrComp 
+        ! from mm(water) to theta and final check
+        Comp(Compi)%Theta = Comp(Compi)%Theta/(1000._dp*Comp(Compi)%Thickness)
+        if (Comp(Compi)%Theta &
+                    > (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
+            Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp
+        end if
+        if (Comp(Compi)%Theta < 0._dp) then
+            Comp(Compi)%Theta = 0._dp
+        end if
+    end do
+
+    do Compi = 1, NrComp 
+        ! from (10*VolSat*dZ * EC) to ECe and distribution in cellls
+        Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                /(10._dp*Comp(Compi)%Thickness &
+                                    *GetSoilLayer_SAT(Comp(Compi)%Layer))
+        call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
+    end do
+end subroutine TranslateIniPointsToSWProfile
+
+
+
 !! Global variables section !!
 
 

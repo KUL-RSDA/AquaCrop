@@ -4373,6 +4373,13 @@ procedure TranslateIniLayersToSWProfile(constref NrLay : ShortInt;
                                         VAR Comp : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_translateinilayerstoswprofile';
 
+procedure TranslateIniPointsToSWProfile(
+                                constref NrLoc : ShortInt;
+                                constref LocDepth,LocVolPr,LocECdS : rep_IniComp;
+                                constref NrComp : integer;
+                                VAR Comp : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_translateinipointstoswprofile';
+
 
 
 implementation

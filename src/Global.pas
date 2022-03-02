@@ -77,11 +77,6 @@ PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustSimPeriod;
-
-PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
-                                        LocDepth,LocVolPr,LocECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
                                 VAR IniSurfaceStorage : double);
 
@@ -538,99 +533,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
    END;
 END; (* AdjustSimPeriod *)
 
-
-
-PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
-                                        LocDepth,LocVolPr,LocECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-VAR Compi,Loci : ShortInt;
-    TotD,Depthi,D1,D2,Th1,Th2,DTopComp,ThTopComp,ThBotComp : double;
-    EC1,EC2,ECTopComp,ECBotComp : double;
-    AddComp,TheEnd : BOOLEAN;
-BEGIN
-TotD := 0;
-For Compi := 1 TO NrComp DO
-    BEGIN
-    Comp[Compi].Theta := 0;
-    Comp[Compi].WFactor := 0;  // used for salt in (10*VolSat*dZ * EC)
-    TotD := TotD + Comp[Compi].Thickness;
-    END;
-Compi := 0;
-Depthi := 0;
-AddComp := true;
-Th2 := LocVolPr[1];
-EC2 := LocECds[1];
-D2 := 0;
-Loci := 0;
-WHILE ((Compi < NrComp) OR ((Compi = NrComp) AND (AddComp = false))) DO
-  BEGIN
-  // upper and lower boundaries location
-  D1 := D2;
-  Th1 := Th2;
-  EC1 := EC2;
-  IF (Loci < NrLoc)
-     THEN BEGIN
-          Loci := Loci + 1;
-          D2 := LocDepth[Loci];
-          Th2 := LocVolPr[Loci];
-          EC2 := LocECdS[Loci];
-          END
-     ELSE D2 := TotD;
-  // transfer water to compartment (SWC in mm) and salt in (10*VolSat*dZ * EC)
-  TheEnd := false;
-  DTopComp := D1;  //Depthi is the bottom depth
-  ThBotComp := Th1;
-  ECBotComp := EC1;
-  REPEAT
-    ThTopComp := ThBotComp;
-    ECTopComp := ECBotComp;
-    IF AddComp THEN
-       BEGIN
-       Compi := Compi + 1;
-       Depthi := Depthi + Comp[Compi].Thickness;
-       END;
-    IF (Depthi < D2)
-       THEN BEGIN
-            ThBotComp := Th1 + (Th2-Th1)*(Depthi-D1)/(D2-D1);
-            Comp[Compi].Theta := Comp[Compi].Theta
-                                 + 10*(Depthi-DTopComp)*((ThTopComp+ThBotComp)/2);
-            ECBotComp := EC1 + (EC2-EC1)*(Depthi-D1)/(D2-D1);
-            Comp[Compi].WFactor := Comp[Compi].WFactor
-                     + (10*(Depthi-DTopComp)*GetSoilLayer_i(Comp[Compi].Layer).SAT)*((ECTopComp+ECbotComp)/2);
-            AddComp := true;
-            DTopComp := Depthi;
-            IF (Compi = NrComp) THEN TheEnd := true;
-            END
-       ELSE BEGIN
-            ThBotComp := Th2;
-            ECBotComp := EC2;
-            Comp[Compi].Theta := Comp[Compi].Theta
-                                 + 10*(D2-DTopComp)*((ThTopComp+ThBotComp)/2);
-            Comp[Compi].WFactor := Comp[Compi].WFactor
-                               + (10*(D2-DTopComp)*GetSoilLayer_i(Comp[Compi].Layer).SAT)*((ECTopComp+ECbotComp)/2);
-            IF (Depthi = D2)
-               THEN AddComp := true
-               ELSE AddComp := false;
-            TheEnd := true;
-            END;
-  UNTIL TheEnd;
-  END;
-
-For Compi := 1 TO NrComp DO // from mm(water) to theta and final check
-    BEGIN
-    Comp[Compi].Theta := Comp[Compi].Theta/(1000*Comp[Compi].Thickness);
-    IF (Comp[Compi].Theta > (GetSoilLayer_i(Comp[compi].Layer).SAT)/100)
-        THEN Comp[Compi].Theta := (GetSoilLayer_i(Comp[compi].Layer).SAT)/100;
-    IF (Comp[Compi].Theta < 0) THEN Comp[Compi].Theta := 0;
-    END;
-
-For Compi := 1 TO NrComp DO // from (10*VolSat*dZ * EC) to ECe and distribution in cellls
-    BEGIN
-    Comp[Compi].WFactor := Comp[Compi].WFactor/(10*Comp[Compi].Thickness*GetSoilLayer_i(Comp[Compi].Layer).SAT);
-    DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
-    END;
-END; (* TranslateIniPointsToSWProfile *)
 
 
 PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
