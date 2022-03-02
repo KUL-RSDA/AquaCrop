@@ -278,14 +278,8 @@ subroutine calculate_drainage()
 
         ! 4. Redistribute excess
         ! ======================
-        if (excess > epsilon(0.0_dp)) then
+        if (excess > 0.0_dp) then
             pre_nr = compi + 1
-            ! this was originally a REPEAT ... UNTIL excess = 0 or pre_nr = 1
-            ! loop in Pascal, so it was bound to always run once disregarding
-            ! the condition.
-            ! Since excess will be larger than zero and pre_nr = compi + 1 with
-            ! compi >= 1 is always larger than 1, this loop will also run at
-            ! least once
             loop: do
                 pre_nr = pre_nr - 1
                 layeri = GetCompartment_Layer(pre_nr)
@@ -319,6 +313,7 @@ subroutine calculate_drainage()
     !Do-loop
     end do
     call SetDrain(drainsum)
+
 contains
 
     subroutine CheckDrainsum(layeri, drainsum, excess)
