@@ -2264,42 +2264,43 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
 end subroutine LoadOffSeason_wrap
 
 
-
-subroutine CompleteClimateDescription_wrap(FromD, FromM, FromY, FromDayNr, &
-                                           DataType, ToDayNr, NrObs, ToD, &
-                                           ToM, ToY, FromString, &
-                                           strlen1, ToString, strlen2)
+subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
+                                           ToD, ToM, ToY, FromDayNr, &
+                                           ToDayNr, FromString, strlen1, &
+                                           ToString, strlen2, NrObs)
     !! Wrapper for [[ac_global:CompleteClimateDescription]] for foreign languages
+    integer(intEnum), intent(in) :: DataType
     integer(int32), intent(inout) :: FromD
     integer(int32), intent(inout) :: FromM
     integer(int32), intent(inout) :: FromY
-    integer(int32), intent(inout) :: FromDayNr
-    integer(intEnum), intent(in) :: DataType
-    integer(int32), intent(inout) :: ToDayNr
-    integer(int32), intent(inout) :: NrObs
     integer(int32), intent(inout) :: ToD
     integer(int32), intent(inout) :: ToM
     integer(int32), intent(inout) :: ToY
+    integer(int32), intent(inout) :: FromDayNr
+    integer(int32), intent(inout) :: ToDayNr
     type(c_ptr), intent(inout) :: FromString
     integer(int32), intent(in) :: strlen1
     type(c_ptr), intent(inout) :: ToString
     integer(int32), intent(in) :: strlen2
+    integer(int32), intent(inout) :: NrObs
 
     type(rep_clim) :: ClimateRecord
 
+    ClimateRecord%DataType = DataType
     ClimateRecord%FromD = FromD
     ClimateRecord%FromM = FromM
     ClimateRecord%FromY = FromY
-    ClimateRecord%FromDayNr = FromDayNr
-    ClimateRecord%DataType = DataType
-    ClimateRecord%ToDayNr = ToDayNr
-    ClimateRecord%NrObs = NrObs
     ClimateRecord%ToD = ToD
     ClimateRecord%ToM = ToM
     ClimateRecord%ToY = ToY
+    ClimateRecord%FromDayNr = FromDayNr
+    ClimateRecord%ToDayNr = ToDayNr
     ClimateRecord%FromString = pointer2string(FromString, strlen1)
     ClimateRecord%ToString = pointer2string(ToString, strlen2)
+    ClimateRecord%NrObs = NrObs
+
     call CompleteClimateDescription(ClimateRecord)
+
     FromD = ClimateRecord%FromD
     FromM = ClimateRecord%FromM
     FromY = ClimateRecord%FromY
@@ -2311,7 +2312,6 @@ subroutine CompleteClimateDescription_wrap(FromD, FromM, FromY, FromDayNr, &
     ToY = ClimateRecord%ToY
     FromString = string2pointer(ClimateRecord%FromString)
     ToString = string2pointer(ClimateRecord%ToString)
-
 end subroutine CompleteClimateDescription_wrap
 
 
