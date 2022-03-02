@@ -93,7 +93,7 @@ real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer)
     theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
     theta_fc = GetSoilLayer_FC(NrLayer) / 100.0_dp
     tau = GetSoilLayer_tau(NrLayer)
-    if (delta_theta <= 0.0_dp) then
+    if (delta_theta <= epsilon(0.0_dp)) then
         ThetaX = thetaAdjFC
     elseif (tau > 0.0_dp) then
         ThetaX = theta_fc&
