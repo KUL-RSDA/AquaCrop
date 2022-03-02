@@ -16,12 +16,12 @@ procedure AdjustpLeafToETo(
 
 function calculate_delta_theta(
              constref theta, thetaAdjFC : double;
-             constref NrLayer : shortint): double;
+             constref NrLayer : integer): double;
      external 'aquacrop' name '__ac_simul_MOD_calculate_delta_theta';
 
 function calculate_theta(
              constref delta_theta, thetaAdjFC : double;
-             constref NrLayer : shortint): double;
+             constref NrLayer : integer): double;
      external 'aquacrop' name '__ac_simul_MOD_calculate_theta';
 
 implementation
