@@ -109,7 +109,7 @@ real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer)
     theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
     theta_fc = GetSoilLayer_FC(NrLayer) / 100.0_dp
     tau = GetSoilLayer_tau(NrLayer)
-    if (delta_theta <= 0.0_dp) then
+    if (delta_theta <= epsilon(0.0_dp)) then
         ThetaX = thetaAdjFC
     elseif (tau > 0.0_dp) then
         ThetaX = theta_fc&
@@ -135,11 +135,11 @@ subroutine calculate_drainage()
     real(dp) :: pre_thick
     logical :: drainability
 
-    ! calculate_drainage 
+    ! calculate_drainage
     drainsum = 0.0_dp
-    do compi=1, GetNrCompartments() 
+    do compi=1, GetNrCompartments()
         ! 1. Calculate drainage of compartment
-        ! =====================================
+        ! ====================================
         layeri = GetCompartment_Layer(compi)
         if (GetCompartment_theta(compi) &
                  > GetCompartment_FCadj(compi)/100.0_dp) then
@@ -156,7 +156,7 @@ subroutine calculate_drainage()
         ! =====================
         excess = 0.0_dp
         pre_thick = 0.0_dp
-        do i = 1, (compi-1) 
+        do i = 1, (compi-1)
             pre_thick = pre_thick + GetCompartment_Thickness(i)
         end do
         drainmax = delta_theta * 1000.0_dp * pre_thick &
@@ -221,7 +221,7 @@ subroutine calculate_drainage()
                 else
                     drainsum = 0.0_dp
                 end if
-            end if ! theta_x <= SoilLayer[layeri].SAT/100  
+            end if ! theta_x <= SoilLayer[layeri].SAT/100
 
             if (theta_x > GetSoilLayer_SAT(layeri)/100.0_dp) then
                 call SetCompartment_theta(compi,&
@@ -270,8 +270,8 @@ subroutine calculate_drainage()
                     drainsum = drainmax + drain_comp
                     call CheckDrainsum(layeri, drainsum, excess)
                 end if
-            end if ! theta_x > SoilLayer[layeri].SAT/100  
-        end if ! drainability = false 
+            end if ! theta_x > SoilLayer[layeri].SAT/100
+        end if ! drainability = false
 
         call SetCompartment_fluxout(compi, drainsum)
 
@@ -312,7 +312,7 @@ subroutine calculate_drainage()
                     excess = 0.0_dp
                 end if
             end do
-            ! redistribute excess 
+            ! redistribute excess
         end if
 
     !Do-loop

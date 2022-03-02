@@ -4090,28 +4090,10 @@ procedure SetSoilLayer_CRb(constref i : integer;
     external 'aquacrop' name '__ac_global_MOD_setsoillayer_crb';
 
 function ECeComp(constref Comp : CompartmentIndividual) : double;
-
-function ECeComp_wrap(
-            constref Thickness : double;
-            constref Layer : integer;
-            constref Salt_ptr : Pdouble;
-            constref Salt_len : integer;
-            constref Depo_ptr : Pdouble;
-            constref Depo_len : integer) : double;
-    external 'aquacrop' name '__ac_interface_global_MOD_ececomp_wrap';
+    external 'aquacrop' name '__ac_global_MOD_ececomp';
 
 function ECswComp(
             constref Comp : CompartmentIndividual;
-            constref atFC : boolean) : double;
-
-function ECswComp_wrap(
-            constref Thickness : double;
-            constref theta :  double;
-            constref Layer : integer;
-            constref Salt_ptr : Pdouble;
-            constref Salt_len : integer;
-            constref Depo_ptr : Pdouble;
-            constref Depo_len : integer;
             constref atFC : boolean) : double;
     external 'aquacrop' name '__ac_interface_global_MOD_ecswcomp_wrap';
 
@@ -4211,8 +4193,20 @@ function GetDrain() : double;
 procedure SetDrain(constref Drain_in : double);
     external 'aquacrop' name '__ac_global_MOD_setdrain';
 
+procedure CalculateAdjustedFC(constref DepthAquifer : double;
+                              var CompartAdj   : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
+
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
+
+function ActiveCells(constref Comp : CompartmentIndividual) : integer;
+    external 'aquacrop' name '__ac_global_MOD_activecells';
+
+
+procedure DetermineSaltContent(constref ECe : double;
+                               var Comp : CompartmentIndividual);
+    external 'aquacrop' name '__ac_global_MOD_determinesaltcontent';
 
 procedure SetClimData;
     external 'aquacrop' name '__ac_global_MOD_setclimdata';
@@ -4267,6 +4261,25 @@ function GetZiAqua() : integer;
 procedure SetZiAqua(constref ZiAqua_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setziaqua';
 
+function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : rep_modeCycle) : double;
+
+function __SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_seasonalsumofkcpot';
+
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
@@ -4284,9 +4297,123 @@ function __HarvestIndexDay(constref DAP  : LongInt;
                          var HIfinal : integer)   : double;
     external 'aquacrop' name '__ac_global_MOD_harvestindexday';
 
+procedure NoManagementOffSeason;
+    external 'aquacrop' name '__ac_global_MOD_nomanagementoffseason';
+
+function GetOffSeasonDescription(): string;
+
+function GetOffSeasonDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getoffseasondescription_wrap';
+
+procedure SetOffSeasonDescription(constref str : string);
+
+procedure SetOffSeasonDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setoffseasondescription_wrap';
+
+procedure LoadOffSeason(constref FullName : string);
+
+procedure LoadOffSeason_wrap(constref FullName : PChar;
+                             constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadoffseason_wrap';
+
+procedure LoadProgramParametersProject(constref FullFileNameProgramParameters : string);
+
+procedure LoadProgramParametersProject_wrap(constref FullFileNameProgramParameters : PChar;
+                                            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadprogramparametersproject_wrap';
+
+procedure ReadCropSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readcropsettingparameters';
+
+procedure ReadFieldSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readfieldsettingparameters';
+
+procedure ReadTemperatureSettingsParameters();
+    external 'aquacrop' name '__ac_global_MOD_readtemperaturesettingparameters';
+
+procedure CompleteCropDescription;
+    external 'aquacrop' name '__ac_global_MOD_completecropdescription';
+
+procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
+
+procedure CompleteClimateDescription_wrap(
+                            constref DataType : integer;
+                            constref FromD, FromM, FromY : integer;
+                            constref ToD, ToM, ToY : integer;
+                            constref FromDayNr, ToDayNr : integer;
+                            constref FromString : PChar;
+                            constref strlen1 : integer;
+                            constref ToString : PChar;
+                            constref strlen2 : integer;
+                            constref NrObs : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_completeclimatedescription_wrap';
+
+
+
+procedure DesignateSoilLayerToCompartments(constref NrCompartments : integer;
+                                           constref NrSoilLayers : integer;
+                                           var Compartment : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_designatesoillayertocompartments';
+
+
+procedure specify_soil_layer(constref NrCompartments,NrSoilLayers : integer;
+                             var SoilLayer : rep_SoilLayer;
+                             var Compartment : rep_Comp;
+                             var TotalWaterContent : rep_Content);
+    external 'aquacrop' name '__ac_global_MOD_specify_soil_layer';
+
+
+procedure Calculate_Saltmobility(constref layer : integer;
+                                 constref SaltDiffusion : shortint;  // percentage
+                                 constref Macro : shortint;
+                                 var Mobil : rep_salt);
+    external 'aquacrop' name '__ac_global_MOD_calculate_saltmobility';
+
+
+procedure CompleteProfileDescription();
+    external 'aquacrop' name '__ac_global_MOD_completeprofiledescription';
+
+
+procedure LoadProfile(FullName : string);
+
+procedure LoadProfile_wrap(constref FullName : PChar;
+                           constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadprofile_wrap';
+
+
+procedure DetermineRootZoneWC(
+            constref RootingDepth : double;
+            VAR ZtopSWCconsidered : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
 
 
 implementation
+
+
+function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
+                            constref L0,L12,L123,L1234,GDDL0,GDDL12 : integer;
+                            constref GDDL123,GDDL1234 : integer;
+                            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop : double;
+                            constref KcDeclAgeing,CCeffectProcent : double;
+                            constref Tbase,Tupper,TDayMin,TDayMax : double;
+                            constref GDtranspLow,CO2i : double;
+                            constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle : integer;
+begin
+    int_modeCycle := ord(TheModeCycle);
+    SeasonalSumOfKcPot := __SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,
+                                               L0, L12, L123, L1234, GDDL0,
+                                               GDDL12, GDDL123, GDDL1234, CCo,
+                                               CCx, CGC, GDDCGC, CDC, GDDCDC,
+                                               KcTop, KcDeclAgeing, CCeffectProcent,
+                                               Tbase, Tupper, TDayMin, TDayMax, 
+                                               GDtranspLow, CO2i, int_modeCycle);
+end;
+
 
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
@@ -7175,36 +7302,6 @@ end;
 
 
 
-function ECeComp(constref Comp : CompartmentIndividual) : double;
-var
-    Salt_ptr, Depo_ptr : Pdouble;
-    Salt_len, Depo_len : integer;
-begin
-    Salt_ptr := @Comp.Salt[1];
-    Salt_len := Length(Comp.Salt);
-    Depo_ptr := @Comp.Depo[1];
-    Depo_len := Length(Comp.Depo);
-    ECeComp := ECeComp_wrap(Comp.Thickness, Comp.Layer, Salt_ptr, Salt_len,
-                            Depo_ptr, Depo_len);
-end;
-
-
-function ECswComp(
-            constref Comp : CompartmentIndividual;
-            constref atFC : boolean) : double;
-var
-    Salt_ptr, Depo_ptr : Pdouble;
-    Salt_len, Depo_len : integer;
-begin
-    Salt_ptr := @Comp.Salt[1];
-    Salt_len := Length(Comp.Salt);
-    Depo_ptr := @Comp.Depo[1];
-    Depo_len := Length(Comp.Depo);
-    ECswComp := ECswComp_wrap(Comp.Thickness, Comp.theta, Comp.Layer,
-                              Salt_ptr, Salt_len, Depo_ptr, Depo_len, atFC);
-end;
-
-
 procedure AdjustYearPerennials(
             constref TheYearSeason: ShortInt;
             constref Sown1stYear : BOOLEAN;
@@ -7229,6 +7326,18 @@ begin;
 end;
 
 
+procedure LoadProfile(FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadProfile_wrap(p,strlen);
+end;
+
+
 procedure LoadCrop(constref FullName : string);
 var
     p : PChar;
@@ -7239,6 +7348,85 @@ begin;
     strlen := Length(FullName);
     LoadCrop_wrap(p,strlen);
 end;
+
+
+function GetOffSeasonDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetOffSeasonDescription_wrap();
+    GetOffSeasonDescription := AnsiString(p);
+end;
+
+
+
+procedure SetOffSeasonDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetOffSeasonDescription_wrap(p, strlen);
+end;
+
+
+procedure LoadOffSeason(constref FullName : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(FullName);
+    strlen := Length(FullName);
+    LoadOffSeason_wrap(p,strlen);
+end;
+
+
+procedure LoadProgramParametersProject(constref FullFileNameProgramParameters : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(FullFileNameProgramParameters);
+    strlen := Length(FullFileNameProgramParameters);
+    LoadProgramParametersProject_wrap(p,strlen);
+end;
+
+
+
+procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
+var
+    int_datatype : integer;
+    FromString_ptr, ToString_ptr : PChar;
+    strlen1, strlen2 : integer;
+begin
+    int_datatype := ord(ClimateRecord.DataType);
+    FromString_ptr := PChar(ClimateRecord.FromString);
+    ToString_ptr := PChar(ClimateRecord.ToString);
+    strlen1 := Length(ClimateRecord.FromString);
+    strlen2 := Length(ClimateRecord.ToString);
+
+    CompleteClimateDescription_wrap(int_datatype,
+                                    ClimateRecord.FromD,
+                                    ClimateRecord.FromM,
+                                    ClimateRecord.FromY,
+                                    ClimateRecord.ToD,
+                                    ClimateRecord.ToM,
+                                    ClimateRecord.ToY,
+                                    ClimateRecord.FromDayNr,
+                                    ClimateRecord.ToDayNr,
+                                    FromString_ptr, strlen1,
+                                    ToString_ptr, strlen2,
+                                    ClimateRecord.NrObs);
+
+    ClimateRecord.DataType := rep_datatype(int_datatype);
+    ClimateRecord.FromString := AnsiString(FromString_ptr);
+    ClimateRecord.ToString := AnsiString(ToString_ptr);
+end;
+
+
 
 
 initialization

@@ -249,11 +249,6 @@ def test_europe(row, col, use_irrigation):
         maxcol = np.argmax(numdevlist)
         log.print('{0} maxnumdev [%] = {1:.3f} (column index {2})'.format(
                                                     filename, maxdev, maxcol))
-        if sum(num_not_realclose) > 0:
-            maxids = np.argsort(numdevlist)[-sum(num_not_realclose):]
-            for col in maxids[::-1]:
-                log.print('{0} numdev [%] = {1:.6f} (column index {2})'.format(
-                    filename, numdevlist[col], col))
 
         # Now we check that the number of small deviations are within bounds.
         # Generally, no such small deviations are allowed. But with irrigation,
@@ -262,7 +257,7 @@ def test_europe(row, col, use_irrigation):
         # Make a dictionnary for the number of allowed small deviations
         # per special case
         special_cases = {
-            (30, 20, True, 'day'):  1,
+            (30, 20, True, 'day'):  2,
             (50, 27, True, 'day'):  1,
             (7, 39, True, 'day'):   2,
             (0, 45, True, 'day'):   1,
