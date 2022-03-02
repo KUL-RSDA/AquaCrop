@@ -286,7 +286,7 @@ subroutine calculate_drainage()
             ! Since excess will be larger than zero and pre_nr = compi + 1 with
             ! compi >= 1 is always larger than 1, this loop will also run at
             ! least once
-            do while (.not. (abs(excess) < epsilon(0.0_dp) .or. pre_nr == 1))
+            loop: do
                 pre_nr = pre_nr - 1
                 layeri = GetCompartment_Layer(pre_nr)
                 if (pre_nr < compi) then
@@ -311,6 +311,7 @@ subroutine calculate_drainage()
                 else
                     excess = 0.0_dp
                 end if
+                if ((excess == 0) .or. (pre_nr == 1)) exit loop
             end do
             ! redistribute excess
         end if
