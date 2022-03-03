@@ -1938,7 +1938,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
     logical, intent(in) :: FertilityStressOn
     logical, intent(in) :: TestRecord
 
-    real(dp), parameter :: EToStandard = 5
+    real(dp), parameter :: EToStandard = 5._dp
     integer(int32), parameter :: k = 2
 
     integer(int32) ::  fTemp, fOUT, rc
@@ -1973,14 +1973,13 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
     ! TEST
     if (TestRecord .eqv. .true.) then
         open(newunit=fOUT, file=trim(GetPathNameSimul()//'TestBio.SIM'), &
-             action='write')
+             action='write', status='replace')
     end if
 
     ! 2. Open Temperature file
     if (GetTemperatureFile() /= '(None)') then
         open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
                      status='old', action='read', iostat=rc)
-        rewind(fTemp)
     end if
 
     ! 3. Initialize
@@ -2015,8 +2014,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 GDDTadj = GDDL12 - GDDL0
                 SumGDD = GDDL12
             end if
-            CCinitial = CCxadj * (1._dp-&
-                         real(StrResRedCCX, kind=dp)/100._dp)
+            CCinitial = CCxadj * (1._dp-StrResRedCCX/100._dp)
         else
         ! CC on 1st day is < CCx
             Tadj = TheDaysToCCini
@@ -2032,17 +2030,17 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 StrResRedCGC, StrResRedCCX)
         end if
         ! Time reduction for days between L12 and L123
-        DayFraction = real(L123-L12, kind=dp)/&
+        DayFraction = (L123-L12) * 1._dp/&
                       real(Tadj + L0 + (L123-L12) ,kind=dp)
         if (TheModeCycle == modeCycle_GDDays) then
-            GDDayFraction = real(GDDL123-GDDL12, kind=dp)/&
-                            real(GDDTadj + GDDL0 + (GDDL123-GDDL12), kind=dp)
+            GDDayFraction = (GDDL123-GDDL12) * 1._dp/&
+                            (GDDTadj + GDDL0 + (GDDL123-GDDL12))
         end if
     else
         ! growth starts after germination/recover
-        Tadj = 0_int32
+        Tadj = 0
         if (TheModeCycle == modeCycle_GDDays) then
-            GDDTadj = 0_int32
+            GDDTadj = 0
             SumGDD = 0._dp
         end if
         CCinitial = CCoadj
@@ -2099,12 +2097,13 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                     if (Dayi <= L123) then
                         DayCC = L12 + roundc((DayFraction * &
                                    real(Dayi+Tadj+L0 - L12, kind=dp)),&
-                                   mold=1_int32) ! slow down
+                                   mold=1) ! slow down
                     else
                         DayCC = Dayi ! switch time scale
                     end if
                 end if
             end if
+
             if (TheModeCycle == modeCycle_GDDays) then
                 if (TheGDDaysToCCini == 0) then
                     SumGDDforPlot = SumGDDfromDay1
@@ -2117,8 +2116,8 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                     if (SumGDDforPlot > GDDL12) then
                         if (SumGDDfromDay1 <= GDDL123) then
                             SumGDDforPlot = GDDL12 + roundc(GDDayFraction * &
-                             (SumGDDfromDay1+GDDTadj+GDDL0 - &
-                                GDDL12),mold=1_int32) ! slow down
+                                (SumGDDfromDay1+GDDTadj+GDDL0 - &
+                                GDDL12),mold=1) ! slow down
                         else
                             SumGDDforPlot = SumGDDfromDay1 ! switch time scale
                         end if
@@ -2132,24 +2131,24 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                         StrResRedCGC, StrResRedCCX, StrResCDecline,&
                         TheModeCycle)
         end if
+
         if (CCi > CCxWitheredForB) then
             CCxWitheredForB = CCi
         end if
         if (DayCC >= L12SF) then
-            CCxWitheredForB = CCxadj*(1._dp-&
-                               real(StrResRedCCX, kind=dp)/100._dp)
+            CCxWitheredForB = CCxadj*(1._dp-StrResRedCCX/100._dp)
         end if
         CCw = CCi
 
-        if (CCi > 0.0001) then
+        if (CCi > 0.0001_dp) then
             ! 5.3 potential transpiration of total canopy cover (crop and weed)
             call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
-                           real(EToStandard, kind=dp), KcTop, KcDeclAgeing,&
+                           EToStandard, KcTop, KcDeclAgeing,&
                            CCxadj, CCxWitheredForB, CCeffectProcent, TheCO2,&
                            GDDi, GDtranspLow, TpotForB, EpotTotForB)
 
             ! 5.4 Sum of Kc (only required for soil fertility stress)
-            SumKci = SumKci + (TpotForB/real(EToStandard, kind=dp))
+            SumKci = SumKci + (TpotForB/EToStandard)
 
             ! 5.5 potential transpiration of crop canopy cover (without weed)
             if (WeedStress > 0) then
@@ -2169,23 +2168,22 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 ! correction for micro-advection
                 CCtotStar = 1.72_dp*CCi - 1._dp*(CCi*CCi) + &
                                 0.30_dp*(CCi*CCi*CCi)
-                if (CCtotStar < 0) then
+                if (CCtotStar < 0._dp) then
                     CCtotStar = 0._dp
                 end if
-                if (CCtotStar > 1) then
+                if (CCtotStar > 1._dp) then
                     CCtotStar = 1._dp
                 end if
-                if (CCw > 0.0001) then
+                if (CCw > 0.0001_dp) then
                     CCwStar = CCw + (CCtotStar - CCi)
                 else
                     CCwStar = 0._dp
                 end if
                 ! crop transpiration in weed-infested field
-                if (CCtotStar <= 0.0001) then
+                if (CCtotStar <= 0.0001_dp) then
                     TpotForB = 0._dp
                 else
-                    TpotForB = TpotForB * (real(CCwStar, kind=dp)/&
-                                    real(CCtotStar, kind=dp))
+                    TpotForB = TpotForB * (CCwStar/CCtotStar)
                 end if
             end if
         else
@@ -2201,37 +2199,33 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
             ! yield formation stage
             fSwitch = 1._dp
             if ((DaysYieldFormation > 0) .and. (tSwitch > 0)) then
-                fSwitch = real(Dayi-LFlor, kind=dp)/real(tSwitch, kind=dp)
+                fSwitch = (Dayi-LFlor) * 1._dp/real(tSwitch, kind=dp)
                 if (fSwitch > 1) then
                     fSwitch = 1._dp
                 end if
             end if
-            WPi = WPi * (1._dp - (1._dp - &
-                         real(WPyield, kind=dp)/100._dp)*fSwitch)
+            WPi = WPi * (1._dp - (1._dp - WPyield/100._dp)*fSwitch)
         end if
 
         ! 5.7 Biomass (B)
         if (FertilityStressOn) then
             ! 5.7a - reduction for soil fertiltiy
-            if ((StrResRedWP > 0) .and. (SumKci > epsilon(1.0)) &
+            if ((StrResRedWP > 0) .and. (SumKci > 0._dp) &
                 .and. (SumKcTopSF > epsilon(1.0))) then
                 if (SumKci < SumKcTopSF) then
                     if (SumKci > 0) then
-                        WPi = WPi * (1._dp -&
-                               (real(StrResRedWP,kind=dp)/100._dp) *&
+                        WPi = WPi * (1._dp - (StrResRedWP/100._dp) *&
                                 exp(k*log(SumKci/SumKcTopSF)))
                     end if
                 else
-                    WPi = WPi * (1._dp - real(StrResRedWP, kind=dp)/100._dp)
+                    WPi = WPi * (1._dp - StrResRedWP/100._dp)
                 end if
             end if
             ! 5.7b - Biomass (B)
-            SumBnor = SumBnor +  WPi * (TpotForB/&
-                                        real(EToStandard, kind=dp))
+            SumBnor = SumBnor +  WPi * (TpotForB/EToStandard)
         else
             SumBnor = SumBnor +  WPi * (1._dp - StrResRedKsSto/100._dp) *&
-                          (TpotForB/&
-                           real(EToStandard, kind=dp)) ! for salinity stress
+                          (TpotForB/EToStandard) ! for salinity stress
         end if
 
         ! test
