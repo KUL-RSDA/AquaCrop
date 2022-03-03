@@ -4,6 +4,17 @@ use ac_kinds, only: dp, &
                     int8, &
                     int32, &
                     sp
+use ac_global, only:    DaysInMonth, &
+                        DetermineDate, &
+                        DetermineDayNr, &
+                        GetEToFilefull, &
+                        GetEToRecord_FromM, &
+                        GetEToRecord_FromY, &
+                        GetEToRecord_NrObs, &
+                        GetEToRecord_ToM, &
+                        GetEToRecord_ToY, &
+                        LeapYear, &
+                        rep_DayEventDbl
 implicit none
 
 
@@ -62,6 +73,247 @@ subroutine GetInterpolationParameters(C1, C2, C3, aOver3, bOver2, c)
     c = (11*C1-7*C2+2*C3)/(6*30)
 
 end subroutine GetInterpolationParameters
+
+
+
+subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
+    integer(int32), intent(in) :: DayNri
+    type(rep_DayEventDbl), dimension(31), intent(inout) :: EToDataSet
+
+    integer(int32) :: Dayi, Monthi, Yeari, DayN
+    integer(int32) :: DNR
+    integer(int32) :: X1, X2, X3, t1, t2
+    real(dp) :: C1, C2, C3
+    real(dp) :: aOver3, bOver2, c
+
+
+    ! GetMonthlyEToDataSet 
+    call DetermineDate(DayNri, Dayi, Monthi, Yeari)
+    call GetSetofThreeMonths(Monthi, Yeari, C1, C2, C3, X1, X2, X3, t1)
+
+    Dayi = 1
+    call DetermineDayNr(Dayi, Monthi, Yeari, DNR)
+    DayN = DaysInMonth(Monthi)
+    if ((Monthi == 2) .and. LeapYear(Yeari)) then
+        DayN = DayN + 1
+    end if
+    call GetInterpolationParameters(C1, C2, C3, aOver3, bOver2, c)
+    do Dayi = 1, DayN 
+        t2 = t1 + 1
+        EToDataSet(Dayi)%DayNr = DNR+Dayi-1
+        EToDataSet(Dayi)%Param = aOver3*(t2*t2*t2-t1*t1*t1) &
+                                 + bOver2*(t2*t2-t1*t1) &
+                                 + c*(t2-t1)
+        if (EToDataSet(Dayi)%Param < 0) then
+            EToDataSet(Dayi)%Param = 0
+        end if
+        t1 = t2
+    end do
+    do Dayi = (DayN+1), 31 
+        EToDataSet(Dayi)%DayNr = DNR+DayN-1
+        EToDataSet(Dayi)%Param = 0._dp
+    end do
+
+
+    contains
+
+
+    subroutine GetSetofThreeMonths(Monthi, Yeari, C1, C2, C3, X1, X2, X3, t1)
+        integer(int32), intent(in) :: Monthi
+        integer(int32), intent(in) :: Yeari
+        real(dp), intent(inout) :: C1
+        real(dp), intent(inout) :: C2
+        real(dp), intent(inout) :: C3
+        integer(int32), intent(inout) :: X1
+        integer(int32), intent(inout) :: X2
+        integer(int32), intent(inout) :: X3
+        integer(int32), intent(inout) :: t1
+
+        integer :: fETo
+        integer(int32) :: Mfile, Yfile, n1, n2, n3, Nri, Obsi
+        integer(int32), parameter :: ni=30
+        logical :: OK3
+
+        ! 1. Prepare record
+        open(newunit=fETo, file=trim(GetEToFilefull()), status='old', &
+                                                        action='read')
+        read(fETo, *) ! description
+        read(fETo, *) ! time step
+        read(fETo, *) ! day
+        read(fETo, *) ! month
+        read(fETo, *) ! year
+        read(fETo, *)
+        read(fETo, *)
+        read(fETo, *)
+
+        Mfile = GetEToRecord_FromM()
+        if (GetEToRecord_FromY() == 1901) then
+            Yfile = Yeari
+        else
+            Yfile = GetEToRecord_FromY()
+        end if
+        OK3 = .false.
+
+        ! 2. IF 3 or less records
+        if (GetEToRecord_NrObs() <= 3) then
+            read(fETo, *) C1
+            C1 = C1 * ni
+            X1 = n1
+            select case (GetEToRecord_NrObs())
+                case(1)
+                    t1 = X1
+                    X2 = X1 + n1
+                    C2 = C1
+                    X3 = X2 + n1
+                    C3 = C1
+                case(2)
+                    t1 = X1
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                    read(fETo, *) C3
+                    C3 = C3 * ni
+                    if (Monthi == Mfile) then
+                        C2 = C3
+                        X2 = X1 + n3
+                        X3 = X2 + n3
+                    else
+                        C2 = C1
+                        X2 = X1 + n1
+                        X3 = X2 + n3
+                    end if
+                case(3)
+                    if (Monthi == Mfile) then
+                        t1 = 0
+                    end if
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                    read(fETo, *) C2
+                    C2 = C2 * ni
+                    X2 = X1 + n2
+                    if (Monthi == Mfile) then
+                        t1 = X1
+                    end if
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                    read(fETo, *) C3
+                    C3 = C3 * ni
+                    X3 = X2 + n3
+                    if (Monthi == Mfile) then
+                        t1 = X2
+                    end if
+            end select
+            OK3 = .true.
+        end if
+
+        ! 3. If first observation
+        if ((.not. OK3) .and. ((Monthi == Mfile) .and. (Yeari == Yfile))) then
+            t1 = 0
+            read(fETo, *) C1
+            C1 = C1 * ni
+            X1 = n1
+            Mfile = Mfile + 1
+            if (Mfile > 12) then
+                call AdjustMONTHandYEAR(Mfile, Yfile)
+            end if
+            read(fETo, *) C2
+            C2 = C2 * ni
+            X2 = X1 + n2
+            Mfile = Mfile + 1
+            if (Mfile > 12) then
+                call AdjustMONTHandYEAR(Mfile, Yfile)
+            end if
+            read(fETo, *) C3
+            C3 = C3 * ni
+            X3 = X2 + n3
+            OK3 = .true.
+        end if
+
+        ! 4. If last observation
+        if ((.not. OK3) .and. (Monthi == GetEToRecord_ToM())) then
+            if ((GetEToRecord_FromY() == 1901) &
+                        .or. (Yeari == GetEToRecord_ToY())) then
+                do Nri = 1, (GetEToRecord_NrObs()-3) 
+                    read(fETo, *)
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                end do
+                read(fETo, *) C1
+                C1 = C1 * ni
+                X1 = n1
+                Mfile = Mfile + 1
+                if (Mfile > 12) then
+                    call AdjustMONTHandYEAR(Mfile, Yfile)
+                end if
+                read(fETo, *) C2
+                C2 = C2 * ni
+                X2 = X1 + n2
+                t1 = X2
+                Mfile = Mfile + 1
+                if (Mfile > 12) then
+                    call AdjustMONTHandYEAR(Mfile, Yfile)
+                end if
+                read(fETo, *) C3
+                C3 = C3 * ni
+                X3 = X2 + n3
+                OK3 = .true.
+            end if
+        end if
+        
+        ! 5. IF not previous cases
+        if (.not. OK3) then
+            Obsi = 1
+            loop: do
+                if ((Monthi == Mfile) .and. (Yeari == Yfile)) then
+                    OK3 = .true.
+                else
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                    Obsi = Obsi + 1
+                end if
+                if (OK3) exit loop
+            end do loop
+            Mfile = GetEToRecord_FromM()
+            do Nri = 1, (Obsi-2) 
+                read(fETo, *)
+                Mfile = Mfile + 1
+                if (Mfile > 12) then
+                    call AdjustMONTHandYEAR(Mfile, Yfile)
+                end if
+            end do
+            read(fETo, *) C1
+            C1 = C1 * ni
+            X1 = n1
+            t1 = X1
+            Mfile = Mfile + 1
+            if (Mfile > 12) then
+                call AdjustMONTHandYEAR(Mfile, Yfile)
+            end if
+            read(fETo, *) C2
+            C2 = C2 * ni
+            X2 = X1 + n2
+            Mfile = Mfile + 1
+            if (Mfile > 12) then
+                call AdjustMONTHandYEAR(Mfile, Yfile)
+            end if
+            read(fETo, *) C3
+            C3 = C3 * ni
+            X3 = X2 + n3
+        end if
+        
+        close(fETo)
+    end subroutine GetSetofThreeMonths
+
+end subroutine GetMonthlyEToDataSet
 
 
 end module ac_climprocessing
