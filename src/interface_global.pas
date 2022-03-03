@@ -4187,6 +4187,12 @@ function GetNrCompartments() : integer;
 procedure SetNrCompartments(constref NrCompartments_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
+function GetDrain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getdrain';
+
+procedure SetDrain(constref Drain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setdrain';
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
@@ -4403,9 +4409,156 @@ procedure LoadClim_wrap(
             var NrObs : integer);
     external 'aquacrop' name '__ac_interface_global_MOD_loadclim_wrap';
 
+procedure AdjustClimRecordTo(CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustclimrecordto';
+
+procedure TranslateIniLayersToSWProfile(constref NrLay : ShortInt;
+                                        constref LayThickness,LayVolPr,LayECdS : rep_IniComp;
+                                        constref NrComp : INTEGER;
+                                        VAR Comp : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_translateinilayerstoswprofile';
+
+procedure TranslateIniPointsToSWProfile(
+                                constref NrLoc : ShortInt;
+                                constref LocDepth,LocVolPr,LocECdS : rep_IniComp;
+                                constref NrComp : integer;
+                                VAR Comp : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_translateinipointstoswprofile';
+
+
+
+function CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : rep_modeCycle) : double;
+
+
+function __CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_ccinitotalfromtimetoccini';
+
+
+procedure AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustcropyeartoclimfile';
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+
+function EndGrowingPeriod_wrap(
+                          constref Day1 : longint;
+                          VAR DayN : longint) : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_endgrowingperiod_wrap';
+
+procedure LoadInitialConditions(constref SWCiniFileFull : string;
+                                VAR IniSurfaceStorage : double);
+
+procedure LoadInitialConditions_wrap(constref SWCiniFileFull : PChar;
+                                constref strlen : integer;
+                                VAR IniSurfaceStorage : double);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadinitialconditions_wrap';
+
+procedure LoadGroundWater(
+                    constref FullName : string;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+
+procedure LoadGroundwater_wrap(
+                    constref FullName_ptr : PChar;
+                    constref strlen : integer;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadgroundwater_wrap';
+
+function GetGroundwaterDescription(): string;
+
+function GetGroundwaterDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getgroundwaterdescription_wrap';
+
+procedure SetGroundwaterDescription(constref str : string);
+
+procedure SetGroundwaterDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterdescription_wrap';
 
 
 implementation
+
+
+
+procedure LoadGroundWater(
+                    constref FullName : string;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+var
+    FullName_ptr : PChar;
+    strlen : integer;
+begin
+    FullName_ptr := PChar(FullName);
+    strlen := Length(FullName);
+    LoadGroundwater_wrap(Fullname_ptr, strlen, AtDayNr, Zcm, ECdSm);
+end;
+
+
+procedure LoadInitialConditions(constref SWCiniFileFull : string;
+                                VAR IniSurfaceStorage : double);
+var
+    p : PChar;
+    strlen : integer;
+begin
+    p := PChar(SWCiniFileFull);
+    strlen := Length(SWCiniFileFull);
+    LoadInitialConditions_wrap(p, strlen, IniSurfaceStorage);
+end;
+
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+var
+    p : PChar;
+begin
+    p := EndGrowingperiod_wrap(Day1, DayN);
+    EndGrowingPeriod := AnsiString(p);
+end;
+    
+
+
+function CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle : integer;
+begin
+    int_modeCycle := ord(TheModeCycle);
+    CCiniTotalFromTimeToCCini := __CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini,
+                                            L0, L12, L12SF, L123, L1234, GDDL0,
+                                            GDDL12, GDDL12SF, GDDL123,
+                                            GDDL1234, CCo, CCx, CGC, GDDCGC,
+                                            CDC, GDDCDC, RatDGDD, SFRedCGC,
+                                            SFRedCCx, SFCDecline, fWeed,
+                                            int_modecycle)
+end;
+
 
 
 function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
@@ -7452,6 +7605,29 @@ end;
 
 
 
+function GetGroundwaterDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetGroundwaterDescription_wrap();
+    GetGroundwaterDescription := AnsiString(p);
+end;
+
+
+
+procedure SetGroundwaterDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetGroundwaterDescription_wrap(p, strlen);
+end;
+
+
+
 procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
 var
     int_datatype : integer;
@@ -7481,8 +7657,6 @@ begin
     ClimateRecord.FromString := AnsiString(FromString_ptr);
     ClimateRecord.ToString := AnsiString(ToString_ptr);
 end;
-
-
 
 
 
