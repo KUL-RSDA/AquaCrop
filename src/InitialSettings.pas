@@ -85,7 +85,7 @@ implementation
  // 2a. Ground water table
  SetGroundWaterFile('(None)');
  SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
- GroundWaterDescription := 'no shallow groundwater table';
+ SetGroundWaterDescription('no shallow groundwater table');
  SetZiAqua(undef_int);
  ECiAqua := undef_int;
  SetSimulParam_ConstGwt(true);
@@ -235,7 +235,7 @@ SetCrop_DayN(Crop_DayN_temp);
  SumWaBal_temp := GetSumWabal();
  GlobalZero(SumWabal_temp);
  SetSumWaBal(SumWaBal_temp);
- Drain:= 0.0; // added 4.0
+ SetDrain(0.0); // added 4.0
  Runoff:= 0.0;// added 4.0
  Infiltrated := 0.0; // added 4.0
  CRwater := 0; // added 4.0
