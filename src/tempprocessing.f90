@@ -2095,9 +2095,8 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 end if
                 if (DayCC > L12) then
                     if (Dayi <= L123) then
-                        DayCC = L12 + roundc((DayFraction * &
-                                   real(Dayi+Tadj+L0 - L12, kind=dp)),&
-                                   mold=1) ! slow down
+                         DayCC = L12 + roundc(DayFraction * &
+                                    (Dayi+Tadj+L0 - L12), mold=1) ! slow down
                     else
                         DayCC = Dayi ! switch time scale
                     end if
