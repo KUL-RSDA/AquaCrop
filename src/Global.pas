@@ -51,10 +51,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-
-PROCEDURE LoadClim (FullName : string;
-                    VAR ClimateDescription : string;
-                    VAR ClimateRecord : rep_clim);
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
@@ -86,36 +82,6 @@ implementation
 
 
 
-
-
-PROCEDURE LoadClim (FullName : string;
-                    VAR ClimateDescription : string;
-                    VAR ClimateRecord : rep_clim);
-VAR f0 : TextFile;
-    Ni : INTEGER;
-BEGIN
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,CLimateDescription);
-READLN(f0,Ni);
-IF (Ni = 1) THEN ClimateRecord.DataType := Daily
-            ELSE IF (Ni = 2) THEN ClimateRecord.DataType := Decadely
-                             ELSE ClimateRecord.DataType := Monthly;
-READLN(f0,ClimateRecord.FromD);
-READLN(f0,ClimateRecord.FromM);
-READLN(f0,ClimateRecord.FromY);
-READLN(f0);
-READLN(f0);
-READLN(f0);
-ClimateRecord.NrObs := 0;
-WHILE NOT Eof(f0) DO
-      BEGIN
-      ClimateRecord.NrObs := ClimateRecord.NrObs + 1;
-      READLN(f0);
-      END;
-Close(f0);
-CompleteClimateDescription(ClimateRecord);
-END; // LoadClim
 
 
 

@@ -4339,15 +4339,15 @@ procedure CompleteCropDescription;
 procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
 
 procedure CompleteClimateDescription_wrap(
-                            constref DataType : integer;
-                            constref FromD, FromM, FromY : integer;
-                            constref ToD, ToM, ToY : integer;
-                            constref FromDayNr, ToDayNr : integer;
-                            constref FromString : PChar;
+                            var DataType : integer;
+                            var FromD, FromM, FromY : integer;
+                            var ToD, ToM, ToY : integer;
+                            var FromDayNr, ToDayNr : integer;
+                            var FromString : PChar;
                             constref strlen1 : integer;
-                            constref ToString : PChar;
+                            var ToString : PChar;
                             constref strlen2 : integer;
-                            constref NrObs : integer);
+                            var NrObs : integer);
     external 'aquacrop' name '__ac_interface_global_MOD_completeclimatedescription_wrap';
 
 
@@ -4387,6 +4387,27 @@ procedure DetermineRootZoneWC(
             constref RootingDepth : double;
             VAR ZtopSWCconsidered : boolean);
     external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
+procedure LoadClim (
+            constref FullName : string;
+            VAR ClimateDescription : string;
+            VAR ClimateRecord : rep_clim);
+
+procedure LoadClim_wrap(
+            constref FullName : PChar;
+            constref strlen1 : integer;
+            var ClimateDescription : PChar;
+            constref strlen2 : integer;
+            var DataType : integer;
+            var FromD, FromM, FromY : integer;
+            var ToD, ToM, ToY : integer;
+            var FromDayNr, ToDayNr : integer;
+            var FromString : PChar;
+            constref strlen3 : integer;
+            var ToString : PChar;
+            constref strlen4 : integer;
+            var NrObs : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadclim_wrap';
 
 procedure AdjustClimRecordTo(CDayN : longint);
     external 'aquacrop' name '__ac_global_MOD_adjustclimrecordto';
@@ -4446,8 +4467,6 @@ procedure LoadInitialConditions_wrap(constref SWCiniFileFull : PChar;
                                 constref strlen : integer;
                                 VAR IniSurfaceStorage : double);
     external 'aquacrop' name '__ac_interface_global_MOD_loadinitialconditions_wrap';
-
-
 
 procedure LoadGroundWater(
                     constref FullName : string;
@@ -7541,6 +7560,47 @@ begin;
     p := PChar(FullFileNameProgramParameters);
     strlen := Length(FullFileNameProgramParameters);
     LoadProgramParametersProject_wrap(p,strlen);
+end;
+
+
+
+procedure LoadClim(constref FullName : string;
+                   var ClimateDescription : string;
+                   var ClimateRecord : rep_clim);
+var
+    int_datatype : integer;
+    FullName_ptr, ClimateDescription_ptr : PChar;
+    FromString_ptr, ToString_ptr : PChar;
+    strlen1, strlen2, strlen3, strlen4 : integer;
+begin
+    int_datatype := ord(ClimateRecord.DataType);
+    FullName_ptr := PChar(FullName);
+    ClimateDescription_ptr := PChar(ClimateDescription);
+    strlen1 := Length(FullName);
+    strlen2 := Length(ClimateDescription);
+    FromString_ptr := PChar(ClimateRecord.FromString);
+    ToString_ptr := PChar(ClimateRecord.ToString);
+    strlen3 := Length(ClimateRecord.FromString);
+    strlen4 := Length(ClimateRecord.ToString);
+
+    LoadClim_wrap(  FullName_ptr, strlen1, 
+                    ClimateDescription_ptr, strlen2, 
+                    int_datatype,
+                    ClimateRecord.FromD,
+                    ClimateRecord.FromM,
+                    ClimateRecord.FromY,
+                    ClimateRecord.ToD,
+                    ClimateRecord.ToM,
+                    ClimateRecord.ToY,
+                    ClimateRecord.FromDayNr,
+                    ClimateRecord.ToDayNr,
+                    FromString_ptr, strlen3,
+                    ToString_ptr, strlen4,
+                    ClimateRecord.NrObs);
+    ClimateDescription := AnsiString(ClimateDescription_ptr);
+    ClimateRecord.DataType := rep_datatype(int_datatype);
+    ClimateRecord.FromString := AnsiString(FromString_ptr);
+    ClimateRecord.ToString := AnsiString(ToString_ptr);
 end;
 
 
