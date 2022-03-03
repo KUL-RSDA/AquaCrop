@@ -72,10 +72,6 @@ PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
 
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
-
-
 implementation
 
 
@@ -532,24 +528,6 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
    UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
 END; (* CheckForWaterTableInProfile *)
-
-
-
-
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
-VAR TheLength : INTEGER;
-    TheExtension : STRING;
-BEGIN
-FullFileNameProgramParameters := '';
-TheLength := Length(TheFullFileNameProgram);
-TheExtension := Copy(TheFullFileNameProgram,(TheLength-2),3); // PRO or PRM
-FullFileNameProgramParameters := Copy(TheFullFileNameProgram,1,(TheLength-3));
-IF (TheExtension = 'PRO')
-   THEN FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PP1')
-   ELSE FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PPn');
-END; (* GetFileForProgramParameters *)
-
 
 
 end.
