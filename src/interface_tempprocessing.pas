@@ -115,8 +115,56 @@ procedure AdjustCropFileParameters(
             VAR L123,L1234,GDD123,GDD1234 : INTEGER);
          external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
+
+procedure BTransferPeriod_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
+            constref TheModeCycle : integer;
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_btransferperiod';
+
+procedure BTransferPeriod(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
+            constref TheModeCycle : rep_modeCycle;
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+
+
 implementation
 
+
+procedure BTransferPeriod(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
+            constref TheModeCycle : rep_modeCycle;
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+var
+    int_modeCycle : integer;
+begin;
+    int_modeCycle := ord(TheModeCycle);
+    BTransferPeriod_wrap(TheDaysToCCini, TheGDDaysToCCini,
+             L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,
+             CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, 
+             KcDeclAgeing, CCeffectProcent, WPbio, TheCO2,
+             Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,
+             int_modeCycle, TempAssimPeriod, TempAssimStored, SumBtot, SumBstored);
+
+end;
 
 initialization
 
