@@ -19,6 +19,9 @@ use ac_global, only:    DaysInMonth, &
                         GetRainRecord_FromD, &
                         GetRainRecord_FromM, &
                         GetRainRecord_FromY, &
+                        GetRainRecord_NrObs, &
+                        GetRainRecord_ToM, &
+                        GetRainRecord_ToY, &
                         LeapYear, &
                         rep_DayEventDbl
 implicit none
@@ -602,7 +605,176 @@ subroutine GetDecadeRainDataSet(DayNri, RainDataSet)
         RainDataSet(Nri)%Param = 0._dp
     end do
 
-end subroutine GetDecadeRainDataSet 
+end subroutine GetDecadeRainDataSet
+
+
+
+subroutine GetMonthlyRainDataSet(DayNri, RainDataSet)
+    integer(int32), intent(in) :: DayNri
+    type(rep_DayEventDbl), dimension(31), intent(inout) :: RainDataSet
+
+    integer(int32) :: Dayi, DayN, Monthi, Yeari
+    real(dp) :: C1, C2, C3, RainDec1, RainDec2, RainDec3
+    integer(int32) :: DNR
+
+    call DetermineDate(DayNri, Dayi, Monthi, Yeari)
+
+    ! Set Monthly Parameters
+
+    call GetSetofThreeMonths(Monthi, Yeari, C1, C2, C3)
+
+    Dayi = 1
+    call DetermineDayNr(Dayi, Monthi, Yeari, DNR)
+    DayN = DaysInMonth(Monthi)
+    if ((Monthi == 2) .and. LeapYear(Yeari)) then
+        DayN = DayN + 1
+    end if
+    if (C2 > epsilon(0._dp)) then
+        RainDec1 = (5._dp*C1 + 26._dp*C2 - 4._dp*C3)/(27._dp*3._dp) ! mm/dec
+        RainDec2 = (-C1 + 29._dp*C2 - C3)/(27._dp*3._dp)
+        RainDec3 = (-4._dp*C1 + 26._dp*C2 + 5._dp*C3)/(27._dp*3._dp)
+        do Dayi = 1, 10 
+            RainDataSet(Dayi)%DayNr = DNR+Dayi-1
+            RainDataSet(Dayi)%Param = RainDec1/10._dp
+            if (RainDataSet(Dayi)%Param < epsilon(0._dp)) then
+                RainDataSet(Dayi)%Param = 0._dp
+            end if
+        end do
+        do Dayi = 11, 20 
+            RainDataSet(Dayi)%DayNr = DNR+Dayi-1
+            RainDataSet(Dayi)%Param = RainDec2/10._dp
+            if (RainDataSet(Dayi)%Param < epsilon(0._dp)) then
+                RainDataSet(Dayi)%Param = 0._dp
+            end if
+        end do
+        do Dayi = 21, DayN 
+            RainDataSet(Dayi)%DayNr = DNR+Dayi-1
+            RainDataSet(Dayi)%Param = RainDec3/(DayN-21._dp+1._dp)
+            if (RainDataSet(Dayi)%Param < epsilon(0._dp)) then
+                RainDataSet(Dayi)%Param = 0._dp
+            end if
+        end do
+    else
+        do Dayi = 1, DayN 
+        RainDataSet(Dayi)%DayNr = DNR+Dayi-1
+        RainDataSet(Dayi)%Param = 0._dp
+        end do
+    end if
+
+    do Dayi = (DayN+1), 31 
+        RainDataSet(Dayi)%DayNr = DNR+DayN-1
+        RainDataSet(Dayi)%Param = 0._dp
+    end do
+
+
+    contains
+
+
+    subroutine GetSetofThreeMonths(Monthi, Yeari, C1, C2, C3)
+        integer(int32), intent(in) :: Monthi
+        integer(int32), intent(in) :: Yeari
+        real(dp), intent(inout) :: C1
+        real(dp), intent(inout) :: C2
+        real(dp), intent(inout) :: C3
+
+        integer :: fRain
+        integer(int32) :: Mfile, Yfile, Nri, Obsi
+        logical :: OK3
+
+        ! 1. Prepare record
+        open(newunit=fRain, file=trim(GetRainFilefull()), status='old', &
+                                                          action='read')
+        read(fRain, *) ! description
+        read(fRain, *) ! time step
+        read(fRain, *) ! day
+        read(fRain, *) ! month
+        read(fRain, *) ! year
+        read(fRain, *)
+        read(fRain, *)
+        read(fRain, *)
+        Mfile = GetRainRecord_FromM()
+        if (GetRainRecord_FromY() == 1901) then
+            Yfile = Yeari
+        else
+            Yfile = GetRainRecord_FromY()
+        end if
+        OK3 = .false.
+
+        ! 2. IF 2 or less records
+        if (GetRainRecord_NrObs() <= 2) then
+            read(fRain, *) C1
+            select case (GetRainRecord_NrObs())
+                case(1)
+                    C2 = C1
+                    C3 = C1
+                case(2)
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                    read(fRain, *) C3
+                    if (Monthi == Mfile) then
+                        C2 = C3
+                    else
+                        C2 = C1
+                    end if
+            end select
+            OK3 = .true.
+        end if
+
+        ! 3. If first observation
+        if ((.not. OK3) .and. ((Monthi == Mfile) &
+                        .and. (Yeari == Yfile))) then
+            read(fRain, *) C1
+            C2 = C1
+            read(fRain, *) C3
+            OK3 = .true.
+        end if
+
+        ! 4. If last observation
+        if ((.not. OK3) .and. (Monthi == GetRainRecord_ToM())) then
+            if ((GetRainRecord_FromY() == 1901) .or. (Yeari == GetRainRecord_ToY())) then
+                do Nri = 1, (GetRainRecord_NrObs()-2) 
+                    read(fRain, *)
+                end do
+                read(fRain, *) C1
+                read(fRain, *) C3
+                C3 = C2
+                OK3 = .true.
+            end if
+        end if
+            
+        ! 5. IF not previous cases
+        if (.not. OK3) then
+            Obsi = 1
+            loop: do
+                if ((Monthi == Mfile) .and. (Yeari == Yfile)) then
+                    OK3 = .true.
+                else
+                    Mfile = Mfile + 1
+                    if (Mfile > 12) then
+                        call AdjustMONTHandYEAR(Mfile, Yfile)
+                    end if
+                    Obsi = Obsi + 1
+                end if
+                if (OK3) exit loop
+            end do loop
+            Mfile = GetRainRecord_FromM()
+            do Nri = 1, (Obsi-2) 
+                read(fRain, *)
+                Mfile = Mfile + 1
+                if (Mfile > 12) then
+                    call AdjustMONTHandYEAR(Mfile, Yfile)
+                end if
+            end do
+            read(fRain, *) C1
+            read(fRain, *) C2
+            read(fRain, *) C3
+        end if
+        close(fRain)
+    end subroutine GetSetofThreeMonths
+
+end subroutine GetMonthlyRainDataSet 
 
 
 end module ac_climprocessing

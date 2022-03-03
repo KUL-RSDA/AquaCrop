@@ -36,6 +36,10 @@ procedure GetDecadeRainDataSet(constref DayNri : LongInt;
                                VAR RainDataSet : rep_SimulationEventsDbl);
          external 'aquacrop' name '__ac_climprocessing_MOD_getdecaderaindataset';
 
+procedure GetMonthlyRainDataSet(constref DayNri : LongInt;
+                                VAR RainDataSet : rep_SimulationEventsDbl);
+         external 'aquacrop' name '__ac_climprocessing_MOD_getmonthlyraindataset';
+
 implementation
 
 
