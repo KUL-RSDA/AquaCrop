@@ -4380,7 +4380,24 @@ procedure LoadProfile_wrap(constref FullName : PChar;
 procedure DetermineRootZoneWC(
             constref RootingDepth : double;
             VAR ZtopSWCconsidered : boolean);
-        external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+    external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
+
+procedure AdjustClimRecordTo(CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustclimrecordto';
+
+procedure TranslateIniLayersToSWProfile(constref NrLay : ShortInt;
+                                        constref LayThickness,LayVolPr,LayECdS : rep_IniComp;
+                                        constref NrComp : INTEGER;
+                                        VAR Comp : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_translateinilayerstoswprofile';
+
+procedure TranslateIniPointsToSWProfile(
+                                constref NrLoc : ShortInt;
+                                constref LocDepth,LocVolPr,LocECdS : rep_IniComp;
+                                constref NrComp : integer;
+                                VAR Comp : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_translateinipointstoswprofile';
+
 
 
 function CCiniTotalFromTimeToCCini(

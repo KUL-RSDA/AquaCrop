@@ -5735,6 +5735,217 @@ end subroutine LoadOffSeason
 
 
 
+subroutine AdjustClimRecordTo(CDayN)
+    integer(int32), intent(in) :: CDayN
+
+    integer(int32) :: dayi, monthi, yeari
+    integer(int32) :: ToDayNr_tmp
+
+    call DetermineDate(CDayN, dayi, monthi, yeari)
+    call SetClimRecord_ToD(31)
+    call SetClimRecord_ToM(12)
+    call SetClimRecord_ToY(yeari)
+    call DetermineDayNr(GetClimRecord_ToD(), GetClimRecord_ToM(), &
+                        GetClimRecord_ToY(), ToDayNr_tmp)
+    call SetClimRecord_ToDayNr(ToDayNr_tmp)
+end subroutine AdjustClimRecordTo
+
+
+
+subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS, NrComp, Comp)
+    integer(int8), intent(in) :: NrLay
+    real(dp), dimension(max_No_compartments), intent(in) :: LayThickness
+    real(dp), dimension(max_No_compartments), intent(in) :: LayVolPr
+    real(dp), dimension(max_No_compartments), intent(in) :: LayECdS
+    integer(int32), intent(in) :: NrComp
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(inout) :: Comp
+
+    integer(int8) :: Compi, Layeri, i
+    real(dp) :: SDLay, SDComp, FracC
+    logical :: GoOn
+
+    ! from specific layers to Compartments
+    do Compi = 1, NrComp 
+        Comp(Compi)%Theta = 0._dp
+        Comp(Compi)%WFactor = 0._dp  ! used for ECe in this procedure
+    end do
+    Compi = 0_int8
+    SDComp = 0._dp
+    Layeri = 1_int8
+    SDLay = LayThickness(1)
+    GoOn = .true.
+    do while (Compi < NrComp) 
+        FracC = 0._dp
+        Compi = Compi + 1_int8
+        SDComp = SDComp + Comp(compi)%Thickness
+        if (SDLay >= SDComp) then
+            Comp(Compi)%Theta = Comp(Compi)%Theta + (1._dp-FracC) &
+                                                *LayVolPr(Layeri)/100._dp
+            Comp(Compi)%WFactor = Comp(Compi)%WFactor + (1._dp-FracC) &
+                                                *LayECdS(Layeri)
+        else
+            ! go to next layer
+            do while ((SDLay < SDComp) .and. GoOn) 
+                ! finish handling previous layer
+                FracC = (SDLay - (SDComp-Comp(Compi)%Thickness)) &
+                                /(Comp(Compi)%Thickness) - FracC
+                Comp(Compi)%Theta = Comp(Compi)%Theta + &
+                                    FracC*LayVolPr(Layeri)/100._dp
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor + FracC*LayECdS(Layeri)
+                FracC = (SDLay - (SDComp-Comp(Compi)%Thickness)) &
+                                    /(Comp(Compi)%Thickness)
+                ! add next layer
+                if (Layeri < NrLay) then
+                    Layeri = Layeri + 1
+                    SDLay = SDLay + LayThickness(Layeri)
+                else
+                    GoOn = .false.
+                end if
+            end do
+            Comp(Compi)%Theta = Comp(Compi)%Theta + (1._dp-FracC) &
+                                                    *LayVolPr(Layeri)/100._dp
+            Comp(Compi)%WFactor = Comp(Compi)%WFactor + (1._dp-FracC) &
+                                                    *LayECdS(Layeri)
+        end if
+        ! next Compartment
+    end do
+    if (.not. GoOn) then
+        do i = (Compi+1), NrComp 
+            Comp(i)%Theta = LayVolPr(NrLay)/100._dp
+            Comp(i)%WFactor = LayECdS(NrLay)
+        end do
+    end if
+        
+    ! final check of SWC
+    do Compi = 1, NrComp 
+        if (Comp(Compi)%Theta > &
+                (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
+            Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer)) &
+                                                            /100._dp
+        end if
+    end do
+    ! salt distribution in cellls
+    do Compi = 1, NrComp 
+        call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
+    end do
+end subroutine TranslateIniLayersToSWProfile
+
+
+
+subroutine TranslateIniPointsToSWProfile(NrLoc, LocDepth, LocVolPr, LocECdS, &
+                                                               NrComp, Comp)
+    integer(int8), intent(in) :: NrLoc
+    real(dp), dimension(max_No_compartments), intent(in) :: LocDepth
+    real(dp), dimension(max_No_compartments), intent(in) :: LocVolPr
+    real(dp), dimension(max_No_compartments), intent(in) :: LocECdS
+    integer(int32), intent(in) :: NrComp
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                              intent(inout) :: Comp
+
+    integer(int32) :: Compi, Loci
+    real(dp) :: TotD, Depthi, D1, D2, Th1, Th2, DTopComp, &
+                ThTopComp, ThBotComp
+    real(dp) :: EC1, EC2, ECTopComp, ECBotComp
+    logical :: AddComp, TheEnd
+
+    TotD = 0
+    do Compi = 1, NrComp 
+        Comp(Compi)%Theta = 0._dp
+        Comp(Compi)%WFactor = 0._dp ! used for salt in (10*VolSat*dZ * EC)
+        TotD = TotD + Comp(Compi)%Thickness
+    end do
+    Compi = 0
+    Depthi = 0._dp
+    AddComp = .true.
+    Th2 = LocVolPr(1)
+    EC2 = LocECds(1)
+    D2 = 0._dp
+    Loci = 0
+    do while ((Compi < NrComp) .or. &
+                ((Compi == NrComp) .and. (AddComp .eqv. .false.))) 
+        ! upper and lower boundaries location
+        D1 = D2
+        Th1 = Th2
+        EC1 = EC2
+        if (Loci < NrLoc) then
+            Loci = Loci + 1
+            D2 = LocDepth(Loci)
+            Th2 = LocVolPr(Loci)
+            EC2 = LocECdS(Loci)
+        else
+            D2 = TotD
+        end if
+        ! transfer water to compartment (SWC in mm) and salt in (10*VolSat*dZ * EC)
+        TheEnd = .false.
+        DTopComp = D1  ! Depthi is the bottom depth
+        ThBotComp = Th1
+        ECBotComp = EC1
+        loop: do
+            ThTopComp = ThBotComp
+            ECTopComp = ECBotComp
+            if (AddComp) then
+                Compi = Compi + 1
+                Depthi = Depthi + Comp(Compi)%Thickness
+            end if
+            if (Depthi < D2) then
+                ThBotComp = Th1 + (Th2-Th1)*(Depthi-D1)/real(D2-D1, kind=dp)
+                Comp(Compi)%Theta = Comp(Compi)%Theta &
+                                   + 10._dp*(Depthi-DTopComp) &
+                                           * ((ThTopComp+ThBotComp)/2._dp)
+                ECBotComp = EC1 + (EC2-EC1)*(Depthi-D1)/real(D2-D1, kind=dp)
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                      + (10._dp*(Depthi-DTopComp) &
+                                       *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
+                                       *((ECTopComp+ECbotComp)/2._dp)
+                AddComp = .true.
+                DTopComp = Depthi
+                if (Compi == NrComp) then
+                    TheEnd = .true.
+                end if
+            else
+                ThBotComp = Th2
+                ECBotComp = EC2
+                Comp(Compi)%Theta = Comp(Compi)%Theta &
+                                  + 10._dp*(D2-DTopComp) &
+                                          * ((ThTopComp+ThBotComp)/2._dp)
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                      + (10._dp*(D2-DTopComp) &
+                                         *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
+                                         *((ECTopComp+ECbotComp)/2._dp)
+                if (Depthi == D2) then
+                    AddComp = .true.
+                else
+                    AddComp = .false.
+                end if
+                TheEnd = .true.
+            end if
+            if (TheEnd) exit loop
+        end do loop
+    end do
+
+    do Compi = 1, NrComp 
+        ! from mm(water) to theta and final check
+        Comp(Compi)%Theta = Comp(Compi)%Theta/(1000._dp*Comp(Compi)%Thickness)
+        if (Comp(Compi)%Theta &
+                    > (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
+            Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp
+        end if
+        if (Comp(Compi)%Theta < 0._dp) then
+            Comp(Compi)%Theta = 0._dp
+        end if
+    end do
+
+    do Compi = 1, NrComp 
+        ! from (10*VolSat*dZ * EC) to ECe and distribution in cellls
+        Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                /(10._dp*Comp(Compi)%Thickness &
+                                    *GetSoilLayer_SAT(Comp(Compi)%Layer))
+        call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
+    end do
+end subroutine TranslateIniPointsToSWProfile
+
+
+
 real(dp) function CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini, &
                                             L0, L12, L12SF, L123, L1234, GDDL0, &
                                             GDDL12, GDDL12SF, GDDL123, &
@@ -5927,6 +6138,7 @@ subroutine LoadInitialConditions(SWCiniFileFull, IniSurfaceStorage)
     close(fhandle)
     call SetSimulation_IniSWC_AtFC(.false.)
 end subroutine LoadInitialConditions
+
 
 
 
