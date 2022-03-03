@@ -28,6 +28,9 @@ procedure GetMonthlyEToDataSet(constref DayNri : LongInt;
                                VAR EToDataSet : rep_SimulationEventsDbl);
          external 'aquacrop' name '__ac_climprocessing_MOD_getmonthlyetodataset';
 
+procedure GetDecadeEToDataSet(constref DayNri : LongInt;
+                              VAR EToDataSet : rep_SimulationEventsDbl);
+         external 'aquacrop' name '__ac_climprocessing_MOD_getdecadeetodataset';
 
 implementation
 

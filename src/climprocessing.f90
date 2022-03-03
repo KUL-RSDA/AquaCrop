@@ -8,9 +8,11 @@ use ac_global, only:    DaysInMonth, &
                         DetermineDate, &
                         DetermineDayNr, &
                         GetEToFilefull, &
+                        GetEToRecord_FromD, &
                         GetEToRecord_FromM, &
                         GetEToRecord_FromY, &
                         GetEToRecord_NrObs, &
+                        GetEToRecord_ToD, &
                         GetEToRecord_ToM, &
                         GetEToRecord_ToY, &
                         LeapYear, &
@@ -314,6 +316,198 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
     end subroutine GetSetofThreeMonths
 
 end subroutine GetMonthlyEToDataSet
+
+
+
+subroutine GetDecadeEToDataSet(DayNri, EToDataSet)
+    integer(int32), intent(in) :: DayNri
+    type(rep_DayEventDbl), dimension(31), intent(inout) :: EToDataSet
+
+    integer(int32) :: Nri, ni, Dayi, Deci, Monthi, Yeari, DayN
+    integer(int32) :: DNR
+    real(dp) :: C1, C2, C3
+    real(dp) :: Ul, LL, Mid
+
+    call DetermineDate(DayNri, Dayi, Monthi, Yeari)
+    if (Dayi > 20) then
+        Deci = 3
+        Dayi = 21
+        DayN = DaysInMonth(Monthi)
+        if ((Monthi == 2) .and. LeapYear(Yeari)) then
+            DayN = DayN + 1
+        end if
+        ni = DayN - Dayi + 1
+    elseif (Dayi > 10) then
+        Deci = 2
+        Dayi = 11
+        DayN = 20
+        ni = 10
+    else
+        Deci = 1
+        Dayi = 1
+        DayN = 10
+        ni = 10
+    end if
+    call GetSetofThree(DayN, Deci, Monthi, Yeari, C1, C2, C3)
+    call DetermineDayNr(Dayi, Monthi, Yeari, DNR)
+    if (C2 == 0) then
+        do Nri = 1, ni 
+            EToDataSet(Nri)%DayNr = DNR+Nri-1
+            EToDataSet(Nri)%Param = 0._dp
+        end do
+    else
+        call GetParameters(C1, C2, C3, UL, LL, Mid)
+        do Nri = 1, ni 
+            EToDataSet(Nri)%DayNr = DNR+Nri-1
+            if (Nri <= (ni/2._dp+0.01)) then
+                EToDataSet(Nri)%Param = (2._dp*UL + (Mid-UL)*(2._dp*Nri-1._dp) &
+                                        / (ni/2._dp))/2._dp
+            else
+                if (((ni == 11) .or. (ni == 9)) .and. (Nri < (ni+1.01)/2)) then
+                    EToDataSet(Nri)%Param = Mid
+                else
+                    EToDataSet(Nri)%Param = (2._dp*Mid &
+                                             + (LL-Mid) &
+                                             * (2._dp*Nri &
+                                                -(ni+1._dp))/(ni/2._dp))/2._dp
+                end if
+            end if
+            if (EToDataSet(Nri)%Param < 0._dp) then
+                EToDataSet(Nri)%Param = 0._dp
+            end if
+        end do
+    end if
+
+    do Nri = (ni+1), 31 
+        EToDataSet(Nri)%DayNr = DNR+ni-1
+        EToDataSet(Nri)%Param = 0._dp
+    end do
+
+
+    contains
+
+
+    subroutine GetSetofThree(DayN, Deci, Monthi, Yeari, C1, C2, C3)
+        integer(int32), intent(in) :: DayN
+        integer(int32), intent(in) :: Deci
+        integer(int32), intent(in) :: Monthi
+        integer(int32), intent(in) :: Yeari
+        real(dp), intent(inout) :: C1
+        real(dp), intent(inout) :: C2
+        real(dp), intent(inout) :: C3
+
+        integer :: fETo
+        integer(int32) :: DecFile, Mfile, Yfile, Nri, Obsi
+        logical :: OK3
+
+
+        !! 1 = previous decade, 2 = Actual decade, 3 = Next decade;
+        open(newunit=fETo, file=trim(GetEToFileFull()), status='old', &
+                                                        action='read')
+        read(fETo, *) ! description
+        read(fETo, *) ! time step
+        read(fETo, *) ! day
+        read(fETo, *) ! month
+        read(fETo, *) ! year
+        read(fETo, *)
+        read(fETo, *)
+        read(fETo, *)
+
+        if (GetEToRecord_FromD() > 20) then
+            DecFile = 3
+        elseif (GetEToRecord_FromD() > 10) then
+            DecFile = 2
+        else
+            DecFile = 1
+        end if
+        Mfile = GetEToRecord_FromM()
+        if (GetEToRecord_FromY() == 1901) then
+            Yfile = Yeari
+        else
+            Yfile = GetEToRecord_FromY()
+        end if
+        OK3 = .false.
+
+        if (GetEToRecord_NrObs() <= 2) then
+            read(fETo, *) C1
+            select case (GetEToRecord_NrObs())
+                case(1)
+                    C2 = C1
+                    C3 = C1
+                case(2)
+                    DecFile = DecFile + 1
+                    if (DecFile > 3) then
+                        call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
+                    end if
+                    read(fETo, *) C3
+                    if (Deci == DecFile) then
+                        C2 = C3
+                        C3 = C2+(C2-C1)/4._dp
+                    else
+                        C2 = C1
+                        C1 = C2 + (C2-C3)/4._dp
+                    end if
+            end select
+            OK3 = .true.
+        end if
+
+        if ((.not. OK3) .and. ((Deci == DecFile) &
+                        .and. (Monthi == Mfile) &
+                        .and. (Yeari == Yfile))) then
+            read(fETo, *) C1
+            C2 = C1
+            read(fETo, *) C3
+            C1 = C2 + (C2-C3)/4._dp
+            OK3 = .true.
+        end if
+
+        if ((.not. OK3) .and. ((DayN == GetEToRecord_ToD()) &
+                        .and. (Monthi == GetEToRecord_ToM()))) then
+            if ((GetEToRecord_FromY() == 1901) &
+                        .or. (Yeari == GetEToRecord_ToY())) then
+                do Nri = 1, (GetEToRecord_NrObs()-2) 
+                    read(fETo, *)
+                end do
+                read(fETo, *) C1
+                read(fETo, *) C2
+                C3 = C2+(C2-C1)/4._dp
+                OK3 = .true.
+            end if
+        end if
+
+        if (.not. OK3) then
+            Obsi = 1
+            loop: do
+                if ((Deci == DecFile) .and. (Monthi == Mfile) &
+                                      .and. (Yeari == Yfile)) then
+                    OK3 = .true.
+                else
+                    DecFile = DecFile + 1
+                    if (DecFile > 3) then
+                        call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
+                    end if
+                    Obsi = Obsi + 1
+                end if
+                if (OK3) exit loop
+            end do loop
+            if (GetEToRecord_FromD() > 20) then
+                DecFile = 3
+            elseif (GetEToRecord_FromD() > 10) then
+                DecFile = 2
+            else
+                DecFile = 1
+            end if
+            do Nri = 1, (Obsi-2) 
+                read(fETo, *)
+            end do
+            read(fETo, *) C1
+            read(fETo, *) C2
+            read(fETo, *) C3
+        end if
+        close(fETo)
+    end subroutine GetSetofThree
+
+end subroutine GetDecadeEToDataSet 
 
 
 end module ac_climprocessing
