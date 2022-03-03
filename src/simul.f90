@@ -1,24 +1,45 @@
 module ac_simul
 
-use ac_kinds, only:  dp, int32
-use ac_global, only: GetCompartment_FCadj, &
+use ac_kinds, only:  dp, int32, int8
+use ac_global, only: CompartmentIndividual, &
+                     datatype_daily, &
+                     datatype_decadely, &
+                     datatype_monthly, &
+                     DetermineCNIandIII, &
+                     GetCompartment, &
+                     GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
                      GetCompartment_Layer, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
+                     GetCompartment_WFactor, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
                      GetDrain, &
+                     GetManagement_CNcorrection, &
                      GetNrCompartments, &
+                     GetRain, &
+                     GetRainRecord_DataType, &
+                     GetRunoff, &
+                     GetSimulParam_CNcorrection, &
+                     GetSimulParam_EffectiveRain_ShowersInDecade, &
+                     GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
+                     GetSoil_CNvalue, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
                      GetSoilLayer_InfRate, &
                      GetSoilLayer_SAT, &
                      GetSoilLayer_tau, &
+                     GetSoilLayer_WP, &
+                     max_No_compartments, &
+                     roundc, &
+                     SetCompartment, &
                      SetCompartment_fluxout, &
                      SetCompartment_theta, &
-                     SetDrain
+                     SetCompartment_WFactor, &
+                     SetDrain, &
+                     SetRunoff
 
 implicit none
 
@@ -35,7 +56,7 @@ real(dp) function GetCDCadjustedNoStressNew(CCx, CDC, CCxAdjusted)
 
     CDCadjusted = CDC * ((CCxadjusted+2.29_dp)/(CCx+2.29_dp))
     GetCDCadjustedNoStressNew = CDCadjusted
-    
+
 end function GetCDCadjustedNoStressNew
 
 subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
@@ -328,6 +349,135 @@ contains
     end subroutine CheckDrainsum
 
 end subroutine calculate_drainage
+
+
+subroutine calculate_weighting_factors(Depth, Compartment)
+
+    real(dp), intent(in) :: Depth
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(inout) :: Compartment
+
+    integer(int32) :: i, compi
+    real(dp) :: CumDepth, xx, wx
+
+    CumDepth = 0.0_dp
+    xx = 0.0_dp
+    compi = 0
+    loop: do
+        compi = compi + 1
+        CumDepth = CumDepth + Compartment(compi)%Thickness
+        if (CumDepth > Depth) then
+            CumDepth = Depth
+        end if
+        wx = 1.016_dp * (1.0_dp - EXP(-4.16_dp * CumDepth/Depth))
+        Compartment(compi)%WFactor = wx - xx
+        if (Compartment(compi)%WFactor > 1.0_dp) then
+            Compartment(compi)%WFactor = 1.0_dp
+        end if
+        if (Compartment(compi)%WFactor < 0.0_dp) then
+            Compartment(compi)%WFactor = 0.0_dp
+        end if
+        xx = wx
+        if ((CumDepth >= Depth) .or. (compi == GetNrCompartments())) exit loop
+    enddo loop
+    do i = (compi + 1), GetNrCompartments()
+        Compartment(i)%WFactor = 0.0_dp
+    end do
+end subroutine calculate_weighting_factors
+
+
+subroutine calculate_runoff(MaxDepth)
+
+    real(dp), intent(in) :: MaxDepth
+
+    real(dp) :: SUM, CNA, Shower, term, S
+    integer(int8) :: CN2, CN1, CN3
+
+    CN2 = roundc(GetSoil_CNvalue()&
+                 * (100 + GetManagement_CNcorrection())/100.0_dp,&
+                 mold=1_int8)
+    if (GetRainRecord_DataType() == datatype_daily) then
+        if (GetSimulParam_CNcorrection()) then
+            call calculate_relative_wetness_topsoil(SUM)
+            call DetermineCNIandIII(CN2, CN1, CN3)
+            CNA = real(roundc(CN1+(CN3-CN1)*SUM, mold=1_int32), kind=dp)
+        else
+            CNA = real(CN2, kind=dp)
+        end if
+        Shower = GetRain()
+    else
+        CNA = real(CN2, kind=dp)
+        Shower = (GetRain()*10.0_dp)&
+                 / GetSimulParam_EffectiveRain_ShowersInDecade()
+    end if
+    S = 254.0_dp * (100.0_dp/CNA - 1.0_dp)
+    ! term := Shower - 0.2 * S;
+    term = Shower - (GetSimulParam_IniAbstract()/100.0_dp) * S
+    if (term <= epsilon(0.0_dp)) then
+        call SetRunoff(0.0_dp);
+    else
+        call SetRunoff(term**2&
+             / (Shower + (1.0_dp - (GetSimulParam_IniAbstract()/100.0_dp)) * S))
+    end if
+    if ((GetRunoff() > 0.0_dp) .and. ( &
+            (GetRainRecord_DataType() == datatype_decadely)&
+             .or. (GetRainRecord_DataType() == datatype_monthly))) then
+        if (GetRunoff() >= Shower) then
+            call SetRunoff(GetRain())
+        else
+            call SetRunoff(GetRunoff() &
+                   * (GetSimulParam_EffectiveRain_ShowersInDecade()/10.14_dp))
+            if (GetRunoff() > GetRain()) then
+                call SetRunoff(GetRain())
+            end if
+        end if
+    end if
+
+contains
+
+subroutine calculate_relative_wetness_topsoil(SUM)
+
+    real(dp), intent(inout) :: SUM
+
+    real(dp) :: CumDepth, theta
+    integer(int32) :: compi, layeri
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
+
+    !calculate_relative_wetness_topsoil
+    Compartment_temp = GetCompartment()
+    call calculate_weighting_factors(MaxDepth, Compartment_temp)
+    call SetCompartment(Compartment_temp)
+    SUM = 0.0_dp
+    compi = 0
+    CumDepth = 0.0_dp
+
+    loop : do
+        compi = compi + 1
+        layeri = GetCompartment_Layer(compi)
+        CumDepth = CumDepth + GetCompartment_Thickness(compi)
+        if (GetCompartment_theta(compi) < GetSoilLayer_WP(layeri)/100.0_dp) then
+            theta = GetSoilLayer_WP(layeri)/100.0_dp
+        else
+            theta = GetCompartment_theta(compi)
+        end if
+        SUM = SUM + GetCompartment_WFactor(compi) &
+             * (theta-GetSoilLayer_WP(layeri)/100.0_dp) &
+             / (GetSoilLayer_FC(layeri)/100.0_dp - GetSoilLayer_WP(layeri)/100.0_dp)
+        if ((CumDepth >= MaxDepth) .or. (compi == GetNrCompartments())) exit loop
+    end do loop
+
+    if (SUM < 0.0_dp) then
+        SUM = 0.0_dp
+    end if
+    if (SUM > 1.0_dp) then
+        SUM = 1.0_dp
+    end if
+
+end subroutine calculate_relative_wetness_topsoil
+
+end subroutine calculate_runoff
+
+
+
 
 !-----------------------------------------------------------------------------
 ! end BUDGET_module

@@ -4193,6 +4193,18 @@ function GetDrain() : double;
 procedure SetDrain(constref Drain_in : double);
     external 'aquacrop' name '__ac_global_MOD_setdrain';
 
+function GetRain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrain';
+
+procedure SetRain(constref Rain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrain';
+
+function GetRunoff() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrunoff';
+
+procedure SetRunoff(constref Runoff_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrunoff';
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';

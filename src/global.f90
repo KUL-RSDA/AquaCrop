@@ -975,6 +975,8 @@ integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
 real(dp) :: Drain  ! mm/day
+real(dp) :: Rain  ! mm/day
+real(dp) :: Runoff  ! mm/day
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -13884,6 +13886,32 @@ subroutine SetDrain(Drain_in)
 
     Drain = Drain_in
 end subroutine SetDrain
+
+real(dp) function GetRain()
+    !! Getter for the "Rain" global variable.
+
+    GetRain = Rain
+end function GetRain
+
+subroutine SetRain(Rain_in)
+    !! Setter for the "Rain" global variable.
+    real(dp), intent(in) :: Rain_in
+
+    Rain = Rain_in
+end subroutine SetRain
+
+real(dp) function GetRunoff()
+    !! Getter for the "Runoff" global variable.
+
+    GetRunoff = Runoff
+end function GetRunoff
+
+subroutine SetRunoff(Runoff_in)
+    !! Setter for the "Runoff" global variable.
+    real(dp), intent(in) :: Runoff_in
+
+    Runoff = Runoff_in
+end subroutine SetRunoff
 
 function GetOffSeasonDescription() result(str)
     !! Getter for the "OffSeasonDescription" global variable.
