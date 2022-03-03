@@ -6,7 +6,9 @@ use ac_kinds,  only: dp, &
                      int32, &
                      intEnum
 
-use ac_tempprocessing, only: Bnormalized
+use ac_global, only: rep_EffectStress
+
+use ac_tempprocessing, only: Bnormalized, BiomassRatio
 
 implicit none
 
@@ -93,5 +95,70 @@ real(dp) function Bnormalized_wrap(&
             bool_fertilitystresson,&
             bool_testrecord)
 end function Bnormalized_wrap
+
+real(dp) function BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,&
+           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
+           TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,&
+           TempL123, TempHarvest, TempFlower, TempGDDL0, &
+           GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,&
+           TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,&
+           TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,&
+           TempWP, ShapeFweed, TempModeCycle, SFInfo, SFInfoStress,&
+           WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn)
+    integer(int32), intent(in) :: TempDaysToCCini
+    integer(int32), intent(in) :: TempGDDaysToCCini
+    real(dp), intent(in) :: TempCCo
+    real(dp), intent(in) :: TempCGC
+    real(dp), intent(in) :: TempCCx
+    real(dp), intent(in) :: TempCDC
+    real(dp), intent(in) :: TempGDDCGC
+    real(dp), intent(in) :: TempGDDCDC
+    real(dp), intent(in) :: TempdHIdt
+    integer(int32), intent(in) :: TempL0
+    integer(int32), intent(in) :: TempL12
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: TempL123
+    integer(int32), intent(in) :: TempHarvest
+    integer(int32), intent(in) :: TempFlower
+    integer(int32), intent(in) :: TempGDDL0
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: TempGDDL12
+    integer(int32), intent(in) :: TempGDDL123
+    integer(int32), intent(in) :: TempGDDHarvest
+    integer(int32), intent(in) :: TempHI
+    integer(int32), intent(in) :: TempWPy
+    real(dp), intent(in) :: TempKc
+    real(dp), intent(in) :: TempKcDecline
+    real(dp), intent(in) :: TempCCeffect
+    real(dp), intent(in) :: TempTbase
+    real(dp), intent(in) :: TempTupper
+    real(dp), intent(in) :: TempTmin
+    real(dp), intent(in) :: TempTmax
+    real(dp), intent(in) :: TempGDtranspLow
+    real(dp), intent(in) :: TempWP
+    real(dp), intent(in) :: ShapeFweed
+    integer(intEnum), intent(in) :: TempModeCycle
+    type(rep_EffectStress), intent(in) :: SFInfo
+    integer(int8), intent(in) :: SFInfoStress
+    integer(int8), intent(in) :: WeedStress
+    integer(int32), intent(in) :: DeltaWeedStress
+    logical(1), intent(in) :: DeterminantCropType
+    logical(1), intent(in) :: FertilityStressOn
+
+    logical :: bool_determinantcroptype,bool_fertilitystresson
+
+    bool_determinantcroptype = DeterminantCropType
+    bool_fertilitystresson = FertilityStressOn
+
+    BiomassRatio_wrap = BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
+           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
+           TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,&
+           TempL123, TempHarvest, TempFlower, TempGDDL0, &
+           GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,&
+           TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,&
+           TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,&
+           TempWP, ShapeFweed, TempModeCycle, SFInfo, SFInfoStress,&
+           WeedStress, DeltaWeedStress, bool_determinantcroptype, bool_fertilitystresson)
+end function BiomassRatio_wrap
 
 end module ac_interface_tempprocessing
