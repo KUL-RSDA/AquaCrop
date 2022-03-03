@@ -5769,8 +5769,11 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
         real(dp), intent(inout) :: ECdSm
 
         Zcm = roundc(100._dp * (Z1 + (Z2-Z1) &
-                    * (AtDayNr-DayNr1)/real(DayNr2-Daynr1, kind=dp)), mold=1)
-        ECdSm = EC1 + (EC2-EC1)*(AtDayNr-DayNr1)/real(DayNr2-Daynr1, kind=dp)
+                    * real(AtDayNr-DayNr1, kind=dp) &
+                    / real(DayNr2-Daynr1, kind=dp)), mold=1)
+        ECdSm = EC1 + (EC2-EC1) &
+                        * real(AtDayNr-DayNr1, kind=dp) &
+                        / real(DayNr2-Daynr1, kind=dp)
         end subroutine FindValues
 
 end subroutine LoadGroundWater
