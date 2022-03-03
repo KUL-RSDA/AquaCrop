@@ -85,7 +85,7 @@ implementation
  // 2a. Ground water table
  SetGroundWaterFile('(None)');
  SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
- GroundWaterDescription := 'no shallow groundwater table';
+ SetGroundWaterDescription('no shallow groundwater table');
  SetZiAqua(undef_int);
  ECiAqua := undef_int;
  SetSimulParam_ConstGwt(true);

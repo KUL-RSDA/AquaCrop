@@ -306,7 +306,7 @@ subroutine calculate_drainage()
                     excess = 0.0_dp
                 end if
                 if ((excess == 0) .or. (pre_nr == 1)) exit loop
-            end do
+            end do loop
             ! redistribute excess
         end if
 

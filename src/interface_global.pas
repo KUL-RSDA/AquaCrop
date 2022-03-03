@@ -4449,7 +4449,50 @@ procedure LoadInitialConditions_wrap(constref SWCiniFileFull : PChar;
 
 
 
+procedure LoadGroundWater(
+                    constref FullName : string;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+
+procedure LoadGroundwater_wrap(
+                    constref FullName_ptr : PChar;
+                    constref strlen : integer;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadgroundwater_wrap';
+
+function GetGroundwaterDescription(): string;
+
+function GetGroundwaterDescription_wrap(): PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_getgroundwaterdescription_wrap';
+
+procedure SetGroundwaterDescription(constref str : string);
+
+procedure SetGroundwaterDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterdescription_wrap';
+
+
 implementation
+
+
+
+procedure LoadGroundWater(
+                    constref FullName : string;
+                    constref AtDayNr : LongInt;
+                    VAR Zcm : INTEGER;
+                    VAR ECdSm : double);
+var
+    FullName_ptr : PChar;
+    strlen : integer;
+begin
+    FullName_ptr := PChar(FullName);
+    strlen := Length(FullName);
+    LoadGroundwater_wrap(Fullname_ptr, strlen, AtDayNr, Zcm, ECdSm);
+end;
 
 
 procedure LoadInitialConditions(constref SWCiniFileFull : string;
@@ -4462,6 +4505,7 @@ begin
     strlen := Length(SWCiniFileFull);
     LoadInitialConditions_wrap(p, strlen, IniSurfaceStorage);
 end;
+
 
 
 function EndGrowingPeriod(constref Day1 : longint;
@@ -7501,6 +7545,29 @@ end;
 
 
 
+function GetGroundwaterDescription(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetGroundwaterDescription_wrap();
+    GetGroundwaterDescription := AnsiString(p);
+end;
+
+
+
+procedure SetGroundwaterDescription(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetGroundwaterDescription_wrap(p, strlen);
+end;
+
+
+
 procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
 var
     int_datatype : integer;
@@ -7530,7 +7597,6 @@ begin
     ClimateRecord.FromString := AnsiString(FromString_ptr);
     ClimateRecord.ToString := AnsiString(ToString_ptr);
 end;
-
 
 
 

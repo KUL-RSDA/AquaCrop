@@ -205,6 +205,10 @@ use ac_global, only: CheckFilesInProject, &
                      GetOffSeasonDescription, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
+                     LoadProgramParametersProject,&
+                     LoadGroundwater, &
+                     GetGroundwaterDescription, &
+                     SetGroundwaterDescription, &
                      LoadProgramParametersProject, &
                      EndGrowingPeriod, &
                      LoadInitialConditions, &
@@ -2277,6 +2281,44 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
     string = pointer2string(FullName, strlen)
     call LoadOffSeason(string)
 end subroutine LoadOffSeason_wrap
+
+
+
+subroutine LoadGroundwater_wrap(FullName_ptr, strlen, AtDayNr, Zcm, ECdSm)
+    !! Wrapper for [[ac_global:LoadGroundwater]] for foreign languages.
+    type(c_ptr), intent(in) :: FullName_ptr
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: AtDayNr
+    integer(int32), intent(inout) :: Zcm
+    real(dp), intent(inout) :: ECdSm
+
+    character(len=strlen) :: FullName
+
+    FullName = pointer2string(FullName_ptr, strlen)
+    call LoadGroundwater(FullName, AtDayNr, Zcm, ECdSm)
+end subroutine LoadGroundwater_wrap
+
+
+
+function GetGroundwaterDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetGroundwaterDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetGroundwaterDescription())
+end function GetGroundwaterDescription_wrap
+
+
+subroutine SetGroundwaterDescription_wrap(GroundwaterDescription, strlen)
+    !! Wrapper for [[ac_global:SetGroundwaterDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: GroundwaterDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(GroundwaterDescription, strlen)
+    call SetGroundwaterDescription(string)
+end subroutine SetGroundwaterDescription_wrap
+
 
 
 function EndGrowingPeriod_wrap(Day1, DayN) result(EndGrowingPeriod_ptr)

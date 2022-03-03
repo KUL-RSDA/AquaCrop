@@ -13,8 +13,7 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ProjectDescription, MultipleProjectDescription,
-    GroundWaterDescription: string;
+    ProjectDescription, MultipleProjectDescription : string;
 
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
@@ -76,10 +75,6 @@ PROCEDURE AdjustSizeCompartments(CropZx : double);
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
-PROCEDURE LoadGroundWater(FullName : string;
-                          AtDayNr : LongInt;
-                          VAR Zcm : INTEGER;
-                          VAR ECdSm : double);
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
@@ -573,161 +568,6 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
 END; (* CheckForWaterTableInProfile *)
 
 
-
-
-PROCEDURE LoadGroundWater(FullName : string;
-                          AtDayNr : LongInt;
-                          VAR Zcm : INTEGER;
-                          VAR ECdSm : double);
-VAR f0 : TextFile;
-    i,dayi,monthi,yeari,Year1Gwt : INTEGER;
-    DayNr1Gwt,DayNr1,DayNr2,DayNrN : LongInt;
-    StringREAD : ShortString;
-    DayDouble,Z1,EC1,Z2,EC2,ZN,ECN : double;
-    TheEnd : BOOLEAN;
-
-    PROCEDURE FindValues(AtDayNr,DayNr1,DayNr2 : LongInt;
-                         Z1,EC1,Z2,EC2 : double;
-                         VAR Zcm : INTEGER;
-                         VAR ECdSm : double);
-    BEGIN
-    Zcm := ROUND(100 * (Z1 + (Z2-Z1)*(AtDayNr-DayNr1)/(DayNr2-Daynr1)));
-    ECdSm := EC1 + (EC2-EC1)*(AtDayNr-DayNr1)/(DayNr2-Daynr1);
-    END; (* FindValues *)
-
-BEGIN
-// initialize
-TheEnd := false;
-Year1Gwt := 1901;
-DayNr1 := 1;
-DayNr2 := 1;
-Assign(f0,FullName);
-Reset(f0);
-READLN(f0,GroundWaterDescription);
-READLN(f0); // AquaCrop Version
-
-// mode groundwater table
-READLN(f0,i);
-CASE i OF
-     0 : BEGIN // no groundwater table
-         Zcm := undef_int;
-         ECdSm := undef_int;
-         SetSimulParam_ConstGwt(true);
-         TheEnd := true;
-         END;
-     1 : BEGIN // constant groundwater table
-         SetSimulParam_ConstGwt(true);
-         END;
-     else SetSimulParam_ConstGwt(false);
-     end;
-
-// first day of observations (only for variable groundwater table)
-IF (NOT GetSimulParam_ConstGwt()) THEN
-   BEGIN
-   READLN(f0,dayi);
-   READLN(f0,monthi);
-   READLN(f0,Year1Gwt);
-   DetermineDayNr(dayi,monthi,Year1Gwt,DayNr1Gwt);
-   END;
-
-// single observation (Constant Gwt) or first observation (Variable Gwt)
-IF (i > 0) THEN  // groundwater table is present
-   BEGIN
-   READLN(f0);
-   READLN(f0);
-   READLN(f0);
-   READLN(f0,StringREAD);
-   SplitStringInThreeParams(StringREAD,DayDouble,Z2,EC2);
-   IF ((i = 1) OR (Eof(f0)))
-      THEN BEGIN // Constant groundwater table or single observation
-           Zcm := ROUND(100*Z2);
-           ECdSm := EC2;
-           TheEnd := true;
-           END
-      ELSE DayNr2 := DayNr1Gwt + ROUND(DayDouble) - 1;
-   END;
-
-// other observations
-IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
-   BEGIN
-   // adjust AtDayNr
-   DetermineDate(AtDayNr,dayi,monthi,yeari);
-   IF ((yeari = 1901) AND (Year1Gwt <> 1901)) THEN // Make AtDayNr defined
-      DetermineDayNr(dayi,monthi,Year1Gwt,AtDayNr);
-   IF ((yeari <> 1901) AND (Year1Gwt = 1901)) THEN // Make AtDayNr undefined
-      DetermineDayNr(dayi,monthi,Year1Gwt,AtDayNr);
-   // get observation at AtDayNr
-   IF (Year1Gwt <> 1901)
-      THEN BEGIN // year is defined
-           IF (AtDayNr <= DayNr2)
-              THEN BEGIN
-                   Zcm := ROUND(100*Z2);
-                   ECdSm := EC2;
-                   END
-              ELSE BEGIN
-                   WHILE (NOT TheEnd) DO
-                      BEGIN
-                      DayNr1 := DayNr2;
-                      Z1 := Z2;
-                      EC1 := EC2;
-                      READLN(f0,StringREAD);
-                      SplitStringInThreeParams(StringREAD,DayDouble,Z2,EC2);
-                      DayNr2 := DayNr1Gwt + ROUND(DayDouble) - 1;
-                      IF (AtDayNr <= DayNr2) THEN
-                         BEGIN
-                         FindValues(AtDayNr,DayNr1,DayNr2,Z1,EC1,Z2,EC2,Zcm,ECdSm);
-                         TheEnd := true;
-                         END;
-                      IF ((Eof(f0)) AND (NOT TheEnd)) THEN
-                         BEGIN
-                         Zcm := ROUND(100*Z2);
-                         ECdSm := EC2;
-                         TheEnd := true;
-                         END;
-                      END;
-                   END;
-           END
-      ELSE BEGIN // year is undefined
-           IF (AtDayNr <= DayNr2)
-              THEN BEGIN
-                   DayNr2 := DayNr2 + 365;
-                   AtDayNr := AtDayNr + 365;
-                   WHILE (NOT Eof(f0)) DO
-                      BEGIN
-                      READLN(f0,StringREAD);
-                      SplitStringInThreeParams(StringREAD,DayDouble,Z1,EC1);
-                      DayNr1 := DayNr1Gwt + ROUND(DayDouble) - 1;
-                      END;
-                   FindValues(AtDayNr,DayNr1,DayNr2,Z1,EC1,Z2,EC2,Zcm,ECdSm);
-                   END
-              ELSE BEGIN
-                   DayNrN := DayNr2 + 365;
-                   ZN := Z2;
-                   ECN := EC2;
-                   WHILE (NOT TheEnd) DO
-                      BEGIN
-                      DayNr1 := DayNr2;
-                      Z1 := Z2;
-                      EC1 := EC2;
-                      READLN(f0,StringREAD);
-                      SplitStringInThreeParams(StringREAD,DayDouble,Z2,EC2);
-                      DayNr2 := DayNr1Gwt + ROUND(DayDouble) - 1;
-                      IF (AtDayNr <= DayNr2) THEN
-                         BEGIN
-                         FindValues(AtDayNr,DayNr1,DayNr2,Z1,EC1,Z2,EC2,Zcm,ECdSm);
-                         TheEnd := true;
-                         END;
-                      IF ((Eof(f0)) AND (NOT TheEnd)) THEN
-                         BEGIN
-                         FindValues(AtDayNr,DayNr2,DayNrN,Z2,EC2,ZN,ECN,Zcm,ECdSm);
-                         TheEnd := true;
-                         END;
-                      END;
-                   END;
-           END;
-   END; // variable groundwater table with more than 1 observation
-Close(f0);
-END; (* LoadGroundWater *)
 
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
