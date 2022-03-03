@@ -52,17 +52,7 @@ VAR DataPath,ObsPath : BOOLEAN;
     Type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
-PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
-                              VAR CompartAdj   : rep_Comp);
 
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
-
-PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -71,14 +61,10 @@ PROCEDURE AppendCropFilePerennials(totalname : string;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
                                    CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : INTEGER;
                                    ThresholdOnset,ThresholdEnd : double);
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
+
 PROCEDURE AdjustSimPeriod;
-PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double);
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
@@ -103,180 +89,8 @@ implementation
 
 
 
-PROCEDURE CalculateAdjustedFC(DepthAquifer : double;
-                              VAR CompartAdj   : rep_Comp);
-VAR compi,ic : INTEGER;
-    Zi,Depth,DeltaV,DeltaFC,Xmax : double;
-
-    FUNCTION NoAdjustment(FCvolPr : Double) : double;
-    VAR pF : double;
-    BEGIN
-    IF (FCvolPr <= 10)
-       THEN NoAdjustment := 1
-       ELSE BEGIN
-            IF (FCvolPr >= 30)
-               THEN NoAdjustment := 2
-               ELSE BEGIN
-                    pF := 2 + 0.3 * (FCvolPr-10)/20;
-                    NoAdjustment := (exp(pF*ln(10)))/100;
-                    END;
-            END;
-    END; (* NoAdjustment *)
-
-BEGIN
-(*
-Depth := 0;
-FOR compi := 1 TO NrCompartments DO
-    BEGIN
-    Depth := Depth + CompartAdj[compi].Thickness;
-    Zi := Depth - CompartAdj[compi].Thickness/2;
-    IF ((DepthAquifer < 0)
-        OR ((DepthAquifer - Zi) >= 2)
-        OR (SoilLayer[CompartAdj[compi].Layer].FC >= SoilLayer[CompartAdj[compi].Layer].SAT))
-           THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC
-           ELSE BEGIN
-                IF (Zi >= DepthAquifer)
-                   THEN CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].SAT
-                   ELSE BEGIN
-                        DeltaV := SoilLayer[CompartAdj[compi].Layer].SAT - SoilLayer[CompartAdj[compi].Layer].FC;
-                        DeltaFC := (DeltaV/4) * (Zi - (DepthAquifer - 2)) * (Zi - (DepthAquifer - 2));
-                        CompartAdj[compi].FCadj := SoilLayer[CompartAdj[compi].Layer].FC + DeltaFC;
-                        END;
-                END;
-    END;  *)
 
 
-Depth := 0;
-FOR compi := 1 TO GetNrCompartments() DO Depth := Depth + CompartAdj[compi].Thickness;
-compi := GetNrCompartments();
-REPEAT
-  Zi := Depth - CompartAdj[compi].Thickness/2;
-  //Xmax := NoAdjustment(SoilLayer[CompartAdj[compi].Layer].SoilClass);
-  Xmax := NoAdjustment(GetSoilLayer_i(CompartAdj[compi].Layer).FC);
-  IF ((DepthAquifer < 0) OR ((DepthAquifer - Zi) >= Xmax))
-      THEN BEGIN
-           FOR ic := 1 to compi DO CompartAdj[ic].FCadj := GetSoilLayer_i(CompartAdj[ic].Layer).FC;
-           compi := 0;
-           END
-      ELSE BEGIN
-           IF (GetSoilLayer_i(CompartAdj[compi].Layer).FC >= GetSoilLayer_i(CompartAdj[compi].Layer).SAT)
-              THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC
-              ELSE BEGIN
-                   IF (Zi >= DepthAquifer)
-                      THEN CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).SAT
-                      ELSE BEGIN
-                           DeltaV := GetSoilLayer_i(CompartAdj[compi].Layer).SAT - GetSoilLayer_i(CompartAdj[compi].Layer).FC;
-                           DeltaFC := (DeltaV/Sqr(Xmax)) * Sqr(Zi - (DepthAquifer - Xmax));
-                           CompartAdj[compi].FCadj := GetSoilLayer_i(CompartAdj[compi].Layer).FC + DeltaFC;
-                           END;
-                   END;
-           Depth := Depth - CompartAdj[compi].Thickness;
-           compi := compi - 1;
-           END;
-UNTIL (compi < 1);
-END; (*  CalculateAdjustedFC *)
-
-
-
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
-
-VAR DayCC : INTEGER;
-    SumGDDforCCini,TempCCini : double;
-    Tadj, GDDTadj : INTEGER;
-BEGIN
-IF (TempDaysToCCini <> 0)
-   THEN BEGIN  // regrowth
-        SumGDDforCCini := undef_int;
-        GDDTadj := undef_int;
-        // find adjusted calendar and GDD time
-        IF (TempDaysToCCini = undef_int)
-             THEN BEGIN // CCx on 1st day
-                  Tadj := L12 - L0;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := GDDL12 - GDDL0;
-                  END
-             ELSE BEGIN // CC on 1st day is < CCx
-                  Tadj := TempDaysToCCini;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := TempGDDaysToCCini;
-                  END;
-        // calculate CCini with adjusted time
-        DayCC := L0 + Tadj;
-        IF (TheModeCycle = GDDays) THEN SumGDDforCCini := GDDL0 + GDDTadj;
-        TempCCini := CCiNoWaterStressSF(DayCC,L0,L12SF,L123,L1234,
-                               GDDL0,GDDL12SF,GDDL123,GDDL1234,
-                               (CCo*fWeed),(CCx*fWeed),CGC,GDDCGC,
-                               (CDC*(fWeed*CCx+2.29)/(CCx+2.29)),
-                               (GDDCDC*(fWeed*CCx+2.29)/(CCx+2.29)),SumGDDforCCini,RatDGDD,
-                               SFRedCGC,SFRedCCx,SFCDecline,TheModeCycle);
-        // correction for fWeed is already in TempCCini (since DayCC > 0);
-        END
-   ELSE TempCCini := (CCo*fWeed); // sowing or transplanting
-
-CCiniTotalFromTimeToCCini := TempCCini;
-END; (* CCiniTotalFromTimeToCCini *)
-
-
-
-
-
-PROCEDURE CompleteClimateDescription(VAR ClimateRecord : rep_clim);
-VAR dayStr,yearStr : STRING;
-    Deci : INTEGER;
-BEGIN
-DetermineDayNr(ClimateRecord.FromD,ClimateRecord.FromM,ClimateRecord.FromY,ClimateRecord.FromDayNr);
-CASE ClimateRecord.DataType OF
-   Daily    : BEGIN
-              ClimateRecord.ToDayNr := ClimateRecord.FromDayNr + ClimateRecord.NrObs - 1;
-              DetermineDate(ClimateRecord.ToDayNr,ClimateRecord.ToD,ClimateRecord.ToM,ClimateRecord.ToY);
-              END;
-   Decadely : BEGIN
-              Deci := ROUND((ClimateRecord.FromD+9)/10) + ClimateRecord.NrObs - 1;
-              ClimateRecord.ToM := ClimateRecord.FromM;
-              ClimateRecord.ToY := ClimateRecord.FromY;
-              WHILE (Deci > 3) DO
-                BEGIN
-                Deci := Deci - 3;
-                ClimateRecord.ToM := ClimateRecord.ToM + 1;
-                IF (ClimateRecord.ToM > 12) THEN BEGIN
-                                                 ClimateRecord.ToM := 1;
-                                                 ClimateRecord.ToY := ClimateRecord.ToY  + 1;
-                                                 END;
-                END;
-              ClimateRecord.ToD := 10;
-              IF (Deci = 2) THEN ClimateRecord.ToD := 20;
-              IF (Deci = 3) THEN
-                 BEGIN
-                 ClimateRecord.ToD := DaysInMonth[ClimateRecord.ToM];
-                 IF ((ClimateRecord.ToM = 2) AND LeapYear(ClimateRecord.ToY)) THEN ClimateRecord.ToD := ClimateRecord.ToD + 1;
-                 END;
-              DetermineDayNr(ClimateRecord.ToD,ClimateRecord.ToM,ClimateRecord.ToY,ClimateRecord.ToDayNr);
-              END;
-   Monthly  : BEGIN
-              ClimateRecord.ToY := ClimateRecord.FromY;
-              ClimateRecord.ToM := ClimateRecord.FromM + ClimateRecord.NrObs - 1;
-              WHILE (ClimateRecord.ToM > 12) DO
-                    BEGIN
-                    ClimateRecord.ToY := ClimateRecord.ToY + 1;
-                    ClimateRecord.ToM := ClimateRecord.ToM - 12;
-                    END;
-              ClimateRecord.ToD := DaysInMonth[ClimateRecord.ToM];
-              IF ((ClimateRecord.ToM = 2) AND LeapYear(ClimateRecord.ToY)) THEN ClimateRecord.ToD := ClimateRecord.ToD + 1;
-              DetermineDayNr(ClimateRecord.ToD,ClimateRecord.ToM,ClimateRecord.ToY,ClimateRecord.ToDayNr);
-              END;
-   end;
-Str(ClimateRecord.FromD:2,dayStr);
-IF ClimateRecord.FromY = 1901 THEN yearStr := ''
-                              ELSE Str(ClimateRecord.FromY:4,yearStr);
-ClimateRecord.FromString := CONCAT(dayStr,' ',NameMonth[ClimateRecord.FromM],' ',yearStr);
-Str(ClimateRecord.ToD:2,dayStr);
-IF ClimateRecord.FromY = 1901 THEN yearStr := ''
-                              ELSE Str(ClimateRecord.ToY:4,yearStr);
-ClimateRecord.ToString := CONCAT(dayStr,' ',NameMonth[ClimateRecord.ToM],' ',yearStr);
-END; (* CompleteClimateDescription *)
 
 
 PROCEDURE LoadClim (FullName : string;
@@ -418,21 +232,6 @@ Close(f);
 END; (* AppendCropFilePerennials *)
 
 
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
-VAR dayi,monthi,yeari : integer;
-    Strday,StrMonth : string;
-BEGIN
-// This function determines Crop.DayN and the string
-DayN := Day1 + GetCrop().DaysToHarvest - 1;
-IF (DayN < Day1) THEN DayN := Day1;
-DetermineDate(DayN,dayi,monthi,yeari);
-Str(dayi:2,Strday);
-StrMonth := NameMonth[monthi];
-EndGrowingPeriod := CONCAT(Strday,' ',StrMonth,'  ');
-END; (* EndGrowingPeriod *)
-
-
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 BEGIN
@@ -455,22 +254,6 @@ IF (GetClimFile() <> '(None)') THEN
 END; (* DetermineLinkedSimDay1 *)
 
 
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
-VAR dayi,monthi,yeari : INTEGER;
-    temp_str : string;
-BEGIN
-DetermineDate(CDay1,dayi,monthi,yeari);
-IF (GetClimFile() = '(None)')
-   THEN yeari := 1901  // yeari = 1901 if undefined year
-   ELSE yeari := GetClimRecord_FromY(); // yeari = 1901 if undefined year
-   (*
-   ELSE BEGIN
-        yeari := Simulation.YearStartCropCycle;
-        IF (CDay1 > GetClimRecord_ToY()) THEN yeari := GetClimRecord_FromY();
-        END; *)
-DetermineDayNr(dayi,monthi,yeari,CDay1);
-temp_str := EndGrowingPeriod(CDay1,CDayN);
-END; (* AdjustCropYearToClimFile *)
 
 
 
@@ -534,80 +317,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
 END; (* AdjustSimPeriod *)
 
 
-
-PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double);
-VAR f0 : TextFile;
-    i : ShortInt;
-    StringParam,swcinidescr_temp : string;
-    VersionNr : double;
-    CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
-    NrLoc_temp : shortint;
-    Loc_i_temp, VolProc_i_temp, SaltECe_i_temp : double;
-BEGIN
-// IniSWCRead attribute of the function was removed to fix a 
-// bug occurring when the function was called in TempProcessing.pas
-// Keep in mind that this could affect the graphical interface
-Assign(f0,SWCiniFileFull);
-Reset(f0);
-READLN(f0,swcinidescr_temp);
-setSWCiniDescription(swcinidescr_temp);
-READLN(f0,VersionNr); // AquaCrop Version
-IF (ROUND(10*VersionNr) < 41) // initial CC at start of simulation period
-   THEN SetSimulation_CCini(undef_int)
-   ELSE BEGIN
-        READLN(f0,CCini_temp);
-        SetSimulation_CCini(CCini_temp);
-        end;
-IF (ROUND(10*VersionNr) < 41) // B produced before start of simulation period
-   THEN SetSimulation_Bini(0.000)
-   ELSE BEGIN
-        READLN(f0,Bini_temp);
-        SetSimulation_Bini(Bini_temp);
-        end;
-IF (ROUND(10*VersionNr) < 41) // initial rooting depth at start of simulation period
-   THEN SetSimulation_Zrini(undef_int)
-   ELSE BEGIN
-        READLN(f0,Zrini_temp);
-        SetSimulation_Zrini(Zrini_temp);
-        END;
-READLN(f0,IniSurfaceStorage);
-IF (ROUND(10*VersionNr) < 32) // EC of the ini surface storage
-   THEN SetSimulation_ECStorageIni(0)
-   ELSE BEGIN 
-        READLN(f0,ECStorageIni_temp);
-        SetSimulation_ECStorageIni(ECStorageIni_temp);
-        END;
-READLN(f0,i);
-IF (i = 1)
-   THEN SetSimulation_IniSWC_AtDepths(true)
-   ELSE SetSimulation_IniSWC_AtDepths(false);
-READLN(f0,NrLoc_temp);
-SetSimulation_IniSWC_NrLoc(NrLoc_temp);
-READLN(f0);
-READLN(f0);
-READLN(f0);
-FOR i := 1 TO GetSimulation_IniSWC_NrLoc() DO
-    BEGIN
-    READLN(f0,StringParam);
-    Loc_i_temp := GetSimulation_IniSWC_Loc_i(i);
-    VolProc_i_temp := GetSimulation_IniSWC_VolProc_i(i);
-    IF (ROUND(10*VersionNr) < 32) // ECe at the locations
-       THEN BEGIN
-            SplitStringInTwoParams(StringParam,Loc_i_temp,VolProc_i_temp);
-            SetSimulation_IniSWC_SaltECe_i(i, 0);
-            END
-       ELSE BEGIN
-            SaltECe_i_temp := GetSimulation_IniSWC_SaltECe_i(i);
-            SplitStringInThreeParams(StringParam,Loc_i_temp,VolProc_i_temp,SaltECe_i_temp);
-            SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp);
-            END;
-    SetSimulation_IniSWC_Loc_i(i, Loc_i_temp);
-    SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp);
-    END;
-Close(f0);
-SetSimulation_IniSWC_AtFC(false);
-END; (* LoadInitialConditions *)
 
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;

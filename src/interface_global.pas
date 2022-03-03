@@ -4187,6 +4187,10 @@ function GetNrCompartments() : integer;
 procedure SetNrCompartments(constref NrCompartments_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
+procedure CalculateAdjustedFC(constref DepthAquifer : double;
+                              var CompartAdj   : rep_Comp);
+    external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
+
 procedure AdjustOnsetSearchPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustonsetsearchperiod';
 
@@ -4326,6 +4330,20 @@ procedure ReadTemperatureSettingsParameters();
 procedure CompleteCropDescription;
     external 'aquacrop' name '__ac_global_MOD_completecropdescription';
 
+procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
+
+procedure CompleteClimateDescription_wrap(
+                            constref DataType : integer;
+                            constref FromD, FromM, FromY : integer;
+                            constref ToD, ToM, ToY : integer;
+                            constref FromDayNr, ToDayNr : integer;
+                            constref FromString : PChar;
+                            constref strlen1 : integer;
+                            constref ToString : PChar;
+                            constref strlen2 : integer;
+                            constref NrObs : integer);
+    external 'aquacrop' name '__ac_interface_global_MOD_completeclimatedescription_wrap';
+
 
 
 procedure DesignateSoilLayerToCompartments(constref NrCompartments : integer;
@@ -4382,7 +4400,96 @@ procedure TranslateIniPointsToSWProfile(
 
 
 
+function CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : rep_modeCycle) : double;
+
+
+function __CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_ccinitotalfromtimetoccini';
+
+
+procedure AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustcropyeartoclimfile';
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+
+function EndGrowingPeriod_wrap(
+                          constref Day1 : longint;
+                          VAR DayN : longint) : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_endgrowingperiod_wrap';
+
+procedure LoadInitialConditions(constref SWCiniFileFull : string;
+                                VAR IniSurfaceStorage : double);
+
+procedure LoadInitialConditions_wrap(constref SWCiniFileFull : PChar;
+                                constref strlen : integer;
+                                VAR IniSurfaceStorage : double);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadinitialconditions_wrap';
+
+
+
 implementation
+
+
+procedure LoadInitialConditions(constref SWCiniFileFull : string;
+                                VAR IniSurfaceStorage : double);
+var
+    p : PChar;
+    strlen : integer;
+begin
+    p := PChar(SWCiniFileFull);
+    strlen := Length(SWCiniFileFull);
+    LoadInitialConditions_wrap(p, strlen, IniSurfaceStorage);
+end;
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+var
+    p : PChar;
+begin
+    p := EndGrowingperiod_wrap(Day1, DayN);
+    EndGrowingPeriod := AnsiString(p);
+end;
+    
+
+
+function CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle : integer;
+begin
+    int_modeCycle := ord(TheModeCycle);
+    CCiniTotalFromTimeToCCini := __CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini,
+                                            L0, L12, L12SF, L123, L1234, GDDL0,
+                                            GDDL12, GDDL12SF, GDDL123,
+                                            GDDL1234, CCo, CCx, CGC, GDDCGC,
+                                            CDC, GDDCDC, RatDGDD, SFRedCGC,
+                                            SFRedCCx, SFCDecline, fWeed,
+                                            int_modecycle)
+end;
+
 
 
 function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;
@@ -7385,6 +7492,40 @@ begin;
     strlen := Length(FullFileNameProgramParameters);
     LoadProgramParametersProject_wrap(p,strlen);
 end;
+
+
+
+procedure CompleteClimateDescription(var ClimateRecord : rep_clim);
+var
+    int_datatype : integer;
+    FromString_ptr, ToString_ptr : PChar;
+    strlen1, strlen2 : integer;
+begin
+    int_datatype := ord(ClimateRecord.DataType);
+    FromString_ptr := PChar(ClimateRecord.FromString);
+    ToString_ptr := PChar(ClimateRecord.ToString);
+    strlen1 := Length(ClimateRecord.FromString);
+    strlen2 := Length(ClimateRecord.ToString);
+
+    CompleteClimateDescription_wrap(int_datatype,
+                                    ClimateRecord.FromD,
+                                    ClimateRecord.FromM,
+                                    ClimateRecord.FromY,
+                                    ClimateRecord.ToD,
+                                    ClimateRecord.ToM,
+                                    ClimateRecord.ToY,
+                                    ClimateRecord.FromDayNr,
+                                    ClimateRecord.ToDayNr,
+                                    FromString_ptr, strlen1,
+                                    ToString_ptr, strlen2,
+                                    ClimateRecord.NrObs);
+
+    ClimateRecord.DataType := rep_datatype(int_datatype);
+    ClimateRecord.FromString := AnsiString(FromString_ptr);
+    ClimateRecord.ToString := AnsiString(ToString_ptr);
+end;
+
+
 
 
 initialization
