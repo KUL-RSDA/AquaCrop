@@ -4533,6 +4533,42 @@ function GetECiAqua() : double;
 procedure SetECiAqua(constref ECiAqua_in : double);
     external 'aquacrop' name '__ac_global_MOD_seteciaqua';
 
+function GetETo() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteto';
+
+procedure SetETo(constref ETo_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteto';
+
+function GetIrrigation() : double;
+    external 'aquacrop' name '__ac_global_MOD_getirrigation';
+
+procedure SetIrrigation(constref Irrigation_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setirrigation';
+
+function GetInfiltrated() : double;
+    external 'aquacrop' name '__ac_global_MOD_getinfiltrated';
+
+procedure SetInfiltrated(constref Infiltrated_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setinfiltrated';
+
+function GetCRwater() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrwater';
+
+procedure SetCRwater(constref CRwater_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrwater';
+
+function GetEpot() : double;
+    external 'aquacrop' name '__ac_global_MOD_getepot';
+
+procedure SetEpot(constref Epot_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setepot';
+
+function GetTpot() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettpot';
+
+procedure SetTpot(constref Tpot_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settpot';
+
 
 implementation
 

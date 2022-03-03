@@ -226,9 +226,9 @@ SetCrop_DayN(Crop_DayN_temp);
  AdjustOnsetSearchPeriod;
 
  // 12. Simulation run
- ETo := 5.0;
+ SetETo(5.0);
  SetRain(0);
- Irrigation := 0;
+ SetIrrigation(0);
  SurfaceStorage := 0;
  ECstorage := 0.0;
  DaySubmerged := 0;
@@ -237,8 +237,8 @@ SetCrop_DayN(Crop_DayN_temp);
  SetSumWaBal(SumWaBal_temp);
  SetDrain(0.0); // added 4.0
  SetRunoff(0.0);// added 4.0
- Infiltrated := 0.0; // added 4.0
- CRwater := 0; // added 4.0
+ SetInfiltrated(0.0); // added 4.0
+ SetCRwater(0); // added 4.0
  CRsalt := 0; // added 4.0
  SetSimulation_ResetIniSWC(true);
  SetSimulation_EvapLimitON(false);
