@@ -586,29 +586,6 @@ VAR  control : rep_control;
 
 
 
-PROCEDURE calculate_weighting_factors(Depth : double;
-                                      VAR Compartment : rep_Comp);
-VAR i, compi : INTEGER;
-    CumDepth, xx, wx : double;
-
-BEGIN
-CumDepth := 0;
-xx := 0;
-compi := 0;
-REPEAT
-  compi := compi + 1;
-  CumDepth := CumDepth + Compartment[compi].Thickness;
-  IF (CumDepth > Depth) THEN CumDepth := Depth;
-  wx := 1.016 * (1.0 - EXP(-4.16 * CumDepth/Depth));
-  Compartment[compi].WFactor := wx - xx;
-  IF (Compartment[compi].WFactor > 1) THEN Compartment[compi].WFactor := 1;
-  IF (Compartment[compi].WFactor < 0) THEN Compartment[compi].WFactor := 0;
-  xx := wx;
-UNTIL (CumDepth >= Depth) OR (compi = GetNrCompartments());
-FOR i := (compi + 1) TO GetNrCompartments() DO Compartment[i].WFactor := 0;
-END; (* calculate_weighting_factors *)
-
-
 PROCEDURE CheckWaterSaltBalance(control: rep_control;
                                 InfiltratedIrrigation, InfiltratedStorage : double;
                                 VAR Surf0,ECInfilt,ECdrain : double);
@@ -633,7 +610,7 @@ CASE control OF
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
                SetDrain(0.0);
-               Runoff:=0.0;
+               SetRunoff(0.0);
                //Eact:=0.0; at the beginning of the evaporation process it is put at zero
                Tact:=0.0;
                Infiltrated := 0.0;
@@ -674,7 +651,7 @@ CASE control OF
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
                SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
-                              -(GetTotalWaterContent().EndDay+GetDrain()+Runoff+Eact+Tact+Surf1-Rain-Irrigation-CRwater-HorizontalWaterFlow));
+                              -(GetTotalWaterContent().EndDay+GetDrain()+GetRunoff()+Eact+Tact+Surf1-GetRain()-Irrigation-CRwater-HorizontalWaterFlow));
                SetTotalSaltContent_ErrorDay(GetTotalSaltContent().BeginDay - GetTotalSaltContent().EndDay // Mg/ha
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
@@ -683,10 +660,10 @@ CASE control OF
                                             + HorizontalSaltFlow);
                SetSumWaBal_Epot(GetSumWaBal_Epot() + Epot);
                SetSumWaBal_Tpot(GetSumWaBal_Tpot() + Tpot);
-               SetSumWaBal_Rain(GetSumWaBal_Rain() + Rain);
+               SetSumWaBal_Rain(GetSumWaBal_Rain() + GetRain());
                SetSumWaBal_Irrigation(GetSumWaBal_Irrigation() + Irrigation);
                SetSumWaBal_Infiltrated(GetSumWaBal_Infiltrated() + Infiltrated);
-               SetSumWaBal_Runoff(GetSumWaBal_Runoff() + Runoff);
+               SetSumWaBal_Runoff(GetSumWaBal_Runoff() + GetRunoff());
                SetSumWaBal_Drain(GetSumWaBal_Drain() + GetDrain());
                SetSumWaBal_Eact(GetSumWaBal_Eact() + Eact);
                SetSumWaBal_Tact(GetSumWaBal_Tact() + Tact);
@@ -709,93 +686,21 @@ CASE control OF
 END; (* CheckWaterSaltBalance *)
 
 
-PROCEDURE calculate_runoff(MaxDepth : double);
-VAR SUM, CNA, Shower, term, S : double;
-    CN2, CN1, CN3 : ShortInt;
-
-
-PROCEDURE calculate_relative_wetness_topsoil(VAR SUM : double);
-
-VAR CumDepth, theta : double;
-    compi, layeri : INTEGER;
-    Compartment_temp : rep_Comp;
-
-BEGIN     (*calculate_relative_wetness_topsoil*)
-Compartment_temp := GetCompartment();
-calculate_weighting_factors(MaxDepth,Compartment_temp);
-SetCompartment(Compartment_temp);
-SUM := 0.0;
-compi := 0;
-CumDepth := 0;
-REPEAT
-  compi := compi + 1;
-  layeri := GetCompartment_Layer(compi);
-  CumDepth := CumDepth + GetCompartment_Thickness(compi);
-  IF GetCompartment_theta(compi) < GetSoilLayer_i(layeri).WP/100
-     THEN theta := GetSoilLayer_i(layeri).WP/100
-     ELSE theta := GetCompartment_theta(compi);
-  SUM := SUM + GetCompartment_WFactor(compi)
-         * (theta-GetSoilLayer_i(layeri).WP/100)/(GetSoilLayer_i(layeri).FC/100 - GetSoilLayer_i(layeri).WP/100);
-UNTIL (CumDepth >= MaxDepth) OR (compi = GetNrCompartments());
-IF SUM < 0 THEN SUM := 0.0;
-IF SUM > 1 THEN SUM := 1.0;
-END; (*calculate_relative_wetness_topsoil*)
-
-
-BEGIN
-//CN2 := GetSoil().CNvalue;
-CN2 := ROUND(GetSoil().CNvalue * (100 + GetManagement_CNcorrection())/100);
-IF (GetRainRecord_DataType() = Daily)
-   THEN BEGIN
-        IF (GetSimulParam_CNcorrection())
-           THEN BEGIN
-                calculate_relative_wetness_topsoil(SUM);
-                DetermineCNIandIII(CN2,CN1,CN3);
-                CNA := ROUND(CN1+(CN3-CN1)*SUM);
-                END
-           ELSE CNA := CN2;
-        Shower := Rain;
-        END
-   ELSE BEGIN
-        CNA := CN2;
-        Shower := (Rain*10)/GetSimulParam_EffectiveRain_ShowersInDecade();
-        END;
-S := 254 * (100/CNA - 1);
-//term := Shower - 0.2 * S;
-term := Shower - (GetSimulParam_IniAbstract()/100) * S;
-IF term <= 0 THEN Runoff := 0.0
-             //ELSE Runoff := SQR(term)/(Shower + 0.8 * S);
-             ELSE Runoff := SQR(term)/(Shower + (1-(GetSimulParam_IniAbstract()/100)) * S);
-IF ((Runoff > 0) AND ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))) THEN
-   BEGIN
-   IF (Runoff >= Shower)
-      THEN Runoff := Rain
-      ELSE BEGIN
-           Runoff := Runoff * (GetSimulParam_EffectiveRain_ShowersInDecade()/10.14);
-           IF (Runoff > Rain) THEN Runoff := Rain;
-           END;
-   END;
-END; (* calculate_runoff *)
-
-
-
-
-
 PROCEDURE CalculateEffectiveRainfall;
 VAR EffecRain, ETcropMonth, RainMonth,
     DrainMax, Zr, depthi, DTheta, RestTheta : double;
     compi : INTEGER;
 
 BEGIN
-IF (Rain > 0) THEN
+IF (GetRain() > 0) THEN
    BEGIN
    // 1. Effective Rainfall
-   EffecRain := (Rain-Runoff);
+   EffecRain := (GetRain()-GetRunoff());
    Case GetSimulParam_EffectiveRain_Method() OF
-      Percentage : EffecRain := (GetSimulParam_EffectiveRain_PercentEffRain()/100) * (Rain-Runoff);
+      Percentage : EffecRain := (GetSimulParam_EffectiveRain_PercentEffRain()/100) * (GetRain()-GetRunoff());
       USDA       : BEGIN
                    ETcropMonth := ((Epot+Tpot)*30)/25.4; // inch/month
-                   RainMonth := ((Rain-Runoff)*30)/25.4; //inch/Month
+                   RainMonth := ((GetRain()-GetRunoff())*30)/25.4; //inch/Month
                   IF (RainMonth > 0.1)
                       THEN EffecRain := (0.70917*EXP(0.82416*LN(RainMonth))-0.11556)
                             * (EXP(0.02426*ETcropMonth*LN(10))) //inch/month
@@ -804,8 +709,8 @@ IF (Rain > 0) THEN
                    END;
       end;
    IF (EffecRain < 0) THEN EffecRain := 0;
-   IF (EffecRain > (Rain-Runoff)) THEN EffecRain := (Rain-Runoff);
-   SubDrain := (Rain-Runoff) - EffecRain;
+   IF (EffecRain > (GetRain()-GetRunoff())) THEN EffecRain := (GetRain()-GetRunoff());
+   SubDrain := (GetRain()-GetRunoff()) - EffecRain;
 
    //2. Verify Possibility of SubDrain
    IF (SubDrain > 0) THEN
@@ -833,7 +738,7 @@ IF (Rain > 0) THEN
         BEGIN
         //IF (NOT SimulParam.StandingWater)
         IF (GetManagement_Bundheight() < 0.001)
-           THEN Runoff := Runoff + (SubDrain-DrainMax);
+           THEN SetRunoff(GetRunoff() + (SubDrain-DrainMax));
         SubDrain := DrainMax;
         END;
      END;
@@ -851,7 +756,7 @@ BEGIN
 SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
 DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
 SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-ZrWC := GetRootZoneWC().Actual - Epot - Tpot + Rain - Runoff - SubDrain;
+ZrWC := GetRootZoneWC().Actual - Epot - Tpot + GetRain() - GetRunoff() - SubDrain;
 IF (GetGenerateTimeMode() = AllDepl) THEN
    IF ((GetRootZoneWC().FC - ZrWC) >= TargetTimeVal)
       THEN TargetTimeVal := 1
@@ -881,7 +786,7 @@ PROCEDURE calculate_Extra_runoff(VAR InfiltratedRain, InfiltratedIrrigation, Inf
 VAR FracSubDrain : double;
 BEGIN
 InfiltratedStorage := 0;
-InfiltratedRain := Rain - Runoff;
+InfiltratedRain := GetRain() - GetRunoff();
 IF (InfiltratedRain > 0)
    THEN FracSubDrain := SubDrain/InfiltratedRain
    ELSE FracSubDrain := 0;
@@ -889,7 +794,7 @@ IF (Irrigation+InfiltratedRain) > GetSoilLayer_i(GetCompartment_Layer(1)).InfRat
    THEN IF (Irrigation > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
            THEN BEGIN
                 InfiltratedIrrigation := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
-                Runoff := Rain + (Irrigation-InfiltratedIrrigation);
+                SetRunoff(GetRain() + (Irrigation-InfiltratedIrrigation));
                 InfiltratedRain := 0;
                 SubDrain := 0;
                 END
@@ -897,7 +802,7 @@ IF (Irrigation+InfiltratedRain) > GetSoilLayer_i(GetCompartment_Layer(1)).InfRat
                 InfiltratedIrrigation := Irrigation;
                 InfiltratedRain := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate - InfiltratedIrrigation;
                 SubDrain := FracSubDrain*InfiltratedRain;
-                Runoff := Rain - InfiltratedRain;
+                SetRunoff(GetRain() - InfiltratedRain);
                 END
    ELSE InfiltratedIrrigation := Irrigation;
 END; (* calculate_Extra_runoff *)
@@ -913,8 +818,8 @@ BEGIN
 InfiltratedRain := 0;
 InfiltratedIrrigation := 0;
 IF (GetRainRecord_DataType() = Daily)
-    THEN Sum := SurfaceStorage + Irrigation + Rain
-    ELSE Sum := SurfaceStorage + Irrigation + Rain - Runoff - SubDrain;
+    THEN Sum := SurfaceStorage + Irrigation + GetRain()
+    ELSE Sum := SurfaceStorage + Irrigation + GetRain() - GetRunoff() - SubDrain;
 IF (Sum > 0)
   THEN BEGIN
        // quality of irrigation water
@@ -939,14 +844,14 @@ IF (Sum > 0)
                   THEN InfiltratedStorage := Sum
                   ELSE BEGIN
                        InfiltratedStorage := SurfaceStorage + Irrigation;
-                       InfiltratedRain := Rain - Runoff (* - SubDrain*);
+                       InfiltratedRain := GetRain() - GetRunoff() (* - SubDrain*);
                        END;
                SurfaceStorage := 0;
                END;
        // extra run-off
        IF (SurfaceStorage > (GetManagement_BundHeight()*1000))
           THEN BEGIN
-               Runoff := Runoff + (SurfaceStorage - GetManagement_BundHeight()*1000);
+               SetRunoff(GetRunoff() + (SurfaceStorage - GetManagement_BundHeight()*1000));
                SurfaceStorage := GetManagement_BundHeight()*1000;
                END;
        END
@@ -992,7 +897,7 @@ IF (GetRainRecord_DataType() = Daily)
 // B - INFILTRATION through TOP soil surface
 IF (amount_still_to_store > 0)
 THEN BEGIN
-     RunoffIni := Runoff;
+     RunoffIni := GetRunoff();
      compi := 0;
 //     excess := 0.0;
 
@@ -1077,7 +982,7 @@ THEN BEGIN
                   END
              ELSE excess := 0.0;
         UNTIL ((excess = 0) OR (pre_comp = 1));
-        IF (excess > 0) THEN Runoff := Runoff + excess;
+        IF (excess > 0) THEN SetRunoff(GetRunoff() + excess);
         END;
 
      UNTIL ((amount_still_to_store <= 0) or (compi = GetNrCompartments()));
@@ -1085,21 +990,21 @@ THEN BEGIN
 
    (*6. Adjust infiltrated water
    ============================= *)
-     IF (Runoff > RunoffIni) THEN
+     IF (GetRunoff() > RunoffIni) THEN
         //IF (SimulParam.StandingWater)
         IF (GetManagement_Bundheight() >= 0.01)
            THEN BEGIN
-                SurfaceStorage := SurfaceStorage + (Runoff-RunoffIni);
-                InfiltratedStorage := InfiltratedStorage - (Runoff-RunoffIni);
+                SurfaceStorage := SurfaceStorage + (GetRunoff()-RunoffIni);
+                InfiltratedStorage := InfiltratedStorage - (GetRunoff()-RunoffIni);
                 IF (SurfaceStorage > GetManagement_BundHeight()*1000)
                    THEN BEGIN
-                        Runoff := RunoffIni + (SurfaceStorage - GetManagement_BundHeight()*1000);
+                        SetRunoff(RunoffIni + (SurfaceStorage - GetManagement_BundHeight()*1000));
                         SurfaceStorage := GetManagement_BundHeight()*1000;
                         END
-                   ELSE Runoff := RunoffIni;
+                   ELSE SetRunoff(RunoffIni);
                 END
            ELSE BEGIN
-                InfiltratedRain := InfiltratedRain - (Runoff-RunoffIni);
+                InfiltratedRain := InfiltratedRain - (GetRunoff()-RunoffIni);
                 IF (InfiltratedRain < 0) THEN
                    BEGIN
                    InfiltratedIrrigation := InfiltratedIrrigation + InfiltratedRain;
@@ -1229,11 +1134,11 @@ IF (EffecRain > 0) THEN
               SurfaceStorage := SurfaceStorage + amount_still_to_store;
               IF (SurfaceStorage > (GetManagement_BundHeight()*1000))
                  THEN BEGIN
-                      Runoff := Runoff + (SurfaceStorage - GetManagement_BundHeight()*1000);
+                      SetRunoff(GetRunoff() + (SurfaceStorage - GetManagement_BundHeight()*1000));
                       SurfaceStorage := GetManagement_BundHeight()*1000;
                      END;
               END
-         ELSE Runoff := Runoff + amount_still_to_store;
+         ELSE SetRunoff(GetRunoff() + amount_still_to_store);
       END;
    END; (* STORAGE in Rootzone (= EffecRain) *)
 
@@ -2826,7 +2731,7 @@ BEGIN
 IF (SurfaceStorage > 0.0000001)
    THEN SetSimulation_EvapWCsurf(GetSoil().REW)
    ELSE BEGIN
-        SetSimulation_EvapWCsurf(Rain + Irrigation - RunOff);
+        SetSimulation_EvapWCsurf(GetRain() + Irrigation - GetRunOff());
         IF (GetSimulation_EvapWCsurf() > GetSoil().REW) THEN SetSimulation_EvapWCsurf(GetSoil().REW);
         END;
 SetSimulation_EvapStartStg2(undef_Int);
@@ -2867,7 +2772,7 @@ IF (Irrigation > 0) THEN
    IF ((dayi >= GetCrop().Day1+GetCrop().DaysToHarvest)AND (GetSimulParam_IrriFwOffSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    END;
-IF ((Rain > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
+IF ((GetRain() > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
 IF ((dayi >= GetCrop().Day1) AND (dayi < GetCrop().Day1+GetCrop().DaysToHarvest) AND (GetIrriMode() = Inet))
    THEN EvapoEntireSoilSurface := true;
 
@@ -3601,7 +3506,7 @@ calculate_drainage;
 IF (GetManagement_Bundheight() < 0.001) THEN
    BEGIN
    DaySubmerged := 0;
-   IF ((GetManagement_RunoffON() = true) AND (Rain > 0.1)) THEN calculate_runoff(GetSimulParam_RunoffDepth());
+   IF ((GetManagement_RunoffON() = true) AND (GetRain() > 0.1)) THEN calculate_runoff(GetSimulParam_RunoffDepth());
    END;
 
 // 5. Infiltration (Rain and Irrigation)
@@ -3664,7 +3569,7 @@ SetCrop_pActStom(Crop_pActStom_temp);
 
 // 12. Evaporation
 IF (PreDay = false) THEN PrepareStage2; // Initialize Simulation.EvapstartStg2 (REW is gone)
-IF ((Rain > 0) OR
+IF ((GetRain() > 0) OR
    ((Irrigation > 0) AND (GetIrriMode() <> Inet)))
    THEN PrepareStage1;
 EvapWCsurf_temp := GetSimulation_EvapWCsurf();
