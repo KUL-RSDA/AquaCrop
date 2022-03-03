@@ -115,8 +115,30 @@ procedure AdjustCropFileParameters(
             VAR L123,L1234,GDD123,GDD1234 : INTEGER);
          external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
+procedure LoadSimulationRunProject(
+            constref NameFileFull : string;
+            constref NrRun : INTEGER);
+
+procedure LoadSimulationRunProject(
+            constref IrriFileFull : string;
+            constref strlen1 : integer;
+            constref NrRun : INTEGER);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_loadsimulationrunproject';
+
 implementation
 
+
+procedure LoadSimulationRunProject(
+            constref NameFileFull : string;
+            constref NrRun : INTEGER);
+var
+    p1 := PChar;
+    strlen1: integer;
+begin;
+    p1 := PChar(NameFileFull);
+    strlen1 := Length(NameFileFull);
+    LoadSimulationRunProject_wrap(p1, strlen1, NrRun);
+end;
 
 initialization
 

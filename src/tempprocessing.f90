@@ -16,6 +16,9 @@ use ac_global , only: undef_int, &
                       rep_DayEventDbl, &
                       rep_CropFileSet, &
                       rep_EffectStress, &
+                      rep_clim, &
+                      max_No_compartments, &
+                      CompartmentIndividual, &
                       subkind_Vegetative, &
                       subkind_Grain, &
                       subkind_Tuber, &
@@ -25,15 +28,53 @@ use ac_global , only: undef_int, &
                       datatype_monthly, &
                       DetermineDayNr, &
                       DetermineDate, &
+                      ECeComp, &
                       LeapYear, &
                       SplitStringInTwoParams, &
                       KsTemperature, &
                       DegreesDay, &
                       LengthCanopyDecline, &
                       DetermineLengthGrowthStages, &
+                      AdjustSizeCompartments, &
+                      GenerateCO2Description, &
+                      LoadClim, &
+                      LoadIrriScheduleInfo,&
+                      LoadManagement, &
+                      GetECiAqua,&
+                      SetECiAqua,&
+                      GetECStorage,&
+                      GetSurfaceStorage,&
+                      GetNrCompartments, &
+                      GetManagement_FertilityStress, &
                       GetPathNameSimul, &
                       GetTemperatureFile, &                     
                       GetTemperatureFilefull, &
+                      GetTemperatureDescription, &
+                      GetEToFile, GetEToFilefull, &
+                      GetEToDescription,&
+                      GetEToRecord, &
+                      GetRainFile, GetRainFileFull,&
+                      Getraindescription,&
+                      GetCO2File, GetCO2FileFull,&
+                      GetCO2Description,&
+                      GetClimFile,&
+                      GetIrriFile, GetIrriFileFull,&
+                      GetManFile, GetManFilefull,&
+                      GetProfFile, GetProfFilefull,&
+                      GetOffSeasonFile, GetOffSeasonFilefull,&
+                      GetGroundWaterFile, GetGroundWaterFilefull,&
+                      GetObservationsFile,&
+                      GetObservationsDescription,&
+                      GetObservationsFileFull,&
+                      GetCompartment_Thickness, &
+                      GetCompartment_Theta, &
+                      GetCompartment_i, &
+                      GetZiAqua, &
+                      GetManagement_BundHeight, &
+                      GetRainRecord, &
+                      GetClimRecord_NrObs, &
+                      GetClimRecord_FromY, &
+                      GetTemperatureRecord, &
                       GetTemperatureRecord_FromD, &
                       GetTemperatureRecord_FromM, &
                       GetTemperatureRecord_FromY, &
@@ -45,7 +86,20 @@ use ac_global , only: undef_int, &
                       GetTemperatureRecord_FromDayNr, &
                       GetTemperatureRecord_ToDayNr, &
                       GetSimulParam_GDDMethod, &
+                      GetCalendarFile, GetCalendarFileFull,&
+                      GetCalendarDescription, &
+                      GetCropFilefull,&
+                      GetCrop_RootMin,&
+                      GetCrop_SizePlant,&
                       FullUndefinedRecord, &
+                      SetEToFilefull, &
+                      SetObservationsFileFull, &
+                      SetProfFilefull,&
+                      SetGroundWaterFilefull,&
+                      SetCO2FileFull,&
+                      SetSimulation_ECStorageIni,&
+                      GetCrop_SownYear1, &
+                      SetCrop_DayN, &
                       SetCrop_GDDaysToFullCanopy, &
                       SetCrop_GDDaysToHIo, &
                       SetCrop_DaysToHarvest, &
@@ -60,6 +114,21 @@ use ac_global , only: undef_int, &
                       SetCrop_DaysToMaxRooting, &
                       SetCrop_CGC, &
                       SetCrop_DaysToFlowering, &
+                      SetSWCIniFile, &
+                      SetZiAqua, &
+                      SetGroundWaterDescription, &
+                      SetClimateFileFull, &
+                      SetSimulation_LinkCropToSimPeriod, &
+                      SetRainFilefull, &
+                      SetCalendarFileFull, &
+                      SetManFileFull, &
+                      GetCropFileSet, &
+                      GetSimulation_EffectStress_RedCGC, &
+                      GetSimulation_EffectStress_RedCCX, &
+                      GetCrop_PlantingDens, &
+                      GetCrop_SizeSeedling, &
+                      GetCrop_DaysToFullCanopySF, &
+                      GetCrop_DayN,GetCrop_Day1, &
                       GetCrop_GDDaysToGermination, &
                       GetCrop_GDDaysToFullCanopy, &
                       GetCrop_GDDaysToHarvest,   GetCrop_GDDaysToHIo, &
@@ -85,7 +154,29 @@ use ac_global , only: undef_int, &
                       GetCrop_ModeCycle, &
                       GetCrop_Tbase, & 
                       GetCrop_Tupper, &
-                      GetSimulParam_Tmin, GetSimulParam_Tmax
+                      GetCrop_Planting, &
+                      GetCrop_CCini, &
+                      GetCrop_GDDaysToCCini, &
+                      GetCrop_DeterminancyLinked, &
+                      GetCrop_RootMax, &
+                      GetSoil_RootMax, &
+                      GetCrop_RootMinYear1, &
+                      GetCompartment,&
+                      GetSimulParam_Tmin, GetSimulParam_Tmax,&
+                      GetSimulation_ResetIniSWC,&
+                      GetSimulation_MultipleRunWithKeepSWC,&
+                      GetSimulation_MultipleRunConstZrx,&
+                      GetSimulation_ToDayNr, &
+                      GetSimulation_FromDayNr,&
+                      GetSimulation_YearSeason, &
+                      GetSimulation_IniSWC_NrLoc, &
+                      GetSimulation_IniSWC_AtDepths, &
+                      GetSimulation_IniSWC_Loc, &
+                      GetSimulation_IniSWC_VolProc, &
+                      GetSimulation_IniSWC_SaltECe, &
+                      GetSimulation_IniSWC_AtFC, &
+                      GetSWCIniFile, GetSWCiniFileFull, &
+                      GetClimateFile, GetClimateFileFull
 
 implicit none
 
@@ -1871,5 +1962,469 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
         GDD123 = undef_int
     end if
 end subroutine AdjustCropFileParameters
+
+subroutine LoadSimulationRunProject(NameFileFull, NrRun)
+    character(len=*), intent(in) :: NameFileFull
+    integer(int32), intent(in) :: NrRun
+
+    integer(int32) :: f0, fClim, rc
+    character(len=:), allocatable :: TempString, TempString1, TempString2
+    character(len=:), allocatable :: observations_descr, eto_descr
+    character(len=:), allocatable :: CO2descr, rain_descr
+    character(len=:), allocatable :: CalendarDescriptionLocal
+    character(len=:), allocatable :: TemperatureDescriptionLocal
+    integer(int32) :: TempSimDayNr1, TempSimDayNrN
+    integer(int32) :: i, Runi
+    real(dp) :: TotDepth
+    real(dp) :: VersionNr
+    integer(int8)  :: FertStress
+    type(rep_clim) :: temperature_record
+    integer(int8)  :: YearSeason_temp, RedCGC_temp, RedCCX_temp
+    type(CompartmentIndividual), dimension(max_No_compartments) :: &
+                      Compartment_temp
+    integer(int32) :: TempInt
+    integer(intEnum) :: Crop_Planting_temp
+    real(dp) :: Crop_RootMin_temp, Crop_SizePlant_temp, Crop_CCini_temp
+    integer(int32) :: Crop_DaysToCCini_temp, Crop_GDDaysToCCini_temp
+    integer(int32) :: Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp
+    integer(int32) :: Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp
+    integer(int32) :: Crop_Day1_temp
+    integer(int32) :: Crop_DayN_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+
+    integer(int32) :: ZiAqua_temp
+    type(rep_clim) :: etorecord_tmp, rainrecord_tmp
+
+    open(newunit=f0, file=trim(NameFileFull), &
+              status='old', action='read', iostat=rc)
+    read(f0, *, iostat=rc) !Description
+    read(f0, *, iostat=rc) VersionNr ! AquaCrop version Nr
+    if (NrRun > 1) then
+        ! Files previous runs
+        do Runi = 1, (NrRun - 1)
+            do i = 1, 47
+                read(f0, *, iostat=rc) ! 5 + 42 lines with files
+            end do
+        end do
+    end if
+    ! Year of cultivation and Simulation and Cropping period
+    read(f0, *, iostat=rc) YearSeason_temp ! year number of cultivation 
+                                           !(1 = seeding/planting year)
+    call SetSimulation_YearSeason(YearSeason_temp);
+    read(f0, *, iostat=rc) TempSimDayNr1 ! First day of simulation period
+    read(f0, *, iostat=rc) TempSimDayNrN ! Last day of simulation period
+    read(f0, *, iostat=rc) TempInt       ! First day of cropping period
+    call SetCrop_Day1(TempInt)
+    read(f0, *, iostat=rc) TempInt ! Last day of cropping period
+    call SetCrop_DayN(TempInt)
+
+    ! 1. Climate
+    read(f0, *, iostat=rc)  ! Info Climate
+    read(f0, '(a)', iostat=rc) TempString  ! ClimateFile
+    call SetClimateFile(trim(TempString))
+    if (GetClimateFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathClimateFile
+        call SetClimateFileFull(GetClimateFile())
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathClimateFile
+        call SetClimateFileFull((trim(TempString)//GetClimateFile()))
+        open(newunit=fClim, file=trim(GetClimateFileFull()), &
+              status='old', action='read', iostat=rc)
+        ! 1.0 Description
+        read(fClim, '(a)', iostat=rc) TempString
+        call SetClimateDescription(trim(TempString))
+        close(fClim)
+    end if
+    ! 1.1 Temperature
+    read(f0, *, iostat=rc)  ! Info Temperature
+    read(f0, '(a)', iostat=rc) TempString  ! TemperatureFile
+    call SetTemperatureFile(trim(TempString))
+    if (GetTemperatureFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathTemperatureFile
+        call SetTemperatureFilefull(GetTemperatureFile())  ! no file 
+        write(TempString1,'(f8.1)') GetSimulParam_Tmin()
+        write(TempString2,'(f8.1)') GetSimulParam_Tmax()
+        call SetTemperatureDescription(('Default temperature data: Tmin = '// &
+          trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' °'))
+    else
+        read(f0, '(a)', iostat=rc) TempString ! PathTemperatureFile
+        call SetTemperatureFileFull((trim(TempString)//trim(GetTemperatureFile())))
+        temperature_record = GetTemperatureRecord()
+        TemperatureDescriptionLocal = GetTemperatureDescription()
+        call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
+                       temperature_record) 
+        call SetTemperatureDescription(TemperatureDescriptionLocal)
+        call CompleteClimateDescription(temperature_record)
+        call SetTemperatureRecord(temperature_record)
+    end if
+    ! 1.2 ETo
+    read(f0, *, iostat=rc) ! Info ETo
+    read(f0, '(a)', iostat=rc) TempString  ! EToFile
+    call SetEToFile(trim(TempString))
+    if (GetEToFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathETo
+        call SetEToFilefull(GetEToFile())  ! no file 
+        call SetEToDescription('Specify ETo data when Running AquaCrop')
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathETo
+        call SetEToFilefull((trim(TempString)//GetEToFile()))
+        eto_descr = GetEToDescription()
+        etorecord_tmp = GetEToRecord()
+        call LoadClim(GetEToFilefull(), eto_descr, etorecord_tmp)
+        call SetEToDescription(eto_descr)
+        call CompleteClimateDescription(etorecord_tmp)
+        call SetEToRecord(etorecord_tmp)
+    end if
+    ! 1.3 Rain
+    read(f0, *, iostat=rc) ! Info Rain
+    read(f0, '(a)', iostat=rc) TempString ! RainFile
+    call SetRainFile(trim(TempString))
+    if (GetRainFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathRain
+        call SetRainFilefull(GetRainFile())  ! no file 
+        call SetRainDescription('Specify Rain data when Running AquaCrop')
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathRain
+        call SetRainFileFull(trim(TempString)// GetRainFile())
+        rain_descr = Getraindescription()
+        rainrecord_tmp = GetRainRecord() 
+        call LoadClim(GetRainFilefull(), rain_descr, rainrecord_tmp)
+        call SetRainDescription(rain_descr)
+        call CompleteClimateDescription(rainrecord_tmp)
+        call SetRainRecord(rainrecord_tmp)
+    end if
+    ! 1.4 CO2
+    read(f0, *, iostat=rc) ! Info CO2
+    read(f0, '(a)', iostat=rc) TempString ! CO2File
+    call SetCO2File(trim(TempString))
+    if (GetCO2File() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathCO2File
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathCO2File
+        call SetCO2FileFull(trim(TempString)// GetCO2File())
+        CO2descr =  GetCO2Description()
+        call GenerateCO2Description(GetCO2FileFull(), CO2descr)
+        call SetCO2Description(CO2descr)
+    end if
+    call SetClimData
+    call AdjustOnsetSearchPeriod ! Set initial StartSearch and StopSearchDayNr
+
+    ! 2. Calendar
+    read(f0, *, iostat=rc)  ! Info calendar
+    read(f0, '(a)', iostat=rc) TempString ! CalendarFile
+    call SetCalendarFile(trim(TempString))
+    if (GetCalendarFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathCalendarFile
+        call SetCalendarDescription('No calendar for the Seeding/Planting year')
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathCalendarFile
+        call SetCalendarFileFull(trim(TempString)//GetCalendarFile())
+        CalendarDescriptionLocal = GetCalendarDescription()
+        call GetFileDescription(GetCalendarFileFull(), CalendarDescriptionLocal)
+        call SetCalendarDescription(CalendarDescriptionLocal)
+    end if
+
+    ! 3. Crop
+    call SetSimulation_LinkCropToSimPeriod(.true.)
+    read(f0, *, iostat=rc)  ! Info Crop
+    read(f0, '(a)', iostat=rc) TempString  ! CropFile
+    call SetCropFile(trim(TempString))
+    read(f0, '(a)', iostat=rc) TempString  ! PathCropFile
+    call SetCropFilefull(trim(TempString))
+    call LoadCrop(GetCropFilefull())
+    ! Adjust crop parameters of Perennials
+    if (GetCrop_subkind() == subkind_Forage) then
+        ! adjust crop characteristics to the Year (Seeding/Planting or
+        ! Non-seesing/Planting year)
+        Crop_Planting_temp = GetCrop_Planting()
+        Crop_RootMin_temp = GetCrop_RootMin()
+        Crop_SizePlant_temp = GetCrop_SizePlant()
+        Crop_CCini_temp = GetCrop_CCini()
+        Crop_DaysToCCini_temp = GetCrop_DaysToCCini()
+        Crop_GDDaysToCCini_temp = GetCrop_GDDaysToCCini()
+        call AdjustYearPerennials(GetSimulation_YearSeason(),&
+              GetCrop_SownYear1(), GetCrop_ModeCycle(), &
+              GetCrop_RootMax(), GetCrop_RootMinYear1(), &
+              GetCrop_CCo(), GetCrop_SizeSeedling(), GetCrop_CGC(),&
+              GetCrop_CCx(), GetCrop_GDDCGC(), GetCrop_PlantingDens(), &
+              Crop_Planting_temp, Crop_RootMin_temp, Crop_SizePlant_temp,&
+              Crop_CCini_temp, Crop_DaysToCCini_temp, Crop_GDDaysToCCini_temp)
+        call SetCrop_Planting(Crop_Planting_temp)
+        call SetCrop_RootMin(Crop_RootMin_temp)
+        call SetCrop_SizePlant(Crop_SizePlant_temp)
+        call SetCrop_CCini(Crop_CCini_temp)
+        call SetCrop_DaysToCCini(Crop_DaysToCCini_temp)
+        call SetCrop_GDDaysToCCini(Crop_GDDaysToCCini_temp)
+        ! adjust length of season
+        call  SetCrop_DaysToHarvest(GetCrop_DayN() - GetCrop_Day1() + 1)
+        Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
+        Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
+        Crop_GDDaysToSenescence_temp = GetCrop_GDDaysToSenescence()
+        Crop_GDDaysToHarvest_temp = GetCrop_GDDaysToHarvest()
+        call AdjustCropFileParameters(GetCropFileSet(),&
+              GetCrop_DaysToHarvest(), GetCrop_Day1(), &
+              GetCrop_ModeCycle(), GetCrop_Tbase(), GetCrop_Tupper(),&
+              Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp,&
+              Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp)
+        call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
+        call SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp)
+        call SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp)
+        call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
+    end if
+
+    call AdjustCalendarCrop(GetCrop_Day1())
+    call CompleteCropDescription
+    ! Onset.Off := true;
+    if (GetClimFile() == '(None)') then
+        Crop_Day1_temp = GetCrop_Day1()
+        Crop_DayN_temp = GetCrop_DayN()
+        call AdjustCropYearToClimFile(Crop_Day1_temp, Crop_DayN_temp) 
+        ! adjusting Crop.Day1 and Crop.DayN to ClimFile
+        call SetCrop_Day1(Crop_Day1_temp)
+        call SetCrop_DayN(Crop_DayN_temp)
+    else
+        call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
+    end if
+
+    ! adjusting ClimRecord.'TO' for undefined year with 365 days 
+    if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
+        .and. (GetClimRecord_NrObs() == 365)) then
+        call AdjustClimRecordTo(GetCrop_DayN())
+    end if
+    ! adjusting simulation period 
+    call AdjustSimPeriod
+
+    ! 4. Irrigation
+    read(f0, *, iostat=rc)  ! Info Irrigation
+    read(f0, '(a)', iostat=rc) TempString ! IrriFile
+    call SetIrriFile(trim(TempString))
+    if (GetIrriFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathIrriFile
+        call SetIrriFileFull(GetIrriFile())
+        call NoIrrigation
+        ! IrriDescription := 'Rainfed cropping';
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathIrriFile
+        call SetIrriFileFull(trim(TempString)//GetIrriFile())
+        call LoadIrriScheduleInfo(GetIrriFileFull())
+    end if
+
+    ! 5. Field Management
+    read(f0, *, iostat=rc) ! Info Field Management
+    read(f0, '(a)', iostat=rc) TempString  ! ManFile
+    call SetManFile(trim(TempString))
+    if (GetManFile() == '(None)') then
+        read(f0, *, iostat=rc) ! PathManFile
+        call SetManFileFull(GetManFile())
+        call SetManDescription('No specific field management')
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! PathManFile
+        call SetManFileFull(trim(TempString)//GetManFile())
+        call LoadManagement(GetManFilefull())
+        ! reset canopy development to soil fertility
+        FertStress = GetManagement_FertilityStress()
+        Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+        RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+        RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+        call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(),&
+               GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(),&
+               GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(),&
+               GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(),&
+               Crop_DaysToFullCanopySF_temp, RedCGC_temp,&
+               RedCCX_temp, FertStress)
+        call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+        call SetManagement_FertilityStress(FertStress)
+        call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+        call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+    end if
+
+    ! 6. Soil Profile
+    read(f0, *, iostat=rc) ! Info Soil
+    read(f0, '(a)', iostat=rc) TempString ! ProfFile
+    call SetProfFile(trim(TempString))
+    read(f0, '(a)', iostat=rc) TempString ! PathProfFile
+    call SetProfFilefull(trim(TempString)//GetProfFile())
+    ! The load of profile is delayed to check if soil water profile need to be
+    ! reset (see 8.)
+
+    ! 7. Groundwater
+    read(f0, *, iostat=rc) ! Info Groundwater
+    read(f0, '(a)', iostat=rc) TempString  ! GroundWaterFile
+    call SetGroundWaterFile(trim(TempString))
+    if (GetGroundWaterFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathGroundWaterFile
+        call SetGroundWaterFilefull(GetGroundWaterFile())
+        call SetGroundWaterDescription('no shallow groundwater table')
+    else
+        read(f0, '(a)', iostat=rc) TempString ! PathGroundWaterFile
+        call SetGroundWaterFilefull(trim(TempString//GetGroundWaterFile()))
+        ! Loading the groundwater is done after loading the soil profile (see
+        ! 9.)
+    end if
+
+    ! 8. Set simulation period
+    call SetSimulation_FromDayNr(TempSimDayNr1)
+    call SetSimulation_ToDayNr(TempSimDayNrN)
+    if ((GetCrop_Day1() /= GetSimulation_FromDayNr()) .or. &
+        (GetCrop_DayN() /= GetSimulation_ToDayNr())) then
+        call SetSimulation_LinkCropToSimPeriod(.false.)
+    end if
+
+    ! 9. Initial conditions
+    read(f0, *, iostat=rc) ! Info Initial conditions
+    read(f0, '(a)', iostat=rc) TempString ! SWCIniFile
+    if (trim(TempString) == 'KeepSWC') then
+        ! No load of soil file (which reset thickness compartments and Soil
+        ! water content to FC)
+        call SetSWCIniFile('KeepSWC')
+        call SetSWCIniDescription('Keep soil water profile of previous run')
+        read(f0, *, iostat=rc) ! PathSWCIniFile
+    else
+        ! start with load and complete profile description (see 5.) which reset
+        ! SWC to FC by default
+        call LoadProfile(GetProfFilefull())
+        call CompleteProfileDescription
+
+        ! Adjust size of compartments if required
+        TotDepth = 0._dp
+        do i = 1, GetNrCompartments()
+            TotDepth = TotDepth + GetCompartment_Thickness(i)
+        end do
+        if (GetSimulation_MultipleRunWithKeepSWC()) then 
+        ! Project with a sequence of simulation runs and KeepSWC
+            if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) > &
+                roundc(TotDepth*1000._dp, mold=1)) then
+                call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
+            end if
+        else
+            if (roundc(GetCrop_RootMax()*1000._dp, mold=1) > &
+                roundc(TotDepth*1000._dp, mold=1)) then
+                if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
+                    roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+                    call AdjustSizeCompartments(GetCrop_RootMax()) 
+                    ! no restrictive soil layer
+                else
+                    ! restrictive soil layer
+                    if (roundc(GetSoil_RootMax()*1000._dp, mold=1) > &
+                        roundc(TotDepth*1000._dp, mold=1)) then
+                        call AdjustSizeCompartments(GetSoil_RootMax())
+                    end if
+                end if
+            end if
+
+            call SetSWCIniFile(trim(TempString))
+            if (GetSWCIniFile() == '(None)') then
+                read(f0, *, iostat=rc)  ! PathSWCIniFile
+                call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+                call SetSWCiniDescription(&
+                         'Soil water profile at Field Capacity')
+            else
+                read(f0, '(a)', iostat=rc) TempString  ! PathSWCIniFile
+                call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
+                call LoadInitialConditions(GetSWCiniFileFull(),&
+                      GetSurfaceStorage())
+            end if
+            Compartment_temp = GetCompartment()
+            select case (GetSimulation_IniSWC_AtDepths())
+            case (.true.)
+                call TranslateIniPointsToSWProfile(&
+                   GetSimulation_IniSWC_NrLoc(), &
+                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
+                   Compartment_temp)
+            case default
+                call TranslateIniLayersToSWProfile(&
+                   GetSimulation_IniSWC_NrLoc(),&
+                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
+                   Compartment_temp)
+            end select
+            call SetCompartment(Compartment_temp)
+
+            if (GetSimulation_ResetIniSWC()) then
+                 ! to reset SWC and SALT at end of simulation run
+                do i = 1, GetNrCompartments()
+                     call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
+                     call SetSimulation_ECeIni_i(i, &
+                              ECeComp(GetCompartment_i(i)))
+                end do
+                ! ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
+                ! CHECK LATER
+                if (GetManagement_BundHeight() >= 0.01) then
+                     call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
+                     call SetSimulation_ECStorageIni(GetECStorage())
+                 end if
+            end if
+        end if
+    end if
+
+    ! 10. load the groundwater file if it exists (only possible for Version 4.0
+    ! and higher)
+    if ((roundc(10*VersionNr, mold=1) >= 40) .and.&
+        (GetGroundWaterFile() /= '(None)')) then 
+          ! the groundwater file is only available in Version 4.0 or higher
+        ZiAqua_temp = GetZiAqua()
+        call LoadGroundWater(GetGroundWaterFilefull(),&
+                GetSimulation_FromDayNr(), ZiAqua_temp, GetECiAqua())
+        call SetZiAqua(ZiAqua_temp)
+    else
+        call SetZiAqua(undef_int)
+        call SetECiAqua(undef_int)
+        call SetSimulParam_ConstGwt(.true.)
+    end if
+    Compartment_temp = GetCompartment()
+    call CalculateAdjustedFC((GetZiAqua()/100), Compartment_temp)
+    call SetCompartment(Compartment_temp)
+    ! IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
+    if (GetSimulation_IniSWC_AtFC() .and. (GetSWCIniFile() /= 'KeepSWC')) then
+        call ResetSWCToFC
+    end if
+
+    ! 11. Off-season conditions
+    read(f0, *, iostat=rc) ! Info Off-season conditions
+    read(f0, '(a)', iostat=rc) TempString ! OffSeasonFile
+    call SetOffSeasonFile(trim(TempString))
+    if (GetOffSeasonFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathOffSeasonFile
+        call SetOffSeasonFileFull(GetOffSeasonFile())
+        call SetOffSeasonDescription('No specific off-season conditions')
+    else
+        read(f0, '(a)', iostat=rc) TempString ! PathOffSeasonFile
+        call SetOffSeasonFileFull((trim(TempString)//GetOffSeasonFile()))
+        call LoadOffSeason(GetOffSeasonFilefull())
+    end if
+
+    ! 12. Field data
+    read(f0, *, iostat=rc) ! Info Field data
+    read(f0, '(a)', iostat=rc) TempString  ! Field dataFile
+    call SetObservationsFile(trim(TempString))
+    if (GetObservationsFile() == '(None)') then
+        read(f0, *, iostat=rc) ! Path Field data File
+        call SetObservationsFileFull(GetObservationsFile())
+        call SetObservationsDescription('No field observations')
+    else
+        read(f0, '(a)', iostat=rc) TempString  ! Path Field data File
+        call SetObservationsFileFull(trim(TempString)//GetObservationsFile())
+        observations_descr = GetObservationsDescription()
+        call GetFileDescription(GetObservationsFileFull(), observations_descr)
+        call SetObservationsDescription(observations_descr)
+    end if
+
+    close(f0)
+
+    contains
+
+    subroutine GetFileDescription(TheFileFullName, TheDescription)
+        character(len=*), intent(in) :: TheFileFullName
+        character(len=*), intent(inout) :: TheDescription
+
+        integer(int32) :: f0, rc
+
+        open(newunit=f0, file=trim(TheFileFullName), &
+                     status='old', action='read', iostat=rc)
+        read(f0, '(a)', iostat=rc) TheDescription
+        close(f0)
+    end subroutine GetFileDescription
+end subroutine LoadSimulationRunProject
 
 end module ac_tempprocessing
