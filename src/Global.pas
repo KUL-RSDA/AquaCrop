@@ -65,8 +65,7 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
                           VAR ConstZrxForRun : double);
-PROCEDURE AdjustThetaInitial(PrevNrComp : ShortInt;
-                             PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
+
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
@@ -392,66 +391,6 @@ Close(f0);
 SetProfFilefull(PreviousProfFilefull);
 LoadProfile(GetProfFilefull());
 END; (* CheckForKeepSWC *)
-
-
-
-
-PROCEDURE AdjustThetaInitial(PrevNrComp : ShortInt;
-                             PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
-VAR layeri,compi : INTEGER;
-    TotDepthC,TotDepthL,Total : Double;
-    Compartment_temp : rep_Comp;
-
-BEGIN
-//1. Actual total depth of compartments
-TotDepthC := 0;
-FOR compi := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
-
-//2. Stretch thickness of bottom soil layer if required
-TotDepthL := 0;
-For layeri := 1 to GetSoil().NrSoilLayers DO TotDepthL := TotDepthL + GetSoilLayer_i(layeri).Thickness;
-IF (TotDepthC > TotDepthL) THEN SetSoilLayer_Thickness(GetSoil().NrSoilLayers, GetSoilLayer_i(GetSoil().NrSoilLayers).Thickness + (TotDepthC - TotDepthL));
-
-//3. Assign a soil layer to each soil compartment
-Compartment_temp := GetCompartment();
-DesignateSoilLayerToCompartments(GetNrCompartments(),GetSoil().NrSoilLayers,Compartment_temp);
-SetCompartment(Compartment_temp);
-
-//4. Adjust initial Soil Water Content of soil compartments
-IF GetSimulation_ResetIniSWC()
-   THEN BEGIN
-        IF GetSimulation_IniSWC_AtDepths()
-           THEN BEGIN
-                Compartment_temp := GetCompartment();
-                TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
-                SetCompartment(Compartment_temp);
-                END
-           ELSE BEGIN
-                Compartment_temp := GetCompartment();
-                TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(),GetSimulation_IniSWC_Loc(),GetSimulation_IniSWC_VolProc(),
-                                              GetSimulation_IniSWC_SaltECe(),GetNrCompartments(),Compartment_temp);
-                SetCompartment(Compartment_temp);
-                END;
-        END
-   ELSE BEGIN
-        Compartment_temp := GetCompartment();
-        TranslateIniLayersToSWProfile(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp,GetNrCompartments(),Compartment_temp);
-        SetCompartment(Compartment_temp);
-        END;
-
-//5. Adjust watercontent in soil layers and determine ThetaIni
-Total := 0;
-FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-FOR compi := 1 TO GetNrCompartments() DO
-    BEGIN
-    SetSimulation_ThetaIni_i(compi,GetCompartment_Theta(compi));
-    SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
-                                                                + GetSimulation_ThetaIni_i(compi)*100*10*GetCompartment_Thickness(compi));
-    END;
-FOR layeri := 1 TO GetSoil().NrSoilLayers DO Total := Total + GetSoilLayer_i(layeri).WaterContent;
-SetTotalWaterContent_BeginDay(Total);
-END; (* AdjustThetaInitial *)
 
 
 

@@ -4498,6 +4498,12 @@ procedure AdjustSizeCompartments(constref CropZx : double);
     external 'aquacrop' name '__ac_global_MOD_adjustsizecompartments';
 
 
+procedure AdjustThetaInitial(
+                constref PrevNrComp : ShortInt;
+                constref PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
+    external 'aquacrop' name '__ac_global_MOD_adjustthetainitial';
+
+
 implementation
 
 
