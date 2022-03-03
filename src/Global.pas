@@ -13,8 +13,7 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ProjectDescription, MultipleProjectDescription,
-    GroundWaterDescription: string;
+    ProjectDescription, MultipleProjectDescription : string;
 
     RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
@@ -23,7 +22,7 @@ VAR DataPath,ObsPath : BOOLEAN;
     DaySubmerged   : INTEGER;
     ETo, Epot, Tpot, Rain, Irrigation, Infiltrated, CRwater : double;   (* mm/day *)
     Tmin, Tmax : double; (* degC *)
-    SurfaceStorage, Runoff, Drain, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
+    SurfaceStorage, Runoff, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
     PreDay         : BOOLEAN;
     Surf0          : double; (* surface water [mm] begin day *)
@@ -53,12 +52,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -67,25 +60,10 @@ PROCEDURE AppendCropFilePerennials(totalname : string;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
                                    CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : INTEGER;
                                    ThresholdOnset,ThresholdEnd : double);
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
-PROCEDURE AdjustClimRecordTo(CDayN : longint);
+
 PROCEDURE AdjustSimPeriod;
-
-PROCEDURE TranslateIniLayersToSWProfile(NrLay : ShortInt;
-                                        LayThickness,LayVolPr,LayECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-
-PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
-                                        LocDepth,LocVolPr,LocECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double);
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
@@ -94,10 +72,15 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
 PROCEDURE AdjustThetaInitial(PrevNrComp : ShortInt;
                              PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
 PROCEDURE AdjustSizeCompartments(CropZx : double);
+
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
                           VAR ECdSm : double);
+
+PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
+                                     ProfileComp : rep_comp;
+                                     VAR WaterTableInProfile : BOOLEAN);
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
                                       VAR FullFileNameProgramParameters : string);
@@ -107,48 +90,6 @@ implementation
 
 
 
-
-
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
-
-VAR DayCC : INTEGER;
-    SumGDDforCCini,TempCCini : double;
-    Tadj, GDDTadj : INTEGER;
-BEGIN
-IF (TempDaysToCCini <> 0)
-   THEN BEGIN  // regrowth
-        SumGDDforCCini := undef_int;
-        GDDTadj := undef_int;
-        // find adjusted calendar and GDD time
-        IF (TempDaysToCCini = undef_int)
-             THEN BEGIN // CCx on 1st day
-                  Tadj := L12 - L0;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := GDDL12 - GDDL0;
-                  END
-             ELSE BEGIN // CC on 1st day is < CCx
-                  Tadj := TempDaysToCCini;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := TempGDDaysToCCini;
-                  END;
-        // calculate CCini with adjusted time
-        DayCC := L0 + Tadj;
-        IF (TheModeCycle = GDDays) THEN SumGDDforCCini := GDDL0 + GDDTadj;
-        TempCCini := CCiNoWaterStressSF(DayCC,L0,L12SF,L123,L1234,
-                               GDDL0,GDDL12SF,GDDL123,GDDL1234,
-                               (CCo*fWeed),(CCx*fWeed),CGC,GDDCGC,
-                               (CDC*(fWeed*CCx+2.29)/(CCx+2.29)),
-                               (GDDCDC*(fWeed*CCx+2.29)/(CCx+2.29)),SumGDDforCCini,RatDGDD,
-                               SFRedCGC,SFRedCCx,SFCDecline,TheModeCycle);
-        // correction for fWeed is already in TempCCini (since DayCC > 0);
-        END
-   ELSE TempCCini := (CCo*fWeed); // sowing or transplanting
-
-CCiniTotalFromTimeToCCini := TempCCini;
-END; (* CCiniTotalFromTimeToCCini *)
 
 
 
@@ -292,21 +233,6 @@ Close(f);
 END; (* AppendCropFilePerennials *)
 
 
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
-VAR dayi,monthi,yeari : integer;
-    Strday,StrMonth : string;
-BEGIN
-// This function determines Crop.DayN and the string
-DayN := Day1 + GetCrop().DaysToHarvest - 1;
-IF (DayN < Day1) THEN DayN := Day1;
-DetermineDate(DayN,dayi,monthi,yeari);
-Str(dayi:2,Strday);
-StrMonth := NameMonth[monthi];
-EndGrowingPeriod := CONCAT(Strday,' ',StrMonth,'  ');
-END; (* EndGrowingPeriod *)
-
-
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 BEGIN
@@ -329,35 +255,7 @@ IF (GetClimFile() <> '(None)') THEN
 END; (* DetermineLinkedSimDay1 *)
 
 
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
-VAR dayi,monthi,yeari : INTEGER;
-    temp_str : string;
-BEGIN
-DetermineDate(CDay1,dayi,monthi,yeari);
-IF (GetClimFile() = '(None)')
-   THEN yeari := 1901  // yeari = 1901 if undefined year
-   ELSE yeari := GetClimRecord_FromY(); // yeari = 1901 if undefined year
-   (*
-   ELSE BEGIN
-        yeari := Simulation.YearStartCropCycle;
-        IF (CDay1 > GetClimRecord_ToY()) THEN yeari := GetClimRecord_FromY();
-        END; *)
-DetermineDayNr(dayi,monthi,yeari,CDay1);
-temp_str := EndGrowingPeriod(CDay1,CDayN);
-END; (* AdjustCropYearToClimFile *)
 
-
-PROCEDURE AdjustClimRecordTo(CDayN : longint);
-VAR dayi,monthi,yeari : INTEGER;
-    ToDayNr_tmp : INTEGER;
-BEGIN
-DetermineDate(CDayN,dayi,monthi,yeari);
-SetClimRecord_ToD(31);
-SetClimRecord_ToM(12);
-SetClimRecord_ToY(yeari);
-DetermineDayNr(GetClimRecord_ToD(),GetClimRecord_ToM(),GetClimRecord_ToY(),ToDayNr_tmp);
-SetClimRecord_ToDayNr(ToDayNr_tmp)
-END; (* AdjustClimRecordTo *)
 
 
 PROCEDURE AdjustSimPeriod;
@@ -420,238 +318,6 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
 END; (* AdjustSimPeriod *)
 
 
-PROCEDURE TranslateIniLayersToSWProfile(NrLay : ShortInt;
-                                        LayThickness,LayVolPr,LayECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-VAR Compi,Layeri,i : ShortInt;
-    SDLay,SDComp,FracC : double;
-    GoOn : BOOLEAN;
-
-BEGIN // from specific layers to Compartments
-FOR Compi := 1 TO NrComp DO
-    BEGIN
-    Comp[Compi].Theta := 0;
-    Comp[Compi].WFactor := 0;  // used for ECe in this procedure
-    END;
-Compi := 0;
-SDComp := 0;
-Layeri := 1;
-SDLay := LayThickness[1];
-GoOn := true;
-WHILE (Compi < NrComp) DO
-  BEGIN
-  FracC := 0;
-  Compi := Compi + 1;
-  SDComp := SDComp + Comp[compi].Thickness;
-  IF (SDLay >= SDComp)
-     THEN BEGIN
-          Comp[Compi].Theta := Comp[Compi].Theta + (1-FracC)*LayVolPr[Layeri]/100;
-          Comp[Compi].WFactor := Comp[Compi].WFactor + (1-FracC)*LayECdS[Layeri];
-          END
-     ELSE BEGIN // go to next layer
-          WHILE ((SDLay < SDComp) AND GoOn) DO
-            BEGIN
-            //finish handling previous layer
-            FracC := (SDLay - (SDComp-Comp[Compi].Thickness))/(Comp[Compi].Thickness) - FracC;
-            Comp[Compi].Theta := Comp[Compi].Theta + FracC*LayVolPr[Layeri]/100;
-            Comp[Compi].WFactor := Comp[Compi].WFactor + FracC*LayECdS[Layeri];
-            FracC := (SDLay - (SDComp-Comp[Compi].Thickness))/(Comp[Compi].Thickness);
-            //add next layer
-            IF (Layeri < NrLay)
-               THEN BEGIN
-                    Layeri := Layeri + 1;
-                    SDLay := SDLay + LayThickness[Layeri];
-                    END
-               ELSE GoOn := false;
-            END;
-          Comp[Compi].Theta := Comp[Compi].Theta + (1-FracC)*LayVolPr[Layeri]/100;
-          Comp[Compi].WFactor := Comp[Compi].WFactor + (1-FracC)*LayECdS[Layeri];
-          END;
-  END; // next Compartment
-IF (NOT GoOn) THEN
-   FOR i := (Compi+1) TO NrComp DO
-       BEGIN
-       Comp[i].Theta := LayVolPr[NrLay]/100;
-       Comp[i].WFactor := LayECdS[NrLay];
-       END;
-
-// final check of SWC
-FOR Compi := 1 TO NrComp DO
-    IF (Comp[Compi].Theta > (GetSoilLayer_i(Comp[compi].Layer).SAT)/100)
-        THEN Comp[Compi].Theta := (GetSoilLayer_i(Comp[compi].Layer).SAT)/100;
-// salt distribution in cellls
-For Compi := 1 TO NrComp DO DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
-END; (* TranslateIniLayersToSWProfile *)
-
-
-
-PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
-                                        LocDepth,LocVolPr,LocECdS : rep_IniComp;
-                                        NrComp : INTEGER;
-                                        VAR Comp : rep_Comp);
-VAR Compi,Loci : ShortInt;
-    TotD,Depthi,D1,D2,Th1,Th2,DTopComp,ThTopComp,ThBotComp : double;
-    EC1,EC2,ECTopComp,ECBotComp : double;
-    AddComp,TheEnd : BOOLEAN;
-BEGIN
-TotD := 0;
-For Compi := 1 TO NrComp DO
-    BEGIN
-    Comp[Compi].Theta := 0;
-    Comp[Compi].WFactor := 0;  // used for salt in (10*VolSat*dZ * EC)
-    TotD := TotD + Comp[Compi].Thickness;
-    END;
-Compi := 0;
-Depthi := 0;
-AddComp := true;
-Th2 := LocVolPr[1];
-EC2 := LocECds[1];
-D2 := 0;
-Loci := 0;
-WHILE ((Compi < NrComp) OR ((Compi = NrComp) AND (AddComp = false))) DO
-  BEGIN
-  // upper and lower boundaries location
-  D1 := D2;
-  Th1 := Th2;
-  EC1 := EC2;
-  IF (Loci < NrLoc)
-     THEN BEGIN
-          Loci := Loci + 1;
-          D2 := LocDepth[Loci];
-          Th2 := LocVolPr[Loci];
-          EC2 := LocECdS[Loci];
-          END
-     ELSE D2 := TotD;
-  // transfer water to compartment (SWC in mm) and salt in (10*VolSat*dZ * EC)
-  TheEnd := false;
-  DTopComp := D1;  //Depthi is the bottom depth
-  ThBotComp := Th1;
-  ECBotComp := EC1;
-  REPEAT
-    ThTopComp := ThBotComp;
-    ECTopComp := ECBotComp;
-    IF AddComp THEN
-       BEGIN
-       Compi := Compi + 1;
-       Depthi := Depthi + Comp[Compi].Thickness;
-       END;
-    IF (Depthi < D2)
-       THEN BEGIN
-            ThBotComp := Th1 + (Th2-Th1)*(Depthi-D1)/(D2-D1);
-            Comp[Compi].Theta := Comp[Compi].Theta
-                                 + 10*(Depthi-DTopComp)*((ThTopComp+ThBotComp)/2);
-            ECBotComp := EC1 + (EC2-EC1)*(Depthi-D1)/(D2-D1);
-            Comp[Compi].WFactor := Comp[Compi].WFactor
-                     + (10*(Depthi-DTopComp)*GetSoilLayer_i(Comp[Compi].Layer).SAT)*((ECTopComp+ECbotComp)/2);
-            AddComp := true;
-            DTopComp := Depthi;
-            IF (Compi = NrComp) THEN TheEnd := true;
-            END
-       ELSE BEGIN
-            ThBotComp := Th2;
-            ECBotComp := EC2;
-            Comp[Compi].Theta := Comp[Compi].Theta
-                                 + 10*(D2-DTopComp)*((ThTopComp+ThBotComp)/2);
-            Comp[Compi].WFactor := Comp[Compi].WFactor
-                               + (10*(D2-DTopComp)*GetSoilLayer_i(Comp[Compi].Layer).SAT)*((ECTopComp+ECbotComp)/2);
-            IF (Depthi = D2)
-               THEN AddComp := true
-               ELSE AddComp := false;
-            TheEnd := true;
-            END;
-  UNTIL TheEnd;
-  END;
-
-For Compi := 1 TO NrComp DO // from mm(water) to theta and final check
-    BEGIN
-    Comp[Compi].Theta := Comp[Compi].Theta/(1000*Comp[Compi].Thickness);
-    IF (Comp[Compi].Theta > (GetSoilLayer_i(Comp[compi].Layer).SAT)/100)
-        THEN Comp[Compi].Theta := (GetSoilLayer_i(Comp[compi].Layer).SAT)/100;
-    IF (Comp[Compi].Theta < 0) THEN Comp[Compi].Theta := 0;
-    END;
-
-For Compi := 1 TO NrComp DO // from (10*VolSat*dZ * EC) to ECe and distribution in cellls
-    BEGIN
-    Comp[Compi].WFactor := Comp[Compi].WFactor/(10*Comp[Compi].Thickness*GetSoilLayer_i(Comp[Compi].Layer).SAT);
-    DetermineSaltContent(Comp[Compi].WFactor,Comp[Compi]);
-    END;
-END; (* TranslateIniPointsToSWProfile *)
-
-
-PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double);
-VAR f0 : TextFile;
-    i : ShortInt;
-    StringParam,swcinidescr_temp : string;
-    VersionNr : double;
-    CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
-    NrLoc_temp : shortint;
-    Loc_i_temp, VolProc_i_temp, SaltECe_i_temp : double;
-BEGIN
-// IniSWCRead attribute of the function was removed to fix a 
-// bug occurring when the function was called in TempProcessing.pas
-// Keep in mind that this could affect the graphical interface
-Assign(f0,SWCiniFileFull);
-Reset(f0);
-READLN(f0,swcinidescr_temp);
-setSWCiniDescription(swcinidescr_temp);
-READLN(f0,VersionNr); // AquaCrop Version
-IF (ROUND(10*VersionNr) < 41) // initial CC at start of simulation period
-   THEN SetSimulation_CCini(undef_int)
-   ELSE BEGIN
-        READLN(f0,CCini_temp);
-        SetSimulation_CCini(CCini_temp);
-        end;
-IF (ROUND(10*VersionNr) < 41) // B produced before start of simulation period
-   THEN SetSimulation_Bini(0.000)
-   ELSE BEGIN
-        READLN(f0,Bini_temp);
-        SetSimulation_Bini(Bini_temp);
-        end;
-IF (ROUND(10*VersionNr) < 41) // initial rooting depth at start of simulation period
-   THEN SetSimulation_Zrini(undef_int)
-   ELSE BEGIN
-        READLN(f0,Zrini_temp);
-        SetSimulation_Zrini(Zrini_temp);
-        END;
-READLN(f0,IniSurfaceStorage);
-IF (ROUND(10*VersionNr) < 32) // EC of the ini surface storage
-   THEN SetSimulation_ECStorageIni(0)
-   ELSE BEGIN 
-        READLN(f0,ECStorageIni_temp);
-        SetSimulation_ECStorageIni(ECStorageIni_temp);
-        END;
-READLN(f0,i);
-IF (i = 1)
-   THEN SetSimulation_IniSWC_AtDepths(true)
-   ELSE SetSimulation_IniSWC_AtDepths(false);
-READLN(f0,NrLoc_temp);
-SetSimulation_IniSWC_NrLoc(NrLoc_temp);
-READLN(f0);
-READLN(f0);
-READLN(f0);
-FOR i := 1 TO GetSimulation_IniSWC_NrLoc() DO
-    BEGIN
-    READLN(f0,StringParam);
-    Loc_i_temp := GetSimulation_IniSWC_Loc_i(i);
-    VolProc_i_temp := GetSimulation_IniSWC_VolProc_i(i);
-    IF (ROUND(10*VersionNr) < 32) // ECe at the locations
-       THEN BEGIN
-            SplitStringInTwoParams(StringParam,Loc_i_temp,VolProc_i_temp);
-            SetSimulation_IniSWC_SaltECe_i(i, 0);
-            END
-       ELSE BEGIN
-            SaltECe_i_temp := GetSimulation_IniSWC_SaltECe_i(i);
-            SplitStringInThreeParams(StringParam,Loc_i_temp,VolProc_i_temp,SaltECe_i_temp);
-            SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp);
-            END;
-    SetSimulation_IniSWC_Loc_i(i, Loc_i_temp);
-    SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp);
-    END;
-Close(f0);
-SetSimulation_IniSWC_AtFC(false);
-END; (* LoadInitialConditions *)
 
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
@@ -1042,6 +708,24 @@ IF (NOT TheEnd) THEN // variable groundwater table with more than 1 observation
    END; // variable groundwater table with more than 1 observation
 Close(f0);
 END; (* LoadGroundWater *)
+
+PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
+                                     ProfileComp : rep_comp;
+                                     VAR WaterTableInProfile : BOOLEAN);
+Var Ztot, Zi : double;
+    compi : INTEGER;
+BEGIN
+WaterTableInProfile := false;
+Ztot := 0;
+compi := 0;
+IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
+   REPEAT
+   compi := compi + 1;
+   Ztot := Ztot + ProfileComp[compi].Thickness;
+   Zi := Ztot - ProfileComp[compi].Thickness/2;
+   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
+   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
+END; (* CheckForWaterTableInProfile *)
 
 
 PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
