@@ -1930,7 +1930,6 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
     if (GetTemperatureFile() /= '(None)') then
         open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
              status='old', action='read', iostat=rc)
-        rewind(fTemp)
     end if
 
     ! 2. initialize
@@ -1973,10 +1972,10 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
                 GDDCGC, GDDCDC, SumGDDforPlot, TheModeCycle, 0_int8, 0_int8)
         end if
         ! Time reduction for days between L12 and L123
-        DayFraction = real(L123-L12, kind=dp)/ &
+        DayFraction = (L123-L12) *1._dp/ &
                       real(Tadj + L0 + (L123-L12), kind=dp)
         if (TheModeCycle == modeCycle_GDDays) then
-            GDDayFraction = real(GDDL123-GDDL12, kind=dp)/&
+            GDDayFraction = (GDDL123-GDDL12) *1._dp/&
                             real(GDDTadj + GDDL0 + (GDDL123-GDDL12), kind=dp)
         end if
     else
@@ -2087,7 +2086,7 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
                     SumBtot = SumBtot +  WPbio * (TpotForB/EToStandard)
                     SumBstored = SumBstored + WPbio*(TpotForB/EToStandard)*&
                             (0.01_dp*TempAssimStored)*&
-                            (real(Dayi-StartStorage+1,kind=dp)/&
+                            ((Dayi-StartStorage+1._dp)/&
                              real(TempAssimPeriod, kind=dp))
                 end if
             end if
