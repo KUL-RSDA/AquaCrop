@@ -94,9 +94,6 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
 PROCEDURE AdjustThetaInitial(PrevNrComp : ShortInt;
                              PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
 PROCEDURE AdjustSizeCompartments(CropZx : double);
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
 PROCEDURE LoadGroundWater(FullName : string;
                           AtDayNr : LongInt;
                           VAR Zcm : INTEGER;
@@ -890,27 +887,6 @@ IF ((TotDepthC + 0.00001) < CropZx) THEN
 //5. Adjust soil water content and theta initial
 AdjustThetaInitial(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp);
 END; (* AdjustSizeCompartments *)
-
-
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
-Var Ztot, Zi : double;
-    compi : INTEGER;
-BEGIN
-WaterTableInProfile := false;
-Ztot := 0;
-compi := 0;
-IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
-   REPEAT
-   compi := compi + 1;
-   Ztot := Ztot + ProfileComp[compi].Thickness;
-   Zi := Ztot - ProfileComp[compi].Thickness/2;
-   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
-END; (* CheckForWaterTableInProfile *)
-
-
 
 
 PROCEDURE LoadGroundWater(FullName : string;
