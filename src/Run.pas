@@ -414,7 +414,7 @@ FOR compi := 1 to GetNrCompartments() DO
        BEGIN
        SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
        Compi_temp := GetCOmpartment_i(compi);
-       DetermineSaltContent(ECiAqua,Compi_temp);
+       DetermineSaltContent(GetECiAqua(),Compi_temp);
        SetCompartment_i(compi, Compi_temp);
        END;
     END;
@@ -2255,8 +2255,8 @@ IF Out4Salt THEN
       ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,(GetZiAqua()/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,ECiAqua:8:2)
-      ELSE WRITELN(fDaily,ECiAqua:8:2);
+      THEN WRITE(fDaily,GetECiAqua():8:2)
+      ELSE WRITELN(fDaily,GetECiAqua():8:2);
    END;
 
 // 5. Compartments - Soil water content
@@ -2389,6 +2389,7 @@ VAR RepeatToDay : LongInt;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
     ZiAqua_temp : integer;
+    ECiAqua_temp : double;
     tmpRain : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
@@ -2687,8 +2688,10 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
         SetGwTable(GwTable_temp);
         END;
    ZiAqua_temp := GetZiAqua();
-   GetZandECgwt(DayNri,ZiAqua_temp,ECiAqua);
+   ECiAqua_temp := GetECiAqua();
+   GetZandECgwt(DayNri,ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
+   SetECiAqua(ECiAqua_temp);
    CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
    IF WaterTableInProfile THEN AdjustForWatertable;
    END;

@@ -35,7 +35,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
     CRsalt         : double; // gram/m2
-    ECiAqua        : double; //  EC of the groundwater table in dS/m
 
 
 
@@ -219,6 +218,7 @@ VAR IniSimFromDayNr : LongInt;
     FullFileName : string;
     FromDayNr_temp, ZiAqua_temp : integer;
     Compartment_temp : rep_Comp;
+    ECiAqua_temp : double;
 
 BEGIN
 IniSimFromDayNr := GetSimulation_FromDayNr();
@@ -264,8 +264,10 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
        ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
    ZiAqua_temp := GetZiAqua();
-   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua_temp,ECiAqua);
+   ECiAqua_temp := GetECiAqua();
+   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
+   SetECiAqua(ECiAqua_temp);
    Compartment_temp := GetCompartment();
    CalculateAdjustedFC((GetZiAqua()/100),Compartment_temp);
    SetCompartment(Compartment_temp);

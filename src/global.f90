@@ -978,6 +978,7 @@ integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
 
+real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
 real(dp) :: Drain  ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: Runoff  ! mm/day
@@ -14199,6 +14200,19 @@ subroutine SetIniPercTAW(IniPercTAW_in)
 
     IniPercTAW = IniPercTAW_in
 end subroutine SetIniPercTAW
+
+real(dp) function GetECiAqua()
+    !! Getter for the "ECiAqua" global variable.
+
+    GetECiAqua = ECiAqua
+end function GetECiAqua
+
+subroutine SetECiAqua(ECiAqua_in)
+    !! Setter for the "ECiAqua" global variable.
+    real(dp), intent(in) :: ECiAqua_in
+
+    ECiAqua = ECiAqua_in
+end subroutine SetECiAqua
 
 
 end module ac_global

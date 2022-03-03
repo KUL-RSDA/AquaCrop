@@ -1212,7 +1212,7 @@ WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout
       CRwater := CRwater + CRcomp;
       // salt stored
       SCellAct := ActiveCells(GetCompartment_i(compi));
-      SaltCRi := Equiv * CRcomp * ECiAqua; // gram/m2
+      SaltCRi := Equiv * CRcomp * GetECiAqua(); // gram/m2
       SetCompartment_Salt(compi, SCellAct, GetCompartment_Salt(compi, SCellAct) + SaltCRi);
       CRsalt := CRsalt + SaltCRi;
       END;
@@ -3436,13 +3436,13 @@ FOR compi := 1 TO GetNrCompartments() DO
                                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
           END;
        // ECe is equal to the EC of the groundwater table
-       IF (Abs(ECeComp(GetCompartment_i(compi)) - ECiAqua) > 0.0001) THEN
+       IF (Abs(ECeComp(GetCompartment_i(compi)) - GetECiAqua()) > 0.0001) THEN
           BEGIN
           SaltAct := 0;
           FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
               SaltAct := SaltAct + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
           Compi_temp := GetCompartment_i(compi);
-          DetermineSaltContent(ECiAqua,Compi_temp);
+          DetermineSaltContent(GetECiAqua(),Compi_temp);
           SetCompartment_i(compi, Compi_temp);
           SaltAdj := 0;
           FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO

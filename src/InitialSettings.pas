@@ -87,7 +87,7 @@ implementation
  SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
  SetGroundWaterDescription('no shallow groundwater table');
  SetZiAqua(undef_int);
- ECiAqua := undef_int;
+ SetECiAqua(undef_int);
  SetSimulParam_ConstGwt(true);
 
  // 2b. Soil profile and initial soil water content

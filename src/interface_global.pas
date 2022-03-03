@@ -4527,6 +4527,12 @@ function GetIniPercTAW() : shortint;
 procedure SetIniPercTAW(constref IniPercTAW_in : shortint);
     external 'aquacrop' name '__ac_global_MOD_setiniperctaw';
 
+function GetECiAqua() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteciaqua';
+
+procedure SetECiAqua(constref ECiAqua_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteciaqua';
+
 
 implementation
 
