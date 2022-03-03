@@ -206,8 +206,11 @@ use ac_global, only: CheckFilesInProject, &
                      SetOffSeasonDescription, &
                      LoadOffSeason, &
                      LoadProgramParametersProject, &
+                     EndGrowingPeriod, &
+                     LoadInitialConditions, &
                      CompleteClimateDescription, &
                      rep_clim
+
 
 use ac_kinds, only: dp, &
                     int32, &
@@ -2276,6 +2279,32 @@ subroutine LoadOffSeason_wrap(FullName, strlen)
 end subroutine LoadOffSeason_wrap
 
 
+function EndGrowingPeriod_wrap(Day1, DayN) result(EndGrowingPeriod_ptr)
+    !! Wrapper for [[ac_global::EndGrowingPeriod]] for foreign languages.
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(inout) :: DayN
+
+    type(c_ptr) :: EndGrowingPeriod_ptr
+    character(len=:), allocatable :: string
+
+    string = EndGrowingPeriod(Day1, DayN)
+    EndGrowingPeriod_ptr = string2pointer(string)
+end function EndGrowingPeriod_wrap
+
+
+subroutine LoadInitialConditions_wrap(SWCiniFileFull_ptr, strlen, &
+                                     IniSurfaceStorage)
+    type(c_ptr), intent(in) :: SWCiniFileFull_ptr
+    integer(int32), intent(in) :: strlen
+    real(dp), intent(inout) :: IniSurfaceStorage
+
+    character(len=strlen) :: string
+
+    string = pointer2string(SWCiniFileFull_ptr, strlen)
+    call LoadInitialConditions(string, IniSurfaceStorage)
+end subroutine LoadInitialConditions_wrap
+
+
 subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
                                            ToD, ToM, ToY, FromDayNr, &
                                            ToDayNr, FromString, strlen1, &
@@ -2327,6 +2356,7 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
                                 FromString, ToString)
     NrObs = ClimateRecord%NrObs
 end subroutine CompleteClimateDescription_wrap
+
 
 
 

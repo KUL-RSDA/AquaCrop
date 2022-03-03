@@ -53,12 +53,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
 PROCEDURE LoadClim (FullName : string;
                     VAR ClimateDescription : string;
                     VAR ClimateRecord : rep_clim);
@@ -67,11 +61,8 @@ PROCEDURE AppendCropFilePerennials(totalname : string;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
                                    CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : INTEGER;
                                    ThresholdOnset,ThresholdEnd : double);
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
 PROCEDURE AdjustSimPeriod;
 
@@ -84,9 +75,6 @@ PROCEDURE TranslateIniPointsToSWProfile(NrLoc : ShortInt;
                                         LocDepth,LocVolPr,LocECdS : rep_IniComp;
                                         NrComp : INTEGER;
                                         VAR Comp : rep_Comp);
-PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double);
-
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           TotalNrOfRuns : INTEGER;
                           VAR RunWithKeepSWC : BOOLEAN;
@@ -110,48 +98,6 @@ implementation
 
 
 
-
-
-FUNCTION CCiniTotalFromTimeToCCini(TempDaysToCCini,TempGDDaysToCCini,
-                                   L0,L12,L12SF,L123,L1234,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234 : INTEGER;
-                                   CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
-                                   SFRedCGC,SFRedCCx : ShortInt;
-                                   SFCDecline,fWeed : Double;
-                                   TheModeCycle : rep_modeCycle) : double;
-
-VAR DayCC : INTEGER;
-    SumGDDforCCini,TempCCini : double;
-    Tadj, GDDTadj : INTEGER;
-BEGIN
-IF (TempDaysToCCini <> 0)
-   THEN BEGIN  // regrowth
-        SumGDDforCCini := undef_int;
-        GDDTadj := undef_int;
-        // find adjusted calendar and GDD time
-        IF (TempDaysToCCini = undef_int)
-             THEN BEGIN // CCx on 1st day
-                  Tadj := L12 - L0;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := GDDL12 - GDDL0;
-                  END
-             ELSE BEGIN // CC on 1st day is < CCx
-                  Tadj := TempDaysToCCini;
-                  IF (TheModeCycle = GDDays) THEN GDDTadj := TempGDDaysToCCini;
-                  END;
-        // calculate CCini with adjusted time
-        DayCC := L0 + Tadj;
-        IF (TheModeCycle = GDDays) THEN SumGDDforCCini := GDDL0 + GDDTadj;
-        TempCCini := CCiNoWaterStressSF(DayCC,L0,L12SF,L123,L1234,
-                               GDDL0,GDDL12SF,GDDL123,GDDL1234,
-                               (CCo*fWeed),(CCx*fWeed),CGC,GDDCGC,
-                               (CDC*(fWeed*CCx+2.29)/(CCx+2.29)),
-                               (GDDCDC*(fWeed*CCx+2.29)/(CCx+2.29)),SumGDDforCCini,RatDGDD,
-                               SFRedCGC,SFRedCCx,SFCDecline,TheModeCycle);
-        // correction for fWeed is already in TempCCini (since DayCC > 0);
-        END
-   ELSE TempCCini := (CCo*fWeed); // sowing or transplanting
-
-CCiniTotalFromTimeToCCini := TempCCini;
-END; (* CCiniTotalFromTimeToCCini *)
 
 
 
@@ -295,21 +241,6 @@ Close(f);
 END; (* AppendCropFilePerennials *)
 
 
-FUNCTION EndGrowingPeriod(Day1 : longint;
-                          VAR DayN : longint) : string;
-VAR dayi,monthi,yeari : integer;
-    Strday,StrMonth : string;
-BEGIN
-// This function determines Crop.DayN and the string
-DayN := Day1 + GetCrop().DaysToHarvest - 1;
-IF (DayN < Day1) THEN DayN := Day1;
-DetermineDate(DayN,dayi,monthi,yeari);
-Str(dayi:2,Strday);
-StrMonth := NameMonth[monthi];
-EndGrowingPeriod := CONCAT(Strday,' ',StrMonth,'  ');
-END; (* EndGrowingPeriod *)
-
-
 PROCEDURE DetermineLinkedSimDay1(CropDay1 : LongInt;
                                  VAR SimDay1 :LongInt);
 BEGIN
@@ -332,22 +263,6 @@ IF (GetClimFile() <> '(None)') THEN
 END; (* DetermineLinkedSimDay1 *)
 
 
-PROCEDURE AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
-VAR dayi,monthi,yeari : INTEGER;
-    temp_str : string;
-BEGIN
-DetermineDate(CDay1,dayi,monthi,yeari);
-IF (GetClimFile() = '(None)')
-   THEN yeari := 1901  // yeari = 1901 if undefined year
-   ELSE yeari := GetClimRecord_FromY(); // yeari = 1901 if undefined year
-   (*
-   ELSE BEGIN
-        yeari := Simulation.YearStartCropCycle;
-        IF (CDay1 > GetClimRecord_ToY()) THEN yeari := GetClimRecord_FromY();
-        END; *)
-DetermineDayNr(dayi,monthi,yeari,CDay1);
-temp_str := EndGrowingPeriod(CDay1,CDayN);
-END; (* AdjustCropYearToClimFile *)
 
 
 PROCEDURE AdjustClimRecordTo(CDayN : longint);
@@ -581,80 +496,6 @@ For Compi := 1 TO NrComp DO // from (10*VolSat*dZ * EC) to ECe and distribution 
     END;
 END; (* TranslateIniPointsToSWProfile *)
 
-
-PROCEDURE LoadInitialConditions(SWCiniFileFull : string;
-                                VAR IniSurfaceStorage : double);
-VAR f0 : TextFile;
-    i : ShortInt;
-    StringParam,swcinidescr_temp : string;
-    VersionNr : double;
-    CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp : double;
-    NrLoc_temp : shortint;
-    Loc_i_temp, VolProc_i_temp, SaltECe_i_temp : double;
-BEGIN
-// IniSWCRead attribute of the function was removed to fix a 
-// bug occurring when the function was called in TempProcessing.pas
-// Keep in mind that this could affect the graphical interface
-Assign(f0,SWCiniFileFull);
-Reset(f0);
-READLN(f0,swcinidescr_temp);
-setSWCiniDescription(swcinidescr_temp);
-READLN(f0,VersionNr); // AquaCrop Version
-IF (ROUND(10*VersionNr) < 41) // initial CC at start of simulation period
-   THEN SetSimulation_CCini(undef_int)
-   ELSE BEGIN
-        READLN(f0,CCini_temp);
-        SetSimulation_CCini(CCini_temp);
-        end;
-IF (ROUND(10*VersionNr) < 41) // B produced before start of simulation period
-   THEN SetSimulation_Bini(0.000)
-   ELSE BEGIN
-        READLN(f0,Bini_temp);
-        SetSimulation_Bini(Bini_temp);
-        end;
-IF (ROUND(10*VersionNr) < 41) // initial rooting depth at start of simulation period
-   THEN SetSimulation_Zrini(undef_int)
-   ELSE BEGIN
-        READLN(f0,Zrini_temp);
-        SetSimulation_Zrini(Zrini_temp);
-        END;
-READLN(f0,IniSurfaceStorage);
-IF (ROUND(10*VersionNr) < 32) // EC of the ini surface storage
-   THEN SetSimulation_ECStorageIni(0)
-   ELSE BEGIN 
-        READLN(f0,ECStorageIni_temp);
-        SetSimulation_ECStorageIni(ECStorageIni_temp);
-        END;
-READLN(f0,i);
-IF (i = 1)
-   THEN SetSimulation_IniSWC_AtDepths(true)
-   ELSE SetSimulation_IniSWC_AtDepths(false);
-READLN(f0,NrLoc_temp);
-SetSimulation_IniSWC_NrLoc(NrLoc_temp);
-READLN(f0);
-READLN(f0);
-READLN(f0);
-FOR i := 1 TO GetSimulation_IniSWC_NrLoc() DO
-    BEGIN
-    READLN(f0,StringParam);
-    Loc_i_temp := GetSimulation_IniSWC_Loc_i(i);
-    VolProc_i_temp := GetSimulation_IniSWC_VolProc_i(i);
-    IF (ROUND(10*VersionNr) < 32) // ECe at the locations
-       THEN BEGIN
-            SplitStringInTwoParams(StringParam,Loc_i_temp,VolProc_i_temp);
-            SetSimulation_IniSWC_SaltECe_i(i, 0);
-            END
-       ELSE BEGIN
-            SaltECe_i_temp := GetSimulation_IniSWC_SaltECe_i(i);
-            SplitStringInThreeParams(StringParam,Loc_i_temp,VolProc_i_temp,SaltECe_i_temp);
-            SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp);
-            END;
-    SetSimulation_IniSWC_Loc_i(i, Loc_i_temp);
-    SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp);
-    END;
-Close(f0);
-SetSimulation_IniSWC_AtFC(false);
-END; (* LoadInitialConditions *)
 
 
 PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;

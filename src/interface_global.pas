@@ -4383,8 +4383,96 @@ procedure DetermineRootZoneWC(
         external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
 
 
+function CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : rep_modeCycle) : double;
+
+
+function __CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : integer) : double;
+    external 'aquacrop' name '__ac_global_MOD_ccinitotalfromtimetoccini';
+
+
+procedure AdjustCropYearToClimFile(VAR CDay1,CDayN : longint);
+    external 'aquacrop' name '__ac_global_MOD_adjustcropyeartoclimfile';
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+
+function EndGrowingPeriod_wrap(
+                          constref Day1 : longint;
+                          VAR DayN : longint) : PChar;
+    external 'aquacrop' name '__ac_interface_global_MOD_endgrowingperiod_wrap';
+
+procedure LoadInitialConditions(constref SWCiniFileFull : string;
+                                VAR IniSurfaceStorage : double);
+
+procedure LoadInitialConditions_wrap(constref SWCiniFileFull : PChar;
+                                constref strlen : integer;
+                                VAR IniSurfaceStorage : double);
+    external 'aquacrop' name '__ac_interface_global_MOD_loadinitialconditions_wrap';
+
+
 
 implementation
+
+
+procedure LoadInitialConditions(constref SWCiniFileFull : string;
+                                VAR IniSurfaceStorage : double);
+var
+    p : PChar;
+    strlen : integer;
+begin
+    p := PChar(SWCiniFileFull);
+    strlen := Length(SWCiniFileFull);
+    LoadInitialConditions_wrap(p, strlen, IniSurfaceStorage);
+end;
+
+
+function EndGrowingPeriod(constref Day1 : longint;
+                          VAR DayN : longint) : string;
+var
+    p : PChar;
+begin
+    p := EndGrowingperiod_wrap(Day1, DayN);
+    EndGrowingPeriod := AnsiString(p);
+end;
+    
+
+
+function CCiniTotalFromTimeToCCini(
+                        constref TempDaysToCCini,TempGDDaysToCCini : integer;
+                        constref L0,L12,L12SF,L123,L1234,GDDL0,GDDL12 : integer;
+                        constref GDDL12SF,GDDL123,GDDL1234 : integer;
+                        constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,RatDGDD : double;
+                        constref SFRedCGC,SFRedCCx : ShortInt;
+                        constref SFCDecline,fWeed : Double;
+                        constref TheModeCycle : rep_modeCycle) : double;
+var
+    int_modeCycle : integer;
+begin
+    int_modeCycle := ord(TheModeCycle);
+    CCiniTotalFromTimeToCCini := __CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini,
+                                            L0, L12, L12SF, L123, L1234, GDDL0,
+                                            GDDL12, GDDL12SF, GDDL123,
+                                            GDDL1234, CCo, CCx, CGC, GDDCGC,
+                                            CDC, GDDCDC, RatDGDD, SFRedCGC,
+                                            SFRedCCx, SFCDecline, fWeed,
+                                            int_modecycle)
+end;
+
 
 
 function SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer;

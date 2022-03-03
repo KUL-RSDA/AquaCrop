@@ -5735,6 +5735,201 @@ end subroutine LoadOffSeason
 
 
 
+real(dp) function CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini, &
+                                            L0, L12, L12SF, L123, L1234, GDDL0, &
+                                            GDDL12, GDDL12SF, GDDL123, &
+                                            GDDL1234, CCo, CCx, CGC, GDDCGC, &
+                                            CDC, GDDCDC, RatDGDD, SFRedCGC, &
+                                            SFRedCCx, SFCDecline, fWeed, &
+                                            TheModeCycle)
+    integer(int32), intent(in) :: TempDaysToCCini
+    integer(int32), intent(in) :: TempGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: RatDGDD
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+    real(dp), intent(in) :: SFCDecline
+    real(dp), intent(in) :: fWeed
+    integer(intEnum), intent(in) :: TheModeCycle
+
+
+    integer(int32) :: DayCC
+    real(dp) :: SumGDDforCCini, TempCCini
+    integer(int32) :: Tadj, GDDTadj
+
+    if (TempDaysToCCini /= 0) then
+        ! regrowth
+        SumGDDforCCini = real(undef_int, kind=dp)
+        GDDTadj = undef_int
+        ! find adjusted calendar and GDD time
+        if (TempDaysToCCini == undef_int) then
+            ! CCx on 1st day
+            Tadj = L12 - L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = GDDL12 - GDDL0
+            end if
+        else
+            ! CC on 1st day is < CCx
+            Tadj = TempDaysToCCini
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = TempGDDaysToCCini
+            end if
+        end if
+        ! calculate CCini with adjusted time
+        DayCC = L0 + Tadj
+        if (TheModeCycle == modeCycle_GDDays) then
+            SumGDDforCCini = GDDL0 + GDDTadj
+        end if
+        TempCCini = CCiNoWaterStressSF(DayCC, L0, L12SF, L123, L1234, GDDL0, &
+                                       GDDL12SF, GDDL123, GDDL1234, &
+                                       (CCo*fWeed), (CCx*fWeed), CGC, GDDCGC, &
+                                       (CDC*(fWeed*CCx+2.29_dp)/(CCx+2.29_dp)), &
+                                       (GDDCDC*(fWeed*CCx+2.29_dp)/(CCx+2.29_dp)), &
+                                       SumGDDforCCini, RatDGDD, SFRedCGC, &
+                                       SFRedCCx, SFCDecline, TheModeCycle)
+        ! correction for fWeed is already in TempCCini (since DayCC > 0);
+    else
+        TempCCini = (CCo*fWeed) ! sowing or transplanting
+    end if
+
+    CCiniTotalFromTimeToCCini = TempCCini
+end function CCiniTotalFromTimeToCCini
+
+
+
+subroutine AdjustCropYearToClimFile(CDay1, CDayN)
+    integer(int32), intent(inout) :: CDay1
+    integer(int32), intent(inout) :: CDayN
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=:), allocatable :: temp_str
+
+    call DetermineDate(CDay1, dayi, monthi, yeari)
+    if (GetClimFile() == '(None)') then
+        yeari = 1901  ! yeari = 1901 if undefined year
+    else
+        yeari = GetClimRecord_FromY() ! yeari = 1901 if undefined year
+    end if
+    call DetermineDayNr(dayi, monthi, yeari, CDay1)
+    temp_str = EndGrowingPeriod(CDay1, CDayN)
+end subroutine AdjustCropYearToClimFile
+
+
+function EndGrowingPeriod(Day1, DayN) result(EndGrowingPeriod_out)
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(inout) :: DayN
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=2) :: Strday
+    character(len=:), allocatable :: StrMonth
+    character(len=:), allocatable :: EndGrowingPeriod_out
+
+    ! This function determines Crop.DayN and the string
+    DayN = Day1 + GetCrop_DaysToHarvest() - 1
+    if (DayN < Day1) then
+        DayN = Day1
+    end if
+    call DetermineDate(DayN, dayi, monthi, yeari)
+    write(Strday, '(i2)') dayi
+    StrMonth = NameMonth(monthi)
+    EndGrowingPeriod_out = Strday // ' ' // StrMonth // '  '
+end function EndGrowingPeriod
+
+
+
+subroutine LoadInitialConditions(SWCiniFileFull, IniSurfaceStorage)
+    character(len=*), intent(in) :: SWCiniFileFull
+    real(dp), intent(inout) :: IniSurfaceStorage
+
+    integer :: fhandle
+    integer(int32) :: i
+    character(len=1025) :: StringParam, swcinidescr_temp
+    real(dp) :: VersionNr
+    real(dp) :: CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp
+    integer(int8) :: NrLoc_temp
+    real(dp) :: Loc_i_temp, VolProc_i_temp, SaltECe_i_temp
+
+    ! IniSWCRead attribute of the function was removed to fix a
+    ! bug occurring when the function was called in TempProcessing.pas
+    ! Keep in mind that this could affect the graphical interface
+    open(newunit=fhandle, file=trim(SWCiniFileFull), status='old', action='read')
+    read(fhandle, '(a)') swcinidescr_temp
+    call SetSWCiniDescription(swcinidescr_temp)
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    if (roundc(10*VersionNr, mold=1) < 41) then ! initial CC at start of simulation period
+        call SetSimulation_CCini(real(undef_int, kind=dp))
+    else
+        read(fhandle, *) CCini_temp
+        call SetSimulation_CCini(CCini_temp)
+    end if
+    if (roundc(10*VersionNr, mold=1) < 41) then ! B produced before start of simulation period
+        call SetSimulation_Bini(0.000_dp)
+    else
+        read(fhandle, *) Bini_temp
+        call SetSimulation_Bini(Bini_temp)
+    end if
+    if (roundc(10*VersionNr, mold=1) < 41) then ! initial rooting depth at start of simulation period
+        call SetSimulation_Zrini(real(undef_int, kind=dp))
+    else
+        read(fhandle, *) Zrini_temp
+        call SetSimulation_Zrini(Zrini_temp)
+    end if
+    read(fhandle, *) IniSurfaceStorage
+    if (roundc(10*VersionNr, mold=1) < 32) then ! EC of the ini surface storage
+        call SetSimulation_ECStorageIni(0._dp)
+    else
+        read(fhandle, *) ECStorageIni_temp
+        call SetSimulation_ECStorageIni(ECStorageIni_temp)
+    end if
+    read(fhandle, *) i
+    if (i == 1) then
+        call SetSimulation_IniSWC_AtDepths(.true.)
+    else
+        call SetSimulation_IniSWC_AtDepths(.false.)
+    end if
+    read(fhandle, *) NrLoc_temp
+    call SetSimulation_IniSWC_NrLoc(NrLoc_temp)
+    read(fhandle, *)
+    read(fhandle, *)
+    read(fhandle, *)
+    do i = 1, GetSimulation_IniSWC_NrLoc() 
+        read(fhandle, '(a)') StringParam
+        Loc_i_temp = GetSimulation_IniSWC_Loc_i(i)
+        VolProc_i_temp = GetSimulation_IniSWC_VolProc_i(i)
+        if (roundc(10*VersionNr, mold=1) < 32) then ! ECe at the locations
+            call SplitStringInTwoParams(StringParam, Loc_i_temp, &
+                                                    VolProc_i_temp)
+            call SetSimulation_IniSWC_SaltECe_i(i, 0._dp)
+        else
+            SaltECe_i_temp = GetSimulation_IniSWC_SaltECe_i(i)
+            call SplitStringInThreeParams(StringParam, Loc_i_temp, &
+                                          VolProc_i_temp, SaltECe_i_temp)
+            call SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp)
+        end if
+        call SetSimulation_IniSWC_Loc_i(i, Loc_i_temp)
+        call SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp)
+    end do
+    close(fhandle)
+    call SetSimulation_IniSWC_AtFC(.false.)
+end subroutine LoadInitialConditions
+
+
+
 !! Global variables section !!
 
 
