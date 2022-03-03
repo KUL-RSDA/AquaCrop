@@ -23,6 +23,9 @@ use ac_global , only: undef_int, &
                       datatype_daily, &
                       datatype_decadely, &
                       datatype_monthly, &
+                      CalculateETpot, &
+                      CCiNoWaterStressSF, &
+                      CanopyCoverNoStressSF, &
                       DetermineDayNr, &
                       DetermineDate, &
                       LeapYear, &
@@ -91,6 +94,8 @@ use ac_global , only: undef_int, &
                       GetCrop_ModeCycle, &
                       GetCrop_Tbase, & 
                       GetCrop_Tupper, &
+                      GetSimulParam_Tmin, GetSimulParam_Tmax, &
+                      SetSimulation_DelayedDays,&
                       GetManagement_WeedAdj, &
                       GetSimulParam_Tmin, GetSimulParam_Tmax,&
                       GetWeedRC
@@ -1881,32 +1886,23 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
 end subroutine AdjustCropFileParameters
 
 
-real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-           L0, L12, L12SF, L123, L1234, LFlor, &
-           GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, &
-           WPyield, DaysYieldFormation, tSwitch, CCo, CCx, &
-           CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
-           CCeffectProcent, WPbio, TheCO2, Tbase, Tupper, &
-           TDayMin, TDayMax, GDtranspLow, RatDGDD, SumKcTop, &
-           StressInPercent, StrResRedCGC, StrResRedCCx, StrResRedWP, &
-           StrResRedKsSto, WeedStress, DeltaWeedStress, StrResCDecline, &
-           ShapeFweed, TheModeCycle, FertilityStressOn, TestRecord)
+subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
+              L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+              CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, &
+              KcDeclAgeing, CCeffectProcent, WPbio, TheCO2,&
+              Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
+              TheModeCycle, TempAssimPeriod, TempAssimStored,&
+              SumBtot, SumBstored)
     integer(int32), intent(in) :: TheDaysToCCini
     integer(int32), intent(in) :: TheGDDaysToCCini
     integer(int32), intent(in) :: L0
     integer(int32), intent(in) :: L12
-    integer(int32), intent(in) :: L12SF
     integer(int32), intent(in) :: L123
     integer(int32), intent(in) :: L1234
-    integer(int32), intent(in) :: LFlor
     integer(int32), intent(in) :: GDDL0
     integer(int32), intent(in) :: GDDL12
-    integer(int32), intent(in) :: GDDL12SF
     integer(int32), intent(in) :: GDDL123
     integer(int32), intent(in) :: GDDL1234
-    integer(int32), intent(in) :: WPyield
-    integer(int32), intent(in) :: DaysYieldFormation
-    integer(int32), intent(in) :: tSwitch
     real(dp), intent(in) :: CCo
     real(dp), intent(in) :: CCx
     real(dp), intent(in) :: CGC
@@ -1924,76 +1920,30 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp), intent(in) :: TDayMax
     real(dp), intent(in) :: GDtranspLow
     real(dp), intent(in) :: RatDGDD
-    real(dp), intent(in) :: SumKcTop
-    integer(int8), intent(in) :: StressInPercent
-    integer(int8), intent(in) :: StrResRedCGC
-    integer(int8), intent(in) :: StrResRedCCx
-    integer(int8), intent(in) :: StrResRedWP
-    integer(int8), intent(in) :: StrResRedKsSto
-    integer(int8), intent(in) :: WeedStress
-    integer(int32), intent(in) :: DeltaWeedStress
-    real(dp), intent(in) :: StrResCDecline
-    real(dp), intent(in) :: ShapeFweed
     integer(intEnum), intent(in) :: TheModeCycle
-    logical, intent(in) :: FertilityStressOn
-    logical, intent(in) :: TestRecord
+    integer(int32), intent(in) :: TempAssimPeriod
+    integer(int8), intent(in) :: TempAssimStored
+    real(dp), intent(inout) :: SumBtot
+    real(dp), intent(inout) :: SumBstored
 
     real(dp), parameter :: EToStandard = 5._dp
-    integer(int32), parameter :: k = 2
 
-    integer(int32) ::  fTemp, fOUT, rc
-    real(dp) :: SumGDD, Tndayi, Txdayi, GDDi, CCi,&
-                CCxWitheredForB, TpotForB, EpotTotForB, SumKCi,&
-                fSwitch, WPi, SumBnor, SumKcTopSF, fCCx
-    integer(int32) :: Dayi, DayCC, Tadj, GDDTadj
-    real(dp) :: CCoadj, CCxadj, CDCadj, GDDCDCadj, CCw, CCtotStar, CCwStar
-    real(dp) :: SumGDDfromDay1, SumGDDforPlot, CCinitial,&
-                DayFraction, GDDayFraction, fWeed, WeedCorrection
+    integer(int32) :: fTemp, rc
+    real(dp) :: SumGDDfromDay1, SumGDDforPlot, SumGDD, DayFraction, &
+                GDDayFraction, CCinitial, Tndayi, Txdayi, GDDi, CCi, &
+                CCxWitheredForB, TpotForB, EpotTotForB
     logical :: GrowthON
-    integer(int32) :: DeltaWeedStress_local
+    integer(int32) :: GDDTadj, Tadj, DayCC, Dayi, StartStorage
 
-    ! 1. Adjustment for weed infestation
-    if (WeedStress > 0) then
-        if (StressInPercent > 0) then ! soil fertility stress
-            fWeed = 1._dp  ! no expansion of canopy cover possible
-        else
-            fWeed = CCmultiplierWeed(WeedStress, CCx, ShapeFweed)
-        end if
-        CCoadj = CCo*fWeed
-        CCxadj = CCx*fWeed
-        CDCadj = CDC*(fWeed*CCx + 2.29_dp)/(CCx + 2.29_dp)
-        GDDCDCadj = GDDCDC*(fWeed*CCx + 2.29_dp)/(CCx + 2.29_dp)
-    else
-        CCoadj = CCo
-        CCxadj = CCx
-        CDCadj = CDC
-        GDDCDCadj = GDDCDC
-    end if
-
-    ! TEST
-    if (TestRecord .eqv. .true.) then
-        open(newunit=fOUT, file=trim(GetPathNameSimul()//'TestBio.SIM'), &
-             action='write', status='replace')
-    end if
-
-    ! 2. Open Temperature file
+    ! 1. Open Temperature file
     if (GetTemperatureFile() /= '(None)') then
         open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
-                     status='old', action='read', iostat=rc)
+             status='old', action='read', iostat=rc)
     end if
-
-    ! 3. Initialize
-    SumKcTopSF = (1._dp - real(StressInPercent, kind=dp)/100._dp) * SumKcTop
-    !! only required for soil fertility stress
-
-    ! test
-    if (TestRecord .eqv. .true.) then
-       write(fOUT, '(f10.1)') SumKcTopSF
-    end if
-
+     ! 2. initialize
     call SetSimulation_DelayedDays(0) ! required for CalculateETpot
-    SumKci = 0._dp
-    SumBnor = 0._dp
+    SumBtot = 0._dp
+    SumBstored = 0._dp
     SumGDDforPlot = undef_int
     SumGDD = undef_int
     SumGDDfromDay1 = 0._dp
@@ -2001,11 +1951,12 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
     GDDTadj = undef_int
     DayFraction = undef_int
     GDDayFraction = undef_int
+    StartStorage = L1234 - TempAssimPeriod + 1
     CCxWitheredForB = 0._dp
 
-    ! 4. Initialise 1st day
+    ! 3. Initialise 1st day
     if (TheDaysToCCini /= 0) then
-        ! regrowth which starts on 1st day
+       ! regrowth which starts on 1st day
         GrowthON = .true.
         if (TheDaysToCCini == undef_int) then
             ! CCx on 1st day
@@ -2014,9 +1965,9 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 GDDTadj = GDDL12 - GDDL0
                 SumGDD = GDDL12
             end if
-            CCinitial = CCxadj * (1._dp-StrResRedCCX/100._dp)
+            CCinitial = CCx
         else
-        ! CC on 1st day is < CCx
+            ! CC on 1st day is < CCx
             Tadj = TheDaysToCCini
             DayCC = Tadj + L0
             if (TheModeCycle == modeCycle_GDDays) then
@@ -2025,36 +1976,35 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 SumGDDforPlot = SumGDD
             end if
             CCinitial = CanopyCoverNoStressSF(DayCC, L0, L123, L1234,&
-                GDDL0, GDDL123, GDDL1234, CCoadj, CCxadj, CGC, CDCadj,&
-                GDDCGC, GDDCDCadj, SumGDDforPlot, TheModeCycle, &
-                StrResRedCGC, StrResRedCCX)
+                GDDL0, GDDL123, GDDL1234, CCo, CCx, CGC, CDC,&
+                GDDCGC, GDDCDC, SumGDDforPlot, TheModeCycle, 0_int8, 0_int8)
         end if
         ! Time reduction for days between L12 and L123
-        DayFraction = (L123-L12) * 1._dp/&
-                      real(Tadj + L0 + (L123-L12) ,kind=dp)
+        DayFraction = (L123-L12) *1._dp/ &
+                      real(Tadj + L0 + (L123-L12), kind=dp)
         if (TheModeCycle == modeCycle_GDDays) then
-            GDDayFraction = (GDDL123-GDDL12) * 1._dp/&
-                            (GDDTadj + GDDL0 + (GDDL123-GDDL12))
+            GDDayFraction = (GDDL123-GDDL12) *1._dp/&
+                            real(GDDTadj + GDDL0 + (GDDL123-GDDL12), kind=dp)
         end if
     else
         ! growth starts after germination/recover
         Tadj = 0
         if (TheModeCycle == modeCycle_GDDays) then
-            GDDTadj = 0
+            GDDTadj = 0._dp
             SumGDD = 0._dp
         end if
-        CCinitial = CCoadj
+        CCinitial = CCo
     end if
 
-    ! 5. Calculate Bnormalized
+    ! 4. Calculate Biomass
     do Dayi = 1, L1234
-        ! 5.1 growing degrees for dayi
+        ! 4.1 growing degrees for dayi
         if (GetTemperatureFile() /= '(None)') then
             read(fTemp, *, iostat=rc) Tndayi, Txdayi
-            GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi,&
+            GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                               GetSimulParam_GDDMethod())
         else
-            GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
+            GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                               GetSimulParam_GDDMethod())
         end if
         if (TheModeCycle == modeCycle_GDDays) then
@@ -2062,7 +2012,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
             SumGDDfromDay1 = SumGDDfromDay1 + GDDi
         end if
 
-        ! 5.2 green Canopy Cover (CC)
+        ! 4.2 green Canopy Cover (CC)
         DayCC = Dayi
         if (GrowthON .eqv. .false.) then
             ! not yet canopy development
@@ -2095,157 +2045,433 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 end if
                 if (DayCC > L12) then
                     if (Dayi <= L123) then
-                         DayCC = L12 + roundc(DayFraction * &
-                                    (Dayi+Tadj+L0 - L12), mold=1) ! slow down
+                        DayCC = L12 + roundc(DayFraction *&
+                             real(Dayi+Tadj+L0 - L12, kind=dp),mold=1) ! slow down
                     else
                         DayCC = Dayi ! switch time scale
                     end if
                 end if
             end if
-
             if (TheModeCycle == modeCycle_GDDays) then
                 if (TheGDDaysToCCini == 0) then
                     SumGDDforPlot = SumGDDfromDay1
                 else
                     SumGDDforPlot = SumGDD
                     if (SumGDDforPlot > GDDL1234) then
-                        SumGDDforPlot = GDDL1234 
-                        ! special case where L123 > L1234
+                        SumGDDforPlot = GDDL1234 ! special case where L123 > L1234
                     end if
                     if (SumGDDforPlot > GDDL12) then
                         if (SumGDDfromDay1 <= GDDL123) then
-                            SumGDDforPlot = GDDL12 + roundc(GDDayFraction * &
-                                (SumGDDfromDay1+GDDTadj+GDDL0 - &
-                                GDDL12),mold=1) ! slow down
+                            SumGDDforPlot = GDDL12 + real(GDDayFraction * &
+                              real(SumGDDfromDay1+GDDTadj+GDDL0 - GDDL12,&
+                                   kind=dp)) ! slow down
                         else
                             SumGDDforPlot = SumGDDfromDay1 ! switch time scale
                         end if
                     end if
+                    CCi = CCiNoWaterStressSF(DayCC, L0, L12, L123, L1234,&
+                        GDDL0, GDDL12, GDDL123, GDDL1234,&
+                        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, SumGDDforPlot,&
+                        RatDGDD, 0_int8, 0_int8, 0._dp, TheModeCycle)
                 end if
-            endif
-            CCi = CCiNoWaterStressSF(DayCC, L0, L12SF, L123, L1234,&
-                        GDDL0, GDDL12SF, GDDL123, GDDL1234,&
-                        CCoadj, CCxadj, CGC, GDDCGC, CDCadj, GDDCDCadj, &
-                        SumGDDforPlot, RatDGDD,&
-                        StrResRedCGC, StrResRedCCX, StrResCDecline,&
-                        TheModeCycle)
-        end if
+                if (CCi > CCxWitheredForB) then
+                     CCxWitheredForB = CCi
+                end if
 
-        if (CCi > CCxWitheredForB) then
-            CCxWitheredForB = CCi
-        end if
-        if (DayCC >= L12SF) then
-            CCxWitheredForB = CCxadj*(1._dp-StrResRedCCX/100._dp)
-        end if
-        CCw = CCi
-
-        if (CCi > 0.0001_dp) then
-            ! 5.3 potential transpiration of total canopy cover (crop and weed)
-            call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
-                           EToStandard, KcTop, KcDeclAgeing,&
-                           CCxadj, CCxWitheredForB, CCeffectProcent, TheCO2,&
-                           GDDi, GDtranspLow, TpotForB, EpotTotForB)
-
-            ! 5.4 Sum of Kc (only required for soil fertility stress)
-            SumKci = SumKci + (TpotForB/EToStandard)
-
-            ! 5.5 potential transpiration of crop canopy cover (without weed)
-            if (WeedStress > 0) then
-                ! green canopy cover of the crop (CCw) in weed-infested field
-                ! (CCi is CC of crop and weeds)
-                fCCx = 1.0_dp ! only for non perennials (no self-thinning)
-                if (DeltaWeedStress /= 0) then
-                    DeltaWeedStress_local = DeltaWeedStress
-                    WeedCorrection = GetWeedRC(DayCC, SumGDDforPlot, fCCx,&
-                           WeedStress, GetManagement_WeedAdj(),&
-                           DeltaWeedStress_local, L12SF, L123, &
-                           GDDL12SF, GDDL123, TheModeCycle)
+                ! 4.3 potential transpiration (TpotForB)
+                if (CCi > 0.0001_dp) then
+                    ! 5.3 potential transpiration of total canopy cover
+                    call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi,&
+                         EToStandard, KcTop, KcDeclAgeing,&
+                         CCx, CCxWitheredForB, CCeffectProcent, TheCO2, GDDi, &
+                         GDtranspLow, TpotForB, EpotTotForB)
                 else
-                    WeedCorrection = WeedStress
-                end if
-                CCw = CCi * (1._dp - WeedCorrection/100._dp)
-                ! correction for micro-advection
-                CCtotStar = 1.72_dp*CCi - 1._dp*(CCi*CCi) + &
-                                0.30_dp*(CCi*CCi*CCi)
-                if (CCtotStar < 0._dp) then
-                    CCtotStar = 0._dp
-                end if
-                if (CCtotStar > 1._dp) then
-                    CCtotStar = 1._dp
-                end if
-                if (CCw > 0.0001_dp) then
-                    CCwStar = CCw + (CCtotStar - CCi)
-                else
-                    CCwStar = 0._dp
-                end if
-                ! crop transpiration in weed-infested field
-                if (CCtotStar <= 0.0001_dp) then
                     TpotForB = 0._dp
-                else
-                    TpotForB = TpotForB * (CCwStar/CCtotStar)
                 end if
-            end if
-        else
-            TpotForB = 0._dp
-        end if
 
-        ! 5.6 biomass water productivity (WP)
-        WPi = WPbio ! vegetative stage
-        ! 5.6a. vegetative versus yield formation stage
-        if (((GetCrop_subkind() == subkind_Tuber) &
-            .or. (GetCrop_subkind() == subkind_Grain)) .and.&
-            (WPyield < 100) .and. (Dayi > LFlor)) then
-            ! yield formation stage
-            fSwitch = 1._dp
-            if ((DaysYieldFormation > 0) .and. (tSwitch > 0)) then
-                fSwitch = (Dayi-LFlor) * 1._dp/real(tSwitch, kind=dp)
-                if (fSwitch > 1) then
-                    fSwitch = 1._dp
-                end if
-            end if
-            WPi = WPi * (1._dp - (1._dp - WPyield/100._dp)*fSwitch)
-        end if
+                ! 4.4 Biomass (B)
+                if (Dayi >= StartStorage) then
+                    SumBtot = SumBtot +  WPbio * (TpotForB/EToStandard)
+                    SumBstored = SumBstored + WPbio*(TpotForB/EToStandard)*&
+                            (0.01_dp*TempAssimStored)*&
+                            ((Dayi-StartStorage+1._dp)/&
+                             real(TempAssimPeriod, kind=dp))
+               end if
+           end if
 
-        ! 5.7 Biomass (B)
-        if (FertilityStressOn) then
-            ! 5.7a - reduction for soil fertiltiy
-            if ((StrResRedWP > 0) .and. (SumKci > 0._dp) &
-                .and. (SumKcTopSF > epsilon(1.0))) then
-                if (SumKci < SumKcTopSF) then
-                    if (SumKci > 0) then
-                        WPi = WPi * (1._dp - (StrResRedWP/100._dp) *&
-                                exp(k*log(SumKci/SumKcTopSF)))
-                    end if
-                else
-                    WPi = WPi * (1._dp - StrResRedWP/100._dp)
-                end if
-            end if
-            ! 5.7b - Biomass (B)
-            SumBnor = SumBnor +  WPi * (TpotForB/EToStandard)
-        else
-            SumBnor = SumBnor +  WPi * (1._dp - StrResRedKsSto/100._dp) *&
-                          (TpotForB/EToStandard) ! for salinity stress
-        end if
+           ! 5. Close Temperature file
+           if (GetTemperatureFile() /= '(None)') then
+               close(fTemp)
+           end if
+       end if
+    end do
+end subroutine BTransferPeriod
 
-        ! test
-        if (TestRecord .eqv. .true.) then
-            write(fOUT,'(i10, 2f10.1, 3f10.2, f10.1)') &
-                    Dayi, (100._dp*CCi), (100._dp*CCw), &
-                    WeedCorrection, TpotForB, WPi, SumKci
-        end if
-    enddo
+real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
+            L0, L12, L12SF, L123, L1234, LFlor, &
+            GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, &
+            WPyield, DaysYieldFormation, tSwitch, CCo, CCx, &
+            CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
+            CCeffectProcent, WPbio, TheCO2, Tbase, Tupper, &
+            TDayMin, TDayMax, GDtranspLow, RatDGDD, SumKcTop, &
+            StressInPercent, StrResRedCGC, StrResRedCCx, StrResRedWP, &
+            StrResRedKsSto, WeedStress, DeltaWeedStress, StrResCDecline, &
+            ShapeFweed, TheModeCycle, FertilityStressOn, TestRecord)
+     integer(int32), intent(in) :: TheDaysToCCini
+     integer(int32), intent(in) :: TheGDDaysToCCini
+     integer(int32), intent(in) :: L0
+     integer(int32), intent(in) :: L12
+     integer(int32), intent(in) :: L12SF
+     integer(int32), intent(in) :: L123
+     integer(int32), intent(in) :: L1234
+     integer(int32), intent(in) :: LFlor
+     integer(int32), intent(in) :: GDDL0
+     integer(int32), intent(in) :: GDDL12
+     integer(int32), intent(in) :: GDDL12SF
+     integer(int32), intent(in) :: GDDL123
+     integer(int32), intent(in) :: GDDL1234
+     integer(int32), intent(in) :: WPyield
+     integer(int32), intent(in) :: DaysYieldFormation
+     integer(int32), intent(in) :: tSwitch
+     real(dp), intent(in) :: CCo
+     real(dp), intent(in) :: CCx
+     real(dp), intent(in) :: CGC
+     real(dp), intent(in) :: GDDCGC
+     real(dp), intent(in) :: CDC
+     real(dp), intent(in) :: GDDCDC
+     real(dp), intent(in) :: KcTop
+     real(dp), intent(in) :: KcDeclAgeing
+     real(dp), intent(in) :: CCeffectProcent
+     real(dp), intent(in) :: WPbio
+     real(dp), intent(in) :: TheCO2
+     real(dp), intent(in) :: Tbase
+     real(dp), intent(in) :: Tupper
+     real(dp), intent(in) :: TDayMin
+     real(dp), intent(in) :: TDayMax
+     real(dp), intent(in) :: GDtranspLow
+     real(dp), intent(in) :: RatDGDD
+     real(dp), intent(in) :: SumKcTop
+     integer(int8), intent(in) :: StressInPercent
+     integer(int8), intent(in) :: StrResRedCGC
+     integer(int8), intent(in) :: StrResRedCCx
+     integer(int8), intent(in) :: StrResRedWP
+     integer(int8), intent(in) :: StrResRedKsSto
+     integer(int8), intent(in) :: WeedStress
+     integer(int32), intent(in) :: DeltaWeedStress
+     real(dp), intent(in) :: StrResCDecline
+     real(dp), intent(in) :: ShapeFweed
+     integer(intEnum), intent(in) :: TheModeCycle
+     logical, intent(in) :: FertilityStressOn
+     logical, intent(in) :: TestRecord
 
-    ! 4. Close Temperature file
-    if (GetTemperatureFile() /= '(None)') then
-        close(fTemp)
-    end if
+     real(dp), parameter :: EToStandard = 5._dp
+     integer(int32), parameter :: k = 2
 
-    if (TestRecord .eqv. .true.) then
-        close(fOUT)
-    end if
+     integer(int32) ::  fTemp, fOUT, rc
+     real(dp) :: SumGDD, Tndayi, Txdayi, GDDi, CCi,&
+                 CCxWitheredForB, TpotForB, EpotTotForB, SumKCi,&
+                 fSwitch, WPi, SumBnor, SumKcTopSF, fCCx
+     integer(int32) :: Dayi, DayCC, Tadj, GDDTadj
+     real(dp) :: CCoadj, CCxadj, CDCadj, GDDCDCadj, CCw, CCtotStar, CCwStar
+     real(dp) :: SumGDDfromDay1, SumGDDforPlot, CCinitial,&
+                 DayFraction, GDDayFraction, fWeed, WeedCorrection
+     logical :: GrowthON
+     integer(int32) :: DeltaWeedStress_local
 
-    ! 5. Export
-    Bnormalized = SumBnor
+     ! 1. Adjustment for weed infestation
+     if (WeedStress > 0) then
+         if (StressInPercent > 0) then ! soil fertility stress
+             fWeed = 1._dp  ! no expansion of canopy cover possible
+         else
+             fWeed = CCmultiplierWeed(WeedStress, CCx, ShapeFweed)
+         end if
+         CCoadj = CCo*fWeed
+         CCxadj = CCx*fWeed
+         CDCadj = CDC*(fWeed*CCx + 2.29_dp)/(CCx + 2.29_dp)
+         GDDCDCadj = GDDCDC*(fWeed*CCx + 2.29_dp)/(CCx + 2.29_dp)
+     else
+         CCoadj = CCo
+         CCxadj = CCx
+         CDCadj = CDC
+         GDDCDCadj = GDDCDC
+     end if
+
+     ! TEST
+     if (TestRecord .eqv. .true.) then
+         open(newunit=fOUT, file=trim(GetPathNameSimul()//'TestBio.SIM'), &
+              action='write', status='replace')
+     end if
+
+     ! 2. Open Temperature file
+     if (GetTemperatureFile() /= '(None)') then
+         open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
+                      status='old', action='read', iostat=rc)
+     end if
+
+     ! 3. Initialize
+     SumKcTopSF = (1._dp - real(StressInPercent, kind=dp)/100._dp) * SumKcTop
+     !! only required for soil fertility stress
+
+     ! test
+     if (TestRecord .eqv. .true.) then
+        write(fOUT, '(f10.1)') SumKcTopSF
+     end if
+
+     call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+     SumKci = 0._dp
+     SumBnor = 0._dp
+     SumGDDforPlot = undef_int
+     SumGDD = undef_int
+     SumGDDfromDay1 = 0._dp
+     GrowthON = .false.
+     GDDTadj = undef_int
+     DayFraction = undef_int
+     GDDayFraction = undef_int
+     CCxWitheredForB = 0._dp
+
+     ! 4. Initialise 1st day
+     if (TheDaysToCCini /= 0) then
+         ! regrowth which starts on 1st day
+         GrowthON = .true.
+         if (TheDaysToCCini == undef_int) then
+             ! CCx on 1st day
+             Tadj = L12 - L0
+             if (TheModeCycle == modeCycle_GDDays) then
+                 GDDTadj = GDDL12 - GDDL0
+                 SumGDD = GDDL12
+             end if
+             CCinitial = CCxadj * (1._dp-StrResRedCCX/100._dp)
+         else
+         ! CC on 1st day is < CCx
+             Tadj = TheDaysToCCini
+             DayCC = Tadj + L0
+             if (TheModeCycle == modeCycle_GDDays) then
+                 GDDTadj = TheGDDaysToCCini
+                 SumGDD = GDDL0 + TheGDDaysToCCini
+                 SumGDDforPlot = SumGDD
+             end if
+             CCinitial = CanopyCoverNoStressSF(DayCC, L0, L123, L1234,&
+                 GDDL0, GDDL123, GDDL1234, CCoadj, CCxadj, CGC, CDCadj,&
+                 GDDCGC, GDDCDCadj, SumGDDforPlot, TheModeCycle, &
+                 StrResRedCGC, StrResRedCCX)
+         end if
+         ! Time reduction for days between L12 and L123
+         DayFraction = (L123-L12) * 1._dp/&
+                       real(Tadj + L0 + (L123-L12) ,kind=dp)
+         if (TheModeCycle == modeCycle_GDDays) then
+             GDDayFraction = (GDDL123-GDDL12) * 1._dp/&
+                             (GDDTadj + GDDL0 + (GDDL123-GDDL12))
+         end if
+     else
+         ! growth starts after germination/recover
+         Tadj = 0
+         if (TheModeCycle == modeCycle_GDDays) then
+             GDDTadj = 0
+             SumGDD = 0._dp
+         end if
+         CCinitial = CCoadj
+     end if
+
+     ! 5. Calculate Bnormalized
+     do Dayi = 1, L1234
+         ! 5.1 growing degrees for dayi
+         if (GetTemperatureFile() /= '(None)') then
+             read(fTemp, *, iostat=rc) Tndayi, Txdayi
+             GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi,&
+                               GetSimulParam_GDDMethod())
+         else
+             GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
+                               GetSimulParam_GDDMethod())
+         end if
+         if (TheModeCycle == modeCycle_GDDays) then
+             SumGDD = SumGDD + GDDi
+             SumGDDfromDay1 = SumGDDfromDay1 + GDDi
+         end if
+
+         ! 5.2 green Canopy Cover (CC)
+         DayCC = Dayi
+         if (GrowthON .eqv. .false.) then
+             ! not yet canopy development
+             CCi = 0._dp
+             if (TheDaysToCCini /= 0) then
+                 ! regrowth
+                 CCi = CCinitial
+                 GrowthON = .true.
+             else
+                 ! sowing or transplanting
+                 if (TheModeCycle == modeCycle_CalendarDays) then
+                     if (Dayi == (L0+1)) then
+                         CCi = CCinitial
+                         GrowthON = .true.
+                     end if
+                 else
+                     if (SumGDD > GDDL0) then
+                         CCi = CCinitial
+                         GrowthON = .true.
+                     end if
+                 end if
+             end if
+         else
+             if (TheDaysToCCini == 0) then
+                 DayCC = Dayi
+             else
+                 DayCC = Dayi + Tadj + L0 ! adjusted time scale
+                 if (DayCC > L1234) then
+                     DayCC = L1234 ! special case where L123 > L1234
+                 end if
+                 if (DayCC > L12) then
+                     if (Dayi <= L123) then
+                          DayCC = L12 + roundc(DayFraction * &
+                                     (Dayi+Tadj+L0 - L12), mold=1) ! slow down
+                     else
+                         DayCC = Dayi ! switch time scale
+                     end if
+                 end if
+             end if
+
+             if (TheModeCycle == modeCycle_GDDays) then
+                 if (TheGDDaysToCCini == 0) then
+                     SumGDDforPlot = SumGDDfromDay1
+                 else
+                     SumGDDforPlot = SumGDD
+                     if (SumGDDforPlot > GDDL1234) then
+                         SumGDDforPlot = GDDL1234 
+                         ! special case where L123 > L1234
+                     end if
+                     if (SumGDDforPlot > GDDL12) then
+                         if (SumGDDfromDay1 <= GDDL123) then
+                             SumGDDforPlot = GDDL12 + roundc(GDDayFraction * &
+                                 (SumGDDfromDay1+GDDTadj+GDDL0 - &
+                                 GDDL12),mold=1) ! slow down
+                         else
+                             SumGDDforPlot = SumGDDfromDay1 ! switch time scale
+                         end if
+                     end if
+                 end if
+             endif
+             CCi = CCiNoWaterStressSF(DayCC, L0, L12SF, L123, L1234,&
+                         GDDL0, GDDL12SF, GDDL123, GDDL1234,&
+                         CCoadj, CCxadj, CGC, GDDCGC, CDCadj, GDDCDCadj, &
+                         SumGDDforPlot, RatDGDD,&
+                         StrResRedCGC, StrResRedCCX, StrResCDecline,&
+                         TheModeCycle)
+         end if
+
+         if (CCi > CCxWitheredForB) then
+             CCxWitheredForB = CCi
+         end if
+         if (DayCC >= L12SF) then
+             CCxWitheredForB = CCxadj*(1._dp-StrResRedCCX/100._dp)
+         end if
+         CCw = CCi
+
+         if (CCi > 0.0001_dp) then
+             ! 5.3 potential transpiration of total canopy cover (crop and weed)
+             call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
+                            EToStandard, KcTop, KcDeclAgeing,&
+                            CCxadj, CCxWitheredForB, CCeffectProcent, TheCO2,&
+                            GDDi, GDtranspLow, TpotForB, EpotTotForB)
+
+             ! 5.4 Sum of Kc (only required for soil fertility stress)
+             SumKci = SumKci + (TpotForB/EToStandard)
+
+             ! 5.5 potential transpiration of crop canopy cover (without weed)
+             if (WeedStress > 0) then
+                 ! green canopy cover of the crop (CCw) in weed-infested field
+                 ! (CCi is CC of crop and weeds)
+                 fCCx = 1.0_dp ! only for non perennials (no self-thinning)
+                 if (DeltaWeedStress /= 0) then
+                     DeltaWeedStress_local = DeltaWeedStress
+                     WeedCorrection = GetWeedRC(DayCC, SumGDDforPlot, fCCx,&
+                            WeedStress, GetManagement_WeedAdj(),&
+                            DeltaWeedStress_local, L12SF, L123, &
+                            GDDL12SF, GDDL123, TheModeCycle)
+                 else
+                     WeedCorrection = WeedStress
+                 end if
+                 CCw = CCi * (1._dp - WeedCorrection/100._dp)
+                 ! correction for micro-advection
+                 CCtotStar = 1.72_dp*CCi - 1._dp*(CCi*CCi) + &
+                                 0.30_dp*(CCi*CCi*CCi)
+                 if (CCtotStar < 0._dp) then
+                     CCtotStar = 0._dp
+                 end if
+                 if (CCtotStar > 1._dp) then
+                     CCtotStar = 1._dp
+                 end if
+                 if (CCw > 0.0001_dp) then
+                     CCwStar = CCw + (CCtotStar - CCi)
+                 else
+                     CCwStar = 0._dp
+                 end if
+                 ! crop transpiration in weed-infested field
+                 if (CCtotStar <= 0.0001_dp) then
+                     TpotForB = 0._dp
+                 else
+                     TpotForB = TpotForB * (CCwStar/CCtotStar)
+                 end if
+             end if
+         else
+             TpotForB = 0._dp
+         end if
+
+         ! 5.6 biomass water productivity (WP)
+         WPi = WPbio ! vegetative stage
+         ! 5.6a. vegetative versus yield formation stage
+         if (((GetCrop_subkind() == subkind_Tuber) &
+             .or. (GetCrop_subkind() == subkind_Grain)) .and.&
+             (WPyield < 100) .and. (Dayi > LFlor)) then
+             ! yield formation stage
+             fSwitch = 1._dp
+             if ((DaysYieldFormation > 0) .and. (tSwitch > 0)) then
+                 fSwitch = (Dayi-LFlor) * 1._dp/real(tSwitch, kind=dp)
+                 if (fSwitch > 1) then
+                     fSwitch = 1._dp
+                 end if
+             end if
+             WPi = WPi * (1._dp - (1._dp - WPyield/100._dp)*fSwitch)
+         end if
+
+         ! 5.7 Biomass (B)
+         if (FertilityStressOn) then
+             ! 5.7a - reduction for soil fertiltiy
+             if ((StrResRedWP > 0) .and. (SumKci > 0._dp) &
+                 .and. (SumKcTopSF > epsilon(1.0))) then
+                 if (SumKci < SumKcTopSF) then
+                     if (SumKci > 0) then
+                         WPi = WPi * (1._dp - (StrResRedWP/100._dp) *&
+                                 exp(k*log(SumKci/SumKcTopSF)))
+                     end if
+                 else
+                     WPi = WPi * (1._dp - StrResRedWP/100._dp)
+                 end if
+             end if
+             ! 5.7b - Biomass (B)
+             SumBnor = SumBnor +  WPi * (TpotForB/EToStandard)
+         else
+             SumBnor = SumBnor +  WPi * (1._dp - StrResRedKsSto/100._dp) *&
+                           (TpotForB/EToStandard) ! for salinity stress
+         end if
+
+         ! test
+         if (TestRecord .eqv. .true.) then
+             write(fOUT,'(i10, 2f10.1, 3f10.2, f10.1)') &
+                     Dayi, (100._dp*CCi), (100._dp*CCw), &
+                     WeedCorrection, TpotForB, WPi, SumKci
+         end if
+     enddo
+
+     ! 4. Close Temperature file
+     if (GetTemperatureFile() /= '(None)') then
+         close(fTemp)
+     end if
+
+     if (TestRecord .eqv. .true.) then
+         close(fOUT)
+     end if
+
+     ! 5. Export
+     Bnormalized = SumBnor
 end function Bnormalized
 
 end module ac_tempprocessing
