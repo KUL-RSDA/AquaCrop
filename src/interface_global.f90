@@ -214,7 +214,9 @@ use ac_global, only: CheckFilesInProject, &
                      EndGrowingPeriod, &
                      LoadInitialConditions, &
                      CompleteClimateDescription, &
-                     rep_clim
+                     rep_clim, &
+                     GetPreDay, &
+                     SetPreDay
 
 
 use ac_kinds, only: dp, &
@@ -2487,6 +2489,25 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
                                 FromString, ToString)
     NrObs = ClimateRecord%NrObs
 end subroutine CompleteClimateDescription_wrap
+
+
+function GetPreDay_wrap() result(PreDay)
+    !! Wrapper for [[ac_global:GetPreDay]] for foreign languages
+    logical(1) :: PreDay
+
+    PreDay = GetPreDay()
+end function GetPreDay_wrap
+
+
+subroutine SetPreDay_wrap(PreDay)
+    !! Wrapper for [[ac_global:SetPreday]] for foreign languages.
+    logical(1), intent(in) :: PreDay
+
+    logical :: bool
+
+    bool = PreDay
+    call SetPreDay(bool)
+end subroutine SetPreDay_wrap
 
 
 

@@ -1530,7 +1530,8 @@ CCoTotal := fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100
 
 // 9. first day
 StartMode := true;
-PreDay := (NOT GetSimulation_ResetIniSWC());
+bool_temp := (NOT GetSimulation_ResetIniSWC());
+SetPreDay(bool_temp);
 DayNri := GetSimulation_FromDayNr();
 DetermineDate(GetSimulation_FromDayNr(),Day1,Month1,Year1); // start simulation run
 NoYear := (Year1 = 1901);  // for output file
@@ -2891,8 +2892,8 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         END;
 
 (* 12. Reset after RUN *)
-IF (PreDay = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
-PreDay := true;
+IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
+SetPreDay(true);
 IF (DayNri >= GetCrop().Day1) THEN
    BEGIN
    CCiPrev := CCiActual;

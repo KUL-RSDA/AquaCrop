@@ -4515,6 +4515,12 @@ procedure AdjustThetaInitial(
                 constref PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
     external 'aquacrop' name '__ac_global_MOD_adjustthetainitial';
 
+function GetPreDay() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getpreday_wrap';
+
+procedure SetPreDay(constref PreDay_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setpreday_wrap';
+
 
 implementation
 

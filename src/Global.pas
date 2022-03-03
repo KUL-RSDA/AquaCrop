@@ -24,7 +24,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-    PreDay         : BOOLEAN;
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;

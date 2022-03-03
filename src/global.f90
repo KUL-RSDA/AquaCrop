@@ -978,6 +978,8 @@ real(dp) :: Drain  ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: Runoff  ! mm/day
 
+logical :: PreDay
+
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
 
@@ -14167,5 +14169,19 @@ subroutine SetGroundwaterDescription(str)
     
     GroundwaterDescription = str
 end subroutine SetGroundwaterDescription
+
+logical function GetPreDay()
+    !! Getter for the "PreDay" global variable.
+
+    GetPreDay = PreDay
+end function GetPreDay
+
+subroutine SetPreDay(PreDay_in)
+    !! Setter for the "PreDay" global variable.
+    logical, intent(in) :: PreDay_in
+
+    PreDay = PreDay_in
+end subroutine SetPreDay
+
 
 end module ac_global

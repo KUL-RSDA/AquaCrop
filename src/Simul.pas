@@ -3568,7 +3568,7 @@ SetCrop_pActStom(Crop_pActStom_temp);
 
 
 // 12. Evaporation
-IF (PreDay = false) THEN PrepareStage2; // Initialize Simulation.EvapstartStg2 (REW is gone)
+IF (GetPreDay() = false) THEN PrepareStage2; // Initialize Simulation.EvapstartStg2 (REW is gone)
 IF ((GetRain() > 0) OR
    ((Irrigation > 0) AND (GetIrriMode() <> Inet)))
    THEN PrepareStage1;
