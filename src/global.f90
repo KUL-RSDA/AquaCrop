@@ -6353,6 +6353,87 @@ end subroutine LoadInitialConditions
 
 
 
+subroutine AdjustSizeCompartments(CropZx)
+    real(dp), intent(in) :: CropZx
+
+    integer(int32) :: i , compi
+    real(dp) :: TotDepthC, fAdd
+    integer(int8) :: PrevNrComp
+    real(dp), dimension(max_No_Compartments) :: PrevThickComp, &
+                                                PrevVolPrComp, &
+                                                PrevECdSComp
+
+    ! 1. Save intial soil water profile (required when initial soil 
+    ! water profile is NOT reset at start simulation - see 7.)
+    PrevNrComp = GetNrCompartments()
+    do compi = 1, prevnrComp 
+        PrevThickComp(compi) = GetCompartment_Thickness(compi)
+        PrevVolPrComp(compi) = 100._dp*GetCompartment_Theta(compi)
+    end do
+
+    ! 2. Actual total depth of compartments
+    TotDepthC = 0._dp
+    do i = 1, GetNrCompartments() 
+        TotDepthC = TotDepthC + GetCompartment_Thickness(compi)
+    end do
+
+    ! 3. Increase number of compartments (if less than 12)
+    if (GetNrCompartments() < 12) then
+        loop: do
+            call SetNrCompartments(GetNrCompartments() + 1)
+            if ((CropZx - TotDepthC) > GetSimulParam_CompDefThick()) then
+                call SetCompartment_Thickness(GetNrCompartments(), &
+                                              GetSimulParam_CompDefThick())
+            else
+                call SetCompartment_Thickness(GetNrCompartments(), &
+                                              CropZx - TotDepthC)
+            end if
+            TotDepthC = TotDepthC &
+                        + GetCompartment_Thickness(GetNrCompartments())
+            if ((GetNrCompartments() == max_No_compartments) &
+                        .or. ((TotDepthC + 0.00001) >= CropZx)) exit loop
+        end do loop
+    end if
+
+    ! 4. Adjust size of compartments (if total depth of compartments < rooting depth)
+    if ((TotDepthC + 0.00001_dp) < CropZx) then
+        call SetNrCompartments(12)
+        fAdd = (CropZx/0.1_dp - 12._dp)/78._dp
+        do i = 1, 12 
+            call SetCompartment_Thickness(i, 0.1 * (1._dp + i*fAdd))
+            call SetCompartment_Thickness(i, 0.05 &
+                    * real(roundc(GetCompartment_Thickness(i) &
+                                    * 20._dp, mold=1), kind=dp))
+        end do
+        TotDepthC = 0._dp
+        do i = 1, GetNrCompartments() 
+            TotDepthC = TotDepthC + GetCompartment_Thickness(i)
+        end do
+        if (TotDepthC < CropZx) then
+            loop2: do
+                call SetCompartment_Thickness(12, &
+                                        GetCompartment_Thickness(12) &
+                                                          + 0.05_dp)
+                TotDepthC = TotDepthC + 0.05_dp
+                if (TotDepthC >= CropZx) exit loop2
+            end do loop2
+        else
+            do while ((TotDepthC - 0.04999999_dp) >= CropZx) 
+                call SetCompartment_Thickness(12, &
+                                        GetCompartment_Thickness(12) &
+                                                          - 0.05_dp)
+                TotDepthC = TotDepthC - 0.05_dp
+            end do
+        end if
+    end if
+
+    ! 5. Adjust soil water content and theta initial
+    call AdjustThetaInitial(PrevNrComp, PrevThickComp, &
+                            PrevVolPrComp, PrevECdSComp)
+end subroutine AdjustSizeCompartments
+
+
+
 
 !! Global variables section !!
 

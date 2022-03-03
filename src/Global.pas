@@ -67,7 +67,6 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           VAR ConstZrxForRun : double);
 PROCEDURE AdjustThetaInitial(PrevNrComp : ShortInt;
                              PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
-PROCEDURE AdjustSizeCompartments(CropZx : double);
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
@@ -454,65 +453,6 @@ FOR layeri := 1 TO GetSoil().NrSoilLayers DO Total := Total + GetSoilLayer_i(lay
 SetTotalWaterContent_BeginDay(Total);
 END; (* AdjustThetaInitial *)
 
-
-
-
-PROCEDURE AdjustSizeCompartments(CropZx : double);
-VAR i ,compi : INTEGER;
-    TotDepthC,fAdd : Double;
-    PrevNrComp : ShortInt;
-    PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp;
-BEGIN
-
-//1. Save intial soil water profile (required when initial soil water profile is NOT reset at start simulation - see 7.)
-PrevNrComp := GetNrCompartments();
-FOR compi := 1 To prevnrComp DO
-    BEGIN
-    PrevThickComp[compi] := GetCompartment_Thickness(compi);
-    PrevVolPrComp[compi] := 100*GetCompartment_Theta(compi);
-    END;
-
-//2. Actual total depth of compartments
-TotDepthC := 0;
-FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(compi);
-
-//3. Increase number of compartments (if less than 12)
-IF (GetNrCompartments() < 12) THEN
-   REPEAT
-   SetNrCompartments(GetNrCompartments() + 1);
-   IF ((CropZx - TotDepthC) > GetSimulParam_CompDefThick())
-      THEN SetCompartment_Thickness(GetNrCompartments(), GetSimulParam_CompDefThick())
-      ELSE SetCompartment_Thickness(GetNrCompartments(), CropZx - TotDepthC);
-   TotDepthC := TotDepthC + GetCompartment_Thickness(GetNrCompartments());
-   UNTIL ((GetNrCompartments() = max_No_compartments) OR ((TotDepthC + 0.00001) >= CropZx));
-
-//4. Adjust size of compartments (if total depth of compartments < rooting depth)
-IF ((TotDepthC + 0.00001) < CropZx) THEN
-   BEGIN
-   SetNrCompartments(12);
-   fAdd := (CropZx/0.1 - 12)/78;
-   FOR i := 1 TO 12 DO
-       BEGIN
-       SetCompartment_Thickness(i, 0.1 * (1 + i*fAdd));
-       SetCompartment_Thickness(i, 0.05 * ROUND(GetCompartment_Thickness(i) * 20));
-       END;
-   TotDepthC := 0;
-   FOR i := 1 to GetNrCompartments() DO TotDepthC := TotDepthC + GetCompartment_Thickness(i);
-   IF (TotDepthC < CropZx)
-      THEN REPEAT
-           SetCompartment_Thickness(12, GetCompartment_Thickness(12) + 0.05);
-           TotDepthC := TotDepthC + 0.05;
-           UNTIL (TotDepthC >= CropZx)
-      ELSE WHILE ((TotDepthC - 0.04999999) >= CropZx) DO
-               BEGIN
-               SetCompartment_Thickness(12, GetCompartment_Thickness(12) - 0.05);
-               TotDepthC := TotDepthC - 0.05;
-               END;
-   END;
-
-//5. Adjust soil water content and theta initial
-AdjustThetaInitial(PrevNrComp,PrevThickComp,PrevVolPrComp,PrevECdSComp);
-END; (* AdjustSizeCompartments *)
 
 
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
