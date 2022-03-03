@@ -4506,6 +4506,9 @@ procedure SetGroundwaterDescription_wrap(
             constref strlen : integer);
     external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterdescription_wrap';
 
+procedure AdjustSizeCompartments(constref CropZx : double);
+    external 'aquacrop' name '__ac_global_MOD_adjustsizecompartments';
+
 
 procedure AdjustThetaInitial(
                 constref PrevNrComp : ShortInt;
