@@ -715,8 +715,7 @@ IF (GetEToFile() <> '(None)')
                                    SetETo(EToDataSet[i].Param);
                                    END;
                          end;
-                    WRITELN(fEToS,ETo_tmp:10:4);
-                    SetETo(ETo_tmp);
+                    WRITELN(fEToS,GetETo():10:4);
                     END;
                 // Close files
                 IF (GetEToRecord_DataType() = Daily) THEN Close(fETo);
@@ -907,6 +906,7 @@ PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
 VAR totalname : string;
     i : LongInt;
     ETo_tmp : double;
+
 BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
@@ -914,14 +914,17 @@ IF (GetEToFile() <> '(None)') THEN
    totalname := CONCAT(GetPathNameSimul(),'EToData.SIM');
    Assign(fEToSIM,totalname);
    Reset(fEToSIM);
-   IF (FirstDayNr = GetSimulation_FromDayNr())
+   IF (FirstDayNr = GetSimulation_FromDayNr()) 
       THEN BEGIN
       READLN(fEToSIM,ETo_tmp);
       SetETo(ETo_tmp);
       END
       ELSE BEGIN
-           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO READLN(fEToSIM,ETo_tmp);
+           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO 
+           BEGIN
+           READLN(fEToSIM,ETo_tmp);
            SetETo(ETo_tmp);
+           END;
            READLN(fEToSIM,ETo_tmp);
            SetETo(ETo_tmp);
            END;
@@ -3046,8 +3049,11 @@ IF (GetSimulation_SumEToStress() >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= GetSimulation_ToDayNr()) THEN
    BEGIN
-   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo_tmp);
-   SetETo(Eto_tmp);
+   IF (GetEToFile() <> '(None)') THEN 
+        BEGIN
+        READLN(fEToSIM,ETo_tmp);
+        SetETo(Eto_tmp);
+        END;
    IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
    IF (GetTemperatureFile() = '(None)')
       THEN BEGIN

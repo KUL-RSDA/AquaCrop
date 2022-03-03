@@ -3,23 +3,26 @@ module ac_simul
 
 use ac_kinds, only:  dp, int32, int8
 use ac_global, only: GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
-                     GetCrop_pMethod, GetCrop_subkind, subkind_Grain, subkind_Tuber, &
-                     pMethod_FAOCorrection, GetSimulParam_pAdjFAO, CO2Ref, &
-                     GetCrop_ModeCycle, modeCycle_CalendarDays, GetSimulation_DelayedDays, &
+                     GetCrop_pMethod, GetCrop_subkind, GetCrop_HI, &
+                     GetCrop_ModeCycle, GetCrop_AdaptedToCO2, & 
                      GetCrop_DaysToGermination, GetCrop_DaysToSenescence, &
                      GetCrop_DaysToHarvest, GetCrop_GDDaysToGermination, &
                      GetCrop_GDDaysToSenescence, GetCrop_GDDaysToHarvest, &
                      GetCrop_CCo, GetCrop_CCx, GetCrop_CGC, GetCrop_CCx, &
                      GetCrop_CDC, GetCrop_GDDCGC, GetCrop_GDDCDC,getCrop_Day1, &
-                     GetCrop_Tbase, GetCrop_Tupper, GetSimulParam_Tmin, &
-                     GetSimulParam_Tmax, GetCrop_DaysToGermination, GetETO, & 
+                     GetCrop_Tbase, GetCrop_Tupper, GetCrop_DaysToGermination, & 
                      GetCrop_DaysToFullCanopy, GetCrop_DaysToSenescence, &
                      GetCrop_DaysToHarvest, GetCrop_KcTop, GetCrop_KcDecline, &
                      GetCrop_CCEffectEvapLate,GetCrop_GDtranspLow, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, GetCrop_DaysToFlowering, &
-                     GetCrop_AdaptedToCO2, CanopyCoverNoStressSF, roundc, GetCrop_HI, &
-                     fAdjustedForCO2, CalculateETpot, GetSoilLayer_SAT, &
-                     GetSoilLayer_FC, GetSoilLayer_tau
+                     GetSimulation_DelayedDays, GetSimulParam_Tmin, &
+                     GetSimulParam_Tmax, &
+                     GetSoilLayer_SAT, GetSoilLayer_FC, GetSoilLayer_tau, &
+                     pMethod_FAOCorrection, GetSimulParam_pAdjFAO, CO2Ref, &
+                     subkind_Grain, subkind_Tuber, modeCycle_CalendarDays, &
+                     CanopyCoverNoStressSF, roundc, GetETO, &
+                     fAdjustedForCO2, CalculateETpot
+                      
 use ac_tempprocessing, only: SumCalendarDays
 
 
@@ -82,17 +85,16 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     integer(int32) :: DAP, DaysYieldFormation, DayiAfterFlowering
     real(dp) :: Tmin_local, Tmax_local
 
-
     ! potential biomass - unlimited soil fertiltiy
     ! 1. - CCi
-    CCiPot = CanopyCoverNoStressSF((VirtualTimeCC + GetSimulation_DelayedDays() + 1_int32), &
+    CCiPot = CanopyCoverNoStressSF((VirtualTimeCC + GetSimulation_DelayedDays() + 1), &
                                   GetCrop_DaysToGermination(), GetCrop_DaysToSenescence(), &
                                   GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
                                   GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
                                   GetCrop_CCo(), GetCrop_CCx(), GetCrop_CGC(), &
                                   GetCrop_CDC(), GetCrop_GDDCGC(), GetCrop_GDDCDC(), &
                                   SumGDDadjCC, GetCrop_ModeCycle(), 0_int8, 0_int8)
-    if (CCiPot < epsilon(1._dp)) then
+    if (CCiPot < 0._dp) then
         CCiPot = 0._dp
     end if
     if (CCiPot > CCxWitheredTpotNoS) then
@@ -111,7 +113,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
         DAP = DAP + GetSimulation_DelayedDays() ! are not considered when working with GDDays
     end if
     call CalculateETpot(DAP, GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
-                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), 0_int32, CCiPot, &
+                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), 0, CCiPot, &
                    GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), GetCrop_CCx(), &
                    CCxWitheredTpotNoS, real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, GDDayi, &
                    GetCrop_GDtranspLow(), TpotForB, EpotTotForB)
@@ -124,7 +126,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
         .and. (GetCrop_WPy() < 100._dp) .and. (GetCrop_dHIdt() > 0._dp) &
         .and. (VirtualTimeCC >= GetCrop_DaysToFlowering())) then
         ! WPi in reproductive stage
-        fSwitch = 1
+        fSwitch = 1._dp
         DaysYieldFormation = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
         DayiAfterFlowering = VirtualTimeCC - GetCrop_DaysToFlowering()
         if ((DaysYieldFormation > 0) .and. (DayiAfterFlowering < &
@@ -139,7 +141,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     end if
 
     ! 4. - Potential Biomass
-    if (GetETo() > epsilon(1._dp)) then
+    if (GetETo() > 0._dp) then
         BiomassUnlim = BiomassUnlim + WPi * TpotForB/real(GetETo(), kind=dp) ! ton/ha
     end if
 

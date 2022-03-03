@@ -973,7 +973,7 @@ integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
-real(dp) :: ETo !(* mm/day *)
+real(dp) :: ETo ! mm/day 
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
