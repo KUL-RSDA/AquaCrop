@@ -292,9 +292,9 @@ subroutine twostrings2twopointers(string1, string2, c_pointer1, c_pointer2)
 end subroutine twostrings2twopointers
 
 
-subroutine twostrings2threepointers(string1, string2, string3, &
+subroutine threestrings2threepointers(string1, string2, string3, &
                                     c_pointer1, c_pointer2, c_pointer3)
-    !! Returns three C-pointers for two Fortran strings.
+    !! Returns three C-pointers for three Fortran strings.
     character(len=*), intent(in) :: string1
     character(len=*), intent(in) :: string2
     character(len=*), intent(in) :: string3
@@ -314,7 +314,7 @@ subroutine twostrings2threepointers(string1, string2, string3, &
 
     f_string3 = string3 // c_null_char
     c_pointer3 = c_loc(f_string3)
-end subroutine twostrings2threepointers
+end subroutine threestrings2threepointers
 
 
 function GetCrop_Assimilates_On_wrap() result(On)
@@ -2350,9 +2350,13 @@ subroutine LoadClim_wrap(FullName_ptr, strlen1, ClimateDescription_ptr, &
     DataType = ClimateRecord%DataType
     FromD = ClimateRecord%FromD
     FromM = ClimateRecord%FromM
-    FromY = ClimateRecord%FromY   
+    FromY = ClimateRecord%FromY 
+    ToD = ClimateRecord%ToD
+    ToM = ClimateRecord%ToM
+    ToY = ClimateRecord%ToY
+    FromDayNr = ClimateRecord%FromDayNr  
     ToDayNr = ClimateRecord%ToDayNr
-    call twostrings2threepointers(ClimateRecord%FromString, &
+    call threestrings2threepointers(ClimateRecord%FromString, &
                                   ClimateRecord%ToString, &
                                   ClimateDescription, &
                                   FromString, ToString, &
