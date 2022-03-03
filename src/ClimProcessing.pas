@@ -5,101 +5,11 @@ interface
 uses Global, interface_global, interface_climprocessing;
 
 
-PROCEDURE GetDecadeRainDataSet(DayNri : LongInt;
-                               VAR RainDataSet : rep_SimulationEventsDbl);
 PROCEDURE GetMonthlyRainDataSet(DayNri : LongInt;
                                 VAR RainDataSet : rep_SimulationEventsDbl);
 
 
 implementation
-
-
-
-PROCEDURE GetDecadeRainDataSet(DayNri : LongInt;
-                               VAR RainDataSet : rep_SimulationEventsDbl);
-VAR Nri,Day1,Deci,Monthi,Yeari,ni,DecFile,Mfile,Yfile : INTEGER;
-    DNR : LongInt;
-    fRain : textfile;
-    OKRain : BOOLEAN;
-    C : double;
-
-BEGIN
-DetermineDate(DayNri,Day1,Monthi,Yeari);
-
-//0. Set Monthly Parameters
-
-// 1. Which decade ?
-IF (Day1 > 20)
-   THEN BEGIN
-        Deci := 3;
-        Day1 := 21;
-        ni := DaysInMonth[Monthi] - Day1 + 1;
-        IF ((Monthi = 2) AND LeapYear(Yeari)) THEN ni := ni + 1;
-        END
-   ELSE IF (Day1 > 10)
-           THEN BEGIN
-                Deci := 2;
-                Day1 := 11;
-                ni := 10;
-                END
-           ELSE BEGIN
-                Deci := 1;
-                Day1 := 1;
-                ni := 10;
-                END;
-
-// 2. Load datafile
-Assign(fRain,GetRainFilefull());
-Reset(fRain);
-READLN(fRain); // description
-READLN(fRain); // time step
-READLN(fRain); // day
-READLN(fRain); // month
-READLN(fRain); // year
-READLN(fRain);
-READLN(fRain);
-READLN(fRain);
-IF (GetRainRecord_FromD() > 20)
-   THEN DecFile := 3
-   ELSE IF (GetRainRecord_FromD() > 10)
-           THEN DecFile := 2
-           ELSE DecFile := 1;
-Mfile := GetRainRecord_FromM();
-IF (GetRainRecord_FromY() = 1901) THEN Yfile := Yeari
-                             ELSE Yfile := GetRainRecord_FromY();
-
-// 3. Find decade
-OKRain := false;
-C := 999;
-REPEAT
- IF ((Deci = DecFile) AND (Monthi = Mfile) AND (Yeari = Yfile))
-    THEN BEGIN
-         READLN(fRain,C);
-         OKRain := true;
-         END
-    ELSE BEGIN
-         READLN(fRain);
-         DecFile := DecFile + 1;
-         IF (DecFile > 3) THEN AdjustDecadeMONTHandYEAR(DecFile,Mfile,Yfile);
-         END;
-UNTIL (OKRain);
-Close(fRain);
-
-// 4. Process data
-DetermineDayNr(Day1,Monthi,Yeari,DNR);
-For Nri := 1 TO ni DO
-    BEGIN
-    RainDataSet[Nri].DayNr := DNR+Nri-1;
-    RainDataSet[Nri].Param := C/ni;
-    END;
-FOR Nri := (ni+1) TO 31 DO
-    BEGIN
-    RainDataSet[Nri].DayNr := DNR+ni-1;
-    RainDataSet[Nri].Param := 0;
-    END;
-
-END; (* GetDecadeRainDataSet *)
-
 
 
 

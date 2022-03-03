@@ -15,6 +15,10 @@ use ac_global, only:    DaysInMonth, &
                         GetEToRecord_ToD, &
                         GetEToRecord_ToM, &
                         GetEToRecord_ToY, &
+                        GetRainFilefull, &
+                        GetRainRecord_FromD, &
+                        GetRainRecord_FromM, &
+                        GetRainRecord_FromY, &
                         LeapYear, &
                         rep_DayEventDbl
 implicit none
@@ -507,7 +511,98 @@ subroutine GetDecadeEToDataSet(DayNri, EToDataSet)
         close(fETo)
     end subroutine GetSetofThree
 
-end subroutine GetDecadeEToDataSet 
+end subroutine GetDecadeEToDataSet
+
+
+
+subroutine GetDecadeRainDataSet(DayNri, RainDataSet)
+    integer(int32), intent(in) :: DayNri
+    type(rep_DayEventDbl), dimension(31), intent(inout) :: RainDataSet
+
+    integer(int32) :: Nri, Day1, Deci, Monthi, Yeari, ni, DecFile, Mfile, Yfile
+    integer(int32) :: DNR
+    integer :: fRain
+    logical :: OKRain
+    real(dp) :: C
+
+    call DetermineDate(DayNri, Day1, Monthi, Yeari)
+
+    ! 0. Set Monthly Parameters
+
+    ! 1. Which decade ?
+    if (Day1 > 20) then
+        Deci = 3
+        Day1 = 21
+        ni = DaysInMonth(Monthi) - Day1 + 1
+        if ((Monthi == 2) .and. LeapYear(Yeari)) then
+            ni = ni + 1
+        end if
+    elseif (Day1 > 10) then
+        Deci = 2
+        Day1 = 11
+        ni = 10
+    else
+        Deci = 1
+        Day1 = 1
+        ni = 10
+    end if
+
+    ! 2. Load datafile
+    open(newunit=fRain, file=trim(GetRainfilefull()), status='old', &
+                                                      action='read')
+    read(fRain, *) ! description
+    read(fRain, *) ! time step
+    read(fRain, *) ! day
+    read(fRain, *) ! month
+    read(fRain, *) ! year
+    read(fRain, *)
+    read(fRain, *)
+    read(fRain, *)
+    if (GetRainRecord_FromD() > 20) then
+        DecFile = 3
+    elseif (GetRainRecord_FromD() > 10) then
+        DecFile = 2
+    else
+        DecFile = 1
+    end if
+    Mfile = GetRainRecord_FromM()
+    if (GetRainRecord_FromY() == 1901) then
+        Yfile = Yeari
+    else
+        Yfile = GetRainRecord_FromY()
+    end if
+
+    ! 3. Find decade
+    OKRain = .false.
+    C = 999._dp
+    loop: do
+        if ((Deci == DecFile) .and. (Monthi == Mfile) &
+                              .and. (Yeari == Yfile)) then
+            read(fRain, *) C
+            OKRain = .true.
+        else
+            read(fRain, *)
+            DecFile = DecFile + 1
+            if (DecFile > 3) then
+                call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
+            end if
+        end if
+        if (OKRain) exit loop
+    end do loop
+    close(fRain)
+
+    ! 4. Process data
+    call DetermineDayNr(Day1, Monthi, Yeari, DNR)
+    do Nri = 1, ni 
+        RainDataSet(Nri)%DayNr = DNR+Nri-1
+        RainDataSet(Nri)%Param = C/ni
+    end do
+    do Nri = (ni+1), 31 
+        RainDataSet(Nri)%DayNr = DNR+ni-1
+        RainDataSet(Nri)%Param = 0._dp
+    end do
+
+end subroutine GetDecadeRainDataSet 
 
 
 end module ac_climprocessing
