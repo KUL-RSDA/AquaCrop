@@ -30,7 +30,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     MinInt, MaxInt : INTEGER;
     MaxPlotNew : Integer;
     MaxPlotTr : ShortInt;
-    IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
     // salinity
     ECstorage      : double; (* EC surface storage dS/m *)
     ECdrain        : double; (* EC drain water dS/m *)

@@ -71,7 +71,7 @@ implementation
 
 
  SetPreDay(false);
- IniPercTAW := 50; // Default Value for Percentage TAW for Display in Initial Soil Water Content Menu
+ SetIniPercTAW(50); // Default Value for Percentage TAW for Display in Initial Soil Water Content Menu
 
  // Default for soil compartments
  IF (GetNrCompartments() > max_No_compartments) //Savety check of value in General.PAR;

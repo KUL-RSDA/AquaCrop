@@ -970,10 +970,14 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
+                            ! Soil Water Content Menu
+
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
+
 real(dp) :: Drain  ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: Runoff  ! mm/day
@@ -14182,6 +14186,19 @@ subroutine SetPreDay(PreDay_in)
 
     PreDay = PreDay_in
 end subroutine SetPreDay
+
+integer(int8) function GetIniPercTAW()
+    !! Getter for the "IniPercTAW" global variable.
+
+    GetIniPercTAW = IniPercTAW
+end function GetIniPercTAW
+
+subroutine SetIniPercTAW(IniPercTAW_in)
+    !! Setter for the "IniPercTAW" global variable.
+    integer(int8), intent(in) :: IniPercTAW_in
+
+    IniPercTAW = IniPercTAW_in
+end subroutine SetIniPercTAW
 
 
 end module ac_global

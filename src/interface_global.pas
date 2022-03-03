@@ -4521,6 +4521,12 @@ function GetPreDay() : boolean;
 procedure SetPreDay(constref PreDay_in : boolean);
     external 'aquacrop' name '__ac_interface_global_MOD_setpreday_wrap';
 
+function GetIniPercTAW() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getiniperctaw';
+
+procedure SetIniPercTAW(constref IniPercTAW_in : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setiniperctaw';
+
 
 implementation
 
