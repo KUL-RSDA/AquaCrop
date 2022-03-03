@@ -1538,7 +1538,7 @@ subroutine CheckForWaterTableInProfile(DepthGWTmeter, ProfileComp, WaterTableInP
     Ztot = 0._dp
     compi = 0
     
-    if (DepthGWTmeter >= 0) then
+    if (DepthGWTmeter >= epsilon(0._dp)) then
         ! groundwater table is present
         do while ((.not. WaterTableInProfile) .and. (compi < getNrCompartments()))
             compi = compi + 1
