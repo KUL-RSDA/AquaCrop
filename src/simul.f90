@@ -150,13 +150,11 @@ end function calculate_theta
 
 
 subroutine calculate_drainage()
-
     integer(int32) ::  i, compi, layeri, pre_nr
     real(dp) :: drainsum, delta_theta, drain_comp, drainmax, theta_x, excess
     real(dp) :: pre_thick
     logical :: drainability
 
-    ! calculate_drainage
     drainsum = 0.0_dp
     do compi=1, GetNrCompartments()
         ! 1. Calculate drainage of compartment
@@ -207,13 +205,6 @@ subroutine calculate_drainage()
                          + drainsum/(1000.0_dp*GetCompartment_Thickness(compi) &
                                      *(1-GetSoilLayer_GravelVol(layeri)/100.0_dp)))
                 if (GetCompartment_theta(compi) > theta_x) then
-                    ! OLD
-                    !drainsum = ((GetCompartment_theta(compi) - theta_x) &
-                    !           + delta_theta) * 1000.0_dp &
-                    !           * GetCompartment_Thickness(compi)
-                    ! OLD
-
-                    ! NEW
                     drainsum = (GetCompartment_theta(compi) - theta_x) &
                                * 1000.0_dp * GetCompartment_Thickness(compi) &
                                * (1 - GetSoilLayer_GravelVol(layeri)/100.0_dp)
@@ -223,8 +214,6 @@ subroutine calculate_drainage()
                                            * GetCompartment_Thickness(compi) &
                                            * (1 - GetSoilLayer_GravelVol(layeri)&
                                                   /100.0_dp)
-                    ! NEW
-
                     call CheckDrainsum(layeri, drainsum, excess)
                     call SetCompartment_theta(compi, theta_x - delta_theta)
                 elseif (GetCompartment_theta(compi) &
@@ -352,7 +341,6 @@ end subroutine calculate_drainage
 
 
 subroutine calculate_weighting_factors(Depth, Compartment)
-
     real(dp), intent(in) :: Depth
     type(CompartmentIndividual), dimension(max_No_compartments), intent(inout) :: Compartment
 
@@ -386,7 +374,6 @@ end subroutine calculate_weighting_factors
 
 
 subroutine calculate_runoff(MaxDepth)
-
     real(dp), intent(in) :: MaxDepth
 
     real(dp) :: SUM, CNA, Shower, term, S
@@ -410,7 +397,6 @@ subroutine calculate_runoff(MaxDepth)
                  / GetSimulParam_EffectiveRain_ShowersInDecade()
     end if
     S = 254.0_dp * (100.0_dp/CNA - 1.0_dp)
-    ! term := Shower - 0.2 * S;
     term = Shower - (GetSimulParam_IniAbstract()/100.0_dp) * S
     if (term <= epsilon(0.0_dp)) then
         call SetRunoff(0.0_dp);
@@ -432,47 +418,45 @@ subroutine calculate_runoff(MaxDepth)
         end if
     end if
 
-contains
+    contains
 
-subroutine calculate_relative_wetness_topsoil(SUM)
+    subroutine calculate_relative_wetness_topsoil(SUM)
+        real(dp), intent(inout) :: SUM
 
-    real(dp), intent(inout) :: SUM
+        real(dp) :: CumDepth, theta
+        integer(int32) :: compi, layeri
+        type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
 
-    real(dp) :: CumDepth, theta
-    integer(int32) :: compi, layeri
-    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
-
-    !calculate_relative_wetness_topsoil
-    Compartment_temp = GetCompartment()
-    call calculate_weighting_factors(MaxDepth, Compartment_temp)
-    call SetCompartment(Compartment_temp)
-    SUM = 0.0_dp
-    compi = 0
-    CumDepth = 0.0_dp
-
-    loop : do
-        compi = compi + 1
-        layeri = GetCompartment_Layer(compi)
-        CumDepth = CumDepth + GetCompartment_Thickness(compi)
-        if (GetCompartment_theta(compi) < GetSoilLayer_WP(layeri)/100.0_dp) then
-            theta = GetSoilLayer_WP(layeri)/100.0_dp
-        else
-            theta = GetCompartment_theta(compi)
-        end if
-        SUM = SUM + GetCompartment_WFactor(compi) &
-             * (theta-GetSoilLayer_WP(layeri)/100.0_dp) &
-             / (GetSoilLayer_FC(layeri)/100.0_dp - GetSoilLayer_WP(layeri)/100.0_dp)
-        if ((CumDepth >= MaxDepth) .or. (compi == GetNrCompartments())) exit loop
-    end do loop
-
-    if (SUM < 0.0_dp) then
+        Compartment_temp = GetCompartment()
+        call calculate_weighting_factors(MaxDepth, Compartment_temp)
+        call SetCompartment(Compartment_temp)
         SUM = 0.0_dp
-    end if
-    if (SUM > 1.0_dp) then
-        SUM = 1.0_dp
-    end if
+        compi = 0
+        CumDepth = 0.0_dp
 
-end subroutine calculate_relative_wetness_topsoil
+        loop : do
+            compi = compi + 1
+            layeri = GetCompartment_Layer(compi)
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if (GetCompartment_theta(compi) < GetSoilLayer_WP(layeri)/100.0_dp) then
+                theta = GetSoilLayer_WP(layeri)/100.0_dp
+            else
+                theta = GetCompartment_theta(compi)
+            end if
+            SUM = SUM + GetCompartment_WFactor(compi) &
+                 * (theta-GetSoilLayer_WP(layeri)/100.0_dp) &
+                 / (GetSoilLayer_FC(layeri)/100.0_dp - GetSoilLayer_WP(layeri)/100.0_dp)
+            if ((CumDepth >= MaxDepth) .or. (compi == GetNrCompartments())) exit loop
+        end do loop
+
+        if (SUM < 0.0_dp) then
+            SUM = 0.0_dp
+        end if
+        if (SUM > 1.0_dp) then
+            SUM = 1.0_dp
+        end if
+
+    end subroutine calculate_relative_wetness_topsoil
 
 end subroutine calculate_runoff
 
