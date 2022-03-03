@@ -5681,7 +5681,6 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     ! 5. Look for maximum root zone depth IF RunWithKeepSWC
     if (RunWithKeepSWC .eqv. .true.) then
         rewind(fhandle0)
-        read(fhandle0, *)
         read(fhandle0, *) ! Description
         read(fhandle0, *)  ! AquaCrop version Nr
         do i = 1, 5 
