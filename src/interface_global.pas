@@ -4187,6 +4187,12 @@ function GetNrCompartments() : integer;
 procedure SetNrCompartments(constref NrCompartments_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setnrcompartments';
 
+function GetDrain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getdrain';
+
+procedure SetDrain(constref Drain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setdrain';
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
