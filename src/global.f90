@@ -7257,6 +7257,83 @@ end subroutine ReadTemperatureSettingsParameters
 
 
 
+subroutine CompleteClimateDescription(ClimateRecord)
+    type(rep_clim), intent(inout) :: ClimateRecord
+
+    character(len=2) :: dayStr
+    character(len=4) ::  yearStr
+    integer(int32) :: Deci
+
+    call DetermineDayNr(ClimateRecord%FromD, ClimateRecord%FromM, &
+                        ClimateRecord%FromY, ClimateRecord%FromDayNr)
+    select case (ClimateRecord%DataType)
+        case(datatype_daily)
+            ClimateRecord%ToDayNr = ClimateRecord%FromDayNr &
+                                    + ClimateRecord%NrObs - 1
+            call DetermineDate(ClimateRecord%ToDayNr, ClimateRecord%ToD, &
+                               ClimateRecord%ToM, ClimateRecord%ToY)
+        case(datatype_decadely)
+            Deci = roundc((ClimateRecord%FromD+9)/10._dp, mold=1) &
+                            + ClimateRecord%NrObs - 1
+            ClimateRecord%ToM = ClimateRecord%FromM
+            ClimateRecord%ToY = ClimateRecord%FromY
+            do while (Deci > 3) 
+                Deci = Deci - 3
+                ClimateRecord%ToM = ClimateRecord%ToM + 1
+                if (ClimateRecord%ToM > 12) then
+                    ClimateRecord%ToM = 1
+                    ClimateRecord%ToY = ClimateRecord%ToY  + 1
+                end if
+            end do
+            ClimateRecord%ToD = 10
+            if (Deci == 2) then
+                ClimateRecord%ToD = 20
+            end if
+            if (Deci == 3) then
+                ClimateRecord%ToD = DaysInMonth(ClimateRecord%ToM)
+                if ((ClimateRecord%ToM == 2) &
+                            .and. LeapYear(ClimateRecord%ToY)) then
+                    ClimateRecord%ToD = ClimateRecord%ToD + 1
+                end if
+            end if
+            call DetermineDayNr(ClimateRecord%ToD, ClimateRecord%ToM, &
+                                ClimateRecord%ToY, ClimateRecord%ToDayNr)
+        case(datatype_monthly)
+            ClimateRecord%ToY = ClimateRecord%FromY
+            ClimateRecord%ToM = ClimateRecord%FromM + ClimateRecord%NrObs - 1
+            do while (ClimateRecord%ToM > 12) 
+                ClimateRecord%ToY = ClimateRecord%ToY + 1
+                ClimateRecord%ToM = ClimateRecord%ToM - 12
+            end do
+            ClimateRecord%ToD = DaysInMonth(ClimateRecord%ToM)
+            if ((ClimateRecord%ToM == 2) &
+                        .and. LeapYear(ClimateRecord%ToY)) then
+                ClimateRecord%ToD = ClimateRecord%ToD + 1
+            end if
+            call DetermineDayNr(ClimateRecord%ToD, ClimateRecord%ToM, &
+                                ClimateRecord%ToY, ClimateRecord%ToDayNr)
+    end select
+    write(dayStr, '(i2)') ClimateRecord%FromD
+    if (ClimateRecord%FromY == 1901) then
+        yearStr = ''
+    else
+        write(yearStr, '(i4)') ClimateRecord%FromY
+    end if
+    ClimateRecord%FromString = dayStr // ' ' // &
+                               NameMonth(ClimateRecord%FromM) // &
+                               ' ' // yearStr
+    write(dayStr, '(i2)') ClimateRecord%ToD
+    if (ClimateRecord%FromY == 1901) then
+        yearStr = ''
+    else
+        write(yearStr, '(i4)') ClimateRecord%ToY
+    end if
+    ClimateRecord%ToString = dayStr // ' ' // NameMonth(ClimateRecord%ToM) // &
+                             ' ' // yearStr
+end subroutine CompleteClimateDescription 
+
+
+
 !! Global variables section !!
 
 
