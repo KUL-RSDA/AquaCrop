@@ -5737,6 +5737,92 @@ end subroutine LoadOffSeason
 
 
 
+
+subroutine AdjustThetaInitial(PrevNrComp, PrevThickComp, PrevVolPrComp, PrevECdSComp)
+    integer(int8), intent(in) :: PrevNrComp
+    real(dp), dimension(max_No_compartments), intent(in) :: PrevThickComp
+    real(dp), dimension(max_No_compartments), intent(in) :: PrevVolPrComp
+    real(dp), dimension(max_No_compartments), intent(in) :: PrevECdSComp
+
+    integer(int32) :: layeri, compi
+    real(dp) :: TotDepthC, TotDepthL, Total
+    type(CompartmentIndividual), &
+                        dimension(max_No_compartments) :: Compartment_temp
+
+    ! 1. Actual total depth of compartments
+    TotDepthC = 0._dp
+    do compi = 1, GetNrCompartments() 
+        TotDepthC = TotDepthC + GetCompartment_Thickness(compi)
+    end do
+
+    ! 2. Stretch thickness of bottom soil layer if required
+    TotDepthL = 0._dp
+    do layeri = 1, GetSoil_NrSoilLayers() 
+        TotDepthL = TotDepthL + GetSoilLayer_Thickness(layeri)
+    end do
+    if (TotDepthC > TotDepthL) then
+        call SetSoilLayer_Thickness(int(GetSoil_NrSoilLayers(), kind=int32), &
+               GetSoilLayer_Thickness(int(GetSoil_NrSoilLayers(), kind=int32)) &
+                                                        + (TotDepthC - TotDepthL))
+    end if
+
+    ! 3. Assign a soil layer to each soil compartment
+    Compartment_temp = GetCompartment()
+    call DesignateSoilLayerToCompartments(GetNrCompartments(), &
+                             int(GetSoil_NrSoilLayers(), kind=int32), &
+                             Compartment_temp)
+    call SetCompartment(Compartment_temp)
+
+    ! 4. Adjust initial Soil Water Content of soil compartments
+    if (GetSimulation_ResetIniSWC()) then
+        if (GetSimulation_IniSWC_AtDepths()) then
+            Compartment_temp = GetCompartment()
+            call TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(), &
+                                               GetSimulation_IniSWC_Loc(), &
+                                               GetSimulation_IniSWC_VolProc(), &
+                                               GetSimulation_IniSWC_SaltECe(), &
+                                               GetNrCompartments(), &
+                                               Compartment_temp)
+            call SetCompartment(Compartment_temp)
+        else
+            Compartment_temp = GetCompartment()
+            call TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(), &
+                                               GetSimulation_IniSWC_Loc(), &
+                                               GetSimulation_IniSWC_VolProc(), &
+                                               GetSimulation_IniSWC_SaltECe(), &
+                                               GetNrCompartments(), &
+                                               Compartment_temp)
+            call SetCompartment(Compartment_temp)
+        end if
+    else
+        Compartment_temp = GetCompartment()
+        call TranslateIniLayersToSWProfile(PrevNrComp, PrevThickComp, &
+                                           PrevVolPrComp, PrevECdSComp, &
+                                           GetNrCompartments(), &
+                                           Compartment_temp)
+        call SetCompartment(Compartment_temp)
+    end if
+
+    ! 5. Adjust watercontent in soil layers and determine ThetaIni
+    Total = 0._dp
+    do layeri = 1, GetSoil_NrSoilLayers() 
+        call SetSoilLayer_WaterContent(layeri, 0._dp)
+    end do
+    do compi = 1, GetNrCompartments() 
+        call SetSimulation_ThetaIni_i(compi, GetCompartment_Theta(compi))
+        call SetSoilLayer_WaterContent(GetCompartment_Layer(compi), &
+                         GetSoilLayer_WaterContent(GetCompartment_Layer(compi)) &
+                            + GetSimulation_ThetaIni_i(compi)*100._dp*10._dp &
+                                * GetCompartment_Thickness(compi))
+    end do
+    do layeri = 1, GetSoil_NrSoilLayers() 
+        Total = Total + GetSoilLayer_WaterContent(layeri)
+    end do
+    call SetTotalWaterContent_BeginDay(Total)
+end subroutine AdjustThetaInitial
+
+
+
 subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
     character(len=*), intent(in) :: FullName
     character(len=*), intent(inout) :: ClimateDescription
@@ -13088,6 +13174,14 @@ function GetSimulation_IniSWC_Loc_i(i) result(Loc_i)
     Loc_i = simulation%IniSWC%Loc(i)
 end function GetSimulation_IniSWC_Loc_i
 
+function GetSimulation_IniSWC_Loc() result(Loc)
+    !! Getter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable
+
+    real(dp), dimension(max_No_compartments) :: Loc
+
+    Loc = simulation%IniSWC%Loc
+end function GetSimulation_IniSWC_Loc
+
 function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
     !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
     integer(int32), intent(in) :: i
@@ -13096,6 +13190,14 @@ function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
     VolProc_i = simulation%IniSWC%VolProc(i)
 end function GetSimulation_IniSWC_VolProc_i
 
+function GetSimulation_IniSWC_VolProc() result(VolProc)
+    !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
+
+    real(dp), dimension(max_No_compartments) :: VolProc
+
+    VolProc = simulation%IniSWC%VolProc
+end function GetSimulation_IniSWC_VolProc
+
 function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
     !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
     integer(int32), intent(in) :: i
@@ -13103,6 +13205,14 @@ function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
 
     SaltECe_i = simulation%IniSWC%SaltECe(i)
 end function GetSimulation_IniSWC_SaltECe_i
+
+function GetSimulation_IniSWC_SaltECe() result(SaltECe)
+    !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
+
+    real(dp), dimension(max_No_compartments) :: SaltECe
+
+    SaltECe = simulation%IniSWC%SaltECe
+end function GetSimulation_IniSWC_SaltECe
 
 function GetSimulation_IniSWC_AtFC() result(AtFC)
     !! Getter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.

@@ -4495,6 +4495,12 @@ procedure SetGroundwaterDescription_wrap(
     external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterdescription_wrap';
 
 
+procedure AdjustThetaInitial(
+                constref PrevNrComp : ShortInt;
+                constref PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
+    external 'aquacrop' name '__ac_global_MOD_adjustthetainitial';
+
+
 implementation
 
 
