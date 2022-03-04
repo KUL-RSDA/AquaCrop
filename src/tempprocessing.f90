@@ -2139,7 +2139,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         write(TempString1,'(f8.1)') GetSimulParam_Tmin()
         write(TempString2,'(f8.1)') GetSimulParam_Tmax()
         call SetTemperatureDescription(('Default temperature data: Tmin = '// &
-          trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' °'))
+          trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' deg'))
     else
         read(f0, *, iostat=rc) TempString ! PathTemperatureFile
         call SetTemperatureFileFull(trim(TempString)//trim(GetTemperatureFile()))
