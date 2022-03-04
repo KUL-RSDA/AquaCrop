@@ -4527,6 +4527,18 @@ function GetCRsalt() : double;
 procedure SetCRsalt(constref CRsalt_in : double);
     external 'aquacrop' name '__ac_global_MOD_setcrsalt';
 
+function GetMaxPlotNew() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getmaxplotnew';
+
+procedure SetMaxPlotNew(constref MaxPlotNew_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setmaxplotnew';
+
+function GetMaxPlotTr() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getmaxplottr';
+
+procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
+
 
 implementation
 

@@ -242,8 +242,8 @@ SetCrop_DayN(Crop_DayN_temp);
  SetCRsalt(0); // added 4.0
  SetSimulation_ResetIniSWC(true);
  SetSimulation_EvapLimitON(false);
- MaxPlotNew := 50;
- MaxPlotTr := 10;
+ SetMaxPlotNew(50);
+ SetMaxPlotTr(10);
  SetSimulation_InitialStep(10); // Length of period (days) for displaying intermediate results during simulation run
  SetSimulation_LengthCuttingInterval(40); // Default length of cutting interval (days)
  END; (* InitializeSettings *)
