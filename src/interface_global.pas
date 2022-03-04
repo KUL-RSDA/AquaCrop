@@ -1200,7 +1200,13 @@ procedure TimeToMaxCanopySF(
             VAR RedCGC,RedCCx : ShortInt;
             VAR ClassSF : ShortInt);
         external 'aquacrop' name '__ac_interface_global_MOD_timetomaxcanopysf_wrap';
-           
+
+procedure CheckForWaterTableInProfile(
+            constref DepthGWTmeter : double;
+            constref ProfileComp : rep_comp;
+            var WaterTableInProfile : boolean);
+        external 'aquacrop' name '__ac_global_MOD_checkforwatertableinprofile';
+                                                
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;

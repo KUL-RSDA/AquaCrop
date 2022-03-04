@@ -1547,6 +1547,33 @@ real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
 end function FromGravelMassToGravelVolume
 
 
+subroutine CheckForWaterTableInProfile(DepthGWTmeter, ProfileComp, WaterTableInProfile)
+    real(dp), intent(in) :: DepthGWTmeter
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                                    intent(in) :: ProfileComp
+    logical, intent(inout) :: WaterTableInProfile
+
+    real(dp) :: Ztot, Zi
+    integer(int32) :: compi
+    
+    WaterTableInProfile = .false.
+    Ztot = 0._dp
+    compi = 0
+    
+    if (DepthGWTmeter >= epsilon(0._dp)) then
+        ! groundwater table is present
+        do while ((.not. WaterTableInProfile) .and. (compi < getNrCompartments()))
+            compi = compi + 1
+            Ztot = Ztot + ProfileComp(compi)%Thickness
+            Zi = Ztot - ProfileComp(compi)%Thickness/2._dp
+            if (Zi >= DepthGWTmeter) then
+                WaterTableInProfile = .true.
+            end if
+        end do
+    end if
+end subroutine CheckForWaterTableInProfile
+
+
 real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                             TempWeedDeltaRC, L12SF, TempL123, GDDL12SF, &
                             TempGDDL123, TheModeCycle)
