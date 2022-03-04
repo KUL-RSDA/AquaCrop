@@ -120,10 +120,10 @@ procedure LoadSimulationRunProject(
             constref NrRun : INTEGER);
 
 procedure LoadSimulationRunProject_wrap(
-            constref IrriFileFull : string;
+            constref IrriFileFull : PChar;
             constref strlen1 : integer;
             constref NrRun : INTEGER);
-         external 'aquacrop' name '__ac_tempprocessing_MOD_loadsimulationrunproject_wrap';
+         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_loadsimulationrunproject_wrap';
 
 procedure BTransferPeriod(
             constref TheDaysToCCini,TheGDDaysToCCini,
@@ -146,7 +146,7 @@ procedure BTransferPeriod_wrap(
             constref TempAssimPeriod : INTEGER;
             constref TempAssimStored : ShortInt;
             VAR SumBtot,SumBstored : double);
-         external 'aquacrop' name '__ac_tempprocessing_MOD_btransferperiod_wrap';
+         external 'aquacrop' name '__ac_tempprocessing_MOD_btransferperiod';
 
 function Bnormalized(
             constref TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;

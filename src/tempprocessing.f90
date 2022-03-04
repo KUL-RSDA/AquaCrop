@@ -50,6 +50,7 @@ use ac_global , only: undef_int, &
                       SetECiAqua,&
                       GetECStorage,&
                       GetSurfaceStorage,&
+                      SetSurfaceStorage, &
                       GetNrCompartments, &
                       GetManagement_FertilityStress, &
                       CanopyCoverNoStressSF, &
@@ -2053,11 +2054,17 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     integer(int32), intent(in) :: NrRun
 
     integer(int32) :: f0, fClim, rc
-    character(len=:), allocatable :: TempString, TempString1, TempString2
-    character(len=:), allocatable :: observations_descr, eto_descr
-    character(len=:), allocatable :: CO2descr, rain_descr
-    character(len=:), allocatable :: CalendarDescriptionLocal
-    character(len=:), allocatable :: TemperatureDescriptionLocal
+!    character(len=:), allocatable :: TempString, TempString1, TempString2
+!    character(len=:), allocatable :: observations_descr, eto_descr
+!    character(len=:), allocatable :: CO2descr, rain_descr
+!    character(len=:), allocatable :: CalendarDescriptionLocal
+!    character(len=:), allocatable :: TemperatureDescriptionLocal
+    character(len=1025) :: TempString, TempString1, TempString2
+    character(len=1025) :: observations_descr, eto_descr
+    character(len=1025) :: CO2descr, rain_descr
+    character(len=1025) :: CalendarDescriptionLocal
+    character(len=1025) :: TemperatureDescriptionLocal
+
     integer(int32) :: TempSimDayNr1, TempSimDayNrN
     integer(int32) :: i, Runi
     real(dp) :: TotDepth
@@ -2079,7 +2086,9 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
 
     integer(int32) :: ZiAqua_temp
     type(rep_clim) :: etorecord_tmp, rainrecord_tmp
+    real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
 
+write(*,*) NameFileFull
     open(newunit=f0, file=trim(NameFileFull), &
               status='old', action='read', iostat=rc)
     read(f0, *, iostat=rc) !Description
@@ -2092,9 +2101,11 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
             end do
         end do
     end if
+
     ! Year of cultivation and Simulation and Cropping period
     read(f0, *, iostat=rc) YearSeason_temp ! year number of cultivation 
                                            !(1 = seeding/planting year)
+write(*,*) YearSeason_temp
     call SetSimulation_YearSeason(YearSeason_temp);
     read(f0, *, iostat=rc) TempSimDayNr1 ! First day of simulation period
     read(f0, *, iostat=rc) TempSimDayNrN ! Last day of simulation period
@@ -2103,10 +2114,13 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     read(f0, *, iostat=rc) TempInt ! Last day of cropping period
     call SetCrop_DayN(TempInt)
 
+write(*,*) TempSimDayNr1,TempSimDayNrN,TempInt
+
     ! 1. Climate
     read(f0, *, iostat=rc)  ! Info Climate
     read(f0, '(a)', iostat=rc) TempString  ! ClimateFile
     call SetClimateFile(trim(TempString))
+write(*,'(a)') trim(TempString),'XXX'
     if (GetClimateFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathClimateFile
         call SetClimateFileFull(GetClimateFile())
@@ -2120,9 +2134,11 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call SetClimateDescription(trim(TempString))
         close(fClim)
     end if
+
     ! 1.1 Temperature
     read(f0, *, iostat=rc)  ! Info Temperature
     read(f0, '(a)', iostat=rc) TempString  ! TemperatureFile
+write(*,*) 'TTT=======', TempString
     call SetTemperatureFile(trim(TempString))
     if (GetTemperatureFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathTemperatureFile
@@ -2133,15 +2149,23 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
           trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' °'))
     else
         read(f0, '(a)', iostat=rc) TempString ! PathTemperatureFile
-        call SetTemperatureFileFull((trim(TempString)//trim(GetTemperatureFile())))
+write(*,*) 'TTT2', TempString
+        call SetTemperatureFileFull(trim(TempString)//trim(GetTemperatureFile()))
         temperature_record = GetTemperatureRecord()
         TemperatureDescriptionLocal = GetTemperatureDescription()
+write(*,*) 'TTT3', GetTemperatureFileFull()
         call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
                        temperature_record) 
+write(*,*) 'TTT4'
         call SetTemperatureDescription(TemperatureDescriptionLocal)
+write(*,*) 'TTT5'
         call CompleteClimateDescription(temperature_record)
+write(*,*) 'TTT6'
         call SetTemperatureRecord(temperature_record)
     end if
+
+write(*,*) 'END TTTTemperature'
+
     ! 1.2 ETo
     read(f0, *, iostat=rc) ! Info ETo
     read(f0, '(a)', iostat=rc) TempString  ! EToFile
@@ -2160,6 +2184,9 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call CompleteClimateDescription(etorecord_tmp)
         call SetEToRecord(etorecord_tmp)
     end if
+
+write(*,*) 'ET'
+
     ! 1.3 Rain
     read(f0, *, iostat=rc) ! Info Rain
     read(f0, '(a)', iostat=rc) TempString ! RainFile
@@ -2178,6 +2205,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call CompleteClimateDescription(rainrecord_tmp)
         call SetRainRecord(rainrecord_tmp)
     end if
+
     ! 1.4 CO2
     read(f0, *, iostat=rc) ! Info CO2
     read(f0, '(a)', iostat=rc) TempString ! CO2File
@@ -2208,6 +2236,8 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call GetFileDescription(GetCalendarFileFull(), CalendarDescriptionLocal)
         call SetCalendarDescription(CalendarDescriptionLocal)
     end if
+
+write(*,*) 'CROP'
 
     ! 3. Crop
     call SetSimulation_LinkCropToSimPeriod(.true.)
@@ -2408,8 +2438,10 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
             else
                 read(f0, '(a)', iostat=rc) TempString  ! PathSWCIniFile
                 call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
+                SurfaceStorage_temp = GetSurfaceStorage()
                 call LoadInitialConditions(GetSWCiniFileFull(),&
-                      GetSurfaceStorage())
+                      SurfaceStorage_temp)
+                call SetSurfaceStorage(SurfaceStorage_temp)
             end if
             Compartment_temp = GetCompartment()
             select case (GetSimulation_IniSWC_AtDepths())
@@ -2451,9 +2483,11 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         (GetGroundWaterFile() /= '(None)')) then 
           ! the groundwater file is only available in Version 4.0 or higher
         ZiAqua_temp = GetZiAqua()
+        ECiAqua_temp = GetECiAqua()
         call LoadGroundWater(GetGroundWaterFilefull(),&
-                GetSimulation_FromDayNr(), ZiAqua_temp, GetECiAqua())
+                GetSimulation_FromDayNr(), ZiAqua_temp, ECiAqua_temp)
         call SetZiAqua(ZiAqua_temp)
+        call SetECiAqua(ECiAqua_temp)
     else
         call SetZiAqua(undef_int)
         call SetECiAqua(real(undef_int, kind=dp))
