@@ -970,6 +970,7 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int32) :: DaySubmerged
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
@@ -14167,5 +14168,21 @@ subroutine SetGroundwaterDescription(str)
     
     GroundwaterDescription = str
 end subroutine SetGroundwaterDescription
+
+
+integer(int32) function GetDaySubmerged()
+    !! Getter for the "DaySubmerged" global variable.
+
+    GetDaySubmerged = DaySubmerged
+end function GetDaySubmerged
+
+
+subroutine SetDaySubmerged(DaySubmerged_in)
+    !! Setter for the "DaySubmerged" global variable.
+    integer(int32), intent(in) :: DaySubmerged_in
+
+    DaySubmerged = DaySubmerged_in
+end subroutine SetDaySubmerged
+
 
 end module ac_global

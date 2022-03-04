@@ -4515,6 +4515,12 @@ procedure AdjustThetaInitial(
                 constref PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
     external 'aquacrop' name '__ac_global_MOD_adjustthetainitial';
 
+function GetDaySubmerged() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getdaysubmerged';
+
+procedure SetDaySubmerged(constref DaySubmerged_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setdaysubmerged';
+
 
 implementation
 

@@ -3149,7 +3149,7 @@ PROCEDURE Correction_Anaeroby(VAR Comp : CompartmentIndividual;
 VAR alfaAN : double;
     ini : INTEGER;
 BEGIN
-IF ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint > 0))
+IF ((GetDaySubmerged() >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint > 0))
    THEN alfaAN := 0
    ELSE IF (Comp.theta > (GetSoilLayer_i(Comp.Layer).SAT - GetCrop().AnaeroPoint)/100)
            THEN BEGIN
@@ -3375,14 +3375,14 @@ VAR Textra, Part : double;
     compi : INTEGER;
     KsReduction,SaltSurface : double;
 BEGIN
-DaySubmerged := DaySubmerged + 1;
+SetDaySubmerged(GetDaySubmerged() + 1);
 FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SetCompartment_DayAnaero(compi, GetCompartment_DayAnaero(compi) + 1);
     IF (GetCompartment_DayAnaero(compi) > GetSimulParam_DelayLowOxygen())
        THEN SetCompartment_DayAnaero(compi, GetSimulParam_DelayLowOxygen());
     END;
-IF (GetCrop().AnaeroPoint > 0) THEN Part := (1-DaySubmerged/GetSimulParam_DelayLowOxygen())
+IF (GetCrop().AnaeroPoint > 0) THEN Part := (1-GetDaySubmerged()/GetSimulParam_DelayLowOxygen())
                           ELSE Part := 1;
 //KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,SimulParam.KsShapeFactorSalt);
 KsReduction := KsSalinity(GetSimulation_SalinityConsidered(),GetCrop().ECemin,GetCrop().ECemax,ECstorage,(0.0));
@@ -3505,7 +3505,7 @@ calculate_drainage;
 // 4. Runoff
 IF (GetManagement_Bundheight() < 0.001) THEN
    BEGIN
-   DaySubmerged := 0;
+   SetDaySubmerged(0);
    IF ((GetManagement_RunoffON() = true) AND (GetRain() > 0.1)) THEN calculate_runoff(GetSimulParam_RunoffDepth());
    END;
 
@@ -3600,11 +3600,11 @@ IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthl
 IF ((NoMoreCrop = false) AND (RootingDepth > 0.0001)) THEN
    BEGIN
    IF ((SurfaceStorage > 0) AND
-       ((GetCrop().AnaeroPoint = 0) OR (DaySubmerged < GetSimulParam_DelayLowOxygen())))
+       ((GetCrop().AnaeroPoint = 0) OR (GetDaySubmerged() < GetSimulParam_DelayLowOxygen())))
        THEN surface_transpiration
        ELSE calculate_transpiration(Tpot,Tact);
    END;
-IF (SurfaceStorage <= 0) THEN DaySubmerged := 0;
+IF (SurfaceStorage <= 0) THEN SetDaySubmerged(0);
 FeedbackCC;
 
 // 14. Adjustment to groundwater table

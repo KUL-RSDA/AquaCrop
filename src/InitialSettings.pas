@@ -231,7 +231,7 @@ SetCrop_DayN(Crop_DayN_temp);
  Irrigation := 0;
  SurfaceStorage := 0;
  ECstorage := 0.0;
- DaySubmerged := 0;
+ SetDaySubmerged(0);
  SumWaBal_temp := GetSumWabal();
  GlobalZero(SumWabal_temp);
  SetSumWaBal(SumWaBal_temp);

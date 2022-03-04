@@ -19,7 +19,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
-    DaySubmerged   : INTEGER;
     ETo, Epot, Tpot, Irrigation, Infiltrated, CRwater : double;   (* mm/day *)
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
