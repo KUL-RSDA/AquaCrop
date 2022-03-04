@@ -239,7 +239,7 @@ SetCrop_DayN(Crop_DayN_temp);
  SetRunoff(0.0);// added 4.0
  Infiltrated := 0.0; // added 4.0
  CRwater := 0; // added 4.0
- CRsalt := 0; // added 4.0
+ SetCRsalt(0); // added 4.0
  SetSimulation_ResetIniSWC(true);
  SetSimulation_EvapLimitON(false);
  MaxPlotNew := 50;

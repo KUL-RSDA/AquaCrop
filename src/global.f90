@@ -974,7 +974,8 @@ integer(int32) :: DaySubmerged
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
-                         ! soil surface in centimeter
+
+real(dp) :: CRsalt ! gram/m2
 real(dp) :: Drain  ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: Runoff  ! mm/day
@@ -14183,6 +14184,20 @@ subroutine SetDaySubmerged(DaySubmerged_in)
 
     DaySubmerged = DaySubmerged_in
 end subroutine SetDaySubmerged
+
+real(dp) function GetCRsalt()
+    !! Getter for the "CRsalt" global variable.
+
+    GetCRsalt = CRsalt
+end function GetCRsalt
+
+
+subroutine SetCRsalt(CRsalt_in)
+    !! Setter for the "CRsalt" global variable.
+    real(dp), intent(in) :: CRsalt_in
+
+    CRsalt = CRsalt_in
+end subroutine SetCRsalt
 
 
 end module ac_global

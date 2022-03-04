@@ -35,7 +35,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     ECstorage      : double; (* EC surface storage dS/m *)
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
-    CRsalt         : double; // gram/m2
     ECiAqua        : double; //  EC of the groundwater table in dS/m
 
 

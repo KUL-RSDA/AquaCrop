@@ -583,6 +583,7 @@ VAR  control : rep_control;
      EvapWCsurf_temp : double;
      Comp_temp : rep_Comp;
      Crop_pActStom_temp : double;
+     CRsalt_temp : double;
 
 
 
@@ -620,7 +621,7 @@ CASE control OF
                HorizontalWaterFlow := 0;
                HorizontalSaltFlow := 0;
                CRwater := 0;
-               CRsalt := 0;
+               SetCRsalt(0);
                END;
 
      end_day : BEGIN
@@ -656,7 +657,7 @@ CASE control OF
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
                                             - GetDrain()*ECdrain*Equiv/100
-                                            + CRsalt/100
+                                            + GetCRsalt()/100
                                             + HorizontalSaltFlow);
                SetSumWaBal_Epot(GetSumWaBal_Epot() + Epot);
                SetSumWaBal_Tpot(GetSumWaBal_Tpot() + Tpot);
@@ -678,7 +679,7 @@ CASE control OF
                           END
                      ELSE SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + Eact); // before germination
                   END;
-               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + CRsalt/100);
+               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + GetCRsalt()/100);
                SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100);
                SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  GetDrain()*ECdrain*Equiv/100);
                END;
@@ -3520,7 +3521,9 @@ IF (GetManagement_Bundheight() >= 0.01)
 calculate_infiltration(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
 
 // 6. Capillary Rise
-calculate_CapillaryRise(CRwater,CRsalt);
+CRsalt_temp := GetCRsalt();
+calculate_CapillaryRise(CRwater,CRsalt_temp);
+SetCRsalt(CRsalt_temp);
 
 // 7. Salt balance
 calculate_saltcontent(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);

@@ -4521,6 +4521,12 @@ function GetDaySubmerged() : integer;
 procedure SetDaySubmerged(constref DaySubmerged_in : integer);
     external 'aquacrop' name '__ac_global_MOD_setdaysubmerged';
 
+function GetCRsalt() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrsalt';
+
+procedure SetCRsalt(constref CRsalt_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrsalt';
+
 
 implementation
 
