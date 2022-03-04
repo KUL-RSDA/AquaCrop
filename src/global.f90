@@ -147,6 +147,13 @@ integer(intEnum), parameter :: datatype_decadely = 1
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
 
+integer(intEnum), parameter :: typeObsSim_ObsSimCC = 0
+    !! index of daily in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
+    !! index of daily in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
+    !! index of daily in typeObsSim enumerated type
+
 type rep_DayEventInt
     integer(int32) :: DayNr
         !! Undocumented

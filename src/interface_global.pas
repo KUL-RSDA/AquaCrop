@@ -18,6 +18,7 @@ const
           'May','June','July','August','September','October','November','December');
 
 type
+    rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)

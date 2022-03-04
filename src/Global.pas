@@ -8,9 +8,6 @@ uses SysUtils, interface_global;
 Const 
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
 
-TYPE
-     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
     ProjectDescription, MultipleProjectDescription : string;
