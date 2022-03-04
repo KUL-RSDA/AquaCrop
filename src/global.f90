@@ -5806,7 +5806,14 @@ subroutine LoadOffSeason(FullName)
     integer(int8) :: TempShortInt, simul_irri_of
     character(len=1025) :: OffSeasonDescr_temp
 
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    logical :: file_exists
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    else
+        write(*,*) 'LoadOffSeason file not found'
+    end if
     read(fhandle, *) OffSeasonDescr_temp
     call SetOffSeasonDescription(trim(OffSeasonDescr_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
@@ -5990,10 +5997,7 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
     read(fhandle, *, iostat=rc)
     read(fhandle, *, iostat=rc)
     ClimateRecord%NrObs = 0
-write(*,*) trim(FullName)
-write(*,*) ClimateRecord%FromD
     do while (rc /= iostat_end) 
- !write(*,*) ClimateRecord%NrObs
         ClimateRecord%NrObs = ClimateRecord%NrObs + 1
         read(fhandle, *, iostat=rc)
     end do
@@ -6016,13 +6020,21 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
     real(dp) :: DayDouble, Z1, EC1, Z2, EC2, ZN, ECN
     logical :: TheEnd 
 
+    logical :: file_exists
+
     AtDayNr_local = AtDayNr
     ! initialize
     TheEnd = .false.
     Year1Gwt = 1901
     DayNr1 = 1
     DayNr2 = 1
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    else
+        write(*,*) 'Groundwater file not found'
+    end if
     read(fhandle, *) GroundWaterDescription
     read(fhandle, *) ! AquaCrop Version
 

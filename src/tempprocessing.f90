@@ -202,6 +202,7 @@ use ac_global , only: undef_int, &
                       GetManagement_WeedAdj, &
                       GetSimulParam_Tmin, GetSimulParam_Tmax,&
                       GetWeedRC,&
+                      GetCropFile, &
                       setclimatedescription,&
                       setoffseasonfilefull,&
                       settemperaturefile,&
@@ -2054,11 +2055,6 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     integer(int32), intent(in) :: NrRun
 
     integer(int32) :: f0, fClim, rc
-!    character(len=:), allocatable :: TempString, TempString1, TempString2
-!    character(len=:), allocatable :: observations_descr, eto_descr
-!    character(len=:), allocatable :: CO2descr, rain_descr
-!    character(len=:), allocatable :: CalendarDescriptionLocal
-!    character(len=:), allocatable :: TemperatureDescriptionLocal
     character(len=1025) :: TempString, TempString1, TempString2
     character(len=1025) :: observations_descr, eto_descr
     character(len=1025) :: CO2descr, rain_descr
@@ -2088,7 +2084,6 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     type(rep_clim) :: etorecord_tmp, rainrecord_tmp
     real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
 
-write(*,*) NameFileFull
     open(newunit=f0, file=trim(NameFileFull), &
               status='old', action='read', iostat=rc)
     read(f0, *, iostat=rc) !Description
@@ -2105,7 +2100,6 @@ write(*,*) NameFileFull
     ! Year of cultivation and Simulation and Cropping period
     read(f0, *, iostat=rc) YearSeason_temp ! year number of cultivation 
                                            !(1 = seeding/planting year)
-write(*,*) YearSeason_temp
     call SetSimulation_YearSeason(YearSeason_temp);
     read(f0, *, iostat=rc) TempSimDayNr1 ! First day of simulation period
     read(f0, *, iostat=rc) TempSimDayNrN ! Last day of simulation period
@@ -2114,31 +2108,27 @@ write(*,*) YearSeason_temp
     read(f0, *, iostat=rc) TempInt ! Last day of cropping period
     call SetCrop_DayN(TempInt)
 
-write(*,*) TempSimDayNr1,TempSimDayNrN,TempInt
-
     ! 1. Climate
     read(f0, *, iostat=rc)  ! Info Climate
-    read(f0, '(a)', iostat=rc) TempString  ! ClimateFile
+    read(f0, *, iostat=rc) TempString  ! ClimateFile
     call SetClimateFile(trim(TempString))
-write(*,'(a)') trim(TempString),'XXX'
     if (GetClimateFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathClimateFile
         call SetClimateFileFull(GetClimateFile())
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathClimateFile
+        read(f0, *, iostat=rc) TempString  ! PathClimateFile
         call SetClimateFileFull((trim(TempString)//GetClimateFile()))
         open(newunit=fClim, file=trim(GetClimateFileFull()), &
               status='old', action='read', iostat=rc)
         ! 1.0 Description
-        read(fClim, '(a)', iostat=rc) TempString
+        read(fClim, *, iostat=rc) TempString
         call SetClimateDescription(trim(TempString))
         close(fClim)
     end if
 
     ! 1.1 Temperature
     read(f0, *, iostat=rc)  ! Info Temperature
-    read(f0, '(a)', iostat=rc) TempString  ! TemperatureFile
-write(*,*) 'TTT=======', TempString
+    read(f0, *, iostat=rc) TempString  ! TemperatureFile
     call SetTemperatureFile(trim(TempString))
     if (GetTemperatureFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathTemperatureFile
@@ -2148,34 +2138,27 @@ write(*,*) 'TTT=======', TempString
         call SetTemperatureDescription(('Default temperature data: Tmin = '// &
           trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' °'))
     else
-        read(f0, '(a)', iostat=rc) TempString ! PathTemperatureFile
-write(*,*) 'TTT2', TempString
+        read(f0, *, iostat=rc) TempString ! PathTemperatureFile
         call SetTemperatureFileFull(trim(TempString)//trim(GetTemperatureFile()))
         temperature_record = GetTemperatureRecord()
         TemperatureDescriptionLocal = GetTemperatureDescription()
-write(*,*) 'TTT3', GetTemperatureFileFull()
         call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
                        temperature_record) 
-write(*,*) 'TTT4'
         call SetTemperatureDescription(TemperatureDescriptionLocal)
-write(*,*) 'TTT5'
         call CompleteClimateDescription(temperature_record)
-write(*,*) 'TTT6'
         call SetTemperatureRecord(temperature_record)
     end if
 
-write(*,*) 'END TTTTemperature'
-
     ! 1.2 ETo
     read(f0, *, iostat=rc) ! Info ETo
-    read(f0, '(a)', iostat=rc) TempString  ! EToFile
+    read(f0, *, iostat=rc) TempString  ! EToFile
     call SetEToFile(trim(TempString))
     if (GetEToFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathETo
         call SetEToFilefull(GetEToFile())  ! no file 
         call SetEToDescription('Specify ETo data when Running AquaCrop')
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathETo
+        read(f0,* , iostat=rc) TempString  ! PathETo
         call SetEToFilefull((trim(TempString)//GetEToFile()))
         eto_descr = GetEToDescription()
         etorecord_tmp = GetEToRecord()
@@ -2185,18 +2168,16 @@ write(*,*) 'END TTTTemperature'
         call SetEToRecord(etorecord_tmp)
     end if
 
-write(*,*) 'ET'
-
     ! 1.3 Rain
     read(f0, *, iostat=rc) ! Info Rain
-    read(f0, '(a)', iostat=rc) TempString ! RainFile
+    read(f0, *, iostat=rc) TempString ! RainFile
     call SetRainFile(trim(TempString))
     if (GetRainFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathRain
         call SetRainFilefull(GetRainFile())  ! no file 
         call SetRainDescription('Specify Rain data when Running AquaCrop')
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathRain
+        read(f0, *, iostat=rc) TempString  ! PathRain
         call SetRainFileFull(trim(TempString)// GetRainFile())
         rain_descr = Getraindescription()
         rainrecord_tmp = GetRainRecord() 
@@ -2208,12 +2189,12 @@ write(*,*) 'ET'
 
     ! 1.4 CO2
     read(f0, *, iostat=rc) ! Info CO2
-    read(f0, '(a)', iostat=rc) TempString ! CO2File
+    read(f0, *, iostat=rc) TempString ! CO2File
     call SetCO2File(trim(TempString))
     if (GetCO2File() == '(None)') then
         read(f0, *, iostat=rc)  ! PathCO2File
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathCO2File
+        read(f0, *, iostat=rc) TempString  ! PathCO2File
         call SetCO2FileFull(trim(TempString)// GetCO2File())
         CO2descr =  GetCO2Description()
         call GenerateCO2Description(GetCO2FileFull(), CO2descr)
@@ -2224,28 +2205,26 @@ write(*,*) 'ET'
 
     ! 2. Calendar
     read(f0, *, iostat=rc)  ! Info calendar
-    read(f0, '(a)', iostat=rc) TempString ! CalendarFile
+    read(f0, *, iostat=rc) TempString ! CalendarFile
     call SetCalendarFile(trim(TempString))
     if (GetCalendarFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathCalendarFile
         call SetCalendarDescription('No calendar for the Seeding/Planting year')
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathCalendarFile
+        read(f0, *, iostat=rc) TempString  ! PathCalendarFile
         call SetCalendarFileFull(trim(TempString)//GetCalendarFile())
         CalendarDescriptionLocal = GetCalendarDescription()
         call GetFileDescription(GetCalendarFileFull(), CalendarDescriptionLocal)
         call SetCalendarDescription(CalendarDescriptionLocal)
     end if
 
-write(*,*) 'CROP'
-
     ! 3. Crop
     call SetSimulation_LinkCropToSimPeriod(.true.)
     read(f0, *, iostat=rc)  ! Info Crop
-    read(f0, '(a)', iostat=rc) TempString  ! CropFile
+    read(f0, *, iostat=rc) TempString  ! CropFile
     call SetCropFile(trim(TempString))
-    read(f0, '(a)', iostat=rc) TempString  ! PathCropFile
-    call SetCropFilefull(trim(TempString))
+    read(f0, *, iostat=rc) TempString  ! PathCropFile
+    call SetCropFilefull(trim(TempString)//GetCropFile())
     call LoadCrop(GetCropFilefull())
     ! Adjust crop parameters of Perennials
     if (GetCrop_subkind() == subkind_Forage) then
@@ -2311,7 +2290,7 @@ write(*,*) 'CROP'
 
     ! 4. Irrigation
     read(f0, *, iostat=rc)  ! Info Irrigation
-    read(f0, '(a)', iostat=rc) TempString ! IrriFile
+    read(f0, *, iostat=rc) TempString ! IrriFile
     call SetIrriFile(trim(TempString))
     if (GetIrriFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathIrriFile
@@ -2319,21 +2298,21 @@ write(*,*) 'CROP'
         call NoIrrigation
         ! IrriDescription := 'Rainfed cropping';
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathIrriFile
+        read(f0, *, iostat=rc) TempString  ! PathIrriFile
         call SetIrriFileFull(trim(TempString)//GetIrriFile())
         call LoadIrriScheduleInfo(GetIrriFileFull())
     end if
 
     ! 5. Field Management
     read(f0, *, iostat=rc) ! Info Field Management
-    read(f0, '(a)', iostat=rc) TempString  ! ManFile
+    read(f0, *, iostat=rc) TempString  ! ManFile
     call SetManFile(trim(TempString))
     if (GetManFile() == '(None)') then
         read(f0, *, iostat=rc) ! PathManFile
         call SetManFileFull(GetManFile())
         call SetManDescription('No specific field management')
     else
-        read(f0, '(a)', iostat=rc) TempString  ! PathManFile
+        read(f0, *, iostat=rc) TempString  ! PathManFile
         call SetManFileFull(trim(TempString)//GetManFile())
         call LoadManagement(GetManFilefull())
         ! reset canopy development to soil fertility
@@ -2355,24 +2334,24 @@ write(*,*) 'CROP'
 
     ! 6. Soil Profile
     read(f0, *, iostat=rc) ! Info Soil
-    read(f0, '(a)', iostat=rc) TempString ! ProfFile
+    read(f0, *, iostat=rc) TempString ! ProfFile
     call SetProfFile(trim(TempString))
-    read(f0, '(a)', iostat=rc) TempString ! PathProfFile
+    read(f0, *, iostat=rc) TempString ! PathProfFile
     call SetProfFilefull(trim(TempString)//GetProfFile())
     ! The load of profile is delayed to check if soil water profile need to be
     ! reset (see 8.)
 
     ! 7. Groundwater
     read(f0, *, iostat=rc) ! Info Groundwater
-    read(f0, '(a)', iostat=rc) TempString  ! GroundWaterFile
+    read(f0, *, iostat=rc) TempString  ! GroundWaterFile
     call SetGroundWaterFile(trim(TempString))
     if (GetGroundWaterFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathGroundWaterFile
         call SetGroundWaterFilefull(GetGroundWaterFile())
         call SetGroundWaterDescription('no shallow groundwater table')
     else
-        read(f0, '(a)', iostat=rc) TempString ! PathGroundWaterFile
-        call SetGroundWaterFilefull(trim(TempString//GetGroundWaterFile()))
+        read(f0, *, iostat=rc) TempString ! PathGroundWaterFile
+        call SetGroundWaterFilefull(trim(TempString)//GetGroundWaterFile())
         ! Loading the groundwater is done after loading the soil profile (see
         ! 9.)
     end if
@@ -2387,7 +2366,7 @@ write(*,*) 'CROP'
 
     ! 9. Initial conditions
     read(f0, *, iostat=rc) ! Info Initial conditions
-    read(f0, '(a)', iostat=rc) TempString ! SWCIniFile
+    read(f0, *, iostat=rc) TempString ! SWCIniFile
     if (trim(TempString) == 'KeepSWC') then
         ! No load of soil file (which reset thickness compartments and Soil
         ! water content to FC)
@@ -2436,7 +2415,7 @@ write(*,*) 'CROP'
                 call SetSWCiniDescription(&
                          'Soil water profile at Field Capacity')
             else
-                read(f0, '(a)', iostat=rc) TempString  ! PathSWCIniFile
+                read(f0, *, iostat=rc) TempString  ! PathSWCIniFile
                 call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
                 SurfaceStorage_temp = GetSurfaceStorage()
                 call LoadInitialConditions(GetSWCiniFileFull(),&
@@ -2503,28 +2482,28 @@ write(*,*) 'CROP'
 
     ! 11. Off-season conditions
     read(f0, *, iostat=rc) ! Info Off-season conditions
-    read(f0, '(a)', iostat=rc) TempString ! OffSeasonFile
+    read(f0, *, iostat=rc) TempString ! OffSeasonFile
     call SetOffSeasonFile(trim(TempString))
     if (GetOffSeasonFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathOffSeasonFile
         call SetOffSeasonFileFull(GetOffSeasonFile())
         call SetOffSeasonDescription('No specific off-season conditions')
     else
-        read(f0, '(a)', iostat=rc) TempString ! PathOffSeasonFile
+        read(f0, *, iostat=rc) TempString ! PathOffSeasonFile
         call SetOffSeasonFileFull((trim(TempString)//GetOffSeasonFile()))
         call LoadOffSeason(GetOffSeasonFilefull())
     end if
 
     ! 12. Field data
     read(f0, *, iostat=rc) ! Info Field data
-    read(f0, '(a)', iostat=rc) TempString  ! Field dataFile
+    read(f0, *, iostat=rc) TempString  ! Field dataFile
     call SetObservationsFile(trim(TempString))
     if (GetObservationsFile() == '(None)') then
         read(f0, *, iostat=rc) ! Path Field data File
         call SetObservationsFileFull(GetObservationsFile())
         call SetObservationsDescription('No field observations')
     else
-        read(f0, '(a)', iostat=rc) TempString  ! Path Field data File
+        read(f0, *, iostat=rc) TempString  ! Path Field data File
         call SetObservationsFileFull(trim(TempString)//GetObservationsFile())
         observations_descr = GetObservationsDescription()
         call GetFileDescription(GetObservationsFileFull(), observations_descr)
