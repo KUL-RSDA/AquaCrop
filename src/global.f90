@@ -970,13 +970,27 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
+                            ! Soil Water Content Menu
+
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below 
                          ! soil surface in centimeter
+
+real(dp) :: CRwater ! mm/day
+real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
+real(dp) :: Epot ! mm/day
+real(dp) :: ETo ! mm/day
 real(dp) :: Drain  ! mm/day
+real(dp) :: Infiltrated ! mm/day
+real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: Runoff  ! mm/day
+real(dp) :: Tpot ! mm/day
+
+
+logical :: PreDay
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -14249,5 +14263,123 @@ subroutine SetGroundwaterDescription(str)
     
     GroundwaterDescription = str
 end subroutine SetGroundwaterDescription
+
+logical function GetPreDay()
+    !! Getter for the "PreDay" global variable.
+
+    GetPreDay = PreDay
+end function GetPreDay
+
+subroutine SetPreDay(PreDay_in)
+    !! Setter for the "PreDay" global variable.
+    logical, intent(in) :: PreDay_in
+
+    PreDay = PreDay_in
+end subroutine SetPreDay
+
+integer(int8) function GetIniPercTAW()
+    !! Getter for the "IniPercTAW" global variable.
+
+    GetIniPercTAW = IniPercTAW
+end function GetIniPercTAW
+
+subroutine SetIniPercTAW(IniPercTAW_in)
+    !! Setter for the "IniPercTAW" global variable.
+    integer(int8), intent(in) :: IniPercTAW_in
+
+    IniPercTAW = IniPercTAW_in
+end subroutine SetIniPercTAW
+
+real(dp) function GetECiAqua()
+    !! Getter for the "ECiAqua" global variable.
+
+    GetECiAqua = ECiAqua
+end function GetECiAqua
+
+subroutine SetECiAqua(ECiAqua_in)
+    !! Setter for the "ECiAqua" global variable.
+    real(dp), intent(in) :: ECiAqua_in
+
+    ECiAqua = ECiAqua_in
+end subroutine SetECiAqua
+
+real(dp) function GetETo()
+    !! Getter for the "ETo" global variable.
+
+    GetETo = ETo
+end function GetETo
+
+subroutine SetETo(ETo_in)
+    !! Setter for the "ETo" global variable.
+    real(dp), intent(in) :: ETo_in
+
+    ETo = ETo_in
+end subroutine SetETo
+
+real(dp) function GetIrrigation()
+    !! Getter for the "Irrigation" global variable.
+
+    GetIrrigation = Irrigation
+end function GetIrrigation
+
+subroutine SetIrrigation(Irrigation_in)
+    !! Setter for the "Irrigation" global variable.
+    real(dp), intent(in) :: Irrigation_in
+
+    Irrigation = Irrigation_in
+end subroutine SetIrrigation
+
+real(dp) function GetInfiltrated()
+    !! Getter for the "Infiltrated" global variable.
+
+    GetInfiltrated = Infiltrated
+end function GetInfiltrated
+
+subroutine SetInfiltrated(Infiltrated_in)
+    !! Setter for the "Infiltrated" global variable.
+    real(dp), intent(in) :: Infiltrated_in
+
+    Infiltrated = Infiltrated_in
+end subroutine SetInfiltrated
+
+real(dp) function GetCRwater()
+    !! Getter for the "CRwater" global variable.
+
+    GetCRwater = CRwater
+end function GetCRwater
+
+subroutine SetCRwater(CRwater_in)
+    !! Setter for the "CRwater" global variable.
+    real(dp), intent(in) :: CRwater_in
+
+    CRwater = CRwater_in
+end subroutine SetCRwater
+
+real(dp) function GetEpot()
+    !! Getter for the "Epot" global variable.
+
+    GetEpot = Epot
+end function GetEpot
+
+subroutine SetEpot(Epot_in)
+    !! Setter for the "Epot" global variable.
+    real(dp), intent(in) :: Epot_in
+
+    Epot = Epot_in
+end subroutine SetEpot
+
+real(dp) function GetTpot()
+    !! Getter for the "Tpot" global variable.
+
+    GetTpot = Tpot
+end function GetTpot
+
+subroutine SetTpot(Tpot_in)
+    !! Setter for the "Tpot" global variable.
+    real(dp), intent(in) :: Tpot_in
+
+    Tpot = Tpot_in
+end subroutine SetTpot
+
 
 end module ac_global
