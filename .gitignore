@@ -5,4 +5,5 @@ src/*.mod
 src/*.so
 __pycache__
 tests/tmp*
+tests/log*.txt
 *.swp

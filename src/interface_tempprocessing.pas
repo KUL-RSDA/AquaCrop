@@ -115,8 +115,102 @@ procedure AdjustCropFileParameters(
             VAR L123,L1234,GDD123,GDD1234 : INTEGER);
          external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
+procedure BTransferPeriod_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
+            constref TheModeCycle : integer;
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_btransferperiod';
+
+procedure BTransferPeriod(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
+            constref TheModeCycle : rep_modeCycle;
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+
+function Bnormalized_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD,SumKcTop : double;
+            constref StressInPercent,StrResRedCGC,StrResRedCCx,StrResRedWP,StrResRedKsSto,WeedStress : ShortInt;
+            constref DeltaWeedStress : INTEGER;
+            constref StrResCDecline,ShapeFweed : Double;
+            constref TheModeCycle : integer;
+            constref FertilityStressOn : BOOLEAN;
+            constref TestRecord : BOOLEAN) : DOUBLE;
+         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_bnormalized_wrap';
+
+function Bnormalized(
+            constref TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD,SumKcTop : double;
+            constref StressInPercent,StrResRedCGC,StrResRedCCx,StrResRedWP,StrResRedKsSto,WeedStress : ShortInt;
+            constref DeltaWeedStress : INTEGER;
+            constref StrResCDecline,ShapeFweed : Double;
+            constref TheModeCycle : rep_modeCycle;
+            constref FertilityStressOn : BOOLEAN;
+            constref TestRecord : BOOLEAN) : DOUBLE;
+
 implementation
 
+
+procedure BTransferPeriod(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
+            constref TheModeCycle : rep_modeCycle;
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+var
+    int_modeCycle : integer;
+begin;
+    int_modeCycle := ord(TheModeCycle);
+    BTransferPeriod_wrap(TheDaysToCCini, TheGDDaysToCCini,
+             L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,
+             CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, 
+             KcDeclAgeing, CCeffectProcent, WPbio, TheCO2,
+             Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,
+             int_modeCycle, TempAssimPeriod, TempAssimStored, SumBtot, SumBstored);
+end;
+
+function Bnormalized(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,
+                     GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,
+                     CCeffectProcent,WPbio,TheCO2,Tbase,Tupper,TDayMin,TDayMax,
+                     GDtranspLow,RatDGDD,SumKcTop : double;
+            constref StressInPercent,StrResRedCGC,StrResRedCCx,StrResRedWP,
+                     StrResRedKsSto,WeedStress : ShortInt;
+            constref DeltaWeedStress : INTEGER;
+            constref StrResCDecline,ShapeFweed : Double;
+            constref TheModeCycle : rep_modeCycle;
+            constref FertilityStressOn : BOOLEAN;
+            constref TestRecord : BOOLEAN) : DOUBLE;
+var
+   int_modeCycle : integer;
+begin
+   int_modeCycle := ord(TheModeCycle);
+   Bnormalized := Bnormalized_wrap(
+                      TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch,
+                      CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD,SumKcTop,
+                      StressInPercent,StrResRedCGC,StrResRedCCx,StrResRedWP,StrResRedKsSto,WeedStress,
+                      DeltaWeedStress,
+                      StrResCDecline,ShapeFweed,
+                      int_modeCycle,
+                      FertilityStressOn, TestRecord); 
+end;
 
 initialization
 
