@@ -2570,10 +2570,10 @@ real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
         TempWPy, DaysYieldFormation, tSwitch,&
         TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
         TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
-        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, (1._dp),&
-        SumKcTop, (0_int8), (0_int8), (0_int8), (0_int8), (0_int8), (0_int8),&
-        (0), (0._dp), (-0.01_dp), &
-        TempModeCycle, FertilityStressOn, (.false.))
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, 1._dp,&
+        SumKcTop, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8,&
+        0, 0._dp, -0.01_dp, &
+        TempModeCycle, FertilityStressOn, .false.)
 
     ! 3. potential biomass - soil fertiltiy stress and weed stress
     SumBSF = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
@@ -2586,7 +2586,7 @@ real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
         SumKcTop, SFInfoStress, SFInfo%RedCGC, SFInfo%RedCCX, SFInfo%RedWP,&
         SFInfo%RedKsSto, WeedStress, DeltaWeedStress, &
         SFInfo%CDecline, ShapeFweed, TempModeCycle, &
-        FertilityStressOn, (.false.))
+        FertilityStressOn, (false.)
 
     BiomassRatio = SumBSF/SumBPot
 end function BiomassRatio
