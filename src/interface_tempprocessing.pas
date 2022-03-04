@@ -51,7 +51,7 @@ procedure GDDCDCToCDC(
             VAR CDC : double);
         external 'aquacrop' name '__ac_tempprocessing_MOD_gddcdctocdc';
 
-PROCEDURE AdjustCalendarDays(
+procedure AdjustCalendarDays(
             constref PlantDayNr : LongInt;
             constref InfoCropType : rep_subkind;
             constref Tbase,Tupper,NoTempFileTMin,NoTempFileTMax : double;
@@ -187,7 +187,7 @@ function  BiomassRatio(
             constref  DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
 
 
-PROCEDURE StressBiomassRelationship_wrap(
+procedure StressBiomassRelationship_wrap(
             constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
             constref L0,L12,L123,L1234,
                      LFlor,LengthFlor,
@@ -204,7 +204,7 @@ PROCEDURE StressBiomassRelationship_wrap(
             VAR BM10,BM20,BM30,BM40,BM50,BM60,BM70 : double);
          external 'aquacrop' name '__ac_interface_tempprocessing_MOD_stressbiomassrelationship_wrap';
 
-PROCEDURE StressBiomassRelationship(
+procedure StressBiomassRelationship(
             constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
             constref L0,L12,L123,L1234,
                      LFlor,LengthFlor,
@@ -219,6 +219,39 @@ PROCEDURE StressBiomassRelationship(
             constref TheModeCycle : rep_modeCycle;
             VAR b0,b1,b2 : double;
             VAR BM10,BM20,BM30,BM40,BM50,BM60,BM70 : double);
+
+procedure CCxSaltStressRelationship_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
+            constref L0,L12,L123,L1234,
+                     LFlor,LengthFlor,GDDFlor,GDDLengthFlor,
+                     GDDL0,GDDL12,GDDL123,GDDL1234,WPyield,RefHI : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,
+                     Tbase,Tupper,TDayMin,TDayMax,GDbioLow,WPveg,RatedHIdt,CO2Given : double;
+            constref CropDNr1 : LongInt;
+            constref CropDeterm : BOOLEAN;
+            constref TheCropType : integer;
+            constref TheModeCycle : integer;
+            constref TheCCsaltDistortion : ShortInt;
+            VAR Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
+            VAR Salt10,Salt20,Salt30,Salt40,Salt50,Salt60,Salt70,Salt80,Salt90 : double);
+     external 'aquacrop' name '__ac_interface_tempprocessing_MOD_ccxsaltstressrelationship_wrap';
+
+procedure CCxSaltStressRelationship(
+            constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
+            constref L0,L12,L123,L1234,
+                     LFlor,LengthFlor,GDDFlor,GDDLengthFlor,
+                     GDDL0,GDDL12,GDDL123,GDDL1234,WPyield,RefHI : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,
+                     Tbase,Tupper,TDayMin,TDayMax,GDbioLow,WPveg,RatedHIdt,CO2Given : double;
+            constref CropDNr1 : LongInt;
+            constref CropDeterm : BOOLEAN;
+            constref TheCropType : rep_subkind;
+            constref TheModeCycle : rep_modeCycle;
+            constref TheCCsaltDistortion : ShortInt;
+            VAR Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
+            VAR Salt10,Salt20,Salt30,Salt40,Salt50,Salt60,Salt70,Salt80,Salt90 : double);
 
 
 implementation
@@ -301,7 +334,7 @@ begin
            WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn);
 end;
 
-PROCEDURE StressBiomassRelationship(
+procedure StressBiomassRelationship(
             constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
             constref L0,L12,L123,L1234,
                      LFlor,LengthFlor,
@@ -332,6 +365,36 @@ begin
             BM10, BM20, BM30, BM40, BM50, BM60, BM70);
 end;
 
+procedure CCxSaltStressRelationship(
+            constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
+            constref L0,L12,L123,L1234,
+                     LFlor,LengthFlor,GDDFlor,GDDLengthFlor,
+                     GDDL0,GDDL12,GDDL123,GDDL1234,WPyield,RefHI : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,
+                     Tbase,Tupper,TDayMin,TDayMax,GDbioLow,WPveg,RatedHIdt,CO2Given : double;
+            constref CropDNr1 : LongInt;
+            constref CropDeterm : BOOLEAN;
+            constref TheCropType : rep_subkind;
+            constref TheModeCycle : rep_modeCycle;
+            constref TheCCsaltDistortion : ShortInt;
+            VAR Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
+            VAR Salt10,Salt20,Salt30,Salt40,Salt50,Salt60,Salt70,Salt80,Salt90 : double);
+var
+   int_modeCycle : integer;
+   int_subkind : integer;
+begin
+   int_modeCycle := ord(TheModeCycle);
+   int_subkind   := ord(theCropType);
+   CCxSaltStressRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,
+       L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,
+       GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,
+       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,
+       Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2Given,
+       CropDNr1, CropDeterm, int_subkind, int_modeCycle, TheCCsaltDistortion,
+       Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,
+       Salt40, Salt50, Salt60, Salt70, Salt80, Salt90);
+end;
 
 initialization
 
