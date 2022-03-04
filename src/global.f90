@@ -4735,7 +4735,7 @@ subroutine AdjustSimPeriod()
         call SetZiAqua(ZiAqua_tmp)
         call SetECiAqua(ECiAqua_tmp)
         Compartment_temp = GetCompartment()
-        call CalculateAdjustedFC((ZiAqua/100._dp), Compartment_temp)
+        call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
         call SetCompartment(Compartment_temp)
         if (GetSimulation_IniSWC_AtFC()) then
             call ResetSWCToFC
