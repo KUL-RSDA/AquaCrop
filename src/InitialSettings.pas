@@ -87,7 +87,7 @@ implementation
  SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
  SetGroundWaterDescription('no shallow groundwater table');
  SetZiAqua(undef_int);
- ECiAqua := undef_int;
+ SetECiAqua(undef_int);
  SetSimulParam_ConstGwt(true);
 
  // 2b. Soil profile and initial soil water content
@@ -227,16 +227,16 @@ SetCrop_DayN(Crop_DayN_temp);
 
  // 12. Simulation run
  ETo := 5.0;
- Rain := 0;
+ SetRain(0);
  Irrigation := 0;
- SurfaceStorage := 0;
- ECstorage := 0.0;
+ SetSurfaceStorage(0);
+ SetECstorage(0.0);
  DaySubmerged := 0;
  SumWaBal_temp := GetSumWabal();
  GlobalZero(SumWabal_temp);
  SetSumWaBal(SumWaBal_temp);
  SetDrain(0.0); // added 4.0
- Runoff:= 0.0;// added 4.0
+ SetRunoff(0.0);// added 4.0
  Infiltrated := 0.0; // added 4.0
  CRwater := 0; // added 4.0
  CRsalt := 0; // added 4.0

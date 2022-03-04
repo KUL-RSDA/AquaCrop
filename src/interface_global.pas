@@ -4193,6 +4193,36 @@ function GetDrain() : double;
 procedure SetDrain(constref Drain_in : double);
     external 'aquacrop' name '__ac_global_MOD_setdrain';
 
+function GetRain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrain';
+
+procedure SetRain(constref Rain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrain';
+
+function GetRunoff() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrunoff';
+
+procedure SetRunoff(constref Runoff_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrunoff';
+
+function GetSurfaceStorage() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsurfacestorage';
+
+procedure SetSurfaceStorage(constref SurfaceStorage_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsurfacestorage';
+
+function GetECstorage() : double;
+    external 'aquacrop' name '__ac_global_MOD_getecstorage';
+
+procedure SetECstorage(constref ECstorage_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setecstorage';
+
+function GetECiAqua() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteciaqua';
+
+procedure SetECiAqua(constref ECiAqua_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteciaqua';
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
@@ -4493,6 +4523,9 @@ procedure SetGroundwaterDescription_wrap(
             constref p : PChar;
             constref strlen : integer);
     external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterdescription_wrap';
+
+procedure AdjustSizeCompartments(constref CropZx : double);
+    external 'aquacrop' name '__ac_global_MOD_adjustsizecompartments';
 
 
 procedure AdjustThetaInitial(
