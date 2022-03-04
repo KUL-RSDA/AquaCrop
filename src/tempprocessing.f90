@@ -2586,7 +2586,7 @@ real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
         SumKcTop, SFInfoStress, SFInfo%RedCGC, SFInfo%RedCCX, SFInfo%RedWP,&
         SFInfo%RedKsSto, WeedStress, DeltaWeedStress, &
         SFInfo%CDecline, ShapeFweed, TempModeCycle, &
-        FertilityStressOn, (false.)
+        FertilityStressOn, .false.)
 
     BiomassRatio = SumBSF/SumBPot
 end function BiomassRatio
