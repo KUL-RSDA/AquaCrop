@@ -35,19 +35,6 @@ PROCEDURE CCxSaltStressRelationship(TheDaysToCCini,TheGDDaysToCCini : INTEGER;
                                     VAR Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
                                     VAR Salt10,Salt20,Salt30,Salt40,Salt50,Salt60,Salt70,Salt80,Salt90 : double);
 
-FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
-                      TempCCo,TempCGC,TempCCx,TempCDC,TempGDDCGC,TempGDDCDC,TempdHIdt : double;
-                      TempL0,TempL12,L12SF,TempL123,TempHarvest,TempFlower,
-                      TempGDDL0,GDDL12SF,TempGDDL12,TempGDDL123,TempGDDHarvest,TempHI,TempWPy : INTEGER;
-                      TempKc,TempKcDecline,TempCCeffect,
-                      TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,TempWP,ShapeFweed : double;
-                      TempModeCycle : rep_modeCycle;
-                      SFInfo : rep_EffectStress;
-                      SFInfoStress,WeedStress : ShortInt;
-                      DeltaWeedStress : INTEGER;
-                      DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
-
-
 implementation
 
 
@@ -371,77 +358,5 @@ IF (abs(ROUND(SUMx1x2*1000)) <> 0)
         Coeffb0Salt := undef_int;
         END;
 END; (* CCxSaltStressRelationship *)
-
-
-FUNCTION BiomassRatio(TempDaysToCCini,TempGDDaysToCCini : INTEGER;
-                      TempCCo,TempCGC,TempCCx,TempCDC,TempGDDCGC,TempGDDCDC,TempdHIdt : double;
-                      TempL0,TempL12,L12SF,TempL123,TempHarvest,TempFlower,
-                      TempGDDL0,GDDL12SF,TempGDDL12,TempGDDL123,TempGDDHarvest,TempHI,TempWPy : INTEGER;
-                      TempKc,TempKcDecline,TempCCeffect,
-                      TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,TempWP,ShapeFweed : double;
-                      TempModeCycle : rep_modeCycle;
-                      SFInfo : rep_EffectStress;
-                      SFInfoStress,WeedStress : ShortInt;
-                      DeltaWeedStress : INTEGER;
-                      DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
-
-Const EToStandard = 5;
-      k = 2;
-      CO2iLocal = 369.41;
-
-VAR SumKcTop,HIGC,HIGClinear : double;
-    RatDGDD,SumBPot,SumBSF : double;
-    tSwitch,DaysYieldFormation : INTEGER;
-
-BEGIN
-//1. Initialize
-//1 - a. Maximum sum Kc
-SumKcTop := SeasonalSumOfKcPot(TempDaysToCCini,TempGDDaysToCCini,
-                               TempL0,TempL12,TempL123,TempHarvest,TempGDDL0,TempGDDL12,TempGDDL123,TempGDDHarvest,
-                               TempCCo,TempCCx,TempCGC,TempGDDCGC,TempCDC,TempGDDCDC,
-                               TempKc,TempKcDecline,TempCCeffect,
-                               TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,CO2iLocal,
-                               TempModeCycle);
-//1 - b. Prepare for growing degree days
-RatDGDD := 1;
-//IF ((TempModeCycle = GDDays) AND (GDDL12SF < TempGDDL123))
-IF ((TempModeCycle = GDDays) AND (SFInfoStress > 0) AND (GDDL12SF < TempGDDL123))
-   THEN RatDGDD := (TempL123-L12SF)/(TempGDDL123-GDDL12SF);
-//1 - c. Get PercentLagPhase (for estimate WPi during yield formation)
-DaysYieldFormation := undef_int;
-IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN //DaysToFlowering corresponds with Tuberformation
-   BEGIN
-   DaysYieldFormation := ROUND(TempHI/TempdHIdt);
-   IF DeterminantCropType
-      THEN BEGIN
-           HIGC := HarvestIndexGrowthCoefficient(TempHI,TempdHIdt);
-           GetDaySwitchToLinear(TempHI,TempdHIdt,HIGC,tSwitch,HIGClinear);
-           END
-      ELSE tSwitch := ROUND(DaysYieldFormation/3);
-   END;
-
-//2. potential biomass - no soil fertiltiy stress - no weed stress
-SumBPot := Bnormalized(TempDaysToCCini,TempGDDaysToCCini,
-                       TempL0,TempL12,TempL12,TempL123,TempHarvest,TempFlower,
-                       TempGDDL0,TempGDDL12,TempGDDL12,TempGDDL123,TempGDDHarvest,TempWPy,DaysYieldFormation,tSwitch,
-                       TempCCo,TempCCx,TempCGC,TempGDDCGC,TempCDC,TempGDDCDC,
-                       TempKc,TempKcDecline,TempCCeffect,TempWP,CO2iLocal,
-                       //TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,RatDGDD,SumKcTop,
-                       TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,(1),SumKcTop,
-                       (0),(0),(0),(0),(0),(0),(0),(0),(-0.01),TempModeCycle,FertilityStressOn,(false));
-
-//3. potential biomass - soil fertiltiy stress and weed stress
-SumBSF := Bnormalized(TempDaysToCCini,TempGDDaysToCCini,
-                      TempL0,TempL12,L12SF,TempL123,TempHarvest,TempFlower,
-                      TempGDDL0,TempGDDL12,GDDL12SF,TempGDDL123,TempGDDHarvest,TempWPy,DaysYieldFormation,tSwitch,
-                      TempCCo,TempCCx,TempCGC,TempGDDCGC,TempCDC,TempGDDCDC,
-                      TempKc,TempKcDecline,TempCCeffect,TempWP,CO2iLocal,
-                      TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,RatDGDD,SumKcTop,
-                      SFInfoStress,SFInfo.RedCGC,SFInfo.RedCCX,SFInfo.RedWP,SFInfo.RedKsSto,WeedStress,
-                      DeltaWeedStress,SFInfo.CDecline,ShapeFweed,TempModeCycle,FertilityStressOn,(false));
-
-BiomassRatio := SumBSF/SumBPot;
-END; (* BiomassRatio *)
-
 
 end.

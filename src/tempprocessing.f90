@@ -32,7 +32,10 @@ use ac_global , only: undef_int, &
                       DetermineDayNr, &
                       DetermineDate, &
                       ECeComp, &
+                      GetDaySwitchToLinear, &
+                      HarvestIndexGrowthCoefficient, &
                       LeapYear, &
+                      SeasonalSumOfKcPot, &
                       SplitStringInTwoParams, &
                       KsTemperature, &
                       DegreesDay, &
@@ -3116,5 +3119,119 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
      ! 5. Export
      Bnormalized = SumBnor
 end function Bnormalized
+
+
+real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
+           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
+           TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,&
+           TempL123, TempHarvest, TempFlower, TempGDDL0, &
+           GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,&
+           TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,&
+           TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,&
+           TempWP, ShapeFweed, TempModeCycle, SFInfo, SFInfoStress,&
+           WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn)
+    integer(int32), intent(in) :: TempDaysToCCini
+    integer(int32), intent(in) :: TempGDDaysToCCini
+    real(dp), intent(in) :: TempCCo
+    real(dp), intent(in) :: TempCGC
+    real(dp), intent(in) :: TempCCx
+    real(dp), intent(in) :: TempCDC
+    real(dp), intent(in) :: TempGDDCGC
+    real(dp), intent(in) :: TempGDDCDC
+    real(dp), intent(in) :: TempdHIdt
+    integer(int32), intent(in) :: TempL0
+    integer(int32), intent(in) :: TempL12
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: TempL123
+    integer(int32), intent(in) :: TempHarvest
+    integer(int32), intent(in) :: TempFlower
+    integer(int32), intent(in) :: TempGDDL0
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: TempGDDL12
+    integer(int32), intent(in) :: TempGDDL123
+    integer(int32), intent(in) :: TempGDDHarvest
+    integer(int32), intent(in) :: TempHI
+    integer(int32), intent(in) :: TempWPy
+    real(dp), intent(in) :: TempKc
+    real(dp), intent(in) :: TempKcDecline
+    real(dp), intent(in) :: TempCCeffect
+    real(dp), intent(in) :: TempTbase
+    real(dp), intent(in) :: TempTupper
+    real(dp), intent(in) :: TempTmin
+    real(dp), intent(in) :: TempTmax
+    real(dp), intent(in) :: TempGDtranspLow
+    real(dp), intent(in) :: TempWP
+    real(dp), intent(in) :: ShapeFweed
+    integer(intEnum), intent(in) :: TempModeCycle
+    type(rep_EffectStress), intent(in) :: SFInfo
+    integer(int8), intent(in) :: SFInfoStress
+    integer(int8), intent(in) :: WeedStress
+    integer(int32), intent(in) :: DeltaWeedStress
+    logical, intent(in) :: DeterminantCropType
+    logical, intent(in) :: FertilityStressOn
+
+    integer(int32), parameter :: k = 2
+    real(dp), parameter :: CO2iLocal = 369.41_dp
+
+    real(dp) :: SumKcTop, HIGC, HIGClinear
+    real(dp) :: RatDGDD, SumBPot, SumBSF
+    integer(int32) :: tSwitch, DaysYieldFormation
+
+    ! 1. Initialize
+    ! 1 - a. Maximum sum Kc
+    SumKcTop = SeasonalSumOfKcPot(TempDaysToCCini, TempGDDaysToCCini,&
+        TempL0, TempL12, TempL123, TempHarvest, TempGDDL0, TempGDDL12,&
+        TempGDDL123, TempGDDHarvest, TempCCo, TempCCx, TempCGC,&
+        TempGDDCGC, TempCDC, TempGDDCDC, TempKc, TempKcDecline, TempCCeffect,&
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, CO2iLocal,&
+        TempModeCycle)
+    ! 1 - b. Prepare for growing degree days
+    RatDGDD = 1._dp
+    if ((TempModeCycle == modeCycle_GDDays) .and. (SFInfoStress > 0_int8) &
+        .and. (GDDL12SF < TempGDDL123)) then
+        RatDGDD = (TempL123-L12SF)/real(TempGDDL123-GDDL12SF, kind=dp)
+    end if
+    ! 1 - c. Get PercentLagPhase (for estimate WPi during yield formation)
+    DaysYieldFormation = undef_int
+    if ((GetCrop_subkind() == subkind_Tuber) .or. &
+        (GetCrop_subkind() == subkind_Grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        DaysYieldFormation = roundc(TempHI/TempdHIdt, mold=1)
+        if (DeterminantCropType) then
+            HIGC = HarvestIndexGrowthCoefficient(real(TempHI,kind=dp), TempdHIdt)
+            call GetDaySwitchToLinear(TempHI, TempdHIdt, &
+                     HIGC, tSwitch, HIGClinear)
+        else
+            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
+        end if
+    end if
+
+    ! 2. potential biomass - no soil fertiltiy stress - no weed stress
+    SumBPot = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
+        TempL0, TempL12, TempL12, TempL123, TempHarvest, TempFlower,&
+        TempGDDL0, TempGDDL12, TempGDDL12, TempGDDL123, TempGDDHarvest,&
+        TempWPy, DaysYieldFormation, tSwitch,&
+        TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
+        TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, 1._dp,&
+        SumKcTop, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8,&
+        0, 0._dp, -0.01_dp, &
+        TempModeCycle, FertilityStressOn, .false.)
+
+    ! 3. potential biomass - soil fertiltiy stress and weed stress
+    SumBSF = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
+        TempL0, TempL12, L12SF, TempL123, TempHarvest, TempFlower,&
+        TempGDDL0, TempGDDL12, GDDL12SF, TempGDDL123, TempGDDHarvest, &
+        TempWPy, DaysYieldFormation, tSwitch,&
+        TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
+        TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, RatDGDD,&
+        SumKcTop, SFInfoStress, SFInfo%RedCGC, SFInfo%RedCCX, SFInfo%RedWP,&
+        SFInfo%RedKsSto, WeedStress, DeltaWeedStress, &
+        SFInfo%CDecline, ShapeFweed, TempModeCycle, &
+        FertilityStressOn, .false.)
+
+    BiomassRatio = SumBSF/SumBPot
+end function BiomassRatio
 
 end module ac_tempprocessing
