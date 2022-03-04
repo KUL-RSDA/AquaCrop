@@ -1200,7 +1200,13 @@ procedure TimeToMaxCanopySF(
             VAR RedCGC,RedCCx : ShortInt;
             VAR ClassSF : ShortInt);
         external 'aquacrop' name '__ac_interface_global_MOD_timetomaxcanopysf_wrap';
-           
+
+procedure CheckForWaterTableInProfile(
+            constref DepthGWTmeter : double;
+            constref ProfileComp : rep_comp;
+            var WaterTableInProfile : boolean);
+        external 'aquacrop' name '__ac_global_MOD_checkforwatertableinprofile';
+                                                
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;
@@ -4204,6 +4210,18 @@ function GetDrain() : double;
 procedure SetDrain(constref Drain_in : double);
     external 'aquacrop' name '__ac_global_MOD_setdrain';
 
+function GetRain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrain';
+
+procedure SetRain(constref Rain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrain';
+
+function GetRunoff() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrunoff';
+
+procedure SetRunoff(constref Runoff_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrunoff';
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
@@ -4504,6 +4522,101 @@ procedure SetGroundwaterDescription_wrap(
             constref p : PChar;
             constref strlen : integer);
     external 'aquacrop' name '__ac_interface_global_MOD_setgroundwaterdescription_wrap';
+
+procedure AdjustSizeCompartments(constref CropZx : double);
+    external 'aquacrop' name '__ac_global_MOD_adjustsizecompartments';
+
+
+procedure AdjustThetaInitial(
+                constref PrevNrComp : ShortInt;
+                constref PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
+    external 'aquacrop' name '__ac_global_MOD_adjustthetainitial';
+
+function GetDaySubmerged() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getdaysubmerged';
+
+procedure SetDaySubmerged(constref DaySubmerged_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setdaysubmerged';
+
+function GetCRsalt() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrsalt';
+
+procedure SetCRsalt(constref CRsalt_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrsalt';
+
+function GetMaxPlotNew() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getmaxplotnew';
+
+procedure SetMaxPlotNew(constref MaxPlotNew_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setmaxplotnew';
+
+function GetMaxPlotTr() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getmaxplottr';
+
+procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
+
+function GetPreDay() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getpreday_wrap';
+
+procedure SetPreDay(constref PreDay_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setpreday_wrap';
+
+function GetIniPercTAW() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getiniperctaw';
+
+procedure SetIniPercTAW(constref IniPercTAW_in : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setiniperctaw';
+
+function GetECiAqua() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteciaqua';
+
+procedure SetECiAqua(constref ECiAqua_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteciaqua';
+
+function GetETo() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteto';
+
+procedure SetETo(constref ETo_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteto';
+
+function GetIrrigation() : double;
+    external 'aquacrop' name '__ac_global_MOD_getirrigation';
+
+procedure SetIrrigation(constref Irrigation_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setirrigation';
+
+function GetInfiltrated() : double;
+    external 'aquacrop' name '__ac_global_MOD_getinfiltrated';
+
+procedure SetInfiltrated(constref Infiltrated_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setinfiltrated';
+
+function GetCRwater() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrwater';
+
+procedure SetCRwater(constref CRwater_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrwater';
+
+function GetEpot() : double;
+    external 'aquacrop' name '__ac_global_MOD_getepot';
+
+procedure SetEpot(constref Epot_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setepot';
+
+function GetTpot() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettpot';
+
+procedure SetTpot(constref Tpot_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settpot';
+
+procedure DetermineLinkedSimDay1(
+            constref CropDay1 : LongInt;
+            VAR SimDay1 :LongInt);
+    external 'aquacrop' name '__ac_global_MOD_determinelinkedsimday1';
+
+procedure AdjustSimPeriod;
+    external 'aquacrop' name '__ac_global_MOD_adjustsimperiod';
 
 
 implementation

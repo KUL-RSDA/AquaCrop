@@ -31,6 +31,9 @@ function calculate_theta(
 procedure calculate_drainage();
      external 'aquacrop' name '__ac_simul_MOD_calculate_drainage';
 
+procedure calculate_runoff(constref MaxDepth : double );
+     external 'aquacrop' name '__ac_simul_MOD_calculate_runoff';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------
