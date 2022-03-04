@@ -186,6 +186,41 @@ function  BiomassRatio(
             constref  DeltaWeedStress : INTEGER;
             constref  DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
 
+
+PROCEDURE StressBiomassRelationship_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
+            constref L0,L12,L123,L1234,
+                     LFlor,LengthFlor,
+                     GDDL0,GDDL12,GDDL123,GDDL1234,WPyield,RefHI : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,WPveg,RatedHIdt,CO2Given : double;
+            constref CropDNr1 : LongInt;
+            constref CropDeterm : BOOLEAN;
+            constref CropSResp : rep_Shapes;
+            constref TheCropType : integer;
+            constref TheModeCycle : integer;
+            VAR b0,b1,b2 : double;
+            VAR BM10,BM20,BM30,BM40,BM50,BM60,BM70 : double);
+         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_stressbiomassrelationship_wrap';
+
+PROCEDURE StressBiomassRelationship(
+            constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
+            constref L0,L12,L123,L1234,
+                     LFlor,LengthFlor,
+                     GDDL0,GDDL12,GDDL123,GDDL1234,WPyield,RefHI : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,WPveg,RatedHIdt,CO2Given : double;
+            constref CropDNr1 : LongInt;
+            constref CropDeterm : BOOLEAN;
+            constref CropSResp : rep_Shapes;
+            constref TheCropType : rep_subkind;
+            constref TheModeCycle : rep_modeCycle;
+            VAR b0,b1,b2 : double;
+            VAR BM10,BM20,BM30,BM40,BM50,BM60,BM70 : double);
+
+
 implementation
 
 
@@ -265,6 +300,38 @@ begin
            TempWP, ShapeFweed, int_modeCycle, SFInfo, SFInfoStress,
            WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn);
 end;
+
+PROCEDURE StressBiomassRelationship(
+            constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
+            constref L0,L12,L123,L1234,
+                     LFlor,LengthFlor,
+                     GDDL0,GDDL12,GDDL123,GDDL1234,WPyield,RefHI : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,WPveg,RatedHIdt,CO2Given : double;
+            constref CropDNr1 : LongInt;
+            constref CropDeterm : BOOLEAN;
+            constref CropSResp : rep_Shapes;
+            constref TheCropType : rep_subkind;
+            constref TheModeCycle : rep_modeCycle;
+            VAR b0,b1,b2 : double;
+            VAR BM10,BM20,BM30,BM40,BM50,BM60,BM70 : double);
+var
+   int_modeCycle : integer;
+   int_subkind : integer;
+begin
+   int_modeCycle := ord(TheModeCycle);
+   int_subkind   := ord(theCropType);
+   StressBiomassRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,
+            L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,
+            GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,
+            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,
+            Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,
+            CO2Given, CropDNr1, CropDeterm, CropSResp, int_subkind,
+            int_modeCycle, b0, b1, b2, 
+            BM10, BM20, BM30, BM40, BM50, BM60, BM70);
+end;
+
 
 initialization
 
