@@ -1200,7 +1200,13 @@ procedure TimeToMaxCanopySF(
             VAR RedCGC,RedCCx : ShortInt;
             VAR ClassSF : ShortInt);
         external 'aquacrop' name '__ac_interface_global_MOD_timetomaxcanopysf_wrap';
-           
+
+procedure CheckForWaterTableInProfile(
+            constref DepthGWTmeter : double;
+            constref ProfileComp : rep_comp;
+            var WaterTableInProfile : boolean);
+        external 'aquacrop' name '__ac_global_MOD_checkforwatertableinprofile';
+                                                
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;
@@ -4515,6 +4521,30 @@ procedure AdjustThetaInitial(
                 constref PrevThickComp,PrevVolPrComp,PrevECdSComp : rep_IniComp);
     external 'aquacrop' name '__ac_global_MOD_adjustthetainitial';
 
+function GetDaySubmerged() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getdaysubmerged';
+
+procedure SetDaySubmerged(constref DaySubmerged_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setdaysubmerged';
+
+function GetCRsalt() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcrsalt';
+
+procedure SetCRsalt(constref CRsalt_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcrsalt';
+
+function GetMaxPlotNew() : integer;
+    external 'aquacrop' name '__ac_global_MOD_getmaxplotnew';
+
+procedure SetMaxPlotNew(constref MaxPlotNew_in : integer);
+    external 'aquacrop' name '__ac_global_MOD_setmaxplotnew';
+
+function GetMaxPlotTr() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getmaxplottr';
+
+procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
+
 function GetPreDay() : boolean;
     external 'aquacrop' name '__ac_interface_global_MOD_getpreday_wrap';
 
@@ -4569,12 +4599,10 @@ function GetTpot() : double;
 procedure SetTpot(constref Tpot_in : double);
     external 'aquacrop' name '__ac_global_MOD_settpot';
 
-
 procedure DetermineLinkedSimDay1(
             constref CropDay1 : LongInt;
             VAR SimDay1 :LongInt);
     external 'aquacrop' name '__ac_global_MOD_determinelinkedsimday1';
-
 
 procedure AdjustSimPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustsimperiod';
