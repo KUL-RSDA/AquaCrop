@@ -159,6 +159,33 @@ function Bnormalized(
             constref FertilityStressOn : BOOLEAN;
             constref TestRecord : BOOLEAN) : DOUBLE;
 
+function  BiomassRatio_wrap(
+            constref TempDaysToCCini,TempGDDaysToCCini : INTEGER;
+            constref TempCCo,TempCGC,TempCCx,TempCDC,TempGDDCGC,TempGDDCDC,TempdHIdt : double;
+            constref TempL0,TempL12,L12SF,TempL123,TempHarvest,TempFlower,
+                     TempGDDL0,GDDL12SF,TempGDDL12,TempGDDL123,TempGDDHarvest,TempHI,TempWPy : INTEGER;
+            constref TempKc,TempKcDecline,TempCCeffect,
+                     TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,TempWP,ShapeFweed : double;
+            constref  TempModeCycle : integer;
+            constref  SFInfo : rep_EffectStress;
+            constref  SFInfoStress,WeedStress : ShortInt;
+            constref  DeltaWeedStress : INTEGER;
+            constref  DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
+         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_biomassratio_wrap';
+
+function  BiomassRatio(
+            constref TempDaysToCCini,TempGDDaysToCCini : INTEGER;
+            constref TempCCo,TempCGC,TempCCx,TempCDC,TempGDDCGC,TempGDDCDC,TempdHIdt : double;
+            constref TempL0,TempL12,L12SF,TempL123,TempHarvest,TempFlower,
+                     TempGDDL0,GDDL12SF,TempGDDL12,TempGDDL123,TempGDDHarvest,TempHI,TempWPy : INTEGER;
+            constref TempKc,TempKcDecline,TempCCeffect,
+                     TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,TempWP,ShapeFweed : double;
+            constref  TempModeCycle : rep_modeCycle;
+            constref  SFInfo : rep_EffectStress;
+            constref  SFInfoStress,WeedStress : ShortInt;
+            constref  DeltaWeedStress : INTEGER;
+            constref  DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
+
 implementation
 
 
@@ -210,6 +237,33 @@ begin
                       StrResCDecline,ShapeFweed,
                       int_modeCycle,
                       FertilityStressOn, TestRecord); 
+end;
+
+function  BiomassRatio(
+            constref TempDaysToCCini,TempGDDaysToCCini : INTEGER;
+            constref TempCCo,TempCGC,TempCCx,TempCDC,TempGDDCGC,TempGDDCDC,TempdHIdt : double;
+            constref TempL0,TempL12,L12SF,TempL123,TempHarvest,TempFlower,
+                     TempGDDL0,GDDL12SF,TempGDDL12,TempGDDL123,TempGDDHarvest,TempHI,TempWPy : INTEGER;
+            constref TempKc,TempKcDecline,TempCCeffect,
+                     TempTbase,TempTupper,TempTmin,TempTmax,TempGDtranspLow,TempWP,ShapeFweed : double;
+            constref  TempModeCycle : rep_modeCycle;
+            constref  SFInfo : rep_EffectStress;
+            constref  SFInfoStress,WeedStress : ShortInt;
+            constref  DeltaWeedStress : INTEGER;
+            constref  DeterminantCropType,FertilityStressOn : BOOLEAN) : double;
+var
+   int_modeCycle : integer;
+begin
+   int_modeCycle := ord(TempModeCycle);
+   BiomassRatio := BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,
+           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, 
+           TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,
+           TempL123, TempHarvest, TempFlower, TempGDDL0, 
+           GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,
+           TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,
+           TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,
+           TempWP, ShapeFweed, int_modeCycle, SFInfo, SFInfoStress,
+           WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn);
 end;
 
 initialization
