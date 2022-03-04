@@ -19,7 +19,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
-    DaySubmerged   : INTEGER;
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
@@ -27,13 +26,10 @@ VAR DataPath,ObsPath : BOOLEAN;
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    MaxPlotNew : Integer;
-    MaxPlotTr : ShortInt;
     // salinity
     ECstorage      : double; (* EC surface storage dS/m *)
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
-    CRsalt         : double; // gram/m2
 
 
 

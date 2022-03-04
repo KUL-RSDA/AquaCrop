@@ -970,14 +970,20 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
-integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
-                            ! Soil Water Content Menu
-
+integer(int32) :: DaySubmerged
+integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
-integer(int32) :: ZiAqua ! Depth of Groundwater table below 
-                         ! soil surface in centimeter
+integer(int32) :: ZiAqua ! Depth of Groundwater table below
+                         ! soil surface in centimeter 
 
+
+integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
+                            ! Soil Water Content Menu
+integer(int8) :: MaxPlotTr
+
+
+real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
 real(dp) :: Epot ! mm/day
@@ -14181,6 +14187,60 @@ subroutine SetGroundwaterDescription(str)
     
     GroundwaterDescription = str
 end subroutine SetGroundwaterDescription
+
+integer(int32) function GetDaySubmerged()
+    !! Getter for the "DaySubmerged" global variable.
+
+    GetDaySubmerged = DaySubmerged
+end function GetDaySubmerged
+
+
+subroutine SetDaySubmerged(DaySubmerged_in)
+    !! Setter for the "DaySubmerged" global variable.
+    integer(int32), intent(in) :: DaySubmerged_in
+
+    DaySubmerged = DaySubmerged_in
+end subroutine SetDaySubmerged
+
+real(dp) function GetCRsalt()
+    !! Getter for the "CRsalt" global variable.
+
+    GetCRsalt = CRsalt
+end function GetCRsalt
+
+subroutine SetCRsalt(CRsalt_in)
+    !! Setter for the "CRsalt" global variable.
+    real(dp), intent(in) :: CRsalt_in
+
+    CRsalt = CRsalt_in
+end subroutine SetCRsalt
+
+
+integer(int32) function GetMaxPlotNew()
+    !! Getter for the "MaxPlotNew" global variable.
+
+    GetMaxPlotNew = MaxPlotNew
+end function GetMaxPlotNew
+
+subroutine SetMaxPlotNew(MaxPlotNew_in)
+    !! Setter for the "MaxPlotNew" global variable.
+    integer(int32), intent(in) :: MaxPlotNew_in
+
+    MaxPlotNew = MaxPlotNew_in
+end subroutine SetMaxPlotNew
+
+integer(int8) function GetMaxPlotTr()
+    !! Getter for the "MaxPlotTr" global variable.
+
+    GetMaxPlotTr = MaxPlotTr
+end function GetMaxPlotTr
+
+subroutine SetMaxPlotTr(MaxPlotTr_in)
+    !! Setter for the "MaxPlotTr" global variable.
+    integer(int8), intent(in) :: MaxPlotTr_in
+
+    MaxPlotTr = MaxPlotTr_in
+end subroutine SetMaxPlotTr
 
 logical function GetPreDay()
     !! Getter for the "PreDay" global variable.

@@ -231,7 +231,7 @@ SetCrop_DayN(Crop_DayN_temp);
  SetIrrigation(0);
  SurfaceStorage := 0;
  ECstorage := 0.0;
- DaySubmerged := 0;
+ SetDaySubmerged(0);
  SumWaBal_temp := GetSumWabal();
  GlobalZero(SumWabal_temp);
  SetSumWaBal(SumWaBal_temp);
@@ -239,11 +239,11 @@ SetCrop_DayN(Crop_DayN_temp);
  SetRunoff(0.0);// added 4.0
  SetInfiltrated(0.0); // added 4.0
  SetCRwater(0); // added 4.0
- CRsalt := 0; // added 4.0
+ SetCRsalt(0); // added 4.0
  SetSimulation_ResetIniSWC(true);
  SetSimulation_EvapLimitON(false);
- MaxPlotNew := 50;
- MaxPlotTr := 10;
+ SetMaxPlotNew(50);
+ SetMaxPlotTr(10);
  SetSimulation_InitialStep(10); // Length of period (days) for displaying intermediate results during simulation run
  SetSimulation_LengthCuttingInterval(40); // Default length of cutting interval (days)
  END; (* InitializeSettings *)

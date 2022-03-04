@@ -583,6 +583,7 @@ VAR  control : rep_control;
      EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp : double;
      Comp_temp : rep_Comp;
      Crop_pActStom_temp : double;
+     CRsalt_temp : double;
 
 
 
@@ -620,7 +621,7 @@ CASE control OF
                HorizontalWaterFlow := 0;
                HorizontalSaltFlow := 0;
                SetCRwater(0);
-               CRsalt := 0;
+               SetCRsalt(0);
                END;
 
      end_day : BEGIN
@@ -656,7 +657,7 @@ CASE control OF
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
                                             - GetDrain()*ECdrain*Equiv/100
-                                            + CRsalt/100
+                                            + GetCRsalt()/100
                                             + HorizontalSaltFlow);
                SetSumWaBal_Epot(GetSumWaBal_Epot() + GetEpot());
                SetSumWaBal_Tpot(GetSumWaBal_Tpot() + GetTpot());
@@ -678,7 +679,7 @@ CASE control OF
                           END
                      ELSE SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + Eact); // before germination
                   END;
-               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + CRsalt/100);
+               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + GetCRsalt()/100);
                SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100);
                SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  GetDrain()*ECdrain*Equiv/100);
                END;
@@ -3149,7 +3150,7 @@ PROCEDURE Correction_Anaeroby(VAR Comp : CompartmentIndividual;
 VAR alfaAN : double;
     ini : INTEGER;
 BEGIN
-IF ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint > 0))
+IF ((GetDaySubmerged() >= GetSimulParam_DelayLowOxygen()) AND (GetCrop().AnaeroPoint > 0))
    THEN alfaAN := 0
    ELSE IF (Comp.theta > (GetSoilLayer_i(Comp.Layer).SAT - GetCrop().AnaeroPoint)/100)
            THEN BEGIN
@@ -3375,14 +3376,14 @@ VAR Textra, Part : double;
     compi : INTEGER;
     KsReduction,SaltSurface : double;
 BEGIN
-DaySubmerged := DaySubmerged + 1;
+SetDaySubmerged(GetDaySubmerged() + 1);
 FOR compi := 1 TO GetNrCompartments() DO
     BEGIN
     SetCompartment_DayAnaero(compi, GetCompartment_DayAnaero(compi) + 1);
     IF (GetCompartment_DayAnaero(compi) > GetSimulParam_DelayLowOxygen())
        THEN SetCompartment_DayAnaero(compi, GetSimulParam_DelayLowOxygen());
     END;
-IF (GetCrop().AnaeroPoint > 0) THEN Part := (1-DaySubmerged/GetSimulParam_DelayLowOxygen())
+IF (GetCrop().AnaeroPoint > 0) THEN Part := (1-GetDaySubmerged()/GetSimulParam_DelayLowOxygen())
                           ELSE Part := 1;
 //KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,SimulParam.KsShapeFactorSalt);
 KsReduction := KsSalinity(GetSimulation_SalinityConsidered(),GetCrop().ECemin,GetCrop().ECemax,ECstorage,(0.0));
@@ -3505,7 +3506,7 @@ calculate_drainage;
 // 4. Runoff
 IF (GetManagement_Bundheight() < 0.001) THEN
    BEGIN
-   DaySubmerged := 0;
+   SetDaySubmerged(0);
    IF ((GetManagement_RunoffON() = true) AND (GetRain() > 0.1)) THEN calculate_runoff(GetSimulParam_RunoffDepth());
    END;
 
@@ -3521,8 +3522,10 @@ calculate_infiltration(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage)
 
 // 6. Capillary Rise
 CRwater_temp := GetCRwater();
-calculate_CapillaryRise(CRwater_temp,CRsalt);
+CRsalt_temp := GetCRsalt();
+calculate_CapillaryRise(CRwater_temp,CRsalt_temp);
 SetCRwater(CRwater_temp);
+SetCRsalt(CRsalt_temp);
 
 // 7. Salt balance
 calculate_saltcontent(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
@@ -3606,11 +3609,11 @@ IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthl
 IF ((NoMoreCrop = false) AND (RootingDepth > 0.0001)) THEN
    BEGIN
    IF ((SurfaceStorage > 0) AND
-       ((GetCrop().AnaeroPoint = 0) OR (DaySubmerged < GetSimulParam_DelayLowOxygen())))
+       ((GetCrop().AnaeroPoint = 0) OR (GetDaySubmerged() < GetSimulParam_DelayLowOxygen())))
        THEN surface_transpiration
        ELSE calculate_transpiration(GetTpot(),Tact);
    END;
-IF (SurfaceStorage <= 0) THEN DaySubmerged := 0;
+IF (SurfaceStorage <= 0) THEN SetDaySubmerged(0);
 FeedbackCC;
 
 // 14. Adjustment to groundwater table

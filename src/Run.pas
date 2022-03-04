@@ -2254,7 +2254,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,GetTotalSaltContent().EndDay:10:3);
+   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
