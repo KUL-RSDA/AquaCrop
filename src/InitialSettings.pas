@@ -70,8 +70,8 @@ implementation
 
 
 
- PreDay := false;
- IniPercTAW := 50; // Default Value for Percentage TAW for Display in Initial Soil Water Content Menu
+ SetPreDay(false);
+ SetIniPercTAW(50); // Default Value for Percentage TAW for Display in Initial Soil Water Content Menu
 
  // Default for soil compartments
  IF (GetNrCompartments() > max_No_compartments) //Savety check of value in General.PAR;
@@ -85,9 +85,9 @@ implementation
  // 2a. Ground water table
  SetGroundWaterFile('(None)');
  SetGroundWaterFilefull(GetGroundWaterFile());  (* no file *)
- GroundWaterDescription := 'no shallow groundwater table';
+ SetGroundWaterDescription('no shallow groundwater table');
  SetZiAqua(undef_int);
- ECiAqua := undef_int;
+ SetECiAqua(undef_int);
  SetSimulParam_ConstGwt(true);
 
  // 2b. Soil profile and initial soil water content
@@ -226,24 +226,24 @@ SetCrop_DayN(Crop_DayN_temp);
  AdjustOnsetSearchPeriod;
 
  // 12. Simulation run
- ETo := 5.0;
- Rain := 0;
- Irrigation := 0;
+ SetETo(5.0);
+ SetRain(0);
+ SetIrrigation(0);
  SurfaceStorage := 0;
  ECstorage := 0.0;
- DaySubmerged := 0;
+ SetDaySubmerged(0);
  SumWaBal_temp := GetSumWabal();
  GlobalZero(SumWabal_temp);
  SetSumWaBal(SumWaBal_temp);
- Drain:= 0.0; // added 4.0
- Runoff:= 0.0;// added 4.0
- Infiltrated := 0.0; // added 4.0
- CRwater := 0; // added 4.0
- CRsalt := 0; // added 4.0
+ SetDrain(0.0); // added 4.0
+ SetRunoff(0.0);// added 4.0
+ SetInfiltrated(0.0); // added 4.0
+ SetCRwater(0); // added 4.0
+ SetCRsalt(0); // added 4.0
  SetSimulation_ResetIniSWC(true);
  SetSimulation_EvapLimitON(false);
- MaxPlotNew := 50;
- MaxPlotTr := 10;
+ SetMaxPlotNew(50);
+ SetMaxPlotTr(10);
  SetSimulation_InitialStep(10); // Length of period (days) for displaying intermediate results during simulation run
  SetSimulation_LengthCuttingInterval(40); // Default length of cutting interval (days)
  END; (* InitializeSettings *)

@@ -257,7 +257,7 @@ def test_europe(row, col, use_irrigation):
         # Make a dictionnary for the number of allowed small deviations
         # per special case
         special_cases = {
-            (30, 20, True, 'day'):  1,
+            (30, 20, True, 'day'):  2,
             (50, 27, True, 'day'):  1,
             (7, 39, True, 'day'):   2,
             (0, 45, True, 'day'):   1,
