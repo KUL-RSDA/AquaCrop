@@ -974,7 +974,8 @@ integer(int32) :: DaySubmerged
 integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
-integer(int32) :: ZiAqua ! Depth of Groundwater table below 
+integer(int32) :: ZiAqua ! Depth of Groundwater table below
+                         ! soil surface in centimeter 
 
 
 integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
