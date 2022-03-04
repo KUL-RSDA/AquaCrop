@@ -19,25 +19,17 @@ VAR DataPath,ObsPath : BOOLEAN;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
-    DaySubmerged   : INTEGER;
-    ETo, Epot, Tpot, Irrigation, Infiltrated, CRwater : double;   (* mm/day *)
     Tmin, Tmax : double; (* degC *)
     SurfaceStorage, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-    PreDay         : BOOLEAN;
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    MaxPlotNew : Integer;
-    MaxPlotTr : ShortInt;
-    IniPercTAW : ShortInt; // Default Value for Percentage TAW for Initial Soil Water Content Menu
     // salinity
     ECstorage      : double; (* EC surface storage dS/m *)
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
-    CRsalt         : double; // gram/m2
-    ECiAqua        : double; //  EC of the groundwater table in dS/m
 
 
 
@@ -221,6 +213,7 @@ VAR IniSimFromDayNr : LongInt;
     FullFileName : string;
     FromDayNr_temp, ZiAqua_temp : integer;
     Compartment_temp : rep_Comp;
+    ECiAqua_temp : double;
 
 BEGIN
 IniSimFromDayNr := GetSimulation_FromDayNr();
@@ -266,8 +259,10 @@ IF ((NOT GetSimulParam_ConstGwt()) AND (IniSimFromDayNr <> GetSimulation_FromDay
        ELSE FullFileName := GetGroundWaterFileFull();
    // initialize ZiAqua and ECiAqua
    ZiAqua_temp := GetZiAqua();
-   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua_temp,ECiAqua);
+   ECiAqua_temp := GetECiAqua();
+   LoadGroundWater(FullFileName,GetSimulation_FromDayNr(),ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
+   SetECiAqua(ECiAqua_temp);
    Compartment_temp := GetCompartment();
    CalculateAdjustedFC((GetZiAqua()/100),Compartment_temp);
    SetCompartment(Compartment_temp);

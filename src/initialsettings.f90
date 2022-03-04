@@ -1,7 +1,7 @@
 module ac_initialsettings
 
 use ac_kinds, only: int32
-use ac_global, only:    SetSimulParam_PerRAW, &
+use ac_global, only:    SetSimulParam_PercRAW, &
                         SetNrCompartments, &
                         SetSimulParam_CompDefThick, &
                         SetSimulParam_CropDay1, &
@@ -17,7 +17,6 @@ use ac_global, only:    SetSimulParam_PerRAW, &
                         SetSimulParam_IniAbstract, &
                         SetSimulParam_EffectiveRain_Method, &
                         EffectiveRainMethod_USDA, &
-                        SetSimulParam_PercentEffectiveRain, &
                         SetSimulParam_EvapDeclineFactor, &
                         SetSimulParam_KcWetBare, &
                         SetSimulParam_PercCCxHifinal, &
@@ -27,7 +26,6 @@ use ac_global, only:    SetSimulParam_PerRAW, &
                         SetSimulParam_TAWGermination, &
                         SetSimulParam_pAdjFAO, &
                         SetSimulParam_DelayLowOxygen, &
-                        SetSimulParam_ExpSen, &
                         SetSimulParam_ExpFsen, &
                         SetSimulParam_Beta, &
                         SetSimulParam_ThicknessTopSWC, &
@@ -47,8 +45,7 @@ use ac_global, only:    SetSimulParam_PerRAW, &
                         undef_int, &
                         SetECiAqua, &
                         SetSimulParam_ConstGwt, &
-                        ResetDefaultSoil, &
-                        SetProfile, &
+                        SetProfFile, &
                         SetProfFilefull, &
                         SetCrop_RootMin, &
                         SetCrop_RootMax, &
@@ -57,12 +54,11 @@ use ac_global, only:    SetSimulParam_PerRAW, &
                         SetSimulation_CCini, &
                         SetSimulation_Bini, &
                         SetSimulation_Zrini, &
-                        ResetDefaultCrop, &
                         SetCropFile, &
                         SetCropFilefull, &
                         SetCrop_CCo, &
                         SetCrop_CCini, &
-                        SetSoilRootMax, &
+                        SetSoil_RootMax, &
                         GetPathNameSimul, &
                         GetCropFile, &
                         GetProfFile, &
@@ -90,10 +86,10 @@ use ac_global, only:    SetSimulParam_PerRAW, &
                         SetTemperatureDescription, &
                         SetTemperatureRecord_DataType, &
                         datatype_daily, &
-                        SetTemperatureRecord_DataTypeNrObs, &
-                        SetTemperatureRecord_DataTypeFromString, &
-                        SetTemperatureRecord_DataTypeToString, &
-                        SetTemperatureRecord_DataTypeFromY, &
+                        SetTemperatureRecord_NrObs, &
+                        SetTemperatureRecord_FromString, &
+                        SetTemperatureRecord_ToString, &
+                        SetTemperatureRecord_FromY, &
                         SetEToFile, &
                         SetEToFilefull, &
                         GetEToFile, &
@@ -182,6 +178,8 @@ use ac_global, only:    SetSimulParam_PerRAW, &
                         SetMaxPlotTr, &
                         SetSimulation_InitialStep, &
                         SetSimulation_LengthCuttingInterval
+use ac_defaultcropsoil, only :  ResetDefaultSoil, &
+                                ResetDefaultCrop
 
 implicit none
 
