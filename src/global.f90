@@ -4329,10 +4329,10 @@ subroutine AdjustSimPeriod()
     select case(GetSimulation_LinkCropToSimPeriod())
     case(.true.)
         FromDayNr_temp = GetSimulation_FromDayNr()
-        call DetermineLinkedSimDay1(GetCrop()%Day1, FromDayNr_temp)
+        call DetermineLinkedSimDay1(GetCrop_Day1(), FromDayNr_temp)
         call SetSimulation_FromDayNr(FromDayNr_temp)
-        if (GetCrop()%Day1 = GetSimulation_FromDayNr()) then
-            call SetSimulation_ToDayNr(GetCrop()%DayN)
+        if (GetCrop_Day1() = GetSimulation_FromDayNr()) then
+            call SetSimulation_ToDayNr(GetCrop_DayN())
         else
             call SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30) ! 30 days
         end if
@@ -4345,10 +4345,10 @@ subroutine AdjustSimPeriod()
             end if
         end if
     case(.false.)
-        if (GetSimulation_FromDayNr() > GetCrop()%Day1) then
-            call SetSimulation_FromDayNr(GetCrop()%Day1)
+        if (GetSimulation_FromDayNr() > GetCrop_Day1()) then
+            call SetSimulation_FromDayNr(GetCrop_Day1())
         end if
-        call SetSimulation_ToDayNr(GetCrop()%DayN)
+        call SetSimulation_ToDayNr(GetCrop_DayN())
         if ((GetClimFile() /= '(None)') .and. &
             ((GetSimulation_FromDayNr() <= GetClimRecord_FromDayNr()) &
              .or. (GetSimulation_FromDayNr() >= GetClimRecord_ToDayNr()))) then
@@ -4372,7 +4372,7 @@ subroutine AdjustSimPeriod()
         call CalculateAdjustedFC((ZiAqua/100._dp), Compartment_temp)
         call SetCompartment(Compartment_temp)
         if (GetSimulation_IniSWC_AtFC() then
-            ResetSWCToFC
+            call ResetSWCToFC
         end if
     end if
 end subroutine AdjustSimPeriod
