@@ -430,6 +430,7 @@ subroutine GetFileForProgramParameters_wrap(TheFullFileNameProgram, strlen1, &
     string1 = pointer2string(TheFullFileNameProgram, strlen1)
     string2 = pointer2string(FullFileNameProgramParameters, strlen2)
     call GetFileForProgramParameters(string1, string2)
+    FullFileNameProgramParameters = string2pointer(string2)
 end subroutine GetFileForProgramParameters_wrap
 
 logical function FileExists_wrap(full_name, strlen)
@@ -486,6 +487,7 @@ subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
     string1 = pointer2string(FullNameProjectFile, strlen1)
     string2 = pointer2string(DescriptionOfProject, strlen2)
     call LoadProjectDescription(string1, string2)
+    DescriptionOfProject = string2pointer(string2)
 end subroutine LoadProjectDescription_wrap
 
 subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)

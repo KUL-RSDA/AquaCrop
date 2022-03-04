@@ -6643,9 +6643,9 @@ subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgr
 
     FullFileNameProgramParameters = ''
     TheLength = len(TheFullFileNameProgram)
-    TheExtension = TheFullFileNameProgram(TheLength-3:TheLength) ! PRO or PRM
+    TheExtension = TheFullFileNameProgram(TheLength-2:TheLength) ! PRO or PRM
 
-    FullFileNameProgramParameters = TheFullFileNameProgram(TheLength-2:TheLength)
+    FullFileNameProgramParameters = TheFullFileNameProgram(1:TheLength-3)
     if (TheExtension == 'PRO') then
         FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PP1'
     else
