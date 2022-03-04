@@ -4696,6 +4696,88 @@ subroutine NoCropCalendar()
 end subroutine NoCropCalendar
 
 
+subroutine DetermineLinkedSimDay1(CropDay1, SimDay1)
+    integer(int32), intent(in) :: CropDay1
+    integer(int32), intent(inout) :: SimDay1
+
+    SimDay1 = CropDay1
+    if (GetClimFile() /= '(None)') then
+        if ((SimDay1 < GetClimRecord_FromDayNr()) .or. &
+            (SimDay1 > GetClimRecord_ToDayNr())) then
+            call SetSimulation_LinkCropToSimPeriod(.false.)
+            SimDay1 = GetClimRecord_FromDayNr()
+        end if
+    end if
+end subroutine DetermineLinkedSimDay1
+
+
+subroutine AdjustSimPeriod()
+    integer(int32) :: IniSimFromDayNr
+    character(len=:), allocatable :: FullFileName
+    integer(int32) :: FromDayNr_temp
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
+
+    integer(int32) :: ZiAqua_tmp
+    real(dp) :: ECiAqua_tmp
+
+    IniSimFromDayNr = GetSimulation_FromDayNr()
+    select case(GetSimulation_LinkCropToSimPeriod())
+    case(.true.)
+        FromDayNr_temp = GetSimulation_FromDayNr()
+        call DetermineLinkedSimDay1(GetCrop_Day1(), FromDayNr_temp)
+        call SetSimulation_FromDayNr(FromDayNr_temp)
+        if (GetCrop_Day1() == GetSimulation_FromDayNr()) then
+            call SetSimulation_ToDayNr(GetCrop_DayN())
+        else
+            call SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30) ! 30 days
+        end if
+        if (GetClimFile() /= '(None)') then
+            if (GetSimulation_ToDayNr() > GetClimRecord_ToDayNr()) then
+                call SetSimulation_ToDayNr(GetClimRecord_ToDayNr())
+            end if
+            if (GetSimulation_ToDayNr() < GetClimRecord_FromDayNr()) then
+                call SetSimulation_ToDayNr(GetClimRecord_FromDayNr())
+            end if
+        end if
+    case(.false.)
+        if (GetSimulation_FromDayNr() > GetCrop_Day1()) then
+            call SetSimulation_FromDayNr(GetCrop_Day1())
+        end if
+        call SetSimulation_ToDayNr(GetCrop_DayN())
+        if ((GetClimFile() /= '(None)') .and. &
+            ((GetSimulation_FromDayNr() <= GetClimRecord_FromDayNr()) &
+             .or. (GetSimulation_FromDayNr() >= GetClimRecord_ToDayNr()))) then
+            call SetSimulation_FromDayNr(GetClimRecord_FromDayNr())
+            call SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30) ! 30 days
+       end if
+    end select
+
+    ! adjust initial depth and quality of the groundwater when required
+    if ((.not. GetSimulParam_ConstGwt()) .and. &
+        (IniSimFromDayNr /= GetSimulation_FromDayNr())) then
+        if (GetGroundWaterFile() == '(None)') then
+            FullFileName = GetPathNameProg()// 'GroundWater.AqC'
+        else
+            FullFileName = GetGroundWaterFileFull()
+        end if
+        ! initialize ZiAqua and ECiAqua
+        ZiAqua_tmp = GetZiAqua()
+        ECiAqua_tmp = GetECiAqua()
+        call LoadGroundWater(FullFileName, GetSimulation_FromDayNr(), &
+                 ZiAqua_tmp, ECiAqua_tmp)
+        call SetZiAqua(ZiAqua_tmp)
+        call SetECiAqua(ECiAqua_tmp)
+        Compartment_temp = GetCompartment()
+        call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
+        call SetCompartment(Compartment_temp)
+        if (GetSimulation_IniSWC_AtFC()) then
+            call ResetSWCToFC
+        end if
+    end if
+end subroutine AdjustSimPeriod
+
+
+!! Global variables section !!
 
 subroutine ResetSWCToFC()
 

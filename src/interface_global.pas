@@ -4599,6 +4599,13 @@ function GetTpot() : double;
 procedure SetTpot(constref Tpot_in : double);
     external 'aquacrop' name '__ac_global_MOD_settpot';
 
+procedure DetermineLinkedSimDay1(
+            constref CropDay1 : LongInt;
+            VAR SimDay1 :LongInt);
+    external 'aquacrop' name '__ac_global_MOD_determinelinkedsimday1';
+
+procedure AdjustSimPeriod;
+    external 'aquacrop' name '__ac_global_MOD_adjustsimperiod';
 
 
 implementation
