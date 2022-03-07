@@ -2673,7 +2673,6 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     integer(int8) :: SiPr
     real(dp) :: SumKcTop, HIGC, HIGClinear
     integer(int32) :: DaysYieldFormation, tSwitch
-
     integer(int8), parameter :: fortran_base = 1_int8
     real(dp) :: TDayMax_temp, TDayMin_temp
 
@@ -2702,11 +2701,11 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     end if
 
     ! 2. Biomass production for various stress levels
-    do Si = 0, 7
+    do Si = 1, 8
         ! various stress levels
         ! stress effect
-        SiPr = 10*Si
-        StressMatrix(Si+fortran_base)%StressProc = SiPr
+        SiPr = 10*(Si-1)
+        StressMatrix(Si)%StressProc = SiPr
         call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
         ! adjusted length of Max canopy cover
         RatDGDD = 1
@@ -2739,19 +2738,19 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
                 StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
                 StressResponse%CDecline, -0.01_dp, TheModeCycle, .true.,&
                 .false.)
-        if (Si == 0) then
+        if (Si == 1) then
             BNor100 = BNor
-            StressMatrix(0+fortran_base)%BioMProc = 100._dp
+            StressMatrix(1)%BioMProc = 100._dp
         else
             if (BNor100 > 0.00001_dp) then
-                StressMatrix(Si+fortran_base)%BioMProc = 100._dp * BNor/BNor100
+                StressMatrix(Si)%BioMProc = 100._dp * BNor/BNor100
             else
-                StressMatrix(Si+fortran_base)%BioMProc = 100._dp
+                StressMatrix(Si)%BioMProc = 100._dp
             end if
         end if
-        StressMatrix(Si+fortran_base)%BioMSquare =&
-             StressMatrix(Si+fortran_base)%BioMProc *&
-             StressMatrix(Si+fortran_base)%BioMProc
+        StressMatrix(Si)%BioMSquare =&
+             StressMatrix(Si)%BioMProc *&
+             StressMatrix(Si)%BioMProc
         ! end stress level
     end do
 
@@ -2759,11 +2758,11 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     Yavg = 0._dp
     X1avg = 0._dp
     X2avg = 0._dp
-    do Si = 0, 7
+    do Si = 1, 8
         ! various stress levels
-        Yavg = Yavg + StressMatrix(Si+fortran_base)%StressProc
-        X1avg = X1avg + StressMatrix(Si+fortran_base)%BioMProc
-        X2avg = X2avg + StressMatrix(Si+fortran_base)%BioMSquare
+        Yavg = Yavg + StressMatrix(Si)%StressProc
+        X1avg = X1avg + StressMatrix(Si)%BioMProc
+        X2avg = X2avg + StressMatrix(Si)%BioMSquare
     end do
     Yavg  = Yavg/8._dp
     X1avg = X1avg/8._dp
@@ -2773,11 +2772,11 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     SUMx1Sq = 0._dp
     SUMx2Sq = 0._dp
     SUMx1x2 = 0._dp
-    do Si = 0, 7
+    do Si = 1, 8
         ! various stress levels
-        y     = StressMatrix(Si+fortran_base)%StressProc - Yavg
-        x1    = StressMatrix(Si+fortran_base)%BioMProc - X1avg
-        x2    = StressMatrix(Si+fortran_base)%BioMSquare - X2avg
+        y     = StressMatrix(Si)%StressProc - Yavg
+        x1    = StressMatrix(Si)%BioMProc - X1avg
+        x2    = StressMatrix(Si)%BioMSquare - X2avg
         x1y   = x1 * y
         x2y   = x2 * y
         x1Sq  = x1 * x1
@@ -2903,7 +2902,7 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     ! Get PercentLagPhase (for estimate WPi during yield formation)
     if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
         ! DaysToFlowering corresponds with Tuberformation
-        DaysYieldFormation = roundc(real(RefHI, kind=dp)/RatedHIdt, mold=1)
+        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
         if (CropDeterm) then
             HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
             call GetDaySwitchToLinear(RefHI, RatedHIdt, &
@@ -2914,11 +2913,11 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     end if
 
     ! 2. Biomass production (or Salt stress) for various CCx reductions
-    do Si = 0, 9
+    do Si = 1, 10
         ! various CCx reduction
         ! CCx reduction
-        SiPr = 10*Si
-        StressMatrix(Si+fortran_base)%CCxReduction = SiPr
+        SiPr = 10*(Si-1)
+        StressMatrix(Si)%CCxReduction = SiPr
         ! adjustment CC
         call CropStressParametersSoilSalinity(SiPr, TheCCsaltDistortion, &
             CCo, CCx, CGC, GDDCGC, CropDeterm, L12, LFlor, LengthFlor, L123,&
@@ -2933,8 +2932,8 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
         else
             CCToReach = 0.98_dp*(1._dp-StressResponse%RedCCX/100._dp)*CCx
             L12SS = DaysToReachCCwithGivenCGC(CCToReach, CCo, &
-                 ((1._dp-StressResponse%RedCCX/100._dp)*CCx),&
-                 (CGC*(1._dp-(StressResponse%RedCGC)/100._dp)), L0)
+                 (1._dp-StressResponse%RedCCX/100._dp)*CCx,&
+                 CGC*(1._dp-StressResponse%RedCGC/100._dp), L0)
             if (TheModeCycle == modeCycle_GDDays) then
                 TDayMax_temp = TDayMax
                 TDayMin_temp = TDayMin
@@ -2943,7 +2942,7 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
             end if
             if ((TheModeCycle == modeCycle_GDDays) .and.&
                 (GDDL12SS < GDDL123)) then
-                RatDGDD = (L123-L12SS)*1._dp/real(GDDL123-GDDL12SS, kind=dp)
+                RatDGDD = (L123-L12SS)*1._dp/(GDDL123-GDDL12SS)
             end if
         end if
 
@@ -2959,21 +2958,21 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
                 StressResponse%RedWP, StressResponse%RedKsSto, &
                 0_int8, 0, StressResponse%CDecline, -0.01_dp,&
                 TheModeCycle, .false., .false.)
-        if (Si == 0) then
+        if (Si == 1) then
             BNor100 = BNor
             BioMProc = 100._dp
             StressMatrix(0+fortran_base)%SaltProc = 0._dp
         else
             if (BNor100 > 0.00001_dp) then
                 BioMProc = 100._dp * BNor/BNor100
-                StressMatrix(Si+fortran_base)%SaltProc = 100._dp - BioMProc
+                StressMatrix(Si)%SaltProc = 100._dp - BioMProc
             else
-                StressMatrix(Si+fortran_base)%SaltProc = 0._dp
+                StressMatrix(Si)%SaltProc = 0._dp
             end if
         end if
-        StressMatrix(Si+fortran_base)%SaltSquare = &
-             StressMatrix(Si+fortran_base)%SaltProc *&
-             StressMatrix(Si+fortran_base)%SaltProc
+        StressMatrix(Si)%SaltSquare = &
+             StressMatrix(Si)%SaltProc *&
+             StressMatrix(Si)%SaltProc
         ! end stress level
     end do
 
@@ -2981,11 +2980,11 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     Yavg = 0._dp
     X1avg = 0._dp
     X2avg = 0._dp
-    do Si = 0, 9
+    do Si = 1, 10
         ! various CCx reduction
-        Yavg = Yavg + StressMatrix(Si+fortran_base)%CCxReduction
-        X1avg = X1avg + StressMatrix(Si+fortran_base)%SaltProc
-        X2avg = X2avg + StressMatrix(Si+fortran_base)%SaltSquare
+        Yavg = Yavg + StressMatrix(Si)%CCxReduction
+        X1avg = X1avg + StressMatrix(Si)%SaltProc
+        X2avg = X2avg + StressMatrix(Si)%SaltSquare
     end do
     Yavg  = Yavg/10._dp
     X1avg = X1avg/10._dp
@@ -2995,11 +2994,11 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     SUMx1Sq = 0._dp
     SUMx2Sq = 0._dp
     SUMx1x2 = 0._dp
-    do Si = 0, 9
+    do Si = 1, 10
         ! various CCx reduction
-        y     = StressMatrix(Si+fortran_base)%CCxReduction - Yavg
-        x1    = StressMatrix(Si+fortran_base)%SaltProc - X1avg
-        x2    = StressMatrix(Si+fortran_base)%SaltSquare - X2avg
+        y     = StressMatrix(Si)%CCxReduction - Yavg
+        x1    = StressMatrix(Si)%SaltProc - X1avg
+        x2    = StressMatrix(Si)%SaltSquare - X2avg
         x1y   = x1 * y
         x2y   = x2 * y
         x1Sq  = x1 * x1
