@@ -2,8 +2,10 @@ unit Run;
 
 interface
 
+
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing,
-     interface_climprocessing;
+     interface_climprocessing, interface_simul;
+
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -78,7 +80,7 @@ WRITELN(fRun,'    RunNr     Day1   Month1    Year1     Rain      ETo       GD   
              '    SaltIn   SaltOut    SaltUp  SaltProf',
              '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr',
              '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-WRITELN(fRun,'                                           mm       mm    캜.day    ppm',
+WRITELN(fRun,'                                           mm       mm    째C.day    ppm',
              '        mm       mm       mm       mm       mm       mm        %       mm       mm        %',
              '    ton/ha    ton/ha    ton/ha    ton/ha',
              '      days       %        %        %        %        %        %  ',
@@ -225,9 +227,9 @@ IF Out1Wabal THEN
 IF Out2Crop THEN
    BEGIN
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      THEN WRITE(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha')
-      ELSE WRITELN(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      ELSE WRITELN(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
    END;
 // D3. Profile/Root zone - Soil water content
@@ -275,7 +277,7 @@ IF Out6CompEC THEN
       ELSE WRITELN(fDaily,NodeD:11:2);
    END;
 // D7. Climate input parameters
-IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       캜        캜        캜       ppm');
+IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       째C        째C        째C       ppm');
 END; (* WriteTitleDailyResults *)
 
 
@@ -374,10 +376,10 @@ WITH PreviousSum DO
   BEGIN
   Epot := 0.0;
   Tpot := 0.0;
-  Rain := 0.0;
+  SetRain(0.0);
   Irrigation := 0.0;
   Infiltrated := 0.0;
-  Runoff := 0.0;
+  SetRunoff(0.0);
   SetDrain(0.0);
   Eact := 0.0;
   Tact := 0.0;
@@ -415,7 +417,7 @@ FOR compi := 1 to GetNrCompartments() DO
        BEGIN
        SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
        Compi_temp := GetCOmpartment_i(compi);
-       DetermineSaltContent(ECiAqua,Compi_temp);
+       DetermineSaltContent(GetECiAqua(),Compi_temp);
        SetCompartment_i(compi, Compi_temp);
        END;
     END;
@@ -638,6 +640,8 @@ VAR totalname,totalnameOUT : string;
     StringREAD : ShortString;
     i : INTEGER;
     RunningDay : LongInt;
+    tmpRain : double;
+    ETo_temp : double;
 BEGIN
 // 1. ETo file
 IF (GetEToFile() <> '(None)')
@@ -659,26 +663,27 @@ IF (GetEToFile() <> '(None)')
                             READLN(fETo);
                             READLN(fETo);
                             FOR i := GetEToRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fETo);
-                            READLN(fETo,ETo);
+                            READLN(fETo,ETo_temp);
+                            SetETo(ETo_temp);
                             END;
                   Decadely: BEGIN
                             GetDecadeEToDataSet(FromSimDay,EToDataSet);
                             i := 1;
                             While (EToDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            ETo := EToDataSet[i].Param;
+                            SetETo(EToDataSet[i].Param);
                             END;
                   Monthly : BEGIN
                             GetMonthlyEToDataSet(FromSimDay,EToDataSet);
                             i := 1;
                             While (EToDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            ETo := EToDataSet[i].Param;
+                            SetETo(EToDataSet[i].Param);
                             END;
                   end;
                 // create SIM file and record first day
                 totalnameOUT := CONCAT(GetPathNameSimul(),'EToData.SIM');
                 Assign(fEToS,totalnameOUT);
                 Rewrite(fEToS);
-                WRITELN(fEToS,ETo:10:4);
+                WRITELN(fEToS,GetETo():10:4);
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
@@ -695,24 +700,28 @@ IF (GetEToFile() <> '(None)')
                                            READLN(fETo);
                                            READLN(fETo);
                                            READLN(fETo);
-                                           READLN(fETo,ETo);
+                                           READLN(fETo,ETo_temp);
+                                           SetETo(ETo_temp);
                                            END
-                                      ELSE READLN(fETo,ETo);
+                                      ELSE BEGIN
+                                           READLN(fETo,ETo_temp);
+                                           SetETo(ETo_temp);
+                                           END;
                                    END;
                          Decadely: BEGIN
                                    IF (RunningDay > EToDataSet[31].DayNr) THEN GetDecadeEToDataSet(RunningDay,EToDataSet);
                                    i := 1;
                                    While (EToDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   ETo := EToDataSet[i].Param;
+                                   SetETo(EToDataSet[i].Param);
                                    END;
                          Monthly : BEGIN
                                    IF (RunningDay > EToDataSet[31].DayNr) THEN GetMonthlyEToDataSet(RunningDay,EToDataSet);
                                    i := 1;
                                    While (EToDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   ETo := EToDataSet[i].Param;
+                                   SetETo(EToDataSet[i].Param);
                                    END;
                          end;
-                    WRITELN(fEToS,ETo:10:4);
+                    WRITELN(fEToS,GetETo():10:4);
                     END;
                 // Close files
                 IF (GetEToRecord_DataType() = Daily) THEN Close(fETo);
@@ -742,26 +751,27 @@ IF (GetRainFile() <> '(None)')
                             READLN(fRain);
                             READLN(fRain);
                             FOR i := GetRainRecord_FromDayNr() TO (FromSimDay - 1) DO READLN(fRain);
-                            READLN(fRain,Rain);
+                               READLN(fRain,tmpRain);
+                               SetRain(tmpRain);
                             END;
                   Decadely: BEGIN
                             GetDecadeRainDataSet(FromSimDay,RainDataSet);
                             i := 1;
                             While (RainDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            Rain := RainDataSet[i].Param;
+                               SetRain(RainDataSet[i].Param);
                             END;
                   Monthly : BEGIN
                             GetMonthlyRainDataSet(FromSimDay,RainDataSet);
                             i := 1;
                             While (RainDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            Rain := RainDataSet[i].Param;
+                               SetRain(RainDataSet[i].Param);
                             END;
                   end;
                 // create SIM file and record first day
                 totalnameOUT := CONCAT(GetPathNameSimul(),'RainData.SIM');
                 Assign(fRainS,totalnameOUT);
                 Rewrite(fRainS);
-                WRITELN(fRainS,Rain:10:4);
+                WRITELN(fRainS,GetRain():10:4);
                 // next days of simulation period
                 FOR RunningDay := (FromSimDay + 1) TO ToSimDay DO
                     BEGIN
@@ -778,24 +788,28 @@ IF (GetRainFile() <> '(None)')
                                            READLN(fRain);
                                            READLN(fRain);
                                            READLN(fRain);
-                                           READLN(fRain,Rain);
+                                           READLN(fRain,tmpRain);
+                                           SetRain(tmpRain);
                                            END
-                                      ELSE READLN(fRain,Rain);
+                                      ELSE BEGIN
+                                         READLN(fRain,tmpRain);
+                                         SetRain(tmpRain);
+                                         END;
                                    END;
                          Decadely: BEGIN
                                    IF (RunningDay > RainDataSet[31].DayNr) THEN GetDecadeRainDataSet(RunningDay,RainDataSet);
                                    i := 1;
                                    While (RainDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   Rain := RainDataSet[i].Param;
+                                      SetRain(RainDataSet[i].Param);
                                    END;
                          Monthly : BEGIN
                                    IF (RunningDay > RainDataSet[31].DayNr) THEN GetMonthlyRainDataSet(RunningDay,RainDataSet);
                                    i := 1;
                                    While (RainDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   Rain := RainDataSet[i].Param;
+                                      SetRain(RainDataSet[i].Param);
                                    END;
                          end;
-                    WRITELN(fRainS,Rain:10:4);
+                    WRITELN(fRainS,GetRain():10:4);
                     END;
              // Close files
              IF (GetRainRecord_DataType() = Daily) THEN Close(fRain);
@@ -902,6 +916,8 @@ PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
                                           VAR fEToSIM,fRainSIM,fTempSIM : text);
 VAR totalname : string;
     i : LongInt;
+    tmpRain, ETo_temp : double;
+
 BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
@@ -910,10 +926,18 @@ IF (GetEToFile() <> '(None)') THEN
    Assign(fEToSIM,totalname);
    Reset(fEToSIM);
    IF (FirstDayNr = GetSimulation_FromDayNr())
-      THEN READLN(fEToSIM,ETo)
+      THEN BEGIN
+           READLN(fEToSIM,ETo_temp);
+           SetETo(ETo_temp);
+           END
       ELSE BEGIN
-           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO READLN(fEToSIM,ETo);
-           READLN(fEToSIM,ETo);
+           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO 
+                BEGIN 
+                READLN(fEToSIM,ETo_temp);
+                SetETo(ETo_temp);
+                END;
+           READLN(fEToSIM,ETo_temp);
+           SetETo(ETo_temp);
            END;
    END;
 // Rain file
@@ -923,10 +947,18 @@ IF (GetRainFile() <> '(None)') THEN
    Assign(fRainSIM,totalname);
    Reset(fRainSIM);
    IF (FirstDayNr = GetSimulation_FromDayNr())
-      THEN READLN(fRainSIM,Rain)
+      THEN BEGIN
+         READLN(fRainSIM,tmpRain);
+         SetRain(tmpRain);
+         END
       ELSE BEGIN
-           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO READLN(fRainSIM,Rain);
-           READLN(fRainSIM,Rain);
+           FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO
+              BEGIN
+                 READLN(fRainSIM,tmpRain);
+                 SetRain(tmpRain);
+              END;
+           READLN(fRainSIM,tmpRain);
+           SetRain(tmpRain);
            END;
    END;
 // Temperature file
@@ -1516,7 +1548,8 @@ CCoTotal := fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100
 
 // 9. first day
 StartMode := true;
-PreDay := (NOT GetSimulation_ResetIniSWC());
+bool_temp := (NOT GetSimulation_ResetIniSWC());
+SetPreDay(bool_temp);
 DayNri := GetSimulation_FromDayNr();
 DetermineDate(GetSimulation_FromDayNr(),Day1,Month1,Year1); // start simulation run
 NoYear := (Year1 = 1901);  // for output file
@@ -1798,8 +1831,8 @@ CGCadjustmentAfterCutting := false;
 // 19. Labels, Plots and displays
 IF (GetManagement_BundHeight() < 0.01) THEN
    BEGIN
-   SurfaceStorage := 0;
-   ECStorage := 0;
+   SetSurfaceStorage(0);
+   SetECStorage(0);
    END;
 IF (RootingDepth > 0) THEN // salinity in root zone
    BEGIN
@@ -2056,9 +2089,9 @@ CASE OutputAggregate OF
         SaltOut := GetSumWaBal_SaltOut() - PreviousSum.SaltOut;
         CRsalt := GetSumWaBal_CRsalt() - PreviousSum.CRsalt;
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
-                       Rain,ETo,GDDayi,
-                       Irrigation,Infiltrated,Runoff,GetDrain(),CRwater,
-                       Eact,Epot,Tact,TactWeedInfested,Tpot,
+                       GetRain(),GetETo(),GDDayi,
+                       GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
+                       Eact,GetEpot(),Tact,TactWeedInfested,GetTpot(),
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,Bin,Bout,
                        TheProjectFile,fRun);
@@ -2101,35 +2134,35 @@ WRITE(fDaily,Di:6,Mi:6,Yi:6,DAP:6,StageCode:6);
 IF Out1Wabal THEN
    BEGIN
    IF (GetZiAqua() = undef_int)
-      THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
-               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,GetDrain():9:1,CRwater:9:1,undef_double:8:2)
-      ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,Rain:8:1,Irrigation:9:1,
-               SurfaceStorage:7:1,Infiltrated:7:1,Runoff:7:1,GetDrain():9:1,CRwater:9:1,(GetZiAqua()/100):8:2);
-   IF (Tpot > 0) THEN Ratio1 := 100*Tact/Tpot
+      THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
+               GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,undef_double:8:2)
+      ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
+               GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
+   IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
                  ELSE Ratio1 := 100.0;
-   IF ((Epot+Tpot) > 0) THEN Ratio2 := 100*(Eact+Tact)/(Epot+Tpot)
+   IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(Eact+Tact)/(GetEpot()+GetTpot())
                         ELSE Ratio2 := 100.0;
-   IF (Epot > 0) THEN Ratio3 := 100*Eact/Epot
+   IF (GetEpot() > 0) THEN Ratio3 := 100*Eact/GetEpot()
                  ELSE Ratio3 := 100;
    IF ((Out2Crop = true) OR (Out3Prof = true) OR (Out4Salt = true)
       OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,Epot:9:1,Eact:9:1,Ratio3:7:0,Tpot:9:1,Tact:9:1,Ratio1:6:0,(Epot+Tpot):9:1,(Eact+Tact):8:1,Ratio2:8:0)
-      ELSE WRITELN(fDaily,Epot:9:1,Eact:9:1,Ratio3:7:0,Tpot:9:1,Tact:9:1,Ratio1:6:0,(Epot+Tpot):9:1,(Eact+Tact):8:1,Ratio2:8:0);
+      THEN WRITE(fDaily,GetEpot():9:1,Eact:9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(Eact+Tact):8:1,Ratio2:8:0)
+      ELSE WRITELN(fDaily,GetEpot():9:1,Eact:9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(Eact+Tact):8:1,Ratio2:8:0);
    END;
 
 // 2. Crop development and yield
 IF Out2Crop THEN
    BEGIN
    //1. relative transpiration
-   IF (Tpot > 0) THEN Ratio1 := 100*Tact/Tpot
+   IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
                  ELSE Ratio1 := 100.0;
    //2. Water stresses
    IF (StressLeaf < 0)
       THEN StrExp := undef_int
       ELSE StrExp := ROUND(StressLeaf);
-   IF (Tpot <= 0)
+   IF (GetTpot() <= 0)
       THEN StrSto := undef_int
-      ELSE StrSto := ROUND(100 *(1 - Tact/Tpot));
+      ELSE StrSto := ROUND(100 *(1 - Tact/GetTpot()));
    //3. Salinity stress
    IF (GetRootZoneSalt().KsSalt < 0)
       THEN StrSalt := undef_int
@@ -2159,8 +2192,8 @@ IF Out2Crop THEN
            END
       ELSE Brel := undef_int;
    //9. Kc coefficient
-   IF ((ETo > 0) AND (Tpot > 0) AND (StrTr < 100))
-      THEN KcVal := Tpot/(ETo*KsTr)
+   IF ((GetETo() > 0) AND (GetTpot() > 0) AND (StrTr < 100))
+      THEN KcVal := GetTpot()/(GetETo()*KsTr)
       ELSE KcVal := undef_int;
    //10. Water Use Efficiency yield
    IF (((GetSumWaBal_Tact() > 0) OR (GetSumWaBal_ECropCycle() > 0)) AND (GetSumWaBal_YieldPart() > 0))
@@ -2168,7 +2201,7 @@ IF Out2Crop THEN
       ELSE WPy := 0.0;
    // write
    WRITE(fDaily,GDDayi:9:1,RootingDepth:8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
-         (CCiActual*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,Tpot:9:1,Tact:9:1,
+         (CCiActual*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
          TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
    IF ((GetCrop().DryMatter = undef_int) OR (GetCrop().DryMatter = 0))
@@ -2225,7 +2258,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(CRsalt/100):10:3,GetTotalSaltContent().EndDay:10:3);
+   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (RootingDepth <= 0)
       THEN BEGIN
            SaltVal := undef_int;
@@ -2240,8 +2273,8 @@ IF Out4Salt THEN
       ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,(GetZiAqua()/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,ECiAqua:8:2)
-      ELSE WRITELN(fDaily,ECiAqua:8:2);
+      THEN WRITE(fDaily,GetECiAqua():8:2)
+      ELSE WRITELN(fDaily,GetECiAqua():8:2);
    END;
 
 // 5. Compartments - Soil water content
@@ -2274,7 +2307,7 @@ IF Out6CompEC THEN
 IF Out7Clim THEN
    BEGIN
    Ratio1 := (Tmin + Tmax)/2;
-   WRITELN(fDaily,Rain:9:1,ETo:10:1,Tmin:10:1,Ratio1:10:1,Tmax:10:1,CO2i:10:2);
+   WRITELN(fDaily,GetRain():9:1,GetETo():10:1,Tmin:10:1,Ratio1:10:1,Tmax:10:1,CO2i:10:2);
    END;
 END; (* WriteDailyResults *)
 
@@ -2370,10 +2403,12 @@ VAR RepeatToDay : LongInt;
     FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
     GwTable_temp : rep_GwTable;
     Store_temp, Mobilize_temp : boolean;
-    ToMobilize_temp, Bmobilized_temp : double;
+    ToMobilize_temp, Bmobilized_temp, ETo_tmp : double;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
     ZiAqua_temp : integer;
+    ECiAqua_temp, ETo_temp : double;
+    tmpRain : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2477,8 +2512,8 @@ VAR RepeatToDay : LongInt;
     TargetTimeVal := -999;
     TargetDepthVal := -999;
     IF ((DayNri < GetCrop().Day1) OR (DayNri > GetCrop().DayN))
-       THEN Irrigation := IrriOutSeason(DayNri)
-       ELSE IF (GetIrriMode() = Manual) THEN Irrigation := IrriManual(DayNri);
+       THEN SetIrrigation(IrriOutSeason(DayNri))
+       ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual(DayNri));
     IF ((GetIrriMode() = Generate) AND ((DayNri >= GetCrop().Day1) AND (DayNri <= GetCrop().DayN))) THEN
        BEGIN
        // read next line if required
@@ -2521,16 +2556,16 @@ VAR RepeatToDay : LongInt;
                                ELSE BEGIN  // still to solve
                                     TargetTimeVal := 1; // voorlopige oplossing
                                     END;
-                    IF ((TargetTimeVal = 1) AND (GetGenerateDepthMode() = FixDepth)) THEN Irrigation := TargetDepthVal;
+                    IF ((TargetTimeVal = 1) AND (GetGenerateDepthMode() = FixDepth)) THEN SetIrrigation(TargetDepthVal);
                     END;
           WaterBetweenBunds : BEGIN
                               TargetTimeVal := GetIrriInfoRecord1_TimeInfo();
                               IF  ((GetManagement_BundHeight() >= 0.01)
                                AND (GetGenerateDepthMode() = FixDepth)
                                AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
-                               AND (TargetTimeVal >= ROUND(SurfaceStorage)))
-                                   THEN Irrigation := TargetDepthVal
-                                   ELSE Irrigation := 0;
+                               AND (TargetTimeVal >= ROUND(GetSurfaceStorage())))
+                                   THEN SetIrrigation(TargetDepthVal)
+                                   ELSE SetIrrigation(0);
                               TargetTimeVal := -999; // no need for check in SIMUL
                               END;
           end;
@@ -2652,12 +2687,13 @@ VAR RepeatToDay : LongInt;
 BEGIN (* FileManagement *)
 RepeatToDay := GetSimulation_ToDayNr();
 
+
 REPEAT
 (* 1. Get ETo *)
-IF (GetEToFile() = '(None)') THEN ETo := 5;
+IF (GetEToFile() = '(None)') THEN SetETo(5);
 
 (* 2. Get Rain *)
-IF (GetRainFile() = '(None)') THEN Rain := 0;
+IF (GetRainFile() = '(None)') THEN SetRain(0);
 
 (* 3. Start mode *)
 IF StartMode THEN StartMode := false;
@@ -2671,14 +2707,16 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
         SetGwTable(GwTable_temp);
         END;
    ZiAqua_temp := GetZiAqua();
-   GetZandECgwt(DayNri,ZiAqua_temp,ECiAqua);
+   ECiAqua_temp := GetECiAqua();
+   GetZandECgwt(DayNri,ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
+   SetECiAqua(ECiAqua_temp);
    CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
    IF WaterTableInProfile THEN AdjustForWatertable;
    END;
 
 (* 5. Get Irrigation *)
-Irrigation := 0;
+SetIrrigation(0);
 GetIrriParam;
 
 (* 6. get virtual time for CC development *)
@@ -2748,7 +2786,7 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((DayNri-GetCrop().Day1+1) < GetCr
    THEN BEGIN
         IF (((DayNri-GetSimulation_DelayedDays()) >= GetCrop().Day1) AND ((DayNri-GetSimulation_DelayedDays()) <= GetCrop().DayN))
            THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
-                RootingDepth := AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,Tpot,Tact,StressLeaf,StressSenescence,
+                RootingDepth := AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),Tact,StressLeaf,StressSenescence,
                                 (DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
                                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
                                 (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
@@ -2795,7 +2833,7 @@ BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayL
 // consider Pre-irrigation (6.) if IrriMode = Inet
 IF ((RootingDepth > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
    BEGIN
-   Irrigation := Irrigation + PreIrri;
+   SetIrrigation(GetIrrigation() + PreIrri);
    SetSumWabal_Irrigation(GetSumWaBal_Irrigation() + PreIrri);
    PreIrri := 0;
    END;
@@ -2846,7 +2884,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
         BiomassTot_temp := GetSumWaBal_BiomassTot();
         YieldPart_temp := GetSumWaBal_YieldPart();
-        DetermineBiomassAndYield(DayNri,ETo,Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
+        DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
                                  Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,CCiActual,FracAssim,
                                  VirtualTimeCC,SumInterval,
@@ -2876,8 +2914,8 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         END;
 
 (* 12. Reset after RUN *)
-IF (PreDay = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
-PreDay := true;
+IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
+SetPreDay(true);
 IF (DayNri >= GetCrop().Day1) THEN
    BEGIN
    CCiPrev := CCiActual;
@@ -2973,7 +3011,7 @@ IF GetManagement_Cuttings_Considered() THEN
 
 (* 14. Write results *)
 //14.a Summation
-SumETo := SumETo + ETo;
+SumETo := SumETo + GetETo();
 SumGDD := SumGDD + GDDayi;
 //14.b Stress totals
 IF (CCiActual > 0) THEN
@@ -2982,9 +3020,9 @@ IF (CCiActual > 0) THEN
    IF (StressLeaf > - 0.000001) THEN
       SetStressTot_Exp(((GetStressTot_NrD() - 1)*GetStressTot_Exp() + StressLeaf)/GetStressTot_NrD());
    // stomatal closure
-   IF (Tpot > 0) THEN
+   IF (GetTpot() > 0) THEN
       BEGIN
-      StressStomata := 100 *(1 - Tact/Tpot);
+      StressStomata := 100 *(1 - Tact/GetTpot());
       IF (StressStomata > - 0.000001) THEN
          SetStressTot_Sto(((GetStressTot_NrD() - 1)*GetStressTot_Sto() + StressStomata)/GetStressTot_NrD());
       END;
@@ -3035,8 +3073,16 @@ IF (GetSimulation_SumEToStress() >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= GetSimulation_ToDayNr()) THEN
    BEGIN
-   IF (GetEToFile() <> '(None)') THEN READLN(fEToSIM,ETo);
-   IF (GetRainFile() <> '(None)') THEN READLN(fRainSIM,Rain);
+   IF (GetEToFile() <> '(None)') THEN
+        BEGIN
+        READLN(fEToSIM,ETo_tmp);
+        SetETo(Eto_tmp);
+        END;
+   IF (GetRainFile() <> '(None)') THEN
+   BEGIN
+      READLN(fRainSIM,tmpRain);
+      SetRain(tmpRain);
+      END;
    IF (GetTemperatureFile() = '(None)')
       THEN BEGIN
            Tmin := GetSimulParam_Tmin();

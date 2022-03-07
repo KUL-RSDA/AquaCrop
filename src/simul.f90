@@ -1,24 +1,79 @@
 module ac_simul
 
-use ac_kinds, only:  dp, int32
-use ac_global, only: GetCompartment_FCadj, &
+use ac_kinds, only:  dp, int32, int8
+use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
+                     CompartmentIndividual, &
+                     CO2Ref, &
+                     datatype_daily, &
+                     datatype_decadely, &
+                     datatype_monthly, &
+                     DetermineCNIandIII, &
+                     GetCompartment, &
+                     GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
                      GetCompartment_Layer, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
+                     GetCompartment_WFactor, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
+                     GetCrop_subkind, GetCrop_HI, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
+                     GetCrop_ModeCycle, &
+                     GetCrop_AdaptedToCO2, & 
+                     GetCrop_DaysToGermination, &
+                     GetCrop_DaysToSenescence, &
+                     GetCrop_DaysToHarvest, &
+                     GetCrop_GDDaysToGermination, &
+                     GetCrop_GDDaysToSenescence, &
+                     GetCrop_GDDaysToHarvest, &
+                     GetCrop_DaysToFullCanopy, &
+                     GetCrop_DaysToSenescence, &
+                     GetCrop_CCo, GetCrop_CCx, &
+                     GetCrop_CGC, GetCrop_CCx, &
+                     GetCrop_CDC, GetCrop_GDDCGC, &
+                     GetCrop_GDDCDC,getCrop_Day1, &
+                     GetCrop_Tbase, GetCrop_Tupper, &
+                     GetCrop_DaysToGermination, &    
+                     GetCrop_DaysToHarvest, GetCrop_KcTop, &
+                     GetCrop_KcDecline,GetCrop_GDtranspLow, &
+                     GetCrop_CCEffectEvapLate, GetCrop_WP, &
+                     GetCrop_WPy, GetCrop_dHIdt, &
+                     GetCrop_DaysToFlowering, &
+                     GetETO, &
                      GetDrain, &
+                     GetManagement_CNcorrection, &
                      GetNrCompartments, &
+                     GetRain, &
+                     GetRainRecord_DataType, &
+                     GetRunoff, &
+                     GetSimulation_DelayedDays, &
+                     GetSimulParam_CNcorrection, &
+                     GetSimulParam_EffectiveRain_ShowersInDecade, &
+                     GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
+                     GetSimulParam_Tmin, &
+                     GetSimulParam_Tmax, &
+                     GetSoil_CNvalue, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
                      GetSoilLayer_InfRate, &
                      GetSoilLayer_SAT, &
                      GetSoilLayer_tau, &
+                     GetSoilLayer_WP, &
+                     fAdjustedForCO2, &
+                     max_No_compartments, &
+                     modeCycle_CalendarDays, &
+                     roundc, &
+                     SetCompartment, &
                      SetCompartment_fluxout, &
                      SetCompartment_theta, &
-                     SetDrain
+                     SetCompartment_WFactor, &
+                     SetDrain, &
+                     SetRunoff, &
+                     subkind_Grain, subkind_Tuber
+                      
+use ac_tempprocessing, only: SumCalendarDays
+
 
 implicit none
 
@@ -35,7 +90,7 @@ real(dp) function GetCDCadjustedNoStressNew(CCx, CDC, CCxAdjusted)
 
     CDCadjusted = CDC * ((CCxadjusted+2.29_dp)/(CCx+2.29_dp))
     GetCDCadjustedNoStressNew = CDCadjusted
-    
+
 end function GetCDCadjustedNoStressNew
 
 subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
@@ -65,6 +120,81 @@ subroutine AdjustpLeafToETo(EToMean, pLeafULAct, pLeafLLAct)
         end if
     end if
 end subroutine AdjustpLeafToETo
+
+subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
+                                              CCxWitheredTpotNoS, BiomassUnlim)
+    integer(int32), intent(in) :: VirtualTimeCC
+    real(dp), intent(in) :: SumGDDadjCC
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(inout) :: CCxWitheredTpotNoS
+    real(dp), intent(inout) :: BiomassUnlim
+
+    real(dp) :: CCiPot,  WPi, fSwitch, TpotForB, EpotTotForB
+    integer(int32) :: DAP, DaysYieldFormation, DayiAfterFlowering
+    real(dp) :: Tmin_local, Tmax_local
+
+    ! potential biomass - unlimited soil fertiltiy
+    ! 1. - CCi
+    CCiPot = CanopyCoverNoStressSF((VirtualTimeCC + GetSimulation_DelayedDays() + 1), &
+                                  GetCrop_DaysToGermination(), GetCrop_DaysToSenescence(), &
+                                  GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                                  GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
+                                  GetCrop_CCo(), GetCrop_CCx(), GetCrop_CGC(), &
+                                  GetCrop_CDC(), GetCrop_GDDCGC(), GetCrop_GDDCDC(), &
+                                  SumGDDadjCC, GetCrop_ModeCycle(), 0_int8, 0_int8)
+    if (CCiPot < 0._dp) then
+        CCiPot = 0._dp
+    end if
+    if (CCiPot > CCxWitheredTpotNoS) then
+        CCxWitheredTpotNoS = CCiPot
+    end if
+
+    ! 2. - Calculation of Tpot
+    if (GetCrop_ModeCycle() == modeCycle_CalendarDays) then
+        DAP = VirtualTimeCC
+    else
+        ! growing degree days
+        Tmin_local = GetSimulParam_Tmin()
+        Tmax_local = GetSimulParam_Tmax()
+        DAP = SumCalendarDays(roundc(SumGDDadjCC, mold=1), GetCrop_Day1(), GetCrop_Tbase(), &
+                    GetCrop_Tupper(), Tmin_local, Tmax_local)
+        DAP = DAP + GetSimulation_DelayedDays() ! are not considered when working with GDDays
+    end if
+    call CalculateETpot(DAP, GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
+                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), 0, CCiPot, &
+                   GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), GetCrop_CCx(), &
+                   CCxWitheredTpotNoS, real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, GDDayi, &
+                   GetCrop_GDtranspLow(), TpotForB, EpotTotForB)
+
+    ! 3. - WPi for that day
+    ! 3a - given WPi
+    WPi = (GetCrop_WP()/100._dp)
+    ! 3b - WPi decline in reproductive stage  (works with calendar days)
+    if (((GetCrop_subkind() == subkind_Grain) .or. (GetCrop_subkind() == subkind_Tuber)) &
+        .and. (GetCrop_WPy() < 100._dp) .and. (GetCrop_dHIdt() > 0._dp) &
+        .and. (VirtualTimeCC >= GetCrop_DaysToFlowering())) then
+        ! WPi in reproductive stage
+        fSwitch = 1._dp
+        DaysYieldFormation = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
+        DayiAfterFlowering = VirtualTimeCC - GetCrop_DaysToFlowering()
+        if ((DaysYieldFormation > 0) .and. (DayiAfterFlowering < &
+                                              (DaysYieldFormation/3._dp))) then
+            fSwitch = DayiAfterFlowering/(DaysYieldFormation/3._dp)
+        end if
+        WPi =  WPi * (1._dp - (1._dp-GetCrop_WPy()/100._dp)*fSwitch)
+    end if
+    ! 3c - adjustment WPi for CO2
+    if (roundc(100._dp*CO2i, mold=1) /= roundc(100._dp*CO2Ref, mold=1)) then
+        WPi = WPi * fAdjustedForCO2(CO2i, GetCrop_WP(), GetCrop_AdaptedToCO2())
+    end if
+
+    ! 4. - Potential Biomass
+    if (GetETo() > 0._dp) then
+        BiomassUnlim = BiomassUnlim + WPi * TpotForB/real(GetETo(), kind=dp) ! ton/ha
+    end if
+
+end subroutine DeterminePotentialBiomass
 
 
 !-----------------------------------------------------------------------------
@@ -129,13 +259,11 @@ end function calculate_theta
 
 
 subroutine calculate_drainage()
-
     integer(int32) ::  i, compi, layeri, pre_nr
     real(dp) :: drainsum, delta_theta, drain_comp, drainmax, theta_x, excess
     real(dp) :: pre_thick
     logical :: drainability
 
-    ! calculate_drainage
     drainsum = 0.0_dp
     do compi=1, GetNrCompartments()
         ! 1. Calculate drainage of compartment
@@ -186,13 +314,6 @@ subroutine calculate_drainage()
                          + drainsum/(1000.0_dp*GetCompartment_Thickness(compi) &
                                      *(1-GetSoilLayer_GravelVol(layeri)/100.0_dp)))
                 if (GetCompartment_theta(compi) > theta_x) then
-                    ! OLD
-                    !drainsum = ((GetCompartment_theta(compi) - theta_x) &
-                    !           + delta_theta) * 1000.0_dp &
-                    !           * GetCompartment_Thickness(compi)
-                    ! OLD
-
-                    ! NEW
                     drainsum = (GetCompartment_theta(compi) - theta_x) &
                                * 1000.0_dp * GetCompartment_Thickness(compi) &
                                * (1 - GetSoilLayer_GravelVol(layeri)/100.0_dp)
@@ -202,8 +323,6 @@ subroutine calculate_drainage()
                                            * GetCompartment_Thickness(compi) &
                                            * (1 - GetSoilLayer_GravelVol(layeri)&
                                                   /100.0_dp)
-                    ! NEW
-
                     call CheckDrainsum(layeri, drainsum, excess)
                     call SetCompartment_theta(compi, theta_x - delta_theta)
                 elseif (GetCompartment_theta(compi) &
@@ -328,6 +447,130 @@ contains
     end subroutine CheckDrainsum
 
 end subroutine calculate_drainage
+
+
+subroutine calculate_weighting_factors(Depth, Compartment)
+    real(dp), intent(in) :: Depth
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(inout) :: Compartment
+
+    integer(int32) :: i, compi
+    real(dp) :: CumDepth, xx, wx
+
+    CumDepth = 0.0_dp
+    xx = 0.0_dp
+    compi = 0
+    loop: do
+        compi = compi + 1
+        CumDepth = CumDepth + Compartment(compi)%Thickness
+        if (CumDepth > Depth) then
+            CumDepth = Depth
+        end if
+        wx = 1.016_dp * (1.0_dp - EXP(-4.16_dp * CumDepth/Depth))
+        Compartment(compi)%WFactor = wx - xx
+        if (Compartment(compi)%WFactor > 1.0_dp) then
+            Compartment(compi)%WFactor = 1.0_dp
+        end if
+        if (Compartment(compi)%WFactor < 0.0_dp) then
+            Compartment(compi)%WFactor = 0.0_dp
+        end if
+        xx = wx
+        if ((CumDepth >= Depth) .or. (compi == GetNrCompartments())) exit loop
+    enddo loop
+    do i = (compi + 1), GetNrCompartments()
+        Compartment(i)%WFactor = 0.0_dp
+    end do
+end subroutine calculate_weighting_factors
+
+
+subroutine calculate_runoff(MaxDepth)
+    real(dp), intent(in) :: MaxDepth
+
+    real(dp) :: SUM, CNA, Shower, term, S
+    integer(int8) :: CN2, CN1, CN3
+
+    CN2 = roundc(GetSoil_CNvalue()&
+                 * (100 + GetManagement_CNcorrection())/100.0_dp,&
+                 mold=1_int8)
+    if (GetRainRecord_DataType() == datatype_daily) then
+        if (GetSimulParam_CNcorrection()) then
+            call calculate_relative_wetness_topsoil(SUM)
+            call DetermineCNIandIII(CN2, CN1, CN3)
+            CNA = real(roundc(CN1+(CN3-CN1)*SUM, mold=1_int32), kind=dp)
+        else
+            CNA = real(CN2, kind=dp)
+        end if
+        Shower = GetRain()
+    else
+        CNA = real(CN2, kind=dp)
+        Shower = (GetRain()*10.0_dp)&
+                 / GetSimulParam_EffectiveRain_ShowersInDecade()
+    end if
+    S = 254.0_dp * (100.0_dp/CNA - 1.0_dp)
+    term = Shower - (GetSimulParam_IniAbstract()/100.0_dp) * S
+    if (term <= epsilon(0.0_dp)) then
+        call SetRunoff(0.0_dp);
+    else
+        call SetRunoff(term**2&
+             / (Shower + (1.0_dp - (GetSimulParam_IniAbstract()/100.0_dp)) * S))
+    end if
+    if ((GetRunoff() > 0.0_dp) .and. ( &
+            (GetRainRecord_DataType() == datatype_decadely)&
+             .or. (GetRainRecord_DataType() == datatype_monthly))) then
+        if (GetRunoff() >= Shower) then
+            call SetRunoff(GetRain())
+        else
+            call SetRunoff(GetRunoff() &
+                   * (GetSimulParam_EffectiveRain_ShowersInDecade()/10.14_dp))
+            if (GetRunoff() > GetRain()) then
+                call SetRunoff(GetRain())
+            end if
+        end if
+    end if
+
+    contains
+
+    subroutine calculate_relative_wetness_topsoil(SUM)
+        real(dp), intent(inout) :: SUM
+
+        real(dp) :: CumDepth, theta
+        integer(int32) :: compi, layeri
+        type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
+
+        Compartment_temp = GetCompartment()
+        call calculate_weighting_factors(MaxDepth, Compartment_temp)
+        call SetCompartment(Compartment_temp)
+        SUM = 0.0_dp
+        compi = 0
+        CumDepth = 0.0_dp
+
+        loop : do
+            compi = compi + 1
+            layeri = GetCompartment_Layer(compi)
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if (GetCompartment_theta(compi) < GetSoilLayer_WP(layeri)/100.0_dp) then
+                theta = GetSoilLayer_WP(layeri)/100.0_dp
+            else
+                theta = GetCompartment_theta(compi)
+            end if
+            SUM = SUM + GetCompartment_WFactor(compi) &
+                 * (theta-GetSoilLayer_WP(layeri)/100.0_dp) &
+                 / (GetSoilLayer_FC(layeri)/100.0_dp - GetSoilLayer_WP(layeri)/100.0_dp)
+            if ((CumDepth >= MaxDepth) .or. (compi == GetNrCompartments())) exit loop
+        end do loop
+
+        if (SUM < 0.0_dp) then
+            SUM = 0.0_dp
+        end if
+        if (SUM > 1.0_dp) then
+            SUM = 1.0_dp
+        end if
+
+    end subroutine calculate_relative_wetness_topsoil
+
+end subroutine calculate_runoff
+
+
+
 
 !-----------------------------------------------------------------------------
 ! end BUDGET_module

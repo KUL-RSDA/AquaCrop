@@ -14,9 +14,20 @@ procedure AdjustpLeafToETo(
             VAR pLeafLLAct : double);
      external 'aquacrop' name '__ac_simul_MOD_adjustpleaftoeto';
 
+
+procedure DeterminePotentialBiomass(
+            constref VirtualTimeCC : integer;
+            constref cumGDDadjCC : double;
+            constref CO2i : double;
+            constref GDDayi : double;
+            VAR CCxWitheredTpotNoS : double;
+            VAR BiomassUnlim : double);
+     external 'aquacrop' name '__ac_simul_MOD_determinepotentialbiomass';
+
 //-----------------------------------------------------------------------------
 // BUDGET_module
 //-----------------------------------------------------------------------------
+
 
 function calculate_delta_theta(
              constref theta, thetaAdjFC : double;
@@ -31,9 +42,13 @@ function calculate_theta(
 procedure calculate_drainage();
      external 'aquacrop' name '__ac_simul_MOD_calculate_drainage';
 
+procedure calculate_runoff(constref MaxDepth : double );
+     external 'aquacrop' name '__ac_simul_MOD_calculate_runoff';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------
+
 
 implementation
 
