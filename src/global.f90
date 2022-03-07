@@ -944,6 +944,7 @@ character(len=:), allocatable :: FullFileNameProgramParameters
 character(len=:), allocatable :: ManDescription
 character(len=:), allocatable :: ClimDescription
 character(len=:), allocatable :: OffSeasonDescription
+character(len=:), allocatable :: GroundwaterDescription
 
 type(rep_IrriECw) :: IrriECw
 type(rep_Manag) :: Management
@@ -969,11 +970,34 @@ integer(intEnum) :: GenerateDepthMode
 integer(intEnum) :: IrriMode
 integer(intEnum) :: IrriMethod
 
+integer(int32) :: DaySubmerged
+integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
-integer(int32) :: ZiAqua ! Depth of Groundwater table below 
-                         ! soil surface in centimeter
-real(dp) :: ETo ! mm/day 
+integer(int32) :: ZiAqua ! Depth of Groundwater table below
+                         ! soil surface in centimeter 
+
+
+integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
+                            ! Soil Water Content Menu
+integer(int8) :: MaxPlotTr
+
+
+real(dp) :: CRsalt ! gram/m2
+real(dp) :: CRwater ! mm/day
+real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
+real(dp) :: Epot ! mm/day
+real(dp) :: ETo ! mm/day
+real(dp) :: Drain  ! mm/day
+real(dp) :: Infiltrated ! mm/day
+real(dp) :: Irrigation ! mm/day
+real(dp) :: Rain  ! mm/day
+real(dp) :: Runoff  ! mm/day
+real(dp) :: Tpot ! mm/day
+
+
+logical :: PreDay
+
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -1522,6 +1546,33 @@ real(dp) function FromGravelMassToGravelVolume(PorosityPercent,&
        FromGravelMassToGravelVolume = 0.0_dp
    end if
 end function FromGravelMassToGravelVolume
+
+
+subroutine CheckForWaterTableInProfile(DepthGWTmeter, ProfileComp, WaterTableInProfile)
+    real(dp), intent(in) :: DepthGWTmeter
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                                    intent(in) :: ProfileComp
+    logical, intent(inout) :: WaterTableInProfile
+
+    real(dp) :: Ztot, Zi
+    integer(int32) :: compi
+    
+    WaterTableInProfile = .false.
+    Ztot = 0._dp
+    compi = 0
+    
+    if (DepthGWTmeter >= epsilon(0._dp)) then
+        ! groundwater table is present
+        do while ((.not. WaterTableInProfile) .and. (compi < getNrCompartments()))
+            compi = compi + 1
+            Ztot = Ztot + ProfileComp(compi)%Thickness
+            Zi = Ztot - ProfileComp(compi)%Thickness/2._dp
+            if (Zi >= DepthGWTmeter) then
+                WaterTableInProfile = .true.
+            end if
+        end do
+    end if
+end subroutine CheckForWaterTableInProfile
 
 
 real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
@@ -4646,6 +4697,88 @@ subroutine NoCropCalendar()
 end subroutine NoCropCalendar
 
 
+subroutine DetermineLinkedSimDay1(CropDay1, SimDay1)
+    integer(int32), intent(in) :: CropDay1
+    integer(int32), intent(inout) :: SimDay1
+
+    SimDay1 = CropDay1
+    if (GetClimFile() /= '(None)') then
+        if ((SimDay1 < GetClimRecord_FromDayNr()) .or. &
+            (SimDay1 > GetClimRecord_ToDayNr())) then
+            call SetSimulation_LinkCropToSimPeriod(.false.)
+            SimDay1 = GetClimRecord_FromDayNr()
+        end if
+    end if
+end subroutine DetermineLinkedSimDay1
+
+
+subroutine AdjustSimPeriod()
+    integer(int32) :: IniSimFromDayNr
+    character(len=:), allocatable :: FullFileName
+    integer(int32) :: FromDayNr_temp
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
+
+    integer(int32) :: ZiAqua_tmp
+    real(dp) :: ECiAqua_tmp
+
+    IniSimFromDayNr = GetSimulation_FromDayNr()
+    select case(GetSimulation_LinkCropToSimPeriod())
+    case(.true.)
+        FromDayNr_temp = GetSimulation_FromDayNr()
+        call DetermineLinkedSimDay1(GetCrop_Day1(), FromDayNr_temp)
+        call SetSimulation_FromDayNr(FromDayNr_temp)
+        if (GetCrop_Day1() == GetSimulation_FromDayNr()) then
+            call SetSimulation_ToDayNr(GetCrop_DayN())
+        else
+            call SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30) ! 30 days
+        end if
+        if (GetClimFile() /= '(None)') then
+            if (GetSimulation_ToDayNr() > GetClimRecord_ToDayNr()) then
+                call SetSimulation_ToDayNr(GetClimRecord_ToDayNr())
+            end if
+            if (GetSimulation_ToDayNr() < GetClimRecord_FromDayNr()) then
+                call SetSimulation_ToDayNr(GetClimRecord_FromDayNr())
+            end if
+        end if
+    case(.false.)
+        if (GetSimulation_FromDayNr() > GetCrop_Day1()) then
+            call SetSimulation_FromDayNr(GetCrop_Day1())
+        end if
+        call SetSimulation_ToDayNr(GetCrop_DayN())
+        if ((GetClimFile() /= '(None)') .and. &
+            ((GetSimulation_FromDayNr() <= GetClimRecord_FromDayNr()) &
+             .or. (GetSimulation_FromDayNr() >= GetClimRecord_ToDayNr()))) then
+            call SetSimulation_FromDayNr(GetClimRecord_FromDayNr())
+            call SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30) ! 30 days
+       end if
+    end select
+
+    ! adjust initial depth and quality of the groundwater when required
+    if ((.not. GetSimulParam_ConstGwt()) .and. &
+        (IniSimFromDayNr /= GetSimulation_FromDayNr())) then
+        if (GetGroundWaterFile() == '(None)') then
+            FullFileName = GetPathNameProg()// 'GroundWater.AqC'
+        else
+            FullFileName = GetGroundWaterFileFull()
+        end if
+        ! initialize ZiAqua and ECiAqua
+        ZiAqua_tmp = GetZiAqua()
+        ECiAqua_tmp = GetECiAqua()
+        call LoadGroundWater(FullFileName, GetSimulation_FromDayNr(), &
+                 ZiAqua_tmp, ECiAqua_tmp)
+        call SetZiAqua(ZiAqua_tmp)
+        call SetECiAqua(ECiAqua_tmp)
+        Compartment_temp = GetCompartment()
+        call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
+        call SetCompartment(Compartment_temp)
+        if (GetSimulation_IniSWC_AtFC()) then
+            call ResetSWCToFC
+        end if
+    end if
+end subroutine AdjustSimPeriod
+
+
+!! Global variables section !!
 
 subroutine ResetSWCToFC()
 
@@ -5733,6 +5866,790 @@ subroutine LoadOffSeason(FullName)
     end if
     close(fhandle)
 end subroutine LoadOffSeason
+
+
+
+
+subroutine AdjustThetaInitial(PrevNrComp, PrevThickComp, PrevVolPrComp, PrevECdSComp)
+    integer(int8), intent(in) :: PrevNrComp
+    real(dp), dimension(max_No_compartments), intent(in) :: PrevThickComp
+    real(dp), dimension(max_No_compartments), intent(in) :: PrevVolPrComp
+    real(dp), dimension(max_No_compartments), intent(in) :: PrevECdSComp
+
+    integer(int32) :: layeri, compi
+    real(dp) :: TotDepthC, TotDepthL, Total
+    type(CompartmentIndividual), &
+                        dimension(max_No_compartments) :: Compartment_temp
+
+    ! 1. Actual total depth of compartments
+    TotDepthC = 0._dp
+    do compi = 1, GetNrCompartments() 
+        TotDepthC = TotDepthC + GetCompartment_Thickness(compi)
+    end do
+
+    ! 2. Stretch thickness of bottom soil layer if required
+    TotDepthL = 0._dp
+    do layeri = 1, GetSoil_NrSoilLayers() 
+        TotDepthL = TotDepthL + GetSoilLayer_Thickness(layeri)
+    end do
+    if (TotDepthC > TotDepthL) then
+        call SetSoilLayer_Thickness(int(GetSoil_NrSoilLayers(), kind=int32), &
+               GetSoilLayer_Thickness(int(GetSoil_NrSoilLayers(), kind=int32)) &
+                                                        + (TotDepthC - TotDepthL))
+    end if
+
+    ! 3. Assign a soil layer to each soil compartment
+    Compartment_temp = GetCompartment()
+    call DesignateSoilLayerToCompartments(GetNrCompartments(), &
+                             int(GetSoil_NrSoilLayers(), kind=int32), &
+                             Compartment_temp)
+    call SetCompartment(Compartment_temp)
+
+    ! 4. Adjust initial Soil Water Content of soil compartments
+    if (GetSimulation_ResetIniSWC()) then
+        if (GetSimulation_IniSWC_AtDepths()) then
+            Compartment_temp = GetCompartment()
+            call TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(), &
+                                               GetSimulation_IniSWC_Loc(), &
+                                               GetSimulation_IniSWC_VolProc(), &
+                                               GetSimulation_IniSWC_SaltECe(), &
+                                               GetNrCompartments(), &
+                                               Compartment_temp)
+            call SetCompartment(Compartment_temp)
+        else
+            Compartment_temp = GetCompartment()
+            call TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(), &
+                                               GetSimulation_IniSWC_Loc(), &
+                                               GetSimulation_IniSWC_VolProc(), &
+                                               GetSimulation_IniSWC_SaltECe(), &
+                                               GetNrCompartments(), &
+                                               Compartment_temp)
+            call SetCompartment(Compartment_temp)
+        end if
+    else
+        Compartment_temp = GetCompartment()
+        call TranslateIniLayersToSWProfile(PrevNrComp, PrevThickComp, &
+                                           PrevVolPrComp, PrevECdSComp, &
+                                           GetNrCompartments(), &
+                                           Compartment_temp)
+        call SetCompartment(Compartment_temp)
+    end if
+
+    ! 5. Adjust watercontent in soil layers and determine ThetaIni
+    Total = 0._dp
+    do layeri = 1, GetSoil_NrSoilLayers() 
+        call SetSoilLayer_WaterContent(layeri, 0._dp)
+    end do
+    do compi = 1, GetNrCompartments() 
+        call SetSimulation_ThetaIni_i(compi, GetCompartment_Theta(compi))
+        call SetSoilLayer_WaterContent(GetCompartment_Layer(compi), &
+                         GetSoilLayer_WaterContent(GetCompartment_Layer(compi)) &
+                            + GetSimulation_ThetaIni_i(compi)*100._dp*10._dp &
+                                * GetCompartment_Thickness(compi))
+    end do
+    do layeri = 1, GetSoil_NrSoilLayers() 
+        Total = Total + GetSoilLayer_WaterContent(layeri)
+    end do
+    call SetTotalWaterContent_BeginDay(Total)
+end subroutine AdjustThetaInitial
+
+
+
+subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
+    character(len=*), intent(in) :: FullName
+    character(len=*), intent(inout) :: ClimateDescription
+    type(rep_clim), intent(inout) :: ClimateRecord
+
+    integer :: fhandle
+    integer(int32) :: Ni, rc
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
+        iostat=rc)
+    read(fhandle, *, iostat=rc) ClimateDescription
+    read(fhandle, *, iostat=rc) Ni
+    if (Ni == 1) then
+        ClimateRecord%DataType = datatype_Daily
+    elseif (Ni == 2) then
+        ClimateRecord%DataType = datatype_Decadely
+    else
+        ClimateRecord%DataType = datatype_Monthly
+    end if
+    read(fhandle, *, iostat=rc) ClimateRecord%FromD
+    read(fhandle, *, iostat=rc) ClimateRecord%FromM
+    read(fhandle, *, iostat=rc) ClimateRecord%FromY
+    read(fhandle, *, iostat=rc)
+    read(fhandle, *, iostat=rc)
+    read(fhandle, *, iostat=rc)
+    ClimateRecord%NrObs = 0
+    do while (rc /= iostat_end) 
+        ClimateRecord%NrObs = ClimateRecord%NrObs + 1
+        read(fhandle, *, iostat=rc)
+    end do
+    close(fhandle)
+    call CompleteClimateDescription(ClimateRecord)
+end subroutine LoadClim
+
+
+
+subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
+    character(len=*), intent(in) :: FullName
+    integer(int32), intent(in) :: AtDayNr
+    integer(int32), intent(inout) :: Zcm
+    real(dp), intent(inout) :: ECdSm
+
+    integer :: fhandle
+    integer(int32) :: i, dayi, monthi, yeari, Year1Gwt, rc
+    integer(int32) :: DayNr1Gwt, DayNr1, DayNr2, DayNrN, AtDayNr_local
+    character(len=255) :: StringREAD
+    real(dp) :: DayDouble, Z1, EC1, Z2, EC2, ZN, ECN
+    logical :: TheEnd 
+
+    AtDayNr_local = AtDayNr
+    ! initialize
+    TheEnd = .false.
+    Year1Gwt = 1901
+    DayNr1 = 1
+    DayNr2 = 1
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, *) GroundWaterDescription
+    read(fhandle, *) ! AquaCrop Version
+
+    ! mode groundwater table
+    read(fhandle, *) i
+    select case (i)
+        case(0)
+            ! no groundwater table
+            Zcm = undef_int
+            ECdSm = real(undef_int, kind=dp)
+            call SetSimulParam_ConstGwt(.true.)
+            TheEnd = .true.
+        case(1)
+            ! constant groundwater table
+            call SetSimulParam_ConstGwt(.true.)
+        case default
+            call SetSimulParam_ConstGwt(.false.)
+    end select
+
+    ! first day of observations (only for variable groundwater table)
+    if (.not. GetSimulParam_ConstGwt()) then
+        read(fhandle, *) dayi
+        read(fhandle, *) monthi
+        read(fhandle, *) Year1Gwt
+        call DetermineDayNr(dayi, monthi, Year1Gwt, DayNr1Gwt)
+    end if
+
+    ! single observation (Constant Gwt) or first observation (Variable Gwt)
+    if (i > 0) then
+        ! groundwater table is present
+        read(fhandle, *)
+        read(fhandle, *)
+        read(fhandle, *)
+        read(fhandle, '(a)', iostat=rc) StringREAD
+        call SplitStringInThreeParams(StringREAD, DayDouble, Z2, EC2)
+        if ((i == 1) .or. (rc == iostat_end)) then
+            ! Constant groundwater table or single observation
+            Zcm = roundc(100._dp*Z2, mold=1)
+            ECdSm = EC2
+            TheEnd = .true.
+        else
+            DayNr2 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
+        end if
+    end if
+
+    ! other observations
+    if (.not. TheEnd) then
+        ! variable groundwater table with more than 1 observation
+        ! adjust AtDayNr
+        call DetermineDate(AtDayNr_local, dayi, monthi, yeari)
+        if ((yeari == 1901) .and. (Year1Gwt /= 1901)) then
+            ! Make AtDayNr defined
+            call DetermineDayNr(dayi, monthi, Year1Gwt, AtDayNr_local)
+        end if
+        if ((yeari /= 1901) .and. (Year1Gwt == 1901)) then
+            ! Make AtDayNr undefined
+            call DetermineDayNr(dayi, monthi, Year1Gwt, AtDayNr_local)
+        end if
+        ! get observation at AtDayNr
+        if (Year1Gwt /= 1901) then
+            ! year is defined
+            if (AtDayNr_local <= DayNr2) then
+                Zcm = roundc(100._dp*Z2, mold=1)
+                ECdSm = EC2
+            else
+                do while (.not. TheEnd) 
+                    DayNr1 = DayNr2
+                    Z1 = Z2
+                    EC1 = EC2
+                    read(fhandle, '(a)', iostat=rc) StringREAD
+                    call SplitStringInThreeParams(StringREAD, DayDouble, &
+                                                                Z2, EC2)
+                    DayNr2 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
+                    if (AtDayNr_local <= DayNr2) then
+                        call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, &
+                                        EC1, Z2, EC2, Zcm, ECdSm)
+                        TheEnd = .true.
+                    end if
+                    if ((rc == iostat_end) .and. (.not. TheEnd)) then
+                        Zcm = roundc(100._dp*Z2, mold=1)
+                        ECdSm = EC2
+                        TheEnd = .true.
+                    end if
+                end do
+            end if
+        else
+            ! year is undefined
+            if (AtDayNr_local <= DayNr2) then
+                DayNr2 = DayNr2 + 365
+                AtDayNr_local = AtDayNr_local + 365
+                do while (rc /= iostat_end) 
+                    read(fhandle, '(a)') StringREAD
+                    call SplitStringInThreeParams(StringREAD, DayDouble, &
+                                                                Z1, EC1)
+                    DayNr1 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
+                end do
+                call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, EC1, Z2, EC2, &
+                                                               Zcm, ECdSm)
+            else
+                DayNrN = DayNr2 + 365
+                ZN = Z2
+                ECN = EC2
+                do while (.not. TheEnd) 
+                    DayNr1 = DayNr2
+                    Z1 = Z2
+                    EC1 = EC2
+                    read(fhandle, '(a)', iostat=rc) StringREAD
+                    call SplitStringInThreeParams(StringREAD, DayDouble, &
+                                                                Z2, EC2)
+                    DayNr2 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
+                    if (AtDayNr_local <= DayNr2) then
+                        call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, EC1, &
+                                                     Z2, EC2, Zcm, ECdSm)
+                        TheEnd = .true.
+                    end if
+                    if ((rc == iostat_end) .and. (.not. TheEnd)) then
+                        call FindValues(AtDayNr_local, DayNr2, DayNrN, Z2, EC2, &
+                                                     ZN, ECN, Zcm, ECdSm)
+                        TheEnd = .true.
+                    end if
+                end do
+            end if
+        end if
+        ! variable groundwater table with more than 1 observation
+    end if
+    Close(fhandle)
+
+
+    contains
+
+    subroutine FindValues(AtDayNr, DayNr1, DayNr2, Z1, EC1, Z2, EC2, &
+                                                         Zcm, ECdSm)
+        integer(int32), intent(in) :: AtDayNr
+        integer(int32), intent(in) :: DayNr1
+        integer(int32), intent(in) :: DayNr2
+        real(dp), intent(in) :: Z1
+        real(dp), intent(in) :: EC1
+        real(dp), intent(in) :: Z2
+        real(dp), intent(in) :: EC2
+        integer(int32), intent(inout) :: Zcm
+        real(dp), intent(inout) :: ECdSm
+
+        Zcm = roundc(100._dp * (Z1 + (Z2-Z1) &
+                    * real(AtDayNr-DayNr1, kind=dp) &
+                    / real(DayNr2-Daynr1, kind=dp)), mold=1)
+        ECdSm = EC1 + (EC2-EC1) &
+                        * real(AtDayNr-DayNr1, kind=dp) &
+                        / real(DayNr2-Daynr1, kind=dp)
+        end subroutine FindValues
+
+end subroutine LoadGroundWater
+
+
+
+subroutine AdjustClimRecordTo(CDayN)
+    integer(int32), intent(in) :: CDayN
+
+    integer(int32) :: dayi, monthi, yeari
+    integer(int32) :: ToDayNr_tmp
+
+    call DetermineDate(CDayN, dayi, monthi, yeari)
+    call SetClimRecord_ToD(31)
+    call SetClimRecord_ToM(12)
+    call SetClimRecord_ToY(yeari)
+    call DetermineDayNr(GetClimRecord_ToD(), GetClimRecord_ToM(), &
+                        GetClimRecord_ToY(), ToDayNr_tmp)
+    call SetClimRecord_ToDayNr(ToDayNr_tmp)
+end subroutine AdjustClimRecordTo
+
+
+
+subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS, NrComp, Comp)
+    integer(int8), intent(in) :: NrLay
+    real(dp), dimension(max_No_compartments), intent(in) :: LayThickness
+    real(dp), dimension(max_No_compartments), intent(in) :: LayVolPr
+    real(dp), dimension(max_No_compartments), intent(in) :: LayECdS
+    integer(int32), intent(in) :: NrComp
+    type(CompartmentIndividual), dimension(max_No_compartments), intent(inout) :: Comp
+
+    integer(int8) :: Compi, Layeri, i
+    real(dp) :: SDLay, SDComp, FracC
+    logical :: GoOn
+
+    ! from specific layers to Compartments
+    do Compi = 1, NrComp 
+        Comp(Compi)%Theta = 0._dp
+        Comp(Compi)%WFactor = 0._dp  ! used for ECe in this procedure
+    end do
+    Compi = 0_int8
+    SDComp = 0._dp
+    Layeri = 1_int8
+    SDLay = LayThickness(1)
+    GoOn = .true.
+    do while (Compi < NrComp) 
+        FracC = 0._dp
+        Compi = Compi + 1_int8
+        SDComp = SDComp + Comp(compi)%Thickness
+        if (SDLay >= SDComp) then
+            Comp(Compi)%Theta = Comp(Compi)%Theta + (1._dp-FracC) &
+                                                *LayVolPr(Layeri)/100._dp
+            Comp(Compi)%WFactor = Comp(Compi)%WFactor + (1._dp-FracC) &
+                                                *LayECdS(Layeri)
+        else
+            ! go to next layer
+            do while ((SDLay < SDComp) .and. GoOn) 
+                ! finish handling previous layer
+                FracC = (SDLay - (SDComp-Comp(Compi)%Thickness)) &
+                                /(Comp(Compi)%Thickness) - FracC
+                Comp(Compi)%Theta = Comp(Compi)%Theta + &
+                                    FracC*LayVolPr(Layeri)/100._dp
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor + FracC*LayECdS(Layeri)
+                FracC = (SDLay - (SDComp-Comp(Compi)%Thickness)) &
+                                    /(Comp(Compi)%Thickness)
+                ! add next layer
+                if (Layeri < NrLay) then
+                    Layeri = Layeri + 1
+                    SDLay = SDLay + LayThickness(Layeri)
+                else
+                    GoOn = .false.
+                end if
+            end do
+            Comp(Compi)%Theta = Comp(Compi)%Theta + (1._dp-FracC) &
+                                                    *LayVolPr(Layeri)/100._dp
+            Comp(Compi)%WFactor = Comp(Compi)%WFactor + (1._dp-FracC) &
+                                                    *LayECdS(Layeri)
+        end if
+        ! next Compartment
+    end do
+    if (.not. GoOn) then
+        do i = (Compi+1), NrComp 
+            Comp(i)%Theta = LayVolPr(NrLay)/100._dp
+            Comp(i)%WFactor = LayECdS(NrLay)
+        end do
+    end if
+        
+    ! final check of SWC
+    do Compi = 1, NrComp 
+        if (Comp(Compi)%Theta > &
+                (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
+            Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer)) &
+                                                            /100._dp
+        end if
+    end do
+    ! salt distribution in cellls
+    do Compi = 1, NrComp 
+        call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
+    end do
+end subroutine TranslateIniLayersToSWProfile
+
+
+
+subroutine TranslateIniPointsToSWProfile(NrLoc, LocDepth, LocVolPr, LocECdS, &
+                                                               NrComp, Comp)
+    integer(int8), intent(in) :: NrLoc
+    real(dp), dimension(max_No_compartments), intent(in) :: LocDepth
+    real(dp), dimension(max_No_compartments), intent(in) :: LocVolPr
+    real(dp), dimension(max_No_compartments), intent(in) :: LocECdS
+    integer(int32), intent(in) :: NrComp
+    type(CompartmentIndividual), dimension(max_No_compartments), &
+                                              intent(inout) :: Comp
+
+    integer(int32) :: Compi, Loci
+    real(dp) :: TotD, Depthi, D1, D2, Th1, Th2, DTopComp, &
+                ThTopComp, ThBotComp
+    real(dp) :: EC1, EC2, ECTopComp, ECBotComp
+    logical :: AddComp, TheEnd
+
+    TotD = 0
+    do Compi = 1, NrComp 
+        Comp(Compi)%Theta = 0._dp
+        Comp(Compi)%WFactor = 0._dp ! used for salt in (10*VolSat*dZ * EC)
+        TotD = TotD + Comp(Compi)%Thickness
+    end do
+    Compi = 0
+    Depthi = 0._dp
+    AddComp = .true.
+    Th2 = LocVolPr(1)
+    EC2 = LocECds(1)
+    D2 = 0._dp
+    Loci = 0
+    do while ((Compi < NrComp) .or. &
+                ((Compi == NrComp) .and. (AddComp .eqv. .false.))) 
+        ! upper and lower boundaries location
+        D1 = D2
+        Th1 = Th2
+        EC1 = EC2
+        if (Loci < NrLoc) then
+            Loci = Loci + 1
+            D2 = LocDepth(Loci)
+            Th2 = LocVolPr(Loci)
+            EC2 = LocECdS(Loci)
+        else
+            D2 = TotD
+        end if
+        ! transfer water to compartment (SWC in mm) and salt in (10*VolSat*dZ * EC)
+        TheEnd = .false.
+        DTopComp = D1  ! Depthi is the bottom depth
+        ThBotComp = Th1
+        ECBotComp = EC1
+        loop: do
+            ThTopComp = ThBotComp
+            ECTopComp = ECBotComp
+            if (AddComp) then
+                Compi = Compi + 1
+                Depthi = Depthi + Comp(Compi)%Thickness
+            end if
+            if (Depthi < D2) then
+                ThBotComp = Th1 + (Th2-Th1)*(Depthi-D1)/real(D2-D1, kind=dp)
+                Comp(Compi)%Theta = Comp(Compi)%Theta &
+                                   + 10._dp*(Depthi-DTopComp) &
+                                           * ((ThTopComp+ThBotComp)/2._dp)
+                ECBotComp = EC1 + (EC2-EC1)*(Depthi-D1)/real(D2-D1, kind=dp)
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                      + (10._dp*(Depthi-DTopComp) &
+                                       *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
+                                       *((ECTopComp+ECbotComp)/2._dp)
+                AddComp = .true.
+                DTopComp = Depthi
+                if (Compi == NrComp) then
+                    TheEnd = .true.
+                end if
+            else
+                ThBotComp = Th2
+                ECBotComp = EC2
+                Comp(Compi)%Theta = Comp(Compi)%Theta &
+                                  + 10._dp*(D2-DTopComp) &
+                                          * ((ThTopComp+ThBotComp)/2._dp)
+                Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                      + (10._dp*(D2-DTopComp) &
+                                         *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
+                                         *((ECTopComp+ECbotComp)/2._dp)
+                if (Depthi == D2) then
+                    AddComp = .true.
+                else
+                    AddComp = .false.
+                end if
+                TheEnd = .true.
+            end if
+            if (TheEnd) exit loop
+        end do loop
+    end do
+
+    do Compi = 1, NrComp 
+        ! from mm(water) to theta and final check
+        Comp(Compi)%Theta = Comp(Compi)%Theta/(1000._dp*Comp(Compi)%Thickness)
+        if (Comp(Compi)%Theta &
+                    > (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
+            Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp
+        end if
+        if (Comp(Compi)%Theta < 0._dp) then
+            Comp(Compi)%Theta = 0._dp
+        end if
+    end do
+
+    do Compi = 1, NrComp 
+        ! from (10*VolSat*dZ * EC) to ECe and distribution in cellls
+        Comp(Compi)%WFactor = Comp(Compi)%WFactor &
+                                /(10._dp*Comp(Compi)%Thickness &
+                                    *GetSoilLayer_SAT(Comp(Compi)%Layer))
+        call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
+    end do
+end subroutine TranslateIniPointsToSWProfile
+
+
+
+real(dp) function CCiniTotalFromTimeToCCini(TempDaysToCCini, TempGDDaysToCCini, &
+                                            L0, L12, L12SF, L123, L1234, GDDL0, &
+                                            GDDL12, GDDL12SF, GDDL123, &
+                                            GDDL1234, CCo, CCx, CGC, GDDCGC, &
+                                            CDC, GDDCDC, RatDGDD, SFRedCGC, &
+                                            SFRedCCx, SFCDecline, fWeed, &
+                                            TheModeCycle)
+    integer(int32), intent(in) :: TempDaysToCCini
+    integer(int32), intent(in) :: TempGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: RatDGDD
+    integer(int8), intent(in) :: SFRedCGC
+    integer(int8), intent(in) :: SFRedCCx
+    real(dp), intent(in) :: SFCDecline
+    real(dp), intent(in) :: fWeed
+    integer(intEnum), intent(in) :: TheModeCycle
+
+
+    integer(int32) :: DayCC
+    real(dp) :: SumGDDforCCini, TempCCini
+    integer(int32) :: Tadj, GDDTadj
+
+    if (TempDaysToCCini /= 0) then
+        ! regrowth
+        SumGDDforCCini = real(undef_int, kind=dp)
+        GDDTadj = undef_int
+        ! find adjusted calendar and GDD time
+        if (TempDaysToCCini == undef_int) then
+            ! CCx on 1st day
+            Tadj = L12 - L0
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = GDDL12 - GDDL0
+            end if
+        else
+            ! CC on 1st day is < CCx
+            Tadj = TempDaysToCCini
+            if (TheModeCycle == modeCycle_GDDays) then
+                GDDTadj = TempGDDaysToCCini
+            end if
+        end if
+        ! calculate CCini with adjusted time
+        DayCC = L0 + Tadj
+        if (TheModeCycle == modeCycle_GDDays) then
+            SumGDDforCCini = GDDL0 + GDDTadj
+        end if
+        TempCCini = CCiNoWaterStressSF(DayCC, L0, L12SF, L123, L1234, GDDL0, &
+                                       GDDL12SF, GDDL123, GDDL1234, &
+                                       (CCo*fWeed), (CCx*fWeed), CGC, GDDCGC, &
+                                       (CDC*(fWeed*CCx+2.29_dp)/(CCx+2.29_dp)), &
+                                       (GDDCDC*(fWeed*CCx+2.29_dp)/(CCx+2.29_dp)), &
+                                       SumGDDforCCini, RatDGDD, SFRedCGC, &
+                                       SFRedCCx, SFCDecline, TheModeCycle)
+        ! correction for fWeed is already in TempCCini (since DayCC > 0);
+    else
+        TempCCini = (CCo*fWeed) ! sowing or transplanting
+    end if
+
+    CCiniTotalFromTimeToCCini = TempCCini
+end function CCiniTotalFromTimeToCCini
+
+
+
+subroutine AdjustCropYearToClimFile(CDay1, CDayN)
+    integer(int32), intent(inout) :: CDay1
+    integer(int32), intent(inout) :: CDayN
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=:), allocatable :: temp_str
+
+    call DetermineDate(CDay1, dayi, monthi, yeari)
+    if (GetClimFile() == '(None)') then
+        yeari = 1901  ! yeari = 1901 if undefined year
+    else
+        yeari = GetClimRecord_FromY() ! yeari = 1901 if undefined year
+    end if
+    call DetermineDayNr(dayi, monthi, yeari, CDay1)
+    temp_str = EndGrowingPeriod(CDay1, CDayN)
+end subroutine AdjustCropYearToClimFile
+
+
+function EndGrowingPeriod(Day1, DayN) result(EndGrowingPeriod_out)
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(inout) :: DayN
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=2) :: Strday
+    character(len=:), allocatable :: StrMonth
+    character(len=:), allocatable :: EndGrowingPeriod_out
+
+    ! This function determines Crop.DayN and the string
+    DayN = Day1 + GetCrop_DaysToHarvest() - 1
+    if (DayN < Day1) then
+        DayN = Day1
+    end if
+    call DetermineDate(DayN, dayi, monthi, yeari)
+    write(Strday, '(i2)') dayi
+    StrMonth = NameMonth(monthi)
+    EndGrowingPeriod_out = Strday // ' ' // StrMonth // '  '
+end function EndGrowingPeriod
+
+
+
+subroutine LoadInitialConditions(SWCiniFileFull, IniSurfaceStorage)
+    character(len=*), intent(in) :: SWCiniFileFull
+    real(dp), intent(inout) :: IniSurfaceStorage
+
+    integer :: fhandle
+    integer(int32) :: i
+    character(len=1025) :: StringParam, swcinidescr_temp
+    real(dp) :: VersionNr
+    real(dp) :: CCini_temp, Bini_temp, Zrini_temp, ECStorageIni_temp
+    integer(int8) :: NrLoc_temp
+    real(dp) :: Loc_i_temp, VolProc_i_temp, SaltECe_i_temp
+
+    ! IniSWCRead attribute of the function was removed to fix a
+    ! bug occurring when the function was called in TempProcessing.pas
+    ! Keep in mind that this could affect the graphical interface
+    open(newunit=fhandle, file=trim(SWCiniFileFull), status='old', action='read')
+    read(fhandle, '(a)') swcinidescr_temp
+    call SetSWCiniDescription(swcinidescr_temp)
+    read(fhandle, *) VersionNr ! AquaCrop Version
+    if (roundc(10*VersionNr, mold=1) < 41) then ! initial CC at start of simulation period
+        call SetSimulation_CCini(real(undef_int, kind=dp))
+    else
+        read(fhandle, *) CCini_temp
+        call SetSimulation_CCini(CCini_temp)
+    end if
+    if (roundc(10*VersionNr, mold=1) < 41) then ! B produced before start of simulation period
+        call SetSimulation_Bini(0.000_dp)
+    else
+        read(fhandle, *) Bini_temp
+        call SetSimulation_Bini(Bini_temp)
+    end if
+    if (roundc(10*VersionNr, mold=1) < 41) then ! initial rooting depth at start of simulation period
+        call SetSimulation_Zrini(real(undef_int, kind=dp))
+    else
+        read(fhandle, *) Zrini_temp
+        call SetSimulation_Zrini(Zrini_temp)
+    end if
+    read(fhandle, *) IniSurfaceStorage
+    if (roundc(10*VersionNr, mold=1) < 32) then ! EC of the ini surface storage
+        call SetSimulation_ECStorageIni(0._dp)
+    else
+        read(fhandle, *) ECStorageIni_temp
+        call SetSimulation_ECStorageIni(ECStorageIni_temp)
+    end if
+    read(fhandle, *) i
+    if (i == 1) then
+        call SetSimulation_IniSWC_AtDepths(.true.)
+    else
+        call SetSimulation_IniSWC_AtDepths(.false.)
+    end if
+    read(fhandle, *) NrLoc_temp
+    call SetSimulation_IniSWC_NrLoc(NrLoc_temp)
+    read(fhandle, *)
+    read(fhandle, *)
+    read(fhandle, *)
+    do i = 1, GetSimulation_IniSWC_NrLoc() 
+        read(fhandle, '(a)') StringParam
+        Loc_i_temp = GetSimulation_IniSWC_Loc_i(i)
+        VolProc_i_temp = GetSimulation_IniSWC_VolProc_i(i)
+        if (roundc(10*VersionNr, mold=1) < 32) then ! ECe at the locations
+            call SplitStringInTwoParams(StringParam, Loc_i_temp, &
+                                                    VolProc_i_temp)
+            call SetSimulation_IniSWC_SaltECe_i(i, 0._dp)
+        else
+            SaltECe_i_temp = GetSimulation_IniSWC_SaltECe_i(i)
+            call SplitStringInThreeParams(StringParam, Loc_i_temp, &
+                                          VolProc_i_temp, SaltECe_i_temp)
+            call SetSimulation_IniSWC_SaltECe_i(i, SaltECe_i_temp)
+        end if
+        call SetSimulation_IniSWC_Loc_i(i, Loc_i_temp)
+        call SetSimulation_IniSWC_VolProc_i(i, VolProc_i_temp)
+    end do
+    close(fhandle)
+    call SetSimulation_IniSWC_AtFC(.false.)
+end subroutine LoadInitialConditions
+
+
+
+subroutine AdjustSizeCompartments(CropZx)
+    real(dp), intent(in) :: CropZx
+
+    integer(int32) :: i , compi
+    real(dp) :: TotDepthC, fAdd
+    integer(int8) :: PrevNrComp
+    real(dp), dimension(max_No_Compartments) :: PrevThickComp, &
+                                                PrevVolPrComp, &
+                                                PrevECdSComp
+
+    ! 1. Save intial soil water profile (required when initial soil 
+    ! water profile is NOT reset at start simulation - see 7.)
+    PrevNrComp = GetNrCompartments()
+    do compi = 1, prevnrComp 
+        PrevThickComp(compi) = GetCompartment_Thickness(compi)
+        PrevVolPrComp(compi) = 100._dp*GetCompartment_Theta(compi)
+    end do
+
+    ! 2. Actual total depth of compartments
+    TotDepthC = 0._dp
+    do i = 1, GetNrCompartments() 
+        TotDepthC = TotDepthC + GetCompartment_Thickness(compi)
+    end do
+
+    ! 3. Increase number of compartments (if less than 12)
+    if (GetNrCompartments() < 12) then
+        loop: do
+            call SetNrCompartments(GetNrCompartments() + 1)
+            if ((CropZx - TotDepthC) > GetSimulParam_CompDefThick()) then
+                call SetCompartment_Thickness(GetNrCompartments(), &
+                                              GetSimulParam_CompDefThick())
+            else
+                call SetCompartment_Thickness(GetNrCompartments(), &
+                                              CropZx - TotDepthC)
+            end if
+            TotDepthC = TotDepthC &
+                        + GetCompartment_Thickness(GetNrCompartments())
+            if ((GetNrCompartments() == max_No_compartments) &
+                        .or. ((TotDepthC + 0.00001) >= CropZx)) exit loop
+        end do loop
+    end if
+
+    ! 4. Adjust size of compartments (if total depth of compartments < rooting depth)
+    if ((TotDepthC + 0.00001_dp) < CropZx) then
+        call SetNrCompartments(12)
+        fAdd = (CropZx/0.1_dp - 12._dp)/78._dp
+        do i = 1, 12 
+            call SetCompartment_Thickness(i, 0.1 * (1._dp + i*fAdd))
+            call SetCompartment_Thickness(i, 0.05 &
+                    * real(roundc(GetCompartment_Thickness(i) &
+                                    * 20._dp, mold=1), kind=dp))
+        end do
+        TotDepthC = 0._dp
+        do i = 1, GetNrCompartments() 
+            TotDepthC = TotDepthC + GetCompartment_Thickness(i)
+        end do
+        if (TotDepthC < CropZx) then
+            loop2: do
+                call SetCompartment_Thickness(12, &
+                                        GetCompartment_Thickness(12) &
+                                                          + 0.05_dp)
+                TotDepthC = TotDepthC + 0.05_dp
+                if (TotDepthC >= CropZx) exit loop2
+            end do loop2
+        else
+            do while ((TotDepthC - 0.04999999_dp) >= CropZx) 
+                call SetCompartment_Thickness(12, &
+                                        GetCompartment_Thickness(12) &
+                                                          - 0.05_dp)
+                TotDepthC = TotDepthC - 0.05_dp
+            end do
+        end if
+    end if
+
+    ! 5. Adjust soil water content and theta initial
+    call AdjustThetaInitial(PrevNrComp, PrevThickComp, &
+                            PrevVolPrComp, PrevECdSComp)
+end subroutine AdjustSizeCompartments
+
 
 
 
@@ -12470,6 +13387,14 @@ function GetSimulation_IniSWC_Loc_i(i) result(Loc_i)
     Loc_i = simulation%IniSWC%Loc(i)
 end function GetSimulation_IniSWC_Loc_i
 
+function GetSimulation_IniSWC_Loc() result(Loc)
+    !! Getter for the "Loc" attribute of the "IniSWC" attribute of the "simulation" global variable
+
+    real(dp), dimension(max_No_compartments) :: Loc
+
+    Loc = simulation%IniSWC%Loc
+end function GetSimulation_IniSWC_Loc
+
 function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
     !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
     integer(int32), intent(in) :: i
@@ -12478,6 +13403,14 @@ function GetSimulation_IniSWC_VolProc_i(i) result(VolProc_i)
     VolProc_i = simulation%IniSWC%VolProc(i)
 end function GetSimulation_IniSWC_VolProc_i
 
+function GetSimulation_IniSWC_VolProc() result(VolProc)
+    !! Getter for the "VolProc" attribute of the "IniSWC" attribute of the "simulation" global variable
+
+    real(dp), dimension(max_No_compartments) :: VolProc
+
+    VolProc = simulation%IniSWC%VolProc
+end function GetSimulation_IniSWC_VolProc
+
 function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
     !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
     integer(int32), intent(in) :: i
@@ -12485,6 +13418,14 @@ function GetSimulation_IniSWC_SaltECe_i(i) result(SaltECe_i)
 
     SaltECe_i = simulation%IniSWC%SaltECe(i)
 end function GetSimulation_IniSWC_SaltECe_i
+
+function GetSimulation_IniSWC_SaltECe() result(SaltECe)
+    !! Getter for the "SaltECe" attribute of the "IniSWC" attribute of the "simulation" global variable
+
+    real(dp), dimension(max_No_compartments) :: SaltECe
+
+    SaltECe = simulation%IniSWC%SaltECe
+end function GetSimulation_IniSWC_SaltECe
 
 function GetSimulation_IniSWC_AtFC() result(AtFC)
     !! Getter for the "AtFC" attribute of the "IniSWC" attribute of the "simulation" global variable.
@@ -13277,19 +14218,6 @@ subroutine SetNrCompartments(NrCompartments_in)
     NrCompartments = NrCompartments_in
 end subroutine SetNrCompartments
 
-real(dp) function GetETo()
-    !! Getter for the "ETo" global variable.
-
-    GetETo = ETo
-end function GetETo
-
-subroutine SetETo(ETo_in)
-    !! Setter for the "ETo" global variable.
-    real(dp), intent(in) :: ETo_in
-
-    ETo = ETo_in
-end subroutine SetETo
-
 integer(int32) function GetZiAqua()
     !! Getter for the "ZiAqua" global variable.
 
@@ -13302,6 +14230,45 @@ subroutine SetZiAqua(ZiAqua_in)
 
     ZiAqua = ZiAqua_in
 end subroutine SetZiAqua
+
+real(dp) function GetDrain()
+    !! Getter for the "Drain" global variable.
+
+    GetDrain = Drain
+end function GetDrain
+
+subroutine SetDrain(Drain_in)
+    !! Setter for the "Drain" global variable.
+    real(dp), intent(in) :: Drain_in
+
+    Drain = Drain_in
+end subroutine SetDrain
+
+real(dp) function GetRain()
+    !! Getter for the "Rain" global variable.
+
+    GetRain = Rain
+end function GetRain
+
+subroutine SetRain(Rain_in)
+    !! Setter for the "Rain" global variable.
+    real(dp), intent(in) :: Rain_in
+
+    Rain = Rain_in
+end subroutine SetRain
+
+real(dp) function GetRunoff()
+    !! Getter for the "Runoff" global variable.
+
+    GetRunoff = Runoff
+end function GetRunoff
+
+subroutine SetRunoff(Runoff_in)
+    !! Setter for the "Runoff" global variable.
+    real(dp), intent(in) :: Runoff_in
+
+    Runoff = Runoff_in
+end subroutine SetRunoff
 
 function GetOffSeasonDescription() result(str)
     !! Getter for the "OffSeasonDescription" global variable.
@@ -13316,5 +14283,191 @@ subroutine SetOffSeasonDescription(str)
     
     OffSeasonDescription = str
 end subroutine SetOffSeasonDescription
+
+function GetGroundwaterDescription() result(str)
+    !! Getter for the "GroundwaterDescription" global variable.
+    character(len=len(GroundwaterDescription)) :: str
+    
+    str = GroundwaterDescription
+end function GetGroundwaterDescription
+
+subroutine SetGroundwaterDescription(str)
+    !! Setter for the "ManDescription" global variable.
+    character(len=*), intent(in) :: str
+    
+    GroundwaterDescription = str
+end subroutine SetGroundwaterDescription
+
+integer(int32) function GetDaySubmerged()
+    !! Getter for the "DaySubmerged" global variable.
+
+    GetDaySubmerged = DaySubmerged
+end function GetDaySubmerged
+
+
+subroutine SetDaySubmerged(DaySubmerged_in)
+    !! Setter for the "DaySubmerged" global variable.
+    integer(int32), intent(in) :: DaySubmerged_in
+
+    DaySubmerged = DaySubmerged_in
+end subroutine SetDaySubmerged
+
+real(dp) function GetCRsalt()
+    !! Getter for the "CRsalt" global variable.
+
+    GetCRsalt = CRsalt
+end function GetCRsalt
+
+subroutine SetCRsalt(CRsalt_in)
+    !! Setter for the "CRsalt" global variable.
+    real(dp), intent(in) :: CRsalt_in
+
+    CRsalt = CRsalt_in
+end subroutine SetCRsalt
+
+
+integer(int32) function GetMaxPlotNew()
+    !! Getter for the "MaxPlotNew" global variable.
+
+    GetMaxPlotNew = MaxPlotNew
+end function GetMaxPlotNew
+
+subroutine SetMaxPlotNew(MaxPlotNew_in)
+    !! Setter for the "MaxPlotNew" global variable.
+    integer(int32), intent(in) :: MaxPlotNew_in
+
+    MaxPlotNew = MaxPlotNew_in
+end subroutine SetMaxPlotNew
+
+integer(int8) function GetMaxPlotTr()
+    !! Getter for the "MaxPlotTr" global variable.
+
+    GetMaxPlotTr = MaxPlotTr
+end function GetMaxPlotTr
+
+subroutine SetMaxPlotTr(MaxPlotTr_in)
+    !! Setter for the "MaxPlotTr" global variable.
+    integer(int8), intent(in) :: MaxPlotTr_in
+
+    MaxPlotTr = MaxPlotTr_in
+end subroutine SetMaxPlotTr
+
+logical function GetPreDay()
+    !! Getter for the "PreDay" global variable.
+
+    GetPreDay = PreDay
+end function GetPreDay
+
+subroutine SetPreDay(PreDay_in)
+    !! Setter for the "PreDay" global variable.
+    logical, intent(in) :: PreDay_in
+
+    PreDay = PreDay_in
+end subroutine SetPreDay
+
+integer(int8) function GetIniPercTAW()
+    !! Getter for the "IniPercTAW" global variable.
+
+    GetIniPercTAW = IniPercTAW
+end function GetIniPercTAW
+
+subroutine SetIniPercTAW(IniPercTAW_in)
+    !! Setter for the "IniPercTAW" global variable.
+    integer(int8), intent(in) :: IniPercTAW_in
+
+    IniPercTAW = IniPercTAW_in
+end subroutine SetIniPercTAW
+
+real(dp) function GetECiAqua()
+    !! Getter for the "ECiAqua" global variable.
+
+    GetECiAqua = ECiAqua
+end function GetECiAqua
+
+subroutine SetECiAqua(ECiAqua_in)
+    !! Setter for the "ECiAqua" global variable.
+    real(dp), intent(in) :: ECiAqua_in
+
+    ECiAqua = ECiAqua_in
+end subroutine SetECiAqua
+
+real(dp) function GetETo()
+    !! Getter for the "ETo" global variable.
+
+    GetETo = ETo
+end function GetETo
+
+subroutine SetETo(ETo_in)
+    !! Setter for the "ETo" global variable.
+    real(dp), intent(in) :: ETo_in
+
+    ETo = ETo_in
+end subroutine SetETo
+
+real(dp) function GetIrrigation()
+    !! Getter for the "Irrigation" global variable.
+
+    GetIrrigation = Irrigation
+end function GetIrrigation
+
+subroutine SetIrrigation(Irrigation_in)
+    !! Setter for the "Irrigation" global variable.
+    real(dp), intent(in) :: Irrigation_in
+
+    Irrigation = Irrigation_in
+end subroutine SetIrrigation
+
+real(dp) function GetInfiltrated()
+    !! Getter for the "Infiltrated" global variable.
+
+    GetInfiltrated = Infiltrated
+end function GetInfiltrated
+
+subroutine SetInfiltrated(Infiltrated_in)
+    !! Setter for the "Infiltrated" global variable.
+    real(dp), intent(in) :: Infiltrated_in
+
+    Infiltrated = Infiltrated_in
+end subroutine SetInfiltrated
+
+real(dp) function GetCRwater()
+    !! Getter for the "CRwater" global variable.
+
+    GetCRwater = CRwater
+end function GetCRwater
+
+subroutine SetCRwater(CRwater_in)
+    !! Setter for the "CRwater" global variable.
+    real(dp), intent(in) :: CRwater_in
+
+    CRwater = CRwater_in
+end subroutine SetCRwater
+
+real(dp) function GetEpot()
+    !! Getter for the "Epot" global variable.
+
+    GetEpot = Epot
+end function GetEpot
+
+subroutine SetEpot(Epot_in)
+    !! Setter for the "Epot" global variable.
+    real(dp), intent(in) :: Epot_in
+
+    Epot = Epot_in
+end subroutine SetEpot
+
+real(dp) function GetTpot()
+    !! Getter for the "Tpot" global variable.
+
+    GetTpot = Tpot
+end function GetTpot
+
+subroutine SetTpot(Tpot_in)
+    !! Setter for the "Tpot" global variable.
+    real(dp), intent(in) :: Tpot_in
+
+    Tpot = Tpot_in
+end subroutine SetTpot
+
 
 end module ac_global
