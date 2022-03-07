@@ -16,6 +16,7 @@ use ac_global , only: undef_int, &
                       rep_DayEventDbl, &
                       rep_CropFileSet, &
                       rep_EffectStress, &
+                      rep_Shapes, &
                       rep_clim, &
                       max_No_compartments, &
                       CompartmentIndividual, &
@@ -204,7 +205,10 @@ use ac_global , only: undef_int, &
                       SetSimulation_DelayedDays,&
                       GetManagement_WeedAdj, &
                       GetSimulParam_Tmin, GetSimulParam_Tmax,&
-                      GetWeedRC,&
+                      GetWeedRC, &
+                      DaysToReachCCwithGivenCGC, &
+                      timetomaxcanopysf, &
+                      cropstressparameterssoilfertility,&
                       GetCropFile, &
                       setclimatedescription,&
                       setoffseasonfilefull,&
@@ -3233,5 +3237,440 @@ real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
 
     BiomassRatio = SumBSF/SumBPot
 end function BiomassRatio
+
+
+subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
+            L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,&
+            GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,&
+            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,&
+            Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,&
+            CO2Given, CropDNr1, CropDeterm, CropSResp, TheCropType,&
+            TheModeCycle, b0, b1, b2, &
+            BM10, BM20, BM30, BM40, BM50, BM60, BM70)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    integer(int32), intent(in) :: WPyield
+    integer(int32), intent(in) :: RefHI
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDtranspLow
+    real(dp), intent(in) :: WPveg
+    real(dp), intent(in) :: RatedHIdt
+    real(dp), intent(in) :: CO2Given
+    integer(int32), intent(in) :: CropDNr1
+    logical, intent(in) :: CropDeterm
+    type(rep_Shapes), intent(in) :: CropSResp
+    integer(intEnum), intent(in) :: TheCropType
+    integer(intEnum), intent(in) :: TheModeCycle
+    real(dp), intent(inout) :: b0
+    real(dp), intent(inout) :: b1
+    real(dp), intent(inout) :: b2
+    real(dp), intent(inout) :: BM10
+    real(dp), intent(inout) :: BM20
+    real(dp), intent(inout) :: BM30
+    real(dp), intent(inout) :: BM40
+    real(dp), intent(inout) :: BM50
+    real(dp), intent(inout) :: BM60
+    real(dp), intent(inout) :: BM70
+
+    real(dp), parameter :: EToStandard = 5._dp
+    integer(int32), parameter :: k = 2
+
+    type StressIndexes
+        integer(int8) :: StressProc
+            !! Undocumented
+        real(dp) :: BioMProc
+            !! Undocumented
+        real(dp) :: BioMSquare
+            !! Undocumented
+    end type StressIndexes
+
+    type(StressIndexes), dimension(8) :: StressMatrix
+    integer(int8) :: Si
+    integer(int32) :: L12SF, GDDL12SF
+    type(rep_EffectStress) :: StressResponse
+    real(dp) :: RatDGDD, BNor, BNor100, Yavg, X1avg, X2avg,&
+                y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2, &
+                SUMx1y, SUMx2y, SUMx1Sq, SUMx2Sq, SUMx1x2
+    integer(int8) :: SiPr
+    real(dp) :: SumKcTop, HIGC, HIGClinear
+    integer(int32) :: DaysYieldFormation, tSwitch
+    real(dp) :: TDayMax_temp, TDayMin_temp
+
+    ! 1. initialize
+    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+    L12SF = L12 ! to calculate SumKcTop (no stress)
+    GDDL12SF = GDDL12 ! to calculate SumKcTop (no stress)
+    ! Maximum sum Kc (no stress)
+    SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
+        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing,&
+        CCeffectProcent, Tbase, Tupper, TDayMin, TDayMax, &
+        GDtranspLow, CO2Given, TheModeCycle)
+
+    ! Get PercentLagPhase (for estimate WPi during yield formation)
+    if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
+        if (CropDeterm) then
+            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
+            call GetDaySwitchToLinear(RefHI, RatedHIdt, HIGC, tSwitch,&
+                  HIGClinear)
+        else
+            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
+        end if
+    end if
+
+    ! 2. Biomass production for various stress levels
+    do Si = 1, 8
+        ! various stress levels
+        ! stress effect
+        SiPr = 10*(Si-1)
+        StressMatrix(Si)%StressProc = SiPr
+        call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
+        ! adjusted length of Max canopy cover
+        RatDGDD = 1
+        if ((StressResponse%RedCCX == 0) .and. &
+            (StressResponse%RedCGC == 0))then
+            L12SF = L12
+            GDDL12SF = GDDL12
+        else
+            call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LFlor,&
+                   LengthFlor, CropDeterm, L12SF, StressResponse%RedCGC,&
+                   StressResponse%RedCCX, SiPr)
+            if (TheModeCycle == modeCycle_GDDays) then
+                TDayMin_temp = TDayMin
+                TDayMax_temp = TDayMax
+                GDDL12SF = GrowingDegreeDays(L12SF, CropDNr1, Tbase, Tupper,&
+                                 TDayMin_temp, TDayMax_temp)
+            end if
+            if ((TheModeCycle == modeCycle_GDDays) .and. (GDDL12SF < GDDL123)) then
+                RatDGDD = (L123-L12SF)*1._dp/(GDDL123-GDDL12SF)
+            end if
+        end if
+        ! biomass production
+        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
+                L0, L12, L12SF, L123, L1234, LFlor,&
+                GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, WPyield, &
+                DaysYieldFormation, tSwitch, CCo, CCx, CGC, GDDCGC, CDC,&
+                GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
+                Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
+                SumKcTop, SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
+                StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
+                StressResponse%CDecline, -0.01_dp, TheModeCycle, .true.,&
+                .false.)
+        if (Si == 1) then
+            BNor100 = BNor
+            StressMatrix(1)%BioMProc = 100._dp
+        else
+            if (BNor100 > 0.00001_dp) then
+                StressMatrix(Si)%BioMProc = 100._dp * BNor/BNor100
+            else
+                StressMatrix(Si)%BioMProc = 100._dp
+            end if
+        end if
+        StressMatrix(Si)%BioMSquare =&
+             StressMatrix(Si)%BioMProc *&
+             StressMatrix(Si)%BioMProc
+        ! end stress level
+    end do
+
+    ! 5. Stress - Biomass relationship
+    Yavg = 0._dp
+    X1avg = 0._dp
+    X2avg = 0._dp
+    do Si = 1, 8
+        ! various stress levels
+        Yavg = Yavg + StressMatrix(Si)%StressProc
+        X1avg = X1avg + StressMatrix(Si)%BioMProc
+        X2avg = X2avg + StressMatrix(Si)%BioMSquare
+    end do
+    Yavg  = Yavg/8._dp
+    X1avg = X1avg/8._dp
+    X2avg = X2avg/8._dp
+    SUMx1y  = 0._dp
+    SUMx2y  = 0._dp
+    SUMx1Sq = 0._dp
+    SUMx2Sq = 0._dp
+    SUMx1x2 = 0._dp
+    do Si = 1, 8
+        ! various stress levels
+        y     = StressMatrix(Si)%StressProc - Yavg
+        x1    = StressMatrix(Si)%BioMProc - X1avg
+        x2    = StressMatrix(Si)%BioMSquare - X2avg
+        x1y   = x1 * y
+        x2y   = x2 * y
+        x1Sq  = x1 * x1
+        x2Sq  = x2 * x2
+        x1x2  = x1 * x2
+        SUMx1y  = SUMx1y + x1y
+        SUMx2y  = SUMx2y + x2y
+        SUMx1Sq = SUMx1Sq + x1Sq
+        SUMx2Sq = SUMx2Sq + x2Sq
+        SUMx1x2 = SUMx1x2 + x1x2
+    end do
+
+    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
+        b2 = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
+             (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
+        b1 = (SUMx1y - b2 * SUMx1x2)/SUMx1Sq
+        b0 = Yavg - b1*X1avg - b2*X2avg
+
+        BM10 =  StressMatrix(2)%BioMProc
+        BM20 =  StressMatrix(3)%BioMProc
+        BM30 =  StressMatrix(4)%BioMProc
+        BM40 =  StressMatrix(5)%BioMProc
+        BM50 =  StressMatrix(6)%BioMProc
+        BM60 =  StressMatrix(7)%BioMProc
+        BM70 =  StressMatrix(8)%BioMProc
+    else
+        b2 = real(undef_int, kind=dp)
+        b1 = real(undef_int, kind=dp)
+        b0 = real(undef_int, kind=dp)
+    end if
+end subroutine StressBiomassRelationship
+
+subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
+       L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&
+       GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,&
+       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,&
+       Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2Given,&
+       CropDNr1, CropDeterm, TheCropType, TheModeCycle, TheCCsaltDistortion,&
+       Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
+       Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: GDDFlor
+    integer(int32), intent(in) :: GDDLengthFlor
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    integer(int32), intent(in) :: WPyield
+    integer(int32), intent(in) :: RefHI
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDbioLow
+    real(dp), intent(in) :: WPveg
+    real(dp), intent(in) :: RatedHIdt
+    real(dp), intent(in) :: CO2Given
+    integer(int32), intent(in) :: CropDNr1
+    logical, intent(in) :: CropDeterm
+    integer(intEnum), intent(in) :: TheCropType
+    integer(intEnum), intent(in) :: TheModeCycle
+    integer(int8), intent(in) :: TheCCsaltDistortion
+    real(dp), intent(inout) :: Coeffb0Salt
+    real(dp), intent(inout) :: Coeffb1Salt
+    real(dp), intent(inout) :: Coeffb2Salt
+    real(dp), intent(inout) :: Salt10
+    real(dp), intent(inout) :: Salt20
+    real(dp), intent(inout) :: Salt30
+    real(dp), intent(inout) :: Salt40
+    real(dp), intent(inout) :: Salt50
+    real(dp), intent(inout) :: Salt60
+    real(dp), intent(inout) :: Salt70
+    real(dp), intent(inout) :: Salt80
+    real(dp), intent(inout) :: Salt90
+
+    type StressIndexes
+        integer(int8) :: CCxReduction
+            !! Undocumented
+        real(dp) :: SaltProc
+            !! Undocumented
+        real(dp) :: SaltSquare
+            !! Undocumented
+    end type StressIndexes
+
+    integer(int32) :: L12SS, GDDL12SS, DaysYieldFormation, tSwitch
+    real(dp) :: SumKcTop, HIGC, HIGClinear, CCToReach
+    integer(int8) :: Si, SiPr
+    type(StressIndexes), dimension(10) :: StressMatrix
+    type(rep_EffectStress) :: StressResponse
+    real(dp) :: RatDGDD, BNor, BNor100, BioMProc
+    real(dp) :: Yavg, X1avg, X2avg, SUMx1y, SUMx2y, SUMx1Sq, &
+         SUMx2Sq, SUMx1x2, y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2
+    real(dp) :: TDayMax_temp, TDayMin_temp
+
+    ! 1. initialize
+    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+    GDDL12SS = GDDL12 ! to calculate SumKcTop (no stress)
+    BNor100 = real(undef_int, kind=dp)
+    ! Maximum sum Kc (no stress)
+    SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
+        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
+        CCeffectProcent,Tbase, Tupper, TDayMin, TDayMax, GDbioLow, &
+        CO2Given, TheModeCycle)
+    ! Get PercentLagPhase (for estimate WPi during yield formation)
+    if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
+        if (CropDeterm) then
+            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
+            call GetDaySwitchToLinear(RefHI, RatedHIdt, &
+                    HIGC, tSwitch, HIGClinear)
+        else
+            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
+        end if
+    end if
+
+    ! 2. Biomass production (or Salt stress) for various CCx reductions
+    do Si = 1, 10
+        ! various CCx reduction
+        ! CCx reduction
+        SiPr = 10*(Si-1)
+        StressMatrix(Si)%CCxReduction = SiPr
+        ! adjustment CC
+        call CropStressParametersSoilSalinity(SiPr, TheCCsaltDistortion, &
+            CCo, CCx, CGC, GDDCGC, CropDeterm, L12, LFlor, LengthFlor, L123,&
+            GDDL12, GDDFlor, GDDLengthFlor, GDDL123, TheModeCycle,&
+            StressResponse)
+        ! adjusted length of Max canopy cover
+        RatDGDD = 1
+        if ((StressResponse%RedCCX == 0) .and.&
+            (StressResponse%RedCGC == 0)) then
+            L12SS = L12
+            GDDL12SS = GDDL12
+        else
+            CCToReach = 0.98_dp*(1._dp-StressResponse%RedCCX/100._dp)*CCx
+            L12SS = DaysToReachCCwithGivenCGC(CCToReach, CCo, &
+                 (1._dp-StressResponse%RedCCX/100._dp)*CCx,&
+                 CGC*(1._dp-StressResponse%RedCGC/100._dp), L0)
+            if (TheModeCycle == modeCycle_GDDays) then
+                TDayMax_temp = TDayMax
+                TDayMin_temp = TDayMin
+                GDDL12SS = GrowingDegreeDays(L12SS, CropDNr1, Tbase, &
+                           Tupper, TDayMin_temp, TDayMax_temp)
+            end if
+            if ((TheModeCycle == modeCycle_GDDays) .and.&
+                (GDDL12SS < GDDL123)) then
+                RatDGDD = (L123-L12SS)*1._dp/(GDDL123-GDDL12SS)
+            end if
+        end if
+
+        ! biomass production
+        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
+                L0, L12, L12SS, L123, L1234, LFlor,&
+                GDDL0, GDDL12, GDDL12SS, GDDL123, GDDL1234,&
+                WPyield, DaysYieldFormation, tSwitch,&
+                CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
+                KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
+                Tbase, Tupper, TDayMin, TDayMax, GDbioLow, RatDGDD, SumKcTop,&
+                SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
+                StressResponse%RedWP, StressResponse%RedKsSto, &
+                0_int8, 0, StressResponse%CDecline, -0.01_dp,&
+                TheModeCycle, .false., .false.)
+        if (Si == 1) then
+            BNor100 = BNor
+            BioMProc = 100._dp
+            StressMatrix(1)%SaltProc = 0._dp
+        else
+            if (BNor100 > 0.00001_dp) then
+                BioMProc = 100._dp * BNor/BNor100
+                StressMatrix(Si)%SaltProc = 100._dp - BioMProc
+            else
+                StressMatrix(Si)%SaltProc = 0._dp
+            end if
+        end if
+        StressMatrix(Si)%SaltSquare = &
+             StressMatrix(Si)%SaltProc *&
+             StressMatrix(Si)%SaltProc
+        ! end stress level
+    end do
+
+    ! 3. CCx - Salt stress relationship
+    Yavg = 0._dp
+    X1avg = 0._dp
+    X2avg = 0._dp
+    do Si = 1, 10
+        ! various CCx reduction
+        Yavg = Yavg + StressMatrix(Si)%CCxReduction
+        X1avg = X1avg + StressMatrix(Si)%SaltProc
+        X2avg = X2avg + StressMatrix(Si)%SaltSquare
+    end do
+    Yavg  = Yavg/10._dp
+    X1avg = X1avg/10._dp
+    X2avg = X2avg/10._dp
+    SUMx1y  = 0._dp
+    SUMx2y  = 0._dp
+    SUMx1Sq = 0._dp
+    SUMx2Sq = 0._dp
+    SUMx1x2 = 0._dp
+    do Si = 1, 10
+        ! various CCx reduction
+        y     = StressMatrix(Si)%CCxReduction - Yavg
+        x1    = StressMatrix(Si)%SaltProc - X1avg
+        x2    = StressMatrix(Si)%SaltSquare - X2avg
+        x1y   = x1 * y
+        x2y   = x2 * y
+        x1Sq  = x1 * x1
+        x2Sq  = x2 * x2
+        x1x2  = x1 * x2
+        SUMx1y  = SUMx1y + x1y
+        SUMx2y  = SUMx2y + x2y
+        SUMx1Sq = SUMx1Sq + x1Sq
+        SUMx2Sq = SUMx2Sq + x2Sq
+        SUMx1x2 = SUMx1x2 + x1x2
+    end do
+
+    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
+        Coeffb2Salt = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
+                      (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
+        Coeffb1Salt = (SUMx1y - Coeffb2Salt * SUMx1x2)/SUMx1Sq
+        Coeffb0Salt = Yavg - Coeffb1Salt*X1avg - Coeffb2Salt*X2avg
+
+        Salt10 =  StressMatrix(2)%SaltProc
+        Salt20 =  StressMatrix(3)%SaltProc
+        Salt30 =  StressMatrix(4)%SaltProc
+        Salt40 =  StressMatrix(5)%SaltProc
+        Salt50 =  StressMatrix(5)%SaltProc
+        Salt60 =  StressMatrix(7)%SaltProc
+        Salt70 =  StressMatrix(8)%SaltProc
+        Salt80 =  StressMatrix(9)%SaltProc
+        Salt90 =  StressMatrix(10)%SaltProc
+    else
+        Coeffb2Salt = real(undef_int, kind=dp)
+        Coeffb1Salt = real(undef_int, kind=dp)
+        Coeffb0Salt = real(undef_int, kind=dp)
+    end if
+end subroutine CCxSaltStressRelationship
 
 end module ac_tempprocessing

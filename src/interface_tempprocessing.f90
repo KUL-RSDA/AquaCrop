@@ -11,9 +11,12 @@ use ac_kinds,  only: dp, &
                      int32, &
                      intEnum
 
-use ac_tempprocessing, only: Bnormalized, &
-                             LoadSimulationRunProject, &
-                             BiomassRatio
+use ac_global, only: rep_EffectStress, rep_Shapes
+
+use ac_tempprocessing, only: Bnormalized, BiomassRatio,&
+                             StressBiomassRelationship, &
+                             CCxSaltStressRelationship, &
+                             LoadSimulationRunProject
 
 use ac_interface_global, only: pointer2string
 
@@ -182,5 +185,150 @@ real(dp) function BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,&
            TempWP, ShapeFweed, TempModeCycle, SFInfo, SFInfoStress,&
            WeedStress, DeltaWeedStress, bool_determinantcroptype, bool_fertilitystresson)
 end function BiomassRatio_wrap
+
+
+subroutine StressBiomassRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,&
+            L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,&
+            GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,&
+            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,&
+            Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,&
+            CO2Given, CropDNr1, CropDeterm, CropSResp, TheCropType,&
+            TheModeCycle, b0, b1, b2, &
+            BM10, BM20, BM30, BM40, BM50, BM60, BM70)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    integer(int32), intent(in) :: WPyield
+    integer(int32), intent(in) :: RefHI
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDtranspLow
+    real(dp), intent(in) :: WPveg
+    real(dp), intent(in) :: RatedHIdt
+    real(dp), intent(in) :: CO2Given
+    integer(int32), intent(in) :: CropDNr1
+    logical(1), intent(in) :: CropDeterm
+    type(rep_Shapes), intent(in) :: CropSResp
+    integer(intEnum), intent(in) :: TheCropType
+    integer(intEnum), intent(in) :: TheModeCycle
+    real(dp), intent(inout) :: b0
+    real(dp), intent(inout) :: b1
+    real(dp), intent(inout) :: b2
+    real(dp), intent(inout) :: BM10
+    real(dp), intent(inout) :: BM20
+    real(dp), intent(inout) :: BM30
+    real(dp), intent(inout) :: BM40
+    real(dp), intent(inout) :: BM50
+    real(dp), intent(inout) :: BM60
+    real(dp), intent(inout) :: BM70
+
+    logical :: bool_cropdeterm
+ 
+    bool_cropdeterm = CropDeterm
+
+    call StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
+            L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,&
+            GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,&
+            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,&
+            Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,&
+            CO2Given, CropDNr1, bool_cropdeterm, CropSResp, TheCropType,&
+            TheModeCycle, b0, b1, b2, &
+            BM10, BM20, BM30, BM40, BM50, BM60, BM70)
+end subroutine StressBiomassRelationship_wrap
+
+
+subroutine CCxSaltStressRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,&
+       L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&
+       GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,&
+       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,&
+       Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2Given,&
+       CropDNr1, CropDeterm, TheCropType, TheModeCycle, TheCCsaltDistortion,&
+       Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
+       Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: GDDFlor
+    integer(int32), intent(in) :: GDDLengthFlor
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    integer(int32), intent(in) :: WPyield
+    integer(int32), intent(in) :: RefHI
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDbioLow
+    real(dp), intent(in) :: WPveg
+    real(dp), intent(in) :: RatedHIdt
+    real(dp), intent(in) :: CO2Given
+    integer(int32), intent(in) :: CropDNr1
+    logical(1), intent(in) :: CropDeterm
+    integer(intEnum), intent(in) :: TheCropType
+    integer(intEnum), intent(in) :: TheModeCycle
+    integer(int8), intent(in) :: TheCCsaltDistortion
+    real(dp), intent(inout) :: Coeffb0Salt
+    real(dp), intent(inout) :: Coeffb1Salt
+    real(dp), intent(inout) :: Coeffb2Salt
+    real(dp), intent(inout) :: Salt10
+    real(dp), intent(inout) :: Salt20
+    real(dp), intent(inout) :: Salt30
+    real(dp), intent(inout) :: Salt40
+    real(dp), intent(inout) :: Salt50
+    real(dp), intent(inout) :: Salt60
+    real(dp), intent(inout) :: Salt70
+    real(dp), intent(inout) :: Salt80
+    real(dp), intent(inout) :: Salt90
+
+    logical :: bool_cropdeterm
+
+    bool_cropdeterm = CropDeterm
+
+    call CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
+       L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&
+       GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,&
+       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,&
+       Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2Given,&
+       CropDNr1, bool_cropdeterm, TheCropType, TheModeCycle, TheCCsaltDistortion,&
+       Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
+       Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
+end subroutine CCxSaltStressRelationship_wrap
+
 
 end module ac_interface_tempprocessing
