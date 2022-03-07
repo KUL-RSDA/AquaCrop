@@ -2673,7 +2673,6 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     integer(int8) :: SiPr
     real(dp) :: SumKcTop, HIGC, HIGClinear
     integer(int32) :: DaysYieldFormation, tSwitch
-    integer(int8), parameter :: fortran_base = 1_int8
     real(dp) :: TDayMax_temp, TDayMin_temp
 
     ! 1. initialize
@@ -2795,13 +2794,13 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
         b1 = (SUMx1y - b2 * SUMx1x2)/SUMx1Sq
         b0 = Yavg - b1*X1avg - b2*X2avg
 
-        BM10 =  StressMatrix(1+fortran_base)%BioMProc
-        BM20 =  StressMatrix(2+fortran_base)%BioMProc
-        BM30 =  StressMatrix(3+fortran_base)%BioMProc
-        BM40 =  StressMatrix(4+fortran_base)%BioMProc
-        BM50 =  StressMatrix(5+fortran_base)%BioMProc
-        BM60 =  StressMatrix(6+fortran_base)%BioMProc
-        BM70 =  StressMatrix(7+fortran_base)%BioMProc
+        BM10 =  StressMatrix(2)%BioMProc
+        BM20 =  StressMatrix(3)%BioMProc
+        BM30 =  StressMatrix(4)%BioMProc
+        BM40 =  StressMatrix(5)%BioMProc
+        BM50 =  StressMatrix(6)%BioMProc
+        BM60 =  StressMatrix(7)%BioMProc
+        BM70 =  StressMatrix(8)%BioMProc
     else
         b2 = real(undef_int, kind=dp)
         b1 = real(undef_int, kind=dp)
@@ -2885,7 +2884,6 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp) :: RatDGDD, BNor, BNor100, BioMProc
     real(dp) :: Yavg, X1avg, X2avg, SUMx1y, SUMx2y, SUMx1Sq, &
          SUMx2Sq, SUMx1x2, y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2
-    integer(int8), parameter :: fortran_base = 1_int8
     real(dp) :: TDayMax_temp, TDayMin_temp
 
     ! 1. initialize
@@ -2960,7 +2958,7 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
         if (Si == 1) then
             BNor100 = BNor
             BioMProc = 100._dp
-            StressMatrix(0+fortran_base)%SaltProc = 0._dp
+            StressMatrix(1)%SaltProc = 0._dp
         else
             if (BNor100 > 0.00001_dp) then
                 BioMProc = 100._dp * BNor/BNor100
@@ -3016,15 +3014,15 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
         Coeffb1Salt = (SUMx1y - Coeffb2Salt * SUMx1x2)/SUMx1Sq
         Coeffb0Salt = Yavg - Coeffb1Salt*X1avg - Coeffb2Salt*X2avg
 
-        Salt10 =  StressMatrix(1+fortran_base)%SaltProc
-        Salt20 =  StressMatrix(2+fortran_base)%SaltProc
-        Salt30 =  StressMatrix(3+fortran_base)%SaltProc
-        Salt40 =  StressMatrix(4+fortran_base)%SaltProc
-        Salt50 =  StressMatrix(5+fortran_base)%SaltProc
-        Salt60 =  StressMatrix(6+fortran_base)%SaltProc
-        Salt70 =  StressMatrix(7+fortran_base)%SaltProc
-        Salt80 =  StressMatrix(8+fortran_base)%SaltProc
-        Salt90 =  StressMatrix(9+fortran_base)%SaltProc
+        Salt10 =  StressMatrix(2)%SaltProc
+        Salt20 =  StressMatrix(3)%SaltProc
+        Salt30 =  StressMatrix(4)%SaltProc
+        Salt40 =  StressMatrix(5)%SaltProc
+        Salt50 =  StressMatrix(5)%SaltProc
+        Salt60 =  StressMatrix(7)%SaltProc
+        Salt70 =  StressMatrix(8)%SaltProc
+        Salt80 =  StressMatrix(9)%SaltProc
+        Salt90 =  StressMatrix(10)%SaltProc
     else
         Coeffb2Salt = real(undef_int, kind=dp)
         Coeffb1Salt = real(undef_int, kind=dp)
