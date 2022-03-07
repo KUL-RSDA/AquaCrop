@@ -2885,7 +2885,6 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp) :: RatDGDD, BNor, BNor100, BioMProc
     real(dp) :: Yavg, X1avg, X2avg, SUMx1y, SUMx2y, SUMx1Sq, &
          SUMx2Sq, SUMx1x2, y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2
-
     integer(int8), parameter :: fortran_base = 1_int8
     real(dp) :: TDayMax_temp, TDayMin_temp
 
