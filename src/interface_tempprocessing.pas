@@ -115,17 +115,15 @@ procedure AdjustCropFileParameters(
             VAR L123,L1234,GDD123,GDD1234 : INTEGER);
          external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
-procedure BTransferPeriod_wrap(
-            constref TheDaysToCCini,TheGDDaysToCCini,
-                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
-            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
-                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
-                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
-            constref TheModeCycle : integer;
-            constref TempAssimPeriod : INTEGER;
-            constref TempAssimStored : ShortInt;
-            VAR SumBtot,SumBstored : double);
-         external 'aquacrop' name '__ac_tempprocessing_MOD_btransferperiod';
+procedure LoadSimulationRunProject(
+            constref NameFileFull : string;
+            constref NrRun : INTEGER);
+
+procedure LoadSimulationRunProject_wrap(
+            constref IrriFileFull : PChar;
+            constref strlen1 : integer;
+            constref NrRun : INTEGER);
+         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_loadsimulationrunproject_wrap';
 
 procedure BTransferPeriod(
             constref TheDaysToCCini,TheGDDaysToCCini,
@@ -138,16 +136,17 @@ procedure BTransferPeriod(
             constref TempAssimStored : ShortInt;
             VAR SumBtot,SumBstored : double);
 
-function Bnormalized_wrap(
-            constref TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;
-            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD,SumKcTop : double;
-            constref StressInPercent,StrResRedCGC,StrResRedCCx,StrResRedWP,StrResRedKsSto,WeedStress : ShortInt;
-            constref DeltaWeedStress : INTEGER;
-            constref StrResCDecline,ShapeFweed : Double;
+procedure BTransferPeriod_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini,
+                     L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,
+                     KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,
+                     Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD : double;
             constref TheModeCycle : integer;
-            constref FertilityStressOn : BOOLEAN;
-            constref TestRecord : BOOLEAN) : DOUBLE;
-         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_bnormalized_wrap';
+            constref TempAssimPeriod : INTEGER;
+            constref TempAssimStored : ShortInt;
+            VAR SumBtot,SumBstored : double);
+         external 'aquacrop' name '__ac_tempprocessing_MOD_btransferperiod';
 
 function Bnormalized(
             constref TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;
@@ -158,6 +157,17 @@ function Bnormalized(
             constref TheModeCycle : rep_modeCycle;
             constref FertilityStressOn : BOOLEAN;
             constref TestRecord : BOOLEAN) : DOUBLE;
+
+function Bnormalized_wrap(
+            constref TheDaysToCCini,TheGDDaysToCCini,L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,GDDL123,GDDL1234,WPyield,DaysYieldFormation,tSwitch : INTEGER;
+            constref CCo,CCx,CGC,GDDCGC,CDC,GDDCDC,KcTop,KcDeclAgeing,CCeffectProcent,WPbio,TheCO2,Tbase,Tupper,TDayMin,TDayMax,GDtranspLow,RatDGDD,SumKcTop : double;
+            constref StressInPercent,StrResRedCGC,StrResRedCCx,StrResRedWP,StrResRedKsSto,WeedStress : ShortInt;
+            constref DeltaWeedStress : INTEGER;
+            constref StrResCDecline,ShapeFweed : Double;
+            constref TheModeCycle : integer;
+            constref FertilityStressOn : BOOLEAN;
+            constref TestRecord : BOOLEAN) : DOUBLE;
+         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_bnormalized_wrap';
 
 function  BiomassRatio_wrap(
             constref TempDaysToCCini,TempGDDaysToCCini : INTEGER;
@@ -188,6 +198,18 @@ function  BiomassRatio(
 
 implementation
 
+
+procedure LoadSimulationRunProject(
+            constref NameFileFull : string;
+            constref NrRun : INTEGER);
+var
+    p1 : PChar;
+    strlen1: integer;
+begin;
+    p1 := PChar(NameFileFull);
+    strlen1 := Length(NameFileFull);
+    LoadSimulationRunProject_wrap(p1, strlen1, NrRun);
+end;
 
 procedure BTransferPeriod(
             constref TheDaysToCCini,TheGDDaysToCCini,

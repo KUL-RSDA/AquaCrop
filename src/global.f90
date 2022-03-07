@@ -974,6 +974,8 @@ integer(int32) :: DaySubmerged
 integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
+real(dp) ::  SurfaceStorage !mm/day
+real(dp) ::  ECstorage !EC surface storage dS/m
 integer(int32) :: ZiAqua ! Depth of Groundwater table below
                          ! soil surface in centimeter 
 
@@ -5805,7 +5807,14 @@ subroutine LoadOffSeason(FullName)
     integer(int8) :: TempShortInt, simul_irri_of
     character(len=1025) :: OffSeasonDescr_temp
 
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    logical :: file_exists
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    else
+        write(*,*) 'LoadOffSeason file not found'
+    end if
     read(fhandle, *) OffSeasonDescr_temp
     call SetOffSeasonDescription(trim(OffSeasonDescr_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
@@ -5963,8 +5972,16 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
     integer :: fhandle
     integer(int32) :: Ni, rc
 
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
+    logical :: file_exists
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
         iostat=rc)
+    else
+        write(*,*) 'Climate file not found'
+    end if
+
     read(fhandle, *, iostat=rc) ClimateDescription
     read(fhandle, *, iostat=rc) Ni
     if (Ni == 1) then
@@ -6004,13 +6021,21 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
     real(dp) :: DayDouble, Z1, EC1, Z2, EC2, ZN, ECN
     logical :: TheEnd 
 
+    logical :: file_exists
+
     AtDayNr_local = AtDayNr
     ! initialize
     TheEnd = .false.
     Year1Gwt = 1901
     DayNr1 = 1
     DayNr2 = 1
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    else
+        write(*,*) 'Groundwater file not found'
+    end if
     read(fhandle, *) GroundWaterDescription
     read(fhandle, *) ! AquaCrop Version
 
@@ -12123,6 +12148,13 @@ integer(int32) function GetTemperatureRecord_NrObs()
     GetTemperatureRecord_NrObs = TemperatureRecord%NrObs
 end function GetTemperatureRecord_NrObs
 
+subroutine SetTemperatureRecord(rec_in)
+    !! Setter for the "TemperatureRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    TemperatureRecord = rec_in
+end subroutine SetTemperatureRecord
+
 subroutine SetTemperatureRecord_DataType(DataType)
     !! Setter for the "TemperatureRecord" global variable.
     integer(intEnum), intent(in) :: DataType
@@ -12574,6 +12606,13 @@ integer(int32) function GetRainRecord_NrObs()
     GetRainRecord_NrObs = RainRecord%NrObs
 end function GetRainRecord_NrObs
 
+subroutine SetRainRecord(rec_in)
+    !! Setter for the "RainRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    RainRecord = rec_in
+end subroutine SetRainRecord
+
 subroutine SetRainRecord_DataType(DataType)
     !! Setter for the "RainRecord" global variable.
     integer(intEnum), intent(in) :: DataType
@@ -12737,6 +12776,13 @@ integer(int32) function GetEToRecord_NrObs()
 
     GetEToRecord_NrObs = EToRecord%NrObs
 end function GetEToRecord_NrObs
+
+subroutine SetEToRecord(rec_in)
+    !! Setter for the "EToRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    EToRecord = rec_in
+end subroutine SetEToRecord
 
 subroutine SetEToRecord_DataType(DataType)
     !! Setter for the "EToRecord" global variable.
@@ -14269,6 +14315,32 @@ subroutine SetRunoff(Runoff_in)
 
     Runoff = Runoff_in
 end subroutine SetRunoff
+
+real(dp) function GetSurfaceStorage()
+    !! Getter for the "SurfaceStorage" global variable.
+    !! mm/day
+    GetSurfaceStorage = SurfaceStorage
+end function GetSurfaceStorage
+
+subroutine SetSurfaceStorage(SurfaceStorage_in)
+    !! Setter for the "SurfaceStorage" global variable.
+    real(dp), intent(in) :: SurfaceStorage_in
+
+    SurfaceStorage = SurfaceStorage_in
+end subroutine SetSurfaceStorage
+
+real(dp) function GetECstorage()
+    !! Getter for the "ECstorage" global variable.
+    !! * EC surface storage dS/m *
+    GetECstorage = ECstorage
+end function GetECstorage
+
+subroutine SetECstorage(ECstorage_in)
+    !! Setter for the "ECstorage" global variable.
+    real(dp), intent(in) :: ECstorage_in
+
+    ECstorage = ECstorage_in
+end subroutine SetECstorage
 
 function GetOffSeasonDescription() result(str)
     !! Getter for the "OffSeasonDescription" global variable.

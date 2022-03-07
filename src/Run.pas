@@ -1828,8 +1828,8 @@ CGCadjustmentAfterCutting := false;
 // 19. Labels, Plots and displays
 IF (GetManagement_BundHeight() < 0.01) THEN
    BEGIN
-   SurfaceStorage := 0;
-   ECStorage := 0;
+   SetSurfaceStorage(0);
+   SetECStorage(0);
    END;
 IF (RootingDepth > 0) THEN // salinity in root zone
    BEGIN
@@ -2132,9 +2132,9 @@ IF Out1Wabal THEN
    BEGIN
    IF (GetZiAqua() = undef_int)
       THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
-               SurfaceStorage:7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,undef_double:8:2)
+               GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,undef_double:8:2)
       ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
-               SurfaceStorage:7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
+               GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
    IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
                  ELSE Ratio1 := 100.0;
    IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(Eact+Tact)/(GetEpot()+GetTpot())
@@ -2560,7 +2560,7 @@ VAR RepeatToDay : LongInt;
                               IF  ((GetManagement_BundHeight() >= 0.01)
                                AND (GetGenerateDepthMode() = FixDepth)
                                AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
-                               AND (TargetTimeVal >= ROUND(SurfaceStorage)))
+                               AND (TargetTimeVal >= ROUND(GetSurfaceStorage())))
                                    THEN SetIrrigation(TargetDepthVal)
                                    ELSE SetIrrigation(0);
                               TargetTimeVal := -999; // no need for check in SIMUL
