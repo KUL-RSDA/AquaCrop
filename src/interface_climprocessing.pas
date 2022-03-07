@@ -24,21 +24,6 @@ procedure GetInterpolationParameters(
             var aOver3, bOver2, c : double);
          external 'aquacrop' name '__ac_climprocessing_MOD_getinterpolationparameters';
 
-procedure GetMonthlyEToDataSet(constref DayNri : LongInt;
-                               VAR EToDataSet : rep_SimulationEventsDbl);
-         external 'aquacrop' name '__ac_climprocessing_MOD_getmonthlyetodataset';
-
-procedure GetDecadeEToDataSet(constref DayNri : LongInt;
-                              VAR EToDataSet : rep_SimulationEventsDbl);
-         external 'aquacrop' name '__ac_climprocessing_MOD_getdecadeetodataset';
-
-procedure GetDecadeRainDataSet(constref DayNri : LongInt;
-                               VAR RainDataSet : rep_SimulationEventsDbl);
-         external 'aquacrop' name '__ac_climprocessing_MOD_getdecaderaindataset';
-
-procedure GetMonthlyRainDataSet(constref DayNri : LongInt;
-                                VAR RainDataSet : rep_SimulationEventsDbl);
-         external 'aquacrop' name '__ac_climprocessing_MOD_getmonthlyraindataset';
 
 implementation
 
