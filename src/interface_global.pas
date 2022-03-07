@@ -4211,6 +4211,7 @@ function GetRunoff() : double;
 procedure SetRunoff(constref Runoff_in : double);
     external 'aquacrop' name '__ac_global_MOD_setrunoff';
 
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
@@ -4220,7 +4221,6 @@ procedure AdjustOnsetSearchPeriod;
 
 function ActiveCells(constref Comp : CompartmentIndividual) : integer;
     external 'aquacrop' name '__ac_global_MOD_activecells';
-
 
 procedure DetermineSaltContent(constref ECe : double;
                                var Comp : CompartmentIndividual);

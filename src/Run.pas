@@ -2,7 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing;
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_simul;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -914,6 +914,7 @@ PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
 VAR totalname : string;
     i : LongInt;
     tmpRain, ETo_temp : double;
+
 BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
@@ -2399,7 +2400,7 @@ VAR RepeatToDay : LongInt;
     FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
     GwTable_temp : rep_GwTable;
     Store_temp, Mobilize_temp : boolean;
-    ToMobilize_temp, Bmobilized_temp : double;
+    ToMobilize_temp, Bmobilized_temp, ETo_tmp : double;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
     ZiAqua_temp : integer;
@@ -2682,6 +2683,7 @@ VAR RepeatToDay : LongInt;
 
 BEGIN (* FileManagement *)
 RepeatToDay := GetSimulation_ToDayNr();
+
 
 REPEAT
 (* 1. Get ETo *)
@@ -3068,11 +3070,11 @@ IF (GetSimulation_SumEToStress() >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= GetSimulation_ToDayNr()) THEN
    BEGIN
-   IF (GetEToFile() <> '(None)') THEN 
-            BEGIN 
-            READLN(fEToSIM,ETo_temp);
-            SetETo(ETo_temp);
-            END;
+   IF (GetEToFile() <> '(None)') THEN
+        BEGIN
+        READLN(fEToSIM,ETo_tmp);
+        SetETo(Eto_tmp);
+        END;
    IF (GetRainFile() <> '(None)') THEN
    BEGIN
       READLN(fRainSIM,tmpRain);
