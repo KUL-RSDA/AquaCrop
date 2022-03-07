@@ -2723,7 +2723,7 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
                                  TDayMin_temp, TDayMax_temp)
             end if
             if ((TheModeCycle == modeCycle_GDDays) .and. (GDDL12SF < GDDL123)) then
-                RatDGDD = (L123-L12SF)*1._dp/real(GDDL123-GDDL12SF, kind=dp)
+                RatDGDD = (L123-L12SF)*1._dp/(GDDL123-GDDL12SF)
             end if
         end if
         ! biomass production
