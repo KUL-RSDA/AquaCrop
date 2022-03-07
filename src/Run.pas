@@ -2,7 +2,10 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_simul;
+
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing,
+     interface_climprocessing, interface_simul;
+
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -77,7 +80,7 @@ WRITELN(fRun,'    RunNr     Day1   Month1    Year1     Rain      ETo       GD   
              '    SaltIn   SaltOut    SaltUp  SaltProf',
              '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr',
              '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-WRITELN(fRun,'                                           mm       mm    캜.day    ppm',
+WRITELN(fRun,'                                           mm       mm    째C.day    ppm',
              '        mm       mm       mm       mm       mm       mm        %       mm       mm        %',
              '    ton/ha    ton/ha    ton/ha    ton/ha',
              '      days       %        %        %        %        %        %  ',
@@ -224,9 +227,9 @@ IF Out1Wabal THEN
 IF Out2Crop THEN
    BEGIN
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      THEN WRITE(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha')
-      ELSE WRITELN(fDaily,'    캜-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      ELSE WRITELN(fDaily,'    째C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
    END;
 // D3. Profile/Root zone - Soil water content
@@ -274,7 +277,7 @@ IF Out6CompEC THEN
       ELSE WRITELN(fDaily,NodeD:11:2);
    END;
 // D7. Climate input parameters
-IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       캜        캜        캜       ppm');
+IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       째C        째C        째C       ppm');
 END; (* WriteTitleDailyResults *)
 
 
