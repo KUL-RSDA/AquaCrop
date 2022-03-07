@@ -4,9 +4,6 @@ interface
 
 uses Global, interface_global, Math, TempProcessing, interface_tempprocessing, interface_simul;
 
-PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
-                                    SumGDDadjCC,CO2i,GDDayi : double;
-                                    VAR CCxWitheredTpotNoS,BiomassUnlim : double);
 
 PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    ETo,TminOnDay,TmaxOnDay,CO2i,GDDayi,Tact,SumKcTop,
@@ -37,62 +34,6 @@ PROCEDURE BUDGET_module(dayi : LongInt;
 
 implementation
 
-
-PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
-                                    SumGDDadjCC,CO2i,GDDayi : double;
-                                    VAR CCxWitheredTpotNoS,BiomassUnlim : double);
-VAR CCiPot,TpotForB,EpotTotForB,WPi,fSwitch : double;
-    DAP,DaysYieldFormation,DayiAfterFlowering : INTEGER;
-
-BEGIN   // potential biomass - unlimited soil fertiltiy
-// 1. - CCi
-CCiPot := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
-             GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-             GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-             GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().CDC,GetCrop().GDDCGC,GetCrop().GDDCDC,
-             SumGDDadjCC,GetCrop().ModeCycle,
-             (0),(0));
-IF (CCiPot < 0) THEN CCiPot := 0;
-IF (CCiPot > CCxWitheredTpotNoS) THEN CCxWitheredTpotNoS := CCiPot;
-
-// 2. - Calculation of Tpot
-IF (GetCrop_ModeCycle() = Calendardays)
-   THEN DAP := VirtualTimeCC
-   ELSE BEGIN // growing degree days
-        DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                               GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
-        DAP := DAP + GetSimulation_DelayedDays(); // are not considered when working with GDDays
-        END;
-CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
-               GetCrop().DaysToHarvest,(0),CCiPot,GetETo(),GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCx,CCxWitheredTpotNoS,GetCrop().CCEffectEvapLate,
-               //GetCrop().DaysToHarvest,CCiPot,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,
-               CO2i,GDDayi,GetCrop().GDtranspLow,TpotForB,EpotTotForB);
-
-// 3. - WPi for that day
-// 3a - given WPi
-WPi := (GetCrop().WP/100);
-// 3b - WPi decline in reproductive stage  (works with calendar days)
-IF (((GetCrop_subkind() = Grain) OR (GetCrop_subkind() = Tuber))
-    AND (GetCrop().WPy < 100) AND (GetCrop().dHIdt > 0)
-    AND (VirtualTimeCC >= GetCrop().DaysToFlowering)) THEN
-  BEGIN
-  // WPi in reproductive stage
-  fSwitch := 1;
-  DaysYieldFormation := ROUND(GetCrop().HI/GetCrop().dHIdt);
-  DayiAfterFlowering := VirtualTimeCC - GetCrop().DaysToFlowering;
-  IF ((DaysYieldFormation > 0) AND (DayiAfterFlowering < (DaysYieldFormation/3)))
-     THEN fSwitch := DayiAfterFlowering/(DaysYieldFormation/3);
-  WPi :=  WPi * (1 - (1-GetCrop().WPy/100)*fSwitch)
-  END;
-// 3c - adjustment WPi for CO2
-IF ROUND(100*CO2i) <> ROUND(100*CO2Ref) THEN
-   WPi := WPi * fAdjustedForCO2(CO2i,GetCrop().WP,GetCrop().AdaptedToCO2);
-
-// 4. - Potential Biomass
-IF (GetETo() > 0) THEN BiomassUnlim := BiomassUnlim + WPi * TpotForB/GetETo(); (* ton/ha*)
-//BiomassUnlim := BiomassUnlim + Bin - Bout; // correction for transferred assimilates
-
-END; (* DeterminePotentialBiomass *)
 
 
 PROCEDURE AdjustpStomatalToETo(MeanETo : double;
@@ -3008,7 +2949,7 @@ FOR i := 1 TO NrOfStepsInDay DO
           Wrel := (Wact-Wlower)/(Wupper-Wlower);
           END;
     Kr := SoilEvaporationReductionCoefficient(Wrel,GetSimulParam_EvapDeclineFactor());
-    IF (Abs(GetETo() - 5) > 0.01) THEN // correction for evaporative demand
+    IF (Abs(getETo() - 5) > 0.01) THEN // correction for evaporative demand
        BEGIN
        // adjustment of Kr (not considered yet)
        END;
