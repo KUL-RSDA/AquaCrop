@@ -1,5 +1,10 @@
 module ac_interface_tempprocessing
 
+use, intrinsic :: iso_c_binding, only: c_f_pointer, &
+                                       c_loc, &
+                                       c_null_char, &
+                                       c_ptr
+
 use ac_kinds,  only: dp, &
                      int8, &
                      int16, &
@@ -10,7 +15,13 @@ use ac_global, only: rep_EffectStress, rep_Shapes
 
 use ac_tempprocessing, only: Bnormalized, BiomassRatio,&
                              StressBiomassRelationship, &
-                             CCxSaltStressRelationship
+                             CCxSaltStressRelationship, &
+                             LoadSimulationRunProject
+
+use ac_interface_global, only: pointer2string
+
+use ac_global, only: rep_EffectStress
+
 
 implicit none
 
@@ -98,6 +109,17 @@ real(dp) function Bnormalized_wrap(&
             bool_testrecord)
 end function Bnormalized_wrap
 
+subroutine LoadSimulationRunProject_wrap(NameFileFull, strlen, NrRun)
+    !! Wrapper
+    type(c_ptr), intent(in) :: NameFileFull
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: NrRun
+
+    character(len=strlen) :: string
+
+    string = pointer2string(NameFileFull, strlen)
+    call LoadSimulationRunProject(string, NrRun)
+end subroutine LoadSimulationRunProject_wrap
 
 real(dp) function BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,&
            TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
