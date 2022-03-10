@@ -7,7 +7,7 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
      interface_climprocessing, interface_simul;
 
 
-PROCEDURE RunSimulation(TheProjectFile : string;
+PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 
 
@@ -43,6 +43,7 @@ var  fRun, fDaily, fHarvest, fEval : text;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      StressLeaf,StressSenescence : double;   // % stress for leaf expansion and senescence
      TargetTimeVal, TargetDepthVal : Integer;
+     TheProjectFile : string;
 
      // DelayedGermination
      NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
@@ -2387,9 +2388,7 @@ END; (* WriteEvaluationData *)
 // WRITING RESULTS section ================================================= END ====================
 
 
-PROCEDURE AdvanceOneTimeStep(TheProjectFile : string;
-                         VAR fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts : text;
-                         VAR DayNri : LongInt);
+PROCEDURE AdvanceOneTimeStep();
 
 VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     HarvestNow : BOOLEAN;
@@ -3137,7 +3136,7 @@ RepeatToDay := GetSimulation_ToDayNr();
 
 REPEAT
 
-  AdvanceOneTimeStep(TheProjectFile,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts,DayNri)
+  AdvanceOneTimeStep()
 
 UNTIL ((DayNri-1) = RepeatToDay);  // END REPEAT
 
@@ -3174,7 +3173,7 @@ END; (* FileManagement *)
 
 
 
-PROCEDURE RunSimulation(TheProjectFile : string;
+PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 VAR NrRun : ShortInt;
     SumWaBal_temp : rep_sum;
@@ -3265,6 +3264,7 @@ VAR NrRun : ShortInt;
 
 
 BEGIN (* RunSimulation *)
+TheProjectFile := TheProjectFile_;
 OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
 IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
 IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
