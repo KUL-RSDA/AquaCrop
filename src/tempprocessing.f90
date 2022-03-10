@@ -16,6 +16,10 @@ use ac_global , only: undef_int, &
                       rep_DayEventDbl, &
                       rep_CropFileSet, &
                       rep_EffectStress, &
+                      rep_Shapes, &
+                      rep_clim, &
+                      max_No_compartments, &
+                      CompartmentIndividual, &
                       subkind_Vegetative, &
                       subkind_Grain, &
                       subkind_Tuber, &
@@ -28,19 +32,65 @@ use ac_global , only: undef_int, &
                       CanopyCoverNoStressSF, &
                       DetermineDayNr, &
                       DetermineDate, &
+                      ECeComp, &
+                      GetDaySwitchToLinear, &
+                      HarvestIndexGrowthCoefficient, &
                       LeapYear, &
+                      SeasonalSumOfKcPot, &
                       SplitStringInTwoParams, &
                       KsTemperature, &
                       DegreesDay, &
                       LengthCanopyDecline, &
                       DetermineLengthGrowthStages, &
+                      AdjustSizeCompartments, &
+                      AdjustOnsetSearchPeriod, &
+                      adjustcropyeartoclimfile, &
+                      GenerateCO2Description, &
+                      LoadProfile,&
+                      LoadClim, &
+                      LoadIrriScheduleInfo,&
+                      LoadManagement, &
+                      GetECiAqua,&
+                      SetECiAqua,&
+                      GetECStorage,&
+                      GetSurfaceStorage,&
+                      SetSurfaceStorage, &
+                      GetNrCompartments, &
+                      GetManagement_FertilityStress, &
                       CanopyCoverNoStressSF, &
                       CCmultiplierWeed, &
                       CCiNoWaterStressSF, &
                       CalculateETpot, &
+                      CalculateAdjustedFC, &
                       GetPathNameSimul, &
                       GetTemperatureFile, &                     
                       GetTemperatureFilefull, &
+                      GetTemperatureDescription, &
+                      GetEToFile, GetEToFilefull, &
+                      GetEToDescription,&
+                      GetEToRecord, &
+                      GetRainFile, GetRainFileFull,&
+                      Getraindescription,&
+                      GetCO2File, GetCO2FileFull,&
+                      GetCO2Description,&
+                      GetClimFile,&
+                      GetIrriFile, GetIrriFileFull,&
+                      GetManFile, GetManFilefull,&
+                      GetProfFile, GetProfFilefull,&
+                      GetOffSeasonFile, GetOffSeasonFilefull,&
+                      GetGroundWaterFile, GetGroundWaterFilefull,&
+                      GetObservationsFile,&
+                      GetObservationsDescription,&
+                      GetObservationsFileFull,&
+                      GetCompartment_Thickness, &
+                      GetCompartment_Theta, &
+                      GetCompartment_i, &
+                      GetZiAqua, &
+                      GetManagement_BundHeight, &
+                      GetRainRecord, &
+                      GetClimRecord_NrObs, &
+                      GetClimRecord_FromY, &
+                      GetTemperatureRecord, &
                       GetTemperatureRecord_FromD, &
                       GetTemperatureRecord_FromM, &
                       GetTemperatureRecord_FromY, &
@@ -52,7 +102,24 @@ use ac_global , only: undef_int, &
                       GetTemperatureRecord_FromDayNr, &
                       GetTemperatureRecord_ToDayNr, &
                       GetSimulParam_GDDMethod, &
+                      GetCalendarFile, GetCalendarFileFull,&
+                      GetCalendarDescription, &
+                      GetCropFilefull,&
+                      GetCrop_RootMin,&
+                      GetCrop_SizePlant,&
+                      SetRainFile,SetManFile,&
+                      SetIrriFileFull,&
                       FullUndefinedRecord, &
+                      SetEToFile, SetEToFilefull, &
+                      SetObservationsFileFull, &
+                      SetProfFilefull,&
+                      SetGroundWaterFilefull,&
+                      SetTemperatureFileFull,&
+                      SetCO2FileFull,&
+                      SetSimulation_ECStorageIni,&
+                      SetCrop_Planting,&
+                      GetCrop_SownYear1, &
+                      SetCrop_DayN, &
                       SetCrop_GDDaysToFullCanopy, &
                       SetCrop_GDDaysToHIo, &
                       SetCrop_DaysToHarvest, &
@@ -67,6 +134,23 @@ use ac_global , only: undef_int, &
                       SetCrop_DaysToMaxRooting, &
                       SetCrop_CGC, &
                       SetCrop_DaysToFlowering, &
+                      SetCrop_GDDaysToHarvest, &
+                      SetSWCIniFile, SetSWCIniFileFull,&
+                      SetTemperatureDescription,&
+                      SetZiAqua, &
+                      SetGroundWaterDescription, &
+                      SetClimateFileFull, &
+                      SetSimulation_LinkCropToSimPeriod, &
+                      SetRainFilefull, &
+                      SetCalendarFileFull, &
+                      SetManFileFull, &
+                      GetCropFileSet, &
+                      GetSimulation_EffectStress_RedCGC, &
+                      GetSimulation_EffectStress_RedCCX, &
+                      GetCrop_PlantingDens, &
+                      GetCrop_SizeSeedling, &
+                      GetCrop_DaysToFullCanopySF, &
+                      GetCrop_DayN,GetCrop_Day1, &
                       SetSimulation_DelayedDays, &
                       SetSimulation_DelayedDays, &
                       GetCrop_GDDaysToGermination, &
@@ -94,11 +178,98 @@ use ac_global , only: undef_int, &
                       GetCrop_ModeCycle, &
                       GetCrop_Tbase, & 
                       GetCrop_Tupper, &
+                      GetCrop_Planting, &
+                      GetCrop_CCini, &
+                      GetCrop_GDDaysToCCini, &
+                      GetCrop_DeterminancyLinked, &
+                      GetCrop_RootMax, &
+                      GetSoil_RootMax, &
+                      GetCrop_RootMinYear1, &
+                      GetCompartment,&
+                      GetSimulParam_Tmin, GetSimulParam_Tmax,&
+                      GetSimulation_ResetIniSWC,&
+                      GetSimulation_MultipleRunWithKeepSWC,&
+                      GetSimulation_MultipleRunConstZrx,&
+                      GetSimulation_ToDayNr, &
+                      GetSimulation_FromDayNr,&
+                      GetSimulation_YearSeason, &
+                      GetSimulation_IniSWC_NrLoc, &
+                      GetSimulation_IniSWC_AtDepths, &
+                      GetSimulation_IniSWC_Loc, &
+                      GetSimulation_IniSWC_VolProc, &
+                      GetSimulation_IniSWC_SaltECe, &
+                      GetSimulation_IniSWC_AtFC, &
+                      GetSWCIniFile, GetSWCiniFileFull, &
+                      GetClimateFile, GetClimateFileFull, &
                       GetSimulParam_Tmin, GetSimulParam_Tmax, &
                       SetSimulation_DelayedDays,&
                       GetManagement_WeedAdj, &
                       GetSimulParam_Tmin, GetSimulParam_Tmax,&
-                      GetWeedRC
+                      GetWeedRC, &
+                      DaysToReachCCwithGivenCGC, &
+                      timetomaxcanopysf, &
+                      cropstressparameterssoilfertility,&
+                      GetCropFile, &
+                      setclimatedescription,&
+                      setoffseasonfilefull,&
+                      settemperaturefile,&
+                      setirrifile,&
+                      loadoffseason,&
+                      setco2description,&
+                      setco2file,&
+                      setoffseasonfile,&
+                      completecropdescription,&
+                      completeprofiledescription,&
+                      setcrop_rootmin,&
+                      setetodescription,&
+                      setcrop_gddaystoccini,&
+                      loadinitialconditions,&
+                      timetomaxcanopysf,&
+                      setsimulation_fromdaynr,&
+                      resetswctofc,&
+                      setsimulparam_constgwt,&
+                      setclimdata,&
+                      setcrop_gddaystosenescence,&
+                      setobservationsfile,&
+                      setmanagement_fertilitystress,&
+                      setcalendardescription,&
+                      setcropfile,&
+                      adjustyearperennials,&
+                      completeclimatedescription,&
+                      settemperaturerecord,&
+                      setcrop_daystoccini,&
+                      setetorecord,&
+                      setcrop_day1,&
+                      setcrop_sizeplant,&
+                      adjustsimperiod,&
+                      setswcinidescription,&
+                      setsimulation_yearseason,&
+                      setsimulation_effectstress_redcgc,&
+                      setproffile,&
+                      loadgroundwater,&
+                      setcrop_daystofullcanopysf,&
+                      setcropfilefull,&
+                      setoffseasondescription,&
+                      setcompartment,&
+                      setmandescription,&
+                      setraindescription,&
+                      setsimulation_eceini_i,&
+                      setclimatefile,&
+                      setrainrecord,&
+                      setobservationsdescription,&
+                      adjustclimrecordto,&
+                      loadcrop,&
+                      setsimulation_todaynr,&
+                      noirrigation,&
+                      setsimulation_thetaini_i,&
+                      translateinilayerstoswprofile,&
+                      setsimulation_effectstress_redccx,&
+                      setcalendarfile,&
+                      setcrop_ccini,&
+                      setgroundwaterfile,&
+                      setsimulation_surfacestorageini,&
+                      translateinipointstoswprofile
+
 
 implicit none
 
@@ -1886,6 +2057,484 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
 end subroutine AdjustCropFileParameters
 
 
+subroutine LoadSimulationRunProject(NameFileFull, NrRun)
+    character(len=*), intent(in) :: NameFileFull
+    integer(int32), intent(in) :: NrRun
+
+    integer(int32) :: f0, fClim, rc
+    character(len=1025) :: TempString, TempString1, TempString2
+    character(len=1025) :: observations_descr, eto_descr
+    character(len=1025) :: CO2descr, rain_descr
+    character(len=1025) :: CalendarDescriptionLocal
+    character(len=1025) :: TemperatureDescriptionLocal
+
+    integer(int32) :: TempSimDayNr1, TempSimDayNrN
+    integer(int32) :: i, Runi
+    real(dp) :: TotDepth
+    real(dp) :: VersionNr
+    integer(int8)  :: FertStress
+    type(rep_clim) :: temperature_record
+    integer(int8)  :: YearSeason_temp, RedCGC_temp, RedCCX_temp
+    type(CompartmentIndividual), dimension(max_No_compartments) :: &
+                      Compartment_temp
+    integer(int32) :: TempInt
+    integer(intEnum) :: Crop_Planting_temp
+    real(dp) :: Crop_RootMin_temp, Crop_SizePlant_temp, Crop_CCini_temp
+    integer(int32) :: Crop_DaysToCCini_temp, Crop_GDDaysToCCini_temp
+    integer(int32) :: Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp
+    integer(int32) :: Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp
+    integer(int32) :: Crop_Day1_temp
+    integer(int32) :: Crop_DayN_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+
+    integer(int32) :: ZiAqua_temp
+    type(rep_clim) :: etorecord_tmp, rainrecord_tmp
+    real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
+
+    open(newunit=f0, file=trim(NameFileFull), &
+              status='old', action='read', iostat=rc)
+    read(f0, *, iostat=rc) !Description
+    read(f0, *, iostat=rc) VersionNr ! AquaCrop version Nr
+    if (NrRun > 1) then
+        ! Files previous runs
+        do Runi = 1, (NrRun - 1)
+            do i = 1, 47
+                read(f0, *, iostat=rc) ! 5 + 42 lines with files
+            end do
+        end do
+    end if
+
+    ! Year of cultivation and Simulation and Cropping period
+    read(f0, *, iostat=rc) YearSeason_temp ! year number of cultivation 
+                                           !(1 = seeding/planting year)
+    call SetSimulation_YearSeason(YearSeason_temp);
+    read(f0, *, iostat=rc) TempSimDayNr1 ! First day of simulation period
+    read(f0, *, iostat=rc) TempSimDayNrN ! Last day of simulation period
+    read(f0, *, iostat=rc) TempInt       ! First day of cropping period
+    call SetCrop_Day1(TempInt)
+    read(f0, *, iostat=rc) TempInt ! Last day of cropping period
+    call SetCrop_DayN(TempInt)
+
+    ! 1. Climate
+    read(f0, *, iostat=rc)  ! Info Climate
+    read(f0, *, iostat=rc) TempString  ! ClimateFile
+    call SetClimateFile(trim(TempString))
+    if (GetClimateFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathClimateFile
+        call SetClimateFileFull(GetClimateFile())
+    else
+        read(f0, *, iostat=rc) TempString  ! PathClimateFile
+        call SetClimateFileFull((trim(TempString)//GetClimateFile()))
+        open(newunit=fClim, file=trim(GetClimateFileFull()), &
+              status='old', action='read', iostat=rc)
+        ! 1.0 Description
+        read(fClim, *, iostat=rc) TempString
+        call SetClimateDescription(trim(TempString))
+        close(fClim)
+    end if
+
+    ! 1.1 Temperature
+    read(f0, *, iostat=rc)  ! Info Temperature
+    read(f0, *, iostat=rc) TempString  ! TemperatureFile
+    call SetTemperatureFile(trim(TempString))
+    if (GetTemperatureFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathTemperatureFile
+        call SetTemperatureFilefull(GetTemperatureFile())  ! no file 
+        write(TempString1,'(f8.1)') GetSimulParam_Tmin()
+        write(TempString2,'(f8.1)') GetSimulParam_Tmax()
+        call SetTemperatureDescription(('Default temperature data: Tmin = '// &
+          trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' deg'))
+    else
+        read(f0, *, iostat=rc) TempString ! PathTemperatureFile
+        call SetTemperatureFileFull(trim(TempString)//trim(GetTemperatureFile()))
+        temperature_record = GetTemperatureRecord()
+        TemperatureDescriptionLocal = GetTemperatureDescription()
+        call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
+                       temperature_record) 
+        call SetTemperatureDescription(TemperatureDescriptionLocal)
+        call CompleteClimateDescription(temperature_record)
+        call SetTemperatureRecord(temperature_record)
+    end if
+
+    ! 1.2 ETo
+    read(f0, *, iostat=rc) ! Info ETo
+    read(f0, *, iostat=rc) TempString  ! EToFile
+    call SetEToFile(trim(TempString))
+    if (GetEToFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathETo
+        call SetEToFilefull(GetEToFile())  ! no file 
+        call SetEToDescription('Specify ETo data when Running AquaCrop')
+    else
+        read(f0,* , iostat=rc) TempString  ! PathETo
+        call SetEToFilefull((trim(TempString)//GetEToFile()))
+        eto_descr = GetEToDescription()
+        etorecord_tmp = GetEToRecord()
+        call LoadClim(GetEToFilefull(), eto_descr, etorecord_tmp)
+        call SetEToDescription(eto_descr)
+        call CompleteClimateDescription(etorecord_tmp)
+        call SetEToRecord(etorecord_tmp)
+    end if
+
+    ! 1.3 Rain
+    read(f0, *, iostat=rc) ! Info Rain
+    read(f0, *, iostat=rc) TempString ! RainFile
+    call SetRainFile(trim(TempString))
+    if (GetRainFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathRain
+        call SetRainFilefull(GetRainFile())  ! no file 
+        call SetRainDescription('Specify Rain data when Running AquaCrop')
+    else
+        read(f0, *, iostat=rc) TempString  ! PathRain
+        call SetRainFileFull(trim(TempString)// GetRainFile())
+        rain_descr = Getraindescription()
+        rainrecord_tmp = GetRainRecord() 
+        call LoadClim(GetRainFilefull(), rain_descr, rainrecord_tmp)
+        call SetRainDescription(rain_descr)
+        call CompleteClimateDescription(rainrecord_tmp)
+        call SetRainRecord(rainrecord_tmp)
+    end if
+
+    ! 1.4 CO2
+    read(f0, *, iostat=rc) ! Info CO2
+    read(f0, *, iostat=rc) TempString ! CO2File
+    call SetCO2File(trim(TempString))
+    if (GetCO2File() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathCO2File
+    else
+        read(f0, *, iostat=rc) TempString  ! PathCO2File
+        call SetCO2FileFull(trim(TempString)// GetCO2File())
+        CO2descr =  GetCO2Description()
+        call GenerateCO2Description(GetCO2FileFull(), CO2descr)
+        call SetCO2Description(CO2descr)
+    end if
+    call SetClimData
+    call AdjustOnsetSearchPeriod ! Set initial StartSearch and StopSearchDayNr
+
+    ! 2. Calendar
+    read(f0, *, iostat=rc)  ! Info calendar
+    read(f0, *, iostat=rc) TempString ! CalendarFile
+    call SetCalendarFile(trim(TempString))
+    if (GetCalendarFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathCalendarFile
+        call SetCalendarDescription('No calendar for the Seeding/Planting year')
+    else
+        read(f0, *, iostat=rc) TempString  ! PathCalendarFile
+        call SetCalendarFileFull(trim(TempString)//GetCalendarFile())
+        CalendarDescriptionLocal = GetCalendarDescription()
+        call GetFileDescription(GetCalendarFileFull(), CalendarDescriptionLocal)
+        call SetCalendarDescription(CalendarDescriptionLocal)
+    end if
+
+    ! 3. Crop
+    call SetSimulation_LinkCropToSimPeriod(.true.)
+    read(f0, *, iostat=rc)  ! Info Crop
+    read(f0, *, iostat=rc) TempString  ! CropFile
+    call SetCropFile(trim(TempString))
+    read(f0, *, iostat=rc) TempString  ! PathCropFile
+    call SetCropFilefull(trim(TempString)//GetCropFile())
+    call LoadCrop(GetCropFilefull())
+    ! Adjust crop parameters of Perennials
+    if (GetCrop_subkind() == subkind_Forage) then
+        ! adjust crop characteristics to the Year (Seeding/Planting or
+        ! Non-seesing/Planting year)
+        Crop_Planting_temp = GetCrop_Planting()
+        Crop_RootMin_temp = GetCrop_RootMin()
+        Crop_SizePlant_temp = GetCrop_SizePlant()
+        Crop_CCini_temp = GetCrop_CCini()
+        Crop_DaysToCCini_temp = GetCrop_DaysToCCini()
+        Crop_GDDaysToCCini_temp = GetCrop_GDDaysToCCini()
+        call AdjustYearPerennials(GetSimulation_YearSeason(),&
+              GetCrop_SownYear1(), GetCrop_ModeCycle(), &
+              GetCrop_RootMax(), GetCrop_RootMinYear1(), &
+              GetCrop_CCo(), GetCrop_SizeSeedling(), GetCrop_CGC(),&
+              GetCrop_CCx(), GetCrop_GDDCGC(), GetCrop_PlantingDens(), &
+              Crop_Planting_temp, Crop_RootMin_temp, Crop_SizePlant_temp,&
+              Crop_CCini_temp, Crop_DaysToCCini_temp, Crop_GDDaysToCCini_temp)
+        call SetCrop_Planting(Crop_Planting_temp)
+        call SetCrop_RootMin(Crop_RootMin_temp)
+        call SetCrop_SizePlant(Crop_SizePlant_temp)
+        call SetCrop_CCini(Crop_CCini_temp)
+        call SetCrop_DaysToCCini(Crop_DaysToCCini_temp)
+        call SetCrop_GDDaysToCCini(Crop_GDDaysToCCini_temp)
+        ! adjust length of season
+        call  SetCrop_DaysToHarvest(GetCrop_DayN() - GetCrop_Day1() + 1)
+        Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
+        Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
+        Crop_GDDaysToSenescence_temp = GetCrop_GDDaysToSenescence()
+        Crop_GDDaysToHarvest_temp = GetCrop_GDDaysToHarvest()
+        call AdjustCropFileParameters(GetCropFileSet(),&
+              GetCrop_DaysToHarvest(), GetCrop_Day1(), &
+              GetCrop_ModeCycle(), GetCrop_Tbase(), GetCrop_Tupper(),&
+              Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp,&
+              Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp)
+        call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
+        call SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp)
+        call SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp)
+        call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
+    end if
+
+    call AdjustCalendarCrop(GetCrop_Day1())
+    call CompleteCropDescription
+    ! Onset.Off := true;
+    if (GetClimFile() == '(None)') then
+        Crop_Day1_temp = GetCrop_Day1()
+        Crop_DayN_temp = GetCrop_DayN()
+        call AdjustCropYearToClimFile(Crop_Day1_temp, Crop_DayN_temp) 
+        ! adjusting Crop.Day1 and Crop.DayN to ClimFile
+        call SetCrop_Day1(Crop_Day1_temp)
+        call SetCrop_DayN(Crop_DayN_temp)
+    else
+        call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
+    end if
+
+    ! adjusting ClimRecord.'TO' for undefined year with 365 days 
+    if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
+        .and. (GetClimRecord_NrObs() == 365)) then
+        call AdjustClimRecordTo(GetCrop_DayN())
+    end if
+    ! adjusting simulation period 
+    call AdjustSimPeriod
+
+    ! 4. Irrigation
+    read(f0, *, iostat=rc)  ! Info Irrigation
+    read(f0, *, iostat=rc) TempString ! IrriFile
+    call SetIrriFile(trim(TempString))
+    if (GetIrriFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathIrriFile
+        call SetIrriFileFull(GetIrriFile())
+        call NoIrrigation
+        ! IrriDescription := 'Rainfed cropping';
+    else
+        read(f0, *, iostat=rc) TempString  ! PathIrriFile
+        call SetIrriFileFull(trim(TempString)//GetIrriFile())
+        call LoadIrriScheduleInfo(GetIrriFileFull())
+    end if
+
+    ! 5. Field Management
+    read(f0, *, iostat=rc) ! Info Field Management
+    read(f0, *, iostat=rc) TempString  ! ManFile
+    call SetManFile(trim(TempString))
+    if (GetManFile() == '(None)') then
+        read(f0, *, iostat=rc) ! PathManFile
+        call SetManFileFull(GetManFile())
+        call SetManDescription('No specific field management')
+    else
+        read(f0, *, iostat=rc) TempString  ! PathManFile
+        call SetManFileFull(trim(TempString)//GetManFile())
+        call LoadManagement(GetManFilefull())
+        ! reset canopy development to soil fertility
+        FertStress = GetManagement_FertilityStress()
+        Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+        RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+        RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+        call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(),&
+               GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(),&
+               GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(),&
+               GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(),&
+               Crop_DaysToFullCanopySF_temp, RedCGC_temp,&
+               RedCCX_temp, FertStress)
+        call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+        call SetManagement_FertilityStress(FertStress)
+        call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+        call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+    end if
+
+    ! 6. Soil Profile
+    read(f0, *, iostat=rc) ! Info Soil
+    read(f0, *, iostat=rc) TempString ! ProfFile
+    call SetProfFile(trim(TempString))
+    read(f0, *, iostat=rc) TempString ! PathProfFile
+    call SetProfFilefull(trim(TempString)//GetProfFile())
+    ! The load of profile is delayed to check if soil water profile need to be
+    ! reset (see 8.)
+
+    ! 7. Groundwater
+    read(f0, *, iostat=rc) ! Info Groundwater
+    read(f0, *, iostat=rc) TempString  ! GroundWaterFile
+    call SetGroundWaterFile(trim(TempString))
+    if (GetGroundWaterFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathGroundWaterFile
+        call SetGroundWaterFilefull(GetGroundWaterFile())
+        call SetGroundWaterDescription('no shallow groundwater table')
+    else
+        read(f0, *, iostat=rc) TempString ! PathGroundWaterFile
+        call SetGroundWaterFilefull(trim(TempString)//GetGroundWaterFile())
+        ! Loading the groundwater is done after loading the soil profile (see
+        ! 9.)
+    end if
+
+    ! 8. Set simulation period
+    call SetSimulation_FromDayNr(TempSimDayNr1)
+    call SetSimulation_ToDayNr(TempSimDayNrN)
+    if ((GetCrop_Day1() /= GetSimulation_FromDayNr()) .or. &
+        (GetCrop_DayN() /= GetSimulation_ToDayNr())) then
+        call SetSimulation_LinkCropToSimPeriod(.false.)
+    end if
+
+    ! 9. Initial conditions
+    read(f0, *, iostat=rc) ! Info Initial conditions
+    read(f0, *, iostat=rc) TempString ! SWCIniFile
+    if (trim(TempString) == 'KeepSWC') then
+        ! No load of soil file (which reset thickness compartments and Soil
+        ! water content to FC)
+        call SetSWCIniFile('KeepSWC')
+        call SetSWCIniDescription('Keep soil water profile of previous run')
+        read(f0, *, iostat=rc) ! PathSWCIniFile
+    else
+        ! start with load and complete profile description (see 5.) which reset
+        ! SWC to FC by default
+        call LoadProfile(GetProfFilefull())
+        call CompleteProfileDescription
+
+        ! Adjust size of compartments if required
+        TotDepth = 0._dp
+        do i = 1, GetNrCompartments()
+            TotDepth = TotDepth + GetCompartment_Thickness(i)
+        end do
+        if (GetSimulation_MultipleRunWithKeepSWC()) then 
+        ! Project with a sequence of simulation runs and KeepSWC
+            if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) > &
+                roundc(TotDepth*1000._dp, mold=1)) then
+                call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
+            end if
+        else
+            if (roundc(GetCrop_RootMax()*1000._dp, mold=1) > &
+                roundc(TotDepth*1000._dp, mold=1)) then
+                if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
+                    roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+                    call AdjustSizeCompartments(&
+                            real(GetCrop_RootMax(), kind=dp)) 
+                    ! no restrictive soil layer
+                else
+                    ! restrictive soil layer
+                    if (roundc(GetSoil_RootMax()*1000._dp, mold=1) > &
+                        roundc(TotDepth*1000._dp, mold=1)) then
+                        call AdjustSizeCompartments(&
+                            real(GetSoil_RootMax(), kind=dp))
+                    end if
+                end if
+            end if
+
+            call SetSWCIniFile(trim(TempString))
+            if (GetSWCIniFile() == '(None)') then
+                read(f0, *, iostat=rc)  ! PathSWCIniFile
+                call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+                call SetSWCiniDescription(&
+                         'Soil water profile at Field Capacity')
+            else
+                read(f0, *, iostat=rc) TempString  ! PathSWCIniFile
+                call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
+                SurfaceStorage_temp = GetSurfaceStorage()
+                call LoadInitialConditions(GetSWCiniFileFull(),&
+                      SurfaceStorage_temp)
+                call SetSurfaceStorage(SurfaceStorage_temp)
+            end if
+            Compartment_temp = GetCompartment()
+            select case (GetSimulation_IniSWC_AtDepths())
+            case (.true.)
+                call TranslateIniPointsToSWProfile(&
+                   GetSimulation_IniSWC_NrLoc(), &
+                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
+                   Compartment_temp)
+            case default
+                call TranslateIniLayersToSWProfile(&
+                   GetSimulation_IniSWC_NrLoc(),&
+                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
+                   Compartment_temp)
+            end select
+            call SetCompartment(Compartment_temp)
+
+            if (GetSimulation_ResetIniSWC()) then
+                 ! to reset SWC and SALT at end of simulation run
+                do i = 1, GetNrCompartments()
+                     call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
+                     call SetSimulation_ECeIni_i(i, &
+                              ECeComp(GetCompartment_i(i)))
+                end do
+                ! ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
+                ! CHECK LATER
+                if (GetManagement_BundHeight() >= 0.01_dp) then
+                     call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
+                     call SetSimulation_ECStorageIni(GetECStorage())
+                 end if
+            end if
+        end if
+    end if
+
+    ! 10. load the groundwater file if it exists (only possible for Version 4.0
+    ! and higher)
+    if ((roundc(10*VersionNr, mold=1) >= 40) .and.&
+        (GetGroundWaterFile() /= '(None)')) then 
+          ! the groundwater file is only available in Version 4.0 or higher
+        ZiAqua_temp = GetZiAqua()
+        ECiAqua_temp = GetECiAqua()
+        call LoadGroundWater(GetGroundWaterFilefull(),&
+                GetSimulation_FromDayNr(), ZiAqua_temp, ECiAqua_temp)
+        call SetZiAqua(ZiAqua_temp)
+        call SetECiAqua(ECiAqua_temp)
+    else
+        call SetZiAqua(undef_int)
+        call SetECiAqua(real(undef_int, kind=dp))
+        call SetSimulParam_ConstGwt(.true.)
+    end if
+    Compartment_temp = GetCompartment()
+    call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
+    call SetCompartment(Compartment_temp)
+    ! IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
+    if (GetSimulation_IniSWC_AtFC() .and. (GetSWCIniFile() /= 'KeepSWC')) then
+        call ResetSWCToFC
+    end if
+
+    ! 11. Off-season conditions
+    read(f0, *, iostat=rc) ! Info Off-season conditions
+    read(f0, *, iostat=rc) TempString ! OffSeasonFile
+    call SetOffSeasonFile(trim(TempString))
+    if (GetOffSeasonFile() == '(None)') then
+        read(f0, *, iostat=rc)  ! PathOffSeasonFile
+        call SetOffSeasonFileFull(GetOffSeasonFile())
+        call SetOffSeasonDescription('No specific off-season conditions')
+    else
+        read(f0, *, iostat=rc) TempString ! PathOffSeasonFile
+        call SetOffSeasonFileFull((trim(TempString)//GetOffSeasonFile()))
+        call LoadOffSeason(GetOffSeasonFilefull())
+    end if
+
+    ! 12. Field data
+    read(f0, *, iostat=rc) ! Info Field data
+    read(f0, *, iostat=rc) TempString  ! Field dataFile
+    call SetObservationsFile(trim(TempString))
+    if (GetObservationsFile() == '(None)') then
+        read(f0, *, iostat=rc) ! Path Field data File
+        call SetObservationsFileFull(GetObservationsFile())
+        call SetObservationsDescription('No field observations')
+    else
+        read(f0, *, iostat=rc) TempString  ! Path Field data File
+        call SetObservationsFileFull(trim(TempString)//GetObservationsFile())
+        observations_descr = GetObservationsDescription()
+        call GetFileDescription(GetObservationsFileFull(), observations_descr)
+        call SetObservationsDescription(observations_descr)
+    end if
+
+    close(f0)
+
+    contains
+
+    subroutine GetFileDescription(TheFileFullName, TheDescription)
+        character(len=*), intent(in) :: TheFileFullName
+        character(len=*), intent(inout) :: TheDescription
+
+        integer(int32) :: f0, rc
+
+        open(newunit=f0, file=trim(TheFileFullName), &
+                     status='old', action='read', iostat=rc)
+        read(f0, '(a)', iostat=rc) TheDescription
+        close(f0)
+    end subroutine GetFileDescription
+end subroutine LoadSimulationRunProject
+
+
 subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
               L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
               CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, &
@@ -2106,6 +2755,7 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
        end if
     end do
 end subroutine BTransferPeriod
+
 
 real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
             L0, L12, L12SF, L123, L1234, LFlor, &
@@ -2473,5 +3123,554 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
      ! 5. Export
      Bnormalized = SumBnor
 end function Bnormalized
+
+
+real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
+           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
+           TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,&
+           TempL123, TempHarvest, TempFlower, TempGDDL0, &
+           GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,&
+           TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,&
+           TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,&
+           TempWP, ShapeFweed, TempModeCycle, SFInfo, SFInfoStress,&
+           WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn)
+    integer(int32), intent(in) :: TempDaysToCCini
+    integer(int32), intent(in) :: TempGDDaysToCCini
+    real(dp), intent(in) :: TempCCo
+    real(dp), intent(in) :: TempCGC
+    real(dp), intent(in) :: TempCCx
+    real(dp), intent(in) :: TempCDC
+    real(dp), intent(in) :: TempGDDCGC
+    real(dp), intent(in) :: TempGDDCDC
+    real(dp), intent(in) :: TempdHIdt
+    integer(int32), intent(in) :: TempL0
+    integer(int32), intent(in) :: TempL12
+    integer(int32), intent(in) :: L12SF
+    integer(int32), intent(in) :: TempL123
+    integer(int32), intent(in) :: TempHarvest
+    integer(int32), intent(in) :: TempFlower
+    integer(int32), intent(in) :: TempGDDL0
+    integer(int32), intent(in) :: GDDL12SF
+    integer(int32), intent(in) :: TempGDDL12
+    integer(int32), intent(in) :: TempGDDL123
+    integer(int32), intent(in) :: TempGDDHarvest
+    integer(int32), intent(in) :: TempHI
+    integer(int32), intent(in) :: TempWPy
+    real(dp), intent(in) :: TempKc
+    real(dp), intent(in) :: TempKcDecline
+    real(dp), intent(in) :: TempCCeffect
+    real(dp), intent(in) :: TempTbase
+    real(dp), intent(in) :: TempTupper
+    real(dp), intent(in) :: TempTmin
+    real(dp), intent(in) :: TempTmax
+    real(dp), intent(in) :: TempGDtranspLow
+    real(dp), intent(in) :: TempWP
+    real(dp), intent(in) :: ShapeFweed
+    integer(intEnum), intent(in) :: TempModeCycle
+    type(rep_EffectStress), intent(in) :: SFInfo
+    integer(int8), intent(in) :: SFInfoStress
+    integer(int8), intent(in) :: WeedStress
+    integer(int32), intent(in) :: DeltaWeedStress
+    logical, intent(in) :: DeterminantCropType
+    logical, intent(in) :: FertilityStressOn
+
+    integer(int32), parameter :: k = 2
+    real(dp), parameter :: CO2iLocal = 369.41_dp
+
+    real(dp) :: SumKcTop, HIGC, HIGClinear
+    real(dp) :: RatDGDD, SumBPot, SumBSF
+    integer(int32) :: tSwitch, DaysYieldFormation
+
+    ! 1. Initialize
+    ! 1 - a. Maximum sum Kc
+    SumKcTop = SeasonalSumOfKcPot(TempDaysToCCini, TempGDDaysToCCini,&
+        TempL0, TempL12, TempL123, TempHarvest, TempGDDL0, TempGDDL12,&
+        TempGDDL123, TempGDDHarvest, TempCCo, TempCCx, TempCGC,&
+        TempGDDCGC, TempCDC, TempGDDCDC, TempKc, TempKcDecline, TempCCeffect,&
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, CO2iLocal,&
+        TempModeCycle)
+    ! 1 - b. Prepare for growing degree days
+    RatDGDD = 1._dp
+    if ((TempModeCycle == modeCycle_GDDays) .and. (SFInfoStress > 0_int8) &
+        .and. (GDDL12SF < TempGDDL123)) then
+        RatDGDD = (TempL123-L12SF)/real(TempGDDL123-GDDL12SF, kind=dp)
+    end if
+    ! 1 - c. Get PercentLagPhase (for estimate WPi during yield formation)
+    DaysYieldFormation = undef_int
+    if ((GetCrop_subkind() == subkind_Tuber) .or. &
+        (GetCrop_subkind() == subkind_Grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        DaysYieldFormation = roundc(TempHI/TempdHIdt, mold=1)
+        if (DeterminantCropType) then
+            HIGC = HarvestIndexGrowthCoefficient(real(TempHI,kind=dp), TempdHIdt)
+            call GetDaySwitchToLinear(TempHI, TempdHIdt, &
+                     HIGC, tSwitch, HIGClinear)
+        else
+            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
+        end if
+    end if
+
+    ! 2. potential biomass - no soil fertiltiy stress - no weed stress
+    SumBPot = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
+        TempL0, TempL12, TempL12, TempL123, TempHarvest, TempFlower,&
+        TempGDDL0, TempGDDL12, TempGDDL12, TempGDDL123, TempGDDHarvest,&
+        TempWPy, DaysYieldFormation, tSwitch,&
+        TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
+        TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, 1._dp,&
+        SumKcTop, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8,&
+        0, 0._dp, -0.01_dp, &
+        TempModeCycle, FertilityStressOn, .false.)
+
+    ! 3. potential biomass - soil fertiltiy stress and weed stress
+    SumBSF = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
+        TempL0, TempL12, L12SF, TempL123, TempHarvest, TempFlower,&
+        TempGDDL0, TempGDDL12, GDDL12SF, TempGDDL123, TempGDDHarvest, &
+        TempWPy, DaysYieldFormation, tSwitch,&
+        TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
+        TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
+        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, RatDGDD,&
+        SumKcTop, SFInfoStress, SFInfo%RedCGC, SFInfo%RedCCX, SFInfo%RedWP,&
+        SFInfo%RedKsSto, WeedStress, DeltaWeedStress, &
+        SFInfo%CDecline, ShapeFweed, TempModeCycle, &
+        FertilityStressOn, .false.)
+
+    BiomassRatio = SumBSF/SumBPot
+end function BiomassRatio
+
+
+subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
+            L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,&
+            GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,&
+            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,&
+            Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,&
+            CO2Given, CropDNr1, CropDeterm, CropSResp, TheCropType,&
+            TheModeCycle, b0, b1, b2, &
+            BM10, BM20, BM30, BM40, BM50, BM60, BM70)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    integer(int32), intent(in) :: WPyield
+    integer(int32), intent(in) :: RefHI
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDtranspLow
+    real(dp), intent(in) :: WPveg
+    real(dp), intent(in) :: RatedHIdt
+    real(dp), intent(in) :: CO2Given
+    integer(int32), intent(in) :: CropDNr1
+    logical, intent(in) :: CropDeterm
+    type(rep_Shapes), intent(in) :: CropSResp
+    integer(intEnum), intent(in) :: TheCropType
+    integer(intEnum), intent(in) :: TheModeCycle
+    real(dp), intent(inout) :: b0
+    real(dp), intent(inout) :: b1
+    real(dp), intent(inout) :: b2
+    real(dp), intent(inout) :: BM10
+    real(dp), intent(inout) :: BM20
+    real(dp), intent(inout) :: BM30
+    real(dp), intent(inout) :: BM40
+    real(dp), intent(inout) :: BM50
+    real(dp), intent(inout) :: BM60
+    real(dp), intent(inout) :: BM70
+
+    real(dp), parameter :: EToStandard = 5._dp
+    integer(int32), parameter :: k = 2
+
+    type StressIndexes
+        integer(int8) :: StressProc
+            !! Undocumented
+        real(dp) :: BioMProc
+            !! Undocumented
+        real(dp) :: BioMSquare
+            !! Undocumented
+    end type StressIndexes
+
+    type(StressIndexes), dimension(8) :: StressMatrix
+    integer(int8) :: Si
+    integer(int32) :: L12SF, GDDL12SF
+    type(rep_EffectStress) :: StressResponse
+    real(dp) :: RatDGDD, BNor, BNor100, Yavg, X1avg, X2avg,&
+                y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2, &
+                SUMx1y, SUMx2y, SUMx1Sq, SUMx2Sq, SUMx1x2
+    integer(int8) :: SiPr
+    real(dp) :: SumKcTop, HIGC, HIGClinear
+    integer(int32) :: DaysYieldFormation, tSwitch
+    real(dp) :: TDayMax_temp, TDayMin_temp
+
+    ! 1. initialize
+    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+    L12SF = L12 ! to calculate SumKcTop (no stress)
+    GDDL12SF = GDDL12 ! to calculate SumKcTop (no stress)
+    ! Maximum sum Kc (no stress)
+    SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
+        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing,&
+        CCeffectProcent, Tbase, Tupper, TDayMin, TDayMax, &
+        GDtranspLow, CO2Given, TheModeCycle)
+
+    ! Get PercentLagPhase (for estimate WPi during yield formation)
+    if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
+        if (CropDeterm) then
+            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
+            call GetDaySwitchToLinear(RefHI, RatedHIdt, HIGC, tSwitch,&
+                  HIGClinear)
+        else
+            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
+        end if
+    end if
+
+    ! 2. Biomass production for various stress levels
+    do Si = 1, 8
+        ! various stress levels
+        ! stress effect
+        SiPr = 10*(Si-1)
+        StressMatrix(Si)%StressProc = SiPr
+        call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
+        ! adjusted length of Max canopy cover
+        RatDGDD = 1
+        if ((StressResponse%RedCCX == 0) .and. &
+            (StressResponse%RedCGC == 0))then
+            L12SF = L12
+            GDDL12SF = GDDL12
+        else
+            call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LFlor,&
+                   LengthFlor, CropDeterm, L12SF, StressResponse%RedCGC,&
+                   StressResponse%RedCCX, SiPr)
+            if (TheModeCycle == modeCycle_GDDays) then
+                TDayMin_temp = TDayMin
+                TDayMax_temp = TDayMax
+                GDDL12SF = GrowingDegreeDays(L12SF, CropDNr1, Tbase, Tupper,&
+                                 TDayMin_temp, TDayMax_temp)
+            end if
+            if ((TheModeCycle == modeCycle_GDDays) .and. (GDDL12SF < GDDL123)) then
+                RatDGDD = (L123-L12SF)*1._dp/(GDDL123-GDDL12SF)
+            end if
+        end if
+        ! biomass production
+        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
+                L0, L12, L12SF, L123, L1234, LFlor,&
+                GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, WPyield, &
+                DaysYieldFormation, tSwitch, CCo, CCx, CGC, GDDCGC, CDC,&
+                GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
+                Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
+                SumKcTop, SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
+                StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
+                StressResponse%CDecline, -0.01_dp, TheModeCycle, .true.,&
+                .false.)
+        if (Si == 1) then
+            BNor100 = BNor
+            StressMatrix(1)%BioMProc = 100._dp
+        else
+            if (BNor100 > 0.00001_dp) then
+                StressMatrix(Si)%BioMProc = 100._dp * BNor/BNor100
+            else
+                StressMatrix(Si)%BioMProc = 100._dp
+            end if
+        end if
+        StressMatrix(Si)%BioMSquare =&
+             StressMatrix(Si)%BioMProc *&
+             StressMatrix(Si)%BioMProc
+        ! end stress level
+    end do
+
+    ! 5. Stress - Biomass relationship
+    Yavg = 0._dp
+    X1avg = 0._dp
+    X2avg = 0._dp
+    do Si = 1, 8
+        ! various stress levels
+        Yavg = Yavg + StressMatrix(Si)%StressProc
+        X1avg = X1avg + StressMatrix(Si)%BioMProc
+        X2avg = X2avg + StressMatrix(Si)%BioMSquare
+    end do
+    Yavg  = Yavg/8._dp
+    X1avg = X1avg/8._dp
+    X2avg = X2avg/8._dp
+    SUMx1y  = 0._dp
+    SUMx2y  = 0._dp
+    SUMx1Sq = 0._dp
+    SUMx2Sq = 0._dp
+    SUMx1x2 = 0._dp
+    do Si = 1, 8
+        ! various stress levels
+        y     = StressMatrix(Si)%StressProc - Yavg
+        x1    = StressMatrix(Si)%BioMProc - X1avg
+        x2    = StressMatrix(Si)%BioMSquare - X2avg
+        x1y   = x1 * y
+        x2y   = x2 * y
+        x1Sq  = x1 * x1
+        x2Sq  = x2 * x2
+        x1x2  = x1 * x2
+        SUMx1y  = SUMx1y + x1y
+        SUMx2y  = SUMx2y + x2y
+        SUMx1Sq = SUMx1Sq + x1Sq
+        SUMx2Sq = SUMx2Sq + x2Sq
+        SUMx1x2 = SUMx1x2 + x1x2
+    end do
+
+    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
+        b2 = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
+             (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
+        b1 = (SUMx1y - b2 * SUMx1x2)/SUMx1Sq
+        b0 = Yavg - b1*X1avg - b2*X2avg
+
+        BM10 =  StressMatrix(2)%BioMProc
+        BM20 =  StressMatrix(3)%BioMProc
+        BM30 =  StressMatrix(4)%BioMProc
+        BM40 =  StressMatrix(5)%BioMProc
+        BM50 =  StressMatrix(6)%BioMProc
+        BM60 =  StressMatrix(7)%BioMProc
+        BM70 =  StressMatrix(8)%BioMProc
+    else
+        b2 = real(undef_int, kind=dp)
+        b1 = real(undef_int, kind=dp)
+        b0 = real(undef_int, kind=dp)
+    end if
+end subroutine StressBiomassRelationship
+
+subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
+       L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&
+       GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,&
+       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,&
+       Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2Given,&
+       CropDNr1, CropDeterm, TheCropType, TheModeCycle, TheCCsaltDistortion,&
+       Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
+       Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
+    integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: L12
+    integer(int32), intent(in) :: L123
+    integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: LFlor
+    integer(int32), intent(in) :: LengthFlor
+    integer(int32), intent(in) :: GDDFlor
+    integer(int32), intent(in) :: GDDLengthFlor
+    integer(int32), intent(in) :: GDDL0
+    integer(int32), intent(in) :: GDDL12
+    integer(int32), intent(in) :: GDDL123
+    integer(int32), intent(in) :: GDDL1234
+    integer(int32), intent(in) :: WPyield
+    integer(int32), intent(in) :: RefHI
+    real(dp), intent(in) :: CCo
+    real(dp), intent(in) :: CCx
+    real(dp), intent(in) :: CGC
+    real(dp), intent(in) :: GDDCGC
+    real(dp), intent(in) :: CDC
+    real(dp), intent(in) :: GDDCDC
+    real(dp), intent(in) :: KcTop
+    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: CCeffectProcent
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+    real(dp), intent(in) :: GDbioLow
+    real(dp), intent(in) :: WPveg
+    real(dp), intent(in) :: RatedHIdt
+    real(dp), intent(in) :: CO2Given
+    integer(int32), intent(in) :: CropDNr1
+    logical, intent(in) :: CropDeterm
+    integer(intEnum), intent(in) :: TheCropType
+    integer(intEnum), intent(in) :: TheModeCycle
+    integer(int8), intent(in) :: TheCCsaltDistortion
+    real(dp), intent(inout) :: Coeffb0Salt
+    real(dp), intent(inout) :: Coeffb1Salt
+    real(dp), intent(inout) :: Coeffb2Salt
+    real(dp), intent(inout) :: Salt10
+    real(dp), intent(inout) :: Salt20
+    real(dp), intent(inout) :: Salt30
+    real(dp), intent(inout) :: Salt40
+    real(dp), intent(inout) :: Salt50
+    real(dp), intent(inout) :: Salt60
+    real(dp), intent(inout) :: Salt70
+    real(dp), intent(inout) :: Salt80
+    real(dp), intent(inout) :: Salt90
+
+    type StressIndexes
+        integer(int8) :: CCxReduction
+            !! Undocumented
+        real(dp) :: SaltProc
+            !! Undocumented
+        real(dp) :: SaltSquare
+            !! Undocumented
+    end type StressIndexes
+
+    integer(int32) :: L12SS, GDDL12SS, DaysYieldFormation, tSwitch
+    real(dp) :: SumKcTop, HIGC, HIGClinear, CCToReach
+    integer(int8) :: Si, SiPr
+    type(StressIndexes), dimension(10) :: StressMatrix
+    type(rep_EffectStress) :: StressResponse
+    real(dp) :: RatDGDD, BNor, BNor100, BioMProc
+    real(dp) :: Yavg, X1avg, X2avg, SUMx1y, SUMx2y, SUMx1Sq, &
+         SUMx2Sq, SUMx1x2, y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2
+    real(dp) :: TDayMax_temp, TDayMin_temp
+
+    ! 1. initialize
+    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
+    GDDL12SS = GDDL12 ! to calculate SumKcTop (no stress)
+    BNor100 = real(undef_int, kind=dp)
+    ! Maximum sum Kc (no stress)
+    SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
+        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
+        CCeffectProcent,Tbase, Tupper, TDayMin, TDayMax, GDbioLow, &
+        CO2Given, TheModeCycle)
+    ! Get PercentLagPhase (for estimate WPi during yield formation)
+    if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
+        if (CropDeterm) then
+            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
+            call GetDaySwitchToLinear(RefHI, RatedHIdt, &
+                    HIGC, tSwitch, HIGClinear)
+        else
+            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
+        end if
+    end if
+
+    ! 2. Biomass production (or Salt stress) for various CCx reductions
+    do Si = 1, 10
+        ! various CCx reduction
+        ! CCx reduction
+        SiPr = 10*(Si-1)
+        StressMatrix(Si)%CCxReduction = SiPr
+        ! adjustment CC
+        call CropStressParametersSoilSalinity(SiPr, TheCCsaltDistortion, &
+            CCo, CCx, CGC, GDDCGC, CropDeterm, L12, LFlor, LengthFlor, L123,&
+            GDDL12, GDDFlor, GDDLengthFlor, GDDL123, TheModeCycle,&
+            StressResponse)
+        ! adjusted length of Max canopy cover
+        RatDGDD = 1
+        if ((StressResponse%RedCCX == 0) .and.&
+            (StressResponse%RedCGC == 0)) then
+            L12SS = L12
+            GDDL12SS = GDDL12
+        else
+            CCToReach = 0.98_dp*(1._dp-StressResponse%RedCCX/100._dp)*CCx
+            L12SS = DaysToReachCCwithGivenCGC(CCToReach, CCo, &
+                 (1._dp-StressResponse%RedCCX/100._dp)*CCx,&
+                 CGC*(1._dp-StressResponse%RedCGC/100._dp), L0)
+            if (TheModeCycle == modeCycle_GDDays) then
+                TDayMax_temp = TDayMax
+                TDayMin_temp = TDayMin
+                GDDL12SS = GrowingDegreeDays(L12SS, CropDNr1, Tbase, &
+                           Tupper, TDayMin_temp, TDayMax_temp)
+            end if
+            if ((TheModeCycle == modeCycle_GDDays) .and.&
+                (GDDL12SS < GDDL123)) then
+                RatDGDD = (L123-L12SS)*1._dp/(GDDL123-GDDL12SS)
+            end if
+        end if
+
+        ! biomass production
+        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
+                L0, L12, L12SS, L123, L1234, LFlor,&
+                GDDL0, GDDL12, GDDL12SS, GDDL123, GDDL1234,&
+                WPyield, DaysYieldFormation, tSwitch,&
+                CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
+                KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
+                Tbase, Tupper, TDayMin, TDayMax, GDbioLow, RatDGDD, SumKcTop,&
+                SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
+                StressResponse%RedWP, StressResponse%RedKsSto, &
+                0_int8, 0, StressResponse%CDecline, -0.01_dp,&
+                TheModeCycle, .false., .false.)
+        if (Si == 1) then
+            BNor100 = BNor
+            BioMProc = 100._dp
+            StressMatrix(1)%SaltProc = 0._dp
+        else
+            if (BNor100 > 0.00001_dp) then
+                BioMProc = 100._dp * BNor/BNor100
+                StressMatrix(Si)%SaltProc = 100._dp - BioMProc
+            else
+                StressMatrix(Si)%SaltProc = 0._dp
+            end if
+        end if
+        StressMatrix(Si)%SaltSquare = &
+             StressMatrix(Si)%SaltProc *&
+             StressMatrix(Si)%SaltProc
+        ! end stress level
+    end do
+
+    ! 3. CCx - Salt stress relationship
+    Yavg = 0._dp
+    X1avg = 0._dp
+    X2avg = 0._dp
+    do Si = 1, 10
+        ! various CCx reduction
+        Yavg = Yavg + StressMatrix(Si)%CCxReduction
+        X1avg = X1avg + StressMatrix(Si)%SaltProc
+        X2avg = X2avg + StressMatrix(Si)%SaltSquare
+    end do
+    Yavg  = Yavg/10._dp
+    X1avg = X1avg/10._dp
+    X2avg = X2avg/10._dp
+    SUMx1y  = 0._dp
+    SUMx2y  = 0._dp
+    SUMx1Sq = 0._dp
+    SUMx2Sq = 0._dp
+    SUMx1x2 = 0._dp
+    do Si = 1, 10
+        ! various CCx reduction
+        y     = StressMatrix(Si)%CCxReduction - Yavg
+        x1    = StressMatrix(Si)%SaltProc - X1avg
+        x2    = StressMatrix(Si)%SaltSquare - X2avg
+        x1y   = x1 * y
+        x2y   = x2 * y
+        x1Sq  = x1 * x1
+        x2Sq  = x2 * x2
+        x1x2  = x1 * x2
+        SUMx1y  = SUMx1y + x1y
+        SUMx2y  = SUMx2y + x2y
+        SUMx1Sq = SUMx1Sq + x1Sq
+        SUMx2Sq = SUMx2Sq + x2Sq
+        SUMx1x2 = SUMx1x2 + x1x2
+    end do
+
+    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
+        Coeffb2Salt = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
+                      (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
+        Coeffb1Salt = (SUMx1y - Coeffb2Salt * SUMx1x2)/SUMx1Sq
+        Coeffb0Salt = Yavg - Coeffb1Salt*X1avg - Coeffb2Salt*X2avg
+
+        Salt10 =  StressMatrix(2)%SaltProc
+        Salt20 =  StressMatrix(3)%SaltProc
+        Salt30 =  StressMatrix(4)%SaltProc
+        Salt40 =  StressMatrix(5)%SaltProc
+        Salt50 =  StressMatrix(5)%SaltProc
+        Salt60 =  StressMatrix(7)%SaltProc
+        Salt70 =  StressMatrix(8)%SaltProc
+        Salt80 =  StressMatrix(9)%SaltProc
+        Salt90 =  StressMatrix(10)%SaltProc
+    else
+        Coeffb2Salt = real(undef_int, kind=dp)
+        Coeffb1Salt = real(undef_int, kind=dp)
+        Coeffb0Salt = real(undef_int, kind=dp)
+    end if
+end subroutine CCxSaltStressRelationship
 
 end module ac_tempprocessing

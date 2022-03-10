@@ -126,9 +126,12 @@ def test_perennial():
                 assert 'Output created on' in out_line, (i, ref_line, out_line)
                 assert 'Output created on' in ref_line, (i, ref_line, out_line)
             else:
+                ref_line = ref_line.replace('°C', 'degC')
+
                 items_ref = ref_line.split()
                 for i in range(len(items_ref)):
                     num_items_total[i] += 1
+
                 try:
                     assert ref_line == out_line, (i, ref_line, out_line)
                 except AssertionError:

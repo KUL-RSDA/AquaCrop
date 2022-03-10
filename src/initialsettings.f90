@@ -1,6 +1,8 @@
 module ac_initialsettings
 
-use ac_kinds, only: int32
+use ac_kinds, only: dp, &
+                    int8, &
+                    int32
 use ac_global, only:    SetSimulParam_PercRAW, &
                         SetNrCompartments, &
                         SetSimulParam_CompDefThick, &
@@ -177,7 +179,9 @@ use ac_global, only:    SetSimulParam_PercRAW, &
                         SetMaxPlotNew, &
                         SetMaxPlotTr, &
                         SetSimulation_InitialStep, &
-                        SetSimulation_LengthCuttingInterval
+                        SetSimulation_LengthCuttingInterval, &
+                        rep_sum, &
+                        SetMultipleProjectDescription
 use ac_defaultcropsoil, only :  ResetDefaultSoil, &
                                 ResetDefaultCrop
 
@@ -264,7 +268,7 @@ subroutine InitializeSettings()
                                          ! soil evaporation [cm]
 
     ! 1f. Temperature.PAR - 3 parameters
-    call SetSimulParam_Tmin(12.0_tp) ! Default minimum temperature (degC) if no 
+    call SetSimulParam_Tmin(12.0_dp) ! Default minimum temperature (degC) if no 
                                      ! temperature file is specified
     call SetSimulParam_Tmax(28.0_dp) ! Default maximum temperature (degC) if no 
                                      ! temperature file is specified
@@ -376,7 +380,7 @@ subroutine InitializeSettings()
     call SetRainFile('(None)')
     call SetRainFilefull(GetRainFile())  ! no file 
     call SetRainDescription('')
-    call SetRainRecord_DataType(Daily)
+    call SetRainRecord_DataType(datatype_Daily)
     call SetRainRecord_NrObs(0)
     call SetRainRecord_FromString('any date')
     call SetRainRecord_ToString('any date')
@@ -405,7 +409,7 @@ subroutine InitializeSettings()
     call SetCrop_Day1(Crop_Day1_temp)
     call SetCrop_DayN(Crop_DayN_temp)
     ! adjusting ClimRecord.'TO' for undefined year with 365 days 
-    if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901)
+    if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
         .and. (GetClimRecord_NrObs() == 365)) then
         call AdjustClimRecordTo(GetCrop_DayN())
     end if
@@ -433,7 +437,7 @@ subroutine InitializeSettings()
     call SetSimulation_MultipleRunConstZrx(real(undef_int, kind=dp))
     call SetMultipleProjectFile(GetProjectFile())
     call SetMultipleProjectFileFull(GetProjectFileFull())
-    MultipleProjectDescription = ProjectDescription
+    call SetMultipleProjectDescription(ProjectDescription)
 
 
     ! 9. Observations file
@@ -456,8 +460,8 @@ subroutine InitializeSettings()
     call SetSurfaceStorage(0._dp)
     call ECstorage(0.0_dp)
     call DaySubmerged(0)
-    call SumWaBal_temp = GetSumWabal()
-    GlobalZero(SumWabal_temp)
+    SumWaBal_temp = GetSumWabal()
+    call GlobalZero(SumWabal_temp)
     call SetSumWaBal(SumWaBal_temp)
     call SetDrain(0.0_dp) ! added 4.0
     call SetRunoff(0.0_dp)! added 4.0

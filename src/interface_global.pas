@@ -1200,7 +1200,13 @@ procedure TimeToMaxCanopySF(
             VAR RedCGC,RedCCx : ShortInt;
             VAR ClassSF : ShortInt);
         external 'aquacrop' name '__ac_interface_global_MOD_timetomaxcanopysf_wrap';
-           
+
+procedure CheckForWaterTableInProfile(
+            constref DepthGWTmeter : double;
+            constref ProfileComp : rep_comp;
+            var WaterTableInProfile : boolean);
+        external 'aquacrop' name '__ac_global_MOD_checkforwatertableinprofile';
+                                                
 procedure DetermineLengthGrowthStages(
             constref CCoVal : double;
             constref CCxVal : double;
@@ -4205,6 +4211,18 @@ function GetRunoff() : double;
 procedure SetRunoff(constref Runoff_in : double);
     external 'aquacrop' name '__ac_global_MOD_setrunoff';
 
+function GetSurfaceStorage() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsurfacestorage';
+
+procedure SetSurfaceStorage(constref SurfaceStorage_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsurfacestorage';
+
+function GetECstorage() : double;
+    external 'aquacrop' name '__ac_global_MOD_getecstorage';
+
+procedure SetECstorage(constref ECstorage_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setecstorage';
+
 procedure CalculateAdjustedFC(constref DepthAquifer : double;
                               var CompartAdj   : rep_Comp);
     external 'aquacrop' name '__ac_global_MOD_calculateadjustedfc';
@@ -4214,7 +4232,6 @@ procedure AdjustOnsetSearchPeriod;
 
 function ActiveCells(constref Comp : CompartmentIndividual) : integer;
     external 'aquacrop' name '__ac_global_MOD_activecells';
-
 
 procedure DetermineSaltContent(constref ECe : double;
                                var Comp : CompartmentIndividual);
@@ -4593,6 +4610,25 @@ function GetTpot() : double;
 procedure SetTpot(constref Tpot_in : double);
     external 'aquacrop' name '__ac_global_MOD_settpot';
 
+procedure DetermineLinkedSimDay1(
+            constref CropDay1 : LongInt;
+            VAR SimDay1 :LongInt);
+    external 'aquacrop' name '__ac_global_MOD_determinelinkedsimday1';
+
+procedure AdjustSimPeriod;
+    external 'aquacrop' name '__ac_global_MOD_adjustsimperiod';
+
+function GetMultipleProjectDescription(): string;
+
+function GetMultipleProjectDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmultipleprojectdescription_wrap';
+
+procedure SetMultipleProjectDescription(constref str : string);
+
+procedure SetMultipleProjectDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_settmultipleprojectdescription_wrap';
 
 
 implementation
@@ -7756,6 +7792,26 @@ begin
     ClimateRecord.DataType := rep_datatype(int_datatype);
     ClimateRecord.FromString := AnsiString(FromString_ptr);
     ClimateRecord.ToString := AnsiString(ToString_ptr);
+end;
+
+
+function GetMultipleProjectDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetMultipleProjectDescription_wrap();
+     GetMultipleProjectDescription := AnsiString(p);
+end;
+
+
+procedure SetMultipleProjectDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetMultipleProjectDescription_wrap(p, strlen);
 end;
 
 

@@ -4,9 +4,6 @@ interface
 
 uses Global, interface_global, Math, TempProcessing, interface_tempprocessing, interface_simul;
 
-PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
-                                    SumGDDadjCC,CO2i,GDDayi : double;
-                                    VAR CCxWitheredTpotNoS,BiomassUnlim : double);
 
 PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    ETo,TminOnDay,TmaxOnDay,CO2i,GDDayi,Tact,SumKcTop,
@@ -37,62 +34,6 @@ PROCEDURE BUDGET_module(dayi : LongInt;
 
 implementation
 
-
-PROCEDURE DeterminePotentialBiomass(VirtualTimeCC : INTEGER;
-                                    SumGDDadjCC,CO2i,GDDayi : double;
-                                    VAR CCxWitheredTpotNoS,BiomassUnlim : double);
-VAR CCiPot,TpotForB,EpotTotForB,WPi,fSwitch : double;
-    DAP,DaysYieldFormation,DayiAfterFlowering : INTEGER;
-
-BEGIN   // potential biomass - unlimited soil fertiltiy
-// 1. - CCi
-CCiPot := CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays()+1),GetCrop().DaysToGermination,
-             GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-             GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-             GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().CDC,GetCrop().GDDCGC,GetCrop().GDDCDC,
-             SumGDDadjCC,GetCrop().ModeCycle,
-             (0),(0));
-IF (CCiPot < 0) THEN CCiPot := 0;
-IF (CCiPot > CCxWitheredTpotNoS) THEN CCxWitheredTpotNoS := CCiPot;
-
-// 2. - Calculation of Tpot
-IF (GetCrop_ModeCycle() = Calendardays)
-   THEN DAP := VirtualTimeCC
-   ELSE BEGIN // growing degree days
-        DAP := SumCalendarDays(ROUND(SumGDDadjCC),
-                               GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax());
-        DAP := DAP + GetSimulation_DelayedDays(); // are not considered when working with GDDays
-        END;
-CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
-               GetCrop().DaysToHarvest,(0),CCiPot,GetETo(),GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCx,CCxWitheredTpotNoS,GetCrop().CCEffectEvapLate,
-               //GetCrop().DaysToHarvest,CCiPot,ETo,GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,
-               CO2i,GDDayi,GetCrop().GDtranspLow,TpotForB,EpotTotForB);
-
-// 3. - WPi for that day
-// 3a - given WPi
-WPi := (GetCrop().WP/100);
-// 3b - WPi decline in reproductive stage  (works with calendar days)
-IF (((GetCrop_subkind() = Grain) OR (GetCrop_subkind() = Tuber))
-    AND (GetCrop().WPy < 100) AND (GetCrop().dHIdt > 0)
-    AND (VirtualTimeCC >= GetCrop().DaysToFlowering)) THEN
-  BEGIN
-  // WPi in reproductive stage
-  fSwitch := 1;
-  DaysYieldFormation := ROUND(GetCrop().HI/GetCrop().dHIdt);
-  DayiAfterFlowering := VirtualTimeCC - GetCrop().DaysToFlowering;
-  IF ((DaysYieldFormation > 0) AND (DayiAfterFlowering < (DaysYieldFormation/3)))
-     THEN fSwitch := DayiAfterFlowering/(DaysYieldFormation/3);
-  WPi :=  WPi * (1 - (1-GetCrop().WPy/100)*fSwitch)
-  END;
-// 3c - adjustment WPi for CO2
-IF ROUND(100*CO2i) <> ROUND(100*CO2Ref) THEN
-   WPi := WPi * fAdjustedForCO2(CO2i,GetCrop().WP,GetCrop().AdaptedToCO2);
-
-// 4. - Potential Biomass
-IF (GetETo() > 0) THEN BiomassUnlim := BiomassUnlim + WPi * TpotForB/GetETo(); (* ton/ha*)
-//BiomassUnlim := BiomassUnlim + Bin - Bout; // correction for transferred assimilates
-
-END; (* DeterminePotentialBiomass *)
 
 
 PROCEDURE AdjustpStomatalToETo(MeanETo : double;
@@ -598,7 +539,7 @@ BEGIN (* CheckWaterSaltBalance *)
 CASE control OF
      begin_day:BEGIN
                SetTotalWaterContent_BeginDay(0); // mm
-               Surf0 := SurfaceStorage; // mm
+               Surf0 := GetSurfaceStorage(); // mm
                SetTotalSaltContent_BeginDay(0); // Mg/ha
                FOR compi :=1 to GetNrCompartments() DO
                    BEGIN
@@ -628,7 +569,7 @@ CASE control OF
                SetInfiltrated(InfiltratedRain+InfiltratedIrrigation+InfiltratedStorage);
                FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
                SetTotalWaterContent_EndDay(0);
-               Surf1 := SurfaceStorage;
+               Surf1 := GetSurfaceStorage();
                SetTotalSaltContent_EndDay(0);
 
                // quality of irrigation water
@@ -717,7 +658,7 @@ IF (GetRain() > 0) THEN
    IF (SubDrain > 0) THEN
      BEGIN
      DrainMax := GetSoilLayer_i(1).InfRate;
-     IF (SurfaceStorage > 0)
+     IF (GetSurfaceStorage() > 0)
         THEN DrainMax := 0
         ELSE BEGIN
              Zr := RootingDepth;
@@ -819,8 +760,8 @@ BEGIN
 InfiltratedRain := 0;
 InfiltratedIrrigation := 0;
 IF (GetRainRecord_DataType() = Daily)
-    THEN Sum := SurfaceStorage + GetIrrigation() + GetRain()
-    ELSE Sum := SurfaceStorage + GetIrrigation() + GetRain() - GetRunoff() - SubDrain;
+    THEN Sum := GetSurfaceStorage() + GetIrrigation() + GetRain()
+    ELSE Sum := GetSurfaceStorage() + GetIrrigation() + GetRain() - GetRunoff() - SubDrain;
 IF (Sum > 0)
   THEN BEGIN
        // quality of irrigation water
@@ -831,34 +772,34 @@ IF (Sum > 0)
                IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
                END;
        // quality of stored surface water
-       ECstorage := (ECstorage*SurfaceStorage + ECw*GetIrrigation())/Sum;
+       SetECstorage((GetECstorage()*GetSurfaceStorage() + ECw*GetIrrigation())/Sum);
        // quality of infiltrated water (rain and/or irrigation and/or stored surface water)
-       ECinfilt := ECstorage;
+       ECinfilt := GetECstorage();
        // surface storage
        IF (Sum > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
           THEN BEGIN
                InfiltratedStorage := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
-               SurfaceStorage := Sum - InfiltratedStorage;
+               SetSurfaceStorage(Sum - InfiltratedStorage);
                END
           ELSE BEGIN
                IF (GetRainRecord_DataType() = Daily)
                   THEN InfiltratedStorage := Sum
                   ELSE BEGIN
-                       InfiltratedStorage := SurfaceStorage + GetIrrigation();
+                       InfiltratedStorage := GetSurfaceStorage() + GetIrrigation();
                        InfiltratedRain := GetRain() - GetRunoff() (* - SubDrain*);
                        END;
-               SurfaceStorage := 0;
+               SetSurfaceStorage(0);
                END;
        // extra run-off
-       IF (SurfaceStorage > (GetManagement_BundHeight()*1000))
+       IF (GetSurfaceStorage() > (GetManagement_BundHeight()*1000))
           THEN BEGIN
-               SetRunoff(GetRunoff() + (SurfaceStorage - GetManagement_BundHeight()*1000));
-               SurfaceStorage := GetManagement_BundHeight()*1000;
+               SetRunoff(GetRunoff() + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
+               SetSurfaceStorage(GetManagement_BundHeight()*1000);
                END;
        END
   ELSE BEGIN
        InfiltratedStorage := 0;
-       ECstorage := 0;
+       SetECstorage(0);
        END;
 END; (* calculate_surfacestorage *)
 
@@ -995,12 +936,12 @@ THEN BEGIN
         //IF (SimulParam.StandingWater)
         IF (GetManagement_Bundheight() >= 0.01)
            THEN BEGIN
-                SurfaceStorage := SurfaceStorage + (GetRunoff()-RunoffIni);
+                SetSurfaceStorage(GetSurfaceStorage() + (GetRunoff()-RunoffIni));
                 InfiltratedStorage := InfiltratedStorage - (GetRunoff()-RunoffIni);
-                IF (SurfaceStorage > GetManagement_BundHeight()*1000)
+                IF (GetSurfaceStorage() > GetManagement_BundHeight()*1000)
                    THEN BEGIN
-                        SetRunoff(RunoffIni + (SurfaceStorage - GetManagement_BundHeight()*1000));
-                        SurfaceStorage := GetManagement_BundHeight()*1000;
+                        SetRunoff(RunoffIni + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
+                        SetSurfaceStorage(GetManagement_BundHeight()*1000);
                         END
                    ELSE SetRunoff(RunoffIni);
                 END
@@ -1132,11 +1073,11 @@ IF (EffecRain > 0) THEN
       //IF (SimulParam.StandingWater)
       IF (GetManagement_Bundheight() >= 0.01)
          THEN BEGIN
-              SurfaceStorage := SurfaceStorage + amount_still_to_store;
-              IF (SurfaceStorage > (GetManagement_BundHeight()*1000))
+              SetSurfaceStorage(GetSurfaceStorage() + amount_still_to_store);
+              IF (GetSurfaceStorage() > (GetManagement_BundHeight()*1000))
                  THEN BEGIN
-                      SetRunoff(GetRunoff() + (SurfaceStorage - GetManagement_BundHeight()*1000));
-                      SurfaceStorage := GetManagement_BundHeight()*1000;
+                      SetRunoff(GetRunoff() + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
+                      SetSurfaceStorage(GetManagement_BundHeight()*1000);
                      END;
               END
          ELSE SetRunoff(GetRunoff() + amount_still_to_store);
@@ -1308,7 +1249,7 @@ IF (dayi < GetCrop().Day1)
         END;
 
 // initialise salt balance
-SaltIN := InfiltratedIrrigation*ECw*Equiv + InfiltratedStorage*ECstorage*Equiv;
+SaltIN := InfiltratedIrrigation*ECw*Equiv + InfiltratedStorage*GetECstorage()*Equiv;
 SaltInfiltr := SaltIN/100; (* salt infiltrated in soil profile kg/ha *)
 SaltOut:= 0;
 
@@ -2729,7 +2670,7 @@ END; (* DetermineCCiGDD *)
 
 PROCEDURE PrepareStage1;
 BEGIN
-IF (SurfaceStorage > 0.0000001)
+IF (GetSurfaceStorage() > 0.0000001)
    THEN SetSimulation_EvapWCsurf(GetSoil().REW)
    ELSE BEGIN
         SetSimulation_EvapWCsurf(GetRain() + GetIrrigation() - GetRunOff());
@@ -2748,7 +2689,7 @@ PROCEDURE AdjustEpotMulchWettedSurface(dayi: INTEGER;
 Var EpotIrri : double;
 BEGIN
 // 1. Mulches (reduction of EpotTot to Epot)
-IF (SurfaceStorage <= 0.000001)
+IF (GetSurfaceStorage() <= 0.000001)
    THEN BEGIN
         IF (dayi < GetCrop().Day1) // before season
            THEN Epot := EpotTot * (1 - (GetManagement_EffectMulchOffS()/100)*(GetManagement_SoilCoverBefore()/100))
@@ -2773,7 +2714,7 @@ IF (GetIrrigation() > 0) THEN
    IF ((dayi >= GetCrop().Day1+GetCrop().DaysToHarvest)AND (GetSimulParam_IrriFwOffSeason() < 100))
       THEN EvapoEntireSoilSurface := false;
    END;
-IF ((GetRain() > 1) OR (SurfaceStorage > 0)) THEN EvapoEntireSoilSurface := true;
+IF ((GetRain() > 1) OR (GetSurfaceStorage() > 0)) THEN EvapoEntireSoilSurface := true;
 IF ((dayi >= GetCrop().Day1) AND (dayi < GetCrop().Day1+GetCrop().DaysToHarvest) AND (GetIrriMode() = Inet))
    THEN EvapoEntireSoilSurface := true;
 
@@ -2847,16 +2788,16 @@ END; (* PrepareStage2 *)
 PROCEDURE CalculateEvaporationSurfaceWater;
 VAR SaltSurface : double;
 BEGIN
-IF (SurfaceStorage > GetEpot())
+IF (GetSurfaceStorage() > GetEpot())
    THEN BEGIN
-        SaltSurface := SurfaceStorage*ECstorage*Equiv;
+        SaltSurface := GetSurfaceStorage()*GetECstorage()*Equiv;
         Eact := GetEpot();
-        SurfaceStorage := SurfaceStorage - Eact;
-        ECstorage := SaltSurface/(SurfaceStorage*Equiv); //salinisation of surface storage layer
+        SetSurfaceStorage(GetSurfaceStorage() - Eact);
+        SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)); //salinisation of surface storage layer
         END
    ELSE BEGIN
-        Eact := SurfaceStorage;
-        SurfaceStorage := 0;
+        Eact := GetSurfaceStorage();
+        SetSurfaceStorage(0);
         SetSimulation_EvapWCsurf(GetSoil().REW);
         SetSimulation_EvapZ(EvapZmin/100);
         IF (GetSimulation_EvapWCsurf() < 0.0001)
@@ -3008,7 +2949,7 @@ FOR i := 1 TO NrOfStepsInDay DO
           Wrel := (Wact-Wlower)/(Wupper-Wlower);
           END;
     Kr := SoilEvaporationReductionCoefficient(Wrel,GetSimulParam_EvapDeclineFactor());
-    IF (Abs(GetETo() - 5) > 0.01) THEN // correction for evaporative demand
+    IF (Abs(getETo() - 5) > 0.01) THEN // correction for evaporative demand
        BEGIN
        // adjustment of Kr (not considered yet)
        END;
@@ -3385,19 +3326,18 @@ FOR compi := 1 TO GetNrCompartments() DO
     END;
 IF (GetCrop().AnaeroPoint > 0) THEN Part := (1-GetDaySubmerged()/GetSimulParam_DelayLowOxygen())
                           ELSE Part := 1;
-//KsReduction := KsSalinity(Simulation.SalinityConsidered,Crop.ECemin,Crop.ECemax,ECstorage,SimulParam.KsShapeFactorSalt);
-KsReduction := KsSalinity(GetSimulation_SalinityConsidered(),GetCrop().ECemin,GetCrop().ECemax,ECstorage,(0.0));
-SaltSurface := SurfaceStorage*ECstorage*Equiv;
-IF (SurfaceStorage > KsReduction*Part*GetTpot())
+KsReduction := KsSalinity(GetSimulation_SalinityConsidered(),GetCrop().ECemin,GetCrop().ECemax,GetECstorage(),(0.0));
+SaltSurface := GetSurfaceStorage()*GetECstorage()*Equiv;
+IF (GetSurfaceStorage() > KsReduction*Part*GetTpot())
    THEN BEGIN
-        SurfaceStorage := SurfaceStorage - KsReduction*Part*GetTpot();
+        SetSurfaceStorage(GetSurfaceStorage() - KsReduction*Part*GetTpot());
         Tact := KsReduction*Part*GetTpot();
         //NEW
-        ECstorage := SaltSurface/(SurfaceStorage*Equiv); //salinisation of surface storage layer
+        SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)); //salinisation of surface storage layer
         END
    ELSE BEGIN
-        Tact := SurfaceStorage -0.1;
-        SurfaceStorage := 0.1; // zero give error in already updated salt balance
+        Tact := GetSurfaceStorage() -0.1;
+        SetSurfaceStorage(0.1); // zero give error in already updated salt balance
         END;
 IF (Tact < KsReduction*Part*GetTpot()) THEN
    BEGIN
@@ -3592,7 +3532,7 @@ Eact := 0;
 IF (GetEpot() > 0) THEN
    BEGIN
    // surface water
-   IF (SurfaceStorage > 0) THEN CalculateEvaporationSurfaceWater;
+   IF (GetSurfaceStorage() > 0) THEN CalculateEvaporationSurfaceWater;
    // stage 1 evaporation
    IF ((ABS(GetEpot() - Eact) > 0.0000001) AND (GetSimulation_EvapWCsurf() > 0))
       THEN CalculateSoilEvaporationStage1;
@@ -3608,12 +3548,12 @@ IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthl
 // 13. Transpiration
 IF ((NoMoreCrop = false) AND (RootingDepth > 0.0001)) THEN
    BEGIN
-   IF ((SurfaceStorage > 0) AND
+   IF ((GetSurfaceStorage() > 0) AND
        ((GetCrop().AnaeroPoint = 0) OR (GetDaySubmerged() < GetSimulParam_DelayLowOxygen())))
        THEN surface_transpiration
        ELSE calculate_transpiration(GetTpot(),Tact);
    END;
-IF (SurfaceStorage <= 0) THEN SetDaySubmerged(0);
+IF (GetSurfaceStorage() <= 0) THEN SetDaySubmerged(0);
 FeedbackCC;
 
 // 14. Adjustment to groundwater table
