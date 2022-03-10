@@ -470,8 +470,8 @@ subroutine InitializeSettings()
     call SetSurfaceStorage(0._dp)
     call SetECstorage(0.0_dp)
     call SetDaySubmerged(0)
-    SumWaBal_temp = GetSumWabal()
-    call GlobalZero(SumWabal_temp)
+    SumWaBal_temp = GetSumWaBal()
+    call GlobalZero(SumWaBal_temp)
     call SetSumWaBal(SumWaBal_temp)
     call SetDrain(0.0_dp) ! added 4.0
     call SetRunoff(0.0_dp)! added 4.0
