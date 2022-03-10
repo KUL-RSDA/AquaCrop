@@ -933,6 +933,7 @@ character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
 character(len=:), allocatable :: SWCiniDescription
+character(len=:), allocatable :: ProjectDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
 character(len=:), allocatable :: MultipleProjectDescription
@@ -14567,6 +14568,20 @@ subroutine SetMultipleProjectDescription(str)
 
     MultipleProjectDescription = str
 end subroutine SetMultipleProjectDescription
+
+function GetProjectDescription() result(str)
+    !! Getter for the "ProjectDescription" global variable.
+    character(len=len(ProjectDescription)) :: str
+
+    str = ProjectDescription
+end function GetProjectDescription
+
+subroutine SetProjectDescription(str)
+    !! Setter for the "ProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProjectDescription = str
+end subroutine SetProjectDescription
 
 
 end module ac_global

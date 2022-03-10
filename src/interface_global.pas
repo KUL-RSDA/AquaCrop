@@ -4628,7 +4628,19 @@ procedure SetMultipleProjectDescription(constref str : string);
 procedure SetMultipleProjectDescription_wrap(
             constref p : PChar;
             constref strlen : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_settmultipleprojectdescription_wrap';
+        external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectdescription_wrap';
+
+function GetProjectDescription(): string;
+
+function GetProjectDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getprojectdescription_wrap';
+
+procedure SetProjectDescription(constref str : string);
+
+procedure SetProjectDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setprojectdescription_wrap';
 
 
 implementation
@@ -7814,6 +7826,25 @@ begin;
      SetMultipleProjectDescription_wrap(p, strlen);
 end;
 
+
+function GetProjectDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetProjectDescription_wrap();
+     GetProjectDescription := AnsiString(p);
+end;
+
+
+procedure SetProjectDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetProjectDescription_wrap(p, strlen);
+end;
 
 
 initialization

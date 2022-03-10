@@ -181,7 +181,17 @@ use ac_global, only:    SetSimulParam_PercRAW, &
                         SetSimulation_InitialStep, &
                         SetSimulation_LengthCuttingInterval, &
                         rep_sum, &
-                        SetMultipleProjectDescription
+                        SetMultipleProjectDescription, &
+                        GetProjectDescription, &
+                        SetProjectDescription, &
+                        GetSimulParam_CompDefThick, &
+                        GetProfFileFull, &
+                        SetCompartment_Thickness, &
+                        SetSimulParam_EffectiveRain_RootNrEvap, &
+                        SetSimulParam_EffectiveRain_ShowersInDecade, &
+                        SetSimulParam_EffectiveRain_PercentEffRain
+                        
+
 use ac_defaultcropsoil, only :  ResetDefaultSoil, &
                                 ResetDefaultCrop
 
@@ -302,8 +312,8 @@ subroutine InitializeSettings()
     call SetGroundWaterFilefull(GetGroundWaterFile())  ! no file 
     call SetGroundWaterDescription('no shallow groundwater table')
     call SetZiAqua(undef_int)
-    call SetECiAqua(undef_int)
-    call SetSimulParam_ConstGwt(true)
+    call SetECiAqua(real(undef_int, kind=dp))
+    call SetSimulParam_ConstGwt(.true.)
 
     ! 2b. Soil profile and initial soil water content
     call ResetDefaultSoil ! Reset the soil profile to its default values
@@ -324,15 +334,15 @@ subroutine InitializeSettings()
                         ! for Soil water and Salinity content
 
     ! 2c. Complete initial conditions (crop development)
-    call SetSimulation_CCini(undef_int)
+    call SetSimulation_CCini(real(undef_int, kind=dp))
     call SetSimulation_Bini(0.000_dp)
-    call SetSimulation_Zrini(undef_int)
+    call SetSimulation_Zrini(real(undef_int, kind=dp))
 
 
     ! 3. Crop characteristics and cropping period
     call ResetDefaultCrop ! Reset the crop to its default values
     call SetCropFile('DEFAULT.CRO')
-    call SetCropFilefull(CONCAT(GetPathNameSimul(), GetCropFile()))
+    call SetCropFilefull(GetPathNameSimul() // GetCropFile())
     ! LoadCrop ==============================
     call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
                         * (GetCrop_SizeSeedling()/10000._dp))
@@ -429,7 +439,7 @@ subroutine InitializeSettings()
     ! 8. Project and Multiple Project file
     call SetProjectFile('(None)')
     call SetProjectFileFull(GetProjectFile())
-    ProjectDescription = 'No specific project'
+    call SetProjectDescription('No specific project')
     call SetSimulation_MultipleRun(.false.) ! No sequence of simulation 
                                             ! runs in the project
     call SetSimulation_NrRuns(1)
@@ -437,7 +447,7 @@ subroutine InitializeSettings()
     call SetSimulation_MultipleRunConstZrx(real(undef_int, kind=dp))
     call SetMultipleProjectFile(GetProjectFile())
     call SetMultipleProjectFileFull(GetProjectFileFull())
-    call SetMultipleProjectDescription(ProjectDescription)
+    call SetMultipleProjectDescription(GetProjectDescription())
 
 
     ! 9. Observations file
@@ -458,8 +468,8 @@ subroutine InitializeSettings()
     call SetRain(0._dp)
     call SetIrrigation(0._dp)
     call SetSurfaceStorage(0._dp)
-    call ECstorage(0.0_dp)
-    call DaySubmerged(0)
+    call SetECstorage(0.0_dp)
+    call SetDaySubmerged(0)
     SumWaBal_temp = GetSumWabal()
     call GlobalZero(SumWabal_temp)
     call SetSumWaBal(SumWaBal_temp)

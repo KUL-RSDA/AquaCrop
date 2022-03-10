@@ -218,7 +218,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetPreDay, &
                      SetPreDay, &
                      GetMultipleProjectDescription, &
-                     SetMultipleProjectDescription
+                     SetMultipleProjectDescription, &
+                     GetProjectDescription, &
+                     SetProjectDescription
 
 
 use ac_kinds, only: dp, &
@@ -2530,6 +2532,26 @@ subroutine SetMultipleProjectDescription_wrap(MultipleProjectDescription, strlen
     string = pointer2string(MultipleProjectDescription, strlen)
     call SetMultipleProjectDescription(string)
 end subroutine SetMultipleProjectDescription_wrap
+
+
+function GetProjectDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProjectDescription())
+end function GetProjectDescription_wrap
+
+
+subroutine SetProjectDescription_wrap(ProjectDescription, strlen)
+    !! Wrapper for [[ac_global:SetProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectDescription, strlen)
+    call SetProjectDescription(string)
+end subroutine SetProjectDescription_wrap
 
 
 
