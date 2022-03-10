@@ -216,7 +216,11 @@ use ac_global, only: CheckFilesInProject, &
                      CompleteClimateDescription, &
                      rep_clim, &
                      GetPreDay, &
-                     SetPreDay
+                     SetPreDay, &
+                     GetMultipleProjectDescription, &
+                     SetMultipleProjectDescription, &
+                     GetProjectDescription, &
+                     SetProjectDescription
 
 
 use ac_kinds, only: dp, &
@@ -2508,6 +2512,46 @@ subroutine SetPreDay_wrap(PreDay)
     bool = PreDay
     call SetPreDay(bool)
 end subroutine SetPreDay_wrap
+
+
+function GetMultipleProjectDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetMultipleProjectDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetMultipleProjectDescription())
+end function GetMultipleProjectDescription_wrap
+
+
+subroutine SetMultipleProjectDescription_wrap(MultipleProjectDescription, strlen)
+    !! Wrapper for [[ac_global:SetMultipleProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: MultipleProjectDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(MultipleProjectDescription, strlen)
+    call SetMultipleProjectDescription(string)
+end subroutine SetMultipleProjectDescription_wrap
+
+
+function GetProjectDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProjectDescription())
+end function GetProjectDescription_wrap
+
+
+subroutine SetProjectDescription_wrap(ProjectDescription, strlen)
+    !! Wrapper for [[ac_global:SetProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectDescription, strlen)
+    call SetProjectDescription(string)
+end subroutine SetProjectDescription_wrap
 
 
 

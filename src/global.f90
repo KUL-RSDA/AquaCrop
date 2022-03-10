@@ -933,8 +933,10 @@ character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
 character(len=:), allocatable :: SWCiniDescription
+character(len=:), allocatable :: ProjectDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
+character(len=:), allocatable :: MultipleProjectDescription
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
@@ -9563,6 +9565,11 @@ subroutine SetSimulParam_EffectiveRain_RootNrEvap(RootNrEvap)
     EffectiveRain%RootNrEvap= RootNrEvap
 end subroutine SetSimulParam_EffectiveRain_RootNrEvap
 
+type(rep_sum) function GetSumWaBal()
+    !! Getter for the "SymWaBal" global variable.
+
+    GetSumWaBal = SumWaBal
+end function GetSumWaBal
 
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.
@@ -9683,6 +9690,13 @@ real(dp) function GetSumWaBal_CRSalt()
 
     GetSumWaBal_CRSalt = SumWaBal%CRSalt
 end function GetSumWaBal_CRSalt
+
+subroutine SetSumWaBal(SumWaBal_in)
+    !! Setter for the "SumWaBal" global variable.
+    type(rep_sum), intent(in) :: SumWaBal_in
+
+    SumWaBal = SumWaBal_in
+end subroutine SetSumWaBal
 
 subroutine SetSumWaBal_Epot(Epot)
     !! Setter for the "SumWaBal" global variable.
@@ -14540,6 +14554,34 @@ subroutine SetTpot(Tpot_in)
 
     Tpot = Tpot_in
 end subroutine SetTpot
+
+function GetMultipleProjectDescription() result(str)
+    !! Getter for the "MultipleProjectDescription" global variable.
+    character(len=len(MultipleProjectDescription)) :: str
+
+    str = MultipleProjectDescription
+end function GetMultipleProjectDescription
+
+subroutine SetMultipleProjectDescription(str)
+    !! Setter for the "MultipleProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    MultipleProjectDescription = str
+end subroutine SetMultipleProjectDescription
+
+function GetProjectDescription() result(str)
+    !! Getter for the "ProjectDescription" global variable.
+    character(len=len(ProjectDescription)) :: str
+
+    str = ProjectDescription
+end function GetProjectDescription
+
+subroutine SetProjectDescription(str)
+    !! Setter for the "ProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProjectDescription = str
+end subroutine SetProjectDescription
 
 
 end module ac_global
