@@ -52,6 +52,7 @@ use ac_global, only: BMRange, &
                      getcrop_daystofullcanopysf, &
                      GetCrop_CCxAdjusted, GetCrop_DeterminancyLinked, &
                      GetCrop_GDDaysToFullCanopySF, &
+                     SetCrop_pPollination, &
                      GetCrop_pPollination, &
                      getcrop_bcoeff, getcrop_dhimax, &
                      getcrop_stressresponse_calibrated, &
@@ -738,11 +739,11 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
       if (GetCrop_LengthFlowering() <= 1._dp) then
           F = 1._dp
       else
-          DiFlor = roundc(dayi - (GetSimulation_DelayedDays() + &
-                            GetCrop_Day1() + GetCrop_DaysToFlowering()), mold=1)
+          DiFlor = dayi - (GetSimulation_DelayedDays() + &
+                            GetCrop_Day1() + GetCrop_DaysToFlowering())
           f2 = FractionPeriod(DiFlor)
-          DiFlor = roundc((dayi-1) - (GetSimulation_DelayedDays() + &
-                            GetCrop_Day1() + GetCrop_DaysToFlowering()), mold=1)
+          DiFlor = (dayi-1) - (GetSimulation_DelayedDays() + &
+                            GetCrop_Day1() + GetCrop_DaysToFlowering())
           f1 = FractionPeriod(DiFlor)
           if (abs(f1-f2) < 0.0000001_dp) then
               F = 0._dp

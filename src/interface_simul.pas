@@ -76,12 +76,12 @@ procedure DetermineBiomassAndYield(
             VAR Bin : double;
             VAR Bout : double;
             VAR TESTVAL : double);
-     external 'aquacrop' name '__ac_simul_MOD_determinebiomassandyield_wrap';
+     external 'aquacrop' name '__ac_interface_simul_MOD_determinebiomassandyield_wrap';
 
 procedure AdjustpStomatalToETo(
             constref MeanETo : double;
             VAR pStomatULAct : double);
-     external 'aquacrop' name '__ac_simul_MOD_adjuststomataltoeto';
+     external 'aquacrop' name '__ac_simul_MOD_adjustpstomataltoeto';
 
 //-----------------------------------------------------------------------------
 // BUDGET_module
