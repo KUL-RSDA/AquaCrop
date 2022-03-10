@@ -3,7 +3,7 @@ unit Run;
 interface
 
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing,
-     interface_inforesults;
+     interface_climprocessing, interface_simul, interface_inforesults;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -78,7 +78,7 @@ WRITELN(fRun,'    RunNr     Day1   Month1    Year1     Rain      ETo       GD   
              '    SaltIn   SaltOut    SaltUp  SaltProf',
              '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr',
              '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-WRITELN(fRun,'                                           mm       mm    °C.day    ppm',
+WRITELN(fRun,'                                           mm       mm  degC.day    ppm',
              '        mm       mm       mm       mm       mm       mm        %       mm       mm        %',
              '    ton/ha    ton/ha    ton/ha    ton/ha',
              '      days       %        %        %        %        %        %  ',
@@ -225,9 +225,9 @@ IF Out1Wabal THEN
 IF Out2Crop THEN
    BEGIN
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,'    °C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      THEN WRITE(fDaily,'  degC-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha')
-      ELSE WRITELN(fDaily,'    °C-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
+      ELSE WRITELN(fDaily,'  degC-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
         '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
    END;
 // D3. Profile/Root zone - Soil water content
@@ -275,7 +275,7 @@ IF Out6CompEC THEN
       ELSE WRITELN(fDaily,NodeD:11:2);
    END;
 // D7. Climate input parameters
-IF Out7Clim THEN WRITELN(fDaily,'       mm        mm       °C        °C        °C       ppm');
+IF Out7Clim THEN WRITELN(fDaily,'       mm        mm     degC      degC      degC       ppm');
 END; (* WriteTitleDailyResults *)
 
 
@@ -915,6 +915,7 @@ PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
 VAR totalname : string;
     i : LongInt;
     tmpRain, ETo_temp : double;
+
 BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
@@ -1828,8 +1829,8 @@ CGCadjustmentAfterCutting := false;
 // 19. Labels, Plots and displays
 IF (GetManagement_BundHeight() < 0.01) THEN
    BEGIN
-   SurfaceStorage := 0;
-   ECStorage := 0;
+   SetSurfaceStorage(0);
+   SetECStorage(0);
    END;
 IF (RootingDepth > 0) THEN // salinity in root zone
    BEGIN
@@ -2132,9 +2133,9 @@ IF Out1Wabal THEN
    BEGIN
    IF (GetZiAqua() = undef_int)
       THEN WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
-               SurfaceStorage:7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,undef_double:8:2)
+               GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,undef_double:8:2)
       ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
-               SurfaceStorage:7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
+               GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
    IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
                  ELSE Ratio1 := 100.0;
    IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(Eact+Tact)/(GetEpot()+GetTpot())
@@ -2400,7 +2401,7 @@ VAR RepeatToDay : LongInt;
     FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
     GwTable_temp : rep_GwTable;
     Store_temp, Mobilize_temp : boolean;
-    ToMobilize_temp, Bmobilized_temp : double;
+    ToMobilize_temp, Bmobilized_temp, ETo_tmp : double;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
     ZiAqua_temp : integer;
@@ -2560,7 +2561,7 @@ VAR RepeatToDay : LongInt;
                               IF  ((GetManagement_BundHeight() >= 0.01)
                                AND (GetGenerateDepthMode() = FixDepth)
                                AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
-                               AND (TargetTimeVal >= ROUND(SurfaceStorage)))
+                               AND (TargetTimeVal >= ROUND(GetSurfaceStorage())))
                                    THEN SetIrrigation(TargetDepthVal)
                                    ELSE SetIrrigation(0);
                               TargetTimeVal := -999; // no need for check in SIMUL
@@ -2683,6 +2684,7 @@ VAR RepeatToDay : LongInt;
 
 BEGIN (* FileManagement *)
 RepeatToDay := GetSimulation_ToDayNr();
+
 
 REPEAT
 (* 1. Get ETo *)
@@ -3069,11 +3071,11 @@ IF (GetSimulation_SumEToStress() >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
 IF (DayNri <= GetSimulation_ToDayNr()) THEN
    BEGIN
-   IF (GetEToFile() <> '(None)') THEN 
-            BEGIN 
-            READLN(fEToSIM,ETo_temp);
-            SetETo(ETo_temp);
-            END;
+   IF (GetEToFile() <> '(None)') THEN
+        BEGIN
+        READLN(fEToSIM,ETo_tmp);
+        SetETo(Eto_tmp);
+        END;
    IF (GetRainFile() <> '(None)') THEN
    BEGIN
       READLN(fRainSIM,tmpRain);
