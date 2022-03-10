@@ -148,18 +148,18 @@ integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
 
 integer(intEnum), parameter :: typeObsSim_ObsSimCC = 0
-    !! index of daily in typeObsSim enumerated type
+    !! index of ObsSimCC in typeObsSim enumerated type
 integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
-    !! index of daily in typeObsSim enumerated type
+    !! index of ObsSimB in typeObsSim enumerated type
 integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
-    !! index of daily in typeObsSim enumerated type
+    !! index of ObsSimSWC in typeObsSim enumerated type
 
 integer(intEnum), parameter :: typeProject_TypePRO = 0
-    !! index of daily in typeProject enumerated type
+    !! index of TypePRO in typeProject enumerated type
 integer(intEnum), parameter :: typeProject_TypePRM = 1
-    !! index of daily in typeProject enumerated type
+    !! index of TypePRM in typeProject enumerated type
 integer(intEnum), parameter :: typeProject_TypeNone = 2
-    !! index of daily in typeProject enumerated type
+    !! index of TypeNone in typeProject enumerated type
 
 type rep_DayEventInt
     integer(int32) :: DayNr
