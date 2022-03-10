@@ -1719,7 +1719,7 @@ TimeSenescence := 0;
 SetCrop_CCxWithered(0);
 NoMoreCrop := false;
 
-CCiActual := CCiPrev;
+SetCCiActual(CCiPrev);
 
 
 // 14. Biomass and re-setting of GlobalZero
@@ -1792,9 +1792,9 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
         IF ((ROUND(GetSoil().RootMax*1000) < ROUND(GetCrop().RootMax*1000))
            AND (Ziprev > GetSoil().RootMax))
            THEN Ziprev := GetSoil().RootMax;
-        RootingDepth := Ziprev;  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
+        SetRootingDepth(Ziprev);  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
         END
-   ELSE RootingDepth := ActualRootingDepth(DayNri-GetCrop().Day1+1,
+   ELSE SetRootingDepth(ActualRootingDepth(DayNri-GetCrop().Day1+1,
                                            GetCrop().DaysToGermination,
                                            GetCrop().DaysToMaxRooting,
                                            GetCrop().DaysToHarvest,
@@ -1804,7 +1804,7 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
                                            GetCrop().RootMin,
                                            GetCrop().RootMax,
                                            GetCrop().RootShape,
-                                           GetCrop_ModeCycle());
+                                           GetCrop_ModeCycle()));
 
 // 17. Multiple cuttings
 NrCut := 0;
@@ -1831,13 +1831,13 @@ IF (GetManagement_BundHeight() < 0.01) THEN
    SurfaceStorage := 0;
    ECStorage := 0;
    END;
-IF (RootingDepth > 0) THEN // salinity in root zone
+IF (GetRootingDepth() > 0) THEN // salinity in root zone
    BEGIN
    ECe_temp := GetRootZoneSalt().ECe;
    ECsw_temp := GetRootZoneSalt().ECsw;
    ECswFC_temp := GetRootZoneSalt().ECswFC;
    KsSalt_temp := GetRootZoneSalt().KsSalt;
-   DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+   DetermineRootZoneSaltContent(GetRootingDepth(),ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
    SetRootZoneSalt_ECe(ECe_temp);
    SetRootZoneSalt_ECsw(ECsw_temp);
    SetRootZoneSalt_ECswFC(ECswFC_temp);
@@ -2165,14 +2165,14 @@ IF Out2Crop THEN
       THEN StrSalt := undef_int
       ELSE StrSalt := ROUND(100 * (1 - GetRootZoneSalt().KsSalt));
    //4. Air temperature stress
-   IF (CCiActual <= 0.0000001)
+   IF (GetCCiActual() <= 0.0000001)
       THEN KsTr := 1
       ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GDDayi);
    IF (KsTr < 1)
       THEN StrTr := ROUND((1-KsTr)*100)
       ELSE StrTr := 0;
    //5. Relative cover of weeds
-   IF (CCiActual <= 0.0000001)
+   IF (GetCCiActual() <= 0.0000001)
       THEN StrW := undef_int
       ELSE StrW := Round(WeedRCi);
    //6. WPi adjustemnt
@@ -2197,8 +2197,8 @@ IF Out2Crop THEN
       THEN WPy := (GetSumWaBal_YieldPart()*1000)/((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10)
       ELSE WPy := 0.0;
    // write
-   WRITE(fDaily,GDDayi:9:1,RootingDepth:8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
-         (CCiActual*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
+   WRITE(fDaily,GDDayi:9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
+         (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
          TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
    IF ((GetCrop().DryMatter = undef_int) OR (GetCrop().DryMatter = 0))
@@ -2214,7 +2214,7 @@ IF Out2Crop THEN
 IF Out3Prof THEN
    BEGIN
    WRITE(fDaily,GetTotalWaterContent().EndDay:10:1);
-   IF (RootingDepth <= 0)
+   IF (GetRootingDepth() <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
            IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
@@ -2229,8 +2229,8 @@ IF Out3Prof THEN
                    SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
                    END;
            END;
-   WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
-   IF (RootingDepth <= 0)
+   WRITE(fDaily,GetRootZoneWC().actual:9:1,GetRootingDepth():8:2);
+   IF (GetRootingDepth() <= 0)
       THEN BEGIN
            SetRootZoneWC_Actual(undef_double);
            SetRootZoneWC_FC(undef_double);
@@ -2242,7 +2242,7 @@ IF Out3Prof THEN
            END
       ELSE BEGIN
            SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-           DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+           DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
            SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
            END; 
    WRITE(fDaily,GetRootZoneWC().actual:8:1,GetRootZoneWC().SAT:10:1,GetRootZoneWC().FC:10:1,GetRootZoneWC().Leaf:10:1,
@@ -2256,7 +2256,7 @@ IF Out3Prof THEN
 IF Out4Salt THEN
    BEGIN
    WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
-   IF (RootingDepth <= 0)
+   IF (GetRootingDepth() <= 0)
       THEN BEGIN
            SaltVal := undef_int;
            SetRootZoneSalt_ECe(undef_int);
@@ -2265,9 +2265,9 @@ IF Out4Salt THEN
            END
       ELSE SaltVal := (GetRootZoneWC().SAT*GetRootZoneSalt().ECe*Equiv)/100;
    IF (GetZiAqua() = undef_int)
-      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+      THEN WRITE(fDaily,SaltVal:10:3,GetRootingDepth():8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,undef_double:8:2)
-      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+      ELSE WRITE(fDaily,SaltVal:10:3,GetRootingDepth():8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,(GetZiAqua()/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,GetECiAqua():8:2)
@@ -2373,7 +2373,7 @@ IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);
-WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(CCiActual*100):8:1,CCfield:8:1,CCstd:8:1,
+WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
 END; (* WriteEvaluationData *)
 
@@ -2587,7 +2587,7 @@ VAR RepeatToDay : LongInt;
          PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
          SetCompartment_Theta(compi, ThetaPercRaw);
          END;
-    UNTIL ((SumDepth >= RootingDepth) OR (compi = GetNrCompartments()))
+    UNTIL ((SumDepth >= GetRootingDepth()) OR (compi = GetNrCompartments()))
     END; (* AdjustSWCRootZone *)
 
 
@@ -2783,25 +2783,25 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((DayNri-GetCrop().Day1+1) < GetCr
    THEN BEGIN
         IF (((DayNri-GetSimulation_DelayedDays()) >= GetCrop().Day1) AND ((DayNri-GetSimulation_DelayedDays()) <= GetCrop().DayN))
            THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
-                RootingDepth := AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),Tact,StressLeaf,StressSenescence,
+                SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),Tact,StressLeaf,StressSenescence,
                                 (DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
                                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
                                 (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
-                                GetCrop().ModeCycle);
-                ZiPrev := RootingDepth;  // IN CASE rootzone drops below groundwate table
-                IF ((GetZiAqua() >= 0) AND (RootingDepth > (GetZiAqua()/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
+                                GetCrop().ModeCycle));
+                ZiPrev := getRootingDepth();  // IN CASE rootzone drops below groundwate table
+                IF ((GetZiAqua() >= 0) AND (GetRootingDepth() > (GetZiAqua()/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
                    BEGIN
-                   RootingDepth := GetZiAqua()/100;
-                   IF (RootingDepth < GetCrop().RootMin) THEN RootingDepth := GetCrop().RootMin;
+                   SetRootingDepth(GetZiAqua()/100);
+                   IF (GetRootingDepth() < GetCrop().RootMin) THEN SetRootingDepth(GetCrop().RootMin);
                    END;
                 END
-           ELSE RootingDepth := 0;
+           ELSE SetRootingDepth(0);
         END
-   ELSE RootingDepth := Ziprev;
-IF ((RootingDepth > 0) AND (DayNri = GetCrop().Day1))
+   ELSE SetRootingDepth(Ziprev);
+IF ((GetRootingDepth() > 0) AND (DayNri = GetCrop().Day1))
    THEN BEGIN //initial root zone depletion day1 (for WRITE Output)
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-        DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+        DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
         SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         IF (GetIrriMode() = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
         END;
@@ -2828,7 +2828,7 @@ BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayL
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
-IF ((RootingDepth > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
+IF ((GetRootingDepth() > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
    BEGIN
    SetIrrigation(GetIrrigation() + PreIrri);
    SetSumWabal_Irrigation(GetSumWaBal_Irrigation() + PreIrri);
@@ -2836,7 +2836,7 @@ IF ((RootingDepth > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = Inet))
    END;
 
 // total number of days in the season
-IF (CCiActual > 0) THEN
+IF (GetCCiActual() > 0) THEN
    BEGIN
    IF (GetStressTot_NrD() < 0)
       THEN SetStressTot_NrD(1)
@@ -2850,13 +2850,13 @@ DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotN
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
-IF ((RootingDepth > 0) AND (NoMoreCrop = false))
+IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
    THEN BEGIN
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-        DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+        DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
         SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         // temperature stress affecting crop transpiration
-        IF (CCiActual <= 0.0000001)
+        IF (GetCCiActual() <= 0.0000001)
            THEN KsTr := 1
            ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GDDayi);
         SetStressTot_Temp(((GetStressTot_NrD() - 1)*GetStressTot_Temp() + 100*(1-KsTr))/GetStressTot_NrD());
@@ -2865,7 +2865,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         ECsw_temp := GetRootZoneSalt().ECsw;
         ECswFC_temp := GetRootZoneSalt().ECswFC;
         KsSalt_temp := GetRootZoneSalt().KsSalt;
-        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        DetermineRootZoneSaltContent(GetRootingDepth(),ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
         SetRootZoneSalt_ECe(ECe_temp);
         SetRootZoneSalt_ECsw(ECsw_temp);
         SetRootZoneSalt_ECswFC(ECswFC_temp);
@@ -2883,7 +2883,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         YieldPart_temp := GetSumWaBal_YieldPart();
         DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
-                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,CCiActual,FracAssim,
+                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,SumInterval,
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
@@ -2915,8 +2915,8 @@ IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
 SetPreDay(true);
 IF (DayNri >= GetCrop().Day1) THEN
    BEGIN
-   CCiPrev := CCiActual;
-   IF (ZiPrev < RootingDepth) THEN Ziprev := RootingDepth; // IN CASE groundwater table does not affect root development
+   CCiPrev := GetCCiActual();
+   IF (ZiPrev < GetRootingDepth()) THEN Ziprev := GetRootingDepth(); // IN CASE groundwater table does not affect root development
    SumGDDPrev := GetSimulation_SumGDD();
    END;
 IF (TargetTimeVal = 1) THEN IrriInterval := 0;
@@ -3011,7 +3011,7 @@ IF GetManagement_Cuttings_Considered() THEN
 SumETo := SumETo + GetETo();
 SumGDD := SumGDD + GDDayi;
 //14.b Stress totals
-IF (CCiActual > 0) THEN
+IF (GetCCiActual() > 0) THEN
    BEGIN
    // leaf expansion growth
    IF (StressLeaf > - 0.000001) THEN
@@ -3028,7 +3028,7 @@ IF (CCiActual > 0) THEN
 IF (WeedRCi > - 0.000001) THEN
    SetStressTot_Weed(((GetStressTot_NrD() - 1)*GetStressTot_Weed() + WeedRCi)/GetStressTot_NrD());
 //14.c Assign crop parameters
-SetPlotVarCrop_ActVal(CCiActual/CCxCropWeedsNoSFstress * 100);
+SetPlotVarCrop_ActVal(GetCCiActual()/CCxCropWeedsNoSFstress * 100);
 SetPlotVarCrop_PotVal(100 * (1/CCxCropWeedsNoSFstress) *
                               CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),GetCrop().DaysToGermination,
                               GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,

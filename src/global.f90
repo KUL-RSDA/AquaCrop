@@ -982,7 +982,7 @@ integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
                             ! Soil Water Content Menu
 integer(int8) :: MaxPlotTr
 
-
+real(dp) :: CCiActual
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
@@ -993,6 +993,7 @@ real(dp) :: Infiltrated ! mm/day
 real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: Runoff  ! mm/day
+real(dp) :: RootingDepth
 real(dp) :: Tpot ! mm/day
 
 
@@ -14442,6 +14443,32 @@ subroutine SetCRwater(CRwater_in)
 
     CRwater = CRwater_in
 end subroutine SetCRwater
+
+real(dp) function GetCCiActual()
+    !! Getter for the "CCiActual" global variable.
+
+    GetCCiActual = CCiActual
+end function GetCCiActual
+
+subroutine SetCCiActual(CCiActual_in)
+    !! Setter for the "CCiActual" global variable.
+    real(dp), intent(in) :: CCiActual_in
+
+    CCiActual = CCiActual_in
+end subroutine SetCCiActual
+
+real(dp) function GetRootingDepth()
+    !! Getter for the "RootingDepth" global variable.
+
+    GetRootingDepth = RootingDepth
+end function GetRootingDepth
+
+subroutine SetRootingDepth(RootingDepth_in)
+    !! Setter for the "RootingDepth" global variable.
+    real(dp), intent(in) :: RootingDepth_in
+
+    RootingDepth = RootingDepth_in
+end subroutine SetRootingDepth
 
 real(dp) function GetEpot()
     !! Getter for the "Epot" global variable.
