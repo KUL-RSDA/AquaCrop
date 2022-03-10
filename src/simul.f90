@@ -4,7 +4,8 @@ use ac_kinds, only:  dp, int32, int8
 use ac_global, only: BMRange, &
                      CalculateETpot, CanopyCoverNoStressSF, &
                      CompartmentIndividual, &
-                     CO2Ref, CCiActual, &
+                     CO2Ref, &
+                     GetCCiActual, SetCCiActual, &
                      datatype_daily, &
                      datatype_decadely, &
                      datatype_monthly, &
@@ -101,7 +102,9 @@ use ac_global, only: BMRange, &
                      modeCycle_CalendarDays, &
                      MultiplierCCxSelfThinning, &
                      plant_regrowth, &
-                     roundc, Rootingdepth, undef_int, &
+                     roundc, &
+                     undef_int, &
+                     GetRootingdepth,SetRootingdepth, &
                      SetCompartment, &
                      SetCompartment_fluxout, &
                      SetCompartment_theta, &
@@ -338,7 +341,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         else
             HIfinal_temp = GetSimulation_HIfinal()
             alfa = HarvestIndexDay((dayi-GetCrop_Day1()), GetCrop_DaysToFlowering(), &
-                                   GetCrop_HI(), GetCrop_dHIdt(), CCiactual, &
+                                   GetCrop_HI(), GetCrop_dHIdt(), GetCCiactual(), &
                                    GetCrop_CCxAdjusted(), GetSimulParam_PercCCxHIfinal(), &
                                    GetCrop_Planting(), PercentLagPhase, HIfinal_temp)
             call SetSimulation_HIfinal(HIfinal_temp)
@@ -349,13 +352,13 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
     WPi = (GetCrop_WP()/100._dp)
 
     ! 1. biomass
-    if (ETo > 0) then
+    if (ETo > 0._dp) then
         ! 1.1 WPi for that day
         ! 1.1a - given WPi
         WPi = (GetCrop_WP()/100._dp)
         ! 1.1b - adjustment WPi for reproductive stage (works with calendar days)
         if (((GetCrop_subkind() == Subkind_Tuber) .or. &
-                    (GetCrop_Subkind() == Subkind_grain)) .and. (alfa > 0)) then
+                    (GetCrop_Subkind() == Subkind_grain)) .and. (alfa > 0._dp)) then
             ! WPi switch to WP for reproductive stage
             fSwitch = 1._dp
             DaysYieldFormation = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
@@ -370,7 +373,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                     end if
                 end if
             end if
-            WPi =  WPi * (1._dp - (1._dp-GetCrop_WPy()/100)*fSwitch)  ! switch in Lag Phase
+            WPi =  WPi * (1._dp - (1._dp-GetCrop_WPy()/100._dp)*fSwitch)  ! switch in Lag Phase
         end if
         
         ! 1.1c - adjustment WPi for CO2
@@ -385,7 +388,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         if (GetSimulation_EffectStress_RedWP() > 0._dp) then ! Reductions are zero if no fertility stress
             ! water stress and fertility stress
             if ((SumKci/SumKcTopStress) < 1._dp) then
-                if (ETo > 0) then
+                if (ETo > 0._dp) then
                     SumKci = SumKci + Tact/ETo
                 end if
                 if (SumKci > 0._dp) then
@@ -395,17 +398,17 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             else
                 WPi = WPi * (1._dp - GetSimulation_EffectStress_RedWP()/100._dp)
             end if
-        elseif (ETo > 0) then
+        elseif (ETo > 0._dp) then
             SumKci = SumKci + Tact/ETo
         end if
         
         
         
         ! 1.2 actual biomass
-        if ((GetSimulation_RCadj() > 0) .and. (roundc(CCtot*10000._dp, mold=1) > 0._dp)) then
+        if ((GetSimulation_RCadj() > 0._dp) .and. (roundc(CCtot*10000._dp, mold=1) > 0._dp)) then
             ! weed infestation
             ! green canopy cover of the crop in weed-infested field
-            if (GetManagement_WeedDeltaRC() /= epsilon(1._dp)) then
+            if (GetManagement_WeedDeltaRC() /= 0) then
                 if (GetCrop_subkind() == Subkind_Forage) then
                     fCCx = MultiplierCCxSelfThinning(int(GetSimulation_YearSeason(), kind=int32), &
                                            int(GetCrop_YearCCx(), kind=int32), GetCrop_CCxRoot())
@@ -425,7 +428,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             CCw = CCtot * (1._dp-WeedRCi/100._dp)
             ! correction for micro-advection
             CCtotStar = 1.72_dp*CCtot - 1._dp*(CCtot*CCtot) + 0.30_dp*(CCtot*CCtot*CCtot)
-            if (CCtotStar < 0) then
+            if (CCtotStar < 0._dp) then
                 CCtotStar = 0._dp
             end if
             if (CCtotStar > 1) then
@@ -505,7 +508,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             
             ! 2.2 determine HImultiplier at the start of flowering
             ! effect of water stress before flowering (HItimesBEF)
-            if (HItimesBEF < - 0.1_dp) then
+            if (HItimesBEF < -0.1_dp) then
                 ! i.e. undefined at the start of flowering
                 if (BiomassPot < 0.0001_dp) then
                     HItimesBEF = 1._dp
@@ -519,14 +522,14 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                     RBM = BMRange(int(GetCrop_HIincrease(), kind=int32))
                     HItimesBEF = HImultiplier(RatioBM, RBM, GetCrop_HIincrease())
                 end if
-                if (CCiActual <= 0.01_dp) then
+                if (GetCCiActual() <= 0.01_dp) then
                     HItimesBEF = 0._dp ! no green canopy cover left at start of flowering;
                 end if
             end if
             
             ! 2.3 Relative water content for that day
             SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-            call DetermineRootZoneWC(RootingDepth, SWCtopSoilConsidered_temp)
+            call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
             call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
             if (GetSimulation_SWCtopSoilConsidered() .eqv. .true.) then ! top soil is relative wetter than total root zone
                 Wrel = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct())/ &
@@ -540,7 +543,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             if (GetCrop_Subkind() == Subkind_grain) then ! - only valid for fruit/grain crops (flowers)
                 if ((dayi <= (GetSimulation_DelayedDays() + GetCrop_Day1() + & 
                    GetCrop_DaysToFlowering() + GetCrop_LengthFlowering())) & ! calculation limited to flowering period
-                    .and. ((CCiactual*100._dp) > GetSimulParam_PercCCxHIfinal())) then
+                    .and. ((GetCCiactual()*100._dp) > GetSimulParam_PercCCxHIfinal())) then
                     ! sufficient green canopy remains
                     ! 2.4a - Fraction of flowers which are flowering on day  (fFlor)
                     fFlor = FractionFlowering(dayi)
@@ -581,7 +584,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                       + GetCrop_DaysToFlowering()+ tmax1)) & ! and not yet end period
                 .and. (tmax1 > 0) & ! otherwise no effect 
                 .and. (roundc(GetCrop_aCoeff(), mold=1) /= Undef_int) & ! otherwise no effect
-                .and. (CCiactual > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
                 ! determine KsLeaf
                 call AdjustpLeafToETo(ETo, pLeafULAct, pLeafLLAct)
                 Ksleaf = KsAny(Wrel, pLeafULAct, pLeafLLAct, GetCrop_KsShapeFactorLeaf())
@@ -596,16 +599,16 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             ! 2.6 determine effect of water stress affecting stomatal closure after flowering
             ! during yield formation
             if (GetCrop_dHIdt() > 99._dp) then
-                tmax2 = 0._dp
+                tmax2 = 0
             else
                 tmax2 = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
             end if
             if ((HItimesBEF > 0.99_dp) & ! there is green canopy cover at start of flowering;
                 .and. (dayi <= (GetSimulation_DelayedDays() + GetCrop_Day1() &
                       + GetCrop_DaysToFlowering() + tmax2)) & ! and not yet end period
-                .and. (tmax2 > 0._dp) & ! otherwise no effect
+                .and. (tmax2 > 0) & ! otherwise no effect
                 .and. (roundc(GetCrop_bCoeff(), mold=1) /= Undef_int) & ! otherwise no effect
-                .and. (CCiactual > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
                 ! determine KsStomatal
                 call AdjustpStomatalToETo(ETo, pStomatULAct)
                 pLL = 1._dp
@@ -623,13 +626,13 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             end if
             
             ! 2.7 total multiplier after flowering
-            if ((tmax2 == epsilon(1._dp)) .and. (tmax1 == epsilon(1._dp))) then
+            if ((tmax2 == 0) .and. (tmax1 == 0)) then
                 HItimesAT = 1._dp
             else
-                if (tmax2 == epsilon(1._dp)) then
+                if (tmax2 == 0) then
                     HItimesAT = HItimesAT1
                 else
-                    if (tmax1 == epsilon(1._dp)) then
+                    if (tmax1 == 0) then
                         HItimesAT = HItimesAT2
                     elseif (tmax1 <= tmax2) then
                         HItimesAT = HItimesAT2 * ((tmax1*HItimesAT1 + (tmax2-tmax1))/tmax2)
@@ -692,17 +695,17 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                                 .and. GetCrop_StressResponse_Calibrated()) then
             BioAdj = 100._dp * (FracBiomassPotSF + (FracBiomassPotSF - BiomassTot/BiomassUnlim))
             if (BioAdj >= 100._dp) then
-                StressSFadjNEW = 0._dp
+                StressSFadjNEW = 0
             else
                 if (BioAdj <= epsilon(1._dp)) then
-                    StressSFadjNEW = 80._dp
+                    StressSFadjNEW = 80
                 else
                     StressSFadjNEW = roundc(Coeffb0 + Coeffb1*BioAdj + Coeffb2*BioAdj*BioAdj, mold=1)
                     if (StressSFadjNEW < 0) then
                         StressSFadjNEW = GetManagement_FertilityStress()
                     end if
-                    if (StressSFadjNEW > 80._dp) then
-                        StressSFadjNEW = 80._dp
+                    if (StressSFadjNEW > 80) then
+                        StressSFadjNEW = 80
                     end if
                 end if
                 if (StressSFadjNEW > GetManagement_FertilityStress()) then
@@ -721,7 +724,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                 end if
             end if
         else
-            StressSFadjNEW = 0._dp
+            StressSFadjNEW = 0
         end if
         PreviousStressLevel = StressSFadjNEW
         SumKcTopStress = (1._dp - StressSFadjNEW/100._dp) * SumKcTop
@@ -736,7 +739,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
       real(dp) :: f1, f2, F
       integer(int32) :: DiFlor
 
-      if (GetCrop_LengthFlowering() <= 1._dp) then
+      if (GetCrop_LengthFlowering() <= 1) then
           F = 1._dp
       else
           DiFlor = dayi - (GetSimulation_DelayedDays() + &
@@ -759,16 +762,16 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
 
         real(dp) :: fi, TimePerc
 
-        if (DiFlor <= epsilon(1._dp)) then
+        if (DiFlor <= 0) then
             fi = 0._dp
         else
             TimePerc = 100._dp * (DiFlor/GetCrop_LengthFlowering())
-            if (TimePerc > 100) then
+            if (TimePerc > 100._dp) then
                 fi = 1._dp
             else
                 fi = 0.00558_dp * exp(0.63_dp*log(TimePerc)) - &
                      0.000969_dp * TimePerc - 0.00383_dp
-                if (fi < 0) then
+                if (fi < 0._dp) then
                     fi = 0._dp
                 end if
             end if
@@ -803,7 +806,7 @@ subroutine AdjustpStomatalToETo(MeanETo, pStomatULAct)
     if (pStomatULAct > 1) then
         pStomatULAct = 1._dp
     end if
-    if (pStomatULAct < 0) then
+    if (pStomatULAct < 0._dp) then
         pStomatULAct = 0._dp
     end if
 end subroutine AdjustpStomatalToETo
