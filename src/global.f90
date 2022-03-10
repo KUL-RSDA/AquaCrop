@@ -154,6 +154,13 @@ integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
 integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
     !! index of daily in typeObsSim enumerated type
 
+integer(intEnum), parameter :: typeProject_TypePRO = 0
+    !! index of daily in typeProject enumerated type
+integer(intEnum), parameter :: typeProject_TypePRM = 1
+    !! index of daily in typeProject enumerated type
+integer(intEnum), parameter :: typeProject_TypeNone = 2
+    !! index of daily in typeProject enumerated type
+
 type rep_DayEventInt
     integer(int32) :: DayNr
         !! Undocumented

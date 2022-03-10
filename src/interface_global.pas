@@ -19,6 +19,7 @@ const
 
 type
     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
+    repTypeProject = (TypePRO,TypePRM,TypeNone);
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)

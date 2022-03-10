@@ -37,8 +37,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
     Part1Mult,Part2Eval : BOOLEAN;
 
-    Type
-    repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;

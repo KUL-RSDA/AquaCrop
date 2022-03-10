@@ -12,8 +12,9 @@ use ac_global, only:    typeObsSim_ObsSimCC, &
                         undef_int, &
                         GetPathNameSimul, &
                         GetSimulation_FromDayNr, &
-                        roundc
-                     
+                        roundc, &
+                        typeProject_TypePRM, &
+                        NameMonth
 implicit none
 
 type rep_EventObsSim 
@@ -192,6 +193,205 @@ subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
         end if
     end subroutine GetObsSim
 end subroutine StatisticAnalysis
+
+
+subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
+                                     TheProjectType, RangeMin, RangeMax)
+    character(len=*), intent(in) :: StrNr
+    character(len=*), intent(in) :: totalnameEvalStat
+    integer(intEnum), intent(in) :: TheProjectType
+    integer(int32), intent(in) :: RangeMin
+    integer(int32), intent(in) :: RangeMax
+
+    integer :: fAssm
+    integer(intEnum) :: TypeObsSim
+    integer(int32) :: Nobs, Nri
+    real(dp) :: ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
+                NScoeff, IndexAg
+    type(rep_EventObsSim), dimension(100) :: ArrayObsSim
+    character(len=:), allocatable :: YearString
+    integer, dimension(8) :: d
+
+    ! 1. Open file for assessment
+    call date_and_time(values=d)
+    open(newunit=fAssm, file=trim(totalnameEvalStat), status='replace', action='write')
+    write(fAssm, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    write(fAssm, '(a)') 'Evaluation of simulation results - Statistics'
+    if (TheProjectType == typeProject_TypePRM) then
+        write(fAssm, '(2a)') '** Run number:', StrNr
+    end if
+    write(fAssm)
+
+    ! 2. Run analysis
+
+    ! 2.1 Canopy Cover
+    TypeObsSim = typeObsSim_ObsSimCC
+    call StatisticAnalysis(TypeObsSim, RangeMin, RangeMax, StrNr, Nobs, &
+                           ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
+                           NScoeff, IndexAg, ArrayObsSim)
+    write(fAssm)
+    write(fAssm, '(a)') &
+    '  ASSESSMENT OF CANOPY COVER --------------------------------------'
+    if (Nobs > 1) then
+        write(fAssm, '(a)') &
+        '              --------- Canopy Cover (%) ---------'
+        write(fAssm, '(a)') &
+        '    Nr        Observed    +/- St Dev     Simulated    Date'
+        write(fAssm, '(a)') &
+        '  ----------------------------------------------------------------'
+        do Nri = 1, Nobs 
+            if (ArrayObsSim(Nri)%YYYYi <= 1901) then
+                YearString = ''
+            else
+                write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
+            end if
+            write(fAssm, '(i6, 3f14.1, a, i2, 4a)') &
+                            Nri, ArrayObsSim(Nri)%Obsi, &
+                            ArrayObsSim(Nri)%StdObsi, &
+                            ArrayObsSim(Nri)%Simi, '      ', &
+                            ArrayObsSim(Nri)%DDi, ' ', &
+                            NameMonth(ArrayObsSim(Nri)%MMi), &
+                            ' ', YearString
+        end do
+        write(fAssm)
+        write(fAssm, '(a, i5)') &
+        '  Valid observations/simulations sets (n) .......  : ', Nobs
+        write(fAssm, '(a, f7.1, a)') &
+        '  Average of observed Canopy Cover .............. : ', ObsAver, '   %'
+        write(fAssm, '(a, f7.1, a)') &
+        '  Average of simulated Canopy Cover ............. : ', SimAver, '   %'
+        write(fAssm)
+        write(fAssm, '(a, f8.2)') &
+        '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
+        write(fAssm, '(a, f7.1, a)') &
+        '  Root mean square error (RMSE) ................. : ', RMSE, '   % CC'
+        write(fAssm, '(a, f7.1, a)') &
+        '  Normalized root mean square error  CV(RMSE).... : ', NRMSE, '   %'
+        write(fAssm, '(a, f8.2)') &
+        '  Nash-Sutcliffe model efficiency coefficient (EF): ', NScoeff
+        write(fAssm, '(a, f8.2, a)') &
+        '  Willmotts index of agreement (d) .............. : ', IndexAg
+    else
+        write(fAssm, '(a)') &
+        '  No statistic analysis (insufficient data)'
+    end if
+    write(fAssm, '(a)') &
+    '  ----------------------------------------------------------------'
+
+    ! 2.2 Biomass production
+    TypeObsSim = typeObsSim_ObsSimB
+    call StatisticAnalysis(TypeObsSim, RangeMin, RangeMax, StrNr, Nobs, &
+                           ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
+                           NScoeff, IndexAg, ArrayObsSim)
+    write(fAssm)
+    write(fAssm)
+    write(fAssm, '(a)') &
+    '  ASSESSMENT OF BIOMASS PRODUCTION --------------------------------'
+    if (Nobs > 1) then
+        write(fAssm, '(a)') &
+        '              --------- Biomass (ton/ha) ---------'
+        write(fAssm, '(a)') &
+        '    Nr        Observed    +/- St Dev     Simulated    Date'
+        write(fAssm, '(a)') &
+        '  ----------------------------------------------------------------'
+        do Nri = 1, Nobs 
+            if (ArrayObsSim(Nri)%YYYYi <= 1901) then
+                YearString = ''
+            else
+                write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
+            end if
+            write(fAssm, '(i6, 3f14.1, a, i2, 4a)') &
+                            Nri, ArrayObsSim(Nri)%Obsi, &
+                            ArrayObsSim(Nri)%StdObsi, &
+                            ArrayObsSim(Nri)%Simi, '      ', &
+                            ArrayObsSim(Nri)%DDi, ' ', &
+                            NameMonth(ArrayObsSim(Nri)%MMi), &
+                            ' ', YearString
+        end do
+        write(fAssm)
+        write(fAssm, '(a, i5)') &
+        '  Valid observations/simulations sets (n) ....... : ', Nobs
+        write(fAssm, '(a, f9.3, a)') &
+        '  Average of observed Biomass production ........ : ', ObsAver, '   ton/ha'
+        write(fAssm, '(a, f9.3, a)') & 
+        '  Average of simulated Biomass production ....... : ', SimAver, '   ton/ha'
+        write(fAssm)
+        write(fAssm, '(a, f8.2)') &
+        '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
+        write(fAssm, '(a, f9.3, a)') &
+        '  Root mean square error (RMSE) ................. : ', RMSE, '   ton/ha'
+        write(fAssm, '(a, f7.1, a)') &
+        '  Normalized root mean square error  CV(RMSE).... : ', NRMSE, '   %'
+        write(fAssm, '(a, f8.2)') &
+        '  Nash-Sutcliffe model efficiency coefficient (EF): ', NScoeff
+        write(fAssm, '(a, f8.2)') &
+        '  Willmotts index of agreement (d) .............. : ', IndexAg
+    else
+        write(fAssm, '(a)') '  No statistic analysis (insufficient data)'
+    end if
+    write(fAssm, '(a)') &
+    '  ----------------------------------------------------------------'
+
+    ! 2.3 Soil Water Content
+    TypeObsSim = typeObsSim_ObsSimSWC
+    call StatisticAnalysis(TypeObsSim, RangeMin, RangeMax, StrNr, Nobs, &
+                           ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
+                           NScoeff, IndexAg, ArrayObsSim)
+    write(fAssm)
+    write(fAssm)
+    write(fAssm, '(a)') &
+    '  ASSESSMENT OF SOIL WATER CONTENT --------------------------------'
+    if (Nobs > 1) then
+        write(fAssm, '(a)') &
+        '              ------ Soil water content (mm) -----'
+        write(fAssm, '(a)') &
+        '    Nr        Observed    +/- St Dev     Simulated    Date'
+        write(fAssm, '(a)') &
+        '  ----------------------------------------------------------------'
+        do Nri = 1, Nobs 
+            if (ArrayObsSim(Nri)%YYYYi <= 1901) then
+                YearString = ''
+            else
+                write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
+            end if
+            write(fAssm, '(i6, 3f14.1, a, i2, 4a)') &
+                            Nri, ArrayObsSim(Nri)%Obsi, &
+                            ArrayObsSim(Nri)%StdObsi, &
+                            ArrayObsSim(Nri)%Simi, '      ', &
+                            ArrayObsSim(Nri)%DDi, ' ', &
+                            NameMonth(ArrayObsSim(Nri)%MMi), &
+                            ' ', YearString
+        end do
+        write(fAssm)
+        write(fAssm, '(a, i5)') &
+        '  Valid observations/simulations sets (n) ....... : ', Nobs
+        write(fAssm, '(a, f7.1, a)') &
+        '  Average of observed Soil Water Content ........ : ', ObsAver, '   %'
+        write(fAssm, '(a, f7.1, a)') &
+        '  Average of simulated Soil Water Content ....... : ', SimAver, '   %'
+        write(fAssm)
+        write(fAssm, '(a, f8.2)') &
+        '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
+        write(fAssm, '(a, f7.1, a)') &
+        '  Root mean square error (RMSE) ................. : ', RMSE, '   % CC'
+        write(fAssm, '(a, f7.1, a)') &
+        '  Normalized root mean square error  CV(RMSE).... : ', NRMSE, '   %'
+        write(fAssm, '(a, f8.2)') &
+        '  Nash-Sutcliffe model efficiency coefficient (EF): ', NScoeff
+        write(fAssm, '(a, f8.2, a)') &
+        '  Willmotts index of agreement (d) .............. : ', IndexAg
+    else
+        write(fAssm, '(a)') '  No statistic analysis (insufficient data)'
+    end if
+    write(fAssm, '(a)') &
+    '  ----------------------------------------------------------------'
+    write(fAssm)
+
+    ! 3. Close file for assessment
+    close(fAssm)
+end subroutine WriteAssessmentSimulation
 
 
 
