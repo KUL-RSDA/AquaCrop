@@ -50,10 +50,12 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
+                     GetRootingDepth, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
+                     GetSimulParam_EffectiveRain_Method, &
                      GetSimulParam_EffectiveRain_PercentEffRain, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_EvapZmax, &
@@ -605,8 +607,8 @@ end subroutine calculate_runoff
 
 
 
-
-subroutine CalculateEffectiveRainfall()
+subroutine CalculateEffectiveRainfall(SubDrain)
+    real(dp), intent(inout) :: SubDrain
 
     real(dp) :: EffecRain, ETcropMonth, RainMonth, &
                 DrainMax, Zr, depthi, DTheta, RestTheta
@@ -646,7 +648,7 @@ subroutine CalculateEffectiveRainfall()
         if (GetSurfaceStorage() > 0._dp) then
             DrainMax = 0._dp
         else
-            Zr = RootingDepth
+            Zr = GetRootingDepth()
             if (Zr <= epsilon(0._dp)) then
                 Zr = (GetSimulParam_EvapZmax()/100._dp)
             end if
