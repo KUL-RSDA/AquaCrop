@@ -50,23 +50,6 @@ CASE GetCrop().pMethod OF
 END; (* AdjustpStomatalToETo *)
 
 
-PROCEDURE AdjustpSenescenceToETo(EToMean : double;
-                                 TimeSenescence : double; // calendar days or GDDays
-                                 WithBeta : BOOLEAN;
-                                 VAR pSenAct : double);
-BEGIN
-pSenAct := GetCrop().pSenescence;
-IF (GetCrop().pMethod = FAOCorrection) THEN
-   BEGIN
-   pSenAct := GetCrop().pSenescence + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pSenescence);
-   IF ((TimeSenescence > 0.0001) AND WithBeta)
-      THEN pSenAct := pSenAct * (1-GetSimulParam_Beta()/100);
-   IF pSenAct < 0 THEN pSenAct := 0;
-   IF pSenAct >= 1.0 THEN pSenAct := 0.98; // otherwise senescence is not possible at WP
-   END;
-END; (* AdjustpSenescenceToETo *)
-
-
 
 
 

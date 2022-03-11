@@ -18,6 +18,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
                      GetCrop_subkind, GetCrop_HI, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
+                     GetCrop_pSenescence, &
                      GetCrop_ModeCycle, &
                      GetCrop_AdaptedToCO2, & 
                      GetCrop_DaysToGermination, &
@@ -47,6 +48,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetRainRecord_DataType, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
+                     GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_IniAbstract, &
@@ -195,6 +197,30 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     end if
 
 end subroutine DeterminePotentialBiomass
+
+
+subroutine AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta, pSenAct)
+    real(dp), intent(in) :: EToMean
+    real(dp), intent(in) :: TimeSenescence
+    logical, intent(in) :: WithBeta
+    real(dp), intent(inout) :: pSenAct
+
+    pSenAct = GetCrop_pSenescence()
+    if (GetCrop_pMethod() == pMethod_FAOCorrection) then
+        pSenAct = GetCrop_pSenescence() + GetSimulParam_pAdjFAO() &
+                            * 0.04_dp*(5._dp-EToMean) &
+                            * log10(10._dp-9._dp*GetCrop_pSenescence())
+        if ((TimeSenescence > 0.0001_dp) .and. WithBeta) then
+            pSenAct = pSenAct * (1._dp-GetSimulParam_Beta()/100._dp)
+        end if
+        if (pSenAct < 0._dp) then
+            pSenAct = 0._dp
+        end if
+        if (pSenAct >= 1.0_dp) then
+            pSenAct = 0.98_dp ! otherwise senescence is not possible at WP
+        end if
+    end if
+end subroutine AdjustpSenescenceToETo
 
 
 !-----------------------------------------------------------------------------
