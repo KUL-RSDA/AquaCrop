@@ -8,6 +8,9 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
+                     DetermineRootzoneWC, &
+                     EffectiveRainMethod_Percentage, &
+                     EffectiveRainMethod_USDA, &
                      GenerateDepthMode_FixDepth, &
                      GenerateTimeMode_AllDepl, &
                      GenerateTimeMode_AllRAW, &
@@ -21,6 +24,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
                      GetCrop_subkind, GetCrop_HI, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
+                     GetCrop_pSenescence, &
                      GetCrop_ModeCycle, &
                      GetCrop_AdaptedToCO2, & 
                      GetCrop_DaysToGermination, &
@@ -42,23 +46,30 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
-                     GetDrain, &
+                     GetEpot, &
                      GetETO, &
+                     GetDrain, &
                      GetGenerateDepthMode, &
                      GetGenerateTimeMode, &
                      GetIrrigation, &
                      GetManagement_CNcorrection, &
+                     GetManagement_BundHeight, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
+                     GetRootingDepth, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
                      GetRootZoneWC_Thresh, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
                      GetSimulation_SWCtopSoilConsidered, &
+                     GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
+                     GetSimulParam_EffectiveRain_Method, &
+                     GetSimulParam_EffectiveRain_PercentEffRain, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
+                     GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
                      GetSimulParam_Tmin, &
@@ -70,6 +81,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSoilLayer_SAT, &
                      GetSoilLayer_tau, &
                      GetSoilLayer_WP, &
+                     GetSurfaceStorage, &
+                     GetTpot, &
                      fAdjustedForCO2, &
                      max_No_compartments, &
                      modeCycle_CalendarDays, &
@@ -207,6 +220,30 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     end if
 
 end subroutine DeterminePotentialBiomass
+
+
+subroutine AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta, pSenAct)
+    real(dp), intent(in) :: EToMean
+    real(dp), intent(in) :: TimeSenescence
+    logical, intent(in) :: WithBeta
+    real(dp), intent(inout) :: pSenAct
+
+    pSenAct = GetCrop_pSenescence()
+    if (GetCrop_pMethod() == pMethod_FAOCorrection) then
+        pSenAct = GetCrop_pSenescence() + GetSimulParam_pAdjFAO() &
+                            * 0.04_dp*(5._dp-EToMean) &
+                            * log10(10._dp-9._dp*GetCrop_pSenescence())
+        if ((TimeSenescence > 0.0001_dp) .and. WithBeta) then
+            pSenAct = pSenAct * (1._dp-GetSimulParam_Beta()/100._dp)
+        end if
+        if (pSenAct < 0._dp) then
+            pSenAct = 0._dp
+        end if
+        if (pSenAct >= 1.0_dp) then
+            pSenAct = 0.98_dp ! otherwise senescence is not possible at WP
+        end if
+    end if
+end subroutine AdjustpSenescenceToETo
 
 
 !-----------------------------------------------------------------------------
@@ -582,16 +619,17 @@ subroutine calculate_runoff(MaxDepth)
 end subroutine calculate_runoff
 
 
-subroutine Calculate_irrigation(SubDrain, TargetTimeVal)
+subroutine Calculate_irrigation(SubDrain, TargetTimeVal, TargetDepthVal)
     real(dp), intent(inout) :: SubDrain
     integer(int32), intent(inout) :: TargetTimeVal
+    integer(int32), intent(in) :: TargetDepthVal
 
     real(dp) :: ZrWC, RAWi
     logical :: SWCtopSoilConsidered_temp
 
     ! total root zone is considered
     SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-    call DetermineRootZoneWC(RootingDepth, SWCtopSoilConsidered_temp)
+    call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
     call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
     ZrWC = GetRootZoneWC_Actual() - GetEpot() - GetTpot() &
            + GetRain() - GetRunoff() - SubDrain
@@ -601,30 +639,105 @@ subroutine Calculate_irrigation(SubDrain, TargetTimeVal)
         else
             TargetTimeVal = 0
         end if
-        if (GetGenerateTimeMode() == GenerateTimeMode_AllRAW) then
-            RAWi = TargetTimeVal/100._dp &
-                    * (GetRootZoneWC_FC() - GetRootZoneWC_Thresh())
-            if ((GetRootZoneWC_FC() - ZrWC) >= RAWi) then
-                TargetTimeVal = 1
-            else
-                TargetTimeVal = 0
-            end if
-        end if
-        if (TargetTimeVal == 1) then
-            if (GetGenerateDepthMode() == GenerateDepthMode_FixDepth) then
-                call SetIrrigation(real(TargetDepthVal, kind=dp))
-            else
-                call SetIrrigation((GetRootZoneWC_FC() - ZrWc) &
-                                                + TargetDepthVal)
-                if (GetIrrigation() < 0._dp) then
-                    call SetIrrigation(0._dp)
-                end if
-            end if
+    end if
+    if (GetGenerateTimeMode() == GenerateTimeMode_AllRAW) then
+        RAWi = TargetTimeVal/100._dp &
+                * (GetRootZoneWC_FC() - GetRootZoneWC_Thresh())
+        if ((GetRootZoneWC_FC() - ZrWC) >= RAWi) then
+            TargetTimeVal = 1
         else
-            call SetIrrigation(0._dp)
+            TargetTimeVal = 0
         end if
     end if
+    if (TargetTimeVal == 1) then
+        if (GetGenerateDepthMode() == GenerateDepthMode_FixDepth) then
+            call SetIrrigation(real(TargetDepthVal, kind=dp))
+        else
+            call SetIrrigation((GetRootZoneWC_FC() - ZrWc) &
+                                            + TargetDepthVal)
+            if (GetIrrigation() < 0._dp) then
+                call SetIrrigation(0._dp)
+            end if
+        end if
+    else
+        call SetIrrigation(0._dp)
+    end if
 end subroutine Calculate_irrigation
+
+
+
+subroutine CalculateEffectiveRainfall(SubDrain)
+    real(dp), intent(inout) :: SubDrain
+
+    real(dp) :: EffecRain, ETcropMonth, RainMonth, &
+                DrainMax, Zr, depthi, DTheta, RestTheta
+    integer(int32) :: compi
+
+    if (GetRain() > 0._dp) then
+        ! 1. Effective Rainfall
+        EffecRain = (GetRain()-GetRunoff())
+        select case (GetSimulParam_EffectiveRain_Method())
+        case (EffectiveRainMethod_Percentage)
+            EffecRain = (GetSimulParam_EffectiveRain_PercentEffRain()/100._dp) &
+                                * (GetRain()-GetRunoff())
+        case (EffectiveRainMethod_USDA)
+            ETcropMonth = ((GetEpot()+GetTpot())*30._dp)/25.4_dp ! inch/month
+            RainMonth = ((GetRain()-GetRunoff())*30._dp)/25.4_dp ! inch/Month
+            if (RainMonth > 0.1_dp) then
+                EffecRain = (0.70917_dp*exp(0.82416_dp*log(RainMonth))-0.11556_dp) &
+                                * (exp(0.02426_dp*ETcropMonth*log(10._dp))) 
+                                                                 ! inch/month
+            else
+                EffecRain = RainMonth
+            end if
+            EffecRain = EffecRain*(25.4_dp/30._dp) ! mm/day
+        end select
+    end if
+    if (EffecRain < 0._dp) then
+        EffecRain = 0._dp
+    end if
+    if (EffecRain > (GetRain()-GetRunoff())) then
+        EffecRain = (GetRain()-GetRunoff())
+    end if
+    SubDrain = (GetRain()-GetRunoff()) - EffecRain
+
+    ! 2. Verify Possibility of SubDrain
+    if (SubDrain > 0._dp) then
+        DrainMax = GetSoilLayer_InfRate(1)
+        if (GetSurfaceStorage() > 0._dp) then
+            DrainMax = 0._dp
+        else
+            Zr = GetRootingDepth()
+            if (Zr <= epsilon(0._dp)) then
+                Zr = (GetSimulParam_EvapZmax()/100._dp)
+            end if
+            compi = 0
+            depthi = 0._dp
+            DTheta = (EffecRain/Zr)/1000._dp
+            loop: do
+                compi = compi + 1
+                depthi = depthi + GetCompartment_Thickness(compi)
+                RestTheta = GetSoilLayer_SAT(GetCompartment_Layer(compi)) &
+                            /100._dp - (GetCompartment_theta(compi) + DTheta)
+                if (RestTheta <= epsilon(0._dp)) then
+                    DrainMax = 0._dp
+                end if
+                if (GetSoilLayer_InfRate(GetCompartment_Layer(compi)) &
+                                                        < DrainMax) then
+                    DrainMax = GetSoilLayer_InfRate(GetCompartment_Layer(compi))
+                end if
+                if ((depthi >= Zr) &
+                    .or. (compi >= GetNrCompartments())) exit loop
+            end do loop
+        end if
+        if (SubDrain > DrainMax) then
+            if (GetManagement_Bundheight() < 0.001_dp) then
+                call SetRunoff(GetRunoff() + (SubDrain-DrainMax))
+            end if
+            SubDrain = DrainMax
+        end if
+    end if
+end subroutine CalculateEffectiveRainfall
 
 
 
