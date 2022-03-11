@@ -1,7 +1,8 @@
 module ac_simul
 
 use ac_kinds, only:  dp, int32, int8
-use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
+use ac_global, only: ActiveCells, &
+                     CalculateETpot, CanopyCoverNoStressSF, &
                      CompartmentIndividual, &
                      CO2Ref, &
                      datatype_daily, &
@@ -10,11 +11,14 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      DetermineCNIandIII, &
                      EffectiveRainMethod_Percentage, &
                      EffectiveRainMethod_USDA, &
+                     Equiv, &
                      GetCompartment, &
                      GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
+                     GetCompartment_i, &
                      GetCompartment_Layer, &
                      GetCompartment_theta, &
+                     GetCompartment_Salt, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
@@ -42,6 +46,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
+                     GetECiAqua, &
                      GetEpot, &
                      GetETO, &
                      GetDrain, &
@@ -61,23 +66,31 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
+                     GetSimulParam_RootNrDF, &
                      GetSimulParam_Tmin, &
                      GetSimulParam_Tmax, &
                      GetSoil_CNvalue, &
+                     GetSoil_NrSoilLayers, &
+                     GetSoilLayer_CRa, &
+                     GetSoilLayer_CRb, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
                      GetSoilLayer_InfRate, &
                      GetSoilLayer_SAT, &
                      GetSoilLayer_tau, &
+                     GetSoilLayer_Thickness, &
                      GetSoilLayer_WP, &
                      GetSurfaceStorage, &
                      GetTpot, &
+                     GetZiAqua, &
                      fAdjustedForCO2, &
                      max_No_compartments, &
+                     MaxCRatDepth, &
                      modeCycle_CalendarDays, &
                      roundc, &
                      SetCompartment, &
                      SetCompartment_fluxout, &
+                     SetCompartment_Salt, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
                      SetDrain, &
@@ -679,6 +692,137 @@ subroutine CalculateEffectiveRainfall(SubDrain)
         end if
     end if
 end subroutine CalculateEffectiveRainfall
+
+
+subroutine calculate_CapillaryRise(CRwater, CRsalt)
+    real(dp), intent(inout) :: CRwater
+    real(dp), intent(inout) :: CRsalt
+
+    real(dp) :: Zbottom, MaxMM, DThetaMax, DTheta, LimitMM, &
+                CRcomp, SaltCRi, DrivingForce, ZtopNextLayer, &
+                Krel, ThetaThreshold
+    integer(int32) :: compi, SCellAct, layeri
+
+    Zbottom = 0._dp
+    do compi = 1, GetNrCompartments() 
+        Zbottom = Zbottom + GetCompartment_Thickness(compi)
+    end do
+
+    ! start at the bottom of the soil profile
+    compi = GetNrCompartments()
+    MaxMM = MaxCRatDepth(GetSoilLayer_CRa(GetCompartment_Layer(compi)), &
+                         GetSoilLayer_CRb(GetCompartment_Layer(compi)), &
+                         GetSoilLayer_InfRate(GetCompartment_Layer(compi)), &
+                         (Zbottom - GetCompartment_Thickness(compi)/2._dp), &
+                         (GetZiAqua()/100._dp))
+
+    ! check restrictions on CR from soil layers below
+    ZtopNextLayer = 0._dp
+    do layeri = 1, GetCompartment_Layer(GetNrCompartments()) 
+        ZtopNextLayer = ZtopNextLayer + GetSoilLayer_Thickness(layeri)
+    end do
+    layeri = GetCompartment_Layer(GetNrCompartments())
+    do while ((ZtopNextLayer < (GetZiAqua()/100._dp)) &
+                .and. (layeri < GetSoil_NrSoilLayers())) 
+        layeri = layeri + 1
+        LimitMM = MaxCRatDepth(GetSoilLayer_CRa(layeri), &
+                               GetSoilLayer_CRb(layeri), &
+                               GetSoilLayer_InfRate(layeri), &
+                               ZtopNextLayer, (GetZiAqua()/100._dp))
+        if (MaxMM > LimitMM) then
+            MaxMM = LimitMM
+        end if
+        ZtopNextLayer = ZtopNextLayer + GetSoilLayer_Thickness(layeri)
+    end do
+
+    loop: do while ((roundc(MaxMM*1000._dp, mold=1) > 0) &
+            .and. (compi > 0) &
+            .and. (roundc(GetCompartment_fluxout(compi)*1000._dp, mold=1) == 0)) 
+        ! Driving force
+        if ((GetCompartment_theta(compi) &
+                >= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+            .and. (GetSimulParam_RootNrDF() > 0_int8)) then
+            DrivingForce = 1._dp &
+                          - (exp(GetSimulParam_RootNrDF() &
+                            * log(GetCompartment_theta(compi) &
+                                - GetSoilLayer_WP(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)) &
+                          /exp(GetSimulParam_RootNrDF() &
+                            *log(GetCompartment_FCadj(compi)/100._dp &
+                      - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)))
+        else
+            DrivingForce = 1._dp
+        end if
+        ! relative hydraulic conductivity
+        ThetaThreshold = (GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp &
+                          + GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                                                                /100._dp)/2._dp
+        if (GetCompartment_Theta(compi) < ThetaThreshold) then
+            if ((GetCompartment_Theta(compi) &
+                <= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+              .or. (ThetaThreshold &
+                <= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)) then
+                Krel = 0._dp
+            else
+                Krel = (GetCompartment_Theta(compi) &
+                        - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+                      /(ThetaThreshold &
+                        - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)
+            end if
+        else
+            Krel = 1._dp
+        end if
+        
+        ! room available to store water
+        DTheta = GetCompartment_FCadj(compi)/100._dp &
+                - GetCompartment_Theta(compi)
+        if ((DTheta > 0._dp) &
+            .and. ((Zbottom - GetCompartment_Thickness(compi)/2._dp) &
+                    < (GetZiAqua()/100._dp))) then
+            ! water stored
+            DThetaMax = Krel * DrivingForce &
+                        * MaxMM/(1000._dp*GetCompartment_Thickness(compi))
+            if (DTheta >= DThetaMax) then
+                call SetCompartment_Theta(compi, &
+                                          GetCompartment_Theta(compi) &
+                                                         + DThetaMax)
+                CRcomp = DThetaMax*1000._dp*GetCompartment_Thickness(compi) &
+                         * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                MaxMM = 0._dp
+            else
+                call SetCompartment_Theta(compi, &
+                                         GetCompartment_FCadj(compi)/100._dp)
+                CRcomp = DTheta*1000._dp*GetCompartment_Thickness(compi) &
+                         * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                MaxMM = Krel * MaxMM - CRcomp
+            end if
+            CRwater = CRwater + CRcomp
+            ! salt stored
+            SCellAct = ActiveCells(GetCompartment_i(compi))
+            SaltCRi = Equiv * CRcomp * GetECiAqua() ! gram/m2
+            call SetCompartment_Salt(compi, SCellAct, &
+                                     GetCompartment_Salt(compi, SCellAct) &
+                                                               + SaltCRi)
+            CRsalt = CRsalt + SaltCRi
+        end if
+        Zbottom = Zbottom - GetCompartment_Thickness(compi)
+        compi = compi - 1
+        if (compi < 1) exit loop
+        LimitMM = MaxCRatDepth(&
+                    GetSoilLayer_CRa(GetCompartment_Layer(compi)), &
+                    GetSoilLayer_CRb(GetCompartment_Layer(compi)), &
+                    GetSoilLayer_InfRate(GetCompartment_Layer(compi)), &
+                    (Zbottom - GetCompartment_Thickness(compi)/2._dp), &
+                    (GetZiAqua()/100._dp))
+        if (MaxMM > LimitMM) then
+            MaxMM = LimitMM
+        end if
+    end do loop
+end subroutine calculate_CapillaryRise
 
 
 

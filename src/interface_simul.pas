@@ -57,6 +57,9 @@ procedure calculate_runoff(constref MaxDepth : double );
 procedure CalculateEffectiveRainfall(var SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
 
+procedure calculate_CapillaryRise(VAR CRwater,CRsalt : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_capillaryrise';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------
