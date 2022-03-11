@@ -61,6 +61,11 @@ procedure Calculate_irrigation(var SubDrain : double;
 procedure CalculateEffectiveRainfall(var SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
 
+procedure calculate_infiltration(
+                VAR InfiltratedRain,InfiltratedIrrigation : double;
+                VAR InfiltratedStorage, SubDrain : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_infiltration';
+
 procedure calculate_Extra_runoff(VAR InfiltratedRain, InfiltratedIrrigation: double;
                                  VAR InfiltratedStorage, SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculate_extra_runoff';
