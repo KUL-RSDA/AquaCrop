@@ -82,6 +82,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      SetCompartment_WFactor, &
                      SetDrain, &
                      SetRunoff, &
+                     SetSurfaceStorage, &
                      subkind_Grain, subkind_Tuber
                       
 use ac_tempprocessing, only: SumCalendarDays
@@ -679,6 +680,425 @@ subroutine CalculateEffectiveRainfall(SubDrain)
         end if
     end if
 end subroutine CalculateEffectiveRainfall
+
+
+
+subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
+                                  InfiltratedStorage, SubDrain)
+    real(dp), intent(inout) :: InfiltratedRain
+    real(dp), intent(inout) :: InfiltratedIrrigation
+    real(dp), intent(inout) :: InfiltratedStorage
+    real(dp), intent(inout) :: SubDrain
+
+    integer(int32) :: compi, layeri, pre_comp
+    real(dp) :: RunoffIni, amount_still_to_store, factor, &
+                delta_theta_nul, delta_theta_SAT, theta_nul, &
+                drain_max, diff, excess
+    real(dp) :: EffecRain, Zr, depthi, DeltaZ, StorableMM
+
+
+    ! calculate_infiltration 
+    ! A -  INFILTRATION versus STORAGE in Rootzone (= EffecRain)
+    if (GetRainRecord_DataType() == datatype_Daily) then
+        amount_still_to_store = InfiltratedRain + InfiltratedIrrigation &
+                                + InfiltratedStorage
+        EffecRain = 0._dp
+    else
+        amount_still_to_store = InfiltratedIrrigation + InfiltratedStorage
+        EffecRain = InfiltratedRain - SubDrain
+    end if
+
+    ! B - INFILTRATION through TOP soil surface
+    if (amount_still_to_store > 0._dp) then
+        RunoffIni = GetRunoff()
+        compi = 0
+        
+        loop1: do
+            compi = compi + 1
+            layeri = GetCompartment_Layer(compi)
+            
+            !1. Calculate multiplication factor
+            !====================================
+            factor = calculate_factor(layeri, compi)
+            
+            !2. Calculate theta nul
+            !========================
+            delta_theta_nul = amount_still_to_store &
+                             /(1000._dp * GetCompartment_Thickness(compi) &
+                              * (1._dp-GetSoilLayer_GravelVol(layeri)/100._dp))
+            delta_theta_SAT = calculate_delta_theta(&
+                                GetSoilLayer_SAT(layeri)/100._dp, &
+                                GetSoilLayer_FC(layeri)/100._dp, &
+                                layeri)
+            
+            if (delta_theta_nul < delta_theta_SAT) then
+                theta_nul = calculate_theta(delta_theta_nul, &
+                                            GetSoilLayer_FC(layeri)/100._dp, &
+                                            layeri)
+                if (theta_nul <= (GetCompartment_FCadj(compi)/100._dp)) then
+                    theta_nul = GetCompartment_FCadj(compi)/100._dp
+                    delta_theta_nul = calculate_delta_theta( &
+                                        theta_nul, &
+                                        GetSoilLayer_FC(layeri)/100._dp, &
+                                        layeri)
+                end if
+                if (theta_nul > GetSoilLayer_SAT(layeri)/100._dp) then
+                    theta_nul = GetSoilLayer_SAT(layeri)/100._dp
+                end if
+            else
+                theta_nul = GetSoilLayer_SAT(layeri)/100._dp
+                delta_theta_nul = delta_theta_SAT
+            end if
+            
+            
+            !3. Calculate drain max
+            !========================
+            drain_max = factor * delta_theta_nul * 1000._dp &
+                            * GetCompartment_Thickness(compi) &
+                            * (1._dp-GetSoilLayer_GravelVol(layeri)/100._dp)
+            if ((GetCompartment_fluxout(compi) + drain_max) &
+                        > GetSoilLayer_InfRate(layeri)) then
+                drain_max = GetSoilLayer_InfRate(layeri) &
+                            - GetCompartment_fluxout(compi)
+            end if
+            
+            
+            !4. Store water
+            !================
+            diff = theta_nul - GetCompartment_theta(compi)
+            if (diff > 0._dp) then
+                call SetCompartment_theta(compi, GetCompartment_theta(compi) &
+                           + amount_still_to_store &
+                             /(1000._dp * GetCompartment_Thickness(compi) &
+                                 * (1._dp &
+                                    - GetSoilLayer_GravelVol(layeri)/100._dp)))
+                if (GetCompartment_theta(compi) > theta_nul) then
+                    amount_still_to_store = (GetCompartment_theta(compi) &
+                                                - theta_nul) &
+                               * 1000._dp &
+                               * GetCompartment_Thickness(compi) &
+                               * (1._dp-GetSoilLayer_GravelVol(layeri)/100._dp)
+                    call SetCompartment_theta(compi, theta_nul)
+                else
+                    amount_still_to_store = 0.0_dp
+                end if
+            end if
+            call SetCompartment_fluxout(compi, GetCompartment_fluxout(compi) &
+                                               + amount_still_to_store)
+            
+            
+            !5. Redistribute excess
+            !========================
+            excess = amount_still_to_store - drain_max
+            if (excess < 0._dp) then
+                excess = 0._dp
+            end if
+            amount_still_to_store = amount_still_to_store - excess
+            
+            if (excess > 0._dp) then
+                pre_comp = compi + 1
+                loop2: do
+                    pre_comp = pre_comp - 1
+                    layeri = GetCompartment_Layer(pre_comp)
+                    call SetCompartment_fluxout(pre_comp, &
+                                    GetCompartment_fluxout(pre_comp) &
+                                                           - excess)
+                    call SetCompartment_theta(&
+                            pre_comp, GetCompartment_theta(pre_comp) &
+                               + excess/(1000._dp &
+                                  * GetCompartment_Thickness(pre_comp) &
+                                  * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(pre_comp))&
+                                                                    /100._dp)))
+                    if (GetCompartment_theta(pre_comp) &
+                            > GetSoilLayer_SAT(layeri)/100._dp) then
+                        excess = (GetCompartment_theta(pre_comp) &
+                            - GetSoilLayer_SAT(layeri)/100._dp) * 1000._dp &
+                                * GetCompartment_Thickness(pre_comp) &
+                                * (1._dp &
+                        -GetSoilLayer_GravelVol(GetCompartment_Layer(pre_comp))&
+                                                                      /100._dp)
+                        call SetCompartment_theta( &
+                                pre_comp, &
+                                GetSoilLayer_SAT(layeri)/100._dp)
+                    else
+                        excess = 0.0_dp
+                    end if
+                    if ((excess == epsilon(0._dp)) .or. (pre_comp == 1)) exit loop2
+                end do loop2
+                if (excess > 0._dp) then
+                    call SetRunoff(GetRunoff() + excess)
+                end if
+            end if
+            
+            if ((amount_still_to_store <= epsilon(0._dp)) &
+                    .or. (compi == GetNrCompartments())) exit loop1
+        end do loop1
+        if (amount_still_to_store > 0._dp) then
+            call SetDrain(GetDrain() + amount_still_to_store)
+        end if
+        
+        !6. Adjust infiltrated water
+        !=============================
+        if (GetRunoff() > RunoffIni) then
+            if (GetManagement_Bundheight() >= 0.01_dp) then
+                call SetSurfaceStorage(GetSurfaceStorage() &
+                                        + (GetRunoff() &
+                                        - RunoffIni))
+                InfiltratedStorage = InfiltratedStorage &
+                                     - (GetRunoff()-RunoffIni)
+                if (GetSurfaceStorage() &
+                            > GetManagement_BundHeight()*1000._dp) then
+                    call SetRunoff(RunoffIni &
+                                   + (GetSurfaceStorage() &
+                                        - GetManagement_BundHeight()*1000._dp))
+                    call SetSurfaceStorage(GetManagement_BundHeight()*1000._dp)
+                else
+                    call SetRunoff(RunoffIni)
+                end if
+            else
+                InfiltratedRain = InfiltratedRain - (GetRunoff()-RunoffIni)
+                if (InfiltratedRain < 0._dp) then
+                    InfiltratedIrrigation = InfiltratedIrrigation &
+                                            + InfiltratedRain
+                    InfiltratedRain = 0._dp
+                end if
+            end if
+            
+            ! INFILTRATION through TOP soil surface 
+        end if
+    end if
+        
+        
+    ! C - STORAGE in Subsoil (= SubDrain)
+    if (SubDrain > 0._dp) then
+        amount_still_to_store = SubDrain
+        
+        ! Where to store 
+        Zr = GetRootingDepth()
+        if (Zr <= 0._dp) then
+            Zr = GetSimulParam_EvapZmax()/100._dp
+        end if
+        compi = 0
+        depthi = 0._dp
+        loop3: do
+            compi = compi + 1
+            depthi = depthi + GetCompartment_Thickness(compi)
+            if ((depthi >= Zr) &
+                .or. (compi >= GetNrCompartments())) exit loop3
+        end do loop3
+        if (depthi > Zr) then
+            DeltaZ = (depthi - Zr)
+        else
+            DeltaZ = 0._dp
+        end if
+        
+        ! Store 
+        do while((amount_still_to_store > 0._dp) &
+                .and. ((compi < GetNrCompartments()) &
+                    .or. (DeltaZ > 0._dp))) 
+            if (DeltaZ == epsilon(0._dp)) then
+                compi = compi + 1
+                DeltaZ = GetCompartment_Thickness(compi)
+            end if
+            StorableMM = (GetSoilLayer_SAT(GetCompartment_Layer(compi))&
+                                                            /100._dp &
+                            - GetCompartment_Theta(compi)) * 1000._dp &
+                                 * DeltaZ * (1._dp &
+                     - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))&
+                                                                 /100._dp)
+            if (StorableMM > amount_still_to_store) then
+               call SetCompartment_theta(&
+                      compi, &
+                      GetCompartment_Theta(compi) &
+                       + (amount_still_to_store)&
+                          /(1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                    - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))&
+                                                                /100._dp)))
+                amount_still_to_store = 0._dp
+            else
+                amount_still_to_store = amount_still_to_store - StorableMM
+                call SetCompartment_theta(&
+                        compi, &
+                        GetCompartment_Theta(compi) &
+                        + (StorableMM)/(1000._dp &
+                            * GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                     - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))&
+                                                                /100._dp)))
+            end if
+            DeltaZ = 0._dp
+            if (amount_still_to_store &
+                  > GetSoilLayer_InfRate(GetCompartment_Layer(compi))) then
+                SubDrain = SubDrain &
+                            - (amount_still_to_store &
+                        - GetSoilLayer_InfRate(GetCompartment_Layer(compi)))
+                EffecRain = EffecRain &
+                            + (amount_still_to_store &
+                        - GetSoilLayer_InfRate(GetCompartment_Layer(compi)))
+                amount_still_to_store = GetSoilLayer_InfRate(&
+                                            GetCompartment_Layer(compi))
+            end if
+        end do
+        
+        ! excess 
+        if (amount_still_to_store > 0._dp) then
+            call SetDrain(GetDrain() + amount_still_to_store)
+        end if
+        ! STORAGE in Subsoil (= SubDrain) 
+    end if
+        
+    ! D - STORAGE in Rootzone (= EffecRain)
+    if (EffecRain > 0._dp) then
+        Zr = GetRootingDepth()
+        if (Zr <= epsilon(0._dp)) then
+            Zr = GetSimulParam_EvapZmax()/100._dp
+        end if
+        amount_still_to_store = EffecRain
+        
+        ! Store 
+        ! step 1 fill to FC (from top to bottom) 
+        compi = 0
+        depthi = 0._dp
+        loop4: do
+            compi = compi + 1
+            depthi = depthi + GetCompartment_Thickness(compi)
+            if (depthi <= Zr) then
+                DeltaZ = GetCompartment_Thickness(compi)
+            else
+                DeltaZ = GetCompartment_Thickness(compi) &
+                         - (depthi-Zr)
+            end if
+            StorableMM = (GetCompartment_FCadj(compi)/100._dp &
+                            - GetCompartment_Theta(compi))*1000._dp*DeltaZ &
+                            * (1._dp &
+                      - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp)
+            if (StorableMM < 0._dp) then
+                StorableMM = 0._dp
+            end if
+            if (StorableMM > amount_still_to_store) then
+                call SetCompartment_theta(&
+                        compi, &
+                        GetCompartment_Theta(compi) &
+                        + amount_still_to_store &
+                            /(1000._dp*GetCompartment_Thickness(compi) &
+                              *(1._dp &
+                       - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                 /100._dp)))
+                amount_still_to_store = 0._dp
+            elseif (StorableMM > 0._dp) then
+                call SetCompartment_theta(&
+                        compi, &
+                        GetCompartment_Theta(compi) &
+                        + StorableMM &
+                            /(1000._dp*GetCompartment_Thickness(compi) &
+                                * (1._dp &
+                    - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                              /100._dp)))
+                amount_still_to_store = amount_still_to_store - StorableMM
+            end if
+            if ((depthi >= Zr) &
+                    .or. (compi >= GetNrCompartments()) &
+                    .or. (amount_still_to_store <= epsilon(0._dp))) &
+                            exit loop4
+        end do loop4
+        
+        ! step 2 fill to SATURATION (from bottom to top) 
+        if (amount_still_to_store > 0._dp) then
+            loop5: do
+                if (depthi > Zr) then
+                    DeltaZ = GetCompartment_Thickness(compi) - (depthi-Zr)
+                else
+                    DeltaZ = GetCompartment_Thickness(compi)
+                end if
+                StorableMM = (GetSoilLayer_SAT(GetCompartment_Layer(compi)) &
+                                                                   /100._dp &
+                             - GetCompartment_Theta(compi))*1000._dp*DeltaZ &
+                                * (1._dp &
+                      - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp)
+                if (StorableMM < 0._dp) then
+                    StorableMM = 0._dp
+                end if
+                if (StorableMM > amount_still_to_store) then
+                    call SetCompartment_theta(&
+                            compi, &
+                            GetCompartment_theta(compi) &
+                            + amount_still_to_store &
+                                /(1000._dp*GetCompartment_Thickness(compi) &
+                                    * (1._dp &
+                      - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                /100._dp)))
+                    amount_still_to_store = 0._dp
+                elseif (StorableMM > 0._dp) then
+                    call SetCompartment_theta(&
+                            compi, &
+                            GetCompartment_Theta(compi) &
+                            + StorableMM &
+                                /(1000._dp*GetCompartment_Thickness(compi) &
+                                    *(1._dp &
+                      - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                /100._dp)))
+                    amount_still_to_store = amount_still_to_store &
+                                           - StorableMM
+                end if
+                compi = compi - 1
+                depthi = depthi - GetCompartment_Thickness(compi)
+                if ((compi == 0) &
+                    .or. (amount_still_to_store <= epsilon(0._dp))) &
+                            exit loop5
+            end do loop5
+        end if
+        
+        ! excess 
+        if (amount_still_to_store > 0._dp) then
+            if (InfiltratedRain > 0._dp) then
+                InfiltratedRain = InfiltratedRain - amount_still_to_store
+            end if
+            if (GetManagement_Bundheight() >= 0.01_dp) then
+                call SetSurfaceStorage(GetSurfaceStorage() &
+                                      + amount_still_to_store)
+                if (GetSurfaceStorage() &
+                        > (GetManagement_BundHeight()*1000._dp)) then
+                    call SetRunoff(GetRunoff() &
+                                   + (GetSurfaceStorage() &
+                                   - GetManagement_BundHeight()*1000._dp))
+                    call SetSurfaceStorage(GetManagement_BundHeight() &
+                                                            *1000._dp)
+                end if
+            else
+                call SetRunoff(GetRunoff() + amount_still_to_store)
+            end if
+        end if
+        ! STORAGE in Rootzone (= EffecRain) 
+    end if
+
+
+    contains
+
+    real(dp) function Calculate_factor(layeri, compi)
+        integer(int32), intent(in) :: layeri
+        integer(int32), intent(in) :: compi
+
+        real(dp) :: delta_theta_SAT
+ 
+        delta_theta_SAT = calculate_delta_theta(GetSoilLayer_SAT(layeri)/100._dp, &
+                                                GetSoilLayer_FC(layeri)/100._dp, &
+                                                layeri)
+        if (delta_theta_SAT > 0._dp) then
+            Calculate_factor = GetSoilLayer_InfRate(layeri)&
+                                /(delta_theta_SAT * 1000._dp &
+                                    * GetCompartment_Thickness(compi) &
+                                    * (1._dp-GetSoilLayer_GravelVol(layeri) &
+                                                                    /100._dp))
+        else
+            Calculate_factor = 1._dp
+        end if
+    end function Calculate_factor 
+
+end subroutine calculate_infiltration
 
 
 
