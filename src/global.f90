@@ -8383,15 +8383,27 @@ type(rep_IrriECw) function GetIrriECw()
     GetIrriECw = IrriECw
 end function GetIrriECw
 
+real(dp) function GetIrriECw_PreSeason()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw_PreSeason = IrriECw%PreSeason
+end function GetIrriECw_PreSeason
+
 subroutine SetIrriECw_PreSeason(PreSeason)
-    !! Setter for the "soil" global variable.
+    !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PreSeason
 
     IrriECw%PreSeason = PreSeason
 end subroutine SetIrriECw_PreSeason
 
+real(dp) function GetIrriECw_PostSeason()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw_PostSeason = IrriECw%PostSeason
+end function GetIrriECw_PostSeason
+
 subroutine SetIrriECw_PostSeason(PostSeason)
-    !! Setter for the "soil" global variable.
+    !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PostSeason
 
     IrriECw%PostSeason = PostSeason
