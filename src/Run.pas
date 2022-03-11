@@ -3176,6 +3176,7 @@ END; (* FileManagement *)
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 VAR NrRun : ShortInt;
+    NrRuns : integer;
     SumWaBal_temp : rep_sum;
 
 
@@ -3268,46 +3269,31 @@ TheProjectFile := TheProjectFile_;
 OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
 IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
 IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
+
 CASE TheProjectType OF
-     TypePRO : BEGIN
-               LoadSimulationRunProject(GetProjectFileFull(),(1));
-               AdjustCompartments;
-               SumWaBal_temp := GetSumWaBal();
-               GlobalZero(SumWabal_temp);
-               SetSumWaBal(SumWaBal_temp);
-               ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
-               InitializeSimulationRun;
-               IF OutDaily THEN WriteTitleDailyResults(TheProjectType,(1),fDaily);
-               IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,(1),fHarvest);
-               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
-               FileManagement((1),TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
-               CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
-               CloseIrrigationFile(fIrri);
-               CloseManagementFile(fCuts);
-               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
-               END;
-     TypePRM : BEGIN
-               FOR NrRun := 1 TO GetSimulation_NrRuns() DO
-                   BEGIN
-                   LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
-                   AdjustCompartments;
-                   SumWaBal_temp := GetSumWaBal();
-                   GlobalZero(SumWabal_temp);
-                   SetSumWaBal(SumWaBal_temp);
-                   ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
-                   InitializeSimulationRun;
-                   IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
-                   IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
-                   FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
-                   CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
-                   CloseIrrigationFile(fIrri);
-                   CloseManagementFile(fCuts);
-                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
-                   END;
-               END;
+     TypePRO : NrRuns := 1;
+     TypePRM : NrRuns := GetSimulation_NrRuns();
      else;
-     end;
+END;
+
+FOR NrRun := 1 TO NrRuns DO
+   BEGIN
+   LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
+   AdjustCompartments;
+   SumWaBal_temp := GetSumWaBal();
+   GlobalZero(SumWabal_temp);
+   SetSumWaBal(SumWaBal_temp);
+   ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+   InitializeSimulationRun;
+   IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
+   IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
+   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+   FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
+   CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
+   CloseIrrigationFile(fIrri);
+   CloseManagementFile(fCuts);
+   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+END;
      
 Close(fRun); // Close Run.out
 IF OutDaily THEN Close(fDaily);  // Close Daily.OUT
