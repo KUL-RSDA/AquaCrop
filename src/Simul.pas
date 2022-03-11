@@ -612,61 +612,6 @@ END; (* CheckWaterSaltBalance *)
 
 
 
-
-PROCEDURE calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt : double);
-VAR Sum : double;
-    ECw : double;
-
-BEGIN
-InfiltratedRain := 0;
-InfiltratedIrrigation := 0;
-IF (GetRainRecord_DataType() = Daily)
-    THEN Sum := GetSurfaceStorage() + GetIrrigation() + GetRain()
-    ELSE Sum := GetSurfaceStorage() + GetIrrigation() + GetRain() - GetRunoff() - SubDrain;
-IF (Sum > 0)
-  THEN BEGIN
-       // quality of irrigation water
-       IF (dayi < GetCrop().Day1)
-          THEN ECw := GetIrriECw().PreSeason
-          ELSE BEGIN
-               ECw := GetSimulation_IrriECw();
-               IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
-               END;
-       // quality of stored surface water
-       SetECstorage((GetECstorage()*GetSurfaceStorage() + ECw*GetIrrigation())/Sum);
-       // quality of infiltrated water (rain and/or irrigation and/or stored surface water)
-       ECinfilt := GetECstorage();
-       // surface storage
-       IF (Sum > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
-          THEN BEGIN
-               InfiltratedStorage := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
-               SetSurfaceStorage(Sum - InfiltratedStorage);
-               END
-          ELSE BEGIN
-               IF (GetRainRecord_DataType() = Daily)
-                  THEN InfiltratedStorage := Sum
-                  ELSE BEGIN
-                       InfiltratedStorage := GetSurfaceStorage() + GetIrrigation();
-                       InfiltratedRain := GetRain() - GetRunoff() (* - SubDrain*);
-                       END;
-               SetSurfaceStorage(0);
-               END;
-       // extra run-off
-       IF (GetSurfaceStorage() > (GetManagement_BundHeight()*1000))
-          THEN BEGIN
-               SetRunoff(GetRunoff() + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
-               SetSurfaceStorage(GetManagement_BundHeight()*1000);
-               END;
-       END
-  ELSE BEGIN
-       InfiltratedStorage := 0;
-       SetECstorage(0);
-       END;
-END; (* calculate_surfacestorage *)
-
-
-
-
 
 PROCEDURE calculate_infiltration(VAR InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage : double);
 VAR compi, layeri, pre_comp : INTEGER;
@@ -3317,7 +3262,7 @@ IF ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly
 IF (((GetIrriMode() = Generate) AND (GetIrrigation() = 0)) AND (TargetTimeVal <> -999))
    THEN Calculate_irrigation(SubDrain, TargetTimeVal, TargetDepthVal);
 IF (GetManagement_Bundheight() >= 0.01)
-   THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt)
+   THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt, SubDrain, dayi)
    ELSE calculate_Extra_runoff(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage, SubDrain);
 calculate_infiltration(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
 

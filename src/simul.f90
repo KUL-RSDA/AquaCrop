@@ -33,6 +33,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_GDDaysToGermination, &
                      GetCrop_GDDaysToSenescence, &
                      GetCrop_GDDaysToHarvest, &
+                     GetCrop_Day1, &
+                     GetCrop_DayN, &
                      GetCrop_DaysToFullCanopy, &
                      GetCrop_DaysToSenescence, &
                      GetCrop_CCo, GetCrop_CCx, &
@@ -46,11 +48,14 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
+                     GetECstorage, &
                      GetEpot, &
                      GetETO, &
                      GetDrain, &
                      GetGenerateDepthMode, &
                      GetGenerateTimeMode, &
+                     GetIrriECw_PostSeason, &
+                     GetIrriECw_PreSeason, &
                      GetIrrigation, &
                      GetManagement_CNcorrection, &
                      GetManagement_BundHeight, &
@@ -63,6 +68,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetRootZoneWC_Thresh, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
+                     GetSimulation_IrriECw, &
                      GetSimulation_SWCtopSoilConsidered, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
@@ -92,9 +98,11 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
                      SetDrain, &
+                     SetECstorage, &
                      SetIrrigation, &
                      SetRunoff, &
                      SetSimulation_SWCtopSoilConsidered, &
+                     SetSurfaceStorage, &
                      subkind_Grain, subkind_Tuber
                       
 use ac_tempprocessing, only: SumCalendarDays
@@ -774,6 +782,70 @@ subroutine calculate_Extra_runoff(InfiltratedRain, InfiltratedIrrigation, &
         InfiltratedIrrigation = GetIrrigation()
     end if
 end subroutine calculate_Extra_runoff
+
+
+subroutine calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
+                                    InfiltratedStorage, ECinfilt, SubDrain, &
+                                    dayi)
+    real(dp), intent(inout) :: InfiltratedRain
+    real(dp), intent(inout) :: InfiltratedIrrigation
+    real(dp), intent(inout) :: InfiltratedStorage
+    real(dp), intent(inout) :: ECinfilt
+    real(dp), intent(in) :: SubDrain
+    integer(int32), intent(in) :: dayi
+
+    real(dp) :: Sum
+    real(dp) :: ECw
+
+    InfiltratedRain = 0._dp
+    InfiltratedIrrigation = 0._dp
+    if (GetRainRecord_DataType() == datatype_Daily) then
+        Sum = GetSurfaceStorage() + GetIrrigation() + GetRain()
+    else
+        Sum = GetSurfaceStorage() + GetIrrigation() + GetRain() &
+              - GetRunoff() - SubDrain
+    end if
+    if (Sum > 0._dp) then
+        ! quality of irrigation water
+        if (dayi < GetCrop_Day1()) then
+            ECw = GetIrriECw_PreSeason()
+        else
+            ECw = GetSimulation_IrriECw()
+            if (dayi > GetCrop_DayN()) then
+                ECw = GetIrriECw_PostSeason()
+            end if
+        end if
+        ! quality of stored surface water
+        call SetECstorage((GetECstorage() &
+                            * GetSurfaceStorage() &
+                            + ECw*GetIrrigation()) /Sum)
+        ! quality of infiltrated water (rain and/or irrigation and/or stored surface water)
+        ECinfilt = GetECstorage()
+        ! surface storage
+        if (Sum > GetSoilLayer_InfRate(GetCompartment_Layer(1))) then
+            InfiltratedStorage = GetSoilLayer_InfRate(GetCompartment_Layer(1))
+            call SetSurfaceStorage(Sum - InfiltratedStorage)
+        else
+            if (GetRainRecord_DataType() == datatype_Daily) then
+                InfiltratedStorage = Sum
+            else
+                InfiltratedStorage = GetSurfaceStorage() + GetIrrigation()
+                InfiltratedRain = GetRain() - GetRunoff()
+            end if
+            call SetSurfaceStorage(0._dp)
+        end if
+        ! extra run-off
+        if (GetSurfaceStorage() > (GetManagement_BundHeight()*1000._dp)) then
+            call SetRunoff(GetRunoff() &
+                            + (GetSurfaceStorage() &
+                            - GetManagement_BundHeight()*1000._dp))
+            call SetSurfaceStorage(GetManagement_BundHeight()*1000._dp)
+        end if
+    else
+        InfiltratedStorage = 0._dp
+        call SetECstorage(0._dp)
+    end if
+end subroutine calculate_surfacestorage
 
 
 

@@ -65,6 +65,11 @@ procedure calculate_Extra_runoff(VAR InfiltratedRain, InfiltratedIrrigation: dou
                                  VAR InfiltratedStorage, SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculate_extra_runoff';
 
+procedure calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation: double;
+                                   VAR InfiltratedStorage,ECinfilt : double;
+                                   constref SubDrain : double;
+                                   constref dayi : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_surfacestorage';
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module
