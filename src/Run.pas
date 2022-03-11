@@ -1795,9 +1795,9 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
         IF ((ROUND(GetSoil().RootMax*1000) < ROUND(GetCrop().RootMax*1000))
            AND (Ziprev > GetSoil().RootMax))
            THEN Ziprev := GetSoil().RootMax;
-        RootingDepth := Ziprev;  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
+        SetRootingDepth(Ziprev);  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
         END
-   ELSE RootingDepth := ActualRootingDepth(DayNri-GetCrop().Day1+1,
+   ELSE SetRootingDepth(ActualRootingDepth(DayNri-GetCrop().Day1+1,
                                            GetCrop().DaysToGermination,
                                            GetCrop().DaysToMaxRooting,
                                            GetCrop().DaysToHarvest,
@@ -1807,7 +1807,7 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
                                            GetCrop().RootMin,
                                            GetCrop().RootMax,
                                            GetCrop().RootShape,
-                                           GetCrop_ModeCycle());
+                                           GetCrop_ModeCycle()));
 
 // 17. Multiple cuttings
 NrCut := 0;
@@ -1834,13 +1834,13 @@ IF (GetManagement_BundHeight() < 0.01) THEN
    SetSurfaceStorage(0);
    SetECStorage(0);
    END;
-IF (RootingDepth > 0) THEN // salinity in root zone
+IF (GetRootingDepth() > 0) THEN // salinity in root zone
    BEGIN
    ECe_temp := GetRootZoneSalt().ECe;
    ECsw_temp := GetRootZoneSalt().ECsw;
    ECswFC_temp := GetRootZoneSalt().ECswFC;
    KsSalt_temp := GetRootZoneSalt().KsSalt;
-   DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+   DetermineRootZoneSaltContent(GetRootingDepth(),ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
    SetRootZoneSalt_ECe(ECe_temp);
    SetRootZoneSalt_ECsw(ECsw_temp);
    SetRootZoneSalt_ECswFC(ECswFC_temp);
@@ -2200,7 +2200,7 @@ IF Out2Crop THEN
       THEN WPy := (GetSumWaBal_YieldPart()*1000)/((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10)
       ELSE WPy := 0.0;
    // write
-   WRITE(fDaily,GDDayi:9:1,RootingDepth:8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
+   WRITE(fDaily,GDDayi:9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
          (CCiActual*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
          TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
@@ -2217,7 +2217,7 @@ IF Out2Crop THEN
 IF Out3Prof THEN
    BEGIN
    WRITE(fDaily,GetTotalWaterContent().EndDay:10:1);
-   IF (RootingDepth <= 0)
+   IF (GetRootingDepth() <= 0)
       THEN SetRootZoneWC_Actual(undef_double)
       ELSE BEGIN
            IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
@@ -2232,8 +2232,8 @@ IF Out3Prof THEN
                    SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
                    END;
            END;
-   WRITE(fDaily,GetRootZoneWC().actual:9:1,RootingDepth:8:2);
-   IF (RootingDepth <= 0)
+   WRITE(fDaily,GetRootZoneWC().actual:9:1,GetRootingDepth():8:2);
+   IF (GetRootingDepth() <= 0)
       THEN BEGIN
            SetRootZoneWC_Actual(undef_double);
            SetRootZoneWC_FC(undef_double);
@@ -2245,7 +2245,7 @@ IF Out3Prof THEN
            END
       ELSE BEGIN
            SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-           DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+           DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
            SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
            END; 
    WRITE(fDaily,GetRootZoneWC().actual:8:1,GetRootZoneWC().SAT:10:1,GetRootZoneWC().FC:10:1,GetRootZoneWC().Leaf:10:1,
@@ -2259,7 +2259,7 @@ IF Out3Prof THEN
 IF Out4Salt THEN
    BEGIN
    WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
-   IF (RootingDepth <= 0)
+   IF (GetRootingDepth() <= 0)
       THEN BEGIN
            SaltVal := undef_int;
            SetRootZoneSalt_ECe(undef_int);
@@ -2268,9 +2268,9 @@ IF Out4Salt THEN
            END
       ELSE SaltVal := (GetRootZoneWC().SAT*GetRootZoneSalt().ECe*Equiv)/100;
    IF (GetZiAqua() = undef_int)
-      THEN WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+      THEN WRITE(fDaily,SaltVal:10:3,GetRootingDepth():8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,undef_double:8:2)
-      ELSE WRITE(fDaily,SaltVal:10:3,RootingDepth:8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
+      ELSE WRITE(fDaily,SaltVal:10:3,GetRootingDepth():8:2,GetRootZoneSalt().ECe:9:2,GetRootZoneSalt().ECsw:8:2,
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,(GetZiAqua()/100):8:2);
    IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
       THEN WRITE(fDaily,GetECiAqua():8:2)
@@ -2590,7 +2590,7 @@ VAR RepeatToDay : LongInt;
          PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
          SetCompartment_Theta(compi, ThetaPercRaw);
          END;
-    UNTIL ((SumDepth >= RootingDepth) OR (compi = GetNrCompartments()))
+    UNTIL ((SumDepth >= GetRootingDepth()) OR (compi = GetNrCompartments()))
     END; (* AdjustSWCRootZone *)
 
 
@@ -2786,25 +2786,25 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((DayNri-GetCrop().Day1+1) < GetCr
    THEN BEGIN
         IF (((DayNri-GetSimulation_DelayedDays()) >= GetCrop().Day1) AND ((DayNri-GetSimulation_DelayedDays()) <= GetCrop().DayN))
            THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
-                RootingDepth := AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),Tact,StressLeaf,StressSenescence,
+                SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),Tact,StressLeaf,StressSenescence,
                                 (DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
                                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
                                 (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
-                                GetCrop().ModeCycle);
-                ZiPrev := RootingDepth;  // IN CASE rootzone drops below groundwate table
-                IF ((GetZiAqua() >= 0) AND (RootingDepth > (GetZiAqua()/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
+                                GetCrop().ModeCycle));
+                ZiPrev := GetRootingDepth();  // IN CASE rootzone drops below groundwate table
+                IF ((GetZiAqua() >= 0) AND (GetRootingDepth() > (GetZiAqua()/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
                    BEGIN
-                   RootingDepth := GetZiAqua()/100;
-                   IF (RootingDepth < GetCrop().RootMin) THEN RootingDepth := GetCrop().RootMin;
+                   SetRootingDepth(GetZiAqua()/100);
+                   IF (GetRootingDepth() < GetCrop().RootMin) THEN SetRootingDepth(GetCrop().RootMin);
                    END;
                 END
-           ELSE RootingDepth := 0;
+           ELSE SetRootingDepth(0);
         END
-   ELSE RootingDepth := Ziprev;
-IF ((RootingDepth > 0) AND (DayNri = GetCrop().Day1))
+   ELSE SetRootingDepth(Ziprev);
+IF ((GetRootingDepth() > 0) AND (DayNri = GetCrop().Day1))
    THEN BEGIN //initial root zone depletion day1 (for WRITE Output)
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-        DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+        DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
         SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         IF (GetIrriMode() = Inet) THEN AdjustSWCRootZone(PreIrri);  // required to start germination
         END;
@@ -2831,7 +2831,7 @@ BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayL
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
-IF ((RootingDepth > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
+IF ((GetRootingDepth() > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
    BEGIN
    SetIrrigation(GetIrrigation() + PreIrri);
    SetSumWabal_Irrigation(GetSumWaBal_Irrigation() + PreIrri);
@@ -2853,10 +2853,10 @@ DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotN
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
-IF ((RootingDepth > 0) AND (NoMoreCrop = false))
+IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
    THEN BEGIN
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-        DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+        DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
         SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         // temperature stress affecting crop transpiration
         IF (CCiActual <= 0.0000001)
@@ -2868,7 +2868,7 @@ IF ((RootingDepth > 0) AND (NoMoreCrop = false))
         ECsw_temp := GetRootZoneSalt().ECsw;
         ECswFC_temp := GetRootZoneSalt().ECswFC;
         KsSalt_temp := GetRootZoneSalt().KsSalt;
-        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
+        DetermineRootZoneSaltContent(GetRootingDepth(),ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
         SetRootZoneSalt_ECe(ECe_temp);
         SetRootZoneSalt_ECsw(ECsw_temp);
         SetRootZoneSalt_ECswFC(ECswFC_temp);
@@ -2919,7 +2919,7 @@ SetPreDay(true);
 IF (DayNri >= GetCrop().Day1) THEN
    BEGIN
    CCiPrev := CCiActual;
-   IF (ZiPrev < RootingDepth) THEN Ziprev := RootingDepth; // IN CASE groundwater table does not affect root development
+   IF (ZiPrev < GetRootingDepth()) THEN Ziprev := GetRootingDepth(); // IN CASE groundwater table does not affect root development
    SumGDDPrev := GetSimulation_SumGDD();
    END;
 IF (TargetTimeVal = 1) THEN IrriInterval := 0;

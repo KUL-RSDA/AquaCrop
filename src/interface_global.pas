@@ -4642,6 +4642,12 @@ procedure SetProjectDescription_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_setprojectdescription_wrap';
 
+function GetRootingDepth() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrootingdepth';
+
+procedure SetRootingDepth(constref RootingDepth_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrootingdepth';
+
 
 implementation
 

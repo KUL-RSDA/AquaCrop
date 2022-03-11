@@ -24,6 +24,15 @@ procedure DeterminePotentialBiomass(
             VAR BiomassUnlim : double);
      external 'aquacrop' name '__ac_simul_MOD_determinepotentialbiomass';
 
+
+procedure AdjustpSenescenceToETo(
+           constref EToMean : double;
+           constref TimeSenescence : double;
+           constref WithBeta : BOOLEAN;
+           VAR pSenAct : double);
+    external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
+
+
 //-----------------------------------------------------------------------------
 // BUDGET_module
 //-----------------------------------------------------------------------------
@@ -44,6 +53,9 @@ procedure calculate_drainage();
 
 procedure calculate_runoff(constref MaxDepth : double );
      external 'aquacrop' name '__ac_simul_MOD_calculate_runoff';
+
+procedure CalculateEffectiveRainfall(var SubDrain : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module

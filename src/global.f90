@@ -996,6 +996,7 @@ real(dp) :: Drain  ! mm/day
 real(dp) :: Infiltrated ! mm/day
 real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
+real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: Tpot ! mm/day
 
@@ -14582,6 +14583,19 @@ subroutine SetProjectDescription(str)
 
     ProjectDescription = str
 end subroutine SetProjectDescription
+
+real(dp) function GetRootingDepth()
+    !! Getter for the "RootingDepth" global variable.
+
+    GetRootingDepth = RootingDepth
+end function GetRootingDepth
+
+subroutine SetRootingDepth(RootingDepth_in)
+    !! Setter for the "RootingDepth" global variable.
+    real(dp), intent(in) :: RootingDepth_in
+
+    RootingDepth = RootingDepth_in
+end subroutine SetRootingDepth
 
 
 end module ac_global
