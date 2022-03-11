@@ -611,67 +611,6 @@ CASE control OF
 END; (* CheckWaterSaltBalance *)
 
 
-PROCEDURE CalculateEffectiveRainfall;
-VAR EffecRain, ETcropMonth, RainMonth,
-    DrainMax, Zr, depthi, DTheta, RestTheta : double;
-    compi : INTEGER;
-
-BEGIN
-IF (GetRain() > 0) THEN
-   BEGIN
-   // 1. Effective Rainfall
-   EffecRain := (GetRain()-GetRunoff());
-   Case GetSimulParam_EffectiveRain_Method() OF
-      Percentage : EffecRain := (GetSimulParam_EffectiveRain_PercentEffRain()/100) * (GetRain()-GetRunoff());
-      USDA       : BEGIN
-                   ETcropMonth := ((GetEpot()+GetTpot())*30)/25.4; // inch/month
-                   RainMonth := ((GetRain()-GetRunoff())*30)/25.4; //inch/Month
-                  IF (RainMonth > 0.1)
-                      THEN EffecRain := (0.70917*EXP(0.82416*LN(RainMonth))-0.11556)
-                            * (EXP(0.02426*ETcropMonth*LN(10))) //inch/month
-                      ELSE EffecRain := RainMonth;
-                   EffecRain := EffecRain*(25.4/30); //mm/day
-                   END;
-      end;
-   IF (EffecRain < 0) THEN EffecRain := 0;
-   IF (EffecRain > (GetRain()-GetRunoff())) THEN EffecRain := (GetRain()-GetRunoff());
-   SubDrain := (GetRain()-GetRunoff()) - EffecRain;
-
-   //2. Verify Possibility of SubDrain
-   IF (SubDrain > 0) THEN
-     BEGIN
-     DrainMax := GetSoilLayer_i(1).InfRate;
-     IF (GetSurfaceStorage() > 0)
-        THEN DrainMax := 0
-        ELSE BEGIN
-             Zr := RootingDepth;
-             IF (Zr <= 0) THEN Zr := (GetSimulParam_EvapZmax()/100);
-             compi := 0;
-             depthi := 0;
-             DTheta := (EffecRain/Zr)/1000;
-             REPEAT
-               compi := compi + 1;
-               depthi := depthi + GetCompartment_Thickness(compi);
-               RestTheta := GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100
-                                         - (GetCompartment_theta(compi) + DTheta);
-               IF (RestTheta <= 0) THEN DrainMax := 0;
-               IF (GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate < DrainMax)
-                  THEN DrainMax := GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate;
-             UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()));
-             END;
-     IF (SubDrain > DrainMax) THEN
-        BEGIN
-        //IF (NOT SimulParam.StandingWater)
-        IF (GetManagement_Bundheight() < 0.001)
-           THEN SetRunoff(GetRunoff() + (SubDrain-DrainMax));
-        SubDrain := DrainMax;
-        END;
-     END;
-   END;
-END; (* CalculateEffectiveRainfall *)
-
-
-
 
 PROCEDURE Calculate_irrigation;
 VAR ZrWC,RAWi : double;

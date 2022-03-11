@@ -8,6 +8,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
+                     EffectiveRainMethod_Percentage, &
+                     EffectiveRainMethod_USDA, &
                      GetCompartment, &
                      GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
@@ -40,9 +42,11 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
+                     GetEpot, &
                      GetETO, &
                      GetDrain, &
                      GetManagement_CNcorrection, &
+                     GetManagement_BundHeight, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
@@ -50,7 +54,9 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSimulation_DelayedDays, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
+                     GetSimulParam_EffectiveRain_PercentEffRain, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
+                     GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
                      GetSimulParam_Tmin, &
@@ -62,6 +68,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSoilLayer_SAT, &
                      GetSoilLayer_tau, &
                      GetSoilLayer_WP, &
+                     GetSurfaceStorage, &
+                     GetTpot, &
                      fAdjustedForCO2, &
                      max_No_compartments, &
                      modeCycle_CalendarDays, &
@@ -594,6 +602,81 @@ subroutine calculate_runoff(MaxDepth)
     end subroutine calculate_relative_wetness_topsoil
 
 end subroutine calculate_runoff
+
+
+
+
+subroutine CalculateEffectiveRainfall()
+
+    real(dp) :: EffecRain, ETcropMonth, RainMonth, &
+                DrainMax, Zr, depthi, DTheta, RestTheta
+    integer(int32) :: compi
+
+    if (GetRain() > 0._dp) then
+        ! 1. Effective Rainfall
+        EffecRain = (GetRain()-GetRunoff())
+        select case (GetSimulParam_EffectiveRain_Method())
+        case (EffectiveRainMethod_Percentage)
+            EffecRain = (GetSimulParam_EffectiveRain_PercentEffRain()/100._dp) &
+                                * (GetRain()-GetRunoff())
+        case (EffectiveRainMethod_USDA)
+            ETcropMonth = ((GetEpot()+GetTpot())*30._dp)/25.4_dp ! inch/month
+            RainMonth = ((GetRain()-GetRunoff())*30._dp)/25.4_dp ! inch/Month
+            if (RainMonth > 0.1_dp) then
+                EffecRain = (0.70917_dp*exp(0.82416_dp*log(RainMonth))-0.11556_dp) &
+                                * (exp(0.02426_dp*ETcropMonth*log(10._dp))) 
+                                                                 ! inch/month
+            else
+                EffecRain = RainMonth
+            end if
+            EffecRain = EffecRain*(25.4_dp/30._dp) ! mm/day
+        end select
+    end if
+    if (EffecRain < 0._dp) then
+        EffecRain = 0._dp
+    end if
+    if (EffecRain > (GetRain()-GetRunoff())) then
+        EffecRain = (GetRain()-GetRunoff())
+    end if
+    SubDrain = (GetRain()-GetRunoff()) - EffecRain
+
+    ! 2. Verify Possibility of SubDrain
+    if (SubDrain > 0._dp) then
+        DrainMax = GetSoilLayer_InfRate(1)
+        if (GetSurfaceStorage() > 0._dp) then
+            DrainMax = 0._dp
+        else
+            Zr = RootingDepth
+            if (Zr <= epsilon(0._dp)) then
+                Zr = (GetSimulParam_EvapZmax()/100._dp)
+            end if
+            compi = 0
+            depthi = 0._dp
+            DTheta = (EffecRain/Zr)/1000._dp
+            loop: do
+                compi = compi + 1
+                depthi = depthi + GetCompartment_Thickness(compi)
+                RestTheta = GetSoilLayer_SAT(GetCompartment_Layer(compi)) &
+                            /100._dp - (GetCompartment_theta(compi) + DTheta)
+                if (RestTheta <= epsilon(0._dp)) then
+                    DrainMax = 0._dp
+                end if
+                if (GetSoilLayer_InfRate(GetCompartment_Layer(compi)) &
+                                                        < DrainMax) then
+                    DrainMax = GetSoilLayer_InfRate(GetCompartment_Layer(compi))
+                end if
+                if ((depthi >= Zr) &
+                    .or. (compi >= GetNrCompartments())) exit loop
+            end do loop
+        end if
+        if (SubDrain > DrainMax) then
+            if (GetManagement_Bundheight() < 0.001_dp) then
+                call SetRunoff(GetRunoff() + (SubDrain-DrainMax))
+            end if
+            SubDrain = DrainMax
+        end if
+    end if
+end subroutine CalculateEffectiveRainfall
 
 
 
