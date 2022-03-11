@@ -7,10 +7,17 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
      interface_climprocessing, interface_simul;
 
 
+PROCEDURE InitializeSimulation(TheProjectFile_ : string;
+                               TheProjectType : repTypeProject);
+
+PROCEDURE FinalizeSimulation();
+
+PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
+
+PROCEDURE FinalizeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
+
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
-
-
 
 implementation
 
@@ -3167,18 +3174,26 @@ IF  ((DayNri-1) = GetSimulation_ToDayNr()) THEN
 END; (* FileManagement *)
 
 
+PROCEDURE InitializeSimulation(TheProjectFile_ : string;
+                               TheProjectType : repTypeProject);
+BEGIN
+TheProjectFile := TheProjectFile_;
+OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
+IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
+IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
+END;  // InitializeSimulation
 
 
+PROCEDURE FinalizeSimulation();
+BEGIN
+Close(fRun); // Close Run.out
+IF OutDaily THEN Close(fDaily);  // Close Daily.OUT
+IF Part1Mult THEN Close(fHarvest);  // Close Multiple harvests in season
+END;  // FinalizeSimulation
 
 
-
-
-PROCEDURE RunSimulation(TheProjectFile_ : string;
-                        TheProjectType : repTypeProject);
-VAR NrRun : ShortInt;
-    NrRuns : integer;
-    SumWaBal_temp : rep_sum;
-
+PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
+VAR SumWaBal_temp : rep_sum;
 
     PROCEDURE AdjustCompartments;
     VAR TotDepth : double;
@@ -3201,6 +3216,7 @@ VAR NrRun : ShortInt;
                        AdjustSizeCompartments(GetCrop().RootMax);
                        // adjust soil water content
                        Comp_temp := GetCompartment();
+
                        CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
                        SetCompartment(Comp_temp);
                        IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
@@ -3218,31 +3234,29 @@ VAR NrRun : ShortInt;
                        END;
                END;
             END;
-    END; (* AdjustCompartments *)
+    END; // AdjustCompartments
 
-    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
-    BEGIN
-    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
-    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
-    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
-    END; (* CloseClimateFiles *)
+BEGIN
+LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
+AdjustCompartments;
+SumWaBal_temp := GetSumWaBal();
+GlobalZero(SumWabal_temp);
+SetSumWaBal(SumWaBal_temp);
+ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+InitializeSimulationRun;
+IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
+IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+END; // InitializeRun
 
-    PROCEDURE CloseIrrigationFile(VAR fIrri : text);
-    BEGIN
-    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
-    END; (* CloseIrrigationFile *)
 
-    PROCEDURE CloseManagementFile(VAR fCuts : text);
-    BEGIN
-    IF GetManagement_Cuttings_Considered() THEN Close(fCuts);
-    END; (* CloseManagementFile *)
-
+PROCEDURE FinalizeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
 
     PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt;
                                               VAR fEval : text);
     VAR totalnameEvalStat,StrNr : string;
 
-    BEGIN  (* CloseEvalDataPerformEvaluation *)
+    BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
     Close(fEval);
     IF (LineNrEval <> undef_int) THEN Close(fObs);
@@ -3261,47 +3275,59 @@ VAR NrRun : ShortInt;
                               GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
     // 4. Delete Evaluation data file
     Erase(fEval);
-    END; (* CloseEvalDataPerformEvaluation *)
+    END; // CloseEvalDataPerformEvaluation
 
 
-BEGIN (* RunSimulation *)
-TheProjectFile := TheProjectFile_;
-OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
-IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
-IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
+    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
+    BEGIN
+    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
+    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
+    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
+    END; // CloseClimateFiles
+
+
+    PROCEDURE CloseIrrigationFile(VAR fIrri : text);
+    BEGIN
+    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
+    END; // CloseIrrigationFile
+
+
+    PROCEDURE CloseManagementFile(VAR fCuts : text);
+    BEGIN
+    IF GetManagement_Cuttings_Considered() THEN Close(fCuts);
+    END; // CloseManagementFile
+
+BEGIN
+CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
+CloseIrrigationFile(fIrri);
+CloseManagementFile(fCuts);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+END; // FinalizeRun
+
+
+PROCEDURE RunSimulation(TheProjectFile_ : string;
+                        TheProjectType : repTypeProject);
+VAR NrRun : ShortInt;
+    NrRuns : integer;
+
+BEGIN
+InitializeSimulation(TheProjectFile_, TheProjectType);
 
 CASE TheProjectType OF
-     TypePRO : NrRuns := 1;
-     TypePRM : NrRuns := GetSimulation_NrRuns();
-     else;
+    TypePRO : NrRuns := 1;
+    TypePRM : NrRuns := GetSimulation_NrRuns();
+    else;
 END;
 
 FOR NrRun := 1 TO NrRuns DO
-   BEGIN
-   LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
-   AdjustCompartments;
-   SumWaBal_temp := GetSumWaBal();
-   GlobalZero(SumWabal_temp);
-   SetSumWaBal(SumWaBal_temp);
-   ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
-   InitializeSimulationRun;
-   IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
-   IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+BEGIN
+   InitializeRun(NrRun, TheProjectType);
    FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
-   CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
-   CloseIrrigationFile(fIrri);
-   CloseManagementFile(fCuts);
-   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+   FinalizeRun(NrRun, TheProjectType);
 END;
-     
-Close(fRun); // Close Run.out
-IF OutDaily THEN Close(fDaily);  // Close Daily.OUT
-IF Part1Mult THEN Close(fHarvest);  // Close Multiple harvests in season
-END; (* RunSimulation *)
 
-
-
+FinalizeSimulation();   
+END; // RunSimulation
 
 
 end.
