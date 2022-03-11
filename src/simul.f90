@@ -8,6 +8,9 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
+                     GenerateDepthMode_FixDepth, &
+                     GenerateTimeMode_AllDepl, &
+                     GenerateTimeMode_AllRAW, &
                      GetCompartment, &
                      GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
@@ -39,14 +42,21 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
-                     GetETO, &
                      GetDrain, &
+                     GetETO, &
+                     GetGenerateDepthMode, &
+                     GetGenerateTimeMode, &
+                     GetIrrigation, &
                      GetManagement_CNcorrection, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
+                     GetRootZoneWC_Actual, &
+                     GetRootZoneWC_FC, &
+                     GetRootZoneWC_Thresh, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
+                     GetSimulation_SWCtopSoilConsidered, &
                      GetSimulParam_CNcorrection, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_IniAbstract, &
@@ -69,7 +79,9 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
                      SetDrain, &
+                     SetIrrigation, &
                      SetRunoff, &
+                     SetSimulation_SWCtopSoilConsidered, &
                      subkind_Grain, subkind_Tuber
                       
 use ac_tempprocessing, only: SumCalendarDays
@@ -568,6 +580,51 @@ subroutine calculate_runoff(MaxDepth)
     end subroutine calculate_relative_wetness_topsoil
 
 end subroutine calculate_runoff
+
+
+subroutine Calculate_irrigation(SubDrain, TargetTimeVal)
+    real(dp), intent(inout) :: SubDrain
+    integer(int32), intent(inout) :: TargetTimeVal
+
+    real(dp) :: ZrWC, RAWi
+    logical :: SWCtopSoilConsidered_temp
+
+    ! total root zone is considered
+    SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+    call DetermineRootZoneWC(RootingDepth, SWCtopSoilConsidered_temp)
+    call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+    ZrWC = GetRootZoneWC_Actual() - GetEpot() - GetTpot() &
+           + GetRain() - GetRunoff() - SubDrain
+    if (GetGenerateTimeMode() == GenerateTimeMode_AllDepl) then
+        if ((GetRootZoneWC_FC() - ZrWC) >= TargetTimeVal) then
+            TargetTimeVal = 1
+        else
+            TargetTimeVal = 0
+        end if
+        if (GetGenerateTimeMode() == GenerateTimeMode_AllRAW) then
+            RAWi = TargetTimeVal/100._dp &
+                    * (GetRootZoneWC_FC() - GetRootZoneWC_Thresh())
+            if ((GetRootZoneWC_FC() - ZrWC) >= RAWi) then
+                TargetTimeVal = 1
+            else
+                TargetTimeVal = 0
+            end if
+        end if
+        if (TargetTimeVal == 1) then
+            if (GetGenerateDepthMode() == GenerateDepthMode_FixDepth) then
+                call SetIrrigation(real(TargetDepthVal, kind=dp))
+            else
+                call SetIrrigation((GetRootZoneWC_FC() - ZrWc) &
+                                                + TargetDepthVal)
+                if (GetIrrigation() < 0._dp) then
+                    call SetIrrigation(0._dp)
+                end if
+            end if
+        else
+            call SetIrrigation(0._dp)
+        end if
+    end if
+end subroutine Calculate_irrigation
 
 
 

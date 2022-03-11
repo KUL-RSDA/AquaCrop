@@ -45,6 +45,10 @@ procedure calculate_drainage();
 procedure calculate_runoff(constref MaxDepth : double );
      external 'aquacrop' name '__ac_simul_MOD_calculate_runoff';
 
+procedure Caluclate_irrigation(var SubDrain : double;
+                               var TargetTimeVal : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_irrigation'; 
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

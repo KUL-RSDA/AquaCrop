@@ -689,41 +689,6 @@ END; (* CalculateEffectiveRainfall *)
 
 
 
-
-PROCEDURE Calculate_irrigation;
-VAR ZrWC,RAWi : double;
-    SWCtopSoilConsidered_temp : boolean;
-BEGIN
-// total root zone is considered
-SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
-SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-ZrWC := GetRootZoneWC().Actual - GetEpot() - GetTpot() + GetRain() - GetRunoff() - SubDrain;
-IF (GetGenerateTimeMode() = AllDepl) THEN
-   IF ((GetRootZoneWC().FC - ZrWC) >= TargetTimeVal)
-      THEN TargetTimeVal := 1
-      ELSE TargetTimeVal := 0;
-IF (GetGenerateTimeMode() = AllRAW) THEN
-   BEGIN
-   RAWi := TargetTimeVal/100 * (GetRootZoneWC().FC - GetRootZoneWC().Thresh);
-   IF ((GetRootZoneWC().FC - ZrWC) >= RAWi)
-      THEN TargetTimeVal := 1
-      ELSE TargetTimeVal := 0;
-   END;
-IF (TargetTimeVal = 1)
-   THEN BEGIN
-        IF (GetGenerateDepthMode() = FixDepth)
-           THEN SetIrrigation(TargetDepthVal)
-           ELSE BEGIN
-                SetIrrigation((GetRootZoneWC().FC - ZrWc) + TargetDepthVal);
-                IF (GetIrrigation() < 0) THEN SetIrrigation(0);
-                END;
-        END
-   ELSE SetIrrigation(0);
-END; (* Calculate_irrigation *)
-
-
-
 PROCEDURE calculate_Extra_runoff(VAR InfiltratedRain, InfiltratedIrrigation, InfiltratedStorage : double);
 VAR FracSubDrain : double;
 BEGIN
@@ -3454,7 +3419,7 @@ IF (GetManagement_Bundheight() < 0.001) THEN
 IF ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
    THEN CalculateEffectiveRainfall;
 IF (((GetIrriMode() = Generate) AND (GetIrrigation() = 0)) AND (TargetTimeVal <> -999))
-   THEN Calculate_irrigation;
+   THEN Calculate_irrigation(SubDrain, TargetTimeVal);
 IF (GetManagement_Bundheight() >= 0.01)
    THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt)
    ELSE calculate_Extra_runoff(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
