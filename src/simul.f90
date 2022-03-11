@@ -740,6 +740,42 @@ subroutine CalculateEffectiveRainfall(SubDrain)
 end subroutine CalculateEffectiveRainfall
 
 
+subroutine calculate_Extra_runoff(InfiltratedRain, InfiltratedIrrigation, &
+                                  InfiltratedStorage, SubDrain)
+    real(dp), intent(inout) :: InfiltratedRain
+    real(dp), intent(inout) :: InfiltratedIrrigation
+    real(dp), intent(inout) :: InfiltratedStorage
+    real(dp), intent(inout) :: SubDrain
+
+    real(dp) :: FracSubDrain
+
+    InfiltratedStorage = 0._dp
+    InfiltratedRain = GetRain() - GetRunoff()
+    if (InfiltratedRain > 0._dp) then
+        FracSubDrain = SubDrain/InfiltratedRain
+    else
+        FracSubDrain = 0._dp
+    end if
+    if ((GetIrrigation()+InfiltratedRain) &
+            > GetSoilLayer_InfRate(GetCompartment_Layer(1))) then
+        if (GetIrrigation() > GetSoilLayer_InfRate(GetCompartment_Layer(1))) then
+            InfiltratedIrrigation = GetSoilLayer_InfRate(GetCompartment_Layer(1))
+            call SetRunoff(GetRain() + (GetIrrigation()-InfiltratedIrrigation))
+            InfiltratedRain = 0._dp
+            SubDrain = 0._dp
+        else
+            InfiltratedIrrigation = GetIrrigation()
+            InfiltratedRain = GetSoilLayer_InfRate(GetCompartment_Layer(1)) &
+                                - InfiltratedIrrigation
+            SubDrain = FracSubDrain*InfiltratedRain
+            call SetRunoff(GetRain() - InfiltratedRain)
+        end if
+    else
+        InfiltratedIrrigation = GetIrrigation()
+    end if
+end subroutine calculate_Extra_runoff
+
+
 
 
 !-----------------------------------------------------------------------------
