@@ -60,6 +60,12 @@ procedure CalculateEffectiveRainfall(var SubDrain : double);
 procedure calculate_CapillaryRise(VAR CRwater,CRsalt : double);
     external 'aquacrop' name '__ac_simul_MOD_calculate_capillaryrise';
 
+procedure calculate_saltcontent(
+                constref InfiltratedRain, InfiltratedIrrigation : double;
+                constref InfiltratedStorage, SubDrain : double;
+                constref dayi : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_saltcontent';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

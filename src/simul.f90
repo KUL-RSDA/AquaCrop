@@ -9,6 +9,7 @@ use ac_global, only: ActiveCells, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
+                     ECswComp, &
                      EffectiveRainMethod_Percentage, &
                      EffectiveRainMethod_USDA, &
                      Equiv, &
@@ -46,10 +47,12 @@ use ac_global, only: ActiveCells, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
+                     GetECdrain, &
                      GetECiAqua, &
                      GetEpot, &
                      GetETO, &
                      GetDrain, &
+                     GetIrri_PreSeason, &
                      GetManagement_CNcorrection, &
                      GetManagement_BundHeight, &
                      GetNrCompartments, &
@@ -67,16 +70,20 @@ use ac_global, only: ActiveCells, &
                      GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
                      GetSimulParam_RootNrDF, &
+                     GetSimulParam_SaltSolub, &
                      GetSimulParam_Tmin, &
                      GetSimulParam_Tmax, &
                      GetSoil_CNvalue, &
                      GetSoil_NrSoilLayers, &
                      GetSoilLayer_CRa, &
                      GetSoilLayer_CRb, &
+                     GetSoilLayer_Dx, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
                      GetSoilLayer_InfRate, &
+                     GetSoilLayer_SaltMobility_i, &
                      GetSoilLayer_SAT, &
+                     GetSoilLayer_SCP1, &
                      GetSoilLayer_tau, &
                      GetSoilLayer_Thickness, &
                      GetSoilLayer_WP, &
@@ -88,13 +95,17 @@ use ac_global, only: ActiveCells, &
                      MaxCRatDepth, &
                      modeCycle_CalendarDays, &
                      roundc, &
+                     SaltSolutionDeposit, &
                      SetCompartment, &
+                     SetCompartment_Depo, &
                      SetCompartment_fluxout, &
                      SetCompartment_Salt, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
                      SetDrain, &
+                     SetECdrain, &
                      SetRunoff, &
+                     SetSaltInfiltr, &
                      subkind_Grain, subkind_Tuber
                       
 use ac_tempprocessing, only: SumCalendarDays
@@ -823,6 +834,394 @@ subroutine calculate_CapillaryRise(CRwater, CRsalt)
         end if
     end do loop
 end subroutine calculate_CapillaryRise
+
+
+subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
+                                 InfiltratedStorage, dayi, SubDrain)
+    real(dp), intent(in) :: InfiltratedRain
+    real(dp), intent(in) :: InfiltratedIrrigation
+    real(dp), intent(in) :: InfiltratedStorage
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: SubDrain
+
+    real(dp) ::   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, &
+                  mm1, mm2, Dx, limit, Dif, UL
+    real(dp) :: Zr, depthi, ECsubdrain, ECcel, DeltaZ, ECsw1, ECsw2, &
+                ECsw, SM1, SM2, DS1, DS2, DS
+
+    integer(int32) :: compi, celi, celiM1, Ni
+    real(dp) :: ECw
+    real(dp) :: Salt_temp, Salt2_temp, Depo_temp, Depo2_temp
+    type(CompartmentIndividual) :: Compi_temp
+
+
+    mmIN = InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage
+
+    ! quality of irrigation water
+    if (dayi < GetCrop_Day1()) then
+        ECw = GetIrriECw_PreSeason()
+    else
+        ECw = GetSimulation_IrriECw()
+        if (dayi > GetCrop_DayN()) then
+            ECw = GetIrriECw_PostSeason()
+        end if
+    end if
+
+    ! initialise salt balance
+    SaltIN = InfiltratedIrrigation*ECw*Equiv &
+            + InfiltratedStorage*GetECstorage()*Equiv
+    call SetSaltInfiltr(SaltIN/100._dp) 
+                ! salt infiltrated in soil profile kg/ha 
+    SaltOut= 0._dp
+
+
+    do compi = 1, GetNrCompartments() 
+        ! 0. Set compartment parameters
+        SAT = (GetSoilLayer_SAT(GetCompartment_Layer(compi)))/100._dp  ! m3/m3 
+        UL = GetSoilLayer_UL(GetCompartment_Layer(compi)) ! m3/m3   
+                                      ! Upper limit of SC salt cel 
+        Dx = GetSoilLayer_Dx(GetCompartment_Layer(compi)) ! m3/m3  
+                            ! Size of salts cel (expect last one) 
+        
+        ! 1. Initial situation before drain and infiltration
+        DeltaTheta = mmIN &
+           /(1000._dp*GetCompartment_Thickness(compi) &
+               *(1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp))
+        Theta = GetCompartment_theta(compi) - DeltaTheta &
+                + GetCompartment_fluxout(compi) &
+                        /(1000._dp*GetCompartment_Thickness(compi))
+        
+        ! 2. Determine active SaltCels and Add IN
+        Theta = Theta + DeltaTheta
+        if (Theta <= UL) then
+            celi = 0
+            do while (Theta > Dx*celi) 
+                celi = celi + 1
+            end do
+        else
+            celi = GetSoilLayer_SCP1(GetCompartment_Layer(compi))
+        end if
+        if (celi == 0) then
+            celi = 1  ! XXX would be best to avoid celi=0 to begin with
+        end if
+        if (DeltaTheta > 0._dp) then
+            call SetCompartment_Salt(compi, celi, &
+                                     GetCompartment_Salt(compi, celi) &
+                                        + SaltIN)
+        end if
+        
+        ! 3. Mixing
+        if (celi > 1) then
+            do Ni = 1, (celi-1) 
+                mm1 = Dx*1000._dp*GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                if (Ni < GetSoilLayer_SC(GetCompartment_Layer(compi))) then
+                    mm2 = mm1
+                elseif (Theta > SAT) then
+                    mm2 = (Theta-UL)*1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                else
+                    mm2 = (SAT-UL)*1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                end if
+                Dif = GetSoilLayer_SaltMobility_i(GetCompartment_Layer(compi), &
+                                                    Ni)
+                Salt_temp = GetCompartment_Salt(compi, Ni)
+                Salt2_temp = GetCompartment_Salt(compi, Ni+1)
+                Depo_temp = GetCompartment_Depo(compi, Ni)
+                Depo2_temp = GetCompartment_Depo(compi, Ni+1)
+                call Mixing(Dif, mm1, mm2, Salt_temp, Salt2_temp, &
+                                           Depo_temp, Depo2_temp)
+                call SetCompartment_Salt(compi, Ni, Salt_temp)
+                call SetCompartment_Salt(compi, Ni+1, Salt2_temp)
+                call SetCompartment_Depo(compi, Ni, Depo_temp)
+                call SetCompartment_Depo(compi, Ni+1, Depo2_temp)
+            end do
+        end if
+        
+        ! 4. Drain
+        SaltOut = 0._dp
+        if (GetCompartment_fluxout(compi) > 0._dp) then
+            DeltaTheta = GetCompartment_fluxout(compi) &
+                         /(1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                     /100._dp))
+            do while (DeltaTheta > 0._dp) 
+                if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                    limit = (celi-1._dp)*Dx
+                else
+                    limit = UL
+                end if
+                if ((Theta - DeltaTheta) < limit) then
+                    SaltOut = SaltOut + GetCompartment_Salt(compi, celi) &
+                              + GetCompartment_Depo(compi, celi)
+                    call SetCompartment_Salt(compi, celi, 0._dp)
+                    mm1 = (Theta - limit)*1000._dp &
+                           * GetCompartment_Thickness(compi) * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                    if (SaltOut > (GetSimulParam_SaltSolub() * mm1)) then
+                        call SetCompartment_Depo(compi, celi, &
+                                   SaltOut - (GetSimulParam_SaltSolub() * mm1))
+                        SaltOut = (GetSimulParam_SaltSolub() * mm1)
+                    else
+                        call SetCompartment_Depo(compi, celi, 0._dp)
+                    end if
+                    DeltaTheta = DeltaTheta - (Theta-limit)
+                    Theta = limit
+                    celi = celi - 1
+                else
+                    SaltOut = SaltOut &
+                              + (GetCompartment_Salt(compi, celi) &
+                                + GetCompartment_Depo(compi, celi)) &
+                              * (DeltaTheta/(Theta-limit))
+                    call SetCompartment_Salt(compi, celi, &
+                                             GetCompartment_Salt(compi, celi) &
+                                             * (1._dp-DeltaTheta/(Theta-limit)))
+                    call SetCompartment_Depo(compi, celi, &
+                                             GetCompartment_Depo(compi, celi) &
+                                             * (1._dp-DeltaTheta/(Theta-limit)))
+                    mm1 = DeltaTheta*1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                    if (SaltOut > (GetSimulParam_SaltSolub() * mm1)) then
+                        call SetCompartment_Depo(&
+                                compi, celi, &
+                                GetCompartment_Depo(compi, celi) &
+                                    + (SaltOut - GetSimulParam_SaltSolub() &
+                                                                    * mm1))
+                        SaltOut = (GetSimulParam_SaltSolub() * mm1)
+                    end if
+                    DeltaTheta = 0._dp
+                    mm1 = GetSoilLayer_Dx(GetCompartment_Layer(compi)) &
+                            *1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                    if (celi == GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                        mm1 = 2._dp*mm1
+                    end if
+                    Salt_temp = GetCompartment_Salt(compi, celi)
+                    Depo_temp = GetCompartment_Depo(compi, celi)
+                    call SaltSolutionDeposit(mm1, Salt_temp, Depo_temp)
+                    call SetCompartment_Salt(compi, celi, Salt_temp)
+                    call SetCompartment_Depo(compi, celi, Depo_temp)
+                end if
+            end do
+        end if
+        
+        mmIN = GetCompartment_fluxout(compi)
+        SaltIN = SaltOUT
+    end do
+
+    if (GetDrain() > 0.001_dp) then
+        call SetECdrain(SaltOUT/(GetDrain()*Equiv))
+    end if
+
+
+    ! 5. vertical salt diffusion
+    celi = ActiveCells(GetCompartment_i(1))
+    SM2 = GetSoilLayer_SaltMobility_i(GetCompartment_Layer(1), celi)/4._dp
+    ECsw2 = ECswComp(GetCompartment_i(1), .false.) ! not at FC
+    mm2 = GetCompartment_Theta(1)*1000._dp*GetCompartment_Thickness(1) &
+            * (1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(1))/100._dp)
+    do compi = 2, GetNrCompartments() 
+        celiM1 = celi
+        SM1 = SM2
+        ECsw1 = ECsw2
+        mm1 = mm2
+        celi =  ActiveCells(GetCompartment_i(compi))
+        SM2 = GetSoilLayer_SaltMobility(GetCompartment_Layer(compi), &
+                                        celi)/4._dp
+        ECsw2 = ECswComp(GetCompartment_i(compi), .false.) ! not at FC
+        mm2 = GetCompartment_Theta(compi)*1000._dp &
+                * GetCompartment_Thickness(compi) &
+                * (1._dp &
+                    - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                /100._dp)
+        ECsw = (ECsw1*mm1+ECsw2*mm2)/(mm1+mm2)
+        DS1 = (ECsw1 - (ECsw1+(ECsw-ECsw1)*SM1))*mm1*Equiv
+        DS2 = (ECsw2 - (ECsw2+(ECsw-ECsw2)*SM2))*mm2*Equiv
+        if (abs(DS2) < abs(DS1)) then
+            DS = abs(DS2)
+        else
+            DS = abs(DS1)
+        end if
+        if (DS > 0._dp) then
+            if (ECsw1 > ECsw) then
+                DS = DS*(-1._dp)
+            end if
+            Compi_temp = GetCompartment_i(compi-1)
+            call MoveSaltTo(Compi_temp, celiM1, DS)
+            call SetCompartment_i(compi-1, Compi_temp)
+            DS = DS*(-1._dp)
+            Compi_temp = GetCompartment_i(compi)
+            call MoveSaltTo(Compi_temp, celi, DS)
+            call SetCompartment_i(compi, Compi_temp)
+        end if
+    end do
+
+
+
+
+    ! 6. Internal salt movement as a result of SubDrain
+    ! SubDrain part of non-effective rainfall (10-day & monthly input)
+    if (SubDrain > 0._dp) then
+        Zr = GetRootingDepth()
+        if (Zr >= epsilon(0._dp)) then
+            Zr = (GetSimulParam_EvapZmax()/100._dp) ! in meter
+        end if
+        compi = 0
+        depthi = 0._dp
+        ECsubdrain = 0._dp
+        
+        ! extract
+        loop: do
+            compi = compi + 1
+            depthi = depthi + GetCompartment_Thickness(compi)
+            if (depthi <= Zr) then
+            DeltaZ = GetCompartment_Thickness(compi)
+            else
+                DeltaZ = GetCompartment_Thickness(compi) - (depthi-Zr)
+            end if
+            celi = ActiveCells(GetCompartment_i(compi))
+            if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                mm1 = GetSoilLayer_Dx(GetCompartment_Layer(compi))*1000._dp &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            else
+                mm1 = 2._dp*GetSoilLayer_Dx(GetCompartment_Layer(compi)) &
+                        *1000._dp*GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            end if
+            ECcel = GetCompartment_Salt(compi, celi)/(mm1*Equiv)
+            ECsubdrain = (ECcel*mm1*(DeltaZ/GetCompartment_Thickness(compi)) &
+                                                       +ECsubdrain*SubDrain) &
+                         /(mm1*(DeltaZ/GetCompartment_Thickness(compi)) &
+                                                              +SubDrain)
+            call SetCompartment_Salt(&
+                    compi, celi, &
+                    (1._dp - (DeltaZ/GetCompartment_Thickness(compi))) &
+                        * GetCompartment_Salt(compi, celi) &
+                    + (DeltaZ/GetCompartment_Thickness(compi)) &
+                        *ECsubdrain*mm1*Equiv)
+            Salt_temp = GetCompartment_Salt(compi, celi)
+            Depo_temp = GetCompartment_Depo(compi, celi)
+            call SaltSolutionDeposit(mm1, Salt_temp, Depo_temp)
+            call SetCompartment_Salt(compi, celi, Salt_temp)
+            call SetCompartment_Depo(compi, celi, Depo_temp)
+            if ((depthi >= Zr) .or. (compi >= GetNrCompartments())) exit loop
+        end do loop
+        
+        ! dump
+        if (compi >= GetNrCompartments()) then
+            SaltOUT = GetECdrain()*(GetDrain()*Equiv) + ECsubdrain*SubDrain*Equiv
+            call SetECdrain(SaltOUT/(GetDrain()*Equiv))
+        else
+            compi = compi + 1
+            celi = ActiveCells(GetCompartment_i(compi))
+            if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                mm1 = GetSoilLayer_Dx(GetCompartment_Layer(compi))*1000._dp &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            else
+                mm1 = 2._dp*GetSoilLayer_Dx(GetCompartment_Layer(compi)) &
+                        *1000._dp*GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            end if
+            call SetCompartment_Salt(compi, celi, &
+                                     GetCompartment_Salt(compi, celi) &
+                                         + ECsubdrain*SubDrain*Equiv)
+            Salt_temp = GetCompartment_Salt(compi, celi)
+            Depo_temp = GetCompartment_Depo(compi, celi)
+            call SaltSolutionDeposit(mm1, Salt_temp, Depo_temp)
+            call SetCompartment_Salt(compi, celi, Salt_temp)
+            call SetCompartment_Depo(compi, celi, Depo_temp)
+        end if
+    end if
+
+    contains
+
+    subroutine Mixing(Dif, mm1, mm2, Salt1, Salt2, Depo1, Depo2)
+        real(dp), intent(in) :: Dif
+        real(dp), intent(in) :: mm1
+        real(dp), intent(in) :: mm2
+        real(dp), intent(inout) :: Salt1
+        real(dp), intent(inout) :: Salt2
+        real(dp), intent(inout) :: Depo1
+        real(dp), intent(inout) :: Depo2
+
+        real(dp) :: EC1, EC2, ECmix
+
+        call SaltSolutionDeposit(mm1, Salt1, Depo1)
+        EC1 = Salt1/(mm1*Equiv)
+        call SaltSolutionDeposit(mm2, Salt2, Depo2)
+        EC2 = Salt2/(mm2*Equiv)
+        ECmix = (EC1*mm1+EC2*mm2)/(mm1+mm2)
+        EC1 = EC1 + (ECmix-EC1)*Dif
+        EC2 = EC2 + (ECmix-EC2)*Dif
+        Salt1 = EC1*mm1*Equiv
+        call SaltSolutionDeposit(mm1, Salt1, Depo1)
+        Salt2 = EC2*mm2*Equiv
+        call SaltSolutionDeposit(mm2, Salt2, Depo2)
+    end subroutine Mixing
+
+
+    subroutine MoveSaltTo(Compx, celx, DS)
+        type(CompartmentIndividual), intent(inout) :: Compx
+        integer(int32), intent(in) :: celx
+        real(dp), intent(in) :: DS
+
+        real(dp) :: mmx
+        integer(int32) :: celx_local
+
+        celx_local = celx
+        if (DS >= epsilon(0._dp)) then
+            Compx%Salt(celx_local) = Compx%Salt(celx_local) + DS
+            mmx = GetSoilLayer_Dx(Compx%Layer)*1000._dp*Compx%Thickness &
+                    * (1._dp - GetSoilLayer_GravelVol(Compx%Layer)/100._dp)
+            if (celx_local == GetSoilLayer_SCP1(Compx%Layer)) then
+                mmx = 2._dp*mmx
+            end if
+            call SaltSolutionDeposit(mmx, Compx%Salt(celx_local), &
+                                     Compx%Depo(celx_local))
+        else
+            celx_local = GetSoilLayer_SCP1(Compx%Layer)
+            Compx%Salt(celx_local) = Compx%Salt(celx_local) + DS
+            mmx = 2._dp*GetSoilLayer_Dx(Compx%Layer)*1000._dp*Compx%Thickness &
+                    * (1._dp - GetSoilLayer_GravelVol(Compx%Layer)/100._dp)
+            call SaltSolutionDeposit(mmx, Compx%Salt(celx_local), &
+                                     Compx%Depo(celx_local))
+            mmx = mmx/2._dp
+            do while (Compx%Salt(celx_local) < 0._dp) 
+                Compx%Salt(celx_local-1) = Compx%Salt(celx_local-1) &
+                                           + Compx%Salt(celx_local)
+                Compx%Salt(celx_local) = 0._dp
+                celx_local = celx_local - 1
+                call SaltSolutionDeposit(mmx, Compx%Salt(celx_local), &
+                                         Compx%Depo(celx_local))
+            end do
+        end if
+    end subroutine MoveSaltTo
+
+end subroutine calculate_saltcontent 
 
 
 
