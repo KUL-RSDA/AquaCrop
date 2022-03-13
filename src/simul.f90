@@ -2,15 +2,18 @@ module ac_simul
 
 use ac_kinds, only:  dp, int32, int8
 use ac_global, only: BMRange, &
-                     CalculateETpot, CanopyCoverNoStressSF, &
+                     CalculateETpot, &
+                     CanopyCoverNoStressSF, &
                      CompartmentIndividual, &
                      CO2Ref, &
-                     GetCCiActual, SetCCiActual, &
+                     GetCCiActual, &
+                     SetCCiActual, &
                      datatype_daily, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
-                     DetermineRootZoneWC, DetermineDate, &
+                     DetermineRootZoneWC, &
+                     DetermineDate, &
                      fAdjustedForCO2, &
                      GetCompartment, &
                      GetCompartment_FCadj, &
@@ -19,13 +22,18 @@ use ac_global, only: BMRange, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
-                     GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
+                     GetCrop_pLeafDefLL, &
+                     GetCrop_pLeafDefUL, &
                      GetCrop_pdef, &
-                     GetCrop_subkind, GetCrop_HI, &
-                     GetCrop_pMethod, pMethod_FAOCorrection, &
+                     GetCrop_subkind, &
+                     GetCrop_HI, &
+                     GetCrop_pMethod, &
+                     pMethod_FAOCorrection, &
                      pMethod_NoCorrection, &
-                     GetCrop_aCoeff, GetCrop_ModeCycle, &
-                     GetCrop_AdaptedToCO2, GetCrop_KsShapeFactorLeaf, & 
+                     GetCrop_aCoeff, &
+                     GetCrop_ModeCycle, &
+                     GetCrop_AdaptedToCO2, &
+                     GetCrop_KsShapeFactorLeaf, & 
                      GetCrop_DaysToGermination, &
                      GetCrop_DaysToSenescence, &
                      GetCrop_DaysToHarvest, &
@@ -34,24 +42,34 @@ use ac_global, only: BMRange, &
                      GetCrop_GDDaysToHarvest, &
                      GetCrop_DaysToFullCanopy, &
                      GetCrop_DaysToSenescence, &
-                     GetCrop_CCo, GetCrop_CCx, &
-                     GetCrop_CCxRoot, getcrop_fexcess, & 
-                     GetCrop_Tcold, getcrop_theat, &
-                     GetCrop_CGC, GetCrop_YearCCx, &
-                     GetCrop_CDC, GetCrop_GDDCGC, &
+                     GetCrop_CCo, &
+                     GetCrop_CCx, &
+                     GetCrop_CCxRoot, &
+                     getcrop_fexcess, & 
+                     GetCrop_Tcold, &
+                     getcrop_theat, &
+                     GetCrop_CGC, &
+                     GetCrop_YearCCx, &
+                     GetCrop_CDC, &
+                     GetCrop_GDDCGC, &
                      GetCrop_GDDCDC,getCrop_Day1, &
                      GetCrop_KsShapeFactorStomata, &
-                     GetCrop_Planting, GetCrop_LengthFlowering, &
+                     GetCrop_Planting, &
+                     GetCrop_LengthFlowering, &
                      GetCrop_Tbase, GetCrop_Tupper, &
                      GetCrop_DaysToGermination, &    
-                     GetCrop_DaysToHarvest, GetCrop_KcTop, &
+                     GetCrop_DaysToHarvest, &
+                     GetCrop_KcTop, &
                      getcrop_hiincrease, &
-                     GetCrop_KcDecline,GetCrop_GDtranspLow, &
-                     GetCrop_CCEffectEvapLate, GetCrop_WP, &
+                     GetCrop_KcDecline, &
+                     GetCrop_GDtranspLow, &
+                     GetCrop_CCEffectEvapLate, &
+                     GetCrop_WP, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
                      getcrop_daystofullcanopysf, &
-                     GetCrop_CCxAdjusted, GetCrop_DeterminancyLinked, &
+                     GetCrop_CCxAdjusted, &
+                     GetCrop_DeterminancyLinked, &
                      GetCrop_GDDaysToFullCanopySF, &
                      SetCrop_pPollination, &
                      GetCrop_pPollination, &
@@ -61,7 +79,8 @@ use ac_global, only: BMRange, &
                      GetDrain, &
                      GetManagement_CNcorrection, &
                      GetManagement_FertilityStress, &
-                     GetManagement_WeedDeltaRC, GetManagement_WeedAdj, &
+                     GetManagement_WeedDeltaRC, &
+                     GetManagement_WeedAdj, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
@@ -104,7 +123,8 @@ use ac_global, only: BMRange, &
                      plant_regrowth, &
                      roundc, &
                      undef_int, &
-                     GetRootingdepth,SetRootingdepth, &
+                     GetRootingdepth, &
+                     SetRootingdepth, &
                      SetCompartment, &
                      SetCompartment_fluxout, &
                      SetCompartment_theta, &
@@ -116,7 +136,8 @@ use ac_global, only: BMRange, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSimulation_Storage_Btotal, &
                      Subkind_Forage, subkind_Grain,  &
-                     subkind_Tuber,subkind_Vegetative
+                     subkind_Tuber, &
+                     subkind_Vegetative
                       
 use ac_tempprocessing, only: SumCalendarDays
 
@@ -508,7 +529,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             
             ! 2.2 determine HImultiplier at the start of flowering
             ! effect of water stress before flowering (HItimesBEF)
-            if (HItimesBEF < -0.1_dp) then
+            if (HItimesBEF < - 0.1_dp) then
                 ! i.e. undefined at the start of flowering
                 if (BiomassPot < 0.0001_dp) then
                     HItimesBEF = 1._dp
