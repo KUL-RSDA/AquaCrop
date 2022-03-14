@@ -1,4 +1,7 @@
 module ac_interface_simul
+use ac_kinds, only: dp
+use ac_simul, only: AdjustpSenescenceToETo
+
 
 use ac_simul, only: DetermineBiomassAndYield
 
@@ -86,6 +89,7 @@ subroutine DetermineBiomassAndYield_wrap(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, 
 
     StoreAssimilates_f = StoreAssimilates
     MobilizeAssimilates_f = MobilizeAssimilates
+
     call DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                                     GDDayi, Tact, SumKcTop, CGCref, GDDCGCref, &
                                     Coeffb0, Coeffb1, Coeffb2, FracBiomassPotSF, &
@@ -101,7 +105,22 @@ subroutine DetermineBiomassAndYield_wrap(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, 
                                     PreviousStressLevel, StoreAssimilates_f, &
                                     MobilizeAssimilates_f, AssimToMobilize, &
                                     AssimMobilized, Bin, Bout, TESTVAL)
+
+    StoreAssimilates = StoreAssimilates_f
+    MobilizeAssimilates = MobilizeAssimilates_f
 end subroutine DetermineBiomassAndYield_wrap
 
+
+subroutine AdjustpSenescenceToETo_wrap(EToMean, TimeSenescence, WithBeta, pSenAct)
+    real(dp), intent(in) :: EToMean
+    real(dp), intent(in) :: TimeSenescence
+    logical(1), intent(in) :: WithBeta
+    real(dp), intent(inout) :: pSenAct
+
+    logical :: WithBeta_f
+
+    WithBeta_f = WithBeta
+    call AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta_f, pSenAct)
+end subroutine AdjustpSenescenceToETo_wrap
 
 end module ac_interface_simul

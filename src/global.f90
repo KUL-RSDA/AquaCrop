@@ -933,8 +933,10 @@ character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
 character(len=:), allocatable :: SWCiniDescription
+character(len=:), allocatable :: ProjectDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
+character(len=:), allocatable :: MultipleProjectDescription
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
@@ -974,6 +976,8 @@ integer(int32) :: DaySubmerged
 integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
+real(dp) ::  SurfaceStorage !mm/day
+real(dp) ::  ECstorage !EC surface storage dS/m
 integer(int32) :: ZiAqua ! Depth of Groundwater table below
                          ! soil surface in centimeter 
 
@@ -992,6 +996,7 @@ real(dp) :: Drain  ! mm/day
 real(dp) :: Infiltrated ! mm/day
 real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
+real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Tpot ! mm/day
@@ -5806,7 +5811,14 @@ subroutine LoadOffSeason(FullName)
     integer(int8) :: TempShortInt, simul_irri_of
     character(len=1025) :: OffSeasonDescr_temp
 
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    logical :: file_exists
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    else
+        write(*,*) 'LoadOffSeason file not found'
+    end if
     read(fhandle, *) OffSeasonDescr_temp
     call SetOffSeasonDescription(trim(OffSeasonDescr_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
@@ -5964,8 +5976,16 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
     integer :: fhandle
     integer(int32) :: Ni, rc
 
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
+    logical :: file_exists
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
         iostat=rc)
+    else
+        write(*,*) 'Climate file not found'
+    end if
+
     read(fhandle, *, iostat=rc) ClimateDescription
     read(fhandle, *, iostat=rc) Ni
     if (Ni == 1) then
@@ -6005,13 +6025,21 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
     real(dp) :: DayDouble, Z1, EC1, Z2, EC2, ZN, ECN
     logical :: TheEnd 
 
+    logical :: file_exists
+
     AtDayNr_local = AtDayNr
     ! initialize
     TheEnd = .false.
     Year1Gwt = 1901
     DayNr1 = 1
     DayNr2 = 1
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+
+    inquire(file=trim(FullName), exist=file_exists)
+    if (file_exists) then
+        open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    else
+        write(*,*) 'Groundwater file not found'
+    end if
     read(fhandle, *) GroundWaterDescription
     read(fhandle, *) ! AquaCrop Version
 
@@ -8356,15 +8384,27 @@ type(rep_IrriECw) function GetIrriECw()
     GetIrriECw = IrriECw
 end function GetIrriECw
 
+real(dp) function GetIrriECw_PreSeason()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw_PreSeason = IrriECw%PreSeason
+end function GetIrriECw_PreSeason
+
 subroutine SetIrriECw_PreSeason(PreSeason)
-    !! Setter for the "soil" global variable.
+    !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PreSeason
 
     IrriECw%PreSeason = PreSeason
 end subroutine SetIrriECw_PreSeason
 
+real(dp) function GetIrriECw_PostSeason()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw_PostSeason = IrriECw%PostSeason
+end function GetIrriECw_PostSeason
+
 subroutine SetIrriECw_PostSeason(PostSeason)
-    !! Setter for the "soil" global variable.
+    !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PostSeason
 
     IrriECw%PostSeason = PostSeason
@@ -9539,6 +9579,11 @@ subroutine SetSimulParam_EffectiveRain_RootNrEvap(RootNrEvap)
     EffectiveRain%RootNrEvap= RootNrEvap
 end subroutine SetSimulParam_EffectiveRain_RootNrEvap
 
+type(rep_sum) function GetSumWaBal()
+    !! Getter for the "SymWaBal" global variable.
+
+    GetSumWaBal = SumWaBal
+end function GetSumWaBal
 
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.
@@ -9659,6 +9704,13 @@ real(dp) function GetSumWaBal_CRSalt()
 
     GetSumWaBal_CRSalt = SumWaBal%CRSalt
 end function GetSumWaBal_CRSalt
+
+subroutine SetSumWaBal(SumWaBal_in)
+    !! Setter for the "SumWaBal" global variable.
+    type(rep_sum), intent(in) :: SumWaBal_in
+
+    SumWaBal = SumWaBal_in
+end subroutine SetSumWaBal
 
 subroutine SetSumWaBal_Epot(Epot)
     !! Setter for the "SumWaBal" global variable.
@@ -12124,6 +12176,13 @@ integer(int32) function GetTemperatureRecord_NrObs()
     GetTemperatureRecord_NrObs = TemperatureRecord%NrObs
 end function GetTemperatureRecord_NrObs
 
+subroutine SetTemperatureRecord(rec_in)
+    !! Setter for the "TemperatureRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    TemperatureRecord = rec_in
+end subroutine SetTemperatureRecord
+
 subroutine SetTemperatureRecord_DataType(DataType)
     !! Setter for the "TemperatureRecord" global variable.
     integer(intEnum), intent(in) :: DataType
@@ -12575,6 +12634,13 @@ integer(int32) function GetRainRecord_NrObs()
     GetRainRecord_NrObs = RainRecord%NrObs
 end function GetRainRecord_NrObs
 
+subroutine SetRainRecord(rec_in)
+    !! Setter for the "RainRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    RainRecord = rec_in
+end subroutine SetRainRecord
+
 subroutine SetRainRecord_DataType(DataType)
     !! Setter for the "RainRecord" global variable.
     integer(intEnum), intent(in) :: DataType
@@ -12738,6 +12804,13 @@ integer(int32) function GetEToRecord_NrObs()
 
     GetEToRecord_NrObs = EToRecord%NrObs
 end function GetEToRecord_NrObs
+
+subroutine SetEToRecord(rec_in)
+    !! Setter for the "EToRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    EToRecord = rec_in
+end subroutine SetEToRecord
 
 subroutine SetEToRecord_DataType(DataType)
     !! Setter for the "EToRecord" global variable.
@@ -14271,6 +14344,32 @@ subroutine SetRunoff(Runoff_in)
     Runoff = Runoff_in
 end subroutine SetRunoff
 
+real(dp) function GetSurfaceStorage()
+    !! Getter for the "SurfaceStorage" global variable.
+    !! mm/day
+    GetSurfaceStorage = SurfaceStorage
+end function GetSurfaceStorage
+
+subroutine SetSurfaceStorage(SurfaceStorage_in)
+    !! Setter for the "SurfaceStorage" global variable.
+    real(dp), intent(in) :: SurfaceStorage_in
+
+    SurfaceStorage = SurfaceStorage_in
+end subroutine SetSurfaceStorage
+
+real(dp) function GetECstorage()
+    !! Getter for the "ECstorage" global variable.
+    !! * EC surface storage dS/m *
+    GetECstorage = ECstorage
+end function GetECstorage
+
+subroutine SetECstorage(ECstorage_in)
+    !! Setter for the "ECstorage" global variable.
+    real(dp), intent(in) :: ECstorage_in
+
+    ECstorage = ECstorage_in
+end subroutine SetECstorage
+
 function GetOffSeasonDescription() result(str)
     !! Getter for the "OffSeasonDescription" global variable.
     character(len=len(OffSeasonDescription)) :: str
@@ -14495,6 +14594,47 @@ subroutine SetTpot(Tpot_in)
 
     Tpot = Tpot_in
 end subroutine SetTpot
+
+function GetMultipleProjectDescription() result(str)
+    !! Getter for the "MultipleProjectDescription" global variable.
+    character(len=len(MultipleProjectDescription)) :: str
+
+    str = MultipleProjectDescription
+end function GetMultipleProjectDescription
+
+subroutine SetMultipleProjectDescription(str)
+    !! Setter for the "MultipleProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    MultipleProjectDescription = str
+end subroutine SetMultipleProjectDescription
+
+function GetProjectDescription() result(str)
+    !! Getter for the "ProjectDescription" global variable.
+    character(len=len(ProjectDescription)) :: str
+
+    str = ProjectDescription
+end function GetProjectDescription
+
+subroutine SetProjectDescription(str)
+    !! Setter for the "ProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProjectDescription = str
+end subroutine SetProjectDescription
+
+real(dp) function GetRootingDepth()
+    !! Getter for the "RootingDepth" global variable.
+
+    GetRootingDepth = RootingDepth
+end function GetRootingDepth
+
+subroutine SetRootingDepth(RootingDepth_in)
+    !! Setter for the "RootingDepth" global variable.
+    real(dp), intent(in) :: RootingDepth_in
+
+    RootingDepth = RootingDepth_in
+end subroutine SetRootingDepth
 
 
 end module ac_global

@@ -13,24 +13,21 @@ TYPE
 
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ProjectDescription, MultipleProjectDescription : string;
 
     CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
     Tmin, Tmax : double; (* degC *)
-    SurfaceStorage, Eact, Tact, TactWeedInfested : double;        (* mm/day *)
+    Eact, Tact, TactWeedInfested : double;        (* mm/day *)
     EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
     // salinity
-    ECstorage      : double; (* EC surface storage dS/m *)
     ECdrain        : double; (* EC drain water dS/m *)
     SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
-
-
+    CRsalt         : double; // gram/m2
 
 
 // Extra for stand alone procedure

@@ -24,6 +24,7 @@ procedure DeterminePotentialBiomass(
             VAR BiomassUnlim : double);
      external 'aquacrop' name '__ac_simul_MOD_determinepotentialbiomass';
 
+<<<<<<< HEAD
 procedure DetermineBiomassAndYield(
             constref dayi : integer;
             constref ETo : double;
@@ -82,6 +83,16 @@ procedure AdjustpStomatalToETo(
             constref MeanETo : double;
             VAR pStomatULAct : double);
      external 'aquacrop' name '__ac_simul_MOD_adjustpstomataltoeto';
+=======
+
+procedure AdjustpSenescenceToETo(
+           constref EToMean : double;
+           constref TimeSenescence : double;
+           constref WithBeta : BOOLEAN;
+           VAR pSenAct : double);
+    external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
+
+>>>>>>> 1353111334c446ffda3ec0c962a06b0a48a4fea8
 
 //-----------------------------------------------------------------------------
 // BUDGET_module
@@ -103,6 +114,28 @@ procedure calculate_drainage();
 
 procedure calculate_runoff(constref MaxDepth : double );
      external 'aquacrop' name '__ac_simul_MOD_calculate_runoff';
+
+procedure Calculate_irrigation(var SubDrain : double;
+                               var TargetTimeVal, TargetDepthVal : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_irrigation'; 
+
+procedure CalculateEffectiveRainfall(var SubDrain : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
+
+procedure calculate_infiltration(
+                VAR InfiltratedRain,InfiltratedIrrigation : double;
+                VAR InfiltratedStorage, SubDrain : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_infiltration';
+
+procedure calculate_Extra_runoff(VAR InfiltratedRain, InfiltratedIrrigation: double;
+                                 VAR InfiltratedStorage, SubDrain : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_extra_runoff';
+
+procedure calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation: double;
+                                   VAR InfiltratedStorage,ECinfilt : double;
+                                   constref SubDrain : double;
+                                   constref dayi : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_surfacestorage';
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module

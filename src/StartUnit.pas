@@ -371,7 +371,7 @@ IF (NrProjects > 0) THEN
                               //4. load project parameters
                               IF CanSelect THEN
                                  BEGIN
-                                 ProjectDescription := 'undefined';
+                                 SetProjectDescription('undefined');
                                  FullFileNameProgramParametersLocal := GetFullFileNameProgramParameters();
                                  ComposeFileForProgramParameters(GetProjectFile(),FullFileNameProgramParametersLocal);
                                  SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal);
@@ -396,7 +396,7 @@ IF (NrProjects > 0) THEN
                               //4. load project parameters
                               IF CanSelect THEN
                                  BEGIN
-                                 MultipleProjectDescription := 'undefined';
+                                 SetMultipleProjectDescription('undefined');
                                  FullFileNameProgramParametersLocal := GetFullFileNameProgramParameters();
                                  ComposeFileForProgramParameters(GetMultipleProjectFile(),FullFileNameProgramParametersLocal);
                                  SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal);
