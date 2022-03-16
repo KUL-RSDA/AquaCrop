@@ -1,6 +1,7 @@
 # Compiler options
 
 DEBUG = 0
+FORTRAN_EXE = 0
 
 PC = fpc
 PCFLAGS = -Mdelphi
@@ -10,7 +11,7 @@ FCFLAGS = -fPIC -shared
 
 ifeq ($(DEBUG), 1)
     # For debugging and development
-    PCFLAGS += -gl
+    PCFLAGS += -gl -fPIC
     FCFLAGS += -g -fPIC -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
                -fcheck=all -fbacktrace -std=f2008
 else
@@ -151,6 +152,8 @@ interface_simul.o: interface_simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+pluginbarev70.o: pluginbarev70.F90
+	$(FC) $(FCFLAGS) -c $< -o $@
 
 
 # Pascal-related targets
@@ -163,8 +166,27 @@ SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
       interface_run.pas interface_startunit.pas interface_defaultcropsoil.pas \
       interface_inforesults.pas interface_rootunit.pas interface_simul.pas
 
+PLIB = libPlugInBareV70.so
+
+$(PLIB): $(SRC) $(FLIB) PlugInBareV70.pas
+	$(PC) $(PCFLAGS) PlugInBareV70.pas
+
+pascalclean: fortranclean
+	$(RM) $(wildcard *.o) $(wildcard *.ppu) $(PLIB)
+
+
+# Finally, the actual 'executable' and 'clean' targets
+
+ifeq ($(FORTRAN_EXE), 0)
+# Pascal-based executable
 $(EXECUTABLE): $(SRC) $(FLIB)
 	$(PC) $(PCFLAGS) PlugInBareV70.dpr
 
-clean: fortranclean
-	$(RM) $(wildcard *.o) $(wildcard *.ppu) $(EXECUTABLE)
+else ifeq ($(FORTRAN_EXE), 1)
+# Fortran-based executable
+$(EXECUTABLE): pluginbarev70.o $(PLIB)
+	$(FC) pluginbarev70.o -o $(EXECUTABLE) -L$(PWD) -laquacrop -lPlugInBareV70
+endif
+
+clean: pascalclean fortranclean
+	$(RM) $(EXECUTABLE)
