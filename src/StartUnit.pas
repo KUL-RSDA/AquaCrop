@@ -505,6 +505,12 @@ BEGIN
 END;
 
 
+PROCEDURE WriteProjectsInfo(constref line : string);
+BEGIN
+    WRITELN(fProjects, line);
+END;
+
+
 PROCEDURE StartTheProgram;
 VAR
     iproject, nprojects : integer;
@@ -521,8 +527,8 @@ BEGIN
 
     IF (nprojects > 0) THEN
     BEGIN
-        WRITELN(fProjects);
-        WRITELN(fProjects, 'Projects handled:');
+        WriteProjectsInfo('');
+        WriteProjectsInfo('Projects handled:');
     END;
 
     FOR iproject := 1 to nprojects DO
@@ -533,14 +539,14 @@ BEGIN
         RunSimulation(TheProjectFile,TheProjectType);
     END;
 
-    IF (nprojects = 0) THEN // no projects
+    IF (nprojects = 0) THEN
     BEGIN
-        WRITELN(fProjects);
-        WRITELN(fProjects,'Projects loaded: None');
+        WriteProjectsInfo('');
+        WriteProjectsInfo('Projects loaded: None');
 
         IF ListProjectFileExist
-        THEN WRITELN(fProjects,'File ''ListProjects.txt'' does not contain ANY project file')
-        ELSE WRITELN(fProjects,'Missing File ''ListProjects.txt'' in LIST directory');
+        THEN WriteProjectsInfo('File ''ListProjects.txt'' does not contain ANY project file')
+        ELSE WriteProjectsInfo('Missing File ''ListProjects.txt'' in LIST directory');
     END;
 
     FinalizeTheProgram;
