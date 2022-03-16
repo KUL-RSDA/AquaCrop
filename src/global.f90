@@ -4273,7 +4273,7 @@ integer(int32) function ActiveCells(Comp)
     integer(int32) ::  celi
 
     if (Comp%theta <= GetSoilLayer_UL(Comp%Layer)) then
-        celi = 0
+        celi = 1
         do while (Comp%theta > (GetSoilLayer_Dx(Comp%Layer)) * celi) 
             celi = celi + 1
         end do

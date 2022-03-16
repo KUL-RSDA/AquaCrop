@@ -1101,9 +1101,6 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
 
     ! 5. vertical salt diffusion
     celi = ActiveCells(GetCompartment_i(1))
-    if (celi == 0) then
-        celi = 1 ! avoiding index 0
-    end if
     SM2 = GetSoilLayer_SaltMobility_i(GetCompartment_Layer(1), celi)/4._dp
     ECsw2 = ECswComp(GetCompartment_i(1), .false.) ! not at FC
     mm2 = GetCompartment_Theta(1)*1000._dp*GetCompartment_Thickness(1) &
