@@ -1160,7 +1160,7 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
             compi = compi + 1
             depthi = depthi + GetCompartment_Thickness(compi)
             if (depthi <= Zr) then
-            DeltaZ = GetCompartment_Thickness(compi)
+                DeltaZ = GetCompartment_Thickness(compi)
             else
                 DeltaZ = GetCompartment_Thickness(compi) - (depthi-Zr)
             end if
