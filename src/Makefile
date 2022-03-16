@@ -152,7 +152,10 @@ interface_simul.o: interface_simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-pluginbarev70.o: pluginbarev70.F90
+pluginbarev70.o: pluginbarev70.F90 \
+    global.o \
+    interface_global.o \
+    kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 

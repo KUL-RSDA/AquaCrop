@@ -2,12 +2,25 @@ unit StartUnit;
 
 interface
 
+USES Global;
+
+FUNCTION GetListProjectsFile() : string;
+FUNCTION GetNumberOfProjects() : integer;
+FUNCTION GetProjectFileName(constref iproject : integer) : string;
+PROCEDURE InitializeTheProgram;
+PROCEDURE GetProjectType(constref TheProjectFile : string;
+                         VAR TheProjectType : repTypeProject);
+PROCEDURE InitializeProject(constref iproject : integer;
+                            constref TheProjectFile : string;
+                            constref TheProjectType : repTypeProject);
+PROCEDURE FinalizeTheProgram;
+PROCEDURE WriteProjectsInfo(constref line : string);
 PROCEDURE StartTheProgram;
 
 
 implementation
 
-USES SysUtils,Global,interface_global,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
+USES SysUtils,interface_global,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
 VAR fProjects : textFile;
 
