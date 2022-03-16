@@ -11962,6 +11962,30 @@ type(rep_RootZoneSalt) function GetRootZoneSalt()
     GetRootZoneSalt = RootZoneSalt
 end function GetRootZoneSalt
 
+real(dp) function GetRootZoneSalt_ECe()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECe = RootZoneSalt%ECe
+end function GetRootZoneSalt_ECe
+
+real(dp) function GetRootZoneSalt_ECsw()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECsw = RootZoneSalt%ECsw
+end function GetRootZoneSalt_ECsw
+
+real(dp) function GetRootZoneSalt_ECswFC()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECswFC = RootZoneSalt%ECswFC
+end function GetRootZoneSalt_ECswFC
+
+real(dp) function GetRootZoneSalt_KsSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_KsSalt = RootZoneSalt%KsSalt
+end function GetRootZoneSalt_KsSalt
+
 subroutine SetRootZoneSalt_ECe(ECe)
     !! Setter for the "RootZoneSalt" global variable.
     real(dp), intent(in) :: ECe
