@@ -1,9 +1,6 @@
 module ac_interface_inforesults
 
-use, intrinsic :: iso_c_binding, only: c_f_pointer, &
-                                       c_loc, &
-                                       c_null_char, &
-                                       c_ptr
+use, intrinsic :: iso_c_binding, only: c_ptr
 
 use ac_kinds, only: dp, &
                     intEnum, &
