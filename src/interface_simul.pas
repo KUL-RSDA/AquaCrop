@@ -58,6 +58,9 @@ procedure Calculate_irrigation(var SubDrain : double;
                                var TargetTimeVal, TargetDepthVal : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_irrigation'; 
 
+procedure CheckGermination();
+    external 'aquacrop' name '__ac_simul_MOD_checkgermination'; 
+
 procedure CalculateEffectiveRainfall(var SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
 

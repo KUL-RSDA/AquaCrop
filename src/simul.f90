@@ -1,7 +1,8 @@
 module ac_simul
 
 use ac_kinds, only:  dp, int32, int8
-use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
+use ac_global, only: CalculateETpot, &
+                     CanopyCoverNoStressSF, &
                      CompartmentIndividual, &
                      CO2Ref, &
                      datatype_daily, &
@@ -21,9 +22,12 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
-                     GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
-                     GetCrop_subkind, GetCrop_HI, &
-                     GetCrop_pMethod, pMethod_FAOCorrection, &
+                     GetCrop_pLeafDefLL, &
+                     GetCrop_pLeafDefUL, &
+                     GetCrop_subkind, &
+                     GetCrop_HI, &
+                     GetCrop_pMethod, &
+                     pMethod_FAOCorrection, &
                      GetCrop_pSenescence, &
                      GetCrop_ModeCycle, &
                      GetCrop_AdaptedToCO2, & 
@@ -40,13 +44,21 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_CCo, GetCrop_CCx, &
                      GetCrop_CGC, GetCrop_CCx, &
                      GetCrop_CDC, GetCrop_GDDCGC, &
-                     GetCrop_GDDCDC,getCrop_Day1, &
-                     GetCrop_Tbase, GetCrop_Tupper, &
+                     GetCrop_GDDCDC, &
+                     getCrop_Day1, &
+                     GetCrop_Planting, &
+                     GetCrop_RootMin, &
+                     GetCrop_Tbase, &
+                     GetCrop_Tupper, &
                      GetCrop_DaysToGermination, &    
-                     GetCrop_DaysToHarvest, GetCrop_KcTop, &
-                     GetCrop_KcDecline,GetCrop_GDtranspLow, &
-                     GetCrop_CCEffectEvapLate, GetCrop_WP, &
-                     GetCrop_WPy, GetCrop_dHIdt, &
+                     GetCrop_DaysToHarvest, &
+                     GetCrop_KcTop, &
+                     GetCrop_KcDecline, &
+                     GetCrop_GDtranspLow, &
+                     GetCrop_CCEffectEvapLate, &
+                     GetCrop_WP, &
+                     GetCrop_WPy, &
+                     GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
                      GetECstorage, &
                      GetEpot, &
@@ -65,11 +77,13 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetRootingDepth, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
+                     GetRootZoneWC_WP, &
                      GetRootZoneWC_Thresh, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
                      GetSimulation_IrriECw, &
                      GetSimulation_SWCtopSoilConsidered, &
+                     GetSimulParam_TAWGermination, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
                      GetSimulParam_EffectiveRain_Method, &
@@ -92,6 +106,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      fAdjustedForCO2, &
                      max_No_compartments, &
                      modeCycle_CalendarDays, &
+                     plant_seed, &
                      roundc, &
                      SetCompartment, &
                      SetCompartment_fluxout, &
@@ -101,6 +116,10 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      SetECstorage, &
                      SetIrrigation, &
                      SetRunoff, &
+                     SetSimulation_DelayedDays, &
+                     SetSimulation_Germinate, &
+                     SetSimulation_ProtectedSeedling, &
+                     setsimulation_sumgdd, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSurfaceStorage, &
                      subkind_Grain, subkind_Tuber
@@ -253,6 +272,30 @@ subroutine AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta, pSenAct)
     end if
 end subroutine AdjustpSenescenceToETo
 
+subroutine CheckGermination()
+
+    real(dp) :: Zroot, WCGermination
+    logical :: SWCtopSoilConsidered_temp
+
+    ! total root zone is considered
+    Zroot = GetCrop_RootMin()
+    SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+    call DetermineRootZoneWC(Zroot, SWCtopSoilConsidered_temp)
+    call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+    WCGermination = GetRootZoneWC_WP() + (GetRootZoneWC_FC() - &
+                    GetRootZoneWC_WP()) * (GetSimulParam_TAWGermination()/100._dp)
+    if (GetRootZoneWC_Actual() < WCGermination) then
+        call SetSimulation_DelayedDays(GetSimulation_DelayedDays() + 1)
+        call SetSimulation_SumGDD(real(0, dp))
+    else
+        call SetSimulation_Germinate(.true.)
+        if (GetCrop_Planting() == plant_Seed) then
+            call SetSimulation_ProtectedSeedling(.true.)
+        else
+            call SetSimulation_ProtectedSeedling(.false.)
+        end if
+    end if
+end subroutine CheckGermination
 
 !-----------------------------------------------------------------------------
 ! BUDGET_module
@@ -1265,8 +1308,6 @@ subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
     end function Calculate_factor 
 
 end subroutine calculate_infiltration
-
-
 
 
 !-----------------------------------------------------------------------------

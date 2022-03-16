@@ -1085,36 +1085,6 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
 END; (* EffectSoilFertilitySalinityStress *)
 
 
-
-
-
-PROCEDURE CheckGermination;
-VAR Zroot, WCGermination : double;
-    SWCtopSoilConsidered_temp : boolean;
-
-BEGIN
-// total root zone is considered
-Zroot := GetCrop().RootMin;
-SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-DetermineRootZoneWC(Zroot,SWCtopSoilConsidered_temp);
-SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (GetSimulParam_TAWGermination()/100);
-IF (GetRootZoneWC().Actual < WCGermination)
-   THEN BEGIN
-        SetSimulation_DelayedDays(GetSimulation_DelayedDays() + 1);
-        SetSimulation_SumGDD(0);
-        END
-   ELSE BEGIN
-        SetSimulation_Germinate(true);
-        IF (GetCrop().Planting = Seed)
-           THEN SetSimulation_ProtectedSeedling(true)
-           ELSE SetSimulation_ProtectedSeedling(false);
-        END;
-END; (* CheckGermination *)
-
-
-
-
 PROCEDURE DetermineCCi(CCxTotal,CCoTotal : double;
                        VAR CCiActual : double);
 
