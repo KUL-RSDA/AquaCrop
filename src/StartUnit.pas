@@ -215,7 +215,7 @@ BEGIN
     END;
     Close(fhandle);
 
-    GetProjectFileName := TheProjectFile;
+    GetProjectFileName := Trim(TheProjectFile);
 END;
 
 
@@ -236,14 +236,13 @@ PrepareReport(OutputAggregate,Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Ou
 END;
 
 
-PROCEDURE GetProjectType(VAR TheProjectFile : string;
+PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 VAR i,lgth : INTEGER;
     TheExtension : string;
 
 BEGIN
 TheProjectType := TypeNone;
-TheProjectFile := Trim(TheProjectFile);
 lgth := length(TheProjectFile);
 IF (lgth > 0) THEN
    BEGIN
