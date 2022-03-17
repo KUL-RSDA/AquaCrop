@@ -1390,8 +1390,8 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
     logical :: WithBeta
     logical :: TheSenescenceON
 
+    !! test Version 6.2
     real(dp) :: KsSen
-        !! test Version 6.2
     real(dp) :: Crop_pLeafAct_temp
     real(dp) :: Crop_pSenAct_temp
     real(dp) :: Crop_CCxAdjusted_temp
@@ -1524,7 +1524,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                 else
                     CCiActual = GetCrop_CCoAdjusted() * exp(CGCGDDSF * GDDayi)
                 end if
-                ! 2.b CC > CCo
+            ! 2.b CC > CCo
             else
                 if (GetCCiPrev() < (0.97999_dp*CCxSF)) then
                     call DetermineGDDCGCadjusted(GDDCGCadjusted)
@@ -1652,7 +1652,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                 if (CCiActual > CCxSFCD) then
                     CCiActual = CCxSFCD
                 end if
-                ! late season
+            ! late season
             else      
                 StressSenescence = undef_int ! to avoid display of zero stress 
                                              ! in late season
