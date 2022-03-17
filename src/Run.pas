@@ -7,12 +7,16 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
      interface_climprocessing, interface_simul;
 
 
+FUNCTION GetDayNri() : LongInt;
+
 PROCEDURE InitializeSimulation(TheProjectFile_ : string;
                                TheProjectType : repTypeProject);
 
 PROCEDURE FinalizeSimulation();
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
+
+PROCEDURE AdvanceOneTimeStep();
 
 PROCEDURE FinalizeRun1(NrRun : ShortInt;
                        TheProjectFile : string;
@@ -2397,6 +2401,11 @@ END; (* WriteEvaluationData *)
 
 // WRITING RESULTS section ================================================= END ====================
 
+FUNCTION GetDayNri() : LongInt;
+BEGIN
+    GetDayNri := DayNri;
+END;
+
 
 PROCEDURE AdvanceOneTimeStep();
 
@@ -2687,9 +2696,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
         GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle());
     PotValSF := 100 * (1/CCxCropWeedsNoSFstress) * PotValSF;
     END; (* GetPotValSF *)
-
-
-
 
 BEGIN (* AdvanceOneTimeStep *)
 
@@ -3330,7 +3336,7 @@ BEGIN
    FinalizeRun2(NrRun, TheProjectType);
 END;
 
-FinalizeSimulation();   
+FinalizeSimulation();
 END; // RunSimulation
 
 
