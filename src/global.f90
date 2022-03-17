@@ -2623,20 +2623,23 @@ end function MultiplierCCoSelfThinning
 
 real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     real(dp), intent(in) :: Wrel
-    real(dp), intent(inout) :: pULActual
+    real(dp), intent(in) :: pULActual
     real(dp), intent(in) :: pLLActual
     real(dp), intent(in) :: ShapeFactor
 
     real(dp) :: pRelativeLLUL, KsVal
+    real(dp) :: pULActual_local
     ! Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
     !        FC .. UpperLimit ... LowerLimit .. WP
     ! p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
 
-    if ((pLLActual - pULActual) < 0.0001_dp) then
-        pULActual = pLLActual - 0.0001_dp
+    pULActual_local = pULActual
+
+    if ((pLLActual - pULActual_local) < 0.0001_dp) then
+        pULActual_local = pLLActual - 0.0001_dp
     end if
 
-    pRelativeLLUL = (Wrel - pULActual)/(pLLActual - pULActual)
+    pRelativeLLUL = (Wrel - pULActual_local)/(pLLActual - pULActual_local)
 
     if (pRelativeLLUL <= 0._dp) then
         KsVal = 1._dp

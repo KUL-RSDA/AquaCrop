@@ -1406,7 +1406,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
             end if
         end if
         StressLeaf = undef_int
-        if ((int(SumGDDadjCC, kind=int32) == GetCrop_GDDaysToGermination()) &
+        if ((SumGDDadjCC == GetCrop_GDDaysToGermination()) &
                 .and. (GetCrop_DaysToCCini() == 0)) then
             call SetCCiPrev(CCoTotal)
         end if
@@ -1491,7 +1491,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                         if (GetCrop_CCxAdjusted() < 0._dp) then
                             CCiActual = GetCCiPrev()
                         elseif (abs(GetCCiPrev() - 0.97999_dp*CCxSF) &
-                                    < 0.001_dp) then ! THEN CCiActual := CCxSF
+                                    < 0.001_dp) then
                             CCiActual = CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                                 GetCrop_DaysToGermination(), &
@@ -1554,11 +1554,11 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                     CGCadjustmentAfterCutting = .false.
                         ! no increase of Canopy development after Cutting
                 end if
+                call SetCrop_CCxAdjusted(CCiActual)
             end if
-            call SetCrop_CCxAdjusted(CCiActual)
             
-            ! 3. Canopy can no longer develop 
-            ! (Mid-season (from tFinalCCx) or Late season stage)
+        ! 3. Canopy can no longer develop 
+        ! (Mid-season (from tFinalCCx) or Late season stage)
         else
             StressLeaf = -33._dp ! maximum canopy is reached;
             CGCadjustmentAfterCutting = .false.   
@@ -1757,7 +1757,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                         GDDtTemp = (log(1._dp &
                                         + (1._dp - GetCCiprev()/GetCCiTopEarlySen()) &
                                                                      /0.05_dp)) &
-                                    / (GDDCDCadjusted &
+                                    /(GDDCDCadjusted &
                                         * 3.33_dp/(GetCCiTopEarlySen() + 2.29_dp))
                         ! add 1 day to tTemp and calculate CCiSen with CDCadjusted
                         CCiSen = GetCCiTopEarlySen() &
@@ -1766,7 +1766,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                         * (exp((GDDtTemp+GDDayi) &
                                                 * GDDCDCadjusted &
                                                 * 3.33_dp &
-                                                / (GetCCiTopEarlySen()+2.29_dp)) &
+                                                /(GetCCiTopEarlySen()+2.29_dp)) &
                                            -1._dp))
                     end if
                     if (CCiSen < 0._dp) then
@@ -1863,16 +1863,17 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
             if (CCiActual > GetCCiprev()) then
                 CCiActual = GetCCiprev()
             end if
+        end if
             
-            ! 7. no crop as a result of fertiltiy and/or water stress
-            if (roundc(1000._dp*CCiActual, mold=1) <= 0) then
-                NoMoreCrop = .true.
-            end if
-            
-        end if 
+        ! 7. no crop as a result of fertiltiy and/or water stress
+        if (roundc(1000._dp*CCiActual, mold=1) <= 0) then
+            NoMoreCrop = .true.
+        end if
     end if
 
+
     contains
+
 
     subroutine DetermineGDDCGCadjusted(GDDCGCadjusted)
         real(dp), intent(inout) :: GDDCGCadjusted
@@ -1887,9 +1888,9 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
             ! top soil is relative wetter than total root zone
             SWCeffectiveRootZone = GetRootZoneWC_ZtopAct()
             Wrelative = (GetRootZoneWC_ZtopFC() &
-                         - GetRootZoneWC_ZtopAct()) &
-                            /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP()) 
-                                                                    ! top soil
+                            - GetRootZoneWC_ZtopAct()) &
+                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP()) 
+                                                                ! top soil
             FCeffectiveRootZone = GetRootZoneWC_ZtopFC()
             WPeffectiveRootZone = GetRootZoneWC_ZtopWP()
         else
@@ -1917,10 +1918,8 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                     GDDCGCadjusted = 0._dp
                     StressLeaf = 100._dp
                 else
-                    Crop_pLeafAct_temp = GetCrop_pLeafAct()
-                    KsLeaf = KsAny(Wrelative, Crop_pLeafAct_temp, &
+                    KsLeaf = KsAny(Wrelative, GetCrop_pLeafAct(), &
                                    pLeafLLAct, GetCrop_KsShapeFactorLeaf())
-                    call SetCrop_pLeafAct(Crop_pLeafAct_temp)
                     GDDCGCadjusted = CGCGDDSF * KsLeaf
                     StressLeaf = 100._dp * (1._dp - KsLeaf)
                 end if
@@ -2054,7 +2053,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
         real(dp), intent(inout) :: KsSen
 
         real(dp) :: Wrelative
-            !! KsSen : double;
         real(dp) :: pSenLL
         real(dp) :: pSenAct
         logical :: WithBeta
