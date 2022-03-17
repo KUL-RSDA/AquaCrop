@@ -987,6 +987,8 @@ integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
 integer(int8) :: MaxPlotTr
 
 
+real(dp) :: CCiprev
+real(dp) :: CCiTopEarlySen
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
@@ -14627,6 +14629,32 @@ subroutine SetRootingDepth(RootingDepth_in)
 
     RootingDepth = RootingDepth_in
 end subroutine SetRootingDepth
+
+real(dp) function GetCCiPrev()
+    !! Getter for the "CCiPrev" global variable.
+
+    GetCCiPrev = CCiPrev
+end function GetCCiPrev
+
+subroutine SetCCiPrev(CCiPrev_in)
+    !! Setter for the "CCiPrev" global variable.
+    real(dp), intent(in) :: CCiPrev_in
+
+    CCiPrev = CCiPrev_in
+end subroutine SetCCiPrev
+
+real(dp) function GetCCiTopEarlySen()
+    !! Getter for the "CCiTopEarlySen" global variable.
+
+    GetCCiTopEarlySen = CCiTopEarlySen
+end function GetCCiTopEarlySen
+
+subroutine SetCCiTopEarlySen(CCiTopEarlySen_in)
+    !! Setter for the "CCiTopEarlySen" global variable.
+    real(dp), intent(in) :: CCiTopEarlySen_in
+
+    CCiTopEarlySen = CCiTopEarlySen_in
+end subroutine SetCCiTopEarlySen
 
 
 end module ac_global

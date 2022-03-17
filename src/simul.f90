@@ -2,6 +2,7 @@ module ac_simul
 
 use ac_kinds, only:  dp, int32, int8
 use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
+                     CCiNoWaterStressSF, &
                      CompartmentIndividual, &
                      CO2Ref, &
                      datatype_daily, &
@@ -14,6 +15,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GenerateDepthMode_FixDepth, &
                      GenerateTimeMode_AllDepl, &
                      GenerateTimeMode_AllRAW, &
+                     GetCCiPrev, &
+                     GetCCiTopEarlySen, &
                      GetCompartment, &
                      GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
@@ -22,6 +25,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
                      GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
+                     GetCrop_pLeafAct, &
+                     GetCrop_pSenAct, &
                      GetCrop_subkind, GetCrop_HI, &
                      GetCrop_pMethod, pMethod_FAOCorrection, &
                      GetCrop_pSenescence, &
@@ -30,14 +35,25 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_DaysToGermination, &
                      GetCrop_DaysToSenescence, &
                      GetCrop_DaysToHarvest, &
+                     GetCrop_DeterminancyLinked, &
+                     GetCrop_GDDCGC, &
+                     GetCrop_GDDaysToFlowering, &
+                     GetCrop_GDDaysToFullCanopy, &
+                     GetCrop_GDDaysToFullCanopySF, &
                      GetCrop_GDDaysToGermination, &
                      GetCrop_GDDaysToSenescence, &
                      GetCrop_GDDaysToHarvest, &
+                     GetCrop_GDDLengthFlowering, &
                      GetCrop_Day1, &
                      GetCrop_DayN, &
+                     GetCrop_DaysToCCini, &
                      GetCrop_DaysToFullCanopy, &
+                     GetCrop_DaysToFullCanopySF, &
                      GetCrop_DaysToSenescence, &
                      GetCrop_CCo, GetCrop_CCx, &
+                     GetCrop_CCoAdjusted, &
+                     GetCrop_CCxAdjusted, &
+                     GetCrop_CCxWithered, &
                      GetCrop_CGC, GetCrop_CCx, &
                      GetCrop_CDC, GetCrop_GDDCGC, &
                      GetCrop_GDDCDC,getCrop_Day1, &
@@ -46,8 +62,11 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCrop_DaysToHarvest, GetCrop_KcTop, &
                      GetCrop_KcDecline,GetCrop_GDtranspLow, &
                      GetCrop_CCEffectEvapLate, GetCrop_WP, &
+                     GetCrop_KsShapeFactorLeaf, &
+                     GetCrop_KsShapeFactorSenescence, &
                      GetCrop_WPy, GetCrop_dHIdt, &
                      GetCrop_DaysToFlowering, &
+                     GetCrop_SumEToDelaySenescence, &
                      GetECstorage, &
                      GetEpot, &
                      GetETO, &
@@ -58,6 +77,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetIrriECw_PreSeason, &
                      GetIrrigation, &
                      GetManagement_CNcorrection, &
+                     GetManagement_Cuttings_CGCPlus, &
                      GetManagement_BundHeight, &
                      GetNrCompartments, &
                      GetRain, &
@@ -66,9 +86,18 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
                      GetRootZoneWC_Thresh, &
+                     GetRootZoneWC_WP, &
+                     GetRootZoneWC_ZtopAct, &
+                     GetRootZoneWC_ZtopFC, &
+                     GetRootZoneWC_ZtopWP, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
+                     GetSimulation_EffectStress_CDecline, &
+                     GetSimulation_EffectStress_RedCCX, &
+                     GetSimulation_EffectStress_RedCGC, &
                      GetSimulation_IrriECw, &
+                     GetSimulation_ProtectedSeedling, &
+                     GetSimulation_SumEToStress, &
                      GetSimulation_SWCtopSoilConsidered, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
@@ -89,21 +118,36 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSoilLayer_WP, &
                      GetSurfaceStorage, &
                      GetTpot, &
+                     KsAny, &
                      fAdjustedForCO2, &
+                     LengthCanopyDecline, &
                      max_No_compartments, &
                      modeCycle_CalendarDays, &
                      roundc, &
+                     SetCCiPrev, &
+                     SetCCiTopEarlySen, &
                      SetCompartment, &
                      SetCompartment_fluxout, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
+                     SetCrop_CCoAdjusted, &
+                     SetCrop_CCxAdjusted, &
+                     SetCrop_CCxWithered, &
+                     SetCrop_pLeafAct, &
+                     SetCrop_pSenAct, &
                      SetDrain, &
                      SetECstorage, &
                      SetIrrigation, &
                      SetRunoff, &
+                     SetSimulation_EvapLimitON, &
+                     SetSimulation_ProtectedSeedling, &
+                     SetSimulation_SumEToStress, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSurfaceStorage, &
-                     subkind_Grain, subkind_Tuber
+                     subkind_Grain, subkind_Tuber, &
+                     subkind_Forage, &
+                     undef_double, &
+                     undef_int
                       
 use ac_tempprocessing, only: SumCalendarDays
 
@@ -1265,6 +1309,815 @@ subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
     end function Calculate_factor 
 
 end subroutine calculate_infiltration
+
+
+subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
+                           StressLeaf, FracAssim, MobilizationON, &
+                           StorageON, SumGDDAdjCC, VirtualTimeCC, &
+                           StressSenescence, TimeSenescence, NoMoreCrop, &
+                           CDCTotal, CGCAdjustmentAfterCutting, GDDayFraction, &
+                           GDDayi, GDDCDCTotal, GDDTadj)
+    real(dp), intent(in) :: CCxTotal
+    real(dp), intent(in) :: CCoTotal
+    real(dp), intent(inout) :: CCiActual
+    real(dp), intent(inout) :: StressLeaf
+    real(dp), intent(in) :: FracAssim
+    logical, intent(in) :: MobilizationON
+    logical, intent(in) :: StorageON
+    real(dp), intent(in) :: SumGDDAdjCC
+    integer(int32), intent(in) :: VirtualTimeCC
+    real(dp), intent(inout) :: StressSenescence
+    real(dp), intent(inout) :: TimeSenescence
+    logical, intent(inout) :: NoMoreCrop
+    real(dp), intent(in) :: CDCTotal
+    logical, intent(inout) :: CGCAdjustmentAfterCutting
+    real(dp), intent(in) :: GDDayFraction
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: GDDCDCTotal
+    integer(int32), intent(in) :: GDDTadj
+
+    real(dp), parameter :: CCdormant = 0.05_dp
+
+    real(dp) :: pLeafLLAct , GDDCGCadjusted, GDDCDCadjusted, &
+                CCiSen, GDDtTemp, CCxSF, CGCGDDSF, CCxSFCD, &
+                RatDGDD, KsRED, CCibis
+    integer(int32) :: GDDtFinalCCx
+    logical :: WithBeta
+    logical :: TheSenescenceON
+
+    real(dp) :: KsSen
+        !! test Version 6.2
+    real(dp) :: Crop_pLeafAct_temp
+    real(dp) :: Crop_pSenAct_temp
+    real(dp) :: Crop_CCxAdjusted_temp
+
+    if ((SumGDDadjCC <= GetCrop_GDDaysToGermination()) &
+          .or. (roundc(SumGDDadjCC, mold=1) > GetCrop_GDDaysToHarvest())) then
+        CCiActual = 0._dp
+    else
+        ! growing season (once germinated)
+        ! 1. find some parameters
+        CGCGDDSF = GetCrop_GDDCGC() &
+                    * (1._dp - GetSimulation_EffectStress_RedCGC()/100._dp)
+        GDDCGCadjusted = CGCGDDSF
+        
+        RatDGDD = 1._dp
+        if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
+            RatDGDD = (GetCrop_DaysToSenescence() &
+                        - GetCrop_DaysToFullCanopySF()) &
+                      /(GetCrop_GDDaysToSenescence() &
+                        - GetCrop_GDDaysToFullCanopySF())
+        end if
+        
+        CCxSF = CCxTotal*(1._dp - GetSimulation_EffectStress_RedCCX()/100._dp)
+        ! maximum canopy cover than can be reached 
+        ! (considering soil fertility/salinity, weed stress)
+        if (SumGDDadjCC <= GetCrop_GDDaysToFullCanopySF()) then
+            CCxSFCD = CCxSF ! no canopy decline before max canopy can be reached
+        else
+            ! canopy decline due to soil fertility
+            if (SumGDDadjCC < GetCrop_GDDaysToSenescence()) then
+                CCxSFCD = CCiNoWaterStressSF(&
+                            (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                            GetCrop_DaysToGermination(), &
+                            GetCrop_DaysToFullCanopySF(), &
+                            GetCrop_DaysToSenescence(), &
+                            GetCrop_DaysToHarvest(), &
+                            GetCrop_GDDaysToGermination(), &
+                            GetCrop_GDDaysToFullCanopySF(), &
+                            GetCrop_GDDaysToSenescence(), &
+                            GetCrop_GDDaysToHarvest(), &
+                            CCoTotal, CCxTotal, GetCrop_CGC(), &
+                            GetCrop_GDDCGC(), CDCTotal, GDDCDCTotal, &
+                            SumGDDadjCC, RatDGDD, &
+                            GetSimulation_EffectStress_RedCGC(), &
+                            GetSimulation_EffectStress_RedCCX(), &
+                            GetSimulation_EffectStress_CDecline(), &
+                            GetCrop_ModeCycle())
+            else
+                CCxSFCD = CCxSF &
+                          - (RatDGDD &
+                                * GetSimulation_EffectStress_CDecline()/100._dp) &
+                          * (GetCrop_GDDaysToSenescence() &
+                                - GetCrop_GDDaysToFullCanopySF())
+            end if
+            if (CCxSFCD < 0._dp) then
+                CCxSFCD = 0._dp
+            end if
+        end if
+        StressLeaf = undef_int
+        if ((int(SumGDDadjCC, kind=int32) == GetCrop_GDDaysToGermination()) &
+                .and. (GetCrop_DaysToCCini() == 0)) then
+            call SetCCiPrev(CCoTotal)
+        end if
+        
+        ! time of potential vegetative growth
+        GDDtFinalCCx = GetCrop_GDDaysToSenescence() ! non determinant crop
+        if ((GetCrop_subkind() == subkind_Grain) &
+                .and. (GetCrop_DeterminancyLinked())) then
+            ! determinancy
+            ! reduce GDDtFinalCCx in f(determinancy of crop)
+            if (GetCrop_DaysToCCini() /= 0) then
+                ! regrowth
+                GDDtFinalCCx = GetCrop_GDDaysToFullCanopy() &
+                               + roundc(GDDayFraction &
+                                        * (GetCrop_GDDaysToFlowering() &
+                                            + (GetCrop_GDDLengthFlowering() &
+                                                                    /2._dp) &
+                                            + GDDTadj &
+                                            + GetCrop_GDDaysToGermination() &
+                                            - GetCrop_GDDaysToFullCanopy()), &
+                                mold=1) ! slow down
+            else
+                ! sown or transplant
+                GDDtFinalCCx = GetCrop_GDDaysToFlowering() &
+                               + roundc(GetCrop_GDDLengthFlowering()/2._dp, &
+                                                                    mold=1)
+            end if
+            if (GDDtFinalCCx > GetCrop_GDDaysToSenescence()) then
+                GDDtFinalCCx = GetCrop_GDDaysToSenescence()
+            end if
+        end if
+        
+        ! Crop.pLeafAct and Crop.pSenAct for plotting root zone depletion in RUN
+        Crop_pLeafAct_temp = GetCrop_pLeafAct()
+        call AdjustpLeafToETo(GetETo(), Crop_pLeafAct_temp, pLeafLLAct)
+        call SetCrop_pLeafAct(Crop_pLeafAct_temp)
+        WithBeta = .true.
+        Crop_pSenAct_temp = GetCrop_pSenAct()
+        call AdjustpSenescenceToETo(GetETo(), TimeSenescence, WithBeta, Crop_pSenAct_temp)
+        call SetCrop_pSenAct(Crop_pSenAct_temp)
+        
+        ! 2. Canopy can still develop (stretched to GDDtFinalCCx)
+        if (SumGDDadjCC < GDDtFinalCCx) then
+            ! Canopy can stil develop (stretched to GDDtFinalCCx)
+            if ((GetCCiPrev() <= GetCrop_CCoAdjusted()) &
+                .or. (SumGDDadjCC <= GDDayi) &
+                .or. ((GetSimulation_ProtectedSeedling()) &
+                        .and. (GetCCiPrev() <= (1.25_dp * CCoTotal)))) then 
+                ! 2.a First day or very small CC as a result of senescence 
+                ! (no adjustment for leaf stress)
+                CGCadjustmentAfterCutting = .false.
+                if (GetSimulation_ProtectedSeedling()) then
+                    CCiActual = CanopyCoverNoStressSF(&
+                                (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                                 GetCrop_DaysToGermination(), &
+                                 GetCrop_DaysToSenescence(), &
+                                 GetCrop_DaysToHarvest(), &
+                                 GetCrop_GDDaysToGermination(), &
+                                 GetCrop_GDDaysToSenescence(), &
+                                 GetCrop_GDDaysToHarvest(), &
+                                 CCoTotal, CCxTotal, GetCrop_CGC(), &
+                                 CDCTotal, GetCrop_GDDCGC(), &
+                                 GDDCDCadjusted, SumGDDadjCC, &
+                                 GetCrop_ModeCycle(), &
+                                 GetSimulation_EffectStress_RedCGC(), &    
+                                 GetSimulation_EffectStress_RedCCX())
+                    if (CCiActual > (1.25_dp * CCoTotal)) then
+                        call SetSimulation_ProtectedSeedling(.false.)
+                    end if
+                else
+                    CCiActual = GetCrop_CCoAdjusted() * exp(CGCGDDSF * GDDayi)
+                end if
+                ! 2.b CC > CCo
+            else
+                if (GetCCiPrev() < (0.97999_dp*CCxSF)) then
+                    call DetermineGDDCGCadjusted(GDDCGCadjusted)
+                    if (GDDCGCadjusted > 0.00000001_dp) then
+                        ! Crop.GDDCGC or GDDCGCadjusted > 0
+                        Crop_CCxAdjusted_temp = GetCrop_CCxAdjusted()
+                        call DetermineCCxAdjusted(Crop_CCxAdjusted_temp)
+                        call SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp)
+                        if (GetCrop_CCxAdjusted() < 0._dp) then
+                            CCiActual = GetCCiPrev()
+                        elseif (abs(GetCCiPrev() - 0.97999_dp*CCxSF) &
+                                    < 0.001_dp) then ! THEN CCiActual := CCxSF
+                            CCiActual = CanopyCoverNoStressSF(&
+                                (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                                GetCrop_DaysToGermination(), &
+                                GetCrop_DaysToSenescence(), &
+                                GetCrop_DaysToHarvest(), &
+                                GetCrop_GDDaysToGermination(), &
+                                GetCrop_GDDaysToSenescence(), &
+                                GetCrop_GDDaysToHarvest(), &
+                                CCoTotal, CCxTotal, GetCrop_CGC(), &
+                                CDCTotal, GetCrop_GDDCGC(), GDDCDCadjusted, &
+                                SumGDDadjCC, GetCrop_ModeCycle(), &
+                                GetSimulation_EffectStress_RedCGC(), &
+                                GetSimulation_EffectStress_RedCCX())
+                        else
+                            GDDtTemp = RequiredGDD(GetCCiprev(), &
+                                                   GetCrop_CCoAdjusted(), &
+                                                   GetCrop_CCxAdjusted(), &
+                                                   GDDCGCadjusted)
+                            if (GDDtTemp < 0._dp) then
+                                CCiActual = GetCCiPrev()
+                            else
+                                GDDtTemp = GDDtTemp + GDDayi
+                                CCiActual = CCatGDDTime(GDDtTemp, &
+                                                        GetCrop_CCoAdjusted(), &
+                                                        GDDCGCadjusted, &
+                                                        GetCrop_CCxAdjusted())
+                            end if
+                        end if
+                    else
+                        ! GDDCGCadjusted = 0 - too dry for leaf expansion
+                        CCiActual = GetCCiPrev()
+                        if (CCiActual > GetCrop_CCoAdjusted()) then
+                            call SetCrop_CCoAdjusted(CCoTotal)
+                        else
+                            call SetCrop_CCoAdjusted(CCiActual)
+                        end if
+                    end if
+                else
+                    CCiActual = CanopyCoverNoStressSF(&
+                            (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                            GetCrop_DaysToGermination(), &
+                            GetCrop_DaysToSenescence(), &
+                            GetCrop_DaysToHarvest(), &
+                            GetCrop_GDDaysToGermination(), &
+                            GetCrop_GDDaysToSenescence(), &
+                            GetCrop_GDDaysToHarvest(), &
+                            CCoTotal, CCxTotal, GetCrop_CGC(), CDCTotal, &
+                            GetCrop_GDDCGC(), GDDCDCadjusted, SumGDDadjCC, &
+                            GetCrop_ModeCycle(), &
+                            GetSimulation_EffectStress_RedCGC(), &
+                            GetSimulation_EffectStress_RedCCX())
+                    call SetCrop_CCoAdjusted(CCoTotal)
+                    StressLeaf = -33._dp ! maximum canopy is reached;
+                    CGCadjustmentAfterCutting = .false.   
+                        ! no increase of Canopy development after Cutting
+                end if
+                if (CCiActual > CCxSFCD) then
+                    CCiActual = CCxSFCD
+                    StressLeaf = -33._dp ! maximum canopy is reached;
+                    CGCadjustmentAfterCutting = .false.
+                        ! no increase of Canopy development after Cutting
+                end if
+            end if
+            call SetCrop_CCxAdjusted(CCiActual)
+            
+            ! 3. Canopy can no longer develop 
+            ! (Mid-season (from tFinalCCx) or Late season stage)
+        else
+            StressLeaf = -33._dp ! maximum canopy is reached;
+            CGCadjustmentAfterCutting = .false.   
+                ! no increase of Canopy development after Cutting
+            if (GetCrop_CCxAdjusted() < 0._dp) then
+                call SetCrop_CCxAdjusted(GetCCiPrev())
+            end if
+            
+            if (SumGDDadjCC < GetCrop_GDDaysToSenescence()) then ! mid-season
+                if (GetCrop_CCxAdjusted() > 0.97999_dp*CCxSF) then
+                    CCiActual = CanopyCoverNoStressSF(&
+                                (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                                GetCrop_DaysToGermination(), &
+                                GetCrop_DaysToSenescence(), &
+                                GetCrop_DaysToHarvest(), &
+                                GetCrop_GDDaysToGermination(), &
+                                GetCrop_GDDaysToSenescence(), &
+                                GetCrop_GDDaysToHarvest(), &
+                                CCoTotal, CCxTotal, GetCrop_CGC(), &
+                                CDCTotal, GetCrop_GDDCGC(), &
+                                GDDCDCadjusted, SumGDDadjCC, &
+                                GetCrop_ModeCycle(), &
+                                GetSimulation_EffectStress_RedCGC(), &
+                                GetSimulation_EffectStress_RedCCX())
+                    call SetCrop_CCxAdjusted(CCiActual)
+                else
+                    CCiActual = CanopyCoverNoStressSF(&
+                                (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                                GetCrop_DaysToGermination(), &
+                                GetCrop_DaysToSenescence(), &
+                                GetCrop_DaysToHarvest(), &
+                                GetCrop_GDDaysToGermination(), &
+                                GetCrop_GDDaysToSenescence(), &
+                                GetCrop_GDDaysToHarvest(), &
+                                CCoTotal, &
+                                (GetCrop_CCxAdjusted() &
+                                    /(1._dp &
+                                       - GetSimulation_EffectStress_RedCCx() &
+                                                                   /100._dp)), &
+                                GetCrop_CGC(), CDCTotal, GetCrop_GDDCGC(), &
+                                GDDCDCadjusted, SumGDDadjCC, &
+                                GetCrop_ModeCycle(), &
+                                GetSimulation_EffectStress_RedCGC(), &
+                                GetSimulation_EffectStress_RedCCX())
+                end if
+                if (CCiActual > CCxSFCD) then
+                    CCiActual = CCxSFCD
+                end if
+                ! late season
+            else      
+                StressSenescence = undef_int ! to avoid display of zero stress 
+                                             ! in late season
+                if (GetCrop_CCxAdjusted() > CCxSFCD) then
+                    call SetCrop_CCxAdjusted(CCxSFCD)
+                end if
+                if (GetCrop_CCxAdjusted() < 0.01_dp) then
+                    CCiActual = 0._dp
+                else
+                    ! calculate CC in late season
+                    ! CCibis = CC which canopy declines 
+                    ! (soil fertility/salinity stress) further in late season
+                    CCibis = CCxSF &
+                            - (RatDGDD*GetSimulation_EffectStress_CDecline() &
+                                                                   /100._dp) &
+                            * (exp(2._dp &
+                                  * log(SumGDDadjCC &
+                                        - GetCrop_GDDaysToFullCanopySF())) &
+                                /(GetCrop_GDDaysToSenescence() &
+                                    - GetCrop_GDDaysToFullCanopySF()))
+                    if (CCibis < 0._dp) then
+                        CCiActual = 0._dp
+                    else
+                        ! CCiActual = CC with natural senescence in late season
+                        GDDCDCadjusted = GetGDDCDCadjustedNoStress(&
+                                                    CCxTotal, &
+                                                    GDDCDCTotal, &
+                                                    GetCrop_CCxAdjusted())
+                        if (SumGDDadjCC &
+                                < (GetCrop_GDDaysToSenescence() &
+                                    + LengthCanopyDecline(&
+                                                    GetCrop_CCxAdjusted(), &
+                                                    GDDCDCadjusted))) then
+                            CCiActual = GetCrop_CCxAdjusted() &
+                                 * (1._dp - 0.05_dp &
+                                    * (exp((SumGDDadjCC &
+                                            - GetCrop_GDDaysToSenescence()) &
+                                          * 3.33_dp &
+                                          * GDDCDCadjusted &
+                                                /(GetCrop_CCxAdjusted() &
+                                                            + 2.29_dp)) &
+                                        - 1._dp))
+                            ! CCiActual becomes CCibis, when canopy decline is more severe
+                            if (CCibis < CCiActual) then
+                                CCiActual = CCibis
+                            end if
+                        else
+                            CCiActual = 0._dp
+                        end if
+                    end if
+                end if
+                ! late season
+            end if
+            ! 3. Canopy can no longer develop (Mid-season (from tFinalCCx) 
+            ! or Late season stage)
+        end if
+        
+        
+        ! 4. Canopy senescence due to water stress ?
+        if ((SumGDDadjCC < GetCrop_GDDaysToSenescence()) &
+                            ! not yet late season stage
+            .or. (TimeSenescence > 0._dp)) then 
+            ! in late season with ongoing early senesence  
+            ! (TimeSenescence in GDD)
+            StressSenescence = 0._dp
+            WithBeta = .true.
+            Crop_pSenAct_temp = GetCrop_pSenAct()
+            call AdjustpSenescenceToETo(GetETo(), TimeSenescence, &
+                                        WithBeta, Crop_pSenAct_temp)
+            call SetCrop_pSenAct(Crop_pSenAct_temp)
+            KsRED = 1._dp ! effect of soil salinity 
+                          ! on the threshold for senescence
+            if (GetSimulation_SWCtopSoilConsidered()) then
+                ! top soil is relative wetter than total root zone
+                if ((GetRootZoneWC_ZtopAct() &
+                        < (GetRootZoneWC_ZtopFC() &
+                            - GetCrop_pSenAct() * KsRED &
+                                * (GetRootZoneWC_ZtopFC() &
+                                    - GetRootZoneWC_ZtopWP()))) &
+                    .and. (GetSimulation_ProtectedSeedling() .eqv. .false.)) then
+                    TheSenescenceON = .true.
+                else
+                    TheSenescenceON = .false.
+                end if
+            else
+                if ((GetRootZoneWC_Actual() &
+                        < (GetRootZoneWC_FC() &
+                            - GetCrop_pSenAct() * KsRED &
+                                * (GetRootZoneWC_FC() - GetRootZoneWC_WP()))) &
+                    .and. (GetSimulation_ProtectedSeedling() .eqv. .false.)) then
+                    TheSenescenceON = .true.
+                else
+                    TheSenescenceON = .false.
+                end if
+            end if
+            
+            if (TheSenescenceON) then
+                ! CanopySenescence
+                CGCadjustmentAfterCutting = .false.
+                call SetSimulation_EvapLimitON(.true.) 
+                ! consider withered crop when not yet in late season
+                if (TimeSenescence == epsilon(0._dp)) then
+                    call SetCCiTopEarlySen(CCiActual) ! CC before canopy decline
+                end if
+                TimeSenescence = TimeSenescence + GDDayi
+                call DetermineGDDCDCadjustedWaterStress(GDDCDCadjusted, KsSen)
+                if (GetCCiTopEarlySen() < 0.001_dp) then
+                    if ((GetSimulation_SumEToStress() &
+                            > GetCrop_SumEToDelaySenescence()) &
+                      .or. (GetCrop_SumEToDelaySenescence() == epsilon(0._dp))) then
+                        CCiSen = 0._dp ! no crop anymore
+                    else
+                        if (CCdormant > GetCrop_CCo()) then
+                            CCiSen = GetCrop_CCo() &
+                                    + (1._dp &
+                                       - GetSimulation_SumEToStress() &
+                                        / GetCrop_SumEToDelaySenescence()) &
+                                    * (CCdormant - GetCrop_CCo())
+                        else
+                            CCiSen = GetCrop_CCo()
+                        end if
+                    end if
+                else
+                    if (((TimeSenescence*GDDCDCadjusted*3.33_dp) &
+                                /(GetCCiTopEarlySen()+2.29_dp) > 100._dp) &
+                        ! e power too large and in any case CCisen << 0
+                        .or. (GetCCiprev() >= 1.05_dp * GetCCiTopEarlySen())) then 
+                        ! Ln of negative or zero value
+                        if ((GetSimulation_SumEToStress() &
+                            > GetCrop_SumEToDelaySenescence()) &
+                            .or. (GetCrop_SumEToDelaySenescence() == epsilon(0._dp))) then
+                            CCiSen = 0._dp ! no crop anymore
+                        else
+                            if (CCdormant > GetCrop_CCo()) then
+                                CCiSen = GetCrop_CCo() &
+                                         + (1._dp &
+                                            - GetSimulation_SumEToStress() &
+                                                /GetCrop_SumEToDelaySenescence()) &
+                                         * (CCdormant - GetCrop_CCo())
+                            else
+                                CCiSen = GetCrop_CCo()
+                            end if
+                        end if
+                    else
+                        ! GDDCDC is adjusted to degree of stress
+                        ! time required to reach CCiprev with GDDCDCadjusted
+                        GDDtTemp = (log(1._dp &
+                                        + (1._dp - GetCCiprev()/GetCCiTopEarlySen()) &
+                                                                     /0.05_dp)) &
+                                    / (GDDCDCadjusted &
+                                        * 3.33_dp/(GetCCiTopEarlySen() + 2.29_dp))
+                        ! add 1 day to tTemp and calculate CCiSen with CDCadjusted
+                        CCiSen = GetCCiTopEarlySen() &
+                                * (1._dp &
+                                    - 0.05_dp &
+                                        * (exp((GDDtTemp+GDDayi) &
+                                                * GDDCDCadjusted &
+                                                * 3.33_dp &
+                                                / (GetCCiTopEarlySen()+2.29_dp)) &
+                                           -1._dp))
+                    end if
+                    if (CCiSen < 0._dp) then
+                        CCiSen = 0._dp
+                    end if
+                    if ((GetCrop_SumEToDelaySenescence() > 0._dp) &
+                        .and. (GetSimulation_SumEToStress() &
+                                <= GetCrop_SumEToDelaySenescence())) then
+                        if ((CCiSen < GetCrop_CCo()) &
+                            .or. (CCiSen < CCdormant)) then
+                            if (CCdormant > GetCrop_CCo()) then
+                                CCiSen = GetCrop_CCo() &
+                                         + (1._dp &
+                                            - GetSimulation_SumEToStress() &
+                                               /GetCrop_SumEToDelaySenescence()) &
+                                            * (CCdormant - GetCrop_CCo())
+                            else
+                                CCiSen = GetCrop_CCo()
+                            end if
+                        end if
+                    end if
+                end if
+                if (SumGDDadjCC < GetCrop_GDDaysToSenescence()) then
+                    ! before late season
+                    if (CCiSen > CCxSFCD) then
+                        CCiSen = CCxSFCD
+                    end if
+                    CCiActual = CCiSen
+                    if (CCiActual > GetCCiPrev()) then
+                        CCiActual = GetCCiPrev() ! to avoid jump in CC
+                    end if
+                    ! when GDDCGCadjusted increases as a result of watering
+                    call SetCrop_CCxAdjusted(CCiActual)
+                    if (CCiActual < CCoTotal) then
+                        call SetCrop_CCoAdjusted(CCiActual)
+                    else
+                        call SetCrop_CCoAdjusted(CCoTotal)
+                    end if
+                else
+                    ! in late season
+                    if (CCiSen < CCiActual) then
+                        CCiActual = CCiSen
+                    end if
+                end if
+
+                if ((roundc(10000._dp*CCiSen, mold=1) <= (10000._dp*CCdormant)) &
+                    .or. (roundc(10000._dp*CCiSen, mold=1) &
+                            <= roundc(10000._dp*GetCrop_CCo(), mold=1))) then
+                    call SetSimulation_SumEToStress(GetSimulation_SumEToStress() &
+                                                    + GetETo())
+                end if
+            else
+                ! no water stress, resulting in canopy senescence
+                if ((TimeSenescence > 0._dp) &
+                    .and. (SumGDDadjCC > GetCrop_GDDaysToSenescence())) then
+                    ! rewatering in late season of an early declining canopy
+                    Crop_CCxAdjusted_temp = GetCrop_CCxAdjusted()
+                    call GetNewCCxandGDDCDC(GetCCiprev(), GDDCDCTotal, &
+                                            CCxSF, Crop_CCxAdjusted_temp, &
+                                            GDDCDCadjusted)
+                    call SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp)
+                    CCiActual = CanopyCoverNoStressSF(&
+                                (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
+                                GetCrop_DaysToGermination(), &
+                                GetCrop_DaysToSenescence(), &
+                                GetCrop_DaysToHarvest(), &
+                                GetCrop_GDDaysToGermination(), &
+                                GetCrop_GDDaysToSenescence(), &
+                                GetCrop_GDDaysToHarvest(), &
+                                CCoTotal, &
+                                (GetCrop_CCxAdjusted() &
+                                    /(1._dp - GetSimulation_EffectStress_RedCCx() &
+                                                                       /100._dp)), &
+                                GetCrop_CGC(), CDCTotal, GetCrop_GDDCGC(), &
+                                GDDCDCadjusted,SumGDDadjCC, &
+                                GetCrop_ModeCycle(), &
+                                GetSimulation_EffectStress_RedCGC(), &
+                                GetSimulation_EffectStress_RedCCX())
+                end if
+                TimeSenescence = 0._dp  ! No early senescence or back to normal
+                StressSenescence = 0._dp
+                call SetSimulation_SumEToStress(0._dp)
+            end if
+        end if
+        
+        ! 5. Adjust Crop.CCxWithered - required for correction 
+        ! of Transpiration of dying green canopy
+        if (CCiActual > GetCrop_CCxWithered()) then
+            call SetCrop_CCxWithered(CCiActual)
+        end if
+        
+        ! 6. correction for late-season stage for rounding off errors
+        if (SumGDDadjCC > GetCrop_GDDaysToSenescence()) then
+            if (CCiActual > GetCCiprev()) then
+                CCiActual = GetCCiprev()
+            end if
+            
+            ! 7. no crop as a result of fertiltiy and/or water stress
+            if (roundc(1000._dp*CCiActual, mold=1) <= 0) then
+                NoMoreCrop = .true.
+            end if
+            
+        end if 
+    end if
+
+    contains
+
+    subroutine DetermineGDDCGCadjusted(GDDCGCadjusted)
+        real(dp), intent(inout) :: GDDCGCadjusted
+
+        real(dp) :: Wrelative
+        real(dp) :: KsLeaf, MaxVal
+        real(dp) :: SWCeffectiveRootZone, FCeffectiveRootZone, &
+                    WPeffectiveRootZone
+
+        ! determine FC and PWP
+        if (GetSimulation_SWCtopSoilConsidered()) then
+            ! top soil is relative wetter than total root zone
+            SWCeffectiveRootZone = GetRootZoneWC_ZtopAct()
+            Wrelative = (GetRootZoneWC_ZtopFC() &
+                         - GetRootZoneWC_ZtopAct()) &
+                            /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP()) 
+                                                                    ! top soil
+            FCeffectiveRootZone = GetRootZoneWC_ZtopFC()
+            WPeffectiveRootZone = GetRootZoneWC_ZtopWP()
+        else
+            SWCeffectiveRootZone = GetRootZoneWC_Actual()
+            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
+                            /(GetRootZoneWC_FC() - GetRootZoneWC_WP()) 
+                                                        ! total root zone
+            FCeffectiveRootZone = GetRootZoneWC_FC()
+            WPeffectiveRootZone = GetRootZoneWC_WP()
+        end if
+
+        ! Canopy stress and effect of water stress on CGCGDD
+        if (SWCeffectiveRootZone >= FCeffectiveRootZone) then
+            GDDCGCadjusted = CGCGDDSF
+            StressLeaf = 0._dp
+        else
+            if (SWCeffectiveRootZone <= WPeffectiveRootZone) then
+                GDDCGCadjusted = 0._dp
+                StressLeaf = 100._dp
+            else
+                if (Wrelative <= GetCrop_pLeafAct()) then
+                    GDDCGCadjusted = CGCGDDSF
+                    StressLeaf = 0._dp
+                elseif (Wrelative >= pLeafLLAct) then
+                    GDDCGCadjusted = 0._dp
+                    StressLeaf = 100._dp
+                else
+                    Crop_pLeafAct_temp = GetCrop_pLeafAct()
+                    KsLeaf = KsAny(Wrelative, Crop_pLeafAct_temp, &
+                                   pLeafLLAct, GetCrop_KsShapeFactorLeaf())
+                    call SetCrop_pLeafAct(Crop_pLeafAct_temp)
+                    GDDCGCadjusted = CGCGDDSF * KsLeaf
+                    StressLeaf = 100._dp * (1._dp - KsLeaf)
+                end if
+            end if
+        end if
+
+        ! effect of transfer of assimilates on CGCGDD
+        if ((GDDCGCadjusted > 0.000001_dp) & ! CGCGDD can be adjusted
+            .and. (((GetCrop_subkind() == subkind_Forage) &
+                    .and. ((StorageON) .or. (MobilizationON))) & 
+                                        ! transfer assimilates
+                    .or. (CGCadjustmentAfterCutting))) then 
+                    ! increase of Canopy development after Cutting
+            ! decrease CGC during storage
+            if ((GetCrop_subkind() == subkind_Forage) .and. (StorageON)) then
+                GDDCGCadjusted = GDDCGCadjusted * (1._dp - FracAssim)
+            end if
+            ! increase CGC after cutting
+            if ((CGCadjustmentAfterCutting) &
+                    .and. (StorageON .eqv. .false.)) then
+                GDDCGCadjusted = GDDCGCadjusted &
+                                * (1._dp + GetManagement_Cuttings_CGCPlus() &
+                                                                  /100._dp)
+            end if
+            ! increase CGC during mobilization
+            if ((GetCrop_subkind() == subkind_Forage) &
+                    .and. (MobilizationON) &
+                    .and. (CGCadjustmentAfterCutting .eqv. .false.)) then
+                if ((CCxSFCD <= epsilon(0._dp)) &
+                    .or. (GetCCiPrev() >= 0.9*CCxSFCD)) then
+                    MaxVal = 0._dp
+                else
+                    MaxVal = (1._dp - GetCCiPrev()/(0.9_dp*CCxSFCD))
+                    if (MaxVal > 1._dp) then
+                        MaxVal = 1._dp
+                    end if
+                    if (MaxVal < 0._dp) then
+                        MaxVal = 0._dp
+                    end if
+                end if
+                if (MaxVal > (FracAssim/2._dp)) then
+                    MaxVal = FracAssim/2._dp
+                end if
+                GDDCGCadjusted = GDDCGCadjusted * (1._dp + Maxval)
+            end if
+        end if
+    end subroutine DetermineGDDCGCadjusted
+
+
+
+    real(dp) function RequiredGDD(CCiToFind, CCo, CCx, GDDCGCadjusted)
+        real(dp), intent(in) :: CCiToFind
+        real(dp), intent(in) :: CCo
+        real(dp), intent(in) :: CCx
+        real(dp), intent(in) :: GDDCGCadjusted
+
+        real(dp) :: GDDCGCx
+
+        ! Only when SumGDDadj > GDDayi
+        ! and CCx < CCiToFind
+        ! 1. GDDCGCx to reach CCiToFind on previous day (= SumGDDadj - GDDayi )
+        if (CCiToFind <= CCx/2._dp) then
+            GDDCGCx = (log(CCiToFind/CCo))/(SumGDDadjCC-GDDayi)
+        else
+            GDDCGCx = (log((0.25_dp*CCx*CCx/CCo) &
+                                /(CCx-CCiToFind)))/(SumGDDadjCC-GDDayi)
+        end if
+        ! 2. Required GDD
+        RequiredGDD = (SumGDDadjCC-GDDayi) * GDDCGCx/GDDCGCadjusted
+    end function RequiredGDD
+
+
+
+    real(dp) function CCatGDDTime(GDDtfictive, CCoGiven, GDDCGCGiven, CCxGiven)
+        real(dp), intent(in) :: GDDtfictive
+        real(dp), intent(in) :: CCoGiven
+        real(dp), intent(in) :: GDDCGCGiven
+        real(dp), intent(in) :: CCxGiven
+
+        real(dp) :: CCi
+
+        CCi = CCoGiven * exp(GDDCGCGiven * GDDtfictive)
+        if (CCi > CCxGiven/2._dp) then
+            CCi = CCxGiven &
+                  - 0.25_dp * (CCxGiven/CCoGiven) &
+                            * CCxGiven &
+                            * exp(-GDDCGCGiven*GDDtfictive)
+        end if
+        CCatGDDTime = CCi
+    end function CCatGDDTime
+
+
+    subroutine DetermineCCxAdjusted(CCxAdjusted)
+        real(dp), intent(inout) :: CCxAdjusted
+
+        real(dp) :: GDDtfictive
+
+        ! 1. find time (GDDtfictive) required to reach CCiPrev 
+        ! (CCi of previous day) with GDDCGCadjusted
+        GDDtfictive = RequiredGDD(GetCCiprev(), GetCrop_CCoAdjusted(), &
+                                  CCxSF, GDDCGCadjusted)
+
+        ! 2. Get CCxadjusted (reached at end of stretched crop development)
+        if (GDDtfictive > 0._dp) then
+            GDDtfictive = GDDtfictive &
+                          + (GDDtFinalCCx - SumGDDadjCC) &
+                          + GDDayi
+            CCxAdjusted = CCatGDDTime(GDDtfictive, GetCrop_CCoAdjusted(), &
+                                      GDDCGCadjusted, CCxSF)
+        else
+            CCxAdjusted = undef_double ! this means CCiActual := CCiPrev
+        end if
+    end subroutine DetermineCCxAdjusted
+
+
+
+    real(dp) function GetGDDCDCadjustedNoStress(CCx, GDDCDC, CCxAdjusted)
+        real(dp), intent(in) :: CCx
+        real(dp), intent(in) :: GDDCDC
+        real(dp), intent(in) :: CCxAdjusted
+
+        real(dp) :: GDDCDCadjusted
+
+        GDDCDCadjusted = GDDCDC * ((CCxadjusted+2.29_dp)/(CCx+2.29_dp))
+        GetGDDCDCadjustedNoStress = GDDCDCadjusted
+    end function GetGDDCDCadjustedNoStress
+
+
+    subroutine DetermineGDDCDCadjustedWaterStress(GDDCDCadjusted, KsSen)
+        real(dp), intent(inout) :: GDDCDCadjusted
+        real(dp), intent(inout) :: KsSen
+
+        real(dp) :: Wrelative
+            !! KsSen : double;
+        real(dp) :: pSenLL
+        real(dp) :: pSenAct
+        logical :: WithBeta
+
+        pSenLL = 0.999_dp ! WP
+        if (GetSimulation_SWCtopSoilConsidered()) then 
+        ! top soil is relative wetter than total root zone
+            Wrelative = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct()) &
+                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP()) 
+                                                                ! top soil
+        else
+            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
+                        /(GetRootZoneWC_FC() - GetRootZoneWC_WP()) 
+                                                ! total root zone
+        end if
+
+        WithBeta = .false.
+        call AdjustpSenescenceToETo(GetETo(), TimeSenescence, &
+                                    WithBeta, pSenAct)
+        if (Wrelative <= pSenAct) then
+            GDDCDCadjusted = 0.0001_dp ! extreme small decline
+            StressSenescence = 0._dp
+            KsSen = 1._dp
+        elseif (Wrelative >= pSenLL) then
+            GDDCDCadjusted = GDDCDCTotal &
+                            * ((CCxSFCD+2.29_dp)/(CCxTotal+2.29_dp)) 
+                                                        ! full speed
+            StressSenescence = 100._dp
+            KsSen = 0._dp
+        else
+            KsSen = KsAny(Wrelative, pSenAct, pSenLL, &
+                          GetCrop_KsShapeFactorSenescence())
+            if (KsSen > 0.000001_dp) then
+                GDDCDCadjusted = GDDCDCTotal &
+                                 * ((CCxSFCD+2.29_dp)/(CCxTotal+2.29_dp)) &
+                                 * (1._dp - exp(8._dp*log(KsSen)))
+                StressSenescence = 100._dp * (1._dp - KsSen)
+            else
+                GDDCDCadjusted = 0._dp
+                StressSenescence = 0._dp
+            end if
+        end if
+    end subroutine DetermineGDDCDCadjustedWaterStress
+
+
+
+    subroutine GetNewCCxandGDDCDC(CCiPrev, GDDCDC, CCx, CCxAdjusted, &
+                                 GDDCDCadjusted)
+        real(dp), intent(in) :: CCiPrev
+        real(dp), intent(in) :: GDDCDC
+        real(dp), intent(in) :: CCx
+        real(dp), intent(inout) :: CCxAdjusted
+        real(dp), intent(inout) :: GDDCDCadjusted
+
+        CCxAdjusted = CCiPrev &
+                        /(1._dp - 0.05_dp &
+                                *(exp((SumGDDadjCC - GDDayi &
+                                       - GetCrop_GDDaysToSenescence()) &
+                                      * GDDCDC * 3.33_dp/(CCX+2.29_dp))-1._dp))
+        GDDCDCadjusted = GDDCDC * (CCxAdjusted+2.29_dp)/(CCx+2.29_dp)
+    end subroutine GetNewCCxandGDDCDC
+
+end subroutine DetermineCCiGDD
 
 
 

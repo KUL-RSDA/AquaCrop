@@ -76,6 +76,24 @@ procedure calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation: do
                                    constref dayi : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_surfacestorage';
 
+procedure DetermineCCiGDD(
+            constref CCxTotal, CCoTotal : double;
+            var CCiActual, StressLeaf : double;
+            constref FracAssim : double;
+            constref MobilizationON, StorageON : boolean;
+            constref SumGDDAdjCC : double;
+            constref VirtualTimeCC : integer;
+            var StressSenescence : double;
+            var TimeSenescence : double;
+            var NoMoreCrop : boolean;
+            constref CDCTotal : double;
+            var CGCAdjustmentAfterCutting : boolean;
+            constref GDDayFraction, GDDayi, GDDCDCTotal : double;
+            constref GDDTadj : integer);
+    external 'aquacrop' name '__ac_interface_simul_MOD_determineccigdd_wrap';
+
+
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

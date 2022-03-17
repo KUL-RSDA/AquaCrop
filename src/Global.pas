@@ -14,7 +14,7 @@ TYPE
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
 
-    CCiActual,CCiPrev,CCiTopEarlySen : double;
+    CCiActual : double;
 
     SenStage       : INTEGER;
     Tmin, Tmax : double; (* degC *)
