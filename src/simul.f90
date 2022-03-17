@@ -1,17 +1,21 @@
 module ac_simul
 
 use ac_kinds, only:  dp, int32, int8
-use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
+use ac_global, only: CalculateETpot, &
+                     CanopyCoverNoStressSF, &
                      CCiNoWaterStressSF, &
-                     CompartmentIndividual, &
                      CO2Ref, &
+                     CompartmentIndividual, &
+                     CropStressParametersSoilFertility, &
                      datatype_daily, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
+                     DetermineRootZoneSaltContent, &
                      DetermineRootzoneWC, &
                      EffectiveRainMethod_Percentage, &
                      EffectiveRainMethod_USDA, &
+                     fAdjustedForCO2, &
                      GenerateDepthMode_FixDepth, &
                      GenerateTimeMode_AllDepl, &
                      GenerateTimeMode_AllRAW, &
@@ -24,65 +28,82 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
-                     GetCrop_pLeafDefLL, GetCrop_pLeafDefUL, &
-                     GetCrop_pLeafAct, &
-                     GetCrop_pSenAct, &
-                     GetCrop_subkind, GetCrop_HI, &
-                     GetCrop_pMethod, pMethod_FAOCorrection, &
-                     GetCrop_pSenescence, &
-                     GetCrop_ModeCycle, &
                      GetCrop_AdaptedToCO2, & 
+                     GetCrop_CCEffectEvapLate, &
+                     GetCrop_CCo, &
+                     GetCrop_CCoAdjusted, &
+                     GetCrop_CCsaltDistortion, &
+                     GetCrop_CCx, &
+                     GetCrop_CCxAdjusted, &
+                     GetCrop_CCxWithered, &
+                     GetCrop_CDC, &
+                     GetCrop_CGC, &
+                     GetCrop_Day1, &
+                     GetCrop_DayN, &
+                     GetCrop_DaysToCCini, &
+                     GetCrop_DaysToFlowering, &
+                     GetCrop_DaysToFullCanopy, &
+                     GetCrop_DaysToFullCanopySF, &
                      GetCrop_DaysToGermination, &
-                     GetCrop_DaysToSenescence, &
                      GetCrop_DaysToHarvest, &
+                     GetCrop_DaysToSenescence, &
                      GetCrop_DeterminancyLinked, &
-                     GetCrop_GDDCGC, &
+                     GetCrop_dHIdt, &
                      GetCrop_GDDaysToFlowering, &
                      GetCrop_GDDaysToFullCanopy, &
                      GetCrop_GDDaysToFullCanopySF, &
                      GetCrop_GDDaysToGermination, &
-                     GetCrop_GDDaysToSenescence, &
                      GetCrop_GDDaysToHarvest, &
+                     GetCrop_GDDaysToSenescence, &
+                     GetCrop_GDDCDC, &
+                     GetCrop_GDDCGC, &
                      GetCrop_GDDLengthFlowering, &
-                     GetCrop_Day1, &
-                     GetCrop_DayN, &
-                     GetCrop_DaysToCCini, &
-                     GetCrop_DaysToFullCanopy, &
-                     GetCrop_DaysToFullCanopySF, &
-                     GetCrop_DaysToSenescence, &
-                     GetCrop_CCo, GetCrop_CCx, &
-                     GetCrop_CCoAdjusted, &
-                     GetCrop_CCxAdjusted, &
-                     GetCrop_CCxWithered, &
-                     GetCrop_CGC, GetCrop_CCx, &
-                     GetCrop_CDC, GetCrop_GDDCGC, &
-                     GetCrop_GDDCDC,getCrop_Day1, &
-                     GetCrop_Tbase, GetCrop_Tupper, &
-                     GetCrop_DaysToGermination, &    
-                     GetCrop_DaysToHarvest, GetCrop_KcTop, &
-                     GetCrop_KcDecline,GetCrop_GDtranspLow, &
-                     GetCrop_CCEffectEvapLate, GetCrop_WP, &
+                     GetCrop_GDtranspLow, &
+                     GetCrop_GDtranspLow, &
+                     GetCrop_HI, &
+                     GetCrop_HI, &
+                     GetCrop_KcDecline, &
+                     GetCrop_KcDecline, &
+                     GetCrop_KcTop, &
+                     GetCrop_KcTop, &
                      GetCrop_KsShapeFactorLeaf, &
                      GetCrop_KsShapeFactorSenescence, &
-                     GetCrop_WPy, GetCrop_dHIdt, &
-                     GetCrop_DaysToFlowering, &
+                     GetCrop_LengthFlowering, &
+                     GetCrop_ModeCycle, &
+                     GetCrop_pLeafAct, &
+                     GetCrop_pLeafDefLL, &
+                     GetCrop_pLeafDefUL, &
+                     GetCrop_pMethod, &
+                     GetCrop_pSenAct, &
+                     GetCrop_pSenescence, &
+                     GetCrop_StressResponse, &
+                     GetCrop_subkind, &
                      GetCrop_SumEToDelaySenescence, &
+                     GetCrop_Tbase, &
+                     GetCrop_Tupper, &
+                     GetCrop_WP, &
+                     GetCrop_WPy, &
+                     GetDrain, &
                      GetECstorage, &
                      GetEpot, &
                      GetETO, &
-                     GetDrain, &
                      GetGenerateDepthMode, &
                      GetGenerateTimeMode, &
                      GetIrriECw_PostSeason, &
                      GetIrriECw_PreSeason, &
                      GetIrrigation, &
+                     GetManagement_BundHeight, &
                      GetManagement_CNcorrection, &
                      GetManagement_Cuttings_CGCPlus, &
-                     GetManagement_BundHeight, &
+                     GetManagement_FertilityStress, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
                      GetRootingDepth, &
+                     GetRootZoneSalt_ECe, &
+                     GetRootZoneSalt_ECsw, &
+                     GetRootZoneSalt_ECswFC, &
+                     GetRootZoneSalt_KsSalt, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
                      GetRootZoneWC_Thresh, &
@@ -92,11 +113,14 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetRootZoneWC_ZtopWP, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
+                     GetSimulation_EffectStress, &
                      GetSimulation_EffectStress_CDecline, &
                      GetSimulation_EffectStress_RedCCX, &
                      GetSimulation_EffectStress_RedCGC, &
+                     GetSimulation_Germinate, &
                      GetSimulation_IrriECw, &
                      GetSimulation_ProtectedSeedling, &
+                     GetSimulation_SalinityConsidered, &
                      GetSimulation_SumEToStress, &
                      GetSimulation_SWCtopSoilConsidered, &
                      GetSimulParam_Beta, &
@@ -107,8 +131,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
                      GetSimulParam_pAdjFAO, &
-                     GetSimulParam_Tmin, &
                      GetSimulParam_Tmax, &
+                     GetSimulParam_Tmin, &
                      GetSoil_CNvalue, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
@@ -119,10 +143,13 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSurfaceStorage, &
                      GetTpot, &
                      KsAny, &
-                     fAdjustedForCO2, &
                      LengthCanopyDecline, &
                      max_No_compartments, &
                      modeCycle_CalendarDays, &
+                     modeCycle_GDDays, &
+                     pMethod_FAOCorrection, &
+                     pMethod_FAOCorrection, &
+                     rep_EffectStress, &
                      roundc, &
                      SetCCiPrev, &
                      SetCCiTopEarlySen, &
@@ -133,23 +160,41 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      SetCrop_CCoAdjusted, &
                      SetCrop_CCxAdjusted, &
                      SetCrop_CCxWithered, &
+                     SetCrop_DaysToFullCanopySF, &
+                     SetCrop_GDDaysToFullCanopySF, &
                      SetCrop_pLeafAct, &
                      SetCrop_pSenAct, &
                      SetDrain, &
                      SetECstorage, &
                      SetIrrigation, &
+                     SetRootZoneSalt_ECe, &
+                     SetRootZoneSalt_ECsw, &
+                     SetRootZoneSalt_ECswFC, &
+                     SetRootZoneSalt_KsSalt, &
                      SetRunoff, &
+                     SetSimulation_EffectStress, &
+                     SetSimulation_EffectStress_CDecline, &
+                     SetSimulation_EffectStress_RedCCx, &
+                     SetSimulation_EffectStress_RedCGC, &
+                     SetSimulation_EffectStress_RedKsSto, &
+                     SetSimulation_EffectStress_RedWP, &
                      SetSimulation_EvapLimitON, &
                      SetSimulation_ProtectedSeedling, &
                      SetSimulation_SumEToStress, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSurfaceStorage, &
-                     subkind_Grain, subkind_Tuber, &
                      subkind_Forage, &
+                     subkind_Grain, &
+                     subkind_Tuber, &
+                     TimeToMaxCanopySF, &
                      undef_double, &
                      undef_int
+
+
                       
-use ac_tempprocessing, only: SumCalendarDays
+use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
+                                GrowingDegreeDays, &
+                                SumCalendarDays
 
 
 implicit none
@@ -2116,6 +2161,161 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
     end subroutine GetNewCCxandGDDCDC
 
 end subroutine DetermineCCiGDD
+
+
+
+subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
+                                             Coeffb1Salt, Coeffb2Salt, &
+                                             NrDayGrow, StressTotSaltPrev, &
+                                             VirtualTimeCC)
+    integer(int8), intent(inout) :: StressSFadjNEW
+    real(dp), intent(in) :: Coeffb0Salt, Coeffb1Salt, Coeffb2Salt
+    integer(int32), intent(in) :: NrDayGrow
+    real(dp), intent(in) :: StressTotSaltPrev
+    integer(int32), intent(in) :: VirtualTimeCC
+
+    type(rep_EffectStress) :: FertilityEffectStress, SalinityEffectStress
+    real(dp) :: SaltStress, CCxRedD
+    integer(int8) :: CCxRed
+    real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
+    integer(int8) :: RedCGC_temp, RedCCX_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+    type(rep_EffectStress) :: EffectStress_temp
+
+    if (GetSimulation_SalinityConsidered()) then
+        ECe_temp = GetRootZoneSalt_ECe()
+        ECsw_temp = GetRootZoneSalt_ECsw()
+        ECswFC_temp = GetRootZoneSalt_ECswFC()
+        KsSalt_temp = GetRootZoneSalt_KsSalt()
+        call DetermineRootZoneSaltContent(GetRootingDepth(), &
+                                          ECe_temp, ECsw_temp, &
+                                          ECswFC_temp, KsSalt_temp)
+        call SetRootZoneSalt_ECe(ECe_temp)
+        call SetRootZoneSalt_ECsw(ECsw_temp)
+        call SetRootZoneSalt_ECswFC(ECswFC_temp)
+        call SetRootZoneSalt_KsSalt(KsSalt_temp)
+        SaltStress = (NrDayGrow*StressTotSaltPrev + 100._dp &
+                            *(1._dp-GetRootZoneSalt_KsSalt())) &
+                     /(NrDayGrow+1._dp)
+    else
+        SaltStress = 0._dp
+    end if
+    if ((VirtualTimeCC < GetCrop_DaysToGermination()) &
+            .or. (VirtualTimeCC > (GetCrop_DayN()-GetCrop_Day1())) &
+            .or. (GetSimulation_Germinate() .eqv. .false.) &
+            .or. ((StressSFAdjNEW == 0) .and. (SaltStress <= 0.1_dp))) then
+        ! no soil fertility and salinity stress
+        EffectStress_temp = GetSimulation_EffectStress()
+        call NoEffectStress(EffectStress_temp)
+        call SetSimulation_EffectStress(EffectStress_temp)
+        call SetCrop_DaysToFullCanopySF(GetCrop_DaysToFullCanopy())
+        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+            call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
+        end if
+    else
+        ! Soil fertility
+        if (StressSFAdjNEW == 0) then
+            call NoEffectStress(FertilityEffectStress)
+        else
+            call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+                                                   StressSFAdjNEW, &
+                                                   FertilityEffectStress)
+        end if
+        ! Soil Salinity
+        CCxRedD = real(roundc(Coeffb0Salt + Coeffb1Salt * SaltStress &
+                              + Coeffb2Salt * SaltStress * SaltStress, &
+                                                      mold=1), kind=dp)
+        if ((CCxRedD < 0._dp) &
+                .or. (SaltStress <= 0.1_dp) &
+                .or. (GetSimulation_SalinityConsidered() .eqv. .false.)) then
+            call NoEffectStress(SalinityEffectStress)
+        else
+            if ((CCxRedD > 100._dp) .or. (SaltStress >= 99.9_dp)) then
+                CCxRed = 100._dp
+            else
+                CCxRed = real(roundc(CCxRedD, mold=1), kind=dp)
+            end if
+            call CropStressParametersSoilSalinity(CCxRed, &
+                                                  GetCrop_CCsaltDistortion(), &
+                                                  GetCrop_CCo(), &
+                                                  GetCrop_CCx(), &
+                                                  GetCrop_CGC(), &
+                                                  GetCrop_GDDCGC(), &
+                                                  GetCrop_DeterminancyLinked(), &
+                                                  GetCrop_DaysToFullCanopy(), &
+                                                  GetCrop_DaysToFlowering(), &
+                                                  GetCrop_LengthFlowering(), &
+                                                  GetCrop_DaysToHarvest(), &
+                                                  GetCrop_GDDaysToFullCanopy(), &
+                                                  GetCrop_GDDaysToFlowering(), &
+                                                  GetCrop_GDDLengthFlowering(), &
+                                                  GetCrop_GDDaysToHarvest(), &
+                                                  GetCrop_ModeCycle(), &
+                                                  SalinityEffectStress)
+        end if
+        ! Assign integrated effect of the stresses
+        call SetSimulation_EffectSTress_RedWP(FertilityEffectStress%RedWP)
+        call SetSimulation_EffectSTress_RedKsSto(SalinityEffectStress%RedKsSto)
+        if (FertilityEffectStress%RedCGC > SalinityEffectStress%RedCGC) then
+            call SetSimulation_EffectSTress_RedCGC(FertilityEffectStress%RedCGC)
+        else
+            call SetSimulation_EffectSTress_RedCGC(SalinityEffectStress%RedCGC)
+        end if
+        if (FertilityEffectStress%RedCCX > SalinityEffectStress%RedCCX) then
+            call SetSimulation_EffectSTress_RedCCX(FertilityEffectStress%RedCCX)
+        else
+            call SetSimulation_EffectSTress_RedCCX(SalinityEffectStress%RedCCX)
+        end if
+        if (FertilityEffectStress%CDecline > SalinityEffectStress%CDecline) then
+            call SetSimulation_EffectSTress_CDecline(FertilityEffectStress%CDecline)
+        else
+            call SetSimulation_EffectSTress_CDecline(SalinityEffectStress%CDecline)
+        end if
+        ! adjust time to maximum canopy cover
+        RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+        RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+        Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+        call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
+                               GetCrop_DaysToGermination(), &
+                               GetCrop_DaysToFullCanopy(), &
+                               GetCrop_DaysToSenescence(), &
+                               GetCrop_DaysToFlowering(), &
+                               GetCrop_LengthFlowering(), &
+                               GetCrop_DeterminancyLinked(), &
+                               Crop_DaysToFullCanopySF_temp, RedCGC_temp, &
+                               RedCCX_temp, StressSFAdjNEW)
+        call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+        call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+        call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+            if ((GetManagement_FertilityStress() /= 0._dp) &
+                    .or. (SaltStress /= 0._dp)) then
+                call SetCrop_GDDaysToFullCanopySF(&
+                             GrowingDegreeDays(GetCrop_DaysToFullCanopySF(), &
+                                               GetCrop_Day1(), &
+                                               GetCrop_Tbase(), &
+                                               GetCrop_Tupper(), &
+                                               GetSimulParam_Tmin(), &
+                                               GetSimulParam_Tmax()))
+            else
+                call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
+            end if
+        end if
+    end if
+
+    contains
+
+    subroutine NoEffectStress(TheEffectStress)
+        type(rep_EffectStress), intent(inout) :: TheEffectStress
+
+        TheEffectStress%RedCGC = 0._dp
+        TheEffectStress%RedCCX = 0._dp
+        TheEffectStress%RedWP = 0._dp
+        TheEffectStress%CDecline = 0._dp
+        TheEffectStress%RedKsSto = 0._dp
+    end subroutine NoEffectStress
+
+end subroutine EffectSoilFertilitySalinityStress
 
 
 

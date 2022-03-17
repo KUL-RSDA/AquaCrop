@@ -987,105 +987,6 @@ END; (* calculate_saltcontent *)
 
 
 
-PROCEDURE EffectSoilFertilitySalinityStress();
-VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
-    SaltStress,CCxRedD : double;
-    CCxRed : ShortInt;
-    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
-    RedCGC_temp, RedCCX_temp : ShortInt;
-    Crop_DaysToFullCanopySF_temp : integer;
-    EffectStress_temp : rep_EffectStress;
-
-    PROCEDURE NoEffectStress(VAR TheEffectStress : rep_EffectStress);
-    BEGIN
-    TheEffectStress.RedCGC := 0;
-    TheEffectStress.RedCCX := 0;
-    TheEffectStress.RedWP := 0;
-    TheEffectStress.CDecline := 0;
-    TheEffectStress.RedKsSto := 0;
-    END; (* NoEffectStress *)
-
-
-BEGIN
-IF (GetSimulation_SalinityConsidered() = true)
-   THEN BEGIN
-        ECe_temp := GetRootZoneSalt().ECe;
-        ECsw_temp := GetRootZoneSalt().ECsw;
-        ECswFC_temp := GetRootZoneSalt().ECswFC;
-        KsSalt_temp := GetRootZoneSalt().KsSalt;
-        DetermineRootZoneSaltContent(GetRootingDepth(),ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
-        SetRootZoneSalt_ECe(ECe_temp);
-        SetRootZoneSalt_ECsw(ECsw_temp);
-        SetRootZoneSalt_ECswFC(ECswFC_temp);
-        SetRootZoneSalt_KsSalt(KsSalt_temp);
-        //SaltStress := (1-RootZoneSalt.KsSalt)*100;
-        SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-GetRootZoneSalt().KsSalt))/(NrDayGrow+1);
-        END
-   ELSE SaltStress := 0;
-IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop().DayN-GetCrop().Day1))
-    OR (GetSimulation_Germinate() = false)
-    OR ((StressSFAdjNEW = 0) AND (SaltStress <= 0.1)))
-   THEN BEGIN  // no soil fertility and salinity stress
-        EffectStress_temp := GetSimulation_EffectStress();
-        NoEffectStress(EffectStress_temp);
-        SetSimulation_EffectStress(EffectStress_temp);
-        SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
-        IF (GetCrop_ModeCycle() = GDDays) THEN SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
-        END
-   ELSE BEGIN
-        // Soil fertility
-        IF (StressSFAdjNEW = 0)
-           THEN NoEffectStress(FertilityEffectStress)
-           ELSE CropStressParametersSoilFertility(GetCrop_StressResponse(),StressSFAdjNEW,FertilityEffectStress);
-        // Soil Salinity
-        CCxRedD := ROUND(Coeffb0Salt + Coeffb1Salt * SaltStress + Coeffb2Salt * SaltStress * SaltStress);
-        IF ((CCxRedD < 0) OR (SaltStress <= 0.1) OR (GetSimulation_SalinityConsidered() = false))
-           THEN NoEffectStress(SalinityEffectStress)
-           ELSE BEGIN
-                IF ((CCxRedD > 100) OR (SaltStress >= 99.9))
-                   THEN CCxRed := 100
-                   ELSE CCxRed := ROUND(CCxRedD);
-                CropStressParametersSoilSalinity(CCxRed,GetCrop().CCsaltDistortion,GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,
-                             GetCrop().GDDCGC,GetCrop().DeterminancyLinked,GetCrop().DaysToFullCanopy,GetCrop().DaysToFlowering,
-                             GetCrop().LengthFlowering,GetCrop().DaysToHarvest,GetCrop().GDDaysToFullCanopy,
-                             GetCrop().GDDaysToFlowering,GetCrop().GDDLengthFlowering,
-                             GetCrop().GDDaysToHarvest,GetCrop_ModeCycle(),SalinityEffectStress);
-                END;
-        // Assign integrated effect of the stresses
-        SetSimulation_EffectSTress_RedWP(FertilityEffectStress.RedWP);
-        SetSimulation_EffectSTress_RedKsSto(SalinityEffectStress.RedKsSto);
-        IF (FertilityEffectStress.RedCGC > SalinityEffectStress.RedCGC)
-           THEN SetSimulation_EffectSTress_RedCGC(FertilityEffectStress.RedCGC)
-           ELSE SetSimulation_EffectSTress_RedCGC(SalinityEffectStress.RedCGC);
-        IF (FertilityEffectStress.RedCCX > SalinityEffectStress.RedCCX)
-           THEN SetSimulation_EffectSTress_RedCCX(FertilityEffectStress.RedCCX)
-           ELSE SetSimulation_EffectSTress_RedCCX(SalinityEffectStress.RedCCX);
-        IF (FertilityEffectStress.CDecline > SalinityEffectStress.CDecline)
-           THEN SetSimulation_EffectSTress_CDecline(FertilityEffectStress.CDecline)
-           ELSE SetSimulation_EffectSTress_CDecline(SalinityEffectStress.CDecline);
-        // adjust time to maximum canopy cover
-        RedCGC_temp := GetSimulation_EffectStress_RedCGC();
-        RedCCX_temp := GetSimulation_EffectStress_RedCCX();
-        Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
-        TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
-                          GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
-                          Crop_DaysToFullCanopySF_temp,RedCGC_temp,
-                          RedCCX_temp,StressSFAdjNEW);
-        SetSimulation_EffectStress_RedCGC(RedCGC_temp);
-        SetSimulation_EffectStress_RedCCX(RedCCX_temp);
-        SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
-        IF (GetCrop().ModeCycle = GDDays) THEN
-           BEGIN
-           IF ((GetManagement_FertilityStress() <> 0) OR (SaltStress <> 0))
-              THEN SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(GetCrop().DaysToFullCanopySF,GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,
-                                            GetSimulParam_Tmin(),GetSimulParam_Tmax()))
-              ELSE SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
-           END;
-        END;
-END; (* EffectSoilFertilitySalinityStress *)
-
-
-
 
 
 PROCEDURE CheckGermination;
@@ -2452,7 +2353,8 @@ IF ((GetSimulation_Germinate() = false) AND (dayi >=GetCrop().Day1)) THEN CheckG
 
 // 9. Determine effect of soil fertiltiy and soil salinity stress
 // EffectSoilFertilitySalinityStress(Simulation.EffectStress);
-IF (NoMoreCrop = false) THEN EffectSoilFertilitySalinityStress();
+IF (NoMoreCrop = false) THEN EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, Coeffb1Salt,
+                                            Coeffb2Salt, NrDayGrow, StressTotSaltPrev, VirtualTimeCC);
 
 
 // 10. Canopy Cover (CC)

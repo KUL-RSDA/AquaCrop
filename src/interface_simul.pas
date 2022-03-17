@@ -92,7 +92,13 @@ procedure DetermineCCiGDD(
             constref GDDTadj : integer);
     external 'aquacrop' name '__ac_interface_simul_MOD_determineccigdd_wrap';
 
-
+procedure EffectSoilFertilitySalinityStress(
+                        VAR StressSFadjNew : Shortint;
+                        constref Coeffb0Salt, Coeffb1Salt, Coeffb2Salt : double;
+                        constref NrDayGrow : integer;
+                        constref StressTotSaltPrev : double;
+                        constref VirtualTimeCC : integer);
+    external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module

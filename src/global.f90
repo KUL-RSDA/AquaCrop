@@ -147,6 +147,20 @@ integer(intEnum), parameter :: datatype_decadely = 1
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
 
+integer(intEnum), parameter :: typeObsSim_ObsSimCC = 0
+    !! index of ObsSimCC in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
+    !! index of ObsSimB in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
+    !! index of ObsSimSWC in typeObsSim enumerated type
+
+integer(intEnum), parameter :: typeProject_TypePRO = 0
+    !! index of TypePRO in typeProject enumerated type
+integer(intEnum), parameter :: typeProject_TypePRM = 1
+    !! index of TypePRM in typeProject enumerated type
+integer(intEnum), parameter :: typeProject_TypeNone = 2
+    !! index of TypeNone in typeProject enumerated type
+
 type rep_DayEventInt
     integer(int32) :: DayNr
         !! Undocumented
@@ -11966,6 +11980,30 @@ type(rep_RootZoneSalt) function GetRootZoneSalt()
 
     GetRootZoneSalt = RootZoneSalt
 end function GetRootZoneSalt
+
+real(dp) function GetRootZoneSalt_ECe()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECe = RootZoneSalt%ECe
+end function GetRootZoneSalt_ECe
+
+real(dp) function GetRootZoneSalt_ECsw()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECsw = RootZoneSalt%ECsw
+end function GetRootZoneSalt_ECsw
+
+real(dp) function GetRootZoneSalt_ECswFC()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECswFC = RootZoneSalt%ECswFC
+end function GetRootZoneSalt_ECswFC
+
+real(dp) function GetRootZoneSalt_KsSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_KsSalt = RootZoneSalt%KsSalt
+end function GetRootZoneSalt_KsSalt
 
 subroutine SetRootZoneSalt_ECe(ECe)
     !! Setter for the "RootZoneSalt" global variable.
