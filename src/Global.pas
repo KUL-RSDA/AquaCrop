@@ -8,9 +8,6 @@ uses SysUtils, interface_global;
 Const 
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
 
-TYPE
-     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
 
@@ -36,8 +33,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
     Part1Mult,Part2Eval : BOOLEAN;
 
-    Type
-    repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
