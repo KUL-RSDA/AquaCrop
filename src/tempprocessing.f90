@@ -821,8 +821,8 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
     integer(int32), intent(in) :: FirstDayPeriod
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
-    real(dp), intent(inout) :: TDayMin
-    real(dp), intent(inout) :: TDayMax
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
 
     integer(int32) :: i, RemainingDays
     character(len=:), allocatable :: totalname
@@ -832,13 +832,16 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     character(len=255) :: StringREAD
     logical :: AdjustDayNri, file_exists
+    real(dp) :: TDayMin_local, TDayMax_local
 
+    TDayMin_local = TDayMin
+    TDayMax_local = TDayMax
     GDDays = 0
     if (ValPeriod > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax
             DayGDD = DegreesDay(Tbase, Tupper, &
-                     TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                     TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
             GDDays = roundc(ValPeriod * DayGDD, mold=1_int32)
         else
             ! temperature file
@@ -872,9 +875,9 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                          read(fhandle, *, iostat=rc)
                     end do
                     read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
-                    call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                    call SplitStringInTwoParams(StringREAD, TDayMin_local, TDayMax_local)
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
@@ -893,14 +896,14 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                             read(fhandle, *, iostat=rc)
                             read(fhandle, '(a)', iostat=rc) StringREAD
                             call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                                     TDayMin_local, TDayMax_local)
                         else
                             read(fhandle, '(a)', iostat=rc) StringREAD
                             call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                                     TDayMin_local, TDayMax_local)
                         end if
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin, TDayMax,&
+                                     TDayMin_local, TDayMax_local,&
                                      GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
@@ -917,10 +920,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                     do while (TminDataSet(i)%DayNr /= DayNri)
                         i = i+1
                     end do
-                    TDaymin = TminDataSet(i)%Param
-                    TDaymax = TmaxDataSet(i)%Param
+                    TDayMin_local = TminDataSet(i)%Param
+                    TDayMax_local = TmaxDataSet(i)%Param
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
@@ -935,10 +938,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                         do while (TminDataSet(i)%DayNr /= DayNri)
                             i = i+1
                         end do
-                        TDayMin = TminDataSet(i)%Param
-                        TDayMax = TmaxDataSet(i)%Param
+                        TDayMin_local = TminDataSet(i)%Param
+                        TDayMax_local = TmaxDataSet(i)%Param
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin, TDayMax,&
+                                     TDayMin_local, TDayMax_local,&
                                      GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
@@ -954,10 +957,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                     do while (TminDataSet(i)%DayNr /= DayNri)
                         i = i+1
                     end do
-                    TDayMin = TminDataSet(i)%Param
-                    TDayMax = TmaxDataSet(i)%Param
+                    TDayMin_local = TminDataSet(i)%Param
+                    TDayMax_local = TmaxDataSet(i)%Param
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
@@ -972,10 +975,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                         do while (TminDataSet(i)%DayNr /= DayNri)
                             i = i+1
                         end do
-                        TDayMin = TminDataSet(i)%Param
-                        TDayMax = TmaxDataSet(i)%Param
+                        TDayMin_local = TminDataSet(i)%Param
+                        TDayMax_local = TmaxDataSet(i)%Param
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                              TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                              TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
                         DayNri = DayNri + 1
