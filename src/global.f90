@@ -147,6 +147,14 @@ integer(intEnum), parameter :: datatype_decadely = 1
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
 
+integer(intEnum), parameter :: typeproject_typepro = 0
+    !! index of TypePRO in typeproject enumerated type
+integer(intEnum), parameter :: typeproject_typeprm = 1
+    !! index of TypePRM in typeproject enumerated type
+integer(intEnum), parameter :: typeproject_typenone = 2
+    !! index of TypeNone in typeproject enumerated type
+
+
 type rep_DayEventInt
     integer(int32) :: DayNr
         !! Undocumented

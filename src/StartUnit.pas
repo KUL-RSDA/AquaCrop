@@ -2,7 +2,7 @@ unit StartUnit;
 
 interface
 
-USES Global;
+USES Global, interface_global;
 
 FUNCTION GetListProjectsFile() : string;
 FUNCTION GetNumberOfProjects() : integer;
@@ -20,7 +20,7 @@ PROCEDURE StartTheProgram;
 
 implementation
 
-USES SysUtils,interface_global,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
+USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
 VAR fProjects : textFile;
 

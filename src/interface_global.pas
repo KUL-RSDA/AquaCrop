@@ -471,6 +471,7 @@ type
          GeneratedDayNrOnset,GeneratedDayNrEnd : integer;
          end;
 
+    repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
