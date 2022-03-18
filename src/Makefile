@@ -152,9 +152,14 @@ interface_simul.o: interface_simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-pluginbarev70.o: pluginbarev70.F90 \
-    global.o \
+aquacrop_wrap.o: aquacrop_wrap.F90 \
     interface_global.o \
+    kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+pluginbarev70.o: pluginbarev70.F90 \
+    aquacrop_wrap.o \
+    global.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
@@ -188,7 +193,7 @@ $(EXECUTABLE): $(SRC) $(FLIB)
 else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
 $(EXECUTABLE): pluginbarev70.o $(PLIB)
-	$(FC) pluginbarev70.o -o $(EXECUTABLE) -L$(PWD) -laquacrop -lPlugInBareV70
+	$(FC) pluginbarev70.o aquacrop_wrap.o -o $(EXECUTABLE) -L$(PWD) -laquacrop -lPlugInBareV70
 endif
 
 clean: pascalclean fortranclean
