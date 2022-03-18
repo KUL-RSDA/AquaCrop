@@ -22,6 +22,8 @@ real(dp), parameter :: PI = 3.1415926535_dp
 real(dp), parameter :: CO2Ref = 369.41_dp; 
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
+real(dp), parameter :: EvapZmin = 15._dp
+    !! cm  minimum soil depth for water extraction by evaporation
 real(dp), parameter :: eps =10E-08
 real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
                                                     90.25_dp, 120.25_dp, 151.25_dp, &
