@@ -216,6 +216,8 @@ use ac_global, only: CheckFilesInProject, &
                      LoadInitialConditions, &
                      CompleteClimateDescription, &
                      rep_clim, &
+                     GetEvapoEntireSoilSurface, &
+                     SetEvapoEntireSoilSurface, &
                      GetPreDay, &
                      SetPreDay, &
                      GetMultipleProjectDescription, &
@@ -2512,6 +2514,25 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
                                 FromString, ToString)
     NrObs = ClimateRecord%NrObs
 end subroutine CompleteClimateDescription_wrap
+
+
+function GetEvapoEntireSoilSurface_wrap() result(EvapoEntireSoilSurface)
+    !! Wrapper for [[ac_global:GetEvapoEntireSoilSurface]] for foreign languages
+    logical(1) :: EvapoEntireSoilSurface
+
+    EvapoEntireSoilSurface = GetEvapoEntireSoilSurface()
+end function GetEvapoEntireSoilSurface_wrap
+
+
+subroutine SetEvapoEntireSoilSurface_wrap(EvapoEntireSoilSurface)
+    !! Wrapper for [[ac_global:SetEvapoEntireSoilSurface]] for foreign languages.
+    logical(1), intent(in) :: EvapoEntireSoilSurface
+
+    logical :: bool
+
+    bool = EvapoEntireSoilSurface
+    call SetEvapoEntireSoilSurface(bool)
+end subroutine SetEvapoEntireSoilSurface_wrap
 
 
 function GetPreDay_wrap() result(PreDay)
