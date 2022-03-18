@@ -2093,21 +2093,6 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
         END;
 END; (* DetermineCCiGDD *)
 
-
-PROCEDURE PrepareStage1;
-BEGIN
-IF (GetSurfaceStorage() > 0.0000001)
-   THEN SetSimulation_EvapWCsurf(GetSoil().REW)
-   ELSE BEGIN
-        SetSimulation_EvapWCsurf(GetRain() + GetIrrigation() - GetRunOff());
-        IF (GetSimulation_EvapWCsurf() > GetSoil().REW) THEN SetSimulation_EvapWCsurf(GetSoil().REW);
-        END;
-SetSimulation_EvapStartStg2(undef_Int);
-SetSimulation_EvapZ(EvapZmin/100);
-END; (* PrepareStage1 *)
-
-
-
 PROCEDURE AdjustEpotMulchWettedSurface(dayi: INTEGER;
                                        EpotTot: DOUBLE;
                                        VAR Epot : Double;

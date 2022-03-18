@@ -84,6 +84,9 @@ procedure EffectSoilFertilitySalinityStress(
                         constref VirtualTimeCC : integer);
     external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
 
+procedure PrepareStage1();
+    external 'aquacrop' name '__ac_simul_MOD_preparestage1';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

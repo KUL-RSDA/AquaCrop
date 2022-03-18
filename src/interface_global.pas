@@ -11,6 +11,7 @@ const
     undef_double = -9.9;
     undef_int = -9;
     CO2Ref = 369.41;
+    EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
