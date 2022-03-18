@@ -1488,7 +1488,7 @@ subroutine PrepareStage1()
             call SetSimulation_EvapWCsurf(Soil_temp%REW*1._dp)
         end if
     end if
-    call SetSimulation_EvapStartStg2(INT(undef_int,1))
+    call SetSimulation_EvapStartStg2(int(undef_int,kind=int8))
     call SetSimulation_EvapZ(EvapZmin/100._dp)
 
 end subroutine PrepareStage1
