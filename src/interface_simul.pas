@@ -88,8 +88,8 @@ procedure PrepareStage1();
     external 'aquacrop' name '__ac_simul_MOD_preparestage1';
 
 procedure AdjustEpotMulchWettedSurface(
-                        dayi: integer;
-                        EpotTot: double;
+                        constref dayi: integer;
+                        constref EpotTot: double;
                         VAR Epot : double;
                         VAR EvapWCsurface : double);
     external 'aquacrop' name '__ac_simul_MOD_adjustepotmulchwettedsurface';

@@ -1516,57 +1516,71 @@ subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
     real(dp), intent(inout) :: EvapWCsurface
 
     real(dp) :: EpotIrri
-    type(rep_Crop) :: Crop_temp
-
-    Crop_temp = GetCrop()
 
     ! 1. Mulches (reduction of EpotTot to Epot)
     if (GetSurfaceStorage() <= 0.000001_dp) then
-        if (dayi < Crop_temp%Day1) then ! before season
-            Epot = EpotTot * (1 - (GetManagement_EffectMulchOffS()/100._dp)*(GetManagement_SoilCoverBefore()/100._dp))
+        if (dayi < GetCrop_Day1()) then ! before season
+            Epot = EpotTot &
+                    * (1._dp - (GetManagement_EffectMulchOffS()/100._dp) &
+                               *(GetManagement_SoilCoverBefore()/100._dp))
         else
-            if (dayi < Crop_temp%Day1+Crop_temp%DaysToHarvest) then ! in season
-                Epot = EpotTot * (1 - (GetManagement_EffectMulchInS()/100._dp)*(GetManagement_Mulch()/100._dp))
+            if (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) then ! in season
+                Epot = EpotTot &
+                        * (1._dp &
+                            - (GetManagement_EffectMulchInS()/100._dp) &
+                             * (GetManagement_Mulch()/100._dp))
             else
-                Epot = EpotTot * (1 - (GetManagement_EffectMulchOffS()/100._dp)*(GetManagement_SoilCoverAfter()/100._dp))
+                Epot = EpotTot &
+                        * (1._dp &
+                            - (GetManagement_EffectMulchOffS()/100._dp) &
+                             * (GetManagement_SoilCoverAfter()/100._dp))
             end if
         end if
     else
         Epot = EpotTot ! flooded soil surface
     end if
 
+
     ! 2a. Entire soil surface wetted ?
-    if (GetIrrigation() > 0) then
+    if (GetIrrigation() > 0._dp) then
         ! before season
-        if ((dayi < Crop_temp%Day1) .and. (GetSimulParam_IrriFwOffSeason() < 100)) then
+        if ((dayi < GetCrop_Day1()) &
+            .and. (GetSimulParam_IrriFwOffSeason() < 100)) then
             call SetEvapoEntireSoilSurface(.false.)
         end if
         ! in season
-        if ((dayi >= Crop_temp%Day1) .and. (dayi < Crop_temp%Day1+Crop_temp%DaysToHarvest) .and. &
-                 (GetSimulParam_IrriFwInSeason() < 100)) then
+        if ((dayi >= GetCrop_Day1()) &
+            .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+            .and. (GetSimulParam_IrriFwInSeason() < 100)) then
             call SetEvapoEntireSoilSurface(.false.)
         end if
         ! after season
-        if ((dayi >= Crop_temp%Day1+Crop_temp%DaysToHarvest).and.(GetSimulParam_IrriFwOffSeason() < 100)) then
+        if ((dayi >= GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+            .and.(GetSimulParam_IrriFwOffSeason() < 100)) then
             call SetEvapoEntireSoilSurface(.false.)
         end if
     end if
-    if ((GetRain() > 1) .or. (GetSurfaceStorage() > 0)) then
+    if ((GetRain() > 1._dp) .or. (GetSurfaceStorage() > 0._dp)) then
         call SetEvapoEntireSoilSurface(.true.)
     end if
-    if ((dayi >= Crop_temp%Day1) .and. (dayi < Crop_temp%Day1+Crop_temp%DaysToHarvest) .and. (GetIrriMode() == IrriMode_Inet)) then
+    if ((dayi >= GetCrop_Day1()) &
+        .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+        .and. (GetIrriMode() == IrriMode_Inet)) then
         call SetEvapoEntireSoilSurface(.true.)
     end if
 
     ! 2b. Correction for Wetted surface by Irrigation
     if (.not.GetEvapoEntireSoilSurface()) then
-        if ((dayi >= Crop_temp%Day1) .and. (dayi < Crop_temp%Day1+Crop_temp%DaysToHarvest)) then
+        if ((dayi >= GetCrop_Day1()) &
+            .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest())) then
             ! in season
-            EvapWCsurface = EvapWCsurface * (GetSimulParam_IrriFwInSeason()/100._dp)
+            EvapWCsurface = EvapWCsurface &
+                            * (GetSimulParam_IrriFwInSeason()/100._dp)
             EpotIrri = EpotTot * (GetSimulParam_IrriFwInSeason()/100._dp)
         else
             ! off-season
-            EvapWCsurface = EvapWCsurface * (GetSimulParam_IrriFwOffSeason()/100._dp)
+            EvapWCsurface = EvapWCsurface &
+                            * (GetSimulParam_IrriFwOffSeason()/100._dp)
             EpotIrri = EpotTot * (GetSimulParam_IrriFwOffSeason()/100._dp)
         end if
         if (GetEact() > EpotIrri) then
