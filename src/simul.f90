@@ -1,6 +1,6 @@
 module ac_simul
 
-use ac_kinds, only:  dp, int32, int8
+use ac_kinds, only:  dp, int32, int8, intEnum
 use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      CompartmentIndividual, &
                      CO2Ref, &
@@ -154,6 +154,15 @@ use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
 
 
 implicit none
+
+integer(intEnum), parameter :: whichtheta_AtSat = 0
+    !! index of AtSat in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtFC = 1
+    !! index of AtFC in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtWP = 2
+    !! index of AtWP in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtAct = 3
+    !! index of AtAct in whichtheta enumerated type
 
 
 contains
@@ -1465,6 +1474,106 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
     end subroutine NoEffectStress
 
 end subroutine EffectSoilFertilitySalinityStress
+
+
+
+real(dp) function WCEvapLayer(Zlayer, AtTheta)
+    real(dp), intent(in) :: Zlayer
+    integer(intEnum), intent(in) :: AtTheta
+
+    real(dp) :: Ztot, Wx, fracZ
+    integer(int8) :: compi
+
+    Wx = 0.0_dp
+    Ztot = 0.0_dp
+    compi = 0
+    do while ((abs(Zlayer-Ztot) > 0.0001_dp) &
+            .and. (compi < GetNrCompartments())) 
+        compi = compi + 1
+        if ((Ztot + GetCompartment_Thickness(compi)) > Zlayer) then
+            fracZ = (Zlayer - Ztot)/(GetCompartment_Thickness(compi))
+        else
+            fracZ = 1._dp
+        end if
+        select case (AtTheta)
+            case(whichtheta_AtSAT)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_SAT(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case (whichtheta_AtFC)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case (whichtheta_AtWP)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_WP(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case default
+                Wx = Wx + 1000._dp &
+                        * GetCompartment_Theta(compi) * fracZ &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                            - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                        /100._dp)
+        end select
+        Ztot = Ztot + fracZ * GetCompartment_Thickness(compi)
+    end do
+    WCEvapLayer = Wx
+end function WCEvapLayer
+
+
+
+subroutine PrepareStage2()
+
+    integer(intEnum) :: AtTheta
+    real(dp) :: WSAT, WFC, Wact
+
+    call SetSimulation_EvapZ(EvapZmin/100)
+    AtTheta = whichtheta_AtSat
+    WSAT = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    AtTheta = whichtheta_AtFC
+    WFC = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    AtTheta = whichtheta_AtAct
+    Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    call SetSimulation_EvapStartStg2(roundc(100._dp &
+          * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), mold=1))
+    if (GetSimulation_EvapStartStg2() < 0._dp) then
+        SetSimulation_EvapStartStg2(0._dp)
+    end if
+end subroutine PrepareStage2
+
+
+subroutine CalculateEvaporationSurfaceWater()
+
+    real(dp) :: SaltSurface
+
+    if (GetSurfaceStorage() > GetEpot()) then
+        SaltSurface = GetSurfaceStorage()*GetECstorage()*Equiv
+        call SetEact(GetEpot())
+        call SetSurfaceStorage(GetSurfaceStorage() - GetEact())
+        call SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)) 
+            ! salinisation of surface storage layer
+    else
+        call SetEact(GetSurfaceStorage())
+        call SetSurfaceStorage(0._dp)
+        call SetSimulation_EvapWCsurf(GetSoil()%REW)
+        call SetSimulation_EvapZ(EvapZmin/100._dp)
+        if (GetSimulation_EvapWCsurf() < 0.0001_dp) then
+            call PrepareStage2()
+        else
+            call SetSimulation_EvapStartStg2(undef_int)
+        end if
+    end if
+end subroutine CalculateEvaporationSurfaceWater
 
 
 

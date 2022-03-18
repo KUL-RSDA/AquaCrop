@@ -4,6 +4,9 @@ interface
 
 uses Global, interface_global, TempProcessing, interface_tempprocessing;
 
+type
+    rep_WhichTheta = (AtSAT,AtFC,AtWP,AtAct);
+
 function GetCDCadjustedNoStressNew(
             constref CCx, CDC, CCxAdjusted): double;
      external 'aquacrop' name '__ac_simul_MOD_getcdcadjustednostressnew';
@@ -31,6 +34,7 @@ procedure AdjustpSenescenceToETo(
            constref WithBeta : BOOLEAN;
            VAR pSenAct : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
+
 
 
 //-----------------------------------------------------------------------------
@@ -84,12 +88,38 @@ procedure EffectSoilFertilitySalinityStress(
                         constref VirtualTimeCC : integer);
     external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
 
+procedure CalculateEvaporationSurfaceWater();
+    external 'aquacrop' name '__MOD_simul_calculateevaporationsurfacewater';
+
+function WCEvapLayer(constref Zlayer : double;
+                     constref AtTheta : rep_WhichTheta) : double;
+
+function __WCEvapLayer(constref Zlayer : double;
+                       constref AtTheta : integer) : double;
+    external 'aquacrop' name '__MOD_simul_wcevaplayer';
+
+procedure PrepareStage2();
+    external 'aquacrop' name '__MOD_simul_preparestage2';
+
+procedure CalculateEvaporationSurfaceWater();
+    external 'aquacrop' name '__MOD_simul_calculateevaporationsurfacewater';
+
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------
 
 
 implementation
+
+function WCEvapLayer(constref Zlayer : double;
+                     constref AtTheta : rep_WhichTheta) : double
+var
+    int_attheta : integer;
+begin
+    int_attheta := ord(AtTheta);
+    WCEvapLayer := __WCEvapLayer(Zlayer, int_attheta);
+end;
 
 
 initialization
