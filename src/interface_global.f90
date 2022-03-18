@@ -11,6 +11,7 @@ use ac_global, only: CheckFilesInProject, &
                      FileExists, &
                      CalculateAdjustedFC, &
                      ComposeOutputFileName, &
+                     GetFileForProgramParameters, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
                      GetCalendarDescription, &
@@ -216,7 +217,11 @@ use ac_global, only: CheckFilesInProject, &
                      CompleteClimateDescription, &
                      rep_clim, &
                      GetPreDay, &
-                     SetPreDay
+                     SetPreDay, &
+                     GetMultipleProjectDescription, &
+                     SetMultipleProjectDescription, &
+                     GetProjectDescription, &
+                     SetProjectDescription
 
 
 use ac_kinds, only: dp, &
@@ -417,6 +422,23 @@ subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
     call ComposeOutputFileName(string)
 end subroutine ComposeOutputFileName_wrap
 
+subroutine GetFileForProgramParameters_wrap(TheFullFileNameProgram, strlen1, &
+            FullFileNameProgramParameters, strlen2)
+    !! Wrapper for [[ac_global:GetFileForProgramParameters]] for foreign languages.
+    type(c_ptr), intent(in) :: TheFullFileNameProgram
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(TheFullFileNameProgram, strlen1)
+    string2 = pointer2string(FullFileNameProgramParameters, strlen2)
+    call GetFileForProgramParameters(string1, string2)
+    FullFileNameProgramParameters = string2pointer(string2)
+end subroutine GetFileForProgramParameters_wrap
+
 logical function FileExists_wrap(full_name, strlen)
     !! Wrapper for [[ac_global:FileExists]] for foreign languages.
     type(c_ptr), intent(in) :: full_name
@@ -471,6 +493,7 @@ subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
     string1 = pointer2string(FullNameProjectFile, strlen1)
     string2 = pointer2string(DescriptionOfProject, strlen2)
     call LoadProjectDescription(string1, string2)
+    DescriptionOfProject = string2pointer(string2)
 end subroutine LoadProjectDescription_wrap
 
 subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
@@ -2508,6 +2531,46 @@ subroutine SetPreDay_wrap(PreDay)
     bool = PreDay
     call SetPreDay(bool)
 end subroutine SetPreDay_wrap
+
+
+function GetMultipleProjectDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetMultipleProjectDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetMultipleProjectDescription())
+end function GetMultipleProjectDescription_wrap
+
+
+subroutine SetMultipleProjectDescription_wrap(MultipleProjectDescription, strlen)
+    !! Wrapper for [[ac_global:SetMultipleProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: MultipleProjectDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(MultipleProjectDescription, strlen)
+    call SetMultipleProjectDescription(string)
+end subroutine SetMultipleProjectDescription_wrap
+
+
+function GetProjectDescription_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetProjectDescription]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetProjectDescription())
+end function GetProjectDescription_wrap
+
+
+subroutine SetProjectDescription_wrap(ProjectDescription, strlen)
+    !! Wrapper for [[ac_global:SetProjectDescription]] for foreign languages.
+    type(c_ptr), intent(in) :: ProjectDescription
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(ProjectDescription, strlen)
+    call SetProjectDescription(string)
+end subroutine SetProjectDescription_wrap
 
 
 

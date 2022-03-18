@@ -8,14 +8,9 @@ uses SysUtils, interface_global;
 Const 
       EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
 
-TYPE
-     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
-    ProjectDescription, MultipleProjectDescription : string;
 
-    RootingDepth   : double;
     CCiActual,CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
@@ -38,6 +33,7 @@ VAR DataPath,ObsPath : BOOLEAN;
     Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
     Part1Mult,Part2Eval : BOOLEAN;
 
+
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;
@@ -52,10 +48,6 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
 PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
                                      ProfileComp : rep_comp;
                                      VAR WaterTableInProfile : BOOLEAN);
-
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
-
 
 implementation
 
@@ -307,23 +299,6 @@ IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
    IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
    UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
 END; (* CheckForWaterTableInProfile *)
-
-
-
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
-VAR TheLength : INTEGER;
-    TheExtension : STRING;
-BEGIN
-FullFileNameProgramParameters := '';
-TheLength := Length(TheFullFileNameProgram);
-TheExtension := Copy(TheFullFileNameProgram,(TheLength-2),3); // PRO or PRM
-FullFileNameProgramParameters := Copy(TheFullFileNameProgram,1,(TheLength-3));
-IF (TheExtension = 'PRO')
-   THEN FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PP1')
-   ELSE FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PPn');
-END; (* GetFileForProgramParameters *)
-
 
 
 end.

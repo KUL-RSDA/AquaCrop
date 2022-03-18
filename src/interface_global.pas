@@ -18,6 +18,8 @@ const
           'May','June','July','August','September','October','November','December');
 
 type
+    rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
+    repTypeProject = (TypePRO,TypePRM,TypeNone);
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -1320,6 +1322,17 @@ procedure ComposeOutputFileName_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_composeoutputfilename_wrap';
 
+procedure GetFileForProgramParameters(
+            constref TheFullFileNameProgram : string;
+            var FullFileNameProgramParameters: string);
+
+procedure GetFileForProgramParameters_wrap(
+            constref TheFullFileNameProgram : PChar;
+            constref strlen1 : integer;
+            var FullFileNameProgramParameters: PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getfileforprogramparameters_wrap';
+        
 function NumberSoilClass (
             constref SatvolPro : double;
             constref FCvolPro : double;
@@ -4619,6 +4632,36 @@ procedure DetermineLinkedSimDay1(
 procedure AdjustSimPeriod;
     external 'aquacrop' name '__ac_global_MOD_adjustsimperiod';
 
+function GetMultipleProjectDescription(): string;
+
+function GetMultipleProjectDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getmultipleprojectdescription_wrap';
+
+procedure SetMultipleProjectDescription(constref str : string);
+
+procedure SetMultipleProjectDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setmultipleprojectdescription_wrap';
+
+function GetProjectDescription(): string;
+
+function GetProjectDescription_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getprojectdescription_wrap';
+
+procedure SetProjectDescription(constref str : string);
+
+procedure SetProjectDescription_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setprojectdescription_wrap';
+
+function GetRootingDepth() : double;
+    external 'aquacrop' name '__ac_global_MOD_getrootingdepth';
+
+procedure SetRootingDepth(constref RootingDepth_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setrootingdepth';
+
 
 implementation
 
@@ -6479,6 +6522,21 @@ begin;
     SetFullFileNameProgramParameters_wrap(p, strlen);
 end;
 
+procedure GetFileForProgramParameters(
+            constref  TheFullFileNameProgram: string;
+            var FullFileNameProgramParameters: string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(TheFullFileNameProgram);
+    p2 := PChar(FullFileNameProgramParameters);
+    strlen1 := Length(TheFullFileNameProgram);
+    strlen2 := Length(FullFileNameProgramParameters);
+    GetFileForProgramParameters_wrap(p1, strlen1, p2, strlen2);
+    FullFileNameProgramParameters := AnsiString(p2);
+end;
 
 function GetPathNameProg(): string;
 var
@@ -7783,6 +7841,45 @@ begin
     ClimateRecord.ToString := AnsiString(ToString_ptr);
 end;
 
+
+function GetMultipleProjectDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetMultipleProjectDescription_wrap();
+     GetMultipleProjectDescription := AnsiString(p);
+end;
+
+
+procedure SetMultipleProjectDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetMultipleProjectDescription_wrap(p, strlen);
+end;
+
+
+function GetProjectDescription(): string;
+var
+     p : PChar;
+begin;
+     p := GetProjectDescription_wrap();
+     GetProjectDescription := AnsiString(p);
+end;
+
+
+procedure SetProjectDescription(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetProjectDescription_wrap(p, strlen);
+end;
 
 
 initialization

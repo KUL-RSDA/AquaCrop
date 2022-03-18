@@ -154,6 +154,12 @@ integer(intEnum), parameter :: typeproject_typeprm = 1
 integer(intEnum), parameter :: typeproject_typenone = 2
     !! index of TypeNone in typeproject enumerated type
 
+integer(intEnum), parameter :: typeObsSim_ObsSimCC = 0
+    !! index of ObsSimCC in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
+    !! index of ObsSimB in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
+    !! index of ObsSimSWC in typeObsSim enumerated type
 
 type rep_DayEventInt
     integer(int32) :: DayNr
@@ -941,8 +947,10 @@ character(len=:), allocatable :: ClimFile
 character(len=:), allocatable :: SWCiniFile
 character(len=:), allocatable :: SWCiniFileFull
 character(len=:), allocatable :: SWCiniDescription
+character(len=:), allocatable :: ProjectDescription
 character(len=:), allocatable :: ProjectFile
 character(len=:), allocatable :: ProjectFileFull
+character(len=:), allocatable :: MultipleProjectDescription
 character(len=:), allocatable :: MultipleProjectFile
 character(len=:), allocatable :: TemperatureFile
 character(len=:), allocatable :: TemperatureFileFull
@@ -1002,6 +1010,7 @@ real(dp) :: Drain  ! mm/day
 real(dp) :: Infiltrated ! mm/day
 real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
+real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: Tpot ! mm/day
 
@@ -6966,6 +6975,25 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     call SetOutputName(TempString2)
 end subroutine ComposeOutputFileName
 
+subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgramParameters)
+    character(len=*), intent(in) :: TheFullFileNameProgram
+    character(len=*), intent(inout) :: FullFileNameProgramParameters
+
+    integer(int32) :: TheLength
+    character(len=:), allocatable :: TheExtension
+
+    FullFileNameProgramParameters = ''
+    TheLength = len(TheFullFileNameProgram)
+    TheExtension = TheFullFileNameProgram(TheLength-2:TheLength) ! PRO or PRM
+
+    FullFileNameProgramParameters = TheFullFileNameProgram(1:TheLength-3)
+    if (TheExtension == 'PRO') then
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PP1'
+    else
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PPn'
+    end if
+end subroutine GetFileForProgramParameters
+    
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 
@@ -8388,15 +8416,27 @@ type(rep_IrriECw) function GetIrriECw()
     GetIrriECw = IrriECw
 end function GetIrriECw
 
+real(dp) function GetIrriECw_PreSeason()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw_PreSeason = IrriECw%PreSeason
+end function GetIrriECw_PreSeason
+
 subroutine SetIrriECw_PreSeason(PreSeason)
-    !! Setter for the "soil" global variable.
+    !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PreSeason
 
     IrriECw%PreSeason = PreSeason
 end subroutine SetIrriECw_PreSeason
 
+real(dp) function GetIrriECw_PostSeason()
+    !! Getter for the "IrriECw" global variable.
+
+    GetIrriECw_PostSeason = IrriECw%PostSeason
+end function GetIrriECw_PostSeason
+
 subroutine SetIrriECw_PostSeason(PostSeason)
-    !! Setter for the "soil" global variable.
+    !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PostSeason
 
     IrriECw%PostSeason = PostSeason
@@ -9571,6 +9611,11 @@ subroutine SetSimulParam_EffectiveRain_RootNrEvap(RootNrEvap)
     EffectiveRain%RootNrEvap= RootNrEvap
 end subroutine SetSimulParam_EffectiveRain_RootNrEvap
 
+type(rep_sum) function GetSumWaBal()
+    !! Getter for the "SymWaBal" global variable.
+
+    GetSumWaBal = SumWaBal
+end function GetSumWaBal
 
 real(dp) function GetSumWaBal_Epot()
     !! Getter for the "SumWaBal" global variable.
@@ -9691,6 +9736,13 @@ real(dp) function GetSumWaBal_CRSalt()
 
     GetSumWaBal_CRSalt = SumWaBal%CRSalt
 end function GetSumWaBal_CRSalt
+
+subroutine SetSumWaBal(SumWaBal_in)
+    !! Setter for the "SumWaBal" global variable.
+    type(rep_sum), intent(in) :: SumWaBal_in
+
+    SumWaBal = SumWaBal_in
+end subroutine SetSumWaBal
 
 subroutine SetSumWaBal_Epot(Epot)
     !! Setter for the "SumWaBal" global variable.
@@ -11923,6 +11975,30 @@ type(rep_RootZoneSalt) function GetRootZoneSalt()
 
     GetRootZoneSalt = RootZoneSalt
 end function GetRootZoneSalt
+
+real(dp) function GetRootZoneSalt_ECe()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECe = RootZoneSalt%ECe
+end function GetRootZoneSalt_ECe
+
+real(dp) function GetRootZoneSalt_ECsw()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECsw = RootZoneSalt%ECsw
+end function GetRootZoneSalt_ECsw
+
+real(dp) function GetRootZoneSalt_ECswFC()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECswFC = RootZoneSalt%ECswFC
+end function GetRootZoneSalt_ECswFC
+
+real(dp) function GetRootZoneSalt_KsSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_KsSalt = RootZoneSalt%KsSalt
+end function GetRootZoneSalt_KsSalt
 
 subroutine SetRootZoneSalt_ECe(ECe)
     !! Setter for the "RootZoneSalt" global variable.
@@ -14548,6 +14624,47 @@ subroutine SetTpot(Tpot_in)
 
     Tpot = Tpot_in
 end subroutine SetTpot
+
+function GetMultipleProjectDescription() result(str)
+    !! Getter for the "MultipleProjectDescription" global variable.
+    character(len=len(MultipleProjectDescription)) :: str
+
+    str = MultipleProjectDescription
+end function GetMultipleProjectDescription
+
+subroutine SetMultipleProjectDescription(str)
+    !! Setter for the "MultipleProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    MultipleProjectDescription = str
+end subroutine SetMultipleProjectDescription
+
+function GetProjectDescription() result(str)
+    !! Getter for the "ProjectDescription" global variable.
+    character(len=len(ProjectDescription)) :: str
+
+    str = ProjectDescription
+end function GetProjectDescription
+
+subroutine SetProjectDescription(str)
+    !! Setter for the "ProjectDescription" global variable.
+    character(len=*), intent(in) :: str
+
+    ProjectDescription = str
+end subroutine SetProjectDescription
+
+real(dp) function GetRootingDepth()
+    !! Getter for the "RootingDepth" global variable.
+
+    GetRootingDepth = RootingDepth
+end function GetRootingDepth
+
+subroutine SetRootingDepth(RootingDepth_in)
+    !! Setter for the "RootingDepth" global variable.
+    real(dp), intent(in) :: RootingDepth_in
+
+    RootingDepth = RootingDepth_in
+end subroutine SetRootingDepth
 
 
 end module ac_global

@@ -50,23 +50,6 @@ CASE GetCrop().pMethod OF
 END; (* AdjustpStomatalToETo *)
 
 
-PROCEDURE AdjustpSenescenceToETo(EToMean : double;
-                                 TimeSenescence : double; // calendar days or GDDays
-                                 WithBeta : BOOLEAN;
-                                 VAR pSenAct : double);
-BEGIN
-pSenAct := GetCrop().pSenescence;
-IF (GetCrop().pMethod = FAOCorrection) THEN
-   BEGIN
-   pSenAct := GetCrop().pSenescence + GetSimulParam_pAdjFAO() * 0.04*(5-EToMean)*log10(10-9*GetCrop().pSenescence);
-   IF ((TimeSenescence > 0.0001) AND WithBeta)
-      THEN pSenAct := pSenAct * (1-GetSimulParam_Beta()/100);
-   IF pSenAct < 0 THEN pSenAct := 0;
-   IF pSenAct >= 1.0 THEN pSenAct := 0.98; // otherwise senescence is not possible at WP
-   END;
-END; (* AdjustpSenescenceToETo *)
-
-
 
 
 
@@ -320,7 +303,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
 
       // 2.3 Relative water content for that day
       SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-      DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+      DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
       SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
       IF (GetSimulation_SWCtopSoilConsidered() = true) // top soil is relative wetter than total root zone
          THEN Wrel := (GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopAct)/(GetRootZoneWC().ZtopFC - GetRootZoneWC().ZtopWP) // top soil
@@ -627,464 +610,6 @@ CASE control OF
      END;
 END; (* CheckWaterSaltBalance *)
 
-
-PROCEDURE CalculateEffectiveRainfall;
-VAR EffecRain, ETcropMonth, RainMonth,
-    DrainMax, Zr, depthi, DTheta, RestTheta : double;
-    compi : INTEGER;
-
-BEGIN
-IF (GetRain() > 0) THEN
-   BEGIN
-   // 1. Effective Rainfall
-   EffecRain := (GetRain()-GetRunoff());
-   Case GetSimulParam_EffectiveRain_Method() OF
-      Percentage : EffecRain := (GetSimulParam_EffectiveRain_PercentEffRain()/100) * (GetRain()-GetRunoff());
-      USDA       : BEGIN
-                   ETcropMonth := ((GetEpot()+GetTpot())*30)/25.4; // inch/month
-                   RainMonth := ((GetRain()-GetRunoff())*30)/25.4; //inch/Month
-                  IF (RainMonth > 0.1)
-                      THEN EffecRain := (0.70917*EXP(0.82416*LN(RainMonth))-0.11556)
-                            * (EXP(0.02426*ETcropMonth*LN(10))) //inch/month
-                      ELSE EffecRain := RainMonth;
-                   EffecRain := EffecRain*(25.4/30); //mm/day
-                   END;
-      end;
-   IF (EffecRain < 0) THEN EffecRain := 0;
-   IF (EffecRain > (GetRain()-GetRunoff())) THEN EffecRain := (GetRain()-GetRunoff());
-   SubDrain := (GetRain()-GetRunoff()) - EffecRain;
-
-   //2. Verify Possibility of SubDrain
-   IF (SubDrain > 0) THEN
-     BEGIN
-     DrainMax := GetSoilLayer_i(1).InfRate;
-     IF (GetSurfaceStorage() > 0)
-        THEN DrainMax := 0
-        ELSE BEGIN
-             Zr := RootingDepth;
-             IF (Zr <= 0) THEN Zr := (GetSimulParam_EvapZmax()/100);
-             compi := 0;
-             depthi := 0;
-             DTheta := (EffecRain/Zr)/1000;
-             REPEAT
-               compi := compi + 1;
-               depthi := depthi + GetCompartment_Thickness(compi);
-               RestTheta := GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100
-                                         - (GetCompartment_theta(compi) + DTheta);
-               IF (RestTheta <= 0) THEN DrainMax := 0;
-               IF (GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate < DrainMax)
-                  THEN DrainMax := GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate;
-             UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()));
-             END;
-     IF (SubDrain > DrainMax) THEN
-        BEGIN
-        //IF (NOT SimulParam.StandingWater)
-        IF (GetManagement_Bundheight() < 0.001)
-           THEN SetRunoff(GetRunoff() + (SubDrain-DrainMax));
-        SubDrain := DrainMax;
-        END;
-     END;
-   END;
-END; (* CalculateEffectiveRainfall *)
-
-
-
-
-PROCEDURE Calculate_irrigation;
-VAR ZrWC,RAWi : double;
-    SWCtopSoilConsidered_temp : boolean;
-BEGIN
-// total root zone is considered
-SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
-SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-ZrWC := GetRootZoneWC().Actual - GetEpot() - GetTpot() + GetRain() - GetRunoff() - SubDrain;
-IF (GetGenerateTimeMode() = AllDepl) THEN
-   IF ((GetRootZoneWC().FC - ZrWC) >= TargetTimeVal)
-      THEN TargetTimeVal := 1
-      ELSE TargetTimeVal := 0;
-IF (GetGenerateTimeMode() = AllRAW) THEN
-   BEGIN
-   RAWi := TargetTimeVal/100 * (GetRootZoneWC().FC - GetRootZoneWC().Thresh);
-   IF ((GetRootZoneWC().FC - ZrWC) >= RAWi)
-      THEN TargetTimeVal := 1
-      ELSE TargetTimeVal := 0;
-   END;
-IF (TargetTimeVal = 1)
-   THEN BEGIN
-        IF (GetGenerateDepthMode() = FixDepth)
-           THEN SetIrrigation(TargetDepthVal)
-           ELSE BEGIN
-                SetIrrigation((GetRootZoneWC().FC - ZrWc) + TargetDepthVal);
-                IF (GetIrrigation() < 0) THEN SetIrrigation(0);
-                END;
-        END
-   ELSE SetIrrigation(0);
-END; (* Calculate_irrigation *)
-
-
-
-PROCEDURE calculate_Extra_runoff(VAR InfiltratedRain, InfiltratedIrrigation, InfiltratedStorage : double);
-VAR FracSubDrain : double;
-BEGIN
-InfiltratedStorage := 0;
-InfiltratedRain := GetRain() - GetRunoff();
-IF (InfiltratedRain > 0)
-   THEN FracSubDrain := SubDrain/InfiltratedRain
-   ELSE FracSubDrain := 0;
-IF (GetIrrigation()+InfiltratedRain) > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate
-   THEN IF (GetIrrigation() > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
-           THEN BEGIN
-                InfiltratedIrrigation := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
-                SetRunoff(GetRain() + (GetIrrigation()-InfiltratedIrrigation));
-                InfiltratedRain := 0;
-                SubDrain := 0;
-                END
-           ELSE BEGIN
-                InfiltratedIrrigation := GetIrrigation();
-                InfiltratedRain := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate - InfiltratedIrrigation;
-                SubDrain := FracSubDrain*InfiltratedRain;
-                SetRunoff(GetRain() - InfiltratedRain);
-                END
-   ELSE InfiltratedIrrigation := GetIrrigation();
-END; (* calculate_Extra_runoff *)
-
-
-
-
-PROCEDURE calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt : double);
-VAR Sum : double;
-    ECw : double;
-
-BEGIN
-InfiltratedRain := 0;
-InfiltratedIrrigation := 0;
-IF (GetRainRecord_DataType() = Daily)
-    THEN Sum := GetSurfaceStorage() + GetIrrigation() + GetRain()
-    ELSE Sum := GetSurfaceStorage() + GetIrrigation() + GetRain() - GetRunoff() - SubDrain;
-IF (Sum > 0)
-  THEN BEGIN
-       // quality of irrigation water
-       IF (dayi < GetCrop().Day1)
-          THEN ECw := GetIrriECw().PreSeason
-          ELSE BEGIN
-               ECw := GetSimulation_IrriECw();
-               IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
-               END;
-       // quality of stored surface water
-       SetECstorage((GetECstorage()*GetSurfaceStorage() + ECw*GetIrrigation())/Sum);
-       // quality of infiltrated water (rain and/or irrigation and/or stored surface water)
-       ECinfilt := GetECstorage();
-       // surface storage
-       IF (Sum > GetSoilLayer_i(GetCompartment_Layer(1)).InfRate)
-          THEN BEGIN
-               InfiltratedStorage := GetSoilLayer_i(GetCompartment_Layer(1)).InfRate;
-               SetSurfaceStorage(Sum - InfiltratedStorage);
-               END
-          ELSE BEGIN
-               IF (GetRainRecord_DataType() = Daily)
-                  THEN InfiltratedStorage := Sum
-                  ELSE BEGIN
-                       InfiltratedStorage := GetSurfaceStorage() + GetIrrigation();
-                       InfiltratedRain := GetRain() - GetRunoff() (* - SubDrain*);
-                       END;
-               SetSurfaceStorage(0);
-               END;
-       // extra run-off
-       IF (GetSurfaceStorage() > (GetManagement_BundHeight()*1000))
-          THEN BEGIN
-               SetRunoff(GetRunoff() + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
-               SetSurfaceStorage(GetManagement_BundHeight()*1000);
-               END;
-       END
-  ELSE BEGIN
-       InfiltratedStorage := 0;
-       SetECstorage(0);
-       END;
-END; (* calculate_surfacestorage *)
-
-
-
-
-
-PROCEDURE calculate_infiltration(VAR InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage : double);
-VAR compi, layeri, pre_comp : INTEGER;
-    RunoffIni,amount_still_to_store, factor,
-    delta_theta_nul, delta_theta_SAT, theta_nul, drain_max, diff, excess : double;
-    EffecRain, Zr, depthi, DeltaZ, StorableMM : double;
-
-FUNCTION Calculate_factor(layeri, compi : INTEGER) : double;
-VAR delta_theta_SAT : double;
-BEGIN (* calculate_factor *)
-delta_theta_SAT := calculate_delta_theta(GetSoilLayer_i(layeri).SAT/100,GetSoilLayer_i(layeri).FC/100,layeri);
-IF (delta_theta_SAT > 0)
-    THEN Calculate_factor := GetSoilLayer_i(layeri).InfRate/
-         (delta_theta_SAT * 1000 * GetCompartment_Thickness(compi) * (1-GetSoilLayer_i(layeri).GravelVol/100))
-    ELSE Calculate_factor := 1;
-END; (* calculate_factor *)
-
-
-BEGIN (* calculate_infiltration *)
-// A -  INFILTRATION versus STORAGE in Rootzone (= EffecRain)
-IF (GetRainRecord_DataType() = Daily)
-   THEN BEGIN
-        amount_still_to_store := InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage;
-        EffecRain := 0;
-        END
-   ELSE BEGIN
-        amount_still_to_store := InfiltratedIrrigation + InfiltratedStorage;
-        EffecRain := InfiltratedRain - SubDrain;
-        END;
-
-// B - INFILTRATION through TOP soil surface
-IF (amount_still_to_store > 0)
-THEN BEGIN
-     RunoffIni := GetRunoff();
-     compi := 0;
-//     excess := 0.0;
-
-     REPEAT
-     compi := compi + 1;
-     layeri := GetCompartment_Layer(compi);
-
-   (*1. Calculate multiplication factor
-   ==================================== *)
-     factor := calculate_factor(layeri,compi);
-
-
-   (*2. Calculate theta nul
-   ======================== *)
-     delta_theta_nul := amount_still_to_store/
-                       (1000 * GetCompartment_Thickness(compi) * (1-GetSoilLayer_i(layeri).GravelVol/100));
-     delta_theta_SAT := calculate_delta_theta(GetSoilLayer_i(layeri).SAT/100,GetSoilLayer_i(layeri).FC/100,layeri);
-
-     IF (delta_theta_nul < delta_theta_SAT)
-        THEN BEGIN
-             theta_nul := calculate_theta(delta_theta_nul,GetSoilLayer_i(layeri).FC/100,layeri);
-             IF (theta_nul <= (GetCompartment_FCadj(compi)/100)) THEN
-                BEGIN
-                theta_nul := GetCompartment_FCadj(compi)/100;
-                delta_theta_nul := calculate_delta_theta(theta_nul,GetSoilLayer_i(layeri).FC/100,layeri);
-                END;
-             IF (theta_nul > GetSoilLayer_i(layeri).SAT/100) THEN theta_nul := GetSoilLayer_i(layeri).SAT/100;
-             END
-        ELSE BEGIN
-             theta_nul := GetSoilLayer_i(layeri).SAT/100;
-             delta_theta_nul := delta_theta_SAT;
-             END;
-
-
-   (*3. Calculate drain max
-   ======================== *)
-     drain_max := factor * delta_theta_nul * 1000 * GetCompartment_Thickness(compi)
-                  * (1-GetSoilLayer_i(layeri).GravelVol/100);
-     IF ((GetCompartment_fluxout(compi) + drain_max) > GetSoilLayer_i(layeri).InfRate)
-        THEN drain_max := GetSoilLayer_i(layeri).InfRate - GetCompartment_fluxout(compi);
-
-
-   (*4. Store water
-   ================ *)
-     diff := theta_nul - GetCompartment_theta(compi);
-     IF (diff > 0) THEN
-        BEGIN
-        SetCompartment_theta(compi, GetCompartment_theta(compi)+ amount_still_to_store/
-                 (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(layeri).GravelVol/100)));
-        IF GetCompartment_theta(compi) > theta_nul
-           THEN BEGIN
-                amount_still_to_store := (GetCompartment_theta(compi) - theta_nul) * 1000 * GetCompartment_Thickness(compi)
-                                         * (1-GetSoilLayer_i(layeri).GravelVol/100);
-                SetCompartment_theta(compi, theta_nul);
-                END
-           ELSE amount_still_to_store := 0.0;
-        END;
-     SetCompartment_fluxout(compi, GetCompartment_fluxout(compi) + amount_still_to_store);
-
-
-   (*5. Redistribute excess
-   ======================== *)
-     excess := amount_still_to_store - drain_max;
-     IF (excess < 0) THEN excess := 0;
-     amount_still_to_store := amount_still_to_store - excess;
-
-     IF (excess > 0) THEN
-        BEGIN
-        pre_comp := compi + 1;
-        REPEAT
-          pre_comp := pre_comp - 1;
-          layeri := GetCompartment_Layer(pre_comp);
-          SetCompartment_fluxout(pre_comp, GetCompartment_fluxout(pre_comp) - excess);
-          SetCompartment_theta(pre_comp, GetCompartment_theta(pre_comp)  + excess/
-             (1000 * GetCompartment_Thickness(pre_comp) * (1-GetSoilLayer_i(GetCompartment_Layer(pre_comp)).GravelVol/100)));
-          IF (GetCompartment_theta(pre_comp) > GetSoilLayer_i(layeri).SAT/100)
-             THEN BEGIN
-                  excess := (GetCompartment_theta(pre_comp) - GetSoilLayer_i(layeri).SAT/100)
-                            * 1000 * GetCompartment_Thickness(pre_comp)
-                            * (1-GetSoilLayer_i(GetCompartment_Layer(pre_comp)).GravelVol/100);
-                  SetCompartment_theta(pre_comp, GetSoilLayer_i(layeri).SAT/100);
-                  END
-             ELSE excess := 0.0;
-        UNTIL ((excess = 0) OR (pre_comp = 1));
-        IF (excess > 0) THEN SetRunoff(GetRunoff() + excess);
-        END;
-
-     UNTIL ((amount_still_to_store <= 0) or (compi = GetNrCompartments()));
-     IF (amount_still_to_store > 0) THEN SetDrain(GetDrain() + amount_still_to_store);
-
-   (*6. Adjust infiltrated water
-   ============================= *)
-     IF (GetRunoff() > RunoffIni) THEN
-        //IF (SimulParam.StandingWater)
-        IF (GetManagement_Bundheight() >= 0.01)
-           THEN BEGIN
-                SetSurfaceStorage(GetSurfaceStorage() + (GetRunoff()-RunoffIni));
-                InfiltratedStorage := InfiltratedStorage - (GetRunoff()-RunoffIni);
-                IF (GetSurfaceStorage() > GetManagement_BundHeight()*1000)
-                   THEN BEGIN
-                        SetRunoff(RunoffIni + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
-                        SetSurfaceStorage(GetManagement_BundHeight()*1000);
-                        END
-                   ELSE SetRunoff(RunoffIni);
-                END
-           ELSE BEGIN
-                InfiltratedRain := InfiltratedRain - (GetRunoff()-RunoffIni);
-                IF (InfiltratedRain < 0) THEN
-                   BEGIN
-                   InfiltratedIrrigation := InfiltratedIrrigation + InfiltratedRain;
-                   InfiltratedRain := 0;
-                   END;
-                END;
-
-     END; (* INFILTRATION through TOP soil surface *)
-
-
-// C - STORAGE in Subsoil (= SubDrain)
-IF (SubDrain > 0) THEN
-   BEGIN
-   amount_still_to_store := SubDrain;
-
-   (* Where to store *)
-   Zr := RootingDepth;
-   IF (Zr <= 0) THEN Zr := GetSimulParam_EvapZmax()/100;
-   compi := 0;
-   depthi := 0;
-   REPEAT
-     compi := compi + 1;
-     depthi := depthi + GetCompartment_Thickness(compi);
-   UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()));
-   IF (depthi > Zr) THEN DeltaZ := (depthi - Zr)
-                    ELSE DeltaZ := 0;
-
-   (* Store *)
-   WHILE((amount_still_to_store > 0) AND ((compi < GetNrCompartments()) OR (DeltaZ > 0))) DO
-     BEGIN
-     IF (DeltaZ = 0) THEN
-        BEGIN
-        compi := compi + 1;
-        DeltaZ := GetCompartment_Thickness(compi);
-        END;
-     StorableMM := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100 - GetCompartment_Theta(compi)) * 1000 * DeltaZ
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-     IF (StorableMM > amount_still_to_store)
-        THEN BEGIN
-             SetCompartment_theta(compi, GetCompartment_Theta(compi) + (amount_still_to_store)/
-                   (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-             amount_still_to_store := 0;
-             END
-        ELSE BEGIN
-             amount_still_to_store := amount_still_to_store - StorableMM;
-             SetCompartment_theta(compi, GetCompartment_Theta(compi) + (StorableMM)/
-                   (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-             END;
-     DeltaZ := 0;
-     IF (amount_still_to_store > GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate) THEN
-        BEGIN
-        SubDrain := SubDrain - (amount_still_to_store - GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate);
-        EffecRain := EffecRain + (amount_still_to_store - GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate);
-        amount_still_to_store := GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate;
-        END;
-     END;
-
-   (* excess *)
-   IF (amount_still_to_store > 0) THEN SetDrain(GetDrain() + amount_still_to_store);
-   END; (* STORAGE in Subsoil (= SubDrain) *)
-
-// D - STORAGE in Rootzone (= EffecRain)
-IF (EffecRain > 0) THEN
-   BEGIN
-   Zr := RootingDepth;
-   IF (Zr <= 0) THEN Zr := GetSimulParam_EvapZmax()/100;
-   amount_still_to_store := EffecRain;
-
-   (* Store *)
-   (* step 1 fill to FC (from top to bottom) *)
-   compi := 0;
-   depthi := 0;
-   REPEAT
-     compi := compi + 1;
-     depthi := depthi + GetCompartment_Thickness(compi);
-     IF (depthi <= Zr) THEN DeltaZ := GetCompartment_Thickness(compi)
-                       ELSE DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr);
-     //StorableMM := (SoilLayer[Compartment[compi].Layer].FC/100 - Compartment[compi].theta)*1000*DeltaZ;
-     StorableMM := (GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi))*1000*DeltaZ
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-     IF (StorableMM < 0) THEN StorableMM := 0;
-     IF (StorableMM > amount_still_to_store)
-        THEN BEGIN
-             SetCompartment_theta(compi, GetCompartment_Theta(compi) + amount_still_to_store/
-                (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-             amount_still_to_store := 0;
-             END
-        ELSE IF (StorableMM > 0) THEN
-                BEGIN
-                SetCompartment_theta(compi, GetCompartment_Theta(compi) + StorableMM/
-                   (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-                amount_still_to_store := amount_still_to_store - StorableMM;
-                END;
-   UNTIL ((depthi >= Zr) OR (compi >= GetNrCompartments()) OR (amount_still_to_store <= 0));
-
-   (* step 2 fill to SATURATION (from bottom to top) *)
-   IF (amount_still_to_store > 0) THEN
-      REPEAT
-        IF (depthi > Zr) THEN DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr)
-                         ELSE DeltaZ := GetCompartment_Thickness(compi);
-        StorableMM := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100 - GetCompartment_Theta(compi))*1000*DeltaZ
-                       * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-        IF (StorableMM < 0) THEN StorableMM := 0;
-        IF (StorableMM > amount_still_to_store)
-           THEN BEGIN
-                SetCompartment_theta(compi, GetCompartment_theta(compi) + amount_still_to_store/
-                     (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-                amount_still_to_store := 0;
-                END
-           ELSE IF (StorableMM > 0) THEN
-                BEGIN
-                SetCompartment_theta(compi, GetCompartment_Theta(compi) + StorableMM/
-                      (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-                amount_still_to_store := amount_still_to_store - StorableMM;
-                END;
-         compi := compi - 1;
-         depthi := depthi - GetCompartment_Thickness(compi);
-      UNTIL ((compi = 0) OR (amount_still_to_store <= 0));
-
-   (* excess *)
-   IF (amount_still_to_store > 0) THEN
-      BEGIN
-      IF (InfiltratedRain > 0) THEN InfiltratedRain := InfiltratedRain - amount_still_to_store;
-      //IF (SimulParam.StandingWater)
-      IF (GetManagement_Bundheight() >= 0.01)
-         THEN BEGIN
-              SetSurfaceStorage(GetSurfaceStorage() + amount_still_to_store);
-              IF (GetSurfaceStorage() > (GetManagement_BundHeight()*1000))
-                 THEN BEGIN
-                      SetRunoff(GetRunoff() + (GetSurfaceStorage() - GetManagement_BundHeight()*1000));
-                      SetSurfaceStorage(GetManagement_BundHeight()*1000);
-                     END;
-              END
-         ELSE SetRunoff(GetRunoff() + amount_still_to_store);
-      END;
-   END; (* STORAGE in Rootzone (= EffecRain) *)
-
-END; (* calculate_infiltration *)
 
 
 
@@ -1405,7 +930,7 @@ FOR compi := 2 TO GetNrCompartments() DO
 //SubDrain part of non-effective rainfall (10-day & monthly input)
 IF (SubDrain > 0) THEN
    BEGIN
-   Zr := RootingDepth;
+   Zr := GetRootingDepth();
    IF (Zr >= 0) THEN Zr := (GetSimulParam_EvapZmax()/100); // in meter
    compi := 0;
    depthi := 0;
@@ -1459,105 +984,6 @@ IF (SubDrain > 0) THEN
            END;
    END;
 END; (* calculate_saltcontent *)
-
-
-
-PROCEDURE EffectSoilFertilitySalinityStress();
-VAR FertilityEffectStress,SalinityEffectStress : rep_EffectStress;
-    SaltStress,CCxRedD : double;
-    CCxRed : ShortInt;
-    ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
-    RedCGC_temp, RedCCX_temp : ShortInt;
-    Crop_DaysToFullCanopySF_temp : integer;
-    EffectStress_temp : rep_EffectStress;
-
-    PROCEDURE NoEffectStress(VAR TheEffectStress : rep_EffectStress);
-    BEGIN
-    TheEffectStress.RedCGC := 0;
-    TheEffectStress.RedCCX := 0;
-    TheEffectStress.RedWP := 0;
-    TheEffectStress.CDecline := 0;
-    TheEffectStress.RedKsSto := 0;
-    END; (* NoEffectStress *)
-
-
-BEGIN
-IF (GetSimulation_SalinityConsidered() = true)
-   THEN BEGIN
-        ECe_temp := GetRootZoneSalt().ECe;
-        ECsw_temp := GetRootZoneSalt().ECsw;
-        ECswFC_temp := GetRootZoneSalt().ECswFC;
-        KsSalt_temp := GetRootZoneSalt().KsSalt;
-        DetermineRootZoneSaltContent(RootingDepth,ECe_temp,ECsw_temp,ECswFC_temp,KsSalt_temp);
-        SetRootZoneSalt_ECe(ECe_temp);
-        SetRootZoneSalt_ECsw(ECsw_temp);
-        SetRootZoneSalt_ECswFC(ECswFC_temp);
-        SetRootZoneSalt_KsSalt(KsSalt_temp);
-        //SaltStress := (1-RootZoneSalt.KsSalt)*100;
-        SaltStress := (NrDayGrow*StressTotSaltPrev + 100*(1-GetRootZoneSalt().KsSalt))/(NrDayGrow+1);
-        END
-   ELSE SaltStress := 0;
-IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop().DayN-GetCrop().Day1))
-    OR (GetSimulation_Germinate() = false)
-    OR ((StressSFAdjNEW = 0) AND (SaltStress <= 0.1)))
-   THEN BEGIN  // no soil fertility and salinity stress
-        EffectStress_temp := GetSimulation_EffectStress();
-        NoEffectStress(EffectStress_temp);
-        SetSimulation_EffectStress(EffectStress_temp);
-        SetCrop_DaysToFullCanopySF(GetCrop().DaysToFullCanopy);
-        IF (GetCrop_ModeCycle() = GDDays) THEN SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
-        END
-   ELSE BEGIN
-        // Soil fertility
-        IF (StressSFAdjNEW = 0)
-           THEN NoEffectStress(FertilityEffectStress)
-           ELSE CropStressParametersSoilFertility(GetCrop_StressResponse(),StressSFAdjNEW,FertilityEffectStress);
-        // Soil Salinity
-        CCxRedD := ROUND(Coeffb0Salt + Coeffb1Salt * SaltStress + Coeffb2Salt * SaltStress * SaltStress);
-        IF ((CCxRedD < 0) OR (SaltStress <= 0.1) OR (GetSimulation_SalinityConsidered() = false))
-           THEN NoEffectStress(SalinityEffectStress)
-           ELSE BEGIN
-                IF ((CCxRedD > 100) OR (SaltStress >= 99.9))
-                   THEN CCxRed := 100
-                   ELSE CCxRed := ROUND(CCxRedD);
-                CropStressParametersSoilSalinity(CCxRed,GetCrop().CCsaltDistortion,GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,
-                             GetCrop().GDDCGC,GetCrop().DeterminancyLinked,GetCrop().DaysToFullCanopy,GetCrop().DaysToFlowering,
-                             GetCrop().LengthFlowering,GetCrop().DaysToHarvest,GetCrop().GDDaysToFullCanopy,
-                             GetCrop().GDDaysToFlowering,GetCrop().GDDLengthFlowering,
-                             GetCrop().GDDaysToHarvest,GetCrop_ModeCycle(),SalinityEffectStress);
-                END;
-        // Assign integrated effect of the stresses
-        SetSimulation_EffectSTress_RedWP(FertilityEffectStress.RedWP);
-        SetSimulation_EffectSTress_RedKsSto(SalinityEffectStress.RedKsSto);
-        IF (FertilityEffectStress.RedCGC > SalinityEffectStress.RedCGC)
-           THEN SetSimulation_EffectSTress_RedCGC(FertilityEffectStress.RedCGC)
-           ELSE SetSimulation_EffectSTress_RedCGC(SalinityEffectStress.RedCGC);
-        IF (FertilityEffectStress.RedCCX > SalinityEffectStress.RedCCX)
-           THEN SetSimulation_EffectSTress_RedCCX(FertilityEffectStress.RedCCX)
-           ELSE SetSimulation_EffectSTress_RedCCX(SalinityEffectStress.RedCCX);
-        IF (FertilityEffectStress.CDecline > SalinityEffectStress.CDecline)
-           THEN SetSimulation_EffectSTress_CDecline(FertilityEffectStress.CDecline)
-           ELSE SetSimulation_EffectSTress_CDecline(SalinityEffectStress.CDecline);
-        // adjust time to maximum canopy cover
-        RedCGC_temp := GetSimulation_EffectStress_RedCGC();
-        RedCCX_temp := GetSimulation_EffectStress_RedCCX();
-        Crop_DaysToFullCanopySF_temp := GetCrop().DaysToFullCanopySF;
-        TimeToMaxCanopySF(GetCrop().CCo,GetCrop().CGC,GetCrop().CCx,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,
-                          GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().DeterminancyLinked,
-                          Crop_DaysToFullCanopySF_temp,RedCGC_temp,
-                          RedCCX_temp,StressSFAdjNEW);
-        SetSimulation_EffectStress_RedCGC(RedCGC_temp);
-        SetSimulation_EffectStress_RedCCX(RedCCX_temp);
-        SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp);
-        IF (GetCrop().ModeCycle = GDDays) THEN
-           BEGIN
-           IF ((GetManagement_FertilityStress() <> 0) OR (SaltStress <> 0))
-              THEN SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(GetCrop().DaysToFullCanopySF,GetCrop().Day1,GetCrop().Tbase,GetCrop().Tupper,
-                                            GetSimulParam_Tmin(),GetSimulParam_Tmax()))
-              ELSE SetCrop_GDDaysToFullCanopySF(GetCrop().GDDaysToFullCanopy);
-           END;
-        END;
-END; (* EffectSoilFertilitySalinityStress *)
 
 
 
@@ -3154,7 +2580,7 @@ IF (Tpot > 0) THEN
       ELSE BEGIN // IrriMode = NOT Inet
            // 1.a effect of water stress and salinity stress
            SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-           DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+           DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
            SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
 
            // --- 1. Effect of water stress and ECe (total rootzone)
@@ -3202,15 +2628,15 @@ IF (Tpot > 0) THEN
            TpotMAX := RedFactECsw * Tpot;
 
            // 1.b anaerobic conditions in root zone (total root zone is considered)
-           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,GetCrop().AnaeroPoint,RootingDepth,RedFact);
+           DetermineRootZoneAnaeroConditions(GetRootZoneWC().SAT,GetRootZoneWC().Actual,GetCrop().AnaeroPoint,GetRootingDepth(),RedFact);
            TpotMAX := RedFact * TpotMax;
            END;
 
    // 2. extraction of TpotMax out of the compartments
    // 2.a initial settings
    Comp_temp := GetCompartment();
-   calculate_rootfraction_compartment(RootingDepth,Comp_temp);
-   calculate_sink_values(TpotMAX,RootingDepth,Comp_temp,GetCrop());
+   calculate_rootfraction_compartment(GetRootingDepth(),Comp_temp);
+   calculate_sink_values(TpotMAX,GetRootingDepth(),Comp_temp,GetCrop());
    SetCompartment(Comp_temp);
    compi := 0;
    pre_layer := 0;
@@ -3282,7 +2708,7 @@ IF (Tpot > 0) THEN
    IF (GetIrriMode() = Inet) THEN
      BEGIN // total root zone is considered
      SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-     DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+     DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
      SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
      InetThreshold := GetRootZoneWC().FC - GetSimulParam_PercRAW()/100*(GetRootZoneWC().FC - GetRootZoneWC().Thresh);
      IF (GetRootZoneWC().Actual < InetThreshold) THEN
@@ -3452,13 +2878,13 @@ IF (GetManagement_Bundheight() < 0.001) THEN
 
 // 5. Infiltration (Rain and Irrigation)
 IF ((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthly))
-   THEN CalculateEffectiveRainfall;
+   THEN CalculateEffectiveRainfall(SubDrain);
 IF (((GetIrriMode() = Generate) AND (GetIrrigation() = 0)) AND (TargetTimeVal <> -999))
-   THEN Calculate_irrigation;
+   THEN Calculate_irrigation(SubDrain, TargetTimeVal, TargetDepthVal);
 IF (GetManagement_Bundheight() >= 0.01)
-   THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt)
-   ELSE calculate_Extra_runoff(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
-calculate_infiltration(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
+   THEN calculate_surfacestorage(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage,ECinfilt, SubDrain, dayi)
+   ELSE calculate_Extra_runoff(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage, SubDrain);
+calculate_infiltration(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage, SubDrain);
 
 // 6. Capillary Rise
 CRwater_temp := GetCRwater();
@@ -3476,7 +2902,8 @@ IF ((GetSimulation_Germinate() = false) AND (dayi >=GetCrop().Day1)) THEN CheckG
 
 // 9. Determine effect of soil fertiltiy and soil salinity stress
 // EffectSoilFertilitySalinityStress(Simulation.EffectStress);
-IF (NoMoreCrop = false) THEN EffectSoilFertilitySalinityStress();
+IF (NoMoreCrop = false) THEN EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, Coeffb1Salt,
+                                            Coeffb2Salt, NrDayGrow, StressTotSaltPrev, VirtualTimeCC);
 
 
 // 10. Canopy Cover (CC)
@@ -3484,7 +2911,7 @@ IF (NoMoreCrop = false) THEN
    BEGIN
    // determine water stresses affecting canopy cover
    SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-   DetermineRootZoneWC(RootingDepth,SWCtopSoilConsidered_temp);
+   DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
    SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
    // determine canopy cover
    CASE GetCrop_ModeCycle() OF
@@ -3546,7 +2973,7 @@ IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthl
 
 
 // 13. Transpiration
-IF ((NoMoreCrop = false) AND (RootingDepth > 0.0001)) THEN
+IF ((NoMoreCrop = false) AND (GetRootingDepth() > 0.0001)) THEN
    BEGIN
    IF ((GetSurfaceStorage() > 0) AND
        ((GetCrop().AnaeroPoint = 0) OR (GetDaySubmerged() < GetSimulParam_DelayLowOxygen())))
