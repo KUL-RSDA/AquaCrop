@@ -1006,6 +1006,7 @@ integer(int8) :: MaxPlotTr
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
+real(dp) :: Eact ! mm/day
 real(dp) :: Epot ! mm/day
 real(dp) :: ETo ! mm/day
 real(dp) :: Drain  ! mm/day
@@ -1017,6 +1018,7 @@ real(dp) :: Runoff  ! mm/day
 real(dp) :: Tpot ! mm/day
 
 
+logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
 
 
@@ -14510,6 +14512,19 @@ subroutine SetMaxPlotTr(MaxPlotTr_in)
     MaxPlotTr = MaxPlotTr_in
 end subroutine SetMaxPlotTr
 
+logical function GetEvapoEntireSoilSurface()
+    !! Getter for the "EvapoEntireSoilSurface" global variable.
+
+    GetEvapoEntireSoilSurface = EvapoEntireSoilSurface
+end function GetEvapoEntireSoilSurface
+
+subroutine SetEvapoEntireSoilSurface(EvapoEntireSoilSurface_in)
+    !! Setter for the "EvapoEntireSoilSurface" global variable.
+    logical, intent(in) :: EvapoEntireSoilSurface_in
+
+    EvapoEntireSoilSurface = EvapoEntireSoilSurface_in
+end subroutine SetEvapoEntireSoilSurface
+
 logical function GetPreDay()
     !! Getter for the "PreDay" global variable.
 
@@ -14548,6 +14563,19 @@ subroutine SetECiAqua(ECiAqua_in)
 
     ECiAqua = ECiAqua_in
 end subroutine SetECiAqua
+
+real(dp) function GetEact()
+    !! Getter for the "Eact" global variable.
+
+    GetEact = Eact
+end function GetEact
+
+subroutine SetEact(Eact_in)
+    !! Setter for the "Eact" global variable.
+    real(dp), intent(in) :: Eact_in
+
+    Eact = Eact_in
+end subroutine SetEact
 
 real(dp) function GetETo()
     !! Getter for the "ETo" global variable.

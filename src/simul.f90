@@ -26,6 +26,7 @@ use ac_global, only: undef_int, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
+                     GetCrop, &
                      GetCrop_AdaptedToCO2, &
                      GetCrop_CCEffectEvapLate, &
                      GetCrop_CCo, &
@@ -67,18 +68,26 @@ use ac_global, only: undef_int, &
                      GetCrop_Tupper, &   
                      GetCrop_WP, &
                      GetCrop_WPy, &
+                     GetEact, &
                      GetECstorage, &
                      GetEpot, &
                      GetETO, &
+                     GetEvapoEntireSoilSurface, &
                      GetDrain, &
                      GetGenerateDepthMode, &
                      GetGenerateTimeMode, &
                      GetIrriECw_PostSeason, &
                      GetIrriECw_PreSeason, &
                      GetIrrigation, &
+                     GetIrriMode, &
                      GetManagement_BundHeight, &
                      GetManagement_CNcorrection, &
+                     GetManagement_EffectMulchInS, &
+                     GetManagement_EffectMulchOffS, &
                      GetManagement_FertilityStress, &
+                     GetManagement_Mulch, &
+                     GetManagement_SoilCoverAfter, &
+                     GetManagement_SoilCoverBefore, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
@@ -107,6 +116,8 @@ use ac_global, only: undef_int, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
+                     GetSimulParam_IrriFwInSeason, &
+                     GetSimulParam_IrriFwOffSeason, &
                      GetSimulParam_pAdjFAO, &
                      GetSimulParam_Tmin, &
                      GetSimulParam_Tmax, &
@@ -120,10 +131,12 @@ use ac_global, only: undef_int, &
                      GetSoilLayer_WP, &
                      GetSurfaceStorage, &
                      GetTpot, &
+                     IrriMode_Inet, &
                      max_No_compartments, &
                      modeCycle_CalendarDays, &
                      modeCycle_GDDays, &
                      pMethod_FAOCorrection, &
+                     rep_Crop, &
                      rep_EffectStress, &
                      rep_Soil, &
                      roundc, &
@@ -134,7 +147,9 @@ use ac_global, only: undef_int, &
                      SetCrop_DaysTOFullCanopySF, &
                      SetCrop_GDDaysToFullCanopySF, &
                      SetDrain, &
+                     SetEact, &
                      SetECstorage, &
+                     SetEvapoEntireSoilSurface, &
                      SetIrrigation, &
                      SetRootZoneSalt_ECe, &
                      SetRootZoneSalt_ECsw, &
@@ -1492,6 +1507,90 @@ subroutine PrepareStage1()
     call SetSimulation_EvapZ(EvapZmin/100._dp)
 
 end subroutine PrepareStage1
+
+
+subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: EpotTot
+    real(dp), intent(inout) :: Epot
+    real(dp), intent(inout) :: EvapWCsurface
+
+    real(dp) :: EpotIrri
+
+    ! 1. Mulches (reduction of EpotTot to Epot)
+    if (GetSurfaceStorage() <= 0.000001_dp) then
+        if (dayi < GetCrop_Day1()) then ! before season
+            Epot = EpotTot &
+                    * (1._dp - (GetManagement_EffectMulchOffS()/100._dp) &
+                               *(GetManagement_SoilCoverBefore()/100._dp))
+        else
+            if (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) then ! in season
+                Epot = EpotTot &
+                        * (1._dp &
+                            - (GetManagement_EffectMulchInS()/100._dp) &
+                             * (GetManagement_Mulch()/100._dp))
+            else
+                Epot = EpotTot &
+                        * (1._dp &
+                            - (GetManagement_EffectMulchOffS()/100._dp) &
+                             * (GetManagement_SoilCoverAfter()/100._dp))
+            end if
+        end if
+    else
+        Epot = EpotTot ! flooded soil surface
+    end if
+
+
+    ! 2a. Entire soil surface wetted ?
+    if (GetIrrigation() > 0._dp) then
+        ! before season
+        if ((dayi < GetCrop_Day1()) &
+            .and. (GetSimulParam_IrriFwOffSeason() < 100)) then
+            call SetEvapoEntireSoilSurface(.false.)
+        end if
+        ! in season
+        if ((dayi >= GetCrop_Day1()) &
+            .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+            .and. (GetSimulParam_IrriFwInSeason() < 100)) then
+            call SetEvapoEntireSoilSurface(.false.)
+        end if
+        ! after season
+        if ((dayi >= GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+            .and.(GetSimulParam_IrriFwOffSeason() < 100)) then
+            call SetEvapoEntireSoilSurface(.false.)
+        end if
+    end if
+    if ((GetRain() > 1._dp) .or. (GetSurfaceStorage() > 0._dp)) then
+        call SetEvapoEntireSoilSurface(.true.)
+    end if
+    if ((dayi >= GetCrop_Day1()) &
+        .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+        .and. (GetIrriMode() == IrriMode_Inet)) then
+        call SetEvapoEntireSoilSurface(.true.)
+    end if
+
+    ! 2b. Correction for Wetted surface by Irrigation
+    if (.not.GetEvapoEntireSoilSurface()) then
+        if ((dayi >= GetCrop_Day1()) &
+            .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest())) then
+            ! in season
+            EvapWCsurface = EvapWCsurface &
+                            * (GetSimulParam_IrriFwInSeason()/100._dp)
+            EpotIrri = EpotTot * (GetSimulParam_IrriFwInSeason()/100._dp)
+        else
+            ! off-season
+            EvapWCsurface = EvapWCsurface &
+                            * (GetSimulParam_IrriFwOffSeason()/100._dp)
+            EpotIrri = EpotTot * (GetSimulParam_IrriFwOffSeason()/100._dp)
+        end if
+        if (GetEact() > EpotIrri) then
+            EpotIrri = GetEact()  ! Eact refers to the previous day
+        end if
+        if (EpotIrri < Epot) then
+            Epot = Epotirri
+        end if
+    end if
+end subroutine AdjustEpotMulchWettedSurface
 
 
 !-----------------------------------------------------------------------------
