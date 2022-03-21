@@ -89,20 +89,17 @@ procedure EffectSoilFertilitySalinityStress(
     external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
 
 procedure CalculateEvaporationSurfaceWater();
-    external 'aquacrop' name '__MOD_simul_calculateevaporationsurfacewater';
+    external 'aquacrop' name '__ac_simul_MOD_calculateevaporationsurfacewater';
 
 function WCEvapLayer(constref Zlayer : double;
                      constref AtTheta : rep_WhichTheta) : double;
 
 function __WCEvapLayer(constref Zlayer : double;
                        constref AtTheta : integer) : double;
-    external 'aquacrop' name '__MOD_simul_wcevaplayer';
+    external 'aquacrop' name '__ac_simul_MOD_wcevaplayer';
 
 procedure PrepareStage2();
-    external 'aquacrop' name '__MOD_simul_preparestage2';
-
-procedure CalculateEvaporationSurfaceWater();
-    external 'aquacrop' name '__MOD_simul_calculateevaporationsurfacewater';
+    external 'aquacrop' name '__ac_simul_MOD_preparestage2';
 
 procedure PrepareStage1();
     external 'aquacrop' name '__ac_simul_MOD_preparestage1';
@@ -123,7 +120,7 @@ procedure AdjustEpotMulchWettedSurface(
 implementation
 
 function WCEvapLayer(constref Zlayer : double;
-                     constref AtTheta : rep_WhichTheta) : double
+                     constref AtTheta : rep_WhichTheta) : double;
 var
     int_attheta : integer;
 begin

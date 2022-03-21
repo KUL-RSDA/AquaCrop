@@ -105,7 +105,9 @@ use ac_global, only: undef_int, &
                      GetSimulation_EffectStress, &
                      GetSimulation_EffectSTress_RedCCx, &
                      GetSimulation_EffectStress_RedCGC, &
+                     GetSimulation_EvapStartStg2, &
                      GetSimulation_EvapWCsurf, &
+                     GetSimulation_EvapZ, &
                      GetSimulation_Germinate, &
                      GetSimulation_IrriECw, &
                      GetSimulation_SalinityConsidered, &
@@ -1519,12 +1521,13 @@ subroutine PrepareStage1()
 
 end subroutine PrepareStage1
 
+
 real(dp) function WCEvapLayer(Zlayer, AtTheta)
     real(dp), intent(in) :: Zlayer
     integer(intEnum), intent(in) :: AtTheta
 
     real(dp) :: Ztot, Wx, fracZ
-    integer(int8) :: compi
+    integer(int32) :: compi
 
     Wx = 0.0_dp
     Ztot = 0.0_dp
@@ -1587,9 +1590,10 @@ subroutine PrepareStage2()
     AtTheta = whichtheta_AtAct
     Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
     call SetSimulation_EvapStartStg2(roundc(100._dp &
-          * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), mold=1))
-    if (GetSimulation_EvapStartStg2() < 0._dp) then
-        call SetSimulation_EvapStartStg2(0._dp)
+          * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), &
+                                                      mold=1_int8))
+    if (GetSimulation_EvapStartStg2() < 0) then
+        call SetSimulation_EvapStartStg2(0_int8)
     end if
 end subroutine PrepareStage2
 
@@ -1612,7 +1616,7 @@ subroutine CalculateEvaporationSurfaceWater()
         if (GetSimulation_EvapWCsurf() < 0.0001_dp) then
             call PrepareStage2()
         else
-            call SetSimulation_EvapStartStg2(undef_int)
+            call SetSimulation_EvapStartStg2(int(undef_int, kind=int8))
         end if
     end if
 end subroutine CalculateEvaporationSurfaceWater
