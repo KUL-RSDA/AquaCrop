@@ -104,6 +104,8 @@ procedure PrepareStage2();
 procedure CalculateEvaporationSurfaceWater();
     external 'aquacrop' name '__MOD_simul_calculateevaporationsurfacewater';
 
+procedure PrepareStage1();
+    external 'aquacrop' name '__ac_simul_MOD_preparestage1';
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module

@@ -1,7 +1,8 @@
 module ac_simul
 
 use ac_kinds, only:  dp, int32, int8, intEnum
-use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
+use ac_global, only: undef_int, &
+                     CalculateETpot, CanopyCoverNoStressSF, &
                      CompartmentIndividual, &
                      CO2Ref, &
                      CropStressParametersSoilFertility, &
@@ -13,6 +14,8 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      DetermineRootzoneWC, &
                      EffectiveRainMethod_Percentage, &
                      EffectiveRainMethod_USDA, &
+                     Equiv, &
+                     EvapZmin, &
                      fAdjustedForCO2, &
                      GenerateDepthMode_FixDepth, &
                      GenerateTimeMode_AllDepl, &
@@ -93,6 +96,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSimulation_EffectStress, &
                      GetSimulation_EffectSTress_RedCCx, &
                      GetSimulation_EffectStress_RedCGC, &
+                     GetSimulation_EvapWCsurf, &
                      GetSimulation_Germinate, &
                      GetSimulation_IrriECw, &
                      GetSimulation_SalinityConsidered, &
@@ -107,6 +111,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      GetSimulParam_pAdjFAO, &
                      GetSimulParam_Tmin, &
                      GetSimulParam_Tmax, &
+                     GetSoil, &
                      GetSoil_CNvalue, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
@@ -121,6 +126,7 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      modeCycle_GDDays, &
                      pMethod_FAOCorrection, &
                      rep_EffectStress, &
+                     rep_Soil, &
                      roundc, &
                      SetCompartment, &
                      SetCompartment_fluxout, &
@@ -142,6 +148,9 @@ use ac_global, only: CalculateETpot, CanopyCoverNoStressSF, &
                      SetSimulation_EffectStress_RedCGC, &
                      SetSimulation_EffectStress_RedKsSto, &
                      SetSimulation_EffectStress_RedWP, &
+                     SetSimulation_EvapStartStg2, &
+                     SetSimulation_EvapWCsurf, &
+                     SetSimulation_EvapZ, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSurfaceStorage, &
                      subkind_Grain, &
@@ -1476,6 +1485,23 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
 end subroutine EffectSoilFertilitySalinityStress
 
 
+subroutine PrepareStage1()
+    type(rep_Soil) :: Soil_temp
+
+    Soil_temp = GetSoil()
+
+    if (GetSurfaceStorage() > 0.0000001_dp) then
+        call SetSimulation_EvapWCsurf(Soil_temp%REW*1._dp)
+    else
+        call SetSimulation_EvapWCsurf(GetRain() + GetIrrigation() - GetRunOff())
+        if (GetSimulation_EvapWCsurf() > Soil_temp%REW) then
+            call SetSimulation_EvapWCsurf(Soil_temp%REW*1._dp)
+        end if
+    end if
+    call SetSimulation_EvapStartStg2(int(undef_int,kind=int8))
+    call SetSimulation_EvapZ(EvapZmin/100._dp)
+
+end subroutine PrepareStage1
 
 real(dp) function WCEvapLayer(Zlayer, AtTheta)
     real(dp), intent(in) :: Zlayer
@@ -1547,7 +1573,7 @@ subroutine PrepareStage2()
     call SetSimulation_EvapStartStg2(roundc(100._dp &
           * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), mold=1))
     if (GetSimulation_EvapStartStg2() < 0._dp) then
-        SetSimulation_EvapStartStg2(0._dp)
+        call SetSimulation_EvapStartStg2(0._dp)
     end if
 end subroutine PrepareStage2
 
@@ -1565,7 +1591,7 @@ subroutine CalculateEvaporationSurfaceWater()
     else
         call SetEact(GetSurfaceStorage())
         call SetSurfaceStorage(0._dp)
-        call SetSimulation_EvapWCsurf(GetSoil()%REW)
+        call SetSimulation_EvapWCsurf(GetSoil_REW())
         call SetSimulation_EvapZ(EvapZmin/100._dp)
         if (GetSimulation_EvapWCsurf() < 0.0001_dp) then
             call PrepareStage2()
