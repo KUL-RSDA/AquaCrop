@@ -491,8 +491,7 @@ PROCEDURE BUDGET_module(dayi : LongInt;
                         VAR TimeSenescence : double;
                         VAR NoMoreCrop,CGCadjustmentAfterCutting : BOOLEAN;
                         VAR TESTVAL : double);
-TYPE // rep_control = (begin_day,end_day);
-     rep_WhichTheta = (AtSAT,AtFC,AtWP,AtAct);
+
 VAR  control : rep_control;
      InfiltratedRain,
      InfiltratedIrrigation,
@@ -1669,79 +1668,6 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
 
         END;
 END; (* DetermineCCiGDD *)
-
-
-
-FUNCTION WCEvapLayer(Zlayer : double;
-                     AtTheta : rep_WhichTheta) : double;
-VAR Ztot,Wx,fracZ : double;
-    compi : ShortInt;
-BEGIN
-Wx := 0.0;
-Ztot := 0.0;
-compi := 0;
-WHILE ((ABS(Zlayer-Ztot) > 0.0001) AND (compi < GetNrCompartments())) DO
-      BEGIN
-      compi := compi + 1;
-      IF ((Ztot + GetCompartment_Thickness(compi)) > Zlayer)
-         THEN fracZ := (Zlayer - Ztot)/(GetCompartment_Thickness(compi))
-         ELSE fracZ := 1;
-      CASE AtTheta OF
-           AtSAT  : Wx := Wx + 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).SAT * fracZ * GetCompartment_Thickness(compi)
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           AtFC   : Wx := Wx + 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).FC * fracZ * GetCompartment_Thickness(compi)
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           AtWP   : Wx := Wx + 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP * fracZ * GetCompartment_Thickness(compi)
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           else Wx := Wx + 1000 * GetCompartment_Theta(compi) * fracZ * GetCompartment_Thickness(compi)
-                      * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           end;
-      Ztot := Ztot + fracZ * GetCompartment_Thickness(compi);
-      END;
-WCEvapLayer := Wx;
-END; (* WCEvapLayer *)
-
-
-
-PROCEDURE PrepareStage2;
-VAR AtTheta : rep_WhichTheta;
-    WSAT,WFC,Wact : double;
-BEGIN
-SetSimulation_EvapZ(EvapZmin/100);
-AtTheta := AtSat;
-WSAT := WCEvapLayer(GetSimulation_EvapZ(),AtTheta);
-AtTheta := AtFC;
-WFC := WCEvapLayer(GetSimulation_EvapZ(),AtTheta);
-AtTheta := AtAct;
-Wact := WCEvapLayer(GetSimulation_EvapZ(),AtTheta);
-SetSimulation_EvapStartStg2(ROUND(100 * (Wact - (WFC-GetSoil().REW))/(WSAT-(WFC-GetSoil().REW))));
-IF (GetSimulation_EvapStartStg2() < 0)
-   THEN SetSimulation_EvapStartStg2(0);
-END; (* PrepareStage2 *)
-
-
-
-PROCEDURE CalculateEvaporationSurfaceWater;
-VAR SaltSurface : double;
-BEGIN
-IF (GetSurfaceStorage() > GetEpot())
-   THEN BEGIN
-        SaltSurface := GetSurfaceStorage()*GetECstorage()*Equiv;
-        SetEact(GetEpot());
-        SetSurfaceStorage(GetSurfaceStorage() - GetEact());
-        SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)); //salinisation of surface storage layer
-        END
-   ELSE BEGIN
-        SetEact(GetSurfaceStorage());
-        SetSurfaceStorage(0);
-        SetSimulation_EvapWCsurf(GetSoil().REW);
-        SetSimulation_EvapZ(EvapZmin/100);
-        IF (GetSimulation_EvapWCsurf() < 0.0001)
-           THEN PrepareStage2
-           ELSE SetSimulation_EvapStartStg2(undef_int);
-        END;
-END; (* CalculateEvaporationSurfaceWater *)
-
 
 
 

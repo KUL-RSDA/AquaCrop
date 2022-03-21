@@ -5,8 +5,8 @@ interface
 uses Global, interface_global, TempProcessing, interface_tempprocessing;
 
 type
-     rep_control = (begin_day,end_day);
-
+    rep_control = (begin_day,end_day);
+    rep_WhichTheta = (AtSAT,AtFC,AtWP,AtAct);
 
 function GetCDCadjustedNoStressNew(
             constref CCx, CDC, CCxAdjusted): double;
@@ -36,6 +36,7 @@ procedure AdjustpSenescenceToETo(
            constref WithBeta : BOOLEAN;
            VAR pSenAct : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
+
 
 
 //-----------------------------------------------------------------------------
@@ -118,6 +119,19 @@ procedure EffectSoilFertilitySalinityStress(
                         constref VirtualTimeCC : integer);
     external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
 
+procedure CalculateEvaporationSurfaceWater();
+    external 'aquacrop' name '__ac_simul_MOD_calculateevaporationsurfacewater';
+
+function WCEvapLayer(constref Zlayer : double;
+                     constref AtTheta : rep_WhichTheta) : double;
+
+function __WCEvapLayer(constref Zlayer : double;
+                       constref AtTheta : integer) : double;
+    external 'aquacrop' name '__ac_simul_MOD_wcevaplayer';
+
+procedure PrepareStage2();
+    external 'aquacrop' name '__ac_simul_MOD_preparestage2';
+
 procedure PrepareStage1();
     external 'aquacrop' name '__ac_simul_MOD_preparestage1';
 
@@ -135,6 +149,15 @@ procedure AdjustEpotMulchWettedSurface(
 
 
 implementation
+
+function WCEvapLayer(constref Zlayer : double;
+                     constref AtTheta : rep_WhichTheta) : double;
+var
+    int_attheta : integer;
+begin
+    int_attheta := ord(AtTheta);
+    WCEvapLayer := __WCEvapLayer(Zlayer, int_attheta);
+end;
 
 
 procedure CheckWaterSaltBalance(
