@@ -1018,7 +1018,8 @@ real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tpot ! mm/day
-
+real(dp) :: CCiActual
+real(dp) :: Tact, TactWeedInfested !mm/day
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
@@ -11914,6 +11915,55 @@ type(rep_Content) function GetTotalSaltContent()
     GetTotalSaltContent = TotalSaltContent
 end function GetTotalSaltContent
 
+real(dp) function GetTotalSaltContent_BeginDay()
+    !! Getter for the "TotalSaltContent_BeginDay" global variable.
+
+    GetTotalSaltContent_BeginDay = TotalSaltContent%BeginDay
+end function GetTotalSaltContent_BeginDay
+
+real(dp) function GetTotalSaltContent_EndDay()
+    !! Getter for the "TotalSaltContent_EndDay" global variable.
+
+    GetTotalSaltContent_EndDay = TotalSaltContent%EndDay
+end function GetTotalSaltContent_EndDay
+
+real(dp) function GetTotalSaltContent_ErrorDay()
+    !! Getter for the "TotalSaltContent_ErrorDay" global variable.
+
+    GetTotalSaltContent_ErrorDay = TotalSaltContent%ErrorDay
+end function GetTotalSaltContent_ErrorDay
+
+type(rep_Content) function GetTotalWaterContent()
+    !! Getter for the "TotalWaterContent" global variable.
+
+    GetTotalWaterContent = TotalWaterContent
+end function GetTotalWaterContent
+
+real(dp) function GetTotalWaterContent_BeginDay()
+    !! Getter for the "TotalWaterContent_BeginDay" global variable.
+
+    GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
+end function GetTotalWaterContent_BeginDay
+
+real(dp) function GetTotalWaterContent_EndDay()
+    !! Getter for the "TotalWaterContent_EndDay" global variable.
+
+    GetTotalWaterContent_EndDay = TotalWaterContent%EndDay
+end function GetTotalWaterContent_EndDay
+
+real(dp) function GetTotalWaterContent_ErrorDay()
+    !! Getter for the "TotalWaterContent_ErrorDay" global variable.
+
+    GetTotalWaterContent_ErrorDay = TotalWaterContent%ErrorDay
+end function GetTotalWaterContent_ErrorDay
+
+subroutine SetTotalSaltContent(TotalSaltContent_in)
+    !! Setter for the TotalWaterContent global variable.
+    type(rep_content), intent(in) :: TotalSaltContent_in
+
+    TotalSaltContent = TotalSaltContent_in
+end subroutine SetTotalSaltContent
+
 subroutine SetTotalSaltContent_BeginDay(BeginDay)
     !! Setter for the "TotalSaltContent" global variable.
     real(dp), intent(in) :: BeginDay
@@ -11934,18 +11984,6 @@ subroutine SetTotalSaltContent_ErrorDay(ErrorDay)
 
     TotalSaltContent%ErrorDay = ErrorDay
 end subroutine SetTotalSaltContent_ErrorDay
-
-type(rep_Content) function GetTotalWaterContent()
-    !! Getter for the "TotalWaterContent" global variable.
-
-    GetTotalWaterContent = TotalWaterContent
-end function GetTotalWaterContent
-
-real(dp) function GetTotalWaterContent_BeginDay()
-    !! Getter for the "TotalWaterContent_BeginDay" global variable.
-
-    GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
-end function GetTotalWaterContent_BeginDay
 
 subroutine SetTotalWaterContent(TotalWaterContent_in)
     !! Setter for the TotalWaterContent global variable.
@@ -11974,7 +12012,6 @@ subroutine SetTotalWaterContent_ErrorDay(ErrorDay)
 
     TotalWaterContent%ErrorDay = ErrorDay
 end subroutine SetTotalWaterContent_ErrorDay
-
 
 type(rep_RootZoneSalt) function GetRootZoneSalt()
     !! Getter for the "RootZoneSalt" global variable.
@@ -14724,5 +14761,43 @@ subroutine SetSaltInfiltr(SaltInfiltr_in)
     SaltInfiltr = SaltInfiltr_in
 end subroutine SetSaltInfiltr
 
+real(dp) function GetCCiActual()
+    !! Getter for the "CCiActual" global variable.
+
+    GetCCiActual = CCiActual
+end function GetCCiActual
+
+subroutine SetCCiActual(CCiActual_in)
+    !! Setter for the "CCiActual" global variable.
+    real(dp), intent(in) :: CCiActual_in
+
+    CCiActual = CCiActual_in
+end subroutine SetCCiActual
+
+real(dp) function GetTact()
+    !! Getter for the "Tact" global variable.
+
+    GetTact = Tact 
+end function GetTact
+
+subroutine SetTact(Tact_in)
+    !! Setter for the "Tact" global variable.
+    real(dp), intent(in) :: Tact_in
+
+    Tact = Tact_in
+end subroutine SetTact
+
+real(dp) function GetTactWeedInfested()
+    !! Getter for the "TactWeedInfested" global variable.
+
+    GetTactWeedInfested = TactWeedInfested
+end function GetTactWeedInfested
+
+subroutine SetTactWeedInfested(TactWeedInfested_in)
+    !! Setter for the "TactWeedInfested" global variable.
+    real(dp), intent(in) :: TactWeedInfested_in
+
+    TactWeedInfested = TactWeedInfested_in
+end subroutine SetTactWeedInfested
 
 end module ac_global

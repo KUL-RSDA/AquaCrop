@@ -4,9 +4,14 @@ interface
 
 uses Global, interface_global, TempProcessing, interface_tempprocessing;
 
+type
+     rep_control = (begin_day,end_day);
+
+
 function GetCDCadjustedNoStressNew(
             constref CCx, CDC, CCxAdjusted): double;
      external 'aquacrop' name '__ac_simul_MOD_getcdcadjustednostressnew';
+
 
 procedure AdjustpLeafToETo(
             constref EToMean : double;
@@ -67,6 +72,23 @@ procedure CalculateEffectiveRainfall(var SubDrain : double);
 procedure calculate_CapillaryRise(VAR CRwater,CRsalt : double);
     external 'aquacrop' name '__ac_simul_MOD_calculate_capillaryrise';
 
+procedure CheckWaterSaltBalance_wrap(
+            constref dayi : integer;
+            constref InfiltratedRain : double;
+            constref control : integer; 
+            constref InfiltratedIrrigation : double;
+            constref InfiltratedStorage : double;
+            var Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain: double);
+    external 'aquacrop' name '__ac_simul_MOD_checkwatersaltbalance';
+
+procedure CheckWaterSaltBalance(
+            constref dayi : integer;
+            constref InfiltratedRain : double;
+            constref control : rep_control;
+            constref InfiltratedIrrigation : double;
+            constref InfiltratedStorage : double;
+            var Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain: double);
+
 procedure calculate_saltcontent(
                 constref InfiltratedRain, InfiltratedIrrigation : double;
                 constref InfiltratedStorage, SubDrain : double;
@@ -113,6 +135,24 @@ procedure AdjustEpotMulchWettedSurface(
 
 
 implementation
+
+
+procedure CheckWaterSaltBalance(
+            constref dayi : integer;
+            constref InfiltratedRain : double;
+            constref control : rep_control;
+            constref InfiltratedIrrigation : double;
+            constref InfiltratedStorage : double;
+            var Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain: double);
+var
+  int_control : integer;
+begin;
+  int_control := ord(control);
+  CheckWaterSaltBalance_wrap(
+            dayi, InfiltratedRain, int_control,
+            InfiltratedIrrigation, InfiltratedStorage,
+            Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain);
+end;
 
 
 initialization

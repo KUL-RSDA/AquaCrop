@@ -2969,9 +2969,31 @@ procedure SetPerennialPeriod_GeneratedDayNrOnset(constref GeneratedDayNrOnset : 
 procedure SetPerennialPeriod_GeneratedDayNrEnd(constref GeneratedDayNrEnd : integer);
     external 'aquacrop' name '__ac_global_MOD_setperennialperiod_generateddaynrend';
 
-
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
+
+function GetTotalSaltContent_BeginDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
+
+function GetTotalSaltContent_EndDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_endday';
+
+function GetTotalSaltContent_ErrorDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_errorday';
+
+function GetTotalWaterContent(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
+
+function GetTotalWaterContent_BeginDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
+
+function GetTotalWaterContent_EndDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_endday';
+
+function GetTotalWaterContent_ErrorDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_errorday';
+
+procedure SetTotalSaltContent(constref TotalSaltContent : rep_Content);
 
 procedure SetTotalSaltContent_BeginDay(constref BeginDay : double);
         external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_beginday';
@@ -2981,12 +3003,6 @@ procedure SetTotalSaltContent_EndDay(constref EndDay : double);
 
 procedure SetTotalSaltContent_ErrorDay(constref ErrorDay : double);
         external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_errorday';
-
-function GetTotalWaterContent(): rep_Content;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
-        
-function GetTotalWaterContent_BeginDay(): rep_Content;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 
@@ -4686,6 +4702,24 @@ function GetSaltInfiltr() : double;
 procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsaltinfiltr';
 
+function GetCCiActual() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcciactual';
+
+procedure SetCCiActual(constref CCiActual_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcciactual';
+
+function GetTact() : double; 
+    external 'aquacrop' name '__ac_global_MOD_gettact';
+
+procedure SetTact(constref Tact_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settact';
+
+function GetTactWeedInfested() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettactweedinfested';
+
+procedure SetTactWeedInfested(constref TactWeedInfested_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settactweedinfested';
+
 
 implementation
 
@@ -5565,6 +5599,15 @@ begin;
     SetTotalWaterContent_EndDay(TotalWaterContent.EndDay);
     SetTotalWaterContent_ErrorDay(TotalWaterContent.ErrorDay);
 end;
+
+
+procedure SetTotalSaltContent(constref TotalSaltContent : rep_Content);
+begin;
+    SetTotalSaltContent_BeginDay(TotalSaltContent.BeginDay);
+    SetTotalSaltContent_EndDay(TotalSaltContent.EndDay);
+    SetTotalSaltContent_ErrorDay(TotalSaltContent.ErrorDay);
+end;
+
 
 procedure GenerateCO2Description(
             constref CO2FileFull : string;
