@@ -1396,6 +1396,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
     real(dp) :: Crop_pSenAct_temp
     real(dp) :: Crop_CCxAdjusted_temp
 
+
     if ((SumGDDadjCC <= GetCrop_GDDaysToGermination()) &
           .or. (roundc(SumGDDadjCC, mold=1) > GetCrop_GDDaysToHarvest())) then
         CCiActual = 0._dp
@@ -1499,7 +1500,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
             if ((GetCCiPrev() <= GetCrop_CCoAdjusted()) &
                 .or. (SumGDDadjCC <= GDDayi) &
                 .or. ((GetSimulation_ProtectedSeedling()) &
-                        .and. (GetCCiPrev() <= (1.25_dp * CCoTotal)))) then 
+                        .and. (GetCCiPrev() <= (1.25_dp * CCoTotal)))) then
                 ! 2.a First day or very small CC as a result of senescence 
                 ! (no adjustment for leaf stress)
                 CGCadjustmentAfterCutting = .false.
@@ -1754,7 +1755,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                 CGCadjustmentAfterCutting = .false.
                 call SetSimulation_EvapLimitON(.true.) 
                 ! consider withered crop when not yet in late season
-                if (TimeSenescence == epsilon(0._dp)) then
+                if (TimeSenescence < 0._dp) then
                     call SetCCiTopEarlySen(CCiActual) ! CC before canopy decline
                 end if
                 TimeSenescence = TimeSenescence + GDDayi
@@ -1762,7 +1763,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                 if (GetCCiTopEarlySen() < 0.001_dp) then
                     if ((GetSimulation_SumEToStress() &
                             > GetCrop_SumEToDelaySenescence()) &
-                      .or. (GetCrop_SumEToDelaySenescence() == epsilon(0._dp))) then
+                      .or. (abs(GetCrop_SumEToDelaySenescence()) < epsilon(0._dp))) then
                         CCiSen = 0._dp ! no crop anymore
                     else
                         if (CCdormant > GetCrop_CCo()) then
@@ -1783,7 +1784,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                         ! Ln of negative or zero value
                         if ((GetSimulation_SumEToStress() &
                             > GetCrop_SumEToDelaySenescence()) &
-                            .or. (GetCrop_SumEToDelaySenescence() == epsilon(0._dp))) then
+                            .or. (abs(GetCrop_SumEToDelaySenescence()) < epsilon(0._dp))) then
                             CCiSen = 0._dp ! no crop anymore
                         else
                             if (CCdormant > GetCrop_CCo()) then
@@ -1917,6 +1918,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
     end if
 
 
+
     contains
 
 
@@ -1994,7 +1996,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                     .and. (MobilizationON) &
                     .and. (CGCadjustmentAfterCutting .eqv. .false.)) then
                 if ((CCxSFCD <= epsilon(0._dp)) &
-                    .or. (GetCCiPrev() >= 0.9*CCxSFCD)) then
+                    .or. (GetCCiPrev() >= 0.9_dp*CCxSFCD)) then
                     MaxVal = 0._dp
                 else
                     MaxVal = (1._dp - GetCCiPrev()/(0.9_dp*CCxSFCD))
