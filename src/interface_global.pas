@@ -4570,6 +4570,12 @@ function GetMaxPlotTr() : shortint;
 procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
     external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
 
+function GetEvapoEntireSoilSurface() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getevapoentiresoilsurface_wrap';
+
+procedure SetEvapoEntireSoilSurface(constref EvapoEntireSoilSurface_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setevapoentiresoilsurface_wrap';
+
 function GetPreDay() : boolean;
     external 'aquacrop' name '__ac_interface_global_MOD_getpreday_wrap';
 
@@ -4587,6 +4593,12 @@ function GetECiAqua() : double;
 
 procedure SetECiAqua(constref ECiAqua_in : double);
     external 'aquacrop' name '__ac_global_MOD_seteciaqua';
+
+function GetEact() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteact';
+
+procedure SetEact(constref Eact_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteact';
 
 function GetETo() : double;
     external 'aquacrop' name '__ac_global_MOD_geteto';
