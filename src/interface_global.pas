@@ -4431,6 +4431,20 @@ procedure DetermineRootZoneWC(
             VAR ZtopSWCconsidered : boolean);
     external 'aquacrop' name '__ac_interface_global_MOD_determinerootzonewc_wrap';
 
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+
+procedure CheckForKeepSWC_wrap(
+                    constref FullNameProjectFile : PChar;
+                    constref strlen : integer;
+                    constref TotalNrRuns : integer;
+                    var RunWithKeepSWC : boolean;
+                    var ConstZrxForRun : double);
+    external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
+
 procedure LoadClim (
             constref FullName : string;
             VAR ClimateDescription : string;
@@ -4689,6 +4703,22 @@ procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
 
 implementation
 
+
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+var
+    FullNameProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    FullNameProjectFile_ptr := PChar(FullNameProjectFile);
+    strlen := Length(FullNameProjectFile);
+    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns,
+                         RunWithKeepSWC, ConstZrxForRun);
+end;
 
 
 procedure LoadGroundWater(
