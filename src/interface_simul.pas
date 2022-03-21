@@ -24,7 +24,6 @@ procedure DeterminePotentialBiomass(
             VAR BiomassUnlim : double);
      external 'aquacrop' name '__ac_simul_MOD_determinepotentialbiomass';
 
-<<<<<<< HEAD
 procedure DetermineBiomassAndYield(
             constref dayi : integer;
             constref ETo : double;
@@ -83,7 +82,7 @@ procedure AdjustpStomatalToETo(
             constref MeanETo : double;
             VAR pStomatULAct : double);
      external 'aquacrop' name '__ac_simul_MOD_adjustpstomataltoeto';
-=======
+
 
 procedure AdjustpSenescenceToETo(
            constref EToMean : double;
@@ -92,7 +91,6 @@ procedure AdjustpSenescenceToETo(
            VAR pSenAct : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
 
->>>>>>> 1353111334c446ffda3ec0c962a06b0a48a4fea8
 
 //-----------------------------------------------------------------------------
 // BUDGET_module

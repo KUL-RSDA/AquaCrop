@@ -175,7 +175,7 @@ use ac_global, only: BMRange, &
                      Subkind_Forage, &
                      subkind_Grain,  &
                      subkind_Tuber, &
-                     subkind_Vegetative
+                     subkind_Vegetative, &
                      SetECstorage, &
                      SetIrrigation, &
                      SetRunoff, &
@@ -414,6 +414,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         end if
     end if
 
+
     WPi = (GetCrop_WP()/100._dp)
 
     ! 1. biomass
@@ -440,19 +441,20 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             end if
             WPi =  WPi * (1._dp - (1._dp-GetCrop_WPy()/100._dp)*fSwitch)  ! switch in Lag Phase
         end if
+
         
         ! 1.1c - adjustment WPi for CO2
         if (roundc(100._dp*CO2i, mold=1) /= roundc(100._dp*CO2Ref, mold=1)) then
             WPi = WPi * fAdjustedForCO2(CO2i, GetCrop_WP(), GetCrop_AdaptedToCO2())
         end if
-        
+   
         
         ! 1.1d - adjustment WPi for Soil Fertility
         WPsf = WPi          ! no water stress, but fertility stress
         WPunlim = WPi       ! no water stress, no fertiltiy stress
         if (GetSimulation_EffectStress_RedWP() > 0._dp) then ! Reductions are zero if no fertility stress
             ! water stress and fertility stress
-            if ((SumKci/SumKcTopStress) < 1._dp) then
+            if ((SumKci/real(SumKcTopStress, dp)) < 1._dp) then
                 if (ETo > 0._dp) then
                     SumKci = SumKci + Tact/ETo
                 end if
@@ -465,8 +467,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             end if
         elseif (ETo > 0._dp) then
             SumKci = SumKci + Tact/ETo
-        end if
-        
+        end if     
         
         
         ! 1.2 actual biomass
@@ -826,7 +827,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
 
         real(dp) :: fi, TimePerc
 
-        if (DiFlor <= 0) then
+        if (DiFlor <= epsilon(1._dp)) then
             fi = 0._dp
         else
             TimePerc = 100._dp * (DiFlor/GetCrop_LengthFlowering())
@@ -851,6 +852,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         call DetermineDate(CropFirstDayNr, Dayi, Monthi, Yeari)
         YearWeighingFactor = Yeari
     end function YearWeighingFactor 
+
 end subroutine DetermineBiomassAndYield
 
 subroutine AdjustpStomatalToETo(MeanETo, pStomatULAct)

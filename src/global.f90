@@ -998,7 +998,6 @@ real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
-real(dp) :: RootingDepth
 real(dp) :: Tpot ! mm/day
 
 
@@ -14556,19 +14555,6 @@ subroutine SetCCiActual(CCiActual_in)
     CCiActual = CCiActual_in
 end subroutine SetCCiActual
 
-real(dp) function GetRootingDepth()
-    !! Getter for the "RootingDepth" global variable.
-
-    GetRootingDepth = RootingDepth
-end function GetRootingDepth
-
-subroutine SetRootingDepth(RootingDepth_in)
-    !! Setter for the "RootingDepth" global variable.
-    real(dp), intent(in) :: RootingDepth_in
-
-    RootingDepth = RootingDepth_in
-end subroutine SetRootingDepth
-
 real(dp) function GetEpot()
     !! Getter for the "Epot" global variable.
 
@@ -14635,6 +14621,5 @@ subroutine SetRootingDepth(RootingDepth_in)
 
     RootingDepth = RootingDepth_in
 end subroutine SetRootingDepth
-
 
 end module ac_global
