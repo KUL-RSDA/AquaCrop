@@ -40,14 +40,8 @@ PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
                           VAR RunWithKeepSWC : BOOLEAN;
                           VAR ConstZrxForRun : double);
 
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
 
 implementation
-
-
-
 
 
 
@@ -274,26 +268,6 @@ Close(f0);
 SetProfFilefull(PreviousProfFilefull);
 LoadProfile(GetProfFilefull());
 END; (* CheckForKeepSWC *)
-
-
-
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
-Var Ztot, Zi : double;
-    compi : INTEGER;
-BEGIN
-WaterTableInProfile := false;
-Ztot := 0;
-compi := 0;
-IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
-   REPEAT
-   compi := compi + 1;
-   Ztot := Ztot + ProfileComp[compi].Thickness;
-   Zi := Ztot - ProfileComp[compi].Thickness/2;
-   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
-END; (* CheckForWaterTableInProfile *)
 
 
 end.
