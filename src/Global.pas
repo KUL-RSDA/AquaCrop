@@ -17,8 +17,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
     // salinity
-    ECdrain        : double; (* EC drain water dS/m *)
-    SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
     CRsalt         : double; // gram/m2
 
 

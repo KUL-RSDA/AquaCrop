@@ -4674,6 +4674,18 @@ function GetRootingDepth() : double;
 procedure SetRootingDepth(constref RootingDepth_in : double);
     external 'aquacrop' name '__ac_global_MOD_setrootingdepth';
 
+function GetECdrain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getecdrain';
+
+procedure SetECdrain(constref ECdrain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setecdrain';
+
+function GetSaltInfiltr() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsaltinfiltr';
+
+procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsaltinfiltr';
+
 
 implementation
 

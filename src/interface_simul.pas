@@ -62,8 +62,20 @@ procedure Calculate_irrigation(var SubDrain : double;
                                var TargetTimeVal, TargetDepthVal : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_irrigation'; 
 
+procedure CheckGermination();
+    external 'aquacrop' name '__ac_simul_MOD_checkgermination'; 
+
 procedure CalculateEffectiveRainfall(var SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
+
+procedure calculate_CapillaryRise(VAR CRwater,CRsalt : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_capillaryrise';
+
+procedure calculate_saltcontent(
+                constref InfiltratedRain, InfiltratedIrrigation : double;
+                constref InfiltratedStorage, SubDrain : double;
+                constref dayi : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_saltcontent';
 
 procedure calculate_infiltration(
                 VAR InfiltratedRain,InfiltratedIrrigation : double;
