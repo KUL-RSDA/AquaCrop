@@ -1005,6 +1005,7 @@ integer(int8) :: MaxPlotTr
 
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
+real(dp) :: ECdrain ! EC drain water dS/m
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
 real(dp) :: Eact ! mm/day
 real(dp) :: Epot ! mm/day
@@ -1015,6 +1016,7 @@ real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
+real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tpot ! mm/day
 
 
@@ -4290,7 +4292,7 @@ integer(int32) function ActiveCells(Comp)
     integer(int32) ::  celi
 
     if (Comp%theta <= GetSoilLayer_UL(Comp%Layer)) then
-        celi = 0
+        celi = 1
         do while (Comp%theta > (GetSoilLayer_Dx(Comp%Layer)) * celi) 
             celi = celi + 1
         end do
@@ -14695,6 +14697,32 @@ subroutine SetRootingDepth(RootingDepth_in)
 
     RootingDepth = RootingDepth_in
 end subroutine SetRootingDepth
+
+real(dp) function GetECDrain()
+    !! Getter for the "ECDrain" global variable.
+
+    GetECDrain = ECDrain
+end function GetECDrain
+
+subroutine SetECDrain(ECDrain_in)
+    !! Setter for the "ECDrain" global variable.
+    real(dp), intent(in) :: ECDrain_in
+
+    ECDrain = ECDrain_in
+end subroutine SetECDrain
+
+real(dp) function GetSaltInfiltr()
+    !! Getter for the "SaltInfiltr" global variable.
+
+    GetSaltInfiltr = SaltInfiltr
+end function GetSaltInfiltr
+
+subroutine SetSaltInfiltr(SaltInfiltr_in)
+    !! Setter for the "SaltInfiltr" global variable.
+    real(dp), intent(in) :: SaltInfiltr_in
+
+    SaltInfiltr = SaltInfiltr_in
+end subroutine SetSaltInfiltr
 
 
 end module ac_global

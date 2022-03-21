@@ -507,7 +507,7 @@ VAR  control : rep_control;
      EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp : double;
      Comp_temp : rep_Comp;
      Crop_pActStom_temp : double;
-     CRsalt_temp : double;
+     CRsalt_temp, ECdrain_temp : double;
 
 
 
@@ -611,379 +611,6 @@ CASE control OF
 END; (* CheckWaterSaltBalance *)
 
 
-
-
-PROCEDURE calculate_CapillaryRise(VAR CRwater,CRsalt : double);
-VAR Zbottom,MaxMM,DThetaMax,DTheta,LimitMM,CRcomp,SaltCRi,DrivingForce,ZtopNextLayer,
-    Krel,ThetaThreshold  : double;
-    compi,SCellAct,layeri : INTEGER;
-BEGIN
-Zbottom := 0;
-FOR compi := 1 TO GetNrCompartments() DO Zbottom := Zbottom + GetCompartment_Thickness(compi);
-
-// start at the bottom of the soil profile
-compi := GetNrCompartments();
-MaxMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
-                      GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(GetZiAqua()/100));
-
-// check restrictions on CR from soil layers below
-ZtopNextLayer := 0;
-FOR layeri := 1 TO GetCompartment_Layer(GetNrCompartments()) DO ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
-layeri := GetCompartment_Layer(GetNrCompartments());
-WHILE ((ZtopNextLayer < (GetZiAqua()/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
-   BEGIN
-   layeri := layeri + 1;
-   LimitMM := MaxCRatDepth(GetSoilLayer_i(layeri).CRa,GetSoilLayer_i(layeri).CRb,GetSoilLayer_i(layeri).InfRate,ZtopNextLayer,(GetZiAqua()/100));
-   IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
-   ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
-   END;
-
-WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout(compi)*1000) = 0)) DO
-   BEGIN
-   // Driving force
-   IF ((GetCompartment_theta(compi) >= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100) AND (GetSimulParam_RootNrDF() > 0))
-      THEN DrivingForce := 1 - (exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_theta(compi)-GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100))
-                                     /exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_FCadj(compi)/100-GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)))
-      ELSE DrivingForce := 1;
-   // relative hydraulic conductivity
-   ThetaThreshold := (GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100 + GetSoilLayer_i(GetCompartment_Layer(compi)).FC/100)/2;
-   IF (GetCompartment_Theta(compi) < ThetaThreshold)
-      THEN BEGIN
-           IF ((GetCompartment_Theta(compi) <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)
-               OR (ThetaThreshold <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100))
-              THEN Krel := 0
-              ELSE Krel := (GetCompartment_Theta(compi) - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)/
-                           (ThetaThreshold - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100);
-           END
-      ELSE Krel := 1;
-
-   // room available to store water
-   DTheta := GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi);
-   IF ((DTheta > 0) AND ((Zbottom - GetCompartment_Thickness(compi)/2) < (GetZiAqua()/100))) THEN
-      BEGIN
-      // water stored
-      DThetaMax := Krel * DrivingForce * MaxMM/(1000*GetCompartment_Thickness(compi));
-      IF (DTheta >= DThetaMax)
-         THEN BEGIN
-              SetCompartment_Theta(compi, GetCompartment_Theta(compi) + DThetaMax);
-              CRcomp := DThetaMax*1000*GetCompartment_Thickness(compi)
-                        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-              MaxMM := 0;
-              END
-         ELSE BEGIN
-              SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
-              CRcomp := DTheta*1000*GetCompartment_Thickness(compi)
-                        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-              MaxMM := Krel * MaxMM - CRcomp;
-              END;
-      CRwater := CRwater + CRcomp;
-      // salt stored
-      SCellAct := ActiveCells(GetCompartment_i(compi));
-      SaltCRi := Equiv * CRcomp * GetECiAqua(); // gram/m2
-      SetCompartment_Salt(compi, SCellAct, GetCompartment_Salt(compi, SCellAct) + SaltCRi);
-      CRsalt := CRsalt + SaltCRi;
-      END;
-   Zbottom := Zbottom - GetCompartment_Thickness(compi);
-   compi := compi - 1;
-   IF (compi > 0) THEN
-      BEGIN
-      LimitMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
-                              GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(GetZiAqua()/100));
-      IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
-      END;
-   END;
-END; (* calculate_CapillaryRise *)
-
-
-
-PROCEDURE calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, InfiltratedStorage : double);
-VAR   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, mm1, mm2, Dx, limit, Dif, UL : double;
-      Zr, depthi, ECsubdrain, ECcel, DeltaZ,
-      ECsw1, ECsw2, ECsw, SM1, SM2, DS1, DS2, DS : double;
-
-      compi, celi, celiM1, Ni : INTEGER;
-      ECw : double;
-      Salt_temp, Salt2_temp, Depo_temp, Depo2_temp : double;
-      Compi_temp : CompartmentIndividual;
-
-
-
-    PROCEDURE Mixing (Dif,mm1,mm2 : double;
-                      VAR Salt1, Salt2, Depo1, Depo2 : double);
-    VAR EC1, EC2, ECmix : double;
-
-    BEGIN
-    SaltSolutionDeposit(mm1,Salt1,Depo1);
-    EC1 := Salt1/(mm1*Equiv);
-    SaltSolutionDeposit(mm2,Salt2,Depo2);
-    EC2 := Salt2/(mm2*Equiv);
-    ECmix := (EC1*mm1+EC2*mm2)/(mm1+mm2);
-    //removed    IN/OUT Ratio
-    //IF (EC1 > EC2) THEN DifAdjusted := Dif * 1/SimulParam.SaltRatio
-    //               ELSE DifAdjusted := Dif;
-    EC1 := EC1 + (ECmix-EC1)*Dif;
-    EC2 := EC2 + (ECmix-EC2)*Dif;
-    Salt1 := EC1*mm1*Equiv;
-    SaltSolutionDeposit(mm1,Salt1,Depo1);
-    Salt2 := EC2*mm2*Equiv;
-    SaltSolutionDeposit(mm2,Salt2,Depo2);
-    END; (* Mixing *)
-
-
-    PROCEDURE MoveSaltTo(VAR Compx : CompartmentIndividual;
-                         celx : INTEGER;
-                         DS : double);
-    VAR mmx : double;
-    BEGIN
-    IF (DS >= 0)
-       THEN BEGIN
-            Compx.Salt[celx] := Compx.Salt[celx] + DS;
-            mmx := GetSoilLayer_i(Compx.Layer).Dx*1000*Compx.Thickness
-                  * (1 - GetSoilLayer_i(Compx.Layer).GravelVol/100);
-            IF (celx = GetSoilLayer_i(Compx.Layer).SCP1) THEN mmx := 2*mmx;
-            SaltSolutionDeposit(mmx,Compx.Salt[celx],Compx.Depo[celx]);
-            END
-       ELSE BEGIN
-            celx := GetSoilLayer_i(Compx.Layer).SCP1;
-            Compx.Salt[celx] := Compx.Salt[celx] + DS;
-            mmx := 2*GetSoilLayer_i(Compx.Layer).Dx*1000*Compx.Thickness
-                   * (1 - GetSoilLayer_i(Compx.Layer).GravelVol/100);
-            SaltSolutionDeposit(mmx,Compx.Salt[celx],Compx.Depo[celx]);
-            mmx := mmx/2;
-            WHILE (Compx.Salt[celx] < 0) DO
-                  BEGIN
-                  Compx.Salt[celx-1] := Compx.Salt[celx-1] + Compx.Salt[celx];
-                  Compx.Salt[celx] := 0;
-                  celx := celx - 1;
-                  SaltSolutionDeposit(mmx,Compx.Salt[celx],Compx.Depo[celx]);
-                  END;
-            END;
-    END; (* MoveSaltTo *)
-
-
-
-BEGIN (* calculate_saltcontent *)
-mmIN := InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage;
-
-// quality of irrigation water
-IF (dayi < GetCrop().Day1)
-   THEN ECw := GetIrriECw().PreSeason
-   ELSE BEGIN
-        ECw := GetSimulation_IrriECw();
-        IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
-        END;
-
-// initialise salt balance
-SaltIN := InfiltratedIrrigation*ECw*Equiv + InfiltratedStorage*GetECstorage()*Equiv;
-SaltInfiltr := SaltIN/100; (* salt infiltrated in soil profile kg/ha *)
-SaltOut:= 0;
-
-
-FOR compi := 1 TO GetNrCompartments() DO
-    BEGIN
-    //0. Set compartment parameters
-    SAT := (GetSoilLayer_i(GetCompartment_Layer(compi)).SAT)/100;  (* m3/m3 *)
-    UL := GetSoilLayer_i(GetCompartment_Layer(compi)).UL; (* m3/m3 *)  (* Upper limit of SC salt cel *)
-    Dx := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx;  (* m3/m3 *) (* Size of salts cel (expect last one) *)
-
-    //1. Initial situation before drain and infiltration
-    DeltaTheta := mmIN/
-                (1000*GetCompartment_Thickness(compi)*(1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-    Theta := GetCompartment_theta(compi)-DeltaTheta+GetCompartment_fluxout(compi)/(1000*GetCompartment_Thickness(compi));
-
-    //2. Determine active SaltCels and Add IN
-    Theta := Theta + DeltaTheta;
-    IF (Theta <= UL)
-       THEN BEGIN
-            celi := 0;
-            WHILE (Theta > Dx*celi) DO celi := celi + 1;
-            END
-       ELSE celi := GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1;
-    IF (celi = 0) THEN celi := 1;  // XXX would be best to avoid celi=0 to begin with 
-    IF (DeltaTheta > 0) THEN SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + SaltIN);
-
-    //3. Mixing
-    IF (celi > 1) THEN
-       BEGIN
-       FOR Ni := 1 TO (celi-1) DO
-           BEGIN
-           mm1 := Dx*1000*GetCompartment_Thickness(compi)
-                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           IF (Ni < GetSoilLayer_i(GetCompartment_Layer(compi)).SC)
-              THEN mm2 := mm1
-              ELSE IF (Theta > SAT)
-                      THEN mm2 := (Theta-UL)*1000*GetCompartment_Thickness(compi)
-                                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)
-                      ELSE mm2 := (SAT-UL)*1000*GetCompartment_Thickness(compi)
-                                  * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           Dif := GetSoilLayer_i(GetCompartment_Layer(compi)).SaltMobility[Ni];
-           Salt_temp := GetCompartment_Salt(compi, Ni);
-           Salt2_temp := GetCompartment_Salt(compi, Ni+1);
-           Depo_temp := GetCompartment_Depo(compi, Ni);
-           Depo2_temp := GetCompartment_Depo(compi, Ni+1);
-           Mixing(Dif,mm1,mm2,Salt_temp,Salt2_temp,Depo_temp,Depo2_temp);
-           SetCompartment_Salt(compi, Ni, Salt_temp);
-           SetCompartment_Salt(compi, Ni+1, Salt2_temp);
-           SetCompartment_Depo(compi, Ni, Depo_temp);
-           SetCompartment_Depo(compi, Ni+1, Depo2_temp);
-           END;
-       END;
-
-    //4. Drain
-    SaltOut := 0;
-    IF (GetCompartment_fluxout(compi) > 0)
-       THEN BEGIN
-            DeltaTheta := GetCompartment_fluxout(compi)/
-                       (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-            WHILE (DeltaTheta > 0) DO
-              BEGIN
-              IF (celi < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1) THEN limit := (celi-1)*Dx
-                                                                   ELSE limit := UL;
-              IF (Theta - DeltaTheta) < limit
-                 THEN BEGIN
-                      SaltOut := SaltOut + GetCompartment_Salt(compi, celi)
-                                         + GetCompartment_Depo(compi, celi);
-                      SetCompartment_Salt(compi, celi, 0);
-                      mm1 := (Theta - limit)*1000*GetCompartment_Thickness(compi)
-                             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-                      IF SaltOut > (GetSimulParam_SaltSolub() * mm1)
-                         THEN BEGIN
-                              SetCompartment_Depo(compi, celi, SaltOut - (GetSimulParam_SaltSolub() * mm1));
-                              SaltOut := (GetSimulParam_SaltSolub() * mm1);
-                              END
-                         ELSE SetCompartment_Depo(compi, celi, 0);
-                      DeltaTheta := DeltaTheta - (Theta-limit);
-                      Theta := limit;
-                      celi := celi - 1;
-                      END
-                 ELSE BEGIN
-                      SaltOut := SaltOut + (GetCompartment_Salt(compi, celi)
-                            + GetCompartment_Depo(compi, celi))*(DeltaTheta/(Theta-limit));
-                      SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) *(1-DeltaTheta/(Theta-limit)));
-                      SetCompartment_Depo(compi, celi, GetCompartment_Depo(compi, celi) *(1-DeltaTheta/(Theta-limit)));
-                      mm1 := DeltaTheta*1000*GetCompartment_Thickness(compi)
-                             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-                      IF SaltOut > (GetSimulParam_SaltSolub() * mm1) THEN
-                         BEGIN
-                         SetCompartment_Depo(compi, celi, GetCompartment_Depo(compi, celi) + (SaltOut - GetSimulParam_SaltSolub() * mm1));
-                         SaltOut := (GetSimulParam_SaltSolub() * mm1);
-                         END;
-                      DeltaTheta := 0;
-                      mm1 := GetSoilLayer_i(GetCompartment_Layer(compi)).DX*1000*GetCompartment_Thickness(compi)
-                             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-                      IF (celi = GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1) THEN mm1 := 2*mm1;
-                      Salt_temp := GetCompartment_Salt(compi, celi);
-                      Depo_temp := GetCompartment_Depo(compi, celi);
-                      SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
-                      SetCompartment_Salt(compi, celi, Salt_temp);
-                      SetCOmpartment_Depo(compi, celi, Depo_temp);
-                      END;
-              END;
-            END;
-
-    mmIN := GetCompartment_fluxout(compi);
-    SaltIN := SaltOUT;
-    END;
-
-IF (GetDrain() > 0.001) THEN ECdrain := SaltOUT/(GetDrain()*Equiv);
-
-
-//5. vertical salt diffusion
-celi := ActiveCells(GetCompartment_i(1));
-SM2 := GetSoilLayer_i(GetCompartment_Layer(1)).SaltMobility[celi]/4;
-ECsw2 := ECswComp(GetCompartment_i(1),(false)); // not at FC
-mm2 := GetCompartment_Theta(1)*1000*GetCompartment_Thickness(1)
-       * (1 - GetSoilLayer_i(GetCompartment_Layer(1)).GravelVol/100);
-FOR compi := 2 TO GetNrCompartments() DO
-    BEGIN
-    celiM1 := celi;
-    SM1 := SM2;
-    ECsw1 := ECsw2;
-    mm1 := mm2;
-    celi :=  ActiveCells(GetCompartment_i(compi));
-    SM2 := GetSoilLayer_i(GetCompartment_Layer(compi)).SaltMobility[celi]/4;
-    ECsw2 := ECswComp(GetCompartment_i(compi),(false)); // not at FC
-    mm2 := GetCompartment_Theta(compi)*1000*GetCompartment_Thickness(compi)
-           * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-    ECsw := (ECsw1*mm1+ECsw2*mm2)/(mm1+mm2);
-    DS1 := (ECsw1 - (ECsw1+(ECsw-ECsw1)*SM1))*mm1*Equiv;
-    DS2 := (ECsw2 - (ECsw2+(ECsw-ECsw2)*SM2))*mm2*Equiv;
-    IF (Abs(DS2) < Abs(DS1)) THEN DS := Abs(DS2)
-                             ELSE DS := Abs(DS1);
-    IF (DS > 0) THEN
-       BEGIN
-       IF (ECsw1 > ECsw) THEN DS := DS*(-1);
-       Compi_temp := GetCompartment_i(compi-1);
-       MoveSaltTo(Compi_temp,celiM1,DS);
-       SetCompartment_i(compi-1, Compi_temp);
-       DS := DS*(-1);
-       Compi_temp := GetCompartment_i(compi);
-       MoveSaltTo(Compi_temp,celi,DS);
-       SetCompartment_i(compi, Compi_temp);
-       END;
-    END;
-
-
-
-
-//6. Internal salt movement as a result of SubDrain
-//SubDrain part of non-effective rainfall (10-day & monthly input)
-IF (SubDrain > 0) THEN
-   BEGIN
-   Zr := GetRootingDepth();
-   IF (Zr >= 0) THEN Zr := (GetSimulParam_EvapZmax()/100); // in meter
-   compi := 0;
-   depthi := 0;
-   ECsubdrain := 0;
-
-   //extract
-   REPEAT
-     compi := compi + 1;
-     depthi := depthi + GetCompartment_Thickness(compi);
-     If (depthi <= Zr)
-        THEN DeltaZ := GetCompartment_Thickness(compi)
-        ELSE DeltaZ := GetCompartment_Thickness(compi) - (depthi-Zr);
-     celi := ActiveCells(GetCompartment_i(compi));
-     IF (celi < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1)
-        THEN mm1 := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)
-        ELSE mm1 := 2*GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
-                    * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-     ECcel := GetCompartment_Salt(compi, celi)/(mm1*Equiv);
-     ECsubdrain := (ECcel*mm1*(DeltaZ/GetCompartment_Thickness(compi))+ECsubdrain*SubDrain)
-                   /(mm1*(DeltaZ/GetCompartment_Thickness(compi))+SubDrain);
-     SetCompartment_Salt(compi, celi, (1-(DeltaZ/GetCompartment_Thickness(compi)))*GetCompartment_Salt(compi,celi)
-                                      + (DeltaZ/GetCompartment_Thickness(compi))*ECsubdrain*mm1*Equiv);
-     Salt_temp := GetCompartment_Salt(compi, celi);
-     Depo_temp := GetCompartment_Depo(compi, celi);
-     SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
-     SetCompartment_Salt(compi, celi, Salt_temp);
-     SetCompartment_Depo(compi, celi, Depo_temp);
-   UNTIl (depthi >= Zr) OR (compi >= GetNrCompartments());
-
-   //dump
-   IF (compi >= GetNrCompartments())
-      THEN BEGIN
-           SaltOUT := ECdrain*(GetDrain()*Equiv) + ECsubdrain*SubDrain*Equiv;
-           ECdrain := SaltOUT/(GetDrain()*Equiv);
-           END
-      ELSE BEGIN
-           compi := compi + 1;
-           celi := ActiveCells(GetCompartment_i(compi));
-           IF (celi < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1)
-              THEN mm1 := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
-                          * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)
-              ELSE mm1 := 2*GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
-                          * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-           SetCompartment_Salt(compi, celi, GetCompartment_Salt(compi, celi) + ECsubdrain*SubDrain*Equiv);
-           Salt_temp := GetCompartment_Salt(compi, celi);
-           Depo_temp := GetCompartment_Depo(compi, celi);
-           SaltSolutionDeposit(mm1,Salt_temp,Depo_temp);
-           SetCompartment_Salt(compi, celi, Salt_temp);
-           SetCompartment_Depo(compi, celi, Depo_temp);
-           END;
-   END;
-END; (* calculate_saltcontent *)
 
 
 
@@ -2791,7 +2418,9 @@ BEGIN (* BUDGET_module *)
 
 // 1. Soil water balance
 control := begin_day;
-CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain);
+ECdrain_temp := GetECdrain();
+CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain_temp);
+SetECdrain(ECdrain_temp);
 
 // 2. Adjustments in presence of Groundwater table
 CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
@@ -2827,7 +2456,7 @@ SetCRwater(CRwater_temp);
 SetCRsalt(CRsalt_temp);
 
 // 7. Salt balance
-calculate_saltcontent(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage);
+calculate_saltcontent(InfiltratedRain,InfiltratedIrrigation,InfiltratedStorage, SubDrain, dayi);
 
 
 // 8. Check Germination
@@ -2924,7 +2553,9 @@ ConcentrateSalts;
 
 // 16. Soil water balance
 control := end_day;
-CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain);
+ECdrain_temp := GetECdrain();
+CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain_temp);
+SetECdrain(ECdrain_temp);
 END; (* BUDGET_module *)
 
 
