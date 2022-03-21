@@ -11,6 +11,7 @@ const
     undef_double = -9.9;
     undef_int = -9;
     CO2Ref = 369.41;
+    EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
@@ -18,6 +19,8 @@ const
           'May','June','July','August','September','October','November','December');
 
 type
+    rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
+    repTypeProject = (TypePRO,TypePRM,TypeNone);
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -1319,6 +1322,17 @@ procedure ComposeOutputFileName_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_composeoutputfilename_wrap';
 
+procedure GetFileForProgramParameters(
+            constref TheFullFileNameProgram : string;
+            var FullFileNameProgramParameters: string);
+
+procedure GetFileForProgramParameters_wrap(
+            constref TheFullFileNameProgram : PChar;
+            constref strlen1 : integer;
+            var FullFileNameProgramParameters: PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getfileforprogramparameters_wrap';
+        
 function NumberSoilClass (
             constref SatvolPro : double;
             constref FCvolPro : double;
@@ -4556,6 +4570,12 @@ function GetMaxPlotTr() : shortint;
 procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
     external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
 
+function GetEvapoEntireSoilSurface() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getevapoentiresoilsurface_wrap';
+
+procedure SetEvapoEntireSoilSurface(constref EvapoEntireSoilSurface_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setevapoentiresoilsurface_wrap';
+
 function GetPreDay() : boolean;
     external 'aquacrop' name '__ac_interface_global_MOD_getpreday_wrap';
 
@@ -4573,6 +4593,12 @@ function GetECiAqua() : double;
 
 procedure SetECiAqua(constref ECiAqua_in : double);
     external 'aquacrop' name '__ac_global_MOD_seteciaqua';
+
+function GetEact() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteact';
+
+procedure SetEact(constref Eact_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteact';
 
 function GetETo() : double;
     external 'aquacrop' name '__ac_global_MOD_geteto';
@@ -6520,6 +6546,21 @@ begin;
     SetFullFileNameProgramParameters_wrap(p, strlen);
 end;
 
+procedure GetFileForProgramParameters(
+            constref  TheFullFileNameProgram: string;
+            var FullFileNameProgramParameters: string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(TheFullFileNameProgram);
+    p2 := PChar(FullFileNameProgramParameters);
+    strlen1 := Length(TheFullFileNameProgram);
+    strlen2 := Length(FullFileNameProgramParameters);
+    GetFileForProgramParameters_wrap(p1, strlen1, p2, strlen2);
+    FullFileNameProgramParameters := AnsiString(p2);
+end;
 
 function GetPathNameProg(): string;
 var

@@ -85,6 +85,25 @@ procedure calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation: do
                                    constref dayi : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_surfacestorage';
 
+procedure EffectSoilFertilitySalinityStress(
+                        VAR StressSFadjNew : Shortint;
+                        constref Coeffb0Salt, Coeffb1Salt, Coeffb2Salt : double;
+                        constref NrDayGrow : integer;
+                        constref StressTotSaltPrev : double;
+                        constref VirtualTimeCC : integer);
+    external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
+
+procedure PrepareStage1();
+    external 'aquacrop' name '__ac_simul_MOD_preparestage1';
+
+procedure AdjustEpotMulchWettedSurface(
+                        constref dayi: integer;
+                        constref EpotTot: double;
+                        VAR Epot : double;
+                        VAR EvapWCsurface : double);
+    external 'aquacrop' name '__ac_simul_MOD_adjustepotmulchwettedsurface';
+
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

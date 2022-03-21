@@ -22,6 +22,8 @@ real(dp), parameter :: PI = 3.1415926535_dp
 real(dp), parameter :: CO2Ref = 369.41_dp; 
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
+real(dp), parameter :: EvapZmin = 15._dp
+    !! cm  minimum soil depth for water extraction by evaporation
 real(dp), parameter :: eps =10E-08
 real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
                                                     90.25_dp, 120.25_dp, 151.25_dp, &
@@ -146,6 +148,20 @@ integer(intEnum), parameter :: datatype_decadely = 1
     !! index of decadely in datatype enumerated type
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
+
+integer(intEnum), parameter :: typeObsSim_ObsSimCC = 0
+    !! index of ObsSimCC in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
+    !! index of ObsSimB in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
+    !! index of ObsSimSWC in typeObsSim enumerated type
+
+integer(intEnum), parameter :: typeProject_TypePRO = 0
+    !! index of TypePRO in typeProject enumerated type
+integer(intEnum), parameter :: typeProject_TypePRM = 1
+    !! index of TypePRM in typeProject enumerated type
+integer(intEnum), parameter :: typeProject_TypeNone = 2
+    !! index of TypeNone in typeProject enumerated type
 
 type rep_DayEventInt
     integer(int32) :: DayNr
@@ -991,6 +1007,7 @@ real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECdrain ! EC drain water dS/m
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
+real(dp) :: Eact ! mm/day
 real(dp) :: Epot ! mm/day
 real(dp) :: ETo ! mm/day
 real(dp) :: Drain  ! mm/day
@@ -1002,6 +1019,8 @@ real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tpot ! mm/day
 
+
+logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
 
 
@@ -6962,6 +6981,25 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     call SetOutputName(TempString2)
 end subroutine ComposeOutputFileName
 
+subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgramParameters)
+    character(len=*), intent(in) :: TheFullFileNameProgram
+    character(len=*), intent(inout) :: FullFileNameProgramParameters
+
+    integer(int32) :: TheLength
+    character(len=:), allocatable :: TheExtension
+
+    FullFileNameProgramParameters = ''
+    TheLength = len(TheFullFileNameProgram)
+    TheExtension = TheFullFileNameProgram(TheLength-2:TheLength) ! PRO or PRM
+
+    FullFileNameProgramParameters = TheFullFileNameProgram(1:TheLength-3)
+    if (TheExtension == 'PRO') then
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PP1'
+    else
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PPn'
+    end if
+end subroutine GetFileForProgramParameters
+    
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 
@@ -11944,6 +11982,30 @@ type(rep_RootZoneSalt) function GetRootZoneSalt()
     GetRootZoneSalt = RootZoneSalt
 end function GetRootZoneSalt
 
+real(dp) function GetRootZoneSalt_ECe()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECe = RootZoneSalt%ECe
+end function GetRootZoneSalt_ECe
+
+real(dp) function GetRootZoneSalt_ECsw()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECsw = RootZoneSalt%ECsw
+end function GetRootZoneSalt_ECsw
+
+real(dp) function GetRootZoneSalt_ECswFC()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECswFC = RootZoneSalt%ECswFC
+end function GetRootZoneSalt_ECswFC
+
+real(dp) function GetRootZoneSalt_KsSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_KsSalt = RootZoneSalt%KsSalt
+end function GetRootZoneSalt_KsSalt
+
 subroutine SetRootZoneSalt_ECe(ECe)
     !! Setter for the "RootZoneSalt" global variable.
     real(dp), intent(in) :: ECe
@@ -14452,6 +14514,19 @@ subroutine SetMaxPlotTr(MaxPlotTr_in)
     MaxPlotTr = MaxPlotTr_in
 end subroutine SetMaxPlotTr
 
+logical function GetEvapoEntireSoilSurface()
+    !! Getter for the "EvapoEntireSoilSurface" global variable.
+
+    GetEvapoEntireSoilSurface = EvapoEntireSoilSurface
+end function GetEvapoEntireSoilSurface
+
+subroutine SetEvapoEntireSoilSurface(EvapoEntireSoilSurface_in)
+    !! Setter for the "EvapoEntireSoilSurface" global variable.
+    logical, intent(in) :: EvapoEntireSoilSurface_in
+
+    EvapoEntireSoilSurface = EvapoEntireSoilSurface_in
+end subroutine SetEvapoEntireSoilSurface
+
 logical function GetPreDay()
     !! Getter for the "PreDay" global variable.
 
@@ -14490,6 +14565,19 @@ subroutine SetECiAqua(ECiAqua_in)
 
     ECiAqua = ECiAqua_in
 end subroutine SetECiAqua
+
+real(dp) function GetEact()
+    !! Getter for the "Eact" global variable.
+
+    GetEact = Eact
+end function GetEact
+
+subroutine SetEact(Eact_in)
+    !! Setter for the "Eact" global variable.
+    real(dp), intent(in) :: Eact_in
+
+    Eact = Eact_in
+end subroutine SetEact
 
 real(dp) function GetETo()
     !! Getter for the "ETo" global variable.
