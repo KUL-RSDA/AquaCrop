@@ -2,10 +2,8 @@ unit Run;
 
 interface
 
-
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing,
-     interface_climprocessing, interface_simul;
-
+     interface_climprocessing, interface_simul, interface_inforesults;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -381,7 +379,7 @@ WITH PreviousSum DO
   Infiltrated := 0.0;
   SetRunoff(0.0);
   SetDrain(0.0);
-  Eact := 0.0;
+  SetEact(0.0);
   Tact := 0.0;
   TrW := 0.0;
   ECropCycle := 0.0;
@@ -1395,7 +1393,7 @@ NextSimFromDayNr := undef_int;
 SetCrop_pActStom(GetCrop().pdef);
 SetCrop_pSenAct(GetCrop().pSenescence);
 SetCrop_pLeafAct(GetCrop().pLeafDefUL);
-EvapoEntireSoilSurface := true;
+SetEvapoEntireSoilSurface(true);
 SetSimulation_EvapLimitON(false);
 SetSimulation_EvapWCsurf(0);
 SetSimulation_EvapZ(EvapZmin/100);
@@ -2091,7 +2089,7 @@ CASE OutputAggregate OF
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
                        GetRain(),GetETo(),GDDayi,
                        GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
-                       Eact,GetEpot(),Tact,TactWeedInfested,GetTpot(),
+                       GetEact(),GetEpot(),Tact,TactWeedInfested,GetTpot(),
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,Bin,Bout,
                        TheProjectFile,fRun);
@@ -2140,14 +2138,14 @@ IF Out1Wabal THEN
                GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
    IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
                  ELSE Ratio1 := 100.0;
-   IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(Eact+Tact)/(GetEpot()+GetTpot())
+   IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(GetEact()+Tact)/(GetEpot()+GetTpot())
                         ELSE Ratio2 := 100.0;
-   IF (GetEpot() > 0) THEN Ratio3 := 100*Eact/GetEpot()
+   IF (GetEpot() > 0) THEN Ratio3 := 100*GetEact()/GetEpot()
                  ELSE Ratio3 := 100;
    IF ((Out2Crop = true) OR (Out3Prof = true) OR (Out4Salt = true)
       OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,GetEpot():9:1,Eact:9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(Eact+Tact):8:1,Ratio2:8:0)
-      ELSE WRITELN(fDaily,GetEpot():9:1,Eact:9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(Eact+Tact):8:1,Ratio2:8:0);
+      THEN WRITE(fDaily,GetEpot():9:1,GetEact():9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(GetEact()+Tact):8:1,Ratio2:8:0)
+      ELSE WRITELN(fDaily,GetEpot():9:1,GetEact():9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(GetEact()+Tact):8:1,Ratio2:8:0);
    END;
 
 // 2. Crop development and yield
@@ -2258,7 +2256,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
+   WRITE(fDaily,GetSaltInfiltr():9:3,(GetDrain()*GetECdrain()*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (GetRootingDepth() <= 0)
       THEN BEGIN
            SaltVal := undef_int;
