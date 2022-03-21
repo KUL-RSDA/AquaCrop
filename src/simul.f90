@@ -36,13 +36,11 @@ use ac_global, only: ActiveCells, &
                      GetCrop, &
                      GetCrop_AdaptedToCO2, &
                      GetCrop_CCEffectEvapLate, &
-                     GetCrop_CCEffectEvapLate, GetCrop_WP, &
-                     GetCrop_CCo, &
                      GetCrop_CCsaltDistortion, &
+                     GetCrop_CCo, &
                      GetCrop_CCx, &
-                     GetCrop_CDC, &
                      GetCrop_CGC, &
-                     GetCrop_CGC, GetCrop_CCx, &
+                     GetCrop_CDC, &
                      GetCrop_Day1, &
                      GetCrop_DayN, &
                      GetCrop_DaysToFlowering, &
@@ -51,26 +49,27 @@ use ac_global, only: ActiveCells, &
                      GetCrop_DaysToGermination, &
                      GetCrop_DaysToHarvest, &
                      GetCrop_DaysToSenescence, &
+                     GetCrop_dHIdt, &
                      GetCrop_DeterminancyLinked, &
-                     GetCrop_dHIdt, &
-                     GetCrop_dHIdt, &
-                     GetCrop_GDDaysToFlowering, &
-                     GetCrop_GDDaysToFullCanopy, &
-                     GetCrop_GDDaysToGermination, &
-                     GetCrop_GDDaysToHarvest, &
-                     GetCrop_GDDaysToSenescence, &
                      GetCrop_GDDCDC, &
                      GetCrop_GDDCGC, &
-                     GetCrop_GDDCGC, &
                      GetCrop_GDDLengthFlowering, &
-                     GetCrop_GDtranspLow, &
+                     getcrop_gddaystofullcanopy, &
+                     getcrop_gddaystoflowering, &
+                     getcrop_gddaystoharvest, &
+                     getcrop_gddaystogermination, &
+                     getcrop_gddaystosenescence, &
                      GetCrop_GDtranspLow, &
                      GetCrop_HI, &
                      GetCrop_KcDecline, &
                      GetCrop_KcTop, &
-                     GetCrop_KcTop, &
                      GetCrop_LengthFlowering, &
                      GetCrop_ModeCycle, &
+                     getCrop_Day1, &
+                     GetCrop_Planting, &
+                     GetCrop_RootMin, &
+                     GetCrop_Tbase, &
+                     GetCrop_Tupper, &
                      GetCrop_pLeafDefLL, &
                      GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, &
@@ -113,6 +112,7 @@ use ac_global, only: ActiveCells, &
                      GetRootZoneSalt_KsSalt, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
+                     GetRootZoneWC_WP, &
                      GetRootZoneWC_Thresh, &
                      GetRunoff, &
                      GetSimulation_DelayedDays, &
@@ -124,6 +124,7 @@ use ac_global, only: ActiveCells, &
                      GetSimulation_IrriECw, &
                      GetSimulation_SalinityConsidered, &
                      GetSimulation_SWCtopSoilConsidered, &
+                     GetSimulParam_TAWGermination, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
                      GetSimulParam_EffectiveRain_Method, &
@@ -162,6 +163,7 @@ use ac_global, only: ActiveCells, &
                      max_No_compartments, &
                      MaxCRatDepth, &
                      modeCycle_CalendarDays, &
+                     plant_seed, &
                      modeCycle_GDDays, &
                      pMethod_FAOCorrection, &
                      rep_Crop, &
@@ -189,6 +191,10 @@ use ac_global, only: ActiveCells, &
                      SetRootZoneSalt_ECswFC, &
                      SetRootZoneSalt_KsSalt, &
                      SetRunoff, &
+                     SetSimulation_DelayedDays, &
+                     SetSimulation_Germinate, &
+                     SetSimulation_ProtectedSeedling, &
+                     setsimulation_sumgdd, &
                      SetSaltInfiltr, &
                      SetSimulation_EffectStress, &
                      SetSimulation_EffectStress_CDecline, &
@@ -357,6 +363,30 @@ subroutine AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta, pSenAct)
     end if
 end subroutine AdjustpSenescenceToETo
 
+subroutine CheckGermination()
+
+    real(dp) :: Zroot, WCGermination
+    logical :: SWCtopSoilConsidered_temp
+
+    ! total root zone is considered
+    Zroot = GetCrop_RootMin()
+    SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+    call DetermineRootZoneWC(Zroot, SWCtopSoilConsidered_temp)
+    call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+    WCGermination = GetRootZoneWC_WP() + (GetRootZoneWC_FC() - &
+                    GetRootZoneWC_WP()) * (GetSimulParam_TAWGermination()/100._dp)
+    if (GetRootZoneWC_Actual() < WCGermination) then
+        call SetSimulation_DelayedDays(GetSimulation_DelayedDays() + 1)
+        call SetSimulation_SumGDD(0._dp)
+    else
+        call SetSimulation_Germinate(.true.)
+        if (GetCrop_Planting() == plant_Seed) then
+            call SetSimulation_ProtectedSeedling(.true.)
+        else
+            call SetSimulation_ProtectedSeedling(.false.)
+        end if
+    end if
+end subroutine CheckGermination
 
 !-----------------------------------------------------------------------------
 ! BUDGET_module
@@ -1890,7 +1920,6 @@ subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
     end function Calculate_factor 
 
 end subroutine calculate_infiltration
-
 
 
 subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &

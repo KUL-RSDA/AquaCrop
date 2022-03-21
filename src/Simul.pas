@@ -614,32 +614,86 @@ END; (* CheckWaterSaltBalance *)
 
 
 
-
-
-PROCEDURE CheckGermination;
-VAR Zroot, WCGermination : double;
-    SWCtopSoilConsidered_temp : boolean;
-
+PROCEDURE calculate_CapillaryRise(VAR CRwater,CRsalt : double);
+VAR Zbottom,MaxMM,DThetaMax,DTheta,LimitMM,CRcomp,SaltCRi,DrivingForce,ZtopNextLayer,
+    Krel,ThetaThreshold  : double;
+    compi,SCellAct,layeri : INTEGER;
 BEGIN
-// total root zone is considered
-Zroot := GetCrop().RootMin;
-SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
-DetermineRootZoneWC(Zroot,SWCtopSoilConsidered_temp);
-SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
-WCGermination := GetRootZoneWC().WP + (GetRootZoneWC().FC - GetRootZoneWC().WP) * (GetSimulParam_TAWGermination()/100);
-IF (GetRootZoneWC().Actual < WCGermination)
-   THEN BEGIN
-        SetSimulation_DelayedDays(GetSimulation_DelayedDays() + 1);
-        SetSimulation_SumGDD(0);
-        END
-   ELSE BEGIN
-        SetSimulation_Germinate(true);
-        IF (GetCrop().Planting = Seed)
-           THEN SetSimulation_ProtectedSeedling(true)
-           ELSE SetSimulation_ProtectedSeedling(false);
-        END;
-END; (* CheckGermination *)
+Zbottom := 0;
+FOR compi := 1 TO GetNrCompartments() DO Zbottom := Zbottom + GetCompartment_Thickness(compi);
 
+// start at the bottom of the soil profile
+compi := GetNrCompartments();
+MaxMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
+                      GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(GetZiAqua()/100));
+
+// check restrictions on CR from soil layers below
+ZtopNextLayer := 0;
+FOR layeri := 1 TO GetCompartment_Layer(GetNrCompartments()) DO ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
+layeri := GetCompartment_Layer(GetNrCompartments());
+WHILE ((ZtopNextLayer < (GetZiAqua()/100)) AND (layeri < GetSoil().NrSoilLayers)) DO
+   BEGIN
+   layeri := layeri + 1;
+   LimitMM := MaxCRatDepth(GetSoilLayer_i(layeri).CRa,GetSoilLayer_i(layeri).CRb,GetSoilLayer_i(layeri).InfRate,ZtopNextLayer,(GetZiAqua()/100));
+   IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
+   ZtopNextLayer := ZtopNextLayer + GetSoilLayer_i(layeri).Thickness;
+   END;
+
+WHILE ((ROUND(MaxMM*1000) > 0) AND (compi > 0) AND (ROUND(GetCompartment_fluxout(compi)*1000) = 0)) DO
+   BEGIN
+   // Driving force
+   IF ((GetCompartment_theta(compi) >= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100) AND (GetSimulParam_RootNrDF() > 0))
+      THEN DrivingForce := 1 - (exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_theta(compi)-GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100))
+                                     /exp(GetSimulParam_RootNrDF()*Ln(GetCompartment_FCadj(compi)/100-GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)))
+      ELSE DrivingForce := 1;
+   // relative hydraulic conductivity
+   ThetaThreshold := (GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100 + GetSoilLayer_i(GetCompartment_Layer(compi)).FC/100)/2;
+   IF (GetCompartment_Theta(compi) < ThetaThreshold)
+      THEN BEGIN
+           IF ((GetCompartment_Theta(compi) <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)
+               OR (ThetaThreshold <= GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100))
+              THEN Krel := 0
+              ELSE Krel := (GetCompartment_Theta(compi) - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100)/
+                           (ThetaThreshold - GetSoilLayer_i(GetCompartment_Layer(compi)).WP/100);
+           END
+      ELSE Krel := 1;
+
+   // room available to store water
+   DTheta := GetCompartment_FCadj(compi)/100 - GetCompartment_Theta(compi);
+   IF ((DTheta > 0) AND ((Zbottom - GetCompartment_Thickness(compi)/2) < (GetZiAqua()/100))) THEN
+      BEGIN
+      // water stored
+      DThetaMax := Krel * DrivingForce * MaxMM/(1000*GetCompartment_Thickness(compi));
+      IF (DTheta >= DThetaMax)
+         THEN BEGIN
+              SetCompartment_Theta(compi, GetCompartment_Theta(compi) + DThetaMax);
+              CRcomp := DThetaMax*1000*GetCompartment_Thickness(compi)
+                        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+              MaxMM := 0;
+              END
+         ELSE BEGIN
+              SetCompartment_Theta(compi, GetCompartment_FCadj(compi)/100);
+              CRcomp := DTheta*1000*GetCompartment_Thickness(compi)
+                        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
+              MaxMM := Krel * MaxMM - CRcomp;
+              END;
+      CRwater := CRwater + CRcomp;
+      // salt stored
+      SCellAct := ActiveCells(GetCompartment_i(compi));
+      SaltCRi := Equiv * CRcomp * GetECiAqua(); // gram/m2
+      SetCompartment_Salt(compi, SCellAct, GetCompartment_Salt(compi, SCellAct) + SaltCRi);
+      CRsalt := CRsalt + SaltCRi;
+      END;
+   Zbottom := Zbottom - GetCompartment_Thickness(compi);
+   compi := compi - 1;
+   IF (compi > 0) THEN
+      BEGIN
+      LimitMM := MaxCRatDepth(GetSoilLayer_i(GetCompartment_Layer(compi)).CRa,GetSoilLayer_i(GetCompartment_Layer(compi)).CRb,
+                              GetSoilLayer_i(GetCompartment_Layer(compi)).InfRate,(Zbottom - GetCompartment_Thickness(compi)/2),(GetZiAqua()/100));
+      IF (MaxMM > LimitMM) THEN MaxMM := LimitMM;
+      END;
+   END;
+END; (* calculate_CapillaryRise *)
 
 
 
