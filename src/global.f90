@@ -1018,7 +1018,7 @@ real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tpot ! mm/day
-
+real(dp) :: CCiActual
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
@@ -14760,5 +14760,17 @@ subroutine SetSaltInfiltr(SaltInfiltr_in)
     SaltInfiltr = SaltInfiltr_in
 end subroutine SetSaltInfiltr
 
+real(dp) function GetCCiActual()
+    !! Getter for the "CCiActual" global variable.
+
+    GetCCiActual = CCiActual
+end function GetCCiActual
+
+subroutine SetCCiActual(CCiActual_in)
+    !! Setter for the "CCiActual" global variable.
+    real(dp), intent(in) :: CCiActual_in
+
+    CCiActual = CCiActual_in
+end subroutine SetCCiActual
 
 end module ac_global

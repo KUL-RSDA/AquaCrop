@@ -2973,13 +2973,13 @@ function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
 
 function GetTotalSaltContent_BeginDay(): double;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_beginday';
 
 function GetTotalSaltContent_EndDay(): double;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_endday';
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_endday';
 
 function GetTotalSaltContent_ErrorDay(): double;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_errorday';
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_errorday';
 
 function GetTotalWaterContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
@@ -4702,6 +4702,11 @@ function GetSaltInfiltr() : double;
 procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsaltinfiltr';
 
+function GetCCiActual() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcciactual';
+
+procedure SetCCiActual(constref CCiActual_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcciactual';
 
 implementation
 

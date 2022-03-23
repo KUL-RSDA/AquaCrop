@@ -7,7 +7,7 @@ uses SysUtils, interface_global;
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
 
-    CCiActual,CCiPrev,CCiTopEarlySen : double;
+    CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
     Tmin, Tmax : double; (* degC *)

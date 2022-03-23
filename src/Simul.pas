@@ -135,7 +135,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain) OR (GetCrop().Sub
            THEN alfa := GetCrop().HI
            ELSE BEGIN
                 HIfinal_temp := GetSimulation_HIfinal();
-                alfa := HarvestIndexDay((dayi-GetCrop().Day1),GetCrop().DaysToFlowering,GetCrop().HI,GetCrop().dHIdt,CCiactual,
+                alfa := HarvestIndexDay((dayi-GetCrop().Day1),GetCrop().DaysToFlowering,GetCrop().HI,GetCrop().dHIdt,GetCCiActual(),
                               GetCrop().CCxAdjusted,GetSimulParam_PercCCxHIfinal(),GetCrop().Planting,
                               PercentLagPhase,HIfinal_temp);
                 SetSimulation_HIfinal(HIfinal_temp);
@@ -298,7 +298,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
                  RBM := BMRange(GetCrop().HIincrease);
                  HItimesBEF := HImultiplier(RatioBM,RBM,GetCrop().HIincrease);
                  END;
-         IF (CCiActual <= 0.01) THEN HItimesBEF := 0; // no green canopy cover left at start of flowering;
+         IF (GetCCiActual() <= 0.01) THEN HItimesBEF := 0; // no green canopy cover left at start of flowering;
          END;
 
       // 2.3 Relative water content for that day
@@ -313,7 +313,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
       IF (GetCrop().Subkind = grain) // - only valid for fruit/grain crops (flowers)
          THEN BEGIN
               IF ((dayi <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + GetCrop().LengthFlowering)) // calculation limited to flowering period
-                 AND ((CCiactual*100) > GetSimulParam_PercCCxHIfinal())) THEN // sufficient green canopy remains
+                 AND ((GetCCiActual()*100) > GetSimulParam_PercCCxHIfinal())) THEN // sufficient green canopy remains
                  BEGIN
                  // 2.4a - Fraction of flowers which are flowering on day  (fFlor)
                  fFlor := FractionFlowering(dayi);
@@ -343,7 +343,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
           AND (dayi <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tmax1)) // and not yet end period
           AND (tmax1 > 0) // otherwise no effect
           AND (ROUND(GetCrop().aCoeff) <> Undef_int) // otherwise no effect
-          AND (CCiactual > 0.001))  // and as long as green canopy cover remains (for correction to stresses)
+          AND (GetCCiActual() > 0.001))  // and as long as green canopy cover remains (for correction to stresses)
          THEN BEGIN
               // determine KsLeaf
               AdjustpLeafToETo(ETo,pLeafULAct,pLeafLLAct);
@@ -365,7 +365,7 @@ IF ((GetCrop_subkind() = Tuber) OR (GetCrop().Subkind = grain)) THEN
           AND (dayi <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tmax2)) // and not yet end period
           AND (tmax2 > 0) // otherwise no effect
           AND (ROUND(GetCrop().bCoeff) <> Undef_int) // otherwise no effect
-          AND (CCiactual > 0.001))  // and as long as green canopy cover remains (for correction to stresses)
+          AND (GetCCiActual() > 0.001))  // and as long as green canopy cover remains (for correction to stresses)
          THEN BEGIN
               // determine KsStomatal
               AdjustpStomatalToETo(ETo,pStomatULAct);
@@ -506,7 +506,7 @@ VAR  control : rep_control;
      EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp : double;
      Comp_temp : rep_Comp;
      Crop_pActStom_temp : double;
-     CRsalt_temp, ECdrain_temp : double;
+     CRsalt_temp, ECdrain_temp, CCiActual_temp : double;
 
 
 
@@ -598,7 +598,7 @@ CASE control OF
                   BEGIN
                   IF (GetSumWaBal_Biomass() > 0) // biomass was already produced (i.e. CC present)
                      THEN BEGIN // and still canopy cover
-                          IF (CCiActual > 0) THEN SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + GetEact());
+                          IF (GetCCiActual() > 0) THEN SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + GetEact());
                           END
                      ELSE SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + GetEact()); // before germination
                   END;
@@ -1082,7 +1082,7 @@ IF ((VirtualTimeCC < GetCrop().DaysToGermination) OR (VirtualTimeCC > (GetCrop()
                                                  // CCiActual becomes CCibis, when canopy decline is more severe
                                                  IF (CCibis < CCiActual) THEN CCiActual := CCibis;
                                                  END
-                                            ELSE CCiActual := 0;
+                                            ELSE CCiActual := 0
                                         END;
                                 END;
                         END; // late season
@@ -2315,9 +2315,11 @@ END; (* surface_transpiration *)
 
 PROCEDURE FeedbackCC;
 BEGIN
-IF (((CCiActual - CCiPrev) > 0.005)  // canopy is still developing
+IF (((GetCCiActual() - CCiPrev) > 0.005)  // canopy is still developing
     AND (Tact = 0))                  // due to aeration stress or ETo = 0
-THEN CCiActual := CCiPrev;           // no transpiration, no crop development
+THEN BEGIN
+    SetCCiActual(CCiPrev);           // no transpiration, no crop development
+    END;
 END; (* FeedbackCC *)
 
 
@@ -2456,11 +2458,13 @@ IF (NoMoreCrop = false) THEN
    DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
    SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
    // determine canopy cover
+   CCiActual_temp := GetCCiActual(); 
    CASE GetCrop_ModeCycle() OF
-           GDDays : DetermineCCiGDD(CCxTotal,CCoTotal,CCiActual);
-           else DetermineCCi(CCxTotal,CCoTotal,CCiActual);
+           GDDays : DetermineCCiGDD(CCxTotal,CCoTotal,CCiActual_temp);
+           else DetermineCCi(CCxTotal,CCoTotal,CCiActual_temp);
            end;
    END;
+   SetCCiActual(CCiActual_temp);
 
 // 11. Determine Tpot and Epot
 // 11.1 Days after Planting
@@ -2474,14 +2478,13 @@ IF (GetCrop_ModeCycle() = Calendardays)
 // 11.2 Calculation
 Tpot_temp := GetTpot();
 CalculateETpot(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,DayLastCut,
-               CCiActual,GetETo(),GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,CO2i,
+               GetCCiActual(),GetETo(),GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCxAdjusted,GetCrop().CCxWithered,GetCrop().CCEffectEvapLate,CO2i,
                GDDayi,GetCrop().GDtranspLow,Tpot_temp,EpotTot);
 SetTpot(Tpot_temp);
 SetEpot(EpotTot);    // adjustment Epot for mulch and partial wetting in next step
 Crop_pActStom_temp := GetCrop().pActStom;
 AdjustpStomatalToETo(GetETo(),Crop_pActStom_temp);
 SetCrop_pActStom(Crop_pActStom_temp);
-
 
 // 12. Evaporation
 IF (GetPreDay() = false) THEN PrepareStage2; // Initialize Simulation.EvapstartStg2 (REW is gone)
