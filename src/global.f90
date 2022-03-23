@@ -6723,7 +6723,6 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     ! 2. Open project file
     open(newunit=fhandle0, file=trim(FullNameProjectFile), status='old', &
                                                            action ='read')
-    rewind(fhandle0)
     read(fhandle0, *) ! Description
     read(fhandle0, *)  ! AquaCrop version Nr
     do i = 1, 5 
@@ -6801,7 +6800,6 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
             FullFileName = trim(PathName) // trim(FileName)
             open(newunit=fhandlex, file=trim(FullFileName), &
                                     status='old', action ='read')
-            rewind(fhandlex)
             read(fhandlex, *) ! description
             read(fhandlex, *) VersionNrCrop
             if (roundc(VersionNrCrop*10, mold=1) <= 31) then
