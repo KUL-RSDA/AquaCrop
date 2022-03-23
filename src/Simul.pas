@@ -2317,9 +2317,7 @@ PROCEDURE FeedbackCC;
 BEGIN
 IF (((GetCCiActual() - CCiPrev) > 0.005)  // canopy is still developing
     AND (Tact = 0))                  // due to aeration stress or ETo = 0
-THEN BEGIN
-    SetCCiActual(CCiPrev);           // no transpiration, no crop development
-    END;
+THEN SetCCiActual(CCiPrev);           // no transpiration, no crop development
 END; (* FeedbackCC *)
 
 
