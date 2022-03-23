@@ -64,17 +64,6 @@ BEGIN
 END;
 
 
-PROCEDURE RunSimulation_wrap(constref TheProjectFile : PChar;
-                             constref TheProjectType : integer);
-VAR
-    str : AnsiString;
-    ptype : repTypeProject;
-BEGIN
-    str := AnsiString(TheProjectFile);
-    ptype := repTypeProject(TheProjectType);
-    RunSimulation(str, ptype);
-END;
-
 
 PROCEDURE InitializeSimulation_wrap(constref TheProjectFile : PChar;
                                     constref TheProjectType : integer);
@@ -123,7 +112,6 @@ END;
 
 exports
   // Related to StartUnit.pas procedures
-  StartTheProgram name 'starttheprogram_',
   InitializeTheProgram name 'initializetheprogram_',
   FinalizeTheProgram name 'finalizetheprogram_',
   GetNumberOfProjects name 'getnumberofprojects_',
@@ -134,7 +122,6 @@ exports
   InitializeProject_wrap name 'initializeproject_wrap_',
   // Related to Run.pas procedures
   GetDayNri name 'getdaynri_',
-  RunSimulation_wrap name 'runsimulation_wrap_',
   InitializeSimulation_wrap name 'initializesimulation_wrap_',
   InitializeRun_wrap name 'initializerun_wrap_',
   AdvanceOneTimeStep name 'advanceonetimestep_',
