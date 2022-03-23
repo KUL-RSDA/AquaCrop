@@ -412,6 +412,7 @@ VAR NrString,TestFile : string;
 
 BEGIN
     Str(iproject:8,NrString);
+    CanSelect := true;
 
     // check if project file exists
     IF (TheProjectType <> TypeNone) THEN
