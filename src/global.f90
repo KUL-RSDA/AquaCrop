@@ -1017,6 +1017,7 @@ real(dp) :: Rain  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
+real(dp) :: Tact ! mm/day
 real(dp) :: Tpot ! mm/day
 
 
@@ -14656,6 +14657,19 @@ subroutine SetTpot(Tpot_in)
 
     Tpot = Tpot_in
 end subroutine SetTpot
+
+real(dp) function GetTact()
+    !! Getter for the "Tact" global variable.
+
+    GetTact = Tact
+end function GetTact
+
+subroutine SetTact(Tact_in)
+    !! Setter for the "Tact" global variable.
+    real(dp), intent(in) :: Tact_in
+
+    Tact = Tact_in
+end subroutine SetTact
 
 function GetMultipleProjectDescription() result(str)
     !! Getter for the "MultipleProjectDescription" global variable.
