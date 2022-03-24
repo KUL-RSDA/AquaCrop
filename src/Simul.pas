@@ -2360,36 +2360,6 @@ END; (* HorizontalInflowGWTable *)
 
 
 
-PROCEDURE ConcentrateSalts;
-Var compi, celWet, celi : INTEGER;
-    SaltTot, mm : Double;
-    Salt_temp, Depo_temp : double;
-BEGIN
-FOR compi := 1 TO GetNrCompartments() DO
-    BEGIN
-    SaltTot := 0;
-    celWet := ActiveCells(GetCompartment_i(compi));
-    IF (celWet < GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1) THEN FOR celi := (celWet+1) TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
-       BEGIN
-       SaltTot := SaltTot + GetCompartment_Salt(compi, celi) + GetCompartment_Depo(compi, celi);
-       SetCompartment_Salt(compi, celi, 0);
-       SetCompartment_Depo(compi, celi, 0);
-       END;
-    IF (SaltTot > 0) THEN
-       BEGIN
-       SetCompartment_Salt(compi, celWet, GetCompartment_Salt(compi, celWet) + SaltTot);
-       mm := GetSoilLayer_i(GetCompartment_Layer(compi)).Dx*1000*GetCompartment_Thickness(compi)
-             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-       Salt_temp := GetCompartment_Salt(compi, celWet);
-       Depo_temp := GetCompartment_Depo(compi, celWet);
-       SaltSolutionDeposit(mm,Salt_temp, Depo_temp);
-       SetCompartment_Salt(compi, celWet, Salt_temp);
-       SetCompartment_Depo(compi, celWet, Depo_temp);
-       END;
-    END;
-END; (* ConcentrateSalts *)
-
-
 
 BEGIN (* BUDGET_module *)
 

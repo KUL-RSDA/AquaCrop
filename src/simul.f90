@@ -2296,6 +2296,39 @@ subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
     end if
 end subroutine AdjustEpotMulchWettedSurface
 
+subroutine ConcentrateSalts()
+
+    integer(int32) :: compi, celWet, celi
+    real(dp) :: SaltTot, mm
+    real(dp) :: Salt_temp, Depo_temp
+
+    do compi = 1, GetNrCompartments() 
+        SaltTot = 0.0_dp
+        celWet = ActiveCells(GetCompartment_i(compi))
+        if (celWet < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+            do celi = (celWet+1), GetSoilLayer_SCP1(GetCompartment_Layer(compi)) 
+                SaltTot = SaltTot + GetCompartment_Salt(compi, celi)&
+                          + GetCompartment_Depo(compi, celi)
+                call SetCompartment_Salt(compi, celi, 0.0_dp)
+                call SetCompartment_Depo(compi, celi, 0.0_dp)
+            end do
+        end if
+        if (SaltTot > 0.0_dp) then
+            call SetCompartment_Salt(compi, celWet, &
+                GetCompartment_Salt(compi, celWet) + SaltTot)
+            mm = GetSoilLayer_Dx(GetCompartment_Layer(compi))*1000.0_dp&
+                 * GetCompartment_Thickness(compi)&
+                 * (1 - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))&
+                        / 100.0_dp)
+            Salt_temp = GetCompartment_Salt(compi, celWet)
+            Depo_temp = GetCompartment_Depo(compi, celWet)
+            call SaltSolutionDeposit(mm, Salt_temp, Depo_temp)
+            call SetCompartment_Salt(compi, celWet, Salt_temp)
+            call SetCompartment_Depo(compi, celWet, Depo_temp)
+        end if
+    end do
+end subroutine ConcentrateSalts
+
 
 !-----------------------------------------------------------------------------
 ! end BUDGET_module

@@ -123,6 +123,8 @@ procedure AdjustEpotMulchWettedSurface(
                         VAR EvapWCsurface : double);
     external 'aquacrop' name '__ac_simul_MOD_adjustepotmulchwettedsurface';
 
+procedure ConcentrateSalts;
+    external 'aquacrop' name '__ac_simul_MOD_concentratesalts';
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module
