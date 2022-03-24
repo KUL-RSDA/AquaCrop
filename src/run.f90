@@ -2,7 +2,19 @@ module ac_run
 
 use ac_kinds, only: dp, &
                     int32
-use ac_global, only: rep_sum
+use ac_global, only: CompartmentIndividual, &
+                     DetermineSaltContent, &
+                     GetCompartment_i, &
+                     GetCompartment_Layer, &
+                     GetCompartment_Thickness, &
+                     GetNrCompartments, &
+                     GetSoilLayer_SAT, &
+                     GetZiAqua, &
+                     GetECiAqua, &
+                     rep_sum, &
+                     SetCompartment_i, &
+                     SetCompartment_Theta
+
                     
 implicit none
 
@@ -624,6 +636,27 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
     Transfer%Bmobilized = Bmobilized
 end subroutine SetTransfer_Bmobilized
 
+
+subroutine AdjustForWatertable()
+
+    real(dp) :: Ztot, Zi
+    integer(int32) :: compi
+    type(CompartmentIndividual) :: Compi_temp
+
+    Ztot = 0.0_dp
+    do compi = 1, GetNrCompartments() 
+        Ztot = Ztot + GetCompartment_Thickness(compi)
+        Zi = Ztot - GetCompartment_Thickness(compi)/2.0_dp
+        if (Zi >= (GetZiAqua()/100.0_dp)) then
+            ! compartment at or below groundwater table
+            call SetCompartment_Theta(compi, &
+                GetSoilLayer_SAT(GetCompartment_Layer(compi))/100.0_dp)
+            Compi_temp = GetCompartment_i(compi)
+            call DetermineSaltContent(GetECiAqua(), Compi_temp)
+            call SetCompartment_i(compi, Compi_temp)
+        end if
+    end do
+end subroutine AdjustForWatertable
 
 subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
