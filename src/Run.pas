@@ -1734,8 +1734,7 @@ SetCrop_CCoAdjusted(CCoTotal);
 TimeSenescence := 0;
 SetCrop_CCxWithered(0);
 NoMoreCrop := false;
-
-CCiActual := CCiPrev;
+SetCCiActual(CCiPrev);
 
 
 // 14. Biomass and re-setting of GlobalZero
@@ -2181,14 +2180,14 @@ IF Out2Crop THEN
       THEN StrSalt := undef_int
       ELSE StrSalt := ROUND(100 * (1 - GetRootZoneSalt().KsSalt));
    //4. Air temperature stress
-   IF (CCiActual <= 0.0000001)
+   IF (GetCCiActual() <= 0.0000001)
       THEN KsTr := 1
       ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GDDayi);
    IF (KsTr < 1)
       THEN StrTr := ROUND((1-KsTr)*100)
       ELSE StrTr := 0;
    //5. Relative cover of weeds
-   IF (CCiActual <= 0.0000001)
+   IF (GetCCiActual() <= 0.0000001)
       THEN StrW := undef_int
       ELSE StrW := Round(WeedRCi);
    //6. WPi adjustemnt
@@ -2214,7 +2213,7 @@ IF Out2Crop THEN
       ELSE WPy := 0.0;
    // write
    WRITE(fDaily,GDDayi:9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
-         (CCiActual*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
+         (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
          TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
    IF ((GetCrop().DryMatter = undef_int) OR (GetCrop().DryMatter = 0))
@@ -2389,7 +2388,7 @@ IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);
-WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(CCiActual*100):8:1,CCfield:8:1,CCstd:8:1,
+WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
 END; (* WriteEvaluationData *)
 
@@ -2847,7 +2846,7 @@ IF ((GetRootingDepth() > 0) AND (DayNri = GetCrop().Day1) AND (GetIrriMode() = I
    END;
 
 // total number of days in the season
-IF (CCiActual > 0) THEN
+IF (GetCCiActual() > 0) THEN
    BEGIN
    IF (GetStressTot_NrD() < 0)
       THEN SetStressTot_NrD(1)
@@ -2867,7 +2866,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
         SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp);
         // temperature stress affecting crop transpiration
-        IF (CCiActual <= 0.0000001)
+        IF (GetCCiActual() <= 0.0000001)
            THEN KsTr := 1
            ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GDDayi);
         SetStressTot_Temp(((GetStressTot_NrD() - 1)*GetStressTot_Temp() + 100*(1-KsTr))/GetStressTot_NrD());
@@ -2894,7 +2893,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         YieldPart_temp := GetSumWaBal_YieldPart();
         DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
-                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,CCiActual,FracAssim,
+                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,SumInterval,
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
@@ -2926,7 +2925,7 @@ IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
 SetPreDay(true);
 IF (DayNri >= GetCrop().Day1) THEN
    BEGIN
-   CCiPrev := CCiActual;
+   CCiPrev := GetCCiActual();
    IF (ZiPrev < GetRootingDepth()) THEN Ziprev := GetRootingDepth(); // IN CASE groundwater table does not affect root development
    SumGDDPrev := GetSimulation_SumGDD();
    END;
@@ -3022,7 +3021,7 @@ IF GetManagement_Cuttings_Considered() THEN
 SumETo := SumETo + GetETo();
 SumGDD := SumGDD + GDDayi;
 //14.b Stress totals
-IF (CCiActual > 0) THEN
+IF (GetCCiActual() > 0) THEN
    BEGIN
    // leaf expansion growth
    IF (StressLeaf > - 0.000001) THEN
@@ -3039,7 +3038,7 @@ IF (CCiActual > 0) THEN
 IF (WeedRCi > - 0.000001) THEN
    SetStressTot_Weed(((GetStressTot_NrD() - 1)*GetStressTot_Weed() + WeedRCi)/GetStressTot_NrD());
 //14.c Assign crop parameters
-SetPlotVarCrop_ActVal(CCiActual/CCxCropWeedsNoSFstress * 100);
+SetPlotVarCrop_ActVal(GetCCiActual()/CCxCropWeedsNoSFstress * 100);
 SetPlotVarCrop_PotVal(100 * (1/CCxCropWeedsNoSFstress) *
                               CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),GetCrop().DaysToGermination,
                               GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
