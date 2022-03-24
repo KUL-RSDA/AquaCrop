@@ -2,8 +2,7 @@ unit Run;
 
 interface
 
-uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing,
-     interface_climprocessing, interface_simul, interface_inforesults;
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_climprocessing, interface_simul, interface_inforesults;
 
 PROCEDURE RunSimulation(TheProjectFile : string;
                         TheProjectType : repTypeProject);
@@ -363,42 +362,6 @@ WRITELN(fEval,'                                                                 
 WRITELN(fEval,'   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
 WRITELN(fEval,'                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
 END; (* CreateEvalData *)
-
-
-PROCEDURE ResetPreviousSum(VAR PreviousSum : rep_sum;
-                           VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
-                               PreviousBmob,PreviousBsto : double);
-BEGIN
-
-WITH PreviousSum DO
-  BEGIN
-  Epot := 0.0;
-  Tpot := 0.0;
-  SetRain(0.0);
-  Irrigation := 0.0;
-  Infiltrated := 0.0;
-  SetRunoff(0.0);
-  SetDrain(0.0);
-  SetEact(0.0);
-  Tact := 0.0;
-  TrW := 0.0;
-  ECropCycle := 0.0;
-  CRwater := 0.0;
-  Biomass := 0.0;
-  YieldPart := 0.0;
-  BiomassPot := 0.0;
-  BiomassUnlim := 0.0;
-  SaltIn := 0.0;
-  SaltOut := 0.0;
-  CRsalt := 0.0;
-  END;
-SumETo := 0.0;
-SumGDD := 0.0;
-PreviousSumETo := 0.0;
-PreviousSumGDD := 0.0;
-PreviousBmob := 0.0;
-PreviousBsto := 0.0;
-END; (* ResetPreviousSum *)
 
 
 PROCEDURE AdjustForWatertable;
