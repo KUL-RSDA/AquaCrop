@@ -20,7 +20,6 @@ const
 
 type
     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-    repTypeProject = (TypePRO,TypePRM,TypeNone);
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -474,6 +473,7 @@ type
          GeneratedDayNrOnset,GeneratedDayNrEnd : integer;
          end;
 
+    repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -2969,9 +2969,31 @@ procedure SetPerennialPeriod_GeneratedDayNrOnset(constref GeneratedDayNrOnset : 
 procedure SetPerennialPeriod_GeneratedDayNrEnd(constref GeneratedDayNrEnd : integer);
     external 'aquacrop' name '__ac_global_MOD_setperennialperiod_generateddaynrend';
 
-
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
+
+function GetTotalSaltContent_BeginDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_beginday';
+
+function GetTotalSaltContent_EndDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_endday';
+
+function GetTotalSaltContent_ErrorDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_errorday';
+
+function GetTotalWaterContent(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
+
+function GetTotalWaterContent_BeginDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
+
+function GetTotalWaterContent_EndDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_endday';
+
+function GetTotalWaterContent_ErrorDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_errorday';
+
+procedure SetTotalSaltContent(constref TotalSaltContent : rep_Content);
 
 procedure SetTotalSaltContent_BeginDay(constref BeginDay : double);
         external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_beginday';
@@ -2981,12 +3003,6 @@ procedure SetTotalSaltContent_EndDay(constref EndDay : double);
 
 procedure SetTotalSaltContent_ErrorDay(constref ErrorDay : double);
         external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_errorday';
-
-function GetTotalWaterContent(): rep_Content;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
-        
-function GetTotalWaterContent_BeginDay(): rep_Content;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 
@@ -4686,8 +4702,44 @@ function GetSaltInfiltr() : double;
 procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsaltinfiltr';
 
+function GetCCiActual() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcciactual';
+
+procedure SetCCiActual(constref CCiActual_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcciactual';
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+
+procedure CheckForKeepSWC_wrap(
+                    constref FullNameProjectFile : PChar;
+                    constref strlen : integer;
+                    constref TotalNrRuns : integer;
+                    var RunWithKeepSWC : boolean;
+                    var ConstZrxForRun : double);
+    external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
+
 
 implementation
+
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+var
+    FullNameProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    FullNameProjectFile_ptr := PChar(FullNameProjectFile);
+    strlen := Length(FullNameProjectFile);
+    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns,
+                         RunWithKeepSWC, ConstZrxForRun);
+end;
 
 
 
@@ -5565,6 +5617,15 @@ begin;
     SetTotalWaterContent_EndDay(TotalWaterContent.EndDay);
     SetTotalWaterContent_ErrorDay(TotalWaterContent.ErrorDay);
 end;
+
+
+procedure SetTotalSaltContent(constref TotalSaltContent : rep_Content);
+begin;
+    SetTotalSaltContent_BeginDay(TotalSaltContent.BeginDay);
+    SetTotalSaltContent_EndDay(TotalSaltContent.EndDay);
+    SetTotalSaltContent_ErrorDay(TotalSaltContent.ErrorDay);
+end;
+
 
 procedure GenerateCO2Description(
             constref CO2FileFull : string;
