@@ -2,6 +2,7 @@ module ac_run
 
 use ac_kinds, only: dp, &
                     int32
+use ac_global, only: rep_sum
                     
 implicit none
 
@@ -622,6 +623,44 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
 
     Transfer%Bmobilized = Bmobilized
 end subroutine SetTransfer_Bmobilized
+
+
+subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
+        PreviousSumGDD, PreviousBmob, PreviousBsto)
+    type(rep_sum), intent(inout) :: PreviousSum
+    real(dp), intent(inout) :: SumETo
+    real(dp), intent(inout) :: SumGDD
+    real(dp), intent(inout) :: PreviousSumETo
+    real(dp), intent(inout) :: PreviousSumGDD
+    real(dp), intent(inout) :: PreviousBmob
+    real(dp), intent(inout) :: PreviousBsto
+
+    PreviousSum%Epot = 0.0_dp
+    PreviousSum%Tpot = 0.0_dp
+    PreviousSum%Rain = 0.0_dp
+    PreviousSum%Irrigation = 0.0_dp
+    PreviousSum%Infiltrated = 0.0_dp
+    PreviousSum%Runoff = 0.0_dp
+    PreviousSum%Drain = 0.0_dp
+    PreviousSum%Eact = 0.0_dp
+    PreviousSum%Tact = 0.0_dp
+    PreviousSum%TrW = 0.0_dp
+    PreviousSum%ECropCycle = 0.0_dp
+    PreviousSum%CRwater = 0.0_dp
+    PreviousSum%Biomass = 0.0_dp
+    PreviousSum%YieldPart = 0.0_dp
+    PreviousSum%BiomassPot = 0.0_dp
+    PreviousSum%BiomassUnlim = 0.0_dp
+    PreviousSum%SaltIn = 0.0_dp
+    PreviousSum%SaltOut = 0.0_dp
+    PreviousSum%CRsalt = 0.0_dp
+    SumETo = 0.0_dp
+    SumGDD = 0.0_dp
+    PreviousSumETo = 0.0_dp
+    PreviousSumGDD = 0.0_dp
+    PreviousBmob = 0.0_dp
+    PreviousBsto = 0.0_dp
+end subroutine ResetPreviousSum
 
 
 end module ac_run
