@@ -1429,7 +1429,6 @@ GDDCDCadjusted := GDDCDC * (CCxAdjusted+2.29)/(CCx+2.29);
 END; (* GetNewCCxandCDC *)
 
 
-
 BEGIN (* DetermineCCiGDD *)
 IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetCrop().GDDaysToHarvest))
    THEN SetCCiActual(0)
@@ -1767,7 +1766,6 @@ IF ((SumGDDadjCC <= GetCrop().GDDaysToGermination) OR (ROUND(SumGDDadjCC) > GetC
 
         // 7. no crop as a result of fertiltiy and/or water stress
         IF (ROUND(1000*GetCCiActual()) <= 0) THEN NoMoreCrop := true;
-
         END;
 END; (* DetermineCCiGDD *)
 
