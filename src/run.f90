@@ -1,21 +1,30 @@
 module ac_run
 
+use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int32
 use ac_global, only: CompartmentIndividual, &
+                     DetermineDate, &
+                     DetermineDayNr, &
                      DetermineSaltContent, &
                      GetCompartment_i, &
                      GetCompartment_Layer, &
                      GetCompartment_Thickness, &
+                     GetGroundWaterFile, &
+                     GetGroundWaterFileFull, &
                      GetNrCompartments, &
+                     GetPathNameProg, &
+                     GetSimulation_FromDayNr, &
+                     GetSimulation_ToDayNr, &
                      GetSoilLayer_SAT, &
                      GetZiAqua, &
                      GetECiAqua, &
                      rep_sum, &
+                     roundc, &
                      SetCompartment_i, &
-                     SetCompartment_Theta
+                     SetCompartment_Theta, &
+                     SplitStringInThreeParams
 
-                    
 implicit none
 
 type rep_GwTable 
@@ -636,6 +645,147 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
     Transfer%Bmobilized = Bmobilized
 end subroutine SetTransfer_Bmobilized
 
+subroutine GetGwtSet(DayNrIN, GwT)
+    integer(int32), intent(in) :: DayNrIN
+    type(rep_GwTable), intent(inout) :: GwT
+
+    integer :: f0
+    character(len=1024) :: FileNameFull
+    integer(int32) :: DayNr1Gwt, DNrini, rc
+    integer(int32) :: i, dayi, monthi, yeari, Zini, yearACT
+    real(dp) :: DayDouble, Zm, ECini
+    character(len=255) :: StringREAD
+    logical :: TheEnd
+    ! FileNameFull
+    if (GetGroundWaterFile() /= '(None)') then
+        FileNameFull = GetGroundWaterFileFull()
+    else
+        FileNameFull = trim(GetPathNameProg())//'GroundWater%AqC'
+    end if
+
+    ! Get DayNr1Gwt
+    open(newunit=f0, file=trim(FileNameFull), status='old', &
+                 action='read', iostat=rc)
+    read(f0, *, iostat=rc) ! description
+    read(f0, *, iostat=rc) ! AquaCrop Version number
+    read(f0, *, iostat=rc) ! Mode
+    read(f0, *, iostat=rc) dayi
+    read(f0, *, iostat=rc) monthi
+    read(f0, *, iostat=rc) yeari
+    call DetermineDayNr(dayi, monthi, yeari, DayNr1Gwt)
+
+    ! Read first observation
+    do i = 1, 3 
+        read(f0, *, iostat=rc)
+    end do
+    read(f0, '(a)', iostat=rc) StringREAD
+    call SplitStringInThreeParams(StringREAD, DayDouble, Zm, GwT%EC2)
+    GwT%DNr2 = DayNr1Gwt + roundc(DayDouble, mold=1_int32) - 1
+    GwT%Z2 = roundc(Zm * 100, mold=1_int32)
+    if (rc == iostat_end) then
+        TheEnd = .true.
+    else
+        TheEnd = .false.
+    end if
+
+    ! Read next observations
+    if (TheEnd) then
+        ! only one observation
+        GwT%DNr1 = GetSimulation_FromDayNr()
+        GwT%Z1 = GwT%Z2
+        GwT%EC1 = GwT%EC2
+        GwT%DNr2 = GetSimulation_ToDayNr()
+    else
+        ! defined year
+        if (DayNr1Gwt > 365) then
+            if (DayNrIN < GwT%DNr2) then
+                ! DayNrIN before 1st observation
+                GwT%DNr1 = GetSimulation_FromDayNr()
+                GwT%Z1 = GwT%Z2
+                GwT%EC1 = GwT%EC2
+            else
+                ! DayNrIN after or at 1st observation
+                loop1: do
+                    GwT%DNr1 = GwT%DNr2
+                    GwT%Z1 = GwT%Z2
+                    GwT%EC1 = GwT%EC2
+                    read(f0, '(a)', iostat=rc) StringREAD
+                    call SplitStringInThreeParams(StringREAD, DayDouble, Zm, GwT%EC2)
+                    GwT%DNr2 = DayNr1Gwt + roundc(DayDouble, mold=1_int32) - 1
+                    GwT%Z2 = roundc(Zm * 100, mold=1_int32)
+                    if (DayNrIN < GwT%DNr2) then
+                        TheEnd = .true.
+                    end if
+                    if (TheEnd .or. (rc == iostat_end)) exit loop1
+                end do loop1
+                if (.not. TheEnd) then
+                    ! DayNrIN after last observation
+                    GwT%DNr1 = GwT%DNr2
+                    GwT%Z1 = GwT%Z2
+                    GwT%EC1 = GwT%EC2
+                    GwT%DNr2 = GetSimulation_ToDayNr()
+                end if
+            end if
+        end if ! defined year
+        
+        ! undefined year
+        if (DayNr1Gwt <= 365) then
+            call DetermineDate(DayNrIN, dayi, monthi, yearACT)
+            if (yearACT /= 1901) then
+                ! make 1st observation defined
+                call DetermineDate(GwT%DNr2, dayi, monthi, yeari)
+                call DetermineDayNr(dayi, monthi, yearACT, GwT%DNr2)
+            end if
+            if (DayNrIN < GwT%DNr2) then
+                ! DayNrIN before 1st observation
+                loop2: do
+                    read(f0, '(a)', iostat=rc) StringREAD
+                    call SplitStringInThreeParams(StringREAD, DayDouble, Zm, GwT%EC1)
+                    GwT%DNr1 = DayNr1Gwt + roundc(DayDouble, mold=1_int32) - 1
+                    call DetermineDate(GwT%DNr1, dayi, monthi, yeari)
+                    call DetermineDayNr(dayi, monthi, yearACT, GwT%DNr1)
+                    GwT%Z1 = roundc(Zm * 100, mold=1_int32)
+                    if (rc == iostat_end) exit loop2
+                end do loop2
+                GwT%DNr1 = GwT%DNr1 - 365
+            else
+                ! save 1st observation
+                DNrini = GwT%DNr2
+                Zini = GwT%Z2
+                ECini = GwT%EC2
+                ! DayNrIN after or at 1st observation
+                loop3: do
+                    GwT%DNr1 = GwT%DNr2
+                    GwT%Z1 = GwT%Z2
+                    GwT%EC1 = GwT%EC2
+                    read(f0, '(a)', iostat=rc) StringREAD
+                    call SplitStringInThreeParams(StringREAD, DayDouble, Zm, GwT%EC2)
+                    GwT%DNr2 = DayNr1Gwt + roundc(DayDouble, mold=1_int32) - 1
+                    if (yearACT /= 1901) then
+                        ! make observation defined
+                        call DetermineDate(GwT%DNr2, dayi, monthi, yeari)
+                        call DetermineDayNr(dayi, monthi, yearACT, GwT%DNr2)
+                    end if
+                    GwT%Z2 = roundc(Zm * 100, mold=1_int32)
+                    if (DayNrIN < GwT%DNr2) then
+                        TheEnd = .true.
+                    end if
+                    if (TheEnd .or. (rc == iostat_end)) exit loop3
+                end do loop3
+                if (.not. TheEnd) then
+                    ! DayNrIN after last observation
+                    GwT%DNr1 = GwT%DNr2
+                    GwT%Z1 = GwT%Z2
+                    GwT%EC1 = GwT%EC2
+                    GwT%DNr2 = DNrini + 365
+                    GwT%Z2 = Zini
+                    GwT%EC2 = ECini
+                end if
+            end if
+        end if ! undefined year
+    end if ! more than 1 observation
+    close(f0)
+end subroutine GetGwtSet
 
 subroutine AdjustForWatertable()
 
