@@ -304,6 +304,9 @@ procedure SetTransfer_ToMobilize(constref ToMobilize : double);
 procedure SetTransfer_Bmobilized(constref Bmobilized : double);
         external 'aquacrop' name '__ac_run_MOD_settransfer_bmobilized';
 
+procedure AdjustForWatertable;
+        external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
+
 
 implementation
 

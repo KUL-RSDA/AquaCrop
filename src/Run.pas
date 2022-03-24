@@ -401,27 +401,6 @@ PreviousBsto := 0.0;
 END; (* ResetPreviousSum *)
 
 
-PROCEDURE AdjustForWatertable;
-Var Ztot, Zi : double;
-    compi : INTEGER;
-    Compi_temp : CompartmentIndividual;
-BEGIN
-Ztot := 0;
-FOR compi := 1 to GetNrCompartments() DO
-    BEGIN
-    Ztot := Ztot + GetCompartment_Thickness(compi);
-    Zi := Ztot - GetCompartment_Thickness(compi)/2;
-    IF (Zi >= (GetZiAqua()/100)) THEN // compartment at or below groundwater table
-       BEGIN
-       SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
-       Compi_temp := GetCOmpartment_i(compi);
-       DetermineSaltContent(GetECiAqua(),Compi_temp);
-       SetCompartment_i(compi, Compi_temp);
-       END;
-    END;
-END; (* AdjustForWatertable *)
-
-
 PROCEDURE GetGwtSet(DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
 VAR f0 : TextFile;
