@@ -491,7 +491,7 @@ PROCEDURE BUDGET_module(dayi : LongInt;
                         VAR TimeSenescence : double;
                         VAR NoMoreCrop,CGCadjustmentAfterCutting : BOOLEAN;
                         VAR TESTVAL : double);
-TYPE rep_control = (begin_day,end_day);
+
 VAR  control : rep_control;
      InfiltratedRain,
      InfiltratedIrrigation,
@@ -507,110 +507,6 @@ VAR  control : rep_control;
      Comp_temp : rep_Comp;
      Crop_pActStom_temp : double;
      CRsalt_temp, ECdrain_temp, Tact_temp : double;
-
-
-
-PROCEDURE CheckWaterSaltBalance(control: rep_control;
-                                InfiltratedIrrigation, InfiltratedStorage : double;
-                                VAR Surf0,ECInfilt,ECdrain : double);
-
-VAR compi, layeri, celli :INTEGER;
-VAR Surf1,ECw : double;
-BEGIN (* CheckWaterSaltBalance *)
-
-CASE control OF
-     begin_day:BEGIN
-               SetTotalWaterContent_BeginDay(0); // mm
-               Surf0 := GetSurfaceStorage(); // mm
-               SetTotalSaltContent_BeginDay(0); // Mg/ha
-               FOR compi :=1 to GetNrCompartments() DO
-                   BEGIN
-                   SetTotalWaterContent_BeginDay(GetTotalWaterContent().BeginDay
-                   + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-                   SetCompartment_fluxout(compi, 0);
-                   FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
-                           SetTotalSaltContent_BeginDay(GetTotalSaltContent().BeginDay
-                           + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
-                   END;
-               SetDrain(0.0);
-               SetRunoff(0.0);
-               //Eact:=0.0; at the beginning of the evaporation process it is put at zero
-               SetTact(0.0);
-               SetInfiltrated(0.0);
-               ECinfilt := 0.0;
-               SubDrain := 0;
-               ECdrain := 0;
-               HorizontalWaterFlow := 0;
-               HorizontalSaltFlow := 0;
-               SetCRwater(0);
-               SetCRsalt(0);
-               END;
-
-     end_day : BEGIN
-               SetInfiltrated(InfiltratedRain+InfiltratedIrrigation+InfiltratedStorage);
-               FOR layeri := 1 TO GetSoil().NrSoilLayers DO SetSoilLayer_WaterContent(layeri, 0);
-               SetTotalWaterContent_EndDay(0);
-               Surf1 := GetSurfaceStorage();
-               SetTotalSaltContent_EndDay(0);
-
-               // quality of irrigation water
-               IF (dayi < GetCrop().Day1)
-                  THEN ECw := GetIrriECw().PreSeason
-                  ELSE BEGIN
-                       ECw := GetSimulation_IrriECw();;
-                       IF (dayi > GetCrop().DayN) THEN ECw := GetIrriECw().PostSeason;
-                       END;
-
-               FOR compi :=1 to GetNrCompartments() DO
-                   BEGIN
-                   SetTotalWaterContent_EndDay(GetTotalWaterContent().EndDay
-                   + GetCompartment_theta(compi)*1000*GetCompartment_Thickness(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-                   SetSoilLayer_WaterContent(GetCompartment_Layer(compi), GetSoilLayer_i(GetCompartment_Layer(compi)).WaterContent
-                   + GetCompartment_theta(compi)*1000*GetCompartment_theta(compi)
-                     * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100));
-                   FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
-                           SetTotalSaltContent_EndDay(GetTotalSaltContent().EndDay
-                           + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
-                   END;
-               SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
-                              -(GetTotalWaterContent().EndDay+GetDrain()+GetRunoff()+GetEact()+GetTact()+Surf1-GetRain()-GetIrrigation()-GetCRwater()-HorizontalWaterFlow));
-               SetTotalSaltContent_ErrorDay(GetTotalSaltContent().BeginDay - GetTotalSaltContent().EndDay // Mg/ha
-                                            + InfiltratedIrrigation*ECw*Equiv/100
-                                            + InfiltratedStorage*ECinfilt*Equiv/100
-                                            - GetDrain()*ECdrain*Equiv/100
-                                            + GetCRsalt()/100
-                                            + HorizontalSaltFlow);
-               SetSumWaBal_Epot(GetSumWaBal_Epot() + GetEpot());
-               SetSumWaBal_Tpot(GetSumWaBal_Tpot() + GetTpot());
-               SetSumWaBal_Rain(GetSumWaBal_Rain() + GetRain());
-               SetSumWaBal_Irrigation(GetSumWaBal_Irrigation() + GetIrrigation());
-               SetSumWaBal_Infiltrated(GetSumWaBal_Infiltrated() + GetInfiltrated());
-               SetSumWaBal_Runoff(GetSumWaBal_Runoff() + GetRunoff());
-               SetSumWaBal_Drain(GetSumWaBal_Drain() + GetDrain());
-               SetSumWaBal_Eact(GetSumWaBal_Eact() + GetEact());
-               SetSumWaBal_Tact(GetSumWaBal_Tact() + GetTact());
-               SetSumWaBal_TrW(GetSumWaBal_TrW() + GetTactWeedInfested());
-               SetSumWaBal_CRwater(GetSumWaBal_CRwater() + GetCRwater());
-
-               IF (((dayi-GetSimulation_DelayedDays()) >= GetCrop().Day1 ) AND ((dayi-GetSimulation_DelayedDays()) <= GetCrop().DayN)) THEN // in growing cycle
-                  BEGIN
-                  IF (GetSumWaBal_Biomass() > 0) // biomass was already produced (i.e. CC present)
-                     THEN BEGIN // and still canopy cover
-                          IF (GetCCiActual() > 0) THEN SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + GetEact());
-                          END
-                     ELSE SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() + GetEact()); // before germination
-                  END;
-               SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + GetCRsalt()/100);
-               SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100);
-               SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() +  GetDrain()*ECdrain*Equiv/100);
-               END;
-     END;
-END; (* CheckWaterSaltBalance *)
-
-
-
 
 
 PROCEDURE calculate_CapillaryRise(VAR CRwater,CRsalt : double);
@@ -2397,7 +2293,7 @@ BEGIN (* BUDGET_module *)
 // 1. Soil water balance
 control := begin_day;
 ECdrain_temp := GetECdrain();
-CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain_temp);
+CheckWaterSaltBalance(dayi, InfiltratedRain, control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain_temp,HorizontalWaterFlow, HorizontalSaltFlow, SubDrain);
 SetECdrain(ECdrain_temp);
 
 // 2. Adjustments in presence of Groundwater table
@@ -2533,7 +2429,7 @@ ConcentrateSalts;
 // 16. Soil water balance
 control := end_day;
 ECdrain_temp := GetECdrain();
-CheckWaterSaltBalance(control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain_temp);
+CheckWaterSaltBalance(dayi,InfiltratedRain, control,InfiltratedIrrigation,InfiltratedStorage,Surf0,ECInfilt,ECdrain_temp,HorizontalWaterFlow,HorizontalSaltFlow, SubDrain);
 SetECdrain(ECdrain_temp);
 END; (* BUDGET_module *)
 
