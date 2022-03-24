@@ -12,7 +12,7 @@ PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    VirtualTimeCC,SumInterval : INTEGER;
                                    VAR Biomass,BiomassPot,BiomassUnlim,BiomassTot,YieldPart,WPi,HItimesBEF,
                                        ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfa,alfaMax,SumKcTopStress,SumKci,CCxWitheredTpot,
-                                       CCxWitheredTpotNoS,WeedRCi,CCw,Trw : double;
+                                       CCxWitheredTpotNoS,WeedRCi,CCw,TrW : double;
                                    VAR StressSFadjNEW,PreviousStressLevel : ShortInt;
                                    VAR StoreAssimilates,MobilizeAssimilates : BOOLEAN;
                                    VAR AssimToMobilize, AssimMobilized,Bin,Bout : double;
@@ -61,7 +61,7 @@ PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    VirtualTimeCC,SumInterval : INTEGER;
                                    VAR Biomass,BiomassPot,BiomassUnlim,BiomassTot,YieldPart,WPi,HItimesBEF,
                                        ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfa,alfaMax,SumKcTopStress,SumKci,CCxWitheredTpot,
-                                       CCxWitheredTpotNoS,WeedRCi,CCw,Trw : double;
+                                       CCxWitheredTpotNoS,WeedRCi,CCw,TrW : double;
                                    VAR StressSFadjNEW,PreviousStressLevel : ShortInt;
                                    VAR StoreAssimilates,MobilizeAssimilates : BOOLEAN;
                                    VAR AssimToMobilize, AssimMobilized,Bin,Bout : double;
@@ -506,7 +506,7 @@ VAR  control : rep_control;
      EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp : double;
      Comp_temp : rep_Comp;
      Crop_pActStom_temp : double;
-     CRsalt_temp, ECdrain_temp : double;
+     CRsalt_temp, ECdrain_temp, Tact_temp : double;
 
 
 
@@ -536,7 +536,7 @@ CASE control OF
                SetDrain(0.0);
                SetRunoff(0.0);
                //Eact:=0.0; at the beginning of the evaporation process it is put at zero
-               Tact:=0.0;
+               SetTact(0.0);
                SetInfiltrated(0.0);
                ECinfilt := 0.0;
                SubDrain := 0;
@@ -575,7 +575,7 @@ CASE control OF
                            + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100); // Mg/ha
                    END;
                SetTotalWaterContent_ErrorDay(GetTotalWaterContent().BeginDay + Surf0
-                              -(GetTotalWaterContent().EndDay+GetDrain()+GetRunoff()+GetEact()+Tact+Surf1-GetRain()-GetIrrigation()-GetCRwater()-HorizontalWaterFlow));
+                              -(GetTotalWaterContent().EndDay+GetDrain()+GetRunoff()+GetEact()+GetTact()+Surf1-GetRain()-GetIrrigation()-GetCRwater()-HorizontalWaterFlow));
                SetTotalSaltContent_ErrorDay(GetTotalSaltContent().BeginDay - GetTotalSaltContent().EndDay // Mg/ha
                                             + InfiltratedIrrigation*ECw*Equiv/100
                                             + InfiltratedStorage*ECinfilt*Equiv/100
@@ -590,8 +590,8 @@ CASE control OF
                SetSumWaBal_Runoff(GetSumWaBal_Runoff() + GetRunoff());
                SetSumWaBal_Drain(GetSumWaBal_Drain() + GetDrain());
                SetSumWaBal_Eact(GetSumWaBal_Eact() + GetEact());
-               SetSumWaBal_Tact(GetSumWaBal_Tact() + Tact);
-               SetSumWaBal_TrW(GetSumWaBal_TrW() + TactWeedInfested);
+               SetSumWaBal_Tact(GetSumWaBal_Tact() + GetTact());
+               SetSumWaBal_TrW(GetSumWaBal_TrW() + GetTactWeedInfested());
                SetSumWaBal_CRwater(GetSumWaBal_CRwater() + GetCRwater());
 
                IF (((dayi-GetSimulation_DelayedDays()) >= GetCrop().Day1 ) AND ((dayi-GetSimulation_DelayedDays()) <= GetCrop().DayN)) THEN // in growing cycle
@@ -1961,7 +1961,7 @@ END; (* CalculateSoilEvaporationStage2 *)
 
 
 
-PROCEDURE calculate_transpiration(Tpot : double; VAR Tact : double);
+PROCEDURE calculate_transpiration(Tpot : double);
 
 VAR WtoExtract, theta_critical, alfa, sinkMM : double;
     compi, layeri, pre_layer : INTEGER;
@@ -2103,7 +2103,7 @@ END; (* DetermineRootZoneAnaeroConditions *)
 
 
 BEGIN (* calculate_transpiration *)
-Tact := 0.0;
+SetTact(0.0);
 
 IF (Tpot > 0) THEN
    BEGIN
@@ -2226,8 +2226,8 @@ IF (Tpot > 0) THEN
      // 2.c extract water
      //sink := alfa * Compartment[compi].WFactor * Compartment[compi].Smax;
      sinkMM := 1000 * (alfa * GetCompartment_WFactor(compi) * GetCompartment_Smax(compi)) * GetCompartment_Thickness(compi);
-     //theta_to_extract := ((TpotMAX-Tact)/1000)/Compartment[compi].Thickness;
-     WtoExtract := TpotMAX-Tact;
+     //theta_to_extract := ((TpotMAX-GetTact())/1000)/Compartment[compi].Thickness;
+     WtoExtract := TpotMAX-GetTact();
      //IF (theta_to_extract < sink) THEN sink := theta_to_extract;
      IF (WtoExtract < sinkMM) THEN sinkMM := WtoExtract;
      //Compartment[compi].theta := Compartment[compi].theta - sink;
@@ -2236,7 +2236,7 @@ IF (Tpot > 0) THEN
      //theta_to_extract := theta_to_extract - sink;
      WtoExtract := WtoExtract - sinkMM;
      //Tact := Tact + sink * 1000 * Compartment[compi].Thickness;
-     Tact := Tact + sinkMM;
+     SetTact(GetTact() + sinkMM);
    //UNTIL ((theta_to_extract <= 0) OR (compi = Nrcompartments));
    UNTIL ((WtoExtract <= 0) OR (compi = GetNrCompartments()));
 
@@ -2278,6 +2278,7 @@ PROCEDURE surface_transpiration;
 VAR Textra, Part : double;
     compi : INTEGER;
     KsReduction,SaltSurface : double;
+    Tact_temp : double;
 BEGIN
 SetDaySubmerged(GetDaySubmerged() + 1);
 FOR compi := 1 TO GetNrCompartments() DO
@@ -2293,18 +2294,19 @@ SaltSurface := GetSurfaceStorage()*GetECstorage()*Equiv;
 IF (GetSurfaceStorage() > KsReduction*Part*GetTpot())
    THEN BEGIN
         SetSurfaceStorage(GetSurfaceStorage() - KsReduction*Part*GetTpot());
-        Tact := KsReduction*Part*GetTpot();
+        SetTact(KsReduction*Part*GetTpot());
         //NEW
         SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)); //salinisation of surface storage layer
         END
    ELSE BEGIN
-        Tact := GetSurfaceStorage() -0.1;
+        SetTact(GetSurfaceStorage() -0.1);
         SetSurfaceStorage(0.1); // zero give error in already updated salt balance
         END;
-IF (Tact < KsReduction*Part*GetTpot()) THEN
+IF (GetTact() < KsReduction*Part*GetTpot()) THEN
    BEGIN
-   calculate_transpiration((KsReduction*Part*GetTpot()-Tact),Textra);
-   Tact := Tact + Textra;
+   Tact_temp := GetTact(); (*Protect Tact from changes in the next routine*)
+   calculate_transpiration((KsReduction*Part*GetTpot()-GetTact()));
+   SetTact(Tact_temp + GetTact());
    END;
 END; (* surface_transpiration *)
 
@@ -2312,7 +2314,7 @@ END; (* surface_transpiration *)
 PROCEDURE FeedbackCC;
 BEGIN
 IF (((GetCCiActual() - CCiPrev) > 0.005)  // canopy is still developing
-    AND (Tact = 0))                  // due to aeration stress or ETo = 0
+    AND (GetTact() = 0))                  // due to aeration stress or ETo = 0
 THEN SetCCiActual(CCiPrev);           // no transpiration, no crop development
 END; (* FeedbackCC *)
 
@@ -2512,11 +2514,13 @@ IF (((GetRainRecord_DataType() = Decadely) OR (GetRainRecord_DataType() = Monthl
 // 13. Transpiration
 IF ((NoMoreCrop = false) AND (GetRootingDepth() > 0.0001)) THEN
    BEGIN
+//   Tact_temp := GetTact();
    IF ((GetSurfaceStorage() > 0) AND
        ((GetCrop().AnaeroPoint = 0) OR (GetDaySubmerged() < GetSimulParam_DelayLowOxygen())))
        THEN surface_transpiration
-       ELSE calculate_transpiration(GetTpot(),Tact);
+       ELSE calculate_transpiration(GetTpot());
    END;
+//   SetTact(Tact_temp);
 IF (GetSurfaceStorage() <= 0) THEN SetDaySubmerged(0);
 FeedbackCC;
 

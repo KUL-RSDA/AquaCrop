@@ -1019,6 +1019,7 @@ real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tpot ! mm/day
 real(dp) :: CCiActual
+real(dp) :: Tact, TactWeedInfested !mm/day
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
@@ -14916,5 +14917,31 @@ subroutine SetCCiActual(CCiActual_in)
 
     CCiActual = CCiActual_in
 end subroutine SetCCiActual
+
+real(dp) function GetTact()
+    !! Getter for the "Tact" global variable.
+
+    GetTact = Tact 
+end function GetTact
+
+subroutine SetTact(Tact_in)
+    !! Setter for the "Tact" global variable.
+    real(dp), intent(in) :: Tact_in
+
+    Tact = Tact_in
+end subroutine SetTact
+
+real(dp) function GetTactWeedInfested()
+    !! Getter for the "TactWeedInfested" global variable.
+
+    GetTactWeedInfested = TactWeedInfested
+end function GetTactWeedInfested
+
+subroutine SetTactWeedInfested(TactWeedInfested_in)
+    !! Setter for the "TactWeedInfested" global variable.
+    real(dp), intent(in) :: TactWeedInfested_in
+
+    TactWeedInfested = TactWeedInfested_in
+end subroutine SetTactWeedInfested
 
 end module ac_global

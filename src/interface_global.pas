@@ -4708,6 +4708,18 @@ function GetCCiActual() : double;
 procedure SetCCiActual(constref CCiActual_in : double);
     external 'aquacrop' name '__ac_global_MOD_setcciactual';
 
+function GetTact() : double; 
+    external 'aquacrop' name '__ac_global_MOD_gettact';
+
+procedure SetTact(constref Tact_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settact';
+
+function GetTactWeedInfested() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettactweedinfested';
+
+procedure SetTactWeedInfested(constref TactWeedInfested_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settactweedinfested';
+
 procedure CheckForKeepSWC(
                     constref FullNameProjectFile : string;
                     constref TotalNrOfRuns : INTEGER;
