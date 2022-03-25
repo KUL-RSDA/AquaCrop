@@ -4690,6 +4690,18 @@ function GetRootingDepth() : double;
 procedure SetRootingDepth(constref RootingDepth_in : double);
     external 'aquacrop' name '__ac_global_MOD_setrootingdepth';
 
+function GetCCiPrev() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcciprev';
+
+procedure SetCCiPrev(constref CCiPrev_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcciprev';
+
+function GetCCiTopEarlySen() : double;
+    external 'aquacrop' name '__ac_global_MOD_getccitopearlysen';
+
+procedure SetCCiTopEarlySen(constref CCiTopEarlySen_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setccitopearlysen';
+
 function GetECdrain() : double;
     external 'aquacrop' name '__ac_global_MOD_getecdrain';
 

@@ -1003,6 +1003,8 @@ integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
 integer(int8) :: MaxPlotTr
 
 
+real(dp) :: CCiprev
+real(dp) :: CCiTopEarlySen
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECdrain ! EC drain water dS/m
@@ -2642,20 +2644,23 @@ end function MultiplierCCoSelfThinning
 
 real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     real(dp), intent(in) :: Wrel
-    real(dp), intent(inout) :: pULActual
+    real(dp), intent(in) :: pULActual
     real(dp), intent(in) :: pLLActual
     real(dp), intent(in) :: ShapeFactor
 
     real(dp) :: pRelativeLLUL, KsVal
+    real(dp) :: pULActual_local
     ! Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
     !        FC .. UpperLimit ... LowerLimit .. WP
     ! p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
 
-    if ((pLLActual - pULActual) < 0.0001_dp) then
-        pULActual = pLLActual - 0.0001_dp
+    pULActual_local = pULActual
+
+    if ((pLLActual - pULActual_local) < 0.0001_dp) then
+        pULActual_local = pLLActual - 0.0001_dp
     end if
 
-    pRelativeLLUL = (Wrel - pULActual)/(pLLActual - pULActual)
+    pRelativeLLUL = (Wrel - pULActual_local)/(pLLActual - pULActual_local)
 
     if (pRelativeLLUL <= 0._dp) then
         KsVal = 1._dp
@@ -14879,6 +14884,32 @@ subroutine SetRootingDepth(RootingDepth_in)
     RootingDepth = RootingDepth_in
 end subroutine SetRootingDepth
 
+real(dp) function GetCCiPrev()
+    !! Getter for the "CCiPrev" global variable.
+
+    GetCCiPrev = CCiPrev
+end function GetCCiPrev
+
+subroutine SetCCiPrev(CCiPrev_in)
+    !! Setter for the "CCiPrev" global variable.
+    real(dp), intent(in) :: CCiPrev_in
+
+    CCiPrev = CCiPrev_in
+end subroutine SetCCiPrev
+
+real(dp) function GetCCiTopEarlySen()
+    !! Getter for the "CCiTopEarlySen" global variable.
+
+    GetCCiTopEarlySen = CCiTopEarlySen
+end function GetCCiTopEarlySen
+
+subroutine SetCCiTopEarlySen(CCiTopEarlySen_in)
+    !! Setter for the "CCiTopEarlySen" global variable.
+    real(dp), intent(in) :: CCiTopEarlySen_in
+
+    CCiTopEarlySen = CCiTopEarlySen_in
+end subroutine SetCCiTopEarlySen
+
 real(dp) function GetECDrain()
     !! Getter for the "ECDrain" global variable.
 
@@ -14943,5 +14974,6 @@ subroutine SetTactWeedInfested(TactWeedInfested_in)
 
     TactWeedInfested = TactWeedInfested_in
 end subroutine SetTactWeedInfested
+
 
 end module ac_global
