@@ -1133,8 +1133,7 @@ subroutine CheckWaterSaltBalance(dayi,&
         end do
         call SetDrain(0._dp)
         call SetRunoff(0._dp)
-        ! Eact:=0.0; at the beginning of the evaporation process it is put at
-        ! zero
+        ! Eact is set to 0 at the beginning of the evaporation process
         call SetTact(0._dp)
         call SetInfiltrated(0._dp)
         ECinfilt = 0._dp
@@ -1210,10 +1209,10 @@ subroutine CheckWaterSaltBalance(dayi,&
         if (((dayi-GetSimulation_DelayedDays()) >= GetCrop_Day1() ) &
             .and. ((dayi-GetSimulation_DelayedDays()) <= GetCrop_DayN())) then
             ! in growing cycle
-            if (GetSumWaBal_Biomass() > epsilon(1._dp)) then 
+            if (GetSumWaBal_Biomass() > 0._dp) then 
                 ! biomass was already produced (i.e. CC present)
                 ! and still canopy cover
-                if (GetCCiActual() > epsilon(1._dp)) then
+                if (GetCCiActual() > 0._dp) then
                     call SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() &
                            + GetEact())
                 end if
