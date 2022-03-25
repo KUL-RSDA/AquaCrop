@@ -312,6 +312,10 @@ procedure ResetPreviousSum(VAR PreviousSum : rep_sum;
                                PreviousBmob,PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
+procedure GetGwtSet(constref DayNrIN : LongInt;
+                    VAR GwT : rep_GwTable);
+        external 'aquacrop' name '__ac_run_MOD_getgwtset';
+
 implementation
 
 function GetGwTable() : rep_GwTable;
