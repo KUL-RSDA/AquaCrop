@@ -708,7 +708,7 @@ subroutine GetGwtSet(DayNrIN, GwT)
     type(rep_GwTable), intent(inout) :: GwT
 
     integer :: f0
-    character(len=1024) :: FileNameFull
+    character(len=:), allocatable :: FileNameFull
     integer(int32) :: DayNr1Gwt, DNrini, rc
     integer(int32) :: i, dayi, monthi, yeari, Zini, yearACT
     real(dp) :: DayDouble, Zm, ECini
@@ -719,7 +719,7 @@ subroutine GetGwtSet(DayNrIN, GwT)
     if (GetGroundWaterFile() /= '(None)') then
         FileNameFull = GetGroundWaterFileFull()
     else
-        FileNameFull = trim(GetPathNameProg())//'GroundWater%AqC'
+        FileNameFull = trim(GetPathNameProg())//'GroundWater.AqC'
     end if
 
     ! Get DayNr1Gwt
