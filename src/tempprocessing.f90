@@ -2417,52 +2417,53 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
                     end if
                 end if
             end if
+        end if
 
-            call SetSWCIniFile(trim(TempString))
-            if (GetSWCIniFile() == '(None)') then
-                read(f0, *, iostat=rc)  ! PathSWCIniFile
-                call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
-                call SetSWCiniDescription(&
-                         'Soil water profile at Field Capacity')
-            else
-                read(f0, *, iostat=rc) TempString  ! PathSWCIniFile
-                call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
-                SurfaceStorage_temp = GetSurfaceStorage()
-                call LoadInitialConditions(GetSWCiniFileFull(),&
-                      SurfaceStorage_temp)
-                call SetSurfaceStorage(SurfaceStorage_temp)
-            end if
-            Compartment_temp = GetCompartment()
-            select case (GetSimulation_IniSWC_AtDepths())
-            case (.true.)
-                call TranslateIniPointsToSWProfile(&
-                   GetSimulation_IniSWC_NrLoc(), &
-                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
-                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
-                   Compartment_temp)
-            case default
-                call TranslateIniLayersToSWProfile(&
-                   GetSimulation_IniSWC_NrLoc(),&
-                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
-                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
-                   Compartment_temp)
-            end select
-            call SetCompartment(Compartment_temp)
+        call SetSWCIniFile(trim(TempString))
+        if (GetSWCIniFile() == '(None)') then
+            read(f0, *, iostat=rc)  ! PathSWCIniFile
+            call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+            call SetSWCiniDescription(&
+                     'Soil water profile at Field Capacity')
+        else
+            read(f0, *, iostat=rc) TempString  ! PathSWCIniFile
 
-            if (GetSimulation_ResetIniSWC()) then
-                 ! to reset SWC and SALT at end of simulation run
-                do i = 1, GetNrCompartments()
-                     call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
-                     call SetSimulation_ECeIni_i(i, &
-                              ECeComp(GetCompartment_i(i)))
-                end do
-                ! ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
-                ! CHECK LATER
-                if (GetManagement_BundHeight() >= 0.01_dp) then
-                     call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
-                     call SetSimulation_ECStorageIni(GetECStorage())
-                 end if
-            end if
+            call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
+            SurfaceStorage_temp = GetSurfaceStorage()
+            call LoadInitialConditions(GetSWCiniFileFull(),&
+                  SurfaceStorage_temp)
+            call SetSurfaceStorage(SurfaceStorage_temp)
+        end if
+        Compartment_temp = GetCompartment()
+        select case (GetSimulation_IniSWC_AtDepths())
+        case (.true.)
+            call TranslateIniPointsToSWProfile(&
+               GetSimulation_IniSWC_NrLoc(), &
+               GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+               GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
+               Compartment_temp)
+        case default
+            call TranslateIniLayersToSWProfile(&
+               GetSimulation_IniSWC_NrLoc(),&
+               GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+               GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
+               Compartment_temp)
+        end select
+        call SetCompartment(Compartment_temp)
+
+        if (GetSimulation_ResetIniSWC()) then
+             ! to reset SWC and SALT at end of simulation run
+            do i = 1, GetNrCompartments()
+                 call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
+                 call SetSimulation_ECeIni_i(i, &
+                          ECeComp(GetCompartment_i(i)))
+            end do
+            ! ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
+            ! CHECK LATER
+            if (GetManagement_BundHeight() >= 0.01_dp) then
+                 call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
+                 call SetSimulation_ECStorageIni(GetECStorage())
+             end if
         end if
     end if
 
@@ -2485,9 +2486,8 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     Compartment_temp = GetCompartment()
     call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
     call SetCompartment(Compartment_temp)
-    ! IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
     if (GetSimulation_IniSWC_AtFC() .and. (GetSWCIniFile() /= 'KeepSWC')) then
-        call ResetSWCToFC
+        call ResetSWCToFC()
     end if
 
     ! 11. Off-season conditions

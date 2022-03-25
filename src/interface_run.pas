@@ -304,6 +304,17 @@ procedure SetTransfer_ToMobilize(constref ToMobilize : double);
 procedure SetTransfer_Bmobilized(constref Bmobilized : double);
         external 'aquacrop' name '__ac_run_MOD_settransfer_bmobilized';
 
+procedure AdjustForWatertable;
+        external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
+
+procedure ResetPreviousSum(VAR PreviousSum : rep_sum;
+                           VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
+                               PreviousBmob,PreviousBsto : double);
+    external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
+
+procedure GetGwtSet(constref DayNrIN : LongInt;
+                    VAR GwT : rep_GwTable);
+        external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
 implementation
 
@@ -402,8 +413,6 @@ begin;
     SetCutInfoRecord2_IntervalGDD(CutInfoRecord2.IntervalGDD);
     SetCutInfoRecord2_MassInfo(CutInfoRecord2.MassInfo);
 end;
-    
-
 
 initialization
 

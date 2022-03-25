@@ -1,6 +1,10 @@
 module ac_simul
 
-use ac_kinds, only:  dp, int32, int8
+use ac_kinds, only:  dp, &
+                     int8, &
+                     int32, &
+                     intEnum
+
 
 use ac_global, only: ActiveCells, &
                      adjustedksstotoecsw, &
@@ -39,6 +43,8 @@ use ac_global, only: ActiveCells, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
+                     GetTact, &
+                     GetTactWeedInfested, &
                      GetCrop, &
                      GetCrop_AdaptedToCO2, &
                      GetCrop_AnaeroPoint, &
@@ -141,7 +147,9 @@ use ac_global, only: ActiveCells, &
                      GetSimulation_EffectSTress_RedCCx, &
                      GetSimulation_EffectStress_RedCGC, &
                      GetSimulation_EffectStress_RedKsSto, &
+                     GetSimulation_EvapStartStg2, &
                      GetSimulation_EvapWCsurf, &
+                     GetSimulation_EvapZ, &
                      GetSimulation_Germinate, &
                      GetSimulation_IrriECw, &
                      GetSimulation_SalinityConsidered, &
@@ -164,6 +172,7 @@ use ac_global, only: ActiveCells, &
                      GetSimulParam_Tmin, &
                      GetSoil, &
                      GetSoil_CNvalue, &
+                     GetSoil_REW, &
                      GetSoil_NrSoilLayers, &
                      GetSoilLayer_CRa, &
                      GetSoilLayer_CRb, &
@@ -179,10 +188,36 @@ use ac_global, only: ActiveCells, &
                      GetSoilLayer_Thickness, &
                      GetSoilLayer_UL, &
                      GetSoilLayer_WP, &
+                     GetSoilLayer_WaterContent, &
                      GetSurfaceStorage, &
                      GetTpot, &
                      GetTact, &
                      GetZiAqua, &
+                     GetInfiltrated, &
+                     GetSumWaBal_SaltOut, &
+                     GetSumWaBal_SaltIn, &
+                     GetSumWaBal_CRsalt, &
+                     GetSumWaBal_ECropCycle, &
+                     GetSumWaBal_Epot, &
+                     GetSumWaBal_Tpot, &
+                     GetSumWaBal_Rain, &
+                     GetSumWaBal_Irrigation, &
+                     GetSumWaBal_Drain, &
+                     GetSumWaBal_Eact, &
+                     GetSumWaBal_Runoff, &
+                     GetSumWaBal_Infiltrated, &
+                     GetSumWaBal_CRwater, &
+                     GetSumWaBal_TrW, &
+                     GetSumWaBal_Tact, &
+                     GetSumWaBal_Biomass, &
+                     GetCRsalt, &
+                     GetCRwater, &
+                     GetTotalWaterContent_BeginDay, &
+                     GetTotalSaltContent_BeginDay, &
+                     GetTotalWaterContent_EndDay, &
+                     GetTotalSaltContent_EndDay, &
+                     GetEact, &
+                     GetCCiActual, &
                      IrriMode_Inet, &
                      KsAny, &
                      KsSalinity, &
@@ -236,7 +271,34 @@ use ac_global, only: ActiveCells, &
                      SetSimulation_EvapZ, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSurfaceStorage, &
-                     settact, &
+                     SetTotalWaterContent_BeginDay, &
+                     SetTotalSaltContent_BeginDay, & 
+                     SetTotalWaterContent_EndDay, &
+                     SetTotalSaltContent_EndDay, &
+                     SetSoilLayer_WaterContent, &
+                     SetTotalSaltContent_EndDay, &
+                     SetTotalWaterContent_EndDay, &
+                     SetTotalSaltContent_ErrorDay, &
+                     SetTotalWaterContent_ErrorDay, &
+                     SetInfiltrated, &
+                     SetCRwater, &
+                     SetCRsalt, &
+                     SetSumWaBal_Epot, &
+                     SetSumWaBal_Tpot, &
+                     SetSumWaBal_Rain, &
+                     SetSumWaBal_Irrigation, &
+                     SetSumWaBal_Infiltrated, &
+                     SetSumWaBal_Runoff, &
+                     SetSumWaBal_Drain, &
+                     SetSumWaBal_Eact, & 
+                     SetSumWaBal_Tact, &
+                     SetSumWaBal_TrW, &
+                     SetSumWaBal_CRwater, &  
+                     SetSumWaBal_ECropCycle, &
+                     SetSumWaBal_SaltIn, &
+                     SetSumWaBal_CRsalt, &
+                     SetSumWaBal_SaltOut, &
+                     SetTact, & 
                      subkind_Grain, &
                      subkind_Tuber, &
                      SurfaceStorage, &
@@ -250,6 +312,21 @@ use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
 
 
 implicit none
+
+integer(intEnum), parameter :: whichtheta_AtSat = 0
+    !! index of AtSat in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtFC = 1
+    !! index of AtFC in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtWP = 2
+    !! index of AtWP in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtAct = 3
+    !! index of AtAct in whichtheta enumerated type
+
+
+integer(intEnum), parameter :: control_begin_day = 0
+    !! index of beginday in control enumerated type
+integer(intEnum), parameter :: control_end_day = 1
+    !! index of endday in control enumerated type
 
 
 contains
@@ -419,9 +496,8 @@ subroutine CheckGermination()
     end if
 end subroutine CheckGermination
 
-subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     real(dp), intent(in) :: Tpot
-    real(dp), intent(inout) :: Tact
     real(dp), intent(in) :: Coeffb0Salt 
     real(dp), intent(in) :: Coeffb1Salt
     real(dp), intent(in) :: Coeffb2Salt
@@ -438,7 +514,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
     type(CompartmentIndividual) :: Compi_temp
 
 
-    Tact = 0.0_dp
+    call SetTact(0.0_dp)
 
     if (Tpot > 0._dp) then
         ! 1. maximum transpiration in actual root zone
@@ -574,7 +650,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
             ! 2.c extract water
             sinkMM = 1000._dp * (alfa * GetCompartment_WFactor(compi) * &
                     GetCompartment_Smax(compi)) * GetCompartment_Thickness(compi)
-            WtoExtract = TpotMAX-Tact
+            WtoExtract = TpotMAX-GetTact()
             if (WtoExtract < sinkMM) then
                 sinkMM = WtoExtract
             end if
@@ -582,7 +658,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
                  - sinkMM/(1000._dp*GetCompartment_Thickness(compi)* &
                  (1._dp - GetSoilLayer_GravelVol(layeri)/100._dp)))
             WtoExtract = WtoExtract - sinkMM
-            Tact = Tact + sinkMM
+            call SetTact(GetTact() + sinkMM)
             if ((WtoExtract <= epsilon(1._dp) .or. (compi == GetNrCompartments()))) exit loop
         end do loop
 
@@ -785,6 +861,7 @@ subroutine surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     real(dp) :: Textra, Part
     integer(int32) :: compi
     real(dp) :: KsReduction, SaltSurface
+    real(dp) :: Tact_temp
 
     DaySubmerged = DaySubmerged + 1
     do compi = 1, GetNrCompartments()
@@ -810,8 +887,9 @@ subroutine surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         SurfaceStorage = 0.1_dp ! zero give error in already updated salt balance
     end if
     if (GetTact() < KsReduction*Part*GetTpot()) then
-        call calculate_transpiration((KsReduction*Part*GetTpot()-GetTact()), Textra, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
-        call SetTact(GetTact() + Textra)
+        Tact_temp = GetTact()   !(*Protect Tact from changes in the next routine*)
+        call calculate_transpiration((KsReduction*Part*GetTpot()-GetTact()),Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+        call SetTact(Tact_temp + GetTact())
     end if
 end subroutine surface_transpiration
 
@@ -1439,6 +1517,144 @@ subroutine calculate_CapillaryRise(CRwater, CRsalt)
         end if
     end do loop
 end subroutine calculate_CapillaryRise
+
+
+subroutine CheckWaterSaltBalance(dayi,&
+              InfiltratedRain,  &
+              control, InfiltratedIrrigation,&
+              InfiltratedStorage, Surf0, ECInfilt, ECdrain, &
+              HorizontalWaterFlow, HorizontalSaltFlow, SubDrain)
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: InfiltratedRain
+    integer(intEnum), intent(in) :: control
+    real(dp), intent(in) :: InfiltratedIrrigation
+    real(dp), intent(in) :: InfiltratedStorage
+    real(dp), intent(inout) :: Surf0
+    real(dp), intent(inout) :: ECInfilt
+    real(dp), intent(inout) :: ECdrain
+    real(dp), intent(inout) :: HorizontalWaterFlow
+    real(dp), intent(inout) :: HorizontalSaltFlow
+    real(dp), intent(inout) :: SubDrain
+
+    integer(int32) :: compi, layeri, celli
+    real(dp) :: Surf1, ECw
+
+    select case (control)
+    case (control_begin_day)
+        call SetTotalWaterContent_BeginDay(0._dp) ! mm
+        Surf0 = GetSurfaceStorage() ! mm
+        call SetTotalSaltContent_BeginDay(0._dp) ! Mg/ha
+        do compi =1, GetNrCompartments()
+            call SetTotalWaterContent_BeginDay(GetTotalWaterContent_BeginDay() &
+               + GetCompartment_theta(compi)*1000._dp* &
+                 GetCompartment_Thickness(compi) &
+               * (1._dp - &
+                  GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetCompartment_fluxout(compi, 0._dp)
+            do celli = 1, GetSoilLayer_SCP1(GetCompartment_Layer(compi))
+                call SetTotalSaltContent_BeginDay(&
+                       GetTotalSaltContent_BeginDay() &
+                       + (GetCompartment_Salt(compi, celli) + &
+                          GetCompartment_Depo(compi, celli))/100._dp) ! Mg/ha
+            end do
+        end do
+        call SetDrain(0._dp)
+        call SetRunoff(0._dp)
+        ! Eact is set to 0 at the beginning of the evaporation process
+        call SetTact(0._dp)
+        call SetInfiltrated(0._dp)
+        ECinfilt = 0._dp
+        SubDrain = 0._dp
+        ECdrain = 0._dp
+        HorizontalWaterFlow = 0._dp
+        HorizontalSaltFlow = 0._dp
+        call SetCRwater(0._dp)
+        call SetCRsalt(0._dp)
+
+    case (control_end_day)
+        call SetInfiltrated(InfiltratedRain+InfiltratedIrrigation &
+                            +InfiltratedStorage)
+        do layeri = 1, GetSoil_NrSoilLayers()
+            call SetSoilLayer_WaterContent(layeri, 0._dp)
+        end do
+        call SetTotalWaterContent_EndDay(0._dp)
+        Surf1 = GetSurfaceStorage()
+        call SetTotalSaltContent_EndDay(0._dp)
+
+        ! quality of irrigation water
+        if (dayi < GetCrop_Day1()) then
+            ECw = GetIrriECw_PreSeason()
+        else
+            ECw = GetSimulation_IrriECw()
+            if (dayi > GetCrop_DayN()) then
+                ECw = GetIrriECw_PostSeason()
+            end if
+        end if
+
+        do compi = 1, GetNrCompartments()
+            call SetTotalWaterContent_EndDay(GetTotalWaterContent_EndDay() &
+               + GetCompartment_theta(compi)*1000._dp*&
+                 GetCompartment_Thickness(compi) &
+               * (1._dp -&
+                  GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            call SetSoilLayer_WaterContent(GetCompartment_Layer(compi), &
+                    GetSoilLayer_WaterContent(GetCompartment_Layer(compi)) &
+                    + GetCompartment_theta(compi)*1000._dp*&
+                          GetCompartment_theta(compi) &
+                    * (1._dp - &
+                       GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp))
+            do celli = 1, GetSoilLayer_SCP1(GetCompartment_Layer(compi))
+                call SetTotalSaltContent_EndDay(GetTotalSaltContent_EndDay() &
+                   + (GetCompartment_Salt(compi, celli) + &
+                      GetCompartment_Depo(compi, celli))/100._dp) ! Mg/ha
+            end do
+        end do
+        call SetTotalWaterContent_ErrorDay(GetTotalWaterContent_BeginDay() &
+                + Surf0 &
+                - (GetTotalWaterContent_EndDay()+GetDrain()+GetRunoff()+GetEact()&
+                + GetTact()+Surf1-GetRain()-GetIrrigation()-GetCRwater()-HorizontalWaterFlow))
+        call SetTotalSaltContent_ErrorDay(GetTotalSaltContent_BeginDay() &
+                - GetTotalSaltContent_EndDay() & ! Mg/ha
+                + InfiltratedIrrigation*ECw*Equiv/100._dp &
+                + InfiltratedStorage*ECinfilt*Equiv/100._dp &
+                - GetDrain()*ECdrain*Equiv/100._dp &
+                + GetCRsalt()/100._dp &
+                + HorizontalSaltFlow)
+        call SetSumWaBal_Epot(GetSumWaBal_Epot() + GetEpot())
+        call SetSumWaBal_Tpot(GetSumWaBal_Tpot() + GetTpot())
+        call SetSumWaBal_Rain(GetSumWaBal_Rain() + GetRain())
+        call SetSumWaBal_Irrigation(GetSumWaBal_Irrigation() + GetIrrigation())
+        call SetSumWaBal_Infiltrated(GetSumWaBal_Infiltrated() + &
+                  GetInfiltrated())
+        call SetSumWaBal_Runoff(GetSumWaBal_Runoff() + GetRunoff())
+        call SetSumWaBal_Drain(GetSumWaBal_Drain() + GetDrain())
+        call SetSumWaBal_Eact(GetSumWaBal_Eact() + GetEact())
+        call SetSumWaBal_Tact(GetSumWaBal_Tact() + GetTact())
+        call SetSumWaBal_TrW(GetSumWaBal_TrW() + GetTactWeedInfested())
+        call SetSumWaBal_CRwater(GetSumWaBal_CRwater() + GetCRwater())
+
+        if (((dayi-GetSimulation_DelayedDays()) >= GetCrop_Day1() ) &
+            .and. ((dayi-GetSimulation_DelayedDays()) <= GetCrop_DayN())) then
+            ! in growing cycle
+            if (GetSumWaBal_Biomass() > 0._dp) then 
+                ! biomass was already produced (i.e. CC present)
+                ! and still canopy cover
+                if (GetCCiActual() > 0._dp) then
+                    call SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() &
+                           + GetEact())
+                end if
+            else
+                call SetSumWaBal_ECropCycle(GetSumWaBal_ECropCycle() &
+                           + GetEact()) ! before germination
+            end if
+        end if
+        call SetSumWaBal_CRsalt(GetSumWaBal_CRsalt() + GetCRsalt()/100._dp)
+        call SetSumWaBal_SaltIn(GetSumWaBal_SaltIn() + &
+               (InfiltratedIrrigation*ECw+InfiltratedStorage*ECinfilt)*Equiv/100._dp)
+        call SetSumWaBal_SaltOut(GetSumWaBal_SaltOut() + &
+                GetDrain()*ECdrain*Equiv/100._dp)
+    end select
+end subroutine CheckWaterSaltBalance
 
 
 subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
@@ -2522,6 +2738,108 @@ subroutine PrepareStage1()
 end subroutine PrepareStage1
 
 
+real(dp) function WCEvapLayer(Zlayer, AtTheta)
+    real(dp), intent(in) :: Zlayer
+    integer(intEnum), intent(in) :: AtTheta
+
+    real(dp) :: Ztot, Wx, fracZ
+    integer(int32) :: compi
+
+    Wx = 0.0_dp
+    Ztot = 0.0_dp
+    compi = 0
+    do while ((abs(Zlayer-Ztot) > 0.0001_dp) &
+            .and. (compi < GetNrCompartments())) 
+        compi = compi + 1
+        if ((Ztot + GetCompartment_Thickness(compi)) > Zlayer) then
+            fracZ = (Zlayer - Ztot)/(GetCompartment_Thickness(compi))
+        else
+            fracZ = 1._dp
+        end if
+        select case (AtTheta)
+            case(whichtheta_AtSAT)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_SAT(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case (whichtheta_AtFC)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case (whichtheta_AtWP)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_WP(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case default
+                Wx = Wx + 1000._dp &
+                        * GetCompartment_Theta(compi) * fracZ &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                            - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                        /100._dp)
+        end select
+        Ztot = Ztot + fracZ * GetCompartment_Thickness(compi)
+    end do
+    WCEvapLayer = Wx
+end function WCEvapLayer
+
+
+
+subroutine PrepareStage2()
+
+    integer(intEnum) :: AtTheta
+    real(dp) :: WSAT, WFC, Wact
+
+    call SetSimulation_EvapZ(EvapZmin/100)
+    AtTheta = whichtheta_AtSat
+    WSAT = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    AtTheta = whichtheta_AtFC
+    WFC = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    AtTheta = whichtheta_AtAct
+    Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    call SetSimulation_EvapStartStg2(roundc(100._dp &
+          * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), &
+                                                      mold=1_int8))
+    if (GetSimulation_EvapStartStg2() < 0) then
+        call SetSimulation_EvapStartStg2(0_int8)
+    end if
+end subroutine PrepareStage2
+
+
+subroutine CalculateEvaporationSurfaceWater()
+
+    real(dp) :: SaltSurface
+
+    if (GetSurfaceStorage() > GetEpot()) then
+        SaltSurface = GetSurfaceStorage()*GetECstorage()*Equiv
+        call SetEact(GetEpot())
+        call SetSurfaceStorage(GetSurfaceStorage() - GetEact())
+        call SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)) 
+            ! salinisation of surface storage layer
+    else
+        call SetEact(GetSurfaceStorage())
+        call SetSurfaceStorage(0._dp)
+        call SetSimulation_EvapWCsurf(real(GetSoil_REW(), kind=dp))
+        call SetSimulation_EvapZ(EvapZmin/100._dp)
+        if (GetSimulation_EvapWCsurf() < 0.0001_dp) then
+            call PrepareStage2()
+        else
+            call SetSimulation_EvapStartStg2(int(undef_int, kind=int8))
+        end if
+    end if
+end subroutine CalculateEvaporationSurfaceWater
+
+
+
+
 subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
     integer(int32), intent(in) :: dayi
     real(dp), intent(in) :: EpotTot
@@ -2604,6 +2922,41 @@ subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
         end if
     end if
 end subroutine AdjustEpotMulchWettedSurface
+
+
+subroutine ConcentrateSalts()
+
+    integer(int32) :: compi, celWet, celi
+    real(dp) :: SaltTot, mm
+    real(dp) :: Salt_temp, Depo_temp
+
+    do compi = 1, GetNrCompartments() 
+        SaltTot = 0.0_dp
+        celWet = ActiveCells(GetCompartment_i(compi))
+        if (celWet < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+            do celi = (celWet+1), GetSoilLayer_SCP1(GetCompartment_Layer(compi)) 
+                SaltTot = SaltTot + GetCompartment_Salt(compi, celi)&
+                          + GetCompartment_Depo(compi, celi)
+                call SetCompartment_Salt(compi, celi, 0.0_dp)
+                call SetCompartment_Depo(compi, celi, 0.0_dp)
+            end do
+        end if
+        if (SaltTot > 0.0_dp) then
+            call SetCompartment_Salt(compi, celWet, &
+                GetCompartment_Salt(compi, celWet) + SaltTot)
+            mm = GetSoilLayer_Dx(GetCompartment_Layer(compi))*1000.0_dp&
+                 * GetCompartment_Thickness(compi)&
+                 * (1 - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))&
+                        / 100.0_dp)
+            Salt_temp = GetCompartment_Salt(compi, celWet)
+            Depo_temp = GetCompartment_Depo(compi, celWet)
+            call SaltSolutionDeposit(mm, Salt_temp, Depo_temp)
+            call SetCompartment_Salt(compi, celWet, Salt_temp)
+            call SetCompartment_Depo(compi, celWet, Depo_temp)
+        end if
+    end do
+end subroutine ConcentrateSalts
+
 
 !-----------------------------------------------------------------------------
 ! end BUDGET_module
