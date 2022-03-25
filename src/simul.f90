@@ -1,9 +1,16 @@
 module ac_simul
 
-use ac_kinds, only:  dp, int32, int8
+
+use ac_kinds, only:  dp, &
+                     int8, &
+                     int32, &
+                     intEnum
+
+
 use ac_global, only: CalculateETpot, &
                      CanopyCoverNoStressSF, &
-                     CCiNoWaterStressSF, &
+                     CCiNoWaterStressSF, ActiveCells, &
+                     CalculateETpot, CanopyCoverNoStressSF, &
                      CO2Ref, &
                      CompartmentIndividual, &
                      CropStressParametersSoilFertility, &
@@ -13,18 +20,26 @@ use ac_global, only: CalculateETpot, &
                      DetermineCNIandIII, &
                      DetermineRootZoneSaltContent, &
                      DetermineRootzoneWC, &
+                     ECswComp, &
                      EffectiveRainMethod_Percentage, &
                      EffectiveRainMethod_USDA, &
+                     Equiv, &
+                     EvapZmin, &
+                     fAdjustedForCO2, &
                      fAdjustedForCO2, &
                      GenerateDepthMode_FixDepth, &
                      GenerateTimeMode_AllDepl, &
                      GenerateTimeMode_AllRAW, &
+                     GetCCiActual, &
                      GetCCiPrev, &
                      GetCCiTopEarlySen, &
                      GetCompartment, &
+                     GetCompartment_Depo, &
                      GetCompartment_FCadj, &
                      GetCompartment_fluxout, &
+                     GetCompartment_i, &
                      GetCompartment_Layer, &
+                     GetCompartment_Salt, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
@@ -32,7 +47,9 @@ use ac_global, only: CalculateETpot, &
                      GetCrop_CCEffectEvapLate, &
                      GetCrop_CCo, &
                      GetCrop_CCoAdjusted, &
+                     GetCrop, &
                      GetCrop_CCsaltDistortion, &
+                     GetCrop_CCo, &
                      GetCrop_CCx, &
                      GetCrop_CCxAdjusted, &
                      GetCrop_CCxWithered, &
@@ -58,6 +75,11 @@ use ac_global, only: CalculateETpot, &
                      GetCrop_GDDCDC, &
                      GetCrop_GDDCGC, &
                      GetCrop_GDDLengthFlowering, &
+                     getcrop_gddaystofullcanopy, &
+                     getcrop_gddaystoflowering, &
+                     getcrop_gddaystoharvest, &
+                     getcrop_gddaystogermination, &
+                     getcrop_gddaystosenescence, &
                      GetCrop_GDtranspLow, &
                      GetCrop_GDtranspLow, &
                      GetCrop_HI, &
@@ -71,6 +93,11 @@ use ac_global, only: CalculateETpot, &
                      GetCrop_LengthFlowering, &
                      GetCrop_ModeCycle, &
                      GetCrop_pLeafAct, &
+                     getCrop_Day1, &
+                     GetCrop_Planting, &
+                     GetCrop_RootMin, &
+                     GetCrop_Tbase, &
+                     GetCrop_Tupper, &
                      GetCrop_pLeafDefLL, &
                      GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, &
@@ -87,15 +114,28 @@ use ac_global, only: CalculateETpot, &
                      GetECstorage, &
                      GetEpot, &
                      GetETO, &
+                     GetEact, &
+                     GetECdrain, &
+                     GetECiAqua, &
+                     GetECstorage, &
+                     GetEpot, &
+                     GetETO, &
+                     GetEvapoEntireSoilSurface, &
                      GetGenerateDepthMode, &
                      GetGenerateTimeMode, &
                      GetIrriECw_PostSeason, &
                      GetIrriECw_PreSeason, &
                      GetIrrigation, &
+                     GetIrriMode, &
                      GetManagement_BundHeight, &
                      GetManagement_CNcorrection, &
                      GetManagement_Cuttings_CGCPlus, &
+                     GetManagement_EffectMulchInS, &
+                     GetManagement_EffectMulchOffS, &
                      GetManagement_FertilityStress, &
+                     GetManagement_Mulch, &
+                     GetManagement_SoilCoverAfter, &
+                     GetManagement_SoilCoverBefore, &
                      GetNrCompartments, &
                      GetRain, &
                      GetRainRecord_DataType, &
@@ -106,6 +146,7 @@ use ac_global, only: CalculateETpot, &
                      GetRootZoneSalt_KsSalt, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
+                     GetRootZoneWC_WP, &
                      GetRootZoneWC_Thresh, &
                      GetRootZoneWC_WP, &
                      GetRootZoneWC_ZtopAct, &
@@ -117,12 +158,16 @@ use ac_global, only: CalculateETpot, &
                      GetSimulation_EffectStress_CDecline, &
                      GetSimulation_EffectStress_RedCCX, &
                      GetSimulation_EffectStress_RedCGC, &
+                     GetSimulation_EvapStartStg2, &
+                     GetSimulation_EvapWCsurf, &
+                     GetSimulation_EvapZ, &
                      GetSimulation_Germinate, &
                      GetSimulation_IrriECw, &
                      GetSimulation_ProtectedSeedling, &
                      GetSimulation_SalinityConsidered, &
                      GetSimulation_SumEToStress, &
                      GetSimulation_SWCtopSoilConsidered, &
+                     GetSimulParam_TAWGermination, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
                      GetSimulParam_EffectiveRain_Method, &
@@ -130,31 +175,57 @@ use ac_global, only: CalculateETpot, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
+                     GetSimulParam_IrriFwInSeason, &
+                     GetSimulParam_IrriFwOffSeason, &
                      GetSimulParam_pAdjFAO, &
+                     GetSimulParam_RootNrDF, &
+                     GetSimulParam_SaltSolub, &
                      GetSimulParam_Tmax, &
                      GetSimulParam_Tmin, &
+                     GetSoil, &
                      GetSoil_CNvalue, &
+                     GetSoil_REW, &
+                     GetSoil_NrSoilLayers, &
+                     GetSoilLayer_CRa, &
+                     GetSoilLayer_CRb, &
+                     GetSoilLayer_Dx, &
                      GetSoilLayer_FC, &
                      GetSoilLayer_GravelVol, &
                      GetSoilLayer_InfRate, &
+                     GetSoilLayer_SaltMobility_i, &
                      GetSoilLayer_SAT, &
+                     GetSoilLayer_SC, &
+                     GetSoilLayer_SCP1, &
                      GetSoilLayer_tau, &
+                     GetSoilLayer_Thickness, &
+                     GetSoilLayer_UL, &
                      GetSoilLayer_WP, &
                      GetSurfaceStorage, &
                      GetTpot, &
                      KsAny, &
                      LengthCanopyDecline, &
+                     GetZiAqua, &
+                     IrriMode_Inet, &
                      max_No_compartments, &
+                     MaxCRatDepth, &
                      modeCycle_CalendarDays, &
+                     plant_seed, &
                      modeCycle_GDDays, &
                      pMethod_FAOCorrection, &
                      pMethod_FAOCorrection, &
+                     rep_Crop, &
                      rep_EffectStress, &
+                     rep_Soil, &
                      roundc, &
+                     SetCCiActual, &
                      SetCCiPrev, &
                      SetCCiTopEarlySen, &
+                     SaltSolutionDeposit, &
                      SetCompartment, &
+                     SetCompartment_Depo, &
                      SetCompartment_fluxout, &
+                     SetCompartment_i, &
+                     SetCompartment_Salt, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
                      SetCrop_CCoAdjusted, &
@@ -165,13 +236,21 @@ use ac_global, only: CalculateETpot, &
                      SetCrop_pLeafAct, &
                      SetCrop_pSenAct, &
                      SetDrain, &
+                     SetEact, &
+                     SetECdrain, &
                      SetECstorage, &
+                     SetEvapoEntireSoilSurface, &
                      SetIrrigation, &
                      SetRootZoneSalt_ECe, &
                      SetRootZoneSalt_ECsw, &
                      SetRootZoneSalt_ECswFC, &
                      SetRootZoneSalt_KsSalt, &
                      SetRunoff, &
+                     SetSimulation_DelayedDays, &
+                     SetSimulation_Germinate, &
+                     SetSimulation_ProtectedSeedling, &
+                     setsimulation_sumgdd, &
+                     SetSaltInfiltr, &
                      SetSimulation_EffectStress, &
                      SetSimulation_EffectStress_CDecline, &
                      SetSimulation_EffectStress_RedCCx, &
@@ -181,6 +260,9 @@ use ac_global, only: CalculateETpot, &
                      SetSimulation_EvapLimitON, &
                      SetSimulation_ProtectedSeedling, &
                      SetSimulation_SumEToStress, &
+                     SetSimulation_EvapStartStg2, &
+                     SetSimulation_EvapWCsurf, &
+                     SetSimulation_EvapZ, &
                      SetSimulation_SWCtopSoilConsidered, &
                      SetSurfaceStorage, &
                      subkind_Forage, &
@@ -190,7 +272,6 @@ use ac_global, only: CalculateETpot, &
                      undef_double, &
                      undef_int
 
-
                       
 use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
                                 GrowingDegreeDays, &
@@ -198,6 +279,15 @@ use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
 
 
 implicit none
+
+integer(intEnum), parameter :: whichtheta_AtSat = 0
+    !! index of AtSat in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtFC = 1
+    !! index of AtFC in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtWP = 2
+    !! index of AtWP in whichtheta enumerated type
+integer(intEnum), parameter :: whichtheta_AtAct = 3
+    !! index of AtAct in whichtheta enumerated type
 
 
 contains
@@ -342,6 +432,30 @@ subroutine AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta, pSenAct)
     end if
 end subroutine AdjustpSenescenceToETo
 
+subroutine CheckGermination()
+
+    real(dp) :: Zroot, WCGermination
+    logical :: SWCtopSoilConsidered_temp
+
+    ! total root zone is considered
+    Zroot = GetCrop_RootMin()
+    SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+    call DetermineRootZoneWC(Zroot, SWCtopSoilConsidered_temp)
+    call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+    WCGermination = GetRootZoneWC_WP() + (GetRootZoneWC_FC() - &
+                    GetRootZoneWC_WP()) * (GetSimulParam_TAWGermination()/100._dp)
+    if (GetRootZoneWC_Actual() < WCGermination) then
+        call SetSimulation_DelayedDays(GetSimulation_DelayedDays() + 1)
+        call SetSimulation_SumGDD(0._dp)
+    else
+        call SetSimulation_Germinate(.true.)
+        if (GetCrop_Planting() == plant_Seed) then
+            call SetSimulation_ProtectedSeedling(.true.)
+        else
+            call SetSimulation_ProtectedSeedling(.false.)
+        end if
+    end if
+end subroutine CheckGermination
 
 !-----------------------------------------------------------------------------
 ! BUDGET_module
@@ -835,6 +949,527 @@ subroutine CalculateEffectiveRainfall(SubDrain)
         end if
     end if
 end subroutine CalculateEffectiveRainfall
+
+
+
+subroutine calculate_CapillaryRise(CRwater, CRsalt)
+    real(dp), intent(inout) :: CRwater
+    real(dp), intent(inout) :: CRsalt
+
+    real(dp) :: Zbottom, MaxMM, DThetaMax, DTheta, LimitMM, &
+                CRcomp, SaltCRi, DrivingForce, ZtopNextLayer, &
+                Krel, ThetaThreshold
+    integer(int32) :: compi, SCellAct, layeri
+
+    Zbottom = 0._dp
+    do compi = 1, GetNrCompartments() 
+        Zbottom = Zbottom + GetCompartment_Thickness(compi)
+    end do
+
+    ! start at the bottom of the soil profile
+    compi = GetNrCompartments()
+    MaxMM = MaxCRatDepth(GetSoilLayer_CRa(GetCompartment_Layer(compi)), &
+                         GetSoilLayer_CRb(GetCompartment_Layer(compi)), &
+                         GetSoilLayer_InfRate(GetCompartment_Layer(compi)), &
+                         (Zbottom - GetCompartment_Thickness(compi)/2._dp), &
+                         (GetZiAqua()/100._dp))
+
+    ! check restrictions on CR from soil layers below
+    ZtopNextLayer = 0._dp
+    do layeri = 1, GetCompartment_Layer(GetNrCompartments()) 
+        ZtopNextLayer = ZtopNextLayer + GetSoilLayer_Thickness(layeri)
+    end do
+    layeri = GetCompartment_Layer(GetNrCompartments())
+    do while ((ZtopNextLayer < (GetZiAqua()/100._dp)) &
+                .and. (layeri < GetSoil_NrSoilLayers())) 
+        layeri = layeri + 1
+        LimitMM = MaxCRatDepth(GetSoilLayer_CRa(layeri), &
+                               GetSoilLayer_CRb(layeri), &
+                               GetSoilLayer_InfRate(layeri), &
+                               ZtopNextLayer, (GetZiAqua()/100._dp))
+        if (MaxMM > LimitMM) then
+            MaxMM = LimitMM
+        end if
+        ZtopNextLayer = ZtopNextLayer + GetSoilLayer_Thickness(layeri)
+    end do
+
+    loop: do while ((roundc(MaxMM*1000._dp, mold=1) > 0) &
+            .and. (compi > 0) &
+            .and. (roundc(GetCompartment_fluxout(compi)*1000._dp, mold=1) == 0)) 
+        ! Driving force
+        if ((GetCompartment_theta(compi) &
+                >= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+            .and. (GetSimulParam_RootNrDF() > 0_int8)) then
+            DrivingForce = 1._dp &
+                          - (exp(GetSimulParam_RootNrDF() &
+                            * log(GetCompartment_theta(compi) &
+                                - GetSoilLayer_WP(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)) &
+                          /exp(GetSimulParam_RootNrDF() &
+                            *log(GetCompartment_FCadj(compi)/100._dp &
+                      - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)))
+        else
+            DrivingForce = 1._dp
+        end if
+        ! relative hydraulic conductivity
+        ThetaThreshold = (GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp &
+                          + GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                                                                /100._dp)/2._dp
+        if (GetCompartment_Theta(compi) < ThetaThreshold) then
+            if ((GetCompartment_Theta(compi) &
+                <= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+              .or. (ThetaThreshold &
+                <= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)) then
+                Krel = 0._dp
+            else
+                Krel = (GetCompartment_Theta(compi) &
+                        - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+                      /(ThetaThreshold &
+                        - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)
+            end if
+        else
+            Krel = 1._dp
+        end if
+        
+        ! room available to store water
+        DTheta = GetCompartment_FCadj(compi)/100._dp &
+                - GetCompartment_Theta(compi)
+        if ((DTheta > 0._dp) &
+            .and. ((Zbottom - GetCompartment_Thickness(compi)/2._dp) &
+                    < (GetZiAqua()/100._dp))) then
+            ! water stored
+            DThetaMax = Krel * DrivingForce &
+                        * MaxMM/(1000._dp*GetCompartment_Thickness(compi))
+            if (DTheta >= DThetaMax) then
+                call SetCompartment_Theta(compi, &
+                                          GetCompartment_Theta(compi) &
+                                                         + DThetaMax)
+                CRcomp = DThetaMax*1000._dp*GetCompartment_Thickness(compi) &
+                         * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                MaxMM = 0._dp
+            else
+                call SetCompartment_Theta(compi, &
+                                         GetCompartment_FCadj(compi)/100._dp)
+                CRcomp = DTheta*1000._dp*GetCompartment_Thickness(compi) &
+                         * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                MaxMM = Krel * MaxMM - CRcomp
+            end if
+            CRwater = CRwater + CRcomp
+            ! salt stored
+            SCellAct = ActiveCells(GetCompartment_i(compi))
+            SaltCRi = Equiv * CRcomp * GetECiAqua() ! gram/m2
+            call SetCompartment_Salt(compi, SCellAct, &
+                                     GetCompartment_Salt(compi, SCellAct) &
+                                                               + SaltCRi)
+            CRsalt = CRsalt + SaltCRi
+        end if
+        Zbottom = Zbottom - GetCompartment_Thickness(compi)
+        compi = compi - 1
+        if (compi < 1) exit loop
+        LimitMM = MaxCRatDepth(&
+                    GetSoilLayer_CRa(GetCompartment_Layer(compi)), &
+                    GetSoilLayer_CRb(GetCompartment_Layer(compi)), &
+                    GetSoilLayer_InfRate(GetCompartment_Layer(compi)), &
+                    (Zbottom - GetCompartment_Thickness(compi)/2._dp), &
+                    (GetZiAqua()/100._dp))
+        if (MaxMM > LimitMM) then
+            MaxMM = LimitMM
+        end if
+    end do loop
+end subroutine calculate_CapillaryRise
+
+
+subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
+                                 InfiltratedStorage, dayi, SubDrain)
+    real(dp), intent(in) :: InfiltratedRain
+    real(dp), intent(in) :: InfiltratedIrrigation
+    real(dp), intent(in) :: InfiltratedStorage
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: SubDrain
+
+    real(dp) ::   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, &
+                  mm1, mm2, Dx, limit, Dif, UL
+    real(dp) :: Zr, depthi, ECsubdrain, ECcel, DeltaZ, ECsw1, ECsw2, &
+                ECsw, SM1, SM2, DS1, DS2, DS
+
+    integer(int32) :: compi, celi, celiM1, Ni
+    real(dp) :: ECw
+    real(dp) :: Salt_temp, Salt2_temp, Depo_temp, Depo2_temp
+    type(CompartmentIndividual) :: Compi_temp
+
+
+    mmIN = InfiltratedRain + InfiltratedIrrigation + InfiltratedStorage
+
+    ! quality of irrigation water
+    if (dayi < GetCrop_Day1()) then
+        ECw = GetIrriECw_PreSeason()
+    else
+        ECw = GetSimulation_IrriECw()
+        if (dayi > GetCrop_DayN()) then
+            ECw = GetIrriECw_PostSeason()
+        end if
+    end if
+
+    ! initialise salt balance
+    SaltIN = InfiltratedIrrigation*ECw*Equiv &
+            + InfiltratedStorage*GetECstorage()*Equiv
+    call SetSaltInfiltr(SaltIN/100._dp) 
+                ! salt infiltrated in soil profile kg/ha 
+    SaltOut= 0._dp
+
+
+    do compi = 1, GetNrCompartments() 
+        ! 0. Set compartment parameters
+        SAT = (GetSoilLayer_SAT(GetCompartment_Layer(compi)))/100._dp  ! m3/m3 
+        UL = GetSoilLayer_UL(GetCompartment_Layer(compi)) ! m3/m3   
+                                      ! Upper limit of SC salt cel 
+        Dx = GetSoilLayer_Dx(GetCompartment_Layer(compi)) ! m3/m3  
+                            ! Size of salts cel (expect last one) 
+        
+        ! 1. Initial situation before drain and infiltration
+        DeltaTheta = mmIN &
+           /(1000._dp*GetCompartment_Thickness(compi) &
+               *(1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp))
+        Theta = GetCompartment_theta(compi) - DeltaTheta &
+                + GetCompartment_fluxout(compi) &
+                        /(1000._dp*GetCompartment_Thickness(compi))
+        
+        ! 2. Determine active SaltCels and Add IN
+        Theta = Theta + DeltaTheta
+        if (Theta <= UL) then
+            celi = 0
+            do while (Theta > Dx*celi) 
+                celi = celi + 1
+            end do
+        else
+            celi = GetSoilLayer_SCP1(GetCompartment_Layer(compi))
+        end if
+        if (celi == 0) then
+            celi = 1  ! XXX would be best to avoid celi=0 to begin with
+        end if
+        if (DeltaTheta > 0._dp) then
+            call SetCompartment_Salt(compi, celi, &
+                                     GetCompartment_Salt(compi, celi) &
+                                        + SaltIN)
+        end if
+        
+        ! 3. Mixing
+        if (celi > 1) then
+            do Ni = 1, (celi-1) 
+                mm1 = Dx*1000._dp*GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                if (Ni < GetSoilLayer_SC(GetCompartment_Layer(compi))) then
+                    mm2 = mm1
+                elseif (Theta > SAT) then
+                    mm2 = (Theta-UL)*1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                else
+                    mm2 = (SAT-UL)*1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                end if
+                Dif = GetSoilLayer_SaltMobility_i(GetCompartment_Layer(compi), &
+                                                    Ni)
+                Salt_temp = GetCompartment_Salt(compi, Ni)
+                Salt2_temp = GetCompartment_Salt(compi, Ni+1)
+                Depo_temp = GetCompartment_Depo(compi, Ni)
+                Depo2_temp = GetCompartment_Depo(compi, Ni+1)
+                call Mixing(Dif, mm1, mm2, Salt_temp, Salt2_temp, &
+                                           Depo_temp, Depo2_temp)
+                call SetCompartment_Salt(compi, Ni, Salt_temp)
+                call SetCompartment_Salt(compi, Ni+1, Salt2_temp)
+                call SetCompartment_Depo(compi, Ni, Depo_temp)
+                call SetCompartment_Depo(compi, Ni+1, Depo2_temp)
+            end do
+        end if
+        
+        ! 4. Drain
+        SaltOut = 0._dp
+        if (GetCompartment_fluxout(compi) > 0._dp) then
+            DeltaTheta = GetCompartment_fluxout(compi) &
+                         /(1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                     /100._dp))
+            do while (DeltaTheta > 0._dp) 
+                if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                    limit = (celi-1._dp)*Dx
+                else
+                    limit = UL
+                end if
+                if ((Theta - DeltaTheta) < limit) then
+                    SaltOut = SaltOut + GetCompartment_Salt(compi, celi) &
+                              + GetCompartment_Depo(compi, celi)
+                    call SetCompartment_Salt(compi, celi, 0._dp)
+                    mm1 = (Theta - limit)*1000._dp &
+                           * GetCompartment_Thickness(compi) * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                    if (SaltOut > (GetSimulParam_SaltSolub() * mm1)) then
+                        call SetCompartment_Depo(compi, celi, &
+                                   SaltOut - (GetSimulParam_SaltSolub() * mm1))
+                        SaltOut = (GetSimulParam_SaltSolub() * mm1)
+                    else
+                        call SetCompartment_Depo(compi, celi, 0._dp)
+                    end if
+                    DeltaTheta = DeltaTheta - (Theta-limit)
+                    Theta = limit
+                    celi = celi - 1
+                else
+                    SaltOut = SaltOut &
+                              + (GetCompartment_Salt(compi, celi) &
+                                + GetCompartment_Depo(compi, celi)) &
+                              * (DeltaTheta/(Theta-limit))
+                    call SetCompartment_Salt(compi, celi, &
+                                             GetCompartment_Salt(compi, celi) &
+                                             * (1._dp-DeltaTheta/(Theta-limit)))
+                    call SetCompartment_Depo(compi, celi, &
+                                             GetCompartment_Depo(compi, celi) &
+                                             * (1._dp-DeltaTheta/(Theta-limit)))
+                    mm1 = DeltaTheta*1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                    if (SaltOut > (GetSimulParam_SaltSolub() * mm1)) then
+                        call SetCompartment_Depo(&
+                                compi, celi, &
+                                GetCompartment_Depo(compi, celi) &
+                                    + (SaltOut - GetSimulParam_SaltSolub() &
+                                                                    * mm1))
+                        SaltOut = (GetSimulParam_SaltSolub() * mm1)
+                    end if
+                    DeltaTheta = 0._dp
+                    mm1 = GetSoilLayer_Dx(GetCompartment_Layer(compi)) &
+                            *1000._dp*GetCompartment_Thickness(compi) &
+                            * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+                    if (celi == GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                        mm1 = 2._dp*mm1
+                    end if
+                    Salt_temp = GetCompartment_Salt(compi, celi)
+                    Depo_temp = GetCompartment_Depo(compi, celi)
+                    call SaltSolutionDeposit(mm1, Salt_temp, Depo_temp)
+                    call SetCompartment_Salt(compi, celi, Salt_temp)
+                    call SetCompartment_Depo(compi, celi, Depo_temp)
+                end if
+            end do
+        end if
+        
+        mmIN = GetCompartment_fluxout(compi)
+        SaltIN = SaltOUT
+    end do
+
+    if (GetDrain() > 0.001_dp) then
+        call SetECdrain(SaltOUT/(GetDrain()*Equiv))
+    end if
+
+
+    ! 5. vertical salt diffusion
+    celi = ActiveCells(GetCompartment_i(1))
+    SM2 = GetSoilLayer_SaltMobility_i(GetCompartment_Layer(1), celi)/4._dp
+    ECsw2 = ECswComp(GetCompartment_i(1), .false.) ! not at FC
+    mm2 = GetCompartment_Theta(1)*1000._dp*GetCompartment_Thickness(1) &
+            * (1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(1))/100._dp)
+    do compi = 2, GetNrCompartments() 
+        celiM1 = celi
+        SM1 = SM2
+        ECsw1 = ECsw2
+        mm1 = mm2
+        celi =  ActiveCells(GetCompartment_i(compi))
+        SM2 = GetSoilLayer_SaltMobility_i(GetCompartment_Layer(compi), &
+                                          celi)/4._dp
+        ECsw2 = ECswComp(GetCompartment_i(compi), .false.) ! not at FC
+        mm2 = GetCompartment_Theta(compi)*1000._dp &
+                * GetCompartment_Thickness(compi) &
+                * (1._dp &
+                    - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                /100._dp)
+        ECsw = (ECsw1*mm1+ECsw2*mm2)/(mm1+mm2)
+        DS1 = (ECsw1 - (ECsw1+(ECsw-ECsw1)*SM1))*mm1*Equiv
+        DS2 = (ECsw2 - (ECsw2+(ECsw-ECsw2)*SM2))*mm2*Equiv
+        if (abs(DS2) < abs(DS1)) then
+            DS = abs(DS2)
+        else
+            DS = abs(DS1)
+        end if
+        if (DS > 0._dp) then
+            if (ECsw1 > ECsw) then
+                DS = DS*(-1._dp)
+            end if
+            Compi_temp = GetCompartment_i(compi-1)
+            call MoveSaltTo(Compi_temp, celiM1, DS)
+            call SetCompartment_i(compi-1, Compi_temp)
+            DS = DS*(-1._dp)
+            Compi_temp = GetCompartment_i(compi)
+            call MoveSaltTo(Compi_temp, celi, DS)
+            call SetCompartment_i(compi, Compi_temp)
+        end if
+    end do
+
+
+
+
+    ! 6. Internal salt movement as a result of SubDrain
+    ! SubDrain part of non-effective rainfall (10-day & monthly input)
+    if (SubDrain > 0._dp) then
+        Zr = GetRootingDepth()
+        if (Zr >= epsilon(0._dp)) then
+            Zr = (GetSimulParam_EvapZmax()/100._dp) ! in meter
+        end if
+        compi = 0
+        depthi = 0._dp
+        ECsubdrain = 0._dp
+        
+        ! extract
+        loop: do
+            compi = compi + 1
+            depthi = depthi + GetCompartment_Thickness(compi)
+            if (depthi <= Zr) then
+                DeltaZ = GetCompartment_Thickness(compi)
+            else
+                DeltaZ = GetCompartment_Thickness(compi) - (depthi-Zr)
+            end if
+            celi = ActiveCells(GetCompartment_i(compi))
+            if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                mm1 = GetSoilLayer_Dx(GetCompartment_Layer(compi))*1000._dp &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            else
+                mm1 = 2._dp*GetSoilLayer_Dx(GetCompartment_Layer(compi)) &
+                        *1000._dp*GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            end if
+            ECcel = GetCompartment_Salt(compi, celi)/(mm1*Equiv)
+            ECsubdrain = (ECcel*mm1*(DeltaZ/GetCompartment_Thickness(compi)) &
+                                                       +ECsubdrain*SubDrain) &
+                         /(mm1*(DeltaZ/GetCompartment_Thickness(compi)) &
+                                                              +SubDrain)
+            call SetCompartment_Salt(&
+                    compi, celi, &
+                    (1._dp - (DeltaZ/GetCompartment_Thickness(compi))) &
+                        * GetCompartment_Salt(compi, celi) &
+                    + (DeltaZ/GetCompartment_Thickness(compi)) &
+                        *ECsubdrain*mm1*Equiv)
+            Salt_temp = GetCompartment_Salt(compi, celi)
+            Depo_temp = GetCompartment_Depo(compi, celi)
+            call SaltSolutionDeposit(mm1, Salt_temp, Depo_temp)
+            call SetCompartment_Salt(compi, celi, Salt_temp)
+            call SetCompartment_Depo(compi, celi, Depo_temp)
+            if ((depthi >= Zr) .or. (compi >= GetNrCompartments())) exit loop
+        end do loop
+        
+        ! dump
+        if (compi >= GetNrCompartments()) then
+            SaltOUT = GetECdrain()*(GetDrain()*Equiv) + ECsubdrain*SubDrain*Equiv
+            call SetECdrain(SaltOUT/(GetDrain()*Equiv))
+        else
+            compi = compi + 1
+            celi = ActiveCells(GetCompartment_i(compi))
+            if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                mm1 = GetSoilLayer_Dx(GetCompartment_Layer(compi))*1000._dp &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            else
+                mm1 = 2._dp*GetSoilLayer_Dx(GetCompartment_Layer(compi)) &
+                        *1000._dp*GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                          - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                      /100._dp)
+            end if
+            call SetCompartment_Salt(compi, celi, &
+                                     GetCompartment_Salt(compi, celi) &
+                                         + ECsubdrain*SubDrain*Equiv)
+            Salt_temp = GetCompartment_Salt(compi, celi)
+            Depo_temp = GetCompartment_Depo(compi, celi)
+            call SaltSolutionDeposit(mm1, Salt_temp, Depo_temp)
+            call SetCompartment_Salt(compi, celi, Salt_temp)
+            call SetCompartment_Depo(compi, celi, Depo_temp)
+        end if
+    end if
+
+    contains
+
+    subroutine Mixing(Dif, mm1, mm2, Salt1, Salt2, Depo1, Depo2)
+        real(dp), intent(in) :: Dif
+        real(dp), intent(in) :: mm1
+        real(dp), intent(in) :: mm2
+        real(dp), intent(inout) :: Salt1
+        real(dp), intent(inout) :: Salt2
+        real(dp), intent(inout) :: Depo1
+        real(dp), intent(inout) :: Depo2
+
+        real(dp) :: EC1, EC2, ECmix
+
+        call SaltSolutionDeposit(mm1, Salt1, Depo1)
+        EC1 = Salt1/(mm1*Equiv)
+        call SaltSolutionDeposit(mm2, Salt2, Depo2)
+        EC2 = Salt2/(mm2*Equiv)
+        ECmix = (EC1*mm1+EC2*mm2)/(mm1+mm2)
+        EC1 = EC1 + (ECmix-EC1)*Dif
+        EC2 = EC2 + (ECmix-EC2)*Dif
+        Salt1 = EC1*mm1*Equiv
+        call SaltSolutionDeposit(mm1, Salt1, Depo1)
+        Salt2 = EC2*mm2*Equiv
+        call SaltSolutionDeposit(mm2, Salt2, Depo2)
+    end subroutine Mixing
+
+
+    subroutine MoveSaltTo(Compx, celx, DS)
+        type(CompartmentIndividual), intent(inout) :: Compx
+        integer(int32), intent(in) :: celx
+        real(dp), intent(in) :: DS
+
+        real(dp) :: mmx
+        integer(int32) :: celx_local
+
+        celx_local = celx
+        if (DS >= epsilon(0._dp)) then
+            Compx%Salt(celx_local) = Compx%Salt(celx_local) + DS
+            mmx = GetSoilLayer_Dx(Compx%Layer)*1000._dp*Compx%Thickness &
+                    * (1._dp - GetSoilLayer_GravelVol(Compx%Layer)/100._dp)
+            if (celx_local == GetSoilLayer_SCP1(Compx%Layer)) then
+                mmx = 2._dp*mmx
+            end if
+            call SaltSolutionDeposit(mmx, Compx%Salt(celx_local), &
+                                     Compx%Depo(celx_local))
+        else
+            celx_local = GetSoilLayer_SCP1(Compx%Layer)
+            Compx%Salt(celx_local) = Compx%Salt(celx_local) + DS
+            mmx = 2._dp*GetSoilLayer_Dx(Compx%Layer)*1000._dp*Compx%Thickness &
+                    * (1._dp - GetSoilLayer_GravelVol(Compx%Layer)/100._dp)
+            call SaltSolutionDeposit(mmx, Compx%Salt(celx_local), &
+                                     Compx%Depo(celx_local))
+            mmx = mmx/2._dp
+            do while (Compx%Salt(celx_local) < 0._dp) 
+                Compx%Salt(celx_local-1) = Compx%Salt(celx_local-1) &
+                                           + Compx%Salt(celx_local)
+                Compx%Salt(celx_local) = 0._dp
+                celx_local = celx_local - 1
+                call SaltSolutionDeposit(mmx, Compx%Salt(celx_local), &
+                                         Compx%Depo(celx_local))
+            end do
+        end if
+    end subroutine MoveSaltTo
+
+end subroutine calculate_saltcontent 
+
 
 
 subroutine calculate_Extra_runoff(InfiltratedRain, InfiltratedIrrigation, &
@@ -1356,7 +1991,8 @@ subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
 end subroutine calculate_infiltration
 
 
-subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
+
+subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                            StressLeaf, FracAssim, MobilizationON, &
                            StorageON, SumGDDAdjCC, VirtualTimeCC, &
                            StressSenescence, TimeSenescence, NoMoreCrop, &
@@ -1364,7 +2000,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                            GDDayi, GDDCDCTotal, GDDTadj)
     real(dp), intent(in) :: CCxTotal
     real(dp), intent(in) :: CCoTotal
-    real(dp), intent(inout) :: CCiActual
     real(dp), intent(inout) :: StressLeaf
     real(dp), intent(in) :: FracAssim
     logical, intent(in) :: MobilizationON
@@ -1399,7 +2034,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
 
     if ((SumGDDadjCC <= GetCrop_GDDaysToGermination()) &
           .or. (roundc(SumGDDadjCC, mold=1) > GetCrop_GDDaysToHarvest())) then
-        CCiActual = 0._dp
+        call SetCCiActual(0._dp)
     else
         ! growing season (once germinated)
         ! 1. find some parameters
@@ -1505,7 +2140,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                 ! (no adjustment for leaf stress)
                 CGCadjustmentAfterCutting = .false.
                 if (GetSimulation_ProtectedSeedling()) then
-                    CCiActual = CanopyCoverNoStressSF(&
+                    call SetCCiActual(CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                                  GetCrop_DaysToGermination(), &
                                  GetCrop_DaysToSenescence(), &
@@ -1518,12 +2153,12 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                  GDDCDCadjusted, SumGDDadjCC, &
                                  GetCrop_ModeCycle(), &
                                  GetSimulation_EffectStress_RedCGC(), &    
-                                 GetSimulation_EffectStress_RedCCX())
-                    if (CCiActual > (1.25_dp * CCoTotal)) then
+                                 GetSimulation_EffectStress_RedCCX()))
+                    if (GetCCiActual() > (1.25_dp * CCoTotal)) then
                         call SetSimulation_ProtectedSeedling(.false.)
                     end if
                 else
-                    CCiActual = GetCrop_CCoAdjusted() * exp(CGCGDDSF * GDDayi)
+                    call SetCCiActual(GetCrop_CCoAdjusted() * exp(CGCGDDSF * GDDayi))
                 end if
             ! 2.b CC > CCo
             else
@@ -1535,10 +2170,10 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                         call DetermineCCxAdjusted(Crop_CCxAdjusted_temp)
                         call SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp)
                         if (GetCrop_CCxAdjusted() < 0._dp) then
-                            CCiActual = GetCCiPrev()
+                            call SetCCiActual(GetCCiPrev())
                         elseif (abs(GetCCiPrev() - 0.97999_dp*CCxSF) &
                                     < 0.001_dp) then
-                            CCiActual = CanopyCoverNoStressSF(&
+                            call SetCCiActual(CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                                 GetCrop_DaysToGermination(), &
                                 GetCrop_DaysToSenescence(), &
@@ -1550,33 +2185,33 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                 CDCTotal, GetCrop_GDDCGC(), GDDCDCadjusted, &
                                 SumGDDadjCC, GetCrop_ModeCycle(), &
                                 GetSimulation_EffectStress_RedCGC(), &
-                                GetSimulation_EffectStress_RedCCX())
+                                GetSimulation_EffectStress_RedCCX()))
                         else
                             GDDtTemp = RequiredGDD(GetCCiprev(), &
                                                    GetCrop_CCoAdjusted(), &
                                                    GetCrop_CCxAdjusted(), &
                                                    GDDCGCadjusted)
                             if (GDDtTemp < 0._dp) then
-                                CCiActual = GetCCiPrev()
+                                call SetCCiActual(GetCCiPrev())
                             else
                                 GDDtTemp = GDDtTemp + GDDayi
-                                CCiActual = CCatGDDTime(GDDtTemp, &
+                                call SetCCiActual(CCatGDDTime(GDDtTemp, &
                                                         GetCrop_CCoAdjusted(), &
                                                         GDDCGCadjusted, &
-                                                        GetCrop_CCxAdjusted())
+                                                        GetCrop_CCxAdjusted()))
                             end if
                         end if
                     else
                         ! GDDCGCadjusted = 0 - too dry for leaf expansion
-                        CCiActual = GetCCiPrev()
-                        if (CCiActual > GetCrop_CCoAdjusted()) then
+                        call SetCCiActual(GetCCiPrev())
+                        if (GetCCiActual() > GetCrop_CCoAdjusted()) then
                             call SetCrop_CCoAdjusted(CCoTotal)
                         else
-                            call SetCrop_CCoAdjusted(CCiActual)
+                            call SetCrop_CCoAdjusted(GetCCiActual())
                         end if
                     end if
                 else
-                    CCiActual = CanopyCoverNoStressSF(&
+                    call SetCCiActual(CanopyCoverNoStressSF(&
                             (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                             GetCrop_DaysToGermination(), &
                             GetCrop_DaysToSenescence(), &
@@ -1588,20 +2223,20 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                             GetCrop_GDDCGC(), GDDCDCadjusted, SumGDDadjCC, &
                             GetCrop_ModeCycle(), &
                             GetSimulation_EffectStress_RedCGC(), &
-                            GetSimulation_EffectStress_RedCCX())
+                            GetSimulation_EffectStress_RedCCX()))
                     call SetCrop_CCoAdjusted(CCoTotal)
                     StressLeaf = -33._dp ! maximum canopy is reached;
                     CGCadjustmentAfterCutting = .false.   
                         ! no increase of Canopy development after Cutting
                 end if
-                if (CCiActual > CCxSFCD) then
-                    CCiActual = CCxSFCD
+                if (GetCCiActual() > CCxSFCD) then
+                    call SetCCiActual(CCxSFCD)
                     StressLeaf = -33._dp ! maximum canopy is reached;
                     CGCadjustmentAfterCutting = .false.
                         ! no increase of Canopy development after Cutting
                 end if
-                call SetCrop_CCxAdjusted(CCiActual)
             end if
+            call SetCrop_CCxAdjusted(GetCCiActual())
             
         ! 3. Canopy can no longer develop 
         ! (Mid-season (from tFinalCCx) or Late season stage)
@@ -1615,7 +2250,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
             
             if (SumGDDadjCC < GetCrop_GDDaysToSenescence()) then ! mid-season
                 if (GetCrop_CCxAdjusted() > 0.97999_dp*CCxSF) then
-                    CCiActual = CanopyCoverNoStressSF(&
+                    call SetCCiActual(CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                                 GetCrop_DaysToGermination(), &
                                 GetCrop_DaysToSenescence(), &
@@ -1628,10 +2263,10 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                 GDDCDCadjusted, SumGDDadjCC, &
                                 GetCrop_ModeCycle(), &
                                 GetSimulation_EffectStress_RedCGC(), &
-                                GetSimulation_EffectStress_RedCCX())
-                    call SetCrop_CCxAdjusted(CCiActual)
+                                GetSimulation_EffectStress_RedCCX()))
+                    call SetCrop_CCxAdjusted(GetCCiActual())
                 else
-                    CCiActual = CanopyCoverNoStressSF(&
+                    call SetCCiActual(CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                                 GetCrop_DaysToGermination(), &
                                 GetCrop_DaysToSenescence(), &
@@ -1648,10 +2283,10 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                 GDDCDCadjusted, SumGDDadjCC, &
                                 GetCrop_ModeCycle(), &
                                 GetSimulation_EffectStress_RedCGC(), &
-                                GetSimulation_EffectStress_RedCCX())
+                                GetSimulation_EffectStress_RedCCX()))
                 end if
-                if (CCiActual > CCxSFCD) then
-                    CCiActual = CCxSFCD
+                if (GetCCiActual() > CCxSFCD) then
+                    call SetCCiActual(CCxSFCD)
                 end if
             ! late season
             else      
@@ -1661,7 +2296,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                     call SetCrop_CCxAdjusted(CCxSFCD)
                 end if
                 if (GetCrop_CCxAdjusted() < 0.01_dp) then
-                    CCiActual = 0._dp
+                    call SetCCiActual(0._dp)
                 else
                     ! calculate CC in late season
                     ! CCibis = CC which canopy declines 
@@ -1675,7 +2310,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                 /(GetCrop_GDDaysToSenescence() &
                                     - GetCrop_GDDaysToFullCanopySF()))
                     if (CCibis < 0._dp) then
-                        CCiActual = 0._dp
+                        call SetCCiActual(0._dp)
                     else
                         ! CCiActual = CC with natural senescence in late season
                         GDDCDCadjusted = GetGDDCDCadjustedNoStress(&
@@ -1687,7 +2322,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                     + LengthCanopyDecline(&
                                                     GetCrop_CCxAdjusted(), &
                                                     GDDCDCadjusted))) then
-                            CCiActual = GetCrop_CCxAdjusted() &
+                            call SetCCiActual(GetCrop_CCxAdjusted() &
                                  * (1._dp - 0.05_dp &
                                     * (exp((SumGDDadjCC &
                                             - GetCrop_GDDaysToSenescence()) &
@@ -1695,13 +2330,13 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                           * GDDCDCadjusted &
                                                 /(GetCrop_CCxAdjusted() &
                                                             + 2.29_dp)) &
-                                        - 1._dp))
+                                        - 1._dp)))
                             ! CCiActual becomes CCibis, when canopy decline is more severe
-                            if (CCibis < CCiActual) then
-                                CCiActual = CCibis
+                            if (CCibis < GetCCiActual()) then
+                                call SetCCiActual(CCibis)
                             end if
                         else
-                            CCiActual = 0._dp
+                            call SetCCiActual(0._dp)
                         end if
                     end if
                 end if
@@ -1755,8 +2390,8 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                 CGCadjustmentAfterCutting = .false.
                 call SetSimulation_EvapLimitON(.true.) 
                 ! consider withered crop when not yet in late season
-                if (TimeSenescence < 0._dp) then
-                    call SetCCiTopEarlySen(CCiActual) ! CC before canopy decline
+                if (abs(TimeSenescence) < epsilon(0._dp)) then
+                    call SetCCiTopEarlySen(GetCCiActual()) ! CC before canopy decline
                 end if
                 TimeSenescence = TimeSenescence + GDDayi
                 call DetermineGDDCDCadjustedWaterStress(GDDCDCadjusted, KsSen)
@@ -1840,21 +2475,21 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                     if (CCiSen > CCxSFCD) then
                         CCiSen = CCxSFCD
                     end if
-                    CCiActual = CCiSen
-                    if (CCiActual > GetCCiPrev()) then
-                        CCiActual = GetCCiPrev() ! to avoid jump in CC
+                    call SetCCiActual(CCiSen)
+                    if (GetCCiActual() > GetCCiPrev()) then
+                        call SetCCiActual(GetCCiPrev()) ! to avoid jump in CC
                     end if
                     ! when GDDCGCadjusted increases as a result of watering
-                    call SetCrop_CCxAdjusted(CCiActual)
-                    if (CCiActual < CCoTotal) then
-                        call SetCrop_CCoAdjusted(CCiActual)
+                    call SetCrop_CCxAdjusted(GetCCiActual())
+                    if (GetCCiActual() < CCoTotal) then
+                        call SetCrop_CCoAdjusted(GetCCiActual())
                     else
                         call SetCrop_CCoAdjusted(CCoTotal)
                     end if
                 else
                     ! in late season
-                    if (CCiSen < CCiActual) then
-                        CCiActual = CCiSen
+                    if (CCiSen < GetCCiActual()) then
+                        call SetCCiActual(CCiSen)
                     end if
                 end if
 
@@ -1874,7 +2509,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                             CCxSF, Crop_CCxAdjusted_temp, &
                                             GDDCDCadjusted)
                     call SetCrop_CCxAdjusted(Crop_CCxAdjusted_temp)
-                    CCiActual = CanopyCoverNoStressSF(&
+                    call SetCCiActual(CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
                                 GetCrop_DaysToGermination(), &
                                 GetCrop_DaysToSenescence(), &
@@ -1890,7 +2525,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
                                 GDDCDCadjusted,SumGDDadjCC, &
                                 GetCrop_ModeCycle(), &
                                 GetSimulation_EffectStress_RedCGC(), &
-                                GetSimulation_EffectStress_RedCCX())
+                                GetSimulation_EffectStress_RedCCX()))
                 end if
                 TimeSenescence = 0._dp  ! No early senescence or back to normal
                 StressSenescence = 0._dp
@@ -1900,19 +2535,19 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
         
         ! 5. Adjust Crop.CCxWithered - required for correction 
         ! of Transpiration of dying green canopy
-        if (CCiActual > GetCrop_CCxWithered()) then
-            call SetCrop_CCxWithered(CCiActual)
+        if (GetCCiActual() > GetCrop_CCxWithered()) then
+            call SetCrop_CCxWithered(GetCCiActual())
         end if
         
         ! 6. correction for late-season stage for rounding off errors
         if (SumGDDadjCC > GetCrop_GDDaysToSenescence()) then
-            if (CCiActual > GetCCiprev()) then
-                CCiActual = GetCCiprev()
+            if (GetCCiActual() > GetCCiprev()) then
+                call SetCCiActual(GetCCiprev())
             end if
         end if
             
         ! 7. no crop as a result of fertiltiy and/or water stress
-        if (roundc(1000._dp*CCiActual, mold=1) <= 0) then
+        if (roundc(1000._dp*GetCCiActual(), mold=1) <= 0) then
             NoMoreCrop = .true.
         end if
     end if
@@ -2320,6 +2955,209 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
 end subroutine EffectSoilFertilitySalinityStress
 
 
+subroutine PrepareStage1()
+    type(rep_Soil) :: Soil_temp
+
+    Soil_temp = GetSoil()
+
+    if (GetSurfaceStorage() > 0.0000001_dp) then
+        call SetSimulation_EvapWCsurf(Soil_temp%REW*1._dp)
+    else
+        call SetSimulation_EvapWCsurf(GetRain() + GetIrrigation() - GetRunOff())
+        if (GetSimulation_EvapWCsurf() > Soil_temp%REW) then
+            call SetSimulation_EvapWCsurf(Soil_temp%REW*1._dp)
+        end if
+    end if
+    call SetSimulation_EvapStartStg2(int(undef_int,kind=int8))
+    call SetSimulation_EvapZ(EvapZmin/100._dp)
+
+end subroutine PrepareStage1
+
+
+real(dp) function WCEvapLayer(Zlayer, AtTheta)
+    real(dp), intent(in) :: Zlayer
+    integer(intEnum), intent(in) :: AtTheta
+
+    real(dp) :: Ztot, Wx, fracZ
+    integer(int32) :: compi
+
+    Wx = 0.0_dp
+    Ztot = 0.0_dp
+    compi = 0
+    do while ((abs(Zlayer-Ztot) > 0.0001_dp) &
+            .and. (compi < GetNrCompartments())) 
+        compi = compi + 1
+        if ((Ztot + GetCompartment_Thickness(compi)) > Zlayer) then
+            fracZ = (Zlayer - Ztot)/(GetCompartment_Thickness(compi))
+        else
+            fracZ = 1._dp
+        end if
+        select case (AtTheta)
+            case(whichtheta_AtSAT)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_SAT(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case (whichtheta_AtFC)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_FC(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case (whichtheta_AtWP)
+            Wx = Wx + 10._dp &
+                    * GetSoilLayer_WP(GetCompartment_Layer(compi)) &
+                    * fracZ * GetCompartment_Thickness(compi) &
+                    * (1._dp &
+                        - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                    /100._dp)
+            case default
+                Wx = Wx + 1000._dp &
+                        * GetCompartment_Theta(compi) * fracZ &
+                        * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                            - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                        /100._dp)
+        end select
+        Ztot = Ztot + fracZ * GetCompartment_Thickness(compi)
+    end do
+    WCEvapLayer = Wx
+end function WCEvapLayer
+
+
+
+subroutine PrepareStage2()
+
+    integer(intEnum) :: AtTheta
+    real(dp) :: WSAT, WFC, Wact
+
+    call SetSimulation_EvapZ(EvapZmin/100)
+    AtTheta = whichtheta_AtSat
+    WSAT = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    AtTheta = whichtheta_AtFC
+    WFC = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    AtTheta = whichtheta_AtAct
+    Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+    call SetSimulation_EvapStartStg2(roundc(100._dp &
+          * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), &
+                                                      mold=1_int8))
+    if (GetSimulation_EvapStartStg2() < 0) then
+        call SetSimulation_EvapStartStg2(0_int8)
+    end if
+end subroutine PrepareStage2
+
+
+subroutine CalculateEvaporationSurfaceWater()
+
+    real(dp) :: SaltSurface
+
+    if (GetSurfaceStorage() > GetEpot()) then
+        SaltSurface = GetSurfaceStorage()*GetECstorage()*Equiv
+        call SetEact(GetEpot())
+        call SetSurfaceStorage(GetSurfaceStorage() - GetEact())
+        call SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)) 
+            ! salinisation of surface storage layer
+    else
+        call SetEact(GetSurfaceStorage())
+        call SetSurfaceStorage(0._dp)
+        call SetSimulation_EvapWCsurf(real(GetSoil_REW(), kind=dp))
+        call SetSimulation_EvapZ(EvapZmin/100._dp)
+        if (GetSimulation_EvapWCsurf() < 0.0001_dp) then
+            call PrepareStage2()
+        else
+            call SetSimulation_EvapStartStg2(int(undef_int, kind=int8))
+        end if
+    end if
+end subroutine CalculateEvaporationSurfaceWater
+
+
+
+
+subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: EpotTot
+    real(dp), intent(inout) :: Epot
+    real(dp), intent(inout) :: EvapWCsurface
+
+    real(dp) :: EpotIrri
+
+    ! 1. Mulches (reduction of EpotTot to Epot)
+    if (GetSurfaceStorage() <= 0.000001_dp) then
+        if (dayi < GetCrop_Day1()) then ! before season
+            Epot = EpotTot &
+                    * (1._dp - (GetManagement_EffectMulchOffS()/100._dp) &
+                               *(GetManagement_SoilCoverBefore()/100._dp))
+        else
+            if (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) then ! in season
+                Epot = EpotTot &
+                        * (1._dp &
+                            - (GetManagement_EffectMulchInS()/100._dp) &
+                             * (GetManagement_Mulch()/100._dp))
+            else
+                Epot = EpotTot &
+                        * (1._dp &
+                            - (GetManagement_EffectMulchOffS()/100._dp) &
+                             * (GetManagement_SoilCoverAfter()/100._dp))
+            end if
+        end if
+    else
+        Epot = EpotTot ! flooded soil surface
+    end if
+
+
+    ! 2a. Entire soil surface wetted ?
+    if (GetIrrigation() > 0._dp) then
+        ! before season
+        if ((dayi < GetCrop_Day1()) &
+            .and. (GetSimulParam_IrriFwOffSeason() < 100)) then
+            call SetEvapoEntireSoilSurface(.false.)
+        end if
+        ! in season
+        if ((dayi >= GetCrop_Day1()) &
+            .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+            .and. (GetSimulParam_IrriFwInSeason() < 100)) then
+            call SetEvapoEntireSoilSurface(.false.)
+        end if
+        ! after season
+        if ((dayi >= GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+            .and.(GetSimulParam_IrriFwOffSeason() < 100)) then
+            call SetEvapoEntireSoilSurface(.false.)
+        end if
+    end if
+    if ((GetRain() > 1._dp) .or. (GetSurfaceStorage() > 0._dp)) then
+        call SetEvapoEntireSoilSurface(.true.)
+    end if
+    if ((dayi >= GetCrop_Day1()) &
+        .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest()) &
+        .and. (GetIrriMode() == IrriMode_Inet)) then
+        call SetEvapoEntireSoilSurface(.true.)
+    end if
+
+    ! 2b. Correction for Wetted surface by Irrigation
+    if (.not.GetEvapoEntireSoilSurface()) then
+        if ((dayi >= GetCrop_Day1()) &
+            .and. (dayi < GetCrop_Day1()+GetCrop_DaysToHarvest())) then
+            ! in season
+            EvapWCsurface = EvapWCsurface &
+                            * (GetSimulParam_IrriFwInSeason()/100._dp)
+            EpotIrri = EpotTot * (GetSimulParam_IrriFwInSeason()/100._dp)
+        else
+            ! off-season
+            EvapWCsurface = EvapWCsurface &
+                            * (GetSimulParam_IrriFwOffSeason()/100._dp)
+            EpotIrri = EpotTot * (GetSimulParam_IrriFwOffSeason()/100._dp)
+        end if
+        if (GetEact() > EpotIrri) then
+            EpotIrri = GetEact()  ! Eact refers to the previous day
+        end if
+        if (EpotIrri < Epot) then
+            Epot = Epotirri
+        end if
+    end if
+end subroutine AdjustEpotMulchWettedSurface
 
 
 !-----------------------------------------------------------------------------

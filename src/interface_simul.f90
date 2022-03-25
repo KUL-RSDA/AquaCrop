@@ -24,7 +24,7 @@ subroutine AdjustpSenescenceToETo_wrap(EToMean, TimeSenescence, WithBeta, pSenAc
 end subroutine AdjustpSenescenceToETo_wrap
 
 
-subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, CCiActual, &
+subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, &
                            StressLeaf, FracAssim, MobilizationON, &
                            StorageON, SumGDDAdjCC, VirtualTimeCC, &
                            StressSenescence, TimeSenescence, NoMoreCrop, &
@@ -32,7 +32,6 @@ subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, CCiActual, &
                            GDDayi, GDDCDCTotal, GDDTadj)
     real(dp), intent(in) :: CCxTotal
     real(dp), intent(in) :: CCoTotal
-    real(dp), intent(inout) :: CCiActual
     real(dp), intent(inout) :: StressLeaf
     real(dp), intent(in) :: FracAssim
     logical(1), intent(in) :: MobilizationON
@@ -57,7 +56,7 @@ subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, CCiActual, &
     NoMoreCrop_f = NoMoreCrop
     CGCAdjustmentAfterCutting_f = CGCAdjustmentAfterCutting
 
-    call DetermineCCiGDD(CCxTotal, CCoTotal, CCiActual, &
+    call DetermineCCiGDD(CCxTotal, CCoTotal, &
                            StressLeaf, FracAssim, MobilizationON_f, &
                            StorageON_f, SumGDDAdjCC, VirtualTimeCC, &
                            StressSenescence, TimeSenescence, NoMoreCrop_f, &
