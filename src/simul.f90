@@ -2046,8 +2046,8 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
             RatDGDD = (GetCrop_DaysToSenescence() &
                         - GetCrop_DaysToFullCanopySF()) &
-                      /(GetCrop_GDDaysToSenescence() &
-                        - GetCrop_GDDaysToFullCanopySF())
+                      /real(GetCrop_GDDaysToSenescence() &
+                        - GetCrop_GDDaysToFullCanopySF(), kind=dp)
         end if
         
         CCxSF = CCxTotal*(1._dp - GetSimulation_EffectStress_RedCCX()/100._dp)
