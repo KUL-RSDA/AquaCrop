@@ -446,7 +446,6 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
             ! salinity stress not considered
             TpotMAX = Tpot
         else
-
             SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
             call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
             call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
@@ -532,7 +531,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
                 alfa = 1._dp
             else
                 ! effect of water stress and ECe
-                if (GetCompartment_theta(compi) >= (theta_critical)) then
+                if (GetCompartment_theta(compi) >= theta_critical) then
                     alfa = (1 - GetSimulation_EffectStress_RedKsSto()/100._dp)
                 elseif (GetCompartment_theta(compi) > (GetSoilLayer_WP(layeri)/100._dp)) then
                     if (theta_critical > (GetSoilLayer_WP(layeri)/100._dp)) then
@@ -544,7 +543,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
                         alfa = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp) &
                                * KsAny(Wrel, crop_pActStom_tmp, pStomatLLAct, &
                                                  GetCrop_KsShapeFactorStomata())
-                    call SetCrop_pActStom(crop_pActStom_tmp)
+                        call SetCrop_pActStom(crop_pActStom_tmp)
                     else
                         alfa = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp)
                     end if
@@ -586,6 +585,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
             Tact = Tact + sinkMM
             if ((WtoExtract <= epsilon(1._dp) .or. (compi == GetNrCompartments()))) exit loop
         end do loop
+
         
         ! 3. add net irrigation water requirement
         if (GetIrriMode() == IrriMode_Inet) then
@@ -640,7 +640,7 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
 
 
 
-        real(dp) ::       frac_value, cumdepth
+        real(dp) ::  frac_value, cumdepth
         integer(int32) :: compi, i
 
         cumdepth = 0._dp
@@ -655,13 +655,13 @@ subroutine calculate_transpiration(Tpot, Tact, Coeffb0Salt, Coeffb1Salt, Coeffb2
                 if (frac_value > 0._dp) then
                     Compartment(compi)%WFactor = frac_value/Compartment(compi)%Thickness
                 else
-                    Compartment(compi)%WFactor = 0
+                    Compartment(compi)%WFactor = 0._dp
                 end if
             end if
             if ((cumdepth >= RootingDepth) .or. (compi == GetNrCompartments())) exit loop
         end do loop
         do i = compi+1, GetNrCompartments()
-            Compartment(i)%WFactor = 0
+            Compartment(i)%WFactor = 0._dp
         end do
     end subroutine calculate_rootfraction_compartment
 

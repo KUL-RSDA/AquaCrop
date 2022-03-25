@@ -476,9 +476,6 @@ END; (* DetermineBiomassAndYield *)
 
 
 
-
-
-
 PROCEDURE BUDGET_module(dayi : LongInt;
                         TargetTimeVal, TargetDepthVal, VirtualTimeCC, SumInterval, DayLastCut,NrDayGrow,
                         Tadj, GDDTadj : Integer;
