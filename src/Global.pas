@@ -10,7 +10,6 @@ VAR DataPath,ObsPath : BOOLEAN;
 
     SenStage       : INTEGER;
     Tmin, Tmax : double; (* degC *)
-    Tact, TactWeedInfested : double;        (* mm/day *)
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
