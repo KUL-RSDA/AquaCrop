@@ -160,6 +160,20 @@ procedure AdjustEpotMulchWettedSurface(
 procedure ConcentrateSalts;
     external 'aquacrop' name '__ac_simul_MOD_concentratesalts';
 
+procedure DetermineCCi(
+                constref CCxTotal, CCoTotal : double;
+                var StressLeaf : double;
+                constref FracAssim : double;
+                constref MobilizationON, StorageON : boolean;
+                constref Tadj, VirtualTimeCC : integer;
+                var StressSenescence, TimeSenescence : double;
+                var NoMoreCrop : boolean;
+                constref CDCTotal : double;
+                var CGCAdjustmentAfterCutting : boolean;
+                constref DayFraction, GDDCDCTotal : double;
+                var TESTVAL : double);
+    external 'aquacrop' name '__ac_interface_simul_MOD_determinecci_wrap';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------
