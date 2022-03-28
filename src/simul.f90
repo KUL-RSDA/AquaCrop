@@ -176,6 +176,7 @@ use ac_global, only: CalculateETpot, &
                      GetSimulParam_EffectiveRain_Method, &
                      GetSimulParam_EffectiveRain_PercentEffRain, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
+                     GetSimulParam_EvapDeclineFactor, &
                      GetSimulParam_EvapZmax, &
                      GetSimulParam_IniAbstract, &
                      GetSimulParam_IrriFwInSeason, &
@@ -322,7 +323,8 @@ use ac_global, only: CalculateETpot, &
                      SetSumWaBal_SaltIn, &
                      SetSumWaBal_CRsalt, &
                      SetSumWaBal_SaltOut, &
-                     SetTact, & 
+                     SetTact, &
+                     SoilEvaporationReductionCoefficient, &
                      subkind_Grain, &
                      subkind_Tuber, &
                      TimeToMaxCanopySF, &
@@ -3473,6 +3475,160 @@ subroutine CalculateSoilEvaporationStage1()
         call PrepareStage2()
     end if
 end subroutine CalculateSoilEvaporationStage1
+
+
+subroutine CalculateSoilEvaporationStage2()
+
+    integer(int32), parameter :: NrOfStepsInDay = 20
+    real(dp), parameter :: FractionWtoExpandZ = 0.4_dp
+    integer(intEnum) :: AtTheta
+    real(dp) :: Wupper, Wlower, Wact, Eremaining, Wrel, Kr, &
+                Elost, MaxSaltExDepth, SX, Zi, SaltDisplaced, UL, DeltaX
+    integer(int32) :: i, compi, SCell1, SCellEnd
+    logical :: Stg1, BoolCell
+    real(dp), dimension(11) :: ThetaIniEvap
+    integer(int32), dimension(11) :: SCellIniEvap
+
+    ! Step 1. Conditions before soil evaporation
+    compi = 1
+    MaxSaltExDepth = GetCompartment_Thickness(1)
+    do while ((MaxSaltExDepth < GetSimulParam_EvapZmax()) &
+                .and. (compi < GetNrCompartments())) 
+        compi = compi + 1
+        ThetaIniEvap(compi-1) = GetCompartment_Theta(compi)
+        SCellIniEvap(compi-1) = ActiveCells(GetCompartment_i(compi))
+        MaxSaltExDepth = MaxSaltExDepth + GetCompartment_Thickness(compi)
+    end do
+
+    ! Step 2. Soil evaporation
+    Stg1 = .false.
+    Eremaining = GetEpot() - GetEact()
+    call GetLimitsEvapLayer(real(GetSimulation_EvapStartStg2(), kind=dp), &
+                            Wupper, Wlower)
+    do i = 1, NrOfStepsInDay 
+        AtTheta = whichtheta_AtAct
+        Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+        Wrel = (Wact-Wlower)/(Wupper-Wlower)
+        if (GetSimulParam_EvapZmax() > EvapZmin) then
+            do while ((Wrel < (FractionWtoExpandZ &
+                * (GetSimulParam_EvapZmax() &
+                    -(100._dp*GetSimulation_EvapZ())) &
+                        /(GetSimulParam_EvapZmax()-EvapZmin))) &
+                .and. (GetSimulation_EvapZ() &
+                            < GetSimulParam_EvapZmax()/100._dp)) 
+                call SetSimulation_EvapZ(GetSimulation_EvapZ() + 0.001_dp) 
+                                                                ! add 1 mm
+                call GetLimitsEvapLayer(real(GetSimulation_EvapStartStg2(), kind=dp), &
+                                        Wupper, Wlower)
+                AtTheta = whichtheta_AtAct
+                Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+                Wrel = (Wact-Wlower)/(Wupper-Wlower)
+            end do
+            Kr = SoilEvaporationReductionCoefficient(Wrel, &
+                               real(GetSimulParam_EvapDeclineFactor(), kind=dp))
+        end if
+        if (abs(GetETo() - 5._dp) > 0.01_dp) then
+            ! correction for evaporative demand
+            ! adjustment of Kr (not considered yet)
+        end if
+        Elost = Kr * (Eremaining/NrOfStepsInDay)
+        call ExtractWaterFromEvapLayer(Elost, GetSimulation_EvapZ(), Stg1)
+    end do
+
+    ! Step 3. Upward salt transport
+    SX = SaltTransportFactor(Getcompartment_Theta(1))
+    if (SX > 0.01_dp) then
+        SCell1 = ActiveCells(GetCompartment_i(1))
+        compi = 2
+        Zi = GetCompartment_Thickness(1) + GetCompartment_Thickness(2)
+        do while ((roundc(Zi*100._dp, mold=1) &
+                    <= roundc(MaxSaltExDepth*100._dp, mold=1)) &
+            .and. (compi <= GetNrCompartments()) &
+            .and. (roundc(ThetaIniEvap(compi-1)*100000._dp, mold=1) &
+                    /= roundc(GetCompartment_theta(compi)*100000._dp, mold=1))) 
+            ! move salt to compartment 1
+            SCellEnd = ActiveCells(GetCompartment_i(compi))
+            BoolCell = .false.
+            UL = GetSoilLayer_UL(GetCompartment_Layer(compi))
+            DeltaX = GetSoilLayer_Dx(GetCompartment_Layer(compi))
+            loop: do
+                if (SCellEnd < SCellIniEvap(compi-1)) then
+                    SaltDisplaced = SX &
+                         * GetCompartment_Salt(compi, SCellIniEvap(compi-1))
+                    call SetCompartment_Salt(compi, SCellIniEvap(compi-1), &
+                                             GetCompartment_Salt(compi, &
+                                             SCellIniEvap(compi-1)) - SaltDisplaced)
+                    SCellIniEvap(compi-1) = SCellIniEvap(compi-1) - 1
+                    ThetaIniEvap(compi-1) = DeltaX * SCellIniEvap(compi-1)
+                else
+                    BoolCell = .true.
+                    if (SCellEnd == GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
+                        SaltDisplaced = SX &
+                            * GetCompartment_Salt(compi, SCellIniEvap(compi)) &
+                            * (ThetaIniEvap(compi-1) &
+                                - GetCompartment_theta(compi)) &
+                                            /(ThetaIniEvap(compi-1)-UL)
+                    else
+                        SaltDisplaced = SX &
+                            * GetCompartment_Salt(compi, SCellIniEvap(compi-1)) &
+                            * (ThetaIniEvap(compi-1) &
+                                - GetCompartment_theta(compi)) &
+                                  /(ThetaIniEvap(compi-1)-(DeltaX*(SCellEnd-1)))
+                    end if
+                    call SetCompartment_Salt(compi, SCellIniEvap(compi-1), &
+                              GetCompartment_Salt(compi, SCellIniEvap(compi-1)) &
+                                            - SaltDisplaced)
+                end if
+                call SetCompartment_Salt(1, SCell1, &
+                               GetCompartment_Salt(1, SCell1) + SaltDisplaced)
+                if (BoolCell) exit loop
+            end do loop
+            compi = compi + 1
+            if (compi <= GetNrCompartments()) then
+                Zi = Zi + GetCompartment_Thickness(compi)
+            end if
+        end do
+    end if
+
+
+    contains
+
+
+    subroutine GetLimitsEvapLayer(xProc, Wupper, Wlower)
+        real(dp), intent(in) :: xProc
+        real(dp), intent(inout) :: Wupper
+        real(dp), intent(inout) :: Wlower
+
+        integer(intEnum) :: AtTheta
+        real(dp) :: WSAT, WFC
+
+        AtTheta = whichtheta_AtSat
+        WSAT = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+        AtTheta = whichtheta_AtFC
+        WFC = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
+        Wupper = (xProc/100._dp) &
+                 * (WSAT - (WFC-GetSoil_REW())) &
+                 + (WFC-GetSoil_REW())
+        AtTheta = whichtheta_AtWP
+        Wlower = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)/2
+    end subroutine GetLimitsEvapLayer
+
+
+    real(dp) function SaltTransportFactor(theta)
+        real(dp), intent(in) :: theta
+
+        real(dp) :: x
+ 
+        if (theta <= GetSoilLayer_WP(1)/200._dp) then
+            SaltTransportFactor = 0._dp
+        else
+            x = (theta*100._dp - GetSoilLayer_WP(1)/2._dp) &
+                /(GetSoilLayer_SAT(1) - GetSoilLayer_WP(1)/2._dp)
+            SaltTransportFactor = exp(x*log(10._dp)+log(x/10._dp))
+        end if
+    end function SaltTransportFactor
+
+end subroutine CalculateSoilEvaporationStage2
 
 
 !-----------------------------------------------------------------------------
