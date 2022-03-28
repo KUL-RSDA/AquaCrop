@@ -3394,6 +3394,68 @@ subroutine ConcentrateSalts()
 end subroutine ConcentrateSalts
 
 
+subroutine ExtractWaterFromEvapLayer(EvapToLose, Zact, Stg1)
+    real(dp), intent(in) :: EvapToLose
+    real(dp), intent(in) :: Zact
+    logical, intent(in) :: Stg1
+
+    real(dp) :: EvapLost, Wx, Wairdry, AvailableW, &
+                Ztot, fracZ, StillToExtract
+    integer(int32) :: compi
+
+    EvapLost = 0._dp
+    compi = 0
+    Ztot = 0._dp
+    loop: do
+        compi = compi + 1
+        if ((Ztot + GetCompartment_Thickness(compi)) > Zact) then
+            fracZ = (Zact-Ztot)/GetCompartment_Thickness(compi)
+        else
+            fracZ = 1._dp
+        end if
+        Wairdry = 10._dp &
+                  * GetSoilLayer_WP(GetCompartment_Layer(compi))/2._dp &
+                  * GetCompartment_Thickness(compi) &
+                  * (1._dp &
+                     - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp)
+        Wx = 1000._dp * GetCompartment_Theta(compi) &
+             * GetCompartment_Thickness(compi) &
+             * (1._dp &
+                  - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))/100._dp)
+        AvailableW = (Wx-Wairdry)*fracZ
+        StillToExtract = (EvapToLose-EvapLost)
+        if (AvailableW > 0._dp) then
+            if (AvailableW > StillToExtract) then
+                call SetEact(GetEact() + StillToExtract)
+                EvapLost = EvapLost + StillToExtract
+                Wx = Wx - StillToExtract
+            else
+                call SetEact(GetEact() + AvailableW)
+                EvapLost = EvapLost + AvailableW
+                Wx = Wx - AvailableW
+            end if
+            call SetCompartment_Theta(&
+                    compi, &
+                    Wx/(1000._dp * GetCompartment_Thickness(compi) &
+                        * (1._dp &
+                           - GetSoilLayer_GravelVol(GetCompartment_Layer(compi))&
+                                                                     /100._dp)))
+        end if
+        Ztot = Ztot + fracZ * (GetCompartment_Thickness(compi))
+        if ((Compi >= GetNrCompartments()) &
+            .or. (abs(StillToExtract) < 0.0000001_dp) &
+            .or. (Ztot >= 0.999999_dp*Zact)) exit loop
+    end do loop
+    if (Stg1) then
+        call SetSimulation_EvapWCsurf(GetSimulation_EvapWCsurf() - EvapLost)
+        if (abs(EvapToLose-EvapLost) > 0.0001_dp) then 
+            ! not enough water left in the compartment to store WCsurf
+            call SetSimulation_EvapWCsurf(0._dp)
+        end if
+    end if
+end subroutine ExtractWaterFromEvapLayer
+
+
 !-----------------------------------------------------------------------------
 ! end BUDGET_module
 !-----------------------------------------------------------------------------

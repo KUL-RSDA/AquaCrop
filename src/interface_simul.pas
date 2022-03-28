@@ -160,6 +160,11 @@ procedure AdjustEpotMulchWettedSurface(
 procedure ConcentrateSalts;
     external 'aquacrop' name '__ac_simul_MOD_concentratesalts';
 
+procedure ExtractWaterFromEvapLayer(constref EvapToLose : double;
+                                    constref Zact : double;
+                                    constref Stg1 : boolean);
+    external 'aquacrop' name '__ac_interface_simul_MOD_extractwaterfromevaplayer_wrap';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

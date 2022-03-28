@@ -1039,57 +1039,6 @@ END; (* DetermineCCi *)
 
 
 
-PROCEDURE ExtractWaterFromEvapLayer(EvapToLose : double;
-                                    Zact : double;
-                                    Stg1 : Boolean);
-VAR EvapLost,Wx,Wairdry,AvailableW,Ztot,fracZ,StillToExtract : double;
-    compi : ShortInt;
-
-BEGIN
-EvapLost := 0;
-compi := 0;
-Ztot := 0;
-REPEAT
-  compi := compi + 1;
-  IF ((Ztot + GetCompartment_Thickness(compi)) > Zact)
-     THEN fracZ := (Zact-Ztot)/GetCompartment_Thickness(compi)
-     ELSE fracZ := 1;
-  Wairdry := 10 * GetSoilLayer_i(GetCompartment_Layer(compi)).WP/2 * GetCompartment_Thickness(compi)
-             * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-  Wx := 1000 * GetCompartment_Theta(compi) * GetCompartment_Thickness(compi)
-        * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-  AvailableW := (Wx-Wairdry)*fracZ;
-  StillToExtract := (EvapToLose-EvapLost);
-  IF (AvailableW > 0) THEN
-     BEGIN
-     IF (AvailableW > StillToExtract)
-        THEN BEGIN
-             SetEact(GetEact() + StillToExtract);
-             EvapLost := EvapLost + StillToExtract;
-             Wx := Wx - StillToExtract;
-             END
-        ELSE BEGIN
-             SetEact(GetEact() + AvailableW);
-             EvapLost := EvapLost + AvailableW;
-             Wx := Wx - AvailableW;
-             END;
-     SetCompartment_Theta(compi, Wx/
-        (1000*GetCompartment_Thickness(compi)*(1-GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100)));
-     END;
-  Ztot := Ztot + fracZ * (GetCompartment_Thickness(compi));
-UNTIL ((Compi >= GetNrCompartments())
-       OR (Abs(StillToExtract) < 0.0000001)
-       OR (Ztot >= 0.999999*Zact));
-IF Stg1 THEN
-   BEGIN
-   SetSimulation_EvapWCsurf(GetSimulation_EvapWCsurf() - EvapLost);
-   IF (Abs(EvapToLose-EvapLost) > 0.0001) // not enough water left in the compartment to store WCsurf
-         THEN SetSimulation_EvapWCsurf(0);
-   END;
-END; (* ExtractWaterFromEvapLayer *)
-
-
-
 
 PROCEDURE CalculateSoilEvaporationStage1;
 VAR Eremaining : double;
