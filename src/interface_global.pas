@@ -11,6 +11,7 @@ const
     undef_double = -9.9;
     undef_int = -9;
     CO2Ref = 369.41;
+    EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
     ElapsedDays : ARRAY[1..12] of double = (0,31,59.25,90.25,120.25,151.25,181.25,
                                                 212.25,243.25,273.25,304.25,334.25);
     DaysInMonth : ARRAY[1..12] of integer = (31,28,31,30,31,30,31,31,30,31,30,31);
@@ -18,6 +19,7 @@ const
           'May','June','July','August','September','October','November','December');
 
 type
+    rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
     Pdouble = ^double;
 
     rep_string25 = string[25]; (* Description SoilLayer *)
@@ -471,6 +473,7 @@ type
          GeneratedDayNrOnset,GeneratedDayNrEnd : integer;
          end;
 
+    repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 
 function AquaCropVersion(FullNameXXFile : string) : double;
@@ -1319,6 +1322,17 @@ procedure ComposeOutputFileName_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_composeoutputfilename_wrap';
 
+procedure GetFileForProgramParameters(
+            constref TheFullFileNameProgram : string;
+            var FullFileNameProgramParameters: string);
+
+procedure GetFileForProgramParameters_wrap(
+            constref TheFullFileNameProgram : PChar;
+            constref strlen1 : integer;
+            var FullFileNameProgramParameters: PChar;
+            constref strlen2 : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_getfileforprogramparameters_wrap';
+        
 function NumberSoilClass (
             constref SatvolPro : double;
             constref FCvolPro : double;
@@ -2955,9 +2969,31 @@ procedure SetPerennialPeriod_GeneratedDayNrOnset(constref GeneratedDayNrOnset : 
 procedure SetPerennialPeriod_GeneratedDayNrEnd(constref GeneratedDayNrEnd : integer);
     external 'aquacrop' name '__ac_global_MOD_setperennialperiod_generateddaynrend';
 
-
 function GetTotalSaltContent(): rep_Content;
         external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent';
+
+function GetTotalSaltContent_BeginDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_beginday';
+
+function GetTotalSaltContent_EndDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_endday';
+
+function GetTotalSaltContent_ErrorDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalsaltcontent_errorday';
+
+function GetTotalWaterContent(): rep_Content;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
+
+function GetTotalWaterContent_BeginDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
+
+function GetTotalWaterContent_EndDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_endday';
+
+function GetTotalWaterContent_ErrorDay(): double;
+        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_errorday';
+
+procedure SetTotalSaltContent(constref TotalSaltContent : rep_Content);
 
 procedure SetTotalSaltContent_BeginDay(constref BeginDay : double);
         external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_beginday';
@@ -2967,12 +3003,6 @@ procedure SetTotalSaltContent_EndDay(constref EndDay : double);
 
 procedure SetTotalSaltContent_ErrorDay(constref ErrorDay : double);
         external 'aquacrop' name '__ac_global_MOD_settotalsaltcontent_errorday';
-
-function GetTotalWaterContent(): rep_Content;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent';
-        
-function GetTotalWaterContent_BeginDay(): rep_Content;
-        external 'aquacrop' name '__ac_global_MOD_gettotalwatercontent_beginday';
 
 procedure SetTotalWaterContent(constref TotalWaterContent : rep_Content);
 
@@ -4556,6 +4586,12 @@ function GetMaxPlotTr() : shortint;
 procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
     external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
 
+function GetEvapoEntireSoilSurface() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getevapoentiresoilsurface_wrap';
+
+procedure SetEvapoEntireSoilSurface(constref EvapoEntireSoilSurface_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setevapoentiresoilsurface_wrap';
+
 function GetPreDay() : boolean;
     external 'aquacrop' name '__ac_interface_global_MOD_getpreday_wrap';
 
@@ -4573,6 +4609,12 @@ function GetECiAqua() : double;
 
 procedure SetECiAqua(constref ECiAqua_in : double);
     external 'aquacrop' name '__ac_global_MOD_seteciaqua';
+
+function GetEact() : double;
+    external 'aquacrop' name '__ac_global_MOD_geteact';
+
+procedure SetEact(constref Eact_in : double);
+    external 'aquacrop' name '__ac_global_MOD_seteact';
 
 function GetETo() : double;
     external 'aquacrop' name '__ac_global_MOD_geteto';
@@ -4654,8 +4696,74 @@ function GetRootingDepth() : double;
 procedure SetRootingDepth(constref RootingDepth_in : double);
     external 'aquacrop' name '__ac_global_MOD_setrootingdepth';
 
+function GetCCiPrev() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcciprev';
+
+procedure SetCCiPrev(constref CCiPrev_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcciprev';
+
+function GetCCiTopEarlySen() : double;
+    external 'aquacrop' name '__ac_global_MOD_getccitopearlysen';
+
+procedure SetCCiTopEarlySen(constref CCiTopEarlySen_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setccitopearlysen';
+
+function GetECdrain() : double;
+    external 'aquacrop' name '__ac_global_MOD_getecdrain';
+
+procedure SetECdrain(constref ECdrain_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setecdrain';
+
+function GetSaltInfiltr() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsaltinfiltr';
+
+procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsaltinfiltr';
+
+function GetTact() : double; 
+    external 'aquacrop' name '__ac_global_MOD_gettact';
+
+procedure SetTact(constref Tact_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settact';
+
+function GetTactWeedInfested() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettactweedinfested';
+
+procedure SetTactWeedInfested(constref TactWeedInfested_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settactweedinfested';
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+
+procedure CheckForKeepSWC_wrap(
+                    constref FullNameProjectFile : PChar;
+                    constref strlen : integer;
+                    constref TotalNrRuns : integer;
+                    var RunWithKeepSWC : boolean;
+                    var ConstZrxForRun : double);
+    external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
+
 
 implementation
+
+
+procedure CheckForKeepSWC(
+                    constref FullNameProjectFile : string;
+                    constref TotalNrOfRuns : INTEGER;
+                    VAR RunWithKeepSWC : BOOLEAN;
+                    VAR ConstZrxForRun : double);
+var
+    FullNameProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    FullNameProjectFile_ptr := PChar(FullNameProjectFile);
+    strlen := Length(FullNameProjectFile);
+    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns,
+                         RunWithKeepSWC, ConstZrxForRun);
+end;
 
 
 
@@ -5533,6 +5641,15 @@ begin;
     SetTotalWaterContent_EndDay(TotalWaterContent.EndDay);
     SetTotalWaterContent_ErrorDay(TotalWaterContent.ErrorDay);
 end;
+
+
+procedure SetTotalSaltContent(constref TotalSaltContent : rep_Content);
+begin;
+    SetTotalSaltContent_BeginDay(TotalSaltContent.BeginDay);
+    SetTotalSaltContent_EndDay(TotalSaltContent.EndDay);
+    SetTotalSaltContent_ErrorDay(TotalSaltContent.ErrorDay);
+end;
+
 
 procedure GenerateCO2Description(
             constref CO2FileFull : string;
@@ -6514,6 +6631,21 @@ begin;
     SetFullFileNameProgramParameters_wrap(p, strlen);
 end;
 
+procedure GetFileForProgramParameters(
+            constref  TheFullFileNameProgram: string;
+            var FullFileNameProgramParameters: string);
+var
+    p1, p2 : PChar;
+    strlen1, strlen2 : integer;
+
+begin;
+    p1 := PChar(TheFullFileNameProgram);
+    p2 := PChar(FullFileNameProgramParameters);
+    strlen1 := Length(TheFullFileNameProgram);
+    strlen2 := Length(FullFileNameProgramParameters);
+    GetFileForProgramParameters_wrap(p1, strlen1, p2, strlen2);
+    FullFileNameProgramParameters := AnsiString(p2);
+end;
 
 function GetPathNameProg(): string;
 var

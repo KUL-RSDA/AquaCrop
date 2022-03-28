@@ -22,6 +22,8 @@ real(dp), parameter :: PI = 3.1415926535_dp
 real(dp), parameter :: CO2Ref = 369.41_dp; 
     !! reference CO2 in ppm by volume for year 2000 for Mauna Loa
     !! (Hawaii,USA)
+real(dp), parameter :: EvapZmin = 15._dp
+    !! cm  minimum soil depth for water extraction by evaporation
 real(dp), parameter :: eps =10E-08
 real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
                                                     90.25_dp, 120.25_dp, 151.25_dp, &
@@ -146,6 +148,20 @@ integer(intEnum), parameter :: datatype_decadely = 1
     !! index of decadely in datatype enumerated type
 integer(intEnum), parameter :: datatype_monthly= 2
     !! index of monthly in datatype enumerated type
+
+integer(intEnum), parameter :: typeproject_typepro = 0
+    !! index of TypePRO in typeproject enumerated type
+integer(intEnum), parameter :: typeproject_typeprm = 1
+    !! index of TypePRM in typeproject enumerated type
+integer(intEnum), parameter :: typeproject_typenone = 2
+    !! index of TypeNone in typeproject enumerated type
+
+integer(intEnum), parameter :: typeObsSim_ObsSimCC = 0
+    !! index of ObsSimCC in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimB = 1
+    !! index of ObsSimB in typeObsSim enumerated type
+integer(intEnum), parameter :: typeObsSim_ObsSimSWC = 2
+    !! index of ObsSimSWC in typeObsSim enumerated type
 
 type rep_DayEventInt
     integer(int32) :: DayNr
@@ -986,10 +1002,15 @@ integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
                             ! Soil Water Content Menu
 integer(int8) :: MaxPlotTr
 
+
 real(dp) :: CCiActual
+real(dp) :: CCiprev
+real(dp) :: CCiTopEarlySen
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
+real(dp) :: ECdrain ! EC drain water dS/m
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
+real(dp) :: Eact ! mm/day
 real(dp) :: Epot ! mm/day
 real(dp) :: ETo ! mm/day
 real(dp) :: Drain  ! mm/day
@@ -998,9 +1019,11 @@ real(dp) :: Irrigation ! mm/day
 real(dp) :: Rain  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
+real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tpot ! mm/day
+real(dp) :: Tact, TactWeedInfested !mm/day
 
-
+logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
 
 
@@ -2621,20 +2644,23 @@ end function MultiplierCCoSelfThinning
 
 real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
     real(dp), intent(in) :: Wrel
-    real(dp), intent(inout) :: pULActual
+    real(dp), intent(in) :: pULActual
     real(dp), intent(in) :: pLLActual
     real(dp), intent(in) :: ShapeFactor
 
     real(dp) :: pRelativeLLUL, KsVal
+    real(dp) :: pULActual_local
     ! Wrel : WC in rootzone (negative .... 0=FC ..... 1=WP .... > 1)
     !        FC .. UpperLimit ... LowerLimit .. WP
     ! p relative (negative .... O=UpperLimit ...... 1=LowerLimit .....>1)
 
-    if ((pLLActual - pULActual) < 0.0001_dp) then
-        pULActual = pLLActual - 0.0001_dp
+    pULActual_local = pULActual
+
+    if ((pLLActual - pULActual_local) < 0.0001_dp) then
+        pULActual_local = pLLActual - 0.0001_dp
     end if
 
-    pRelativeLLUL = (Wrel - pULActual)/(pLLActual - pULActual)
+    pRelativeLLUL = (Wrel - pULActual_local)/(pLLActual - pULActual_local)
 
     if (pRelativeLLUL <= 0._dp) then
         KsVal = 1._dp
@@ -4272,7 +4298,7 @@ integer(int32) function ActiveCells(Comp)
     integer(int32) ::  celi
 
     if (Comp%theta <= GetSoilLayer_UL(Comp%Layer)) then
-        celi = 0
+        celi = 1
         do while (Comp%theta > (GetSoilLayer_Dx(Comp%Layer)) * celi) 
             celi = celi + 1
         end do
@@ -6680,6 +6706,150 @@ end subroutine AdjustSizeCompartments
 
 
 
+subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
+                           ConstZrxForRun)
+    character(len=*), intent(in) :: FullNameProjectFile
+    integer(int32), intent(in) :: TotalNrOfRuns
+    logical, intent(inout) :: RunWithKeepSWC
+    real(dp), intent(inout) :: ConstZrxForRun
+
+    integer :: fhandle0, fhandlex
+    integer(int32) :: i, Runi
+    character(len=1025) :: FileName, PathName, FullFileName
+    real(dp) :: Zrni, Zrxi, ZrSoili
+    real(dp) :: VersionNrCrop
+    integer(int8) :: TheNrSoilLayers
+    type(SoilLayerIndividual), dimension(max_SoilLayers) :: TheSoilLayer
+    character(len=:), allocatable :: PreviousProfFilefull
+
+    ! 1. Initial settings
+    RunWithKeepSWC = .false.
+    ConstZrxForRun = real(undef_int, kind=dp)
+
+    ! 2. Open project file
+    open(newunit=fhandle0, file=trim(FullNameProjectFile), status='old', &
+                                                           action ='read')
+    read(fhandle0, *) ! Description
+    read(fhandle0, *)  ! AquaCrop version Nr
+    do i = 1, 5 
+        read(fhandle0, *) ! Type Year, and Simulation 
+                          ! and Cropping period of run 1
+    end do
+
+    ! 3. Look for restrictive soil layer
+    ! restricted to run 1 since with KeepSWC, 
+    ! the soil file has to be common between runs
+    PreviousProfFilefull = GetProfFilefull() ! keep name soil file 
+                                             ! (to restore after check)
+    do i = 1, 27 
+        read(fhandle0, *) ! Climate (5x3 = 15),Calendar (3),Crop (3), 
+                          ! Irri (3) and Field (3) file
+    end do
+    read(fhandle0, *) ! info Soil file
+    read(fhandle0, *) FileName
+    read(fhandle0, *) PathName
+    FullFileName = trim(PathName) // trim(FileName)
+    call LoadProfile(FullFileName)
+    TheNrSoilLayers = GetSoil_NrSoilLayers()
+    TheSoilLayer = GetSoilLayer()
+
+    ! 3.bis  groundwater file
+    do i = 1, 3 
+        read(fhandle0, *)
+    end do
+
+    ! 4. Check if runs with KeepSWC exist
+    Runi = 1
+    do while ((RunWithKeepSWC .eqv. .false.) .and. (Runi <= TotalNrOfRuns))
+        if (Runi > 1) then
+            do i = 1, 44
+                read(fhandle0, *)  ! 5 + 42 lines with files
+            end do
+        end if
+        read(fhandle0, *) ! info Initial Conditions file
+        read(fhandle0, *) FileName
+        read(fhandle0, *) ! Pathname
+        if (trim(FileName) == 'KeepSWC') then
+            RunWithKeepSWC = .true.
+        end if
+        Runi = Runi + 1
+    end do
+    if (RunWithKeepSWC .eqv. .false.) then
+        ConstZrxForRun = real(undef_int, kind=dp) ! reset
+    end if
+
+    ! 5. Look for maximum root zone depth IF RunWithKeepSWC
+    if (RunWithKeepSWC .eqv. .true.) then
+        rewind(fhandle0)
+        read(fhandle0, *) ! Description
+        read(fhandle0, *)  ! AquaCrop version Nr
+        do i = 1, 5 
+            read(fhandle0, *) ! Type Year, and Simulation and 
+                              ! Cropping period of run 1
+        end do
+        Runi = 1
+        do while (Runi <= TotalNrOfRuns) 
+            ! Simulation and Cropping period
+            if (Runi > 1) then
+                do i = 1, 5 
+                    read(fhandle0, *)
+                end do
+            end if
+            ! 5 Climate files (15) + Calendar file (3)
+            do i = 1, 18 
+                read(fhandle0, *)
+            end do
+            ! Crop file
+            read(fhandle0, *) ! Crop file title
+            read(fhandle0, *) FileName
+            read(fhandle0, *) PathName
+            FullFileName = trim(PathName) // trim(FileName)
+            open(newunit=fhandlex, file=trim(FullFileName), &
+                                    status='old', action ='read')
+            read(fhandlex, *) ! description
+            read(fhandlex, *) VersionNrCrop
+            if (roundc(VersionNrCrop*10, mold=1) <= 31) then
+                do i = 1, 29 
+                    read(fhandlex, *)  ! no Salinity stress 
+                        ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
+                end do
+            else
+                if (roundc(VersionNrCrop*10, mold=1) <= 50) then
+                    do i = 1, 32 
+                        read(fhandlex, *) ! no distortion to salinity and 
+                                          ! response to ECsw factor
+                    end do
+                else
+                    do i = 1, 34 
+                        read(fhandlex, *)
+                    end do
+                end if
+            end if
+            read(fhandlex, *) Zrni ! minimum rooting depth
+            read(fhandlex, *) Zrxi ! maximum rooting depth
+            ZrSoili = RootMaxInSoilProfile(Zrxi, TheNrSoilLayers, &
+                                           TheSoilLayer)
+            if (ZrSoili > ConstZrxForRun) then
+                ConstZrxForRun = ZrSoili
+            end if
+            close(fhandlex)
+            ! Remaining files: Irri (3), Field (3), Soil (3), Gwt (3), 
+            ! Inni (3), Off (3) and FieldData (3) file
+            do i = 1, 21 
+                read(fhandle0, *)
+            end do
+            Runi = Runi + 1
+        end do
+    end if
+    close(fhandle0)
+            
+    ! 6. Reload existing soil file
+    call SetProfFilefull(PreviousProfFilefull)
+    call LoadProfile(GetProfFilefull())
+end subroutine CheckForKeepSWC
+
+
+
 
 !! Global variables section !!
 
@@ -6961,6 +7131,25 @@ subroutine ComposeOutputFileName(TheProjectFileName)
     call SetOutputName(TempString2)
 end subroutine ComposeOutputFileName
 
+subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgramParameters)
+    character(len=*), intent(in) :: TheFullFileNameProgram
+    character(len=*), intent(inout) :: FullFileNameProgramParameters
+
+    integer(int32) :: TheLength
+    character(len=:), allocatable :: TheExtension
+
+    FullFileNameProgramParameters = ''
+    TheLength = len(TheFullFileNameProgram)
+    TheExtension = TheFullFileNameProgram(TheLength-2:TheLength) ! PRO or PRM
+
+    FullFileNameProgramParameters = TheFullFileNameProgram(1:TheLength-3)
+    if (TheExtension == 'PRO') then
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PP1'
+    else
+        FullFileNameProgramParameters = Trim(FullFileNameProgramParameters)//'PPn'
+    end if
+end subroutine GetFileForProgramParameters
+    
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 
@@ -11875,6 +12064,55 @@ type(rep_Content) function GetTotalSaltContent()
     GetTotalSaltContent = TotalSaltContent
 end function GetTotalSaltContent
 
+real(dp) function GetTotalSaltContent_BeginDay()
+    !! Getter for the "TotalSaltContent_BeginDay" global variable.
+
+    GetTotalSaltContent_BeginDay = TotalSaltContent%BeginDay
+end function GetTotalSaltContent_BeginDay
+
+real(dp) function GetTotalSaltContent_EndDay()
+    !! Getter for the "TotalSaltContent_EndDay" global variable.
+
+    GetTotalSaltContent_EndDay = TotalSaltContent%EndDay
+end function GetTotalSaltContent_EndDay
+
+real(dp) function GetTotalSaltContent_ErrorDay()
+    !! Getter for the "TotalSaltContent_ErrorDay" global variable.
+
+    GetTotalSaltContent_ErrorDay = TotalSaltContent%ErrorDay
+end function GetTotalSaltContent_ErrorDay
+
+type(rep_Content) function GetTotalWaterContent()
+    !! Getter for the "TotalWaterContent" global variable.
+
+    GetTotalWaterContent = TotalWaterContent
+end function GetTotalWaterContent
+
+real(dp) function GetTotalWaterContent_BeginDay()
+    !! Getter for the "TotalWaterContent_BeginDay" global variable.
+
+    GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
+end function GetTotalWaterContent_BeginDay
+
+real(dp) function GetTotalWaterContent_EndDay()
+    !! Getter for the "TotalWaterContent_EndDay" global variable.
+
+    GetTotalWaterContent_EndDay = TotalWaterContent%EndDay
+end function GetTotalWaterContent_EndDay
+
+real(dp) function GetTotalWaterContent_ErrorDay()
+    !! Getter for the "TotalWaterContent_ErrorDay" global variable.
+
+    GetTotalWaterContent_ErrorDay = TotalWaterContent%ErrorDay
+end function GetTotalWaterContent_ErrorDay
+
+subroutine SetTotalSaltContent(TotalSaltContent_in)
+    !! Setter for the TotalWaterContent global variable.
+    type(rep_content), intent(in) :: TotalSaltContent_in
+
+    TotalSaltContent = TotalSaltContent_in
+end subroutine SetTotalSaltContent
+
 subroutine SetTotalSaltContent_BeginDay(BeginDay)
     !! Setter for the "TotalSaltContent" global variable.
     real(dp), intent(in) :: BeginDay
@@ -11895,18 +12133,6 @@ subroutine SetTotalSaltContent_ErrorDay(ErrorDay)
 
     TotalSaltContent%ErrorDay = ErrorDay
 end subroutine SetTotalSaltContent_ErrorDay
-
-type(rep_Content) function GetTotalWaterContent()
-    !! Getter for the "TotalWaterContent" global variable.
-
-    GetTotalWaterContent = TotalWaterContent
-end function GetTotalWaterContent
-
-real(dp) function GetTotalWaterContent_BeginDay()
-    !! Getter for the "TotalWaterContent_BeginDay" global variable.
-
-    GetTotalWaterContent_BeginDay = TotalWaterContent%BeginDay
-end function GetTotalWaterContent_BeginDay
 
 subroutine SetTotalWaterContent(TotalWaterContent_in)
     !! Setter for the TotalWaterContent global variable.
@@ -11936,12 +12162,35 @@ subroutine SetTotalWaterContent_ErrorDay(ErrorDay)
     TotalWaterContent%ErrorDay = ErrorDay
 end subroutine SetTotalWaterContent_ErrorDay
 
-
 type(rep_RootZoneSalt) function GetRootZoneSalt()
     !! Getter for the "RootZoneSalt" global variable.
 
     GetRootZoneSalt = RootZoneSalt
 end function GetRootZoneSalt
+
+real(dp) function GetRootZoneSalt_ECe()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECe = RootZoneSalt%ECe
+end function GetRootZoneSalt_ECe
+
+real(dp) function GetRootZoneSalt_ECsw()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECsw = RootZoneSalt%ECsw
+end function GetRootZoneSalt_ECsw
+
+real(dp) function GetRootZoneSalt_ECswFC()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_ECswFC = RootZoneSalt%ECswFC
+end function GetRootZoneSalt_ECswFC
+
+real(dp) function GetRootZoneSalt_KsSalt()
+    !! Getter for the "RootZoneSalt" global variable.
+
+    GetRootZoneSalt_KsSalt = RootZoneSalt%KsSalt
+end function GetRootZoneSalt_KsSalt
 
 subroutine SetRootZoneSalt_ECe(ECe)
     !! Setter for the "RootZoneSalt" global variable.
@@ -14451,6 +14700,19 @@ subroutine SetMaxPlotTr(MaxPlotTr_in)
     MaxPlotTr = MaxPlotTr_in
 end subroutine SetMaxPlotTr
 
+logical function GetEvapoEntireSoilSurface()
+    !! Getter for the "EvapoEntireSoilSurface" global variable.
+
+    GetEvapoEntireSoilSurface = EvapoEntireSoilSurface
+end function GetEvapoEntireSoilSurface
+
+subroutine SetEvapoEntireSoilSurface(EvapoEntireSoilSurface_in)
+    !! Setter for the "EvapoEntireSoilSurface" global variable.
+    logical, intent(in) :: EvapoEntireSoilSurface_in
+
+    EvapoEntireSoilSurface = EvapoEntireSoilSurface_in
+end subroutine SetEvapoEntireSoilSurface
+
 logical function GetPreDay()
     !! Getter for the "PreDay" global variable.
 
@@ -14489,6 +14751,19 @@ subroutine SetECiAqua(ECiAqua_in)
 
     ECiAqua = ECiAqua_in
 end subroutine SetECiAqua
+
+real(dp) function GetEact()
+    !! Getter for the "Eact" global variable.
+
+    GetEact = Eact
+end function GetEact
+
+subroutine SetEact(Eact_in)
+    !! Setter for the "Eact" global variable.
+    real(dp), intent(in) :: Eact_in
+
+    Eact = Eact_in
+end subroutine SetEact
 
 real(dp) function GetETo()
     !! Getter for the "ETo" global variable.
@@ -14621,5 +14896,84 @@ subroutine SetRootingDepth(RootingDepth_in)
 
     RootingDepth = RootingDepth_in
 end subroutine SetRootingDepth
+
+real(dp) function GetCCiPrev()
+    !! Getter for the "CCiPrev" global variable.
+
+    GetCCiPrev = CCiPrev
+end function GetCCiPrev
+
+subroutine SetCCiPrev(CCiPrev_in)
+    !! Setter for the "CCiPrev" global variable.
+    real(dp), intent(in) :: CCiPrev_in
+
+    CCiPrev = CCiPrev_in
+end subroutine SetCCiPrev
+
+real(dp) function GetCCiTopEarlySen()
+    !! Getter for the "CCiTopEarlySen" global variable.
+
+    GetCCiTopEarlySen = CCiTopEarlySen
+end function GetCCiTopEarlySen
+
+subroutine SetCCiTopEarlySen(CCiTopEarlySen_in)
+    !! Setter for the "CCiTopEarlySen" global variable.
+    real(dp), intent(in) :: CCiTopEarlySen_in
+
+    CCiTopEarlySen = CCiTopEarlySen_in
+end subroutine SetCCiTopEarlySen
+
+real(dp) function GetECDrain()
+    !! Getter for the "ECDrain" global variable.
+
+    GetECDrain = ECDrain
+end function GetECDrain
+
+subroutine SetECDrain(ECDrain_in)
+    !! Setter for the "ECDrain" global variable.
+    real(dp), intent(in) :: ECDrain_in
+
+    ECDrain = ECDrain_in
+end subroutine SetECDrain
+
+real(dp) function GetSaltInfiltr()
+    !! Getter for the "SaltInfiltr" global variable.
+
+    GetSaltInfiltr = SaltInfiltr
+end function GetSaltInfiltr
+
+subroutine SetSaltInfiltr(SaltInfiltr_in)
+    !! Setter for the "SaltInfiltr" global variable.
+    real(dp), intent(in) :: SaltInfiltr_in
+
+    SaltInfiltr = SaltInfiltr_in
+end subroutine SetSaltInfiltr
+
+real(dp) function GetTact()
+    !! Getter for the "Tact" global variable.
+
+    GetTact = Tact 
+end function GetTact
+
+subroutine SetTact(Tact_in)
+    !! Setter for the "Tact" global variable.
+    real(dp), intent(in) :: Tact_in
+
+    Tact = Tact_in
+end subroutine SetTact
+
+real(dp) function GetTactWeedInfested()
+    !! Getter for the "TactWeedInfested" global variable.
+
+    GetTactWeedInfested = TactWeedInfested
+end function GetTactWeedInfested
+
+subroutine SetTactWeedInfested(TactWeedInfested_in)
+    !! Setter for the "TactWeedInfested" global variable.
+    real(dp), intent(in) :: TactWeedInfested_in
+
+    TactWeedInfested = TactWeedInfested_in
+end subroutine SetTactWeedInfested
+
 
 end module ac_global

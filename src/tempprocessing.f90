@@ -821,8 +821,8 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
     integer(int32), intent(in) :: FirstDayPeriod
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
-    real(dp), intent(inout) :: TDayMin
-    real(dp), intent(inout) :: TDayMax
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
 
     integer(int32) :: i, RemainingDays
     character(len=:), allocatable :: totalname
@@ -832,13 +832,16 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     character(len=255) :: StringREAD
     logical :: AdjustDayNri, file_exists
+    real(dp) :: TDayMin_local, TDayMax_local
 
+    TDayMin_local = TDayMin
+    TDayMax_local = TDayMax
     GDDays = 0
     if (ValPeriod > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax
             DayGDD = DegreesDay(Tbase, Tupper, &
-                     TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                     TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
             GDDays = roundc(ValPeriod * DayGDD, mold=1_int32)
         else
             ! temperature file
@@ -872,9 +875,9 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                          read(fhandle, *, iostat=rc)
                     end do
                     read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
-                    call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                    call SplitStringInTwoParams(StringREAD, TDayMin_local, TDayMax_local)
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
@@ -893,14 +896,14 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                             read(fhandle, *, iostat=rc)
                             read(fhandle, '(a)', iostat=rc) StringREAD
                             call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                                     TDayMin_local, TDayMax_local)
                         else
                             read(fhandle, '(a)', iostat=rc) StringREAD
                             call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                                     TDayMin_local, TDayMax_local)
                         end if
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin, TDayMax,&
+                                     TDayMin_local, TDayMax_local,&
                                      GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
@@ -917,10 +920,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                     do while (TminDataSet(i)%DayNr /= DayNri)
                         i = i+1
                     end do
-                    TDaymin = TminDataSet(i)%Param
-                    TDaymax = TmaxDataSet(i)%Param
+                    TDayMin_local = TminDataSet(i)%Param
+                    TDayMax_local = TmaxDataSet(i)%Param
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
@@ -935,10 +938,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                         do while (TminDataSet(i)%DayNr /= DayNri)
                             i = i+1
                         end do
-                        TDayMin = TminDataSet(i)%Param
-                        TDayMax = TmaxDataSet(i)%Param
+                        TDayMin_local = TminDataSet(i)%Param
+                        TDayMax_local = TmaxDataSet(i)%Param
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin, TDayMax,&
+                                     TDayMin_local, TDayMax_local,&
                                      GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
@@ -954,10 +957,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                     do while (TminDataSet(i)%DayNr /= DayNri)
                         i = i+1
                     end do
-                    TDayMin = TminDataSet(i)%Param
-                    TDayMax = TmaxDataSet(i)%Param
+                    TDayMin_local = TminDataSet(i)%Param
+                    TDayMax_local = TmaxDataSet(i)%Param
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
@@ -972,10 +975,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                         do while (TminDataSet(i)%DayNr /= DayNri)
                             i = i+1
                         end do
-                        TDayMin = TminDataSet(i)%Param
-                        TDayMax = TmaxDataSet(i)%Param
+                        TDayMin_local = TminDataSet(i)%Param
+                        TDayMax_local = TmaxDataSet(i)%Param
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                              TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                              TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
                         DayNri = DayNri + 1
@@ -2414,52 +2417,53 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
                     end if
                 end if
             end if
+        end if
 
-            call SetSWCIniFile(trim(TempString))
-            if (GetSWCIniFile() == '(None)') then
-                read(f0, *, iostat=rc)  ! PathSWCIniFile
-                call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
-                call SetSWCiniDescription(&
-                         'Soil water profile at Field Capacity')
-            else
-                read(f0, *, iostat=rc) TempString  ! PathSWCIniFile
-                call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
-                SurfaceStorage_temp = GetSurfaceStorage()
-                call LoadInitialConditions(GetSWCiniFileFull(),&
-                      SurfaceStorage_temp)
-                call SetSurfaceStorage(SurfaceStorage_temp)
-            end if
-            Compartment_temp = GetCompartment()
-            select case (GetSimulation_IniSWC_AtDepths())
-            case (.true.)
-                call TranslateIniPointsToSWProfile(&
-                   GetSimulation_IniSWC_NrLoc(), &
-                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
-                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
-                   Compartment_temp)
-            case default
-                call TranslateIniLayersToSWProfile(&
-                   GetSimulation_IniSWC_NrLoc(),&
-                   GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
-                   GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
-                   Compartment_temp)
-            end select
-            call SetCompartment(Compartment_temp)
+        call SetSWCIniFile(trim(TempString))
+        if (GetSWCIniFile() == '(None)') then
+            read(f0, *, iostat=rc)  ! PathSWCIniFile
+            call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+            call SetSWCiniDescription(&
+                     'Soil water profile at Field Capacity')
+        else
+            read(f0, *, iostat=rc) TempString  ! PathSWCIniFile
 
-            if (GetSimulation_ResetIniSWC()) then
-                 ! to reset SWC and SALT at end of simulation run
-                do i = 1, GetNrCompartments()
-                     call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
-                     call SetSimulation_ECeIni_i(i, &
-                              ECeComp(GetCompartment_i(i)))
-                end do
-                ! ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
-                ! CHECK LATER
-                if (GetManagement_BundHeight() >= 0.01_dp) then
-                     call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
-                     call SetSimulation_ECStorageIni(GetECStorage())
-                 end if
-            end if
+            call SetSWCiniFileFull(trim(TempString)//GetSWCIniFile())
+            SurfaceStorage_temp = GetSurfaceStorage()
+            call LoadInitialConditions(GetSWCiniFileFull(),&
+                  SurfaceStorage_temp)
+            call SetSurfaceStorage(SurfaceStorage_temp)
+        end if
+        Compartment_temp = GetCompartment()
+        select case (GetSimulation_IniSWC_AtDepths())
+        case (.true.)
+            call TranslateIniPointsToSWProfile(&
+               GetSimulation_IniSWC_NrLoc(), &
+               GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+               GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
+               Compartment_temp)
+        case default
+            call TranslateIniLayersToSWProfile(&
+               GetSimulation_IniSWC_NrLoc(),&
+               GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
+               GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
+               Compartment_temp)
+        end select
+        call SetCompartment(Compartment_temp)
+
+        if (GetSimulation_ResetIniSWC()) then
+             ! to reset SWC and SALT at end of simulation run
+            do i = 1, GetNrCompartments()
+                 call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
+                 call SetSimulation_ECeIni_i(i, &
+                          ECeComp(GetCompartment_i(i)))
+            end do
+            ! ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
+            ! CHECK LATER
+            if (GetManagement_BundHeight() >= 0.01_dp) then
+                 call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
+                 call SetSimulation_ECStorageIni(GetECStorage())
+             end if
         end if
     end if
 
@@ -2482,9 +2486,8 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     Compartment_temp = GetCompartment()
     call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
     call SetCompartment(Compartment_temp)
-    ! IF Simulation.IniSWC.AtFC THEN ResetSWCToFC;
     if (GetSimulation_IniSWC_AtFC() .and. (GetSWCIniFile() /= 'KeepSWC')) then
-        call ResetSWCToFC
+        call ResetSWCToFC()
     end if
 
     ! 11. Off-season conditions

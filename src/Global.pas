@@ -4,29 +4,17 @@ interface
 
 uses SysUtils, interface_global;
 
-
-Const 
-      EvapZmin = 15; //cm  minimum soil depth for water extraction by evaporation
-
-TYPE
-     rep_TypeObsSim =(ObsSimCC,ObsSimB,ObsSimSWC);
-
 VAR DataPath,ObsPath : BOOLEAN;
     SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
 
-    CCiPrev,CCiTopEarlySen : double;
 
     SenStage       : INTEGER;
     Tmin, Tmax : double; (* degC *)
-    Eact, Tact, TactWeedInfested : double;        (* mm/day *)
-    EvapoEntireSoilSurface : BOOLEAN; // True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
     Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
     // salinity
-    ECdrain        : double; (* EC drain water dS/m *)
-    SaltInfiltr    : double; (* salt infiltrated in soil profile Mg/ha *)
     CRsalt         : double; // gram/m2
 
 
@@ -36,8 +24,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
     Part1Mult,Part2Eval : BOOLEAN;
 
-    Type
-    repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
@@ -45,23 +31,9 @@ PROCEDURE AppendCropFilePerennials(totalname : string;
                                    CriterionNrEnd,DayNEnd,MonthNEnd,ExtraYearEnd,LengthEnd,SuccessiveDaysEnd,OccurrenceEnd : INTEGER;
                                    ThresholdOnset,ThresholdEnd : double);
 
-PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
-                          TotalNrOfRuns : INTEGER;
-                          VAR RunWithKeepSWC : BOOLEAN;
-                          VAR ConstZrxForRun : double);
-
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
-
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
 
 
 implementation
-
-
-
 
 
 
@@ -173,157 +145,6 @@ IF (GenerateTheEnd = false)
         END;
 Close(f);
 END; (* AppendCropFilePerennials *)
-
-
-PROCEDURE CheckForKeepSWC(FullNameProjectFile : string;
-                          TotalNrOfRuns : INTEGER;
-                          VAR RunWithKeepSWC : BOOLEAN;
-                          VAR ConstZrxForRun : double);
-VAR f0,fx : TextFile;
-    i,Runi : INTEGER;
-    FileName,PathName,FullFileName : string;
-    Zrni,Zrxi,ZrSoili : double;
-    VersionNrCrop : double;
-    TheNrSoilLayers : ShortInt;
-    TheSoilLayer : rep_SoilLayer;
-    PreviousProfFilefull : string;
-
-BEGIN
-//1. Initial settings
-RunWithKeepSWC := false;
-ConstZrxForRun := undef_int;
-
-//2. Open project file
-Assign(f0,FullNameProjectFile);
-Reset(f0);
-READLN(f0); // Description
-READLN(f0);  // AquaCrop version Nr
-FOR i := 1 TO 5 DO READLN(f0); // Type Year, and Simulation and Cropping period of run 1
-
-//3. Look for restrictive soil layer
-//restricted to run 1 since with KeepSWC, the soil file has to be common between runs
-PreviousProfFilefull := GetProfFilefull(); // keep name soil file (to restore after check)
-FOR i := 1 TO 27 DO READLN(f0); // Climate (5x3 = 15),Calendar (3),Crop (3), Irri (3) and Field (3) file
-READLN(f0); // info Soil file
-READLN(f0,FileName);
-READLN(f0,PathName);
-PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
-FullFileName := CONCAT(Trim(PathName),Trim(FileName));
-LoadProfile(FullFileName);
-TheNrSoilLayers := GetSoil().NrSoilLayers;
-TheSoilLayer := GetSoilLayer();
-//ZrRestrict := 1000; // assumed not to be so far a restriction
-(*
-Assign(fx,FullFileName);
-Reset(fx);
-FOR i := 1 TO 5 DO READLN(fx);
-READLN(fx,ZrRestrict); // depth restrictive soil layer inhibiting root zone expansion
-IF (ZrRestrict < 0)
-   THEN ZrRestrict := 1000 // undefined, HENCE very large (no restriction)
-   ELSE IF (ZrRestrict <= 1.20) THEN ConstZrxForRun := ZrRestrict;
-Close(fx); *)
-
-//3.bis  groundwater file
-FOR i := 1 TO 3 DO READLN(f0);
-
-//4. Check if runs with KeepSWC exist
-Runi := 1;
-WHILE (RunWithKeepSWC = false) AND (Runi <= TotalNrOfRuns) DO
-   BEGIN
-   IF (Runi > 1) THEN FOR i := 1 TO 47 DO READLN(f0);  // 5 + 42 lines with files
-   READLN(f0); // info Initial Conditions file
-   READLN(f0,FileName);
-   READLN(f0); //Pathname
-   IF (Trim(FileName) = 'KeepSWC') THEN RunWithKeepSWC := true;
-   Runi := Runi + 1;
-   END;
-IF (RunWithKeepSWC = false) THEN ConstZrxForRun := undef_int; // reset
-
-//5. Look for maximum root zone depth IF RunWithKeepSWC
-//IF (RunWithKeepSWC AND (ROUND(100*ConstZrxForRun) < ROUND(100*ZrRestrict))) THEN
-IF (RunWithKeepSWC = true) THEN
-   BEGIN
-   Reset(f0);
-   READLN(f0); // Description
-   READLN(f0);  // AquaCrop version Nr
-   FOR i := 1 TO 5 DO READLN(f0); // Type Year, and Simulation and Cropping period of run 1
-   Runi := 1;
-   //WHILE ((ROUND(100*ConstZrxForRun) < ROUND(100*ZrRestrict)) AND (Runi <= TotalNrOfRuns)) DO
-   WHILE (Runi <= TotalNrOfRuns) DO
-     BEGIN
-     // Simulation and Cropping period
-     IF (Runi > 1) THEN FOR i := 1 TO 5 DO READLN(f0);
-     // 5 Climate files (15) + Calendar file (3)
-     FOR i := 1 TO 18 DO READLN(f0);
-     // Crop file
-     READLN(f0); // Crop file title
-     READLN(f0,FileName);
-     READLN(f0,PathName);
-     PathName := StringReplace(PathName, '"', '', [rfReplaceAll]);
-     FullFileName := CONCAT(Trim(PathName),Trim(FileName));
-     Assign(fx,FullFileName);
-     Reset(fx);
-     READLN(fx); // description
-     READLN(fx,VersionNrCrop);
-     IF (Round(VersionNrCrop*10) <= 31)
-        THEN FOR i := 1 TO 29 DO READLN(fx)  // no Salinity stress (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
-        ELSE BEGIN
-             IF (Round(VersionNrCrop*10) <= 50)
-                THEN FOR i := 1 TO 32 DO READLN(fx) // no distortion to salinity and response to ECsw factor
-                ELSE FOR i := 1 TO 34 DO READLN(fx);
-             END;
-     READLN(fx,Zrni); // minimum rooting depth
-     READLN(fx,Zrxi); // maximum rooting depth
-     ZrSoili := RootMaxInSoilProfile(Zrxi,TheNrSoilLayers,TheSoilLayer);
-     IF (ZrSoili > ConstZrxForRun) THEN ConstZrxForRun := ZrSoili;
-     Close(fx);
-     // Remaining files: Irri (3), Field (3), Soil (3), Gwt (3), Inni (3), Off (3) and FieldData (3) file
-     FOR i := 1 TO 21 DO READLN(f0);
-     Runi := Runi + 1;
-     END;
-   END;
-Close(f0);
-
-//6. Reload existing soil file
-SetProfFilefull(PreviousProfFilefull);
-LoadProfile(GetProfFilefull());
-END; (* CheckForKeepSWC *)
-
-
-
-PROCEDURE CheckForWaterTableInProfile(DepthGWTmeter : double;
-                                     ProfileComp : rep_comp;
-                                     VAR WaterTableInProfile : BOOLEAN);
-Var Ztot, Zi : double;
-    compi : INTEGER;
-BEGIN
-WaterTableInProfile := false;
-Ztot := 0;
-compi := 0;
-IF (DepthGWTmeter >= 0) THEN  // groundwater table is present
-   REPEAT
-   compi := compi + 1;
-   Ztot := Ztot + ProfileComp[compi].Thickness;
-   Zi := Ztot - ProfileComp[compi].Thickness/2;
-   IF (Zi >= DepthGWTmeter) THEN WaterTableInProfile := true;
-   UNTIL ((WaterTableInProfile = true) OR (compi >= GetNrCompartments()));
-END; (* CheckForWaterTableInProfile *)
-
-
-
-PROCEDURE GetFileForProgramParameters(TheFullFileNameProgram : string;
-                                      VAR FullFileNameProgramParameters : string);
-VAR TheLength : INTEGER;
-    TheExtension : STRING;
-BEGIN
-FullFileNameProgramParameters := '';
-TheLength := Length(TheFullFileNameProgram);
-TheExtension := Copy(TheFullFileNameProgram,(TheLength-2),3); // PRO or PRM
-FullFileNameProgramParameters := Copy(TheFullFileNameProgram,1,(TheLength-3));
-IF (TheExtension = 'PRO')
-   THEN FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PP1')
-   ELSE FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PPn');
-END; (* GetFileForProgramParameters *)
 
 
 

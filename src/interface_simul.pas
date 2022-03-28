@@ -4,6 +4,10 @@ interface
 
 uses Global, interface_global, TempProcessing, interface_tempprocessing;
 
+type
+    rep_control = (begin_day,end_day);
+    rep_WhichTheta = (AtSAT,AtFC,AtWP,AtAct);
+
 function GetCDCadjustedNoStressNew(
             constref CCx, CDC, CCxAdjusted): double;
      external 'aquacrop' name '__ac_simul_MOD_getcdcadjustednostressnew';
@@ -92,6 +96,7 @@ procedure AdjustpSenescenceToETo(
     external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
 
 
+
 //-----------------------------------------------------------------------------
 // BUDGET_module
 //-----------------------------------------------------------------------------
@@ -117,8 +122,37 @@ procedure Calculate_irrigation(var SubDrain : double;
                                var TargetTimeVal, TargetDepthVal : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_irrigation'; 
 
+procedure CheckGermination();
+    external 'aquacrop' name '__ac_simul_MOD_checkgermination'; 
+
 procedure CalculateEffectiveRainfall(var SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
+
+procedure calculate_CapillaryRise(VAR CRwater,CRsalt : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_capillaryrise';
+
+procedure CheckWaterSaltBalance_wrap(
+            constref dayi : integer;
+            constref InfiltratedRain : double;
+            constref control : integer; 
+            constref InfiltratedIrrigation : double;
+            constref InfiltratedStorage : double;
+            var Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain: double);
+    external 'aquacrop' name '__ac_simul_MOD_checkwatersaltbalance';
+
+procedure CheckWaterSaltBalance(
+            constref dayi : integer;
+            constref InfiltratedRain : double;
+            constref control : rep_control;
+            constref InfiltratedIrrigation : double;
+            constref InfiltratedStorage : double;
+            var Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain: double);
+
+procedure calculate_saltcontent(
+                constref InfiltratedRain, InfiltratedIrrigation : double;
+                constref InfiltratedStorage, SubDrain : double;
+                constref dayi : integer);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_saltcontent';
 
 procedure calculate_infiltration(
                 VAR InfiltratedRain,InfiltratedIrrigation : double;
@@ -135,12 +169,103 @@ procedure calculate_surfacestorage(VAR InfiltratedRain,InfiltratedIrrigation: do
                                    constref dayi : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_surfacestorage';
 
+procedure DetermineCCiGDD(
+            constref CCxTotal, CCoTotal : double;
+            var StressLeaf : double;
+            constref FracAssim : double;
+            constref MobilizationON, StorageON : boolean;
+            constref SumGDDAdjCC : double;
+            constref VirtualTimeCC : integer;
+            var StressSenescence : double;
+            var TimeSenescence : double;
+            var NoMoreCrop : boolean;
+            constref CDCTotal : double;
+            var CGCAdjustmentAfterCutting : boolean;
+            constref GDDayFraction, GDDayi, GDDCDCTotal : double;
+            constref GDDTadj : integer);
+    external 'aquacrop' name '__ac_interface_simul_MOD_determineccigdd_wrap';
+
+procedure EffectSoilFertilitySalinityStress(
+                        VAR StressSFadjNew : Shortint;
+                        constref Coeffb0Salt, Coeffb1Salt, Coeffb2Salt : double;
+                        constref NrDayGrow : integer;
+                        constref StressTotSaltPrev : double;
+                        constref VirtualTimeCC : integer);
+    external 'aquacrop' name '__ac_simul_MOD_effectsoilfertilitysalinitystress';
+
+procedure CalculateEvaporationSurfaceWater();
+    external 'aquacrop' name '__ac_simul_MOD_calculateevaporationsurfacewater';
+
+function WCEvapLayer(constref Zlayer : double;
+                     constref AtTheta : rep_WhichTheta) : double;
+
+function __WCEvapLayer(constref Zlayer : double;
+                       constref AtTheta : integer) : double;
+    external 'aquacrop' name '__ac_simul_MOD_wcevaplayer';
+
+procedure PrepareStage2();
+    external 'aquacrop' name '__ac_simul_MOD_preparestage2';
+
+procedure PrepareStage1();
+    external 'aquacrop' name '__ac_simul_MOD_preparestage1';
+
+procedure AdjustEpotMulchWettedSurface(
+                        constref dayi: integer;
+                        constref EpotTot: double;
+                        VAR Epot : double;
+                        VAR EvapWCsurface : double);
+    external 'aquacrop' name '__ac_simul_MOD_adjustepotmulchwettedsurface';
+
+procedure ConcentrateSalts;
+    external 'aquacrop' name '__ac_simul_MOD_concentratesalts';
+
+procedure DetermineCCi(
+                constref CCxTotal, CCoTotal : double;
+                var StressLeaf : double;
+                constref FracAssim : double;
+                constref MobilizationON, StorageON : boolean;
+                constref Tadj, VirtualTimeCC : integer;
+                var StressSenescence, TimeSenescence : double;
+                var NoMoreCrop : boolean;
+                constref CDCTotal : double;
+                var CGCAdjustmentAfterCutting : boolean;
+                constref DayFraction, GDDCDCTotal : double;
+                var TESTVAL : double);
+    external 'aquacrop' name '__ac_interface_simul_MOD_determinecci_wrap';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------
 
 
 implementation
+
+function WCEvapLayer(constref Zlayer : double;
+                     constref AtTheta : rep_WhichTheta) : double;
+var
+    int_attheta : integer;
+begin
+    int_attheta := ord(AtTheta);
+    WCEvapLayer := __WCEvapLayer(Zlayer, int_attheta);
+end;
+
+
+procedure CheckWaterSaltBalance(
+            constref dayi : integer;
+            constref InfiltratedRain : double;
+            constref control : rep_control;
+            constref InfiltratedIrrigation : double;
+            constref InfiltratedStorage : double;
+            var Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain: double);
+var
+  int_control : integer;
+begin;
+  int_control := ord(control);
+  CheckWaterSaltBalance_wrap(
+            dayi, InfiltratedRain, int_control,
+            InfiltratedIrrigation, InfiltratedStorage,
+            Surf0, ECInfilt, ECdrain, HorizontalWaterFlow,HorizontalSaltFlow,SubDrain);
+end;
 
 
 initialization

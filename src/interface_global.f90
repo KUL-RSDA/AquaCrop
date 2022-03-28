@@ -10,7 +10,9 @@ use ac_global, only: CheckFilesInProject, &
                      ECswComp, &
                      FileExists, &
                      CalculateAdjustedFC, &
+                     CheckForKeepSWC, &
                      ComposeOutputFileName, &
+                     GetFileForProgramParameters, &
                      GetCalendarFile, &
                      GetCalendarFileFull, &
                      GetCalendarDescription, &
@@ -215,6 +217,8 @@ use ac_global, only: CheckFilesInProject, &
                      LoadInitialConditions, &
                      CompleteClimateDescription, &
                      rep_clim, &
+                     GetEvapoEntireSoilSurface, &
+                     SetEvapoEntireSoilSurface, &
                      GetPreDay, &
                      SetPreDay, &
                      GetMultipleProjectDescription, &
@@ -421,6 +425,23 @@ subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
     call ComposeOutputFileName(string)
 end subroutine ComposeOutputFileName_wrap
 
+subroutine GetFileForProgramParameters_wrap(TheFullFileNameProgram, strlen1, &
+            FullFileNameProgramParameters, strlen2)
+    !! Wrapper for [[ac_global:GetFileForProgramParameters]] for foreign languages.
+    type(c_ptr), intent(in) :: TheFullFileNameProgram
+    integer(int32), intent(in) :: strlen1
+    type(c_ptr), intent(inout) :: FullFileNameProgramParameters
+    integer(int32), intent(in) :: strlen2
+
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
+
+    string1 = pointer2string(TheFullFileNameProgram, strlen1)
+    string2 = pointer2string(FullFileNameProgramParameters, strlen2)
+    call GetFileForProgramParameters(string1, string2)
+    FullFileNameProgramParameters = string2pointer(string2)
+end subroutine GetFileForProgramParameters_wrap
+
 logical function FileExists_wrap(full_name, strlen)
     !! Wrapper for [[ac_global:FileExists]] for foreign languages.
     type(c_ptr), intent(in) :: full_name
@@ -475,6 +496,7 @@ subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
     string1 = pointer2string(FullNameProjectFile, strlen1)
     string2 = pointer2string(DescriptionOfProject, strlen2)
     call LoadProjectDescription(string1, string2)
+    DescriptionOfProject = string2pointer(string2)
 end subroutine LoadProjectDescription_wrap
 
 subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
@@ -2495,6 +2517,25 @@ subroutine CompleteClimateDescription_wrap(DataType, FromD, FromM, FromY, &
 end subroutine CompleteClimateDescription_wrap
 
 
+function GetEvapoEntireSoilSurface_wrap() result(EvapoEntireSoilSurface)
+    !! Wrapper for [[ac_global:GetEvapoEntireSoilSurface]] for foreign languages
+    logical(1) :: EvapoEntireSoilSurface
+
+    EvapoEntireSoilSurface = GetEvapoEntireSoilSurface()
+end function GetEvapoEntireSoilSurface_wrap
+
+
+subroutine SetEvapoEntireSoilSurface_wrap(EvapoEntireSoilSurface)
+    !! Wrapper for [[ac_global:SetEvapoEntireSoilSurface]] for foreign languages.
+    logical(1), intent(in) :: EvapoEntireSoilSurface
+
+    logical :: bool
+
+    bool = EvapoEntireSoilSurface
+    call SetEvapoEntireSoilSurface(bool)
+end subroutine SetEvapoEntireSoilSurface_wrap
+
+
 function GetPreDay_wrap() result(PreDay)
     !! Wrapper for [[ac_global:GetPreDay]] for foreign languages
     logical(1) :: PreDay
@@ -2552,6 +2593,25 @@ subroutine SetProjectDescription_wrap(ProjectDescription, strlen)
     string = pointer2string(ProjectDescription, strlen)
     call SetProjectDescription(string)
 end subroutine SetProjectDescription_wrap
+
+
+subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, &
+                                RunwithKeepSWC, ConstZrxForRun)
+    type(c_ptr), intent(in) :: FullNameProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+    integer(int32), intent(in) :: TotalNrOfRuns
+    logical(1), intent(inout) :: RunWithKeepSWC
+    real(dp), intent(inout) :: ConstZrxForRun
+
+    character(len=strlen) :: FullNameProjectFile
+    logical :: RunWithKeepSWC_f
+
+    FullNameprojectFile = pointer2string(FullNameProjectFile_ptr, strlen)
+    RunWithKeepSWC_f = RunWithKeepSWC
+    call CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, &
+                         RunWithKeepSWC_f, ConstZrxForRun)
+    RunWithKeepSWC = RunWithKeepSWC_f
+end subroutine CheckForKeepSWC_wrap
 
 
 

@@ -2,15 +2,26 @@ unit Run;
 
 interface
 
+uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_climprocessing, interface_simul, interface_inforesults;
 
-uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing,
-     interface_climprocessing, interface_simul;
+FUNCTION GetDayNri() : LongInt;
 
+PROCEDURE InitializeSimulation(TheProjectFile_ : string;
+                               TheProjectType : repTypeProject);
 
-PROCEDURE RunSimulation(TheProjectFile : string;
+PROCEDURE FinalizeSimulation();
+
+PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
+
+PROCEDURE AdvanceOneTimeStep();
+
+PROCEDURE FinalizeRun1(NrRun : ShortInt;
+                       TheProjectFile : string;
+                       TheProjectType : repTypeProject);
+PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
+
+PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
-
-
 
 implementation
 
@@ -43,6 +54,7 @@ var  fRun, fDaily, fHarvest, fEval : text;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      StressLeaf,StressSenescence : double;   // % stress for leaf expansion and senescence
      TargetTimeVal, TargetDepthVal : Integer;
+     TheProjectFile : string;
 
      // DelayedGermination
      NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
@@ -366,199 +378,6 @@ WRITELN(fEval,'   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim   
 WRITELN(fEval,'                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
 END; (* CreateEvalData *)
 
-
-PROCEDURE ResetPreviousSum(VAR PreviousSum : rep_sum;
-                           VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
-                               PreviousBmob,PreviousBsto : double);
-BEGIN
-
-WITH PreviousSum DO
-  BEGIN
-  Epot := 0.0;
-  Tpot := 0.0;
-  SetRain(0.0);
-  Irrigation := 0.0;
-  Infiltrated := 0.0;
-  SetRunoff(0.0);
-  SetDrain(0.0);
-  Eact := 0.0;
-  Tact := 0.0;
-  TrW := 0.0;
-  ECropCycle := 0.0;
-  CRwater := 0.0;
-  Biomass := 0.0;
-  YieldPart := 0.0;
-  BiomassPot := 0.0;
-  BiomassUnlim := 0.0;
-  SaltIn := 0.0;
-  SaltOut := 0.0;
-  CRsalt := 0.0;
-  END;
-SumETo := 0.0;
-SumGDD := 0.0;
-PreviousSumETo := 0.0;
-PreviousSumGDD := 0.0;
-PreviousBmob := 0.0;
-PreviousBsto := 0.0;
-END; (* ResetPreviousSum *)
-
-
-PROCEDURE AdjustForWatertable;
-Var Ztot, Zi : double;
-    compi : INTEGER;
-    Compi_temp : CompartmentIndividual;
-BEGIN
-Ztot := 0;
-FOR compi := 1 to GetNrCompartments() DO
-    BEGIN
-    Ztot := Ztot + GetCompartment_Thickness(compi);
-    Zi := Ztot - GetCompartment_Thickness(compi)/2;
-    IF (Zi >= (GetZiAqua()/100)) THEN // compartment at or below groundwater table
-       BEGIN
-       SetCompartment_Theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
-       Compi_temp := GetCOmpartment_i(compi);
-       DetermineSaltContent(GetECiAqua(),Compi_temp);
-       SetCompartment_i(compi, Compi_temp);
-       END;
-    END;
-END; (* AdjustForWatertable *)
-
-
-PROCEDURE GetGwtSet(DayNrIN : LongInt;
-                    VAR GwT : rep_GwTable);
-VAR f0 : TextFile;
-    FileNameFull : string;
-    DayNr1Gwt,DNrini : LongInt;
-    i,dayi,monthi,yeari,Zini,yearACT : INTEGER;
-    DayDouble,Zm,ECini : double;
-    StringREAD : ShortString;
-    TheEnd : BOOLEAN;
-BEGIN
-// FileNameFull
-IF (GetGroundWaterFile() <> '(None)')
-   THEN FileNameFull := GetGroundWaterFileFull()
-   ELSE FileNameFull := CONCAT(GetPathNameProg(),'GroundWater.AqC');
-
-// Get DayNr1Gwt
-Assign(f0,FileNameFull);
-Reset(f0);
-READLN(f0); // description
-READLN(f0); // AquaCrop Version number
-READLN(f0); // Mode
-READLN(f0,dayi);
-READLN(f0,monthi);
-READLN(f0,yeari);
-DetermineDayNr(dayi,monthi,yeari,DayNr1Gwt);
-
-// Read first observation
-FOR i := 1 TO 3 DO READLN(f0);
-READLN(f0,StringREAD);
-SplitStringInThreeParams(StringREAD,DayDouble,Zm,GwT.EC2);
-GwT.DNr2 := DayNr1Gwt + ROUND(DayDouble) - 1;
-GwT.Z2 := ROUND(Zm * 100);
-IF (Eof(f0))
-   THEN TheEnd := true
-   ELSE TheEnd := false;
-
-// Read next observations
-IF TheEnd
-   THEN BEGIN // only one observation
-        GwT.DNr1 := GetSimulation_FromDayNr();
-        GwT.Z1 := GwT.Z2;
-        GwT.EC1 := GwT.EC2;
-        GwT.DNr2 := GetSimulation_ToDayNr();
-        END
-   ELSE BEGIN
-        // defined year
-        IF (DayNr1Gwt > 365) THEN
-           BEGIN
-           IF (DayNrIN < GwT.DNr2)
-              THEN BEGIN
-                   // DayNrIN before 1st observation
-                   GwT.DNr1 := GetSimulation_FromDayNr();
-                   GwT.Z1 := GwT.Z2;
-                   GwT.EC1 := GwT.EC2;
-                   END
-              ELSE BEGIN
-                   // DayNrIN after or at 1st observation
-                   REPEAT
-                     GwT.DNr1 := GwT.DNr2;
-                     GwT.Z1 := GwT.Z2;
-                     GwT.EC1 := GwT.EC2;
-                     READLN(f0,StringREAD);
-                     SplitStringInThreeParams(StringREAD,DayDouble,Zm,GwT.EC2);
-                     GwT.DNr2 := DayNr1Gwt + ROUND(DayDouble) - 1;
-                     GwT.Z2 := ROUND(Zm * 100);
-                     IF (DayNrIN < GwT.DNr2) THEN TheEnd := true;
-                   UNTIL (TheEnd OR Eof(f0));
-                   IF (NOT TheEnd) THEN // DayNrIN after last observation
-                      BEGIN
-                      GwT.DNr1 := GwT.DNr2;
-                      GwT.Z1 := GwT.Z2;
-                      GwT.EC1 := GwT.EC2;
-                      GwT.DNr2 := GetSimulation_ToDayNr();
-                      END;
-                   END;
-           END; // defined year
-
-        // undefined year
-        IF (DayNr1Gwt <= 365) THEN
-           BEGIN
-           DetermineDate(DayNrIN,dayi,monthi,yearACT);
-           IF (yearACT <> 1901) THEN
-              BEGIN
-              // make 1st observation defined
-              DetermineDate(GwT.DNr2,dayi,monthi,yeari);
-              DetermineDayNr(dayi,monthi,yearACT,GwT.DNr2);
-              END;
-           IF (DayNrIN < GwT.DNr2)
-              THEN BEGIN // DayNrIN before 1st observation
-                   REPEAT
-                     READLN(f0,StringREAD);
-                     SplitStringInThreeParams(StringREAD,DayDouble,Zm,GwT.EC1);
-                     GwT.DNr1 := DayNr1Gwt + ROUND(DayDouble) - 1;
-                     DetermineDate(GwT.DNr1,dayi,monthi,yeari);
-                     DetermineDayNr(dayi,monthi,yearACT,GwT.DNr1);
-                     GwT.Z1 := ROUND(Zm * 100);
-                   UNTIL Eof(f0);
-                   GwT.DNr1 := GwT.DNr1 - 365;
-                   END
-              ELSE BEGIN
-                   // save 1st observation
-                   DNrini := GwT.DNr2;
-                   Zini := GwT.Z2;
-                   ECini := GwT.EC2;
-                   // DayNrIN after or at 1st observation
-                   REPEAT
-                     GwT.DNr1 := GwT.DNr2;
-                     GwT.Z1 := GwT.Z2;
-                     GwT.EC1 := GwT.EC2;
-                     READLN(f0,StringREAD);
-                     SplitStringInThreeParams(StringREAD,DayDouble,Zm,GwT.EC2);
-                     GwT.DNr2 := DayNr1Gwt + ROUND(DayDouble) - 1;
-                     IF (yearACT <> 1901) THEN
-                        BEGIN
-                        // make observation defined
-                        DetermineDate(GwT.DNr2,dayi,monthi,yeari);
-                        DetermineDayNr(dayi,monthi,yearACT,GwT.DNr2);
-                        END;
-                     GwT.Z2 := ROUND(Zm * 100);
-                     IF (DayNrIN < GwT.DNr2) THEN TheEnd := true;
-                   UNTIL (TheEnd OR Eof(f0));
-                   IF (NOT TheEnd) THEN // DayNrIN after last observation
-                      BEGIN
-                      GwT.DNr1 := GwT.DNr2;
-                      GwT.Z1 := GwT.Z2;
-                      GwT.EC1 := GwT.EC2;
-                      GwT.DNr2 := DNrini + 365;
-                      GwT.Z2 := Zini;
-                      GwT.EC2 := ECini;
-                      END;
-                   END;
-           END; // undefined year
-        END; // more than 1 observation
-Close(f0);
-END; (* GetGwtSet *)
 
 
 
@@ -1395,7 +1214,7 @@ NextSimFromDayNr := undef_int;
 SetCrop_pActStom(GetCrop().pdef);
 SetCrop_pSenAct(GetCrop().pSenescence);
 SetCrop_pLeafAct(GetCrop().pLeafDefUL);
-EvapoEntireSoilSurface := true;
+SetEvapoEntireSoilSurface(true);
 SetSimulation_EvapLimitON(false);
 SetSimulation_EvapWCsurf(0);
 SetSimulation_EvapZ(EvapZmin/100);
@@ -1669,7 +1488,7 @@ IF (DayNri <= GetCrop().Day1)
            THEN BEGIN  // regrowth which starts on 1st day
                 IF (DayNri = GetCrop().Day1)
                    THEN BEGIN
-                        CCiPrev := CCiNoWaterStressSF(DayCC,
+                        SetCCiPrev(CCiNoWaterStressSF(DayCC,
                                       GetCrop().DaysToGermination,
                                       GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                                       GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,
@@ -1677,20 +1496,20 @@ IF (DayNri <= GetCrop().Day1)
                                       CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,
                                       SumGDDforDayCC,RatDGDD,
                                       GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
-                                      GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle());
+                                      GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle()));
                         END
-                   ELSE CCiPrev := 0;
+                   ELSE SetCCiPrev(0);
                 END
            ELSE BEGIN // sowing or transplanting
-                CCiPrev := 0;
-                IF (DayNri = (GetCrop().Day1+GetCrop().DaysToGermination)) THEN CCiPrev := CCoTotal;
+                SetCCiPrev(0);
+                IF (DayNri = (GetCrop().Day1+GetCrop().DaysToGermination)) THEN SetCCiPrev(CCoTotal);
                 END;
         END
    ELSE BEGIN
         IF (DayNri > GetCrop().DayN)
-           THEN CCiPrev := 0  // after cropping period
+           THEN SetCCiPrev(0)  // after cropping period
            ELSE BEGIN
-                CCiPrev := CCiNoWaterStressSF(DayCC,
+                SetCCiPrev(CCiNoWaterStressSF(DayCC,
                               GetCrop().DaysToGermination,
                               GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                               GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,
@@ -1698,11 +1517,11 @@ IF (DayNri <= GetCrop().Day1)
                               CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,
                               SumGDDforDayCC,RatDGDD,
                               GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
-                              GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle());
+                              GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle()));
                 END;
         END;
 // 13.2 specified CCini (%)
-IF ((GetSimulation_CCini() > 0) AND (ROUND(10000*CCiPrev) > 0) AND (ROUND(GetSimulation_CCini()) <> ROUND(100*CCiPrev)))
+IF ((GetSimulation_CCini() > 0) AND (ROUND(10000*GetCCiPrev()) > 0) AND (ROUND(GetSimulation_CCini()) <> ROUND(100*GetCCiPrev())))
    THEN BEGIN
         // 13.2a Minimum CC
         CCiniMin := 100 * (GetCrop().SizeSeedling/10000)*(GetCrop().PlantingDens/10000);
@@ -1710,10 +1529,10 @@ IF ((GetSimulation_CCini() > 0) AND (ROUND(10000*CCiPrev) > 0) AND (ROUND(GetSim
            THEN CCiniMin := INT(CCiniMin*100 + 1)/100
            ELSE CCiniMin := INT(CCiniMin*100)/100;
         // 13.2b Maximum CC
-        CCiniMax := 100 * CCiPrev;
+        CCiniMax := 100 * GetCCiPrev();
         CCiniMax := INT(CCiniMax*100)/100;
         // 13.2c accept specified CCini
-        IF ((GetSimulation_CCini() >= CCiniMin) AND (GetSimulation_CCini() <= CCiniMax)) THEN CCiPrev := GetSimulation_CCini()/100;
+        IF ((GetSimulation_CCini() >= CCiniMin) AND (GetSimulation_CCini() <= CCiniMax)) THEN SetCCiPrev(GetSimulation_CCini()/100);
         END;
 // 13.3
 SetCrop_CCxAdjusted(CCxTotal);
@@ -1721,8 +1540,7 @@ SetCrop_CCoAdjusted(CCoTotal);
 TimeSenescence := 0;
 SetCrop_CCxWithered(0);
 NoMoreCrop := false;
-
-SetCCiActual(CCiPrev);
+SetCCiActual(GetCCiPrev());
 
 
 // 14. Biomass and re-setting of GlobalZero
@@ -1889,7 +1707,7 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
            ELSE ScorAT2 := 1;  // after period of effect
         END;
 
-IF OutDaily THEN DetermineGrowthStage(DayNri,CCiPrev,StageCode);
+IF OutDaily THEN DetermineGrowthStage(DayNri,GetCCiPrev(),StageCode);
 
 // 20. Settings for start
 StartMode := true;
@@ -2091,7 +1909,7 @@ CASE OutputAggregate OF
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
                        GetRain(),GetETo(),GDDayi,
                        GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
-                       Eact,GetEpot(),Tact,TactWeedInfested,GetTpot(),
+                       GetEact(),GetEpot(),GetTact(),GetTactWeedInfested(),GetTpot(),
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,Bin,Bout,
                        TheProjectFile,fRun);
@@ -2138,23 +1956,23 @@ IF Out1Wabal THEN
                GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,undef_double:8:2)
       ELSE WRITE(fDaily,GetTotalWaterContent().EndDay:10:1,GetRain():8:1,GetIrrigation():9:1,
                GetSurfaceStorage():7:1,GetInfiltrated():7:1,GetRunoff():7:1,GetDrain():9:1,GetCRwater():9:1,(GetZiAqua()/100):8:2);
-   IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
+   IF (GetTpot() > 0) THEN Ratio1 := 100*GetTact()/GetTpot()
                  ELSE Ratio1 := 100.0;
-   IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(Eact+Tact)/(GetEpot()+GetTpot())
+   IF ((GetEpot()+GetTpot()) > 0) THEN Ratio2 := 100*(GetEact()+GetTact())/(GetEpot()+GetTpot())
                         ELSE Ratio2 := 100.0;
-   IF (GetEpot() > 0) THEN Ratio3 := 100*Eact/GetEpot()
+   IF (GetEpot() > 0) THEN Ratio3 := 100*GetEact()/GetEpot()
                  ELSE Ratio3 := 100;
    IF ((Out2Crop = true) OR (Out3Prof = true) OR (Out4Salt = true)
       OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,GetEpot():9:1,Eact:9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(Eact+Tact):8:1,Ratio2:8:0)
-      ELSE WRITELN(fDaily,GetEpot():9:1,Eact:9:1,Ratio3:7:0,GetTpot():9:1,Tact:9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(Eact+Tact):8:1,Ratio2:8:0);
+      THEN WRITE(fDaily,GetEpot():9:1,GetEact():9:1,Ratio3:7:0,GetTpot():9:1,GetTact():9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(GetEact()+GetTact()):8:1,Ratio2:8:0)
+      ELSE WRITELN(fDaily,GetEpot():9:1,GetEact():9:1,Ratio3:7:0,GetTpot():9:1,GetTact():9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(GetEact()+GetTact()):8:1,Ratio2:8:0);
    END;
 
 // 2. Crop development and yield
 IF Out2Crop THEN
    BEGIN
    //1. relative transpiration
-   IF (GetTpot() > 0) THEN Ratio1 := 100*Tact/GetTpot()
+   IF (GetTpot() > 0) THEN Ratio1 := 100*GetTact()/GetTpot()
                  ELSE Ratio1 := 100.0;
    //2. Water stresses
    IF (StressLeaf < 0)
@@ -2162,7 +1980,7 @@ IF Out2Crop THEN
       ELSE StrExp := ROUND(StressLeaf);
    IF (GetTpot() <= 0)
       THEN StrSto := undef_int
-      ELSE StrSto := ROUND(100 *(1 - Tact/GetTpot()));
+      ELSE StrSto := ROUND(100 *(1 - GetTact()/GetTpot()));
    //3. Salinity stress
    IF (GetRootZoneSalt().KsSalt < 0)
       THEN StrSalt := undef_int
@@ -2201,8 +2019,8 @@ IF Out2Crop THEN
       ELSE WPy := 0.0;
    // write
    WRITE(fDaily,GDDayi:9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
-         (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,Tact:9:1,
-         TactWeedInfested:9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
+         (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,GetTact():9:1,
+         GetTactWeedInfested():9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
    IF ((GetCrop().DryMatter = undef_int) OR (GetCrop().DryMatter = 0))
       THEN WRITE(fDaily,undef_double:9:3)
@@ -2258,7 +2076,7 @@ IF Out3Prof THEN
 // 4. Profile/Root zone - soil salinity
 IF Out4Salt THEN
    BEGIN
-   WRITE(fDaily,SaltInfiltr:9:3,(GetDrain()*ECdrain*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
+   WRITE(fDaily,GetSaltInfiltr():9:3,(GetDrain()*GetECdrain()*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
    IF (GetRootingDepth() <= 0)
       THEN BEGIN
            SaltVal := undef_int;
@@ -2386,14 +2204,15 @@ END; (* WriteEvaluationData *)
 
 // WRITING RESULTS section ================================================= END ====================
 
+FUNCTION GetDayNri() : LongInt;
+BEGIN
+    GetDayNri := DayNri;
+END;
 
 
-PROCEDURE FileManagement(NrRun : ShortInt;
-                         TheProjectFile : string;
-                         TheProjectType : repTypeProject;
-                         VAR fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts : text);
-VAR RepeatToDay : LongInt;
-    PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
+PROCEDURE AdvanceOneTimeStep();
+
+VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     HarvestNow : BOOLEAN;
     VirtualTimeCC,DayInSeason : INTEGER;
     SumGDDadjCC,RatDGDD : double;
@@ -2407,8 +2226,9 @@ VAR RepeatToDay : LongInt;
     EffectStress_temp : rep_EffectStress;
     SWCtopSOilConsidered_temp : boolean;
     ZiAqua_temp : integer;
-    ECiAqua_temp, ETo_temp : double;
+    ECiAqua_temp : double;
     tmpRain : double;
+    TactWeedInfested_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2681,14 +2501,8 @@ VAR RepeatToDay : LongInt;
     PotValSF := 100 * (1/CCxCropWeedsNoSFstress) * PotValSF;
     END; (* GetPotValSF *)
 
+BEGIN (* AdvanceOneTimeStep *)
 
-
-
-BEGIN (* FileManagement *)
-RepeatToDay := GetSimulation_ToDayNr();
-
-
-REPEAT
 (* 1. Get ETo *)
 IF (GetEToFile() = '(None)') THEN SetETo(5);
 
@@ -2756,14 +2570,14 @@ IF (GetCrop().DaysToCCini <> 0)
                    EffectStress_temp := GetSimulation_EffectStress();
                    CropStressParametersSoilFertility(GetCrop().StressResponse,StressSFAdjNEW,EffectStress_temp);
                    SetSimulation_EffectStress(EffectStress_temp);
-                   CCiPrev := CCiniTotalFromTimeToCCini(GetCrop().DaysToCCini,GetCrop().GDDaysToCCini,
+                   SetCCiPrev(CCiniTotalFromTimeToCCini(GetCrop().DaysToCCini,GetCrop().GDDaysToCCini,
                                   GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToFullCanopySF,
                                   GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                                   GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToFullCanopySF,
                                   GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
                                   GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().GDDCGC,GetCrop().CDC,GetCrop().GDDCDC,RatDGDD,
                                   GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
-                                  GetSimulation_EffectStress_CDecline(),(CCxTotal/GetCrop().CCx),GetCrop().ModeCycle);  // (CCxTotal/Crop.CCx) = fWeed
+                                  GetSimulation_EffectStress_CDecline(),(CCxTotal/GetCrop().CCx),GetCrop().ModeCycle));  // (CCxTotal/Crop.CCx) = fWeed
                    END;
                 END
            ELSE BEGIN // before start crop
@@ -2776,7 +2590,7 @@ IF (GetCrop().DaysToCCini <> 0)
         IF (GetCrop().ModeCycle = GDDays) THEN SumGDDadjCC := GetSimulation_SumGDD();
         // CC initial (at the end of previous day) when simulation starts before sowing/transplanting,
         IF ((DayNri = (GetCrop().Day1 + GetCrop().DaysToGermination)) AND (DayNri > GetSimulation_FromDayNr()))
-           THEN CCiPrev := CCoTotal;
+           THEN SetCCiPrev(CCoTotal);
         END;
 
 
@@ -2786,7 +2600,7 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((DayNri-GetCrop().Day1+1) < GetCr
    THEN BEGIN
         IF (((DayNri-GetSimulation_DelayedDays()) >= GetCrop().Day1) AND ((DayNri-GetSimulation_DelayedDays()) <= GetCrop().DayN))
            THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
-                SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),Tact,StressLeaf,StressSenescence,
+                SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),GetTact(),StressLeaf,StressSenescence,
                                 (DayNri-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
                                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
                                 (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
@@ -2884,14 +2698,15 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
         BiomassTot_temp := GetSumWaBal_BiomassTot();
         YieldPart_temp := GetSumWaBal_YieldPart();
-        DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,Tact,SumKcTop,CGCref,GDDCGCref,
+        TactWeedInfested_temp := GetTactWeedInfested();
+        DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
                                  Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,SumInterval,
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
                                  HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot,CCxWitheredTpotNoS,
-                                 WeedRCi,CCiActualWeedInfested,TactWeedInfested,
+                                 WeedRCi,CCiActualWeedInfested,TactWeedInfested_temp,
                                  StressSFadjNEW,PreviousStressLevel,
                                  Store_temp,Mobilize_temp,
                                  ToMobilize_temp,Bmobilized_temp,Bin,Bout,
@@ -2905,12 +2720,13 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
         SetSumWaBal_BiomassTot(BiomassTot_temp);
         SetSumWaBal_YieldPart(YieldPart_temp);
+        SetTactWeedInfested(TactWeedInfested_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;
         WeedRCi := undef_int; // no crop and no weed infestation
         CCiActualWeedInfested := 0.0; // no crop
-        TactWeedInfested := 0.0; // no crop
+        SetTactWeedInfested(0.0); // no crop
         END;
 
 (* 12. Reset after RUN *)
@@ -2918,7 +2734,7 @@ IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
 SetPreDay(true);
 IF (DayNri >= GetCrop().Day1) THEN
    BEGIN
-   CCiPrev := GetCCiActual();
+   SetCCiPrev(GetCCiActual());
    IF (ZiPrev < GetRootingDepth()) THEN Ziprev := GetRootingDepth(); // IN CASE groundwater table does not affect root development
    SumGDDPrev := GetSimulation_SumGDD();
    END;
@@ -2988,14 +2804,14 @@ IF GetManagement_Cuttings_Considered() THEN
       NrCut := NrCut + 1;
       DayLastCut := DayInSeason;
       CGCadjustmentAfterCutting := false; // adjustement CGC
-      IF (CCiPrev > (GetManagement_Cuttings_CCcut()/100)) THEN
+      IF (GetCCiPrev() > (GetManagement_Cuttings_CCcut()/100)) THEN
          BEGIN
-         CCiPrev := GetManagement_Cuttings_CCcut()/100;
+         SetCCiPrev(GetManagement_Cuttings_CCcut()/100);
          // ook nog CCwithered
          SetCrop_CCxWithered(0);  // or CCiPrev ??
          CCxWitheredTpot := 0; // for calculation Maximum Biomass but considering soil fertility stress
          CCxWitheredTpotNoS := 0; //  for calculation Maximum Biomass unlimited soil fertility
-         SetCrop_CCxAdjusted(CCiPrev); // new
+         SetCrop_CCxAdjusted(GetCCiPrev()); // new
          // Increase of CGC
          CGCadjustmentAfterCutting := true; // adjustement CGC
          END;
@@ -3022,7 +2838,7 @@ IF (GetCCiActual() > 0) THEN
    // stomatal closure
    IF (GetTpot() > 0) THEN
       BEGIN
-      StressStomata := 100 *(1 - Tact/GetTpot());
+      StressStomata := 100 *(1 - GetTact()/GetTpot());
       IF (StressStomata > - 0.000001) THEN
          SetStressTot_Sto(((GetStressTot_NrD() - 1)*GetStressTot_Sto() + StressStomata)/GetStressTot_NrD());
       END;
@@ -3067,7 +2883,7 @@ IF (DayNri = GetCrop().Day1)
    ELSE IrriInterval := IrriInterval + 1;
 //15.c Rooting depth
 //15.bis extra line for standalone
-IF OutDaily THEN DetermineGrowthStage(DayNri,CCiPrev,StageCode);
+IF OutDaily THEN DetermineGrowthStage(DayNri,GetCCiPrev(),StageCode);
 // 15.extra - reset ageing of Kc at recovery after full senescence
 IF (GetSimulation_SumEToStress() >= 0.1) THEN DayLastCut := DayNri;
 //15.d Read Climate next day, Get GDDays and update SumGDDays
@@ -3097,7 +2913,131 @@ IF (DayNri <= GetSimulation_ToDayNr()) THEN
       END;
    END;
 
-UNTIL ((DayNri-1) = RepeatToDay);  // END REPEAT
+END; (* AdvanceOneTimeStep *)
+
+PROCEDURE FileManagement();
+VAR RepeatToDay : LongInt;
+
+BEGIN (* FileManagement *)
+RepeatToDay := GetSimulation_ToDayNr();
+REPEAT
+  AdvanceOneTimeStep()
+UNTIL ((DayNri-1) = RepeatToDay);
+END; // FileManagement
+
+
+PROCEDURE InitializeSimulation(TheProjectFile_ : string;
+                               TheProjectType : repTypeProject);
+BEGIN
+TheProjectFile := TheProjectFile_;
+OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
+IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
+IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
+END;  // InitializeSimulation
+
+
+PROCEDURE FinalizeSimulation();
+BEGIN
+Close(fRun); // Close Run.out
+IF OutDaily THEN Close(fDaily);  // Close Daily.OUT
+IF Part1Mult THEN Close(fHarvest);  // Close Multiple harvests in season
+END;  // FinalizeSimulation
+
+
+PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
+VAR SumWaBal_temp : rep_sum;
+
+    PROCEDURE AdjustCompartments;
+    VAR TotDepth : double;
+        i : ShortInt;
+        Comp_temp : rep_Comp;
+    BEGIN
+    //Adjust size of compartments if required
+    TotDepth := 0;
+    FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
+    IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
+       THEN BEGIN
+            IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
+               THEN AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx());
+            END
+       ELSE BEGIN
+            IF (ROUND(GetCrop().RootMax*1000) > ROUND(TotDepth*1000)) THEN
+               BEGIN
+               IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
+                  THEN BEGIN // no restrictive soil layer
+                       AdjustSizeCompartments(GetCrop().RootMax);
+                       // adjust soil water content
+                       Comp_temp := GetCompartment();
+
+                       CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
+                       SetCompartment(Comp_temp);
+                       IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
+                       END
+                  ELSE BEGIN // restrictive soil layer
+                       IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000)) THEN
+                          BEGIN
+                          AdjustSizeCompartments(GetSoil().RootMax);
+                          // adjust soil water content
+                          Comp_temp := GetCompartment();
+                          CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
+                          SetCompartment(Comp_temp);
+                          IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
+                          END
+                       END;
+               END;
+            END;
+    END; // AdjustCompartments
+
+BEGIN
+LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
+AdjustCompartments;
+SumWaBal_temp := GetSumWaBal();
+GlobalZero(SumWabal_temp);
+SetSumWaBal(SumWaBal_temp);
+ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+InitializeSimulationRun;
+IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
+IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+END; // InitializeRun
+
+
+PROCEDURE FinalizeRun1(NrRun : ShortInt;
+                       TheProjectFile : string;
+                       TheProjectType : repTypeProject);
+
+    PROCEDURE RecordHarvest(NrCut : INTEGER;
+                        DayNri : LongInt;
+                        DayInSeason,SumInterval : INTEGER;
+                        BprevSum,YprevSum : double;
+                        VAR fHarvest : text);
+    VAR Dayi,Monthi,Yeari : INTEGER;
+        NoYear : BOOLEAN;
+    BEGIN
+    Append(fHarvest);
+    DetermineDate(GetCrop().Day1,Dayi,Monthi,Yeari);
+    NoYear := (Yeari = 1901);
+    DetermineDate(DayNri,Dayi,Monthi,Yeari);
+    IF NoYear THEN Yeari := 9999;
+    IF (NrCut = 9999)
+       THEN BEGIN
+            // last line at end of season
+            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
+            IF (GetCrop().DryMatter = undef_int)
+               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3)
+               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):20:3);
+            END
+       ELSE BEGIN
+            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
+                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
+            IF (GetCrop().DryMatter = undef_int)
+               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3)
+               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+                         (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
+            END;
+    END; // RecordHarvest
+
+BEGIN
 
 (* 16. Finalise *)
 IF  ((DayNri-1) = GetSimulation_ToDayNr()) THEN
@@ -3122,82 +3062,16 @@ IF  ((DayNri-1) = GetSimulation_ToDayNr()) THEN
     //
     WriteSimPeriod(NrRun,TheProjectFile);
     END;
-
-END; (* FileManagement *)
-
+END; // FinalizeRun1
 
 
-
-
-PROCEDURE RunSimulation(TheProjectFile : string;
-                        TheProjectType : repTypeProject);
-VAR NrRun : ShortInt;
-    SumWaBal_temp : rep_sum;
-
-
-    PROCEDURE AdjustCompartments;
-    VAR TotDepth : double;
-        i : ShortInt;
-        Comp_temp : rep_Comp;
-    BEGIN
-    //Adjust size of compartments if required
-    TotDepth := 0;
-    FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
-    IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
-       THEN BEGIN
-            IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
-               THEN AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx());
-            END
-       ELSE BEGIN
-            IF (ROUND(GetCrop().RootMax*1000) > ROUND(TotDepth*1000)) THEN
-               BEGIN
-               IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
-                  THEN BEGIN // no restrictive soil layer
-                       AdjustSizeCompartments(GetCrop().RootMax);
-                       // adjust soil water content
-                       Comp_temp := GetCompartment();
-                       CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
-                       SetCompartment(Comp_temp);
-                       IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
-                       END
-                  ELSE BEGIN // restrictive soil layer
-                       IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000)) THEN
-                          BEGIN
-                          AdjustSizeCompartments(GetSoil().RootMax);
-                          // adjust soil water content
-                          Comp_temp := GetCompartment();
-                          CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
-                          SetCompartment(Comp_temp);
-                          IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
-                          END
-                       END;
-               END;
-            END;
-    END; (* AdjustCompartments *)
-
-    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
-    BEGIN
-    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
-    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
-    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
-    END; (* CloseClimateFiles *)
-
-    PROCEDURE CloseIrrigationFile(VAR fIrri : text);
-    BEGIN
-    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
-    END; (* CloseIrrigationFile *)
-
-    PROCEDURE CloseManagementFile(VAR fCuts : text);
-    BEGIN
-    IF GetManagement_Cuttings_Considered() THEN Close(fCuts);
-    END; (* CloseManagementFile *)
-
+PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
     PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt;
                                               VAR fEval : text);
     VAR totalnameEvalStat,StrNr : string;
 
-    BEGIN  (* CloseEvalDataPerformEvaluation *)
+    BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
     Close(fEval);
     IF (LineNrEval <> undef_int) THEN Close(fObs);
@@ -3216,61 +3090,60 @@ VAR NrRun : ShortInt;
                               GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
     // 4. Delete Evaluation data file
     Erase(fEval);
-    END; (* CloseEvalDataPerformEvaluation *)
+    END; // CloseEvalDataPerformEvaluation
 
 
-BEGIN (* RunSimulation *)
-OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
-IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
-IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
+    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
+    BEGIN
+    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
+    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
+    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
+    END; // CloseClimateFiles
+
+
+    PROCEDURE CloseIrrigationFile(VAR fIrri : text);
+    BEGIN
+    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
+    END; // CloseIrrigationFile
+
+
+    PROCEDURE CloseManagementFile(VAR fCuts : text);
+    BEGIN
+    IF GetManagement_Cuttings_Considered() THEN Close(fCuts);
+    END; // CloseManagementFile
+
+BEGIN
+CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
+CloseIrrigationFile(fIrri);
+CloseManagementFile(fCuts);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+END; // FinalizeRun2
+
+
+PROCEDURE RunSimulation(TheProjectFile_ : string;
+                        TheProjectType : repTypeProject);
+VAR NrRun : ShortInt;
+    NrRuns : integer;
+
+BEGIN
+InitializeSimulation(TheProjectFile_, TheProjectType);
+
 CASE TheProjectType OF
-     TypePRO : BEGIN
-               LoadSimulationRunProject(GetProjectFileFull(),(1));
-               AdjustCompartments;
-               SumWaBal_temp := GetSumWaBal();
-               GlobalZero(SumWabal_temp);
-               SetSumWaBal(SumWaBal_temp);
-               ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
-               InitializeSimulationRun;
-               IF OutDaily THEN WriteTitleDailyResults(TheProjectType,(1),fDaily);
-               IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,(1),fHarvest);
-               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData((1),fObs,fEval);
-               FileManagement((1),TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
-               CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
-               CloseIrrigationFile(fIrri);
-               CloseManagementFile(fCuts);
-               IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation((1),fEval);
-               END;
-     TypePRM : BEGIN
-               FOR NrRun := 1 TO GetSimulation_NrRuns() DO
-                   BEGIN
-                   LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
-                   AdjustCompartments;
-                   SumWaBal_temp := GetSumWaBal();
-                   GlobalZero(SumWabal_temp);
-                   SetSumWaBal(SumWaBal_temp);
-                   ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
-                   InitializeSimulationRun;
-                   IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
-                   IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
-                   FileManagement(NrRun,TheProjectFile,TheProjectType,fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts);
-                   CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
-                   CloseIrrigationFile(fIrri);
-                   CloseManagementFile(fCuts);
-                   IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
-                   END;
-               END;
-     else;
-     end;
-     
-Close(fRun); // Close Run.out
-IF OutDaily THEN Close(fDaily);  // Close Daily.OUT
-IF Part1Mult THEN Close(fHarvest);  // Close Multiple harvests in season
-END; (* RunSimulation *)
+    TypePRO : NrRuns := 1;
+    TypePRM : NrRuns := GetSimulation_NrRuns();
+    else;
+END;
 
+FOR NrRun := 1 TO NrRuns DO
+BEGIN
+   InitializeRun(NrRun, TheProjectType);
+   FileManagement();
+   FinalizeRun1(NrRun, TheProjectFile, TheProjectType);
+   FinalizeRun2(NrRun, TheProjectType);
+END;
 
-
+FinalizeSimulation();
+END; // RunSimulation
 
 
 end.
