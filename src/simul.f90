@@ -16,7 +16,6 @@ use ac_global, only: ActiveCells, &
                      datatype_daily, &
                      datatype_decadely, &
                      datatype_monthly, &
-                     DaySubmerged, &
                      DetermineCNIandIII, &
                      DetermineRootZoneSaltContent, &
                      DetermineRootzoneWC, &
@@ -100,6 +99,7 @@ use ac_global, only: ActiveCells, &
                      GetCrop_Tupper, &   
                      GetCrop_WP, &
                      GetCrop_WPy, &
+                     GetDaySubmerged, &
                      GetDrain, &
                      GetEact, &
                      GetECdrain, &
@@ -243,6 +243,7 @@ use ac_global, only: ActiveCells, &
                      SetCompartment_DayAnaero, &
                      SetCrop_DaysTOFullCanopySF, &
                      SetCrop_GDDaysToFullCanopySF, &
+                     SetDaySubmerged, &
                      SetDrain, &
                      SetEact, &
                      SetECdrain, &
@@ -301,7 +302,6 @@ use ac_global, only: ActiveCells, &
                      SetTact, & 
                      subkind_Grain, &
                      subkind_Tuber, &
-                     SurfaceStorage, &
                      TimeToMaxCanopySF, &
                      undef_int
 
@@ -534,13 +534,13 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
             pStomatLLAct = 1._dp
             if (GetSimulation_SWCtopSoilConsidered() .eqv. .true.) then
                 ! top soil is relative wetter than total root zone
-                if (GetRootZoneWC_ZtopAct() < (0.999_dp * GetRootZoneWC_ZtopThresh())) then
+                if (GetRootZoneWC_ZtopAct() < &
+                                  (0.999_dp * GetRootZoneWC_ZtopThresh())) then
                     Wrel = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct())/ &
                            (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
                     crop_pActStom_tmp = GetCrop_pActStom()
                     RedFact = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp) &
-                              * KsAny(Wrel, crop_pActStom_tmp, pStomatLLAct, (0.0_dp)) ! where (0.0) is linear
-                    call SetCrop_pActStom(crop_pActStom_tmp)
+                              * KsAny(Wrel, crop_pActStom_tmp, pStomatLLAct, 0.0_dp) ! where (0.0) is linear
                 else
                     RedFact = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp)
                 end if
@@ -551,7 +551,7 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                             (GetRootZoneWC_FC()-GetRootZoneWC_WP())
                     crop_pActStom_tmp = GetCrop_pActStom()
                     RedFact = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp) &
-                              * KsAny(Wrel, crop_pActStom_tmp, pStomatLLAct, (0.0_dp)) ! where (0.0) is linear
+                              * KsAny(Wrel, crop_pActStom_tmp, pStomatLLAct, 0.0_dp) ! where (0.0) is linear
                     call SetCrop_pActStom(crop_pActStom_tmp)
                 else
                     RedFact = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp)
@@ -608,12 +608,13 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
             else
                 ! effect of water stress and ECe
                 if (GetCompartment_theta(compi) >= theta_critical) then
-                    alfa = (1 - GetSimulation_EffectStress_RedKsSto()/100._dp)
+                    alfa = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp)
                 elseif (GetCompartment_theta(compi) > (GetSoilLayer_WP(layeri)/100._dp)) then
                     if (theta_critical > (GetSoilLayer_WP(layeri)/100._dp)) then
-                        Wrel = (GetSoilLayer_FC(layeri)/100._dp - &
-                        GetCompartment_theta(compi))/ &
-                        (GetSoilLayer_FC(layeri)/100._dp - GetSoilLayer_WP(layeri)/100._dp)
+                        Wrel = (GetSoilLayer_FC(layeri)/100._dp &
+                        - GetCompartment_theta(compi)) &
+                            /(GetSoilLayer_FC(layeri)/100._dp &
+                                - GetSoilLayer_WP(layeri)/100._dp)
                         pStomatLLAct = 1._dp
                         crop_pActStom_tmp = GetCrop_pActStom()
                         alfa = (1._dp - GetSimulation_EffectStress_RedKsSto()/100._dp) &
@@ -628,11 +629,13 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                 end if
                 ! extra effect of ECsw
                 if (GetSimulation_SalinityConsidered()) then
-                    WrelSalt = (GetSoilLayer_FC(layeri)/100._dp - GetCompartment_theta(compi)) &
-                    /(GetSoilLayer_FC(layeri)/100._dp - GetSoilLayer_WP(layeri)/100._dp)
+                    WrelSalt = (GetSoilLayer_FC(layeri)/100._dp &
+                                - GetCompartment_theta(compi)) &
+                                    /(GetSoilLayer_FC(layeri)/100._dp &
+                                        - GetSoilLayer_WP(layeri)/100._dp)
                     CompiECe = ECeComp(GetCompartment_i(compi))
-                    CompiECsw = ECswComp(GetCompartment_i(compi), (.false.))
-                    CompiECswFC = ECswComp(GetCompartment_i(compi), (.true.))
+                    CompiECsw = ECswComp(GetCompartment_i(compi), .false.)
+                    CompiECswFC = ECswComp(GetCompartment_i(compi), .true.)
                     RedFactECsw = AdjustedKsStoToECsw(GetCrop_ECemin(), &
                                   GetCrop_ECemax(), GetCrop_ResponseECsw(), &
                                   CompiECe, CompiECsw, CompiECswFC, WrelSalt, &
@@ -659,7 +662,8 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                  (1._dp - GetSoilLayer_GravelVol(layeri)/100._dp)))
             WtoExtract = WtoExtract - sinkMM
             call SetTact(GetTact() + sinkMM)
-            if ((WtoExtract <= epsilon(1._dp) .or. (compi == GetNrCompartments()))) exit loop
+            if ((WtoExtract < epsilon(1._dp) .or. &
+                                    (compi == GetNrCompartments()))) exit loop
         end do loop
 
         
@@ -701,11 +705,12 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         integer(int32), intent(in) :: layeri
         real(dp), intent(inout) :: theta_critical
 
-
         real(dp) :: theta_TAW
 
-        theta_TAW = GetSoilLayer_FC(layeri)/100._dp - GetSoilLayer_WP(layeri)/100._dp
-        theta_critical = GetSoilLayer_FC(layeri)/100._dp - theta_TAW * GetCrop_pActStom()
+        theta_TAW = GetSoilLayer_FC(layeri)/100._dp &
+                                             - GetSoilLayer_WP(layeri)/100._dp
+        theta_critical = GetSoilLayer_FC(layeri)/100._dp - theta_TAW &
+                                                           * GetCrop_pActStom()
     end subroutine calculate_theta_critical
 
 
@@ -713,8 +718,6 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         real(dp), intent(in) :: RootingDepth
         type(CompartmentIndividual), dimension(max_No_compartments), &
                                     intent(inout) :: Compartment
-
-
 
         real(dp) ::  frac_value, cumdepth
         integer(int32) :: compi, i
@@ -734,7 +737,8 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                     Compartment(compi)%WFactor = 0._dp
                 end if
             end if
-            if ((cumdepth >= RootingDepth) .or. (compi == GetNrCompartments())) exit loop
+            if ((cumdepth >= RootingDepth) .or. &
+                                      (compi == GetNrCompartments())) exit loop
         end do loop
         do i = compi+1, GetNrCompartments()
             Compartment(i)%WFactor = 0._dp
@@ -767,9 +771,10 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                 StopComp = SbotComp
                 cumdepth = cumdepth + Compartment(compi)%Thickness
                 if (cumdepth <= RootingDepth) then
-                    SbotComp = GetCrop_SmaxBot() * GetSimulation_SCor() + &
-                             (GetCrop_SmaxTop()- GetCrop_SmaxBot()*GetSimulation_SCor()) &
-                                                * (RootingDepth - cumdepth)/RootingDepth
+                    SbotComp = GetCrop_SmaxBot() * GetSimulation_SCor() &
+                               + (GetCrop_SmaxTop()- GetCrop_SmaxBot() &
+                                    *GetSimulation_SCor()) &
+                                       * (RootingDepth - cumdepth)/RootingDepth
                 else
                     SbotComp = GetCrop_SmaxBot()*GetSimulation_SCor()
                 end if
@@ -777,7 +782,8 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                 if (Compartment(compi)%Smax > 0.06_dp) then
                     Compartment(compi)%Smax = 0.06_dp
                 end if
-                if ((cumdepth >= RootingDepth) .or. (compi == GetNrCompartments())) exit loop
+                if ((cumdepth >= RootingDepth) .or. &
+                                      (compi == GetNrCompartments())) exit loop
             end do loop
             do i = (compi + 1), GetNrCompartments()
                 Compartment(i)%Smax = 0._dp
@@ -790,12 +796,13 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         type(CompartmentIndividual), intent(inout) :: Comp
         real(dp), intent(inout) :: alfa
 
-
         real(dp) :: alfaAN
         integer(int32) :: ini
-        if ((DaySubmerged >= GetSimulParam_DelayLowOxygen()) .and. (GetCrop_AnaeroPoint() > 0._dp)) then
+        if ((GetDaySubmerged() >= GetSimulParam_DelayLowOxygen()) .and. &
+                                         (GetCrop_AnaeroPoint() > 0._dp)) then
             alfaAN = 0._dp
-        elseif (Comp%theta > (GetSoilLayer_SAT(Comp%Layer)- GetCrop_AnaeroPoint())/100._dp) then
+        elseif (Comp%theta > (GetSoilLayer_SAT(Comp%Layer) &
+                        - GetCrop_AnaeroPoint())/100._dp) then
             Comp%DayAnaero = Comp%DayAnaero + 1
             if (Comp%DayAnaero >= GetSimulParam_DelayLowOxygen()) then
                 ini = 0
@@ -803,12 +810,14 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
             else
                 ini = 1
             end if
-            alfaAN = (GetSoilLayer_SAT(Comp%Layer)/100._dp - Comp%theta)/(GetCrop_AnaeroPoint()/100._dp)
+            alfaAN = (GetSoilLayer_SAT(Comp%Layer)/100._dp & 
+                          - Comp%theta)/(GetCrop_AnaeroPoint()/100._dp)
             if (alfaAN < 0._dp) then
                 alfaAN = 0._dp
             end if
             if (GetSimulParam_DelayLowOxygen() > 1._dp) then
-                alfaAN = (ini+(Comp%DayAnaero-1._dp)*alfaAN)/(ini+Comp%DayAnaero-1._dp)
+                alfaAN = (ini+(Comp%DayAnaero-1._dp)*alfaAN) &
+                            /(ini+Comp%DayAnaero-1._dp)
             end if
         else
             alfaAN = 1._dp
@@ -827,7 +836,6 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         real(dp), intent(in) :: Zr
         real(dp), intent(inout) :: RedFact
 
-
         real(dp) :: SATVol, ACTVol
         RedFact = 1
         if ((AnaeVol > 0._dp) .and. (Zr > 0._dp)) then
@@ -841,7 +849,9 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                 if (GetSimulation_DayAnaero() > GetSimulParam_DelayLowOxygen()) then
                     call SetSimulation_DayAnaero(int(GetSimulParam_DelayLowOxygen(), kind=int8))
                 end if
-                RedFact = 1._dp - (1._dp-((SATVol - ACTVol)/AnaeVol))* (GetSimulation_DayAnaero()/GetSimulParam_DelayLowOxygen())
+                RedFact = 1._dp - (1._dp-((SATVol - ACTVol)/AnaeVol)) &
+                                * (GetSimulation_DayAnaero()*1._dp &
+                                    /GetSimulParam_DelayLowOxygen())
             else
                 call SetSimulation_DayAnaero(0_int8)
             end if
@@ -863,7 +873,7 @@ subroutine surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     real(dp) :: KsReduction, SaltSurface
     real(dp) :: Tact_temp
 
-    DaySubmerged = DaySubmerged + 1
+    call SetDaySubmerged(GetDaySubmerged() + 1)
     do compi = 1, GetNrCompartments()
         call SetCompartment_DayAnaero(compi, GetCompartment_DayAnaero(compi) + 1)
         if (GetCompartment_DayAnaero(compi) > GetSimulParam_DelayLowOxygen()) then
@@ -871,24 +881,26 @@ subroutine surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         end if
     end do
     if (GetCrop_AnaeroPoint() > 0._dp) then
-        Part = (1-DaySubmerged/GetSimulParam_DelayLowOxygen())
+        Part = (1._dp-GetDaySubmerged()/real(GetSimulParam_DelayLowOxygen(), kind=dp))
     else
         Part = 1
     end if
     KsReduction = KsSalinity(GetSimulation_SalinityConsidered(), GetCrop_ECemin(), &
-                  GetCrop_ECemax(), GetECstorage(), (0.0_dp))
-    SaltSurface = SurfaceStorage*GetECstorage()*Equiv
-    if (SurfaceStorage > KsReduction*Part*GetTpot()) then
-        SurfaceStorage = SurfaceStorage - KsReduction*Part*GetTpot()
+                  GetCrop_ECemax(), GetECstorage(), 0.0_dp)
+    SaltSurface = GetSurfaceStorage()*GetECstorage()*Equiv
+    if (GetSurfaceStorage() > KsReduction*Part*GetTpot()) then
+        call SetSurfaceStorage(GetSurfaceStorage() - KsReduction*Part*GetTpot())
         call SetTact(KsReduction*Part*GetTpot())
-        call SetECstorage(SaltSurface/(SurfaceStorage*Equiv)) ! salinisation of surface storage layer
+        ! salinisation of surface storage layer
+        call SetECstorage(SaltSurface/(GetSurfaceStorage()*Equiv)) 
     else
-        call SetTact(SurfaceStorage -0.1_dp)
-        SurfaceStorage = 0.1_dp ! zero give error in already updated salt balance
+        call SetTact(GetSurfaceStorage() -0.1_dp)
+        call SetSurfaceStorage(0.1_dp) ! zero give error in already updated salt balance
     end if
     if (GetTact() < KsReduction*Part*GetTpot()) then
         Tact_temp = GetTact()   !(*Protect Tact from changes in the next routine*)
-        call calculate_transpiration((KsReduction*Part*GetTpot()-GetTact()),Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+        call calculate_transpiration((KsReduction*Part*GetTpot()-GetTact()), & 
+                                         Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
         call SetTact(Tact_temp + GetTact())
     end if
 end subroutine surface_transpiration
