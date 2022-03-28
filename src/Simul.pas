@@ -860,53 +860,6 @@ IF (GetTact() < KsReduction*Part*GetTpot()) THEN
 END; (* surface_transpiration *)
 
 
-PROCEDURE FeedbackCC;
-BEGIN
-IF (((GetCCiActual() - GetCCiPrev()) > 0.005)  // canopy is still developing
-    AND (GetTact() = 0))                  // due to aeration stress or ETo = 0
-THEN SetCCiActual(GetCCiPrev());           // no transpiration, no crop developmentc
-END; (* FeedbackCC *)
-
-
-
-PROCEDURE HorizontalInflowGWTable(DepthGWTmeter : double);
-Var Ztot, Zi, DeltaTheta, SaltAct,SaltAdj : double;
-    compi,celli : INTEGER;
-    Compi_temp : CompartmentIndividual;
-BEGIN
-Ztot := 0;
-FOR compi := 1 TO GetNrCompartments() DO
-    BEGIN
-    Ztot := Ztot + GetCompartment_Thickness(compi);
-    Zi := Ztot - GetCompartment_Thickness(compi)/2;
-    IF (Zi >= DepthGWTmeter) THEN
-       BEGIN
-       // soil water content is at saturation
-       IF (GetCompartment_Theta(compi) < GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100) THEN
-          BEGIN
-          DeltaTheta := GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100 - GetCompartment_Theta(compi);
-          SetCompartment_theta(compi, GetSoilLayer_i(GetCompartment_Layer(compi)).SAT/100);
-          HorizontalWaterFlow := HorizontalWaterFlow + 1000 * DeltaTheta * GetCompartment_Thickness(compi)
-                                 * (1 - GetSoilLayer_i(GetCompartment_Layer(compi)).GravelVol/100);
-          END;
-       // ECe is equal to the EC of the groundwater table
-       IF (Abs(ECeComp(GetCompartment_i(compi)) - GetECiAqua()) > 0.0001) THEN
-          BEGIN
-          SaltAct := 0;
-          FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
-              SaltAct := SaltAct + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
-          Compi_temp := GetCompartment_i(compi);
-          DetermineSaltContent(GetECiAqua(),Compi_temp);
-          SetCompartment_i(compi, Compi_temp);
-          SaltAdj := 0;
-          FOR celli := 1 TO GetSoilLayer_i(GetCompartment_Layer(compi)).SCP1 DO
-              SaltAdj := SaltAdj + (GetCompartment_Salt(compi, celli) + GetCompartment_Depo(compi, celli))/100; // Mg/ha
-          HorizontalSaltFlow := HorizontalSaltFlow + (SaltAdj - SaltAct);
-          END;
-       END;
-    END;
-END; (* HorizontalInflowGWTable *)
-
 
 
 
@@ -1044,7 +997,7 @@ IF (GetSurfaceStorage() <= 0) THEN SetDaySubmerged(0);
 FeedbackCC;
 
 // 14. Adjustment to groundwater table
-IF WaterTableInProfile THEN HorizontalInflowGWTable(GetZiAqua()/100);
+IF WaterTableInProfile THEN HorizontalInflowGWTable(GetZiAqua()/100, HorizontalSaltFlow, HorizontalWaterFlow);
 
 // 15. Salt concentration
 ConcentrateSalts;

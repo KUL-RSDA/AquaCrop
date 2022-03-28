@@ -185,6 +185,14 @@ procedure DetermineCCi(
                 var TESTVAL : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_determinecci_wrap';
 
+procedure FeedbackCC;
+    external 'aquacrop' name '__ac_simul_MOD_feedbackcc';
+
+procedure HorizontalInflowGWTable(constref DepthGWTmeter : double;
+                                  constref HorizontalSaltFlow : double;
+                                  constref HorizontalWaterFlow : double);
+    external 'aquacrop' name '__ac_simul_MOD_horizontalinflowgwtable';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

@@ -20,6 +20,8 @@ use ac_global, only: CalculateETpot, &
                      DetermineCNIandIII, &
                      DetermineRootZoneSaltContent, &
                      DetermineRootzoneWC, &
+                     DetermineSaltContent, &
+                     ECeComp, &
                      ECswComp, &
                      EffectiveRainMethod_Percentage, &
                      EffectiveRainMethod_USDA, &
@@ -4411,8 +4413,78 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
         CDCadjusted = CDC * (CCxAdjusted+2.29_dp)/(CCx+2.29_dp)
     end subroutine GetNewCCxandCDC
 
-
 end subroutine DetermineCCi
+
+
+
+subroutine FeedbackCC()
+
+    if (((GetCCiActual() - GetCCiPrev()) > 0.005_dp) &
+        ! canopy is still developing
+        .and. (GetTact() < epsilon(0._dp))) then 
+        ! due to aeration stress or ETo = 0
+        call SetCCiActual(GetCCiPrev())           
+        ! no transpiration, no crop developmentc
+    end if
+end subroutine FeedbackCC 
+
+
+
+subroutine HorizontalInflowGWTable(DepthGWTmeter, HorizontalSaltFlow, &
+                                   HorizontalWaterFlow)
+    real(dp), intent(in) :: DepthGWTmeter
+    real(dp), intent(inout) :: HorizontalSaltFlow
+    real(dp), intent(inout) :: HorizontalWaterFlow
+
+    real(dp) :: Ztot, Zi, DeltaTheta, SaltAct, SaltAdj
+    integer(int32) :: compi, celli
+    type(CompartmentIndividual) :: Compi_temp
+
+    Ztot = 0._dp
+    do compi = 1, GetNrCompartments() 
+        Ztot = Ztot + GetCompartment_Thickness(compi)
+        Zi = Ztot - GetCompartment_Thickness(compi)/2._dp
+        if (Zi >= DepthGWTmeter) then
+            ! soil water content is at saturation
+            if (GetCompartment_Theta(compi) &
+                < GetSoilLayer_SAT(GetCompartment_Layer(compi))/100._dp) then
+                DeltaTheta = GetSoilLayer_SAT(GetCompartment_Layer(compi))/100._dp &
+                            - GetCompartment_Theta(compi)
+                call SetCompartment_theta(&
+                        compi, &
+                        GetSoilLayer_SAT(GetCompartment_Layer(compi))/100._dp)
+                HorizontalWaterFlow = HorizontalWaterFlow &
+                                      + 1000._dp * DeltaTheta &
+                                            * GetCompartment_Thickness(compi) & 
+                                            * (1._dp &
+                      - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp)
+            end if
+            ! ECe is equal to the EC of the groundwater table
+            if (abs(ECeComp(GetCompartment_i(compi)) - GetECiAqua()) &
+                        > 0.0001_dp) then
+                SaltAct = 0._dp
+                do celli = 1, GetSoilLayer_SCP1(GetCompartment_Layer(compi))
+                    SaltAct = SaltAct &
+                              + (GetCompartment_Salt(compi, celli) &
+                                    + GetCompartment_Depo(compi, celli))&
+                                /100._dp ! Mg/ha
+                end do
+                Compi_temp = GetCompartment_i(compi)
+                call DetermineSaltContent(GetECiAqua(), Compi_temp)
+                call SetCompartment_i(compi, Compi_temp)
+                SaltAdj = 0._dp
+                do celli = 1, GetSoilLayer_SCP1(GetCompartment_Layer(compi))
+                    SaltAdj = SaltAdj &
+                              + (GetCompartment_Salt(compi, celli) &
+                                    + GetCompartment_Depo(compi, celli))&
+                                 /100._dp ! Mg/ha
+                end do
+                HorizontalSaltFlow = HorizontalSaltFlow + (SaltAdj - SaltAct)
+            end if
+        end if
+    end do
+end subroutine HorizontalInflowGWTable 
 
 
 !-----------------------------------------------------------------------------
