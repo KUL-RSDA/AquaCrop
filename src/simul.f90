@@ -883,7 +883,7 @@ subroutine surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     if (GetCrop_AnaeroPoint() > 0._dp) then
         Part = (1._dp-GetDaySubmerged()/real(GetSimulParam_DelayLowOxygen(), kind=dp))
     else
-        Part = 1
+        Part = 1._dp
     end if
     KsReduction = KsSalinity(GetSimulation_SalinityConsidered(), GetCrop_ECemin(), &
                   GetCrop_ECemax(), GetECstorage(), 0.0_dp)
