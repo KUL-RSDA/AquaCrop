@@ -3417,16 +3417,13 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
     real(dp), intent(in) :: GDDCDCTotal
     real(dp), intent(inout) :: TESTVAL
 
-
     real(dp), parameter :: CCdormant = 0.05_dp
-
     real(dp) :: pLeafLLAct , CGCadjusted, CDCadjusted, &
                 CCiSen, tTemp, CCxSF, CGCSF, CCxSFCD, KsRED, CCibis
     integer(int32) :: tFinalCCx
     logical :: WithBeta
     logical :: TheSenescenceON
     real(dp) :: KsSen
-    
     !! test Version 6.2
     real(dp) :: Crop_pLeafAct_temp
     real(dp) :: Crop_pSenAct_temp
@@ -4029,7 +4026,7 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
             ! increase CGC during mobilization
             if ((GetCrop_subkind() == subkind_Forage) .and. (MobilizationON) &
                 .and. (.not. CGCadjustmentAfterCutting)) then
-                if ((CCxSFCD <= epsilon(0._dp)) &
+                if ((CCxSFCD < epsilon(0._dp)) &
                     .or. (GetCCiPrev() >= 0.9_dp * CCxSFCD)) then
                     MaxVal = 0._dp
                 else
