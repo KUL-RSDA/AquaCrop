@@ -1019,9 +1019,10 @@ real(dp) :: Rain  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
+real(dp) :: Tact ! mm/day
 real(dp) :: Tpot ! mm/day
 real(dp) :: CCiActual
-real(dp) :: Tact, TactWeedInfested !mm/day
+real(dp) :: TactWeedInfested !mm/day
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay

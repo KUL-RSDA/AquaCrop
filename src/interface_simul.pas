@@ -36,6 +36,21 @@ procedure AdjustpSenescenceToETo(
            VAR pSenAct : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_adjustpsenescencetoeto_wrap';
 
+procedure CheckGermination();
+    external 'aquacrop' name '__ac_simul_MOD_checkgermination'; 
+
+procedure calculate_transpiration(
+            constref Tpot : double;
+            constref Coeffb0Salt : double;
+            constref Coeffb1Salt : double; 
+            constref Coeffb2Salt : double);
+    external 'aquacrop' name '__ac_simul_MOD_calculate_transpiration';
+
+procedure surface_transpiration(
+            constref Coeffb0Salt : double;
+            constref Coeffb1Salt: double; 
+            constref Coeffb2Salt: double);
+    external 'aquacrop' name '__ac_simul_MOD_surface_transpiration';
 
 
 //-----------------------------------------------------------------------------
@@ -62,9 +77,6 @@ procedure calculate_runoff(constref MaxDepth : double );
 procedure Calculate_irrigation(var SubDrain : double;
                                var TargetTimeVal, TargetDepthVal : integer);
     external 'aquacrop' name '__ac_simul_MOD_calculate_irrigation'; 
-
-procedure CheckGermination();
-    external 'aquacrop' name '__ac_simul_MOD_checkgermination'; 
 
 procedure CalculateEffectiveRainfall(var SubDrain : double);
     external 'aquacrop' name '__ac_simul_MOD_calculateeffectiverainfall';
@@ -192,6 +204,7 @@ procedure HorizontalInflowGWTable(constref DepthGWTmeter : double;
                                   constref HorizontalSaltFlow : double;
                                   constref HorizontalWaterFlow : double);
     external 'aquacrop' name '__ac_simul_MOD_horizontalinflowgwtable';
+
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module
