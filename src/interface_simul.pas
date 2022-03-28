@@ -53,7 +53,6 @@ procedure surface_transpiration(
     external 'aquacrop' name '__ac_simul_MOD_surface_transpiration';
 
 
-
 //-----------------------------------------------------------------------------
 // BUDGET_module
 //-----------------------------------------------------------------------------
@@ -173,6 +172,17 @@ procedure AdjustEpotMulchWettedSurface(
 procedure ConcentrateSalts;
     external 'aquacrop' name '__ac_simul_MOD_concentratesalts';
 
+procedure ExtractWaterFromEvapLayer(constref EvapToLose : double;
+                                    constref Zact : double;
+                                    constref Stg1 : boolean);
+    external 'aquacrop' name '__ac_interface_simul_MOD_extractwaterfromevaplayer_wrap';
+
+procedure CalculateSoilEvaporationStage1;
+    external 'aquacrop' name '__ac_simul_MOD_calculatesoilevaporationstage1';
+
+procedure CalculateSoilEvaporationStage2;
+    external 'aquacrop' name '__ac_simul_MOD_calculatesoilevaporationstage2';
+
 procedure DetermineCCi(
                 constref CCxTotal, CCoTotal : double;
                 var StressLeaf : double;
@@ -186,6 +196,14 @@ procedure DetermineCCi(
                 constref DayFraction, GDDCDCTotal : double;
                 var TESTVAL : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_determinecci_wrap';
+
+procedure FeedbackCC;
+    external 'aquacrop' name '__ac_simul_MOD_feedbackcc';
+
+procedure HorizontalInflowGWTable(constref DepthGWTmeter : double;
+                                  constref HorizontalSaltFlow : double;
+                                  constref HorizontalWaterFlow : double);
+    external 'aquacrop' name '__ac_simul_MOD_horizontalinflowgwtable';
 
 
 //-----------------------------------------------------------------------------
