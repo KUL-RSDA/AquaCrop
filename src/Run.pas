@@ -28,7 +28,7 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 
-var  fRun, fDaily, fHarvest, fEval : text;
+var  fDaily, fHarvest, fEval : text;
      fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts,fObs : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
@@ -74,8 +74,7 @@ var  fRun, fDaily, fHarvest, fEval : text;
 
 
 
-PROCEDURE OpenOutputRun(TheProjectType : repTypeProject;
-                         VAR fRun : text);
+PROCEDURE OpenOutputRun(TheProjectType : repTypeProject);
 VAR totalname : string;
 
 BEGIN
@@ -83,20 +82,19 @@ CASE TheProjectType OF
       TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROseason.OUT');
       TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMseason.OUT');
       end;
-Assign(fRun,totalname);
-Rewrite(fRun);
-WRITELN(fRun,'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-WRITELN(fRun);
-WRITELN(fRun,'    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2',
-             '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx',
-             '    SaltIn   SaltOut    SaltUp  SaltProf',
-             '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr',
-             '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-WRITELN(fRun,'                                           mm       mm  degC.day    ppm',
-             '        mm       mm       mm       mm       mm       mm        %       mm       mm        %',
-             '    ton/ha    ton/ha    ton/ha    ton/ha',
-             '      days       %        %        %        %        %        %  ',
-             '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha');
+fRun_open(totalname, 'w');
+fRun_write('AquaCrop 7.0 (October 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
+fRun_write('');
+fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' +
+           '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' +
+           '    SaltIn   SaltOut    SaltUp  SaltProf' +
+           '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' +
+           '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
+fRun_write('                                           mm       mm  degC.day    ppm' +
+           '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' +
+           '    ton/ha    ton/ha    ton/ha    ton/ha' +
+           '      days       %        %        %        %        %        %  ' +
+           '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha');
 END; (* OpenOutputRun *)
 
 
@@ -1729,8 +1727,7 @@ PROCEDURE WriteTheResults(ANumber : ShortInt;
                          EPer,ExPer,TrPer,TrWPer,TrxPer,
                          SalInPer,SalOutPer,SalCRPer,
                          BiomassPer,BUnlimPer,BmobPer,BstoPer : double;
-                         TheProjectFile : string;
-                         VAR fRun : text);
+                         TheProjectFile : string);
 VAR BrSF,RatioE,RatioT : INTEGER;
     WPy,HI : double;
     TempString : string;
@@ -1745,19 +1742,25 @@ IF NoYear THEN
 IF (ANumber = undef_int) // intermediate results
    THEN BEGIN
         CASE OutputAggregate OF
-             1 : WRITE(fRun,'      Day',Day1:9,Month1:9,Year1:9);
-             2 : WRITE(fRun,'    10Day',Day1:9,Month1:9,Year1:9);
-             3 : WRITE(fRun,'    Month',Day1:9,Month1:9,Year1:9);
+             1 : WriteStr(TempString,'      Day',Day1:9,Month1:9,Year1:9);
+             2 : WriteStr(TempString,'    10Day',Day1:9,Month1:9,Year1:9);
+             3 : WriteStr(TempString,'    Month',Day1:9,Month1:9,Year1:9);
              end;
+        fRun_write(TempString, False);
         END
    ELSE BEGIN
-        Str(ANumber:9,TempString);
-        TempString := CONCAT('Tot(',Trim(TempString),')');
+        WriteStr(TempString, ANumber:9);
+        TempString := CONCAT('Tot(', Trim(TempString), ')');
         WHILE (Length(TempString) < 9) DO TempString := CONCAT(' ',TempString);
-        WRITE(fRun,TempString,Day1:9,Month1:9,Year1:9);
+        fRun_write(TempString, False);
+        WriteStr(TempString, Day1:9,Month1:9,Year1:9);
+        fRun_write(TempString, False);
         END;
+
 // Climatic conditions
-WRITE(fRun,Rper:9:1,EToPer:9:1,GDDPer:9:1,CO2i:9:2);
+WriteStr(TempString, Rper:9:1,EToPer:9:1,GDDPer:9:1,CO2i:9:2);
+fRun_write(TempString, False);
+
 // Soil water parameters
 IF (ExPer > 0)
    THEN RatioE := ROUND(100*EPer/ExPer)
@@ -1765,13 +1768,18 @@ IF (ExPer > 0)
 IF (TrxPer > 0)
    THEN RatioT := ROUND(100*TrPer/TrxPer)
    ELSE RatioT := undef_int;
-WRITE(fRun,IrriPer:9:1,InfiltPer:9:1,ROPer:9:1,DrainPer:9:1,CRwPer:9:1,
-           EPer:9:1,RatioE:9,TrPer:9:1,TrWPer:9:1,RatioT:9);
+
+WriteStr(TempString, IrriPer:9:1,InfiltPer:9:1,ROPer:9:1,DrainPer:9:1,CRwPer:9:1,
+         EPer:9:1,RatioE:9,TrPer:9:1,TrWPer:9:1,RatioT:9);
+fRun_write(TempString, False);
 // Soil Salinity
-WRITE(fRun,SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,GetTotalSaltContent().EndDay:10:3);
+WriteStr(TempString, SalInPer:10:3,SalOutPer:10:3,SalCRPer:10:3,GetTotalSaltContent().EndDay:10:3);
+fRun_write(TempString, False);
 // seasonal stress
-WRITE(fRun,GetStressTot_NrD():9,GetStressTot_Salt():9:0,GetManagement_FertilityStress():9,GetStressTot_Weed():9:0,
-        GetStressTot_Temp():9:0,GetStressTot_Exp():9:0,GetStressTot_Sto():9:0);
+WriteStr(TempString, GetStressTot_NrD():9,GetStressTot_Salt():9:0,GetManagement_FertilityStress():9,GetStressTot_Weed():9:0,
+         GetStressTot_Temp():9:0,GetStressTot_Exp():9:0,GetStressTot_Sto():9:0);
+fRun_write(TempString, False);
+
 // Biomass production
 IF ((BiomassPer > 0) AND (BUnlimPer > 0))
    THEN BEGIN
@@ -1779,7 +1787,10 @@ IF ((BiomassPer > 0) AND (BUnlimPer > 0))
         IF (BrSF > 100) THEN BrSF := 100;
         END
    ELSE BrSF := undef_int;
-WRITE(fRun,BiomassPer:10:3,BrSF:9);
+
+WriteStr(TempString, BiomassPer:10:3, BrSF:9);
+fRun_write(TempString, False);
+
 // Crop yield
 IF (ANumber <> undef_int) // end of simulation run
    THEN BEGIN
@@ -1793,16 +1804,23 @@ IF (ANumber <> undef_int) // end of simulation run
            ELSE HI := undef_double;
         // Fresh yield
         IF ((GetCrop().DryMatter = undef_int) OR (GetCrop().DryMatter = 0))
-           THEN WRITE(fRun,HI:9:1,GetSumWaBal_YieldPart():9:3,undef_double:9:3,WPy:9:2)
-           ELSE WRITE(fRun,HI:9:1,GetSumWaBal_YieldPart():9:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):9:3,WPy:9:2);
+           THEN WriteStr(TempString, HI:9:1,GetSumWaBal_YieldPart():9:3,undef_double:9:3,WPy:9:2)
+           ELSE WriteStr(TempString, HI:9:1,GetSumWaBal_YieldPart():9:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):9:3,WPy:9:2);
+        fRun_write(TempString, False);
         // Transfer of assimilates
-        WRITE(fRun,GetTransfer_Bmobilized():9:3,GetSimulation_Storage_Btotal():9:3);
+        WriteStr(TempString, GetTransfer_Bmobilized():9:3,GetSimulation_Storage_Btotal():9:3);
+        fRun_write(TempString, False);
         END
-   ELSE WRITE(fRun,undef_int:9,undef_int:9,undef_int:9,undef_int:9,BmobPer:9:3,BstoPer:9:3);
+   ELSE BEGIN
+        WriteStr(TempString, undef_int:9,undef_int:9,undef_int:9,undef_int:9,BmobPer:9:3,BstoPer:9:3);
+        fRun_write(TempString, False);
+        END;
 // End
-WRITE(fRun,DayN:9,MonthN:9,YearN:9);
+WriteStr(TempString, DayN:9,MonthN:9,YearN:9);
+fRun_write(TempString, False);
+
 // Project
-WRITELN(fRun,'  ',TheProjectFile);
+fRun_write('  ' + TheProjectFile, True);
 END; (* WriteTheResults *)
 
 
@@ -1845,7 +1863,7 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
                 EPer,ExPer,TrPer,TrWPer,TrxPer,
                 SalInPer,SalOutPer,SalCRPer,
                 BiomassPer,BUnlimPer,BmobPer,BstoPer,
-                TheProjectFile,fRun);
+                TheProjectFile);
 
 // reset previous sums
 PreviousDayNr := DayNri;
@@ -1887,7 +1905,7 @@ WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
                GetSumWaBal_Eact(),GetSumWaBal_Epot(),GetSumWaBal_Tact(),GetSumWaBal_TrW(),GetSumWaBal_Tpot(),
                GetSumWaBal_SaltIn(),GetSumWaBal_SaltOut(),GetSumWaBal_CRsalt(),
                GetSumWaBal_Biomass(),GetSumWaBal_BiomassUnlim(),GetTransfer_Bmobilized(),GetSimulation_Storage_Btotal(),
-               TheProjectFile,fRun);
+               TheProjectFile);
 END; (* WriteSimPeriod *)
 
 
@@ -1912,7 +1930,7 @@ CASE OutputAggregate OF
                        GetEact(),GetEpot(),GetTact(),GetTactWeedInfested(),GetTpot(),
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,Bin,Bout,
-                       TheProjectFile,fRun);
+                       TheProjectFile);
         PreviousSum.Biomass := GetSumWaBal_Biomass();
         PreviousSum.BiomassUnlim := GetSumWaBal_BiomassUnlim();
         PreviousSum.SaltIn := GetSumWaBal_SaltIn();
@@ -2930,7 +2948,7 @@ PROCEDURE InitializeSimulation(TheProjectFile_ : string;
                                TheProjectType : repTypeProject);
 BEGIN
 TheProjectFile := TheProjectFile_;
-OpenOutputRun(TheProjectType,fRun); // open seasonal results .out
+OpenOutputRun(TheProjectType); // open seasonal results .out
 IF OutDaily THEN OpenOutputDaily(TheProjectType,fDaily);  // Open Daily results .OUT
 IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
 END;  // InitializeSimulation
@@ -2938,7 +2956,7 @@ END;  // InitializeSimulation
 
 PROCEDURE FinalizeSimulation();
 BEGIN
-Close(fRun); // Close Run.out
+fRun_close(); // Close Run.out
 IF OutDaily THEN Close(fDaily);  // Close Daily.OUT
 IF Part1Mult THEN Close(fHarvest);  // Close Multiple harvests in season
 END;  // FinalizeSimulation

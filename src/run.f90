@@ -100,6 +100,7 @@ type rep_Transfer
         !! Cumulative sum of assimilates (ton/ha) mobilized form root system
 end type rep_Transfer 
 
+integer :: fRun  ! file handle
 type(rep_GwTable) :: GwTable
 type(rep_plotPar) :: PlotVarCrop
 type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
@@ -110,8 +111,93 @@ type(rep_Transfer) :: Transfer
 contains
 
 
+subroutine open_file(fhandle, filename, mode)
+    !! Opens a file in the given mode.
+    integer, intent(out) :: fhandle
+        !! file handle to be used for the open file
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    logical :: file_exists
+
+    inquire(file=filename, exist=file_exists)
+
+    if (mode == 'r') then
+        open(newunit=fhandle, file=trim(filename), status='old', action='read')
+    elseif (mode == 'a') then
+        if (file_exists) then
+            open(newunit=fhandle, file=trim(filename), status='old', &
+                 position='append', action='write')
+        else
+            open(newunit=fhandle, file=trim(filename), status='replace', &
+                 action='write')
+        end if
+    elseif (mode == 'w') then
+        open(newunit=fhandle, file=trim(filename), status='new', action='write')
+    end if
+end subroutine open_file
+
+
+subroutine write_file(fhandle, line, advance)
+    !! Writes one line to a file.
+    integer, intent(in) :: fhandle
+        !! file handle of an already-opened file
+    character(len=*), intent(in) :: line
+        !! line to write to the file
+    logical, intent(in) :: advance
+        !! whether or not to append a newline character
+
+    character(len=:), allocatable :: advance_str
+
+    if (advance) then
+        advance_str = 'yes'
+    else
+        advance_str = 'no'
+    end if
+
+    write(fhandle, '(a)', advance=advance_str) line
+end subroutine write_file
+
 
 !! Section for Getters and Setters for global variables
+
+! fRun
+
+subroutine fRun_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fRun' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fRun, filename, mode)
+end subroutine fRun_open
+
+
+subroutine fRun_write(line, advance_in)
+    !! Writes the given line to the fRun file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fRun, line, advance)
+end subroutine fRun_write
+
+
+subroutine fRun_close()
+    close(fRun)
+end subroutine fRun_close
+
 
 ! GwTable
 
