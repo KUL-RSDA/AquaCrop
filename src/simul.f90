@@ -3456,6 +3456,25 @@ subroutine ExtractWaterFromEvapLayer(EvapToLose, Zact, Stg1)
 end subroutine ExtractWaterFromEvapLayer
 
 
+subroutine CalculateSoilEvaporationStage1()
+
+    real(dp) :: Eremaining
+    logical :: Stg1
+
+    Stg1 = .true.
+    Eremaining = GetEpot() - GetEact()
+    if (GetSimulation_EvapWCsurf() > Eremaining) then
+        call ExtractWaterFromEvapLayer(Eremaining, EvapZmin, Stg1)
+    else
+        call ExtractWaterFromEvapLayer(GetSimulation_EvapWCsurf(), EvapZmin, &
+                                                                       Stg1)
+    end if
+    if (GetSimulation_EvapWCsurf() < 0.0000001_dp) then
+        call PrepareStage2()
+    end if
+end subroutine CalculateSoilEvaporationStage1
+
+
 !-----------------------------------------------------------------------------
 ! end BUDGET_module
 !-----------------------------------------------------------------------------

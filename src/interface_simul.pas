@@ -165,6 +165,9 @@ procedure ExtractWaterFromEvapLayer(constref EvapToLose : double;
                                     constref Stg1 : boolean);
     external 'aquacrop' name '__ac_interface_simul_MOD_extractwaterfromevaplayer_wrap';
 
+procedure CalculateSoilEvaporationStage1;
+    external 'aquacrop' name '__ac_simul_MOD_calculatesoilevaporationstage1';
+
 //-----------------------------------------------------------------------------
 // end BUDGET_module
 //-----------------------------------------------------------------------------

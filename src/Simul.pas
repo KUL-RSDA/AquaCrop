@@ -1038,22 +1038,6 @@ END; (* DetermineCCi *)
 
 
 
-
-
-PROCEDURE CalculateSoilEvaporationStage1;
-VAR Eremaining : double;
-    Stg1 : BOOLEAN;
-BEGIN
-Stg1 := true;
-Eremaining := GetEpot() - GetEact();
-IF (GetSimulation_EvapWCsurf() > Eremaining)
-   THEN ExtractWaterFromEvapLayer(Eremaining,EvapZmin,Stg1)
-   ELSE ExtractWaterFromEvapLayer(GetSimulation_EvapWCsurf(),EvapZmin,Stg1);
-IF (GetSimulation_EvapWCsurf() <0.0000001) THEN PrepareStage2;
-END; (* CalculateSoilEvaporationStage1 *)
-
-
-
 PROCEDURE CalculateSoilEvaporationStage2;
 CONST NrOfStepsInDay = 20;
       FractionWtoExpandZ = 0.4;
