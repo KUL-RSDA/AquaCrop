@@ -3,7 +3,8 @@ use ac_kinds, only: dp, &
                     int32
 use ac_simul, only: AdjustpSenescenceToETo, &
                     DetermineCCi, &
-                    DetermineCCiGDD
+                    DetermineCCiGDD, &
+                    ExtractWaterFromEvapLayer
 
 
 use ac_simul, only: DetermineBiomassAndYield
@@ -168,6 +169,19 @@ subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, &
     NoMoreCrop = NoMoreCrop_f
     CGCAdjustmentAfterCutting = CGCAdjustmentAfterCutting_f
 end subroutine DetermineCCiGDD_wrap
+
+
+subroutine ExtractWaterFromEvapLayer_wrap(EvapToLose, Zact, Stg1)
+    real(dp), intent(in) :: EvapToLose
+    real(dp), intent(in) :: Zact
+    logical(1), intent(in) :: Stg1
+
+    logical :: Stg1_f
+
+    Stg1_f = Stg1
+
+    call ExtractWaterFromEvapLayer(EvapToLose, Zact, Stg1_f)
+end subroutine ExtractWaterFromEvapLayer_wrap
 
 
 subroutine DetermineCCi_wrap(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
