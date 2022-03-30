@@ -5777,7 +5777,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                                          Coeffb2Salt)
         end if
     end if
-    if (GetSurfaceStorage() <= 0) then
+    if (GetSurfaceStorage() < epsilon(0._dp)) then
         call SetDaySubmerged(0)
     end if
     call FeedbackCC()
