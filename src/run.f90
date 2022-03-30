@@ -976,12 +976,12 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
     ! 1.b Soil fertility : FracBiomassPotSF
     if ((GetManagement_FertilityStress() /= 0._dp) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
-        BioLow = 100
+        BioLow = 100_int8
         StrLow = 0._dp
         loop: do
             BioTop = BioLow
             StrTop = StrLow
-            BioLow = BioLow - 1
+            BioLow = BioLow - 1_int8
             StrLow = Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow
             if (((StrLow >= GetManagement_FertilityStress()) &
                          .or. (BioLow <= 0) .or. (StrLow >= 99.99_dp))) exit loop
