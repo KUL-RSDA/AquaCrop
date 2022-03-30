@@ -4746,6 +4746,12 @@ procedure CheckForKeepSWC_wrap(
                     var ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
 
+function GetSurf0() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsurf0';
+
+procedure SetSurf0(constref Surf0_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsurf0';
+
 
 implementation
 

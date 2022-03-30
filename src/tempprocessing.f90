@@ -1002,8 +1002,8 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
     integer(int32), intent(in) :: FirstDayCrop
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
-    real(dp), intent(inout) :: TDayMin
-    real(dp), intent(inout) :: TDayMax
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
 
     integer(int32) :: i
     integer(int32) :: fhandle, rc
@@ -1014,13 +1014,18 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     logical :: AdjustDayNri, file_exists
     character(len=255) :: StringREAD
+    real(dp) :: TDayMin_loc, TDayMax_loc
+
+    TDayMin_loc = TDayMin
+    TDayMax_loc = TDayMax
+
 
     NrCdays = 0
     if (ValGDDays > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax
             DayGDD = DegreesDay(Tbase, Tupper, &
-                       TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                       TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
             if (abs(DayGDD) < epsilon(1._dp)) then
                 NrCDays = -9
             else
@@ -1057,9 +1062,9 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                          read(fhandle, *, iostat=rc)
                     end do
                     read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
-                    call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                    call SplitStringInTwoParams(StringREAD, TDayMin_loc, TDayMax_loc)
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                                 TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
@@ -1078,14 +1083,14 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                             read(fhandle, *, iostat=rc)
                             read(fhandle, '(a)', iostat=rc) StringREAD
                             call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                                     TDayMin_loc, TDayMax_loc)
                         else
                             read(fhandle, '(a)', iostat=rc) StringREAD
                             call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                                     TDayMin_loc, TDayMax_loc)
                         end if
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin, TDayMax,&
+                                     TDayMin_loc, TDayMax_loc,&
                                      GetSimulParam_GDDMethod())
                         NrCDays = NrCDays + 1
                         RemainingGDDays = RemainingGDDays - DayGDD
@@ -1102,10 +1107,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                     do while (TminDataSet(i)%DayNr /= DayNri)
                         i = i+1
                     end do
-                    TDaymin = TminDataSet(i)%Param
-                    TDaymax = TmaxDataSet(i)%Param
+                    TDayMin_loc = TminDataSet(i)%Param
+                    TDayMax_loc = TmaxDataSet(i)%Param
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                               TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                               TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
@@ -1120,10 +1125,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                         do while (TminDataSet(i)%DayNr /= DayNri)
                             i = i+1
                         end do
-                        TDayMin = TminDataSet(i)%Param
-                        TDayMax = TmaxDataSet(i)%Param
+                        TDayMin_loc = TminDataSet(i)%Param
+                        TDayMax_loc = TmaxDataSet(i)%Param
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                             TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                             TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
                         NrCDays = NrCDays + 1
                         RemainingGDDays = RemainingGDDays - DayGDD
                         DayNri = DayNri + 1
@@ -1138,10 +1143,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                     do while (TminDataSet(i)%DayNr /= DayNri)
                         i = i+1
                     end do
-                    TDayMin = TminDataSet(i)%Param
-                    TDayMax = TmaxDataSet(i)%Param
+                    TDayMin_loc = TminDataSet(i)%Param
+                    TDayMax_loc = TmaxDataSet(i)%Param
                     DayGDD = DegreesDay(Tbase, Tupper, &
-                               TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                               TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
@@ -1156,10 +1161,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                         do while (TminDataSet(i)%DayNr /= DayNri)
                             i = i+1
                         end do
-                        TDayMin = TminDataSet(i)%Param
-                        TDayMax = TmaxDataSet(i)%Param
+                        TDayMin_loc = TminDataSet(i)%Param
+                        TDayMax_loc = TmaxDataSet(i)%Param
                         DayGDD = DegreesDay(Tbase, Tupper, &
-                             TDayMin, TDayMax, GetSimulParam_GDDMethod())
+                             TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
                         NrCDays = NrCDays + 1
                         RemainingGDDays = RemainingGDDays - DayGDD
                         DayNri = DayNri + 1
