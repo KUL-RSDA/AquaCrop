@@ -2,6 +2,7 @@ module ac_run
 
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
+                    int8, &
                     int32
 use ac_global, only: CompartmentIndividual, &
                      DetermineDate, &
@@ -10,47 +11,56 @@ use ac_global, only: CompartmentIndividual, &
                      GetCompartment_i, &
                      GetCompartment_Layer, &
                      GetCompartment_Thickness, &
+                     GetCrop_CCEffectEvapLate, &
                      GetCrop_CCo, &
                      GetCrop_CCx, &
-                     GetCrop_CCxAdjusted, &
-                     GetCrop_CCxWithered, &
                      GetCrop_CDC, &
                      GetCrop_CGC, &
                      GetCrop_Day1, &
-                     GetCrop_DayN, &
                      GetCrop_DaysToCCini, &
                      GetCrop_DaysToFlowering, &
                      GetCrop_DaysToFullCanopy, &
-                     GetCrop_DaysToFullCanopySF, &
                      GetCrop_DaysToGermination, &
                      GetCrop_DaysToHarvest, &
                      GetCrop_DaysToSenescence, &
                      GetCrop_DeterminancyLinked, &
                      GetCrop_dHIdt, &
-                     GetCrop_ECemin, &
-                     GetCrop_ECemax, &
+                     GetCrop_GDDaysToCCini, &
                      GetCrop_GDDaysToFlowering, &
                      GetCrop_GDDaysToFullCanopy, &
-                     GetCrop_GDDaysToFullCanopySF, &
                      GetCrop_GDDaysToGermination, &
                      GetCrop_GDDaysToHarvest, &
                      GetCrop_GDDaysToSenescence, &
                      GetCrop_GDDCDC, &
                      GetCrop_GDDCGC, &
+                     GetCrop_GDDaysToFlowering, &
+                     GetCrop_GDDaysToHarvest, &
                      GetCrop_GDDLengthFlowering, &
-                     getcrop_gddaystofullcanopy, &
-                     getcrop_gddaystoflowering, &
-                     getcrop_gddaystoharvest, &
-                     getcrop_gddaystogermination, &
-                     getcrop_gddaystosenescence, &
                      GetCrop_GDtranspLow, &
+                     GetCrop_KcDecline, &
+                     GetCrop_KcTop, &
+                     GetCrop_HI, &
+                     GetCrop_LengthFlowering, &
                      GetCrop_GDtranspLow, &
+                     getcrop_ccsaltdistortion, &
+                     GetCrop_StressResponse, &
+                     GetCrop_StressResponse_Calibrated, &
+                     GetCrop_subkind, &
+                     GetCrop_ModeCycle, &
+                     GetCrop_Tbase, &
+                     GetCrop_Tupper, &
+                     GetCrop_WP, &
+                     GetCrop_WPy, &
                      GetGroundWaterFile, &
                      GetGroundWaterFileFull, &
+                     GetManagement_FertilityStress, &
                      GetNrCompartments, &
                      GetPathNameProg, &
                      GetSimulation_FromDayNr, &
                      GetSimulation_ToDayNr, &
+                     GetSimulParam_Tmax, &
+                     GetSimulParam_Tmin, &
+                     GetSimulation_SalinityConsidered, &
                      GetSoilLayer_SAT, &
                      GetZiAqua, &
                      GetECiAqua, &
@@ -58,7 +68,12 @@ use ac_global, only: CompartmentIndividual, &
                      roundc, &
                      SetCompartment_i, &
                      SetCompartment_Theta, &
-                     SplitStringInThreeParams
+                     SplitStringInThreeParams, &
+                     undef_int
+
+use ac_tempprocessing, only: CCxSaltStressRelationship, &
+                             StressBiomassRelationship
+
 
 implicit none
 
@@ -142,13 +157,40 @@ type(rep_StressTot) :: StressTot
 type(repCutInfoRecord) :: CutInfoRecord1, CutInfoRecord2
 type(rep_Transfer) :: Transfer
 
-
+real(dp) :: CO2i
+real(dp) :: FracBiomassPotSF
 
 contains
 
 
 
 !! Section for Getters and Setters for global variables
+
+real(dp) function GetFracBiomassPotSF()
+    !! Getter for the "FracBiomassPotSF" global variable.
+
+    GetFracBiomassPotSF = FracBiomassPotSF
+end function GetFracBiomassPotSF
+
+subroutine SetFracBiomassPotSF(FracBiomassPotSF_in)
+    !! Setter for the "FracBiomassPotSF" global variable.
+    real(dp), intent(in) :: FracBiomassPotSF_in
+    
+    FracBiomassPotSF = FracBiomassPotSF_in
+end subroutine SetFracBiomassPotSF
+
+real(dp) function GetCO2i()
+    !! Getter for the "CO2i" global variable.
+
+    GetCO2i = CO2i
+end function GetCO2i
+
+subroutine SetCO2i(CO2i_in)
+    !! Setter for the "CO2i" global variable.
+    real(dp), intent(in) :: CO2i_in
+    
+    CO2i = CO2i_in
+end subroutine SetCO2i
 
 ! GwTable
 
@@ -883,7 +925,8 @@ subroutine GetGwtSet(DayNrIN, GwT)
     close(f0)
 end subroutine GetGwtSet
 
-subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, FracBiomassPotSF, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
+                        FracBiomassPotSF, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     real(dp), intent(inout) :: Coeffb0
     real(dp), intent(inout) :: Coeffb1
     real(dp), intent(inout) :: Coeffb2
@@ -900,30 +943,31 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, Fra
     FracBiomassPotSF = 1._dp
     ! 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
     if (GetCrop_StressResponse_Calibrated()) then
-        StressBiomassRelationship(GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), &
-                                   GetCrop_DaysToGermination(), &
-                                   GetCrop_DaysToFullCanopy(), &
-                                   GetCrop_DaysToSenescence(), &
-                                   GetCrop_DaysToHarvest(), &
-                                   GetCrop_DaysToFlowering(), &
-                                   GetCrop_LengthFlowering(), &
-                                   GetCrop_GDDaysToGermination(), &
-                                   GetCrop_GDDaysToFullCanopy(), &
-                                   GetCrop_GDDaysToSenescence(), &
-                                   GetCrop_GDDaysToHarvest(), &
-                                   GetCrop_WPy(), GetCrop_HI(), &
-                                   GetCrop_CCo(), GetCrop_CCx(), &
-                                   GetCrop_CGC(), GetCrop_GDDCGC(), &
-                                   GetCrop_CDC(), GetCrop_GDDCDC(),
-                                   GetCrop_KcTop(), GetCrop_KcDecline(), &
-                                   GetCrop_CCEffectEvapLate(),GetCrop_Tbase(), &
-                                   GetCrop_Tupper(), GetSimulParam_Tmin(), &
-                                   GetSimulParam_Tmax(), GetCrop_GDtranspLow(), &
-                                   GetCrop_WP(), GetCrop_dHIdt(), CO2i, 
-                                   GetCrop_Day1(), GetCrop_DeterminancyLinked(), &
-                                   GetCrop_StressResponse(),GetCrop_subkind(), &
-                                   GetCrop_ModeCycle(), Coeffb0, Coeffb1, &
-                                   Coeffb2, X10, X20, X30, X40, X50, X60, X70)
+        call StressBiomassRelationship(GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), &
+                                  GetCrop_DaysToGermination(), &
+                                  GetCrop_DaysToFullCanopy(), &
+                                  GetCrop_DaysToSenescence(), &
+                                  GetCrop_DaysToHarvest(), &
+                                  GetCrop_DaysToFlowering(), &
+                                  GetCrop_LengthFlowering(), &
+                                  GetCrop_GDDaysToGermination(), &
+                                  GetCrop_GDDaysToFullCanopy(), &
+                                  GetCrop_GDDaysToSenescence(), &
+                                  GetCrop_GDDaysToHarvest(), &
+                                  GetCrop_WPy(), GetCrop_HI(), &
+                                  GetCrop_CCo(), GetCrop_CCx(), &
+                                  GetCrop_CGC(), GetCrop_GDDCGC(), &
+                                  GetCrop_CDC(), GetCrop_GDDCDC(), &
+                                  GetCrop_KcTop(), GetCrop_KcDecline(), &
+                                  real(GetCrop_CCEffectEvapLate(), kind= dp), &
+                                  GetCrop_Tbase(), &
+                                  GetCrop_Tupper(), GetSimulParam_Tmin(), &
+                                  GetSimulParam_Tmax(), GetCrop_GDtranspLow(), &
+                                  GetCrop_WP(), GetCrop_dHIdt(), GetCO2i(), &
+                                  GetCrop_Day1(), GetCrop_DeterminancyLinked(), &
+                                  GetCrop_StressResponse(),GetCrop_subkind(), &
+                                  GetCrop_ModeCycle(), Coeffb0, Coeffb1, &
+                                  Coeffb2, X10, X20, X30, X40, X50, X60, X70)
     else
         Coeffb0 = undef_int
         Coeffb1 = undef_int
@@ -932,15 +976,15 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, Fra
     ! 1.b Soil fertility : FracBiomassPotSF
     if ((GetManagement_FertilityStress() /= 0._dp) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
-        BioLow = 100._dp
+        BioLow = 100
         StrLow = 0._dp
         loop: do
             BioTop = BioLow
             StrTop = StrLow
             BioLow = BioLow - 1
             StrLow = Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow
-        if (((StrLow >= GetManagement_FertilityStress()) .or. (BioLow <= 0) &
-                                            .or. (StrLow >= 99.99))) exit loop
+            if (((StrLow >= GetManagement_FertilityStress()) &
+                         .or. (BioLow <= 0) .or. (StrLow >= 99.99_dp))) exit loop
         end do loop
         if (StrLow >= 99.99_dp) then
             StrLow = 100._dp
@@ -948,14 +992,15 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, Fra
         if (abs(StrLow-StrTop) < 0.001_dp) then
             FracBiomassPotSF = BioTop
         else
-            FracBiomassPotSF = BioTop - (GetManagement_FertilityStress() - StrTop)/(StrLow-StrTop)
+            FracBiomassPotSF = BioTop - (GetManagement_FertilityStress() &
+                                                    - StrTop)/(StrLow-StrTop)
         end if
-        FracBiomassPotSF = FracBiomassPotSF/100._dp
+    FracBiomassPotSF = FracBiomassPotSF/100._dp
     end if
 
     ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if (GetSimulation_SalinityConsidered() .eqv. .true.) then
-        CCxSaltStressRelationship(GetCrop_DaysToCCini(), &
+        call CCxSaltStressRelationship(GetCrop_DaysToCCini(), &
                                   GetCrop_GDDaysToCCini(), &
                                   GetCrop_DaysToGermination(), &
                                   GetCrop_DaysToFullCanopy(), &
@@ -966,19 +1011,19 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, Fra
                                   GetCrop_GDDaysToFlowering(), & 
                                   GetCrop_GDDLengthFlowering(), &
                                   GetCrop_GDDaysToGermination(), &
-                                  GetCrop_GDDaysToFullCanopy,() &
+                                  GetCrop_GDDaysToFullCanopy(), &
                                   GetCrop_GDDaysToSenescence(), &
                                   GetCrop_GDDaysToHarvest(), &
                                   GetCrop_WPy(), GetCrop_HI(), &
                                   GetCrop_CCo(), GetCrop_CCx(), &
                                   GetCrop_CGC(), GetCrop_GDDCGC(), &
                                   GetCrop_CDC(), GetCrop_GDDCDC(), &
-                                  GetCrop_KcTop,() GetCrop_KcDecline(), & 
-                                  GetCrop_CCEffectEvapLate(),  &
+                                  GetCrop_KcTop(), GetCrop_KcDecline(), & 
+                                  real(GetCrop_CCEffectEvapLate(), kind=dp),  &
                                   GetCrop_Tbase(), GetCrop_Tupper(), &
                                   GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
                                   GetCrop_GDtranspLow(), GetCrop_WP(), &
-                                  GetCrop_dHIdt(), CO2i, GetCrop_Day1(), &
+                                  GetCrop_dHIdt(), GetCO2i(), GetCrop_Day1(), &
                                   GetCrop_DeterminancyLinked(), &
                                   GetCrop_subkind(), GetCrop_ModeCycle(), &
                                   GetCrop_CCsaltDistortion(),Coeffb0Salt, &

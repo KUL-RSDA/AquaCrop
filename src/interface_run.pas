@@ -316,6 +316,19 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
+function GetFracBiomassPotSF() : double;
+    external 'aquacrop' name '__ac_run_MOD_getfracbiomasspotsf';
+
+procedure SetFracBiomassPotSF(constref FracBiomassPotSF_in : double);
+    external 'aquacrop' name '__ac_run_MOD_setfracbiomasspotsf';
+
+function GetCO2i() : double;
+    external 'aquacrop' name '__ac_run_MOD_getco2i';
+
+procedure SetCO2i(constref CO2i_in : double);
+    external 'aquacrop' name '__ac_run_MOD_setco2i';
+
+
 procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb0 : double;
                     VAR Coeffb1 : double;
