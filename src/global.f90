@@ -1000,6 +1000,7 @@ integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
                             ! Soil Water Content Menu
 integer(int8) :: MaxPlotTr
 
+
 real(dp) :: CCiActual
 real(dp) :: CCiprev
 real(dp) :: CCiTopEarlySen
@@ -14819,6 +14820,19 @@ subroutine SetCRwater(CRwater_in)
     CRwater = CRwater_in
 end subroutine SetCRwater
 
+real(dp) function GetCCiActual()
+    !! Getter for the "CCiActual" global variable.
+
+    GetCCiActual = CCiActual
+end function GetCCiActual
+
+subroutine SetCCiActual(CCiActual_in)
+    !! Setter for the "CCiActual" global variable.
+    real(dp), intent(in) :: CCiActual_in
+
+    CCiActual = CCiActual_in
+end subroutine SetCCiActual
+
 real(dp) function GetEpot()
     !! Getter for the "Epot" global variable.
 
@@ -14937,19 +14951,6 @@ subroutine SetSaltInfiltr(SaltInfiltr_in)
 
     SaltInfiltr = SaltInfiltr_in
 end subroutine SetSaltInfiltr
-
-real(dp) function GetCCiActual()
-    !! Getter for the "CCiActual" global variable.
-
-    GetCCiActual = CCiActual
-end function GetCCiActual
-
-subroutine SetCCiActual(CCiActual_in)
-    !! Setter for the "CCiActual" global variable.
-    real(dp), intent(in) :: CCiActual_in
-
-    CCiActual = CCiActual_in
-end subroutine SetCCiActual
 
 real(dp) function GetTact()
     !! Getter for the "Tact" global variable.

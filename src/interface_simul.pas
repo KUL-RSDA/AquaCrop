@@ -28,6 +28,65 @@ procedure DeterminePotentialBiomass(
             VAR BiomassUnlim : double);
      external 'aquacrop' name '__ac_simul_MOD_determinepotentialbiomass';
 
+procedure DetermineBiomassAndYield(
+            constref dayi : integer;
+            constref ETo : double;
+            constref TminOnDay : double;
+            constref TmaxOnDay : double;
+            constref CO2i,GDDayi : double;
+            constref Tact : double;
+            constref SumKcTop : double;
+            constref CGCref : double;
+            constref GDDCGCref : double;
+            constref Coeffb0 : double;
+            constref Coeffb1 : double;
+            constref Coeffb2 : double;
+            constref FracBiomassPotSF : double;
+            constref Coeffb0Salt : double;
+            constref Coeffb1Salt : double;
+            constref Coeffb2Salt : double;
+            constref AverageSaltStress : double;
+            constref SumGDDadjCC : double;
+            constref CCtot : double;
+            constref FracAssim : double;
+            constref VirtualTimeCC :  integer;
+            constref SumInterval :  integer;
+            VAR Biomass : double;
+            VAR BiomassPot : double;
+            VAR BiomassUnlim,BiomassTot : double;
+            VAR YieldPart : double;
+            VAR WPi : double;
+            VAR HItimesBEF : double;
+            VAR ScorAT1 : double;
+            VAR ScorAT2 : double;
+            VAR HItimesAT1 : double;
+            VAR HItimesAT2 : double;
+            VAR HItimesAT : double;
+            VAR alfa : double;
+            VAR alfaMax : double;
+            VAR SumKcTopStress : double;
+            VAR SumKci : double;
+            VAR CCxWitheredTpot : double;
+            VAR CCxWitheredTpotNoS : double;
+            VAR WeedRCi : double;
+            VAR CCw : double;
+            VAR Trws : double;
+            VAR StressSFadjNEW : ShortInt;
+            VAR PreviousStressLevel : ShortInt;
+            VAR StoreAssimilates : boolean;
+            VAR MobilizeAssimilates : boolean; 
+            VAR AssimToMobilize : double;
+            VAR AssimMobilized : double;
+            VAR Bin : double;
+            VAR Bout : double;
+            VAR TESTVAL : double);
+     external 'aquacrop' name '__ac_interface_simul_MOD_determinebiomassandyield_wrap';
+
+procedure AdjustpStomatalToETo(
+            constref MeanETo : double;
+            VAR pStomatULAct : double);
+     external 'aquacrop' name '__ac_simul_MOD_adjustpstomataltoeto';
+
 
 procedure AdjustpSenescenceToETo(
            constref EToMean : double;
@@ -214,8 +273,8 @@ procedure BUDGET_module(constref dayi : LongInt;
                                  SumGDDadjCC, Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,
                                  StressTotSaltPrev,DayFraction,GDDayFraction,
                                  FracAssim : double;
-                        StressSFadjNEW : ShortInt;
-                        StorageON,MobilizationON : BOOLEAN;
+                        constref StressSFadjNEW : ShortInt;
+                        constref StorageON,MobilizationON : BOOLEAN;
                         VAR StressLeaf,StressSenescence : double;
                         VAR TimeSenescence : double;
                         VAR NoMoreCrop,CGCadjustmentAfterCutting : BOOLEAN;
