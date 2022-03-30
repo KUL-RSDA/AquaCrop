@@ -18,19 +18,6 @@ PROCEDURE DetermineBiomassAndYield(dayi : LongInt;
                                    VAR AssimToMobilize, AssimMobilized,Bin,Bout : double;
                                    VAR TESTVAL : double);
 
-PROCEDURE BUDGET_module(dayi : LongInt;
-                        TargetTimeVal, TargetDepthVal, VirtualTimeCC, SumInterval, DayLastCut,NrDayGrow,
-                        Tadj, GDDTadj : Integer;
-                        GDDayi,CGCref,GDDCGCref,CO2i,CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
-                        Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,StressTotSaltPrev,
-                        DayFraction,GDDayFraction,FracAssim : double;
-                        StressSFadjNEW : ShortInt;
-                        StorageON,MobilizationON : BOOLEAN;
-                        VAR StressLeaf,StressSenescence : double;
-                        VAR TimeSenescence : double;
-                        VAR NoMoreCrop,CGCadjustmentAfterCutting : BOOLEAN;
-                        VAR TESTVAL : double);
-
 
 implementation
 

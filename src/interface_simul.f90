@@ -1,5 +1,6 @@
 module ac_interface_simul
 use ac_kinds, only: dp, &
+                    int8, &
                     int32
 use ac_simul, only: AdjustpSenescenceToETo, &
                     BUDGET_module, &

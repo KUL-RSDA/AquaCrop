@@ -7,7 +7,9 @@ use ac_kinds, only:  dp, &
                      intEnum
 
 use ac_global, only: ActiveCells, &
+                     AdjustpStomatalToETo, &
                      adjustedksstotoecsw, &
+                     CalculateAdjustedFC, &
                      CalculateETpot, &
                      CanopyCoverNoStressSF, &
                      ccinowaterstresssf, &
@@ -153,6 +155,7 @@ use ac_global, only: ActiveCells, &
                      GetManagement_SoilCoverAfter, &
                      GetManagement_SoilCoverBefore, &
                      GetNrCompartments, &
+                     GetPreDay, &
                      GetRain, &
                      GetRainRecord_DataType, &
                      GetRootingDepth, &
@@ -193,6 +196,7 @@ use ac_global, only: ActiveCells, &
                      GetSimulParam_CNcorrection, &
                      GetSimulParam_EffectiveRain_Method, &
                      GetSimulParam_EffectiveRain_PercentEffRain, &
+                     GetSimulParam_EffectiveRain_RootNrEvap, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_EvapDeclineFactor, &
                      GetSimulParam_EvapZmax, &
@@ -247,6 +251,7 @@ use ac_global, only: ActiveCells, &
                      GetSumWaBal_TrW, &
                      GetSumWaBal_Tact, &
                      GetSumWaBal_Biomass, &
+                     GetSurf0, &
                      GetCRsalt, &
                      GetCRwater, &
                      GetTotalWaterContent_BeginDay, &
@@ -297,6 +302,7 @@ use ac_global, only: ActiveCells, &
                      SetEact, &
                      SetECdrain, &
                      SetECstorage, &
+                     SetEpot, &
                      SetEvapoEntireSoilSurface, &
                      SetIrrigation, &
                      SetRootZoneSalt_ECe, &
@@ -353,7 +359,9 @@ use ac_global, only: ActiveCells, &
                      SetSumWaBal_SaltIn, &
                      SetSumWaBal_CRsalt, &
                      SetSumWaBal_SaltOut, &
+                     SetSurf0, &
                      SetTact, &
+                     SetTpot, &
                      SoilEvaporationReductionCoefficient, &
                      subkind_Grain, &
                      subkind_Tuber, &
@@ -1726,7 +1734,7 @@ end subroutine CheckWaterSaltBalance
 
 
 subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
-                                 InfiltratedStorage, dayi, SubDrain)
+                                 InfiltratedStorage, SubDrain, dayi)
     real(dp), intent(in) :: InfiltratedRain
     real(dp), intent(in) :: InfiltratedIrrigation
     real(dp), intent(in) :: InfiltratedStorage
@@ -4982,18 +4990,24 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     real(dp) :: EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp
     type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
     real(dp) :: Crop_pActStom_temp
-    real(dp) :: CRsalt_temp, ECdrain_temp, Tact_temp
+    real(dp) :: CRsalt_temp, ECdrain_temp, Tact_temp, Surf0_temp
+    integer(int32) :: TargetTimeVal_loc
+    integer(int8) :: StressSFadjNEW_loc
 
+    TargetTimeVal_loc = TargetTimeVal
+    StressSFadjNEW_loc = StressSFadjNEW
 
     ! 1. Soil water balance
     control = control_begin_day
     ECdrain_temp = GetECdrain()
+    Surf0_temp = GetSurf0()
     call CheckWaterSaltBalance(dayi, InfiltratedRain, control, &
                                InfiltratedIrrigation, InfiltratedStorage, &
-                               Surf0, ECInfilt, ECdrain_temp, &
+                               Surf0_temp, ECInfilt, ECdrain_temp, &
                                HorizontalWaterFlow, HorizontalSaltFlow, &
                                SubDrain)
     call SetECdrain(ECdrain_temp)
+    call SetSurf0(Surf0_temp)
 
     ! 2. Adjustments in presence of Groundwater table
     call CheckForWaterTableInProfile(GetZiAqua()/100._dp, GetCompartment(), &
@@ -5020,8 +5034,8 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     end if
     if (((GetIrriMode() == IrriMode_Generate) &
         .and. (GetIrrigation() < epsilon(0._dp))) &
-            .and. (TargetTimeVal /= -999)) then
-        call Calculate_irrigation(SubDrain, TargetTimeVal, TargetDepthVal)
+            .and. (TargetTimeVal_loc /= -999)) then
+        call Calculate_irrigation(SubDrain, TargetTimeVal_loc, TargetDepthVal)
     end if
     if (GetManagement_Bundheight() >= 0.01_dp) then
         call calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
@@ -5053,7 +5067,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
 
     ! 9. Determine effect of soil fertiltiy and soil salinity stress
     if (.not. NoMoreCrop) then
-        call EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
+        call EffectSoilFertilitySalinityStress(StressSFadjNEW_loc, Coeffb0Salt, &
                                                Coeffb1Salt, Coeffb2Salt, &
                                                NrDayGrow, StressTotSaltPrev, &
                                                VirtualTimeCC)
@@ -5104,8 +5118,8 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                         GetCrop_DaysToHarvest(), DayLastCut, GetCCiActual(), &
                         GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), &
                         GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), &
-                        GetCrop_CCEffectEvapLate(), CO2i, GDDayi, &
-                        GetCrop_GDtranspLow(), Tpot_temp, EpotTot)
+                        real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, &
+                        GDDayi, GetCrop_GDtranspLow(), Tpot_temp, EpotTot)
     call SetTpot(Tpot_temp)
     call SetEpot(EpotTot)    
         ! adjustment Epot for mulch and partial wetting in next step
@@ -5181,7 +5195,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
 
     ! 14. Adjustment to groundwater table
     if (WaterTableInProfile) then
-        call HorizontalInflowGWTable(GetZiAqua()/100, HorizontalSaltFlow, &
+        call HorizontalInflowGWTable(GetZiAqua()/100._dp, HorizontalSaltFlow, &
                                      HorizontalWaterFlow)
     end if
 
@@ -5191,12 +5205,14 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     ! 16. Soil water balance
     control = control_end_day
     ECdrain_temp = GetECdrain()
+    Surf0_temp = GetSurf0()
     call CheckWaterSaltBalance(dayi, InfiltratedRain, control, &
                                InfiltratedIrrigation, InfiltratedStorage, &
-                               Surf0, ECInfilt, ECdrain_temp, &
+                               Surf0_temp, ECInfilt, ECdrain_temp, &
                                HorizontalWaterFlow, HorizontalSaltFlow, &
                                SubDrain)
     call SetECdrain(ECdrain_temp)
+    call SetSurf0(Surf0_temp)
 end subroutine BUDGET_module
 
 
