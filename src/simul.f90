@@ -1076,7 +1076,6 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         call DetermineDate(CropFirstDayNr, Dayi, Monthi, Yeari)
         YearWeighingFactor = Yeari
     end function YearWeighingFactor 
-
 end subroutine DetermineBiomassAndYield
 
 subroutine AdjustpStomatalToETo(MeanETo, pStomatULAct)
