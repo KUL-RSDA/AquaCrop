@@ -316,6 +316,16 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
+procedure RelationshipsForFertilityAndSaltStress(
+                    VAR Coeffb0 : double;
+                    VAR Coeffb1 : double;
+                    VAR Coeffb2 : double;
+                    VAR FracBiomassPotSF : double;
+                    VAR Coeffb0Salt : double;
+                    VAR Coeffb1Salt : double;
+                    VAR Coeffb2Salt : double);
+        external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
+
 implementation
 
 function GetGwTable() : rep_GwTable;

@@ -10,6 +10,41 @@ use ac_global, only: CompartmentIndividual, &
                      GetCompartment_i, &
                      GetCompartment_Layer, &
                      GetCompartment_Thickness, &
+                     GetCrop_CCo, &
+                     GetCrop_CCx, &
+                     GetCrop_CCxAdjusted, &
+                     GetCrop_CCxWithered, &
+                     GetCrop_CDC, &
+                     GetCrop_CGC, &
+                     GetCrop_Day1, &
+                     GetCrop_DayN, &
+                     GetCrop_DaysToCCini, &
+                     GetCrop_DaysToFlowering, &
+                     GetCrop_DaysToFullCanopy, &
+                     GetCrop_DaysToFullCanopySF, &
+                     GetCrop_DaysToGermination, &
+                     GetCrop_DaysToHarvest, &
+                     GetCrop_DaysToSenescence, &
+                     GetCrop_DeterminancyLinked, &
+                     GetCrop_dHIdt, &
+                     GetCrop_ECemin, &
+                     GetCrop_ECemax, &
+                     GetCrop_GDDaysToFlowering, &
+                     GetCrop_GDDaysToFullCanopy, &
+                     GetCrop_GDDaysToFullCanopySF, &
+                     GetCrop_GDDaysToGermination, &
+                     GetCrop_GDDaysToHarvest, &
+                     GetCrop_GDDaysToSenescence, &
+                     GetCrop_GDDCDC, &
+                     GetCrop_GDDCGC, &
+                     GetCrop_GDDLengthFlowering, &
+                     getcrop_gddaystofullcanopy, &
+                     getcrop_gddaystoflowering, &
+                     getcrop_gddaystoharvest, &
+                     getcrop_gddaystogermination, &
+                     getcrop_gddaystosenescence, &
+                     GetCrop_GDtranspLow, &
+                     GetCrop_GDtranspLow, &
                      GetGroundWaterFile, &
                      GetGroundWaterFileFull, &
                      GetNrCompartments, &
@@ -106,6 +141,8 @@ type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
 type(rep_StressTot) :: StressTot
 type(repCutInfoRecord) :: CutInfoRecord1, CutInfoRecord2
 type(rep_Transfer) :: Transfer
+
+
 
 contains
 
@@ -845,5 +882,114 @@ subroutine GetGwtSet(DayNrIN, GwT)
     end if ! more than 1 observation
     close(f0)
 end subroutine GetGwtSet
+
+subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, FracBiomassPotSF, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+    real(dp), intent(inout) :: Coeffb0
+    real(dp), intent(inout) :: Coeffb1
+    real(dp), intent(inout) :: Coeffb2
+    real(dp), intent(inout) :: FracBiomassPotSF
+    real(dp), intent(inout) :: Coeffb0Salt
+    real(dp), intent(inout) :: Coeffb1Salt
+    real(dp), intent(inout) :: Coeffb2Salt
+
+    real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
+    integer(int8) :: BioTop, BioLow
+    real(dp) :: StrTop, StrLow
+
+    ! 1. Soil fertility
+    FracBiomassPotSF = 1._dp
+    ! 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
+    if (GetCrop_StressResponse_Calibrated()) then
+        StressBiomassRelationship(GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), &
+                                   GetCrop_DaysToGermination(), &
+                                   GetCrop_DaysToFullCanopy(), &
+                                   GetCrop_DaysToSenescence(), &
+                                   GetCrop_DaysToHarvest(), &
+                                   GetCrop_DaysToFlowering(), &
+                                   GetCrop_LengthFlowering(), &
+                                   GetCrop_GDDaysToGermination(), &
+                                   GetCrop_GDDaysToFullCanopy(), &
+                                   GetCrop_GDDaysToSenescence(), &
+                                   GetCrop_GDDaysToHarvest(), &
+                                   GetCrop_WPy(), GetCrop_HI(), &
+                                   GetCrop_CCo(), GetCrop_CCx(), &
+                                   GetCrop_CGC(), GetCrop_GDDCGC(), &
+                                   GetCrop_CDC(), GetCrop_GDDCDC(),
+                                   GetCrop_KcTop(), GetCrop_KcDecline(), &
+                                   GetCrop_CCEffectEvapLate(),GetCrop_Tbase(), &
+                                   GetCrop_Tupper(), GetSimulParam_Tmin(), &
+                                   GetSimulParam_Tmax(), GetCrop_GDtranspLow(), &
+                                   GetCrop_WP(), GetCrop_dHIdt(), CO2i, 
+                                   GetCrop_Day1(), GetCrop_DeterminancyLinked(), &
+                                   GetCrop_StressResponse(),GetCrop_subkind(), &
+                                   GetCrop_ModeCycle(), Coeffb0, Coeffb1, &
+                                   Coeffb2, X10, X20, X30, X40, X50, X60, X70)
+    else
+        Coeffb0 = undef_int
+        Coeffb1 = undef_int
+        Coeffb2 = undef_int
+    end if
+    ! 1.b Soil fertility : FracBiomassPotSF
+    if ((GetManagement_FertilityStress() /= 0._dp) .and. &
+                                     GetCrop_StressResponse_Calibrated()) then
+        BioLow = 100._dp
+        StrLow = 0._dp
+        loop: do
+            BioTop = BioLow
+            StrTop = StrLow
+            BioLow = BioLow - 1
+            StrLow = Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow
+        if (((StrLow >= GetManagement_FertilityStress()) .or. (BioLow <= 0) &
+                                            .or. (StrLow >= 99.99))) exit loop
+        end do loop
+        if (StrLow >= 99.99_dp) then
+            StrLow = 100._dp
+        end if
+        if (abs(StrLow-StrTop) < 0.001_dp) then
+            FracBiomassPotSF = BioTop
+        else
+            FracBiomassPotSF = BioTop - (GetManagement_FertilityStress() - StrTop)/(StrLow-StrTop)
+        end if
+        FracBiomassPotSF = FracBiomassPotSF/100._dp
+    end if
+
+    ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
+    if (GetSimulation_SalinityConsidered() .eqv. .true.) then
+        CCxSaltStressRelationship(GetCrop_DaysToCCini(), &
+                                  GetCrop_GDDaysToCCini(), &
+                                  GetCrop_DaysToGermination(), &
+                                  GetCrop_DaysToFullCanopy(), &
+                                  GetCrop_DaysToSenescence(), &
+                                  GetCrop_DaysToHarvest(), &
+                                  GetCrop_DaysToFlowering(), & 
+                                  GetCrop_LengthFlowering(), &
+                                  GetCrop_GDDaysToFlowering(), & 
+                                  GetCrop_GDDLengthFlowering(), &
+                                  GetCrop_GDDaysToGermination(), &
+                                  GetCrop_GDDaysToFullCanopy,() &
+                                  GetCrop_GDDaysToSenescence(), &
+                                  GetCrop_GDDaysToHarvest(), &
+                                  GetCrop_WPy(), GetCrop_HI(), &
+                                  GetCrop_CCo(), GetCrop_CCx(), &
+                                  GetCrop_CGC(), GetCrop_GDDCGC(), &
+                                  GetCrop_CDC(), GetCrop_GDDCDC(), &
+                                  GetCrop_KcTop,() GetCrop_KcDecline(), & 
+                                  GetCrop_CCEffectEvapLate(),  &
+                                  GetCrop_Tbase(), GetCrop_Tupper(), &
+                                  GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+                                  GetCrop_GDtranspLow(), GetCrop_WP(), &
+                                  GetCrop_dHIdt(), CO2i, GetCrop_Day1(), &
+                                  GetCrop_DeterminancyLinked(), &
+                                  GetCrop_subkind(), GetCrop_ModeCycle(), &
+                                  GetCrop_CCsaltDistortion(),Coeffb0Salt, &
+                                  Coeffb1Salt, Coeffb2Salt, X10, X20, X30, &
+                                  X40, X50, X60, X70, X80, X90)
+    else
+        Coeffb0Salt = undef_int
+        Coeffb1Salt = undef_int
+        Coeffb2Salt = undef_int
+    end if
+end subroutine RelationshipsForFertilityAndSaltStress
+
 
 end module ac_run
