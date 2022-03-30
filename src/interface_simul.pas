@@ -205,6 +205,23 @@ procedure HorizontalInflowGWTable(constref DepthGWTmeter : double;
                                   constref HorizontalWaterFlow : double);
     external 'aquacrop' name '__ac_simul_MOD_horizontalinflowgwtable';
 
+procedure BUDGET_module(constref dayi : LongInt;
+                        constref TargetTimeVal, TargetDepthVal, VirtualTimeCC, 
+                                 SumInterval, DayLastCut,NrDayGrow,
+                                 Tadj, GDDTadj : Integer;
+                        constref GDDayi,CGCref,GDDCGCref,CO2i,
+                                 CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,
+                                 SumGDDadjCC, Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,
+                                 StressTotSaltPrev,DayFraction,GDDayFraction,
+                                 FracAssim : double;
+                        StressSFadjNEW : ShortInt;
+                        StorageON,MobilizationON : BOOLEAN;
+                        VAR StressLeaf,StressSenescence : double;
+                        VAR TimeSenescence : double;
+                        VAR NoMoreCrop,CGCadjustmentAfterCutting : BOOLEAN;
+                        VAR TESTVAL : double);
+    external 'aquacrop' name '__ac_interface_simul_MOD_budget_module_wrap';
+
 
 //-----------------------------------------------------------------------------
 // end BUDGET_module

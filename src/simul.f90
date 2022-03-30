@@ -149,6 +149,7 @@ use ac_global, only: ActiveCells, &
                      GetManagement_EffectMulchOffS, &
                      GetManagement_FertilityStress, &
                      GetManagement_Mulch, &
+                     GetManagement_RunoffON, &
                      GetManagement_SoilCoverAfter, &
                      GetManagement_SoilCoverBefore, &
                      GetNrCompartments, &
@@ -200,6 +201,7 @@ use ac_global, only: ActiveCells, &
                      GetSimulParam_IrriFwOffSeason, &
                      GetSimulParam_pAdjFAO, &
                      GetSimulParam_RootNrDF, &
+                     GetSimulParam_RunoffDepth, &
                      GetSimulParam_SaltSolub, &
                      GetSimulParam_Tmax, &
                      GetSimulParam_Tmin, &
@@ -253,14 +255,15 @@ use ac_global, only: ActiveCells, &
                      GetTotalSaltContent_EndDay, &
                      GetEact, &
                      GetCCiActual, &
+                     IrriMode_Generate, &
                      IrriMode_Inet, &
                      KsAny, &
                      KsSalinity, &
-                     max_No_compartments, &
                      MaxCRatDepth, &
                      modeCycle_CalendarDays, &
                      plant_seed, &
                      modeCycle_GDDays, &
+                     max_No_compartments, &
                      pMethod_FAOCorrection, &
                      pMethod_FAOCorrection, &
                      rep_Crop, &
@@ -4918,7 +4921,284 @@ subroutine HorizontalInflowGWTable(DepthGWTmeter, HorizontalSaltFlow, &
             end if
         end if
     end do
-end subroutine HorizontalInflowGWTable 
+end subroutine HorizontalInflowGWTable
+
+
+subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
+                         SumInterval, DayLastCut, NrDayGrow, Tadj, GDDTadj, &
+                         GDDayi, CGCref, GDDCGCref, CO2i, CCxTotal, CCoTotal, &
+                         CDCTotal, GDDCDCTotal, SumGDDadjCC, Coeffb0Salt, &
+                         Coeffb1Salt, Coeffb2Salt, StressTotSaltPrev, &
+                         DayFraction, GDDayFraction, FracAssim, &
+                         StressSFadjNEW, StorageON, MobilizationON, &
+                         StressLeaf, StressSenescence, TimeSenescence, &
+                         NoMoreCrop, CGCadjustmentAfterCutting, TESTVAL)
+    integer(int32), intent(in) :: dayi
+    integer(int32), intent(in) :: TargetTimeVal
+    integer(int32), intent(in) :: TargetDepthVal
+    integer(int32), intent(in) :: VirtualTimeCC
+    integer(int32), intent(in) :: SumInterval
+    integer(int32), intent(in) :: DayLastCut
+    integer(int32), intent(in) :: NrDayGrow
+    integer(int32), intent(in) :: Tadj
+    integer(int32), intent(in) :: GDDTadj
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: CGCref
+    real(dp), intent(in) :: GDDCGCref
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: CCxTotal
+    real(dp), intent(in) :: CCoTotal
+    real(dp), intent(in) :: CDCTotal
+    real(dp), intent(in) :: GDDCDCTotal
+    real(dp), intent(in) :: SumGDDadjCC
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: StressTotSaltPrev
+    real(dp), intent(in) :: DayFraction
+    real(dp), intent(in) :: GDDayFraction
+    real(dp), intent(in) :: FracAssim
+    integer(int8), intent(in) :: StressSFadjNEW
+    logical, intent(in) :: StorageON
+    logical, intent(in) :: MobilizationON
+    real(dp), intent(inout) :: StressLeaf
+    real(dp), intent(inout) :: StressSenescence
+    real(dp), intent(inout) :: TimeSenescence
+    logical, intent(inout) :: NoMoreCrop
+    logical, intent(inout) :: CGCadjustmentAfterCutting
+    real(dp), intent(inout) :: TESTVAL
+
+
+    integer(intEnum) ::  control
+    real(dp) :: InfiltratedRain, InfiltratedIrrigation, &
+                InfiltratedStorage, EpotTot, SubDrain
+    integer(int32) :: DAP
+    real(dp) :: ECInfilt
+        !! EC of the infiltrated water (surface storage)
+    logical :: WaterTableInProfile
+    real(dp) :: HorizontalWaterFlow, HorizontalSaltFlow
+    type(rep_EffectStress) :: EffectStress_temp
+    logical :: SWCtopSoilConsidered_temp
+    real(dp) :: EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
+    real(dp) :: Crop_pActStom_temp
+    real(dp) :: CRsalt_temp, ECdrain_temp, Tact_temp
+
+
+    ! 1. Soil water balance
+    control = control_begin_day
+    ECdrain_temp = GetECdrain()
+    call CheckWaterSaltBalance(dayi, InfiltratedRain, control, &
+                               InfiltratedIrrigation, InfiltratedStorage, &
+                               Surf0, ECInfilt, ECdrain_temp, &
+                               HorizontalWaterFlow, HorizontalSaltFlow, &
+                               SubDrain)
+    call SetECdrain(ECdrain_temp)
+
+    ! 2. Adjustments in presence of Groundwater table
+    call CheckForWaterTableInProfile(GetZiAqua()/100._dp, GetCompartment(), &
+                                     WaterTableInProfile)
+    Comp_temp = GetCompartment()
+    call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+    call SetCompartment(Comp_temp)
+
+    ! 3. Drainage
+    call calculate_drainage()
+
+    ! 4. Runoff
+    if (GetManagement_Bundheight() < 0.001_dp) then
+        call SetDaySubmerged(0)
+        if ((GetManagement_RunoffON()) .and. (GetRain() > 0.1_dp)) then
+            call calculate_runoff(GetSimulParam_RunoffDepth())
+        end if
+    end if
+
+    ! 5. Infiltration (Rain and Irrigation)
+    if ((GetRainRecord_DataType() == datatype_decadely) &
+            .or. (GetRainRecord_DataType() == datatype_monthly)) then
+        call CalculateEffectiveRainfall(SubDrain)
+    end if
+    if (((GetIrriMode() == IrriMode_Generate) &
+        .and. (GetIrrigation() < epsilon(0._dp))) &
+            .and. (TargetTimeVal /= -999)) then
+        call Calculate_irrigation(SubDrain, TargetTimeVal, TargetDepthVal)
+    end if
+    if (GetManagement_Bundheight() >= 0.01_dp) then
+        call calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
+                                      InfiltratedStorage, ECinfilt, SubDrain, &
+                                      dayi)
+    else
+        call calculate_Extra_runoff(InfiltratedRain, InfiltratedIrrigation, &
+                                    InfiltratedStorage, SubDrain)
+    end if
+    call calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
+                                InfiltratedStorage, SubDrain)
+
+    ! 6. Capillary Rise
+    CRwater_temp = GetCRwater()
+    CRsalt_temp = GetCRsalt()
+    call calculate_CapillaryRise(CRwater_temp, CRsalt_temp)
+    call SetCRwater(CRwater_temp)
+    call SetCRsalt(CRsalt_temp)
+
+    ! 7. Salt balance
+    call calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
+                               InfiltratedStorage, SubDrain, dayi)
+
+
+    ! 8. Check Germination
+    if ((.not. GetSimulation_Germinate()) .and. (dayi >=GetCrop_Day1())) then
+        call CheckGermination()
+    end if
+
+    ! 9. Determine effect of soil fertiltiy and soil salinity stress
+    if (.not. NoMoreCrop) then
+        call EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
+                                               Coeffb1Salt, Coeffb2Salt, &
+                                               NrDayGrow, StressTotSaltPrev, &
+                                               VirtualTimeCC)
+    end if
+
+
+    ! 10. Canopy Cover (CC)
+    if (.not. NoMoreCrop) then
+        ! determine water stresses affecting canopy cover
+        SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+        call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
+        call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        ! determine canopy cover
+        select case (GetCrop_ModeCycle())
+            case(modecycle_GDDays)
+            call DetermineCCiGDD(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
+                                 MobilizationON, StorageON, SumGDDAdjCC, &
+                                 VirtualTimeCC, StressSenescence, &
+                                 TimeSenescence, NoMoreCrop, CDCTotal, &
+                                 CGCAdjustmentAfterCutting, GDDayFraction, &
+                                 GDDayi, GDDCDCTotal, GDDTadj)
+            case default
+            call DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
+                              MobilizationON, StorageON, Tadj, VirtualTimeCC, &
+                              StressSenescence, TimeSenescence, NoMoreCrop, &
+                              CDCTotal, CGCAdjustmentAfterCutting, &
+                              DayFraction, GDDCDCTotal, TESTVAL)
+        end select
+    end if
+
+    ! 11. Determine Tpot and Epot
+    ! 11.1 Days after Planting
+    if (GetCrop_ModeCycle() == modecycle_Calendardays) then
+        DAP = VirtualTimeCC
+    else
+        ! growing degree days - to position correctly where in cycle
+        DAP = SumCalendarDays(roundc(SumGDDadjCC, mold=1), GetCrop_Day1(), &
+                              GetCrop_Tbase(), GetCrop_Tupper(), &
+                              GetSimulParam_Tmin(), GetSimulParam_Tmax())
+        DAP = DAP + GetSimulation_DelayedDays() 
+            ! are not considered when working with GDDays
+    end if
+
+    ! 11.2 Calculation
+    Tpot_temp = GetTpot()
+    call CalculateETpot(DAP, GetCrop_DaysToGermination(), &
+                        GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
+                        GetCrop_DaysToHarvest(), DayLastCut, GetCCiActual(), &
+                        GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), &
+                        GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), &
+                        GetCrop_CCEffectEvapLate(), CO2i, GDDayi, &
+                        GetCrop_GDtranspLow(), Tpot_temp, EpotTot)
+    call SetTpot(Tpot_temp)
+    call SetEpot(EpotTot)    
+        ! adjustment Epot for mulch and partial wetting in next step
+    Crop_pActStom_temp = GetCrop_pActStom()
+    call AdjustpStomatalToETo(GetETo(), Crop_pActStom_temp)
+    call SetCrop_pActStom(Crop_pActStom_temp)
+
+    ! 12. Evaporation
+    if (.not. GetPreDay()) then
+        call PrepareStage2() 
+            ! Initialize Simulation.EvapstartStg2 (REW is gone)
+    end if
+    if ((GetRain() > 0._dp) &
+        .or. ((GetIrrigation() > 0._dp) &
+            .and. (GetIrriMode() /= IrriMode_Inet))) then
+        call PrepareStage1()
+    end if
+    EvapWCsurf_temp = GetSimulation_EvapWCsurf()
+    Epot_temp = GetEpot()
+    call AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot_temp, EvapWCsurf_temp)
+    call SetEpot(Epot_temp)
+    call SetSimulation_EvapWCsurf(EvapWCsurf_temp)
+    if (((GetRainRecord_DataType() == datatype_Decadely) &
+            .or. (GetRainRecord_DataType() == datatype_Monthly)) &
+        .and. (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) then 
+        ! reduction soil evaporation
+        call SetEpot(GetEpot() &
+                    * (exp((1._dp/GetSimulParam_EffectiveRain_RootNrEvap())&
+                            *log((GetSoil_REW()+1._dp)/20._dp))))
+    end if
+    ! actual evaporation
+    call SetEact(0._dp)
+    if (GetEpot() > 0._dp) then
+        ! surface water
+        if (GetSurfaceStorage() > 0._dp) then
+            call CalculateEvaporationSurfaceWater
+        end if
+        ! stage 1 evaporation
+        if ((abs(GetEpot() - GetEact()) > 0.0000001_dp) &
+            .and. (GetSimulation_EvapWCsurf() > 0._dp)) then
+            call CalculateSoilEvaporationStage1()
+        end if
+        ! stage 2 evaporation
+        if (abs(GetEpot() - GetEact()) > 0.0000001_dp) then
+            call CalculateSoilEvaporationStage2()
+        end if
+    end if
+    ! Reset redcution Epot for 10-day or monthly rainfall data
+    if (((GetRainRecord_DataType() == datatype_Decadely) &
+            .or. (GetRainRecord_DataType() == datatype_Monthly)) &
+        .and. (GetSimulParam_EffectiveRain_RootNrEvap() > 0._dp)) then
+        call SetEpot(GetEpot()&
+                    /(exp((1._dp/GetSimulParam_EffectiveRain_RootNrEvap()) &
+                           *log((GetSoil_REW()+1._dp)/20._dp))))
+    end if
+
+
+    ! 13. Transpiration
+    if ((.not. NoMoreCrop) .and. (GetRootingDepth() > 0.0001_dp)) then
+        if ((GetSurfaceStorage() > 0._dp) &
+            .and. ((GetCrop_AnaeroPoint() == 0) &
+                  .or. (GetDaySubmerged() < GetSimulParam_DelayLowOxygen()))) then
+            call surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+        else
+            call calculate_transpiration(GetTpot(), Coeffb0Salt, Coeffb1Salt, &
+                                         Coeffb2Salt)
+        end if
+    end if
+    if (GetSurfaceStorage() <= 0) then
+        call SetDaySubmerged(0)
+    end if
+    call FeedbackCC()
+
+    ! 14. Adjustment to groundwater table
+    if (WaterTableInProfile) then
+        call HorizontalInflowGWTable(GetZiAqua()/100, HorizontalSaltFlow, &
+                                     HorizontalWaterFlow)
+    end if
+
+    ! 15. Salt concentration
+    call ConcentrateSalts()
+
+    ! 16. Soil water balance
+    control = control_end_day
+    ECdrain_temp = GetECdrain()
+    call CheckWaterSaltBalance(dayi, InfiltratedRain, control, &
+                               InfiltratedIrrigation, InfiltratedStorage, &
+                               Surf0, ECInfilt, ECdrain_temp, &
+                               HorizontalWaterFlow, HorizontalSaltFlow, &
+                               SubDrain)
+    call SetECdrain(ECdrain_temp)
+end subroutine BUDGET_module
+
 
 
 !-----------------------------------------------------------------------------
