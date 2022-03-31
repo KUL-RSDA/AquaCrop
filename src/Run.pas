@@ -42,7 +42,7 @@ var  fRun, fDaily, fHarvest, fEval : text;
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
      DayNri : LongInt;
-     EToDataSet,RainDataSet,TminDataSet,TmaxDataSet : rep_SimulationEventsDbl;
+     EToDataSet,RainDataSet : rep_SimulationEventsDbl;
      IrriInterval : INTEGER;
      Tadj, GDDTadj : INTEGER;
      DayFraction,GDDayFraction,Bin,Bout : double;
@@ -461,6 +461,7 @@ VAR totalname,totalnameOUT : string;
     RunningDay : LongInt;
     tmpRain : double;
     ETo_temp : double;
+    TminDataSet_temp, TmaxDataSet_temp : rep_SimulationEventsDbl;
 BEGIN
 // 1. ETo file
 IF (GetEToFile() <> '(None)')
@@ -663,18 +664,26 @@ IF (GetTemperatureFile() <> '(None)')
                             SplitStringInTwoParams(StringREAD,Tmin,Tmax);
                             END;
                   Decadely: BEGIN
-                            GetDecadeTemperatureDataSet(FromSimDay,TminDataSet,TmaxDataSet);
+                            TminDataSet_temp := GetTminDataSet();
+                            TmaxDataSet_temp := GetTmaxDataSet();
+                            GetDecadeTemperatureDataSet(FromSimDay,TminDataSet_temp,TmaxDataSet_temp);
+                            SetTminDataSet(TminDataSet_temp);
+                            SetTmaxDataSet(TmaxDataSet_temp);
                             i := 1;
-                            While (TminDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            Tmin := TminDataSet[i].Param;
-                            Tmax := TmaxDataSet[i].Param;
+                            While (GetTminDataSet_i(i).DayNr <> FromSimDay) Do i := i+1;
+                            Tmin := GetTminDataSet_i(i).Param;
+                            Tmax := GetTmaxDataSet_i(i).Param;
                             END;
                   Monthly : BEGIN
-                            GetMonthlyTemperatureDataSet(FromSimDay,TminDataSet,TmaxDataSet);
+                            TminDataSet_temp := GetTminDataSet();
+                            TmaxDataSet_temp := GetTmaxDataSet();
+                            GetMonthlyTemperatureDataSet(FromSimDay,TminDataSet_temp,TmaxDataSet_temp);
+                            SetTminDataSet(TminDataSet_temp);
+                            SetTmaxDataSet(TmaxDataSet_temp);
                             i := 1;
-                            While (TminDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            Tmin := TminDataSet[i].Param;
-                            Tmax := TmaxDataSet[i].Param;
+                            While (GetTminDataSet_i(i).DayNr <> FromSimDay) Do i := i+1;
+                            Tmin := GetTminDataSet_i(i).Param;
+                            Tmax := GetTmaxDataSet_i(i).Param;
                             END;
                   end;
                 // create SIM file and record first day
@@ -704,18 +713,32 @@ IF (GetTemperatureFile() <> '(None)')
                                       ELSE READLN(fTemp,Tmin,Tmax);
                                    END;
                          Decadely: BEGIN
-                                   IF (RunningDay > TminDataSet[31].DayNr) THEN GetDecadeTemperatureDataSet(RunningDay,TminDataSet,TmaxDataSet);
+                                   IF (RunningDay > GetTminDataSet_i(31).DayNr) THEN
+                                        BEGIN
+                                        TminDataSet_temp := GetTminDataSet();
+                                        TmaxDataSet_temp := GetTmaxDataSet();
+                                        GetDecadeTemperatureDataSet(FromSimDay,TminDataSet_temp,TmaxDataSet_temp);
+                                        SetTminDataSet(TminDataSet_temp);
+                                        SetTmaxDataSet(TmaxDataSet_temp);
+                                        END;
                                    i := 1;
-                                   While (TminDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   Tmin := TminDataSet[i].Param;
-                                   Tmax := TmaxDataSet[i].Param;
+                                   While (GetTminDataSet_i(i).DayNr <> RunningDay) Do i := i+1;
+                                   Tmin := GetTminDataSet_i(i).Param;
+                                   Tmax := GetTmaxDataSet_i(i).Param;
                                    END;
                          Monthly : BEGIN
-                                   IF (RunningDay > TminDataSet[31].DayNr) THEN GetMonthlyTemperatureDataSet(RunningDay,TminDataSet,TmaxDataSet);
+                                   IF (RunningDay > GetTminDataSet_i(31).DayNr) THEN
+                                        BEGIN
+                                        TminDataSet_temp := GetTminDataSet();
+                                        TmaxDataSet_temp := GetTmaxDataSet();
+                                        GetMonthlyTemperatureDataSet(FromSimDay,TminDataSet_temp,TmaxDataSet_temp);
+                                        SetTminDataSet(TminDataSet_temp);
+                                        SetTmaxDataSet(TmaxDataSet_temp);
+                                        END;
                                    i := 1;
-                                   While (TminDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   Tmin := TminDataSet[i].Param;
-                                   Tmax := TmaxDataSet[i].Param;
+                                   While (GetTminDataSet_i(i).DayNr <> RunningDay) Do i := i+1;
+                                   Tmin := GetTminDataSet_i(i).Param;
+                                   Tmax := GetTmaxDataSet_i(i).Param;
                                    END;
                          end;
                     WRITELN(fTempS,Tmin:10:4,Tmax:10:4);
@@ -806,6 +829,7 @@ VAR totalname : string;
     i : LongInt;
     StringREAD : ShortString;
     DayX : LongInt;
+    TminDataSet_temp, TmaxDataSet_temp : rep_SimulationEventsDbl;
 BEGIN
 SetSimulation_SumGDD(0);
 IF (GetTemperatureFile() <> '(None)')
@@ -842,24 +866,32 @@ IF (GetTemperatureFile() <> '(None)')
                   Decadely: BEGIN
                             DayX := GetCrop().Day1;
                             // first day of cropping
-                            GetDecadeTemperatureDataSet(DayX,TminDataSet,TmaxDataSet);
+                            TminDataSet_temp := GetTminDataSet();
+                            TmaxDataSet_temp := GetTmaxDataSet();
+                            GetDecadeTemperatureDataSet(DayX,TminDataSet_temp,TmaxDataSet_temp);
+                            SetTminDataSet(TminDataSet_temp);
+                            SetTmaxDataSet(TmaxDataSet_temp);
                             i := 1;
-                            While (TminDataSet[i].DayNr <> DayX) Do i := i+1;
-                            Tmin := TminDataSet[i].Param;
-                            Tmax := TmaxDataSet[i].Param;
+                            While (GetTminDataSet_i(i).DayNr <> DayX) Do i := i+1;
+                            Tmin := GetTminDataSet_i(i).Param;
+                            Tmax := GetTmaxDataSet_i(i).Param;
                             SetSimulation_SumGDD(DegreesDay(GetCrop().Tbase,GetCrop().Tupper,Tmin,Tmax,GetSimulParam_GDDMethod()));
                             // next days
                             WHILE (DayX < DayNri) DO
                                  BEGIN
                                  DayX := DayX + 1;
-                                 IF (DayX > TminDataSet[31].DayNr) THEN
+                                 IF (DayX > GetTminDataSet_i(31).DayNr) THEN
                                     BEGIN
-                                    GetDecadeTemperatureDataSet(DayX,TminDataSet,TmaxDataSet);
+                                    TminDataSet_temp := GetTminDataSet();
+                                    TmaxDataSet_temp := GetTmaxDataSet();
+                                    GetDecadeTemperatureDataSet(DayX,TminDataSet_temp,TmaxDataSet_temp);
+                                    SetTminDataSet(TminDataSet_temp);
+                                    SetTmaxDataSet(TmaxDataSet_temp);
                                     i := 0;
                                     END;
                                  i := i+1;
-                                 Tmin := TminDataSet[i].Param;
-                                 Tmax := TmaxDataSet[i].Param;
+                                 Tmin := GetTminDataSet_i(i).Param;
+                                 Tmax := GetTmaxDataSet_i(i).Param;
                                  SetSimulation_SumGDD(GetSimulation_SumGDD()
                                          + DegreesDay(GetCrop().Tbase,GetCrop().Tupper,Tmin,Tmax,GetSimulParam_GDDMethod()));
                                  END;
@@ -867,24 +899,32 @@ IF (GetTemperatureFile() <> '(None)')
                   Monthly : BEGIN
                             DayX := GetCrop().Day1;
                             // first day of cropping
-                            GetMonthlyTemperatureDataSet(DayX,TminDataSet,TmaxDataSet);
+                            TminDataSet_temp := GetTminDataSet();
+                            TmaxDataSet_temp := GetTmaxDataSet();
+                            GetMonthlyTemperatureDataSet(DayX,TminDataSet_temp,TmaxDataSet_temp);
+                            SetTminDataSet(TminDataSet_temp);
+                            SetTmaxDataSet(TmaxDataSet_temp);
                             i := 1;
-                            While (TminDataSet[i].DayNr <> DayX) Do i := i+1;
-                            Tmin := TminDataSet[i].Param;
-                            Tmax := TmaxDataSet[i].Param;
+                            While (GetTminDataSet_i(i).DayNr <> DayX) Do i := i+1;
+                            Tmin := GetTminDataSet_i(i).Param;
+                            Tmax := GetTmaxDataSet_i(i).Param;
                             SetSimulation_SumGDD(DegreesDay(GetCrop().Tbase,GetCrop().Tupper,Tmin,Tmax,GetSimulParam_GDDMethod()));
                             // next days
                             WHILE (DayX < DayNri) DO
                                   BEGIN
                                   DayX := DayX + 1;
-                                  IF (DayX > TminDataSet[31].DayNr) THEN
+                                  IF (DayX > GetTminDataSet_i(31).DayNr) THEN
                                      BEGIN
-                                     GetMonthlyTemperatureDataSet(DayX,TminDataSet,TmaxDataSet);
+                                    TminDataSet_temp := GetTminDataSet();
+                                    TmaxDataSet_temp := GetTmaxDataSet();
+                                    GetMonthlyTemperatureDataSet(DayX,TminDataSet_temp,TmaxDataSet_temp);
+                                    SetTminDataSet(TminDataSet_temp);
+                                    SetTmaxDataSet(TmaxDataSet_temp);
                                      i := 0;
                                      END;
                                   i := i+1;
-                                  Tmin := TminDataSet[i].Param;
-                                  Tmax := TmaxDataSet[i].Param;
+                                  Tmin := GetTminDataSet_i(i).Param;
+                                  Tmax := GetTmaxDataSet_i(i).Param;
                                   SetSimulation_SumGDD(GetSimulation_SumGDD()
                                          + DegreesDay(GetCrop().Tbase,GetCrop().Tupper,Tmin,Tmax,GetSimulParam_GDDMethod()));
                                   END;

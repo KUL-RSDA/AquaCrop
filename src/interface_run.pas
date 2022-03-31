@@ -316,7 +316,107 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
+function GetTminDataSet() : rep_SimulationEventsDbl;
+
+function GetTminDataSet_i(constref i : integer) : rep_DayEventDbl;
+
+function GetTminDataSet_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_run_MOD_gettmindataset_daynr';
+
+function GetTminDataSet_Param(constref i : integer) : double;
+    external 'aquacrop' name '__ac_run_MOD_gettmindataset_param';
+
+procedure SetTminDataSet(constref TminDataSet_in : rep_SimulationEventsDbl);
+
+procedure SetTminDataSet_i(constref i : integer;
+                           constref TminDataSet_i : rep_DayEventDbl);
+
+procedure SetTminDataSet_DayNr(constref i : integer;
+                               constref  DayNr_in : integer);
+    external 'aquacrop' name '__ac_run_MOD_settmindataset_daynr';
+
+procedure SetTminDataSet_Param(constref i : integer;
+                               constref Param_in : double);
+    external 'aquacrop' name '__ac_run_MOD_settmindataset_param';
+
+function GetTmaxDataSet() : rep_SimulationEventsDbl;
+
+function GetTmaxDataSet_i(constref i : integer) : rep_DayEventDbl;
+
+function GetTmaxDataSet_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_run_MOD_gettmaxdataset_daynr';
+
+function GetTmaxDataSet_Param(constref i : integer) : double;
+    external 'aquacrop' name '__ac_run_MOD_gettmaxdataset_param';
+
+procedure SetTmaxDataSet(constref TmaxDataSet_in : rep_SimulationEventsDbl);
+
+procedure SetTmaxDataSet_i(constref i : integer;
+                           constref TmaxDataSet_i : rep_DayEventDbl);
+
+procedure SetTmaxDataSet_DayNr(constref i, DayNr_in: integer);
+    external 'aquacrop' name '__ac_run_MOD_settmaxdataset_daynr';
+
+procedure SetTmaxDataSet_Param(constref i : integer;
+                               constref Param_in : double);
+    external 'aquacrop' name '__ac_run_MOD_settmaxdataset_param';
+
+
 implementation
+
+function GetTminDataSet() : rep_SimulationEventsDbl;
+var
+    i : integer;
+begin
+    for i := 1 to 31 do GetTminDataSet[i] := GetTminDataSet_i(i);
+end;
+
+function GetTminDataSet_i(constref i : integer) : rep_DayEventDbl;
+begin
+    GetTminDataSet_i.DayNr := GetTminDataSet_DayNr(i);
+    GetTminDataSet_i.Param := GetTminDataSet_Param(i);
+end;
+
+procedure SetTminDataSet(constref TminDataSet_in : rep_SimulationEventsDbl);
+var
+    i : integer;
+begin
+    for i := 1 to 31 do SetTminDataSet_i(i, TminDataSet_in[i]);
+end;
+
+procedure SetTminDataSet_i(constref i : integer;
+                          constref TminDataSet_i : rep_DayEventDbl);
+begin
+    SetTminDataSet_DayNr(i, TminDataSet_i.DayNr);
+    SetTminDataSet_Param(i, TminDataSet_i.Param);
+end;
+
+function GetTmaxDataSet() : rep_SimulationEventsDbl;
+var
+    i : integer;
+begin
+    for i := 1 to 31 do GetTmaxDataSet[i] := GetTmaxDataSet_i(i);
+end;
+
+function GetTmaxDataSet_i(constref i : integer) : rep_DayEventDbl;
+begin
+    GetTmaxDataSet_i.DayNr := GetTmaxDataSet_DayNr(i);
+    GetTmaxDataSet_i.Param := GetTmaxDataSet_Param(i);
+end;
+
+procedure SetTmaxDataSet(constref TmaxDataSet_in : rep_SimulationEventsDbl);
+var
+    i : integer;
+begin
+    for i := 1 to 31 do SetTmaxDataSet_i(i, TmaxDataSet_in[i]);
+end;
+
+procedure SetTmaxDataSet_i(constref i : integer;
+                          constref TmaxDataSet_i : rep_DayEventDbl);
+begin
+    SetTmaxDataSet_DayNr(i, TmaxDataSet_i.DayNr);
+    SetTmaxDataSet_Param(i, TmaxDataSet_i.Param);
+end;
 
 function GetGwTable() : rep_GwTable;
 begin;
