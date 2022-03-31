@@ -34,9 +34,8 @@ var  fRun, fDaily, fHarvest, fEval : text;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      CCxWitheredTpot,CCxWitheredTpotNoS : double;
-     Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF : double;
+     Coeffb0,Coeffb1,Coeffb2 : double;
      Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
-     CO2i : double;
      PreviousStressLevel,StressSFadjNEW : ShortInt;
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
@@ -378,78 +377,6 @@ WRITELN(fEval,'   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim   
 WRITELN(fEval,'                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
 END; (* CreateEvalData *)
 
-
-
-
-
-PROCEDURE RelationshipsForFertilityAndSaltStress(VAR Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
-                                                 Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double);
-VAR X10,X20,X30,X40,X50,X60,X70,X80,X90 : double;
-    BioTop,BioLow : ShortInt;
-    StrTop,StrLow : double;
-
-BEGIN
-// 1. Soil fertility
-FracBiomassPotSF := 1;
-// 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
-IF GetCrop_StressResponse().Calibrated
-   THEN BEGIN
-        StressBiomassRelationship(GetCrop().DaysToCCini,GetCrop().GDDaysToCCini,
-               GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-               GetCrop().DaysToFlowering,GetCrop().LengthFlowering,
-               GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-               GetCrop().WPy,GetCrop().HI,
-               GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().GDDCGC,GetCrop().CDC,GetCrop().GDDCDC,
-               GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCEffectEvapLate,
-               GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetCrop().GDtranspLow,GetCrop().WP,GetCrop().dHIdt,CO2i,
-               GetCrop().Day1,GetCrop().DeterminancyLinked,GetCrop_StressResponse(),GetCrop_subkind(),GetCrop_ModeCycle(),
-               Coeffb0,Coeffb1,Coeffb2,X10,X20,X30,X40,X50,X60,X70);
-        END
-   ELSE BEGIN
-        Coeffb0 := undef_int;
-        Coeffb1 := undef_int;
-        Coeffb2 := undef_int;
-        END;
-// 1.b Soil fertility : FracBiomassPotSF
-IF ((GetManagement_FertilityStress() <> 0) AND GetCrop_StressResponse().Calibrated) THEN
-   BEGIN
-   BioLow := 100;
-   StrLow := 0;
-   REPEAT
-     BioTop := BioLow;
-     StrTop := StrLow;
-     BioLow := BioLow - 1;
-     StrLow := Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow;
-   UNTIL ((StrLow >= GetManagement_FertilityStress())
-               OR (BioLow <= 0) OR (StrLow >= 99.99));
-   IF (StrLow >= 99.99) THEN StrLow := 100;
-   IF (abs(StrLow-StrTop) < 0.001)
-      THEN FracBiomassPotSF := BioTop
-      ELSE FracBiomassPotSF := BioTop - (GetManagement_FertilityStress() - StrTop)/(StrLow-StrTop);
-   FracBiomassPotSF := FracBiomassPotSF/100;
-   END;
-
-// 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
-IF (GetSimulation_SalinityConsidered() = true)
-   THEN BEGIN
-        CCxSaltStressRelationship(GetCrop().DaysToCCini,GetCrop().GDDaysToCCini,
-               GetCrop().DaysToGermination,GetCrop().DaysToFullCanopy,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-               GetCrop().DaysToFlowering,GetCrop().LengthFlowering,GetCrop().GDDaysToFlowering,GetCrop().GDDLengthFlowering,
-               GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-               GetCrop().WPy,GetCrop().HI,
-               GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().GDDCGC,GetCrop().CDC,GetCrop().GDDCDC,
-               GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCEffectEvapLate,
-               GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetCrop().GDtranspLow,GetCrop().WP,GetCrop().dHIdt,CO2i,                     
-               GetCrop().Day1,GetCrop().DeterminancyLinked,GetCrop_subkind(),GetCrop_ModeCycle(),
-               GetCrop().CCsaltDistortion,
-               Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,X10,X20,X30,X40,X50,X60,X70,X80,X90);
-        END
-   ELSE BEGIN
-        Coeffb0Salt := undef_int;
-        Coeffb1Salt := undef_int;
-        Coeffb2Salt := undef_int;
-        END;
-END; (* RelationshipsForFertilityAndSaltStress *)
 
 
 
@@ -1188,7 +1115,7 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     GwTable_temp : rep_GwTable;
     RedCGC_temp, RedCCX_temp, RCadj_temp : ShortInt; 
     EffectStress_temp : rep_EffectStress;
-    SumGDD_temp, SumGDDFromDay1_temp : double;
+    SumGDD_temp, SumGDDFromDay1_temp, FracBiomassPotSF_temp : double;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
 
@@ -1246,7 +1173,7 @@ DNr1 := GetSimulation_FromDayNr();
 IF (GetCrop().Day1 > GetSimulation_FromDayNr()) THEN DNr1 := GetCrop().Day1;
 DNr2 := GetSimulation_ToDayNr();
 IF (GetCrop().DayN < GetSimulation_ToDayNr()) THEN DNr2 := GetCrop().DayN;
-CO2i := CO2ForSimulationPeriod(DNr1,DNr2);
+SetCO2i(CO2ForSimulationPeriod(DNr1,DNr2));
 
 // 5. seasonals stress coefficients
 bool_temp := ((GetCrop().ECemin <> undef_int) AND (GetCrop().ECemax <> undef_int)) AND (GetCrop().ECemin < GetCrop().ECemax);
@@ -1262,7 +1189,9 @@ SetStressTot_Weed(0);
 // 6. Soil fertility stress
 // Coefficients for soil fertility - biomass relationship
   // AND for Soil salinity - CCx/KsSto relationship
-RelationshipsForFertilityAndSaltStress(Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt);
+FracBiomassPotSF_temp := GetFracBiomassPotSF();
+RelationshipsForFertilityAndSaltStress(Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF_temp,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt);
+SetFracBiomassPotSF(FracBiomassPotSF_temp);
 
 // No soil fertility stress
 IF (GetManagement_FertilityStress() <= 0) THEN SetManagement_FertilityStress(0);
@@ -1299,9 +1228,9 @@ SumKcTop := SeasonalSumOfKcPot(GetCrop().DaysToCCini,GetCrop().GDDaysToCCini,
                  GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopy,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
                  GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().GDDCGC,GetCrop().CDC,GetCrop().GDDCDC,
                  GetCrop().KcTop,GetCrop().KcDecline,GetCrop().CCEffectEvapLate,
-                 GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetCrop().GDtranspLow,CO2i,
+                 GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetCrop().GDtranspLow,GetCO2i(),
                  GetCrop_ModeCycle());
-SumKcTopStress := SumKcTop * FracBiomassPotSF;
+SumKcTopStress := SumKcTop * GetFracBiomassPotSF();
 SumKci := 0;
 
 // 7. weed infestation and self-thinning of herbaceous perennial forage crops
@@ -1757,7 +1686,7 @@ IF (ANumber = undef_int) // intermediate results
         WRITE(fRun,TempString,Day1:9,Month1:9,Year1:9);
         END;
 // Climatic conditions
-WRITE(fRun,Rper:9:1,EToPer:9:1,GDDPer:9:1,CO2i:9:2);
+WRITE(fRun,Rper:9:1,EToPer:9:1,GDDPer:9:1,GetCO2i():9:2);
 // Soil water parameters
 IF (ExPer > 0)
    THEN RatioE := ROUND(100*EPer/ExPer)
@@ -2125,7 +2054,7 @@ IF Out6CompEC THEN
 IF Out7Clim THEN
    BEGIN
    Ratio1 := (Tmin + Tmax)/2;
-   WRITELN(fDaily,GetRain():9:1,GetETo():10:1,Tmin:10:1,Ratio1:10:1,Tmax:10:1,CO2i:10:2);
+   WRITELN(fDaily,GetRain():9:1,GetETo():10:1,Tmin:10:1,Ratio1:10:1,Tmax:10:1,GetCO2i():10:2);
    END;
 END; (* WriteDailyResults *)
 
@@ -2638,7 +2567,7 @@ SetTransfer_Mobilize(Mobilize_temp);
 (* 9. RUN Soil water balance and actual Canopy Cover *)
 BUDGET_module(DayNri,TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayLastCut,GetStressTot_NrD(),
               Tadj,GDDTadj,
-              GDDayi,CGCref,GDDCGCref,CO2i,CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
+              GDDayi,CGCref,GDDCGCref,GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
               Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),
               DayFraction,GDDayFraction,FracAssim,
               StressSFadjNEW,GetTransfer_Store(),GetTransfer_Mobilize(),
@@ -2663,7 +2592,7 @@ IF (GetCCiActual() > 0) THEN
 
 (* 10. Potential biomass *)
 BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
-DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,CO2i,GDDayi,CCxWitheredTpotNoS,BiomassUnlim_temp);
+DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GDDayi,CCxWitheredTpotNoS,BiomassUnlim_temp);
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
@@ -2699,8 +2628,8 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         BiomassTot_temp := GetSumWaBal_BiomassTot();
         YieldPart_temp := GetSumWaBal_YieldPart();
         TactWeedInfested_temp := GetTactWeedInfested();
-        DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,CO2i,GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
-                                 Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF,
+        DetermineBiomassAndYield(DayNri,GetETo(),Tmin,Tmax,GetCO2i(),GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
+                                 Coeffb0,Coeffb1,Coeffb2,GetFracBiomassPotSF(),
                                  Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,SumInterval,
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
