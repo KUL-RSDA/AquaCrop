@@ -2,7 +2,9 @@ module ac_run
 
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
+                    int8, &
                     int32
+
 use ac_global, only:    CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
@@ -15,15 +17,53 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
                         GetCompartment_Thickness, &
+                        GetCrop_CCEffectEvapLate, &
+                        GetCrop_CCo, &
+                        GetCrop_CCx, &
+                        GetCrop_CDC, &
+                        GetCrop_CGC, &
                         GetCrop_Day1, &
+                        GetCrop_DaysToCCini, &
+                        GetCrop_DaysToFlowering, &
+                        GetCrop_DaysToFullCanopy, &
+                        GetCrop_DaysToGermination, &
+                        GetCrop_DaysToHarvest, &
+                        GetCrop_DaysToSenescence, &
+                        GetCrop_DeterminancyLinked, &
+                        GetCrop_dHIdt, &
+                        GetCrop_GDDaysToCCini, &
+                        GetCrop_GDDaysToFlowering, &
+                        GetCrop_GDDaysToFullCanopy, &
+                        GetCrop_GDDaysToGermination, &
+                        GetCrop_GDDaysToHarvest, &
+                        GetCrop_GDDaysToSenescence, &
+                        GetCrop_GDDCDC, &
+                        GetCrop_GDDCGC, &
+                        GetCrop_GDDaysToFlowering, &
+                        GetCrop_GDDaysToHarvest, &
+                        GetCrop_GDDLengthFlowering, &
+                        GetCrop_GDtranspLow, &
+                        GetCrop_KcDecline, &
+                        GetCrop_KcTop, &
+                        GetCrop_HI, &
+                        GetCrop_LengthFlowering, &
+                        GetCrop_GDtranspLow, &
+                        getcrop_ccsaltdistortion, &
+                        GetCrop_StressResponse, &
+                        GetCrop_StressResponse_Calibrated, &
+                        GetCrop_subkind, &
+                        GetCrop_ModeCycle, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
+                        GetCrop_WP, &
+                        GetCrop_WPy, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetNrCompartments, &
                         GetPathNameProg, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_SumGDD, &
+                        GetSimulation_SalinityConsidered, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
                         GetSimulParam_Tmin, &
@@ -46,11 +86,52 @@ use ac_global, only:    CompartmentIndividual, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
-                        SplitStringInTwoParams
+                        SplitStringInTwoParams, &
+                        undef_int
 
 
-use ac_tempprocessing, only:    GetDecadeTemperatureDataSet, &
-                                GetMonthlyTemperaturedataset
+
+use ac_global, only: CompartmentIndividual, &
+                     DetermineDate, &
+                     DetermineDayNr, &
+                     DetermineSaltContent, &
+                     GetCompartment_i, &
+                     GetCompartment_Layer, &
+                     GetCompartment_Thickness, &
+                     GetCrop_CCEffectEvapLate, &
+                     GetCrop_CCo, &
+                     GetCrop_CCx, &
+                     GetCrop_CDC, &
+                     GetCrop_CGC, &
+                     GetCrop_Day1, &
+                     GetCrop_Tbase, &
+                     GetCrop_Tupper, &
+                     GetCrop_WP, &
+                     GetCrop_WPy, &
+                     GetGroundWaterFile, &
+                     GetGroundWaterFileFull, &
+                     GetManagement_FertilityStress, &
+                     GetNrCompartments, &
+                     GetPathNameProg, &
+                     GetSimulation_FromDayNr, &
+                     GetSimulation_ToDayNr, &
+                     GetSimulParam_Tmax, &
+                     GetSimulParam_Tmin, &
+                     GetSoilLayer_SAT, &
+                     GetZiAqua, &
+                     GetECiAqua, &
+                     rep_sum, &
+                     roundc, &
+                     SetCompartment_i, &
+                     SetCompartment_Theta, &
+                     SplitStringInThreeParams, &
+                     undef_int
+
+use ac_tempprocessing, only:    CCxSaltStressRelationship, &
+                                GetDecadeTemperatureDataSet, &
+                                GetMonthlyTemperaturedataset, &
+                                StressBiomassRelationship
+
 
 implicit none
 
@@ -125,8 +206,11 @@ type rep_Transfer
         !! Total mass of assimilates (ton/ha) to mobilize at start of the season
     real(dp) :: Bmobilized
         !! Cumulative sum of assimilates (ton/ha) mobilized form root system
-end type rep_Transfer 
+end type rep_Transfer
 
+
+integer :: fRun  ! file handle
+integer :: fIrri  ! file handle
 type(rep_GwTable) :: GwTable
 type(rep_plotPar) :: PlotVarCrop
 type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
@@ -137,11 +221,197 @@ type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 
 integer(int32) :: DayNri
 
+real(dp) :: CO2i
+real(dp) :: FracBiomassPotSF
+
 contains
 
 
+subroutine open_file(fhandle, filename, mode)
+    !! Opens a file in the given mode.
+    integer, intent(out) :: fhandle
+        !! file handle to be used for the open file
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    logical :: file_exists
+
+    inquire(file=filename, exist=file_exists)
+
+    if (mode == 'r') then
+        open(newunit=fhandle, file=trim(filename), status='old', action='read')
+    elseif (mode == 'a') then
+        if (file_exists) then
+            open(newunit=fhandle, file=trim(filename), status='old', &
+                 position='append', action='write')
+        else
+            open(newunit=fhandle, file=trim(filename), status='replace', &
+                 action='write')
+        end if
+    elseif (mode == 'w') then
+        open(newunit=fhandle, file=trim(filename), status='new', action='write')
+    end if
+end subroutine open_file
+
+
+subroutine write_file(fhandle, line, advance)
+    !! Writes one line to a file.
+    integer, intent(in) :: fhandle
+        !! file handle of an already-opened file
+    character(len=*), intent(in) :: line
+        !! line to write to the file
+    logical, intent(in) :: advance
+        !! whether or not to append a newline character
+
+    character(len=:), allocatable :: advance_str
+
+    if (advance) then
+        advance_str = 'yes'
+    else
+        advance_str = 'no'
+    end if
+
+    write(fhandle, '(a)', advance=advance_str) line
+end subroutine write_file
+
+
+function read_file(fhandle) result(line)
+    !! Returns the next line read from the given file.
+    integer, intent(in) :: fhandle
+        !! file handle of an already-opened file
+    character(len=:), allocatable :: line
+        !! string which will contain the content of the next line
+
+    integer, parameter :: length = 1024  ! max. no of characters
+    integer :: status
+
+    allocate(character(len=length) :: line)
+    read(fhandle, '(a)', iostat=status) line
+    line = trim(line)
+end function read_file
+
+
+function file_eof(fhandle) result(eof)
+    !! Returns whether we have reached the end of the file or not.
+    !!
+    !! This is done by inquiring about the record length (recl)
+    !! and checking whether it is equal to -1. A similar approach
+    !! with the IO status (iostat) did not work, i.e. the status
+    !! always appears to be 0, even at the end of the file.
+    integer, intent(in) :: fhandle
+        !! file handle of an already-opened file
+    logical :: eof
+
+    integer :: recl
+
+    inquire(unit=fhandle, recl=recl)
+    eof = recl == -1
+end function file_eof
+
 
 !! Section for Getters and Setters for global variables
+
+! fRun
+
+subroutine fRun_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fRun' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fRun, filename, mode)
+end subroutine fRun_open
+
+
+subroutine fRun_write(line, advance_in)
+    !! Writes the given line to the fRun file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fRun, line, advance)
+end subroutine fRun_write
+
+
+subroutine fRun_close()
+    close(fRun)
+end subroutine fRun_close
+
+
+! fIrri
+
+subroutine fIrri_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fIrri' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fIrri, filename, mode)
+end subroutine fIrri_open
+
+
+function fIrri_read() result(line)
+    !! Returns the next line read from the 'fIrri' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fIrri)
+end function fIrri_read
+
+
+function fIrri_eof() result(eof)
+    !! Returns whether the end of the 'fIrri' file has been reached.
+    logical :: eof
+
+    eof = file_eof(fIrri)
+end function fIrri_eof
+
+
+subroutine fIrri_close()
+    close(fIrri)
+end subroutine fIrri_close
+
+! FracBiomass
+
+real(dp) function GetFracBiomassPotSF()
+    !! Getter for the "FracBiomassPotSF" global variable.
+
+    GetFracBiomassPotSF = FracBiomassPotSF
+end function GetFracBiomassPotSF
+
+subroutine SetFracBiomassPotSF(FracBiomassPotSF_in)
+    !! Setter for the "FracBiomassPotSF" global variable.
+    real(dp), intent(in) :: FracBiomassPotSF_in
+    
+    FracBiomassPotSF = FracBiomassPotSF_in
+end subroutine SetFracBiomassPotSF
+
+! CO2i
+
+real(dp) function GetCO2i()
+    !! Getter for the "CO2i" global variable.
+
+    GetCO2i = CO2i
+end function GetCO2i
+
+subroutine SetCO2i(CO2i_in)
+    !! Setter for the "CO2i" global variable.
+    real(dp), intent(in) :: CO2i_in
+    
+    CO2i = CO2i_in
+end subroutine SetCO2i
 
 ! GwTable
 
@@ -1009,6 +1279,7 @@ subroutine GetGwtSet(DayNrIN, GwT)
 end subroutine GetGwtSet
 
 
+
 subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
     real(dp), intent(inout) :: SumGDDtillDay
     real(dp), intent(inout) :: SumGDDtillDayM1
@@ -1163,5 +1434,121 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
                                       GetSimulParam_GDDMethod())
     end if
 end subroutine GetSumGDDBeforeSimulation 
+
+
+
+
+subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
+                        FracBiomassPotSF, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+    real(dp), intent(inout) :: Coeffb0
+    real(dp), intent(inout) :: Coeffb1
+    real(dp), intent(inout) :: Coeffb2
+    real(dp), intent(inout) :: FracBiomassPotSF
+    real(dp), intent(inout) :: Coeffb0Salt
+    real(dp), intent(inout) :: Coeffb1Salt
+    real(dp), intent(inout) :: Coeffb2Salt
+
+    real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
+    integer(int8) :: BioTop, BioLow
+    real(dp) :: StrTop, StrLow
+
+    ! 1. Soil fertility
+    FracBiomassPotSF = 1._dp
+    ! 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
+    if (GetCrop_StressResponse_Calibrated()) then
+        call StressBiomassRelationship(GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), &
+                                  GetCrop_DaysToGermination(), &
+                                  GetCrop_DaysToFullCanopy(), &
+                                  GetCrop_DaysToSenescence(), &
+                                  GetCrop_DaysToHarvest(), &
+                                  GetCrop_DaysToFlowering(), &
+                                  GetCrop_LengthFlowering(), &
+                                  GetCrop_GDDaysToGermination(), &
+                                  GetCrop_GDDaysToFullCanopy(), &
+                                  GetCrop_GDDaysToSenescence(), &
+                                  GetCrop_GDDaysToHarvest(), &
+                                  GetCrop_WPy(), GetCrop_HI(), &
+                                  GetCrop_CCo(), GetCrop_CCx(), &
+                                  GetCrop_CGC(), GetCrop_GDDCGC(), &
+                                  GetCrop_CDC(), GetCrop_GDDCDC(), &
+                                  GetCrop_KcTop(), GetCrop_KcDecline(), &
+                                  real(GetCrop_CCEffectEvapLate(), kind= dp), &
+                                  GetCrop_Tbase(), &
+                                  GetCrop_Tupper(), GetSimulParam_Tmin(), &
+                                  GetSimulParam_Tmax(), GetCrop_GDtranspLow(), &
+                                  GetCrop_WP(), GetCrop_dHIdt(), GetCO2i(), &
+                                  GetCrop_Day1(), GetCrop_DeterminancyLinked(), &
+                                  GetCrop_StressResponse(),GetCrop_subkind(), &
+                                  GetCrop_ModeCycle(), Coeffb0, Coeffb1, &
+                                  Coeffb2, X10, X20, X30, X40, X50, X60, X70)
+    else
+        Coeffb0 = undef_int
+        Coeffb1 = undef_int
+        Coeffb2 = undef_int
+    end if
+    ! 1.b Soil fertility : FracBiomassPotSF
+    if ((GetManagement_FertilityStress() /= 0._dp) .and. &
+                                     GetCrop_StressResponse_Calibrated()) then
+        BioLow = 100_int8
+        StrLow = 0._dp
+        loop: do
+            BioTop = BioLow
+            StrTop = StrLow
+            BioLow = BioLow - 1_int8
+            StrLow = Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow
+            if (((StrLow >= GetManagement_FertilityStress()) &
+                         .or. (BioLow <= 0) .or. (StrLow >= 99.99_dp))) exit loop
+        end do loop
+        if (StrLow >= 99.99_dp) then
+            StrLow = 100._dp
+        end if
+        if (abs(StrLow-StrTop) < 0.001_dp) then
+            FracBiomassPotSF = BioTop
+        else
+            FracBiomassPotSF = BioTop - (GetManagement_FertilityStress() &
+                                                    - StrTop)/(StrLow-StrTop)
+        end if
+    FracBiomassPotSF = FracBiomassPotSF/100._dp
+    end if
+
+    ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
+    if (GetSimulation_SalinityConsidered() .eqv. .true.) then
+        call CCxSaltStressRelationship(GetCrop_DaysToCCini(), &
+                                  GetCrop_GDDaysToCCini(), &
+                                  GetCrop_DaysToGermination(), &
+                                  GetCrop_DaysToFullCanopy(), &
+                                  GetCrop_DaysToSenescence(), &
+                                  GetCrop_DaysToHarvest(), &
+                                  GetCrop_DaysToFlowering(), & 
+                                  GetCrop_LengthFlowering(), &
+                                  GetCrop_GDDaysToFlowering(), & 
+                                  GetCrop_GDDLengthFlowering(), &
+                                  GetCrop_GDDaysToGermination(), &
+                                  GetCrop_GDDaysToFullCanopy(), &
+                                  GetCrop_GDDaysToSenescence(), &
+                                  GetCrop_GDDaysToHarvest(), &
+                                  GetCrop_WPy(), GetCrop_HI(), &
+                                  GetCrop_CCo(), GetCrop_CCx(), &
+                                  GetCrop_CGC(), GetCrop_GDDCGC(), &
+                                  GetCrop_CDC(), GetCrop_GDDCDC(), &
+                                  GetCrop_KcTop(), GetCrop_KcDecline(), & 
+                                  real(GetCrop_CCEffectEvapLate(), kind=dp),  &
+                                  GetCrop_Tbase(), GetCrop_Tupper(), &
+                                  GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+                                  GetCrop_GDtranspLow(), GetCrop_WP(), &
+                                  GetCrop_dHIdt(), GetCO2i(), GetCrop_Day1(), &
+                                  GetCrop_DeterminancyLinked(), &
+                                  GetCrop_subkind(), GetCrop_ModeCycle(), &
+                                  GetCrop_CCsaltDistortion(),Coeffb0Salt, &
+                                  Coeffb1Salt, Coeffb2Salt, X10, X20, X30, &
+                                  X40, X50, X60, X70, X80, X90)
+    else
+        Coeffb0Salt = undef_int
+        Coeffb1Salt = undef_int
+        Coeffb2Salt = undef_int
+    end if
+end subroutine RelationshipsForFertilityAndSaltStress
+
+
 
 end module ac_run

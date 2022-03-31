@@ -1,7 +1,9 @@
 module ac_interface_simul
 use ac_kinds, only: dp, &
+                    int8, &
                     int32
 use ac_simul, only: AdjustpSenescenceToETo, &
+                    BUDGET_module, &
                     DetermineCCi, &
                     DetermineCCiGDD, &
                     ExtractWaterFromEvapLayer
@@ -222,6 +224,73 @@ subroutine DetermineCCi_wrap(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
     NoMoreCrop = NoMoreCrop_f
     CGCAdjustmentAfterCutting = CGCAdjustmentAfterCutting_f
 end subroutine DetermineCCi_wrap
+
+
+subroutine BUDGET_module_wrap(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
+                         SumInterval, DayLastCut, NrDayGrow, Tadj, GDDTadj, &
+                         GDDayi, CGCref, GDDCGCref, CO2i, CCxTotal, CCoTotal, &
+                         CDCTotal, GDDCDCTotal, SumGDDadjCC, Coeffb0Salt, &
+                         Coeffb1Salt, Coeffb2Salt, StressTotSaltPrev, &
+                         DayFraction, GDDayFraction, FracAssim, &
+                         StressSFadjNEW, StorageON, MobilizationON, &
+                         StressLeaf, StressSenescence, TimeSenescence, &
+                         NoMoreCrop, CGCadjustmentAfterCutting, TESTVAL)
+    integer(int32), intent(in) :: dayi
+    integer(int32), intent(in) :: TargetTimeVal
+    integer(int32), intent(in) :: TargetDepthVal
+    integer(int32), intent(in) :: VirtualTimeCC
+    integer(int32), intent(in) :: SumInterval
+    integer(int32), intent(in) :: DayLastCut
+    integer(int32), intent(in) :: NrDayGrow
+    integer(int32), intent(in) :: Tadj
+    integer(int32), intent(in) :: GDDTadj
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: CGCref
+    real(dp), intent(in) :: GDDCGCref
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: CCxTotal
+    real(dp), intent(in) :: CCoTotal
+    real(dp), intent(in) :: CDCTotal
+    real(dp), intent(in) :: GDDCDCTotal
+    real(dp), intent(in) :: SumGDDadjCC
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: StressTotSaltPrev
+    real(dp), intent(in) :: DayFraction
+    real(dp), intent(in) :: GDDayFraction
+    real(dp), intent(in) :: FracAssim
+    integer(int8), intent(in) :: StressSFadjNEW
+    logical(1), intent(in) :: StorageON
+    logical(1), intent(in) :: MobilizationON
+    real(dp), intent(inout) :: StressLeaf
+    real(dp), intent(inout) :: StressSenescence
+    real(dp), intent(inout) :: TimeSenescence
+    logical(1), intent(inout) :: NoMoreCrop
+    logical(1), intent(inout) :: CGCadjustmentAfterCutting
+    real(dp), intent(inout) :: TESTVAL
+
+    logical :: StorageON_f, MobilizationON_f, &
+               NoMoreCrop_f, CGCadjustmentAfterCutting_f
+
+    StorageON_f = StorageON
+    MobilizationON_f = MobilizationON
+    NoMoreCrop_f = NoMoreCrop
+    CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting
+
+    call BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
+                         SumInterval, DayLastCut, NrDayGrow, Tadj, GDDTadj, &
+                         GDDayi, CGCref, GDDCGCref, CO2i, CCxTotal, CCoTotal, &
+                         CDCTotal, GDDCDCTotal, SumGDDadjCC, Coeffb0Salt, &
+                         Coeffb1Salt, Coeffb2Salt, StressTotSaltPrev, &
+                         DayFraction, GDDayFraction, FracAssim, &
+                         StressSFadjNEW, StorageON_f, MobilizationON_f, &
+                         StressLeaf, StressSenescence, TimeSenescence, &
+                         NoMoreCrop_f, CGCadjustmentAfterCutting_f, TESTVAL)
+
+    NoMoreCrop = NoMoreCrop_f
+    CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_f
+end subroutine BUDGET_module_wrap
 
 
 end module ac_interface_simul

@@ -4758,6 +4758,12 @@ function GetTmax() : double;
 procedure SetTmax(constref Tmax_in : double);
     external 'aquacrop' name '__ac_global_MOD_settmax';
 
+function GetSurf0() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsurf0';
+
+procedure SetSurf0(constref Surf0_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsurf0';
+
 
 implementation
 
