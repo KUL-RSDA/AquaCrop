@@ -1051,33 +1051,33 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
 
     VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
     if (VirtualDay < 0) then
-        Code = 0 ! before cropping period
+        Code = 0_int8 ! before cropping period
     else
         if (VirtualDay < GetCrop_DaysToGermination()) then
-            Code = 1 ! sown --> emergence OR transplant recovering
+            Code = 1_int8 ! sown --> emergence OR transplant recovering
         else
-            Code = 2 ! vegetative development
+            Code = 2_int8 ! vegetative development
             if ((GetCrop_subkind() == subkind_Grain) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
                 if (VirtualDay < (GetCrop_DaysToFlowering() + &
                                   GetCrop_LengthFlowering())) then
-                    Code = 3 ! flowering
+                    Code = 3_int8 ! flowering
                 else
-                    Code = 4 ! yield formation
+                    Code = 4_int8 ! yield formation
                 end if
             end if
             if ((GetCrop_subkind() == subkind_Tuber) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
-                Code = 4 ! yield formation
+                Code = 4_int8 ! yield formation
             end if
             if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
-                (CCiPrev <= 0)) then
-                Code = Undef_int  ! no growth stage
+                (CCiPrev < epsilon(0._dp))) then
+                Code = int(undef_int, kind=int8)  ! no growth stage
             end if
             if (VirtualDay >= &
                 (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
                  GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
-                Code = 0 ! after cropping period
+                Code = 0_int8 ! after cropping period
             end if
         end if
     end if
