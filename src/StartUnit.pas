@@ -60,52 +60,6 @@ IF (FileExists(FullFileName) = true) THEN
 END; (* GetTimeAggregationResults *)
 
 
-PROCEDURE GetRequestDailyResults(VAR Out1Wabal,Out2Crop,Out3Prof,Out4Salt,
-                                     Out5CompWC,Out6CompEC,Out7Clim,OutDaily : BOOLEAN);
-VAR FullFileName,TempString : string;
-    f0 : TextFile;
-    n,i : INTEGER;
-
-BEGIN
-Out1Wabal := false;
-Out2Crop := false;
-Out3Prof := false;
-Out4Salt := false;
-Out5CompWC := false;
-Out6CompEC := false;
-Out7Clim := false;
-
-FullFileName := CONCAT(GetPathNameSimul(),'DailyResults.SIM');
-IF (FileExists(FullFileName) = true) THEN
-   BEGIN
-   Assign(f0,FullFileName);
-   Reset(f0);
-   WHILE NOT Eof(f0) DO
-     BEGIN
-     READLN(f0,TempString);
-     n := Length(TempString);
-     IF (n > 0) THEN
-        BEGIN
-        i := 1;
-        While ((TempString[i] = ' ') AND (i < n)) DO i := i + 1;
-        IF (TempString[i] = '1') THEN Out1Wabal := true;
-        IF (TempString[i] = '2') THEN Out2Crop := true;
-        IF (TempString[i] = '3') THEN Out3Prof := true;
-        IF (TempString[i] = '4') THEN Out4Salt := true;
-        IF (TempString[i] = '5') THEN Out5CompWC := true;
-        IF (TempString[i] = '6') THEN Out6CompEC := true;
-        IF (TempString[i] = '7') THEN Out7Clim := true;
-        END;
-     END;
-   Close(f0);
-   END;
-IF ((Out1Wabal = true) OR (Out2Crop = true) OR (Out3Prof = true) OR
-   (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true) )
-   THEN OutDaily := true
-   ELSE OutDaily := false;
-END; (* GetRequestDailyResults *)
-
-
 PROCEDURE GetRequestParticularResults(VAR Part1Mult,Part2Eval : BOOLEAN);
 VAR FullFileName,TempString : string;
     f0 : TextFile;
