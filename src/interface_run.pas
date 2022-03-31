@@ -328,7 +328,6 @@ function GetCO2i() : double;
 procedure SetCO2i(constref CO2i_in : double);
     external 'aquacrop' name '__ac_run_MOD_setco2i';
 
-
 procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb0 : double;
                     VAR Coeffb1 : double;
@@ -339,7 +338,15 @@ procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb2Salt : double);
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
 
+procedure DetermineGrowthStage(
+                    constref Dayi : LongInt;
+                    constref CCiPrev : double;
+                    VAR Code : ShortInt);
+        external 'aquacrop' name '__ac_run_MOD_determinegrowthstage';
+
+
 implementation
+
 
 function GetGwTable() : rep_GwTable;
 begin;

@@ -1070,40 +1070,6 @@ GetNextHarvest;
 END; (* OpenHarvestInfo *)
 
 
-// extra for output of daily results  -----------------------------
-PROCEDURE DetermineGrowthStage(Dayi : LongInt;
-                               CCiPrev : Double;
-                               VAR Code : ShortInt);
-VAR VirtualDay : INTEGER;
-BEGIN
-VirtualDay := Dayi - GetSimulation_DelayedDays() - GetCrop().Day1;
-IF (VirtualDay < 0)
-   THEN Code := 0 // before cropping period
-   ELSE BEGIN
-        IF (VirtualDay < GetCrop().DaysToGermination)
-           THEN Code := 1 //sown --> emergence OR transplant recovering
-           ELSE BEGIN
-                Code := 2; // vegetative development
-                IF ((GetCrop_subkind() = Grain) AND (VirtualDay >= GetCrop().DaysToFlowering))
-                   THEN BEGIN
-                        IF (VirtualDay < (GetCrop().DaysToFlowering + GetCrop().LengthFlowering))
-                           THEN Code := 3 // flowering
-                           ELSE Code := 4; // yield formation
-                        END;
-                IF ((GetCrop_subkind() = Tuber) AND (VirtualDay >= GetCrop().DaysToFlowering))
-                   THEN Code := 4; // yield formation
-                IF ((VirtualDay > GetCrop().DaysToGermination) AND (CCiPrev <= 0))
-                   THEN Code := Undef_int;  // no growth stage
-                IF (VirtualDay >= (GetCrop_Length_i(1)+GetCrop_Length_i(2)+GetCrop_Length_i(3)+GetCrop_Length_i(4)))
-                   THEN Code := 0; // after cropping period
-                END;
-        END;
-END; (* DetermineGrowthStage *)
-
-
-
-
-
 PROCEDURE InitializeSimulationRun;
 VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     SumGDDforDayCC : double;
