@@ -60,38 +60,6 @@ IF (FileExists(FullFileName) = true) THEN
 END; (* GetTimeAggregationResults *)
 
 
-PROCEDURE GetRequestParticularResults(VAR Part1Mult,Part2Eval : BOOLEAN);
-VAR FullFileName,TempString : string;
-    f0 : TextFile;
-    n,i : INTEGER;
-
-BEGIN
-Part1Mult := false;
-Part2Eval := false;
-
-FullFileName := CONCAT(GetPathNameSimul(),'ParticularResults.SIM');
-IF (FileExists(FullFileName) = true) THEN
-   BEGIN
-   Assign(f0,FullFileName);
-   Reset(f0);
-   WHILE NOT Eof(f0) DO
-     BEGIN
-     READLN(f0,TempString);
-     n := Length(TempString);
-     IF (n > 0) THEN
-        BEGIN
-        i := 1;
-        While ((TempString[i] = ' ') AND (i < n)) DO i := i + 1;
-        IF (TempString[i] = '1') THEN Part1Mult := true;
-        IF (TempString[i] = '2') THEN Part2Eval := true;
-        END;
-     END;
-   Close(f0);
-   END;
-END; (* GetRequestParticularResults *)
-
-
-
 PROCEDURE PrepareReport(OutputAggregate : ShortInt;
                         Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
                         Part1Mult,Part2Eval : BOOLEAN);
