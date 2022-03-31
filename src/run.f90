@@ -26,10 +26,15 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulation_SumGDD, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
+                        GetSimulParam_Tmin, &
+                        GetSimulParam_Tmax, &
                         GetSoilLayer_SAT, &
+                        GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
                         GetTemperatureRecord_FromDayNr, &
+                        GetTmax, &
+                        GetTmin, &
                         GetZiAqua, &
                         GetECiAqua, &
                         rep_DayEventDbl, &
@@ -38,11 +43,14 @@ use ac_global, only:    CompartmentIndividual, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
                         SetSimulation_SumGDD, &
+                        SetTmax, &
+                        SetTmin, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams
 
 
-use ac_tempprocessing, only:    GetDecadeTemperatureDataSet
+use ac_tempprocessing, only:    GetDecadeTemperatureDataSet, &
+                                GetMonthlyTemperaturedataset
 
 implicit none
 
@@ -126,6 +134,8 @@ type(rep_StressTot) :: StressTot
 type(repCutInfoRecord) :: CutInfoRecord1, CutInfoRecord2
 type(rep_Transfer) :: Transfer
 type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+
+integer(int32) :: DayNri
 
 contains
 
@@ -781,6 +791,17 @@ subroutine SetTmaxDataSet_Param(i, Param_in)
     TmaxDataSet(i)%Param = Param_in
 end subroutine SetTmaxDataSet_Param
 
+integer(int32) function GetDayNri()
+
+    GetDayNri = DayNri
+end function GetDayNri
+
+subroutine SetDayNri(DayNri_in)
+    integer(int32), intent(in) :: DayNri_in
+
+    DayNri = DayNri_in
+end subroutine SetDayNri
+
 ! END global variables section
 
 
@@ -986,5 +1007,161 @@ subroutine GetGwtSet(DayNrIN, GwT)
     end if ! more than 1 observation
     close(f0)
 end subroutine GetGwtSet
+
+
+subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
+    real(dp), intent(inout) :: SumGDDtillDay
+    real(dp), intent(inout) :: SumGDDtillDayM1
+
+    character(len=:), allocatable :: totalname
+    integer :: fTemp
+    integer(int32) :: i
+    character(len=255) :: StringREAD
+    integer(int32) :: DayX
+    real(dp) :: Tmin_temp, Tmax_temp
+    type(rep_DayEventDbl), dimension(31) :: TmaxDataSet_temp, &
+                                            TminDataSet_temp
+
+    call SetSimulation_SumGDD(0._dp)
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = GetTemperatureFilefull()
+
+        if (FileExists(totalname)) then
+            select case (GetTemperatureRecord_DataType())
+            case (datatype_daily)
+                open(newunit=fTemp, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fTemp, *) ! description
+                read(fTemp, *) ! time step
+                read(fTemp, *) ! day
+                read(fTemp, *) ! month
+                read(fTemp, *) ! year
+                read(fTemp, *)
+                read(fTemp, *)
+                read(fTemp, *)
+                ! days before first day of simulation (= DayNri)
+                do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1) 
+                    if (i < GetCrop_Day1()) then
+                        read(fTemp, *)
+                    else
+                        read(fTemp, '(a)') StringREAD
+                        Tmin_temp = GetTmin()
+                        Tmax_temp = GetTmax()
+                        call SplitStringInTwoParams(StringREAD, Tmin_temp, Tmax_temp)
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                        call SetSimulation_SumGDD(GetSimulation_SumGDD() &
+                                + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                             GetTmin(), GetTmax(), &
+                                             GetSimulParam_GDDMethod()))
+                    end if
+                end do
+                close(fTemp)
+
+            case (datatype_decadely)
+                DayX = GetCrop_Day1()
+                ! first day of cropping
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetDecadeTemperatureDataSet(DayX, TminDataSet_temp, &
+                                                 TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= DayX) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+                call SetSimulation_SumGDD(DegreesDay(GetCrop_Tbase(), &
+                                GetCrop_Tupper(), GetTmin(), GetTmax(), &
+                                GetSimulParam_GDDMethod()))
+                ! next days
+                do while (DayX < DayNri) 
+                    DayX = DayX + 1
+                    if (DayX > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetDecadeTemperatureDataSet(DayX, &
+                                TminDataSet_temp, TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                        i = 0
+                    end if
+                    i = i+1
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                    call SetSimulation_SumGDD(GetSimulation_SumGDD() &
+                                + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                             GetTmin(), GetTmax(), &
+                                             GetSimulParam_GDDMethod()))
+                end do
+            case (datatype_monthly)
+                DayX = GetCrop_Day1()
+                ! first day of cropping
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetMonthlyTemperatureDataSet(DayX, TminDataSet_temp, &
+                                                  TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= DayX) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+                call SetSimulation_SumGDD(&
+                        DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                   GetTmin(), GetTmax(), &
+                                   GetSimulParam_GDDMethod()))
+                ! next days
+                do while (DayX < DayNri) 
+                    DayX = DayX + 1
+                    if (DayX > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetMonthlyTemperatureDataSet(&
+                                DayX, TminDataSet_temp, TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                        i = 0
+                    end if
+                    i = i+1
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                    call SetSimulation_SumGDD(GetSimulation_SumGDD() &
+                            + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                         GetTmin(), GetTmax(), &
+                                         GetSimulParam_GDDMethod()))
+                end do
+            end select
+        end if
+    end if
+    if (GetTemperatureFile() == '(None)') then
+        call SetSimulation_SumGDD(DegreesDay(&
+                                 GetCrop_Tbase(), GetCrop_Tupper(), &
+                                 GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+                                 GetSimulParam_GDDMethod()) &
+                                 * (DayNri - GetCrop_Day1() + 1))
+        if (GetSimulation_SumGDD() < 0._dp) then
+            call SetSimulation_SumGDD(0._dp)
+        end if
+        SumGDDtillDay = GetSimulation_SumGDD()
+        SumGDDtillDayM1 = DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                     GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+                                     GetSimulParam_GDDMethod()) &
+                          * (DayNri - GetCrop_Day1())
+        if (SumGDDtillDayM1 < 0._dp) then
+            SumGDDtillDayM1 = 0._dp
+        end if
+    else
+        SumGDDtillDay = GetSimulation_SumGDD()
+        SumGDDtillDayM1 = SumGDDtillDay &
+                         - DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                      GetTmin(), GetTmax(), &
+                                      GetSimulParam_GDDMethod())
+    end if
+end subroutine GetSumGDDBeforeSimulation 
 
 end module ac_run

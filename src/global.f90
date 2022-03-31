@@ -1023,6 +1023,8 @@ real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Tact ! mm/day
 real(dp) :: Tpot ! mm/day
 real(dp) :: TactWeedInfested !mm/day
+real(dp) :: Tmax ! degC
+real(dp) :: Tmin ! degC
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
@@ -14975,6 +14977,34 @@ subroutine SetTactWeedInfested(TactWeedInfested_in)
 
     TactWeedInfested = TactWeedInfested_in
 end subroutine SetTactWeedInfested
+
+real(dp) function GetTmin()
+    !! Getter for the "Tmin" global variable.
+
+    GetTmin = Tmin
+end function GetTmin
+
+subroutine SetTmin(Tmin_in)
+    !! Setter for the "Tmin" global variable.
+    real(dp), intent(in) :: Tmin_in
+
+    Tmin = Tmin_in
+end subroutine SetTmin
+
+real(dp) function GetTmax()
+    !! Getter for the "Tmax" global variable.
+
+    GetTmax = Tmax
+end function GetTmax
+
+subroutine SetTmax(Tmax_in)
+    !! Setter for the "Tmax" global variable.
+    real(dp), intent(in) :: Tmax_in
+
+    Tmax = Tmax_in
+end subroutine SetTmax
+
+
 
 
 end module ac_global

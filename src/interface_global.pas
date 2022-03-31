@@ -4746,6 +4746,18 @@ procedure CheckForKeepSWC_wrap(
                     var ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
 
+function GetTmin() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettmin';
+
+procedure SetTmin(constref Tmin_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settmax';
+
+function GetTmax() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettmax';
+
+procedure SetTmax(constref Tmax_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settmax';
+
 
 implementation
 

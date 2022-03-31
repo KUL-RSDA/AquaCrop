@@ -361,6 +361,15 @@ procedure SetTmaxDataSet_Param(constref i : integer;
                                constref Param_in : double);
     external 'aquacrop' name '__ac_run_MOD_settmaxdataset_param';
 
+procedure GetSumGDDBeforeSimulation(var SumGDDtillDay, SumGDDtillDayM1 : double);
+    external 'aquacrop' name '__ac_run_MOD_getsumgddbeforesimulation';
+
+function GetDayNri() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getdaynri';
+
+procedure SetDayNri(constref DayNri_in : integer);
+    external 'aquacrop' name '__ac_run_MOD_setdaynri';
+
 
 implementation
 
