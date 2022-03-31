@@ -29,7 +29,7 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 
 var  fDaily, fHarvest, fEval : text;
-     fEToSIM,fRainSIM,fTempSIM,fIrri,fCuts,fObs : text;
+     fEToSIM,fRainSIM,fTempSIM,fCuts,fObs : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
@@ -908,7 +908,7 @@ IF (GetTemperatureFile() = '(None)')
 END; (* GetSumGDDBeforeSimulation *)
 
 
-PROCEDURE OpenIrrigationFile(VAR fIrri : text);
+PROCEDURE OpenIrrigationFile();
 VAR totalname : string;
     StringREAD : ShortString;
     i,DNr : INTEGER;
@@ -916,6 +916,7 @@ VAR totalname : string;
     VersionNr : double;
     FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
     IrriECw_temp : double;
+    TempString : string;
 
 BEGIN
 IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
@@ -923,25 +924,26 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
    IF (GetIrriFile() <> '(None)')
       THEN totalname := GetIrriFileFull()
       ELSE totalname := CONCAT(GetPathNameProg(),'IrriSchedule.AqC');
-   Assign(fIrri,totalname);
-   Reset(fIrri);
-   READLN(fIrri); // description
-   READLN(fIrri,VersionNr); // AquaCrop version
+   fIrri_open(totalname, 'r');
+   TempString := fIrri_read(); // description
+   TempString := fIrri_read(); // AquaCrop version
+   ReadStr(TempString, VersionNr);
+
    IF (ROUND(VersionNr*10) < 32)
       THEN GlobalIrriECw := true
       ELSE GlobalIrriECw := false;
-   FOR i := 1 TO 6 DO READLN(fIrri);  // irrigation info (already loaded)
+   FOR i := 1 TO 6 DO TempString := fIrri_read();  // irrigation info (already loaded)
    CASE GetIrriMode() OF
         Manual   : BEGIN
                    IF (GetIrriFirstDayNr() = undef_int)
                       THEN DNr := DayNri - GetCrop().Day1 + 1
                       ELSE DNr := DayNri - GetIrriFirstDayNr() + 1;
                    REPEAT
-                   IF Eof(fIrri)
+                   IF fIrri_eof()
                       THEN SetIrriInfoRecord1_NoMoreInfo(true)
                       ELSE BEGIN
                            SetIrriInfoRecord1_NoMoreInfo(false);
-                           READLN(fIrri,StringREAD);
+                           StringREAD := fIrri_read();
                            IF GlobalIrriECw
                               THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
                               ELSE BEGIN
@@ -955,36 +957,40 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
                    UNTIL ((GetIrriInfoRecord1_NoMoreInfo()) OR (GetIrriInfoRecord1_TimeInfo() >= DNr));
                    END;
         Generate : BEGIN
-                   FOR i := 1 TO 2 DO READLN(fIrri); // time and depth criterion (already loaded)
+                   FOR i := 1 TO 2 DO TempString := fIrri_read(); // time and depth criterion (already loaded)
                    SetIrriInfoRecord1_NoMoreInfo(false);
                    IF (ROUND(VersionNr*10) < 32)
                       THEN BEGIN
-                           READLN(fIrri,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
+                           TempString := fIrri_read();
+                           ReadStr(TempString, FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                            SetIrriInfoRecord1_FromDay(FromDay_temp);
                            SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
                            SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
                            END
                       ELSE BEGIN
-                           READLN(fIrri,FromDay_temp,TimeInfo_temp,           
-                                        DepthInfo_temp,IrriECw_temp);
+                           TempString := fIrri_read();
+                           ReadStr(TempString,FromDay_temp,TimeInfo_temp,
+                                   DepthInfo_temp,IrriECw_temp);
                            SetIrriInfoRecord1_FromDay(FromDay_temp);
                            SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
                            SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
                            SetSimulation_IrriECw(IrriECw_temp);
                            END;
-                   IF Eof(fIrri)
+                   IF fIrri_eof()
                       THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
                       ELSE BEGIN
                            SetIrriInfoRecord2_NoMoreInfo(false);
                            IF GlobalIrriECw
                              THEN BEGIN
-                                  READLN(fIrri,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
+                                  TempString := fIrri_read();
+                                  ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                                   SetIrriInfoRecord2_FromDay(FromDay_temp);
                                   SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
                                   SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
                                   END
                              ELSE BEGIN
-                                  READLN(fIrri,FromDay_temp,TimeInfo_temp,
+                                  TempString := fIrri_read();
+                                  ReadStr(TempString,FromDay_temp,TimeInfo_temp,
                                            DepthInfo_temp,IrriEcw_temp);
                                   SetIrriInfoRecord2_FromDay(FromDay_temp);
                                   SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
@@ -1406,7 +1412,7 @@ SumGDD := 0;
 // 11. Irrigation
 IrriInterval := 1;
 GlobalIrriECw := true; // In Versions < 3.2 - Irrigation water quality is not yet recorded on file
-OpenIrrigationFile(fIrri);
+OpenIrrigationFile();
 
 
 // 12. Adjusted time when starting as regrowth
@@ -2321,11 +2327,11 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
             IF (GetIrriInfoRecord1_TimeInfo() = DNr) THEN
                BEGIN
                IrriManual := GetIrriInfoRecord1_DepthInfo();
-               IF Eof(fIrri)
+               IF fIrri_eof()
                   THEN SetIrriInfoRecord1_NoMoreInfo(true)
                   ELSE BEGIN
                        SetIrriInfoRecord1_NoMoreInfo(false);
-                       READLN(fIrri,StringREAD);
+                       StringREAD := fIrri_read();
                        IF GlobalIrriECw // Versions before 3.2
                           THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
                           ELSE BEGIN
@@ -2345,6 +2351,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     PROCEDURE GetIrriParam;
     VAR DayInSeason : Integer;
         IrriECw_temp : double;
+        TempString : string;
 
     BEGIN
     TargetTimeVal := -999;
@@ -2359,19 +2366,21 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
        IF (DayInSeason > GetIrriInfoRecord1_ToDay()) THEN // read next line
           BEGIN
           SetIrriInfoRecord1(GetIrriInfoRecord2());
-          IF Eof(fIrri)
+          IF fIrri_eof()
              THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
              ELSE BEGIN
                   SetIrriInfoRecord2_NoMoreInfo(false);
                   IF GlobalIrriECw // Versions before 3.2
                      THEN BEGIN
-                          READLN(fIrri,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
+                          TempString := fIrri_read();
+                          ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
                           SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
                           SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
                           END
                      ELSE BEGIN
-                          READLN(fIrri,FromDay_temp,TimeInfo_temp, DepthInfo_temp,IrriEcw_temp);
+                          TempString := fIrri_read();
+                          ReadStr(TempString,FromDay_temp,TimeInfo_temp, DepthInfo_temp,IrriEcw_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
                           SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
                           SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
@@ -3119,9 +3128,9 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseClimateFiles
 
 
-    PROCEDURE CloseIrrigationFile(VAR fIrri : text);
+    PROCEDURE CloseIrrigationFile();
     BEGIN
-    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN Close(fIrri);
+    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN fIrri_close();
     END; // CloseIrrigationFile
 
 
@@ -3132,7 +3141,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
 BEGIN
 CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
-CloseIrrigationFile(fIrri);
+CloseIrrigationFile();
 CloseManagementFile(fCuts);
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
 END; // FinalizeRun2

@@ -336,6 +336,27 @@ procedure fRun_write_wrap(
 procedure fRun_close();
         external 'aquacrop' name '__ac_run_MOD_frun_close';
 
+procedure fIrri_open(constref filename : string; constref mode : string);
+
+procedure fIrri_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_firri_open_wrap';
+
+function fIrri_read() : string;
+
+function fIrri_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_firri_read_wrap';
+
+function fIrri_eof() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_firri_eof_wrap';
+
+procedure fIrri_close();
+        external 'aquacrop' name '__ac_run_MOD_firri_close';
+
+
 implementation
 
 
@@ -457,6 +478,25 @@ begin;
      fRun_write_wrap(line_ptr, line_len, advance);
 end;
 
+procedure fIrri_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fIrri_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fIrri_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fIrri_read_wrap();
+     fIrri_read := AnsiString(line_ptr);
+end;
 
 initialization
 

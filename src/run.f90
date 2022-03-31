@@ -98,9 +98,11 @@ type rep_Transfer
         !! Total mass of assimilates (ton/ha) to mobilize at start of the season
     real(dp) :: Bmobilized
         !! Cumulative sum of assimilates (ton/ha) mobilized form root system
-end type rep_Transfer 
+end type rep_Transfer
+
 
 integer :: fRun  ! file handle
+integer :: fIrri  ! file handle
 type(rep_GwTable) :: GwTable
 type(rep_plotPar) :: PlotVarCrop
 type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
@@ -161,6 +163,40 @@ subroutine write_file(fhandle, line, advance)
 end subroutine write_file
 
 
+function read_file(fhandle) result(line)
+    !! Returns the next line read from the given file.
+    integer, intent(in) :: fhandle
+        !! file handle of an already-opened file
+    character(len=:), allocatable :: line
+        !! string which will contain the content of the next line
+
+    integer, parameter :: length = 1024  ! max. no of characters
+    integer :: status
+
+    allocate(character(len=length) :: line)
+    read(fhandle, '(a)', iostat=status) line
+    line = trim(line)
+end function read_file
+
+
+function file_eof(fhandle) result(eof)
+    !! Returns whether we have reached the end of the file or not.
+    !!
+    !! This is done by inquiring about the record length (recl)
+    !! and checking whether it is equal to -1. A similar approach
+    !! with the IO status (iostat) did not work, i.e. the status
+    !! always appears to be 0, even at the end of the file.
+    integer, intent(in) :: fhandle
+        !! file handle of an already-opened file
+    logical :: eof
+
+    integer :: recl
+
+    inquire(unit=fhandle, recl=recl)
+    eof = recl == -1
+end function file_eof
+
+
 !! Section for Getters and Setters for global variables
 
 ! fRun
@@ -197,6 +233,41 @@ end subroutine fRun_write
 subroutine fRun_close()
     close(fRun)
 end subroutine fRun_close
+
+
+! fIrri
+
+subroutine fIrri_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fIrri' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fIrri, filename, mode)
+end subroutine fIrri_open
+
+
+function fIrri_read() result(line)
+    !! Returns the next line read from the 'fIrri' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fIrri)
+end function fIrri_read
+
+
+function fIrri_eof() result(eof)
+    !! Returns whether the end of the 'fIrri' file has been reached.
+    logical :: eof
+
+    eof = file_eof(fIrri)
+end function fIrri_eof
+
+
+subroutine fIrri_close()
+    close(fIrri)
+end subroutine fIrri_close
 
 
 ! GwTable
