@@ -992,8 +992,6 @@ integer(int32) :: DaySubmerged
 integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
-real(dp) ::  SurfaceStorage !mm/day
-real(dp) ::  ECstorage !EC surface storage dS/m
 integer(int32) :: ZiAqua ! Depth of Groundwater table below
                          ! soil surface in centimeter 
 
@@ -1003,12 +1001,14 @@ integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
 integer(int8) :: MaxPlotTr
 
 
+real(dp) :: CCiActual
 real(dp) :: CCiprev
 real(dp) :: CCiTopEarlySen
 real(dp) :: CRsalt ! gram/m2
 real(dp) :: CRwater ! mm/day
 real(dp) :: ECdrain ! EC drain water dS/m
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
+real(dp) :: ECstorage !EC surface storage dS/m
 real(dp) :: Eact ! mm/day
 real(dp) :: Epot ! mm/day
 real(dp) :: ETo ! mm/day
@@ -1019,10 +1019,12 @@ real(dp) :: Rain  ! mm/day
 real(dp) :: RootingDepth
 real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
+real(dp) :: Surf0 ! surface water [mm] begin day
+real(dp) :: SurfaceStorage !mm/day
 real(dp) :: Tact ! mm/day
 real(dp) :: Tpot ! mm/day
-real(dp) :: CCiActual
 real(dp) :: TactWeedInfested !mm/day
+
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay
@@ -14818,6 +14820,19 @@ subroutine SetCRwater(CRwater_in)
     CRwater = CRwater_in
 end subroutine SetCRwater
 
+real(dp) function GetCCiActual()
+    !! Getter for the "CCiActual" global variable.
+
+    GetCCiActual = CCiActual
+end function GetCCiActual
+
+subroutine SetCCiActual(CCiActual_in)
+    !! Setter for the "CCiActual" global variable.
+    real(dp), intent(in) :: CCiActual_in
+
+    CCiActual = CCiActual_in
+end subroutine SetCCiActual
+
 real(dp) function GetEpot()
     !! Getter for the "Epot" global variable.
 
@@ -14937,19 +14952,6 @@ subroutine SetSaltInfiltr(SaltInfiltr_in)
     SaltInfiltr = SaltInfiltr_in
 end subroutine SetSaltInfiltr
 
-real(dp) function GetCCiActual()
-    !! Getter for the "CCiActual" global variable.
-
-    GetCCiActual = CCiActual
-end function GetCCiActual
-
-subroutine SetCCiActual(CCiActual_in)
-    !! Setter for the "CCiActual" global variable.
-    real(dp), intent(in) :: CCiActual_in
-
-    CCiActual = CCiActual_in
-end subroutine SetCCiActual
-
 real(dp) function GetTact()
     !! Getter for the "Tact" global variable.
 
@@ -14975,6 +14977,19 @@ subroutine SetTactWeedInfested(TactWeedInfested_in)
 
     TactWeedInfested = TactWeedInfested_in
 end subroutine SetTactWeedInfested
+
+real(dp) function GetSurf0()
+    !! Getter for the "Surf0" global variable.
+
+    GetSurf0 = Surf0
+end function GetSurf0
+
+subroutine SetSurf0(Surf0_in)
+    !! Setter for the "Surf0" global variable.
+    real(dp), intent(in) :: Surf0_in
+
+    Surf0 = Surf0_in
+end subroutine SetSurf0
 
 
 end module ac_global

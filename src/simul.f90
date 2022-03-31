@@ -1,16 +1,19 @@
 module ac_simul
 
-
 use ac_kinds, only:  dp, &
                      int8, &
                      int32, &
                      intEnum
 
+
 use ac_global, only: ActiveCells, &
                      adjustedksstotoecsw, &
+                     BMRange, &
+                     CalculateAdjustedFC, &
                      CalculateETpot, &
                      CanopyCoverNoStressSF, &
                      ccinowaterstresssf, &
+                     CheckForWaterTableInProfile, &
                      CO2Ref, &
                      CompartmentIndividual, &
                      CropStressParametersSoilFertility, &
@@ -18,6 +21,7 @@ use ac_global, only: ActiveCells, &
                      datatype_decadely, &
                      datatype_monthly, &
                      DetermineCNIandIII, &
+                     DetermineDate, &
                      DetermineRootZoneSaltContent, &
                      DetermineRootzoneWC, &
                      DetermineSaltContent, &
@@ -27,7 +31,6 @@ use ac_global, only: ActiveCells, &
                      EffectiveRainMethod_USDA, &
                      Equiv, &
                      EvapZmin, &
-                     fAdjustedForCO2, &
                      fAdjustedForCO2, &
                      GenerateDepthMode_FixDepth, &
                      GenerateTimeMode_AllDepl, &
@@ -47,19 +50,19 @@ use ac_global, only: ActiveCells, &
                      GetCompartment_theta, &
                      GetCompartment_Thickness, &
                      GetCompartment_WFactor, &
-                     GetTact, &
-                     GetTactWeedInfested, &
                      GetCrop, &
+                     GetCrop, &
+                     GetCrop_aCoeff, &
                      GetCrop_AdaptedToCO2, &
                      GetCrop_AnaeroPoint, &
+                     getcrop_bcoeff, &
                      GetCrop_CCEffectEvapLate, &
                      GetCrop_CCo, &
                      GetCrop_CCoAdjusted, &
-                     GetCrop, &
                      GetCrop_CCsaltDistortion, &
-                     GetCrop_CCo, &
                      GetCrop_CCx, &
                      GetCrop_CCxAdjusted, &
+                     GetCrop_CCxRoot, &
                      GetCrop_CCxWithered, &
                      GetCrop_CDC, &
                      GetCrop_CGC, &
@@ -74,70 +77,70 @@ use ac_global, only: ActiveCells, &
                      GetCrop_DaysToSenescence, &
                      GetCrop_DeterminancyLinked, &
                      GetCrop_dHIdt, &
-                     GetCrop_ECemin, &
+                     getcrop_dhimax, &
                      GetCrop_ECemax, &
+                     GetCrop_ECemin, &
+                     getcrop_fexcess, & 
                      GetCrop_GDDaysToFlowering, &
                      GetCrop_GDDaysToFullCanopy, &
                      GetCrop_GDDaysToFullCanopySF, &
                      GetCrop_GDDaysToGermination, &
                      GetCrop_GDDaysToHarvest, &
                      GetCrop_GDDaysToSenescence, &
-                     GetCrop_GDDCDC, &
+                     GetCrop_GDDCDC, & 
                      GetCrop_GDDCGC, &
                      GetCrop_GDDLengthFlowering, &
-                     getcrop_gddaystofullcanopy, &
-                     getcrop_gddaystoflowering, &
-                     getcrop_gddaystoharvest, &
-                     getcrop_gddaystogermination, &
-                     getcrop_gddaystosenescence, &
-                     GetCrop_GDtranspLow, &
                      GetCrop_GDtranspLow, &
                      GetCrop_HI, &
-                     GetCrop_HI, &
-                     GetCrop_KcDecline, &
+                     getcrop_hiincrease, &
                      GetCrop_KcDecline, &
                      GetCrop_KcTop, &
-                     GetCrop_KsShapeFactorLeaf, &
+                     GetCrop_KsShapeFactorLeaf, & 
                      GetCrop_KsShapeFactorSenescence, &
                      GetCrop_KsShapeFactorStomata, &
                      GetCrop_LengthFlowering, &
                      GetCrop_ModeCycle, &
                      GetCrop_pActStom, &
-                     GetCrop_pLeafAct, &
+                     GetCrop_pdef, &
                      GetCrop_Planting, &
-                     GetCrop_ResponseECsw, &
-                     GetCrop_RootMin, &
-                     GetCrop_Tbase, &
-                     GetCrop_Tupper, &
+                     GetCrop_pLeafAct, &
                      GetCrop_pLeafDefLL, &
                      GetCrop_pLeafDefUL, &
                      GetCrop_pMethod, &
+                     GetCrop_pPollination, &
                      GetCrop_pSenAct, &
                      GetCrop_pSenescence, &
-                     getsimulation_dayanaero, &
+                     GetCrop_ResponseECsw, &
+                     GetCrop_RootMin, &
+                     GetCrop_RootMin, &
                      Getcrop_smaxbot, &
                      GetCrop_SmaxTop, &
                      GetCrop_StressResponse, &
+                     getcrop_stressresponse_calibrated, &
                      GetCrop_subkind, &
                      GetCrop_SumEToDelaySenescence, &
                      GetCrop_Tbase, &
+                     GetCrop_Tcold, &
+                     getcrop_theat, &
                      GetCrop_Tupper, &
                      GetCrop_WP, &
                      GetCrop_WPy, &
+                     GetCrop_YearCCx, &
+                     GetCRsalt, &
+                     GetCRwater, &
                      GetDaySubmerged, &
                      GetDrain, &
-                     GetECstorage, &
-                     GetEpot, &
-                     GetETO, &
                      GetEact, &
                      GetECdrain, &
                      GetECiAqua, &
                      GetECstorage, &
                      GetEpot, &
-                     GetETO, &
+                     GetETo, &
                      GetEvapoEntireSoilSurface, &
                      GetGenerateDepthMode, &
                      GetGenerateTimeMode, &
+                     GetInfiltrated, &
+                     GetInfiltrated, &
                      GetIrriECw_PostSeason, &
                      GetIrriECw_PreSeason, &
                      GetIrrigation, &
@@ -149,9 +152,13 @@ use ac_global, only: ActiveCells, &
                      GetManagement_EffectMulchOffS, &
                      GetManagement_FertilityStress, &
                      GetManagement_Mulch, &
+                     GetManagement_RunoffON, &
                      GetManagement_SoilCoverAfter, &
                      GetManagement_SoilCoverBefore, &
+                     GetManagement_WeedAdj, &
+                     GetManagement_WeedDeltaRC, &
                      GetNrCompartments, &
+                     GetPreDay, &
                      GetRain, &
                      GetRainRecord_DataType, &
                      GetRootingDepth, &
@@ -162,36 +169,42 @@ use ac_global, only: ActiveCells, &
                      GetRootZoneWC_Actual, &
                      GetRootZoneWC_FC, &
                      GetRootZoneWC_SAT, &
-                     GetRootZoneWC_WP, &
                      GetRootZoneWC_Thresh, &
+                     GetRootZoneWC_WP, &
                      GetRootZoneWC_ZtopAct, &
                      GetRootZoneWC_ZtopFC, &
                      GetRootZoneWC_ZtopThresh, &
                      GetRootZoneWC_ZtopWP, &
                      GetRunoff, &
+                     getsimulation_dayanaero, &
                      GetSimulation_DelayedDays, &
-                     GetSimulParam_DelayLowOxygen, &
-                     GetSimulParam_PercRAW, &
                      GetSimulation_EffectStress, &
                      GetSimulation_EffectStress_CDecline, &
                      GetSimulation_EffectStress_RedCCX, &
                      GetSimulation_EffectStress_RedCGC, &
                      GetSimulation_EffectStress_RedKsSto, &
+                     GetSimulation_EffectStress_RedWP, &
                      GetSimulation_EvapStartStg2, &
                      GetSimulation_EvapWCsurf, &
                      GetSimulation_EvapZ, &
                      GetSimulation_Germinate, &
+                     GetSimulation_HIfinal, &
                      GetSimulation_IrriECw, &
                      GetSimulation_ProtectedSeedling, &
+                     GetSimulation_RCadj, &
                      GetSimulation_SalinityConsidered, &
                      GetSimulation_SCor, &
+                     GetSimulation_Storage_Btotal, &
                      GetSimulation_SumEToStress, &
+                     GetSimulation_SumGDD, &
                      GetSimulation_SWCtopSoilConsidered, &
-                     GetSimulParam_TAWGermination, &
+                     GetSimulation_YearSeason, &
                      GetSimulParam_Beta, &
                      GetSimulParam_CNcorrection, &
+                     GetSimulParam_DelayLowOxygen, &
                      GetSimulParam_EffectiveRain_Method, &
                      GetSimulParam_EffectiveRain_PercentEffRain, &
+                     GetSimulParam_EffectiveRain_RootNrEvap, &
                      GetSimulParam_EffectiveRain_ShowersInDecade, &
                      GetSimulParam_EvapDeclineFactor, &
                      GetSimulParam_EvapZmax, &
@@ -199,14 +212,18 @@ use ac_global, only: ActiveCells, &
                      GetSimulParam_IrriFwInSeason, &
                      GetSimulParam_IrriFwOffSeason, &
                      GetSimulParam_pAdjFAO, &
+                     GetSimulParam_PercCCxHIfinal, &
+                     GetSimulParam_PercRAW, &
                      GetSimulParam_RootNrDF, &
+                     GetSimulParam_RunoffDepth, &
                      GetSimulParam_SaltSolub, &
+                     GetSimulParam_TAWGermination, &
                      GetSimulParam_Tmax, &
                      GetSimulParam_Tmin, &
                      GetSoil, &
                      GetSoil_CNvalue, &
-                     GetSoil_REW, &
                      GetSoil_NrSoilLayers, &
+                     GetSoil_REW, &
                      GetSoilLayer_CRa, &
                      GetSoilLayer_CRb, &
                      GetSoilLayer_Dx, &
@@ -220,93 +237,103 @@ use ac_global, only: ActiveCells, &
                      GetSoilLayer_tau, &
                      GetSoilLayer_Thickness, &
                      GetSoilLayer_UL, &
-                     GetSoilLayer_WP, &
                      GetSoilLayer_WaterContent, &
-                     GetSurfaceStorage, &
-                     GetTact, &
-                     GetTpot, &
-                     KsAny, &
-                     LengthCanopyDecline, &
-                     GetZiAqua, &
-                     GetInfiltrated, &
-                     GetSumWaBal_SaltOut, &
-                     GetSumWaBal_SaltIn, &
+                     GetSoilLayer_WP, &
+                     GetSumWaBal_Biomass, &
                      GetSumWaBal_CRsalt, &
-                     GetSumWaBal_ECropCycle, &
-                     GetSumWaBal_Epot, &
-                     GetSumWaBal_Tpot, &
-                     GetSumWaBal_Rain, &
-                     GetSumWaBal_Irrigation, &
+                     GetSumWaBal_CRwater, &
                      GetSumWaBal_Drain, &
                      GetSumWaBal_Eact, &
-                     GetSumWaBal_Runoff, &
+                     GetSumWaBal_ECropCycle, &
+                     GetSumWaBal_Epot, &
                      GetSumWaBal_Infiltrated, &
-                     GetSumWaBal_CRwater, &
-                     GetSumWaBal_TrW, &
+                     GetSumWaBal_Irrigation, &
+                     GetSumWaBal_Rain, &
+                     GetSumWaBal_Runoff, &
+                     GetSumWaBal_SaltIn, &
+                     GetSumWaBal_SaltOut, &
                      GetSumWaBal_Tact, &
-                     GetSumWaBal_Biomass, &
-                     GetCRsalt, &
-                     GetCRwater, &
-                     GetTotalWaterContent_BeginDay, &
+                     GetSumWaBal_Tpot, &
+                     GetSumWaBal_TrW, &
+                     GetSurf0, &
+                     GetSurfaceStorage, &
+                     GetTact, &
+                     GetTactWeedInfested, &
                      GetTotalSaltContent_BeginDay, &
-                     GetTotalWaterContent_EndDay, &
                      GetTotalSaltContent_EndDay, &
-                     GetEact, &
-                     GetCCiActual, &
+                     GetTotalWaterContent_BeginDay, &
+                     GetTotalWaterContent_EndDay, &
+                     GetTpot, &
+                     GetWeedRC, &
+                     GetZiAqua, &
+                     HarvestIndexDay, &
+                     HImultiplier, &
+                     IrriMode_Generate, &
                      IrriMode_Inet, &
                      KsAny, &
+                     KsAny, &
                      KsSalinity, &
+                     KsTemperature, &
+                     LengthCanopyDecline, &
                      max_No_compartments, &
                      MaxCRatDepth, &
                      modeCycle_CalendarDays, &
-                     plant_seed, &
                      modeCycle_GDDays, &
+                     MultiplierCCxSelfThinning, &
+                     plant_regrowth, &
+                     plant_seed, &
                      pMethod_FAOCorrection, &
-                     pMethod_FAOCorrection, &
+                     pMethod_NoCorrection, &
                      rep_Crop, &
                      rep_EffectStress, &
                      rep_Soil, &
                      roundc, &
+                     SaltSolutionDeposit, &
+                     SaltSolutionDeposit, &
                      SetCCiActual, &
                      SetCCiPrev, &
                      SetCCiTopEarlySen, &
-                     SaltSolutionDeposit, &
-                     SetCrop_pActStom, &
                      SetCompartment, &
+                     SetCompartment_DayAnaero, &
                      SetCompartment_Depo, &
                      SetCompartment_fluxout, &
                      SetCompartment_i, &
                      SetCompartment_Salt, &
                      SetCompartment_theta, &
                      SetCompartment_WFactor, &
-                     SetCompartment_DayAnaero, &
-                     SetCrop_DaysTOFullCanopySF, &
-                     SetCrop_GDDaysToFullCanopySF, &
-                     SetDaySubmerged, &
                      SetCrop_CCoAdjusted, &
                      SetCrop_CCxAdjusted, &
                      SetCrop_CCxWithered, &
+                     SetCrop_DaysTOFullCanopySF, &
                      SetCrop_DaysToFullCanopySF, &
                      SetCrop_GDDaysToFullCanopySF, &
+                     SetCrop_GDDaysToFullCanopySF, &
+                     SetCrop_pActStom, &
                      SetCrop_pLeafAct, &
+                     SetCrop_pPollination, &
                      SetCrop_pSenAct, &
+                     SetCRsalt, &
+                     SetCRwater, &
+                     SetDaySubmerged, &
                      SetDrain, &
                      SetEact, &
                      SetECdrain, &
                      SetECstorage, &
+                     SetEpot, &
                      SetEvapoEntireSoilSurface, &
+                     SetInfiltrated, &
                      SetIrrigation, &
+                     SetManagement_WeedDeltaRC, &
+                     SetRootingdepth, &
                      SetRootZoneSalt_ECe, &
                      SetRootZoneSalt_ECsw, &
                      SetRootZoneSalt_ECswFC, &
                      SetRootZoneSalt_KsSalt, &
                      SetRunoff, &
-                     SetSimulation_DelayedDays, &
-                     SetSimulation_Germinate, &
-                     SetSimulation_ProtectedSeedling, &
-                     setsimulation_sumgdd, &
+                     SetRunoff, &
                      SetSaltInfiltr, &
                      setsimulation_dayanaero, &
+                     SetSimulation_DelayedDays, &
                      SetSimulation_EffectStress, &
                      SetSimulation_EffectStress_CDecline, &
                      SetSimulation_EffectStress_RedCCx, &
@@ -314,49 +341,53 @@ use ac_global, only: ActiveCells, &
                      SetSimulation_EffectStress_RedKsSto, &
                      SetSimulation_EffectStress_RedWP, &
                      SetSimulation_EvapLimitON, &
-                     SetSimulation_ProtectedSeedling, &
-                     SetSimulation_SumEToStress, &
                      SetSimulation_EvapStartStg2, &
                      SetSimulation_EvapWCsurf, &
                      SetSimulation_EvapZ, &
-                     GetSimulation_SumGDD, &
+                     SetSimulation_Germinate, &
+                     SetSimulation_HIfinal, &
+                     SetSimulation_ProtectedSeedling, &
+                     SetSimulation_Storage_Btotal, &
+                     SetSimulation_SumEToStress, &
+                     setsimulation_sumgdd, &
                      SetSimulation_SWCtopSoilConsidered, &
-                     SetSurfaceStorage, &
-                     subkind_Forage, &
-                     SetTotalWaterContent_BeginDay, &
-                     SetTotalSaltContent_BeginDay, & 
-                     SetTotalWaterContent_EndDay, &
-                     SetTotalSaltContent_EndDay, &
                      SetSoilLayer_WaterContent, &
-                     SetTotalSaltContent_EndDay, &
-                     SetTotalWaterContent_EndDay, &
-                     SetTotalSaltContent_ErrorDay, &
-                     SetTotalWaterContent_ErrorDay, &
-                     SetInfiltrated, &
-                     SetCRwater, &
-                     SetCRsalt, &
-                     SetSumWaBal_Epot, &
-                     SetSumWaBal_Tpot, &
-                     SetSumWaBal_Rain, &
-                     SetSumWaBal_Irrigation, &
-                     SetSumWaBal_Infiltrated, &
-                     SetSumWaBal_Runoff, &
+                     SetSumWaBal_CRsalt, &
+                     SetSumWaBal_CRwater, &  
                      SetSumWaBal_Drain, &
                      SetSumWaBal_Eact, & 
-                     SetSumWaBal_Tact, &
-                     SetSumWaBal_TrW, &
-                     SetSumWaBal_CRwater, &  
                      SetSumWaBal_ECropCycle, &
+                     SetSumWaBal_Epot, &
+                     SetSumWaBal_Infiltrated, &
+                     SetSumWaBal_Irrigation, &
+                     SetSumWaBal_Rain, &
+                     SetSumWaBal_Runoff, &
                      SetSumWaBal_SaltIn, &
-                     SetSumWaBal_CRsalt, &
                      SetSumWaBal_SaltOut, &
+                     SetSumWaBal_Tact, &
+                     SetSumWaBal_Tpot, &
+                     SetSumWaBal_TrW, &
+                     SetSurf0, &
+                     SetSurfaceStorage, &
+                     SetTact, & 
                      SetTact, &
+                     SetTotalSaltContent_BeginDay, & 
+                     SetTotalSaltContent_EndDay, &
+                     SetTotalSaltContent_ErrorDay, &
+                     SetTotalWaterContent_BeginDay, &
+                     SetTotalWaterContent_EndDay, &
+                     SetTotalWaterContent_ErrorDay, &
+                     SetTpot, &
                      SoilEvaporationReductionCoefficient, &
+                     Subkind_Forage, &
+                     subkind_Grain,  &
                      subkind_Grain, &
                      subkind_Tuber, &
+                     subkind_Vegetative, &
                      TimeToMaxCanopySF, &
                      undef_double, &
                      undef_int
+
 
                       
 use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
@@ -499,6 +530,575 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     end if
 
 end subroutine DeterminePotentialBiomass
+
+subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
+                                    GDDayi, Tact, SumKcTop, CGCref, GDDCGCref, &
+                                    Coeffb0, Coeffb1, Coeffb2, FracBiomassPotSF, &
+                                    Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, &
+                                    AverageSaltStress, SumGDDadjCC, CCtot, &
+                                    FracAssim, VirtualTimeCC, SumInterval, &
+                                    Biomass, BiomassPot, BiomassUnlim, &
+                                    BiomassTot, YieldPart, WPi, HItimesBEF, &
+                                    ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, &
+                                    HItimesAT, alfa, alfaMax, SumKcTopStress, &
+                                    SumKci, CCxWitheredTpot, CCxWitheredTpotNoS, &
+                                    WeedRCi, CCw, Trw, StressSFadjNEW, &
+                                    PreviousStressLevel, StoreAssimilates, &
+                                    MobilizeAssimilates, AssimToMobilize, &
+                                    AssimMobilized, Bin, Bout, TESTVAL)
+
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: ETo
+    real(dp), intent(in) :: TminOnDay
+    real(dp), intent(in) :: TmaxOnDay
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: Tact
+    real(dp), intent(in) :: SumKcTop
+    real(dp), intent(in) :: CGCref
+    real(dp), intent(in) :: GDDCGCref
+    real(dp), intent(in) :: Coeffb0
+    real(dp), intent(in) :: Coeffb1
+    real(dp), intent(in) :: Coeffb2
+    real(dp), intent(in) :: FracBiomassPotSF
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: AverageSaltStress
+    real(dp), intent(in) :: SumGDDadjCC
+    real(dp), intent(in) :: CCtot
+    real(dp), intent(inout) :: FracAssim
+    integer(int32), intent(in) :: VirtualTimeCC
+    integer(int32), intent(in) :: SumInterval
+    real(dp), intent(inout) :: Biomass
+    real(dp), intent(inout) :: BiomassPot
+    real(dp), intent(inout) :: BiomassUnlim
+    real(dp), intent(inout) :: BiomassTot
+    real(dp), intent(inout) :: YieldPart
+    real(dp), intent(inout) :: WPi
+    real(dp), intent(inout) :: HItimesBEF
+    real(dp), intent(inout) :: ScorAT1
+    real(dp), intent(inout) :: ScorAT2
+    real(dp), intent(inout) :: HItimesAT1
+    real(dp), intent(inout) :: HItimesAT2
+    real(dp), intent(inout) :: HItimesAT
+    real(dp), intent(inout) :: alfa
+    real(dp), intent(inout) :: alfaMax
+    real(dp), intent(inout) :: SumKcTopStress
+    real(dp), intent(inout) :: SumKci
+    real(dp), intent(inout) :: CCxWitheredTpot
+    real(dp), intent(inout) :: CCxWitheredTpotNoS
+    real(dp), intent(inout) :: WeedRCi
+    real(dp), intent(inout) :: CCw
+    real(dp), intent(inout) :: Trw
+    integer(int8), intent(inout) :: StressSFadjNEW
+    integer(int8), intent(inout) :: PreviousStressLevel
+    logical, intent(inout) :: StoreAssimilates
+    logical, intent(inout) :: MobilizeAssimilates
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+    real(dp), intent(inout) :: TESTVAL
+
+    real(dp), parameter :: TempRange = 5._dp
+    real(dp), parameter :: k = 2._dp
+
+    real(dp) :: RatioBM, RBM, HItimesTotal, pLeafULAct, pLeafLLAct, &
+                pStomatULAct, pLL, Ksleaf, Ksstomatal, KsPolWS, KsPolCs, &
+                KsPolHs, KsPol, Wrel, Dcor, fFlor, fSwitch, fCCx,WPsf, WPunlim, &
+                BioAdj,CCtotStar, CCwStar, croppol_temp
+    integer(int32) :: tmax1, tmax2, DayCor, DayiAfterFlowering, &
+                      DaysYieldFormation, wdrc_temp, HIfinal_temp
+    integer(int8) :: PercentLagPhase
+    logical :: SWCtopSoilConsidered_temp
+
+
+
+    TESTVAL = undef_int
+
+    ! 0. Reference HarvestIndex for that day (alfa in percentage) + Information on PercentLagPhase (for estimate WPi)
+    if ((GetCrop_subkind() == Subkind_Tuber) .or. (GetCrop_Subkind() == Subkind_grain) &
+        .or. (GetCrop_Subkind() == Subkind_Vegetative) .or. &
+                                    (GetCrop_Subkind() == Subkind_Forage)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        if ((GetCrop_Subkind() == Subkind_Vegetative) .and. &
+                                (GetCrop_Planting() == plant_Regrowth) .or. &
+                                (GetCrop_Subkind() == Subkind_Forage) .and. &
+                                (GetCrop_Planting() == plant_Regrowth)) then
+            alfa = GetCrop_HI()
+        else
+            HIfinal_temp = GetSimulation_HIfinal()
+            alfa = HarvestIndexDay((dayi-GetCrop_Day1()), GetCrop_DaysToFlowering(), &
+                                   GetCrop_HI(), GetCrop_dHIdt(), GetCCiactual(), &
+                                   GetCrop_CCxAdjusted(), GetSimulParam_PercCCxHIfinal(), &
+                                   GetCrop_Planting(), PercentLagPhase, HIfinal_temp)
+            call SetSimulation_HIfinal(HIfinal_temp)
+        end if
+    end if
+
+
+    WPi = (GetCrop_WP()/100._dp)
+
+    ! 1. biomass
+    if (ETo > 0._dp) then
+        ! 1.1 WPi for that day
+        ! 1.1a - given WPi
+        WPi = (GetCrop_WP()/100._dp)
+        ! 1.1b - adjustment WPi for reproductive stage (works with calendar days)
+        if (((GetCrop_subkind() == Subkind_Tuber) .or. &
+                    (GetCrop_Subkind() == Subkind_grain)) .and. (alfa > 0._dp)) then
+            ! WPi switch to WP for reproductive stage
+            fSwitch = 1._dp
+            DaysYieldFormation = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
+            if (DaysYieldFormation > 0) then
+                if (GetCrop_DeterminancyLinked()) then
+                    fSwitch = PercentLagPhase/100._dp
+                else
+                    DayiAfterFlowering = dayi - GetSimulation_DelayedDays() - &
+                                      GetCrop_Day1() - GetCrop_DaysToFlowering()
+                    if (DayiAfterFlowering < (DaysYieldFormation/3._dp)) then
+                        fSwitch = DayiAfterFlowering/(DaysYieldFormation/3._dp)
+                    end if
+                end if
+            end if
+            WPi =  WPi * (1._dp - (1._dp-GetCrop_WPy()/100._dp)*fSwitch)  ! switch in Lag Phase
+        end if
+
+        
+        ! 1.1c - adjustment WPi for CO2
+        if (roundc(100._dp*CO2i, mold=1) /= roundc(100._dp*CO2Ref, mold=1)) then
+            WPi = WPi * fAdjustedForCO2(CO2i, GetCrop_WP(), GetCrop_AdaptedToCO2())
+        end if
+   
+        
+        ! 1.1d - adjustment WPi for Soil Fertility
+        WPsf = WPi          ! no water stress, but fertility stress
+        WPunlim = WPi       ! no water stress, no fertiltiy stress
+        if (GetSimulation_EffectStress_RedWP() > 0._dp) then ! Reductions are zero if no fertility stress
+            ! water stress and fertility stress
+            if ((SumKci/real(SumKcTopStress, dp)) < 1._dp) then
+                if (ETo > 0._dp) then
+                    SumKci = SumKci + Tact/ETo
+                end if
+                if (SumKci > 0._dp) then
+                    WPi = WPi * (1._dp - (GetSimulation_EffectStress_RedWP()/100._dp) &
+                                            * exp(k*log(SumKci/SumKcTopStress)) )
+                end if
+            else
+                WPi = WPi * (1._dp - GetSimulation_EffectStress_RedWP()/100._dp)
+            end if
+        elseif (ETo > 0._dp) then
+            SumKci = SumKci + Tact/ETo
+        end if     
+        
+        
+        ! 1.2 actual biomass
+        if ((GetSimulation_RCadj() > 0._dp) .and. (roundc(CCtot*10000._dp, mold=1) > 0._dp)) then
+            ! weed infestation
+            ! green canopy cover of the crop in weed-infested field
+            if (GetManagement_WeedDeltaRC() /= 0) then
+                if (GetCrop_subkind() == Subkind_Forage) then
+                    fCCx = MultiplierCCxSelfThinning(int(GetSimulation_YearSeason(), kind=int32), &
+                                           int(GetCrop_YearCCx(), kind=int32), GetCrop_CCxRoot())
+                else
+                    fCCx = 1._dp
+                end if
+                wdrc_temp = GetManagement_WeedDeltaRC()
+                WeedRCi = GetWeedRC(VirtualTimeCC, SumGDDadjCC, fCCx, &
+                GetSimulation_RCadj(), GetManagement_WeedAdj(), wdrc_temp, &
+                GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
+                GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
+                GetCrop_ModeCycle())
+                call SetManagement_WeedDeltaRC(wdrc_temp)
+            else
+                WeedRCi = GetSimulation_RCadj()
+            end if
+            CCw = CCtot * (1._dp-WeedRCi/100._dp)
+            ! correction for micro-advection
+            CCtotStar = 1.72_dp*CCtot - 1._dp*(CCtot*CCtot) + 0.30_dp*(CCtot*CCtot*CCtot)
+            if (CCtotStar < 0._dp) then
+                CCtotStar = 0._dp
+            end if
+            if (CCtotStar > 1) then
+                CCtotStar = 1._dp
+            end if
+            if (CCw > 0.0001_dp) then
+                CCwStar = CCw + (CCtotStar - CCtot)
+            else
+                CCwStar = 0._dp
+            end if
+            ! crop transpiration in weed-infested field
+            if (CCtotStar <= 0.0001_dp) then
+                TrW = 0._dp
+            else
+                TrW = Tact * (CCwStar/CCtotStar)
+            end if
+            ! crop biomass in weed-infested field
+            Biomass = Biomass + WPi *(TrW/ETo)  ! ton/ha
+        else
+            WeedRCi = 0.0_dp
+            CCw = CCtot
+            TrW = Tact
+            Biomass = Biomass + WPi *(Tact/ETo)  ! ton/ha
+        end if
+        
+        ! Transfer of assimilates
+        if (GetCrop_subkind() == subkind_Forage) then
+            ! only for perennial herbaceous forage crops
+            ! 1. Mobilize assimilates at start of season
+            if (MobilizeAssimilates .eqv. .true.) then
+                ! mass to mobilize
+                if (FracAssim < 0.05_dp) then
+                    FracAssim = 0.05_dp
+                end if
+                Bin = FracAssim * WPi *(TrW/ETo)  ! ton/ha
+                if ((AssimMobilized + Bin) > AssimToMobilize) then
+                    Bin = AssimToMobilize - AssimMobilized
+                end if
+                ! cumulative mass mobilized
+                AssimMobilized = AssimMobilized + Bin
+                ! switch mobilize off when all mass is transfered
+                if (roundc(1000._dp*AssimToMobilize, mold=1) &
+                   <= roundc(1000._dp *AssimMobilized, mold=1)) then
+                    MobilizeAssimilates = .false.
+                end if
+            end if
+            ! 2. Store assimilates at end of season
+            if (StoreAssimilates .eqv. .true.) then
+                ! mass to store
+                Bout = FracAssim * WPi *(TrW/ETo)  ! ton/ha
+                ! cumulative mass stored
+                call SetSimulation_Storage_Btotal(GetSimulation_Storage_Btotal() + Bout)
+            end if
+            TESTVAL = FracAssim
+        end if
+        
+        Biomass = Biomass + Bin - Bout  ! ton/ha ! correction for transferred assimilates
+        
+        ! actual total biomass (crop and weeds)
+        BiomassTot = BiomassTot + WPi *(Tact/ETo)  ! ton/ha  for dynamic adjustment of soil fertility stress
+        BiomassTot = BiomassTot + Bin - Bout ! correction for transferred assimilates
+        
+        ! 1.3 potential biomass - unlimited soil fertiltiy
+        BiomassUnlim = BiomassUnlim + Bin - Bout ! correction for transferred assimilates
+
+    end if
+
+    ! 1.4 potential biomass for given soil fertility
+    BiomassPot =  FracBiomassPotSF * BiomassUnlim ! ton/ha
+
+    ! 2. yield
+    tmax1 = undef_int
+    if ((GetCrop_subkind() == subkind_Tuber) .or. (GetCrop_Subkind() == subkind_Grain)) then
+        ! DaysToFlowering corresponds with Tuberformation
+        if (dayi > (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())) then
+            ! calculation starts when flowering has started
+            
+            ! 2.2 determine HImultiplier at the start of flowering
+            ! effect of water stress before flowering (HItimesBEF)
+            if (HItimesBEF < - 0.1_dp) then
+                ! i.e. undefined at the start of flowering
+                if (BiomassPot < 0.0001_dp) then
+                    HItimesBEF = 1._dp
+                else
+                    RatioBM = Biomass/BiomassPot
+                    ! Not correct if weed infestation and no fertility stress
+                    ! for that case BiomassPot might be larger (but cannot be calculated since WP is unknown)
+                    if (RatioBM > 1._dp) then
+                        RatioBM = 1_dp
+                    end if
+                    RBM = BMRange(int(GetCrop_HIincrease(), kind=int32))
+                    HItimesBEF = HImultiplier(RatioBM, RBM, GetCrop_HIincrease())
+                end if
+                if (GetCCiActual() <= 0.01_dp) then
+                    HItimesBEF = 0._dp ! no green canopy cover left at start of flowering;
+                end if
+            end if
+            
+            ! 2.3 Relative water content for that day
+            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+            call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
+            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+            if (GetSimulation_SWCtopSoilConsidered() .eqv. .true.) then ! top soil is relative wetter than total root zone
+                Wrel = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct())/ &
+                       (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP()) ! top soil
+            else
+                Wrel = (GetRootZoneWC_FC() - GetRootZoneWC_Actual())/ &
+                       (GetRootZoneWC_FC() - GetRootZoneWC_WP()) ! total root zone
+            end if
+            
+            ! 2.4 Failure of Pollination during flowering (alfaMax in percentage)
+            if (GetCrop_Subkind() == Subkind_grain) then ! - only valid for fruit/grain crops (flowers)
+                if ((dayi <= (GetSimulation_DelayedDays() + GetCrop_Day1() + & 
+                   GetCrop_DaysToFlowering() + GetCrop_LengthFlowering())) & ! calculation limited to flowering period
+                    .and. ((GetCCiactual()*100._dp) > GetSimulParam_PercCCxHIfinal())) then
+                    ! sufficient green canopy remains
+                    ! 2.4a - Fraction of flowers which are flowering on day  (fFlor)
+                    fFlor = FractionFlowering(dayi)
+                    ! 2.4b - Ks(pollination) water stress
+                    pLL = 1._dp
+                    croppol_temp = GetCrop_pPollination()
+                    KsPolWS = KsAny(Wrel, croppol_temp, pLL, 0._dp)
+                    ! 2.4c - Ks(pollination) cold stress
+                    KsPolCS = KsTemperature((GetCrop_Tcold()-TempRange), real(GetCrop_Tcold(), kind=dp), TminOnDay)
+                    ! 2.4d - Ks(pollination) heat stress
+                    KsPolHS = KsTemperature((GetCrop_Theat()+TempRange), real(GetCrop_Theat(), kind=dp), TmaxOnDay)
+                    ! 2.4e - Adjust alfa
+                    KsPol = KsPolWS
+                    if (KsPol > KsPolCS) then
+                        KsPol = KsPolCS
+                    end if
+                    if (KsPol > KsPolHS) then
+                        KsPol = KsPolHS
+                    end if
+                    alfaMax = alfaMax + (KsPol * (1 + GetCrop_fExcess()/100._dp) * fFlor * GetCrop_HI())
+                    if (alfaMax > GetCrop_HI()) then
+                        alfaMax = GetCrop_HI()
+                    end if
+                end if
+            else
+                alfaMax = GetCrop_HI() ! for Tuber crops (no flowering)
+            end if
+            
+            ! 2.5 determine effect of water stress affecting leaf expansion after flowering
+            ! from start flowering till end of determinancy
+            if (GetCrop_DeterminancyLinked()) then
+                tmax1 = roundc(GetCrop_LengthFlowering()/2._dp, mold=1)
+            else
+                tmax1 = (GetCrop_DaysToSenescence() - GetCrop_DaysToFlowering())
+            end if
+            if ((HItimesBEF > 0.99_dp) & ! there is green canopy cover at start of flowering;
+                .and. (dayi <= (GetSimulation_DelayedDays() + GetCrop_Day1() &
+                      + GetCrop_DaysToFlowering()+ tmax1)) & ! and not yet end period
+                .and. (tmax1 > 0) & ! otherwise no effect 
+                .and. (roundc(GetCrop_aCoeff(), mold=1) /= undef_int) & ! otherwise no effect
+                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                ! determine KsLeaf
+                call AdjustpLeafToETo(ETo, pLeafULAct, pLeafLLAct)
+                Ksleaf = KsAny(Wrel, pLeafULAct, pLeafLLAct, GetCrop_KsShapeFactorLeaf())
+                ! daily correction
+                Dcor = (1._dp + (1._dp-Ksleaf)/GetCrop_aCoeff())
+                ! weighted correction
+                ScorAT1 = ScorAT1 + Dcor/tmax1
+                DayCor = dayi - (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())
+                HItimesAT1  = (tmax1/DayCor) * ScorAT1
+            end if
+            
+            ! 2.6 determine effect of water stress affecting stomatal closure after flowering
+            ! during yield formation
+            if (GetCrop_dHIdt() > 99._dp) then
+                tmax2 = 0
+            else
+                tmax2 = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
+            end if
+            if ((HItimesBEF > 0.99_dp) & ! there is green canopy cover at start of flowering;
+                .and. (dayi <= (GetSimulation_DelayedDays() + GetCrop_Day1() &
+                      + GetCrop_DaysToFlowering() + tmax2)) & ! and not yet end period
+                .and. (tmax2 > 0) & ! otherwise no effect
+                .and. (roundc(GetCrop_bCoeff(), mold=1) /= undef_int) & ! otherwise no effect
+                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                ! determine KsStomatal
+                call AdjustpStomatalToETo(ETo, pStomatULAct)
+                pLL = 1._dp
+                Ksstomatal = KsAny(Wrel, pStomatULAct, pLL, GetCrop_KsShapeFactorStomata())
+                ! daily correction
+                if (Ksstomatal > 0.001_dp) then
+                    Dcor = (exp(0.10_dp*log(Ksstomatal))) * (1._dp-(1._dp-Ksstomatal)/GetCrop_bCoeff())
+                else
+                    Dcor = 0._dp
+                end if
+                ! weighted correction
+                ScorAT2 = ScorAT2 + Dcor/tmax2
+                DayCor = dayi - (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())
+                HItimesAT2  = (tmax2/DayCor) * ScorAT2
+            end if
+            
+            ! 2.7 total multiplier after flowering
+            if ((tmax2 == 0) .and. (tmax1 == 0)) then
+                HItimesAT = 1._dp
+            else
+                if (tmax2 == 0) then
+                    HItimesAT = HItimesAT1
+                else
+                    if (tmax1 == 0) then
+                        HItimesAT = HItimesAT2
+                    elseif (tmax1 <= tmax2) then
+                        HItimesAT = HItimesAT2 * ((tmax1*HItimesAT1 + (tmax2-tmax1))/tmax2)
+                        if (roundc(GetCrop_bCoeff(), mold=1) == undef_int) then
+                            HItimesAT = HItimesAT1
+                        end if
+                        if (roundc(GetCrop_aCoeff(), mold=1) == undef_int) then
+                            HItimesAT = HItimesAT2
+                        end if
+                    else
+                        HItimesAT = HItimesAT1 * ((tmax2*HItimesAT2 + (tmax1-tmax2))/tmax1)
+                        if (roundc(GetCrop_bCoeff(), mold=1) == undef_int) then
+                            HItimesAT = HItimesAT1
+                        end if
+                        if (roundc(GetCrop_aCoeff(), mold=1) == undef_int) then
+                            HItimesAT = HItimesAT2
+                        end if
+                    end if
+                end if
+            end if
+            
+            ! 2.8 Limit HI to allowable maximum increase
+            HItimesTotal = HItimesBEF * HItimesAT
+            if (HItimesTotal > (1._dp +(GetCrop_DHImax()/100._dp))) then
+                HItimesTotal = 1._dp +(GetCrop_DHImax()/100._dp)
+            end if
+            
+            ! 2.9 Yield
+            if (alfaMax >= alfa) then
+                YieldPart = Biomass * HItimesTotal*(alfa/100._dp)
+            else
+                YieldPart = Biomass * HItimesTotal*(alfaMax/100._dp)
+            end if
+        end if
+    end if
+        
+    ! 2bis. yield leafy vegetable crops
+    if ((GetCrop_subkind() == subkind_Vegetative) .or. (GetCrop_subkind() == subkind_Forage)) then
+        if (dayi >= (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())) then
+            ! calculation starts at crop day 1 (since days to flowering is 0)
+            if ((100._dp*CCw) < GetSimulParam_PercCCxHIfinal()) then
+                alfa = 0._dp
+            end if
+            if (roundc(100._dp*ETo, mold=1)> 0._dp) then
+                ! with correction for transferred assimilates
+                if (GetSimulation_RCadj() > 0._dp) then 
+                    YieldPart = YieldPart + (WPi*(TrW/ETo) + Bin - Bout) * (alfa/100._dp)
+                    
+                else
+                    YieldPart = YieldPart + (WPi*(Tact/ETo) + Bin - Bout) * (alfa/100._dp)
+                end if
+            end if
+        end if
+    end if
+        
+        
+        
+    ! 3. Dynamic adjustment of soil fertility stress
+    if ((GetManagement_FertilityStress() > 0) .and. (BiomassUnlim > 0.001_dp) &
+                            .and. GetCrop_StressResponse_Calibrated()) then
+        BioAdj = 100._dp * (FracBiomassPotSF + (FracBiomassPotSF - BiomassTot/BiomassUnlim))
+        if (BioAdj >= 100._dp) then
+            StressSFadjNEW = 0
+        else
+            if (BioAdj <= epsilon(1._dp)) then
+                StressSFadjNEW = 80
+            else
+                StressSFadjNEW = roundc(Coeffb0 + Coeffb1*BioAdj + Coeffb2*BioAdj*BioAdj, mold=1)
+                if (StressSFadjNEW < 0) then
+                    StressSFadjNEW = GetManagement_FertilityStress()
+                end if
+                if (StressSFadjNEW > 80) then
+                    StressSFadjNEW = 80
+                end if
+            end if
+            if (StressSFadjNEW > GetManagement_FertilityStress()) then
+                StressSFadjNEW = GetManagement_FertilityStress()
+            end if
+        end if
+        if ((GetCrop_Subkind() == Subkind_grain) .and. GetCrop_DeterminancyLinked() &
+            .and. (dayi > (GetSimulation_DelayedDays() + GetCrop_Day1() &
+                                + GetCrop_DaysToFlowering() + tmax1))) then
+            ! potential vegetation period is exceeded
+            if (StressSFadjNEW < PreviousStressLevel) then
+                StressSFadjNEW = PreviousStressLevel
+            end if
+            if (StressSFadjNEW > GetManagement_FertilityStress()) then
+                StressSFadjNEW = GetManagement_FertilityStress()
+            end if
+        end if
+    else
+        StressSFadjNEW = 0
+    end if
+    PreviousStressLevel = StressSFadjNEW
+    SumKcTopStress = (1._dp - StressSFadjNEW/100._dp) * SumKcTop
+
+
+    contains
+
+    real(dp) function FractionFlowering(Dayi)
+      integer(int32), intent(in) :: Dayi
+
+      real(dp) :: f1, f2, F
+      integer(int32) :: DiFlor
+
+      if (GetCrop_LengthFlowering() <= 1) then
+          F = 1._dp
+      else
+          DiFlor = dayi - (GetSimulation_DelayedDays() + &
+                            GetCrop_Day1() + GetCrop_DaysToFlowering())
+          f2 = FractionPeriod(DiFlor)
+          DiFlor = (dayi-1) - (GetSimulation_DelayedDays() + &
+                            GetCrop_Day1() + GetCrop_DaysToFlowering())
+          f1 = FractionPeriod(DiFlor)
+          if (abs(f1-f2) < 0.0000001_dp) then
+              F = 0._dp
+          else
+              F = (100._dp * ((f1+f2)/2._dp)/GetCrop_LengthFlowering())
+          end if
+      end if
+      FractionFlowering = F
+    end function FractionFlowering
+
+    real(dp) function FractionPeriod(DiFlor)
+        integer(int32), intent(in) :: DiFlor
+
+        real(dp) :: fi, TimePerc
+
+        if (DiFlor <= epsilon(1._dp)) then
+            fi = 0._dp
+        else
+            TimePerc = 100._dp * (DiFlor/GetCrop_LengthFlowering())
+            if (TimePerc > 100._dp) then
+                fi = 1._dp
+            else
+                fi = 0.00558_dp * exp(0.63_dp*log(TimePerc)) - &
+                     0.000969_dp * TimePerc - 0.00383_dp
+                if (fi < 0._dp) then
+                    fi = 0._dp
+                end if
+            end if
+        end if
+        FractionPeriod = fi
+    end function FractionPeriod
+
+    integer(int32) function YearWeighingFactor(CropFirstDayNr)
+        integer(int32), intent(in) :: CropFirstDayNr
+        
+        integer(int32) :: Dayi, Monthi, Yeari
+
+        call DetermineDate(CropFirstDayNr, Dayi, Monthi, Yeari)
+        YearWeighingFactor = Yeari
+    end function YearWeighingFactor 
+end subroutine DetermineBiomassAndYield
+
+subroutine AdjustpStomatalToETo(MeanETo, pStomatULAct)
+    real(dp), intent(in) :: MeanETo
+    real(dp), intent(inout) :: pStomatULAct
+
+
+    select case (GetCrop_pMethod())
+        case (pMethod_NoCorrection)
+            pStomatULAct = GetCrop_pdef() 
+
+        case (pMethod_FAOCorrection)
+             pStomatULAct = GetCrop_pdef() + GetSimulParam_pAdjFAO() * &
+             (0.04_dp *(5._dp-MeanETo))*log10(10._dp-9._dp*GetCrop_pdef())
+    end select
+    if (pStomatULAct > 1) then
+        pStomatULAct = 1._dp
+    end if
+    if (pStomatULAct < 0._dp) then
+        pStomatULAct = 0._dp
+    end if
+end subroutine AdjustpStomatalToETo
+
+
 
 
 subroutine AdjustpSenescenceToETo(EToMean, TimeSenescence, WithBeta, pSenAct)
@@ -1263,7 +1863,7 @@ subroutine calculate_runoff(MaxDepth)
         Shower = GetRain()
     else
         CNA = real(CN2, kind=dp)
-        Shower = (GetRain()*10.0_dp)&
+        Shower = (GetRain()*10.0_dp) &
                  / GetSimulParam_EffectiveRain_ShowersInDecade()
     end if
     S = 254.0_dp * (100.0_dp/CNA - 1.0_dp)
@@ -1723,7 +2323,7 @@ end subroutine CheckWaterSaltBalance
 
 
 subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
-                                 InfiltratedStorage, dayi, SubDrain)
+                                 InfiltratedStorage, SubDrain, dayi)
     real(dp), intent(in) :: InfiltratedRain
     real(dp), intent(in) :: InfiltratedIrrigation
     real(dp), intent(in) :: InfiltratedStorage
@@ -4918,7 +5518,292 @@ subroutine HorizontalInflowGWTable(DepthGWTmeter, HorizontalSaltFlow, &
             end if
         end if
     end do
-end subroutine HorizontalInflowGWTable 
+end subroutine HorizontalInflowGWTable
+
+
+subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
+                         SumInterval, DayLastCut, NrDayGrow, Tadj, GDDTadj, &
+                         GDDayi, CGCref, GDDCGCref, CO2i, CCxTotal, CCoTotal, &
+                         CDCTotal, GDDCDCTotal, SumGDDadjCC, Coeffb0Salt, &
+                         Coeffb1Salt, Coeffb2Salt, StressTotSaltPrev, &
+                         DayFraction, GDDayFraction, FracAssim, &
+                         StressSFadjNEW, StorageON, MobilizationON, &
+                         StressLeaf, StressSenescence, TimeSenescence, &
+                         NoMoreCrop, CGCadjustmentAfterCutting, TESTVAL)
+    integer(int32), intent(in) :: dayi
+    integer(int32), intent(in) :: TargetTimeVal
+    integer(int32), intent(in) :: TargetDepthVal
+    integer(int32), intent(in) :: VirtualTimeCC
+    integer(int32), intent(in) :: SumInterval
+    integer(int32), intent(in) :: DayLastCut
+    integer(int32), intent(in) :: NrDayGrow
+    integer(int32), intent(in) :: Tadj
+    integer(int32), intent(in) :: GDDTadj
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: CGCref
+    real(dp), intent(in) :: GDDCGCref
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: CCxTotal
+    real(dp), intent(in) :: CCoTotal
+    real(dp), intent(in) :: CDCTotal
+    real(dp), intent(in) :: GDDCDCTotal
+    real(dp), intent(in) :: SumGDDadjCC
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: StressTotSaltPrev
+    real(dp), intent(in) :: DayFraction
+    real(dp), intent(in) :: GDDayFraction
+    real(dp), intent(in) :: FracAssim
+    integer(int8), intent(in) :: StressSFadjNEW
+    logical, intent(in) :: StorageON
+    logical, intent(in) :: MobilizationON
+    real(dp), intent(inout) :: StressLeaf
+    real(dp), intent(inout) :: StressSenescence
+    real(dp), intent(inout) :: TimeSenescence
+    logical, intent(inout) :: NoMoreCrop
+    logical, intent(inout) :: CGCadjustmentAfterCutting
+    real(dp), intent(inout) :: TESTVAL
+
+
+    integer(intEnum) ::  control
+    real(dp) :: InfiltratedRain, InfiltratedIrrigation, &
+                InfiltratedStorage, EpotTot, SubDrain
+    integer(int32) :: DAP
+    real(dp) :: ECInfilt
+        !! EC of the infiltrated water (surface storage)
+    logical :: WaterTableInProfile
+    real(dp) :: HorizontalWaterFlow, HorizontalSaltFlow
+    type(rep_EffectStress) :: EffectStress_temp
+    logical :: SWCtopSoilConsidered_temp
+    real(dp) :: EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
+    real(dp) :: Crop_pActStom_temp
+    real(dp) :: CRsalt_temp, ECdrain_temp, Tact_temp, Surf0_temp
+    integer(int32) :: TargetTimeVal_loc
+    integer(int8) :: StressSFadjNEW_loc
+
+    TargetTimeVal_loc = TargetTimeVal
+    StressSFadjNEW_loc = StressSFadjNEW
+
+    ! 1. Soil water balance
+    control = control_begin_day
+    ECdrain_temp = GetECdrain()
+    Surf0_temp = GetSurf0()
+    call CheckWaterSaltBalance(dayi, InfiltratedRain, control, &
+                               InfiltratedIrrigation, InfiltratedStorage, &
+                               Surf0_temp, ECInfilt, ECdrain_temp, &
+                               HorizontalWaterFlow, HorizontalSaltFlow, &
+                               SubDrain)
+    call SetECdrain(ECdrain_temp)
+    call SetSurf0(Surf0_temp)
+
+    ! 2. Adjustments in presence of Groundwater table
+    call CheckForWaterTableInProfile(GetZiAqua()/100._dp, GetCompartment(), &
+                                     WaterTableInProfile)
+    Comp_temp = GetCompartment()
+    call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+    call SetCompartment(Comp_temp)
+
+    ! 3. Drainage
+    call calculate_drainage()
+
+    ! 4. Runoff
+    if (GetManagement_Bundheight() < 0.001_dp) then
+        call SetDaySubmerged(0)
+        if ((GetManagement_RunoffON()) .and. (GetRain() > 0.1_dp)) then
+            call calculate_runoff(GetSimulParam_RunoffDepth())
+        end if
+    end if
+
+    ! 5. Infiltration (Rain and Irrigation)
+    if ((GetRainRecord_DataType() == datatype_decadely) &
+            .or. (GetRainRecord_DataType() == datatype_monthly)) then
+        call CalculateEffectiveRainfall(SubDrain)
+    end if
+    if (((GetIrriMode() == IrriMode_Generate) &
+        .and. (GetIrrigation() < epsilon(0._dp))) &
+            .and. (TargetTimeVal_loc /= -999)) then
+        call Calculate_irrigation(SubDrain, TargetTimeVal_loc, TargetDepthVal)
+    end if
+    if (GetManagement_Bundheight() >= 0.01_dp) then
+        call calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
+                                      InfiltratedStorage, ECinfilt, SubDrain, &
+                                      dayi)
+    else
+        call calculate_Extra_runoff(InfiltratedRain, InfiltratedIrrigation, &
+                                    InfiltratedStorage, SubDrain)
+    end if
+    call calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
+                                InfiltratedStorage, SubDrain)
+
+    ! 6. Capillary Rise
+    CRwater_temp = GetCRwater()
+    CRsalt_temp = GetCRsalt()
+    call calculate_CapillaryRise(CRwater_temp, CRsalt_temp)
+    call SetCRwater(CRwater_temp)
+    call SetCRsalt(CRsalt_temp)
+
+    ! 7. Salt balance
+    call calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
+                               InfiltratedStorage, SubDrain, dayi)
+
+
+    ! 8. Check Germination
+    if ((.not. GetSimulation_Germinate()) .and. (dayi >=GetCrop_Day1())) then
+        call CheckGermination()
+    end if
+
+    ! 9. Determine effect of soil fertiltiy and soil salinity stress
+    if (.not. NoMoreCrop) then
+        call EffectSoilFertilitySalinityStress(StressSFadjNEW_loc, Coeffb0Salt, &
+                                               Coeffb1Salt, Coeffb2Salt, &
+                                               NrDayGrow, StressTotSaltPrev, &
+                                               VirtualTimeCC)
+    end if
+
+
+    ! 10. Canopy Cover (CC)
+    if (.not. NoMoreCrop) then
+        ! determine water stresses affecting canopy cover
+        SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+        call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
+        call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        ! determine canopy cover
+        select case (GetCrop_ModeCycle())
+            case(modecycle_GDDays)
+            call DetermineCCiGDD(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
+                                 MobilizationON, StorageON, SumGDDAdjCC, &
+                                 VirtualTimeCC, StressSenescence, &
+                                 TimeSenescence, NoMoreCrop, CDCTotal, &
+                                 CGCAdjustmentAfterCutting, GDDayFraction, &
+                                 GDDayi, GDDCDCTotal, GDDTadj)
+            case default
+            call DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
+                              MobilizationON, StorageON, Tadj, VirtualTimeCC, &
+                              StressSenescence, TimeSenescence, NoMoreCrop, &
+                              CDCTotal, CGCAdjustmentAfterCutting, &
+                              DayFraction, GDDCDCTotal, TESTVAL)
+        end select
+    end if
+
+    ! 11. Determine Tpot and Epot
+    ! 11.1 Days after Planting
+    if (GetCrop_ModeCycle() == modecycle_Calendardays) then
+        DAP = VirtualTimeCC
+    else
+        ! growing degree days - to position correctly where in cycle
+        DAP = SumCalendarDays(roundc(SumGDDadjCC, mold=1), GetCrop_Day1(), &
+                              GetCrop_Tbase(), GetCrop_Tupper(), &
+                              GetSimulParam_Tmin(), GetSimulParam_Tmax())
+        DAP = DAP + GetSimulation_DelayedDays() 
+            ! are not considered when working with GDDays
+    end if
+
+    ! 11.2 Calculation
+    Tpot_temp = GetTpot()
+    call CalculateETpot(DAP, GetCrop_DaysToGermination(), &
+                        GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
+                        GetCrop_DaysToHarvest(), DayLastCut, GetCCiActual(), &
+                        GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), &
+                        GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), &
+                        real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, &
+                        GDDayi, GetCrop_GDtranspLow(), Tpot_temp, EpotTot)
+    call SetTpot(Tpot_temp)
+    call SetEpot(EpotTot)    
+        ! adjustment Epot for mulch and partial wetting in next step
+    Crop_pActStom_temp = GetCrop_pActStom()
+    call AdjustpStomatalToETo(GetETo(), Crop_pActStom_temp)
+    call SetCrop_pActStom(Crop_pActStom_temp)
+
+    ! 12. Evaporation
+    if (.not. GetPreDay()) then
+        call PrepareStage2() 
+            ! Initialize Simulation.EvapstartStg2 (REW is gone)
+    end if
+    if ((GetRain() > 0._dp) &
+        .or. ((GetIrrigation() > 0._dp) &
+            .and. (GetIrriMode() /= IrriMode_Inet))) then
+        call PrepareStage1()
+    end if
+    EvapWCsurf_temp = GetSimulation_EvapWCsurf()
+    Epot_temp = GetEpot()
+    call AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot_temp, EvapWCsurf_temp)
+    call SetEpot(Epot_temp)
+    call SetSimulation_EvapWCsurf(EvapWCsurf_temp)
+    if (((GetRainRecord_DataType() == datatype_Decadely) &
+            .or. (GetRainRecord_DataType() == datatype_Monthly)) &
+        .and. (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) then 
+        ! reduction soil evaporation
+        call SetEpot(GetEpot() &
+                    * (exp((1._dp/GetSimulParam_EffectiveRain_RootNrEvap())&
+                            *log((GetSoil_REW()+1._dp)/20._dp))))
+    end if
+    ! actual evaporation
+    call SetEact(0._dp)
+    if (GetEpot() > 0._dp) then
+        ! surface water
+        if (GetSurfaceStorage() > 0._dp) then
+            call CalculateEvaporationSurfaceWater
+        end if
+        ! stage 1 evaporation
+        if ((abs(GetEpot() - GetEact()) > 0.0000001_dp) &
+            .and. (GetSimulation_EvapWCsurf() > 0._dp)) then
+            call CalculateSoilEvaporationStage1()
+        end if
+        ! stage 2 evaporation
+        if (abs(GetEpot() - GetEact()) > 0.0000001_dp) then
+            call CalculateSoilEvaporationStage2()
+        end if
+    end if
+    ! Reset redcution Epot for 10-day or monthly rainfall data
+    if (((GetRainRecord_DataType() == datatype_Decadely) &
+            .or. (GetRainRecord_DataType() == datatype_Monthly)) &
+        .and. (GetSimulParam_EffectiveRain_RootNrEvap() > 0._dp)) then
+        call SetEpot(GetEpot()&
+                    /(exp((1._dp/GetSimulParam_EffectiveRain_RootNrEvap()) &
+                           *log((GetSoil_REW()+1._dp)/20._dp))))
+    end if
+
+
+    ! 13. Transpiration
+    if ((.not. NoMoreCrop) .and. (GetRootingDepth() > 0.0001_dp)) then
+        if ((GetSurfaceStorage() > 0._dp) &
+            .and. ((GetCrop_AnaeroPoint() == 0) &
+                  .or. (GetDaySubmerged() < GetSimulParam_DelayLowOxygen()))) then
+            call surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+        else
+            call calculate_transpiration(GetTpot(), Coeffb0Salt, Coeffb1Salt, &
+                                         Coeffb2Salt)
+        end if
+    end if
+    if (GetSurfaceStorage() < epsilon(0._dp)) then
+        call SetDaySubmerged(0)
+    end if
+    call FeedbackCC()
+
+    ! 14. Adjustment to groundwater table
+    if (WaterTableInProfile) then
+        call HorizontalInflowGWTable(GetZiAqua()/100._dp, HorizontalSaltFlow, &
+                                     HorizontalWaterFlow)
+    end if
+
+    ! 15. Salt concentration
+    call ConcentrateSalts()
+
+    ! 16. Soil water balance
+    control = control_end_day
+    ECdrain_temp = GetECdrain()
+    Surf0_temp = GetSurf0()
+    call CheckWaterSaltBalance(dayi, InfiltratedRain, control, &
+                               InfiltratedIrrigation, InfiltratedStorage, &
+                               Surf0_temp, ECInfilt, ECdrain_temp, &
+                               HorizontalWaterFlow, HorizontalSaltFlow, &
+                               SubDrain)
+    call SetECdrain(ECdrain_temp)
+    call SetSurf0(Surf0_temp)
+end subroutine BUDGET_module
+
 
 
 !-----------------------------------------------------------------------------

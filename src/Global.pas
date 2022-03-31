@@ -5,17 +5,13 @@ interface
 uses SysUtils, interface_global;
 
 VAR DataPath,ObsPath : BOOLEAN;
-    SWCiniFileFull,ProjectFileFull,MultipleProjectFileFull : string;
 
 
     SenStage       : INTEGER;
     Tmin, Tmax : double; (* degC *)
-    Surf0          : double; (* surface water [mm] begin day *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
-    // salinity
-    CRsalt         : double; // gram/m2
 
 
 // Extra for stand alone procedure

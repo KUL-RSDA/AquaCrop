@@ -4640,6 +4640,12 @@ function GetCRwater() : double;
 procedure SetCRwater(constref CRwater_in : double);
     external 'aquacrop' name '__ac_global_MOD_setcrwater';
 
+function GetCCiActual() : double;
+    external 'aquacrop' name '__ac_global_MOD_getcciactual';
+
+procedure SetCCiActual(constref CCiACtual_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setcciactual';
+
 function GetEpot() : double;
     external 'aquacrop' name '__ac_global_MOD_getepot';
 
@@ -4714,12 +4720,6 @@ function GetSaltInfiltr() : double;
 procedure SetSaltInfiltr(constref SaltInfiltr_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsaltinfiltr';
 
-function GetCCiActual() : double;
-    external 'aquacrop' name '__ac_global_MOD_getcciactual';
-
-procedure SetCCiActual(constref CCiActual_in : double);
-    external 'aquacrop' name '__ac_global_MOD_setcciactual';
-
 function GetTact() : double; 
     external 'aquacrop' name '__ac_global_MOD_gettact';
 
@@ -4745,6 +4745,12 @@ procedure CheckForKeepSWC_wrap(
                     var RunWithKeepSWC : boolean;
                     var ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
+
+function GetSurf0() : double;
+    external 'aquacrop' name '__ac_global_MOD_getsurf0';
+
+procedure SetSurf0(constref Surf0_in : double);
+    external 'aquacrop' name '__ac_global_MOD_setsurf0';
 
 
 implementation

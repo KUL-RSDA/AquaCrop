@@ -356,6 +356,29 @@ function fIrri_eof() : boolean;
 procedure fIrri_close();
         external 'aquacrop' name '__ac_run_MOD_firri_close';
 
+function GetFracBiomassPotSF() : double;
+    external 'aquacrop' name '__ac_run_MOD_getfracbiomasspotsf';
+
+procedure SetFracBiomassPotSF(constref FracBiomassPotSF_in : double);
+    external 'aquacrop' name '__ac_run_MOD_setfracbiomasspotsf';
+
+function GetCO2i() : double;
+    external 'aquacrop' name '__ac_run_MOD_getco2i';
+
+procedure SetCO2i(constref CO2i_in : double);
+    external 'aquacrop' name '__ac_run_MOD_setco2i';
+
+
+procedure RelationshipsForFertilityAndSaltStress(
+                    VAR Coeffb0 : double;
+                    VAR Coeffb1 : double;
+                    VAR Coeffb2 : double;
+                    VAR FracBiomassPotSF : double;
+                    VAR Coeffb0Salt : double;
+                    VAR Coeffb1Salt : double;
+                    VAR Coeffb2Salt : double);
+        external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
+
 
 implementation
 
