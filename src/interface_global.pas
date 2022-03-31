@@ -4750,7 +4750,7 @@ function GetTmin() : double;
     external 'aquacrop' name '__ac_global_MOD_gettmin';
 
 procedure SetTmin(constref Tmin_in : double);
-    external 'aquacrop' name '__ac_global_MOD_settmax';
+    external 'aquacrop' name '__ac_global_MOD_settmin';
 
 function GetTmax() : double;
     external 'aquacrop' name '__ac_global_MOD_gettmax';

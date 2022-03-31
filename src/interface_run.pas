@@ -364,10 +364,10 @@ procedure SetTmaxDataSet_Param(constref i : integer;
 procedure GetSumGDDBeforeSimulation(var SumGDDtillDay, SumGDDtillDayM1 : double);
     external 'aquacrop' name '__ac_run_MOD_getsumgddbeforesimulation';
 
-function GetDayNri() : integer;
+function GetDayNri() : LongInt;
     external 'aquacrop' name '__ac_run_MOD_getdaynri';
 
-procedure SetDayNri(constref DayNri_in : integer);
+procedure SetDayNri(constref DayNri_in : LongInt);
     external 'aquacrop' name '__ac_run_MOD_setdaynri';
 
 
