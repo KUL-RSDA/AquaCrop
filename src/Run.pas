@@ -909,9 +909,9 @@ VAR InfoLoaded : BOOLEAN;
 BEGIN
 CASE GetManagement_Cuttings_Generate() OF
  false: BEGIN
+        TempString := fCuts_read();
         IF (NOT fCuts_eof())
            THEN BEGIN
-                TempString := fCuts_read();
                 ReadStr(TempString, FromDay_temp);
                 SetCutInfoRecord1_FromDay(FromDay_temp);
                 SetCutInfoRecord1_NoMoreInfo(false);
@@ -920,9 +920,9 @@ CASE GetManagement_Cuttings_Generate() OF
                    DayNrXX := GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1;
                    WHILE ((DayNrXX < GetCrop().Day1) AND (GetCutInfoRecord1_NoMoreInfo() = false)) DO
                      BEGIN
+                     TempString := fCuts_read();
                      IF (NOT fCuts_eof())
                         THEN BEGIN
-                             TempString := fCuts_read();
                              ReadStr(TempString, FromDay_temp);
                              SetCutInfoRecord1_FromDay(FromDay_temp);
                              DayNrXX := GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1;
@@ -960,23 +960,21 @@ CASE GetManagement_Cuttings_Generate() OF
            END;
         InfoLoaded := false;
         REPEAT
+        TempString := fCuts_read();
         IF (NOT fCuts_eof())
            THEN BEGIN
                 CASE GetManagement_Cuttings_Criterion() OF
                      IntDay :           BEGIN
-                                        TempString := fCuts_read();
                                         ReadStr(TempString, FromDay_temp, IntervalInfo_temp);
                                         SetCutInfoRecord2_FromDay(FromDay_temp);
                                         SetCutInfoRecord2_IntervalInfo(IntervalInfo_temp);
                                         END;
                      IntGDD :           BEGIN
-                                        TempString := fCuts_read();
                                         ReadStr(TempString, FromDay_temp, IntervalGDD_temp);
                                         SetCutInfoRecord2_FromDay(FromDay_temp);
                                         SetCutInfoRecord2_IntervalGDD(IntervalGDD_temp);
                                         END;
                      DryB,DryY,FreshY : BEGIN
-                                        TempString := fCuts_read();
                                         ReadStr(TempString, FromDay_temp, MassInfo_temp);
                                         SetCutInfoRecord2_FromDay(FromDay_temp);
                                         SetCutInfoRecord2_MassInfo(MassInfo_temp);
