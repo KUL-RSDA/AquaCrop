@@ -236,6 +236,7 @@ VAR NrString,TestFile : string;
         i,simul_RpZmi,simul_lowox : INTEGER;
         effrainperc,effrainshow,effrainrootE,simul_saltdiff,simul_saltsolub, simul_root,simul_ed,simul_pCCHIf,simul_SFR,simul_TAWg,simul_beta,simul_Tswc,simul_EZma,simul_GDD : ShortInt;
         simul_rod,simul_kcWB,simul_RZEma,simul_pfao,simul_expFsen,simul_Tmi,simul_Tma : double;
+        Tmin_temp : double;
     BEGIN
     IF FileExists(FullFileNameProgramParameters)
        THEN BEGIN // load set of program parameters
@@ -296,7 +297,8 @@ VAR NrString,TestFile : string;
             SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
 
             // Temperature
-            Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
+            Readln(f0,Tmin_temp);   //Default minimum temperature (degC) if no temperature file is specified
+            SetTmin(Tmin_temp);
             SetSimulParam_Tmin(simul_Tmi);
             Readln(f0,simul_Tma);   //Default maximum temperature (degC) if no temperature file is specified
 
