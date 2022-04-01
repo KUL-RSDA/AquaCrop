@@ -25,41 +25,6 @@ USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, inter
 VAR fProjects : textFile;
 
 
-PROCEDURE GetTimeAggregationResults(VAR OutputAggregate : ShortInt);
-VAR FullFileName,TempString : string;
-    f0 : TextFile;
-    n,i : INTEGER;
-
-BEGIN
-OutputAggregate := 0; // simulation period 0: season
-FullFileName := CONCAT(GetPathNameSimul(),'AggregationResults.SIM');
-IF (FileExists(FullFileName) = true) THEN
-   BEGIN
-   Assign(f0,FullFileName);
-   Reset(f0);
-   READLN(f0,TempString);
-   n := Length(TempString);
-   IF (n > 0) THEN
-      BEGIN
-      i := 1;
-      While ((TempString[i] = ' ') AND (i < n)) DO i := i + 1;
-      IF (TempString[i] = '1')
-         THEN OutputAggregate := 1 // 1: daily aggregation
-         ELSE BEGIN
-              IF (TempString[i] = '2')
-                 THEN OutputAggregate := 2 // 2 : 10-daily aggregation
-                 ELSE BEGIN
-                      IF (TempString[i] = '3')
-                         THEN OutputAggregate := 3 // 3 : monthly aggregation
-                         ELSE OutputAggregate := 0; // 0 : seasonal results only
-                      END;
-              END;
-      END;
-   Close(f0);
-   END;
-END; (* GetTimeAggregationResults *)
-
-
 PROCEDURE PrepareReport(OutputAggregate : ShortInt;
                         Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
                         Part1Mult,Part2Eval : BOOLEAN);

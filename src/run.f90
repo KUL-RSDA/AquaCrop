@@ -108,6 +108,8 @@ use ac_global, only: CompartmentIndividual, &
                      GetCrop_Tupper, &
                      GetCrop_WP, &
                      GetCrop_WPy, &
+                     GetCrop_Length_i, &
+                     GetSimulation_DelayedDays, &
                      GetGroundWaterFile, &
                      GetGroundWaterFileFull, &
                      GetManagement_FertilityStress, &
@@ -126,7 +128,9 @@ use ac_global, only: CompartmentIndividual, &
                      SetCompartment_i, &
                      SetCompartment_Theta, &
                      SplitStringInThreeParams, &
-                     undef_int
+                     undef_int, &
+                     subkind_Grain, &
+                     subkind_Tuber
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -1663,6 +1667,48 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
     end if
 end subroutine RelationshipsForFertilityAndSaltStress
 
+
+! extra for output of daily results  -----------------------------
+subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
+    integer(int32), intent(in) :: Dayi
+    real(dp), intent(in) :: CCiPrev
+    integer(int8), intent(inout)  :: Code
+
+    integer(int32) :: VirtualDay
+
+    VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
+    if (VirtualDay < 0) then
+        Code = 0_int8 ! before cropping period
+    else
+        if (VirtualDay < GetCrop_DaysToGermination()) then
+            Code = 1_int8 ! sown --> emergence OR transplant recovering
+        else
+            Code = 2_int8 ! vegetative development
+            if ((GetCrop_subkind() == subkind_Grain) .and. &
+                (VirtualDay >= GetCrop_DaysToFlowering())) then
+                if (VirtualDay < (GetCrop_DaysToFlowering() + &
+                                  GetCrop_LengthFlowering())) then
+                    Code = 3_int8 ! flowering
+                else
+                    Code = 4_int8 ! yield formation
+                end if
+            end if
+            if ((GetCrop_subkind() == subkind_Tuber) .and. &
+                (VirtualDay >= GetCrop_DaysToFlowering())) then
+                Code = 4_int8 ! yield formation
+            end if
+            if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
+                (CCiPrev < epsilon(0._dp))) then
+                Code = int(undef_int, kind=int8)  ! no growth stage
+            end if
+            if (VirtualDay >= &
+                (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
+                 GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
+                Code = 0_int8 ! after cropping period
+            end if
+        end if
+    end if
+end subroutine DetermineGrowthStage
 
 
 end module ac_run

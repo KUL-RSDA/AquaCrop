@@ -422,7 +422,6 @@ function GetCO2i() : double;
 procedure SetCO2i(constref CO2i_in : double);
     external 'aquacrop' name '__ac_run_MOD_setco2i';
 
-
 procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb0 : double;
                     VAR Coeffb1 : double;
@@ -432,6 +431,12 @@ procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb1Salt : double;
                     VAR Coeffb2Salt : double);
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
+
+procedure DetermineGrowthStage(
+                    constref Dayi : LongInt;
+                    constref CCiPrev : double;
+                    VAR Code : ShortInt);
+        external 'aquacrop' name '__ac_run_MOD_determinegrowthstage';
 
 function GetEToDataSet() : rep_SimulationEventsDbl;
 
@@ -478,7 +483,6 @@ procedure SetRainDataSet_DayNr(constref i : integer;
 procedure SetRainDataSet_Param(constref i : integer;
                                constref Param_in : double);
     external 'aquacrop' name '__ac_run_MOD_setraindataset_param';
-
 
 
 implementation
