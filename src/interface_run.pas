@@ -433,6 +433,53 @@ procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb2Salt : double);
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
 
+function GetEToDataSet() : rep_SimulationEventsDbl;
+
+function GetEToDataSet_i(constref i : integer) : rep_DayEventDbl;
+
+function GetEToDataSet_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_run_MOD_getetodataset_daynr';
+
+function GetEToDataSet_Param(constref i : integer) : double;
+    external 'aquacrop' name '__ac_run_MOD_getetodataset_param';
+
+procedure SetEToDataSet(constref EToDataSet_in : rep_SimulationEventsDbl);
+
+procedure SetEToDataSet_i(constref i : integer;
+                           constref EToDataSet_i : rep_DayEventDbl);
+
+procedure SetEToDataSet_DayNr(constref i : integer;
+                               constref  DayNr_in : integer);
+    external 'aquacrop' name '__ac_run_MOD_setetodataset_daynr';
+
+procedure SetEToDataSet_Param(constref i : integer;
+                               constref Param_in : double);
+    external 'aquacrop' name '__ac_run_MOD_setetodataset_param';
+
+function GetRainDataSet() : rep_SimulationEventsDbl;
+
+function GetRainDataSet_i(constref i : integer) : rep_DayEventDbl;
+
+function GetRainDataSet_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_run_MOD_getraindataset_daynr';
+
+function GetRainDataSet_Param(constref i : integer) : double;
+    external 'aquacrop' name '__ac_run_MOD_getraindataset_param';
+
+procedure SetRainDataSet(constref RainDataSet_in : rep_SimulationEventsDbl);
+
+procedure SetRainDataSet_i(constref i : integer;
+                           constref RainDataSet_i : rep_DayEventDbl);
+
+procedure SetRainDataSet_DayNr(constref i : integer;
+                               constref  DayNr_in : integer);
+    external 'aquacrop' name '__ac_run_MOD_setraindataset_daynr';
+
+procedure SetRainDataSet_Param(constref i : integer;
+                               constref Param_in : double);
+    external 'aquacrop' name '__ac_run_MOD_setraindataset_param';
+
+
 
 implementation
 
@@ -628,6 +675,63 @@ var
 begin;
      line_ptr := fIrri_read_wrap();
      fIrri_read := AnsiString(line_ptr);
+end;
+
+
+function GetEToDataSet() : rep_SimulationEventsDbl;
+var
+    i : integer;
+begin
+    for i := 1 to 31 do GetEToDataSet[i] := GetEToDataSet_i(i);
+end;
+
+function GetEToDataSet_i(constref i : integer) : rep_DayEventDbl;
+begin
+    GetEToDataSet_i.DayNr := GetEToDataSet_DayNr(i);
+    GetEToDataSet_i.Param := GetEToDataSet_Param(i);
+end;
+
+procedure SetEToDataSet(constref EToDataSet_in : rep_SimulationEventsDbl);
+var
+    i : integer;
+begin
+    for i := 1 to 31 do SetEToDataSet_i(i, EToDataSet_in[i]);
+end;
+
+procedure SetEToDataSet_i(constref i : integer;
+                          constref EToDataSet_i : rep_DayEventDbl);
+begin
+    SetEToDataSet_DayNr(i, EToDataSet_i.DayNr);
+    SetEToDataSet_Param(i, EToDataSet_i.Param);
+end;
+
+
+
+function GetRainDataSet() : rep_SimulationEventsDbl;
+var
+    i : integer;
+begin
+    for i := 1 to 31 do GetRainDataSet[i] := GetRainDataSet_i(i);
+end;
+
+function GetRainDataSet_i(constref i : integer) : rep_DayEventDbl;
+begin
+    GetRainDataSet_i.DayNr := GetRainDataSet_DayNr(i);
+    GetRainDataSet_i.Param := GetRainDataSet_Param(i);
+end;
+
+procedure SetRainDataSet(constref RainDataSet_in : rep_SimulationEventsDbl);
+var
+    i : integer;
+begin
+    for i := 1 to 31 do SetRainDataSet_i(i, RainDataSet_in[i]);
+end;
+
+procedure SetRainDataSet_i(constref i : integer;
+                          constref RainDataSet_i : rep_DayEventDbl);
+begin
+    SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
+    SetRainDataSet_Param(i, RainDataSet_i.Param);
 end;
 
 initialization

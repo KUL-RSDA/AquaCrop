@@ -120,6 +120,7 @@ use ac_global, only: CompartmentIndividual, &
                      GetSoilLayer_SAT, &
                      GetZiAqua, &
                      GetECiAqua, &
+                     rep_DayEventDbl, &
                      rep_sum, &
                      roundc, &
                      SetCompartment_i, &
@@ -210,8 +211,13 @@ end type rep_Transfer
 
 
 integer :: fRun  ! file handle
+integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
+integer :: fIrri_iostat  ! IO status
+
 type(rep_GwTable) :: GwTable
+type(rep_DayEventDbl), dimension(31) :: EToDataSet
+type(rep_DayEventDbl), dimension(31) :: RainDataSet
 type(rep_plotPar) :: PlotVarCrop
 type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
 type(rep_StressTot) :: StressTot
@@ -224,10 +230,11 @@ integer(int32) :: DayNri
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
 
+
 contains
 
 
-subroutine open_file(fhandle, filename, mode)
+subroutine open_file(fhandle, filename, mode, iostat)
     !! Opens a file in the given mode.
     integer, intent(out) :: fhandle
         !! file handle to be used for the open file
@@ -235,28 +242,32 @@ subroutine open_file(fhandle, filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
+    integer, intent(out) :: iostat
+        !! IO status returned by open()
 
     logical :: file_exists
 
     inquire(file=filename, exist=file_exists)
 
     if (mode == 'r') then
-        open(newunit=fhandle, file=trim(filename), status='old', action='read')
+        open(newunit=fhandle, file=trim(filename), status='old', &
+             action='read', iostat=iostat)
     elseif (mode == 'a') then
         if (file_exists) then
             open(newunit=fhandle, file=trim(filename), status='old', &
-                 position='append', action='write')
+                 position='append', action='write', iostat=iostat)
         else
             open(newunit=fhandle, file=trim(filename), status='replace', &
-                 action='write')
+                 action='write', iostat=iostat)
         end if
     elseif (mode == 'w') then
-        open(newunit=fhandle, file=trim(filename), status='new', action='write')
+        open(newunit=fhandle, file=trim(filename), status='new', &
+             action='write', iostat=iostat)
     end if
 end subroutine open_file
 
 
-subroutine write_file(fhandle, line, advance)
+subroutine write_file(fhandle, line, advance, iostat)
     !! Writes one line to a file.
     integer, intent(in) :: fhandle
         !! file handle of an already-opened file
@@ -264,6 +275,8 @@ subroutine write_file(fhandle, line, advance)
         !! line to write to the file
     logical, intent(in) :: advance
         !! whether or not to append a newline character
+    integer, intent(out) :: iostat
+        !! IO status returned by write()
 
     character(len=:), allocatable :: advance_str
 
@@ -273,42 +286,25 @@ subroutine write_file(fhandle, line, advance)
         advance_str = 'no'
     end if
 
-    write(fhandle, '(a)', advance=advance_str) line
+    write(fhandle, '(a)', advance=advance_str, iostat=iostat) line
 end subroutine write_file
 
 
-function read_file(fhandle) result(line)
+function read_file(fhandle, iostat) result(line)
     !! Returns the next line read from the given file.
     integer, intent(in) :: fhandle
         !! file handle of an already-opened file
+    integer, intent(out) :: iostat
+        !! IO status returned by read()
     character(len=:), allocatable :: line
         !! string which will contain the content of the next line
 
     integer, parameter :: length = 1024  ! max. no of characters
-    integer :: status
 
     allocate(character(len=length) :: line)
-    read(fhandle, '(a)', iostat=status) line
+    read(fhandle, '(a)', iostat=iostat) line
     line = trim(line)
 end function read_file
-
-
-function file_eof(fhandle) result(eof)
-    !! Returns whether we have reached the end of the file or not.
-    !!
-    !! This is done by inquiring about the record length (recl)
-    !! and checking whether it is equal to -1. A similar approach
-    !! with the IO status (iostat) did not work, i.e. the status
-    !! always appears to be 0, even at the end of the file.
-    integer, intent(in) :: fhandle
-        !! file handle of an already-opened file
-    logical :: eof
-
-    integer :: recl
-
-    inquire(unit=fhandle, recl=recl)
-    eof = recl == -1
-end function file_eof
 
 
 !! Section for Getters and Setters for global variables
@@ -322,7 +318,7 @@ subroutine fRun_open(filename, mode)
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
 
-    call open_file(fRun, filename, mode)
+    call open_file(fRun, filename, mode, fRun_iostat)
 end subroutine fRun_open
 
 
@@ -340,7 +336,7 @@ subroutine fRun_write(line, advance_in)
     else
         advance = .true.
     end if
-    call write_file(fRun, line, advance)
+    call write_file(fRun, line, advance, fRun_iostat)
 end subroutine fRun_write
 
 
@@ -358,7 +354,7 @@ subroutine fIrri_open(filename, mode)
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
 
-    call open_file(fIrri, filename, mode)
+    call open_file(fIrri, filename, mode, fIrri_iostat)
 end subroutine fIrri_open
 
 
@@ -367,7 +363,7 @@ function fIrri_read() result(line)
     character(len=:), allocatable :: line
         !! name of the file to assign the file handle to
 
-    line = read_file(fIrri)
+    line = read_file(fIrri, fIrri_iostat)
 end function fIrri_read
 
 
@@ -375,7 +371,7 @@ function fIrri_eof() result(eof)
     !! Returns whether the end of the 'fIrri' file has been reached.
     logical :: eof
 
-    eof = file_eof(fIrri)
+    eof = fIrri_iostat == iostat_end
 end function fIrri_eof
 
 
@@ -945,6 +941,7 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
     Transfer%Bmobilized = Bmobilized
 end subroutine SetTransfer_Bmobilized
 
+
 !TminDatSet
 
 function GetTminDataSet() result(TminDataSet_out)
@@ -1072,7 +1069,124 @@ subroutine SetDayNri(DayNri_in)
     DayNri = DayNri_in
 end subroutine SetDayNri
 
-! END global variables section
+
+! EToDataSet
+
+function GetEToDataSet() result(EToDataSet_out)
+    !! Getter for the "EToDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: EToDataSet_out
+
+    EToDataSet_out = EToDataSet
+end function GetEToDataSet
+
+function GetEToDataSet_i(i) result(EToDataSet_i)
+    !! Getter for individual elements of the "EToDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: EToDataSet_i
+
+    EToDataSet_i = EToDataSet(i)
+end function GetEToDataSet_i
+
+integer(int32) function GetEToDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetEToDataSet_DayNr = EToDataSet(i)%DayNr
+end function GetEToDataSet_DayNr
+
+real(dp) function GetEToDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetEToDataSet_Param = EToDataSet(i)%Param
+end function GetEToDataSet_Param
+
+subroutine SetEToDataSet(EToDataSet_in)
+    !! Setter for the "EToDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: EToDataSet_in
+
+    EToDataSet = EToDataSet_in
+end subroutine SetEToDataSet
+
+subroutine SetEToDataSet_i(i, EToDataSet_i)
+    !! Setter for individual element for the "EToDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: EToDataSet_i
+
+    EToDataSet(i) = EToDataSet_i
+end subroutine SetEToDataSet_i
+
+subroutine SetEToDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    EToDataSet(i)%DayNr = DayNr_in
+end subroutine SetEToDataSet_DayNr
+
+subroutine SetEToDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    EToDataSet(i)%Param = Param_in
+end subroutine SetEToDataSet_Param
+
+! RainDataSet
+
+function GetRainDataSet() result(RainDataSet_out)
+    !! Getter for the "RainDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: RainDataSet_out
+
+    RainDataSet_out = RainDataSet
+end function GetRainDataSet
+
+function GetRainDataSet_i(i) result(RainDataSet_i)
+    !! Getter for individual elements of the "RainDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: RainDataSet_i
+
+    RainDataSet_i = RainDataSet(i)
+end function GetRainDataSet_i
+
+integer(int32) function GetRainDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetRainDataSet_DayNr = RainDataSet(i)%DayNr
+end function GetRainDataSet_DayNr
+
+real(dp) function GetRainDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetRainDataSet_Param = RainDataSet(i)%Param
+end function GetRainDataSet_Param
+
+subroutine SetRainDataSet(RainDataSet_in)
+    !! Setter for the "RainDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: RainDataSet_in
+
+    RainDataSet = RainDataSet_in
+end subroutine SetRainDataSet
+
+subroutine SetRainDataSet_i(i, RainDataSet_i)
+    !! Setter for individual element for the "RainDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: RainDataSet_i
+
+    RainDataSet(i) = RainDataSet_i
+end subroutine SetRainDataSet_i
+
+subroutine SetRainDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    RainDataSet(i)%DayNr = DayNr_in
+end subroutine SetRainDataSet_DayNr
+
+subroutine SetRainDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    RainDataSet(i)%Param = Param_in
+end subroutine SetRainDataSet_Param
+
+!! END section global variables
 
 
 
