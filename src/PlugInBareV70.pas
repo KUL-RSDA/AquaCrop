@@ -4,7 +4,7 @@ uses
   Global in 'Global.pas',
   interface_global in 'interface_global.pas',
   Run in 'Run.pas',
-  interface_run in 'interface_run.oas',
+  interface_run in 'interface_run.pas',
   StartUnit in 'StartUnit.pas';
 
 
