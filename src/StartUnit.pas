@@ -25,84 +25,6 @@ USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, inter
 VAR fProjects : textFile;
 
 
-PROCEDURE GetRequestDailyResults(VAR Out1Wabal,Out2Crop,Out3Prof,Out4Salt,
-                                     Out5CompWC,Out6CompEC,Out7Clim,OutDaily : BOOLEAN);
-VAR FullFileName,TempString : string;
-    f0 : TextFile;
-    n,i : INTEGER;
-
-BEGIN
-Out1Wabal := false;
-Out2Crop := false;
-Out3Prof := false;
-Out4Salt := false;
-Out5CompWC := false;
-Out6CompEC := false;
-Out7Clim := false;
-
-FullFileName := CONCAT(GetPathNameSimul(),'DailyResults.SIM');
-IF (FileExists(FullFileName) = true) THEN
-   BEGIN
-   Assign(f0,FullFileName);
-   Reset(f0);
-   WHILE NOT Eof(f0) DO
-     BEGIN
-     READLN(f0,TempString);
-     n := Length(TempString);
-     IF (n > 0) THEN
-        BEGIN
-        i := 1;
-        While ((TempString[i] = ' ') AND (i < n)) DO i := i + 1;
-        IF (TempString[i] = '1') THEN Out1Wabal := true;
-        IF (TempString[i] = '2') THEN Out2Crop := true;
-        IF (TempString[i] = '3') THEN Out3Prof := true;
-        IF (TempString[i] = '4') THEN Out4Salt := true;
-        IF (TempString[i] = '5') THEN Out5CompWC := true;
-        IF (TempString[i] = '6') THEN Out6CompEC := true;
-        IF (TempString[i] = '7') THEN Out7Clim := true;
-        END;
-     END;
-   Close(f0);
-   END;
-IF ((Out1Wabal = true) OR (Out2Crop = true) OR (Out3Prof = true) OR
-   (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true) )
-   THEN OutDaily := true
-   ELSE OutDaily := false;
-END; (* GetRequestDailyResults *)
-
-
-PROCEDURE GetRequestParticularResults(VAR Part1Mult,Part2Eval : BOOLEAN);
-VAR FullFileName,TempString : string;
-    f0 : TextFile;
-    n,i : INTEGER;
-
-BEGIN
-Part1Mult := false;
-Part2Eval := false;
-
-FullFileName := CONCAT(GetPathNameSimul(),'ParticularResults.SIM');
-IF (FileExists(FullFileName) = true) THEN
-   BEGIN
-   Assign(f0,FullFileName);
-   Reset(f0);
-   WHILE NOT Eof(f0) DO
-     BEGIN
-     READLN(f0,TempString);
-     n := Length(TempString);
-     IF (n > 0) THEN
-        BEGIN
-        i := 1;
-        While ((TempString[i] = ' ') AND (i < n)) DO i := i + 1;
-        IF (TempString[i] = '1') THEN Part1Mult := true;
-        IF (TempString[i] = '2') THEN Part2Eval := true;
-        END;
-     END;
-   Close(f0);
-   END;
-END; (* GetRequestParticularResults *)
-
-
-
 PROCEDURE PrepareReport(OutputAggregate : ShortInt;
                         Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
                         Part1Mult,Part2Eval : BOOLEAN);
@@ -279,6 +201,7 @@ VAR NrString,TestFile : string;
         i,simul_RpZmi,simul_lowox : INTEGER;
         effrainperc,effrainshow,effrainrootE,simul_saltdiff,simul_saltsolub, simul_root,simul_ed,simul_pCCHIf,simul_SFR,simul_TAWg,simul_beta,simul_Tswc,simul_EZma,simul_GDD : ShortInt;
         simul_rod,simul_kcWB,simul_RZEma,simul_pfao,simul_expFsen,simul_Tmi,simul_Tma : double;
+        Tmin_temp : double;
     BEGIN
     IF FileExists(FullFileNameProgramParameters)
        THEN BEGIN // load set of program parameters
@@ -339,7 +262,8 @@ VAR NrString,TestFile : string;
             SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
 
             // Temperature
-            Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
+            Readln(f0,Tmin_temp);   //Default minimum temperature (degC) if no temperature file is specified
+            SetTmin(Tmin_temp);
             SetSimulParam_Tmin(simul_Tmi);
             Readln(f0,simul_Tma);   //Default maximum temperature (degC) if no temperature file is specified
 
