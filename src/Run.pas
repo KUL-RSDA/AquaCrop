@@ -41,7 +41,7 @@ var  fDaily, fHarvest, fEval : text;
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
      DayNri : LongInt;
-     EToDataSet,RainDataSet,TminDataSet,TmaxDataSet : rep_SimulationEventsDbl;
+     TminDataSet,TmaxDataSet : rep_SimulationEventsDbl;
      IrriInterval : INTEGER;
      Tadj, GDDTadj : INTEGER;
      DayFraction,GDDayFraction,Bin,Bout : double;
@@ -386,6 +386,7 @@ VAR totalname,totalnameOUT : string;
     RunningDay : LongInt;
     tmpRain : double;
     ETo_temp : double;
+    EToDataSet_temp, RainDataSet_temp : rep_SimulationEventsDbl;
 BEGIN
 // 1. ETo file
 IF (GetEToFile() <> '(None)')
@@ -411,16 +412,20 @@ IF (GetEToFile() <> '(None)')
                             SetETo(ETo_temp);
                             END;
                   Decadely: BEGIN
-                            GetDecadeEToDataSet(FromSimDay,EToDataSet);
+                            EToDataSet_temp := GetEToDataSet();
+                            GetDecadeEToDataSet(FromSimDay,EToDataSet_temp);
+                            SetEToDataSet(EToDataSet_temp);
                             i := 1;
-                            While (EToDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            SetETo(EToDataSet[i].Param);
+                            While (GetEToDataSet_i(i).DayNr <> FromSimDay) Do i := i+1;
+                            SetETo(GetEToDataSet_i(i).Param);
                             END;
                   Monthly : BEGIN
-                            GetMonthlyEToDataSet(FromSimDay,EToDataSet);
+                            EToDataSet_temp := GetEToDataSet();
+                            GetMonthlyEToDataSet(FromSimDay,EToDataSet_temp);
+                            SetEToDataSet(EToDataSet_temp);
                             i := 1;
-                            While (EToDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                            SetETo(EToDataSet[i].Param);
+                            While (GetEToDataSet_i(i).DayNr <> FromSimDay) Do i := i+1;
+                            SetETo(GetEToDataSet_i(i).Param);
                             END;
                   end;
                 // create SIM file and record first day
@@ -453,16 +458,26 @@ IF (GetEToFile() <> '(None)')
                                            END;
                                    END;
                          Decadely: BEGIN
-                                   IF (RunningDay > EToDataSet[31].DayNr) THEN GetDecadeEToDataSet(RunningDay,EToDataSet);
+                                   IF (RunningDay > GetEToDataSet_i(31).DayNr) THEN
+                                        BEGIN
+                                        EToDataSet_temp := GetEToDataSet();
+                                        GetDecadeEToDataSet(RunningDay,EToDataSet_temp);
+                                        SetEToDataSet(EToDataSet_temp);
+                                        END;
                                    i := 1;
-                                   While (EToDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   SetETo(EToDataSet[i].Param);
+                                   While (GetEToDataSet_i(i).DayNr <> RunningDay) Do i := i+1;
+                                   SetETo(GetEToDataSet_i(i).Param);
                                    END;
                          Monthly : BEGIN
-                                   IF (RunningDay > EToDataSet[31].DayNr) THEN GetMonthlyEToDataSet(RunningDay,EToDataSet);
+                                   IF (RunningDay > GetEToDataSet_i(31).DayNr) THEN
+                                        BEGIN
+                                        EToDataSet_temp := GetEToDataSet();
+                                        GetMonthlyEToDataSet(RunningDay,EToDataSet_temp);
+                                        SetEToDataSet(EToDataSet_temp);
+                                        END;
                                    i := 1;
-                                   While (EToDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                   SetETo(EToDataSet[i].Param);
+                                   While (GetEToDataSet_i(i).DayNr <> RunningDay) Do i := i+1;
+                                   SetETo(GetEToDataSet_i(i).Param);
                                    END;
                          end;
                     WRITELN(fEToS,GetETo():10:4);
@@ -499,16 +514,20 @@ IF (GetRainFile() <> '(None)')
                                SetRain(tmpRain);
                             END;
                   Decadely: BEGIN
-                            GetDecadeRainDataSet(FromSimDay,RainDataSet);
+                            RainDataSet_temp := GetRainDataSet();
+                            GetDecadeRainDataSet(RunningDay,RainDataSet_temp);
+                            SetRainDataSet(RainDataSet_temp);
                             i := 1;
-                            While (RainDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                               SetRain(RainDataSet[i].Param);
+                            While (GetRainDataSet_i(i).DayNr <> FromSimDay) Do i := i+1;
+                               SetRain(GetRainDataSet_i(i).Param);
                             END;
                   Monthly : BEGIN
-                            GetMonthlyRainDataSet(FromSimDay,RainDataSet);
+                            RainDataSet_temp := GetRainDataSet();
+                            GetMonthlyRainDataSet(RunningDay,RainDataSet_temp);
+                            SetRainDataSet(RainDataSet_temp);
                             i := 1;
-                            While (RainDataSet[i].DayNr <> FromSimDay) Do i := i+1;
-                               SetRain(RainDataSet[i].Param);
+                            While (GetRainDataSet_i(i).DayNr <> FromSimDay) Do i := i+1;
+                               SetRain(GetRainDataSet_i(i).Param);
                             END;
                   end;
                 // create SIM file and record first day
@@ -541,16 +560,26 @@ IF (GetRainFile() <> '(None)')
                                          END;
                                    END;
                          Decadely: BEGIN
-                                   IF (RunningDay > RainDataSet[31].DayNr) THEN GetDecadeRainDataSet(RunningDay,RainDataSet);
+                                   IF (RunningDay > GetRainDataSet_i(31).DayNr) THEN
+                                        BEGIN
+                                        RainDataSet_temp := GetRainDataSet();
+                                        GetDecadeRainDataSet(RunningDay,RainDataSet_temp);
+                                        SetRainDataSet(RainDataSet_temp);
+                                        END;
                                    i := 1;
-                                   While (RainDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                      SetRain(RainDataSet[i].Param);
+                                   While (GetRainDataSet_i(i).DayNr <> RunningDay) Do i := i+1;
+                                      SetRain(GetRainDataSet_i(i).Param);
                                    END;
                          Monthly : BEGIN
-                                   IF (RunningDay > RainDataSet[31].DayNr) THEN GetMonthlyRainDataSet(RunningDay,RainDataSet);
+                                   IF (RunningDay > GetRainDataSet_i(31).DayNr) THEN
+                                        BEGIN
+                                        RainDataSet_temp := GetRainDataSet();
+                                        GetMonthlyRainDataSet(RunningDay,RainDataSet_temp);
+                                        SetRainDataSet(RainDataSet_temp);
+                                        END;
                                    i := 1;
-                                   While (RainDataSet[i].DayNr <> RunningDay) Do i := i+1;
-                                      SetRain(RainDataSet[i].Param);
+                                   While (GetRainDataSet_i(i).DayNr <> RunningDay) Do i := i+1;
+                                      SetRain(GetRainDataSet_i(i).Param);
                                    END;
                          end;
                     WRITELN(fRainS,GetRain():10:4);

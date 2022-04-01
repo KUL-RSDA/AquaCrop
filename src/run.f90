@@ -64,6 +64,7 @@ use ac_global, only: CompartmentIndividual, &
                      GetSoilLayer_SAT, &
                      GetZiAqua, &
                      GetECiAqua, &
+                     rep_DayEventDbl, &
                      rep_sum, &
                      roundc, &
                      SetCompartment_i, &
@@ -157,6 +158,8 @@ integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
 
 type(rep_GwTable) :: GwTable
+type(rep_DayEventDbl), dimension(31) :: EToDataSet
+type(rep_DayEventDbl), dimension(31) :: RainDataSet
 type(rep_plotPar) :: PlotVarCrop
 type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
 type(rep_StressTot) :: StressTot
@@ -876,6 +879,126 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
 
     Transfer%Bmobilized = Bmobilized
 end subroutine SetTransfer_Bmobilized
+
+! EToDataSet
+
+function GetEToDataSet() result(EToDataSet_out)
+    !! Getter for the "EToDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: EToDataSet_out
+
+    EToDataSet_out = EToDataSet
+end function GetEToDataSet
+
+function GetEToDataSet_i(i) result(EToDataSet_i)
+    !! Getter for individual elements of the "EToDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: EToDataSet_i
+
+    EToDataSet_i = EToDataSet(i)
+end function GetEToDataSet_i
+
+integer(int32) function GetEToDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetEToDataSet_DayNr = EToDataSet(i)%DayNr
+end function GetEToDataSet_DayNr
+
+real(dp) function GetEToDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetEToDataSet_Param = EToDataSet(i)%Param
+end function GetEToDataSet_Param
+
+subroutine SetEToDataSet(EToDataSet_in)
+    !! Setter for the "EToDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: EToDataSet_in
+
+    EToDataSet = EToDataSet_in
+end subroutine SetEToDataSet
+
+subroutine SetEToDataSet_i(i, EToDataSet_i)
+    !! Setter for individual element for the "EToDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: EToDataSet_i
+
+    EToDataSet(i) = EToDataSet_i
+end subroutine SetEToDataSet_i
+
+subroutine SetEToDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    EToDataSet(i)%DayNr = DayNr_in
+end subroutine SetEToDataSet_DayNr
+
+subroutine SetEToDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    EToDataSet(i)%Param = Param_in
+end subroutine SetEToDataSet_Param
+
+! RainDataSet
+
+function GetRainDataSet() result(RainDataSet_out)
+    !! Getter for the "RainDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: RainDataSet_out
+
+    RainDataSet_out = RainDataSet
+end function GetRainDataSet
+
+function GetRainDataSet_i(i) result(RainDataSet_i)
+    !! Getter for individual elements of the "RainDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: RainDataSet_i
+
+    RainDataSet_i = RainDataSet(i)
+end function GetRainDataSet_i
+
+integer(int32) function GetRainDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetRainDataSet_DayNr = RainDataSet(i)%DayNr
+end function GetRainDataSet_DayNr
+
+real(dp) function GetRainDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetRainDataSet_Param = RainDataSet(i)%Param
+end function GetRainDataSet_Param
+
+subroutine SetRainDataSet(RainDataSet_in)
+    !! Setter for the "RainDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: RainDataSet_in
+
+    RainDataSet = RainDataSet_in
+end subroutine SetRainDataSet
+
+subroutine SetRainDataSet_i(i, RainDataSet_i)
+    !! Setter for individual element for the "RainDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: RainDataSet_i
+
+    RainDataSet(i) = RainDataSet_i
+end subroutine SetRainDataSet_i
+
+subroutine SetRainDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    RainDataSet(i)%DayNr = DayNr_in
+end subroutine SetRainDataSet_DayNr
+
+subroutine SetRainDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    RainDataSet(i)%Param = Param_in
+end subroutine SetRainDataSet_Param
+
+!! END section global variables
+
+
 
 subroutine AdjustForWatertable()
 
