@@ -10,6 +10,11 @@ use ac_run, only:   fRun_open, &
                     fIrri_eof, &
                     fIrri_open, &
                     fIrri_read, &
+                    fTempSIM_open, &
+                    fTempSIM_read, &
+                    fCuts_eof, &
+                    fCuts_open, &
+                    fCuts_read, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
                     GetIrriInfoRecord1_NoMoreInfo, &
@@ -89,6 +94,62 @@ function fIrri_eof_wrap() result(eof)
 
     eof = fIrri_eof()
 end function fIrri_eof_wrap
+
+
+subroutine fTempSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fTempSIM_open(filename, mode)
+end subroutine fTempSIM_open_wrap
+
+
+function fTempSIM_read_wrap() result(line_ptr)
+    type(c_ptr) :: line_ptr
+
+    character(len=:), allocatable :: line
+
+    line = fTempSIM_read()
+    line_ptr = string2pointer(line)
+end function fTempSIM_read_wrap
+
+subroutine fCuts_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fCuts_open(filename, mode)
+end subroutine fCuts_open_wrap
+
+
+function fCuts_read_wrap() result(line_ptr)
+    type(c_ptr) :: line_ptr
+
+    character(len=:), allocatable :: line
+
+    line = fCuts_read()
+    line_ptr = string2pointer(line)
+end function fCuts_read_wrap
+
+
+function fCuts_eof_wrap() result(eof)
+    logical(1) :: eof
+
+    eof = fCuts_eof()
+end function fCuts_eof_wrap
 
 
 function GetCutInfoRecord1_NoMoreInfo_wrap() result(NoMoreInfo_f)
