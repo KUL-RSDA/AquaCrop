@@ -12,7 +12,8 @@ implicit none
 
 contains
 
-subroutine GetRequestDailyResults(Out1Wabal, Out2Crop, Out3Prof, Out4Salt, Out5CompWC, Out6CompEC, Out7Clim, OutDaily)
+subroutine GetRequestDailyResults(Out1Wabal, Out2Crop, Out3Prof, Out4Salt, &
+                                    Out5CompWC, Out6CompEC, Out7Clim, OutDaily)
     logical, intent(inout) :: Out1Wabal
     logical, intent(inout) :: Out2Crop
     logical, intent(inout) :: Out3Prof
@@ -23,7 +24,6 @@ subroutine GetRequestDailyResults(Out1Wabal, Out2Crop, Out3Prof, Out4Salt, Out5C
     logical, intent(inout) :: OutDaily
 
     integer :: fhandle, rc
-
     character(len= 1025) :: FullFileName, TempString
     integer(int32) :: n, i
 
@@ -72,10 +72,8 @@ subroutine GetRequestDailyResults(Out1Wabal, Out2Crop, Out3Prof, Out4Salt, Out5C
         end do loop
         close(fhandle)
     end if
-    if ((Out1Wabal .eqv. .true.) .or. (Out2Crop .eqv. .true.) &
-        .or. (Out3Prof .eqv. .true.) .or. (Out4Salt .eqv. .true.) &
-            .or. (Out5CompWC .eqv. .true.) .or. (Out6CompEC .eqv. .true.) &
-                .or. (Out7Clim .eqv. .true.) ) then
+    if ((Out1Wabal) .or. (Out2Crop ) .or. (Out3Prof) .or. (Out4Salt) &
+            .or. (Out5CompWC) .or. (Out6CompEC) .or. (Out7Clim) ) then
         OutDaily = .true.
     else
         OutDaily = .false.
@@ -86,9 +84,7 @@ subroutine GetRequestParticularResults(Part1Mult, Part2Eval)
     logical, intent(inout) :: Part1Mult
     logical, intent(inout) :: Part2Eval
 
-
     integer :: fhandle, rc
-
     character(len= 1025) :: FullFileName, TempString
     integer(int32) :: n, i
 
