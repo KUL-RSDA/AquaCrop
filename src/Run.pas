@@ -27,7 +27,7 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 
 var  fDaily, fHarvest, fEval : text;
-     fEToSIM,fRainSIM,fTempSIM,fCuts,fObs : text;
+     fEToSIM,fRainSIM, fObs : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
@@ -718,11 +718,12 @@ END; (* CreateDailyClimFiles *)
 
 
 PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
-                                          VAR fEToSIM,fRainSIM,fTempSIM : text);
+                                          VAR fEToSIM,fRainSIM : text);
 VAR totalname : string;
     i : LongInt;
     tmpRain, ETo_temp : double;
     Tmin_temp, Tmax_temp : double;
+    TempString : string;
 
 BEGIN
 // ETo file
@@ -771,22 +772,24 @@ IF (GetRainFile() <> '(None)') THEN
 IF (GetTemperatureFile() <> '(None)')
    THEN BEGIN
         totalname := CONCAT(GetPathNameSimul(),'TempData.SIM');
-        Assign(fTempSIM,totalname);
-        Reset(fTempSIM);
+        fTempSIM_open(totalname, 'r');
         IF (FirstDayNr = GetSimulation_FromDayNr())
            THEN BEGIN
-                READLN(fTempSIM,Tmin_temp,Tmax_temp);
+                TempString := fTempSIM_read();
+                ReadStr(TempString, Tmin_temp, Tmax_temp);
                 SetTmin(Tmin_temp);
                 SetTmax(Tmax_temp);
                 END
            ELSE BEGIN
                 FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO 
                     BEGIN
-                    READLN(fTempSIM,Tmin_temp,Tmax_temp);
+                    TempString := fTempSIM_read();
+                    ReadStr(TempString, Tmin_temp, Tmax_temp);
                     SetTmin(Tmin_temp);
                     SetTmax(Tmax_temp);
                     END;
-                READLN(fTempSIM,Tmin_temp,Tmax_temp);
+                TempString := fTempSIM_read();
+                ReadStr(TempString, Tmin_temp, Tmax_temp);
                 SetTmin(Tmin_temp);
                 SetTmax(Tmax_temp);
                 END;
@@ -902,12 +905,14 @@ VAR InfoLoaded : BOOLEAN;
     DayNrXX : LongInt;
     FromDay_temp : integer;
     IntervalInfo_temp, IntervalGDD_temp, MassInfo_temp : double;
+    TempString : string;
 BEGIN
 CASE GetManagement_Cuttings_Generate() OF
  false: BEGIN
-        IF (NOT Eof(fCuts))
+        TempString := fCuts_read();
+        IF (NOT fCuts_eof())
            THEN BEGIN
-                READLN(fCuts,FromDay_temp);
+                ReadStr(TempString, FromDay_temp);
                 SetCutInfoRecord1_FromDay(FromDay_temp);
                 SetCutInfoRecord1_NoMoreInfo(false);
                 IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) THEN
@@ -915,9 +920,10 @@ CASE GetManagement_Cuttings_Generate() OF
                    DayNrXX := GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1;
                    WHILE ((DayNrXX < GetCrop().Day1) AND (GetCutInfoRecord1_NoMoreInfo() = false)) DO
                      BEGIN
-                     IF (NOT Eof(fCuts))
+                     TempString := fCuts_read();
+                     IF (NOT fCuts_eof())
                         THEN BEGIN
-                             READLN(fCuts,FromDay_temp);
+                             ReadStr(TempString, FromDay_temp);
                              SetCutInfoRecord1_FromDay(FromDay_temp);
                              DayNrXX := GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1;
                              END
@@ -932,17 +938,20 @@ CASE GetManagement_Cuttings_Generate() OF
            BEGIN
            CASE GetManagement_Cuttings_Criterion() OF
                 IntDay :             BEGIN
-                                     READLN(fCuts,FromDay_temp,IntervalInfo_temp);
+                                     TempString := fCuts_read();
+                                     ReadStr(TempString, FromDay_temp, IntervalInfo_temp);
                                      SetCutInfoRecord1_FromDay(FromDay_temp);
                                      SetCutInfoRecord1_IntervalInfo(IntervalInfo_temp)
                                      END;
                 IntGDD :             BEGIN
-                                     READLN(fCuts,FromDay_temp,IntervalGDD_temp);
+                                     TempString := fCuts_read();
+                                     ReadStr(TempString, FromDay_temp, IntervalGDD_temp);
                                      SetCutInfoRecord1_FromDay(FromDay_temp);
                                      SetCutInfoRecord1_IntervalGDD(IntervalGDD_temp)
                                      END;
                 DryB,DryY,FreshY :   BEGIN
-                                     READLN(fCuts,FromDay_temp,MassInfo_temp);
+                                     TempString := fCuts_read();
+                                     ReadStr(TempString, FromDay_temp, MassInfo_temp);
                                      SetCutInfoRecord1_FromDay(FromDay_temp);
                                      SetCutInfoRecord1_MassInfo(MassInfo_temp)
                                      END;
@@ -951,21 +960,22 @@ CASE GetManagement_Cuttings_Generate() OF
            END;
         InfoLoaded := false;
         REPEAT
-        IF (NOT Eof(fCuts))
+        TempString := fCuts_read();
+        IF (NOT fCuts_eof())
            THEN BEGIN
                 CASE GetManagement_Cuttings_Criterion() OF
                      IntDay :           BEGIN
-                                        READLN(fCuts,FromDay_temp,IntervalInfo_temp);
+                                        ReadStr(TempString, FromDay_temp, IntervalInfo_temp);
                                         SetCutInfoRecord2_FromDay(FromDay_temp);
                                         SetCutInfoRecord2_IntervalInfo(IntervalInfo_temp);
                                         END;
                      IntGDD :           BEGIN
-                                        READLN(fCuts,FromDay_temp,IntervalGDD_temp);
+                                        ReadStr(TempString, FromDay_temp, IntervalGDD_temp);
                                         SetCutInfoRecord2_FromDay(FromDay_temp);
                                         SetCutInfoRecord2_IntervalGDD(IntervalGDD_temp);
                                         END;
                      DryB,DryY,FreshY : BEGIN
-                                        READLN(fCuts,FromDay_temp,MassInfo_temp);
+                                        ReadStr(TempString, FromDay_temp, MassInfo_temp);
                                         SetCutInfoRecord2_FromDay(FromDay_temp);
                                         SetCutInfoRecord2_MassInfo(MassInfo_temp);
                                         END
@@ -1022,19 +1032,18 @@ END; (* GetNextHarvest *)
 
 
 
-PROCEDURE OpenHarvestInfo(VAR fCuts : text);
+PROCEDURE OpenHarvestInfo();
 VAR totalname : string;
     i : ShortInt;
 BEGIN
 IF (getManFile() <> '(None)')
    THEN totalname := GetManFileFull()
    ELSE totalname := CONCAT(GetPathNameSimul(),'Cuttings.AqC');
-Assign(fCuts,totalname);
-Reset(fCuts);
-READLN(fCuts); // description
-READLN(fCuts); // AquaCrop version
-IF (GetManFile() <> '(None)') THEN For i:= 1 to 10 DO READLN(fCuts); // management info
-FOR i := 1 TO 12 DO READLN(fCuts);  // cuttings info (already loaded)
+fCuts_open(totalname, 'r');
+fCuts_read(); // description
+fCuts_read(); // AquaCrop version
+IF (GetManFile() <> '(None)') THEN For i:= 1 to 10 DO fCuts_read(); // management info
+FOR i := 1 TO 12 DO fCuts_read();  // cuttings info (already loaded)
 GetNextHarvest;
 END; (* OpenHarvestInfo *)
 
@@ -1242,7 +1251,7 @@ NoYear := (Year1 = 1901);  // for output file
 // create climate files
 CreateDailyClimFiles(GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
 // climatic data for first day
-OpenClimFilesAndGetDataFirstDay(GetDayNri(),fEToSIM,fRainSIM,fTempSIM);
+OpenClimFilesAndGetDataFirstDay(GetDayNri(),fEToSIM,fRainSIM);
 
 // Sum of GDD before start of simulation
 SetSimulation_SumGDD(0);
@@ -1504,7 +1513,7 @@ SetCutInfoRecord2_MassInfo(0);
 DayLastCut:= 0;
 CGCref := GetCrop().CGC;
 GDDCGCref := GetCrop().GDDCGC;
-IF GetManagement_Cuttings_Considered() THEN OpenHarvestInfo(fCuts);
+IF GetManagement_Cuttings_Considered() THEN OpenHarvestInfo();
 CGCadjustmentAfterCutting := false;
 
 
@@ -2107,6 +2116,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     tmpRain : double;
     TactWeedInfested_temp : double;
     Tmin_temp, Tmax_temp : double;
+    TempString : string;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2785,7 +2795,8 @@ IF (GetDayNri() <= GetSimulation_ToDayNr()) THEN
            SetTmax(GetSimulParam_Tmax());
            END
       ELSE BEGIN
-           READLN(fTempSIM,Tmin_temp,Tmax_temp);
+           TempString := fTempSIM_read();
+           ReadStr(TempString, Tmin_temp, Tmax_temp);
            SetTmin(Tmin_temp);
            SetTmax(Tmax_temp);
            END;
@@ -2977,11 +2988,11 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseEvalDataPerformEvaluation
 
 
-    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
+    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM : text);
     BEGIN
     IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
     IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
-    IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
+    IF (GetTemperatureFile() <> '(None)') THEN fTempSIM_close();
     END; // CloseClimateFiles
 
 
@@ -2991,15 +3002,15 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseIrrigationFile
 
 
-    PROCEDURE CloseManagementFile(VAR fCuts : text);
+    PROCEDURE CloseManagementFile();
     BEGIN
-    IF GetManagement_Cuttings_Considered() THEN Close(fCuts);
+    IF GetManagement_Cuttings_Considered() THEN fCuts_close();
     END; // CloseManagementFile
 
 BEGIN
-CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
+CloseClimateFiles(fEToSIM,fRainSIM);
 CloseIrrigationFile();
-CloseManagementFile(fCuts);
+CloseManagementFile();
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
 END; // FinalizeRun2
 

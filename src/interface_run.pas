@@ -484,6 +484,42 @@ procedure SetRainDataSet_Param(constref i : integer;
                                constref Param_in : double);
     external 'aquacrop' name '__ac_run_MOD_setraindataset_param';
 
+procedure fTempSIM_open(constref filename : string; constref mode : string);
+
+procedure fTempSIM_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_ftempsim_open_wrap';
+
+function fTempSIM_read() : string;
+
+function fTempSIM_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_ftempsim_read_wrap';
+
+procedure fTempSIM_close();
+        external 'aquacrop' name '__ac_run_MOD_ftempsim_close';
+
+procedure fCuts_open(constref filename : string; constref mode : string);
+
+procedure fCuts_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fcuts_open_wrap';
+
+function fCuts_read() : string;
+
+function fCuts_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_fcuts_read_wrap';
+
+function fCuts_eof() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_fcuts_eof_wrap';
+
+procedure fCuts_close();
+        external 'aquacrop' name '__ac_run_MOD_fcuts_close';
 
 implementation
 
@@ -679,6 +715,48 @@ var
 begin;
      line_ptr := fIrri_read_wrap();
      fIrri_read := AnsiString(line_ptr);
+end;
+
+
+procedure fTempSIM_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fTempSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fTempSIM_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fTempSIM_read_wrap();
+     fTempSIM_read := AnsiString(line_ptr);
+end;
+
+
+procedure fCuts_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fCuts_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fCuts_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fCuts_read_wrap();
+     fCuts_read := AnsiString(line_ptr);
 end;
 
 

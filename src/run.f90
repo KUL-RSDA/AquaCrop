@@ -218,6 +218,10 @@ integer :: fRun  ! file handle
 integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
+integer :: fTempSIM ! file handle
+integer :: fTempSIM_iostat ! IO status
+integer :: fCuts ! file handle
+integer :: fCuts_iostat ! IO status
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -382,6 +386,68 @@ end function fIrri_eof
 subroutine fIrri_close()
     close(fIrri)
 end subroutine fIrri_close
+
+! fTempSIM
+
+subroutine fTempSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fTempSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fTempSIM, filename, mode, fTempSIM_iostat)
+end subroutine fTempSIM_open
+
+
+function fTempSIM_read() result(line)
+    !! Returns the next line read from the 'fTempSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fTempSIM, fTempSIM_iostat)
+end function fTempSIM_read
+
+
+subroutine fTempSIM_close()
+    close(fTempSIM)
+end subroutine fTempSIM_close
+
+! fCuts
+
+subroutine fCuts_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fCuts' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fCuts, filename, mode, fCuts_iostat)
+end subroutine fCuts_open
+
+
+function fCuts_read() result(line)
+    !! Returns the next line read from the 'fCuts' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fCuts, fCuts_iostat)
+end function fCuts_read
+
+
+function fCuts_eof() result(eof)
+    !! Returns whether the end of the 'fCuts' file has been reached.
+    logical :: eof
+
+    eof = fCuts_iostat == iostat_end
+end function fCuts_eof
+
+
+subroutine fCuts_close()
+    close(fCuts)
+end subroutine fCuts_close
+
+
 
 ! FracBiomass
 
