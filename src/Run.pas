@@ -99,17 +99,15 @@ WRITELN(fRun,'                                           mm       mm  degC.day  
 END; (* OpenOutputRun *)
 
 
-PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject;
-                          VAR fDaily : text);
+PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject);
 VAR totalname : string;
 BEGIN
 CASE TheProjectType OF
       TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROday.OUT');
       TypePRM : totalname := CONCAT(getPathNameOutp(),GetOutputName(),'PRMday.OUT');
       end;
-Assign(fDaily,totalname);
-Rewrite(fDaily);
-WRITELN(fDaily,'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
+fDaily_open(totalname, 'w');
+fDaily_write('AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
 END; (* OpenOutputDaily *)
 
 
@@ -130,8 +128,7 @@ END; (* OpenPart1MultResults *)
 
 
 PROCEDURE WriteTitleDailyResults(TheProjectType : repTypeProject;
-                                 TheNrRun : ShortInt;
-                                 VAR fDaily : text);
+                                 TheNrRun : ShortInt);
 VAR Str1,Str2 : string;
     NodeD,Zprof : double;
     Compi : INTEGER;
