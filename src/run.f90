@@ -222,6 +222,8 @@ integer :: fTempSIM ! file handle
 integer :: fTempSIM_iostat ! IO status
 integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
+integer :: fObs ! file handle
+integer :: fObs_iostat ! IO status
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -446,6 +448,44 @@ end function fCuts_eof
 subroutine fCuts_close()
     close(fCuts)
 end subroutine fCuts_close
+
+! fObs
+
+subroutine fObs_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fObs' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fObs, filename, mode, fObs_iostat)
+end subroutine fObs_open
+
+
+function fObs_read() result(line)
+    !! Returns the next line read from the 'fObs' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fObs, fObs_iostat)
+end function fObs_read
+
+
+function fObs_eof() result(eof)
+    !! Returns whether the end of the 'fObs' file has been reached.
+    logical :: eof
+
+    eof = fObs_iostat == iostat_end
+end function fObs_eof
+
+
+subroutine fObs_close()
+    close(fObs)
+end subroutine fObs_close
+
+subroutine fObs_rewind()
+    rewind(fObs)
+end subroutine fObs_rewind
 
 
 

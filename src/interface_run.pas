@@ -521,6 +521,29 @@ function fCuts_eof() : boolean;
 procedure fCuts_close();
         external 'aquacrop' name '__ac_run_MOD_fcuts_close';
 
+procedure fObs_open(constref filename : string; constref mode : string);
+
+procedure fObs_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fobs_open_wrap';
+
+function fObs_read() : string;
+
+function fObs_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_fobs_read_wrap';
+
+function fObs_eof() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_fobs_eof_wrap';
+
+procedure fObs_close();
+        external 'aquacrop' name '__ac_run_MOD_fobs_close';
+
+procedure fObs_rewind();
+        external 'aquacrop' name '__ac_run_MOD_fobs_rewind';
+
 implementation
 
 
@@ -759,6 +782,26 @@ begin;
      fCuts_read := AnsiString(line_ptr);
 end;
 
+
+procedure fObs_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fObs_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fObs_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fObs_read_wrap();
+     fObs_read := AnsiString(line_ptr);
+end;
 
 function GetEToDataSet() : rep_SimulationEventsDbl;
 var

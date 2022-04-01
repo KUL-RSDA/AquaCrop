@@ -27,7 +27,7 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 
 var  fDaily, fHarvest, fEval : text;
-     fEToSIM,fRainSIM, fObs : text;
+     fEToSIM,fRainSIM : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
@@ -319,43 +319,48 @@ END; (* WriteTitlePart1MultResults *)
 
 
 PROCEDURE CreateEvalData(NrRun : ShortInt;
-                         VAR fObs,fEval : text);
+                         VAR fEval : text);
 VAR dayi, monthi, yeari : INTEGER;
     StrNr,totalname,TempString : string;
 
 BEGIN
 // open input file with field data
-Assign(fObs,GetObservationsFileFull()); // Observations recorded in File
-Reset(fObs);
-READLN(fObs); // description
-READLN(fObs); // AquaCrop Version number
-READLN(fObs,Zeval); //  depth of sampled soil profile
-READLN(fObs,dayi);
-READLN(fObs,monthi);
-READLN(fObs,yeari);
+fObs_open(GetObservationsFilefull(), 'r'); // Observations recorded in File
+fObs_read(); // description
+fObs_read(); // AquaCrop Version number
+TempString := fObs_read();
+ReadStr(TempString, Zeval); //  depth of sampled soil profile
+TempString := fObs_read();
+ReadStr(TempString, dayi);
+TempString := fObs_read();
+ReadStr(TempString, monthi);
+TempString := fObs_read();
+ReadStr(TempString, yeari);
 DetermineDayNr(dayi,monthi,yeari,DayNr1Eval);
-READLN(fObs); // title
-READLN(fObs); // title
-READLN(fObs); // title
-READLN(fObs); // title
+fObs_read(); // title
+fObs_read(); // title
+fObs_read(); // title
+fObs_read(); // title
 LineNrEval := undef_int;
-IF (NOT Eof(fObs)) THEN
+TempString := fObs_read();
+IF (NOT fObs_eof()) THEN
    BEGIN
    LineNrEval := 11;
-   READLN(fObs,DayNrEval);
+   ReadStr(TempString, DayNrEval);
    DayNrEval := DayNr1Eval + DayNrEval -1;
    WHILE ((DayNrEval < GetSimulation_FromDayNr()) AND (LineNrEval <> undef_int)) DO
       BEGIN
-      IF (Eof(fObs))
+      TempString := fObs_read();
+      IF (fObs_eof())
          THEN LineNrEval := undef_int
          ELSE BEGIN
               LineNrEval := LineNrEval + 1;
-              READLN(fObs,DayNrEval);
+              ReadStr(TempString, DayNrEval);
               DayNrEval := DayNr1Eval + DayNrEval -1;
               END;
       END;
    END;
-IF (LineNrEval = undef_int) THEN Close(fObs);
+IF (LineNrEval = undef_int) THEN fObs_close();
 // open file with simulation results, field data
 IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
    THEN Str(NrRun:3,StrNr)
@@ -2029,6 +2034,7 @@ PROCEDURE WriteEvaluationData(DAP : INTEGER;
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
     Nr,Di,Mi,Yi : INTEGER;
+    TempString : string;
 
     FUNCTION SWCZsoil(Zsoil : double) : double;
     VAR compi : INTEGER;
@@ -2065,18 +2071,20 @@ SWCstd := undef_int;
 IF ((LineNrEval <> undef_int) AND (DayNrEval = GetDayNri())) THEN
    BEGIN
    // read field data
-   Reset(fObs);
-   FOR Nr := 1 TO (LineNrEval -1) DO READLN(fObs);
-   READLN(fObs,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
+   fObs_rewind();
+   FOR Nr := 1 TO (LineNrEval -1) DO fObs_read();
+   TempString := fObs_read();
+   ReadStr(TempString,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
    // get Day Nr for next field data
-   IF (Eof(fObs))
+   fObs_read();
+   IF (fObs_eof())
       THEN BEGIN
            LineNrEval := undef_int;
-           Close(fObs);
+           fObs_close();
            END
       ELSE BEGIN
            LineNrEval := LineNrEval + 1;
-           READ(fObs,DayNrEval);
+           ReadStr(TempString,DayNrEval);
            DayNrEval := DayNr1Eval + DayNrEval -1;
            END;
    END;
@@ -2893,7 +2901,7 @@ ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,Previou
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fObs,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fEval);
 END; // InitializeRun
 
 
@@ -2969,7 +2977,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
     Close(fEval);
-    IF (LineNrEval <> undef_int) THEN Close(fObs);
+    IF (LineNrEval <> undef_int) THEN fObs_close();
     // 2. Specify File name Evaluation of simulation results - Statistics
     StrNr := '';
     IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);
