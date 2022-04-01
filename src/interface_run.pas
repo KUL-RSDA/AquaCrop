@@ -379,6 +379,23 @@ procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb2Salt : double);
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
 
+procedure fEToSIM_open(constref filename : string; constref mode : string);
+
+procedure fEToSIM_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fetosim_open_wrap';
+
+function fEToSIM_read() : string;
+
+function fEToSIM_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_fetosim_read_wrap';
+
+procedure fEToSIM_close();
+        external 'aquacrop' name '__ac_run_MOD_fetosim_close';
+
 
 implementation
 
@@ -519,6 +536,27 @@ var
 begin;
      line_ptr := fIrri_read_wrap();
      fIrri_read := AnsiString(line_ptr);
+end;
+
+
+procedure fEToSIM_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fEToSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fEToSIM_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fEToSIM_read_wrap();
+     fEToSIM_read := AnsiString(line_ptr);
 end;
 
 initialization

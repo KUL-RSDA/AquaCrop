@@ -29,7 +29,7 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 
 var  fDaily, fHarvest, fEval : text;
-     fEToSIM,fRainSIM,fTempSIM,fCuts,fObs : text;
+     fRainSIM,fTempSIM,fCuts,fObs : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
@@ -657,30 +657,33 @@ END; (* CreateDailyClimFiles *)
 
 
 PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
-                                          VAR fEToSIM,fRainSIM,fTempSIM : text);
+                                          VAR fRainSIM,fTempSIM : text);
 VAR totalname : string;
     i : LongInt;
     tmpRain, ETo_temp : double;
+    TempString : string;
 
 BEGIN
 // ETo file
 IF (GetEToFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(GetPathNameSimul(),'EToData.SIM');
-   Assign(fEToSIM,totalname);
-   Reset(fEToSIM);
+   fEToSIM_open(totalname, 'r');
    IF (FirstDayNr = GetSimulation_FromDayNr())
       THEN BEGIN
-           READLN(fEToSIM,ETo_temp);
+           TempString := fEToSIM_read();
+           ReadStr(TempString, ETo_temp);
            SetETo(ETo_temp);
            END
       ELSE BEGIN
            FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO 
                 BEGIN 
-                READLN(fEToSIM,ETo_temp);
+                TempString := fEToSIM_read();
+                ReadStr(TempString, ETo_temp);
                 SetETo(ETo_temp);
                 END;
-           READLN(fEToSIM,ETo_temp);
+           TempString := fEToSIM_read();
+           ReadStr(TempString, ETo_temp);
            SetETo(ETo_temp);
            END;
    END;
@@ -1311,7 +1314,7 @@ NoYear := (Year1 = 1901);  // for output file
 // create climate files
 CreateDailyClimFiles(GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
 // climatic data for first day
-OpenClimFilesAndGetDataFirstDay(DayNri,fEToSIM,fRainSIM,fTempSIM);
+OpenClimFilesAndGetDataFirstDay(DayNri,fRainSIM,fTempSIM);
 
 // Sum of GDD before start of simulation
 SetSimulation_SumGDD(0);
@@ -2181,6 +2184,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     ECiAqua_temp : double;
     tmpRain : double;
     TactWeedInfested_temp : double;
+    TempString : string;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2846,8 +2850,9 @@ IF (DayNri <= GetSimulation_ToDayNr()) THEN
    BEGIN
    IF (GetEToFile() <> '(None)') THEN
         BEGIN
-        READLN(fEToSIM,ETo_tmp);
-        SetETo(Eto_tmp);
+        TempString := fEToSIM_read();
+        ReadStr(TempString, ETo_tmp);
+        SetETo(ETo_tmp);
         END;
    IF (GetRainFile() <> '(None)') THEN
    BEGIN
@@ -3048,9 +3053,9 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseEvalDataPerformEvaluation
 
 
-    PROCEDURE CloseClimateFiles(VAR fEToSIM,fRainSIM,fTempSIM : text);
+    PROCEDURE CloseClimateFiles(VAR fRainSIM,fTempSIM : text);
     BEGIN
-    IF (GetEToFile() <> '(None)') THEN Close(fEToSIM);
+    IF (GetEToFile() <> '(None)') THEN fEToSIM_close();
     IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
     IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
     END; // CloseClimateFiles
@@ -3068,7 +3073,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseManagementFile
 
 BEGIN
-CloseClimateFiles(fEToSIM,fRainSIM,fTempSIM);
+CloseClimateFiles(fRainSIM,fTempSIM);
 CloseIrrigationFile();
 CloseManagementFile(fCuts);
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);

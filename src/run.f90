@@ -153,6 +153,7 @@ end type rep_Transfer
 
 integer :: fRun  ! file handle
 integer :: fIrri  ! file handle
+integer :: fEToSIM ! file handle
 type(rep_GwTable) :: GwTable
 type(rep_plotPar) :: PlotVarCrop
 type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
@@ -321,6 +322,33 @@ end function fIrri_eof
 subroutine fIrri_close()
     close(fIrri)
 end subroutine fIrri_close
+
+! fEToSIM
+
+subroutine fEToSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEToSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fEToSIM, filename, mode)
+end subroutine fEToSIM_open
+
+
+function fEToSIM_read() result(line)
+    !! Returns the next line read from the 'fEToSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fEToSIM)
+end function fEToSIM_read
+
+
+subroutine fEToSIM_close()
+    close(fEToSIM)
+end subroutine fEToSIM_close
+
 
 ! FracBiomass
 
