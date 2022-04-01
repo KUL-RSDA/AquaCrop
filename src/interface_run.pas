@@ -396,6 +396,23 @@ function fEToSIM_read_wrap() : PChar;
 procedure fEToSIM_close();
         external 'aquacrop' name '__ac_run_MOD_fetosim_close';
 
+procedure fRainSIM_open(constref filename : string; constref mode : string);
+
+procedure fRainSIM_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_frainsim_open_wrap';
+
+function fRainSIM_read() : string;
+
+function fRainSIM_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_frainsim_read_wrap';
+
+procedure fRainSIM_close();
+        external 'aquacrop' name '__ac_run_MOD_frainsim_close';
+
 
 implementation
 
@@ -558,6 +575,28 @@ begin;
      line_ptr := fEToSIM_read_wrap();
      fEToSIM_read := AnsiString(line_ptr);
 end;
+
+
+procedure fRainSIM_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fRainSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fRainSIM_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fRainSIM_read_wrap();
+     fRainSIM_read := AnsiString(line_ptr);
+end;
+
 
 initialization
 

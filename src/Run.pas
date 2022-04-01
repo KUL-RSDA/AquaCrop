@@ -29,7 +29,7 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 
 var  fDaily, fHarvest, fEval : text;
-     fRainSIM,fTempSIM,fCuts,fObs : text;
+     fTempSIM,fCuts,fObs : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
@@ -657,7 +657,7 @@ END; (* CreateDailyClimFiles *)
 
 
 PROCEDURE OpenClimFilesAndGetDataFirstDay(FirstDayNr : LongInt;
-                                          VAR fRainSIM,fTempSIM : text);
+                                          VAR fTempSIM : text);
 VAR totalname : string;
     i : LongInt;
     tmpRain, ETo_temp : double;
@@ -691,20 +691,22 @@ IF (GetEToFile() <> '(None)') THEN
 IF (GetRainFile() <> '(None)') THEN
    BEGIN
    totalname := CONCAT(GetPathNameSimul(),'RainData.SIM');
-   Assign(fRainSIM,totalname);
-   Reset(fRainSIM);
+   fRainSIM_open(totalname, 'r');
    IF (FirstDayNr = GetSimulation_FromDayNr())
       THEN BEGIN
-         READLN(fRainSIM,tmpRain);
+         TempString := fRainSIM_read();
+         ReadStr(TempString, tmpRain);
          SetRain(tmpRain);
          END
       ELSE BEGIN
            FOR i := GetSimulation_FromDayNr() TO (FirstDayNr - 1) DO
               BEGIN
-                 READLN(fRainSIM,tmpRain);
+                 TempString := fRainSIM_read();
+                 ReadStr(TempString, tmpRain);
                  SetRain(tmpRain);
               END;
-           READLN(fRainSIM,tmpRain);
+           TempString := fRainSIM_read();
+           ReadStr(TempString, tmpRain);
            SetRain(tmpRain);
            END;
    END;
@@ -1314,7 +1316,7 @@ NoYear := (Year1 = 1901);  // for output file
 // create climate files
 CreateDailyClimFiles(GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
 // climatic data for first day
-OpenClimFilesAndGetDataFirstDay(DayNri,fRainSIM,fTempSIM);
+OpenClimFilesAndGetDataFirstDay(DayNri,fTempSIM);
 
 // Sum of GDD before start of simulation
 SetSimulation_SumGDD(0);
@@ -2856,7 +2858,8 @@ IF (DayNri <= GetSimulation_ToDayNr()) THEN
         END;
    IF (GetRainFile() <> '(None)') THEN
    BEGIN
-      READLN(fRainSIM,tmpRain);
+      TempString := fRainSIM_read();
+      ReadStr(TempString, tmpRain);
       SetRain(tmpRain);
       END;
    IF (GetTemperatureFile() = '(None)')
@@ -3053,10 +3056,10 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseEvalDataPerformEvaluation
 
 
-    PROCEDURE CloseClimateFiles(VAR fRainSIM,fTempSIM : text);
+    PROCEDURE CloseClimateFiles(VAR fTempSIM : text);
     BEGIN
     IF (GetEToFile() <> '(None)') THEN fEToSIM_close();
-    IF (GetRainFile() <> '(None)') THEN Close(fRainSIM);
+    IF (GetRainFile() <> '(None)') THEN fRainSIM_close();
     IF (GetTemperatureFile() <> '(None)') THEN Close(fTempSIM);
     END; // CloseClimateFiles
 
@@ -3073,7 +3076,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     END; // CloseManagementFile
 
 BEGIN
-CloseClimateFiles(fRainSIM,fTempSIM);
+CloseClimateFiles(fTempSIM);
 CloseIrrigationFile();
 CloseManagementFile(fCuts);
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
