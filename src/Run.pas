@@ -865,12 +865,13 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
                    IF (GetIrriFirstDayNr() = undef_int)
                       THEN DNr := DayNri - GetCrop().Day1 + 1
                       ELSE DNr := DayNri - GetIrriFirstDayNr() + 1;
+
                    REPEAT
+                   StringREAD := fIrri_read();
                    IF fIrri_eof()
                       THEN SetIrriInfoRecord1_NoMoreInfo(true)
                       ELSE BEGIN
                            SetIrriInfoRecord1_NoMoreInfo(false);
-                           StringREAD := fIrri_read();
                            IF GlobalIrriECw
                               THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
                               ELSE BEGIN
@@ -903,20 +904,20 @@ IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
                            SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
                            SetSimulation_IrriECw(IrriECw_temp);
                            END;
+
+                   TempString := fIrri_read();
                    IF fIrri_eof()
                       THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
                       ELSE BEGIN
                            SetIrriInfoRecord2_NoMoreInfo(false);
                            IF GlobalIrriECw
                              THEN BEGIN
-                                  TempString := fIrri_read();
                                   ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                                   SetIrriInfoRecord2_FromDay(FromDay_temp);
                                   SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
                                   SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
                                   END
                              ELSE BEGIN
-                                  TempString := fIrri_read();
                                   ReadStr(TempString,FromDay_temp,TimeInfo_temp,
                                            DepthInfo_temp,IrriEcw_temp);
                                   SetIrriInfoRecord2_FromDay(FromDay_temp);
@@ -2255,11 +2256,11 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
             IF (GetIrriInfoRecord1_TimeInfo() = DNr) THEN
                BEGIN
                IrriManual := GetIrriInfoRecord1_DepthInfo();
+               StringREAD := fIrri_read();
                IF fIrri_eof()
                   THEN SetIrriInfoRecord1_NoMoreInfo(true)
                   ELSE BEGIN
                        SetIrriInfoRecord1_NoMoreInfo(false);
-                       StringREAD := fIrri_read();
                        IF GlobalIrriECw // Versions before 3.2
                           THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
                           ELSE BEGIN
@@ -2294,20 +2295,20 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
        IF (DayInSeason > GetIrriInfoRecord1_ToDay()) THEN // read next line
           BEGIN
           SetIrriInfoRecord1(GetIrriInfoRecord2());
+
+          TempString := fIrri_read();
           IF fIrri_eof()
              THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
              ELSE BEGIN
                   SetIrriInfoRecord2_NoMoreInfo(false);
                   IF GlobalIrriECw // Versions before 3.2
                      THEN BEGIN
-                          TempString := fIrri_read();
                           ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
                           SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
                           SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
                           END
                      ELSE BEGIN
-                          TempString := fIrri_read();
                           ReadStr(TempString,FromDay_temp,TimeInfo_temp, DepthInfo_temp,IrriEcw_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
                           SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
