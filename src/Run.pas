@@ -1616,7 +1616,7 @@ IF NoYear THEN
    END;
 IF (ANumber = undef_int) // intermediate results
    THEN BEGIN
-        CASE OutputAggregate OF
+        CASE GetOutputAggregate() OF
              1 : WriteStr(TempString,'      Day',Day1:9,Month1:9,Year1:9);
              2 : WriteStr(TempString,'    10Day',Day1:9,Month1:9,Year1:9);
              3 : WriteStr(TempString,'    Month',Day1:9,Month1:9,Year1:9);
@@ -1791,7 +1791,7 @@ VAR DayN,MonthN,YearN,DayEndM : INTEGER;
 
 BEGIN
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
-CASE OutputAggregate OF
+CASE GetOutputAggregate() OF
   1 :   BEGIN // daily output
         BiomassDay := GetSumWaBal_Biomass() - PreviousSum.Biomass;
         BUnlimDay := GetSumWaBal_BiomassUnlim() - PreviousSum.BiomassUnlim;
@@ -1816,7 +1816,7 @@ CASE OutputAggregate OF
         DayEndM := DaysInMonth[MonthN];
         IF (LeapYear(YearN) AND (MonthN = 2)) THEN DayEndM := 29;
         IF (DayN = DayEndM) THEN WriteNow := true;  // 10-day and month
-        IF ((OutputAggregate = 2) AND ((DayN = 10) OR (DayN = 20))) THEN WriteNow := true; // 10-day
+        IF ((GetOutputAggregate() = 2) AND ((DayN = 10) OR (DayN = 20))) THEN WriteNow := true; // 10-day
         IF WriteNow THEN WriteIntermediatePeriod(TheProjectFile);
         END;
     end;
@@ -2760,7 +2760,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
         END
    ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),PotValSF);
 //14.d Print ---------------------------------------
-IF (OutputAggregate > 0) THEN CheckForPrint(TheProjectFile);
+IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,WPi,fDaily);
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,fEval);
 
@@ -2948,7 +2948,7 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
        RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),SumInterval,BprevSum,YprevSum,fHarvest); // last line at end of season
        END;
     // intermediate results
-    IF ((OutputAggregate = 2) OR (OutputAggregate = 3) // 10-day and monthly results
+    IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
         AND ((GetDayNri()-1) > PreviousDayNr)) THEN
         BEGIN
         SetDayNri(GetDayNri()-1);
