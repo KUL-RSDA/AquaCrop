@@ -8,7 +8,6 @@ VAR DataPath,ObsPath : BOOLEAN;
 
 
     SenStage       : INTEGER;
-    Tmin, Tmax : double; (* degC *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;

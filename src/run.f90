@@ -4,6 +4,93 @@ use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
                     int32
+
+use ac_global, only:    CompartmentIndividual, &
+                        datatype_daily, &
+                        datatype_decadely, &
+                        datatype_monthly, &
+                        DegreesDay, &
+                        DetermineDate, &
+                        DetermineDayNr, &
+                        DetermineSaltContent, &
+                        FileExists, &
+                        GetCompartment_i, &
+                        GetCompartment_Layer, &
+                        GetCompartment_Thickness, &
+                        GetCrop_CCEffectEvapLate, &
+                        GetCrop_CCo, &
+                        GetCrop_CCx, &
+                        GetCrop_CDC, &
+                        GetCrop_CGC, &
+                        GetCrop_Day1, &
+                        GetCrop_DaysToCCini, &
+                        GetCrop_DaysToFlowering, &
+                        GetCrop_DaysToFullCanopy, &
+                        GetCrop_DaysToGermination, &
+                        GetCrop_DaysToHarvest, &
+                        GetCrop_DaysToSenescence, &
+                        GetCrop_DeterminancyLinked, &
+                        GetCrop_dHIdt, &
+                        GetCrop_GDDaysToCCini, &
+                        GetCrop_GDDaysToFlowering, &
+                        GetCrop_GDDaysToFullCanopy, &
+                        GetCrop_GDDaysToGermination, &
+                        GetCrop_GDDaysToHarvest, &
+                        GetCrop_GDDaysToSenescence, &
+                        GetCrop_GDDCDC, &
+                        GetCrop_GDDCGC, &
+                        GetCrop_GDDaysToFlowering, &
+                        GetCrop_GDDaysToHarvest, &
+                        GetCrop_GDDLengthFlowering, &
+                        GetCrop_GDtranspLow, &
+                        GetCrop_KcDecline, &
+                        GetCrop_KcTop, &
+                        GetCrop_HI, &
+                        GetCrop_LengthFlowering, &
+                        GetCrop_GDtranspLow, &
+                        getcrop_ccsaltdistortion, &
+                        GetCrop_StressResponse, &
+                        GetCrop_StressResponse_Calibrated, &
+                        GetCrop_subkind, &
+                        GetCrop_ModeCycle, &
+                        GetCrop_Tbase, &
+                        GetCrop_Tupper, &
+                        GetCrop_WP, &
+                        GetCrop_WPy, &
+                        GetGroundWaterFile, &
+                        GetGroundWaterFileFull, &
+                        GetNrCompartments, &
+                        GetPathNameProg, &
+                        GetSimulation_FromDayNr, &
+                        GetSimulation_SumGDD, &
+                        GetSimulation_SalinityConsidered, &
+                        GetSimulation_ToDayNr, &
+                        GetSimulParam_GDDMethod, &
+                        GetSimulParam_Tmin, &
+                        GetSimulParam_Tmax, &
+                        GetSoilLayer_SAT, &
+                        GetTemperatureFile, &
+                        GetTemperatureFilefull, &
+                        GetTemperatureRecord_DataType, &
+                        GetTemperatureRecord_FromDayNr, &
+                        GetTmax, &
+                        GetTmin, &
+                        GetZiAqua, &
+                        GetECiAqua, &
+                        rep_DayEventDbl, &
+                        rep_sum, &
+                        roundc, &
+                        SetCompartment_i, &
+                        SetCompartment_Theta, &
+                        SetSimulation_SumGDD, &
+                        SetTmax, &
+                        SetTmin, &
+                        SplitStringInThreeParams, &
+                        SplitStringInTwoParams, &
+                        undef_int
+
+
+
 use ac_global, only: CompartmentIndividual, &
                      DetermineDate, &
                      DetermineDayNr, &
@@ -17,40 +104,12 @@ use ac_global, only: CompartmentIndividual, &
                      GetCrop_CDC, &
                      GetCrop_CGC, &
                      GetCrop_Day1, &
-                     GetCrop_DaysToCCini, &
-                     GetCrop_DaysToFlowering, &
-                     GetCrop_DaysToFullCanopy, &
-                     GetCrop_DaysToGermination, &
-                     GetCrop_DaysToHarvest, &
-                     GetCrop_DaysToSenescence, &
-                     GetCrop_DeterminancyLinked, &
-                     GetCrop_dHIdt, &
-                     GetCrop_GDDaysToCCini, &
-                     GetCrop_GDDaysToFlowering, &
-                     GetCrop_GDDaysToFullCanopy, &
-                     GetCrop_GDDaysToGermination, &
-                     GetCrop_GDDaysToHarvest, &
-                     GetCrop_GDDaysToSenescence, &
-                     GetCrop_GDDCDC, &
-                     GetCrop_GDDCGC, &
-                     GetCrop_GDDaysToFlowering, &
-                     GetCrop_GDDaysToHarvest, &
-                     GetCrop_GDDLengthFlowering, &
-                     GetCrop_GDtranspLow, &
-                     GetCrop_KcDecline, &
-                     GetCrop_KcTop, &
-                     GetCrop_HI, &
-                     GetCrop_LengthFlowering, &
-                     GetCrop_GDtranspLow, &
-                     getcrop_ccsaltdistortion, &
-                     GetCrop_StressResponse, &
-                     GetCrop_StressResponse_Calibrated, &
-                     GetCrop_subkind, &
-                     GetCrop_ModeCycle, &
                      GetCrop_Tbase, &
                      GetCrop_Tupper, &
                      GetCrop_WP, &
                      GetCrop_WPy, &
+                     GetCrop_Length_i, &
+                     GetSimulation_DelayedDays, &
                      GetGroundWaterFile, &
                      GetGroundWaterFileFull, &
                      GetManagement_FertilityStress, &
@@ -60,7 +119,6 @@ use ac_global, only: CompartmentIndividual, &
                      GetSimulation_ToDayNr, &
                      GetSimulParam_Tmax, &
                      GetSimulParam_Tmin, &
-                     GetSimulation_SalinityConsidered, &
                      GetSoilLayer_SAT, &
                      GetZiAqua, &
                      GetECiAqua, &
@@ -70,10 +128,14 @@ use ac_global, only: CompartmentIndividual, &
                      SetCompartment_i, &
                      SetCompartment_Theta, &
                      SplitStringInThreeParams, &
-                     undef_int
+                     undef_int, &
+                     subkind_Grain, &
+                     subkind_Tuber
 
-use ac_tempprocessing, only: CCxSaltStressRelationship, &
-                             StressBiomassRelationship
+use ac_tempprocessing, only:    CCxSaltStressRelationship, &
+                                GetDecadeTemperatureDataSet, &
+                                GetMonthlyTemperaturedataset, &
+                                StressBiomassRelationship
 
 
 implicit none
@@ -160,6 +222,10 @@ integer :: fEToSIM ! file handle
 integer :: fEToSIM_iostat ! IO status
 integer :: fRainSIM ! file handle
 integer :: fRainSIM_iostat ! IO status
+integer :: fTempSIM ! file handle
+integer :: fTempSIM_iostat ! IO status
+integer :: fCuts ! file handle
+integer :: fCuts_iostat ! IO status
 
 
 type(rep_GwTable) :: GwTable
@@ -170,6 +236,9 @@ type(repIrriInfoRecord) :: IrriInfoRecord1, IrriInfoRecord2
 type(rep_StressTot) :: StressTot
 type(repCutInfoRecord) :: CutInfoRecord1, CutInfoRecord2
 type(rep_Transfer) :: Transfer
+type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+
+integer(int32) :: DayNri
 
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
@@ -323,6 +392,7 @@ subroutine fIrri_close()
     close(fIrri)
 end subroutine fIrri_close
 
+
 ! fEToSIM
 
 subroutine fEToSIM_open(filename, mode)
@@ -331,7 +401,6 @@ subroutine fEToSIM_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fEToSIM, filename, mode, fEToSIM_iostat)
 end subroutine fEToSIM_open
 
@@ -350,6 +419,32 @@ subroutine fEToSIM_close()
 end subroutine fEToSIM_close
 
 
+! fTempSIM
+
+subroutine fTempSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fTempSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fTempSIM, filename, mode, fTempSIM_iostat)
+end subroutine fTempSIM_open
+
+
+function fTempSIM_read() result(line)
+    !! Returns the next line read from the 'fTempSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fTempSIM, fTempSIM_iostat)
+end function fTempSIM_read
+
+
+subroutine fTempSIM_close()
+    close(fTempSIM)
+end subroutine fTempSIM_close
+
+
 ! fRainSIM
 
 subroutine fRainSIM_open(filename, mode)
@@ -358,7 +453,6 @@ subroutine fRainSIM_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fRainSIM, filename, mode, fRainSIM_iostat)
 end subroutine fRainSIM_open
 
@@ -375,6 +469,40 @@ end function fRainSIM_read
 subroutine fRainSIM_close()
     close(fRainSIM)
 end subroutine fRainSIM_close
+
+
+! fCuts
+
+subroutine fCuts_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fCuts' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fCuts, filename, mode, fCuts_iostat)
+end subroutine fCuts_open
+
+
+function fCuts_read() result(line)
+    !! Returns the next line read from the 'fCuts' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fCuts, fCuts_iostat)
+end function fCuts_read
+
+
+function fCuts_eof() result(eof)
+    !! Returns whether the end of the 'fCuts' file has been reached.
+    logical :: eof
+
+    eof = fCuts_iostat == iostat_end
+end function fCuts_eof
+
+
+subroutine fCuts_close()
+    close(fCuts)
+end subroutine fCuts_close
 
 
 ! FracBiomass
@@ -939,6 +1067,135 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
     Transfer%Bmobilized = Bmobilized
 end subroutine SetTransfer_Bmobilized
 
+
+!TminDatSet
+
+function GetTminDataSet() result(TminDataSet_out)
+    !! Getter for the "TminDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet_out
+
+    TminDataSet_out = TminDataSet
+end function GetTminDataSet
+
+function GetTminDataSet_i(i) result(TminDataSet_i)
+    !! Getter for individual elements of the "TminDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: TminDataSet_i
+
+    TminDataSet_i = TminDataSet(i)
+end function GetTminDataSet_i
+
+integer(int32) function GetTminDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetTminDataSet_DayNr = TminDataSet(i)%DayNr
+end function GetTminDataSet_DayNr
+
+real(dp) function GetTminDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetTminDataSet_Param = TminDataSet(i)%Param
+end function GetTminDataSet_Param
+
+subroutine SetTminDataSet(TminDataSet_in)
+    !! Setter for the "TminDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: TminDataSet_in
+
+    TminDataSet = TminDataSet_in
+end subroutine SetTminDataSet
+
+subroutine SetTminDataSet_i(i, TminDataSet_i)
+    !! Setter for individual element for the "TminDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: TminDataSet_i
+
+    TminDataSet(i) = TminDataSet_i
+end subroutine SetTminDataSet_i
+
+subroutine SetTminDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    TminDataSet(i)%DayNr = DayNr_in
+end subroutine SetTminDataSet_DayNr
+
+subroutine SetTminDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    TminDataSet(i)%Param = Param_in
+end subroutine SetTminDataSet_Param
+
+! TmaxDataSet
+
+function GetTmaxDataSet() result(TmaxDataSet_out)
+    !! Getter for the "TmaxDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: TmaxDataSet_out
+
+    TmaxDataSet_out = TmaxDataSet
+end function GetTmaxDataSet
+
+function GetTmaxDataSet_i(i) result(TmaxDataSet_i)
+    !! Getter for individual elements of the "TmaxDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: TmaxDataSet_i
+
+    TmaxDataSet_i = TmaxDataSet(i)
+end function GetTmaxDataSet_i
+
+integer(int32) function GetTmaxDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetTmaxDataSet_DayNr = TmaxDataSet(i)%DayNr
+end function GetTmaxDataSet_DayNr
+
+real(dp) function GetTmaxDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetTmaxDataSet_Param = TmaxDataSet(i)%Param
+end function GetTmaxDataSet_Param
+
+subroutine SetTmaxDataSet(TmaxDataSet_in)
+    !! Setter for the "TmaxDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: TmaxDataSet_in
+
+    TmaxDataSet = TmaxDataSet_in
+end subroutine SetTmaxDataSet
+
+subroutine SetTmaxDataSet_i(i, TmaxDataSet_i)
+    !! Setter for individual element for the "TmaxDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: TmaxDataSet_i
+
+    TmaxDataSet(i) = TmaxDataSet_i
+end subroutine SetTmaxDataSet_i
+
+subroutine SetTmaxDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    TmaxDataSet(i)%DayNr = DayNr_in
+end subroutine SetTmaxDataSet_DayNr
+
+subroutine SetTmaxDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    TmaxDataSet(i)%Param = Param_in
+end subroutine SetTmaxDataSet_Param
+
+integer(int32) function GetDayNri()
+
+    GetDayNri = DayNri
+end function GetDayNri
+
+subroutine SetDayNri(DayNri_in)
+    integer(int32), intent(in) :: DayNri_in
+
+    DayNri = DayNri_in
+end subroutine SetDayNri
+
+
 ! EToDataSet
 
 function GetEToDataSet() result(EToDataSet_out)
@@ -1056,6 +1313,7 @@ subroutine SetRainDataSet_Param(i, Param_in)
 end subroutine SetRainDataSet_Param
 
 !! END section global variables
+
 
 
 
@@ -1260,6 +1518,166 @@ subroutine GetGwtSet(DayNrIN, GwT)
     close(f0)
 end subroutine GetGwtSet
 
+
+
+subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
+    real(dp), intent(inout) :: SumGDDtillDay
+    real(dp), intent(inout) :: SumGDDtillDayM1
+
+    character(len=:), allocatable :: totalname
+    integer :: fTemp
+    integer(int32) :: i
+    character(len=255) :: StringREAD
+    integer(int32) :: DayX
+    real(dp) :: Tmin_temp, Tmax_temp
+    type(rep_DayEventDbl), dimension(31) :: TmaxDataSet_temp, &
+                                            TminDataSet_temp
+
+    call SetSimulation_SumGDD(0._dp)
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = GetTemperatureFilefull()
+
+        if (FileExists(totalname)) then
+            select case (GetTemperatureRecord_DataType())
+            case (datatype_daily)
+                open(newunit=fTemp, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fTemp, *) ! description
+                read(fTemp, *) ! time step
+                read(fTemp, *) ! day
+                read(fTemp, *) ! month
+                read(fTemp, *) ! year
+                read(fTemp, *)
+                read(fTemp, *)
+                read(fTemp, *)
+                ! days before first day of simulation (= DayNri)
+                do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1) 
+                    if (i < GetCrop_Day1()) then
+                        read(fTemp, *)
+                    else
+                        read(fTemp, '(a)') StringREAD
+                        Tmin_temp = GetTmin()
+                        Tmax_temp = GetTmax()
+                        call SplitStringInTwoParams(StringREAD, Tmin_temp, Tmax_temp)
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                        call SetSimulation_SumGDD(GetSimulation_SumGDD() &
+                                + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                             GetTmin(), GetTmax(), &
+                                             GetSimulParam_GDDMethod()))
+                    end if
+                end do
+                close(fTemp)
+
+            case (datatype_decadely)
+                DayX = GetCrop_Day1()
+                ! first day of cropping
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetDecadeTemperatureDataSet(DayX, TminDataSet_temp, &
+                                                 TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= DayX) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+                call SetSimulation_SumGDD(DegreesDay(GetCrop_Tbase(), &
+                                GetCrop_Tupper(), GetTmin(), GetTmax(), &
+                                GetSimulParam_GDDMethod()))
+                ! next days
+                do while (DayX < DayNri) 
+                    DayX = DayX + 1
+                    if (DayX > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetDecadeTemperatureDataSet(DayX, &
+                                TminDataSet_temp, TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                        i = 0
+                    end if
+                    i = i+1
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                    call SetSimulation_SumGDD(GetSimulation_SumGDD() &
+                                + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                             GetTmin(), GetTmax(), &
+                                             GetSimulParam_GDDMethod()))
+                end do
+            case (datatype_monthly)
+                DayX = GetCrop_Day1()
+                ! first day of cropping
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetMonthlyTemperatureDataSet(DayX, TminDataSet_temp, &
+                                                  TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= DayX) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+                call SetSimulation_SumGDD(&
+                        DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                   GetTmin(), GetTmax(), &
+                                   GetSimulParam_GDDMethod()))
+                ! next days
+                do while (DayX < DayNri) 
+                    DayX = DayX + 1
+                    if (DayX > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetMonthlyTemperatureDataSet(&
+                                DayX, TminDataSet_temp, TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                        i = 0
+                    end if
+                    i = i+1
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                    call SetSimulation_SumGDD(GetSimulation_SumGDD() &
+                            + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                         GetTmin(), GetTmax(), &
+                                         GetSimulParam_GDDMethod()))
+                end do
+            end select
+        end if
+    end if
+    if (GetTemperatureFile() == '(None)') then
+        call SetSimulation_SumGDD(DegreesDay(&
+                                 GetCrop_Tbase(), GetCrop_Tupper(), &
+                                 GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+                                 GetSimulParam_GDDMethod()) &
+                                 * (DayNri - GetCrop_Day1() + 1))
+        if (GetSimulation_SumGDD() < 0._dp) then
+            call SetSimulation_SumGDD(0._dp)
+        end if
+        SumGDDtillDay = GetSimulation_SumGDD()
+        SumGDDtillDayM1 = DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                     GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
+                                     GetSimulParam_GDDMethod()) &
+                          * (DayNri - GetCrop_Day1())
+        if (SumGDDtillDayM1 < 0._dp) then
+            SumGDDtillDayM1 = 0._dp
+        end if
+    else
+        SumGDDtillDay = GetSimulation_SumGDD()
+        SumGDDtillDayM1 = SumGDDtillDay &
+                         - DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
+                                      GetTmin(), GetTmax(), &
+                                      GetSimulParam_GDDMethod())
+    end if
+end subroutine GetSumGDDBeforeSimulation 
+
+
+
+
 subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
                         FracBiomassPotSF, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     real(dp), intent(inout) :: Coeffb0
@@ -1370,6 +1788,49 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
         Coeffb2Salt = undef_int
     end if
 end subroutine RelationshipsForFertilityAndSaltStress
+
+
+! extra for output of daily results  -----------------------------
+subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
+    integer(int32), intent(in) :: Dayi
+    real(dp), intent(in) :: CCiPrev
+    integer(int8), intent(inout)  :: Code
+
+    integer(int32) :: VirtualDay
+
+    VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
+    if (VirtualDay < 0) then
+        Code = 0_int8 ! before cropping period
+    else
+        if (VirtualDay < GetCrop_DaysToGermination()) then
+            Code = 1_int8 ! sown --> emergence OR transplant recovering
+        else
+            Code = 2_int8 ! vegetative development
+            if ((GetCrop_subkind() == subkind_Grain) .and. &
+                (VirtualDay >= GetCrop_DaysToFlowering())) then
+                if (VirtualDay < (GetCrop_DaysToFlowering() + &
+                                  GetCrop_LengthFlowering())) then
+                    Code = 3_int8 ! flowering
+                else
+                    Code = 4_int8 ! yield formation
+                end if
+            end if
+            if ((GetCrop_subkind() == subkind_Tuber) .and. &
+                (VirtualDay >= GetCrop_DaysToFlowering())) then
+                Code = 4_int8 ! yield formation
+            end if
+            if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
+                (CCiPrev < epsilon(0._dp))) then
+                Code = int(undef_int, kind=int8)  ! no growth stage
+            end if
+            if (VirtualDay >= &
+                (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
+                 GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
+                Code = 0_int8 ! after cropping period
+            end if
+        end if
+    end if
+end subroutine DetermineGrowthStage
 
 
 end module ac_run

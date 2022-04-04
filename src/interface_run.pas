@@ -316,6 +316,60 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
+function GetTminDataSet() : rep_SimulationEventsDbl;
+
+function GetTminDataSet_i(constref i : integer) : rep_DayEventDbl;
+
+function GetTminDataSet_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_run_MOD_gettmindataset_daynr';
+
+function GetTminDataSet_Param(constref i : integer) : double;
+    external 'aquacrop' name '__ac_run_MOD_gettmindataset_param';
+
+procedure SetTminDataSet(constref TminDataSet_in : rep_SimulationEventsDbl);
+
+procedure SetTminDataSet_i(constref i : integer;
+                           constref TminDataSet_i : rep_DayEventDbl);
+
+procedure SetTminDataSet_DayNr(constref i : integer;
+                               constref  DayNr_in : integer);
+    external 'aquacrop' name '__ac_run_MOD_settmindataset_daynr';
+
+procedure SetTminDataSet_Param(constref i : integer;
+                               constref Param_in : double);
+    external 'aquacrop' name '__ac_run_MOD_settmindataset_param';
+
+function GetTmaxDataSet() : rep_SimulationEventsDbl;
+
+function GetTmaxDataSet_i(constref i : integer) : rep_DayEventDbl;
+
+function GetTmaxDataSet_DayNr(constref i : integer) : integer;
+    external 'aquacrop' name '__ac_run_MOD_gettmaxdataset_daynr';
+
+function GetTmaxDataSet_Param(constref i : integer) : double;
+    external 'aquacrop' name '__ac_run_MOD_gettmaxdataset_param';
+
+procedure SetTmaxDataSet(constref TmaxDataSet_in : rep_SimulationEventsDbl);
+
+procedure SetTmaxDataSet_i(constref i : integer;
+                           constref TmaxDataSet_i : rep_DayEventDbl);
+
+procedure SetTmaxDataSet_DayNr(constref i, DayNr_in: integer);
+    external 'aquacrop' name '__ac_run_MOD_settmaxdataset_daynr';
+
+procedure SetTmaxDataSet_Param(constref i : integer;
+                               constref Param_in : double);
+    external 'aquacrop' name '__ac_run_MOD_settmaxdataset_param';
+
+procedure GetSumGDDBeforeSimulation(var SumGDDtillDay, SumGDDtillDayM1 : double);
+    external 'aquacrop' name '__ac_run_MOD_getsumgddbeforesimulation';
+
+function GetDayNri() : LongInt;
+    external 'aquacrop' name '__ac_run_MOD_getdaynri';
+
+procedure SetDayNri(constref DayNri_in : LongInt);
+    external 'aquacrop' name '__ac_run_MOD_setdaynri';
+
 procedure fRun_open(constref filename : string; constref mode : string);
 
 procedure fRun_open_wrap(
@@ -368,7 +422,6 @@ function GetCO2i() : double;
 procedure SetCO2i(constref CO2i_in : double);
     external 'aquacrop' name '__ac_run_MOD_setco2i';
 
-
 procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb0 : double;
                     VAR Coeffb1 : double;
@@ -412,6 +465,12 @@ function fRainSIM_read_wrap() : PChar;
 
 procedure fRainSIM_close();
         external 'aquacrop' name '__ac_run_MOD_frainsim_close';
+
+procedure DetermineGrowthStage(
+                    constref Dayi : LongInt;
+                    constref CCiPrev : double;
+                    VAR Code : ShortInt);
+        external 'aquacrop' name '__ac_run_MOD_determinegrowthstage';
 
 function GetEToDataSet() : rep_SimulationEventsDbl;
 
@@ -459,9 +518,99 @@ procedure SetRainDataSet_Param(constref i : integer;
                                constref Param_in : double);
     external 'aquacrop' name '__ac_run_MOD_setraindataset_param';
 
+procedure fTempSIM_open(constref filename : string; constref mode : string);
 
+procedure fTempSIM_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_ftempsim_open_wrap';
+
+function fTempSIM_read() : string;
+
+function fTempSIM_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_ftempsim_read_wrap';
+
+procedure fTempSIM_close();
+        external 'aquacrop' name '__ac_run_MOD_ftempsim_close';
+
+procedure fCuts_open(constref filename : string; constref mode : string);
+
+procedure fCuts_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fcuts_open_wrap';
+
+function fCuts_read() : string;
+
+function fCuts_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_fcuts_read_wrap';
+
+function fCuts_eof() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_fcuts_eof_wrap';
+
+procedure fCuts_close();
+        external 'aquacrop' name '__ac_run_MOD_fcuts_close';
 
 implementation
+
+
+function GetTminDataSet() : rep_SimulationEventsDbl;
+var
+    i : integer;
+begin
+    for i := 1 to 31 do GetTminDataSet[i] := GetTminDataSet_i(i);
+end;
+
+function GetTminDataSet_i(constref i : integer) : rep_DayEventDbl;
+begin
+    GetTminDataSet_i.DayNr := GetTminDataSet_DayNr(i);
+    GetTminDataSet_i.Param := GetTminDataSet_Param(i);
+end;
+
+procedure SetTminDataSet(constref TminDataSet_in : rep_SimulationEventsDbl);
+var
+    i : integer;
+begin
+    for i := 1 to 31 do SetTminDataSet_i(i, TminDataSet_in[i]);
+end;
+
+procedure SetTminDataSet_i(constref i : integer;
+                          constref TminDataSet_i : rep_DayEventDbl);
+begin
+    SetTminDataSet_DayNr(i, TminDataSet_i.DayNr);
+    SetTminDataSet_Param(i, TminDataSet_i.Param);
+end;
+
+function GetTmaxDataSet() : rep_SimulationEventsDbl;
+var
+    i : integer;
+begin
+    for i := 1 to 31 do GetTmaxDataSet[i] := GetTmaxDataSet_i(i);
+end;
+
+function GetTmaxDataSet_i(constref i : integer) : rep_DayEventDbl;
+begin
+    GetTmaxDataSet_i.DayNr := GetTmaxDataSet_DayNr(i);
+    GetTmaxDataSet_i.Param := GetTmaxDataSet_Param(i);
+end;
+
+procedure SetTmaxDataSet(constref TmaxDataSet_in : rep_SimulationEventsDbl);
+var
+    i : integer;
+begin
+    for i := 1 to 31 do SetTmaxDataSet_i(i, TmaxDataSet_in[i]);
+end;
+
+procedure SetTmaxDataSet_i(constref i : integer;
+                          constref TmaxDataSet_i : rep_DayEventDbl);
+begin
+    SetTmaxDataSet_DayNr(i, TmaxDataSet_i.DayNr);
+    SetTmaxDataSet_Param(i, TmaxDataSet_i.Param);
+end;
 
 
 function GetGwTable() : rep_GwTable;
@@ -603,6 +752,7 @@ begin;
 end;
 
 
+
 procedure fEToSIM_open(constref filename : string; constref mode : string);
 var
      filename_ptr, mode_ptr : PChar;
@@ -614,6 +764,20 @@ begin;
      mode_len := Length(mode);
      fEToSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
+
+
+procedure fTempSIM_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fTempSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
 
 function fEToSIM_read() : string;
 var
@@ -636,12 +800,44 @@ begin;
      fRainSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
 
+
+function fTempSIM_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fTempSIM_read_wrap();
+     fTempSIM_read := AnsiString(line_ptr);
+end;
+
+
+procedure fCuts_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fCuts_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+
 function fRainSIM_read() : string;
 var
      line_ptr : PChar;
 begin;
      line_ptr := fRainSIM_read_wrap();
      fRainSIM_read := AnsiString(line_ptr);
+end;
+
+
+function fCuts_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fCuts_read_wrap();
+     fCuts_read := AnsiString(line_ptr);
 end;
 
 
