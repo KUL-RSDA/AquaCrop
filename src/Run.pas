@@ -28,7 +28,7 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 var  fDaily, fHarvest, fEval : text;
      fEToSIM,fRainSIM, fObs : text;
-     SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
+     SumETo, SumGDD,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      CCxWitheredTpot,CCxWitheredTpotNoS : double;
@@ -1266,11 +1266,11 @@ IF ((GetCrop_ModeCycle() = GDDays) AND (GetCrop().Day1 < GetDayNri()))
 SumGDDPrev := GetSimulation_SumGDDfromDay1();
 
 // Sum of GDD at end of first day
-GDDayi := DegreesDay(GetCrop().Tbase,GetCrop().Tupper,GetTmin(),GetTmax(),GetSimulParam_GDDMethod());
+SetGDDayi(DegreesDay(GetCrop().Tbase,GetCrop().Tupper,GetTmin(),GetTmax(),GetSimulParam_GDDMethod()));
 IF (GetDayNri() >= GetCrop().Day1)
    THEN BEGIN
-        IF (GetDayNri() = GetCrop().Day1) THEN SetSimulation_SumGDD(GetSimulation_SumGDD() + GDDayi);
-        SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + GDDayi);
+        IF (GetDayNri() = GetCrop().Day1) THEN SetSimulation_SumGDD(GetSimulation_SumGDD() + GetGDDayi());
+        SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + GetGDDayi());
         END;
 // Reset cummulative sums of ETo and GDD for Run output
 SumETo := 0;
@@ -1340,16 +1340,16 @@ SumGDDforDayCC := undef_int;
 IF (GetCrop_ModeCycle() = GDDays) THEN
    BEGIN
    IF (GetCrop().GDDaysToCCini = 0)
-      THEN SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GDDayi
+      THEN SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GetGDDayi()
       ELSE BEGIN
            // adjust time (Growing Degree Days) for regrowth
-           SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GDDayi + GDDTadj + GetCrop().GDDaysToGermination;
+           SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GetGDDayi() + GDDTadj + GetCrop().GDDaysToGermination;
            IF (SumGDDforDayCC > GetCrop().GDDaysToHarvest) THEN SumGDDforDayCC := GetCrop().GDDaysToHarvest; // special case where L123 > L1234
            IF (SumGDDforDayCC > GetCrop().GDDaysToFullCanopy) THEN
               BEGIN
               IF (GetSimulation_SumGDDfromDay1() <= GetCrop().GDDaysToFullCanopy)
                  THEN SumGDDforDayCC := GetCrop().GDDaysToFullCanopy + ROUND(GDDayFraction * (GetSimulation_SumGDDfromDay1()+GDDTadj+GetCrop().GDDaysToGermination-GetCrop().GDDaysToFullCanopy)) // slow down
-                 ELSE SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GDDayi; // switch time scale
+                 ELSE SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GetGDDayi(); // switch time scale
               END;
            END;
    END;
@@ -1798,7 +1798,7 @@ CASE GetOutputAggregate() OF
         SaltOut := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
         CRsalt := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
-                       GetRain(),GetETo(),GDDayi,
+                       GetRain(),GetETo(),GetGDDayi(),
                        GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
                        GetEact(),GetEpot(),GetTact(),GetTactWeedInfested(),GetTpot(),
                        SaltIn,SaltOut,CRsalt,
@@ -1879,7 +1879,7 @@ IF Out2Crop THEN
    //4. Air temperature stress
    IF (GetCCiActual() <= 0.0000001)
       THEN KsTr := 1
-      ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GDDayi);
+      ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GetGDDayi());
    IF (KsTr < 1)
       THEN StrTr := ROUND((1-KsTr)*100)
       ELSE StrTr := 0;
@@ -1909,7 +1909,7 @@ IF Out2Crop THEN
       THEN WPy := (GetSumWaBal_YieldPart()*1000)/((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10)
       ELSE WPy := 0.0;
    // write
-   WRITE(fDaily,GDDayi:9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
+   WRITE(fDaily,GetGDDayi():9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
          (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,GetTact():9:1,
          GetTactWeedInfested():9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
@@ -2533,7 +2533,7 @@ SetBout(Bout_temp);
 (* 9. RUN Soil water balance and actual Canopy Cover *)
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayLastCut,GetStressTot_NrD(),
               Tadj,GDDTadj,
-              GDDayi,CGCref,GDDCGCref,GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
+              GetGDDayi(),CGCref,GDDCGCref,GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
               Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),
               DayFraction,GDDayFraction,FracAssim,
               StressSFadjNEW,GetTransfer_Store(),GetTransfer_Mobilize(),
@@ -2558,7 +2558,7 @@ IF (GetCCiActual() > 0) THEN
 
 (* 10. Potential biomass *)
 BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
-DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GDDayi,CCxWitheredTpotNoS,BiomassUnlim_temp);
+DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GetGDDayi(),CCxWitheredTpotNoS,BiomassUnlim_temp);
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
@@ -2570,7 +2570,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         // temperature stress affecting crop transpiration
         IF (GetCCiActual() <= 0.0000001)
            THEN KsTr := 1
-           ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GDDayi);
+           ELSE KsTr := KsTemperature((0),GetCrop().GDtranspLow,GetGDDayi());
         SetStressTot_Temp(((GetStressTot_NrD() - 1)*GetStressTot_Temp() + 100*(1-KsTr))/GetStressTot_NrD());
         // soil salinity stress
         ECe_temp := GetRootZoneSalt().ECe;
@@ -2596,7 +2596,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         TactWeedInfested_temp := GetTactWeedInfested();
         Bin_temp := GetBin();
         Bout_temp := GetBout();
-        DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
+        DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GetGDDayi(),GetTact(),SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,GetFracBiomassPotSF(),                             Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,SumInterval,
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
@@ -2644,7 +2644,7 @@ IF GetManagement_Cuttings_Considered() THEN
    HarvestNow := false;
    DayInSeason := GetDayNri() - GetCrop().Day1 + 1;
    SumInterval := SumInterval + 1;
-   SumGDDcuts := SumGDDcuts + GDDayi;
+   SumGDDcuts := SumGDDcuts + GetGDDayi();
    CASE GetManagement_Cuttings_Generate() OF
         false : BEGIN
                 IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) // adjust DayInSeason
@@ -2726,7 +2726,7 @@ IF GetManagement_Cuttings_Considered() THEN
 (* 14. Write results *)
 //14.a Summation
 SumETo := SumETo + GetETo();
-SumGDD := SumGDD + GDDayi;
+SumGDD := SumGDD + GetGDDayi();
 //14.b Stress totals
 IF (GetCCiActual() > 0) THEN
    BEGIN
@@ -2808,11 +2808,11 @@ IF (GetDayNri() <= GetSimulation_ToDayNr()) THEN
            SetTmin(Tmin_temp);
            SetTmax(Tmax_temp);
            END;
-   GDDayi := DegreesDay(GetCrop().Tbase,GetCrop().Tupper,GetTmin(),GetTmax(),GetSimulParam_GDDMethod());
+   SetGDDayi(DegreesDay(GetCrop().Tbase,GetCrop().Tupper,GetTmin(),GetTmax(),GetSimulParam_GDDMethod()));
    IF (GetDayNri() >= GetCrop().Day1) THEN
       BEGIN
-      SetSimulation_SumGDD(GetSimulation_SumGDD() + GDDayi);
-      SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + GDDayi);
+      SetSimulation_SumGDD(GetSimulation_SumGDD() + GetGDDayi());
+      SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + GetGDDayi());
       END;
    END;
 

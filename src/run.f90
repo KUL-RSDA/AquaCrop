@@ -58,11 +58,13 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_Tupper, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetETo, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetNrCompartments, &
                         GetOutputAggregate, &
                         GetPathNameProg, &
+                        GetRain, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_SumGDD, &
                         GetSimulation_SalinityConsidered, &
@@ -71,6 +73,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulParam_Tmin, &
                         GetSimulParam_Tmax, &
                         GetSoilLayer_SAT, &
+                        GetSumWaBal_Biomass, &
+                        GetSumWaBal_BiomassUnlim, &
+                        GetSumWaBal_SaltIn, &
+                        GetSumWaBal_SaltOut, &
+                        GetSumWaBal_CRsalt, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -241,6 +248,7 @@ integer(int32) :: DayNri
 
 real(dp) :: Bin
 real(dp) :: Bout
+real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
 
@@ -483,6 +491,21 @@ subroutine SetBout(Bout_in)
     
     Bout = Bout_in
 end subroutine SetBout
+
+! GDDayi
+
+real(dp) function GetGDDayi()
+    !! Getter for the "GDDayi" global variable.
+
+    GetGDDayi = GDDayi
+end function GetGDDayi
+
+subroutine SetGDDayi(GDDayi_in)
+    !! Setter for the "GDDayi" global variable.
+    real(dp), intent(in) :: GDDayi_in
+    
+    GDDayi = GDDayi_in
+end subroutine SetGDDayi
 
 ! FracBiomass
 
@@ -789,7 +812,6 @@ subroutine SetPreviousSum_CRSalt(CRSalt)
 
     PreviousSum%CRSalt = CRSalt
 end subroutine SetPreviousSum_CRSalt
-
 
 ! GwTable
 

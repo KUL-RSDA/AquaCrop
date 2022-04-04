@@ -428,6 +428,12 @@ procedure SetBin(constref Bin_in : double);
 procedure SetBout(constref Bout_in : double);
         external 'aquacrop' name '__ac_run_MOD_setbout';
 
+function GetGDDayi(): double;
+        external 'aquacrop' name '__ac_run_MOD_getgddayi';
+
+procedure SetGDDayi(constref GDDayi_in : double);
+        external 'aquacrop' name '__ac_run_MOD_setgddayi';
+
 function GetCO2i() : double;
     external 'aquacrop' name '__ac_run_MOD_getco2i';
 
