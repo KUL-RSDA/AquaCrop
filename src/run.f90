@@ -239,10 +239,13 @@ type(rep_Transfer) :: Transfer
 type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 
 integer(int32) :: DayNri
+integer(int32) :: IrriInterval
+integer(int32) :: Tadj, GDDTadj
+integer(int32) :: DayLastCut,NrCut,SumInterval
+integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
-
 
 contains
 
@@ -1312,9 +1315,111 @@ subroutine SetRainDataSet_Param(i, Param_in)
     RainDataSet(i)%Param = Param_in
 end subroutine SetRainDataSet_Param
 
+integer(int32) function GetIrriInterval()
+    !! Getter for the "IrriInterval" global variable.
+
+    GetIrriInterval = IrriInterval
+end function GetIrriInterval
+
+subroutine SetIrriInterval(IrriInterval_in)
+    !! Setter for the "IrriInterval" global variable.
+    integer(int32), intent(in) :: IrriInterval_in
+
+    IrriInterval = IrriInterval_in
+end subroutine SetIrriInterval
+
+integer(int32) function GetTadj()
+    !! Getter for the "Tadj" global variable.
+
+    GetTadj = Tadj
+end function GetTadj
+
+subroutine SetTadj(Tadj_in)
+    !! Setter for the "Tadj" global variable. 
+    integer(int32), intent(in) :: Tadj_in
+
+    Tadj = Tadj_in 
+end subroutine SetTadj
+
+integer(int32) function GetGDDTadj()
+    !! Getter for the "GDDTadj" global variable.
+
+    GetGDDTadj = GDDTadj
+end function GetGDDTadj
+
+subroutine SetGDDTadj(GDDTadj_in)
+    !! Setter for the "GDDTadj" global variable.
+    integer(int32), intent(in) :: GDDTadj_in
+
+    GDDTadj = GDDTadj_in
+end subroutine SetGDDTadj
+
+integer(int32) function GetDayLastCut()
+    !! Getter for the "DayLastCut" global variable.
+
+    GetDayLastCut = DayLastCut
+end function GetDayLastCut
+
+subroutine SetDayLastCut(DayLastCut_in)
+    !! Setter for the "DayLastCut" global variable.
+    integer(int32), intent(in) :: DayLastCut_in
+
+    DayLastCut = DayLastCut_in
+end subroutine SetDayLastCut
+
+integer(int32) function GetNrCut()
+    !! Getter for the "NrCut" global variable.
+
+    GetNrCut = NrCut
+end function GetNrCut
+
+subroutine SetNrCut(NrCut_in)
+    !! Setter for the "NrCut" global variable. 
+    integer(int32), intent(in) :: NrCut_in
+
+    NrCut = NrCut_in 
+end subroutine SetNrCut
+
+integer(int32) function GetSumInterval()
+    !! Getter for the "SumInterval" global variable.
+
+    GetSumInterval = SumInterval
+end function GetSumInterval
+
+subroutine SetSumInterval(SumInterval_in)
+    !! Setter for the "SumInterval" global variable.
+    integer(int32), intent(in) :: SumInterval_in
+
+    SumInterval = SumInterval_in
+end subroutine SetSumInterval
+
+integer(int32) function GetPreviousStressLevel()
+    !! Getter for the "PreviousStressLevel" global variable.
+
+    GetPreviousStressLevel = PreviousStressLevel
+end function GetPreviousStressLevel
+
+subroutine SetPreviousStressLevel(PreviousStressLevel_in)
+    !! Setter for the "PreviousStressLevel" global variable.
+    integer(int32), intent(in) :: PreviousStressLevel_in
+
+    PreviousStressLevel = PreviousStressLevel_in
+end subroutine SetPreviousStressLevel
+
+integer(int32) function GetStressSFadjNEW()
+    !! Getter for the "StressSFadjNEW" global variable.
+
+    GetStressSFadjNEW = StressSFadjNEW
+end function GetStressSFadjNEW
+
+subroutine SetStressSFadjNEW(StressSFadjNEW_in)
+    !! Setter for the "StressSFadjNEW" global variable. 
+    integer(int32), intent(in) :: StressSFadjNEW_in
+
+    StressSFadjNEW = StressSFadjNEW_in 
+end subroutine SetStressSFadjNEW
+
 !! END section global variables
-
-
 
 
 subroutine AdjustForWatertable()
