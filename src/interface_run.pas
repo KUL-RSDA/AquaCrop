@@ -434,6 +434,130 @@ function GetCO2i() : double;
 procedure SetCO2i(constref CO2i_in : double);
     external 'aquacrop' name '__ac_run_MOD_setco2i';
 
+function GetPreviousSum() : rep_sum;
+
+function GetPreviousSum_Epot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_epot';
+
+function GetPreviousSum_Tpot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_tpot';
+
+function GetPreviousSum_Rain() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_rain';
+
+function GetPreviousSum_Irrigation() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_irrigation';
+
+function GetPreviousSum_Infiltrated() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_infiltrated';
+
+function GetPreviousSum_Runoff() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_runoff';
+
+function GetPreviousSum_Drain() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_drain';
+
+function GetPreviousSum_Eact() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_eact';
+
+function GetPreviousSum_Tact() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_tact';
+
+function GetPreviousSum_TrW() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_trw';
+
+function GetPreviousSum_ECropCycle() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_ecropcycle';
+
+function GetPreviousSum_CRwater() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_crwater';
+
+function GetPreviousSum_Biomass() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomass';
+
+function GetPreviousSum_YieldPart() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_yieldpart';
+
+function GetPreviousSum_BiomassPot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomasspot';
+
+function GetPreviousSum_BiomassUnlim() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomassunlim';
+
+function GetPreviousSum_BiomassTot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomasstot';
+
+function GetPreviousSum_SaltIn() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_saltin';
+
+function GetPreviousSum_SaltOut() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_saltout';
+
+function GetPreviousSum_CRsalt() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_crsalt';
+
+procedure SetPreviousSum(constref PreviousSum : rep_sum);
+
+procedure SetPreviousSum_Epot(constref Epot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_epot';
+
+procedure SetPreviousSum_Tpot(constref Tpot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_tpot';
+
+procedure SetPreviousSum_Rain(constref Rain : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_rain';
+
+procedure SetPreviousSum_Irrigation(constref Irrigation : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_irrigation';
+
+procedure SetPreviousSum_Infiltrated(constref Infiltrated : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_infiltrated';
+
+procedure SetPreviousSum_Runoff(constref Runoff : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_runoff';
+
+procedure SetPreviousSum_Drain(constref Drain : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_drain';
+
+procedure SetPreviousSum_Eact(constref Eact : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_eact';
+
+procedure SetPreviousSum_Tact(constref Tact : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_tact';
+
+procedure SetPreviousSum_TrW(constref TrW : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_trw';
+
+procedure SetPreviousSum_ECropCycle(constref ECropCycle : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_ecropcycle';
+
+procedure SetPreviousSum_CRwater(constref CRwater : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_crwater';
+
+procedure SetPreviousSum_Biomass(constref Biomass : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomass';
+
+procedure SetPreviousSum_yieldpart(constref yieldpart : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_yieldpart';
+
+procedure SetPreviousSum_BiomassPot(constref BiomassPot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomasspot';
+
+procedure SetPreviousSum_BiomassUnlim(constref BiomassUnlim : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomassunlim';
+
+procedure SetPreviousSum_BiomassTot(constref BiomassTot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomasstot';
+
+procedure SetPreviousSum_SaltIn(constref SaltIn : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_saltin';
+
+procedure SetPreviousSum_SaltOut(constref SaltOut : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_saltout';
+
+procedure SetPreviousSum_CRsalt(constref CRsalt : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_crsalt';
+
 procedure RelationshipsForFertilityAndSaltStress(
                     VAR Coeffb0 : double;
                     VAR Coeffb1 : double;
@@ -826,6 +950,54 @@ procedure SetRainDataSet_i(constref i : integer;
 begin
     SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
     SetRainDataSet_Param(i, RainDataSet_i.Param);
+end;
+
+function GetPreviousSum() : rep_sum;
+begin;
+    GetPreviousSum.Epot := GetPreviousSum_Epot();
+    GetPreviousSum.Tpot := GetPreviousSum_Tpot();
+    GetPreviousSum.Rain := GetPreviousSum_Rain();
+    GetPreviousSum.Irrigation := GetPreviousSum_Irrigation();
+    GetPreviousSum.Infiltrated := GetPreviousSum_Infiltrated();
+    GetPreviousSum.Runoff := GetPreviousSum_Runoff();
+    GetPreviousSum.Drain := GetPreviousSum_Drain();
+    GetPreviousSum.Eact := GetPreviousSum_Eact();
+    GetPreviousSum.Tact := GetPreviousSum_Tact();
+    GetPreviousSum.TrW := GetPreviousSum_TrW();
+    GetPreviousSum.ECropCycle := GetPreviousSum_ECropCycle();
+    GetPreviousSum.CRwater := GetPreviousSum_CRwater();
+    GetPreviousSum.Biomass := GetPreviousSum_Biomass();
+    GetPreviousSum.YieldPart := GetPreviousSum_YieldPart();
+    GetPreviousSum.BiomassPot := GetPreviousSum_BiomassPot();
+    GetPreviousSum.BiomassUnlim := GetPreviousSum_BiomassUnlim();
+    GetPreviousSum.BiomassTot := GetPreviousSum_BiomassTot();
+    GetPreviousSum.SaltIn := GetPreviousSum_SaltIn();
+    GetPreviousSum.SaltOut := GetPreviousSum_SaltOut();
+    GetPreviousSum.CRsalt := GetPreviousSum_CRsalt();
+end;
+
+procedure SetPreviousSum(constref PreviousSum : rep_sum);
+begin;
+    SetPreviousSum_Epot(PreviousSum.Epot);
+    SetPreviousSum_Tpot(PreviousSum.Tpot);
+    SetPreviousSum_Rain(PreviousSum.Rain);
+    SetPreviousSum_Irrigation(PreviousSum.Irrigation);
+    SetPreviousSum_Infiltrated(PreviousSum.Infiltrated);
+    SetPreviousSum_Runoff(PreviousSum.Runoff);
+    SetPreviousSum_Drain(PreviousSum.Drain);
+    SetPreviousSum_Eact(PreviousSum.Eact);
+    SetPreviousSum_Tact(PreviousSum.Tact);
+    SetPreviousSum_TrW(PreviousSum.TrW);
+    SetPreviousSum_ECropCycle(PreviousSum.ECropCycle);
+    SetPreviousSum_CRwater(PreviousSum.CRwater);
+    SetPreviousSum_Biomass(PreviousSum.Biomass);
+    SetPreviousSum_YieldPart(PreviousSum.YieldPart);
+    SetPreviousSum_BiomassPot(PreviousSum.BiomassPot);
+    SetPreviousSum_BiomassUnlim(PreviousSum.BiomassUnlim);
+    SetPreviousSum_BiomassTot(PreviousSum.BiomassTot);
+    SetPreviousSum_SaltIn(PreviousSum.SaltIn);
+    SetPreviousSum_SaltOut(PreviousSum.SaltOut);
+    SetPreviousSum_CRsalt(PreviousSum.CRsalt);
 end;
 
 initialization

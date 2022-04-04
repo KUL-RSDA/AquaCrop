@@ -59,7 +59,6 @@ var  fDaily, fHarvest, fEval : text;
      LineNrEval : INTEGER;
      
 // specific for StandAlone
-     PreviousSum : rep_sum;
      PreviousSumETo,PreviousSumGDD : double;
      PreviousBmob,PreviousBsto : double;
      NoYear : BOOLEAN;
@@ -1707,25 +1706,25 @@ BEGIN
 // determine intermediate results
 DetermineDate((PreviousDayNr+1),Day1,Month1,Year1);
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
-RPer := GetSumWaBal_Rain() - PreviousSum.Rain;
+RPer := GetSumWaBal_Rain() - GetPreviousSum_Rain();
 EToPer := SumETo - PreviousSumETo;
 GDDPer := SumGDD - PreviousSumGDD;
-IrriPer := GetSumWaBal_Irrigation() - PreviousSum.Irrigation;
-InfiltPer := GetSumWaBal_Infiltrated() - PreviousSum.Infiltrated;
-EPer := GetSumWaBal_Eact() - PreviousSum.Eact;
-ExPer := GetSumWaBal_Epot() - PreviousSum.Epot;
-TrPer := GetSumWaBal_Tact() - PreviousSum.Tact;
-TrWPer := GetSumWaBal_TrW() - PreviousSum.TrW;
-TrxPer := GetSumWaBal_Tpot() - PreviousSum.Tpot;
-DrainPer := GetSumWaBal_Drain() - PreviousSum.Drain;
-BiomassPer := GetSumWaBal_Biomass() - PreviousSum.Biomass;
-BUnlimPer := GetSumWaBal_BiomassUnlim() - PreviousSum.BiomassUnlim;
+IrriPer := GetSumWaBal_Irrigation() - GetPreviousSum_Irrigation();
+InfiltPer := GetSumWaBal_Infiltrated() - GetPreviousSum_Infiltrated();
+EPer := GetSumWaBal_Eact() - GetPreviousSum_Eact();
+ExPer := GetSumWaBal_Epot() - GetPreviousSum_Epot();
+TrPer := GetSumWaBal_Tact() - GetPreviousSum_Tact();
+TrWPer := GetSumWaBal_TrW() - GetPreviousSum_TrW();
+TrxPer := GetSumWaBal_Tpot() - GetPreviousSum_Tpot();
+DrainPer := GetSumWaBal_Drain() - GetPreviousSum_Drain();
+BiomassPer := GetSumWaBal_Biomass() - GetPreviousSum_Biomass();
+BUnlimPer := GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim();
 
-ROPer := GetSumWaBal_Runoff - PreviousSum.Runoff;
-CRwPer := GetSumWaBal_CRwater - PreviousSum.CRwater;
-SalInPer := GetSumWaBal_SaltIn - PreviousSum.SaltIn;
-SalOutPer := GetSumWaBal_SaltOut - PreviousSum.SaltOut;
-SalCRPer := GetSumWaBal_CRsalt - PreviousSum.CRsalt;
+ROPer := GetSumWaBal_Runoff() - GetPreviousSum_Runoff();
+CRwPer := GetSumWaBal_CRwater() - GetPreviousSum_CRwater();
+SalInPer := GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn();
+SalOutPer := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
+SalCRPer := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
 
 BmobPer := GetTransfer_Bmobilized() - PreviousBmob;
 BstoPer := GetSimulation_Storage_Btotal() - PreviousBsto;
@@ -1741,26 +1740,26 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
 
 // reset previous sums
 PreviousDayNr := GetDayNri();
-PreviousSum.Rain := GetSumWaBal_Rain();
+SetPreviousSum_Rain(GetSumWaBal_Rain());
 PreviousSumETo := SumETo;
 PreviousSumGDD := SumGDD;
-PreviousSum.Irrigation := GetSumWaBal_Irrigation();
-PreviousSum.Infiltrated := GetSumWaBal_Infiltrated();
-PreviousSum.Eact := GetSumWaBal_Eact();
-PreviousSum.Epot := GetSumWaBal_Epot();
-PreviousSum.Tact := GetSumWaBal_Tact();
-PreviousSum.TrW := GetSumWaBal_TrW();
-PreviousSum.Tpot := GetSumWaBal_Tpot();
-PreviousSum.Drain := GetSumWaBal_Drain();
-PreviousSum.Biomass := GetSumWaBal_Biomass();
-PreviousSum.BiomassPot := GetSumWaBal_BiomassPot();
-PreviousSum.BiomassUnlim := GetSumWaBal_BiomassUnlim();
+SetPreviousSum_Irrigation(GetSumWaBal_Irrigation());
+SetPreviousSum_Infiltrated(GetSumWaBal_Infiltrated());
+SetPreviousSum_Eact(GetSumWaBal_Eact());
+SetPreviousSum_Epot(GetSumWaBal_Epot());
+SetPreviousSum_Tact(GetSumWaBal_Tact());
+SetPreviousSum_TrW(GetSumWaBal_TrW());
+SetPreviousSum_Tpot(GetSumWaBal_Tpot());
+SetPreviousSum_Drain(GetSumWaBal_Drain());
+SetPreviousSum_Biomass(GetSumWaBal_Biomass());
+SetPreviousSum_BiomassPot(GetSumWaBal_BiomassPot());
+SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim());
 
-PreviousSum.Runoff := GetSumWaBal_Runoff();
-PreviousSum.CRwater := GetSumWaBal_CRwater();
-PreviousSum.SaltIn := GetSumWaBal_SaltIn();
-PreviousSum.SaltOut := GetSumWaBal_SaltOut();
-PreviousSum.CRsalt := GetSumWaBal_CRsalt();
+SetPreviousSum_Runoff(GetSumWaBal_Runoff());
+SetPreviousSum_CRwater(GetSumWaBal_CRwater());
+SetPreviousSum_SaltIn(GetSumWaBal_SaltIn());
+SetPreviousSum_SaltOut(GetSumWaBal_SaltOut());
+SetPreviousSum_CRsalt(GetSumWaBal_CRsalt());
 
 PreviousBmob := GetTransfer_Bmobilized();
 PreviousBsto := GetSimulation_Storage_Btotal();
@@ -1793,11 +1792,11 @@ BEGIN
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
 CASE GetOutputAggregate() OF
   1 :   BEGIN // daily output
-        BiomassDay := GetSumWaBal_Biomass() - PreviousSum.Biomass;
-        BUnlimDay := GetSumWaBal_BiomassUnlim() - PreviousSum.BiomassUnlim;
-        SaltIn := GetSumWaBal_SaltIn() - PreviousSum.SaltIn;
-        SaltOut := GetSumWaBal_SaltOut() - PreviousSum.SaltOut;
-        CRsalt := GetSumWaBal_CRsalt() - PreviousSum.CRsalt;
+        BiomassDay := GetSumWaBal_Biomass() - GetPreviousSum_Biomass();
+        BUnlimDay := GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim();
+        SaltIn := GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn();
+        SaltOut := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
+        CRsalt := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
         WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
                        GetRain(),GetETo(),GDDayi,
                        GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
@@ -1805,11 +1804,11 @@ CASE GetOutputAggregate() OF
                        SaltIn,SaltOut,CRsalt,
                        BiomassDay,BUnlimDay,GetBin(),GetBout(),
                        TheProjectFile);
-        PreviousSum.Biomass := GetSumWaBal_Biomass();
-        PreviousSum.BiomassUnlim := GetSumWaBal_BiomassUnlim();
-        PreviousSum.SaltIn := GetSumWaBal_SaltIn();
-        PreviousSum.SaltOut := GetSumWaBal_SaltOut();
-        PreviousSum.CRsalt := GetSumWaBal_CRsalt();
+        SetPreviousSum_Biomass(GetSumWaBal_Biomass());
+        SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim());
+        SetPreviousSum_SaltIn(GetSumWaBal_SaltIn());
+        SetPreviousSum_SaltOut(GetSumWaBal_SaltOut());
+        SetPreviousSum_CRsalt(GetSumWaBal_CRsalt());
         END;
   2,3 : BEGIN  // 10-day or monthly output
         WriteNow := false;
@@ -2849,7 +2848,7 @@ END;  // FinalizeSimulation
 
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
-VAR SumWaBal_temp : rep_sum;
+VAR SumWaBal_temp, PreviousSum_temp : rep_sum;
 
     PROCEDURE AdjustCompartments;
     VAR TotDepth : double;
@@ -2898,7 +2897,9 @@ AdjustCompartments;
 SumWaBal_temp := GetSumWaBal();
 GlobalZero(SumWabal_temp);
 SetSumWaBal(SumWaBal_temp);
-ResetPreviousSum(PreviousSum,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+PreviousSum_temp := GetPreviousSum();
+ResetPreviousSum(PreviousSum_temp,SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+SetPreviousSum(PreviousSum_temp);
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
