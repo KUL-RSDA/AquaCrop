@@ -10,6 +10,10 @@ use ac_run, only:   fRun_open, &
                     fIrri_eof, &
                     fIrri_open, &
                     fIrri_read, &
+                    fEToSIM_open, &
+                    fEToSIM_read, &
+                    fRainSIM_open, &
+                    fRainSIM_read, &
                     fTempSIM_open, &
                     fTempSIM_read, &
                     fCuts_eof, &
@@ -99,6 +103,21 @@ function fIrri_eof_wrap() result(eof)
 end function fIrri_eof_wrap
 
 
+subroutine fEToSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fEToSIM_open(filename, mode)
+end subroutine fEToSIM_open_wrap
+
+
 subroutine fTempSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
     integer(int32), intent(in) :: filename_len
@@ -114,6 +133,17 @@ subroutine fTempSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
 end subroutine fTempSIM_open_wrap
 
 
+
+function fEToSIM_read_wrap() result(line_ptr)
+    type(c_ptr) :: line_ptr
+
+    character(len=:), allocatable :: line
+
+    line = fEToSIM_read()
+    line_ptr = string2pointer(line)
+end function fEToSIM_read_wrap
+
+
 function fTempSIM_read_wrap() result(line_ptr)
     type(c_ptr) :: line_ptr
 
@@ -122,6 +152,22 @@ function fTempSIM_read_wrap() result(line_ptr)
     line = fTempSIM_read()
     line_ptr = string2pointer(line)
 end function fTempSIM_read_wrap
+
+
+subroutine fRainSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fRainSIM_open(filename, mode)
+end subroutine fRainSIM_open_wrap
+
 
 subroutine fCuts_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
@@ -136,6 +182,16 @@ subroutine fCuts_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     mode = pointer2string(mode_ptr, mode_len)
     call fCuts_open(filename, mode)
 end subroutine fCuts_open_wrap
+
+
+function fRainSIM_read_wrap() result(line_ptr)
+    type(c_ptr) :: line_ptr
+
+    character(len=:), allocatable :: line
+
+    line = fRainSIM_read()
+    line_ptr = string2pointer(line)
+end function fRainSIM_read_wrap
 
 
 function fCuts_read_wrap() result(line_ptr)

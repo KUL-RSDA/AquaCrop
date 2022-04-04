@@ -218,12 +218,17 @@ integer :: fRun  ! file handle
 integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
+integer :: fEToSIM ! file handle
+integer :: fEToSIM_iostat ! IO status
+integer :: fRainSIM ! file handle
+integer :: fRainSIM_iostat ! IO status
 integer :: fTempSIM ! file handle
 integer :: fTempSIM_iostat ! IO status
 integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
 integer :: fObs ! file handle
 integer :: fObs_iostat ! IO status
+
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -389,6 +394,33 @@ subroutine fIrri_close()
     close(fIrri)
 end subroutine fIrri_close
 
+
+! fEToSIM
+
+subroutine fEToSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEToSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fEToSIM, filename, mode, fEToSIM_iostat)
+end subroutine fEToSIM_open
+
+
+function fEToSIM_read() result(line)
+    !! Returns the next line read from the 'fEToSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fEToSIM, fEToSIM_iostat)
+end function fEToSIM_read
+
+
+subroutine fEToSIM_close()
+    close(fEToSIM)
+end subroutine fEToSIM_close
+
+
 ! fTempSIM
 
 subroutine fTempSIM_open(filename, mode)
@@ -397,7 +429,6 @@ subroutine fTempSIM_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fTempSIM, filename, mode, fTempSIM_iostat)
 end subroutine fTempSIM_open
 
@@ -415,6 +446,33 @@ subroutine fTempSIM_close()
     close(fTempSIM)
 end subroutine fTempSIM_close
 
+
+! fRainSIM
+
+subroutine fRainSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fRainSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fRainSIM, filename, mode, fRainSIM_iostat)
+end subroutine fRainSIM_open
+
+
+function fRainSIM_read() result(line)
+    !! Returns the next line read from the 'fRainSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fRainSIM, fRainSIM_iostat)
+end function fRainSIM_read
+
+
+subroutine fRainSIM_close()
+    close(fRainSIM)
+end subroutine fRainSIM_close
+
+
 ! fCuts
 
 subroutine fCuts_open(filename, mode)
@@ -423,7 +481,6 @@ subroutine fCuts_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fCuts, filename, mode, fCuts_iostat)
 end subroutine fCuts_open
 
@@ -486,7 +543,6 @@ end subroutine fObs_close
 subroutine fObs_rewind()
     rewind(fObs)
 end subroutine fObs_rewind
-
 
 
 ! FracBiomass
