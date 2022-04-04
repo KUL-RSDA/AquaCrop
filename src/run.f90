@@ -9,6 +9,7 @@ use ac_global, only:    CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
+                        DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
                         DetermineDayNr, &
@@ -60,6 +61,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetNrCompartments, &
+                        GetOutputAggregate, &
                         GetPathNameProg, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_SumGDD, &
@@ -77,6 +79,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmin, &
                         GetZiAqua, &
                         GetECiAqua, &
+                        LeapYear, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
@@ -235,6 +238,8 @@ type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 
 integer(int32) :: DayNri
 
+real(dp) :: Bin
+real(dp) :: Bout
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
 
@@ -448,6 +453,35 @@ subroutine fCuts_close()
 end subroutine fCuts_close
 
 
+! Bin
+
+real(dp) function GetBin()
+    !! Getter for the "Bin" global variable.
+
+    GetBin = Bin
+end function GetBin
+
+subroutine SetBin(Bin_in)
+    !! Setter for the "Bin" global variable.
+    real(dp), intent(in) :: Bin_in
+    
+    Bin = Bin_in
+end subroutine SetBin
+
+! Bout
+
+real(dp) function GetBout()
+    !! Getter for the "Bout" global variable.
+
+    GetBout = Bout
+end function GetBout
+
+subroutine SetBout(Bout_in)
+    !! Setter for the "Bout" global variable.
+    real(dp), intent(in) :: Bout_in
+    
+    Bout = Bout_in
+end subroutine SetBout
 
 ! FracBiomass
 
@@ -463,6 +497,7 @@ subroutine SetFracBiomassPotSF(FracBiomassPotSF_in)
     
     FracBiomassPotSF = FracBiomassPotSF_in
 end subroutine SetFracBiomassPotSF
+
 
 ! CO2i
 

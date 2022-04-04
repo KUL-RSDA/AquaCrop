@@ -40,7 +40,7 @@ var  fDaily, fHarvest, fEval : text;
 
      IrriInterval : INTEGER;
      Tadj, GDDTadj : INTEGER;
-     DayFraction,GDDayFraction,Bin,Bout : double;
+     DayFraction,GDDayFraction : double;
      TimeSenescence : double; // calendar days or GDDays
      DayLastCut,NrCut,SumInterval : INTEGER;
      CGCadjustmentAfterCutting : BOOLEAN;
@@ -1803,7 +1803,7 @@ CASE GetOutputAggregate() OF
                        GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
                        GetEact(),GetEpot(),GetTact(),GetTactWeedInfested(),GetTpot(),
                        SaltIn,SaltOut,CRsalt,
-                       BiomassDay,BUnlimDay,Bin,Bout,
+                       BiomassDay,BUnlimDay,GetBin(),GetBout(),
                        TheProjectFile);
         PreviousSum.Biomass := GetSumWaBal_Biomass();
         PreviousSum.BiomassUnlim := GetSumWaBal_BiomassUnlim();
@@ -1919,8 +1919,8 @@ IF Out2Crop THEN
       ELSE WRITE(fDaily,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):9:3);
    // finalize
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
-      THEN WRITE(fDaily,Brel:8,WPy:12:2,Bin:9:3,Bout:9:3)
-      ELSE WRITELN(fDaily,Brel:8,WPy:12:2,Bin:9:3,Bout:9:3);
+      THEN WRITE(fDaily,Brel:8,WPy:12:2,GetBin():9:3,GetBout():9:3)
+      ELSE WRITELN(fDaily,Brel:8,WPy:12:2,GetBin():9:3,GetBout():9:3);
    END;
 
 // 3. Profile/Root zone - Soil water content
@@ -2116,6 +2116,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     tmpRain : double;
     TactWeedInfested_temp : double;
     Tmin_temp, Tmax_temp : double;
+    Bin_temp, Bout_temp : double;
     TempString : string;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
@@ -2519,12 +2520,16 @@ ToMobilize_temp := GetTransfer_ToMobilize();
 Bmobilized_temp := GetTransfer_Bmobilized();
 Store_temp := GetTransfer_Store();
 Mobilize_temp := GetTransfer_Mobilize();
-InitializeTransferAssimilates(NoMoreCrop,Bin,Bout,ToMobilize_temp,Bmobilized_temp,FracAssim,
+Bin_temp := GetBin();
+Bout_temp := GetBout();
+InitializeTransferAssimilates(NoMoreCrop,Bin_temp,Bout_temp,ToMobilize_temp,Bmobilized_temp,FracAssim,
                               Store_temp,Mobilize_temp);
 SetTransfer_ToMobilize(ToMobilize_temp);
 SetTransfer_Bmobilized(Bmobilized_temp);
 SetTransfer_Store(Store_temp);
 SetTransfer_Mobilize(Mobilize_temp);
+SetBin(Bin_temp);
+SetBout(Bout_temp);
 
 (* 9. RUN Soil water balance and actual Canopy Cover *)
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,SumInterval,DayLastCut,GetStressTot_NrD(),
@@ -2590,6 +2595,8 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         BiomassTot_temp := GetSumWaBal_BiomassTot();
         YieldPart_temp := GetSumWaBal_YieldPart();
         TactWeedInfested_temp := GetTactWeedInfested();
+        Bin_temp := GetBin();
+        Bout_temp := GetBout();
         DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
                                  Coeffb0,Coeffb1,Coeffb2,GetFracBiomassPotSF(),                             Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,SumInterval,
@@ -2599,7 +2606,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
                                  WeedRCi,CCiActualWeedInfested,TactWeedInfested_temp,
                                  StressSFadjNEW,PreviousStressLevel,
                                  Store_temp,Mobilize_temp,
-                                 ToMobilize_temp,Bmobilized_temp,Bin,Bout,
+                                 ToMobilize_temp,Bmobilized_temp,Bin_temp,Bout_temp,
                                  TESTVALY);
         SetTransfer_Store(Store_temp);
         SetTransfer_Mobilize(Mobilize_temp);
@@ -2611,6 +2618,8 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetSumWaBal_BiomassTot(BiomassTot_temp);
         SetSumWaBal_YieldPart(YieldPart_temp);
         SetTactWeedInfested(TactWeedInfested_temp);
+        SetBin(Bin_temp);
+        SetBout(Bout_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;

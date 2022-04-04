@@ -416,6 +416,18 @@ function GetFracBiomassPotSF() : double;
 procedure SetFracBiomassPotSF(constref FracBiomassPotSF_in : double);
     external 'aquacrop' name '__ac_run_MOD_setfracbiomasspotsf';
 
+function GetBin(): double;
+        external 'aquacrop' name '__ac_run_MOD_getbin';
+
+function GetBout(): double;
+        external 'aquacrop' name '__ac_run_MOD_getbout';
+
+procedure SetBin(constref Bin_in : double);
+        external 'aquacrop' name '__ac_run_MOD_setbin';
+
+procedure SetBout(constref Bout_in : double);
+        external 'aquacrop' name '__ac_run_MOD_setbout';
+
 function GetCO2i() : double;
     external 'aquacrop' name '__ac_run_MOD_getco2i';
 
