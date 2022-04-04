@@ -228,10 +228,15 @@ integer :: fRun  ! file handle
 integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
+integer :: fEToSIM ! file handle
+integer :: fEToSIM_iostat ! IO status
+integer :: fRainSIM ! file handle
+integer :: fRainSIM_iostat ! IO status
 integer :: fTempSIM ! file handle
 integer :: fTempSIM_iostat ! IO status
 integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
+
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -245,13 +250,16 @@ type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 type(rep_sum) :: PreviousSum
 
 integer(int32) :: DayNri
+integer(int32) :: IrriInterval
+integer(int32) :: Tadj, GDDTadj
+integer(int32) :: DayLastCut,NrCut,SumInterval
+integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
 real(dp) :: Bin
 real(dp) :: Bout
 real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
-
 
 contains
 
@@ -401,6 +409,33 @@ subroutine fIrri_close()
     close(fIrri)
 end subroutine fIrri_close
 
+
+! fEToSIM
+
+subroutine fEToSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEToSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fEToSIM, filename, mode, fEToSIM_iostat)
+end subroutine fEToSIM_open
+
+
+function fEToSIM_read() result(line)
+    !! Returns the next line read from the 'fEToSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fEToSIM, fEToSIM_iostat)
+end function fEToSIM_read
+
+
+subroutine fEToSIM_close()
+    close(fEToSIM)
+end subroutine fEToSIM_close
+
+
 ! fTempSIM
 
 subroutine fTempSIM_open(filename, mode)
@@ -409,7 +444,6 @@ subroutine fTempSIM_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fTempSIM, filename, mode, fTempSIM_iostat)
 end subroutine fTempSIM_open
 
@@ -427,6 +461,33 @@ subroutine fTempSIM_close()
     close(fTempSIM)
 end subroutine fTempSIM_close
 
+
+! fRainSIM
+
+subroutine fRainSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fRainSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fRainSIM, filename, mode, fRainSIM_iostat)
+end subroutine fRainSIM_open
+
+
+function fRainSIM_read() result(line)
+    !! Returns the next line read from the 'fRainSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fRainSIM, fRainSIM_iostat)
+end function fRainSIM_read
+
+
+subroutine fRainSIM_close()
+    close(fRainSIM)
+end subroutine fRainSIM_close
+
+
 ! fCuts
 
 subroutine fCuts_open(filename, mode)
@@ -435,7 +496,6 @@ subroutine fCuts_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fCuts, filename, mode, fCuts_iostat)
 end subroutine fCuts_open
 
@@ -1590,9 +1650,111 @@ subroutine SetRainDataSet_Param(i, Param_in)
     RainDataSet(i)%Param = Param_in
 end subroutine SetRainDataSet_Param
 
+integer(int32) function GetIrriInterval()
+    !! Getter for the "IrriInterval" global variable.
+
+    GetIrriInterval = IrriInterval
+end function GetIrriInterval
+
+subroutine SetIrriInterval(IrriInterval_in)
+    !! Setter for the "IrriInterval" global variable.
+    integer(int32), intent(in) :: IrriInterval_in
+
+    IrriInterval = IrriInterval_in
+end subroutine SetIrriInterval
+
+integer(int32) function GetTadj()
+    !! Getter for the "Tadj" global variable.
+
+    GetTadj = Tadj
+end function GetTadj
+
+subroutine SetTadj(Tadj_in)
+    !! Setter for the "Tadj" global variable. 
+    integer(int32), intent(in) :: Tadj_in
+
+    Tadj = Tadj_in 
+end subroutine SetTadj
+
+integer(int32) function GetGDDTadj()
+    !! Getter for the "GDDTadj" global variable.
+
+    GetGDDTadj = GDDTadj
+end function GetGDDTadj
+
+subroutine SetGDDTadj(GDDTadj_in)
+    !! Setter for the "GDDTadj" global variable.
+    integer(int32), intent(in) :: GDDTadj_in
+
+    GDDTadj = GDDTadj_in
+end subroutine SetGDDTadj
+
+integer(int32) function GetDayLastCut()
+    !! Getter for the "DayLastCut" global variable.
+
+    GetDayLastCut = DayLastCut
+end function GetDayLastCut
+
+subroutine SetDayLastCut(DayLastCut_in)
+    !! Setter for the "DayLastCut" global variable.
+    integer(int32), intent(in) :: DayLastCut_in
+
+    DayLastCut = DayLastCut_in
+end subroutine SetDayLastCut
+
+integer(int32) function GetNrCut()
+    !! Getter for the "NrCut" global variable.
+
+    GetNrCut = NrCut
+end function GetNrCut
+
+subroutine SetNrCut(NrCut_in)
+    !! Setter for the "NrCut" global variable. 
+    integer(int32), intent(in) :: NrCut_in
+
+    NrCut = NrCut_in 
+end subroutine SetNrCut
+
+integer(int32) function GetSumInterval()
+    !! Getter for the "SumInterval" global variable.
+
+    GetSumInterval = SumInterval
+end function GetSumInterval
+
+subroutine SetSumInterval(SumInterval_in)
+    !! Setter for the "SumInterval" global variable.
+    integer(int32), intent(in) :: SumInterval_in
+
+    SumInterval = SumInterval_in
+end subroutine SetSumInterval
+
+integer(int32) function GetPreviousStressLevel()
+    !! Getter for the "PreviousStressLevel" global variable.
+
+    GetPreviousStressLevel = PreviousStressLevel
+end function GetPreviousStressLevel
+
+subroutine SetPreviousStressLevel(PreviousStressLevel_in)
+    !! Setter for the "PreviousStressLevel" global variable.
+    integer(int32), intent(in) :: PreviousStressLevel_in
+
+    PreviousStressLevel = PreviousStressLevel_in
+end subroutine SetPreviousStressLevel
+
+integer(int32) function GetStressSFadjNEW()
+    !! Getter for the "StressSFadjNEW" global variable.
+
+    GetStressSFadjNEW = StressSFadjNEW
+end function GetStressSFadjNEW
+
+subroutine SetStressSFadjNEW(StressSFadjNEW_in)
+    !! Setter for the "StressSFadjNEW" global variable. 
+    integer(int32), intent(in) :: StressSFadjNEW_in
+
+    StressSFadjNEW = StressSFadjNEW_in 
+end subroutine SetStressSFadjNEW
+
 !! END section global variables
-
-
 
 
 subroutine AdjustForWatertable()
