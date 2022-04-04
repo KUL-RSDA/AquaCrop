@@ -521,6 +521,54 @@ function fCuts_eof() : boolean;
 procedure fCuts_close();
         external 'aquacrop' name '__ac_run_MOD_fcuts_close';
 
+function GetIrriInterval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getirriinterval';
+
+procedure SetIrriInterval(constref IrriInterval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setirriinterval';
+
+function GetTadj() : integer;
+    external 'aquacrop' name '__ac_run_MOD_gettadj';
+
+procedure SetTadj(constref Tadj : integer);
+    external 'aquacrop' name '__ac_run_MOD_settadj';
+
+function GetGDDTadj() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getgddtadj';
+
+procedure SetGDDTadj(constref GDDTadj : integer);
+    external 'aquacrop' name '__ac_run_MOD_setgddtadj';
+
+function GetDayLastCut() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getdaylastcut';
+
+procedure SetDayLastCut(constref DayLastCut : integer);
+    external 'aquacrop' name '__ac_run_MOD_setdaylastcut';
+
+function GetNrCut() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getnrcut';
+
+procedure SetNrCut(constref NrCut : integer); 
+    external 'aquacrop' name '__ac_run_MOD_setnrcut';
+
+function GetSumInterval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getsuminterval';
+
+procedure SetSumInterval(constref SumInterval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setsuminterval';
+
+function GetPreviousStressLevel() : shortint;
+    external 'aquacrop' name '__ac_run_MOD_getpreviousstresslevel';
+
+procedure SetPreviousStressLevel(constref PreviousStressLevel : shortint);
+    external 'aquacrop' name '__ac_run_MOD_setpreviousstresslevel';
+
+function GetStressSFadjNEW() : shortint;
+    external 'aquacrop' name '__ac_run_MOD_getstresssfadjnew';
+
+procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
+    external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
+
 implementation
 
 
