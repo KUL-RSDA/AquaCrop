@@ -307,8 +307,7 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum(VAR PreviousSum : rep_sum;
-                           VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
+procedure ResetPreviousSum(VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
                                PreviousBmob,PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 

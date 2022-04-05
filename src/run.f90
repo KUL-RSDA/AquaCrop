@@ -1778,9 +1778,8 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
+subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
-    type(rep_sum), intent(inout) :: PreviousSum
     real(dp), intent(inout) :: SumETo
     real(dp), intent(inout) :: SumGDD
     real(dp), intent(inout) :: PreviousSumETo
@@ -1788,25 +1787,25 @@ subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
     real(dp), intent(inout) :: PreviousBmob
     real(dp), intent(inout) :: PreviousBsto
 
-    PreviousSum%Epot = 0.0_dp
-    PreviousSum%Tpot = 0.0_dp
-    PreviousSum%Rain = 0.0_dp
-    PreviousSum%Irrigation = 0.0_dp
-    PreviousSum%Infiltrated = 0.0_dp
-    PreviousSum%Runoff = 0.0_dp
-    PreviousSum%Drain = 0.0_dp
-    PreviousSum%Eact = 0.0_dp
-    PreviousSum%Tact = 0.0_dp
-    PreviousSum%TrW = 0.0_dp
-    PreviousSum%ECropCycle = 0.0_dp
-    PreviousSum%CRwater = 0.0_dp
-    PreviousSum%Biomass = 0.0_dp
-    PreviousSum%YieldPart = 0.0_dp
-    PreviousSum%BiomassPot = 0.0_dp
-    PreviousSum%BiomassUnlim = 0.0_dp
-    PreviousSum%SaltIn = 0.0_dp
-    PreviousSum%SaltOut = 0.0_dp
-    PreviousSum%CRsalt = 0.0_dp
+    call SetPreviousSum_Epot(0.0_dp)
+    call SetPreviousSum_Tpot(0.0_dp)
+    call SetPreviousSum_Rain(0.0_dp)
+    call SetPreviousSum_Irrigation(0.0_dp)
+    call SetPreviousSum_Infiltrated(0.0_dp)
+    call SetPreviousSum_Runoff(0.0_dp)
+    call SetPreviousSum_Drain(0.0_dp)
+    call SetPreviousSum_Eact(0.0_dp)
+    call SetPreviousSum_Tact(0.0_dp)
+    call SetPreviousSum_TrW(0.0_dp)
+    call SetPreviousSum_ECropCycle(0.0_dp)
+    call SetPreviousSum_CRwater(0.0_dp)
+    call SetPreviousSum_Biomass(0.0_dp)
+    call SetPreviousSum_YieldPart(0.0_dp)
+    call SetPreviousSum_BiomassPot(0.0_dp)
+    call SetPreviousSum_BiomassUnlim(0.0_dp)
+    call SetPreviousSum_SaltIn(0.0_dp)
+    call SetPreviousSum_SaltOut(0.0_dp)
+    call SetPreviousSum_CRsalt(0.0_dp)
     SumETo = 0.0_dp
     SumGDD = 0.0_dp
     PreviousSumETo = 0.0_dp
