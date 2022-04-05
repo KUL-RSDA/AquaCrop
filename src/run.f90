@@ -246,6 +246,7 @@ integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 
 contains
@@ -1419,6 +1420,32 @@ subroutine SetStressSFadjNEW(StressSFadjNEW_in)
 
     StressSFadjNEW = StressSFadjNEW_in 
 end subroutine SetStressSFadjNEW
+
+real(dp) function GetCCxWitheredTpot()
+    !! Getter for the "CCxWitheredTpot" global variable.
+
+    GetCCxWitheredTpot = CCxWitheredTpot
+end function GetCCxWitheredTpot
+
+subroutine SetCCxWitheredTpot(CCxWitheredTpot_in)
+    !! Setter for the "CCxWitheredTpot" global variable.
+    real(dp), intent(in) :: CCxWitheredTpot_in
+
+    CCxWitheredTpot = CCxWitheredTpot_in
+end subroutine SetCCxWitheredTpot
+
+real(dp) function GetCCxWitheredTpotNoS()
+    !! Getter for the "CCxWitheredTpotNoS" global variable.
+
+    GetCCxWitheredTpotNoS = CCxWitheredTpotNoS
+end function GetCCxWitheredTpotNoS
+
+subroutine SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_in)
+    !! Setter for the "CCxWitheredTpotNoS" global variable.
+    real(dp), intent(in) :: CCxWitheredTpotNoS_in
+
+    CCxWitheredTpotNoS = CCxWitheredTpotNoS_in
+end subroutine SetCCxWitheredTpotNoS
 
 real(dp) function GetCoeffb0()
     !! Getter for the "Coeffb0" global variable.

@@ -31,7 +31,6 @@ var  fDaily, fHarvest, fEval : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     CCxWitheredTpot,CCxWitheredTpotNoS : double;
      Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
@@ -1088,8 +1087,8 @@ SetSimulation_EvapLimitON(false);
 SetSimulation_EvapWCsurf(0);
 SetSimulation_EvapZ(EvapZmin/100);
 SetSimulation_SumEToStress(0);
-CCxWitheredTpot := 0; // for calculation Maximum Biomass and considering soil fertility stress
-CCxWitheredTpotNoS := 0; //  for calculation Maximum Biomass unlimited soil fertility
+SetCCxWitheredTpot(0); // for calculation Maximum Biomass and considering soil fertility stress
+SetCCxWitheredTpotNoS(0); //  for calculation Maximum Biomass unlimited soil fertility
 SetSimulation_DayAnaero(0); // days of anaerobic condictions in global root zone
 // germination
 IF ((GetCrop().Planting = Seed) AND (GetSimulation_FromDayNr() <= GetCrop().Day1))
@@ -2120,6 +2119,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TempString : string;
     TargetTimeVal, TargetDepthVal : Integer;
     PreviousStressLevel_temp, StressSFadjNEW_temp : shortint;
+    CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2557,7 +2557,9 @@ IF (GetCCiActual() > 0) THEN
 
 (* 10. Potential biomass *)
 BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
-DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GDDayi,CCxWitheredTpotNoS,BiomassUnlim_temp);
+CCxWitheredTpotNoS_temp := GetCCxWitheredTpotNoS();
+DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GDDayi,CCxWitheredTpotNoS_temp,BiomassUnlim_temp);
+SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
@@ -2595,12 +2597,14 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         TactWeedInfested_temp := GetTactWeedInfested();
         PreviousStressLevel_temp := GetPreviousStressLevel();
         StressSFadjNEW_temp := GetStressSFadjNEW();
+        CCxWitheredTpot_temp := GetCCxWitheredTpot();
+        CCxWitheredTpotNoS_temp := GetCCxWitheredTpotNoS();
         DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
                                  GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,GetSumInterval(),
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
-                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot,CCxWitheredTpotNoS,
+                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
                                  WeedRCi,CCiActualWeedInfested,TactWeedInfested_temp,
                                  StressSFadjNEW_temp,PreviousStressLevel_temp,
                                  Store_temp,Mobilize_temp,
@@ -2618,6 +2622,8 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetTactWeedInfested(TactWeedInfested_temp);
         SetPreviousStressLevel(PreviousStressLevel_temp);
         SetStressSFadjNEW(StressSFadjNEW_temp);
+        SetCCxWitheredTpot(CCxWitheredTpot_temp);
+        SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;
@@ -2706,8 +2712,8 @@ IF GetManagement_Cuttings_Considered() THEN
          SetCCiPrev(GetManagement_Cuttings_CCcut()/100);
          // ook nog CCwithered
          SetCrop_CCxWithered(0);  // or CCiPrev ??
-         CCxWitheredTpot := 0; // for calculation Maximum Biomass but considering soil fertility stress
-         CCxWitheredTpotNoS := 0; //  for calculation Maximum Biomass unlimited soil fertility
+         SetCCxWitheredTpot(0); // for calculation Maximum Biomass but considering soil fertility stress
+         SetCCxWitheredTpotNoS(0); //  for calculation Maximum Biomass unlimited soil fertility
          SetCrop_CCxAdjusted(GetCCiPrev()); // new
          // Increase of CGC
          CGCadjustmentAfterCutting := true; // adjustement CGC

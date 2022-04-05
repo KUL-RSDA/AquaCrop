@@ -603,6 +603,18 @@ function GetStressSFadjNEW() : shortint;
 procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
     external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
 
+function GetCCxWitheredTpot() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
+
+procedure SetCCxWitheredTpot(constref CCxWitheredTpot : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpot';
+
+function GetCCxWitheredTpotNoS() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpotnos';
+
+procedure SetCCxWitheredTpotNoS(constref CCxWitheredTpotNoS : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpotnos';
+
 function GetCoeffb0() : double;
     external 'aquacrop' name '__ac_run_MOD_getcoeffb0';
 
