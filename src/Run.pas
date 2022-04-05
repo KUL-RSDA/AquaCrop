@@ -31,19 +31,13 @@ var  fDaily, fHarvest, fEval : text;
      SumETo, SumGDD,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     CCxWitheredTpot,CCxWitheredTpotNoS : double;
-     Coeffb0,Coeffb1,Coeffb2 : double;
-     Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
-     DayFraction,GDDayFraction : double;
      TimeSenescence : double; // calendar days or GDDays
      CGCadjustmentAfterCutting : BOOLEAN;
      BprevSum,YprevSum,SumGDDcuts : double;
-     CGCref,GDDCGCref : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
-     StressLeaf,StressSenescence : double;   // % stress for leaf expansion and senescence
      TheProjectFile : string;
 
      // DelayedGermination
@@ -1059,12 +1053,14 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     SumGDD_temp, SumGDDFromDay1_temp, FracBiomassPotSF_temp : double;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
+    Coeffb0_temp, Coeffb1_temp, Coeffb2_temp : double;
+    Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp : double;
 
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
 CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
-IF WaterTableInProfile THEN AdjustForWatertable;
+IF WaterTableInProfile THEN AdjustForWatertable; 
 IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
     GetGwtSet(GetSimulation_FromDayNr(),GwTable_temp);
@@ -1087,8 +1083,8 @@ SetSimulation_EvapLimitON(false);
 SetSimulation_EvapWCsurf(0);
 SetSimulation_EvapZ(EvapZmin/100);
 SetSimulation_SumEToStress(0);
-CCxWitheredTpot := 0; // for calculation Maximum Biomass and considering soil fertility stress
-CCxWitheredTpotNoS := 0; //  for calculation Maximum Biomass unlimited soil fertility
+SetCCxWitheredTpot(0); // for calculation Maximum Biomass and considering soil fertility stress
+SetCCxWitheredTpotNoS(0); //  for calculation Maximum Biomass unlimited soil fertility
 SetSimulation_DayAnaero(0); // days of anaerobic condictions in global root zone
 // germination
 IF ((GetCrop().Planting = Seed) AND (GetSimulation_FromDayNr() <= GetCrop().Day1))
@@ -1130,8 +1126,13 @@ SetStressTot_Weed(0);
 // 6. Soil fertility stress
 // Coefficients for soil fertility - biomass relationship
   // AND for Soil salinity - CCx/KsSto relationship
-FracBiomassPotSF_temp := GetFracBiomassPotSF();
-RelationshipsForFertilityAndSaltStress(Coeffb0,Coeffb1,Coeffb2,FracBiomassPotSF_temp,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt);
+RelationshipsForFertilityAndSaltStress(Coeffb0_temp,Coeffb1_temp,Coeffb2_temp,FracBiomassPotSF_temp,Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp);
+SetCoeffb0(Coeffb0_temp);
+SetCoeffb1(Coeffb1_temp);
+SetCoeffb2(Coeffb2_temp);
+SetCoeffb0Salt(Coeffb0Salt_temp);
+SetCoeffb1Salt(Coeffb1Salt_temp);
+SetCoeffb2Salt(Coeffb2Salt_temp);
 SetFracBiomassPotSF(FracBiomassPotSF_temp);
 
 // No soil fertility stress
@@ -1285,24 +1286,24 @@ OpenIrrigationFile();
 IF (GetCrop().DaysToCCini <> 0)
    THEN BEGIN  // regrowth
         SetGDDTadj(undef_int);
-        GDDayFraction := undef_int;
+        SetGDDayFraction(undef_int);
         IF (GetCrop().DaysToCCini = undef_int)
            THEN SetTadj(GetCrop().DaysToFullCanopy - GetCrop().DaysToGermination)
            ELSE SetTadj(GetCrop().DaysToCCini);
-        DayFraction := (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopy)/(GetTadj() + GetCrop().DaysToGermination + (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopy) );
+        SetDayFraction((GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopy)/(GetTadj() + GetCrop().DaysToGermination + (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopy) ));
         IF (GetCrop_ModeCycle() = GDDays) THEN
            BEGIN
            IF (GetCrop().GDDaysToCCini = undef_int)
               THEN SetGDDTadj(GetCrop().GDDaysToFullCanopy - GetCrop().GDDaysToGermination)
               ELSE SetGDDTadj(GetCrop().GDDaysToCCini);
-           GDDayFraction := (GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopy)/(GetGDDTadj() + GetCrop().GDDaysToGermination + (GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopy));
+           SetGDDayFraction((GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopy)/(GetGDDTadj() + GetCrop().GDDaysToGermination + (GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopy)));
            END;
         END
    ELSE BEGIN // sowing or transplanting
         SetTadj(0);
         SetGDDTadj(0);
-        DayFraction := undef_int;
-        GDDayFraction := undef_int;
+        SetDayFraction(undef_int);
+        SetGDDayFraction(undef_int);
         END;
 
 
@@ -1320,7 +1321,7 @@ Dayi := GetDayNri() - GetCrop().Day1;
 IF (GetCrop().DaysToCCini = 0)
    THEN BEGIN // sowing or transplant
         DayCC := Dayi;
-        DayFraction := undef_int;
+        SetDayFraction( undef_int );
         END
    ELSE BEGIN
         // adjust time (calendar days) for regrowth
@@ -1329,7 +1330,7 @@ IF (GetCrop().DaysToCCini = 0)
         IF (DayCC > GetCrop().DaysToFullCanopy) THEN
            BEGIN
            IF (Dayi <= GetCrop().DaysToSenescence)
-              THEN DayCC := GetCrop().DaysToFullCanopy  + ROUND(DayFraction * (Dayi+GetTadj()+GetCrop().DaysToGermination - GetCrop().DaysToFullCanopy)) // slow down
+              THEN DayCC := GetCrop().DaysToFullCanopy  + ROUND(GetDayFraction() * (Dayi+GetTadj()+GetCrop().DaysToGermination - GetCrop().DaysToFullCanopy)) // slow down
               ELSE DayCC := Dayi; // switch time scale
            END;
         END;
@@ -1346,7 +1347,7 @@ IF (GetCrop_ModeCycle() = GDDays) THEN
            IF (SumGDDforDayCC > GetCrop().GDDaysToFullCanopy) THEN
               BEGIN
               IF (GetSimulation_SumGDDfromDay1() <= GetCrop().GDDaysToFullCanopy)
-                 THEN SumGDDforDayCC := GetCrop().GDDaysToFullCanopy + ROUND(GDDayFraction * (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+GetCrop().GDDaysToGermination-GetCrop().GDDaysToFullCanopy)) // slow down
+                 THEN SumGDDforDayCC := GetCrop().GDDaysToFullCanopy + ROUND(GetGDDayFraction() * (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+GetCrop().GDDaysToGermination-GetCrop().GDDaysToFullCanopy)) // slow down
                  ELSE SumGDDforDayCC := GetSimulation_SumGDDfromDay1() - GetGDDayi(); // switch time scale
               END;
            END;
@@ -1508,8 +1509,8 @@ SetCutInfoRecord2_IntervalInfo(0);
 SetCutInfoRecord1_MassInfo(0);
 SetCutInfoRecord2_MassInfo(0);
 SetDayLastCut(0);
-CGCref := GetCrop().CGC;
-GDDCGCref := GetCrop().GDDCGC;
+SetCGCref( GetCrop().CGC);
+SetGDDCGCref(GetCrop().GDDCGC);
 IF GetManagement_Cuttings_Considered() THEN OpenHarvestInfo();
 CGCadjustmentAfterCutting := false;
 
@@ -1581,8 +1582,8 @@ IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev(),StageCode);
 
 // 20. Settings for start
 StartMode := true;
-StressLeaf := undef_int;
-StressSenescence := undef_int;
+SetStressLeaf(undef_int);
+SetStressSenescence(undef_int);
 
 END; (* InitializeSimulationRun *)
 
@@ -1864,9 +1865,9 @@ IF Out2Crop THEN
    IF (GetTpot() > 0) THEN Ratio1 := 100*GetTact()/GetTpot()
                  ELSE Ratio1 := 100.0;
    //2. Water stresses
-   IF (StressLeaf < 0)
+   IF (GetStressLeaf() < 0)
       THEN StrExp := undef_int
-      ELSE StrExp := ROUND(StressLeaf);
+      ELSE StrExp := ROUND(GetStressLeaf());
    IF (GetTpot() <= 0)
       THEN StrSto := undef_int
       ELSE StrSto := ROUND(100 *(1 - GetTact()/GetTpot()));
@@ -1907,7 +1908,7 @@ IF Out2Crop THEN
       THEN WPy := (GetSumWaBal_YieldPart()*1000)/((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10)
       ELSE WPy := 0.0;
    // write
-   WRITE(fDaily,GetGDDayi():9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,StressSenescence:7:0,StrSalt:7,StrW:7,
+   WRITE(fDaily,GetGDDayi():9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,GetStressSenescence():7:0,StrSalt:7,StrW:7,
          (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,GetTact():9:1,
          GetTactWeedInfested():9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    // Fresh yield
@@ -2117,6 +2118,8 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TempString : string;
     TargetTimeVal, TargetDepthVal : Integer;
     PreviousStressLevel_temp, StressSFadjNEW_temp : shortint;
+    CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp : double;
+    StressLeaf_temp,StressSenescence_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2436,7 +2439,7 @@ IF (GetCrop().DaysToCCini <> 0)
                 IF (VirtualTimeCC > GetCrop().DaysToFullCanopy) THEN
                    BEGIN
                    IF ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1) <= GetCrop().DaysToSenescence)
-                      THEN VirtualTimeCC := GetCrop().DaysToFullCanopy + ROUND(DayFraction *
+                      THEN VirtualTimeCC := GetCrop().DaysToFullCanopy + ROUND(GetDayFraction() *
                             ( (GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1)+GetTadj()+GetCrop().DaysToGermination - GetCrop().DaysToFullCanopy)) // slow down
                       ELSE VirtualTimeCC := (GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1); // switch time scale
                    END;
@@ -2448,7 +2451,7 @@ IF (GetCrop().DaysToCCini <> 0)
                       BEGIN
                       IF (GetSimulation_SumGDDfromDay1() <= GetCrop().GDDaysToSenescence)
                          THEN SumGDDadjCC := GetCrop().GDDaysToFullCanopy
-                           + ROUND(GDDayFraction * (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+GetCrop().GDDaysToGermination-GetCrop().GDDaysToFullCanopy)) // slow down
+                           + ROUND(GetGDDayFraction() * (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+GetCrop().GDDaysToGermination-GetCrop().GDDaysToFullCanopy)) // slow down
                          ELSE SumGDDadjCC := GetSimulation_SumGDDfromDay1() // switch time scale
                       END
                    END;
@@ -2491,7 +2494,7 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((GetDayNri()-GetCrop().Day1+1) < 
    THEN BEGIN
         IF (((GetDayNri()-GetSimulation_DelayedDays()) >= GetCrop().Day1) AND ((GetDayNri()-GetSimulation_DelayedDays()) <= GetCrop().DayN))
            THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
-                SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),GetTact(),StressLeaf,StressSenescence,
+                SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),GetTact(),GetStressLeaf(),GetStressSenescence(),
                                 (GetDayNri()-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
                                 GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
                                 (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
@@ -2531,13 +2534,17 @@ SetBin(Bin_temp);
 SetBout(Bout_temp);
 
 (* 9. RUN Soil water balance and actual Canopy Cover *)
+StressLeaf_temp := GetStressLeaf();
+StressSenescence_temp := GetStressSenescence();
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,GetSumInterval(),GetDayLastCut(),GetStressTot_NrD(),
               GetTadj(),GetGDDTadj(),
-              GetGDDayi(),CGCref,GDDCGCref,GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
-              Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),
-              DayFraction,GDDayFraction,FracAssim,
+              GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
+              GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),
+              GetDayFraction(),GetGDDayFraction(),FracAssim,
               GetStressSFadjNEW(),GetTransfer_Store(),GetTransfer_Mobilize(),
-              StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
+              StressLeaf_temp,StressSenescence_temp,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
+SetStressLeaf(StressLeaf_temp);
+SetStressSenescence(StressSenescence_temp);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
 IF ((GetRootingDepth() > 0) AND (GetDayNri() = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
@@ -2558,7 +2565,9 @@ IF (GetCCiActual() > 0) THEN
 
 (* 10. Potential biomass *)
 BiomassUnlim_temp := GetSumWaBal_BiomassUnlim();
-DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GetGDDayi(),CCxWitheredTpotNoS,BiomassUnlim_temp);
+CCxWitheredTpotNoS_temp := GetCCxWitheredTpotNoS();
+DeterminePotentialBiomass(VirtualTimeCC,SumGDDadjCC,GetCO2i(),GetGDDayi(),CCxWitheredTpotNoS_temp,BiomassUnlim_temp);
+SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
@@ -2596,14 +2605,16 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         TactWeedInfested_temp := GetTactWeedInfested();
         PreviousStressLevel_temp := GetPreviousStressLevel();
         StressSFadjNEW_temp := GetStressSFadjNEW();
+        CCxWitheredTpot_temp := GetCCxWitheredTpot();
+        CCxWitheredTpotNoS_temp := GetCCxWitheredTpotNoS();
         Bin_temp := GetBin();
         Bout_temp := GetBout();
-        DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GetGDDayi(),GetTact(),SumKcTop,CGCref,GDDCGCref,
-                                 Coeffb0,Coeffb1,Coeffb2,GetFracBiomassPotSF(),                             Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
+        DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GetGDDayi(),GetTact(),SumKcTop,GetCGCref(),GetGDDCGCref(),
+                                 GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,GetSumInterval(),
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
-                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot,CCxWitheredTpotNoS,
+                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress,SumKci,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
                                  WeedRCi,CCiActualWeedInfested,TactWeedInfested_temp,
                                  StressSFadjNEW_temp,PreviousStressLevel_temp,
                                  Store_temp,Mobilize_temp,
@@ -2623,6 +2634,8 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetBout(Bout_temp);
         SetPreviousStressLevel(PreviousStressLevel_temp);
         SetStressSFadjNEW(StressSFadjNEW_temp);
+        SetCCxWitheredTpot(CCxWitheredTpot_temp);
+        SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;
@@ -2711,8 +2724,8 @@ IF GetManagement_Cuttings_Considered() THEN
          SetCCiPrev(GetManagement_Cuttings_CCcut()/100);
          // ook nog CCwithered
          SetCrop_CCxWithered(0);  // or CCiPrev ??
-         CCxWitheredTpot := 0; // for calculation Maximum Biomass but considering soil fertility stress
-         CCxWitheredTpotNoS := 0; //  for calculation Maximum Biomass unlimited soil fertility
+         SetCCxWitheredTpot(0); // for calculation Maximum Biomass but considering soil fertility stress
+         SetCCxWitheredTpotNoS(0); //  for calculation Maximum Biomass unlimited soil fertility
          SetCrop_CCxAdjusted(GetCCiPrev()); // new
          // Increase of CGC
          CGCadjustmentAfterCutting := true; // adjustement CGC
@@ -2735,8 +2748,8 @@ SumGDD := SumGDD + GetGDDayi();
 IF (GetCCiActual() > 0) THEN
    BEGIN
    // leaf expansion growth
-   IF (StressLeaf > - 0.000001) THEN
-      SetStressTot_Exp(((GetStressTot_NrD() - 1)*GetStressTot_Exp() + StressLeaf)/GetStressTot_NrD());
+   IF (GetStressLeaf() > - 0.000001) THEN
+      SetStressTot_Exp(((GetStressTot_NrD() - 1)*GetStressTot_Exp() + GetStressLeaf())/GetStressTot_NrD());
    // stomatal closure
    IF (GetTpot() > 0) THEN
       BEGIN
@@ -2754,9 +2767,9 @@ SetPlotVarCrop_PotVal(100 * (1/CCxCropWeedsNoSFstress) *
                               CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),GetCrop().DaysToGermination,
                               GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                               GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                              (fWeedNoS*GetCrop().CCo),(fWeedNoS*GetCrop().CCx),CGCref,
+                              (fWeedNoS*GetCrop().CCo),(fWeedNoS*GetCrop().CCx),GetCGCref(),
                               (GetCrop().CDC*(fWeedNoS*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
-                              GDDCGCref,(GetCrop().GDDCDC*(fWeedNoS*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
+                              GetGDDCGCref(),(GetCrop().GDDCDC*(fWeedNoS*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
                               SumGDDadjCC,GetCrop().ModeCycle,
                               (0),(0)));
 IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanopySF)
