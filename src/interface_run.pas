@@ -633,6 +633,24 @@ function GetCoeffb2() : double;
 procedure SetCoeffb2(constref Coeffb2 : double);
     external 'aquacrop' name '__ac_run_MOD_setcoeffb2';
 
+function GetCoeffb0Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb0salt';
+
+procedure SetCoeffb0Salt(constref Coeffb0Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb0salt';
+
+function GetCoeffb1Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb1salt';
+
+procedure SetCoeffb1Salt(constref Coeffb1Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb1salt';
+
+function GetCoeffb2Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb2salt';
+
+procedure SetCoeffb2Salt(constref Coeffb2Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb2salt';
+
 implementation
 
 

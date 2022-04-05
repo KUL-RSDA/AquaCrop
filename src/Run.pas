@@ -31,7 +31,6 @@ var  fDaily, fHarvest, fEval : text;
      SumETo, SumGDD, GDDayi,Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : double;
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
@@ -1059,12 +1058,13 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
     Coeffb0_temp, Coeffb1_temp, Coeffb2_temp : double;
+    Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp : double;
 
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
 CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
-IF WaterTableInProfile THEN AdjustForWatertable;
+IF WaterTableInProfile THEN AdjustForWatertable; 
 IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
     GetGwtSet(GetSimulation_FromDayNr(),GwTable_temp);
@@ -1131,10 +1131,13 @@ SetStressTot_Weed(0);
 // Coefficients for soil fertility - biomass relationship
   // AND for Soil salinity - CCx/KsSto relationship
 FracBiomassPotSF_temp := GetFracBiomassPotSF();
-RelationshipsForFertilityAndSaltStress(Coeffb0_temp,Coeffb1_temp,Coeffb2_temp,FracBiomassPotSF_temp,Coeffb0Salt,Coeffb1Salt,Coeffb2Salt);
+RelationshipsForFertilityAndSaltStress(Coeffb0_temp,Coeffb1_temp,Coeffb2_temp,FracBiomassPotSF_temp,Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp);
 SetCoeffb0(Coeffb0_temp);
 SetCoeffb1(Coeffb1_temp);
 SetCoeffb2(Coeffb2_temp);
+SetCoeffb0Salt(Coeffb0Salt_temp);
+SetCoeffb1Salt(Coeffb1Salt_temp);
+SetCoeffb2Salt(Coeffb2Salt_temp);
 SetFracBiomassPotSF(FracBiomassPotSF_temp);
 
 // No soil fertility stress
@@ -2533,7 +2536,7 @@ SetTransfer_Mobilize(Mobilize_temp);
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,GetSumInterval(),GetDayLastCut(),GetStressTot_NrD(),
               GetTadj(),GetGDDTadj(),
               GDDayi,CGCref,GDDCGCref,GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
-              Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),
+              GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),
               DayFraction,GDDayFraction,FracAssim,
               GetStressSFadjNEW(),GetTransfer_Store(),GetTransfer_Mobilize(),
               StressLeaf,StressSenescence,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
@@ -2600,7 +2603,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         CCxWitheredTpot_temp := GetCCxWitheredTpot();
         CCxWitheredTpotNoS_temp := GetCCxWitheredTpotNoS();
         DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GDDayi,GetTact(),SumKcTop,CGCref,GDDCGCref,
-                                 GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             Coeffb0Salt,Coeffb1Salt,Coeffb2Salt,GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
+                                 GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,GetSumInterval(),
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,

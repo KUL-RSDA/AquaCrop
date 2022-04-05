@@ -55,8 +55,10 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_ModeCycle, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
+                        GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetNrCompartments, &
@@ -83,54 +85,15 @@ use ac_global, only:    CompartmentIndividual, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
                         SetSimulation_SumGDD, &
+                        GetSimulation_DelayedDays, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams, &
-                        undef_int
+                        undef_int, &
+                        subkind_Grain, &
+                        subkind_Tuber
 
-
-
-use ac_global, only: CompartmentIndividual, &
-                     DetermineDate, &
-                     DetermineDayNr, &
-                     DetermineSaltContent, &
-                     GetCompartment_i, &
-                     GetCompartment_Layer, &
-                     GetCompartment_Thickness, &
-                     GetCrop_CCEffectEvapLate, &
-                     GetCrop_CCo, &
-                     GetCrop_CCx, &
-                     GetCrop_CDC, &
-                     GetCrop_CGC, &
-                     GetCrop_Day1, &
-                     GetCrop_Tbase, &
-                     GetCrop_Tupper, &
-                     GetCrop_WP, &
-                     GetCrop_WPy, &
-                     GetCrop_Length_i, &
-                     GetSimulation_DelayedDays, &
-                     GetGroundWaterFile, &
-                     GetGroundWaterFileFull, &
-                     GetManagement_FertilityStress, &
-                     GetNrCompartments, &
-                     GetPathNameProg, &
-                     GetSimulation_FromDayNr, &
-                     GetSimulation_ToDayNr, &
-                     GetSimulParam_Tmax, &
-                     GetSimulParam_Tmin, &
-                     GetSoilLayer_SAT, &
-                     GetZiAqua, &
-                     GetECiAqua, &
-                     rep_DayEventDbl, &
-                     rep_sum, &
-                     roundc, &
-                     SetCompartment_i, &
-                     SetCompartment_Theta, &
-                     SplitStringInThreeParams, &
-                     undef_int, &
-                     subkind_Grain, &
-                     subkind_Tuber
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -248,6 +211,7 @@ real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
+real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 
 contains
 
@@ -1485,6 +1449,46 @@ subroutine SetCoeffb2(Coeffb2_in)
 
     Coeffb2 = Coeffb2_in 
 end subroutine SetCoeffb2
+
+real(dp) function GetCoeffb0Salt()
+    !! Getter for the "Coeffb0Salt" global variable.
+
+    GetCoeffb0Salt = Coeffb0Salt
+end function GetCoeffb0Salt
+
+subroutine SetCoeffb0Salt(Coeffb0Salt_in)
+    !! Setter for the "Coeffb0Salt" global variable.
+    real(dp), intent(in) :: Coeffb0Salt_in
+
+    Coeffb0Salt = Coeffb0Salt_in
+end subroutine SetCoeffb0Salt
+
+real(dp) function GetCoeffb1Salt()
+    !! Getter for the "Coeffb1Salt" global variable.
+
+    GetCoeffb1Salt = Coeffb1Salt
+end function GetCoeffb1Salt
+
+subroutine SetCoeffb1Salt(Coeffb1Salt_in)
+    !! Setter for the "Coeffb1Salt" global variable.
+    real(dp), intent(in) :: Coeffb1Salt_in
+
+    Coeffb1Salt = Coeffb1Salt_in
+end subroutine SetCoeffb1Salt
+
+real(dp) function GetCoeffb2Salt()
+    !! Getter for the "Coeffb2Salt" global variable.
+
+    GetCoeffb2Salt = Coeffb2Salt
+end function GetCoeffb2Salt
+
+subroutine SetCoeffb2Salt(Coeffb2Salt_in)
+    !! Setter for the "Coeffb2Salt" global variable.
+    real(dp), intent(in) :: Coeffb2Salt_in
+
+    Coeffb2Salt = Coeffb2Salt_in
+end subroutine SetCoeffb2Salt
+
 
 !! END section global variables
 
