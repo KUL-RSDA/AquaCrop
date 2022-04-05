@@ -578,6 +578,139 @@ procedure fObs_close();
 procedure fObs_rewind();
         external 'aquacrop' name '__ac_run_MOD_fobs_rewind';
 
+function GetIrriInterval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getirriinterval';
+
+procedure SetIrriInterval(constref IrriInterval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setirriinterval';
+
+function GetTadj() : integer;
+    external 'aquacrop' name '__ac_run_MOD_gettadj';
+
+procedure SetTadj(constref Tadj : integer);
+    external 'aquacrop' name '__ac_run_MOD_settadj';
+
+function GetGDDTadj() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getgddtadj';
+
+procedure SetGDDTadj(constref GDDTadj : integer);
+    external 'aquacrop' name '__ac_run_MOD_setgddtadj';
+
+function GetDayLastCut() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getdaylastcut';
+
+procedure SetDayLastCut(constref DayLastCut : integer);
+    external 'aquacrop' name '__ac_run_MOD_setdaylastcut';
+
+function GetNrCut() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getnrcut';
+
+procedure SetNrCut(constref NrCut : integer); 
+    external 'aquacrop' name '__ac_run_MOD_setnrcut';
+
+function GetSumInterval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getsuminterval';
+
+procedure SetSumInterval(constref SumInterval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setsuminterval';
+
+function GetPreviousStressLevel() : shortint;
+    external 'aquacrop' name '__ac_run_MOD_getpreviousstresslevel';
+
+procedure SetPreviousStressLevel(constref PreviousStressLevel : shortint);
+    external 'aquacrop' name '__ac_run_MOD_setpreviousstresslevel';
+
+function GetStressSFadjNEW() : shortint;
+    external 'aquacrop' name '__ac_run_MOD_getstresssfadjnew';
+
+procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
+    external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
+
+function GetCCxWitheredTpot() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
+
+procedure SetCCxWitheredTpot(constref CCxWitheredTpot : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpot';
+
+function GetCCxWitheredTpotNoS() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpotnos';
+
+procedure SetCCxWitheredTpotNoS(constref CCxWitheredTpotNoS : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpotnos';
+
+function GetCoeffb0() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb0';
+
+procedure SetCoeffb0(constref Coeffb0 : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb0';
+
+function GetCoeffb1() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb1';
+
+procedure SetCoeffb1(constref Coeffb1 : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb1';
+
+function GetCoeffb2() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb2';
+
+procedure SetCoeffb2(constref Coeffb2 : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb2';
+
+function GetCoeffb0Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb0salt';
+
+procedure SetCoeffb0Salt(constref Coeffb0Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb0salt';
+
+function GetCoeffb1Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb1salt';
+
+procedure SetCoeffb1Salt(constref Coeffb1Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb1salt';
+
+function GetCoeffb2Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb2salt';
+
+procedure SetCoeffb2Salt(constref Coeffb2Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb2salt';
+
+function GetStressLeaf() : double;
+    external 'aquacrop' name '__ac_run_MOD_getstressleaf';
+
+procedure SetStressLeaf(constref StressLeaf : double);
+    external 'aquacrop' name '__ac_run_MOD_setstressleaf';
+
+function GetStressSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_getstresssenescence';
+
+procedure SetStressSenescence(constref StressSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_setstresssenescence';
+
+function GetDayFraction() : double;
+    external 'aquacrop' name '__ac_run_MOD_getdayfraction';
+
+procedure SetDayFraction(constref DayFraction : double);
+    external 'aquacrop' name '__ac_run_MOD_setdayfraction';
+
+function GetGDDayFraction() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddayfraction';
+
+procedure SetGDDayFraction(constref GDDayFraction : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddayfraction';
+
+function GetGDDCGCref() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddcgcref';
+
+procedure SetGDDCGCref(constref GDDCGCref : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddcgcref';
+
+function GetCGCref() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcgcref';
+
+procedure SetCGCref(constref CGCref : double);
+    external 'aquacrop' name '__ac_run_MOD_setcgcref';
+
+
 implementation
 
 

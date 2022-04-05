@@ -55,8 +55,10 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_ModeCycle, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
+                        GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetNrCompartments, &
@@ -83,54 +85,15 @@ use ac_global, only:    CompartmentIndividual, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
                         SetSimulation_SumGDD, &
+                        GetSimulation_DelayedDays, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams, &
-                        undef_int
+                        undef_int, &
+                        subkind_Grain, &
+                        subkind_Tuber
 
-
-
-use ac_global, only: CompartmentIndividual, &
-                     DetermineDate, &
-                     DetermineDayNr, &
-                     DetermineSaltContent, &
-                     GetCompartment_i, &
-                     GetCompartment_Layer, &
-                     GetCompartment_Thickness, &
-                     GetCrop_CCEffectEvapLate, &
-                     GetCrop_CCo, &
-                     GetCrop_CCx, &
-                     GetCrop_CDC, &
-                     GetCrop_CGC, &
-                     GetCrop_Day1, &
-                     GetCrop_Tbase, &
-                     GetCrop_Tupper, &
-                     GetCrop_WP, &
-                     GetCrop_WPy, &
-                     GetCrop_Length_i, &
-                     GetSimulation_DelayedDays, &
-                     GetGroundWaterFile, &
-                     GetGroundWaterFileFull, &
-                     GetManagement_FertilityStress, &
-                     GetNrCompartments, &
-                     GetPathNameProg, &
-                     GetSimulation_FromDayNr, &
-                     GetSimulation_ToDayNr, &
-                     GetSimulParam_Tmax, &
-                     GetSimulParam_Tmin, &
-                     GetSoilLayer_SAT, &
-                     GetZiAqua, &
-                     GetECiAqua, &
-                     rep_DayEventDbl, &
-                     rep_sum, &
-                     roundc, &
-                     SetCompartment_i, &
-                     SetCompartment_Theta, &
-                     SplitStringInThreeParams, &
-                     undef_int, &
-                     subkind_Grain, &
-                     subkind_Tuber
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -241,10 +204,19 @@ type(rep_Transfer) :: Transfer
 type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 
 integer(int32) :: DayNri
+integer(int32) :: IrriInterval
+integer(int32) :: Tadj, GDDTadj
+integer(int32) :: DayLastCut,NrCut,SumInterval
+integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
-
+real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
+real(dp) :: Coeffb0,Coeffb1,Coeffb2
+real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
+real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
+real(dp) :: DayFraction,GDDayFraction
+real(dp) :: CGCref,GDDCGCref 
 
 contains
 
@@ -1352,9 +1324,294 @@ subroutine SetRainDataSet_Param(i, Param_in)
     RainDataSet(i)%Param = Param_in
 end subroutine SetRainDataSet_Param
 
+integer(int32) function GetIrriInterval()
+    !! Getter for the "IrriInterval" global variable.
+
+    GetIrriInterval = IrriInterval
+end function GetIrriInterval
+
+subroutine SetIrriInterval(IrriInterval_in)
+    !! Setter for the "IrriInterval" global variable.
+    integer(int32), intent(in) :: IrriInterval_in
+
+    IrriInterval = IrriInterval_in
+end subroutine SetIrriInterval
+
+integer(int32) function GetTadj()
+    !! Getter for the "Tadj" global variable.
+
+    GetTadj = Tadj
+end function GetTadj
+
+subroutine SetTadj(Tadj_in)
+    !! Setter for the "Tadj" global variable. 
+    integer(int32), intent(in) :: Tadj_in
+
+    Tadj = Tadj_in 
+end subroutine SetTadj
+
+integer(int32) function GetGDDTadj()
+    !! Getter for the "GDDTadj" global variable.
+
+    GetGDDTadj = GDDTadj
+end function GetGDDTadj
+
+subroutine SetGDDTadj(GDDTadj_in)
+    !! Setter for the "GDDTadj" global variable.
+    integer(int32), intent(in) :: GDDTadj_in
+
+    GDDTadj = GDDTadj_in
+end subroutine SetGDDTadj
+
+integer(int32) function GetDayLastCut()
+    !! Getter for the "DayLastCut" global variable.
+
+    GetDayLastCut = DayLastCut
+end function GetDayLastCut
+
+subroutine SetDayLastCut(DayLastCut_in)
+    !! Setter for the "DayLastCut" global variable.
+    integer(int32), intent(in) :: DayLastCut_in
+
+    DayLastCut = DayLastCut_in
+end subroutine SetDayLastCut
+
+integer(int32) function GetNrCut()
+    !! Getter for the "NrCut" global variable.
+
+    GetNrCut = NrCut
+end function GetNrCut
+
+subroutine SetNrCut(NrCut_in)
+    !! Setter for the "NrCut" global variable. 
+    integer(int32), intent(in) :: NrCut_in
+
+    NrCut = NrCut_in 
+end subroutine SetNrCut
+
+integer(int32) function GetSumInterval()
+    !! Getter for the "SumInterval" global variable.
+
+    GetSumInterval = SumInterval
+end function GetSumInterval
+
+subroutine SetSumInterval(SumInterval_in)
+    !! Setter for the "SumInterval" global variable.
+    integer(int32), intent(in) :: SumInterval_in
+
+    SumInterval = SumInterval_in
+end subroutine SetSumInterval
+
+integer(int32) function GetPreviousStressLevel()
+    !! Getter for the "PreviousStressLevel" global variable.
+
+    GetPreviousStressLevel = PreviousStressLevel
+end function GetPreviousStressLevel
+
+subroutine SetPreviousStressLevel(PreviousStressLevel_in)
+    !! Setter for the "PreviousStressLevel" global variable.
+    integer(int32), intent(in) :: PreviousStressLevel_in
+
+    PreviousStressLevel = PreviousStressLevel_in
+end subroutine SetPreviousStressLevel
+
+integer(int32) function GetStressSFadjNEW()
+    !! Getter for the "StressSFadjNEW" global variable.
+
+    GetStressSFadjNEW = StressSFadjNEW
+end function GetStressSFadjNEW
+
+subroutine SetStressSFadjNEW(StressSFadjNEW_in)
+    !! Setter for the "StressSFadjNEW" global variable. 
+    integer(int32), intent(in) :: StressSFadjNEW_in
+
+    StressSFadjNEW = StressSFadjNEW_in 
+end subroutine SetStressSFadjNEW
+
+real(dp) function GetCCxWitheredTpot()
+    !! Getter for the "CCxWitheredTpot" global variable.
+
+    GetCCxWitheredTpot = CCxWitheredTpot
+end function GetCCxWitheredTpot
+
+subroutine SetCCxWitheredTpot(CCxWitheredTpot_in)
+    !! Setter for the "CCxWitheredTpot" global variable.
+    real(dp), intent(in) :: CCxWitheredTpot_in
+
+    CCxWitheredTpot = CCxWitheredTpot_in
+end subroutine SetCCxWitheredTpot
+
+real(dp) function GetCCxWitheredTpotNoS()
+    !! Getter for the "CCxWitheredTpotNoS" global variable.
+
+    GetCCxWitheredTpotNoS = CCxWitheredTpotNoS
+end function GetCCxWitheredTpotNoS
+
+subroutine SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_in)
+    !! Setter for the "CCxWitheredTpotNoS" global variable.
+    real(dp), intent(in) :: CCxWitheredTpotNoS_in
+
+    CCxWitheredTpotNoS = CCxWitheredTpotNoS_in
+end subroutine SetCCxWitheredTpotNoS
+
+real(dp) function GetCoeffb0()
+    !! Getter for the "Coeffb0" global variable.
+
+    GetCoeffb0 = Coeffb0
+end function GetCoeffb0
+
+subroutine SetCoeffb0(Coeffb0_in)
+    !! Setter for the "Coeffb0" global variable.  
+    real(dp), intent(in) :: Coeffb0_in
+
+    Coeffb0 = Coeffb0_in 
+end subroutine SetCoeffb0
+
+real(dp) function GetCoeffb1()
+    !! Getter for the "Coeffb1" global variable.
+
+    GetCoeffb1 = Coeffb1
+end function GetCoeffb1
+
+subroutine SetCoeffb1(Coeffb1_in)
+    !! Setter for the "Coeffb1" global variable.  
+    real(dp), intent(in) :: Coeffb1_in
+
+    Coeffb1 = Coeffb1_in 
+end subroutine SetCoeffb1
+
+real(dp) function GetCoeffb2()
+    !! Getter for the "Coeffb2" global variable.
+
+    GetCoeffb2 = Coeffb2
+end function GetCoeffb2
+
+subroutine SetCoeffb2(Coeffb2_in)
+    !! Setter for the "Coeffb2" global variable.  
+    real(dp), intent(in) :: Coeffb2_in
+
+    Coeffb2 = Coeffb2_in 
+end subroutine SetCoeffb2
+
+real(dp) function GetCoeffb0Salt()
+    !! Getter for the "Coeffb0Salt" global variable.
+
+    GetCoeffb0Salt = Coeffb0Salt
+end function GetCoeffb0Salt
+
+subroutine SetCoeffb0Salt(Coeffb0Salt_in)
+    !! Setter for the "Coeffb0Salt" global variable.
+    real(dp), intent(in) :: Coeffb0Salt_in
+
+    Coeffb0Salt = Coeffb0Salt_in
+end subroutine SetCoeffb0Salt
+
+real(dp) function GetCoeffb1Salt()
+    !! Getter for the "Coeffb1Salt" global variable.
+
+    GetCoeffb1Salt = Coeffb1Salt
+end function GetCoeffb1Salt
+
+subroutine SetCoeffb1Salt(Coeffb1Salt_in)
+    !! Setter for the "Coeffb1Salt" global variable.
+    real(dp), intent(in) :: Coeffb1Salt_in
+
+    Coeffb1Salt = Coeffb1Salt_in
+end subroutine SetCoeffb1Salt
+
+real(dp) function GetCoeffb2Salt()
+    !! Getter for the "Coeffb2Salt" global variable.
+
+    GetCoeffb2Salt = Coeffb2Salt
+end function GetCoeffb2Salt
+
+subroutine SetCoeffb2Salt(Coeffb2Salt_in)
+    !! Setter for the "Coeffb2Salt" global variable.
+    real(dp), intent(in) :: Coeffb2Salt_in
+
+    Coeffb2Salt = Coeffb2Salt_in
+end subroutine SetCoeffb2Salt
+
+real(dp) function GetStressLeaf()
+    !! Getter for the "StressLeaf" global variable.
+
+    GetStressLeaf = StressLeaf
+end function GetStressLeaf
+
+subroutine SetStressLeaf(StressLeaf_in)
+    !! Setter for the "StressLeaf" global variable.
+    real(dp), intent(in) :: StressLeaf_in
+
+    StressLeaf = StressLeaf_in
+end subroutine SetStressLeaf
+
+real(dp) function GetStressSenescence()
+    !! Getter for the "StressSenescence" global variable.
+
+    GetStressSenescence = StressSenescence
+end function GetStressSenescence
+
+subroutine SetStressSenescence(StressSenescence_in)
+    !! Setter for the "StressSenescence" global variable.
+    real(dp), intent(in) :: StressSenescence_in
+
+    StressSenescence = StressSenescence_in
+end subroutine SetStressSenescence
+
+real(dp) function GetDayFraction()
+    !! Getter for the "DayFraction" global variable.
+
+    GetDayFraction = DayFraction
+end function GetDayFraction
+
+subroutine SetDayFraction(DayFraction_in)
+    !! Setter for the "DayFraction" global variable.
+    real(dp), intent(in) :: DayFraction_in
+
+    DayFraction = DayFraction_in
+end subroutine SetDayFraction
+
+real(dp) function GetGDDayFraction()
+    !! Getter for the "GDDayFraction" global variable.
+
+    GetGDDayFraction = GDDayFraction
+end function GetGDDayFraction
+
+subroutine SetGDDayFraction(GDDayFraction_in)
+    !! Setter for the "GDDayFraction" global variable.
+    real(dp), intent(in) :: GDDayFraction_in
+
+    GDDayFraction = GDDayFraction_in
+end subroutine SetGDDayFraction
+
+real(dp) function GetCGCref()
+    !! Getter for the "CGCref" global variable.
+
+    GetCGCref = CGCref
+end function GetCGCref
+
+subroutine SetCGCref(CGCref_in)
+    !! Setter for the "CGCref" global variable.
+    real(dp), intent(in) :: CGCref_in
+
+    CGCref = CGCref_in
+end subroutine SetCGCref
+
+real(dp) function GetGDDCGCref()
+    !! Getter for the "GDDCGCref" global variable.
+
+    GetGDDCGCref = GDDCGCref
+end function GetGDDCGCref
+
+subroutine SetGDDCGCref(GDDCGCref_in)
+    !! Setter for the "GDDCGCref" global variable.
+    real(dp), intent(in) :: GDDCGCref_in
+
+    GDDCGCref = GDDCGCref_in
+end subroutine SetGDDCGCref
+
+
 !! END section global variables
-
-
 
 
 subroutine AdjustForWatertable()
