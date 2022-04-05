@@ -246,6 +246,7 @@ integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: Coeffb0,Coeffb1,Coeffb2
 
 contains
 
@@ -1418,6 +1419,45 @@ subroutine SetStressSFadjNEW(StressSFadjNEW_in)
 
     StressSFadjNEW = StressSFadjNEW_in 
 end subroutine SetStressSFadjNEW
+
+real(dp) function GetCoeffb0()
+    !! Getter for the "Coeffb0" global variable.
+
+    GetCoeffb0 = Coeffb0
+end function GetCoeffb0
+
+subroutine SetCoeffb0(Coeffb0_in)
+    !! Setter for the "Coeffb0" global variable.  
+    real(dp), intent(in) :: Coeffb0_in
+
+    Coeffb0 = Coeffb0_in 
+end subroutine SetCoeffb0
+
+real(dp) function GetCoeffb1()
+    !! Getter for the "Coeffb1" global variable.
+
+    GetCoeffb1 = Coeffb1
+end function GetCoeffb1
+
+subroutine SetCoeffb1(Coeffb1_in)
+    !! Setter for the "Coeffb1" global variable.  
+    real(dp), intent(in) :: Coeffb1_in
+
+    Coeffb1 = Coeffb1_in 
+end subroutine SetCoeffb1
+
+real(dp) function GetCoeffb2()
+    !! Getter for the "Coeffb2" global variable.
+
+    GetCoeffb2 = Coeffb2
+end function GetCoeffb2
+
+subroutine SetCoeffb2(Coeffb2_in)
+    !! Setter for the "Coeffb2" global variable.  
+    real(dp), intent(in) :: Coeffb2_in
+
+    Coeffb2 = Coeffb2_in 
+end subroutine SetCoeffb2
 
 !! END section global variables
 
