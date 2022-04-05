@@ -1935,22 +1935,22 @@ end subroutine GetSumGDDBeforeSimulation
 
 
 
-subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
-                        FracBiomassPotSF, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
-    real(dp), intent(inout) :: Coeffb0
-    real(dp), intent(inout) :: Coeffb1
-    real(dp), intent(inout) :: Coeffb2
-    real(dp), intent(inout) :: FracBiomassPotSF
-    real(dp), intent(inout) :: Coeffb0Salt
-    real(dp), intent(inout) :: Coeffb1Salt
-    real(dp), intent(inout) :: Coeffb2Salt
+subroutine RelationshipsForFertilityAndSaltStress()
+
+    real(dp) :: Coeffb0_temp
+    real(dp) :: Coeffb1_temp
+    real(dp) :: Coeffb2_temp
+    real(dp) :: Coeffb0Salt_temp
+    real(dp) :: Coeffb1Salt_temp
+    real(dp) :: Coeffb2Salt_temp
 
     real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
     integer(int8) :: BioTop, BioLow
     real(dp) :: StrTop, StrLow
 
     ! 1. Soil fertility
-    FracBiomassPotSF = 1._dp
+    call SetFracBiomassPotSF(1._dp)
+
     ! 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
     if (GetCrop_StressResponse_Calibrated()) then
         call StressBiomassRelationship(GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), &
@@ -1976,13 +1976,17 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
                                   GetCrop_WP(), GetCrop_dHIdt(), GetCO2i(), &
                                   GetCrop_Day1(), GetCrop_DeterminancyLinked(), &
                                   GetCrop_StressResponse(),GetCrop_subkind(), &
-                                  GetCrop_ModeCycle(), Coeffb0, Coeffb1, &
-                                  Coeffb2, X10, X20, X30, X40, X50, X60, X70)
+                                  GetCrop_ModeCycle(), Coeffb0_temp, Coeffb1_temp, &
+                                  Coeffb2_temp, X10, X20, X30, X40, X50, X60, X70)
+        call SetCoeffb0(Coeffb0_temp)
+        call SetCoeffb1(Coeffb1_temp)
+        call SetCoeffb2(Coeffb2_temp)
     else
-        Coeffb0 = undef_int
-        Coeffb1 = undef_int
-        Coeffb2 = undef_int
+        call SetCoeffb0(real(undef_int, kind=dp))
+        call SetCoeffb1(real(undef_int, kind=dp))
+        call SetCoeffb2(real(undef_int, kind=dp))
     end if
+
     ! 1.b Soil fertility : FracBiomassPotSF
     if ((GetManagement_FertilityStress() /= 0._dp) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
@@ -1992,7 +1996,7 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
             BioTop = BioLow
             StrTop = StrLow
             BioLow = BioLow - 1_int8
-            StrLow = Coeffb0 + Coeffb1*BioLow + Coeffb2*BioLow*BioLow
+            StrLow = GetCoeffb0() + GetCoeffb1()*BioLow + GetCoeffb2()*BioLow*BioLow
             if (((StrLow >= GetManagement_FertilityStress()) &
                          .or. (BioLow <= 0) .or. (StrLow >= 99.99_dp))) exit loop
         end do loop
@@ -2000,12 +2004,12 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
             StrLow = 100._dp
         end if
         if (abs(StrLow-StrTop) < 0.001_dp) then
-            FracBiomassPotSF = BioTop
+            call SetFracBiomassPotSF(real(BioTop, kind=dp))
         else
-            FracBiomassPotSF = BioTop - (GetManagement_FertilityStress() &
-                                                    - StrTop)/(StrLow-StrTop)
+            call SetFracBiomassPotSF(real(BioTop, kind=dp) - (GetManagement_FertilityStress() &
+                                                    - StrTop)/(StrLow-StrTop))
         end if
-    FracBiomassPotSF = FracBiomassPotSF/100._dp
+    call SetFracBiomassPotSF(GetFracBiomassPotSF()/100._dp)
     end if
 
     ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
@@ -2036,13 +2040,16 @@ subroutine RelationshipsForFertilityAndSaltStress(Coeffb0, Coeffb1, Coeffb2, &
                                   GetCrop_dHIdt(), GetCO2i(), GetCrop_Day1(), &
                                   GetCrop_DeterminancyLinked(), &
                                   GetCrop_subkind(), GetCrop_ModeCycle(), &
-                                  GetCrop_CCsaltDistortion(),Coeffb0Salt, &
-                                  Coeffb1Salt, Coeffb2Salt, X10, X20, X30, &
+                                  GetCrop_CCsaltDistortion(),Coeffb0Salt_temp, &
+                                  Coeffb1Salt_temp, Coeffb2Salt_temp, X10, X20, X30, &
                                   X40, X50, X60, X70, X80, X90)
+        call SetCoeffb0Salt(Coeffb0Salt_temp)
+        call SetCoeffb1Salt(Coeffb1Salt_temp)
+        call SetCoeffb2Salt(Coeffb2Salt_temp) 
     else
-        Coeffb0Salt = undef_int
-        Coeffb1Salt = undef_int
-        Coeffb2Salt = undef_int
+        call SetCoeffb0Salt(real(undef_int, kind=dp))
+        call SetCoeffb1Salt(real(undef_int, kind=dp))
+        call SetCoeffb2Salt(real(undef_int, kind=dp))
     end if
 end subroutine RelationshipsForFertilityAndSaltStress
 

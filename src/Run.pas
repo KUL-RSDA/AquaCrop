@@ -1128,14 +1128,7 @@ SetStressTot_Weed(0);
 // 6. Soil fertility stress
 // Coefficients for soil fertility - biomass relationship
   // AND for Soil salinity - CCx/KsSto relationship
-RelationshipsForFertilityAndSaltStress(Coeffb0_temp,Coeffb1_temp,Coeffb2_temp,FracBiomassPotSF_temp,Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp);
-SetCoeffb0(Coeffb0_temp);
-SetCoeffb1(Coeffb1_temp);
-SetCoeffb2(Coeffb2_temp);
-SetCoeffb0Salt(Coeffb0Salt_temp);
-SetCoeffb1Salt(Coeffb1Salt_temp);
-SetCoeffb2Salt(Coeffb2Salt_temp);
-SetFracBiomassPotSF(FracBiomassPotSF_temp);
+RelationshipsForFertilityAndSaltStress();
 
 // No soil fertility stress
 IF (GetManagement_FertilityStress() <= 0) THEN SetManagement_FertilityStress(0);
