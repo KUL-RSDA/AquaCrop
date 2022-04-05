@@ -212,6 +212,8 @@ real(dp) :: FracBiomassPotSF
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
+real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
+
 
 contains
 
@@ -1488,6 +1490,32 @@ subroutine SetCoeffb2Salt(Coeffb2Salt_in)
 
     Coeffb2Salt = Coeffb2Salt_in
 end subroutine SetCoeffb2Salt
+
+real(dp) function GetStressLeaf()
+    !! Getter for the "StressLeaf" global variable.
+
+    GetStressLeaf = StressLeaf
+end function GetStressLeaf
+
+subroutine SetStressLeaf(StressLeaf_in)
+    !! Setter for the "StressLeaf" global variable.
+    real(dp), intent(in) :: StressLeaf_in
+
+    StressLeaf = StressLeaf_in
+end subroutine SetStressLeaf
+
+real(dp) function GetStressSenescence()
+    !! Getter for the "StressSenescence" global variable.
+
+    GetStressSenescence = StressSenescence
+end function GetStressSenescence
+
+subroutine SetStressSenescence(StressSenescence_in)
+    !! Setter for the "StressSenescence" global variable.
+    real(dp), intent(in) :: StressSenescence_in
+
+    StressSenescence = StressSenescence_in
+end subroutine SetStressSenescence
 
 
 !! END section global variables

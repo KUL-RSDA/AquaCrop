@@ -651,6 +651,19 @@ function GetCoeffb2Salt() : double;
 procedure SetCoeffb2Salt(constref Coeffb2Salt : double);
     external 'aquacrop' name '__ac_run_MOD_setcoeffb2salt';
 
+function GetStressLeaf() : double;
+    external 'aquacrop' name '__ac_run_MOD_getstressleaf';
+
+procedure SetStressLeaf(constref StressLeaf : double);
+    external 'aquacrop' name '__ac_run_MOD_setstressleaf';
+
+function GetStressSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_getstresssenescence';
+
+procedure SetStressSenescence(constref StressSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_setstresssenescence';
+
+
 implementation
 
 
