@@ -213,7 +213,8 @@ real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
-
+real(dp) :: DayFraction,GDDayFraction
+real(dp) :: CGCref,GDDCGCref 
 
 contains
 
@@ -1516,6 +1517,58 @@ subroutine SetStressSenescence(StressSenescence_in)
 
     StressSenescence = StressSenescence_in
 end subroutine SetStressSenescence
+
+real(dp) function GetDayFraction()
+    !! Getter for the "DayFraction" global variable.
+
+    GetDayFraction = DayFraction
+end function GetDayFraction
+
+subroutine SetDayFraction(DayFraction_in)
+    !! Setter for the "DayFraction" global variable.
+    real(dp), intent(in) :: DayFraction_in
+
+    DayFraction = DayFraction_in
+end subroutine SetDayFraction
+
+real(dp) function GetGDDayFraction()
+    !! Getter for the "GDDayFraction" global variable.
+
+    GetGDDayFraction = GDDayFraction
+end function GetGDDayFraction
+
+subroutine SetGDDayFraction(GDDayFraction_in)
+    !! Setter for the "GDDayFraction" global variable.
+    real(dp), intent(in) :: GDDayFraction_in
+
+    GDDayFraction = GDDayFraction_in
+end subroutine SetGDDayFraction
+
+real(dp) function GetCGCref()
+    !! Getter for the "CGCref" global variable.
+
+    GetCGCref = CGCref
+end function GetCGCref
+
+subroutine SetCGCref(CGCref_in)
+    !! Setter for the "CGCref" global variable.
+    real(dp), intent(in) :: CGCref_in
+
+    CGCref = CGCref_in
+end subroutine SetCGCref
+
+real(dp) function GetGDDCGCref()
+    !! Getter for the "GDDCGCref" global variable.
+
+    GetGDDCGCref = GDDCGCref
+end function GetGDDCGCref
+
+subroutine SetGDDCGCref(GDDCGCref_in)
+    !! Setter for the "GDDCGCref" global variable.
+    real(dp), intent(in) :: GDDCGCref_in
+
+    GDDCGCref = GDDCGCref_in
+end subroutine SetGDDCGCref
 
 
 !! END section global variables

@@ -663,6 +663,30 @@ function GetStressSenescence() : double;
 procedure SetStressSenescence(constref StressSenescence : double);
     external 'aquacrop' name '__ac_run_MOD_setstresssenescence';
 
+function GetDayFraction() : double;
+    external 'aquacrop' name '__ac_run_MOD_getdayfraction';
+
+procedure SetDayFraction(constref DayFraction : double);
+    external 'aquacrop' name '__ac_run_MOD_setdayfraction';
+
+function GetGDDayFraction() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddayfraction';
+
+procedure SetGDDayFraction(constref GDDayFraction : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddayfraction';
+
+function GetGDDCGCref() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddcgcref';
+
+procedure SetGDDCGCref(constref GDDCGCref : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddcgcref';
+
+function GetCGCref() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcgcref';
+
+procedure SetCGCref(constref CGCref : double);
+    external 'aquacrop' name '__ac_run_MOD_setcgcref';
+
 
 implementation
 
