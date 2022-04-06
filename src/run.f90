@@ -152,6 +152,8 @@ type rep_Transfer
 end type rep_Transfer
 
 
+integer :: fDaily  ! file handle
+integer :: fDaily_iostat  ! IO status
 integer :: fRun  ! file handle
 integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
@@ -247,6 +249,42 @@ end function read_file
 
 
 !! Section for Getters and Setters for global variables
+
+! fDaily
+
+
+subroutine fDaily_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fDaily' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fDaily, filename, mode, fDaily_iostat)
+end subroutine fDaily_open
+
+
+subroutine fDaily_write(line, advance_in)
+    !! Writes the given line to the fDaily file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fDaily, line, advance, fDaily_iostat)
+end subroutine fDaily_write
+
+
+subroutine fDaily_close()
+    close(fDaily)
+end subroutine fDaily_close
 
 ! fRun
 
