@@ -9,6 +9,7 @@ use ac_global, only:    CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
+                        DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
                         DetermineDayNr, &
@@ -58,11 +59,14 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetETo, &
                         GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetNrCompartments, &
+                        GetOutputAggregate, &
                         GetPathNameProg, &
+                        GetRain, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_SumGDD, &
                         GetSimulation_SalinityConsidered, &
@@ -71,6 +75,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulParam_Tmin, &
                         GetSimulParam_Tmax, &
                         GetSoilLayer_SAT, &
+                        GetSumWaBal_Biomass, &
+                        GetSumWaBal_BiomassUnlim, &
+                        GetSumWaBal_SaltIn, &
+                        GetSumWaBal_SaltOut, &
+                        GetSumWaBal_CRsalt, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -79,6 +88,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmin, &
                         GetZiAqua, &
                         GetECiAqua, &
+                        LeapYear, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
@@ -189,6 +199,8 @@ integer :: fTempSIM ! file handle
 integer :: fTempSIM_iostat ! IO status
 integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
+integer :: fObs ! file handle
+integer :: fObs_iostat ! IO status
 
 
 type(rep_GwTable) :: GwTable
@@ -200,6 +212,7 @@ type(rep_StressTot) :: StressTot
 type(repCutInfoRecord) :: CutInfoRecord1, CutInfoRecord2
 type(rep_Transfer) :: Transfer
 type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+type(rep_sum) :: PreviousSum
 
 integer(int32) :: DayNri
 integer(int32) :: IrriInterval
@@ -207,6 +220,9 @@ integer(int32) :: Tadj, GDDTadj
 integer(int32) :: DayLastCut,NrCut,SumInterval
 integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
+real(dp) :: Bin
+real(dp) :: Bout
+real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
@@ -476,6 +492,89 @@ subroutine fCuts_close()
     close(fCuts)
 end subroutine fCuts_close
 
+! fObs
+
+subroutine fObs_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fObs' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fObs, filename, mode, fObs_iostat)
+end subroutine fObs_open
+
+
+function fObs_read() result(line)
+    !! Returns the next line read from the 'fObs' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fObs, fObs_iostat)
+end function fObs_read
+
+
+function fObs_eof() result(eof)
+    !! Returns whether the end of the 'fObs' file has been reached.
+    logical :: eof
+
+    eof = fObs_iostat == iostat_end
+end function fObs_eof
+
+
+subroutine fObs_close()
+    close(fObs)
+end subroutine fObs_close
+
+subroutine fObs_rewind()
+    rewind(fObs)
+end subroutine fObs_rewind
+
+
+! Bin
+
+real(dp) function GetBin()
+    !! Getter for the "Bin" global variable.
+
+    GetBin = Bin
+end function GetBin
+
+subroutine SetBin(Bin_in)
+    !! Setter for the "Bin" global variable.
+    real(dp), intent(in) :: Bin_in
+    
+    Bin = Bin_in
+end subroutine SetBin
+
+! Bout
+
+real(dp) function GetBout()
+    !! Getter for the "Bout" global variable.
+
+    GetBout = Bout
+end function GetBout
+
+subroutine SetBout(Bout_in)
+    !! Setter for the "Bout" global variable.
+    real(dp), intent(in) :: Bout_in
+    
+    Bout = Bout_in
+end subroutine SetBout
+
+! GDDayi
+
+real(dp) function GetGDDayi()
+    !! Getter for the "GDDayi" global variable.
+
+    GetGDDayi = GDDayi
+end function GetGDDayi
+
+subroutine SetGDDayi(GDDayi_in)
+    !! Setter for the "GDDayi" global variable.
+    real(dp), intent(in) :: GDDayi_in
+    
+    GDDayi = GDDayi_in
+end subroutine SetGDDayi
 
 ! FracBiomass
 
@@ -492,6 +591,7 @@ subroutine SetFracBiomassPotSF(FracBiomassPotSF_in)
     FracBiomassPotSF = FracBiomassPotSF_in
 end subroutine SetFracBiomassPotSF
 
+
 ! CO2i
 
 real(dp) function GetCO2i()
@@ -506,6 +606,281 @@ subroutine SetCO2i(CO2i_in)
     
     CO2i = CO2i_in
 end subroutine SetCO2i
+
+
+! PreviousSum
+type(rep_sum) function GetPreviousSum()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum = PreviousSum
+end function GetPreviousSum
+
+real(dp) function GetPreviousSum_Epot()
+    !! Getter for the "PreviousSum" global variable.
+
+     GetPreviousSum_Epot = PreviousSum%Epot
+end function GetPreviousSum_Epot
+
+real(dp) function GetPreviousSum_Tpot()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Tpot = PreviousSum%Tpot
+end function GetPreviousSum_Tpot
+
+real(dp) function GetPreviousSum_Rain()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Rain = PreviousSum%Rain
+end function GetPreviousSum_Rain
+
+real(dp) function GetPreviousSum_Irrigation()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Irrigation = PreviousSum%Irrigation
+end function GetPreviousSum_Irrigation
+
+real(dp) function GetPreviousSum_Infiltrated()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Infiltrated = PreviousSum%Infiltrated
+end function GetPreviousSum_Infiltrated
+
+real(dp) function GetPreviousSum_Runoff()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Runoff = PreviousSum%Runoff
+end function GetPreviousSum_Runoff
+
+real(dp) function GetPreviousSum_Drain()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Drain = PreviousSum%Drain
+end function GetPreviousSum_Drain
+
+real(dp) function GetPreviousSum_Eact()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Eact = PreviousSum%Eact
+end function GetPreviousSum_Eact
+
+real(dp) function GetPreviousSum_Tact()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Tact = PreviousSum%Tact
+end function GetPreviousSum_Tact
+
+real(dp) function GetPreviousSum_TrW()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_TrW = PreviousSum%TrW
+end function GetPreviousSum_TrW
+
+real(dp) function GetPreviousSum_ECropCycle()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_ECropCycle = PreviousSum%ECropCycle
+end function GetPreviousSum_ECropCycle
+
+real(dp) function GetPreviousSum_CRwater()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_CRwater = PreviousSum%CRwater
+end function GetPreviousSum_CRwater
+
+real(dp) function GetPreviousSum_Biomass()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Biomass = PreviousSum%Biomass
+end function GetPreviousSum_Biomass
+
+real(dp) function GetPreviousSum_YieldPart()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_YieldPart = PreviousSum%YieldPart
+end function GetPreviousSum_YieldPart
+
+real(dp) function GetPreviousSum_BiomassPot()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_BiomassPot = PreviousSum%BiomassPot
+end function GetPreviousSum_BiomassPot
+
+real(dp) function GetPreviousSum_BiomassUnlim()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_BiomassUnlim = PreviousSum%BiomassUnlim
+end function GetPreviousSum_BiomassUnlim
+
+real(dp) function GetPreviousSum_BiomassTot()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_BiomassTot = PreviousSum%BiomassTot
+end function GetPreviousSum_BiomassTot
+
+real(dp) function GetPreviousSum_SaltIn()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_SaltIn = PreviousSum%SaltIn
+end function GetPreviousSum_SaltIn
+
+real(dp) function GetPreviousSum_SaltOut()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_SaltOut = PreviousSum%SaltOut
+end function GetPreviousSum_SaltOut
+
+real(dp) function GetPreviousSum_CRSalt()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_CRSalt = PreviousSum%CRSalt
+end function GetPreviousSum_CRSalt
+
+subroutine SetPreviousSum(PreviousSum_in)
+    !! Setter for the "PreviousSum" global variable.
+    type(rep_sum), intent(in) :: PreviousSum_in
+
+    PreviousSum = PreviousSum_in
+end subroutine SetPreviousSum
+
+subroutine SetPreviousSum_Epot(Epot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Epot
+
+    PreviousSum%Epot = Epot
+end subroutine SetPreviousSum_Epot
+
+subroutine SetPreviousSum_Tpot(Tpot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Tpot
+
+    PreviousSum%Tpot = Tpot
+end subroutine SetPreviousSum_Tpot
+
+subroutine SetPreviousSum_Rain(Rain)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Rain
+
+    PreviousSum%Rain = Rain
+end subroutine SetPreviousSum_Rain
+
+subroutine SetPreviousSum_Irrigation(Irrigation)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Irrigation
+
+    PreviousSum%Irrigation = Irrigation
+end subroutine SetPreviousSum_Irrigation
+
+subroutine SetPreviousSum_Infiltrated(Infiltrated)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Infiltrated
+
+    PreviousSum%Infiltrated = Infiltrated
+end subroutine SetPreviousSum_Infiltrated
+
+subroutine SetPreviousSum_Runoff(Runoff)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Runoff
+
+    PreviousSum%Runoff = Runoff
+end subroutine SetPreviousSum_Runoff
+
+subroutine SetPreviousSum_Drain(Drain)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Drain
+
+    PreviousSum%Drain = Drain
+end subroutine SetPreviousSum_Drain
+
+subroutine SetPreviousSum_Eact(Eact)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Eact
+
+    PreviousSum%Eact = Eact
+end subroutine SetPreviousSum_Eact
+
+subroutine SetPreviousSum_Tact(Tact)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Tact
+
+    PreviousSum%Tact = Tact
+end subroutine SetPreviousSum_Tact
+
+subroutine SetPreviousSum_TrW(TrW)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: TrW
+
+    PreviousSum%TrW = TrW
+end subroutine SetPreviousSum_TrW
+
+subroutine SetPreviousSum_ECropCycle(ECropCycle)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: ECropCycle
+
+    PreviousSum%ECropCycle = ECropCycle
+end subroutine SetPreviousSum_ECropCycle
+
+subroutine SetPreviousSum_CRwater(CRwater)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: CRwater
+
+    PreviousSum%CRwater = CRwater
+end subroutine SetPreviousSum_CRwater
+
+subroutine SetPreviousSum_Biomass(Biomass)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Biomass
+
+    PreviousSum%Biomass = Biomass
+end subroutine SetPreviousSum_Biomass
+
+subroutine SetPreviousSum_YieldPart(YieldPart)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: YieldPart
+
+    PreviousSum%YieldPart = YieldPart
+end subroutine SetPreviousSum_YieldPart
+
+subroutine SetPreviousSum_BiomassPot(BiomassPot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: BiomassPot
+
+    PreviousSum%BiomassPot = BiomassPot
+end subroutine SetPreviousSum_BiomassPot
+
+subroutine SetPreviousSum_BiomassUnlim(BiomassUnlim)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: BiomassUnlim
+
+    PreviousSum%BiomassUnlim = BiomassUnlim
+end subroutine SetPreviousSum_BiomassUnlim
+
+subroutine SetPreviousSum_BiomassTot(BiomassTot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: BiomassTot
+
+    PreviousSum%BiomassTot = BiomassTot
+end subroutine SetPreviousSum_BiomassTot
+
+subroutine SetPreviousSum_SaltIn(SaltIn)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: SaltIn
+
+    PreviousSum%SaltIn = SaltIn
+end subroutine SetPreviousSum_SaltIn
+
+subroutine SetPreviousSum_SaltOut(SaltOut)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: SaltOut
+
+    PreviousSum%SaltOut = SaltOut
+end subroutine SetPreviousSum_SaltOut
+
+subroutine SetPreviousSum_CRSalt(CRSalt)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: CRSalt
+
+    PreviousSum%CRSalt = CRSalt
+end subroutine SetPreviousSum_CRSalt
 
 ! GwTable
 
@@ -1595,9 +1970,8 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
+subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
-    type(rep_sum), intent(inout) :: PreviousSum
     real(dp), intent(inout) :: SumETo
     real(dp), intent(inout) :: SumGDD
     real(dp), intent(inout) :: PreviousSumETo
@@ -1605,25 +1979,25 @@ subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
     real(dp), intent(inout) :: PreviousBmob
     real(dp), intent(inout) :: PreviousBsto
 
-    PreviousSum%Epot = 0.0_dp
-    PreviousSum%Tpot = 0.0_dp
-    PreviousSum%Rain = 0.0_dp
-    PreviousSum%Irrigation = 0.0_dp
-    PreviousSum%Infiltrated = 0.0_dp
-    PreviousSum%Runoff = 0.0_dp
-    PreviousSum%Drain = 0.0_dp
-    PreviousSum%Eact = 0.0_dp
-    PreviousSum%Tact = 0.0_dp
-    PreviousSum%TrW = 0.0_dp
-    PreviousSum%ECropCycle = 0.0_dp
-    PreviousSum%CRwater = 0.0_dp
-    PreviousSum%Biomass = 0.0_dp
-    PreviousSum%YieldPart = 0.0_dp
-    PreviousSum%BiomassPot = 0.0_dp
-    PreviousSum%BiomassUnlim = 0.0_dp
-    PreviousSum%SaltIn = 0.0_dp
-    PreviousSum%SaltOut = 0.0_dp
-    PreviousSum%CRsalt = 0.0_dp
+    call SetPreviousSum_Epot(0.0_dp)
+    call SetPreviousSum_Tpot(0.0_dp)
+    call SetPreviousSum_Rain(0.0_dp)
+    call SetPreviousSum_Irrigation(0.0_dp)
+    call SetPreviousSum_Infiltrated(0.0_dp)
+    call SetPreviousSum_Runoff(0.0_dp)
+    call SetPreviousSum_Drain(0.0_dp)
+    call SetPreviousSum_Eact(0.0_dp)
+    call SetPreviousSum_Tact(0.0_dp)
+    call SetPreviousSum_TrW(0.0_dp)
+    call SetPreviousSum_ECropCycle(0.0_dp)
+    call SetPreviousSum_CRwater(0.0_dp)
+    call SetPreviousSum_Biomass(0.0_dp)
+    call SetPreviousSum_YieldPart(0.0_dp)
+    call SetPreviousSum_BiomassPot(0.0_dp)
+    call SetPreviousSum_BiomassUnlim(0.0_dp)
+    call SetPreviousSum_SaltIn(0.0_dp)
+    call SetPreviousSum_SaltOut(0.0_dp)
+    call SetPreviousSum_CRsalt(0.0_dp)
     SumETo = 0.0_dp
     SumGDD = 0.0_dp
     PreviousSumETo = 0.0_dp
