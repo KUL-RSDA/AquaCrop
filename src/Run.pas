@@ -25,9 +25,9 @@ implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
-
 var  fHarvest, fEval : text;
-     SumETo, SumGDD, Ziprev,SumGDDPrev,TESTVAL : double;
+     SumETo, SumGDD, TESTVAL : double;
+
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
@@ -1120,11 +1120,9 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     GwTable_temp : rep_GwTable;
     RedCGC_temp, RedCCX_temp, RCadj_temp : ShortInt; 
     EffectStress_temp : rep_EffectStress;
-    SumGDD_temp, SumGDDFromDay1_temp, FracBiomassPotSF_temp : double;
+    SumGDD_temp, SumGDDFromDay1_temp : double;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
-    Coeffb0_temp, Coeffb1_temp, Coeffb2_temp : double;
-    Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp : double;
 
 BEGIN
 //1. Adjustments at start
@@ -1325,7 +1323,7 @@ IF ((GetCrop_ModeCycle() = GDDays) AND (GetCrop().Day1 < GetDayNri()))
         SetSimulation_SumGDD(SumGDD_temp);
         SetSimulation_SumGDDFromDay1(SumGDDFromDay1_temp);
         END;
-SumGDDPrev := GetSimulation_SumGDDfromDay1();
+SetSumGDDPrev( GetSimulation_SumGDDfromDay1());
 
 // Sum of GDD at end of first day
 SetGDDayi(DegreesDay(GetCrop().Tbase,GetCrop().Tupper,GetTmin(),GetTmax(),GetSimulParam_GDDMethod()));
@@ -1516,38 +1514,38 @@ SetTransfer_Bmobilized(0);
 // 16. Initial rooting depth
 // 16.1 default value
 IF (GetDayNri() <= GetCrop().Day1)
-   THEN Ziprev := undef_int
+   THEN SetZiprev(undef_int)
    ELSE BEGIN
         IF (GetDayNri() > GetCrop().DayN)
-           THEN Ziprev := undef_int
+           THEN SetZiprev(undef_int)
            ELSE BEGIN
-                ZiPrev := ActualRootingDepth(GetDayNri()-GetCrop().Day1,
+                SetZiprev( ActualRootingDepth(GetDayNri()-GetCrop().Day1,
                                              GetCrop().DaysToGermination,
                                              GetCrop().DaysToMaxRooting,
                                              GetCrop().DaysToHarvest,
                                              GetCrop().GDDaysToGermination,
                                              GetCrop().GDDaysToMaxRooting,
-                                             SumGDDPrev,
+                                             GetSumGDDPrev(),
                                              GetCrop().RootMin,
                                              GetCrop().RootMax,
                                              GetCrop().RootShape,
-                                             GetCrop_ModeCycle());
+                                             GetCrop_ModeCycle()) );
                 END;
         END;
 // 16.2 specified or default Zrini (m)
-IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Ziprev))
+IF ((GetSimulation_Zrini() > 0) AND (GetZiprev() > 0) AND (GetSimulation_Zrini() <= GetZiprev()))
    THEN BEGIN
         IF ((GetSimulation_Zrini() >= GetCrop().RootMin) AND (GetSimulation_Zrini() <= GetCrop().RootMax))
-           THEN Ziprev := GetSimulation_Zrini()
+           THEN SetZiprev( GetSimulation_Zrini())
            ELSE BEGIN
                 IF (GetSimulation_Zrini() < GetCrop().RootMin)
-                   THEN Ziprev := GetCrop().RootMin
-                   ELSE Ziprev := GetCrop().RootMax;
+                   THEN SetZiprev( GetCrop().RootMin)
+                   ELSE SetZiprev( GetCrop().RootMax);
                 END;
         IF ((ROUND(GetSoil().RootMax*1000) < ROUND(GetCrop().RootMax*1000))
-           AND (Ziprev > GetSoil().RootMax))
-           THEN Ziprev := GetSoil().RootMax;
-        SetRootingDepth(Ziprev);  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering ZiPrev
+           AND (GetZiprev() > GetSoil().RootMax))
+           THEN SetZiprev( GetSoil().RootMax);
+        SetRootingDepth(GetZiprev());  // NOT NEEDED since RootingDepth is calculated in the RUN by ocnsidering Ziprev
         END
    ELSE SetRootingDepth(ActualRootingDepth(GetDayNri()-GetCrop().Day1+1,
                                            GetCrop().DaysToGermination,
@@ -1555,7 +1553,7 @@ IF ((GetSimulation_Zrini() > 0) AND (Ziprev > 0) AND (GetSimulation_Zrini() <= Z
                                            GetCrop().DaysToHarvest,
                                            GetCrop().GDDaysToGermination,
                                            GetCrop().GDDaysToMaxRooting,
-                                           SumGDDPrev,
+                                           GetSumGDDPrev(),
                                            GetCrop().RootMin,
                                            GetCrop().RootMax,
                                            GetCrop().RootShape,
@@ -2629,10 +2627,10 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((GetDayNri()-GetCrop().Day1+1) < 
            THEN BEGIN // rooting depth at DAP (at Crop.Day1, DAP = 1)
                 SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop().ActVal,GetPlotVarCrop().PotVal,GetTpot(),GetTact(),GetStressLeaf(),GetStressSenescence(),
                                 (GetDayNri()-GetCrop().Day1+1),GetCrop().DaysToGermination,GetCrop().DaysToMaxRooting,GetCrop().DaysToHarvest,
-                                GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,(SumGDDPrev),
-                                (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,Ziprev,GetCrop().RootShape,
+                                GetCrop().GDDaysToGermination,GetCrop().GDDaysToMaxRooting,GetCrop().GDDaysToHarvest,GetSumGDDPrev(),
+                                (GetSimulation_SumGDD()),GetCrop().RootMin,GetCrop().RootMax,GetZiprev(),GetCrop().RootShape,
                                 GetCrop().ModeCycle));
-                ZiPrev := GetRootingDepth();  // IN CASE rootzone drops below groundwate table
+                SetZiprev(GetRootingDepth());  // IN CASE rootzone drops below groundwate table
                 IF ((GetZiAqua() >= 0) AND (GetRootingDepth() > (GetZiAqua()/100)) AND (GetCrop().AnaeroPoint > 0)) THEN
                    BEGIN
                    SetRootingDepth(GetZiAqua()/100);
@@ -2641,7 +2639,7 @@ IF (((GetCrop().ModeCycle = CalendarDays) AND ((GetDayNri()-GetCrop().Day1+1) < 
                 END
            ELSE SetRootingDepth(0);
         END
-   ELSE SetRootingDepth(Ziprev);
+   ELSE SetRootingDepth(GetZiprev());
 IF ((GetRootingDepth() > 0) AND (GetDayNri() = GetCrop().Day1))
    THEN BEGIN //initial root zone depletion day1 (for WRITE Output)
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
@@ -2783,8 +2781,8 @@ SetPreDay(true);
 IF (GetDayNri() >= GetCrop().Day1) THEN
    BEGIN
    SetCCiPrev(GetCCiActual());
-   IF (ZiPrev < GetRootingDepth()) THEN Ziprev := GetRootingDepth(); // IN CASE groundwater table does not affect root development
-   SumGDDPrev := GetSimulation_SumGDD();
+   IF (GetZiprev() < GetRootingDepth()) THEN SetZiprev(GetRootingDepth()); // IN CASE groundwater table does not affect root development
+   SetSumGDDPrev(GetSimulation_SumGDD());
    END;
 IF (TargetTimeVal = 1) THEN SetIrriInterval(0);
 
@@ -3001,7 +2999,7 @@ END;  // FinalizeSimulation
 
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
-VAR SumWaBal_temp, PreviousSum_temp : rep_sum;
+VAR SumWaBal_temp : rep_sum;
 
     PROCEDURE AdjustCompartments;
     VAR TotDepth : double;

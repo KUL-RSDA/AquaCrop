@@ -227,6 +227,7 @@ real(dp) :: Bout
 real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: Ziprev,SumGDDPrev
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
@@ -1982,6 +1983,32 @@ subroutine SetGDDCGCref(GDDCGCref_in)
 
     GDDCGCref = GDDCGCref_in
 end subroutine SetGDDCGCref
+
+real(dp) function GetZiprev()
+    !! Getter for the "Ziprev" global variable.
+
+    GetZiprev = Ziprev
+end function GetZiprev
+
+subroutine SetZiprev(Ziprev_in)
+    !! Setter for the "Ziprev" global variable.
+    real(dp), intent(in) :: Ziprev_in
+
+    Ziprev = Ziprev_in
+end subroutine SetZiprev
+
+real(dp) function GetSumGDDPrev()
+    !! Getter for the "SumGDDPrev" global variable.
+
+    GetSumGDDPrev = SumGDDPrev
+end function GetSumGDDPrev
+
+subroutine SetSumGDDPrev(SumGDDPrev_in)
+    !! Setter for the "SumGDDPrev" global variable.
+    real(dp), intent(in) :: SumGDDPrev_in
+
+    SumGDDPrev = SumGDDPrev_in
+end subroutine SetSumGDDPrev
 
 
 !! END section global variables
