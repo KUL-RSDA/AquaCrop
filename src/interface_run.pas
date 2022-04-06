@@ -865,6 +865,17 @@ function GetCGCref() : double;
 procedure SetCGCref(constref CGCref : double);
     external 'aquacrop' name '__ac_run_MOD_setcgcref';
 
+function GetZiprev() : double;
+    external 'aquacrop' name '__ac_run_MOD_getziprev';
+
+procedure SetZiprev(constref Ziprev : double);
+    external 'aquacrop' name '__ac_run_MOD_setziprev';
+
+function GetSumGDDPrev() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgddprev';
+
+procedure SetSumGDDPrev(constref SumGDDPrev : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgddprev';
 
 implementation
 
