@@ -19,6 +19,9 @@ use ac_run, only:   fRun_open, &
                     fCuts_eof, &
                     fCuts_open, &
                     fCuts_read, &
+                    fObs_eof, &
+                    fObs_open, &
+                    fObs_read, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
                     GetIrriInfoRecord1_NoMoreInfo, &
@@ -206,6 +209,37 @@ function fCuts_eof_wrap() result(eof)
 
     eof = fCuts_eof()
 end function fCuts_eof_wrap
+
+subroutine fObs_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fObs_open(filename, mode)
+end subroutine fObs_open_wrap
+
+
+function fObs_read_wrap() result(line_ptr)
+    type(c_ptr) :: line_ptr
+
+    character(len=:), allocatable :: line
+
+    line = fObs_read()
+    line_ptr = string2pointer(line)
+end function fObs_read_wrap
+
+
+function fObs_eof_wrap() result(eof)
+    logical(1) :: eof
+
+    eof = fObs_eof()
+end function fObs_eof_wrap
 
 
 function GetCutInfoRecord1_NoMoreInfo_wrap() result(NoMoreInfo_f)
