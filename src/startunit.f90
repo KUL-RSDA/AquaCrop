@@ -7,11 +7,54 @@ use iso_fortran_env, only: iostat_end
 
 use ac_global, only: GetPathNameSimul, &
                      FileExists
+use ac_run, only: open_file, &
+                  write_file
 
 implicit none
 
+integer :: fProjects  ! file handle
+integer :: fProjects_iostat  ! IO status
 
 contains
+
+
+!! Section for Getters and Setters for global variables
+
+! fProjects
+
+subroutine fProjects_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fProjects' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fProjects, filename, mode, fProjects_iostat)
+end subroutine fProjects_open
+
+
+subroutine fProjects_write(line, advance_in)
+    !! Writes the given line to the fProjects file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fProjects, line, advance, fProjects_iostat)
+end subroutine fProjects_write
+
+
+subroutine fProjects_close()
+    close(fProjects)
+end subroutine fProjects_close
+
 
 subroutine GetRequestDailyResults(Out1Wabal, Out2Crop, Out3Prof, Out4Salt, &
                                     Out5CompWC, Out6CompEC, Out7Clim, OutDaily)
