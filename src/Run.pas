@@ -26,7 +26,7 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 
-var  fDaily, fHarvest, fEval : text;
+var  fDaily, fHarvest : text;
      SumETo, SumGDD, Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
@@ -305,10 +305,9 @@ END; (* WriteTitlePart1MultResults *)
 
 
 
-PROCEDURE CreateEvalData(NrRun : ShortInt;
-                         VAR fEval : text);
+PROCEDURE CreateEvalData(NrRun : ShortInt);
 VAR dayi, monthi, yeari : INTEGER;
-    StrNr,totalname,TempString : string;
+    StrNr,TempString : string;
 
 BEGIN
 // open input file with field data
@@ -352,15 +351,14 @@ IF (LineNrEval = undef_int) THEN fObs_close();
 IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
    THEN Str(NrRun:3,StrNr)
    ELSE StrNr := '';
-totalname := CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT');
-Assign(fEval,totalname);
-Rewrite(fEval);
-WRITELN(fEval,'AquaCrop 7.0 (June 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-WRITELN(fEval,'Evaluation of simulation results - Data');
+SetfEval_filename(CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT'));
+fEval_open(GetfEval_filename(), 'w');
+fEval_write('AquaCrop 7.0 (June 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
+fEval_write('Evaluation of simulation results - Data');
 Str(Zeval:5:2,TempString);
-WRITELN(fEval,'                                                                                     for soil depth: ',Trim(TempString),' m');
-WRITELN(fEval,'   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
-WRITELN(fEval,'                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
+fEval_write('                                                                                     for soil depth: ' + Trim(TempString) + ' m');
+fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
+fEval_write('                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
 END; (* CreateEvalData *)
 
 
@@ -2026,8 +2024,7 @@ END; (* WriteDailyResults *)
 
 
 PROCEDURE WriteEvaluationData(DAP : INTEGER;
-                              StageCode : ShortInt;
-                              VAR fEval : text);
+                              StageCode : ShortInt);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
     Nr,Di,Mi,Yi : INTEGER;
@@ -2091,8 +2088,9 @@ IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);
-WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
+WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
+fEval_write(TempString, False);
 END; (* WriteEvaluationData *)
 
 
@@ -2794,7 +2792,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
 //14.d Print ---------------------------------------
 IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,WPi,fDaily);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode);
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -2927,7 +2925,7 @@ ResetPreviousSum(SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,Previo
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun);
 END; // InitializeRun
 
 
@@ -2996,13 +2994,12 @@ END; // FinalizeRun1
 
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
-    PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt;
-                                              VAR fEval : text);
+    PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt);
     VAR totalnameEvalStat,StrNr : string;
 
     BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
-    Close(fEval);
+    fEval_close();
     IF (LineNrEval <> undef_int) THEN fObs_close();
     // 2. Specify File name Evaluation of simulation results - Statistics
     StrNr := '';
@@ -3018,7 +3015,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     WriteAssessmentSimulation(StrNr,totalnameEvalStat,TheProjectType,
                               GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
     // 4. Delete Evaluation data file
-    Erase(fEval);
+    fEval_erase();
     END; // CloseEvalDataPerformEvaluation
 
 
@@ -3045,7 +3042,7 @@ BEGIN
 CloseClimateFiles();
 CloseIrrigationFile();
 CloseManagementFile();
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun);
 END; // FinalizeRun2
 
 

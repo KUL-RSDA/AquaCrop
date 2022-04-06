@@ -22,14 +22,18 @@ use ac_run, only:   fRun_open, &
                     fObs_eof, &
                     fObs_open, &
                     fObs_read, &
+                    fEval_open, &
+                    fEval_write, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
+                    GetfEval_filename, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
                     GetTransfer_Mobilize, &
                     GetTransfer_Store, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
+                    SetfEval_filename, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
                     SetTransfer_Mobilize, &
@@ -337,6 +341,55 @@ subroutine SetTransfer_Store_wrap(Store)
     Store_f = Store
     call SetTransfer_Store(Store_f)    
 end subroutine SetTransfer_Store_wrap
+
+function GetfEval_filename_wrap() result(filename_ptr)
+    type(c_ptr) :: filename_ptr
+
+    character(len=:), allocatable :: filename
+
+    filename = GetfEval_filename()
+    filename_ptr = string2pointer(filename)
+end function GetfEval_filename_wrap
+    
+
+subroutine SetfEval_filename_wrap(filename_ptr, strlen)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=:), allocatable :: filename
+
+    filename = pointer2string(filename_ptr, strlen)
+    call SetfEval_filename(filename)
+end subroutine SetfEval_filename_wrap
+
+
+subroutine fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fEval_open(filename, mode)
+end subroutine fEval_open_wrap
+
+
+subroutine fEval_write_wrap(line_ptr, line_len, advance)
+    type(c_ptr), intent(in) :: line_ptr
+    integer(int32), intent(in) :: line_len
+    logical(1), intent(in) :: advance
+
+    character(len=line_len) :: line
+    logical :: advance_f
+
+    line = pointer2string(line_ptr, line_len)
+    advance_f = advance
+    call fEval_write(line, advance_f)
+end subroutine fEval_write_wrap
 
 
 end module ac_interface_run
