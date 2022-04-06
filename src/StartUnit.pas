@@ -120,6 +120,8 @@ END;
 
 
 PROCEDURE InitializeTheProgram;
+VAR
+    OutputAggregate_temp : shortint;
 BEGIN
 Decimalseparator := '.';
 SetPathNameOutp('OUTP/');
@@ -128,10 +130,12 @@ PathNameList :=  'LIST/';
 PathNameParam := 'PARAM/';
 SetPathNameProg('');
 
-GetTimeAggregationResults(OutputAggregate);
+OutputAggregate_temp := GetOutputAggregate();
+GetTimeAggregationResults(OutputAggregate_temp);
+SetOutputAggregate(OutputAggregate_temp);
 GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily);
 GetRequestParticularResults(Part1Mult,Part2Eval);
-PrepareReport(OutputAggregate,Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
+PrepareReport(GetOutputAggregate(),Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
               Part1Mult,Part2Eval);
 END;
 

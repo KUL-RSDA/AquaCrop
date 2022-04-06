@@ -999,6 +999,7 @@ integer(int32) :: ZiAqua ! Depth of Groundwater table below
 integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
                             ! Soil Water Content Menu
 integer(int8) :: MaxPlotTr
+integer(int8) :: OutputAggregate
 
 
 real(dp) :: CCiActual
@@ -14704,6 +14705,19 @@ subroutine SetMaxPlotTr(MaxPlotTr_in)
 
     MaxPlotTr = MaxPlotTr_in
 end subroutine SetMaxPlotTr
+
+integer(int8) function GetOutputAggregate()
+    !! Getter for the "OutputAggregate" global variable.
+
+    GetOutputAggregate = OutputAggregate
+end function GetOutputAggregate
+
+subroutine SetOutputAggregate(OutputAggregate_in)
+    !! Setter for the "OutputAggregate" global variable.
+    integer(int8), intent(in) :: OutputAggregate_in
+
+    OutputAggregate = OutputAggregate_in
+end subroutine SetOutputAggregate
 
 logical function GetEvapoEntireSoilSurface()
     !! Getter for the "EvapoEntireSoilSurface" global variable.

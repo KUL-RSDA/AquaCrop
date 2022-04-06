@@ -10,6 +10,7 @@ use ac_global, only:    CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
+                        DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
                         DetermineDate, &
@@ -61,9 +62,12 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_subkind, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
+                        GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
                         GetECiAqua, &
+                        GetETo, &
+                        GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
                         GetIrriFile, &
@@ -72,8 +76,10 @@ use ac_global, only:    CompartmentIndividual, &
                         GetIrriMode, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
+                        GetOutputAggregate, &
                         GetPathNameProg, &
                         GetSimulation_DelayedDays, &
+                        GetRain, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
@@ -84,6 +90,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulParam_Tmin, &
                         GetSoilLayer_SAT, &
                         GetSoilLayer_SAT, &
+                        GetSumWaBal_Biomass, &
+                        GetSumWaBal_BiomassUnlim, &
+                        GetSumWaBal_SaltIn, &
+                        GetSumWaBal_SaltOut, &
+                        GetSumWaBal_CRsalt, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -91,10 +102,10 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmax, &
                         GetTmin, &
                         GetZiAqua, &
-                        GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
                         rep_DayEventDbl, &
+                        LeapYear, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
@@ -102,6 +113,7 @@ use ac_global, only:    CompartmentIndividual, &
                         SetCompartment_Theta, &
                         SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
+                        GetSimulation_DelayedDays, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
@@ -109,7 +121,6 @@ use ac_global, only:    CompartmentIndividual, &
                         subkind_Grain, &
                         subkind_Tuber, &
                         undef_int
-
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -198,10 +209,17 @@ integer :: fRun  ! file handle
 integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
+integer :: fEToSIM ! file handle
+integer :: fEToSIM_iostat ! IO status
+integer :: fRainSIM ! file handle
+integer :: fRainSIM_iostat ! IO status
 integer :: fTempSIM ! file handle
 integer :: fTempSIM_iostat ! IO status
 integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
+integer :: fObs ! file handle
+integer :: fObs_iostat ! IO status
+
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -212,11 +230,25 @@ type(rep_StressTot) :: StressTot
 type(repCutInfoRecord) :: CutInfoRecord1, CutInfoRecord2
 type(rep_Transfer) :: Transfer
 type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
+type(rep_sum) :: PreviousSum
 
 integer(int32) :: DayNri
+integer(int32) :: IrriInterval
+integer(int32) :: Tadj, GDDTadj
+integer(int32) :: DayLastCut,NrCut,SumInterval
+integer(int8)  :: PreviousStressLevel, StressSFadjNEW
 
+real(dp) :: Bin
+real(dp) :: Bout
+real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
+real(dp) :: Coeffb0,Coeffb1,Coeffb2
+real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
+real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
+real(dp) :: DayFraction,GDDayFraction
+real(dp) :: CGCref,GDDCGCref 
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
@@ -370,6 +402,33 @@ subroutine fIrri_close()
     close(fIrri)
 end subroutine fIrri_close
 
+
+! fEToSIM
+
+subroutine fEToSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEToSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fEToSIM, filename, mode, fEToSIM_iostat)
+end subroutine fEToSIM_open
+
+
+function fEToSIM_read() result(line)
+    !! Returns the next line read from the 'fEToSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fEToSIM, fEToSIM_iostat)
+end function fEToSIM_read
+
+
+subroutine fEToSIM_close()
+    close(fEToSIM)
+end subroutine fEToSIM_close
+
+
 ! fTempSIM
 
 subroutine fTempSIM_open(filename, mode)
@@ -378,7 +437,6 @@ subroutine fTempSIM_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fTempSIM, filename, mode, fTempSIM_iostat)
 end subroutine fTempSIM_open
 
@@ -396,6 +454,33 @@ subroutine fTempSIM_close()
     close(fTempSIM)
 end subroutine fTempSIM_close
 
+
+! fRainSIM
+
+subroutine fRainSIM_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fRainSIM' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+    call open_file(fRainSIM, filename, mode, fRainSIM_iostat)
+end subroutine fRainSIM_open
+
+
+function fRainSIM_read() result(line)
+    !! Returns the next line read from the 'fRainSIM' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fRainSIM, fRainSIM_iostat)
+end function fRainSIM_read
+
+
+subroutine fRainSIM_close()
+    close(fRainSIM)
+end subroutine fRainSIM_close
+
+
 ! fCuts
 
 subroutine fCuts_open(filename, mode)
@@ -404,7 +489,6 @@ subroutine fCuts_open(filename, mode)
         !! name of the file to assign the file handle to
     character, intent(in) :: mode
         !! open the file for reading ('r'), writing ('w') or appending ('a')
-
     call open_file(fCuts, filename, mode, fCuts_iostat)
 end subroutine fCuts_open
 
@@ -430,7 +514,89 @@ subroutine fCuts_close()
     close(fCuts)
 end subroutine fCuts_close
 
+! fObs
 
+subroutine fObs_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fObs' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fObs, filename, mode, fObs_iostat)
+end subroutine fObs_open
+
+
+function fObs_read() result(line)
+    !! Returns the next line read from the 'fObs' file.
+    character(len=:), allocatable :: line
+        !! name of the file to assign the file handle to
+
+    line = read_file(fObs, fObs_iostat)
+end function fObs_read
+
+
+function fObs_eof() result(eof)
+    !! Returns whether the end of the 'fObs' file has been reached.
+    logical :: eof
+
+    eof = fObs_iostat == iostat_end
+end function fObs_eof
+
+
+subroutine fObs_close()
+    close(fObs)
+end subroutine fObs_close
+
+subroutine fObs_rewind()
+    rewind(fObs)
+end subroutine fObs_rewind
+
+
+! Bin
+
+real(dp) function GetBin()
+    !! Getter for the "Bin" global variable.
+
+    GetBin = Bin
+end function GetBin
+
+subroutine SetBin(Bin_in)
+    !! Setter for the "Bin" global variable.
+    real(dp), intent(in) :: Bin_in
+    
+    Bin = Bin_in
+end subroutine SetBin
+
+! Bout
+
+real(dp) function GetBout()
+    !! Getter for the "Bout" global variable.
+
+    GetBout = Bout
+end function GetBout
+
+subroutine SetBout(Bout_in)
+    !! Setter for the "Bout" global variable.
+    real(dp), intent(in) :: Bout_in
+    
+    Bout = Bout_in
+end subroutine SetBout
+
+! GDDayi
+
+real(dp) function GetGDDayi()
+    !! Getter for the "GDDayi" global variable.
+
+    GetGDDayi = GDDayi
+end function GetGDDayi
+
+subroutine SetGDDayi(GDDayi_in)
+    !! Setter for the "GDDayi" global variable.
+    real(dp), intent(in) :: GDDayi_in
+    
+    GDDayi = GDDayi_in
+end subroutine SetGDDayi
 
 ! FracBiomass
 
@@ -447,6 +613,7 @@ subroutine SetFracBiomassPotSF(FracBiomassPotSF_in)
     FracBiomassPotSF = FracBiomassPotSF_in
 end subroutine SetFracBiomassPotSF
 
+
 ! CO2i
 
 real(dp) function GetCO2i()
@@ -461,6 +628,281 @@ subroutine SetCO2i(CO2i_in)
     
     CO2i = CO2i_in
 end subroutine SetCO2i
+
+
+! PreviousSum
+type(rep_sum) function GetPreviousSum()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum = PreviousSum
+end function GetPreviousSum
+
+real(dp) function GetPreviousSum_Epot()
+    !! Getter for the "PreviousSum" global variable.
+
+     GetPreviousSum_Epot = PreviousSum%Epot
+end function GetPreviousSum_Epot
+
+real(dp) function GetPreviousSum_Tpot()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Tpot = PreviousSum%Tpot
+end function GetPreviousSum_Tpot
+
+real(dp) function GetPreviousSum_Rain()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Rain = PreviousSum%Rain
+end function GetPreviousSum_Rain
+
+real(dp) function GetPreviousSum_Irrigation()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Irrigation = PreviousSum%Irrigation
+end function GetPreviousSum_Irrigation
+
+real(dp) function GetPreviousSum_Infiltrated()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Infiltrated = PreviousSum%Infiltrated
+end function GetPreviousSum_Infiltrated
+
+real(dp) function GetPreviousSum_Runoff()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Runoff = PreviousSum%Runoff
+end function GetPreviousSum_Runoff
+
+real(dp) function GetPreviousSum_Drain()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Drain = PreviousSum%Drain
+end function GetPreviousSum_Drain
+
+real(dp) function GetPreviousSum_Eact()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Eact = PreviousSum%Eact
+end function GetPreviousSum_Eact
+
+real(dp) function GetPreviousSum_Tact()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Tact = PreviousSum%Tact
+end function GetPreviousSum_Tact
+
+real(dp) function GetPreviousSum_TrW()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_TrW = PreviousSum%TrW
+end function GetPreviousSum_TrW
+
+real(dp) function GetPreviousSum_ECropCycle()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_ECropCycle = PreviousSum%ECropCycle
+end function GetPreviousSum_ECropCycle
+
+real(dp) function GetPreviousSum_CRwater()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_CRwater = PreviousSum%CRwater
+end function GetPreviousSum_CRwater
+
+real(dp) function GetPreviousSum_Biomass()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_Biomass = PreviousSum%Biomass
+end function GetPreviousSum_Biomass
+
+real(dp) function GetPreviousSum_YieldPart()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_YieldPart = PreviousSum%YieldPart
+end function GetPreviousSum_YieldPart
+
+real(dp) function GetPreviousSum_BiomassPot()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_BiomassPot = PreviousSum%BiomassPot
+end function GetPreviousSum_BiomassPot
+
+real(dp) function GetPreviousSum_BiomassUnlim()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_BiomassUnlim = PreviousSum%BiomassUnlim
+end function GetPreviousSum_BiomassUnlim
+
+real(dp) function GetPreviousSum_BiomassTot()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_BiomassTot = PreviousSum%BiomassTot
+end function GetPreviousSum_BiomassTot
+
+real(dp) function GetPreviousSum_SaltIn()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_SaltIn = PreviousSum%SaltIn
+end function GetPreviousSum_SaltIn
+
+real(dp) function GetPreviousSum_SaltOut()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_SaltOut = PreviousSum%SaltOut
+end function GetPreviousSum_SaltOut
+
+real(dp) function GetPreviousSum_CRSalt()
+    !! Getter for the "PreviousSum" global variable.
+
+    GetPreviousSum_CRSalt = PreviousSum%CRSalt
+end function GetPreviousSum_CRSalt
+
+subroutine SetPreviousSum(PreviousSum_in)
+    !! Setter for the "PreviousSum" global variable.
+    type(rep_sum), intent(in) :: PreviousSum_in
+
+    PreviousSum = PreviousSum_in
+end subroutine SetPreviousSum
+
+subroutine SetPreviousSum_Epot(Epot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Epot
+
+    PreviousSum%Epot = Epot
+end subroutine SetPreviousSum_Epot
+
+subroutine SetPreviousSum_Tpot(Tpot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Tpot
+
+    PreviousSum%Tpot = Tpot
+end subroutine SetPreviousSum_Tpot
+
+subroutine SetPreviousSum_Rain(Rain)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Rain
+
+    PreviousSum%Rain = Rain
+end subroutine SetPreviousSum_Rain
+
+subroutine SetPreviousSum_Irrigation(Irrigation)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Irrigation
+
+    PreviousSum%Irrigation = Irrigation
+end subroutine SetPreviousSum_Irrigation
+
+subroutine SetPreviousSum_Infiltrated(Infiltrated)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Infiltrated
+
+    PreviousSum%Infiltrated = Infiltrated
+end subroutine SetPreviousSum_Infiltrated
+
+subroutine SetPreviousSum_Runoff(Runoff)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Runoff
+
+    PreviousSum%Runoff = Runoff
+end subroutine SetPreviousSum_Runoff
+
+subroutine SetPreviousSum_Drain(Drain)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Drain
+
+    PreviousSum%Drain = Drain
+end subroutine SetPreviousSum_Drain
+
+subroutine SetPreviousSum_Eact(Eact)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Eact
+
+    PreviousSum%Eact = Eact
+end subroutine SetPreviousSum_Eact
+
+subroutine SetPreviousSum_Tact(Tact)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Tact
+
+    PreviousSum%Tact = Tact
+end subroutine SetPreviousSum_Tact
+
+subroutine SetPreviousSum_TrW(TrW)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: TrW
+
+    PreviousSum%TrW = TrW
+end subroutine SetPreviousSum_TrW
+
+subroutine SetPreviousSum_ECropCycle(ECropCycle)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: ECropCycle
+
+    PreviousSum%ECropCycle = ECropCycle
+end subroutine SetPreviousSum_ECropCycle
+
+subroutine SetPreviousSum_CRwater(CRwater)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: CRwater
+
+    PreviousSum%CRwater = CRwater
+end subroutine SetPreviousSum_CRwater
+
+subroutine SetPreviousSum_Biomass(Biomass)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: Biomass
+
+    PreviousSum%Biomass = Biomass
+end subroutine SetPreviousSum_Biomass
+
+subroutine SetPreviousSum_YieldPart(YieldPart)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: YieldPart
+
+    PreviousSum%YieldPart = YieldPart
+end subroutine SetPreviousSum_YieldPart
+
+subroutine SetPreviousSum_BiomassPot(BiomassPot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: BiomassPot
+
+    PreviousSum%BiomassPot = BiomassPot
+end subroutine SetPreviousSum_BiomassPot
+
+subroutine SetPreviousSum_BiomassUnlim(BiomassUnlim)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: BiomassUnlim
+
+    PreviousSum%BiomassUnlim = BiomassUnlim
+end subroutine SetPreviousSum_BiomassUnlim
+
+subroutine SetPreviousSum_BiomassTot(BiomassTot)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: BiomassTot
+
+    PreviousSum%BiomassTot = BiomassTot
+end subroutine SetPreviousSum_BiomassTot
+
+subroutine SetPreviousSum_SaltIn(SaltIn)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: SaltIn
+
+    PreviousSum%SaltIn = SaltIn
+end subroutine SetPreviousSum_SaltIn
+
+subroutine SetPreviousSum_SaltOut(SaltOut)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: SaltOut
+
+    PreviousSum%SaltOut = SaltOut
+end subroutine SetPreviousSum_SaltOut
+
+subroutine SetPreviousSum_CRSalt(CRSalt)
+    !! Setter for the "PreviousSum" global variable.
+    real(dp), intent(in) :: CRSalt
+
+    PreviousSum%CRSalt = CRSalt
+end subroutine SetPreviousSum_CRSalt
 
 ! GwTable
 
@@ -1252,9 +1694,294 @@ subroutine SetGlobalIrriECw(GlobalIrriECw_in)
     GlobalIrriECw = GlobalIrriECw_in
 end subroutine SetGlobalIrriECw
 
+integer(int32) function GetIrriInterval()
+    !! Getter for the "IrriInterval" global variable.
+
+    GetIrriInterval = IrriInterval
+end function GetIrriInterval
+
+subroutine SetIrriInterval(IrriInterval_in)
+    !! Setter for the "IrriInterval" global variable.
+    integer(int32), intent(in) :: IrriInterval_in
+
+    IrriInterval = IrriInterval_in
+end subroutine SetIrriInterval
+
+integer(int32) function GetTadj()
+    !! Getter for the "Tadj" global variable.
+
+    GetTadj = Tadj
+end function GetTadj
+
+subroutine SetTadj(Tadj_in)
+    !! Setter for the "Tadj" global variable. 
+    integer(int32), intent(in) :: Tadj_in
+
+    Tadj = Tadj_in 
+end subroutine SetTadj
+
+integer(int32) function GetGDDTadj()
+    !! Getter for the "GDDTadj" global variable.
+
+    GetGDDTadj = GDDTadj
+end function GetGDDTadj
+
+subroutine SetGDDTadj(GDDTadj_in)
+    !! Setter for the "GDDTadj" global variable.
+    integer(int32), intent(in) :: GDDTadj_in
+
+    GDDTadj = GDDTadj_in
+end subroutine SetGDDTadj
+
+integer(int32) function GetDayLastCut()
+    !! Getter for the "DayLastCut" global variable.
+
+    GetDayLastCut = DayLastCut
+end function GetDayLastCut
+
+subroutine SetDayLastCut(DayLastCut_in)
+    !! Setter for the "DayLastCut" global variable.
+    integer(int32), intent(in) :: DayLastCut_in
+
+    DayLastCut = DayLastCut_in
+end subroutine SetDayLastCut
+
+integer(int32) function GetNrCut()
+    !! Getter for the "NrCut" global variable.
+
+    GetNrCut = NrCut
+end function GetNrCut
+
+subroutine SetNrCut(NrCut_in)
+    !! Setter for the "NrCut" global variable. 
+    integer(int32), intent(in) :: NrCut_in
+
+    NrCut = NrCut_in 
+end subroutine SetNrCut
+
+integer(int32) function GetSumInterval()
+    !! Getter for the "SumInterval" global variable.
+
+    GetSumInterval = SumInterval
+end function GetSumInterval
+
+subroutine SetSumInterval(SumInterval_in)
+    !! Setter for the "SumInterval" global variable.
+    integer(int32), intent(in) :: SumInterval_in
+
+    SumInterval = SumInterval_in
+end subroutine SetSumInterval
+
+integer(int32) function GetPreviousStressLevel()
+    !! Getter for the "PreviousStressLevel" global variable.
+
+    GetPreviousStressLevel = PreviousStressLevel
+end function GetPreviousStressLevel
+
+subroutine SetPreviousStressLevel(PreviousStressLevel_in)
+    !! Setter for the "PreviousStressLevel" global variable.
+    integer(int32), intent(in) :: PreviousStressLevel_in
+
+    PreviousStressLevel = PreviousStressLevel_in
+end subroutine SetPreviousStressLevel
+
+integer(int32) function GetStressSFadjNEW()
+    !! Getter for the "StressSFadjNEW" global variable.
+
+    GetStressSFadjNEW = StressSFadjNEW
+end function GetStressSFadjNEW
+
+subroutine SetStressSFadjNEW(StressSFadjNEW_in)
+    !! Setter for the "StressSFadjNEW" global variable. 
+    integer(int32), intent(in) :: StressSFadjNEW_in
+
+    StressSFadjNEW = StressSFadjNEW_in 
+end subroutine SetStressSFadjNEW
+
+real(dp) function GetCCxWitheredTpot()
+    !! Getter for the "CCxWitheredTpot" global variable.
+
+    GetCCxWitheredTpot = CCxWitheredTpot
+end function GetCCxWitheredTpot
+
+subroutine SetCCxWitheredTpot(CCxWitheredTpot_in)
+    !! Setter for the "CCxWitheredTpot" global variable.
+    real(dp), intent(in) :: CCxWitheredTpot_in
+
+    CCxWitheredTpot = CCxWitheredTpot_in
+end subroutine SetCCxWitheredTpot
+
+real(dp) function GetCCxWitheredTpotNoS()
+    !! Getter for the "CCxWitheredTpotNoS" global variable.
+
+    GetCCxWitheredTpotNoS = CCxWitheredTpotNoS
+end function GetCCxWitheredTpotNoS
+
+subroutine SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_in)
+    !! Setter for the "CCxWitheredTpotNoS" global variable.
+    real(dp), intent(in) :: CCxWitheredTpotNoS_in
+
+    CCxWitheredTpotNoS = CCxWitheredTpotNoS_in
+end subroutine SetCCxWitheredTpotNoS
+
+real(dp) function GetCoeffb0()
+    !! Getter for the "Coeffb0" global variable.
+
+    GetCoeffb0 = Coeffb0
+end function GetCoeffb0
+
+subroutine SetCoeffb0(Coeffb0_in)
+    !! Setter for the "Coeffb0" global variable.  
+    real(dp), intent(in) :: Coeffb0_in
+
+    Coeffb0 = Coeffb0_in 
+end subroutine SetCoeffb0
+
+real(dp) function GetCoeffb1()
+    !! Getter for the "Coeffb1" global variable.
+
+    GetCoeffb1 = Coeffb1
+end function GetCoeffb1
+
+subroutine SetCoeffb1(Coeffb1_in)
+    !! Setter for the "Coeffb1" global variable.  
+    real(dp), intent(in) :: Coeffb1_in
+
+    Coeffb1 = Coeffb1_in 
+end subroutine SetCoeffb1
+
+real(dp) function GetCoeffb2()
+    !! Getter for the "Coeffb2" global variable.
+
+    GetCoeffb2 = Coeffb2
+end function GetCoeffb2
+
+subroutine SetCoeffb2(Coeffb2_in)
+    !! Setter for the "Coeffb2" global variable.  
+    real(dp), intent(in) :: Coeffb2_in
+
+    Coeffb2 = Coeffb2_in 
+end subroutine SetCoeffb2
+
+real(dp) function GetCoeffb0Salt()
+    !! Getter for the "Coeffb0Salt" global variable.
+
+    GetCoeffb0Salt = Coeffb0Salt
+end function GetCoeffb0Salt
+
+subroutine SetCoeffb0Salt(Coeffb0Salt_in)
+    !! Setter for the "Coeffb0Salt" global variable.
+    real(dp), intent(in) :: Coeffb0Salt_in
+
+    Coeffb0Salt = Coeffb0Salt_in
+end subroutine SetCoeffb0Salt
+
+real(dp) function GetCoeffb1Salt()
+    !! Getter for the "Coeffb1Salt" global variable.
+
+    GetCoeffb1Salt = Coeffb1Salt
+end function GetCoeffb1Salt
+
+subroutine SetCoeffb1Salt(Coeffb1Salt_in)
+    !! Setter for the "Coeffb1Salt" global variable.
+    real(dp), intent(in) :: Coeffb1Salt_in
+
+    Coeffb1Salt = Coeffb1Salt_in
+end subroutine SetCoeffb1Salt
+
+real(dp) function GetCoeffb2Salt()
+    !! Getter for the "Coeffb2Salt" global variable.
+
+    GetCoeffb2Salt = Coeffb2Salt
+end function GetCoeffb2Salt
+
+subroutine SetCoeffb2Salt(Coeffb2Salt_in)
+    !! Setter for the "Coeffb2Salt" global variable.
+    real(dp), intent(in) :: Coeffb2Salt_in
+
+    Coeffb2Salt = Coeffb2Salt_in
+end subroutine SetCoeffb2Salt
+
+real(dp) function GetStressLeaf()
+    !! Getter for the "StressLeaf" global variable.
+
+    GetStressLeaf = StressLeaf
+end function GetStressLeaf
+
+subroutine SetStressLeaf(StressLeaf_in)
+    !! Setter for the "StressLeaf" global variable.
+    real(dp), intent(in) :: StressLeaf_in
+
+    StressLeaf = StressLeaf_in
+end subroutine SetStressLeaf
+
+real(dp) function GetStressSenescence()
+    !! Getter for the "StressSenescence" global variable.
+
+    GetStressSenescence = StressSenescence
+end function GetStressSenescence
+
+subroutine SetStressSenescence(StressSenescence_in)
+    !! Setter for the "StressSenescence" global variable.
+    real(dp), intent(in) :: StressSenescence_in
+
+    StressSenescence = StressSenescence_in
+end subroutine SetStressSenescence
+
+real(dp) function GetDayFraction()
+    !! Getter for the "DayFraction" global variable.
+
+    GetDayFraction = DayFraction
+end function GetDayFraction
+
+subroutine SetDayFraction(DayFraction_in)
+    !! Setter for the "DayFraction" global variable.
+    real(dp), intent(in) :: DayFraction_in
+
+    DayFraction = DayFraction_in
+end subroutine SetDayFraction
+
+real(dp) function GetGDDayFraction()
+    !! Getter for the "GDDayFraction" global variable.
+
+    GetGDDayFraction = GDDayFraction
+end function GetGDDayFraction
+
+subroutine SetGDDayFraction(GDDayFraction_in)
+    !! Setter for the "GDDayFraction" global variable.
+    real(dp), intent(in) :: GDDayFraction_in
+
+    GDDayFraction = GDDayFraction_in
+end subroutine SetGDDayFraction
+
+real(dp) function GetCGCref()
+    !! Getter for the "CGCref" global variable.
+
+    GetCGCref = CGCref
+end function GetCGCref
+
+subroutine SetCGCref(CGCref_in)
+    !! Setter for the "CGCref" global variable.
+    real(dp), intent(in) :: CGCref_in
+
+    CGCref = CGCref_in
+end subroutine SetCGCref
+
+real(dp) function GetGDDCGCref()
+    !! Getter for the "GDDCGCref" global variable.
+
+    GetGDDCGCref = GDDCGCref
+end function GetGDDCGCref
+
+subroutine SetGDDCGCref(GDDCGCref_in)
+    !! Setter for the "GDDCGCref" global variable.
+    real(dp), intent(in) :: GDDCGCref_in
+
+    GDDCGCref = GDDCGCref_in
+end subroutine SetGDDCGCref
+
+
 !! END section global variables
-
-
 
 
 subroutine AdjustForWatertable()
@@ -1278,9 +2005,8 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
+subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
-    type(rep_sum), intent(inout) :: PreviousSum
     real(dp), intent(inout) :: SumETo
     real(dp), intent(inout) :: SumGDD
     real(dp), intent(inout) :: PreviousSumETo
@@ -1288,25 +2014,25 @@ subroutine ResetPreviousSum(PreviousSum, SumETo, SumGDD, PreviousSumETo, &
     real(dp), intent(inout) :: PreviousBmob
     real(dp), intent(inout) :: PreviousBsto
 
-    PreviousSum%Epot = 0.0_dp
-    PreviousSum%Tpot = 0.0_dp
-    PreviousSum%Rain = 0.0_dp
-    PreviousSum%Irrigation = 0.0_dp
-    PreviousSum%Infiltrated = 0.0_dp
-    PreviousSum%Runoff = 0.0_dp
-    PreviousSum%Drain = 0.0_dp
-    PreviousSum%Eact = 0.0_dp
-    PreviousSum%Tact = 0.0_dp
-    PreviousSum%TrW = 0.0_dp
-    PreviousSum%ECropCycle = 0.0_dp
-    PreviousSum%CRwater = 0.0_dp
-    PreviousSum%Biomass = 0.0_dp
-    PreviousSum%YieldPart = 0.0_dp
-    PreviousSum%BiomassPot = 0.0_dp
-    PreviousSum%BiomassUnlim = 0.0_dp
-    PreviousSum%SaltIn = 0.0_dp
-    PreviousSum%SaltOut = 0.0_dp
-    PreviousSum%CRsalt = 0.0_dp
+    call SetPreviousSum_Epot(0.0_dp)
+    call SetPreviousSum_Tpot(0.0_dp)
+    call SetPreviousSum_Rain(0.0_dp)
+    call SetPreviousSum_Irrigation(0.0_dp)
+    call SetPreviousSum_Infiltrated(0.0_dp)
+    call SetPreviousSum_Runoff(0.0_dp)
+    call SetPreviousSum_Drain(0.0_dp)
+    call SetPreviousSum_Eact(0.0_dp)
+    call SetPreviousSum_Tact(0.0_dp)
+    call SetPreviousSum_TrW(0.0_dp)
+    call SetPreviousSum_ECropCycle(0.0_dp)
+    call SetPreviousSum_CRwater(0.0_dp)
+    call SetPreviousSum_Biomass(0.0_dp)
+    call SetPreviousSum_YieldPart(0.0_dp)
+    call SetPreviousSum_BiomassPot(0.0_dp)
+    call SetPreviousSum_BiomassUnlim(0.0_dp)
+    call SetPreviousSum_SaltIn(0.0_dp)
+    call SetPreviousSum_SaltOut(0.0_dp)
+    call SetPreviousSum_CRsalt(0.0_dp)
     SumETo = 0.0_dp
     SumGDD = 0.0_dp
     PreviousSumETo = 0.0_dp
