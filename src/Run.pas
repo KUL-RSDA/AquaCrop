@@ -26,7 +26,7 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 var  fHarvest, fEval : text;
-     SumETo, SumGDD, Ziprev,SumGDDPrev,TESTVAL : double;
+     SumETo, SumGDD, Ziprev,SumGDDPrev, TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
@@ -1119,11 +1119,9 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     GwTable_temp : rep_GwTable;
     RedCGC_temp, RedCCX_temp, RCadj_temp : ShortInt; 
     EffectStress_temp : rep_EffectStress;
-    SumGDD_temp, SumGDDFromDay1_temp, FracBiomassPotSF_temp : double;
+    SumGDD_temp, SumGDDFromDay1_temp : double;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
-    Coeffb0_temp, Coeffb1_temp, Coeffb2_temp : double;
-    Coeffb0Salt_temp,Coeffb1Salt_temp,Coeffb2Salt_temp : double;
 
 BEGIN
 //1. Adjustments at start
@@ -3000,7 +2998,7 @@ END;  // FinalizeSimulation
 
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
-VAR SumWaBal_temp, PreviousSum_temp : rep_sum;
+VAR SumWaBal_temp : rep_sum;
 
     PROCEDURE AdjustCompartments;
     VAR TotDepth : double;
