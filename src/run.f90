@@ -227,6 +227,7 @@ real(dp) :: Bout
 real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: SumETo,SumGDD
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
@@ -1983,6 +1984,31 @@ subroutine SetGDDCGCref(GDDCGCref_in)
     GDDCGCref = GDDCGCref_in
 end subroutine SetGDDCGCref
 
+real(dp) function GetSumETo()
+    !! Getter for the "SumETo" global variable.
+
+    GetSumETo = SumETo
+end function GetSumETo
+
+subroutine SetSumETo(SumETo_in)
+    !! Setter for the "SumETo" global variable.
+    real(dp), intent(in) :: SumETo_in
+
+    SumETo = SumETo_in
+end subroutine SetSumETo
+
+real(dp) function GetSumGDD()
+    !! Getter for the "SumGDD" global variable.
+
+    GetSumGDD = SumGDD
+end function GetSumGDD
+
+subroutine SetSumGDD(SumGDD_in)
+    !! Setter for the "SumGDD" global variable.
+    real(dp), intent(in) :: SumGDD_in
+
+    SumGDD = SumGDD_in
+end subroutine SetSumGDD
 
 !! END section global variables
 
@@ -2008,10 +2034,8 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
+subroutine ResetPreviousSum(PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
-    real(dp), intent(inout) :: SumETo
-    real(dp), intent(inout) :: SumGDD
     real(dp), intent(inout) :: PreviousSumETo
     real(dp), intent(inout) :: PreviousSumGDD
     real(dp), intent(inout) :: PreviousBmob
@@ -2036,8 +2060,8 @@ subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
     call SetPreviousSum_SaltIn(0.0_dp)
     call SetPreviousSum_SaltOut(0.0_dp)
     call SetPreviousSum_CRsalt(0.0_dp)
-    SumETo = 0.0_dp
-    SumGDD = 0.0_dp
+    call SetSumETo(0.0_dp)
+    call SetSumGDD(0.0_dp)
     PreviousSumETo = 0.0_dp
     PreviousSumGDD = 0.0_dp
     PreviousBmob = 0.0_dp

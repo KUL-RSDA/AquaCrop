@@ -26,7 +26,7 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 var  fHarvest, fEval : text;
-     SumETo, SumGDD, Ziprev,SumGDDPrev,TESTVAL : double;
+     Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
@@ -1334,8 +1334,8 @@ IF (GetDayNri() >= GetCrop().Day1)
         SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + GetGDDayi());
         END;
 // Reset cummulative sums of ETo and GDD for Run output
-SumETo := 0;
-SumGDD := 0;
+SetSumETo(0);
+SetSumGDD(0);
 
 
 // 11. Irrigation
@@ -1768,8 +1768,8 @@ BEGIN
 DetermineDate((PreviousDayNr+1),Day1,Month1,Year1);
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
 RPer := GetSumWaBal_Rain() - GetPreviousSum_Rain();
-EToPer := SumETo - PreviousSumETo;
-GDDPer := SumGDD - PreviousSumGDD;
+EToPer := GetSumETo() - PreviousSumETo;
+GDDPer := GetSumGDD() - PreviousSumGDD;
 IrriPer := GetSumWaBal_Irrigation() - GetPreviousSum_Irrigation();
 InfiltPer := GetSumWaBal_Infiltrated() - GetPreviousSum_Infiltrated();
 EPer := GetSumWaBal_Eact() - GetPreviousSum_Eact();
@@ -1802,8 +1802,8 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
 // reset previous sums
 PreviousDayNr := GetDayNri();
 SetPreviousSum_Rain(GetSumWaBal_Rain());
-PreviousSumETo := SumETo;
-PreviousSumGDD := SumGDD;
+PreviousSumETo := GetSumETo();
+PreviousSumGDD := GetSumGDD();
 SetPreviousSum_Irrigation(GetSumWaBal_Irrigation());
 SetPreviousSum_Infiltrated(GetSumWaBal_Infiltrated());
 SetPreviousSum_Eact(GetSumWaBal_Eact());
@@ -1834,7 +1834,7 @@ BEGIN
 DetermineDate(GetSimulation_FromDayNr(),Day1,Month1,Year1); // Start simulation run
 DetermineDate(GetSimulation_ToDayNr(),DayN,MonthN,YearN); // End simulation run
 WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
-               GetSumWaBal_Rain(),SumETo,SumGDD,
+               GetSumWaBal_Rain(),GetSumETo(),GetSumGDD(),
                GetSumWaBal_Irrigation(),GetSumWaBal_Infiltrated(),GetSumWaBal_Runoff(),GetSumWaBal_Drain(),GetSumWaBal_CRwater(),
                GetSumWaBal_Eact(),GetSumWaBal_Epot(),GetSumWaBal_Tact(),GetSumWaBal_TrW(),GetSumWaBal_Tpot(),
                GetSumWaBal_SaltIn(),GetSumWaBal_SaltOut(),GetSumWaBal_CRsalt(),
@@ -2874,8 +2874,8 @@ IF GetManagement_Cuttings_Considered() THEN
 
 (* 14. Write results *)
 //14.a Summation
-SumETo := SumETo + GetETo();
-SumGDD := SumGDD + GetGDDayi();
+SetSumETo( GetSumETo() + GetETo());
+SetSumGDD( GetSumGDD() + GetGDDayi());
 //14.b Stress totals
 IF (GetCCiActual() > 0) THEN
    BEGIN
@@ -3049,7 +3049,7 @@ AdjustCompartments;
 SumWaBal_temp := GetSumWaBal();
 GlobalZero(SumWabal_temp);
 SetSumWaBal(SumWaBal_temp);
-ResetPreviousSum(SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+ResetPreviousSum(PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);

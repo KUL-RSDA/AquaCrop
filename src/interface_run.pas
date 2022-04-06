@@ -307,7 +307,7 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum(VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
+procedure ResetPreviousSum(VAR PreviousSumETo,PreviousSumGDD,
                                PreviousBmob,PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
@@ -865,6 +865,17 @@ function GetCGCref() : double;
 procedure SetCGCref(constref CGCref : double);
     external 'aquacrop' name '__ac_run_MOD_setcgcref';
 
+function GetSumETo() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumeto';
+
+procedure SetSumETo(constref SumETo : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumeto';
+
+function GetSumGDD() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgdd';
+
+procedure SetSumGDD(constref SumGDD : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgdd';
 
 implementation
 
