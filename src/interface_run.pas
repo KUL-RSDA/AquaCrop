@@ -883,6 +883,19 @@ function GetTimeSenescence() : double;
 procedure SetTimeSenescence(constref TimeSenescence : double);
     external 'aquacrop' name '__ac_run_MOD_settimesenescence';
 
+function GetSumKcTop() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctop';
+
+procedure SetSumKcTop(constref SumKcTop : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctop';
+
+function GetSumKcTopStress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctopstress';
+
+procedure SetSumKcTopStress(constref SumKcTopStress : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctopstress';
+
+
 implementation
 
 
