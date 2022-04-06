@@ -563,14 +563,7 @@ procedure SetPreviousSum_SaltOut(constref SaltOut : double);
 procedure SetPreviousSum_CRsalt(constref CRsalt : double);
         external 'aquacrop' name '__ac_run_MOD_setprevioussum_crsalt';
 
-procedure RelationshipsForFertilityAndSaltStress(
-                    VAR Coeffb0 : double;
-                    VAR Coeffb1 : double;
-                    VAR Coeffb2 : double;
-                    VAR FracBiomassPotSF : double;
-                    VAR Coeffb0Salt : double;
-                    VAR Coeffb1Salt : double;
-                    VAR Coeffb2Salt : double);
+procedure RelationshipsForFertilityAndSaltStress();
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
