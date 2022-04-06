@@ -4586,6 +4586,12 @@ function GetMaxPlotTr() : shortint;
 procedure SetMaxPlotTr(constref MaxPlotTr_in : shortint);
     external 'aquacrop' name '__ac_global_MOD_setmaxplottr';
 
+function GetOutputAggregate() : shortint;
+    external 'aquacrop' name '__ac_global_MOD_getoutputaggregate';
+
+procedure SetOutputAggregate(constref OutputAggregate_in : shortint);
+    external 'aquacrop' name '__ac_global_MOD_setoutputaggregate';
+
 function GetEvapoEntireSoilSurface() : boolean;
     external 'aquacrop' name '__ac_interface_global_MOD_getevapoentiresoilsurface_wrap';
 
@@ -4745,6 +4751,18 @@ procedure CheckForKeepSWC_wrap(
                     var RunWithKeepSWC : boolean;
                     var ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
+
+function GetTmin() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettmin';
+
+procedure SetTmin(constref Tmin_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settmin';
+
+function GetTmax() : double;
+    external 'aquacrop' name '__ac_global_MOD_gettmax';
+
+procedure SetTmax(constref Tmax_in : double);
+    external 'aquacrop' name '__ac_global_MOD_settmax';
 
 function GetSurf0() : double;
     external 'aquacrop' name '__ac_global_MOD_getsurf0';

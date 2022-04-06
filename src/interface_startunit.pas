@@ -4,6 +4,10 @@ interface
 
 uses Global, interface_global, InitialSettings, interface_initialsettings, Run, interface_run;
 
+
+procedure GetTimeAggregationResults(VAR OutputAggregate : ShortInt);
+    external 'aquacrop' name '__ac_startunit_MOD_gettimeaggregationresults';
+
 procedure GetRequestDailyResults(VAR Out1Wabal : boolean; 
                                  VAR Out2Cro : boolean; 
                                  VAR Out3Prof : boolean;

@@ -999,6 +999,7 @@ integer(int32) :: ZiAqua ! Depth of Groundwater table below
 integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
                             ! Soil Water Content Menu
 integer(int8) :: MaxPlotTr
+integer(int8) :: OutputAggregate
 
 
 real(dp) :: CCiActual
@@ -1024,6 +1025,8 @@ real(dp) :: SurfaceStorage !mm/day
 real(dp) :: Tact ! mm/day
 real(dp) :: Tpot ! mm/day
 real(dp) :: TactWeedInfested !mm/day
+real(dp) :: Tmax ! degC
+real(dp) :: Tmin ! degC
 
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
@@ -14703,6 +14706,19 @@ subroutine SetMaxPlotTr(MaxPlotTr_in)
     MaxPlotTr = MaxPlotTr_in
 end subroutine SetMaxPlotTr
 
+integer(int8) function GetOutputAggregate()
+    !! Getter for the "OutputAggregate" global variable.
+
+    GetOutputAggregate = OutputAggregate
+end function GetOutputAggregate
+
+subroutine SetOutputAggregate(OutputAggregate_in)
+    !! Setter for the "OutputAggregate" global variable.
+    integer(int8), intent(in) :: OutputAggregate_in
+
+    OutputAggregate = OutputAggregate_in
+end subroutine SetOutputAggregate
+
 logical function GetEvapoEntireSoilSurface()
     !! Getter for the "EvapoEntireSoilSurface" global variable.
 
@@ -14977,6 +14993,32 @@ subroutine SetTactWeedInfested(TactWeedInfested_in)
 
     TactWeedInfested = TactWeedInfested_in
 end subroutine SetTactWeedInfested
+
+real(dp) function GetTmin()
+    !! Getter for the "Tmin" global variable.
+
+    GetTmin = Tmin
+end function GetTmin
+
+subroutine SetTmin(Tmin_in)
+    !! Setter for the "Tmin" global variable.
+    real(dp), intent(in) :: Tmin_in
+
+    Tmin = Tmin_in
+end subroutine SetTmin
+
+real(dp) function GetTmax()
+    !! Getter for the "Tmax" global variable.
+
+    GetTmax = Tmax
+end function GetTmax
+
+subroutine SetTmax(Tmax_in)
+    !! Setter for the "Tmax" global variable.
+    real(dp), intent(in) :: Tmax_in
+
+    Tmax = Tmax_in
+end subroutine SetTmax
 
 real(dp) function GetSurf0()
     !! Getter for the "Surf0" global variable.

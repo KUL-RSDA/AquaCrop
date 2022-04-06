@@ -25,41 +25,6 @@ USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, inter
 VAR fProjects : textFile;
 
 
-PROCEDURE GetTimeAggregationResults(VAR OutputAggregate : ShortInt);
-VAR FullFileName,TempString : string;
-    f0 : TextFile;
-    n,i : INTEGER;
-
-BEGIN
-OutputAggregate := 0; // simulation period 0: season
-FullFileName := CONCAT(GetPathNameSimul(),'AggregationResults.SIM');
-IF (FileExists(FullFileName) = true) THEN
-   BEGIN
-   Assign(f0,FullFileName);
-   Reset(f0);
-   READLN(f0,TempString);
-   n := Length(TempString);
-   IF (n > 0) THEN
-      BEGIN
-      i := 1;
-      While ((TempString[i] = ' ') AND (i < n)) DO i := i + 1;
-      IF (TempString[i] = '1')
-         THEN OutputAggregate := 1 // 1: daily aggregation
-         ELSE BEGIN
-              IF (TempString[i] = '2')
-                 THEN OutputAggregate := 2 // 2 : 10-daily aggregation
-                 ELSE BEGIN
-                      IF (TempString[i] = '3')
-                         THEN OutputAggregate := 3 // 3 : monthly aggregation
-                         ELSE OutputAggregate := 0; // 0 : seasonal results only
-                      END;
-              END;
-      END;
-   Close(f0);
-   END;
-END; (* GetTimeAggregationResults *)
-
-
 PROCEDURE PrepareReport(OutputAggregate : ShortInt;
                         Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
                         Part1Mult,Part2Eval : BOOLEAN);
@@ -155,6 +120,8 @@ END;
 
 
 PROCEDURE InitializeTheProgram;
+VAR
+    OutputAggregate_temp : shortint;
 BEGIN
 Decimalseparator := '.';
 SetPathNameOutp('OUTP/');
@@ -163,10 +130,12 @@ PathNameList :=  'LIST/';
 PathNameParam := 'PARAM/';
 SetPathNameProg('');
 
-GetTimeAggregationResults(OutputAggregate);
+OutputAggregate_temp := GetOutputAggregate();
+GetTimeAggregationResults(OutputAggregate_temp);
+SetOutputAggregate(OutputAggregate_temp);
 GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily);
 GetRequestParticularResults(Part1Mult,Part2Eval);
-PrepareReport(OutputAggregate,Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
+PrepareReport(GetOutputAggregate(),Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
               Part1Mult,Part2Eval);
 END;
 
@@ -236,6 +205,7 @@ VAR NrString,TestFile : string;
         i,simul_RpZmi,simul_lowox : INTEGER;
         effrainperc,effrainshow,effrainrootE,simul_saltdiff,simul_saltsolub, simul_root,simul_ed,simul_pCCHIf,simul_SFR,simul_TAWg,simul_beta,simul_Tswc,simul_EZma,simul_GDD : ShortInt;
         simul_rod,simul_kcWB,simul_RZEma,simul_pfao,simul_expFsen,simul_Tmi,simul_Tma : double;
+        Tmin_temp : double;
     BEGIN
     IF FileExists(FullFileNameProgramParameters)
        THEN BEGIN // load set of program parameters
@@ -296,7 +266,8 @@ VAR NrString,TestFile : string;
             SetSimulParam_IniAbstract(5); // fixed in Version 5.0 cannot be changed since linked with equations for CN AMCII and CN converions
 
             // Temperature
-            Readln(f0,Tmin);   //Default minimum temperature (degC) if no temperature file is specified
+            Readln(f0,Tmin_temp);   //Default minimum temperature (degC) if no temperature file is specified
+            SetTmin(Tmin_temp);
             SetSimulParam_Tmin(simul_Tmi);
             Readln(f0,simul_Tma);   //Default maximum temperature (degC) if no temperature file is specified
 

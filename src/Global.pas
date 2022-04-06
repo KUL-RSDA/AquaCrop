@@ -8,14 +8,12 @@ VAR DataPath,ObsPath : BOOLEAN;
 
 
     SenStage       : INTEGER;
-    Tmin, Tmax : double; (* degC *)
     NrC,NrD        : INTEGER; (* formats REAL *)
     MinReal, MaxReal : double;
     MinInt, MaxInt : INTEGER;
 
 
 // Extra for stand alone procedure
-    OutputAggregate : ShortInt;
     PathNameList,PathNameParam : string;
     Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
     Part1Mult,Part2Eval : BOOLEAN;
