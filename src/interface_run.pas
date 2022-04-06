@@ -895,6 +895,11 @@ function GetSumKcTopStress() : double;
 procedure SetSumKcTopStress(constref SumKcTopStress : double);
     external 'aquacrop' name '__ac_run_MOD_setsumkctopstress';
 
+function GetSumKci() : double; 
+    external 'aquacrop' name '__ac_run_MOD_getsumkci';
+
+procedure SetSumKci(constref SumKci : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkci';
 
 implementation
 

@@ -29,7 +29,7 @@ var  fHarvest, fEval : text;
      Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
+     Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
      CGCadjustmentAfterCutting : BOOLEAN;
@@ -1234,7 +1234,7 @@ SetSumKcTop(SeasonalSumOfKcPot(GetCrop().DaysToCCini,GetCrop().GDDaysToCCini,
                  GetCrop().Tbase,GetCrop().Tupper,GetSimulParam_Tmin(),GetSimulParam_Tmax(),GetCrop().GDtranspLow,GetCO2i(),
                  GetCrop_ModeCycle()));
 SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF());
-SumKci := 0;
+SetSumKci(0);
 
 // 7. weed infestation and self-thinning of herbaceous perennial forage crops
 // CC expansion due to weed infestation and/or CC decrease as a result of self-thinning
@@ -2251,7 +2251,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     PreviousStressLevel_temp, StressSFadjNEW_temp : shortint;
     CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp : double;
     StressLeaf_temp,StressSenescence_temp, TimeSenescence_temp : double;
-    SumKcTopStress_temp : double;
+    SumKcTopStress_temp, SumKci_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2744,12 +2744,13 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         Bin_temp := GetBin();
         Bout_temp := GetBout();
         SumKcTopStress_temp := GetSumKcTopStress();
+        SumKci_temp := GetSumKci();
         DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GetGDDayi(),GetTact(),GetSumKcTop(),GetCGCref(),GetGDDCGCref(),
                                  GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,GetSumInterval(),
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
                                  YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
-                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress_temp,SumKci,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
+                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress_temp,SumKci_temp,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
                                  WeedRCi,CCiActualWeedInfested,TactWeedInfested_temp,
                                  StressSFadjNEW_temp,PreviousStressLevel_temp,
                                  Store_temp,Mobilize_temp,
@@ -2772,6 +2773,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetCCxWitheredTpot(CCxWitheredTpot_temp);
         SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
         SetSumKcTopStress(SumKcTopStress_temp);
+        SetSumKci(SumKci_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;

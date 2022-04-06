@@ -235,7 +235,7 @@ real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senesce
 real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
 real(dp) :: TimeSenescence !! calendar days or GDDays
-real(dp) :: SumKcTop, SumKcTopStress
+real(dp) :: SumKcTop, SumKcTopStress, SumKci
 
 contains
 
@@ -2050,6 +2050,20 @@ subroutine SetSumKcTopStress(SumKcTopStress_in)
 
     SumKcTopStress = SumKcTopStress_in
 end subroutine SetSumKcTopStress
+
+real(dp) function GetSumKci()
+    !! Getter for the "SumKci" global variable.
+
+    GetSumKci = SumKci
+end function GetSumKci
+
+subroutine SetSumKci(SumKci_in)
+    !! Setter for the "SumKci" global variable.
+    real(dp), intent(in) :: SumKci_in
+
+    SumKci = SumKci_in
+end subroutine SetSumKci
+
 
 !! END section global variables
 
