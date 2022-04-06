@@ -5,7 +5,9 @@ use, intrinsic :: iso_c_binding, only: c_char, &
 use ac_interface_global, only: pointer2string, &
                                string2pointer
 use ac_kinds, only: int32
-use ac_run, only:   fRun_open, &
+use ac_run, only:   fDaily_open, &
+                    fDaily_write, &
+                    fRun_open, &
                     fRun_write, &
                     fIrri_eof, &
                     fIrri_open, &
@@ -41,6 +43,33 @@ implicit none
 
 contains
 
+subroutine fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fDaily_open(filename, mode)
+end subroutine fDaily_open_wrap
+
+
+subroutine fDaily_write_wrap(line_ptr, line_len, advance)
+    type(c_ptr), intent(in) :: line_ptr
+    integer(int32), intent(in) :: line_len
+    logical(1), intent(in) :: advance
+
+    character(len=line_len) :: line
+    logical :: advance_f
+
+    line = pointer2string(line_ptr, line_len)
+    advance_f = advance
+    call fDaily_write(line, advance_f)
+end subroutine fDaily_write_wrap
 
 subroutine fRun_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr

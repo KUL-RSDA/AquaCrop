@@ -315,6 +315,27 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
+
+procedure fDaily_open(constref filename : string; constref mode : string);
+
+procedure fDaily_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fdaily_open_wrap';
+
+procedure fDaily_write(constref line : string; constref advance : boolean = True);
+
+procedure fDaily_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_fdaily_write_wrap';
+
+procedure fDaily_close();
+        external 'aquacrop' name '__ac_run_MOD_fdaily_close';
+
 function GetTminDataSet() : rep_SimulationEventsDbl;
 
 function GetTminDataSet_i(constref i : integer) : rep_DayEventDbl;
@@ -997,6 +1018,28 @@ begin;
     SetCutInfoRecord2_IntervalInfo(CutInfoRecord2.IntervalInfo);
     SetCutInfoRecord2_IntervalGDD(CutInfoRecord2.IntervalGDD);
     SetCutInfoRecord2_MassInfo(CutInfoRecord2.MassInfo);
+end;
+
+procedure fDaily_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+procedure fDaily_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fDaily_write_wrap(line_ptr, line_len, advance);
 end;
 
 procedure fRun_open(constref filename : string; constref mode : string);
