@@ -234,6 +234,7 @@ real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
 real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
+real(dp) :: TimeSenescence !! calendar days or GDDays
 
 contains
 
@@ -2009,6 +2010,19 @@ subroutine SetSumGDD(SumGDD_in)
 
     SumGDD = SumGDD_in
 end subroutine SetSumGDD
+
+real(dp) function GetTimeSenescence()
+    !! Getter for the "TimeSenescence" global variable.
+
+    GetTimeSenescence = TimeSenescence
+end function GetTimeSenescence
+
+subroutine SetTimeSenescence(TimeSenescence_in)
+    !! Setter for the "TimeSenescence" global variable.
+    real(dp), intent(in) :: TimeSenescence_in
+
+    TimeSenescence = TimeSenescence_in
+end subroutine SetTimeSenescence
 
 !! END section global variables
 

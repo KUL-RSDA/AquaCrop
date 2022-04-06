@@ -877,6 +877,12 @@ function GetSumGDD() : double;
 procedure SetSumGDD(constref SumGDD : double);
     external 'aquacrop' name '__ac_run_MOD_setsumgdd';
 
+function GetTimeSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_gettimesenescence';
+
+procedure SetTimeSenescence(constref TimeSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_settimesenescence';
+
 implementation
 
 

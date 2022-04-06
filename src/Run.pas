@@ -32,7 +32,6 @@ var  fHarvest, fEval : text;
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
-     TimeSenescence : double; // calendar days or GDDays
      CGCadjustmentAfterCutting : BOOLEAN;
      BprevSum,YprevSum,SumGDDcuts : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
@@ -1470,7 +1469,7 @@ IF ((GetSimulation_CCini() > 0) AND (ROUND(10000*GetCCiPrev()) > 0) AND (ROUND(G
 // 13.3
 SetCrop_CCxAdjusted(CCxTotal);
 SetCrop_CCoAdjusted(CCoTotal);
-TimeSenescence := 0;
+SetTimeSenescence(0);
 SetCrop_CCxWithered(0);
 NoMoreCrop := false;
 SetCCiActual(GetCCiPrev());
@@ -2251,7 +2250,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TargetTimeVal, TargetDepthVal : Integer;
     PreviousStressLevel_temp, StressSFadjNEW_temp : shortint;
     CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp : double;
-    StressLeaf_temp,StressSenescence_temp : double;
+    StressLeaf_temp,StressSenescence_temp, TimeSenescence_temp : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2668,15 +2667,17 @@ SetBout(Bout_temp);
 (* 9. RUN Soil water balance and actual Canopy Cover *)
 StressLeaf_temp := GetStressLeaf();
 StressSenescence_temp := GetStressSenescence();
+TimeSenescence_temp := GetTimeSenescence();
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,GetSumInterval(),GetDayLastCut(),GetStressTot_NrD(),
               GetTadj(),GetGDDTadj(),
               GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
               GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),
               GetDayFraction(),GetGDDayFraction(),FracAssim,
               GetStressSFadjNEW(),GetTransfer_Store(),GetTransfer_Mobilize(),
-              StressLeaf_temp,StressSenescence_temp,TimeSenescence,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
+              StressLeaf_temp,StressSenescence_temp,TimeSenescence_temp,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
 SetStressLeaf(StressLeaf_temp);
 SetStressSenescence(StressSenescence_temp);
+SetTimeSenescence(TimeSenescence_temp);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
 IF ((GetRootingDepth() > 0) AND (GetDayNri() = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
