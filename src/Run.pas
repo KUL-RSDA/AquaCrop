@@ -138,7 +138,7 @@ IF (TheProjectType = TypePRM) THEN
    BEGIN
    Str(TheNrRun:4, Str1);
    WriteStr(tempstring, '   Run:',Str1);
-   fDaily_write(tempstring, false);
+   fDaily_write(tempstring);
    END;
 
 // B. thickness of soil profile and root zone
@@ -253,6 +253,7 @@ IF Out6CompEC THEN
       ELSE BEGIN
       WriteStr(tempstring,'      ECe',Str1);
       fDaily_write(tempstring);
+      END;
    END;
 // C7. Climate input parameters
 IF Out7Clim THEN fDaily_write('     Rain       ETo      Tmin      Tavg      Tmax      CO2');
@@ -351,7 +352,7 @@ IF Out6CompEC THEN
    END;
 // D7. Climate input parameters
 IF Out7Clim THEN fDaily_write('       mm        mm     degC      degC      degC       ppm');
-end;
+//end;
 END; (* WriteTitleDailyResults *)
 
 
@@ -2091,6 +2092,7 @@ IF Out2Crop THEN
       ELSE BEGIN
       WriteStr(tempstring, (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):9:3);
       fDaily_write(tempstring, false);
+      END;
    // finalize
    IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
       BEGIN
@@ -2196,7 +2198,7 @@ IF Out5CompWC THEN
    fDaily_write(tempstring, false);
    FOR Nr := 2 TO (GetNrCompartments()-1) DO 
     BEGIN WriteStr(tempstring, (GetCompartment_Theta(Nr)*100):11:1);
-          fDaily_write(tempstring);
+          fDaily_write(tempstring, false);
     END;
    IF ((Out6CompEC = true) OR (Out7Clim = true))
       THEN BEGIN
