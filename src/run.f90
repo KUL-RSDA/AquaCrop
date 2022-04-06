@@ -6,23 +6,31 @@ use ac_kinds, only: dp, &
                     int32
 
 use ac_global, only:    CompartmentIndividual, &
+                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
                         DegreesDay, &
                         DetermineDate, &
+                        DetermineDate, &
+                        DetermineDayNr, &
                         DetermineDayNr, &
                         DetermineSaltContent, &
+                        DetermineSaltContent, &
                         FileExists, &
+                        GetCompartment_i, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
+                        getcrop_ccsaltdistortion, &
                         GetCrop_CCx, &
                         GetCrop_CDC, &
                         GetCrop_CGC, &
+                        GetCrop_CGC, &
                         GetCrop_Day1, &
+                        GetCrop_DayN, &
                         GetCrop_DaysToCCini, &
                         GetCrop_DaysToFlowering, &
                         GetCrop_DaysToFullCanopy, &
@@ -39,35 +47,42 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_GDDaysToSenescence, &
                         GetCrop_GDDCDC, &
                         GetCrop_GDDCGC, &
-                        GetCrop_GDDaysToFlowering, &
-                        GetCrop_GDDaysToHarvest, &
                         GetCrop_GDDLengthFlowering, &
                         GetCrop_GDtranspLow, &
+                        GetCrop_GDtranspLow, &
+                        GetCrop_HI, &
                         GetCrop_KcDecline, &
                         GetCrop_KcTop, &
-                        GetCrop_HI, &
+                        GetCrop_Length_i, &
                         GetCrop_LengthFlowering, &
-                        GetCrop_GDtranspLow, &
-                        getcrop_ccsaltdistortion, &
+                        GetCrop_ModeCycle, &
                         GetCrop_StressResponse, &
                         GetCrop_StressResponse_Calibrated, &
                         GetCrop_subkind, &
-                        GetCrop_ModeCycle, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetECiAqua, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
+                        GetIrriFile, &
+                        GetIrriFilefull, &
+                        GetIrriFirstDayNr, &
+                        GetIrriMode, &
+                        GetManagement_FertilityStress, &
                         GetNrCompartments, &
                         GetPathNameProg, &
+                        GetSimulation_DelayedDays, &
                         GetSimulation_FromDayNr, &
-                        GetSimulation_SumGDD, &
+                        GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
+                        GetSimulation_SumGDD, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
-                        GetSimulParam_Tmin, &
                         GetSimulParam_Tmax, &
+                        GetSimulParam_Tmin, &
+                        GetSoilLayer_SAT, &
                         GetSoilLayer_SAT, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
@@ -76,61 +91,26 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmax, &
                         GetTmin, &
                         GetZiAqua, &
-                        GetECiAqua, &
+                        GetZiAqua, &
+                        IrriMode_Generate, &
+                        IrriMode_Manual, &
+                        rep_DayEventDbl, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
+                        SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams, &
+                        subkind_Grain, &
+                        subkind_Tuber, &
                         undef_int
 
 
-
-use ac_global, only: CompartmentIndividual, &
-                     DetermineDate, &
-                     DetermineDayNr, &
-                     DetermineSaltContent, &
-                     GetCompartment_i, &
-                     GetCompartment_Layer, &
-                     GetCompartment_Thickness, &
-                     GetCrop_CCEffectEvapLate, &
-                     GetCrop_CCo, &
-                     GetCrop_CCx, &
-                     GetCrop_CDC, &
-                     GetCrop_CGC, &
-                     GetCrop_Day1, &
-                     GetCrop_Tbase, &
-                     GetCrop_Tupper, &
-                     GetCrop_WP, &
-                     GetCrop_WPy, &
-                     GetCrop_Length_i, &
-                     GetSimulation_DelayedDays, &
-                     GetGroundWaterFile, &
-                     GetGroundWaterFileFull, &
-                     GetManagement_FertilityStress, &
-                     GetNrCompartments, &
-                     GetPathNameProg, &
-                     GetSimulation_FromDayNr, &
-                     GetSimulation_ToDayNr, &
-                     GetSimulParam_Tmax, &
-                     GetSimulParam_Tmin, &
-                     GetSoilLayer_SAT, &
-                     GetZiAqua, &
-                     GetECiAqua, &
-                     rep_DayEventDbl, &
-                     rep_sum, &
-                     roundc, &
-                     SetCompartment_i, &
-                     SetCompartment_Theta, &
-                     SplitStringInThreeParams, &
-                     undef_int, &
-                     subkind_Grain, &
-                     subkind_Tuber
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -237,6 +217,9 @@ integer(int32) :: DayNri
 
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+
+logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
+                         ! irrigation water was not yet recorded
 
 
 contains
@@ -1256,6 +1239,19 @@ subroutine SetRainDataSet_Param(i, Param_in)
     RainDataSet(i)%Param = Param_in
 end subroutine SetRainDataSet_Param
 
+logical function GetGlobalIrriECw()
+    !! Getter for the GlobalIrriECw global variable
+
+    GetGlobalIrriECw = GlobalIrriECw
+end function GetGlobalIrriECw
+
+subroutine SetGlobalIrriECw(GlobalIrriECw_in)
+    !! Setter for the GlobalIrriECw global variable
+    logical, intent(in) :: GlobalIrriECw_in
+
+    GlobalIrriECw = GlobalIrriECw_in
+end subroutine SetGlobalIrriECw
+
 !! END section global variables
 
 
@@ -1775,6 +1771,114 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
         end if
     end if
 end subroutine DetermineGrowthStage
+
+
+subroutine OpenIrrigationFile()
+
+    character(len=:), allocatable :: totalname
+    character(len=255) :: StringREAD
+    integer(int32) :: i, DNr
+    real(dp) :: Ir1, Ir2
+    real(dp) :: VersionNr
+    integer(int32) :: FromDay_temp, TimeInfo_temp, DepthInfo_temp
+    real(dp) :: IrriECw_temp
+    character(len=1025) :: TempString
+
+    if ((GetIrriMode() == IrriMode_Manual) &
+        .or. (GetIrriMode() == IrriMode_Generate)) then
+        if (GetIrriFile() /= '(None)') then
+            totalname = GetIrriFileFull()
+        else
+            totalname = GetPathNameProg() // 'IrriSchedule.AqC'
+        end if
+        call fIrri_open(totalname, 'r')
+        TempString = fIrri_read() ! description
+        TempString = fIrri_read() ! AquaCrop version
+        read(TempString, *) VersionNr
+        
+        if (roundc(VersionNr*10, mold=1) < 32) then
+            call SetGlobalIrriECw(.true.)
+        else
+            call SetGlobalIrriECw(.false.)
+        end if
+        do i = 1, 6 
+            TempString = fIrri_read()  ! irrigation info (already loaded)
+        end do
+        select case (GetIrriMode())
+        case (IrriMode_Manual)
+            if (GetIrriFirstDayNr() == undef_int) then
+                DNr = GetDayNri() - GetCrop_Day1() + 1
+            else
+                DNr = GetDayNri() - GetIrriFirstDayNr() + 1
+            end if
+            loop: do
+                StringREAD = fIrri_read()
+                if (fIrri_eof()) then
+                    call SetIrriInfoRecord1_NoMoreInfo(.true.)
+                else
+                    call SetIrriInfoRecord1_NoMoreInfo(.false.)
+                    if (GetGlobalIrriECw()) then
+                        call SplitStringInTwoParams(StringREAD, Ir1, Ir2)
+                    else
+                        IrriECw_temp = GetSimulation_IrriECw()
+                        call SplitStringInThreeParams(StringREAD, Ir1, Ir2, &
+                                                      IrriECw_temp)
+                        call SetSimulation_IrriECw(IrriECw_temp)
+                    end if
+                    call SetIrriInfoRecord1_TimeInfo(roundc(Ir1, mold=1))
+                    call SetIrriInfoRecord1_DepthInfo(roundc(Ir2, mold=1))
+                end if
+                if ((GetIrriInfoRecord1_NoMoreInfo()) &
+                    .or. (GetIrriInfoRecord1_TimeInfo() >= DNr)) exit loop
+            end do loop
+        case(IrriMode_Generate)
+            do i = 1, 2 
+                TempString = fIrri_read() 
+                ! time and depth criterion (already loaded)
+            end do
+            call SetIrriInfoRecord1_NoMoreInfo(.false.)
+            if (roundc(VersionNr*10, mold=1) < 32) then
+                TempString = fIrri_read()
+                read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                    DepthInfo_temp
+                call SetIrriInfoRecord1_FromDay(FromDay_temp)
+                call SetIrriInfoRecord1_TimeInfo(TimeInfo_temp)
+                call SetIrriInfoRecord1_DepthInfo(DepthInfo_temp)
+            else
+                TempString = fIrri_read()
+                read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                    DepthInfo_temp, IrriECw_temp
+                call SetIrriInfoRecord1_FromDay(FromDay_temp)
+                call SetIrriInfoRecord1_TimeInfo(TimeInfo_temp)
+                call SetIrriInfoRecord1_DepthInfo(DepthInfo_temp)
+                call SetSimulation_IrriECw(IrriECw_temp)
+            end if
+            
+            TempString = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_ToDay(GetCrop_DayN() &
+                                              - GetCrop_Day1() + 1)
+            else
+                call SetIrriInfoRecord2_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then
+                    read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                        DepthInfo_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                else
+                    read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                        DepthInfo_temp, IrriEcw_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                    call SetSimulation_IrriECw(IrriECw_temp)
+                end if
+                call SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1)
+            end if
+        end select
+    end if
+end subroutine OpenIrrigationFile
 
 
 end module ac_run

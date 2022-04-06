@@ -521,6 +521,15 @@ function fCuts_eof() : boolean;
 procedure fCuts_close();
         external 'aquacrop' name '__ac_run_MOD_fcuts_close';
 
+procedure OpenIrrigationFile();
+        external 'aquacrop' name '__ac_run_MOD_openirrigationfile';
+
+function GetGlobalIrriECw() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getglobalirriecw_wrap';
+
+procedure SetGlobalIrriECw(constref GlobalIrriECw_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setglobalirriecw_wrap';
+
 implementation
 
 
