@@ -901,6 +901,12 @@ function GetSumKci() : double;
 procedure SetSumKci(constref SumKci : double);
     external 'aquacrop' name '__ac_run_MOD_setsumkci';
 
+function GetCCxCropWeedsNoSFstress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxcropweedsnosfstress';
+
+procedure SetCCxCropWeedsNoSFstress(constref CCxCropWeedsNoSFstress : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxcropweedsnosfstress';
+
 implementation
 
 

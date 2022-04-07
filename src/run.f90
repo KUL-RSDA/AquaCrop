@@ -236,6 +236,7 @@ real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
 real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
+real(dp) :: CCxCropWeedsNoSFstress
 
 contains
 
@@ -2063,6 +2064,19 @@ subroutine SetSumKci(SumKci_in)
 
     SumKci = SumKci_in
 end subroutine SetSumKci
+
+real(dp) function GetCCxCropWeedsNoSFstress()
+    !! Getter for the "CCxCropWeedsNoSFstress" global variable.
+
+    GetCCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress
+end function GetCCxCropWeedsNoSFstress
+
+subroutine SetCCxCropWeedsNoSFstress(CCxCropWeedsNoSFstress_in)
+    !! Setter for the "CCxCropWeedsNoSFstress" global variable.
+    real(dp), intent(in) :: CCxCropWeedsNoSFstress_in
+
+    CCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress_in
+end subroutine SetCCxCropWeedsNoSFstress
 
 
 !! END section global variables
