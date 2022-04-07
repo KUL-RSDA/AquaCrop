@@ -30,7 +30,6 @@ var  fHarvest, fEval : text;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
 
      CGCadjustmentAfterCutting : BOOLEAN;
-     YprevSum,SumGDDcuts : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      TheProjectFile : string;
 
@@ -1463,9 +1462,9 @@ IF ((GetSimulation_Zrini() > 0) AND (GetZiprev() > 0) AND (GetSimulation_Zrini()
 // 17. Multiple cuttings
 SetNrCut(0);
 SetSumInterval(0);
-SumGDDcuts := 0;
+SetSumGDDcuts(0);
 SetBprevSum(0);
-YprevSum := 0;
+SetYprevSum(0);
 SetCutInfoRecord1_IntervalInfo(0);
 SetCutInfoRecord2_IntervalInfo(0);
 SetCutInfoRecord1_MassInfo(0);
@@ -2384,8 +2383,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
 
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
-                        DayInSeason,SumInterval : INTEGER;
-                        YprevSum : double);
+                        DayInSeason,SumInterval : INTEGER);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
         tempstring : string;
@@ -2413,7 +2411,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
             END
        ELSE BEGIN
             WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-GetBprevSum()):12:3,
-                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
+                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-GetYprevSum()):10:3);
             fHarvest_write(tempstring, false);
             IF (GetCrop().DryMatter = undef_int) THEN
                 BEGIN
@@ -2422,7 +2420,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
                 END
             ELSE
                 BEGIN
-                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-GetYprevSum())/(GetCrop().DryMatter/100)):10:3,
                         (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
                 fHarvest_write(tempstring);
                 END;
@@ -2721,7 +2719,7 @@ IF GetManagement_Cuttings_Considered() THEN
    HarvestNow := false;
    DayInSeason := GetDayNri() - GetCrop().Day1 + 1;
    SetSumInterval(GetSumInterval() + 1);
-   SumGDDcuts := SumGDDcuts + GetGDDayi();
+   SetSumGDDcuts( GetSumGDDcuts() + GetGDDayi());
    CASE GetManagement_Cuttings_Generate() OF
         false : BEGIN
                 IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) // adjust DayInSeason
@@ -2745,7 +2743,7 @@ IF GetManagement_Cuttings_Considered() THEN
                                  THEN HarvestNow := true;
                               END;
                      IntGDD : BEGIN
-                              IF ((SumGDDcuts >= GetCutInfoRecord1_IntervalGDD())
+                              IF ((GetSumGDDcuts() >= GetCutInfoRecord1_IntervalGDD())
                                    AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                    AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
@@ -2757,14 +2755,14 @@ IF GetManagement_Cuttings_Considered() THEN
                                  THEN HarvestNow := true;
                               END;
                      DryY   : BEGIN
-                              IF (((GetSumWabal_YieldPart() - YprevSum) >= GetCutInfoRecord1_MassInfo())
+                              IF (((GetSumWabal_YieldPart() - GetYprevSum()) >= GetCutInfoRecord1_MassInfo())
                                                    AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                    AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
                               END;
                      FreshY : BEGIN
                               // OK if Crop.DryMatter = undef_int (not specified) HarvestNow remains false
-                              IF ((((GetSumWaBal_YieldPart() - YprevSum)/(GetCrop().DryMatter/100)) >= GetCutInfoRecord1_MassInfo())
+                              IF ((((GetSumWaBal_YieldPart() - GetYprevSum())/(GetCrop().DryMatter/100)) >= GetCutInfoRecord1_MassInfo())
                                                                           AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                                           AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
@@ -2791,12 +2789,12 @@ IF GetManagement_Cuttings_Considered() THEN
          CGCadjustmentAfterCutting := true; // adjustement CGC
          END;
       // Record harvest
-      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval(),YprevSum);
+      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval());
       // Reset
       SetSumInterval(0);
-      SumGDDcuts := 0;
+      SetSumGDDcuts(0);
       SetBprevSum(GetSumWaBal_Biomass());
-      YprevSum := GetSumWaBal_YieldPart();
+      SetYprevSum(GetSumWaBal_YieldPart());
       END;
    END;
 
@@ -2990,8 +2988,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
 
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
-                        DayInSeason,SumInterval : INTEGER;
-                        YprevSum : double);
+                        DayInSeason,SumInterval : INTEGER);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
         tempstring : string;
@@ -3019,7 +3016,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
             END
        ELSE BEGIN
             WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-GetBprevSum()):12:3,
-                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
+                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-GetYprevSum()):10:3);
             fHarvest_write(tempstring, False);
             IF (GetCrop().DryMatter = undef_int) THEN
                 BEGIN
@@ -3028,7 +3025,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
                 END
             ELSE
                 BEGIN
-                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-GetYprevSum())/(GetCrop().DryMatter/100)):10:3,
                          (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
                 fHarvest_write(tempstring);
                 END;
@@ -3046,9 +3043,9 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
        IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
           BEGIN  // final harvest at crop maturity
           SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),YprevSum);
+          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval());
           END;
-       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),YprevSum); // last line at end of season
+       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval()); // last line at end of season
        END;
     // intermediate results
     IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results

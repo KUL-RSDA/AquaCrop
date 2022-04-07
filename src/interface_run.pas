@@ -982,6 +982,18 @@ function GetBprevSum() : double;
 procedure SetBprevSum(constref BprevSum : double);
     external 'aquacrop' name '__ac_run_MOD_setbprevsum';
 
+function GetYprevSum() : double;
+    external 'aquacrop' name '__ac_run_MOD_getyprevsum';
+
+procedure SetYprevSum(constref YprevSum : double);
+    external 'aquacrop' name '__ac_run_MOD_setyprevsum';
+
+function GetSumGDDcuts() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgddcuts';
+
+procedure SetSumGDDcuts(constref SumGDDcuts : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgddcuts';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;

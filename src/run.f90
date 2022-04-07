@@ -260,7 +260,7 @@ real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
 real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
 real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
-real(dp) :: BprevSum
+real(dp) :: BprevSum, YprevSum, SumGDDcuts
 
 character(len=:), allocatable :: fEval_filename
 
@@ -2370,6 +2370,31 @@ subroutine SetBprevSum(BprevSum_in)
     BprevSum = BprevSum_in
 end subroutine SetBprevSum
 
+real(dp) function GetYprevSum()
+    !! Getter for the "YprevSum" global variable.
+
+    GetYprevSum = YprevSum
+end function GetYprevSum
+
+subroutine SetYprevSum(YprevSum_in)
+    !! Setter for the "YprevSum" global variable.
+    real(dp), intent(in) :: YprevSum_in
+
+    YprevSum = YprevSum_in
+end subroutine SetYprevSum
+
+real(dp) function GetSumGDDcuts()
+    !! Getter for the "SumGDDcuts" global variable.
+
+    GetSumGDDcuts = SumGDDcuts
+end function GetSumGDDcuts
+
+subroutine SetSumGDDcuts(SumGDDcuts_in)
+    !! Setter for the "SumGDDcuts" global variable.
+    real(dp), intent(in) :: SumGDDcuts_in
+
+    SumGDDcuts = SumGDDcuts_in
+end subroutine SetSumGDDcuts
 
 !! END section global variables
 
