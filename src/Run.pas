@@ -30,7 +30,6 @@ var  fHarvest, fEval : text;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
 
      CGCadjustmentAfterCutting : BOOLEAN;
-     HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      TheProjectFile : string;
 
      // DelayedGermination
@@ -1499,16 +1498,16 @@ IF (GetRootingDepth() > 0) THEN // salinity in root zone
    END;
 // Harvest Index
 SetSimulation_HIfinal(GetCrop().HI);
-HItimesBEF := undef_int;
-HItimesAT1 := 1;
-HItimesAT2 := 1;
-HItimesAT := 1;
-alfaHI := undef_int;
-alfaHIAdj := 0;
+SetHItimesBEF(undef_int);
+SetHItimesAT1(1);
+SetHItimesAT2(1);
+SetHItimesAT(1);
+SetalfaHI(undef_int);
+SetalfaHIAdj(0);
 IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering))
    THEN BEGIN // not yet flowering
-        ScorAT1 := 0;
-        ScorAT2 := 0;
+        SetScorAT1(0);
+        SetScorAT2(0);
         END
    ELSE BEGIN
         // water stress affecting leaf expansion
@@ -1519,11 +1518,11 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
         IF ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tHImax)) // not yet end period
              AND (tHImax > 0))
            THEN BEGIN // not yet end determinancy
-                ScorAT1 := 1/tHImax;
-                ScorAT1 := ScorAT1 * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering));
-                IF (ScorAT1 > 1) THEN ScorAT1 := 1;
+                SetScorAT1(1/tHImax);
+                SetScorAT1(GetScorAT1() * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering)));
+                IF (GetScorAT1() > 1) THEN SetScorAT1(1);
                 END
-           ELSE ScorAT1 := 1;  // after period of effect
+           ELSE SetScorAT1(1);  // after period of effect
         // water stress affecting stomatal closure
         // period of effect is yield formation
         IF (GetCrop().dHIdt > 99)
@@ -1532,11 +1531,11 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
         IF ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tHImax)) // not yet end period
               AND (tHImax > 0))
            THEN BEGIN // not yet end yield formation
-                ScorAT2 := 1/tHImax;
-                ScorAT2 := ScorAT2 * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering));
-                IF (ScorAT2 > 1) THEN ScorAT2 := 1;
+                SetScorAT2(1/tHImax);
+                SetScorAT2(GetScorAT2() * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering)));
+                IF (GetScorAT2() > 1) THEN SetScorAT2(1);
                 END
-           ELSE ScorAT2 := 1;  // after period of effect
+           ELSE SetScorAT2(1);  // after period of effect
         END;
 
 IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev(),StageCode);
@@ -2152,6 +2151,9 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp : double;
     StressLeaf_temp,StressSenescence_temp, TimeSenescence_temp : double;
     SumKcTopStress_temp, SumKci_temp, WeedRCi_temp, CCiActualWeedInfested_temp : double;
+    HItimesBEF_temp, ScorAT1_temp,ScorAT2_temp : double; 
+    HItimesAT1_temp, HItimesAT2_temp, HItimesAT_temp : double;
+    alfaHI_temp, alfaHIAdj_temp : double;
     TESTVAL : double;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
@@ -2663,12 +2665,20 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SumKci_temp := GetSumKci();
         WeedRCi_temp := GetWeedRCi();
         CCiActualWeedInfested_temp := GetCCiActualWeedInfested();
+        HItimesBEF_temp := GetHItimesBEF();
+        ScorAT1_temp := GetScorAT1();
+        ScorAT2_temp := GetScorAT2();
+        HItimesAT1_temp := GetHItimesAT1();
+        HItimesAT2_temp := GetHItimesAT2();
+        HItimesAT_temp := GetHItimesAT();
+        alfaHI_temp := GetalfaHI(); 
+        alfaHIAdj_temp := GetalfaHIAdj();
         DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GetGDDayi(),GetTact(),GetSumKcTop(),GetCGCref(),GetGDDCGCref(),
                                  GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,GetSumInterval(),
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
-                                 YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
-                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress_temp,SumKci_temp,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
+                                 YieldPart_temp,WPi,HItimesBEF_temp,ScorAT1_temp,ScorAT2_temp,HItimesAT1_temp,HItimesAT2_temp,
+                                 HItimesAT_temp,alfaHI_temp,alfaHIAdj_temp,SumKcTopStress_temp,SumKci_temp,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
                                  WeedRCi_temp,CCiActualWeedInfested_temp,TactWeedInfested_temp,
                                  StressSFadjNEW_temp,PreviousStressLevel_temp,
                                  Store_temp,Mobilize_temp,
@@ -2694,6 +2704,14 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetSumKci(SumKci_temp);
         SetWeedRCi(WeedRCi_temp);
         SetCCiActualWeedInfested(CCiActualWeedInfested_temp); 
+        SetHItimesBEF(HItimesBEF_temp);
+        SetScorAT1(ScorAT1_temp);
+        SetScorAT2(ScorAT2_temp);
+        SetHItimesAT1(HItimesAT1_temp);
+        SetHItimesAT2(HItimesAT2_temp);
+        SetHItimesAT(HItimesAT_temp);
+        SetalfaHI(alfaHI_temp);
+        SetalfaHIAdj(alfaHIAdj_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;

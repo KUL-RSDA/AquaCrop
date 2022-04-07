@@ -260,7 +260,9 @@ real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
 real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
 real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
-real(dp) :: BprevSum, YprevSum, SumGDDcuts
+real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
+real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
+real(dp) :: alfaHI, alfaHIAdj
 
 character(len=:), allocatable :: fEval_filename
 
@@ -2395,6 +2397,110 @@ subroutine SetSumGDDcuts(SumGDDcuts_in)
 
     SumGDDcuts = SumGDDcuts_in
 end subroutine SetSumGDDcuts
+
+real(dp) function GetHItimesBEF()
+    !! Getter for the "HItimesBEF" global variable.
+
+    GetHItimesBEF = HItimesBEF
+end function GetHItimesBEF
+
+subroutine SetHItimesBEF(HItimesBEF_in)
+    !! Setter for the "HItimesBEF" global variable.
+    real(dp), intent(in) :: HItimesBEF_in
+
+    HItimesBEF = HItimesBEF_in
+end subroutine SetHItimesBEF
+
+real(dp) function GetScorAT1()
+    !! Getter for the "ScorAT1" global variable.
+
+    GetScorAT1 = ScorAT1
+end function GetScorAT1
+
+subroutine SetScorAT1(ScorAT1_in)
+    !! Setter for the "ScorAT1" global variable.
+    real(dp), intent(in) :: ScorAT1_in
+
+    ScorAT1 = ScorAT1_in
+end subroutine SetScorAT1
+
+real(dp) function GetScorAT2()
+    !! Getter for the "ScorAT2" global variable.
+
+    GetScorAT2 = ScorAT2
+end function GetScorAT2
+
+subroutine SetScorAT2(ScorAT2_in)
+    !! Setter for the "ScorAT2" global variable.
+    real(dp), intent(in) :: ScorAT2_in
+
+    ScorAT2 = ScorAT2_in
+end subroutine SetScorAT2
+
+real(dp) function GetHItimesAT1()
+    !! Getter for the "HItimesAT1" global variable.
+
+    GetHItimesAT1 = HItimesAT1
+end function GetHItimesAT1
+
+subroutine SetHItimesAT1(HItimesAT1_in)
+    !! Setter for the "HItimesAT1" global variable.
+    real(dp), intent(in) :: HItimesAT1_in
+
+    HItimesAT1 = HItimesAT1_in
+end subroutine SetHItimesAT1
+
+real(dp) function GetHItimesAT2()
+    !! Getter for the "HItimesAT2" global variable.
+
+    GetHItimesAT2 = HItimesAT2
+end function GetHItimesAT2
+
+subroutine SetHItimesAT2(HItimesAT2_in)
+    !! Setter for the "HItimesAT2" global variable.
+    real(dp), intent(in) :: HItimesAT2_in
+
+    HItimesAT2 = HItimesAT2_in
+end subroutine SetHItimesAT2
+
+real(dp) function GetHItimesAT()
+    !! Getter for the "HItimesAT" global variable.
+
+    GetHItimesAT = HItimesAT
+end function GetHItimesAT
+
+subroutine SetHItimesAT(HItimesAT_in)
+    !! Setter for the "HItimesAT" global variable.
+    real(dp), intent(in) :: HItimesAT_in
+
+    HItimesAT = HItimesAT_in
+end subroutine SetHItimesAT
+
+real(dp) function GetalfaHI()
+    !! Getter for the "alfaHI" global variable.
+
+    GetalfaHI = alfaHI
+end function GetalfaHI
+
+subroutine SetalfaHI(alfaHI_in)
+    !! Setter for the "alfaHI" global variable.
+    real(dp), intent(in) :: alfaHI_in
+
+    alfaHI = alfaHI_in
+end subroutine SetalfaHI
+
+real(dp) function GetalfaHIAdj()
+    !! Getter for the "alfaHIAdj" global variable.
+
+    GetalfaHIAdj = alfaHIAdj
+end function GetalfaHIAdj
+
+subroutine SetalfaHIAdj(alfaHIAdj_in)
+    !! Setter for the "alfaHIAdj" global variable.
+    real(dp), intent(in) :: alfaHIAdj_in
+
+    alfaHIAdj = alfaHIAdj_in
+end subroutine SetalfaHIAdj
 
 !! END section global variables
 

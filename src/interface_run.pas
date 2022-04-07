@@ -994,6 +994,54 @@ function GetSumGDDcuts() : double;
 procedure SetSumGDDcuts(constref SumGDDcuts : double);
     external 'aquacrop' name '__ac_run_MOD_setsumgddcuts';
 
+function GetHItimesBEF() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesbef';
+
+procedure SetHItimesBEF(constref HItimesBEF : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesbef';
+
+function GetScorAT1() : double;
+    external 'aquacrop' name '__ac_run_MOD_getscorat1';
+
+procedure SetScorAT1(constref ScorAT1 : double);
+    external 'aquacrop' name '__ac_run_MOD_setscorat1';
+
+function GetScorAT2() : double;
+    external 'aquacrop' name '__ac_run_MOD_getscorat2';
+
+procedure SetScorAT2(constref ScorAT2 : double);
+    external 'aquacrop' name '__ac_run_MOD_setscorat2';
+
+function GetHItimesAT1() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesat1';
+
+procedure SetHItimesAT1(constref HItimesAT1 : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesat1';
+
+function GetHItimesAT2() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesat2';
+
+procedure SetHItimesAT2(constref HItimesAT2 : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesat2';
+
+function GetHItimesAT() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesat';
+
+procedure SetHItimesAT(constref HItimesAT : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesat';
+
+function GetalfaHI() : double;
+    external 'aquacrop' name '__ac_run_MOD_getalfahi';
+
+procedure SetalfaHI(constref alfaHI : double);
+    external 'aquacrop' name '__ac_run_MOD_setalfahi';
+
+function GetalfaHIAdj() : double;
+    external 'aquacrop' name '__ac_run_MOD_getalfahiadj';
+
+procedure SetalfaHIAdj(constref alfaHIAdj : double);
+    external 'aquacrop' name '__ac_run_MOD_setalfahiadj';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;
