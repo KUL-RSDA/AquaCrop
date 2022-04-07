@@ -76,7 +76,9 @@ use ac_global, only:    CompartmentIndividual, &
                         GetIrriMode, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
+                        GetObservationsFilefull, &
                         GetOutputAggregate, &
+                        GetPathNameSimul, &
                         GetPathNameProg, &
                         GetSimulation_DelayedDays, &
                         GetRain, &
@@ -114,6 +116,8 @@ use ac_global, only:    CompartmentIndividual, &
                         SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
                         GetSimulation_DelayedDays, &
+                        GetSimulation_MultipleRun, &
+                        GetSimulation_NrRuns, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
@@ -238,6 +242,9 @@ type(rep_Transfer) :: Transfer
 type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 type(rep_sum) :: PreviousSum
 
+integer(int32) :: DayNr1Eval
+integer(int32) :: DayNrEval
+integer(int32) :: LineNrEval
 integer(int32) :: DayNri
 integer(int32) :: IrriInterval
 integer(int32) :: Tadj, GDDTadj
@@ -259,6 +266,7 @@ real(dp) :: CGCref,GDDCGCref
 real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
 real(dp) :: CCxCropWeedsNoSFstress
+real(dp) :: Zeval
 
 character(len=:), allocatable :: fEval_filename
 
@@ -2251,6 +2259,60 @@ subroutine SetSumGDDPrev(SumGDDPrev_in)
     SumGDDPrev = SumGDDPrev_in
 end subroutine SetSumGDDPrev
 
+integer(int32) function GetDayNr1Eval()
+    !! Getter for the "DayNr1Eval" global variable.
+
+    GetDayNr1Eval = DayNr1Eval
+end function GetDayNr1Eval
+
+subroutine SetDayNr1Eval(DayNr1Eval_in)
+    !! Setter for the "DayNr1Eval" global variable.
+    integer(int32), intent(in) :: DayNr1Eval_in
+
+    DayNr1Eval = DayNr1Eval_in
+end subroutine SetDayNr1Eval
+
+integer(int32) function GetDayNrEval()
+    !! Getter for the "DayNrEval" global variable.
+
+    GetDayNrEval = DayNrEval
+end function GetDayNrEval
+
+subroutine SetDayNrEval(DayNrEval_in)
+    !! Setter for the "DayNrEval" global variable.
+    integer(int32), intent(in) :: DayNrEval_in
+
+    DayNrEval = DayNrEval_in
+end subroutine SetDayNrEval
+
+
+integer(int32) function GetLineNrEval()
+    !! Getter for the "LineNrEval" global variable.
+
+    GetLineNrEval = LineNrEval
+end function GetLineNrEval
+
+subroutine SetLineNrEval(LineNrEval_in)
+    !! Setter for the "LineNrEval" global variable.
+    integer(int32), intent(in) :: LineNrEval_in
+
+    LineNrEval = LineNrEval_in
+end subroutine SetLineNrEval
+
+real(dp) function GetZeval()
+    !! Getter for the "Zeval" global variable.
+
+    GetZeval = Zeval
+end function GetZeval
+
+subroutine SetZeval(Zeval_in)
+    !! Setter for the "Zeval" global variable.
+    real(dp), intent(in) :: Zeval_in
+
+    Zeval = Zeval_in
+end subroutine SetZeval
+
+
 
 !! END section global variables
 
@@ -2886,14 +2948,15 @@ end subroutine OpenIrrigationFile
 subroutine CreateEvalData(NrRun)
     integer(int8), intent(in) :: NrRun
 
-    integer(int32) :: dayi, monthi, yeari
+    integer(int32) :: dayi, monthi, yeari, integer_temp
     character(len=:), allocatable :: StrNr, TempString
     character(len=1025) :: tempstring2
+    integer, dimension(8) :: d
 
     ! open input file with field data
     call fObs_open(GetObservationsFilefull(), 'r') ! Observations recorded in File
-    call fObs_read() ! description
-    call fObs_read() ! AquaCrop Version number
+    TempString = fObs_read() ! description
+    TempString = fObs_read() ! AquaCrop Version number
     TempString = fObs_read()
     read(TempString, *) Zeval !  depth of sampled soil profile
     TempString = fObs_read()
@@ -2902,30 +2965,34 @@ subroutine CreateEvalData(NrRun)
     read(TempString, *)monthi
     TempString = fObs_read()
     read(TempString, *) yeari
-    call DetermineDayNr(dayi, monthi, yeari, DayNr1Eval)
-    call fObs_read() ! title
-    call fObs_read() ! title
-    call fObs_read() ! title
-    call fObs_read() ! title
-    LineNrEval = undef_int
+    integer_temp = GetDayNr1Eval()
+    call DetermineDayNr(dayi, monthi, yeari, integer_temp)
+    call SetDayNr1Eval(integer_temp)
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    call SetLineNrEval(undef_int)
     TempString = fObs_read()
     if (.not. fObs_eof()) then
-        LineNrEval = 11
-        read(TempString, *) DayNrEval
-        DayNrEval = DayNr1Eval + DayNrEval -1
-        do while ((DayNrEval < GetSimulation_FromDayNr()) &
-                    .and. (LineNrEval /= undef_int)) 
+        call SetLineNrEval(11)
+        read(TempString, *) integer_temp
+        call SetDayNrEval(integer_temp)
+        call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+        do while ((GetDayNrEval() < GetSimulation_FromDayNr()) &
+                    .and. (GetLineNrEval() /= undef_int)) 
             TempString = fObs_read()
             if (fObs_eof()) then
-                LineNrEval = undef_int
+                call SetLineNrEval(undef_int)
             else
-                LineNrEval = LineNrEval + 1
-                read(TempString, *) DayNrEval
-                DayNrEval = DayNr1Eval + DayNrEval -1
+                call SetLineNrEval(GetLineNrEval() + 1)
+                read(TempString, *) integer_temp
+                call SetDayNrEval(integer_temp)
+                call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
             end if
         end do
     end if
-    if (LineNrEval == undef_int) then
+    if (GetLineNrEval() == undef_int) then
         call fObs_close()
     end if
     ! open file with simulation results, field data
@@ -2941,7 +3008,7 @@ subroutine CreateEvalData(NrRun)
     '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
     call fEval_write(trim(tempstring2))
     call fEval_write('Evaluation of simulation results - Data')
-    write(TempString, '(f5.2)') Zeval
+    write(TempString, '(f5.2)') GetZeval()
     call fEval_write('                                             ' // &
     '                                        for soil depth: ' // trim(TempString) // ' m')
     call fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      ' // &

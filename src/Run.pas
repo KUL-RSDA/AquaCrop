@@ -25,10 +25,9 @@ implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
-var  fHarvest, fEval : text;
-     WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
+var  WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     Zeval,fWeedNoS,
+     fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
      CGCadjustmentAfterCutting : BOOLEAN;
@@ -38,10 +37,6 @@ var  fHarvest, fEval : text;
 
      // DelayedGermination
      NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
-
-     // Evaluation
-     DayNr1Eval,DayNrEval : LongInt;
-     LineNrEval : INTEGER;
      
 // specific for StandAlone
      PreviousSumETo,PreviousSumGDD : double;
@@ -1996,7 +1991,7 @@ PROCEDURE WriteEvaluationData(DAP : INTEGER;
                               StageCode : ShortInt);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
-    Nr,Di,Mi,Yi : INTEGER;
+    Nr,Di,Mi,Yi, integer_temp : INTEGER;
     TempString : string;
 
     FUNCTION SWCZsoil(Zsoil : double) : double;
@@ -2031,24 +2026,25 @@ Bfield := undef_int;
 Bstd := undef_int;
 SWCfield := undef_int;
 SWCstd := undef_int;
-IF ((LineNrEval <> undef_int) AND (DayNrEval = GetDayNri())) THEN
+IF ((GetLineNrEval() <> undef_int) AND (GetDayNrEval() = GetDayNri())) THEN
    BEGIN
    // read field data
    fObs_rewind();
-   FOR Nr := 1 TO (LineNrEval -1) DO fObs_read();
+   FOR Nr := 1 TO (GetLineNrEval() -1) DO fObs_read();
    TempString := fObs_read();
    ReadStr(TempString,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
    // get Day Nr for next field data
    fObs_read();
    IF (fObs_eof())
       THEN BEGIN
-           LineNrEval := undef_int;
+           SetLineNrEval(undef_int);
            fObs_close();
            END
       ELSE BEGIN
-           LineNrEval := LineNrEval + 1;
-           ReadStr(TempString,DayNrEval);
-           DayNrEval := DayNr1Eval + DayNrEval -1;
+           SetLineNrEval(GetLineNrEval() + 1);
+           ReadStr(TempString,integer_temp);
+           SetDayNrEval(integer_temp);
+           SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
            END;
    END;
 //2. Date
@@ -2056,7 +2052,7 @@ DetermineDate(GetDayNri(),Di,Mi,Yi);
 IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
-SWCi := SWCZsoil(Zeval);
+SWCi := SWCZsoil(GetZeval());
 WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
 fEval_write(TempString);
@@ -3009,7 +3005,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
     fEval_close();
-    IF (LineNrEval <> undef_int) THEN fObs_close();
+    IF (GetLineNrEval() <> undef_int) THEN fObs_close();
     // 2. Specify File name Evaluation of simulation results - Statistics
     StrNr := '';
     IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);

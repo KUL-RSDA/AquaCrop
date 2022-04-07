@@ -997,6 +997,31 @@ procedure fHarvest_close();
 procedure CreateEvalData(NrRun : ShortInt);
     external 'aquacrop' name '__ac_run_MOD_createevaldata';
 
+function GetDayNr1Eval() : LongInt;
+    external 'aquacrop' name '__ac_run_MOD_getdaynr1eval';
+
+procedure SetDayNr1Eval(constref DayNr1Eval : LongInt);
+    external 'aquacrop' name '__ac_run_MOD_setdaynr1eval';
+
+function GetDayNrEval() : LongInt;
+    external 'aquacrop' name '__ac_run_MOD_getdaynreval';
+
+procedure SetDayNrEval(constref DayNrEval : LongInt);
+    external 'aquacrop' name '__ac_run_MOD_setdaynreval';
+
+function GetLineNrEval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getlinenreval';
+
+procedure SetLineNrEval(constref LineNrEval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setlinenreval';
+
+function GetZeval() : double;
+    external 'aquacrop' name '__ac_run_MOD_getzeval';
+
+procedure SetZeval(constref Zeval : double);
+    external 'aquacrop' name '__ac_run_MOD_setzeval';
+
+
 implementation
 
 function GetfEval_filename() : string;
