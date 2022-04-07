@@ -29,6 +29,7 @@ use ac_run, only:   fDaily_open, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
                     GetfHarvest_filename, &
+                    GetGlobalIrriECw, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
                     GetTransfer_Mobilize, &
@@ -36,6 +37,7 @@ use ac_run, only:   fDaily_open, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
                     SetfHarvest_filename, &
+                    SetGlobalIrriECw, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
                     SetTransfer_Mobilize, &
@@ -419,5 +421,23 @@ subroutine SetTransfer_Store_wrap(Store)
     Store_f = Store
     call SetTransfer_Store(Store_f)    
 end subroutine SetTransfer_Store_wrap
+
+
+function GetGlobalIrriECw_wrap() result(GlobalIrriECw_f)
+
+    logical(1) :: GlobalIrriECw_f
+
+    GlobalIrriECw_f = GetGlobalIrriECw()
+end function GetGlobalIrriECw_wrap
+
+
+subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
+    logical(1), intent(in) :: GlobalIrriECw_in
+
+    logical :: GlobalIrriECw_f
+
+    GlobalIrriECw_f = GlobalIrriECw_in
+    call SetGlobalIrriECw(GlobalIrriECw_f)    
+end subroutine SetGlobalIrriECw_wrap
 
 end module ac_interface_run
