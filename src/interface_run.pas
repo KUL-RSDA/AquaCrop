@@ -951,6 +951,120 @@ function GetPreviousBsto() : double;
 procedure SetPreviousBsto(constref PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_setpreviousbsto';
 
+function GetCCoTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccototal';
+
+procedure SetCCoTotal(constref CCoTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setccototal';
+
+function GetCCxTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxtotal';
+
+procedure SetCCxTotal(constref CCxTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxtotal';
+
+function GetCDCTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcdctotal';
+
+procedure SetCDCTotal(constref CDCTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setcdctotal';
+
+function GetGDDCDCTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddcdctotal';
+
+procedure SetGDDCDCTotal(constref GDDCDCTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddcdctotal';
+
+function GetWeedRCi() : double;
+    external 'aquacrop' name '__ac_run_MOD_getweedrci';
+
+procedure SetWeedRCi(constref WeedRCi : double);
+    external 'aquacrop' name '__ac_run_MOD_setweedrci';
+
+function GetCCiActualWeedInfested() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcciactualweedinfested';
+
+procedure SetCCiActualWeedInfested(constref CCiActualWeedInfested : double);
+    external 'aquacrop' name '__ac_run_MOD_setcciactualweedinfested';
+
+function GetfWeedNoS() : double;
+    external 'aquacrop' name '__ac_run_MOD_getfweednos';
+
+procedure SetfWeedNoS(constref fWeedNoS : double);
+    external 'aquacrop' name '__ac_run_MOD_setfweednos';
+
+function GetZeval() : double;
+    external 'aquacrop' name '__ac_run_MOD_getzeval';
+
+procedure SetZeval(constref Zeval : double);
+    external 'aquacrop' name '__ac_run_MOD_setzeval';
+
+function GetBprevSum() : double;
+    external 'aquacrop' name '__ac_run_MOD_getbprevsum';
+
+procedure SetBprevSum(constref BprevSum : double);
+    external 'aquacrop' name '__ac_run_MOD_setbprevsum';
+
+function GetYprevSum() : double;
+    external 'aquacrop' name '__ac_run_MOD_getyprevsum';
+
+procedure SetYprevSum(constref YprevSum : double);
+    external 'aquacrop' name '__ac_run_MOD_setyprevsum';
+
+function GetSumGDDcuts() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgddcuts';
+
+procedure SetSumGDDcuts(constref SumGDDcuts : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgddcuts';
+
+function GetHItimesBEF() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesbef';
+
+procedure SetHItimesBEF(constref HItimesBEF : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesbef';
+
+function GetScorAT1() : double;
+    external 'aquacrop' name '__ac_run_MOD_getscorat1';
+
+procedure SetScorAT1(constref ScorAT1 : double);
+    external 'aquacrop' name '__ac_run_MOD_setscorat1';
+
+function GetScorAT2() : double;
+    external 'aquacrop' name '__ac_run_MOD_getscorat2';
+
+procedure SetScorAT2(constref ScorAT2 : double);
+    external 'aquacrop' name '__ac_run_MOD_setscorat2';
+
+function GetHItimesAT1() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesat1';
+
+procedure SetHItimesAT1(constref HItimesAT1 : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesat1';
+
+function GetHItimesAT2() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesat2';
+
+procedure SetHItimesAT2(constref HItimesAT2 : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesat2';
+
+function GetHItimesAT() : double;
+    external 'aquacrop' name '__ac_run_MOD_gethitimesat';
+
+procedure SetHItimesAT(constref HItimesAT : double);
+    external 'aquacrop' name '__ac_run_MOD_sethitimesat';
+
+function GetalfaHI() : double;
+    external 'aquacrop' name '__ac_run_MOD_getalfahi';
+
+procedure SetalfaHI(constref alfaHI : double);
+    external 'aquacrop' name '__ac_run_MOD_setalfahi';
+
+function GetalfaHIAdj() : double;
+    external 'aquacrop' name '__ac_run_MOD_getalfahiadj';
+
+procedure SetalfaHIAdj(constref alfaHIAdj : double);
+    external 'aquacrop' name '__ac_run_MOD_setalfahiadj';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;
