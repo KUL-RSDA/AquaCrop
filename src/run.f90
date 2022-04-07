@@ -6,32 +6,23 @@ use ac_kinds, only: dp, &
                     int32
 
 use ac_global, only:    CompartmentIndividual, &
-                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
-                        DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
-                        DetermineDate, &
                         DetermineDayNr, &
-                        DetermineDayNr, &
-                        DetermineSaltContent, &
                         DetermineSaltContent, &
                         FileExists, &
-                        GetCompartment_i, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
-                        getcrop_ccsaltdistortion, &
                         GetCrop_CCx, &
                         GetCrop_CDC, &
                         GetCrop_CGC, &
-                        GetCrop_CGC, &
                         GetCrop_Day1, &
-                        GetCrop_DayN, &
                         GetCrop_DaysToCCini, &
                         GetCrop_DaysToFlowering, &
                         GetCrop_DaysToFullCanopy, &
@@ -53,53 +44,36 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_GDDaysToSenescence, &
                         GetCrop_GDDCDC, &
                         GetCrop_GDDCGC, &
+                        GetCrop_GDDaysToFlowering, &
+                        GetCrop_GDDaysToHarvest, &
                         GetCrop_GDDLengthFlowering, &
                         GetCrop_GDtranspLow, &
-                        GetCrop_GDtranspLow, &
-                        GetCrop_HI, &
                         GetCrop_KcDecline, &
                         GetCrop_KcTop, &
-                        GetCrop_Length_i, &
+                        GetCrop_HI, &
                         GetCrop_LengthFlowering, &
-                        GetCrop_ModeCycle, &
+                        GetCrop_GDtranspLow, &
+                        getcrop_ccsaltdistortion, &
                         GetCrop_StressResponse, &
                         GetCrop_StressResponse_Calibrated, &
                         GetCrop_subkind, &
+                        GetCrop_ModeCycle, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
-                        GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
-                        GetECiAqua, &
-                        GetETo, &
-                        GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
-                        GetIrriFile, &
-                        GetIrriFilefull, &
-                        GetIrriFirstDayNr, &
-                        GetIrriMode, &
-                        GetManagement_FertilityStress, &
                         GetNrCompartments, &
-                        GetOutputAggregate, &
                         GetPathNameProg, &
-                        GetSimulation_DelayedDays, &
-                        GetRain, &
                         GetSimulation_FromDayNr, &
-                        GetSimulation_IrriECw, &
-                        GetSimulation_SalinityConsidered, &
                         GetSimulation_SumGDD, &
+                        GetSimulation_SalinityConsidered, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
-                        GetSimulParam_Tmax, &
                         GetSimulParam_Tmin, &
+                        GetSimulParam_Tmax, &
                         GetSoilLayer_SAT, &
-                        GetSoilLayer_SAT, &
-                        GetSumWaBal_Biomass, &
-                        GetSumWaBal_BiomassUnlim, &
-                        GetSumWaBal_SaltIn, &
-                        GetSumWaBal_SaltOut, &
-                        GetSumWaBal_CRsalt, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -107,18 +81,13 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmax, &
                         GetTmin, &
                         GetZiAqua, &
-                        IrriMode_Generate, &
-                        IrriMode_Manual, &
-                        rep_DayEventDbl, &
-                        LeapYear, &
+                        GetECiAqua, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
-                        SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
-                        GetSimulation_DelayedDays, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
@@ -128,50 +97,12 @@ use ac_global, only:    CompartmentIndividual, &
                         TimeCuttings_IntGDD, &
                         TimeCuttings_DryB, &
                         TimeCuttings_DryY, &
-                        roundc_int32, &
                         undef_int
-
-
-use ac_global, only: CompartmentIndividual, &
-                     DetermineDate, &
-                     DetermineDayNr, &
-                     DetermineSaltContent, &
-                     GetCompartment_i, &
-                     GetCompartment_Layer, &
-                     GetCompartment_Thickness, &
-                     GetCrop_CCEffectEvapLate, &
-                     GetCrop_CCo, &
-                     GetCrop_CCx, &
-                     GetCrop_CDC, &
-                     GetCrop_CGC, &
-                     GetCrop_Day1, &
-                     GetCrop_Tbase, &
-                     GetCrop_Tupper, &
-                     GetCrop_WP, &
-                     GetCrop_WPy, &
-                     GetCrop_Length_i, &
-                     GetSimulation_DelayedDays, &
-                     GetGroundWaterFile, &
-                     GetGroundWaterFileFull, &
-                     GetManagement_FertilityStress, &
-                     GetNrCompartments, &
-                     GetPathNameProg, &
-                     GetSimulation_FromDayNr, &
-                     GetSimulation_ToDayNr, &
-                     GetSimulParam_Tmax, &
-                     GetSimulParam_Tmin, &
-                     GetSoilLayer_SAT, &
-                     GetZiAqua, &
-                     GetECiAqua, &
-                     rep_DayEventDbl, &
-                     rep_sum, &
-                     roundc, &
-                     SetCompartment_i, &
-                     SetCompartment_Theta, &
-                     SplitStringInThreeParams, &
-                     undef_int, &
-                     subkind_Grain, &
-                     subkind_Tuber
+                        GetCrop_Length_i, &
+                        GetSimulation_DelayedDays, &
+                        GetManagement_FertilityStress, &
+                        subkind_Grain, &
+                        subkind_Tuber
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -2508,7 +2439,6 @@ subroutine GetNextHarvest()
     integer(int32) :: DayNrXX
     integer(int32) :: FromDay_temp
     real(dp) :: IntervalInfo_temp, IntervalGDD_temp, MassInfo_temp
-
     character(len=:), allocatable :: TempString
 
     if (.not. GetManagement_Cuttings_Generate()) then
@@ -2541,7 +2471,7 @@ subroutine GetNextHarvest()
                 TempString = fCuts_read()
                 read(TempString, *) FromDay_temp, IntervalInfo_temp
                 call SetCutInfoRecord1_FromDay(FromDay_temp)
-                call SetCutInfoRecord1_IntervalInfo(roundc_int32(IntervalInfo_temp, mold = 1))
+                call SetCutInfoRecord1_IntervalInfo(roundc(IntervalInfo_temp, mold = 1))
             elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
                 TempString = fCuts_read()
                 read(TempString, *) FromDay_temp, IntervalGDD_temp
@@ -2566,7 +2496,7 @@ subroutine GetNextHarvest()
                 if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
                     read(TempString, *) FromDay_temp, IntervalInfo_temp
                     call SetCutInfoRecord2_FromDay(FromDay_temp)
-                    call SetCutInfoRecord2_IntervalInfo(roundc_int32(IntervalInfo_temp, mold = 1))
+                    call SetCutInfoRecord2_IntervalInfo(roundc(IntervalInfo_temp, mold = 1))
                 elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
                     read(TempString, *) FromDay_temp, IntervalGDD_temp
                     call SetCutInfoRecord2_FromDay(FromDay_temp)
