@@ -97,7 +97,7 @@ use ac_global, only:    CompartmentIndividual, &
                         TimeCuttings_IntGDD, &
                         TimeCuttings_DryB, &
                         TimeCuttings_DryY, &
-                        undef_int
+                        undef_int, &
                         GetCrop_Length_i, &
                         GetSimulation_DelayedDays, &
                         GetManagement_FertilityStress, &
@@ -2450,7 +2450,7 @@ subroutine GetNextHarvest()
             if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
                 ! scroll to start growing cycle
                 DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
-                loop: do 
+                 do while ((DayNrXX < GetCrop_Day1()) .or. (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.))
                     TempString = fCuts_read()
                     if (.not. fCuts_eof()) then
                         read(TempString, *) FromDay_temp
@@ -2459,8 +2459,7 @@ subroutine GetNextHarvest()
                     else
                         call SetCutInfoRecord1_NoMoreInfo(.true.)
                     end if
-                    if ((DayNrXX >= GetCrop_Day1()) .or. (GetCutInfoRecord1_NoMoreInfo() .eqv. .true.)) exit loop
-                end do loop
+                end do
             end if
         else
             call SetCutInfoRecord1_NoMoreInfo(.true.)
@@ -2471,7 +2470,7 @@ subroutine GetNextHarvest()
                 TempString = fCuts_read()
                 read(TempString, *) FromDay_temp, IntervalInfo_temp
                 call SetCutInfoRecord1_FromDay(FromDay_temp)
-                call SetCutInfoRecord1_IntervalInfo(roundc(IntervalInfo_temp, mold = 1))
+                call SetCutInfoRecord1_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
             elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
                 TempString = fCuts_read()
                 read(TempString, *) FromDay_temp, IntervalGDD_temp
@@ -2496,7 +2495,7 @@ subroutine GetNextHarvest()
                 if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
                     read(TempString, *) FromDay_temp, IntervalInfo_temp
                     call SetCutInfoRecord2_FromDay(FromDay_temp)
-                    call SetCutInfoRecord2_IntervalInfo(roundc(IntervalInfo_temp, mold = 1))
+                    call SetCutInfoRecord2_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
                 elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
                     read(TempString, *) FromDay_temp, IntervalGDD_temp
                     call SetCutInfoRecord2_FromDay(FromDay_temp)
@@ -2511,7 +2510,8 @@ subroutine GetNextHarvest()
                 if (GetCutInfoRecord2_FromDay() < GetManagement_Cuttings_Day1()) then
                     call SetCutInfoRecord2_FromDay(GetManagement_Cuttings_Day1())
                 end if
-                if (GetCutInfoRecord2_FromDay() <= GetCutInfoRecord1_FromDay()) then ! CutInfoRecord2 becomes CutInfoRecord1
+                if (GetCutInfoRecord2_FromDay() <= GetCutInfoRecord1_FromDay()) then 
+                    ! CutInfoRecord2 becomes CutInfoRecord1
                     call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
                     if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
                         call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
