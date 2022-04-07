@@ -32,19 +32,8 @@ var  fHarvest, fEval : text;
      CGCadjustmentAfterCutting : BOOLEAN;
      TheProjectFile : string;
 
-     // DelayedGermination
-     NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
-
-     // Evaluation
-     DayNr1Eval,DayNrEval : LongInt;
-     LineNrEval : INTEGER;
-     
 // specific for StandAlone
      NoYear : BOOLEAN;
-     StageCode : ShortInt;
-     PreviousDayNr : LongInt;
-
-
 
 PROCEDURE OpenOutputRun(TheProjectType : repTypeProject);
 VAR totalname : string;
@@ -369,6 +358,7 @@ PROCEDURE CreateEvalData(NrRun : ShortInt);
 VAR dayi, monthi, yeari : INTEGER;
     StrNr,TempString : string;
     Zeval_temp : double;
+    DayNr1Eval_temp, DayNrEval_temp : INTEGER;
 
 BEGIN
 // open input file with field data
@@ -384,31 +374,35 @@ TempString := fObs_read();
 ReadStr(TempString, monthi);
 TempString := fObs_read();
 ReadStr(TempString, yeari);
-DetermineDayNr(dayi,monthi,yeari,DayNr1Eval);
+DayNr1Eval_temp := GetDayNr1Eval();
+DetermineDayNr(dayi,monthi,yeari,DayNr1Eval_temp);
+SetDayNr1Eval(DayNr1Eval_temp);
 fObs_read(); // title
 fObs_read(); // title
 fObs_read(); // title
 fObs_read(); // title
-LineNrEval := undef_int;
+SetLineNrEval(undef_int);
 TempString := fObs_read();
 IF (NOT fObs_eof()) THEN
    BEGIN
-   LineNrEval := 11;
-   ReadStr(TempString, DayNrEval);
-   DayNrEval := DayNr1Eval + DayNrEval -1;
-   WHILE ((DayNrEval < GetSimulation_FromDayNr()) AND (LineNrEval <> undef_int)) DO
+   SetLineNrEval(11);
+   ReadStr(TempString, DayNrEval_temp);
+   SetDayNrEval(DayNrEval_temp);
+   SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
+   WHILE ((GetDayNrEval() < GetSimulation_FromDayNr()) AND (GetLineNrEval() <> undef_int)) DO
       BEGIN
       TempString := fObs_read();
       IF (fObs_eof())
-         THEN LineNrEval := undef_int
+         THEN SetLineNrEval(undef_int)
          ELSE BEGIN
-              LineNrEval := LineNrEval + 1;
-              ReadStr(TempString, DayNrEval);
-              DayNrEval := DayNr1Eval + DayNrEval -1;
+              SetLineNrEval( GetLineNrEval() + 1);
+              ReadStr(TempString, DayNrEval_temp);
+              SetDayNrEval(DayNrEval_temp);
+              SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
               END;
       END;
    END;
-IF (LineNrEval = undef_int) THEN fObs_close();
+IF (GetLineNrEval() = undef_int) THEN fObs_close();
 // open file with simulation results, field data
 IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
    THEN Str(NrRun:3,StrNr)
@@ -1020,6 +1014,7 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
 
+
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
@@ -1032,11 +1027,11 @@ IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     END;
 
 // 1.2 Check if FromDayNr simulation needs to be adjusted from previous run if Keep initial SWC
-IF ((GetSWCIniFile() = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
+IF ((GetSWCIniFile() = 'KeepSWC') AND (GetNextSimFromDayNr() <> undef_int)) THEN
    BEGIN  // assign the adjusted DayNr defined in previous run
-   IF (NextSimFromDayNr <= GetCrop().Day1) THEN SetSimulation_FromDayNr(NextSimFromDayNr);
+   IF (GetNextSimFromDayNr() <= GetCrop().Day1) THEN SetSimulation_FromDayNr(GetNextSimFromDayNr());
    END;
-NextSimFromDayNr := undef_int;
+SetNextSimFromDayNr(undef_int);
 
 // 2. initial settings for Crop
 SetCrop_pActStom(GetCrop().pdef);
@@ -1535,7 +1530,7 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
            ELSE SetScorAT2(1);  // after period of effect
         END;
 
-IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev(),StageCode);
+IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev());
 
 // 20. Settings for start
 StartMode := true;
@@ -1660,7 +1655,7 @@ VAR Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
 
 BEGIN
 // determine intermediate results
-DetermineDate((PreviousDayNr+1),Day1,Month1,Year1);
+DetermineDate((GetPreviousDayNr()+1),Day1,Month1,Year1);
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
 RPer := GetSumWaBal_Rain() - GetPreviousSum_Rain();
 EToPer := GetSumETo() - GetPreviousSumETo();
@@ -1695,7 +1690,7 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
                 TheProjectFile);
 
 // reset previous sums
-PreviousDayNr := GetDayNri();
+SetPreviousDayNr(GetDayNri());
 SetPreviousSum_Rain(GetSumWaBal_Rain());
 SetPreviousSumETo(GetSumETo());
 SetPreviousSumGDD(GetSumGDD());
@@ -1779,7 +1774,6 @@ END; (* CheckForPrint *)
 
 
 PROCEDURE WriteDailyResults(DAP : INTEGER;
-                            StageCode : ShortInt;
                             WPi : double);
 CONST NoValD = undef_double;
       NoValI = undef_int;
@@ -1790,10 +1784,10 @@ VAR Di,Mi,Yi,StrExp,StrSto,StrSalt,StrTr,StrW,Brel,Nr : INTEGER;
 BEGIN
 DetermineDate(GetDayNri(),Di,Mi,Yi);
 IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
-IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
+IF (GetStageCode() = 0) THEN DAP := undef_int; // before or after cropping
 
 // 0. info day
-writeStr(tempstring,Di:6,Mi:6,Yi:6,DAP:6,StageCode:6);
+writeStr(tempstring,Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():6);
 fDaily_write(tempstring, false);
 
 // 1. Water balance
@@ -2045,12 +2039,12 @@ END; (* WriteDailyResults *)
 
 
 
-PROCEDURE WriteEvaluationData(DAP : INTEGER;
-                              StageCode : ShortInt);
+PROCEDURE WriteEvaluationData(DAP : INTEGER);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
     Nr,Di,Mi,Yi : INTEGER;
     TempString : string;
+    DayNrEval_temp : INTEGER;
 
     FUNCTION SWCZsoil(Zsoil : double) : double;
     VAR compi : INTEGER;
@@ -2084,33 +2078,34 @@ Bfield := undef_int;
 Bstd := undef_int;
 SWCfield := undef_int;
 SWCstd := undef_int;
-IF ((LineNrEval <> undef_int) AND (DayNrEval = GetDayNri())) THEN
+IF ((GetLineNrEval() <> undef_int) AND (GetDayNrEval() = GetDayNri())) THEN
    BEGIN
    // read field data
    fObs_rewind();
-   FOR Nr := 1 TO (LineNrEval -1) DO fObs_read();
+   FOR Nr := 1 TO (GetLineNrEval() -1) DO fObs_read();
    TempString := fObs_read();
    ReadStr(TempString,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
    // get Day Nr for next field data
    fObs_read();
    IF (fObs_eof())
       THEN BEGIN
-           LineNrEval := undef_int;
+           SetLineNrEval(undef_int);
            fObs_close();
            END
       ELSE BEGIN
-           LineNrEval := LineNrEval + 1;
-           ReadStr(TempString,DayNrEval);
-           DayNrEval := DayNr1Eval + DayNrEval -1;
+           SetLineNrEval(GetLineNrEval() + 1);
+           ReadStr(TempString,DayNrEval_temp);
+           SetDayNrEval(DayNrEval_temp);
+           SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
            END;
    END;
 //2. Date
 DetermineDate(GetDayNri(),Di,Mi,Yi);
 IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
-IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
+IF (GetStageCode() = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(GetZeval());
-WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
+WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
 fEval_write(TempString);
 END; (* WriteEvaluationData *)
@@ -2718,7 +2713,7 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         END;
 
 (* 12. Reset after RUN *)
-IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
+IF (GetPreDay() = false) THEN SetPreviousDayNr(GetSimulation_FromDayNr() - 1);
 SetPreDay(true);
 IF (GetDayNri() >= GetCrop().Day1) THEN
    BEGIN
@@ -2859,8 +2854,8 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
    ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),PotValSF);
 //14.d Print ---------------------------------------
 IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
-IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,WPi);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode);
+IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -2871,7 +2866,7 @@ IF (GetDayNri() = GetCrop().Day1)
    ELSE SetIrriInterval(GetIrriInterval() + 1);
 //15.c Rooting depth
 //15.bis extra line for standalone
-IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev(),StageCode);
+IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev());
 // 15.extra - reset ageing of Kc at recovery after full senescence
 IF (GetSimulation_SumEToStress() >= 0.1) THEN SetDayLastCut(GetDayNri());
 //15.d Read Climate next day, Get GDDays and update SumGDDays
@@ -3064,7 +3059,7 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
        END;
     // intermediate results
     IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
-        AND ((GetDayNri()-1) > PreviousDayNr)) THEN
+        AND ((GetDayNri()-1) > GetPreviousDayNr())) THEN
         BEGIN
         SetDayNri(GetDayNri()-1);
         WriteIntermediatePeriod(TheProjectFile);
@@ -3083,7 +3078,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
     fEval_close();
-    IF (LineNrEval <> undef_int) THEN fObs_close();
+    IF (GetLineNrEval() <> undef_int) THEN fObs_close();
     // 2. Specify File name Evaluation of simulation results - Statistics
     StrNr := '';
     IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);
