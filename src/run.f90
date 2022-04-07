@@ -219,6 +219,8 @@ integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
 integer :: fEToSIM ! file handle
 integer :: fEToSIM_iostat ! IO status
+integer :: fEval ! file handle
+integer :: fEval_iostat ! IO status
 integer :: fRainSIM ! file handle
 integer :: fRainSIM_iostat ! IO status
 integer :: fTempSIM ! file handle
@@ -227,7 +229,9 @@ integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
 integer :: fObs ! file handle
 integer :: fObs_iostat ! IO status
-
+integer :: fHarvest  ! file handle
+integer :: fHarvest_iostat  ! IO status
+character(len=:), allocatable :: fHarvest_filename  ! file name
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -251,16 +255,21 @@ real(dp) :: Bout
 real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: SumETo,SumGDD, Ziprev,SumGDDPrev
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
 real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
+real(dp) :: TimeSenescence !! calendar days or GDDays
+real(dp) :: SumKcTop, SumKcTopStress, SumKci
+real(dp) :: CCxCropWeedsNoSFstress
+
+character(len=:), allocatable :: fEval_filename
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
-
 
 contains
 
@@ -410,6 +419,62 @@ end subroutine fRun_write
 subroutine fRun_close()
     close(fRun)
 end subroutine fRun_close
+
+! fEval
+
+subroutine fEval_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEval' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fEval, filename, mode, fEval_iostat)
+end subroutine fEval_open
+
+
+subroutine fEval_write(line, advance_in)
+    !! Writes the given line to the fEval file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fEval, line, advance, fEval_iostat)
+end subroutine fEval_write
+
+
+subroutine fEval_close()
+    close(fEval)
+end subroutine fEval_close
+
+subroutine fEval_erase()
+    call unlink(GetfEval_filename())
+end subroutine fEval_erase
+
+
+function GetfEval_filename() result(filename)
+    !! Getter for the fEval_filename
+    
+    character(len=:), allocatable :: filename
+
+    filename = fEval_filename
+end function GetfEval_filename
+
+subroutine SetfEval_filename(filename)
+    !! Setter for the fEval_filename
+    character(len=*), intent(in) :: filename
+
+    fEval_filename = filename
+end subroutine SetfEval_filename
+
 
 
 ! fIrri
@@ -596,6 +661,57 @@ subroutine fObs_rewind()
     rewind(fObs)
 end subroutine fObs_rewind
 
+
+! fHarvest
+
+function GetfHarvest_filename() result(str)
+    !! Getter for the "fHarvest_filename" global variable.
+    character(len=len(fHarvest_filename)) :: str
+
+    str = fHarvest_filename
+end function GetfHarvest_filename
+
+
+subroutine SetfHarvest_filename(str)
+    !! Setter for the "fHarvest_filename" global variable.
+    character(len=*), intent(in) :: str
+
+    fHarvest_filename = str
+end subroutine SetfHarvest_filename
+
+
+subroutine fHarvest_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fHarvest' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fHarvest, filename, mode, fHarvest_iostat)
+end subroutine fHarvest_open
+
+
+subroutine fHarvest_write(line, advance_in)
+    !! Writes the given line to the fHarvest file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fHarvest, line, advance, fHarvest_iostat)
+end subroutine fHarvest_write
+
+
+subroutine fHarvest_close()
+    close(fHarvest)
+end subroutine fHarvest_close
 
 ! Bin
 
@@ -2024,6 +2140,123 @@ subroutine SetGDDCGCref(GDDCGCref_in)
     GDDCGCref = GDDCGCref_in
 end subroutine SetGDDCGCref
 
+real(dp) function GetSumETo()
+    !! Getter for the "SumETo" global variable.
+
+    GetSumETo = SumETo
+end function GetSumETo
+
+subroutine SetSumETo(SumETo_in)
+    !! Setter for the "SumETo" global variable.
+    real(dp), intent(in) :: SumETo_in
+
+    SumETo = SumETo_in
+end subroutine SetSumETo
+
+real(dp) function GetSumGDD()
+    !! Getter for the "SumGDD" global variable.
+
+    GetSumGDD = SumGDD
+end function GetSumGDD
+
+subroutine SetSumGDD(SumGDD_in)
+    !! Setter for the "SumGDD" global variable.
+    real(dp), intent(in) :: SumGDD_in
+
+    SumGDD = SumGDD_in
+end subroutine SetSumGDD
+
+real(dp) function GetTimeSenescence()
+    !! Getter for the "TimeSenescence" global variable.
+
+    GetTimeSenescence = TimeSenescence
+end function GetTimeSenescence
+
+subroutine SetTimeSenescence(TimeSenescence_in)
+    !! Setter for the "TimeSenescence" global variable.
+    real(dp), intent(in) :: TimeSenescence_in
+
+    TimeSenescence = TimeSenescence_in
+end subroutine SetTimeSenescence
+
+real(dp) function GetSumKcTop()
+    !! Getter for the "SumKcTop" global variable.
+
+    GetSumKcTop = SumKcTop
+end function GetSumKcTop
+
+subroutine SetSumKcTop(SumKcTop_in)
+    !! Setter for the "SumKcTop" global variable.
+    real(dp), intent(in) :: SumKcTop_in
+
+    SumKcTop = SumKcTop_in
+end subroutine SetSumKcTop
+
+real(dp) function GetSumKcTopStress()
+    !! Getter for the "SumKcTopStress" global variable.
+
+    GetSumKcTopStress = SumKcTopStress
+end function GetSumKcTopStress
+
+subroutine SetSumKcTopStress(SumKcTopStress_in)
+    !! Setter for the "SumKcTopStress" global variable.
+    real(dp), intent(in) :: SumKcTopStress_in
+
+    SumKcTopStress = SumKcTopStress_in
+end subroutine SetSumKcTopStress
+
+real(dp) function GetSumKci()
+    !! Getter for the "SumKci" global variable.
+
+    GetSumKci = SumKci
+end function GetSumKci
+
+subroutine SetSumKci(SumKci_in)
+    !! Setter for the "SumKci" global variable.
+    real(dp), intent(in) :: SumKci_in
+
+    SumKci = SumKci_in
+end subroutine SetSumKci
+
+real(dp) function GetCCxCropWeedsNoSFstress()
+    !! Getter for the "CCxCropWeedsNoSFstress" global variable.
+
+    GetCCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress
+end function GetCCxCropWeedsNoSFstress
+
+subroutine SetCCxCropWeedsNoSFstress(CCxCropWeedsNoSFstress_in)
+    !! Setter for the "CCxCropWeedsNoSFstress" global variable.
+    real(dp), intent(in) :: CCxCropWeedsNoSFstress_in
+
+    CCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress_in
+end subroutine SetCCxCropWeedsNoSFstress
+
+real(dp) function GetZiprev()
+    !! Getter for the "Ziprev" global variable.
+
+    GetZiprev = Ziprev
+end function GetZiprev
+
+subroutine SetZiprev(Ziprev_in)
+    !! Setter for the "Ziprev" global variable.
+    real(dp), intent(in) :: Ziprev_in
+
+    Ziprev = Ziprev_in
+end subroutine SetZiprev
+
+real(dp) function GetSumGDDPrev()
+    !! Getter for the "SumGDDPrev" global variable.
+
+    GetSumGDDPrev = SumGDDPrev
+end function GetSumGDDPrev
+
+subroutine SetSumGDDPrev(SumGDDPrev_in)
+    !! Setter for the "SumGDDPrev" global variable.
+    real(dp), intent(in) :: SumGDDPrev_in
+
+    SumGDDPrev = SumGDDPrev_in
+end subroutine SetSumGDDPrev
+
 
 !! END section global variables
 
@@ -2049,10 +2282,8 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
+subroutine ResetPreviousSum(PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
-    real(dp), intent(inout) :: SumETo
-    real(dp), intent(inout) :: SumGDD
     real(dp), intent(inout) :: PreviousSumETo
     real(dp), intent(inout) :: PreviousSumGDD
     real(dp), intent(inout) :: PreviousBmob
@@ -2077,8 +2308,8 @@ subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
     call SetPreviousSum_SaltIn(0.0_dp)
     call SetPreviousSum_SaltOut(0.0_dp)
     call SetPreviousSum_CRsalt(0.0_dp)
-    SumETo = 0.0_dp
-    SumGDD = 0.0_dp
+    call SetSumETo(0.0_dp)
+    call SetSumGDD(0.0_dp)
     PreviousSumETo = 0.0_dp
     PreviousSumGDD = 0.0_dp
     PreviousBmob = 0.0_dp

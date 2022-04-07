@@ -307,7 +307,7 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum(VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
+procedure ResetPreviousSum(VAR PreviousSumETo,PreviousSumGDD,
                                PreviousBmob,PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
@@ -884,8 +884,128 @@ procedure OpenOutputDaily(constref TheProjectType : repTypeProject);
 procedure __OpenOutputDaily(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openoutputdaily';
 
+function GetSumETo() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumeto';
+
+procedure SetSumETo(constref SumETo : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumeto';
+
+function GetSumGDD() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgdd';
+
+procedure SetSumGDD(constref SumGDD : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgdd';
+
+function GetTimeSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_gettimesenescence';
+
+procedure SetTimeSenescence(constref TimeSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_settimesenescence';
+
+function GetSumKcTop() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctop';
+
+procedure SetSumKcTop(constref SumKcTop : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctop';
+
+function GetSumKcTopStress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctopstress';
+
+procedure SetSumKcTopStress(constref SumKcTopStress : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctopstress';
+
+function GetSumKci() : double; 
+    external 'aquacrop' name '__ac_run_MOD_getsumkci';
+
+procedure SetSumKci(constref SumKci : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkci';
+
+function GetCCxCropWeedsNoSFstress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxcropweedsnosfstress';
+
+procedure SetCCxCropWeedsNoSFstress(constref CCxCropWeedsNoSFstress : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxcropweedsnosfstress';
+
+function GetZiprev() : double;
+    external 'aquacrop' name '__ac_run_MOD_getziprev';
+
+procedure SetZiprev(constref Ziprev : double);
+    external 'aquacrop' name '__ac_run_MOD_setziprev';
+
+function GetSumGDDPrev() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgddprev';
+
+procedure SetSumGDDPrev(constref SumGDDPrev : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgddprev';
+
+function GetfEval_filename() : string;
+
+function GetfEval_filename_wrap() : PChar;
+    external 'aquacrop' name '__ac_interface_run_MOD_getfeval_filename_wrap';
+
+procedure SetfEval_filename(constref filename : string);
+
+procedure SetfEval_filename_wrap(constref filename_ptr : PChar;
+                                 constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_setfeval_filename_wrap';
+
+procedure fEval_open(constref filename : string; constref mode : string);
+
+procedure fEval_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_feval_open_wrap';
+
+procedure fEval_write(constref line : string; constref advance : boolean = True);
+
+procedure fEval_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_feval_write_wrap';
+
+procedure fEval_close();
+        external 'aquacrop' name '__ac_run_MOD_feval_close';
+
+procedure fEval_erase();
+    external 'aquacrop' name '__ac_run_MOD_feval_erase';
+
+function GetfHarvest_filename_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_getfharvest_filename_wrap';
+
+function GetfHarvest_filename(): string;
+
+procedure SetfHarvest_filename(constref str : string);
+
+procedure SetfHarvest_filename_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_setfharvest_filename_wrap';
+
+procedure fHarvest_open(constref filename : string; constref mode : string);
+
+procedure fHarvest_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fharvest_open_wrap';
+
+procedure fHarvest_write(constref line : string; constref advance : boolean = True);
+
+procedure fHarvest_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_fharvest_write_wrap';
+
+procedure fHarvest_close();
+        external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
 implementation
+
 
 procedure OpenOutputRun(constref TheProjectType : repTypeProject);
 var
@@ -902,6 +1022,48 @@ var
 begin
     int_typeproject := ord(TheProjectType);
     __OpenOutputDaily(int_typeproject);
+end;
+
+
+function GetfEval_filename() : string;
+var
+    filename_ptr : PChar;
+begin
+    filename_ptr := GetfEval_filename_wrap();
+    GetfEval_filename := AnsiString(filename_ptr);
+end;
+
+
+procedure SetfEval_filename(constref filename : string);
+var
+    filename_ptr : PChar;
+    strlen : integer;
+begin
+    filename_ptr := PChar(filename);
+    strlen := Length(filename);
+    SetfEval_filename_wrap(filename_ptr, strlen);
+end;
+
+procedure fEval_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+procedure fEval_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fEval_write_wrap(line_ptr, line_len, advance);
 end;
 
 
@@ -1333,6 +1495,51 @@ begin;
     SetPreviousSum_SaltOut(PreviousSum.SaltOut);
     SetPreviousSum_CRsalt(PreviousSum.CRsalt);
 end;
+
+
+function GetfHarvest_filename(): string;
+var
+     p : PChar;
+begin;
+     p := GetfHarvest_filename_wrap();
+     GetfHarvest_filename := AnsiString(p);
+end;
+
+
+procedure SetfHarvest_filename(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetfHarvest_filename_wrap(p, strlen);
+end;
+
+
+procedure fHarvest_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fHarvest_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+
+procedure fHarvest_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fHarvest_write_wrap(line_ptr, line_len, advance);
+end;
+
 
 initialization
 
