@@ -307,7 +307,7 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum(VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
+procedure ResetPreviousSum(VAR PreviousSumETo,PreviousSumGDD,
                                PreviousBmob,PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
@@ -873,6 +873,48 @@ function GetCGCref() : double;
 
 procedure SetCGCref(constref CGCref : double);
     external 'aquacrop' name '__ac_run_MOD_setcgcref';
+
+function GetSumETo() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumeto';
+
+procedure SetSumETo(constref SumETo : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumeto';
+
+function GetSumGDD() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgdd';
+
+procedure SetSumGDD(constref SumGDD : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgdd';
+
+function GetTimeSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_gettimesenescence';
+
+procedure SetTimeSenescence(constref TimeSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_settimesenescence';
+
+function GetSumKcTop() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctop';
+
+procedure SetSumKcTop(constref SumKcTop : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctop';
+
+function GetSumKcTopStress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctopstress';
+
+procedure SetSumKcTopStress(constref SumKcTopStress : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctopstress';
+
+function GetSumKci() : double; 
+    external 'aquacrop' name '__ac_run_MOD_getsumkci';
+
+procedure SetSumKci(constref SumKci : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkci';
+
+function GetCCxCropWeedsNoSFstress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxcropweedsnosfstress';
+
+procedure SetCCxCropWeedsNoSFstress(constref CCxCropWeedsNoSFstress : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxcropweedsnosfstress';
 
 function GetZiprev() : double;
     external 'aquacrop' name '__ac_run_MOD_getziprev';

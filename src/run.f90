@@ -249,19 +249,21 @@ real(dp) :: Bout
 real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
-real(dp) :: Ziprev,SumGDDPrev
+real(dp) :: SumETo,SumGDD, Ziprev,SumGDDPrev
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
 real(dp) :: DayFraction,GDDayFraction
-real(dp) :: CGCref,GDDCGCref
+real(dp) :: CGCref,GDDCGCref 
+real(dp) :: TimeSenescence !! calendar days or GDDays
+real(dp) :: SumKcTop, SumKcTopStress, SumKci
+real(dp) :: CCxCropWeedsNoSFstress
 
 character(len=:), allocatable :: fEval_filename
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
-
 
 contains
 
@@ -2132,6 +2134,97 @@ subroutine SetGDDCGCref(GDDCGCref_in)
     GDDCGCref = GDDCGCref_in
 end subroutine SetGDDCGCref
 
+real(dp) function GetSumETo()
+    !! Getter for the "SumETo" global variable.
+
+    GetSumETo = SumETo
+end function GetSumETo
+
+subroutine SetSumETo(SumETo_in)
+    !! Setter for the "SumETo" global variable.
+    real(dp), intent(in) :: SumETo_in
+
+    SumETo = SumETo_in
+end subroutine SetSumETo
+
+real(dp) function GetSumGDD()
+    !! Getter for the "SumGDD" global variable.
+
+    GetSumGDD = SumGDD
+end function GetSumGDD
+
+subroutine SetSumGDD(SumGDD_in)
+    !! Setter for the "SumGDD" global variable.
+    real(dp), intent(in) :: SumGDD_in
+
+    SumGDD = SumGDD_in
+end subroutine SetSumGDD
+
+real(dp) function GetTimeSenescence()
+    !! Getter for the "TimeSenescence" global variable.
+
+    GetTimeSenescence = TimeSenescence
+end function GetTimeSenescence
+
+subroutine SetTimeSenescence(TimeSenescence_in)
+    !! Setter for the "TimeSenescence" global variable.
+    real(dp), intent(in) :: TimeSenescence_in
+
+    TimeSenescence = TimeSenescence_in
+end subroutine SetTimeSenescence
+
+real(dp) function GetSumKcTop()
+    !! Getter for the "SumKcTop" global variable.
+
+    GetSumKcTop = SumKcTop
+end function GetSumKcTop
+
+subroutine SetSumKcTop(SumKcTop_in)
+    !! Setter for the "SumKcTop" global variable.
+    real(dp), intent(in) :: SumKcTop_in
+
+    SumKcTop = SumKcTop_in
+end subroutine SetSumKcTop
+
+real(dp) function GetSumKcTopStress()
+    !! Getter for the "SumKcTopStress" global variable.
+
+    GetSumKcTopStress = SumKcTopStress
+end function GetSumKcTopStress
+
+subroutine SetSumKcTopStress(SumKcTopStress_in)
+    !! Setter for the "SumKcTopStress" global variable.
+    real(dp), intent(in) :: SumKcTopStress_in
+
+    SumKcTopStress = SumKcTopStress_in
+end subroutine SetSumKcTopStress
+
+real(dp) function GetSumKci()
+    !! Getter for the "SumKci" global variable.
+
+    GetSumKci = SumKci
+end function GetSumKci
+
+subroutine SetSumKci(SumKci_in)
+    !! Setter for the "SumKci" global variable.
+    real(dp), intent(in) :: SumKci_in
+
+    SumKci = SumKci_in
+end subroutine SetSumKci
+
+real(dp) function GetCCxCropWeedsNoSFstress()
+    !! Getter for the "CCxCropWeedsNoSFstress" global variable.
+
+    GetCCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress
+end function GetCCxCropWeedsNoSFstress
+
+subroutine SetCCxCropWeedsNoSFstress(CCxCropWeedsNoSFstress_in)
+    !! Setter for the "CCxCropWeedsNoSFstress" global variable.
+    real(dp), intent(in) :: CCxCropWeedsNoSFstress_in
+
+    CCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress_in
+end subroutine SetCCxCropWeedsNoSFstress
+
 real(dp) function GetZiprev()
     !! Getter for the "Ziprev" global variable.
 
@@ -2158,6 +2251,7 @@ subroutine SetSumGDDPrev(SumGDDPrev_in)
     SumGDDPrev = SumGDDPrev_in
 end subroutine SetSumGDDPrev
 
+
 !! END section global variables
 
 
@@ -2182,10 +2276,8 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
+subroutine ResetPreviousSum(PreviousSumETo, &
         PreviousSumGDD, PreviousBmob, PreviousBsto)
-    real(dp), intent(inout) :: SumETo
-    real(dp), intent(inout) :: SumGDD
     real(dp), intent(inout) :: PreviousSumETo
     real(dp), intent(inout) :: PreviousSumGDD
     real(dp), intent(inout) :: PreviousBmob
@@ -2210,8 +2302,8 @@ subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
     call SetPreviousSum_SaltIn(0.0_dp)
     call SetPreviousSum_SaltOut(0.0_dp)
     call SetPreviousSum_CRsalt(0.0_dp)
-    SumETo = 0.0_dp
-    SumGDD = 0.0_dp
+    call SetSumETo(0.0_dp)
+    call SetSumGDD(0.0_dp)
     PreviousSumETo = 0.0_dp
     PreviousSumGDD = 0.0_dp
     PreviousBmob = 0.0_dp
