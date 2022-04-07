@@ -3,7 +3,8 @@ module ac_run
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
-                    int32
+                    int32, &
+                    intEnum
 
 use ac_global, only:    CompartmentIndividual, &
                         CompartmentIndividual, &
@@ -77,6 +78,8 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
                         GetOutputAggregate, &
+                        GetOutputName, &
+                        GetPathNameOutp, &
                         GetPathNameProg, &
                         GetSimulation_DelayedDays, &
                         GetRain, &
@@ -120,6 +123,9 @@ use ac_global, only:    CompartmentIndividual, &
                         SplitStringInTwoParams, &
                         subkind_Grain, &
                         subkind_Tuber, &
+                        typeproject_typenone, &
+                        typeproject_typepro, &
+                        typeproject_typeprm, &
                         undef_int
 
 
@@ -2650,6 +2656,39 @@ subroutine OpenIrrigationFile()
         end select
     end if
 end subroutine OpenIrrigationFile
+
+
+subroutine OpenOutputRun(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROseason.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMseason.OUT'
+    end select
+    call fRun_open(totalname, 'w')
+    call date_and_time(values=d)
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fRun_write(trim(tempstring))
+    call fRun_write('')
+    call fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' // &
+    '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' // &
+    '    SaltIn   SaltOut    SaltUp  SaltProf' // &
+    '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' // &
+    '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN')
+    call fRun_write('                                           mm       mm  degC.day    ppm' // &
+    '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' // &
+    '    ton/ha    ton/ha    ton/ha    ton/ha' // &
+    '      days       %        %        %        %        %        %  ' // &
+    '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha')
+end subroutine OpenOutputRun
 
 
 end module ac_run

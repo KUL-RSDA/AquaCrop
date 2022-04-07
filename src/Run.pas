@@ -53,31 +53,6 @@ var  fHarvest, fEval : text;
      
 
 
-
-PROCEDURE OpenOutputRun(TheProjectType : repTypeProject);
-VAR totalname : string;
-
-BEGIN
-CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROseason.OUT');
-      TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMseason.OUT');
-      end;
-fRun_open(totalname, 'w');
-fRun_write('AquaCrop 7.0 (October 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
-fRun_write('');
-fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' +
-           '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' +
-           '    SaltIn   SaltOut    SaltUp  SaltProf' +
-           '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' +
-           '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-fRun_write('                                           mm       mm  degC.day    ppm' +
-           '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' +
-           '    ton/ha    ton/ha    ton/ha    ton/ha' +
-           '      days       %        %        %        %        %        %  ' +
-           '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha');
-END; (* OpenOutputRun *)
-
-
 PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject);
 VAR totalname, tempstring : string;
 BEGIN
