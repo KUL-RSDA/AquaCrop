@@ -28,7 +28,6 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 var  fHarvest, fEval : text;
      SumETo, SumGDD : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
-     GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
@@ -92,18 +91,19 @@ fDaily_write(tempstring);
 END; (* OpenOutputDaily *)
 
 
-PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject;
-                               VAR fHarvest : text);
+PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject);
 VAR totalname : string;
+    tempstring : string;
 BEGIN
 CASE TheProjectType OF
       TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROharvests.OUT');
       TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMharvests.OUT');
       end;
-Assign(fHarvest,totalname);
-Rewrite(fHarvest);
-WRITELN(fHarvest,'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-WRITELN(fHarvest,'Biomass and Yield at Multiple cuttings');
+SetfHarvest_filename(totalname);
+fHarvest_open(GetfHarvest_filename(), 'w');
+WriteStr(tempstring, 'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
+fHarvest_write(tempstring);
+fHarvest_write('Biomass and Yield at Multiple cuttings');
 END; (* OpenPart1MultResults *)
 
 
@@ -339,22 +339,24 @@ END; (* WriteTitleDailyResults *)
 
 
 PROCEDURE WriteTitlePart1MultResults(TheProjectType : repTypeProject;
-                                     TheNrRun : ShortInt;
-                                     VAR fHarvest : text);
+                                     TheNrRun : ShortInt);
 VAR Str1 : string;
     Dayi,Monthi,Yeari : INTEGER;
     Nr : Double;
+    tempstring : string;
 BEGIN
 // A. Run number
-WRITELN(fHarvest);
+fHarvest_write('');
 IF (TheProjectType = TypePRM) THEN
    BEGIN
    Str(TheNrRun:4,Str1);
-   WRITELN(fHarvest,'   Run:',Str1);
+   fHarvest_write('   Run:' + Str1);
    END;
+
 // B. Title
-WRITELN(fHarvest,'    Nr   Day  Month Year   DAP Interval  Biomass    Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)');
-WRITELN(fHarvest,'                                 days     ton/ha    ton/ha    ton/ha    ton/ha    ton/ha    ton/ha');
+fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)');
+fHarvest_write('                                 days     ton/ha    ton/ha    ton/ha    ton/ha    ton/ha    ton/ha');
+
 // C. start crop cycle
 DetermineDate(GetCrop().Day1,Dayi,Monthi,Yeari);
 NoYear := (Yeari = 1901);
@@ -365,15 +367,15 @@ IF NoYear THEN
    END;
 Nr := 0;
 Str(Nr:6:0,Str1);
-WRITELN(fHarvest,Str1,Dayi:6,Monthi:6,Yeari:6,Nr:34:3,Nr:20:3,Nr:20:3);
+WriteStr(tempstring, Str1,Dayi:6,Monthi:6,Yeari:6,Nr:34:3,Nr:20:3,Nr:20:3);
+fHarvest_write(tempstring);
 END; (* WriteTitlePart1MultResults *)
 
 
 
-PROCEDURE CreateEvalData(NrRun : ShortInt;
-                         VAR fEval : text);
+PROCEDURE CreateEvalData(NrRun : ShortInt);
 VAR dayi, monthi, yeari : INTEGER;
-    StrNr,totalname,TempString : string;
+    StrNr,TempString : string;
 
 BEGIN
 // open input file with field data
@@ -417,15 +419,14 @@ IF (LineNrEval = undef_int) THEN fObs_close();
 IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
    THEN Str(NrRun:3,StrNr)
    ELSE StrNr := '';
-totalname := CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT');
-Assign(fEval,totalname);
-Rewrite(fEval);
-WRITELN(fEval,'AquaCrop 7.0 (June 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-WRITELN(fEval,'Evaluation of simulation results - Data');
+SetfEval_filename(CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT'));
+fEval_open(GetfEval_filename(), 'w');
+fEval_write('AquaCrop 7.0 (June 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
+fEval_write('Evaluation of simulation results - Data');
 Str(Zeval:5:2,TempString);
-WRITELN(fEval,'                                                                                     for soil depth: ',Trim(TempString),' m');
-WRITELN(fEval,'   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
-WRITELN(fEval,'                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
+fEval_write('                                                                                     for soil depth: ' + Trim(TempString) + ' m');
+fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
+fEval_write('                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
 END; (* CreateEvalData *)
 
 
@@ -862,104 +863,6 @@ END; (* OpenClimFilesAndGetDataFirstDay *)
 
 
 
-
-PROCEDURE OpenIrrigationFile();
-VAR totalname : string;
-    StringREAD : ShortString;
-    i,DNr : INTEGER;
-    Ir1,Ir2 : double;
-    VersionNr : double;
-    FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
-    IrriECw_temp : double;
-    TempString : string;
-
-BEGIN
-IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
-   BEGIN
-   IF (GetIrriFile() <> '(None)')
-      THEN totalname := GetIrriFileFull()
-      ELSE totalname := CONCAT(GetPathNameProg(),'IrriSchedule.AqC');
-   fIrri_open(totalname, 'r');
-   TempString := fIrri_read(); // description
-   TempString := fIrri_read(); // AquaCrop version
-   ReadStr(TempString, VersionNr);
-
-   IF (ROUND(VersionNr*10) < 32)
-      THEN GlobalIrriECw := true
-      ELSE GlobalIrriECw := false;
-   FOR i := 1 TO 6 DO TempString := fIrri_read();  // irrigation info (already loaded)
-   CASE GetIrriMode() OF
-        Manual   : BEGIN
-                   IF (GetIrriFirstDayNr() = undef_int)
-                      THEN DNr := GetDayNri() - GetCrop().Day1 + 1
-                      ELSE DNr := GetDayNri() - GetIrriFirstDayNr() + 1;
-                   REPEAT
-                   StringREAD := fIrri_read();
-                   IF fIrri_eof()
-                      THEN SetIrriInfoRecord1_NoMoreInfo(true)
-                      ELSE BEGIN
-                           SetIrriInfoRecord1_NoMoreInfo(false);
-                           IF GlobalIrriECw
-                              THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
-                              ELSE BEGIN
-                                   IrriECw_temp := GetSimulation_IrriECw();
-                                   SplitStringInThreeParams(StringREAD,Ir1,Ir2,IrriECw_temp);
-                                   SetSimulation_IrriECw(IrriECw_temp);
-                                   END; 
-                           SetIrriInfoRecord1_TimeInfo(ROUND(Ir1));
-                           SetIrriInfoRecord1_DepthInfo(ROUND(Ir2));
-                           END;
-                   UNTIL ((GetIrriInfoRecord1_NoMoreInfo()) OR (GetIrriInfoRecord1_TimeInfo() >= DNr));
-                   END;
-        Generate : BEGIN
-                   FOR i := 1 TO 2 DO TempString := fIrri_read(); // time and depth criterion (already loaded)
-                   SetIrriInfoRecord1_NoMoreInfo(false);
-                   IF (ROUND(VersionNr*10) < 32)
-                      THEN BEGIN
-                           TempString := fIrri_read();
-                           ReadStr(TempString, FromDay_temp,TimeInfo_temp,DepthInfo_temp);
-                           SetIrriInfoRecord1_FromDay(FromDay_temp);
-                           SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
-                           SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
-                           END
-                      ELSE BEGIN
-                           TempString := fIrri_read();
-                           ReadStr(TempString,FromDay_temp,TimeInfo_temp,
-                                   DepthInfo_temp,IrriECw_temp);
-                           SetIrriInfoRecord1_FromDay(FromDay_temp);
-                           SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
-                           SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
-                           SetSimulation_IrriECw(IrriECw_temp);
-                           END;
-
-                   TempString := fIrri_read();
-                   IF fIrri_eof()
-                      THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
-                      ELSE BEGIN
-                           SetIrriInfoRecord2_NoMoreInfo(false);
-                           IF GlobalIrriECw
-                             THEN BEGIN
-                                  ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
-                                  SetIrriInfoRecord2_FromDay(FromDay_temp);
-                                  SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
-                                  SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
-                                  END
-                             ELSE BEGIN
-                                  ReadStr(TempString,FromDay_temp,TimeInfo_temp,
-                                           DepthInfo_temp,IrriEcw_temp);
-                                  SetIrriInfoRecord2_FromDay(FromDay_temp);
-                                  SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
-                                  SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
-                                  SetSimulation_IrriECw(IrriECw_temp);
-                                  END;
-                           SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1);
-                           END;
-                   END;
-        end;
-   END;
-END; (* OpenIrrigationFile *)
-
-
 PROCEDURE GetNextHarvest;
 VAR InfoLoaded : BOOLEAN;
     DayNrXX : LongInt;
@@ -1338,7 +1241,7 @@ SumGDD := 0;
 
 // 11. Irrigation
 SetIrriInterval(1);
-GlobalIrriECw := true; // In Versions < 3.2 - Irrigation water quality is not yet recorded on file
+SetGlobalIrriECw(true); // In Versions < 3.2 - Irrigation water quality is not yet recorded on file
 OpenIrrigationFile();
 
 
@@ -2149,8 +2052,7 @@ END; (* WriteDailyResults *)
 
 
 PROCEDURE WriteEvaluationData(DAP : INTEGER;
-                              StageCode : ShortInt;
-                              VAR fEval : text);
+                              StageCode : ShortInt);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
     Nr,Di,Mi,Yi : INTEGER;
@@ -2214,8 +2116,9 @@ IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
 IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
 SWCi := SWCZsoil(Zeval);
-WRITELN(fEval,Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
+WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
+fEval_write(TempString);
 END; (* WriteEvaluationData *)
 
 
@@ -2330,7 +2233,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
                   THEN SetIrriInfoRecord1_NoMoreInfo(true)
                   ELSE BEGIN
                        SetIrriInfoRecord1_NoMoreInfo(false);
-                       IF GlobalIrriECw // Versions before 3.2
+                       IF GetGlobalIrriECw() // Versions before 3.2
                           THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
                           ELSE BEGIN
                                IrriECw_temp := GetSimulation_IrriECw();
@@ -2370,7 +2273,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
              THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
              ELSE BEGIN
                   SetIrriInfoRecord2_NoMoreInfo(false);
-                  IF GlobalIrriECw // Versions before 3.2
+                  IF GetGlobalIrriECw() // Versions before 3.2
                      THEN BEGIN
                           ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
@@ -2482,12 +2385,12 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
                         DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double;
-                        VAR fHarvest : text);
+                        BprevSum,YprevSum : double);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
+        tempstring : string;
     BEGIN
-    Append(fHarvest);
+    fHarvest_open(GetfHarvest_filename(), 'a');  // Append(fHarvest);
     DetermineDate(GetCrop().Day1,Dayi,Monthi,Yeari);
     NoYear := (Yeari = 1901);
     DetermineDate(DayNri,Dayi,Monthi,Yeari);
@@ -2495,18 +2398,34 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     IF (NrCut = 9999)
        THEN BEGIN
             // last line at end of season
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
-            IF (GetCrop().DryMatter = undef_int)
-               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3)
-               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):20:3);
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
+            fHarvest_write(tempstring, False);
+            IF (GetCrop().DryMatter = undef_int) THEN
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():20:3);
+                fHarvest_write(tempstring);
+                END
+            ELSE
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):20:3);
+                fHarvest_write(tempstring);
+                END;
             END
        ELSE BEGIN
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
                   GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
-            IF (GetCrop().DryMatter = undef_int)
-               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3)
-               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
-                         (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
+            fHarvest_write(tempstring, false);
+            IF (GetCrop().DryMatter = undef_int) THEN
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3);
+                fHarvest_write(tempstring);
+                END
+            ELSE
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+                        (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
+                fHarvest_write(tempstring);
+                END;
             END;
     END; (* RecordHarvest *)
 
@@ -2862,7 +2781,7 @@ IF GetManagement_Cuttings_Considered() THEN
          CGCadjustmentAfterCutting := true; // adjustement CGC
          END;
       // Record harvest
-      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval(),BprevSum,YprevSum,fHarvest);
+      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval(),BprevSum,YprevSum);
       // Reset
       SetSumInterval(0);
       SumGDDcuts := 0;
@@ -2918,8 +2837,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
 //14.d Print ---------------------------------------
 IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
 IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,WPi);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,fEval);
-
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode);
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -2986,7 +2904,7 @@ BEGIN
 TheProjectFile := TheProjectFile_;
 OpenOutputRun(TheProjectType); // open seasonal results .out
 IF OutDaily THEN OpenOutputDaily(TheProjectType);  // Open Daily results .OUT
-IF Part1Mult THEN OpenPart1MultResults(TheProjectType,fHarvest); // Open Multiple harvests in season .OUT
+IF Part1Mult THEN OpenPart1MultResults(TheProjectType); // Open Multiple harvests in season .OUT
 END;  // InitializeSimulation
 
 
@@ -2994,7 +2912,7 @@ PROCEDURE FinalizeSimulation();
 BEGIN
 fRun_close(); // Close Run.out
 IF OutDaily THEN fDaily_close();  // Close Daily.OUT
-IF Part1Mult THEN Close(fHarvest);  // Close Multiple harvests in season
+IF Part1Mult THEN fHarvest_close();  // Close Multiple harvests in season
 END;  // FinalizeSimulation
 
 
@@ -3051,8 +2969,8 @@ SetSumWaBal(SumWaBal_temp);
 ResetPreviousSum(SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun);
-IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fEval);
+IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun);
 END; // InitializeRun
 
 
@@ -3063,12 +2981,12 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
                         DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double;
-                        VAR fHarvest : text);
+                        BprevSum,YprevSum : double);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
+        tempstring : string;
     BEGIN
-    Append(fHarvest);
+    fHarvest_open(GetfHarvest_filename(), 'a');
     DetermineDate(GetCrop().Day1,Dayi,Monthi,Yeari);
     NoYear := (Yeari = 1901);
     DetermineDate(DayNri,Dayi,Monthi,Yeari);
@@ -3076,18 +2994,34 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
     IF (NrCut = 9999)
        THEN BEGIN
             // last line at end of season
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
-            IF (GetCrop().DryMatter = undef_int)
-               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3)
-               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):20:3);
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
+            fHarvest_write(tempstring, False);
+            IF (GetCrop().DryMatter = undef_int) THEN
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():20:3);
+                fHarvest_write(tempstring);
+                END
+            ELSE
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):20:3);
+                fHarvest_write(tempstring);
+                END;
             END
        ELSE BEGIN
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
                   GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
-            IF (GetCrop().DryMatter = undef_int)
-               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3)
-               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+            fHarvest_write(tempstring, False);
+            IF (GetCrop().DryMatter = undef_int) THEN
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3);
+                fHarvest_write(tempstring);
+                END
+            ELSE
+                BEGIN
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
                          (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
+                fHarvest_write(tempstring);
+                END;
             END;
     END; // RecordHarvest
 
@@ -3102,9 +3036,9 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
        IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
           BEGIN  // final harvest at crop maturity
           SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum,fHarvest);
+          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum);
           END;
-       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum,fHarvest); // last line at end of season
+       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum); // last line at end of season
        END;
     // intermediate results
     IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
@@ -3121,13 +3055,12 @@ END; // FinalizeRun1
 
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
-    PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt;
-                                              VAR fEval : text);
+    PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt);
     VAR totalnameEvalStat,StrNr : string;
 
     BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
-    Close(fEval);
+    fEval_close();
     IF (LineNrEval <> undef_int) THEN fObs_close();
     // 2. Specify File name Evaluation of simulation results - Statistics
     StrNr := '';
@@ -3143,7 +3076,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     WriteAssessmentSimulation(StrNr,totalnameEvalStat,TheProjectType,
                               GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
     // 4. Delete Evaluation data file
-    Erase(fEval);
+    fEval_erase();
     END; // CloseEvalDataPerformEvaluation
 
 
@@ -3170,7 +3103,7 @@ BEGIN
 CloseClimateFiles();
 CloseIrrigationFile();
 CloseManagementFile();
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun,fEval);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun);
 END; // FinalizeRun2
 
 
