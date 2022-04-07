@@ -928,6 +928,30 @@ function GetSumGDDPrev() : double;
 procedure SetSumGDDPrev(constref SumGDDPrev : double);
     external 'aquacrop' name '__ac_run_MOD_setsumgddprev';
 
+function GetCCoTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccototal';
+
+procedure SetCCoTotal(constref CCoTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setccototal';
+
+function GetCCxTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxtotal';
+
+procedure SetCCxTotal(constref CCxTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxtotal';
+
+function GetCDCTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcdctotal';
+
+procedure SetCDCTotal(constref CDCTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setcdctotal';
+
+function GetGDDCDCTotal() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddcdctotal';
+
+procedure SetGDDCDCTotal(constref GDDCDCTotal : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddcdctotal';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;

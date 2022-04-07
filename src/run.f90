@@ -258,7 +258,7 @@ real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
 real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
-real(dp) :: CCxCropWeedsNoSFstress
+real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
 
 character(len=:), allocatable :: fEval_filename
 
@@ -2250,6 +2250,58 @@ subroutine SetSumGDDPrev(SumGDDPrev_in)
 
     SumGDDPrev = SumGDDPrev_in
 end subroutine SetSumGDDPrev
+
+real(dp) function GetCCoTotal()
+    !! Getter for the "CCoTotal" global variable.
+
+    GetCCoTotal = CCoTotal
+end function GetCCoTotal
+
+subroutine SetCCoTotal(CCoTotal_in)
+    !! Setter for the "CCoTotal" global variable.
+    real(dp), intent(in) :: CCoTotal_in
+
+    CCoTotal = CCoTotal_in 
+end subroutine SetCCoTotal
+
+real(dp) function GetCCxTotal()
+    !! Getter for the "CCxTotal" global variable.
+
+    GetCCxTotal = CCxTotal
+end function GetCCxTotal
+
+subroutine SetCCxTotal(CCxTotal_in)
+    !! Setter for the "CCxTotal" global variable.
+    real(dp), intent(in) :: CCxTotal_in
+
+    CCxTotal = CCxTotal_in 
+end subroutine SetCCxTotal
+
+real(dp) function GetCDCTotal()
+    !! Getter for the "CDCTotal" global variable.
+
+    GetCDCTotal = CDCTotal
+end function GetCDCTotal
+
+subroutine SetCDCTotal(CDCTotal_in)
+    !! Setter for the "CDCTotal" global variable.
+    real(dp), intent(in) :: CDCTotal_in
+
+    CDCTotal = CDCTotal_in 
+end subroutine SetCDCTotal
+
+real(dp) function GetGDDCDCTotal()
+    !! Getter for the "GDDCDCTotal" global variable.
+
+    GetGDDCDCTotal = GDDCDCTotal
+end function GetGDDCDCTotal
+
+subroutine SetGDDCDCTotal(GDDCDCTotal_in)
+    !! Setter for the "GDDCDCTotal" global variable.
+    real(dp), intent(in) :: GDDCDCTotal_in
+
+    GDDCDCTotal = GDDCDCTotal_in
+end subroutine SetGDDCDCTotal
 
 
 !! END section global variables

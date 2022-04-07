@@ -29,7 +29,7 @@ var  fHarvest, fEval : text;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      Zeval,fWeedNoS,
-     CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
+     WeedRCi,CCiActualWeedInfested : double;
 
      CGCadjustmentAfterCutting : BOOLEAN;
      BprevSum,YprevSum,SumGDDcuts : double;
@@ -1185,15 +1185,15 @@ IF (GetManagement_WeedRC() > 0)
         SetCCxCropWeedsNoSFstress( GetCrop().CCx);
         END;
 // 7.3 CC total due to weed infestation
-CCxTotal := fWeed * GetCrop().CCx * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
-CDCTotal := GetCrop().CDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
-                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
-GDDCDCTotal := GetCrop().GDDCDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
-                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
+SetCCxTotal( fWeed * GetCrop().CCx * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100));
+SetCDCTotal( GetCrop().CDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29));
+SetGDDCDCTotal(GetCrop().GDDCDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29));
 IF (GetCrop_subkind() = Forage)
    THEN fi := MultiplierCCoSelfThinning(GetSimulation_YearSeason(),GetCrop().YearCCx,GetCrop().CCxRoot)
    ELSE fi := 1;
-CCoTotal := fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
+SetCCoTotal(fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100));
 
 // 8. prepare output files
 // Not applicable
@@ -1326,7 +1326,7 @@ IF (GetDayNri() <= GetCrop().Day1)
                                       GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                                       GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,
                                       GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                                      CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,
+                                      GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),
                                       SumGDDforDayCC,RatDGDD,
                                       GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
                                       GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle()));
@@ -1335,7 +1335,7 @@ IF (GetDayNri() <= GetCrop().Day1)
                 END
            ELSE BEGIN // sowing or transplanting
                 SetCCiPrev(0);
-                IF (GetDayNri() = (GetCrop().Day1+GetCrop().DaysToGermination)) THEN SetCCiPrev(CCoTotal);
+                IF (GetDayNri() = (GetCrop().Day1+GetCrop().DaysToGermination)) THEN SetCCiPrev(GetCCoTotal());
                 END;
         END
    ELSE BEGIN
@@ -1347,7 +1347,7 @@ IF (GetDayNri() <= GetCrop().Day1)
                               GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                               GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,
                               GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                              CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,
+                              GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),
                               SumGDDforDayCC,RatDGDD,
                               GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
                               GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle()));
@@ -1368,8 +1368,8 @@ IF ((GetSimulation_CCini() > 0) AND (ROUND(10000*GetCCiPrev()) > 0) AND (ROUND(G
         IF ((GetSimulation_CCini() >= CCiniMin) AND (GetSimulation_CCini() <= CCiniMax)) THEN SetCCiPrev(GetSimulation_CCini()/100);
         END;
 // 13.3
-SetCrop_CCxAdjusted(CCxTotal);
-SetCrop_CCoAdjusted(CCoTotal);
+SetCrop_CCxAdjusted(GetCCxTotal());
+SetCrop_CCoAdjusted(GetCCoTotal());
 SetTimeSenescence(0);
 SetCrop_CCxWithered(0);
 NoMoreCrop := false;
@@ -2440,7 +2440,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
        THEN RatDGDD := (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopySF)/(GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopySF);
     PotValSF := CCiNoWaterStressSF(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
         GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-        CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
+        GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),SumGDDadjCC,RatDGDD,
         GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle());
     PotValSF := 100 * (1/GetCCxCropWeedsNoSFstress()) * PotValSF;
     END; (* GetPotValSF *)
@@ -2521,7 +2521,7 @@ IF (GetCrop().DaysToCCini <> 0)
                                   GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
                                   GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().GDDCGC,GetCrop().CDC,GetCrop().GDDCDC,RatDGDD,
                                   GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
-                                  GetSimulation_EffectStress_CDecline(),(CCxTotal/GetCrop().CCx),GetCrop().ModeCycle));  // (CCxTotal/Crop.CCx) = fWeed
+                                  GetSimulation_EffectStress_CDecline(),(GetCCxTotal()/GetCrop().CCx),GetCrop().ModeCycle));  // (CCxTotal/Crop.CCx) = fWeed
                    END;
                 END
            ELSE BEGIN // before start crop
@@ -2534,7 +2534,7 @@ IF (GetCrop().DaysToCCini <> 0)
         IF (GetCrop().ModeCycle = GDDays) THEN SumGDDadjCC := GetSimulation_SumGDD();
         // CC initial (at the end of previous day) when simulation starts before sowing/transplanting,
         IF ((GetDayNri() = (GetCrop().Day1 + GetCrop().DaysToGermination)) AND (GetDayNri() > GetSimulation_FromDayNr()))
-           THEN SetCCiPrev(CCoTotal);
+           THEN SetCCiPrev(GetCCoTotal());
         END;
 
 
@@ -2589,7 +2589,7 @@ StressSenescence_temp := GetStressSenescence();
 TimeSenescence_temp := GetTimeSenescence();
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,GetSumInterval(),GetDayLastCut(),GetStressTot_NrD(),
               GetTadj(),GetGDDTadj(),
-              GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
+              GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),GetCCxTotal(),GetCCoTotal(),GetCDCTotal(),GetGDDCDCTotal(),SumGDDadjCC,
               GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),
               GetDayFraction(),GetGDDayFraction(),FracAssim,
               GetStressSFadjNEW(),GetTransfer_Store(),GetTransfer_Mobilize(),
@@ -2834,8 +2834,8 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
                          CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),GetCrop().DaysToGermination,
                          GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                          GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                         CCoTotal,CCxTotal,GetCrop().CGC,
-                         CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                         GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,
+                         GetCDCTotal(),GetCrop().GDDCGC,GetGDDCDCTotal(),
                          SumGDDadjCC,GetCrop().ModeCycle,
                          GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
         END
