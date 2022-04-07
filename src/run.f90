@@ -260,6 +260,7 @@ real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
 real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
 real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
+real(dp) :: BprevSum
 
 character(len=:), allocatable :: fEval_filename
 
@@ -2355,6 +2356,19 @@ subroutine SetZeval(Zeval_in)
 
     Zeval = Zeval_in
 end subroutine SetZeval
+
+real(dp) function GetBprevSum()
+    !! Getter for the "BprevSum" global variable.
+
+    GetBprevSum = BprevSum
+end function GetBprevSum
+
+subroutine SetBprevSum(BprevSum_in)
+    !! Setter for the "BprevSum" global variable.
+    real(dp), intent(in) :: BprevSum_in
+
+    BprevSum = BprevSum_in
+end subroutine SetBprevSum
 
 
 !! END section global variables

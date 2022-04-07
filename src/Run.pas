@@ -30,7 +30,7 @@ var  fHarvest, fEval : text;
      GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
 
      CGCadjustmentAfterCutting : BOOLEAN;
-     BprevSum,YprevSum,SumGDDcuts : double;
+     YprevSum,SumGDDcuts : double;
      HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
      TheProjectFile : string;
 
@@ -1464,7 +1464,7 @@ IF ((GetSimulation_Zrini() > 0) AND (GetZiprev() > 0) AND (GetSimulation_Zrini()
 SetNrCut(0);
 SetSumInterval(0);
 SumGDDcuts := 0;
-BprevSum := 0;
+SetBprevSum(0);
 YprevSum := 0;
 SetCutInfoRecord1_IntervalInfo(0);
 SetCutInfoRecord2_IntervalInfo(0);
@@ -2385,7 +2385,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
                         DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double);
+                        YprevSum : double);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
         tempstring : string;
@@ -2412,7 +2412,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
                 END;
             END
        ELSE BEGIN
-            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-GetBprevSum()):12:3,
                   GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
             fHarvest_write(tempstring, false);
             IF (GetCrop().DryMatter = undef_int) THEN
@@ -2751,7 +2751,7 @@ IF GetManagement_Cuttings_Considered() THEN
                                  THEN HarvestNow := true;
                               END;
                      DryB   : BEGIN
-                              IF (((GetSumWabal_Biomass() - BprevSum) >= GetCutInfoRecord1_MassInfo())
+                              IF (((GetSumWabal_Biomass() - GetBprevSum()) >= GetCutInfoRecord1_MassInfo())
                                                  AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                  AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
@@ -2791,11 +2791,11 @@ IF GetManagement_Cuttings_Considered() THEN
          CGCadjustmentAfterCutting := true; // adjustement CGC
          END;
       // Record harvest
-      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval(),BprevSum,YprevSum);
+      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval(),YprevSum);
       // Reset
       SetSumInterval(0);
       SumGDDcuts := 0;
-      BprevSum := GetSumWaBal_Biomass();
+      SetBprevSum(GetSumWaBal_Biomass());
       YprevSum := GetSumWaBal_YieldPart();
       END;
    END;
@@ -2991,7 +2991,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
                         DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double);
+                        YprevSum : double);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
         tempstring : string;
@@ -3018,7 +3018,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
                 END;
             END
        ELSE BEGIN
-            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-GetBprevSum()):12:3,
                   GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
             fHarvest_write(tempstring, False);
             IF (GetCrop().DryMatter = undef_int) THEN
@@ -3046,9 +3046,9 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
        IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
           BEGIN  // final harvest at crop maturity
           SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum);
+          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),YprevSum);
           END;
-       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum); // last line at end of season
+       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),YprevSum); // last line at end of season
        END;
     // intermediate results
     IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results

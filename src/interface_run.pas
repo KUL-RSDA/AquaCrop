@@ -976,6 +976,12 @@ function GetZeval() : double;
 procedure SetZeval(constref Zeval : double);
     external 'aquacrop' name '__ac_run_MOD_setzeval';
 
+function GetBprevSum() : double;
+    external 'aquacrop' name '__ac_run_MOD_getbprevsum';
+
+procedure SetBprevSum(constref BprevSum : double);
+    external 'aquacrop' name '__ac_run_MOD_setbprevsum';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;
