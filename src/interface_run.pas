@@ -1004,6 +1004,12 @@ procedure fHarvest_write_wrap(
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
+procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
+
+procedure __OpenPart1MultResults(constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
+
+
 implementation
 
 
@@ -1022,6 +1028,14 @@ var
 begin
     int_typeproject := ord(TheProjectType);
     __OpenOutputDaily(int_typeproject);
+end;
+
+procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __OpenPart1MultResults(int_typeproject);
 end;
 
 

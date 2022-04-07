@@ -2944,4 +2944,28 @@ subroutine OpenOutputDaily(TheProjectType)
 end subroutine OpenOutputDaily
 
 
+subroutine OpenPart1MultResults(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROharvests.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMharvests.OUT'
+    end select
+    call SetfHarvest_filename(totalname)
+    call fHarvest_open(GetfHarvest_filename(), 'w')
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fHarvest_write(trim(tempstring))
+    call fHarvest_write('Biomass and Yield at Multiple cuttings')
+end subroutine OpenPart1MultResults
+
+
+
 end module ac_run
