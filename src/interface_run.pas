@@ -879,6 +879,11 @@ procedure OpenOutputRun(constref TheProjectType : repTypeProject);
 procedure __OpenOutputRun(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openoutputrun';
 
+procedure OpenOutputDaily(constref TheProjectType : repTypeProject);
+
+procedure __OpenOutputDaily(constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_openoutputdaily';
+
 
 implementation
 
@@ -888,6 +893,15 @@ var
 begin
     int_typeproject := ord(TheProjectType);
     __OpenOutputRun(int_typeproject);
+end;
+
+
+procedure OpenOutputDaily(constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __OpenOutputDaily(int_typeproject);
 end;
 
 

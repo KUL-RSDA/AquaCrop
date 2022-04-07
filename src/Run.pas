@@ -53,19 +53,6 @@ var  fHarvest, fEval : text;
      
 
 
-PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject);
-VAR totalname, tempstring : string;
-BEGIN
-CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROday.OUT');
-      TypePRM : totalname := CONCAT(getPathNameOutp(),GetOutputName(),'PRMday.OUT');
-      end;
-fDaily_open(totalname, 'w');
-WriteStr(tempstring, 'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-fDaily_write(tempstring);
-END; (* OpenOutputDaily *)
-
-
 PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject;
                                VAR fHarvest : text);
 VAR totalname : string;

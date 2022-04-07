@@ -2691,4 +2691,26 @@ subroutine OpenOutputRun(TheProjectType)
 end subroutine OpenOutputRun
 
 
+subroutine OpenOutputDaily(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROday.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMday.OUT'
+    end select
+    call date_and_time(values=d)
+    call fDaily_open(totalname, 'w')
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fDaily_write(trim(tempstring))
+end subroutine OpenOutputDaily
+
+
 end module ac_run
