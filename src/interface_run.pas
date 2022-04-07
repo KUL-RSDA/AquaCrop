@@ -307,14 +307,34 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum(VAR PreviousSum : rep_sum;
-                           VAR SumETo,SumGDD,PreviousSumETo,PreviousSumGDD,
+procedure ResetPreviousSum(VAR PreviousSumETo,PreviousSumGDD,
                                PreviousBmob,PreviousBsto : double);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
 procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
+
+
+procedure fDaily_open(constref filename : string; constref mode : string);
+
+procedure fDaily_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fdaily_open_wrap';
+
+procedure fDaily_write(constref line : string; constref advance : boolean = True);
+
+procedure fDaily_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_fdaily_write_wrap';
+
+procedure fDaily_close();
+        external 'aquacrop' name '__ac_run_MOD_fdaily_close';
 
 function GetTminDataSet() : rep_SimulationEventsDbl;
 
@@ -416,20 +436,155 @@ function GetFracBiomassPotSF() : double;
 procedure SetFracBiomassPotSF(constref FracBiomassPotSF_in : double);
     external 'aquacrop' name '__ac_run_MOD_setfracbiomasspotsf';
 
+function GetBin(): double;
+        external 'aquacrop' name '__ac_run_MOD_getbin';
+
+function GetBout(): double;
+        external 'aquacrop' name '__ac_run_MOD_getbout';
+
+procedure SetBin(constref Bin_in : double);
+        external 'aquacrop' name '__ac_run_MOD_setbin';
+
+procedure SetBout(constref Bout_in : double);
+        external 'aquacrop' name '__ac_run_MOD_setbout';
+
+function GetGDDayi(): double;
+        external 'aquacrop' name '__ac_run_MOD_getgddayi';
+
+procedure SetGDDayi(constref GDDayi_in : double);
+        external 'aquacrop' name '__ac_run_MOD_setgddayi';
+
 function GetCO2i() : double;
     external 'aquacrop' name '__ac_run_MOD_getco2i';
 
 procedure SetCO2i(constref CO2i_in : double);
     external 'aquacrop' name '__ac_run_MOD_setco2i';
 
-procedure RelationshipsForFertilityAndSaltStress(
-                    VAR Coeffb0 : double;
-                    VAR Coeffb1 : double;
-                    VAR Coeffb2 : double;
-                    VAR FracBiomassPotSF : double;
-                    VAR Coeffb0Salt : double;
-                    VAR Coeffb1Salt : double;
-                    VAR Coeffb2Salt : double);
+function GetPreviousSum() : rep_sum;
+
+function GetPreviousSum_Epot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_epot';
+
+function GetPreviousSum_Tpot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_tpot';
+
+function GetPreviousSum_Rain() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_rain';
+
+function GetPreviousSum_Irrigation() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_irrigation';
+
+function GetPreviousSum_Infiltrated() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_infiltrated';
+
+function GetPreviousSum_Runoff() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_runoff';
+
+function GetPreviousSum_Drain() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_drain';
+
+function GetPreviousSum_Eact() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_eact';
+
+function GetPreviousSum_Tact() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_tact';
+
+function GetPreviousSum_TrW() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_trw';
+
+function GetPreviousSum_ECropCycle() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_ecropcycle';
+
+function GetPreviousSum_CRwater() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_crwater';
+
+function GetPreviousSum_Biomass() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomass';
+
+function GetPreviousSum_YieldPart() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_yieldpart';
+
+function GetPreviousSum_BiomassPot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomasspot';
+
+function GetPreviousSum_BiomassUnlim() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomassunlim';
+
+function GetPreviousSum_BiomassTot() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_biomasstot';
+
+function GetPreviousSum_SaltIn() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_saltin';
+
+function GetPreviousSum_SaltOut() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_saltout';
+
+function GetPreviousSum_CRsalt() : double;
+        external 'aquacrop' name '__ac_run_MOD_getprevioussum_crsalt';
+
+procedure SetPreviousSum(constref PreviousSum : rep_sum);
+
+procedure SetPreviousSum_Epot(constref Epot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_epot';
+
+procedure SetPreviousSum_Tpot(constref Tpot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_tpot';
+
+procedure SetPreviousSum_Rain(constref Rain : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_rain';
+
+procedure SetPreviousSum_Irrigation(constref Irrigation : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_irrigation';
+
+procedure SetPreviousSum_Infiltrated(constref Infiltrated : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_infiltrated';
+
+procedure SetPreviousSum_Runoff(constref Runoff : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_runoff';
+
+procedure SetPreviousSum_Drain(constref Drain : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_drain';
+
+procedure SetPreviousSum_Eact(constref Eact : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_eact';
+
+procedure SetPreviousSum_Tact(constref Tact : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_tact';
+
+procedure SetPreviousSum_TrW(constref TrW : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_trw';
+
+procedure SetPreviousSum_ECropCycle(constref ECropCycle : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_ecropcycle';
+
+procedure SetPreviousSum_CRwater(constref CRwater : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_crwater';
+
+procedure SetPreviousSum_Biomass(constref Biomass : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomass';
+
+procedure SetPreviousSum_yieldpart(constref yieldpart : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_yieldpart';
+
+procedure SetPreviousSum_BiomassPot(constref BiomassPot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomasspot';
+
+procedure SetPreviousSum_BiomassUnlim(constref BiomassUnlim : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomassunlim';
+
+procedure SetPreviousSum_BiomassTot(constref BiomassTot : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_biomasstot';
+
+procedure SetPreviousSum_SaltIn(constref SaltIn : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_saltin';
+
+procedure SetPreviousSum_SaltOut(constref SaltOut : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_saltout';
+
+procedure SetPreviousSum_CRsalt(constref CRsalt : double);
+        external 'aquacrop' name '__ac_run_MOD_setprevioussum_crsalt';
+
+procedure RelationshipsForFertilityAndSaltStress();
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
@@ -555,6 +710,38 @@ function fCuts_eof() : boolean;
 procedure fCuts_close();
         external 'aquacrop' name '__ac_run_MOD_fcuts_close';
 
+procedure OpenIrrigationFile();
+        external 'aquacrop' name '__ac_run_MOD_openirrigationfile';
+
+function GetGlobalIrriECw() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getglobalirriecw_wrap';
+
+procedure SetGlobalIrriECw(constref GlobalIrriECw_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setglobalirriecw_wrap';
+
+procedure fObs_open(constref filename : string; constref mode : string);
+
+procedure fObs_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fobs_open_wrap';
+
+function fObs_read() : string;
+
+function fObs_read_wrap() : PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_fobs_read_wrap';
+
+function fObs_eof() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_fobs_eof_wrap';
+
+procedure fObs_close();
+        external 'aquacrop' name '__ac_run_MOD_fobs_close';
+
+procedure fObs_rewind();
+        external 'aquacrop' name '__ac_run_MOD_fobs_rewind';
+
 function GetIrriInterval() : integer;
     external 'aquacrop' name '__ac_run_MOD_getirriinterval';
 
@@ -606,7 +793,252 @@ procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
 procedure GetNextHarvest()
     external 'aquacrop' name '__ac_run_MOD_getnextharvest';     
 
+function GetCCxWitheredTpot() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
+
+procedure SetCCxWitheredTpot(constref CCxWitheredTpot : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpot';
+
+function GetCCxWitheredTpotNoS() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpotnos';
+
+procedure SetCCxWitheredTpotNoS(constref CCxWitheredTpotNoS : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpotnos';
+
+function GetCoeffb0() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb0';
+
+procedure SetCoeffb0(constref Coeffb0 : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb0';
+
+function GetCoeffb1() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb1';
+
+procedure SetCoeffb1(constref Coeffb1 : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb1';
+
+function GetCoeffb2() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb2';
+
+procedure SetCoeffb2(constref Coeffb2 : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb2';
+
+function GetCoeffb0Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb0salt';
+
+procedure SetCoeffb0Salt(constref Coeffb0Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb0salt';
+
+function GetCoeffb1Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb1salt';
+
+procedure SetCoeffb1Salt(constref Coeffb1Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb1salt';
+
+function GetCoeffb2Salt() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcoeffb2salt';
+
+procedure SetCoeffb2Salt(constref Coeffb2Salt : double);
+    external 'aquacrop' name '__ac_run_MOD_setcoeffb2salt';
+
+function GetStressLeaf() : double;
+    external 'aquacrop' name '__ac_run_MOD_getstressleaf';
+
+procedure SetStressLeaf(constref StressLeaf : double);
+    external 'aquacrop' name '__ac_run_MOD_setstressleaf';
+
+function GetStressSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_getstresssenescence';
+
+procedure SetStressSenescence(constref StressSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_setstresssenescence';
+
+function GetDayFraction() : double;
+    external 'aquacrop' name '__ac_run_MOD_getdayfraction';
+
+procedure SetDayFraction(constref DayFraction : double);
+    external 'aquacrop' name '__ac_run_MOD_setdayfraction';
+
+function GetGDDayFraction() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddayfraction';
+
+procedure SetGDDayFraction(constref GDDayFraction : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddayfraction';
+
+function GetGDDCGCref() : double;
+    external 'aquacrop' name '__ac_run_MOD_getgddcgcref';
+
+procedure SetGDDCGCref(constref GDDCGCref : double);
+    external 'aquacrop' name '__ac_run_MOD_setgddcgcref';
+
+function GetCGCref() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcgcref';
+
+procedure SetCGCref(constref CGCref : double);
+    external 'aquacrop' name '__ac_run_MOD_setcgcref';
+
+function GetSumETo() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumeto';
+
+procedure SetSumETo(constref SumETo : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumeto';
+
+function GetSumGDD() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgdd';
+
+procedure SetSumGDD(constref SumGDD : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgdd';
+
+function GetTimeSenescence() : double;
+    external 'aquacrop' name '__ac_run_MOD_gettimesenescence';
+
+procedure SetTimeSenescence(constref TimeSenescence : double);
+    external 'aquacrop' name '__ac_run_MOD_settimesenescence';
+
+function GetSumKcTop() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctop';
+
+procedure SetSumKcTop(constref SumKcTop : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctop';
+
+function GetSumKcTopStress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumkctopstress';
+
+procedure SetSumKcTopStress(constref SumKcTopStress : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkctopstress';
+
+function GetSumKci() : double; 
+    external 'aquacrop' name '__ac_run_MOD_getsumkci';
+
+procedure SetSumKci(constref SumKci : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumkci';
+
+function GetCCxCropWeedsNoSFstress() : double;
+    external 'aquacrop' name '__ac_run_MOD_getccxcropweedsnosfstress';
+
+procedure SetCCxCropWeedsNoSFstress(constref CCxCropWeedsNoSFstress : double);
+    external 'aquacrop' name '__ac_run_MOD_setccxcropweedsnosfstress';
+
+function GetZiprev() : double;
+    external 'aquacrop' name '__ac_run_MOD_getziprev';
+
+procedure SetZiprev(constref Ziprev : double);
+    external 'aquacrop' name '__ac_run_MOD_setziprev';
+
+function GetSumGDDPrev() : double;
+    external 'aquacrop' name '__ac_run_MOD_getsumgddprev';
+
+procedure SetSumGDDPrev(constref SumGDDPrev : double);
+    external 'aquacrop' name '__ac_run_MOD_setsumgddprev';
+
+function GetfEval_filename() : string;
+
+function GetfEval_filename_wrap() : PChar;
+    external 'aquacrop' name '__ac_interface_run_MOD_getfeval_filename_wrap';
+
+procedure SetfEval_filename(constref filename : string);
+
+procedure SetfEval_filename_wrap(constref filename_ptr : PChar;
+                                 constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_setfeval_filename_wrap';
+
+procedure fEval_open(constref filename : string; constref mode : string);
+
+procedure fEval_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_feval_open_wrap';
+
+procedure fEval_write(constref line : string; constref advance : boolean = True);
+
+procedure fEval_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_feval_write_wrap';
+
+procedure fEval_close();
+        external 'aquacrop' name '__ac_run_MOD_feval_close';
+
+procedure fEval_erase();
+    external 'aquacrop' name '__ac_run_MOD_feval_erase';
+
+function GetfHarvest_filename_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_getfharvest_filename_wrap';
+
+function GetfHarvest_filename(): string;
+
+procedure SetfHarvest_filename(constref str : string);
+
+procedure SetfHarvest_filename_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_setfharvest_filename_wrap';
+
+procedure fHarvest_open(constref filename : string; constref mode : string);
+
+procedure fHarvest_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fharvest_open_wrap';
+
+procedure fHarvest_write(constref line : string; constref advance : boolean = True);
+
+procedure fHarvest_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_fharvest_write_wrap';
+
+procedure fHarvest_close();
+        external 'aquacrop' name '__ac_run_MOD_fharvest_close';
+
 implementation
+
+function GetfEval_filename() : string;
+var
+    filename_ptr : PChar;
+begin
+    filename_ptr := GetfEval_filename_wrap();
+    GetfEval_filename := AnsiString(filename_ptr);
+end;
+
+
+procedure SetfEval_filename(constref filename : string);
+var
+    filename_ptr : PChar;
+    strlen : integer;
+begin
+    filename_ptr := PChar(filename);
+    strlen := Length(filename);
+    SetfEval_filename_wrap(filename_ptr, strlen);
+end;
+
+procedure fEval_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+procedure fEval_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fEval_write_wrap(line_ptr, line_len, advance);
+end;
 
 
 function GetTminDataSet() : rep_SimulationEventsDbl;
@@ -760,6 +1192,28 @@ begin;
     SetCutInfoRecord2_MassInfo(CutInfoRecord2.MassInfo);
 end;
 
+procedure fDaily_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+procedure fDaily_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fDaily_write_wrap(line_ptr, line_len, advance);
+end;
+
 procedure fRun_open(constref filename : string; constref mode : string);
 var
      filename_ptr, mode_ptr : PChar;
@@ -892,6 +1346,26 @@ begin;
 end;
 
 
+procedure fObs_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fObs_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+function fObs_read() : string;
+var
+     line_ptr : PChar;
+begin;
+     line_ptr := fObs_read_wrap();
+     fObs_read := AnsiString(line_ptr);
+end;
+
 function GetEToDataSet() : rep_SimulationEventsDbl;
 var
     i : integer;
@@ -946,6 +1420,98 @@ procedure SetRainDataSet_i(constref i : integer;
 begin
     SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
     SetRainDataSet_Param(i, RainDataSet_i.Param);
+end;
+
+function GetPreviousSum() : rep_sum;
+begin;
+    GetPreviousSum.Epot := GetPreviousSum_Epot();
+    GetPreviousSum.Tpot := GetPreviousSum_Tpot();
+    GetPreviousSum.Rain := GetPreviousSum_Rain();
+    GetPreviousSum.Irrigation := GetPreviousSum_Irrigation();
+    GetPreviousSum.Infiltrated := GetPreviousSum_Infiltrated();
+    GetPreviousSum.Runoff := GetPreviousSum_Runoff();
+    GetPreviousSum.Drain := GetPreviousSum_Drain();
+    GetPreviousSum.Eact := GetPreviousSum_Eact();
+    GetPreviousSum.Tact := GetPreviousSum_Tact();
+    GetPreviousSum.TrW := GetPreviousSum_TrW();
+    GetPreviousSum.ECropCycle := GetPreviousSum_ECropCycle();
+    GetPreviousSum.CRwater := GetPreviousSum_CRwater();
+    GetPreviousSum.Biomass := GetPreviousSum_Biomass();
+    GetPreviousSum.YieldPart := GetPreviousSum_YieldPart();
+    GetPreviousSum.BiomassPot := GetPreviousSum_BiomassPot();
+    GetPreviousSum.BiomassUnlim := GetPreviousSum_BiomassUnlim();
+    GetPreviousSum.BiomassTot := GetPreviousSum_BiomassTot();
+    GetPreviousSum.SaltIn := GetPreviousSum_SaltIn();
+    GetPreviousSum.SaltOut := GetPreviousSum_SaltOut();
+    GetPreviousSum.CRsalt := GetPreviousSum_CRsalt();
+end;
+
+procedure SetPreviousSum(constref PreviousSum : rep_sum);
+begin;
+    SetPreviousSum_Epot(PreviousSum.Epot);
+    SetPreviousSum_Tpot(PreviousSum.Tpot);
+    SetPreviousSum_Rain(PreviousSum.Rain);
+    SetPreviousSum_Irrigation(PreviousSum.Irrigation);
+    SetPreviousSum_Infiltrated(PreviousSum.Infiltrated);
+    SetPreviousSum_Runoff(PreviousSum.Runoff);
+    SetPreviousSum_Drain(PreviousSum.Drain);
+    SetPreviousSum_Eact(PreviousSum.Eact);
+    SetPreviousSum_Tact(PreviousSum.Tact);
+    SetPreviousSum_TrW(PreviousSum.TrW);
+    SetPreviousSum_ECropCycle(PreviousSum.ECropCycle);
+    SetPreviousSum_CRwater(PreviousSum.CRwater);
+    SetPreviousSum_Biomass(PreviousSum.Biomass);
+    SetPreviousSum_YieldPart(PreviousSum.YieldPart);
+    SetPreviousSum_BiomassPot(PreviousSum.BiomassPot);
+    SetPreviousSum_BiomassUnlim(PreviousSum.BiomassUnlim);
+    SetPreviousSum_BiomassTot(PreviousSum.BiomassTot);
+    SetPreviousSum_SaltIn(PreviousSum.SaltIn);
+    SetPreviousSum_SaltOut(PreviousSum.SaltOut);
+    SetPreviousSum_CRsalt(PreviousSum.CRsalt);
+end;
+
+
+function GetfHarvest_filename(): string;
+var
+     p : PChar;
+begin;
+     p := GetfHarvest_filename_wrap();
+     GetfHarvest_filename := AnsiString(p);
+end;
+
+
+procedure SetfHarvest_filename(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetfHarvest_filename_wrap(p, strlen);
+end;
+
+
+procedure fHarvest_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fHarvest_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+
+procedure fHarvest_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fHarvest_write_wrap(line_ptr, line_len, advance);
 end;
 
 
