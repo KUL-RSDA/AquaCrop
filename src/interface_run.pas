@@ -952,6 +952,30 @@ function GetGDDCDCTotal() : double;
 procedure SetGDDCDCTotal(constref GDDCDCTotal : double);
     external 'aquacrop' name '__ac_run_MOD_setgddcdctotal';
 
+function GetWeedRCi() : double;
+    external 'aquacrop' name '__ac_run_MOD_getweedrci';
+
+procedure SetWeedRCi(constref WeedRCi : double);
+    external 'aquacrop' name '__ac_run_MOD_setweedrci';
+
+function GetCCiActualWeedInfested() : double;
+    external 'aquacrop' name '__ac_run_MOD_getcciactualweedinfested';
+
+procedure SetCCiActualWeedInfested(constref CCiActualWeedInfested : double);
+    external 'aquacrop' name '__ac_run_MOD_setcciactualweedinfested';
+
+function GetfWeedNoS() : double;
+    external 'aquacrop' name '__ac_run_MOD_getfweednos';
+
+procedure SetfWeedNoS(constref fWeedNoS : double);
+    external 'aquacrop' name '__ac_run_MOD_setfweednos';
+
+function GetZeval() : double;
+    external 'aquacrop' name '__ac_run_MOD_getzeval';
+
+procedure SetZeval(constref Zeval : double);
+    external 'aquacrop' name '__ac_run_MOD_setzeval';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;

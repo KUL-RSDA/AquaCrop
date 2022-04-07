@@ -259,6 +259,7 @@ real(dp) :: CGCref,GDDCGCref
 real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
 real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
+real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
 
 character(len=:), allocatable :: fEval_filename
 
@@ -2302,6 +2303,58 @@ subroutine SetGDDCDCTotal(GDDCDCTotal_in)
 
     GDDCDCTotal = GDDCDCTotal_in
 end subroutine SetGDDCDCTotal
+
+real(dp) function GetWeedRCi()
+    !! Getter for the "WeedRCi" global variable.
+
+    GetWeedRCi = WeedRCi
+end function GetWeedRCi
+
+subroutine SetWeedRCi(WeedRCi_in)
+    !! Setter for the "WeedRCi" global variable.
+    real(dp), intent(in) :: WeedRCi_in
+
+    WeedRCi = WeedRCi_in
+end subroutine SetWeedRCi
+
+real(dp) function GetCCiActualWeedInfested()
+    !! Getter for the "CCiActualWeedInfested" global variable.
+
+    GetCCiActualWeedInfested = CCiActualWeedInfested
+end function GetCCiActualWeedInfested
+
+subroutine SetCCiActualWeedInfested(CCiActualWeedInfested_in)
+    !! Setter for the "CCiActualWeedInfested" global variable.
+    real(dp), intent(in) :: CCiActualWeedInfested_in
+
+    CCiActualWeedInfested = CCiActualWeedInfested_in
+end subroutine SetCCiActualWeedInfested
+
+real(dp) function GetfWeedNoS()
+    !! Getter for the "fWeedNoS" global variable.
+
+    GetfWeedNoS = fWeedNoS
+end function GetfWeedNoS
+
+subroutine SetfWeedNoS(fWeedNoS_in)
+    !! Setter for the "fWeedNoS" global variable.
+    real(dp), intent(in) :: fWeedNoS_in
+
+    fWeedNoS = fWeedNoS_in
+end subroutine SetfWeedNoS
+
+real(dp) function GetZeval()
+    !! Getter for the "Zeval" global variable.
+
+    GetZeval = Zeval
+end function GetZeval
+
+subroutine SetZeval(Zeval_in)
+    !! Setter for the "Zeval" global variable.
+    real(dp), intent(in) :: Zeval_in
+
+    Zeval = Zeval_in
+end subroutine SetZeval
 
 
 !! END section global variables
