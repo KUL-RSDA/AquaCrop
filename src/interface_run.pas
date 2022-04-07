@@ -307,8 +307,7 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum(VAR PreviousSumETo,PreviousSumGDD,
-                               PreviousBmob,PreviousBsto : double);
+procedure ResetPreviousSum;
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
 procedure GetGwtSet(constref DayNrIN : LongInt;
@@ -927,6 +926,30 @@ function GetSumGDDPrev() : double;
 
 procedure SetSumGDDPrev(constref SumGDDPrev : double);
     external 'aquacrop' name '__ac_run_MOD_setsumgddprev';
+
+function GetPreviousSumETo() : double;
+    external 'aquacrop' name '__ac_run_MOD_getprevioussumeto';
+
+procedure SetPreviousSumETo(constref PreviousSumETo : double);
+    external 'aquacrop' name '__ac_run_MOD_setprevioussumeto';
+
+function GetPreviousSumGDD() : double;
+    external 'aquacrop' name '__ac_run_MOD_getprevioussumgdd';
+
+procedure SetPreviousSumGDD(constref PreviousSumGDD : double);
+    external 'aquacrop' name '__ac_run_MOD_setprevioussumgdd';
+
+function GetPreviousBmob() : double;
+    external 'aquacrop' name '__ac_run_MOD_getpreviousbmob';
+
+procedure SetPreviousBmob(constref PreviousBmob : double);
+    external 'aquacrop' name '__ac_run_MOD_setpreviousbmob';
+
+function GetPreviousBsto() : double;
+    external 'aquacrop' name '__ac_run_MOD_getpreviousbsto';
+
+procedure SetPreviousBsto(constref PreviousBsto : double);
+    external 'aquacrop' name '__ac_run_MOD_setpreviousbsto';
 
 function GetCCoTotal() : double;
     external 'aquacrop' name '__ac_run_MOD_getccototal';

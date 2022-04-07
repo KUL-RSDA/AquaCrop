@@ -40,12 +40,9 @@ var  fHarvest, fEval : text;
      LineNrEval : INTEGER;
      
 // specific for StandAlone
-     PreviousSumETo,PreviousSumGDD : double;
-     PreviousBmob,PreviousBsto : double;
      NoYear : BOOLEAN;
      StageCode : ShortInt;
      PreviousDayNr : LongInt;
-     
 
 
 
@@ -1666,8 +1663,8 @@ BEGIN
 DetermineDate((PreviousDayNr+1),Day1,Month1,Year1);
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
 RPer := GetSumWaBal_Rain() - GetPreviousSum_Rain();
-EToPer := GetSumETo() - PreviousSumETo;
-GDDPer := GetSumGDD() - PreviousSumGDD;
+EToPer := GetSumETo() - GetPreviousSumETo();
+GDDPer := GetSumGDD() - GetPreviousSumGDD();
 IrriPer := GetSumWaBal_Irrigation() - GetPreviousSum_Irrigation();
 InfiltPer := GetSumWaBal_Infiltrated() - GetPreviousSum_Infiltrated();
 EPer := GetSumWaBal_Eact() - GetPreviousSum_Eact();
@@ -1685,8 +1682,8 @@ SalInPer := GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn();
 SalOutPer := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
 SalCRPer := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
 
-BmobPer := GetTransfer_Bmobilized() - PreviousBmob;
-BstoPer := GetSimulation_Storage_Btotal() - PreviousBsto;
+BmobPer := GetTransfer_Bmobilized() - GetPreviousBmob();
+BstoPer := GetSimulation_Storage_Btotal() - GetPreviousBsto();
 
 // write
 WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
@@ -1700,8 +1697,8 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
 // reset previous sums
 PreviousDayNr := GetDayNri();
 SetPreviousSum_Rain(GetSumWaBal_Rain());
-PreviousSumETo := GetSumETo();
-PreviousSumGDD := GetSumGDD();
+SetPreviousSumETo(GetSumETo());
+SetPreviousSumGDD(GetSumGDD());
 SetPreviousSum_Irrigation(GetSumWaBal_Irrigation());
 SetPreviousSum_Infiltrated(GetSumWaBal_Infiltrated());
 SetPreviousSum_Eact(GetSumWaBal_Eact());
@@ -1720,8 +1717,8 @@ SetPreviousSum_SaltIn(GetSumWaBal_SaltIn());
 SetPreviousSum_SaltOut(GetSumWaBal_SaltOut());
 SetPreviousSum_CRsalt(GetSumWaBal_CRsalt());
 
-PreviousBmob := GetTransfer_Bmobilized();
-PreviousBsto := GetSimulation_Storage_Btotal();
+SetPreviousBmob(GetTransfer_Bmobilized());
+SetPreviousBsto(GetSimulation_Storage_Btotal());
 END; (* WriteIntermediatePeriod *)
 
 
@@ -2992,7 +2989,7 @@ AdjustCompartments;
 SumWaBal_temp := GetSumWaBal();
 GlobalZero(SumWabal_temp);
 SetSumWaBal(SumWaBal_temp);
-ResetPreviousSum(PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+ResetPreviousSum();
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun);

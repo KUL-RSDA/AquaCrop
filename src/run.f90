@@ -264,6 +264,8 @@ real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
 real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
 real(dp) :: alfaHI, alfaHIAdj
 
+!! specific for StandAlone
+real(dp) :: PreviousSumETo, PreviousSumGDD, PreviousBmob,PreviousBsto
 character(len=:), allocatable :: fEval_filename
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
@@ -2502,6 +2504,59 @@ subroutine SetalfaHIAdj(alfaHIAdj_in)
     alfaHIAdj = alfaHIAdj_in
 end subroutine SetalfaHIAdj
 
+real(dp) function GetPreviousSumETo()
+    !! Getter for the "PreviousSumETo" global variable.
+
+    GetPreviousSumETo = PreviousSumETo
+end function GetPreviousSumETo
+
+subroutine SetPreviousSumETo(PreviousSumETo_in)
+    !! Setter for the "PreviousSumETo" global variable.
+    real(dp), intent(in) :: PreviousSumETo_in
+
+    PreviousSumETo = PreviousSumETo_in
+end subroutine SetPreviousSumETo
+
+real(dp) function GetPreviousSumGDD()
+    !! Getter for the "PreviousSumGDD" global variable.
+
+    GetPreviousSumGDD = PreviousSumGDD
+end function GetPreviousSumGDD
+
+subroutine SetPreviousSumGDD(PreviousSumGDD_in)
+    !! Setter for the "PreviousSumGDD" global variable.
+    real(dp), intent(in) :: PreviousSumGDD_in
+
+    PreviousSumGDD = PreviousSumGDD_in
+end subroutine SetPreviousSumGDD
+
+real(dp) function GetPreviousBmob()
+    !! Getter for the "PreviousBmob" global variable.
+
+    GetPreviousBmob = PreviousBmob
+end function GetPreviousBmob
+
+subroutine SetPreviousBmob(PreviousBmob_in)
+    !! Setter for the "PreviousBmob" global variable.
+    real(dp), intent(in) :: PreviousBmob_in
+
+    PreviousBmob = PreviousBmob_in
+end subroutine SetPreviousBmob
+
+real(dp) function GetPreviousBsto()
+    !! Getter for the "PreviousBsto" global variable.
+
+    GetPreviousBsto = PreviousBsto
+end function GetPreviousBsto
+
+subroutine SetPreviousBsto(PreviousBsto_in)
+    !! Setter for the "PreviousBsto" global variable.
+    real(dp), intent(in) :: PreviousBsto_in
+
+    PreviousBsto = PreviousBsto_in
+end subroutine SetPreviousBsto
+
+
 !! END section global variables
 
 
@@ -2526,12 +2581,7 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(PreviousSumETo, &
-        PreviousSumGDD, PreviousBmob, PreviousBsto)
-    real(dp), intent(inout) :: PreviousSumETo
-    real(dp), intent(inout) :: PreviousSumGDD
-    real(dp), intent(inout) :: PreviousBmob
-    real(dp), intent(inout) :: PreviousBsto
+subroutine ResetPreviousSum()
 
     call SetPreviousSum_Epot(0.0_dp)
     call SetPreviousSum_Tpot(0.0_dp)
@@ -2554,10 +2604,10 @@ subroutine ResetPreviousSum(PreviousSumETo, &
     call SetPreviousSum_CRsalt(0.0_dp)
     call SetSumETo(0.0_dp)
     call SetSumGDD(0.0_dp)
-    PreviousSumETo = 0.0_dp
-    PreviousSumGDD = 0.0_dp
-    PreviousBmob = 0.0_dp
-    PreviousBsto = 0.0_dp
+    call SetPreviousSumETo(0.0_dp)
+    call SetPreviousSumGDD(0.0_dp)
+    call SetPreviousBmob(0.0_dp)
+    call SetPreviousBsto(0.0_dp)
 end subroutine ResetPreviousSum
 
 subroutine GetGwtSet(DayNrIN, GwT)
