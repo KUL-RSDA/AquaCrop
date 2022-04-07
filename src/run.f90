@@ -2883,4 +2883,72 @@ subroutine OpenIrrigationFile()
 end subroutine OpenIrrigationFile
 
 
+subroutine CreateEvalData(NrRun)
+    integer(int8), intent(in) :: NrRun
+
+    integer(int32) :: dayi, monthi, yeari
+    character(len=:), allocatable :: StrNr, TempString
+    character(len=1025) :: tempstring2
+
+    ! open input file with field data
+    call fObs_open(GetObservationsFilefull(), 'r') ! Observations recorded in File
+    call fObs_read() ! description
+    call fObs_read() ! AquaCrop Version number
+    TempString = fObs_read()
+    read(TempString, *) Zeval !  depth of sampled soil profile
+    TempString = fObs_read()
+    read(TempString, *) dayi
+    TempString = fObs_read()
+    read(TempString, *)monthi
+    TempString = fObs_read()
+    read(TempString, *) yeari
+    call DetermineDayNr(dayi, monthi, yeari, DayNr1Eval)
+    call fObs_read() ! title
+    call fObs_read() ! title
+    call fObs_read() ! title
+    call fObs_read() ! title
+    LineNrEval = undef_int
+    TempString = fObs_read()
+    if (.not. fObs_eof()) then
+        LineNrEval = 11
+        read(TempString, *) DayNrEval
+        DayNrEval = DayNr1Eval + DayNrEval -1
+        do while ((DayNrEval < GetSimulation_FromDayNr()) &
+                    .and. (LineNrEval /= undef_int)) 
+            TempString = fObs_read()
+            if (fObs_eof()) then
+                LineNrEval = undef_int
+            else
+                LineNrEval = LineNrEval + 1
+                read(TempString, *) DayNrEval
+                DayNrEval = DayNr1Eval + DayNrEval -1
+            end if
+        end do
+    end if
+    if (LineNrEval == undef_int) then
+        call fObs_close()
+    end if
+    ! open file with simulation results, field data
+    if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
+        write(StrNr, '(i3)') NrRun
+    else
+        StrNr = ''
+    end if
+    call SetfEval_filename(GetPathNameSimul() // 'EvalData' // trim(StrNr) // '.OUT')
+    call fEval_open(GetfEval_filename(), 'w')
+    write(tempstring2, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fEval_write(trim(tempstring2))
+    call fEval_write('Evaluation of simulation results - Data')
+    write(TempString, '(f5.2)') Zeval
+    call fEval_write('                                             ' // &
+    '                                        for soil depth: ' // trim(TempString) // ' m')
+    call fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      ' // &
+    'Bobs      Bstd   SWCsim  SWCobs   SWstd')
+    call fEval_write('                                   %       %       %     ton/ha    ' // &
+    'ton/ha    ton/ha    mm       mm      mm')
+end subroutine CreateEvalData
+
+
 end module ac_run

@@ -994,6 +994,9 @@ procedure fHarvest_write_wrap(
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
+procedure CreateEvalData(NrRun : ShortInt);
+    external 'aquacrop' name '__ac_run_MOD_createevaldata';
+
 implementation
 
 function GetfEval_filename() : string;

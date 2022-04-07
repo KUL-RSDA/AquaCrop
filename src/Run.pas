@@ -372,64 +372,6 @@ END; (* WriteTitlePart1MultResults *)
 
 
 
-PROCEDURE CreateEvalData(NrRun : ShortInt);
-VAR dayi, monthi, yeari : INTEGER;
-    StrNr,TempString : string;
-
-BEGIN
-// open input file with field data
-fObs_open(GetObservationsFilefull(), 'r'); // Observations recorded in File
-fObs_read(); // description
-fObs_read(); // AquaCrop Version number
-TempString := fObs_read();
-ReadStr(TempString, Zeval); //  depth of sampled soil profile
-TempString := fObs_read();
-ReadStr(TempString, dayi);
-TempString := fObs_read();
-ReadStr(TempString, monthi);
-TempString := fObs_read();
-ReadStr(TempString, yeari);
-DetermineDayNr(dayi,monthi,yeari,DayNr1Eval);
-fObs_read(); // title
-fObs_read(); // title
-fObs_read(); // title
-fObs_read(); // title
-LineNrEval := undef_int;
-TempString := fObs_read();
-IF (NOT fObs_eof()) THEN
-   BEGIN
-   LineNrEval := 11;
-   ReadStr(TempString, DayNrEval);
-   DayNrEval := DayNr1Eval + DayNrEval -1;
-   WHILE ((DayNrEval < GetSimulation_FromDayNr()) AND (LineNrEval <> undef_int)) DO
-      BEGIN
-      TempString := fObs_read();
-      IF (fObs_eof())
-         THEN LineNrEval := undef_int
-         ELSE BEGIN
-              LineNrEval := LineNrEval + 1;
-              ReadStr(TempString, DayNrEval);
-              DayNrEval := DayNr1Eval + DayNrEval -1;
-              END;
-      END;
-   END;
-IF (LineNrEval = undef_int) THEN fObs_close();
-// open file with simulation results, field data
-IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
-   THEN Str(NrRun:3,StrNr)
-   ELSE StrNr := '';
-SetfEval_filename(CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT'));
-fEval_open(GetfEval_filename(), 'w');
-fEval_write('AquaCrop 7.0 (June 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
-fEval_write('Evaluation of simulation results - Data');
-Str(Zeval:5:2,TempString);
-fEval_write('                                                                                     for soil depth: ' + Trim(TempString) + ' m');
-fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
-fEval_write('                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
-END; (* CreateEvalData *)
-
-
-
 
 PROCEDURE CreateDailyClimFiles(FromSimDay,ToSimDay : LongInt);
 VAR totalname,totalnameOUT : string;
