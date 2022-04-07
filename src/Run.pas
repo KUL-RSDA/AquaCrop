@@ -49,23 +49,6 @@ var  fHarvest, fEval : text;
      NoYear : BOOLEAN;
      StageCode : ShortInt;
      PreviousDayNr : LongInt;
-    
-
-PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject);
-VAR totalname : string;
-    tempstring : string;
-BEGIN
-CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROharvests.OUT');
-      TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMharvests.OUT');
-      end;
-SetfHarvest_filename(totalname);
-fHarvest_open(GetfHarvest_filename(), 'w');
-WriteStr(tempstring, 'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-fHarvest_write(tempstring);
-fHarvest_write('Biomass and Yield at Multiple cuttings');
-END; (* OpenPart1MultResults *)
-
 
 
 PROCEDURE WriteTitleDailyResults(TheProjectType : repTypeProject;
