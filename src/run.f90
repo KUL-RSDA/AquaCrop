@@ -223,7 +223,9 @@ integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
 integer :: fObs ! file handle
 integer :: fObs_iostat ! IO status
-
+integer :: fHarvest  ! file handle
+integer :: fHarvest_iostat  ! IO status
+character(len=:), allocatable :: fHarvest_filename  ! file name
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -650,6 +652,57 @@ subroutine fObs_rewind()
     rewind(fObs)
 end subroutine fObs_rewind
 
+
+! fHarvest
+
+function GetfHarvest_filename() result(str)
+    !! Getter for the "fHarvest_filename" global variable.
+    character(len=len(fHarvest_filename)) :: str
+
+    str = fHarvest_filename
+end function GetfHarvest_filename
+
+
+subroutine SetfHarvest_filename(str)
+    !! Setter for the "fHarvest_filename" global variable.
+    character(len=*), intent(in) :: str
+
+    fHarvest_filename = str
+end subroutine SetfHarvest_filename
+
+
+subroutine fHarvest_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fHarvest' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fHarvest, filename, mode, fHarvest_iostat)
+end subroutine fHarvest_open
+
+
+subroutine fHarvest_write(line, advance_in)
+    !! Writes the given line to the fHarvest file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fHarvest, line, advance, fHarvest_iostat)
+end subroutine fHarvest_write
+
+
+subroutine fHarvest_close()
+    close(fHarvest)
+end subroutine fHarvest_close
 
 ! Bin
 

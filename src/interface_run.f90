@@ -29,6 +29,11 @@ use ac_run, only:   fDaily_open, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
                     GetfEval_filename, &
+                    fHarvest_open, &
+                    fHarvest_write, &
+                    GetCutInfoRecord1_NoMoreInfo, &
+                    GetCutInfoRecord2_NoMoreInfo, &
+                    GetfHarvest_filename, &
                     GetGlobalIrriECw, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
@@ -37,6 +42,7 @@ use ac_run, only:   fDaily_open, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
                     SetfEval_filename, &
+                    SetfHarvest_filename, &
                     SetGlobalIrriECw, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
@@ -277,6 +283,55 @@ function fObs_eof_wrap() result(eof)
 end function fObs_eof_wrap
 
 
+function GetfHarvest_filename_wrap() result(c_pointer)
+    !! Wrapper for [[ac_run:GetfHarvest_filename_wrap]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetfHarvest_filename())
+end function GetfHarvest_filename_wrap
+
+
+subroutine SetfHarvest_filename_wrap(fHarvest_filename, strlen)
+    !! Wrapper for [[ac_run:SetfHarvest_filename_wrap]] for foreign languages.
+    type(c_ptr), intent(in) :: fHarvest_filename
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(fHarvest_filename, strlen)
+    call SetfHarvest_filename(string)
+end subroutine SetfHarvest_filename_wrap
+
+
+subroutine fHarvest_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
+    type(c_ptr), intent(in) :: filename_ptr
+    integer(int32), intent(in) :: filename_len
+    type(c_ptr), intent(in) :: mode_ptr
+    integer(int32), intent(in) :: mode_len
+
+    character(len=filename_len) :: filename
+    character(len=mode_len) :: mode
+
+    filename = pointer2string(filename_ptr, filename_len)
+    mode = pointer2string(mode_ptr, mode_len)
+    call fHarvest_open(filename, mode)
+end subroutine fHarvest_open_wrap
+
+
+subroutine fHarvest_write_wrap(line_ptr, line_len, advance)
+    type(c_ptr), intent(in) :: line_ptr
+    integer(int32), intent(in) :: line_len
+    logical(1), intent(in) :: advance
+
+    character(len=line_len) :: line
+    logical :: advance_f
+
+    line = pointer2string(line_ptr, line_len)
+    advance_f = advance
+    call fHarvest_write(line, advance_f)
+end subroutine fHarvest_write_wrap
+
+
 function GetCutInfoRecord1_NoMoreInfo_wrap() result(NoMoreInfo_f)
 
     logical(1) :: NoMoreInfo_f
@@ -439,6 +494,5 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
     GlobalIrriECw_f = GlobalIrriECw_in
     call SetGlobalIrriECw(GlobalIrriECw_f)    
 end subroutine SetGlobalIrriECw_wrap
-
 
 end module ac_interface_run

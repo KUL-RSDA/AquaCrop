@@ -908,6 +908,37 @@ procedure fEval_close();
 procedure fEval_erase();
     external 'aquacrop' name '__ac_run_MOD_feval_erase';
 
+function GetfHarvest_filename_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_getfharvest_filename_wrap';
+
+function GetfHarvest_filename(): string;
+
+procedure SetfHarvest_filename(constref str : string);
+
+procedure SetfHarvest_filename_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_setfharvest_filename_wrap';
+
+procedure fHarvest_open(constref filename : string; constref mode : string);
+
+procedure fHarvest_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_fharvest_open_wrap';
+
+procedure fHarvest_write(constref line : string; constref advance : boolean = True);
+
+procedure fHarvest_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_fharvest_write_wrap';
+
+procedure fHarvest_close();
+        external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
 
 implementation
@@ -1382,6 +1413,51 @@ begin;
     SetPreviousSum_SaltOut(PreviousSum.SaltOut);
     SetPreviousSum_CRsalt(PreviousSum.CRsalt);
 end;
+
+
+function GetfHarvest_filename(): string;
+var
+     p : PChar;
+begin;
+     p := GetfHarvest_filename_wrap();
+     GetfHarvest_filename := AnsiString(p);
+end;
+
+
+procedure SetfHarvest_filename(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetfHarvest_filename_wrap(p, strlen);
+end;
+
+
+procedure fHarvest_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fHarvest_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+
+procedure fHarvest_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fHarvest_write_wrap(line_ptr, line_len, advance);
+end;
+
 
 initialization
 
