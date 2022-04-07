@@ -874,6 +874,40 @@ function GetCGCref() : double;
 procedure SetCGCref(constref CGCref : double);
     external 'aquacrop' name '__ac_run_MOD_setcgcref';
 
+function GetfEval_filename() : string;
+
+function GetfEval_filename_wrap() : PChar;
+    external 'aquacrop' name '__ac_interface_run_MOD_getfeval_filename_wrap';
+
+procedure SetfEval_filename(constref filename : string);
+
+procedure SetfEval_filename_wrap(constref filename_ptr : PChar;
+                                 constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_setfeval_filename_wrap';
+
+procedure fEval_open(constref filename : string; constref mode : string);
+
+procedure fEval_open_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer;
+            constref mode_ptr : PChar;
+            constref mode_len : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_feval_open_wrap';
+
+procedure fEval_write(constref line : string; constref advance : boolean = True);
+
+procedure fEval_write_wrap(
+            constref line_ptr : PChar;
+            constref line_len : integer;
+            constref advance : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_feval_write_wrap';
+
+procedure fEval_close();
+        external 'aquacrop' name '__ac_run_MOD_feval_close';
+
+procedure fEval_erase();
+    external 'aquacrop' name '__ac_run_MOD_feval_erase';
+
 function GetfHarvest_filename_wrap(): PChar;
         external 'aquacrop' name '__ac_interface_run_MOD_getfharvest_filename_wrap';
 
@@ -908,6 +942,47 @@ procedure fHarvest_close();
 
 
 implementation
+
+function GetfEval_filename() : string;
+var
+    filename_ptr : PChar;
+begin
+    filename_ptr := GetfEval_filename_wrap();
+    GetfEval_filename := AnsiString(filename_ptr);
+end;
+
+
+procedure SetfEval_filename(constref filename : string);
+var
+    filename_ptr : PChar;
+    strlen : integer;
+begin
+    filename_ptr := PChar(filename);
+    strlen := Length(filename);
+    SetfEval_filename_wrap(filename_ptr, strlen);
+end;
+
+procedure fEval_open(constref filename : string; constref mode : string);
+var
+     filename_ptr, mode_ptr : PChar;
+     filename_len, mode_len : integer;
+begin;
+     filename_ptr := PChar(filename);
+     filename_len := Length(filename);
+     mode_ptr := PChar(mode);
+     mode_len := Length(mode);
+     fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
+end;
+
+procedure fEval_write(constref line : string; constref advance : boolean = True);
+var
+     line_ptr : PChar;
+     line_len : integer;
+begin;
+     line_ptr := PChar(line);
+     line_len := Length(line);
+     fEval_write_wrap(line_ptr, line_len, advance);
+end;
 
 
 function GetTminDataSet() : rep_SimulationEventsDbl;

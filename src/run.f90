@@ -213,6 +213,8 @@ integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
 integer :: fEToSIM ! file handle
 integer :: fEToSIM_iostat ! IO status
+integer :: fEval ! file handle
+integer :: fEval_iostat ! IO status
 integer :: fRainSIM ! file handle
 integer :: fRainSIM_iostat ! IO status
 integer :: fTempSIM ! file handle
@@ -252,7 +254,9 @@ real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
 real(dp) :: DayFraction,GDDayFraction
-real(dp) :: CGCref,GDDCGCref 
+real(dp) :: CGCref,GDDCGCref
+
+character(len=:), allocatable :: fEval_filename
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
@@ -406,6 +410,62 @@ end subroutine fRun_write
 subroutine fRun_close()
     close(fRun)
 end subroutine fRun_close
+
+! fEval
+
+subroutine fEval_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEval' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fEval, filename, mode, fEval_iostat)
+end subroutine fEval_open
+
+
+subroutine fEval_write(line, advance_in)
+    !! Writes the given line to the fEval file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fEval, line, advance, fEval_iostat)
+end subroutine fEval_write
+
+
+subroutine fEval_close()
+    close(fEval)
+end subroutine fEval_close
+
+subroutine fEval_erase()
+    call unlink(GetfEval_filename())
+end subroutine fEval_erase
+
+
+function GetfEval_filename() result(filename)
+    !! Getter for the fEval_filename
+    
+    character(len=:), allocatable :: filename
+
+    filename = fEval_filename
+end function GetfEval_filename
+
+subroutine SetfEval_filename(filename)
+    !! Setter for the fEval_filename
+    character(len=*), intent(in) :: filename
+
+    fEval_filename = filename
+end subroutine SetfEval_filename
+
 
 
 ! fIrri
