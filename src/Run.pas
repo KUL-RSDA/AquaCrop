@@ -28,7 +28,6 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 var  fHarvest, fEval : text;
      SumETo, SumGDD, Ziprev,SumGDDPrev,TESTVAL : double;
      WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
-     GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
      SumKcTop,SumKcTopStress,SumKci,Zeval,CCxCropWeedsNoSFstress,fWeedNoS,
      CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
 
@@ -862,104 +861,6 @@ END; (* OpenClimFilesAndGetDataFirstDay *)
 
 
 
-
-PROCEDURE OpenIrrigationFile();
-VAR totalname : string;
-    StringREAD : ShortString;
-    i,DNr : INTEGER;
-    Ir1,Ir2 : double;
-    VersionNr : double;
-    FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
-    IrriECw_temp : double;
-    TempString : string;
-
-BEGIN
-IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN
-   BEGIN
-   IF (GetIrriFile() <> '(None)')
-      THEN totalname := GetIrriFileFull()
-      ELSE totalname := CONCAT(GetPathNameProg(),'IrriSchedule.AqC');
-   fIrri_open(totalname, 'r');
-   TempString := fIrri_read(); // description
-   TempString := fIrri_read(); // AquaCrop version
-   ReadStr(TempString, VersionNr);
-
-   IF (ROUND(VersionNr*10) < 32)
-      THEN GlobalIrriECw := true
-      ELSE GlobalIrriECw := false;
-   FOR i := 1 TO 6 DO TempString := fIrri_read();  // irrigation info (already loaded)
-   CASE GetIrriMode() OF
-        Manual   : BEGIN
-                   IF (GetIrriFirstDayNr() = undef_int)
-                      THEN DNr := GetDayNri() - GetCrop().Day1 + 1
-                      ELSE DNr := GetDayNri() - GetIrriFirstDayNr() + 1;
-                   REPEAT
-                   StringREAD := fIrri_read();
-                   IF fIrri_eof()
-                      THEN SetIrriInfoRecord1_NoMoreInfo(true)
-                      ELSE BEGIN
-                           SetIrriInfoRecord1_NoMoreInfo(false);
-                           IF GlobalIrriECw
-                              THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
-                              ELSE BEGIN
-                                   IrriECw_temp := GetSimulation_IrriECw();
-                                   SplitStringInThreeParams(StringREAD,Ir1,Ir2,IrriECw_temp);
-                                   SetSimulation_IrriECw(IrriECw_temp);
-                                   END; 
-                           SetIrriInfoRecord1_TimeInfo(ROUND(Ir1));
-                           SetIrriInfoRecord1_DepthInfo(ROUND(Ir2));
-                           END;
-                   UNTIL ((GetIrriInfoRecord1_NoMoreInfo()) OR (GetIrriInfoRecord1_TimeInfo() >= DNr));
-                   END;
-        Generate : BEGIN
-                   FOR i := 1 TO 2 DO TempString := fIrri_read(); // time and depth criterion (already loaded)
-                   SetIrriInfoRecord1_NoMoreInfo(false);
-                   IF (ROUND(VersionNr*10) < 32)
-                      THEN BEGIN
-                           TempString := fIrri_read();
-                           ReadStr(TempString, FromDay_temp,TimeInfo_temp,DepthInfo_temp);
-                           SetIrriInfoRecord1_FromDay(FromDay_temp);
-                           SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
-                           SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
-                           END
-                      ELSE BEGIN
-                           TempString := fIrri_read();
-                           ReadStr(TempString,FromDay_temp,TimeInfo_temp,
-                                   DepthInfo_temp,IrriECw_temp);
-                           SetIrriInfoRecord1_FromDay(FromDay_temp);
-                           SetIrriInfoRecord1_TimeInfo(TimeInfo_temp);
-                           SetIrriInfoRecord1_DepthInfo(DepthInfo_temp);
-                           SetSimulation_IrriECw(IrriECw_temp);
-                           END;
-
-                   TempString := fIrri_read();
-                   IF fIrri_eof()
-                      THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
-                      ELSE BEGIN
-                           SetIrriInfoRecord2_NoMoreInfo(false);
-                           IF GlobalIrriECw
-                             THEN BEGIN
-                                  ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
-                                  SetIrriInfoRecord2_FromDay(FromDay_temp);
-                                  SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
-                                  SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
-                                  END
-                             ELSE BEGIN
-                                  ReadStr(TempString,FromDay_temp,TimeInfo_temp,
-                                           DepthInfo_temp,IrriEcw_temp);
-                                  SetIrriInfoRecord2_FromDay(FromDay_temp);
-                                  SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
-                                  SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
-                                  SetSimulation_IrriECw(IrriECw_temp);
-                                  END;
-                           SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1);
-                           END;
-                   END;
-        end;
-   END;
-END; (* OpenIrrigationFile *)
-
-
 PROCEDURE GetNextHarvest;
 VAR InfoLoaded : BOOLEAN;
     DayNrXX : LongInt;
@@ -1340,7 +1241,7 @@ SumGDD := 0;
 
 // 11. Irrigation
 SetIrriInterval(1);
-GlobalIrriECw := true; // In Versions < 3.2 - Irrigation water quality is not yet recorded on file
+SetGlobalIrriECw(true); // In Versions < 3.2 - Irrigation water quality is not yet recorded on file
 OpenIrrigationFile();
 
 
@@ -2331,7 +2232,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
                   THEN SetIrriInfoRecord1_NoMoreInfo(true)
                   ELSE BEGIN
                        SetIrriInfoRecord1_NoMoreInfo(false);
-                       IF GlobalIrriECw // Versions before 3.2
+                       IF GetGlobalIrriECw() // Versions before 3.2
                           THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
                           ELSE BEGIN
                                IrriECw_temp := GetSimulation_IrriECw();
@@ -2371,7 +2272,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
              THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
              ELSE BEGIN
                   SetIrriInfoRecord2_NoMoreInfo(false);
-                  IF GlobalIrriECw // Versions before 3.2
+                  IF GetGlobalIrriECw() // Versions before 3.2
                      THEN BEGIN
                           ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
                           SetIrriInfoRecord2_FromDay(FromDay_temp);
