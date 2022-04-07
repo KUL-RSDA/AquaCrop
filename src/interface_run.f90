@@ -21,12 +21,14 @@ use ac_run, only:   fRun_open, &
                     fCuts_read, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
+                    GetCutInfoRecord1_FromDay, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
                     GetTransfer_Mobilize, &
                     GetTransfer_Store, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
+                    SetCutInfoRecord1_FromDay, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
                     SetTransfer_Mobilize, &
@@ -37,7 +39,6 @@ implicit none
 
 
 contains
-
 
 subroutine fRun_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
@@ -303,6 +304,5 @@ subroutine SetTransfer_Store_wrap(Store)
     Store_f = Store
     call SetTransfer_Store(Store_f)    
 end subroutine SetTransfer_Store_wrap
-
 
 end module ac_interface_run

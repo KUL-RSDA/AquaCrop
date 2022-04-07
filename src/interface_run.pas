@@ -603,6 +603,9 @@ function GetStressSFadjNEW() : shortint;
 procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
     external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
 
+procedure GetNextHarvest()
+    external 'aquacrop' name '__ac_run_MOD_getnextharvest';     
+
 implementation
 
 
@@ -944,6 +947,8 @@ begin
     SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
     SetRainDataSet_Param(i, RainDataSet_i.Param);
 end;
+
+
 
 
 initialization
