@@ -717,6 +717,12 @@ function GetGlobalIrriECw() : boolean;
 procedure SetGlobalIrriECw(constref GlobalIrriECw_in : boolean);
         external 'aquacrop' name '__ac_interface_run_MOD_setglobalirriecw_wrap';
 
+function GetNoYear() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getnoyear_wrap';
+
+procedure SetNoYear(constref NoYear_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setnoyear_wrap';
+
 procedure fObs_open(constref filename : string; constref mode : string);
 
 procedure fObs_open_wrap(
@@ -1186,7 +1192,7 @@ var
     int_typeproject : integer;
 begin
     int_typeproject := ord(TheProjectType);
-    __WriteTitlePart1MultResults(int_typeproject, TheRunNr);
+    __WriteTitlePart1MultResults(int_typeproject, TheNrRun);
 end;
 
 function GetfEval_filename() : string;

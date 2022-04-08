@@ -37,6 +37,7 @@ use ac_run, only:   fDaily_open, &
                     GetGlobalIrriECw, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
+                    GetNoYear, &
                     GetTransfer_Mobilize, &
                     GetTransfer_Store, &
                     SetCutInfoRecord1_NoMoreInfo, &
@@ -46,6 +47,7 @@ use ac_run, only:   fDaily_open, &
                     SetGlobalIrriECw, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
+                    SetNoYear, &
                     SetTransfer_Mobilize, &
                     SetTransfer_Store
 
@@ -494,5 +496,23 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
     GlobalIrriECw_f = GlobalIrriECw_in
     call SetGlobalIrriECw(GlobalIrriECw_f)    
 end subroutine SetGlobalIrriECw_wrap
+
+
+function GetNoYear_wrap() result(NoYear_f)
+
+    logical(1) :: NoYear_f
+
+    NoYear_f = GetNoYear()
+end function GetNoYear_wrap
+
+
+subroutine SetNoYear_wrap(NoYear_in)
+    logical(1), intent(in) :: NoYear_in
+
+    logical :: NoYear_f
+
+    NoYear_f = NoYear_in
+    call SetNoYear(NoYear_f)    
+end subroutine SetNoYear_wrap
 
 end module ac_interface_run

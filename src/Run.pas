@@ -32,8 +32,6 @@ var  fHarvest, fEval : text;
      CGCadjustmentAfterCutting : BOOLEAN;
      TheProjectFile : string;
 
-// specific for StandAlone
-     NoYear : BOOLEAN;
 
 PROCEDURE OpenOutputRun(TheProjectType : repTypeProject);
 VAR totalname : string;
@@ -1161,7 +1159,8 @@ bool_temp := (NOT GetSimulation_ResetIniSWC());
 SetPreDay(bool_temp);
 SetDayNri(GetSimulation_FromDayNr());
 DetermineDate(GetSimulation_FromDayNr(),Day1,Month1,Year1); // start simulation run
-NoYear := (Year1 = 1901);  // for output file
+bool_temp := (Year1 = 1901);
+SetNoYear(bool_temp);  // for output file
 
 
 // 10. Climate
@@ -1526,7 +1525,7 @@ VAR BrSF,RatioE,RatioT : INTEGER;
 
 BEGIN
 // start
-IF NoYear THEN
+IF GetNoYear() THEN
    BEGIN
    Year1 := 9999;
    YearN := 9999;

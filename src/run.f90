@@ -121,6 +121,7 @@ use ac_global, only:    CompartmentIndividual, &
                         SplitStringInTwoParams, &
                         subkind_Grain, &
                         subkind_Tuber, &
+                        typeproject_typePRM, &
                         undef_int
 
 
@@ -281,6 +282,8 @@ character(len=:), allocatable :: fEval_filename
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
+logical :: NoYear
+
 
 contains
 
@@ -1865,6 +1868,19 @@ subroutine SetGlobalIrriECw(GlobalIrriECw_in)
     GlobalIrriECw = GlobalIrriECw_in
 end subroutine SetGlobalIrriECw
 
+logical function GetNoYear()
+    !! Getter for the NoYear global variable
+
+    GetNoYear = NoYear
+end function GetNoYear
+
+subroutine SetNoYear(NoYear_in)
+    !! Setter for the NoYear global variable
+    logical, intent(in) :: NoYear_in
+
+    NoYear = NoYear_in
+end subroutine SetNoYear
+
 integer(int32) function GetIrriInterval()
     !! Getter for the "IrriInterval" global variable.
 
@@ -3284,7 +3300,7 @@ subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
     call fHarvest_write('')
     if (TheProjectType == typeproject_TypePRM) then
         write(Str1, '(i4)') TheNrRun
-        call fHarvest_write('   Run:' + Str1)
+        call fHarvest_write('   Run:' // Str1)
     end if
 
     ! B. Title
@@ -3295,8 +3311,8 @@ subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
 
     ! C. start crop cycle
     call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
-    NoYear = (Yeari == 1901)
-    if (NoYear) then
+    call SetNoYear(Yeari == 1901)
+    if (GetNoYear()) then
         if (Dayi == 0) then
             Dayi = 1
         end if
