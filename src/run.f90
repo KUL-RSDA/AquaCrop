@@ -3391,22 +3391,22 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         case(3)
             write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
         end select
-    call fRun_write(TempString, .false.)
+    call fRun_write(trim(TempString), .false.)
 
     else
-        write(TempString, '(i9)') ANumber
+        write(TempString, '(i0)') ANumber
         TempString = 'Tot(' // trim(TempString) // ')'
-        do while (len(TempString) < 9) 
-            TempString = ' ' // TempString
+        do while (len(trim(TempString)) < 9) 
+            TempString = ' ' // trim(TempString)
         end do
-        call fRun_write(TempString, .false.)
+        call fRun_write(trim(TempString), .false.)
         write(TempString, '(3i9)') Day1, Month1, Year1_loc
-        call fRun_write(TempString, .false.)
+        call fRun_write(trim(TempString), .false.)
     end if
 
     ! Climatic conditions
-    write(TempString, '(3f9.1, f9.2)') Rper, EToPer, GDDPer, GetCO2i()
-    call fRun_write(TempString, .false.)
+    write(TempString, '(3f9.1, f9.2)') Rper, EToPer,GDDPer, GetCO2i()
+    call fRun_write(trim(TempString), .false.)
     ! Soil water parameters
     if (ExPer > 0._dp) then
         RatioE = roundc(100._dp*EPer/ExPer, mold=1)
@@ -3421,18 +3421,18 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
 
     write(TempString, '(6f9.1, i9, 2f9.1, i9)') IrriPer, InfiltPer, ROPer, &
                     DrainPer, CRwPer, EPer, RatioE, TrPer, TrWPer, RatioT
-    call fRun_write(TempString, .false.)
+    call fRun_write(trim(TempString), .false.)
 
     ! Soil Salinity
     write(TempString, '(4f10.3)') SalInPer, SalOutPer, SalCRPer, &
                                   GetTotalSaltContent_EndDay()
-    call fRun_write(TempString, .false.)
+    call fRun_write(trim(TempString), .false.)
 
     ! seasonal stress
     write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
                     GetManagement_FertilityStress(), GetStressTot_Weed(), &
                     GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
-    call fRun_write(TempString, .false.)
+    call fRun_write(trim(TempString), .false.)
 
     ! Biomass production
     if ((BiomassPer > 0._dp) .and. (BUnlimPer > 0._dp)) then
@@ -3445,7 +3445,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
     end if
 
     write(TempString, '(f10.3, i9)') BiomassPer, BrSF
-    call fRun_write(TempString, .false.)
+    call fRun_write(trim(TempString), .false.)
 
     ! Crop yield
     if (ANumber /= undef_int) then ! end of simulation run
@@ -3475,21 +3475,21 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
             write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
                 (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp)), WPy
         end if
-        call fRun_write(TempString, .false.)
+        call fRun_write(trim(TempString), .false.)
 
         ! Transfer of assimilates
         write(TempString, '(2f9.3)') GetTransfer_Bmobilized(), &
                                      GetSimulation_Storage_Btotal()
-        call fRun_write(TempString, .false.)
+        call fRun_write(trim(TempString), .false.)
     else
         write(TempString, '(4i9, 2f9.3)') undef_int, undef_int, undef_int, &
                                           undef_int, BmobPer, BstoPer
-        call fRun_write(TempString, .false.)
+        call fRun_write(trim(TempString), .false.)
     end if
 
     ! End
     write(TempString, '(3i9)') DayN, MonthN, YearN_loc
-    call fRun_write(TempString, .false.)
+    call fRun_write(trim(TempString), .false.)
 
     ! Project
     call fRun_write('  ' // TheProjectFile)
