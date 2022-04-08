@@ -25,8 +25,7 @@ implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
-var  fHarvest, fEval : text;
-     TheProjectFile : string;
+var  TheProjectFile : string;
 
 // specific for StandAlone
      NoYear : BOOLEAN;
