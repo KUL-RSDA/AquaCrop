@@ -622,8 +622,7 @@ procedure fRainSIM_close();
 
 procedure DetermineGrowthStage(
                     constref Dayi : LongInt;
-                    constref CCiPrev : double;
-                    VAR Code : ShortInt);
+                    constref CCiPrev : double);
         external 'aquacrop' name '__ac_run_MOD_determinegrowthstage';
 
 function GetEToDataSet() : rep_SimulationEventsDbl;
@@ -1064,6 +1063,42 @@ function GetalfaHIAdj() : double;
 
 procedure SetalfaHIAdj(constref alfaHIAdj : double);
     external 'aquacrop' name '__ac_run_MOD_setalfahiadj';
+
+function GetDayNr1Eval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getdaynr1eval';
+
+procedure SetDayNr1Eval(constref DayNr1Eval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setdaynr1eval';
+
+function GetDayNrEval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getdaynreval';
+
+procedure SetDayNrEval(constref DayNrEval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setdaynreval';
+
+function GetLineNrEval() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getlinenreval';
+
+procedure SetLineNrEval(constref LineNrEval : integer);
+    external 'aquacrop' name '__ac_run_MOD_setlinenreval';
+
+function GetNextSimFromDayNr() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getnextsimfromdaynr';
+
+procedure SetNextSimFromDayNr(constref NextSimFromDayNr : integer);
+    external 'aquacrop' name '__ac_run_MOD_setnextsimfromdaynr';
+
+function GetStageCode() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getstagecode';
+
+procedure SetStageCode(constref StageCode : integer);
+    external 'aquacrop' name '__ac_run_MOD_setstagecode';
+
+function GetPreviousDayNr() : integer;
+    external 'aquacrop' name '__ac_run_MOD_getpreviousdaynr';
+
+procedure SetPreviousDayNr(constref PreviousDayNr : integer);
+    external 'aquacrop' name '__ac_run_MOD_setpreviousdaynr';
 
 function GetfEval_filename() : string;
 

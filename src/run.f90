@@ -264,8 +264,18 @@ real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
 real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
 real(dp) :: alfaHI, alfaHIAdj
 
+!! DelayedGermination
+integer(int32) :: NextSimFromDayNr !! the Simulation.FromDayNr for next run if delayed germination and KeepSWC
+
+!! Evaluation
+integer(int32) :: DayNr1Eval,DayNrEval
+integer(int8)  :: LineNrEval
+
 !! specific for StandAlone
 real(dp) :: PreviousSumETo, PreviousSumGDD, PreviousBmob,PreviousBsto
+integer(int8)  :: StageCode
+integer(int32) :: PreviousDayNr
+
 character(len=:), allocatable :: fEval_filename
 
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
@@ -2556,6 +2566,84 @@ subroutine SetPreviousBsto(PreviousBsto_in)
     PreviousBsto = PreviousBsto_in
 end subroutine SetPreviousBsto
 
+integer(int32) function GetDayNr1Eval()
+    !! Getter for the "DayNr1Eval" global variable.
+
+    GetDayNr1Eval = DayNr1Eval
+end function GetDayNr1Eval
+
+subroutine SetDayNr1Eval(DayNr1Eval_in)
+    !! Setter for the "DayNr1Eval" global variable.
+    integer(int32), intent(in) :: DayNr1Eval_in
+
+    DayNr1Eval = DayNr1Eval_in
+end subroutine SetDayNr1Eval
+
+integer(int32) function GetDayNrEval()
+    !! Getter for the "DayNrEval" global variable.
+
+    GetDayNrEval = DayNrEval
+end function GetDayNrEval
+
+subroutine SetDayNrEval(DayNrEval_in)
+    !! Setter for the "DayNrEval" global variable.
+    integer(int32), intent(in) :: DayNrEval_in
+
+    DayNrEval = DayNrEval_in
+end subroutine SetDayNrEval
+
+integer(int32) function GetLineNrEval()
+    !! Getter for the "LineNrEval" global variable.
+
+    GetLineNrEval = LineNrEval
+end function GetLineNrEval
+
+subroutine SetLineNrEval(LineNrEval_in)
+    !! Setter for the "LineNrEval" global variable.
+    integer(int32), intent(in) :: LineNrEval_in
+
+    LineNrEval = LineNrEval_in
+end subroutine SetLineNrEval
+
+integer(int32) function GetNextSimFromDayNr()
+    !! Getter for the "NextSimFromDayNr " global variable.
+
+    GetNextSimFromDayNr = NextSimFromDayNr
+end function GetNextSimFromDayNr
+
+subroutine SetNextSimFromDayNr(NextSimFromDayNr_in)
+    !! Setter for the "NextSimFromDayNr " global variable.
+    integer(int32), intent(in) :: NextSimFromDayNr_in
+
+    NextSimFromDayNr = NextSimFromDayNr_in
+end subroutine SetNextSimFromDayNr
+
+integer(int8) function GetStageCode()
+    !! Getter for the "StageCode" global variable.
+
+    GetStageCode = StageCode
+end function GetStageCode
+
+subroutine SetStageCode(StageCode_in)
+    !! Setter for the "StageCode" global variable.
+    integer(int8), intent(in) :: StageCode_in
+
+    StageCode = StageCode_in
+end subroutine SetStageCode
+
+integer(int32) function GetPreviousDayNr()
+    !! Getter for the "PreviousDayNr" global variable.
+
+    GetPreviousDayNr = PreviousDayNr
+end function GetPreviousDayNr 
+
+subroutine SetPreviousDayNr(PreviousDayNr_in)
+    !! Setter for the "PreviousDayNr" global variable.
+    integer(int32), intent(in) :: PreviousDayNr_in
+
+    PreviousDayNr = PreviousDayNr_in
+end subroutine SetPreviousDayNr 
+
 
 !! END section global variables
 
@@ -3033,42 +3121,41 @@ end subroutine RelationshipsForFertilityAndSaltStress
 
 
 ! extra for output of daily results  -----------------------------
-subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
+subroutine DetermineGrowthStage(Dayi, CCiPrev)
     integer(int32), intent(in) :: Dayi
     real(dp), intent(in) :: CCiPrev
-    integer(int8), intent(inout)  :: Code
 
     integer(int32) :: VirtualDay
 
     VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
     if (VirtualDay < 0) then
-        Code = 0_int8 ! before cropping period
+        call SetStageCode(0_int8) ! before cropping period
     else
         if (VirtualDay < GetCrop_DaysToGermination()) then
-            Code = 1_int8 ! sown --> emergence OR transplant recovering
+            call SetStageCode(1_int8) ! sown --> emergence OR transplant recovering
         else
-            Code = 2_int8 ! vegetative development
+            call SetStageCode(2_int8) ! vegetative development
             if ((GetCrop_subkind() == subkind_Grain) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
                 if (VirtualDay < (GetCrop_DaysToFlowering() + &
                                   GetCrop_LengthFlowering())) then
-                    Code = 3_int8 ! flowering
+                    call SetStageCode(3_int8) ! flowering
                 else
-                    Code = 4_int8 ! yield formation
+                    call SetStageCode(4_int8) ! yield formation
                 end if
             end if
             if ((GetCrop_subkind() == subkind_Tuber) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
-                Code = 4_int8 ! yield formation
+                call SetStageCode(4_int8) ! yield formation
             end if
             if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
                 (CCiPrev < epsilon(0._dp))) then
-                Code = int(undef_int, kind=int8)  ! no growth stage
+                call SetStageCode(int(undef_int, kind=int8))  ! no growth stage
             end if
             if (VirtualDay >= &
                 (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
                  GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
-                Code = 0_int8 ! after cropping period
+                call SetStageCode(0_int8) ! after cropping period
             end if
         end if
     end if
