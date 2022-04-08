@@ -319,39 +319,6 @@ IF Out7Clim THEN fDaily_write('       mm        mm     degC      degC      degC 
 END; (* WriteTitleDailyResults *)
 
 
-PROCEDURE WriteTitlePart1MultResults(TheProjectType : repTypeProject;
-                                     TheNrRun : ShortInt);
-VAR Str1 : string;
-    Dayi,Monthi,Yeari : INTEGER;
-    Nr : Double;
-    tempstring : string;
-BEGIN
-// A. Run number
-fHarvest_write('');
-IF (TheProjectType = TypePRM) THEN
-   BEGIN
-   Str(TheNrRun:4,Str1);
-   fHarvest_write('   Run:' + Str1);
-   END;
-
-// B. Title
-fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)');
-fHarvest_write('                                 days     ton/ha    ton/ha    ton/ha    ton/ha    ton/ha    ton/ha');
-
-// C. start crop cycle
-DetermineDate(GetCrop().Day1,Dayi,Monthi,Yeari);
-NoYear := (Yeari = 1901);
-IF NoYear THEN
-   BEGIN
-   IF (Dayi = 0) THEN Dayi := 1;
-   Yeari := 9999;
-   END;
-Nr := 0;
-Str(Nr:6:0,Str1);
-WriteStr(tempstring, Str1,Dayi:6,Monthi:6,Yeari:6,Nr:34:3,Nr:20:3,Nr:20:3);
-fHarvest_write(tempstring);
-END; (* WriteTitlePart1MultResults *)
-
 
 
 PROCEDURE CreateEvalData(NrRun : ShortInt);

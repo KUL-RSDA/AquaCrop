@@ -1166,7 +1166,28 @@ procedure fHarvest_write_wrap(
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
+
+procedure WriteTitlePart1MultResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+
+procedure __WriteTitlePart1MultResults(constref TheProjectType : integer;
+                           constref TheNrRun : shortint);
+    external 'aquacrop' name '__ac_run_MOD_writetitlepart1multresults';
+
+
+
 implementation
+
+
+
+procedure WriteTitlePart1MultResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __WriteTitlePart1MultResults(int_typeproject, TheRunNr);
+end;
 
 function GetfEval_filename() : string;
 var

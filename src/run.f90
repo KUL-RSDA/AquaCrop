@@ -3,7 +3,8 @@ module ac_run
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
-                    int32
+                    int32, &
+                    intEnum
 
 use ac_global, only:    CompartmentIndividual, &
                         CompartmentIndividual, &
@@ -3268,6 +3269,45 @@ subroutine OpenIrrigationFile()
         end select
     end if
 end subroutine OpenIrrigationFile
+
+
+subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
+    integer(intEnum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=:), allocatable :: Str1
+    integer(int32) :: Dayi, Monthi, Yeari
+    real(dp) :: Nr
+    character(len=:), allocatable :: tempstring
+
+    ! A. Run number
+    call fHarvest_write('')
+    if (TheProjectType == typeproject_TypePRM) then
+        write(Str1, '(i4)') TheNrRun
+        call fHarvest_write('   Run:' + Str1)
+    end if
+
+    ! B. Title
+    call fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    ' // &
+        'Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)')
+    call fHarvest_write('                                 days     ton/ha    ' // &
+        'ton/ha    ton/ha    ton/ha    ton/ha    ton/ha')
+
+    ! C. start crop cycle
+    call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
+    NoYear = (Yeari == 1901)
+    if (NoYear) then
+        if (Dayi == 0) then
+            Dayi = 1
+        end if
+        Yeari = 9999
+    end if
+    Nr = 0
+    write(Str1, '(f6.0)') Nr
+    write(tempstring, '(a, 3i6, f34.3, 2f20.3)') Str1, Dayi, Monthi, Yeari, &
+                                                 Nr, Nr, Nr
+    call fHarvest_write(tempstring)
+end subroutine WriteTitlePart1MultResults
 
 
 end module ac_run
