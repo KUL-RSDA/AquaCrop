@@ -278,8 +278,10 @@ integer(int32) :: PreviousDayNr
 
 character(len=:), allocatable :: fEval_filename
 
+logical :: WaterTableInProfile, StartMode, NoMoreCrop, CGCadjustmentAfterCutting
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
+
 
 contains
 
@@ -1863,6 +1865,58 @@ subroutine SetGlobalIrriECw(GlobalIrriECw_in)
 
     GlobalIrriECw = GlobalIrriECw_in
 end subroutine SetGlobalIrriECw
+
+logical function GetWaterTableInProfile()
+    !! Getter for the "WaterTableInProfile" global variable.
+
+    GetWaterTableInProfile = WaterTableInProfile
+end function GetWaterTableInProfile
+
+subroutine SetWaterTableInProfile(WaterTableInProfile_in)
+    !! Setter for the "WaterTableInProfile" global variable.
+    logical, intent(in) :: WaterTableInProfile_in
+
+    WaterTableInProfile = WaterTableInProfile_in
+end subroutine SetWaterTableInProfile
+
+logical function GetStartMode()
+    !! Getter for the "StartMode" global variable. 
+
+    GetStartMode = StartMode 
+end function GetStartMode
+
+subroutine SetStartMode(StartMode_in)
+    !! Setter for the "StartMode" global variable. 
+    logical, intent(in) :: StartMode_in
+
+    StartMode = StartMode_in
+end subroutine SetStartMode
+
+logical function GetNoMoreCrop()
+    !! Getter for the "NoMoreCrop" global variable.
+
+    GetNoMoreCrop = NoMoreCrop
+end function GetNoMoreCrop
+
+subroutine SetNoMoreCrop(NoMoreCrop_in)
+    !! Setter for the "NoMoreCrop" global variable.
+    logical, intent(in) :: NoMoreCrop_in
+
+    NoMoreCrop = NoMoreCrop_in
+end subroutine SetNoMoreCrop
+
+logical function GetCGCadjustmentAfterCutting()
+    !! Getter for the "CGCadjustmentAfterCutting" global variable.
+
+    GetCGCadjustmentAfterCutting = CGCadjustmentAfterCutting
+end function GetCGCadjustmentAfterCutting
+
+subroutine SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_in)
+    !! Setter for the "CGCadjustmentAfterCutting" global variable.
+    logical, intent(in) :: CGCadjustmentAfterCutting_in
+
+    CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_in
+end subroutine SetCGCadjustmentAfterCutting
 
 integer(int32) function GetIrriInterval()
     !! Getter for the "IrriInterval" global variable.
