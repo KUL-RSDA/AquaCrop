@@ -41,6 +41,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_DaysToSenescence, &
                         GetCrop_DeterminancyLinked, &
                         GetCrop_dHIdt, &
+                        GetCrop_DryMatter, &
                         GetCrop_GDDaysToCCini, &
                         GetCrop_GDDaysToFlowering, &
                         GetCrop_GDDaysToFullCanopy, &
@@ -84,6 +85,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
+                        GetSimulation_Storage_Btotal, &
                         GetSimulation_SumGDD, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
@@ -96,12 +98,16 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSumWaBal_SaltIn, &
                         GetSumWaBal_SaltOut, &
                         GetSumWaBal_CRsalt, &
+                        GetSumWaBal_ECropCycle, &
+                        GetSUmWaBal_Tact, &
+                        GetSumWaBal_YieldPart, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
                         GetTemperatureRecord_FromDayNr, &
                         GetTmax, &
                         GetTmin, &
+                        GetTotalSaltContent_endDay, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
@@ -122,6 +128,7 @@ use ac_global, only:    CompartmentIndividual, &
                         subkind_Grain, &
                         subkind_Tuber, &
                         typeproject_typePRM, &
+                        undef_double, &
                         undef_int
 
 
@@ -3324,6 +3331,169 @@ subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
                                                  Nr, Nr, Nr
     call fHarvest_write(tempstring)
 end subroutine WriteTitlePart1MultResults
+
+
+subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile)
+    integer(int8), intent(in) :: ANumber
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(in) :: Month1
+    integer(int32), intent(in) :: Year1
+    integer(int32), intent(in) :: DayN
+    integer(int32), intent(in) :: MonthN
+    integer(int32), intent(in) :: YearN
+    real(dp), intent(in) :: RPer
+    real(dp), intent(in) :: EToPer
+    real(dp), intent(in) :: GDDPer
+    real(dp), intent(in) :: IrriPer
+    real(dp), intent(in) :: InfiltPer
+    real(dp), intent(in) :: ROPer
+    real(dp), intent(in) :: DrainPer
+    real(dp), intent(in) :: CRwPer
+    real(dp), intent(in) :: EPer
+    real(dp), intent(in) :: ExPer
+    real(dp), intent(in) :: TrPer
+    real(dp), intent(in) :: TrWPer
+    real(dp), intent(in) :: TrxPer
+    real(dp), intent(in) :: SalInPer
+    real(dp), intent(in) :: SalOutPer
+    real(dp), intent(in) :: SalCRPer
+    real(dp), intent(in) :: BiomassPer
+    real(dp), intent(in) :: BUnlimPer
+    real(dp), intent(in) :: BmobPer
+    real(dp), intent(in) :: BstoPer
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: BrSF, RatioE, RatioT
+    integer(int32) :: Year1_loc, YearN_loc
+    real(dp) :: WPy, HI
+    character(len=1025) :: TempString
+
+    ! copy intent(in) variables to locals
+    Year1_loc = Year1
+    YearN_loc = YearN
+
+    ! start
+    if (GetNoYear()) then
+        Year1_loc = 9999
+        YearN_loc = 9999
+    end if
+    if (ANumber == undef_int) then ! intermediate results
+        select case (GetOutputAggregate())
+        case(1)
+            write(TempString, '(a, 3i9)') '      Day', Day1, Month1, Year1_loc
+        case(2)
+            write(TempString, '(a, 3i9)') '    10Day', Day1, Month1, Year1_loc
+        case(3)
+            write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
+        end select
+    call fRun_write(TempString, .false.)
+
+    else
+        write(TempString, '(i9)') ANumber
+        TempString = 'Tot(' // trim(TempString) // ')'
+        do while (len(TempString) < 9) 
+            TempString = ' ' // TempString
+        end do
+        call fRun_write(TempString, .false.)
+        write(TempString, '(3i9)') Day1, Month1, Year1_loc
+        call fRun_write(TempString, .false.)
+    end if
+
+    ! Climatic conditions
+    write(TempString, '(3f9.1, f9.2)') Rper, EToPer, GDDPer, GetCO2i()
+    call fRun_write(TempString, .false.)
+    ! Soil water parameters
+    if (ExPer > 0._dp) then
+        RatioE = roundc(100._dp*EPer/ExPer, mold=1)
+    else
+        RatioE = undef_int
+    end if
+    if (TrxPer > 0._dp) then
+        RatioT = roundc(100._dp*TrPer/TrxPer, mold=1)
+    else
+        RatioT = undef_int
+    end if
+
+    write(TempString, '(6f9.1, i9, 2f9.1, i9)') IrriPer, InfiltPer, ROPer, &
+                    DrainPer, CRwPer, EPer, RatioE, TrPer, TrWPer, RatioT
+    call fRun_write(TempString, .false.)
+
+    ! Soil Salinity
+    write(TempString, '(4f10.3)') SalInPer, SalOutPer, SalCRPer, &
+                                  GetTotalSaltContent_EndDay()
+    call fRun_write(TempString, .false.)
+
+    ! seasonal stress
+    write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
+                    GetManagement_FertilityStress(), GetStressTot_Weed(), &
+                    GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
+    call fRun_write(TempString, .false.)
+
+    ! Biomass production
+    if ((BiomassPer > 0._dp) .and. (BUnlimPer > 0._dp)) then
+        BrSF = roundc(100._dp*BiomassPer/BUnlimPer, mold=1)
+        if (BrSF > 100) then
+            BrSF = 100
+        end if
+    else
+        BrSF = undef_int
+    end if
+
+    write(TempString, '(f10.3, i9)') BiomassPer, BrSF
+    call fRun_write(TempString, .false.)
+
+    ! Crop yield
+    if (ANumber /= undef_int) then ! end of simulation run
+        ! Water Use Efficiency yield
+        if (((GetSumWaBal_Tact() > 0._dp) .or. (GetSumWaBal_ECropCycle() > 0._dp)) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            WPy = (GetSumWaBal_YieldPart()*1000._dp) &
+                    /((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10._dp)
+        else
+            WPy = 0.0_dp
+        end if
+
+        ! Harvest Index
+        if ((GetSumWaBal_Biomass() > 0._dp) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            HI = 100._dp*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
+        else
+            HI = undef_double
+        end if
+
+        ! Fresh yield
+        if ((GetCrop_DryMatter() == undef_int) &
+            .or. (GetCrop_DryMatter() < epsilon(0._dp))) then
+            write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
+                                                    undef_double, WPy
+        else
+            write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp)), WPy
+        end if
+        call fRun_write(TempString, .false.)
+
+        ! Transfer of assimilates
+        write(TempString, '(2f9.3)') GetTransfer_Bmobilized(), &
+                                     GetSimulation_Storage_Btotal()
+        call fRun_write(TempString, .false.)
+    else
+        write(TempString, '(4i9, 2f9.3)') undef_int, undef_int, undef_int, &
+                                          undef_int, BmobPer, BstoPer
+        call fRun_write(TempString, .false.)
+    end if
+
+    ! End
+    write(TempString, '(3i9)') DayN, MonthN, YearN_loc
+    call fRun_write(TempString, .false.)
+
+    ! Project
+    call fRun_write('  ' // TheProjectFile)
+end subroutine WriteTheResults 
 
 
 end module ac_run

@@ -4,7 +4,10 @@ use, intrinsic :: iso_c_binding, only: c_char, &
                                        c_ptr
 use ac_interface_global, only: pointer2string, &
                                string2pointer
-use ac_kinds, only: int32
+use ac_kinds, only: int8, &
+                    int32, &
+                    dp
+
 use ac_run, only:   fDaily_open, &
                     fDaily_write, &
                     fRun_open, &
@@ -49,7 +52,8 @@ use ac_run, only:   fDaily_open, &
                     SetIrriInfoRecord2_NoMoreInfo, &
                     SetNoYear, &
                     SetTransfer_Mobilize, &
-                    SetTransfer_Store
+                    SetTransfer_Store, &
+                    WriteTheResults
 
 
 implicit none
@@ -514,5 +518,55 @@ subroutine SetNoYear_wrap(NoYear_in)
     NoYear_f = NoYear_in
     call SetNoYear(NoYear_f)    
 end subroutine SetNoYear_wrap
+
+
+
+
+subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile_ptr, strlen)
+    integer(int8), intent(in) :: ANumber
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(in) :: Month1
+    integer(int32), intent(in) :: Year1
+    integer(int32), intent(in) :: DayN
+    integer(int32), intent(in) :: MonthN
+    integer(int32), intent(in) :: YearN
+    real(dp), intent(in) :: RPer
+    real(dp), intent(in) :: EToPer
+    real(dp), intent(in) :: GDDPer
+    real(dp), intent(in) :: IrriPer
+    real(dp), intent(in) :: InfiltPer
+    real(dp), intent(in) :: ROPer
+    real(dp), intent(in) :: DrainPer
+    real(dp), intent(in) :: CRwPer
+    real(dp), intent(in) :: EPer
+    real(dp), intent(in) :: ExPer
+    real(dp), intent(in) :: TrPer
+    real(dp), intent(in) :: TrWPer
+    real(dp), intent(in) :: TrxPer
+    real(dp), intent(in) :: SalInPer
+    real(dp), intent(in) :: SalOutPer
+    real(dp), intent(in) :: SalCRPer
+    real(dp), intent(in) :: BiomassPer
+    real(dp), intent(in) :: BUnlimPer
+    real(dp), intent(in) :: BmobPer
+    real(dp), intent(in) :: BstoPer
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
+    call WriteTheResults (ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile)
+end subroutine WriteTheResults_wrap
 
 end module ac_interface_run
