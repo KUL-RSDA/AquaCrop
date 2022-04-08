@@ -26,10 +26,6 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 var  fHarvest, fEval : text;
-     WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
-     GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-
-     CGCadjustmentAfterCutting : BOOLEAN;
      TheProjectFile : string;
 
 // specific for StandAlone
@@ -1013,13 +1009,16 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     SumGDD_temp, SumGDDFromDay1_temp : double;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
+    WaterTableInProfile_temp : boolean;
 
 
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
-CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
-IF WaterTableInProfile THEN AdjustForWatertable; 
+WaterTableInProfile_temp := GetWaterTableInProfile();
+CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile_temp);
+SetWaterTableInProfile(WaterTableInProfile_temp);
+IF GetWaterTableInProfile() THEN AdjustForWatertable; 
 IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
     GetGwtSet(GetSimulation_FromDayNr(),GwTable_temp);
@@ -1189,7 +1188,7 @@ SetCCoTotal(fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100
 // Not applicable
 
 // 9. first day
-StartMode := true;
+SetStartMode(true);
 bool_temp := (NOT GetSimulation_ResetIniSWC());
 SetPreDay(bool_temp);
 SetDayNri(GetSimulation_FromDayNr());
@@ -1362,7 +1361,7 @@ SetCrop_CCxAdjusted(GetCCxTotal());
 SetCrop_CCoAdjusted(GetCCoTotal());
 SetTimeSenescence(0);
 SetCrop_CCxWithered(0);
-NoMoreCrop := false;
+SetNoMoreCrop(false);
 SetCCiActual(GetCCiPrev());
 
 
@@ -1464,7 +1463,7 @@ SetDayLastCut(0);
 SetCGCref( GetCrop().CGC);
 SetGDDCGCref(GetCrop().GDDCGC);
 IF GetManagement_Cuttings_Considered() THEN OpenHarvestInfo();
-CGCadjustmentAfterCutting := false;
+SetCGCadjustmentAfterCutting(false);
 
 
 // 18. Tab sheets
@@ -1533,7 +1532,7 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
 IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev());
 
 // 20. Settings for start
-StartMode := true;
+SetStartMode(true);
 SetStressLeaf(undef_int);
 SetStressSenescence(undef_int);
 
@@ -2147,6 +2146,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     HItimesAT1_temp, HItimesAT2_temp, HItimesAT_temp : double;
     alfaHI_temp, alfaHIAdj_temp : double;
     TESTVAL : double;
+    WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2335,8 +2335,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     END; (* AdjustSWCRootZone *)
 
 
-    PROCEDURE InitializeTransferAssimilates(NoMoreCrop : BOOLEAN;
-                                            VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
+    PROCEDURE InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
                                             VAR StorageOn,MobilizationOn : BOOLEAN);
     BEGIN
     Bin := 0;
@@ -2345,7 +2344,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     IF (GetCrop_subkind() = Forage) THEN // only for perennial herbaceous forage crops
       BEGIN
       FracAssim := 0;
-      IF (NoMoreCrop = true)
+      IF (GetNoMoreCrop() = true)
          THEN BEGIN
               StorageOn := false;
               MobilizationOn := false;
@@ -2446,7 +2445,7 @@ IF (GetEToFile() = '(None)') THEN SetETo(5);
 IF (GetRainFile() = '(None)') THEN SetRain(0);
 
 (* 3. Start mode *)
-IF StartMode THEN StartMode := false;
+IF GetStartMode() THEN SetStartMode(false);
 
 (* 4. Get depth and quality of the groundwater*)
 IF (NOT GetSimulParam_ConstGwt()) THEN
@@ -2461,8 +2460,10 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
    GetZandECgwt(GetDayNri(),ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
    SetECiAqua(ECiAqua_temp);
-   CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
-   IF WaterTableInProfile THEN AdjustForWatertable;
+   WaterTableInProfile_temp := GetWaterTableInProfile();
+   CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile_temp);
+   SetWaterTableInProfile(WaterTableInProfile_temp);
+   IF GetWaterTableInProfile() THEN AdjustForWatertable;
    END;
 
 (* 5. Get Irrigation *)
@@ -2566,7 +2567,7 @@ Store_temp := GetTransfer_Store();
 Mobilize_temp := GetTransfer_Mobilize();
 Bin_temp := GetBin();
 Bout_temp := GetBout();
-InitializeTransferAssimilates(NoMoreCrop,Bin_temp,Bout_temp,ToMobilize_temp,Bmobilized_temp,FracAssim,
+InitializeTransferAssimilates(Bin_temp,Bout_temp,ToMobilize_temp,Bmobilized_temp,FracAssim,
                               Store_temp,Mobilize_temp);
 SetTransfer_ToMobilize(ToMobilize_temp);
 SetTransfer_Bmobilized(Bmobilized_temp);
@@ -2579,16 +2580,20 @@ SetBout(Bout_temp);
 StressLeaf_temp := GetStressLeaf();
 StressSenescence_temp := GetStressSenescence();
 TimeSenescence_temp := GetTimeSenescence();
+NoMoreCrop_temp := GetNoMoreCrop();
+CGCadjustmentAfterCutting_temp := GetCGCadjustmentAfterCutting();
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,GetSumInterval(),GetDayLastCut(),GetStressTot_NrD(),
               GetTadj(),GetGDDTadj(),
               GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),GetCCxTotal(),GetCCoTotal(),GetCDCTotal(),GetGDDCDCTotal(),SumGDDadjCC,
               GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),
               GetDayFraction(),GetGDDayFraction(),FracAssim,
               GetStressSFadjNEW(),GetTransfer_Store(),GetTransfer_Mobilize(),
-              StressLeaf_temp,StressSenescence_temp,TimeSenescence_temp,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
+              StressLeaf_temp,StressSenescence_temp,TimeSenescence_temp,NoMoreCrop_temp,CGCadjustmentAfterCutting_temp,TESTVAL);
 SetStressLeaf(StressLeaf_temp);
 SetStressSenescence(StressSenescence_temp);
 SetTimeSenescence(TimeSenescence_temp);
+SetNoMoreCrop(NoMoreCrop_temp);
+SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_temp);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
 IF ((GetRootingDepth() > 0) AND (GetDayNri() = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
@@ -2615,7 +2620,7 @@ SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
-IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
+IF ((GetRootingDepth() > 0) AND (GetNoMoreCrop() = false))
    THEN BEGIN
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
         DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
@@ -2786,7 +2791,7 @@ IF GetManagement_Cuttings_Considered() THEN
       BEGIN
       SetNrCut(GetNrCut() + 1);
       SetDayLastCut(DayInSeason);
-      CGCadjustmentAfterCutting := false; // adjustement CGC
+      SetCGCadjustmentAfterCutting(false); // adjustement CGC
       IF (GetCCiPrev() > (GetManagement_Cuttings_CCcut()/100)) THEN
          BEGIN
          SetCCiPrev(GetManagement_Cuttings_CCcut()/100);
@@ -2796,7 +2801,7 @@ IF GetManagement_Cuttings_Considered() THEN
          SetCCxWitheredTpotNoS(0); //  for calculation Maximum Biomass unlimited soil fertility
          SetCrop_CCxAdjusted(GetCCiPrev()); // new
          // Increase of CGC
-         CGCadjustmentAfterCutting := true; // adjustement CGC
+         SetCGCadjustmentAfterCutting(true); // adjustement CGC
          END;
       // Record harvest
       IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval());

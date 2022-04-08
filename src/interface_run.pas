@@ -717,6 +717,30 @@ function GetGlobalIrriECw() : boolean;
 procedure SetGlobalIrriECw(constref GlobalIrriECw_in : boolean);
         external 'aquacrop' name '__ac_interface_run_MOD_setglobalirriecw_wrap';
 
+function GetWaterTableInProfile() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getwatertableinprofile_wrap';
+
+procedure SetWaterTableInProfile(constref WaterTableInProfile_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setwatertableinprofile_wrap';
+
+function GetStartMode() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getstartmode_wrap';
+
+procedure SetStartMode(constref StartMode_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setstartmode_wrap';
+
+function GetNoMoreCrop() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getnomorecrop_wrap';
+
+procedure SetNoMoreCrop(constref NoMoreCrop_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setnomorecrop_wrap';
+
+function GetCGCadjustmentAfterCutting() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getcgcadjustmentaftercutting_wrap';
+
+procedure SetCGCadjustmentAfterCutting(constref CGCadjustmentAfterCutting_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setcgcadjustmentaftercutting_wrap';
+
 procedure fObs_open(constref filename : string; constref mode : string);
 
 procedure fObs_open_wrap(
