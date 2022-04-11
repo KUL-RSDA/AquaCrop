@@ -2529,7 +2529,7 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
 
     ! A. Run number
     call fDaily_write(trim(''))
-    if (TheProjectType == typeproject_typeprm) then
+    if (TheProjectType == typeproject_TypePRM) then
         write(Str1, '(i4)') TheNrRun
         call fDaily_write(trim('   Run:'// Str1))
     end if

@@ -586,9 +586,11 @@ procedure SetPreviousSum_CRsalt(constref CRsalt : double);
 procedure RelationshipsForFertilityAndSaltStress();
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
 
-PROCEDURE WriteTitleDailyResults(
-            constref TheProjectType : repTypeProject;
-            constref TheNrRun : ShortInt);
+procedure WriteTitleDailyResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+
+procedure __WriteTitleDailyResults(constref TheProjectType : integer;
+                           constref TheNrRun : shortint);
         external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
@@ -1252,6 +1254,15 @@ procedure SetRainDataSet_i(constref i : integer;
 begin
     SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
     SetRainDataSet_Param(i, RainDataSet_i.Param);
+end;
+
+procedure WriteTitleDailyResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __WriteTitleDailyResults(int_typeproject, TheNrRun);
 end;
 
 function GetPreviousSum() : rep_sum;
