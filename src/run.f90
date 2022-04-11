@@ -192,12 +192,56 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_RootShape, &
                         CCiNoWaterStressSF, &
                         MultiplierCCoSelfThinning, &
-                        ActualRootingDepth
+                        ActualRootingDepth, &
+                        setcrop_gddaystofullcanopysf, &
+                        setsimulation_sumgddfromday1, &
+                        determinerootzonesaltcontent, &
+                        setsimulation_storage_btotal, &
+                        setcciprev, &
+                        setsimulation_delayeddays, &
+                        setcrop_ccoadjusted, &
+                        setsumwabal_biomasstot, &
+                        setsumwabal_biomasspot, &
+                        checkforwatertableinprofile, &
+                        setsimulation_dayanaero, &
+                        setecstorage, &
+                        setsumwabal_biomassunlim, &
+                        setsimulation_hifinal, &
+                        setcrop_ccxwithered, &
+                        timetomaxcanopysf, &
+                        setsimulation_fromdaynr, &
+                        setsimulation_salinityconsidered, &
+                        setsurfacestorage, &
+                        setevapoentiresoilsurface, &
+                        setsimulation_evapz, &
+                        setmanagement_fertilitystress, &
+                        setrootzonesalt_ecsw, &
+                        setrootzonesalt_ece, &
+                        setsimulation_evaplimiton, &
+                        setrootingdepth, &
+                        setcrop_ccxadjusted, &
+                        setsimulation_effectstress_redcgc, &
+                        setsimulation_evapwcsurf, &
+                        setcrop_daystofullcanopysf, &
+                        cropstressparameterssoilfertility, &
+                        setsimulation_protectedseedling, &
+                        setsumwabal_biomass, &
+                        setcciactual, &
+                        setsimulation_effectstress, &
+                        setrootzonesalt_kssalt, &
+                        setsimulation_storage_cropstring, &
+                        setpreday, &
+                        setsimulation_storage_season, &
+                        setrootzonesalt_ecswfc, &
+                        setsimulation_effectstress_redccx, &
+                        setsimulation_sumetostress, &
+                        setsimulation_germinate
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
                                 StressBiomassRelationship, &
+                                temperaturefilecoveringcropperiod, &
                                 GrowingDegreeDays
 
 
@@ -1192,6 +1236,13 @@ type(rep_GwTable) function GetGwTable()
 
     GetGwTable = GwTable
 end function GetGwTable
+
+subroutine SetGwTable(GwT)
+    !! Setter for the "GwTable" global variable. 
+    type(rep_GWTable), intent(in) :: GwT
+
+    GwTable = GwT
+end subroutine SetGwTable
 
 subroutine SetGwTable_DNr1(DNr1)
     !! Setter for the "GwTable" global variable. 
@@ -3472,7 +3523,7 @@ subroutine InitializeSimulationRun()
                                    ! and considering soil fertility stress
     call SetCCxWitheredTpotNoS(0._dp) ! for calculation Maximum Biomass
                                       ! unlimited soil fertility
-    call SetSimulation_DayAnaero(0) ! days of anaerobic conditions in
+    call SetSimulation_DayAnaero(0_int8) ! days of anaerobic conditions in
                                     ! global root zone
     ! germination
     if ((GetCrop_Planting() == plant_Seed) .and. &
