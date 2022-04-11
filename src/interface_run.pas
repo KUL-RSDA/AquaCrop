@@ -812,6 +812,9 @@ function GetStressSFadjNEW() : shortint;
 procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
     external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
 
+procedure GetNextHarvest()
+    external 'aquacrop' name '__ac_run_MOD_getnextharvest';     
+
 function GetCCxWitheredTpot() : double;
     external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
 
@@ -1752,6 +1755,8 @@ begin;
      line_len := Length(line);
      fHarvest_write_wrap(line_ptr, line_len, advance);
 end;
+
+
 
 
 initialization
