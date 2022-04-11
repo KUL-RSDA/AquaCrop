@@ -146,7 +146,9 @@ use ac_global, only:    CompartmentIndividual, &
                         typeproject_typenone, &
                         typeproject_typepro, &
                         typeproject_typeprm, &
-                        undef_int
+                        undef_int, &
+                        GetManFile, &
+                        GetManFileFull
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -3553,6 +3555,30 @@ subroutine OpenPart1MultResults(TheProjectType)
     call fHarvest_write('Biomass and Yield at Multiple cuttings')
 end subroutine OpenPart1MultResults
 
+
+subroutine OpenHarvestInfo()
+    character(len=:), allocatable :: totalname
+    integer(int8) :: i
+    character(len=:), allocatable :: TempString
+
+    if (GetManFile() /= '(None)') then
+        totalname = GetManFileFull()
+    else
+        totalname = trim(GetPathNameSimul())//'Cuttings.AqC'
+    end if
+    call fCuts_open(totalname, 'r')
+    TempString = fCuts_read() ! description
+    TempString = fCuts_read() ! AquaCrop version
+    if (GetManFile() /= '(None)') then
+        do i= 1, 10
+            TempString = fCuts_read() ! management info
+       end do
+    end if
+    do i = 1, 12
+        TempString = fCuts_read()  ! cuttings info (already loaded)
+    end do
+    call GetNextHarvest
+end subroutine OpenHarvestInfo
 
 
 end module ac_run
