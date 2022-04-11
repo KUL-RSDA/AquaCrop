@@ -264,12 +264,30 @@ real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
 real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
-real(dp) :: CCxCropWeedsNoSFstress
+real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
+real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
+real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
+real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
+real(dp) :: alfaHI, alfaHIAdj
+
+!! DelayedGermination
+integer(int32) :: NextSimFromDayNr !! the Simulation.FromDayNr for next run if delayed germination and KeepSWC
+
+!! Evaluation
+integer(int32) :: DayNr1Eval,DayNrEval
+integer(int8)  :: LineNrEval
+
+!! specific for StandAlone
+real(dp) :: PreviousSumETo, PreviousSumGDD, PreviousBmob,PreviousBsto
+integer(int8)  :: StageCode
+integer(int32) :: PreviousDayNr
 
 character(len=:), allocatable :: fEval_filename
 
+logical :: WaterTableInProfile, StartMode, NoMoreCrop, CGCadjustmentAfterCutting
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
+
 
 contains
 
@@ -1854,6 +1872,58 @@ subroutine SetGlobalIrriECw(GlobalIrriECw_in)
     GlobalIrriECw = GlobalIrriECw_in
 end subroutine SetGlobalIrriECw
 
+logical function GetWaterTableInProfile()
+    !! Getter for the "WaterTableInProfile" global variable.
+
+    GetWaterTableInProfile = WaterTableInProfile
+end function GetWaterTableInProfile
+
+subroutine SetWaterTableInProfile(WaterTableInProfile_in)
+    !! Setter for the "WaterTableInProfile" global variable.
+    logical, intent(in) :: WaterTableInProfile_in
+
+    WaterTableInProfile = WaterTableInProfile_in
+end subroutine SetWaterTableInProfile
+
+logical function GetStartMode()
+    !! Getter for the "StartMode" global variable. 
+
+    GetStartMode = StartMode 
+end function GetStartMode
+
+subroutine SetStartMode(StartMode_in)
+    !! Setter for the "StartMode" global variable. 
+    logical, intent(in) :: StartMode_in
+
+    StartMode = StartMode_in
+end subroutine SetStartMode
+
+logical function GetNoMoreCrop()
+    !! Getter for the "NoMoreCrop" global variable.
+
+    GetNoMoreCrop = NoMoreCrop
+end function GetNoMoreCrop
+
+subroutine SetNoMoreCrop(NoMoreCrop_in)
+    !! Setter for the "NoMoreCrop" global variable.
+    logical, intent(in) :: NoMoreCrop_in
+
+    NoMoreCrop = NoMoreCrop_in
+end subroutine SetNoMoreCrop
+
+logical function GetCGCadjustmentAfterCutting()
+    !! Getter for the "CGCadjustmentAfterCutting" global variable.
+
+    GetCGCadjustmentAfterCutting = CGCadjustmentAfterCutting
+end function GetCGCadjustmentAfterCutting
+
+subroutine SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_in)
+    !! Setter for the "CGCadjustmentAfterCutting" global variable.
+    logical, intent(in) :: CGCadjustmentAfterCutting_in
+
+    CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_in
+end subroutine SetCGCadjustmentAfterCutting
+
 integer(int32) function GetIrriInterval()
     !! Getter for the "IrriInterval" global variable.
 
@@ -2257,6 +2327,383 @@ subroutine SetSumGDDPrev(SumGDDPrev_in)
     SumGDDPrev = SumGDDPrev_in
 end subroutine SetSumGDDPrev
 
+real(dp) function GetCCoTotal()
+    !! Getter for the "CCoTotal" global variable.
+
+    GetCCoTotal = CCoTotal
+end function GetCCoTotal
+
+subroutine SetCCoTotal(CCoTotal_in)
+    !! Setter for the "CCoTotal" global variable.
+    real(dp), intent(in) :: CCoTotal_in
+
+    CCoTotal = CCoTotal_in 
+end subroutine SetCCoTotal
+
+real(dp) function GetCCxTotal()
+    !! Getter for the "CCxTotal" global variable.
+
+    GetCCxTotal = CCxTotal
+end function GetCCxTotal
+
+subroutine SetCCxTotal(CCxTotal_in)
+    !! Setter for the "CCxTotal" global variable.
+    real(dp), intent(in) :: CCxTotal_in
+
+    CCxTotal = CCxTotal_in 
+end subroutine SetCCxTotal
+
+real(dp) function GetCDCTotal()
+    !! Getter for the "CDCTotal" global variable.
+
+    GetCDCTotal = CDCTotal
+end function GetCDCTotal
+
+subroutine SetCDCTotal(CDCTotal_in)
+    !! Setter for the "CDCTotal" global variable.
+    real(dp), intent(in) :: CDCTotal_in
+
+    CDCTotal = CDCTotal_in 
+end subroutine SetCDCTotal
+
+real(dp) function GetGDDCDCTotal()
+    !! Getter for the "GDDCDCTotal" global variable.
+
+    GetGDDCDCTotal = GDDCDCTotal
+end function GetGDDCDCTotal
+
+subroutine SetGDDCDCTotal(GDDCDCTotal_in)
+    !! Setter for the "GDDCDCTotal" global variable.
+    real(dp), intent(in) :: GDDCDCTotal_in
+
+    GDDCDCTotal = GDDCDCTotal_in
+end subroutine SetGDDCDCTotal
+
+real(dp) function GetWeedRCi()
+    !! Getter for the "WeedRCi" global variable.
+
+    GetWeedRCi = WeedRCi
+end function GetWeedRCi
+
+subroutine SetWeedRCi(WeedRCi_in)
+    !! Setter for the "WeedRCi" global variable.
+    real(dp), intent(in) :: WeedRCi_in
+
+    WeedRCi = WeedRCi_in
+end subroutine SetWeedRCi
+
+real(dp) function GetCCiActualWeedInfested()
+    !! Getter for the "CCiActualWeedInfested" global variable.
+
+    GetCCiActualWeedInfested = CCiActualWeedInfested
+end function GetCCiActualWeedInfested
+
+subroutine SetCCiActualWeedInfested(CCiActualWeedInfested_in)
+    !! Setter for the "CCiActualWeedInfested" global variable.
+    real(dp), intent(in) :: CCiActualWeedInfested_in
+
+    CCiActualWeedInfested = CCiActualWeedInfested_in
+end subroutine SetCCiActualWeedInfested
+
+real(dp) function GetfWeedNoS()
+    !! Getter for the "fWeedNoS" global variable.
+
+    GetfWeedNoS = fWeedNoS
+end function GetfWeedNoS
+
+subroutine SetfWeedNoS(fWeedNoS_in)
+    !! Setter for the "fWeedNoS" global variable.
+    real(dp), intent(in) :: fWeedNoS_in
+
+    fWeedNoS = fWeedNoS_in
+end subroutine SetfWeedNoS
+
+real(dp) function GetZeval()
+    !! Getter for the "Zeval" global variable.
+
+    GetZeval = Zeval
+end function GetZeval
+
+subroutine SetZeval(Zeval_in)
+    !! Setter for the "Zeval" global variable.
+    real(dp), intent(in) :: Zeval_in
+
+    Zeval = Zeval_in
+end subroutine SetZeval
+
+real(dp) function GetBprevSum()
+    !! Getter for the "BprevSum" global variable.
+
+    GetBprevSum = BprevSum
+end function GetBprevSum
+
+subroutine SetBprevSum(BprevSum_in)
+    !! Setter for the "BprevSum" global variable.
+    real(dp), intent(in) :: BprevSum_in
+
+    BprevSum = BprevSum_in
+end subroutine SetBprevSum
+
+real(dp) function GetYprevSum()
+    !! Getter for the "YprevSum" global variable.
+
+    GetYprevSum = YprevSum
+end function GetYprevSum
+
+subroutine SetYprevSum(YprevSum_in)
+    !! Setter for the "YprevSum" global variable.
+    real(dp), intent(in) :: YprevSum_in
+
+    YprevSum = YprevSum_in
+end subroutine SetYprevSum
+
+real(dp) function GetSumGDDcuts()
+    !! Getter for the "SumGDDcuts" global variable.
+
+    GetSumGDDcuts = SumGDDcuts
+end function GetSumGDDcuts
+
+subroutine SetSumGDDcuts(SumGDDcuts_in)
+    !! Setter for the "SumGDDcuts" global variable.
+    real(dp), intent(in) :: SumGDDcuts_in
+
+    SumGDDcuts = SumGDDcuts_in
+end subroutine SetSumGDDcuts
+
+real(dp) function GetHItimesBEF()
+    !! Getter for the "HItimesBEF" global variable.
+
+    GetHItimesBEF = HItimesBEF
+end function GetHItimesBEF
+
+subroutine SetHItimesBEF(HItimesBEF_in)
+    !! Setter for the "HItimesBEF" global variable.
+    real(dp), intent(in) :: HItimesBEF_in
+
+    HItimesBEF = HItimesBEF_in
+end subroutine SetHItimesBEF
+
+real(dp) function GetScorAT1()
+    !! Getter for the "ScorAT1" global variable.
+
+    GetScorAT1 = ScorAT1
+end function GetScorAT1
+
+subroutine SetScorAT1(ScorAT1_in)
+    !! Setter for the "ScorAT1" global variable.
+    real(dp), intent(in) :: ScorAT1_in
+
+    ScorAT1 = ScorAT1_in
+end subroutine SetScorAT1
+
+real(dp) function GetScorAT2()
+    !! Getter for the "ScorAT2" global variable.
+
+    GetScorAT2 = ScorAT2
+end function GetScorAT2
+
+subroutine SetScorAT2(ScorAT2_in)
+    !! Setter for the "ScorAT2" global variable.
+    real(dp), intent(in) :: ScorAT2_in
+
+    ScorAT2 = ScorAT2_in
+end subroutine SetScorAT2
+
+real(dp) function GetHItimesAT1()
+    !! Getter for the "HItimesAT1" global variable.
+
+    GetHItimesAT1 = HItimesAT1
+end function GetHItimesAT1
+
+subroutine SetHItimesAT1(HItimesAT1_in)
+    !! Setter for the "HItimesAT1" global variable.
+    real(dp), intent(in) :: HItimesAT1_in
+
+    HItimesAT1 = HItimesAT1_in
+end subroutine SetHItimesAT1
+
+real(dp) function GetHItimesAT2()
+    !! Getter for the "HItimesAT2" global variable.
+
+    GetHItimesAT2 = HItimesAT2
+end function GetHItimesAT2
+
+subroutine SetHItimesAT2(HItimesAT2_in)
+    !! Setter for the "HItimesAT2" global variable.
+    real(dp), intent(in) :: HItimesAT2_in
+
+    HItimesAT2 = HItimesAT2_in
+end subroutine SetHItimesAT2
+
+real(dp) function GetHItimesAT()
+    !! Getter for the "HItimesAT" global variable.
+
+    GetHItimesAT = HItimesAT
+end function GetHItimesAT
+
+subroutine SetHItimesAT(HItimesAT_in)
+    !! Setter for the "HItimesAT" global variable.
+    real(dp), intent(in) :: HItimesAT_in
+
+    HItimesAT = HItimesAT_in
+end subroutine SetHItimesAT
+
+real(dp) function GetalfaHI()
+    !! Getter for the "alfaHI" global variable.
+
+    GetalfaHI = alfaHI
+end function GetalfaHI
+
+subroutine SetalfaHI(alfaHI_in)
+    !! Setter for the "alfaHI" global variable.
+    real(dp), intent(in) :: alfaHI_in
+
+    alfaHI = alfaHI_in
+end subroutine SetalfaHI
+
+real(dp) function GetalfaHIAdj()
+    !! Getter for the "alfaHIAdj" global variable.
+
+    GetalfaHIAdj = alfaHIAdj
+end function GetalfaHIAdj
+
+subroutine SetalfaHIAdj(alfaHIAdj_in)
+    !! Setter for the "alfaHIAdj" global variable.
+    real(dp), intent(in) :: alfaHIAdj_in
+
+    alfaHIAdj = alfaHIAdj_in
+end subroutine SetalfaHIAdj
+
+real(dp) function GetPreviousSumETo()
+    !! Getter for the "PreviousSumETo" global variable.
+
+    GetPreviousSumETo = PreviousSumETo
+end function GetPreviousSumETo
+
+subroutine SetPreviousSumETo(PreviousSumETo_in)
+    !! Setter for the "PreviousSumETo" global variable.
+    real(dp), intent(in) :: PreviousSumETo_in
+
+    PreviousSumETo = PreviousSumETo_in
+end subroutine SetPreviousSumETo
+
+real(dp) function GetPreviousSumGDD()
+    !! Getter for the "PreviousSumGDD" global variable.
+
+    GetPreviousSumGDD = PreviousSumGDD
+end function GetPreviousSumGDD
+
+subroutine SetPreviousSumGDD(PreviousSumGDD_in)
+    !! Setter for the "PreviousSumGDD" global variable.
+    real(dp), intent(in) :: PreviousSumGDD_in
+
+    PreviousSumGDD = PreviousSumGDD_in
+end subroutine SetPreviousSumGDD
+
+real(dp) function GetPreviousBmob()
+    !! Getter for the "PreviousBmob" global variable.
+
+    GetPreviousBmob = PreviousBmob
+end function GetPreviousBmob
+
+subroutine SetPreviousBmob(PreviousBmob_in)
+    !! Setter for the "PreviousBmob" global variable.
+    real(dp), intent(in) :: PreviousBmob_in
+
+    PreviousBmob = PreviousBmob_in
+end subroutine SetPreviousBmob
+
+real(dp) function GetPreviousBsto()
+    !! Getter for the "PreviousBsto" global variable.
+
+    GetPreviousBsto = PreviousBsto
+end function GetPreviousBsto
+
+subroutine SetPreviousBsto(PreviousBsto_in)
+    !! Setter for the "PreviousBsto" global variable.
+    real(dp), intent(in) :: PreviousBsto_in
+
+    PreviousBsto = PreviousBsto_in
+end subroutine SetPreviousBsto
+
+integer(int32) function GetDayNr1Eval()
+    !! Getter for the "DayNr1Eval" global variable.
+
+    GetDayNr1Eval = DayNr1Eval
+end function GetDayNr1Eval
+
+subroutine SetDayNr1Eval(DayNr1Eval_in)
+    !! Setter for the "DayNr1Eval" global variable.
+    integer(int32), intent(in) :: DayNr1Eval_in
+
+    DayNr1Eval = DayNr1Eval_in
+end subroutine SetDayNr1Eval
+
+integer(int32) function GetDayNrEval()
+    !! Getter for the "DayNrEval" global variable.
+
+    GetDayNrEval = DayNrEval
+end function GetDayNrEval
+
+subroutine SetDayNrEval(DayNrEval_in)
+    !! Setter for the "DayNrEval" global variable.
+    integer(int32), intent(in) :: DayNrEval_in
+
+    DayNrEval = DayNrEval_in
+end subroutine SetDayNrEval
+
+integer(int32) function GetLineNrEval()
+    !! Getter for the "LineNrEval" global variable.
+
+    GetLineNrEval = LineNrEval
+end function GetLineNrEval
+
+subroutine SetLineNrEval(LineNrEval_in)
+    !! Setter for the "LineNrEval" global variable.
+    integer(int32), intent(in) :: LineNrEval_in
+
+    LineNrEval = LineNrEval_in
+end subroutine SetLineNrEval
+
+integer(int32) function GetNextSimFromDayNr()
+    !! Getter for the "NextSimFromDayNr " global variable.
+
+    GetNextSimFromDayNr = NextSimFromDayNr
+end function GetNextSimFromDayNr
+
+subroutine SetNextSimFromDayNr(NextSimFromDayNr_in)
+    !! Setter for the "NextSimFromDayNr " global variable.
+    integer(int32), intent(in) :: NextSimFromDayNr_in
+
+    NextSimFromDayNr = NextSimFromDayNr_in
+end subroutine SetNextSimFromDayNr
+
+integer(int8) function GetStageCode()
+    !! Getter for the "StageCode" global variable.
+
+    GetStageCode = StageCode
+end function GetStageCode
+
+subroutine SetStageCode(StageCode_in)
+    !! Setter for the "StageCode" global variable.
+    integer(int8), intent(in) :: StageCode_in
+
+    StageCode = StageCode_in
+end subroutine SetStageCode
+
+integer(int32) function GetPreviousDayNr()
+    !! Getter for the "PreviousDayNr" global variable.
+
+    GetPreviousDayNr = PreviousDayNr
+end function GetPreviousDayNr 
+
+subroutine SetPreviousDayNr(PreviousDayNr_in)
+    !! Setter for the "PreviousDayNr" global variable.
+    integer(int32), intent(in) :: PreviousDayNr_in
+
+    PreviousDayNr = PreviousDayNr_in
+end subroutine SetPreviousDayNr 
+
 
 !! END section global variables
 
@@ -2282,12 +2729,7 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(PreviousSumETo, &
-        PreviousSumGDD, PreviousBmob, PreviousBsto)
-    real(dp), intent(inout) :: PreviousSumETo
-    real(dp), intent(inout) :: PreviousSumGDD
-    real(dp), intent(inout) :: PreviousBmob
-    real(dp), intent(inout) :: PreviousBsto
+subroutine ResetPreviousSum()
 
     call SetPreviousSum_Epot(0.0_dp)
     call SetPreviousSum_Tpot(0.0_dp)
@@ -2310,10 +2752,10 @@ subroutine ResetPreviousSum(PreviousSumETo, &
     call SetPreviousSum_CRsalt(0.0_dp)
     call SetSumETo(0.0_dp)
     call SetSumGDD(0.0_dp)
-    PreviousSumETo = 0.0_dp
-    PreviousSumGDD = 0.0_dp
-    PreviousBmob = 0.0_dp
-    PreviousBsto = 0.0_dp
+    call SetPreviousSumETo(0.0_dp)
+    call SetPreviousSumGDD(0.0_dp)
+    call SetPreviousBmob(0.0_dp)
+    call SetPreviousBsto(0.0_dp)
 end subroutine ResetPreviousSum
 
 subroutine GetGwtSet(DayNrIN, GwT)
@@ -2739,42 +3181,41 @@ end subroutine RelationshipsForFertilityAndSaltStress
 
 
 ! extra for output of daily results  -----------------------------
-subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
+subroutine DetermineGrowthStage(Dayi, CCiPrev)
     integer(int32), intent(in) :: Dayi
     real(dp), intent(in) :: CCiPrev
-    integer(int8), intent(inout)  :: Code
 
     integer(int32) :: VirtualDay
 
     VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
     if (VirtualDay < 0) then
-        Code = 0_int8 ! before cropping period
+        call SetStageCode(0_int8) ! before cropping period
     else
         if (VirtualDay < GetCrop_DaysToGermination()) then
-            Code = 1_int8 ! sown --> emergence OR transplant recovering
+            call SetStageCode(1_int8) ! sown --> emergence OR transplant recovering
         else
-            Code = 2_int8 ! vegetative development
+            call SetStageCode(2_int8) ! vegetative development
             if ((GetCrop_subkind() == subkind_Grain) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
                 if (VirtualDay < (GetCrop_DaysToFlowering() + &
                                   GetCrop_LengthFlowering())) then
-                    Code = 3_int8 ! flowering
+                    call SetStageCode(3_int8) ! flowering
                 else
-                    Code = 4_int8 ! yield formation
+                    call SetStageCode(4_int8) ! yield formation
                 end if
             end if
             if ((GetCrop_subkind() == subkind_Tuber) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
-                Code = 4_int8 ! yield formation
+                call SetStageCode(4_int8) ! yield formation
             end if
             if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
                 (CCiPrev < epsilon(0._dp))) then
-                Code = int(undef_int, kind=int8)  ! no growth stage
+                call SetStageCode(int(undef_int, kind=int8))  ! no growth stage
             end if
             if (VirtualDay >= &
                 (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
                  GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
-                Code = 0_int8 ! after cropping period
+                call SetStageCode(0_int8) ! after cropping period
             end if
         end if
     end if

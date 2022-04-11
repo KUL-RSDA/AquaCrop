@@ -25,31 +25,10 @@ implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
-var  fHarvest, fEval : text;
-     WaterTableInProfile,StartMode,NoMoreCrop : BOOLEAN;
-     GlobalIrriECw : BOOLEAN; // for versions before 3.2 where EC of irrigation water was not yet recorded
-     Zeval,fWeedNoS,
-     CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,WeedRCi,CCiActualWeedInfested : double;
+var  TheProjectFile : string;
 
-     CGCadjustmentAfterCutting : BOOLEAN;
-     BprevSum,YprevSum,SumGDDcuts : double;
-     HItimesBEF,ScorAT1,SCorAT2,HItimesAT1,HItimesAT2,HItimesAT,alfaHI,alfaHIAdj : double;
-     TheProjectFile : string;
-
-     // DelayedGermination
-     NextSimFromDayNr : LongInt; // the Simulation.FromDayNr for next run if delayed germination and KeepSWC
-
-     // Evaluation
-     DayNr1Eval,DayNrEval : LongInt;
-     LineNrEval : INTEGER;
-     
 // specific for StandAlone
-     PreviousSumETo,PreviousSumGDD : double;
-     PreviousBmob,PreviousBsto : double;
      NoYear : BOOLEAN;
-     StageCode : ShortInt;
-     PreviousDayNr : LongInt;
-
 
 PROCEDURE WriteTitleDailyResults(TheProjectType : repTypeProject;
                                  TheNrRun : ShortInt);
@@ -319,6 +298,8 @@ END; (* WriteTitlePart1MultResults *)
 PROCEDURE CreateEvalData(NrRun : ShortInt);
 VAR dayi, monthi, yeari : INTEGER;
     StrNr,TempString : string;
+    Zeval_temp : double;
+    DayNr1Eval_temp, DayNrEval_temp : INTEGER;
 
 BEGIN
 // open input file with field data
@@ -326,38 +307,43 @@ fObs_open(GetObservationsFilefull(), 'r'); // Observations recorded in File
 fObs_read(); // description
 fObs_read(); // AquaCrop Version number
 TempString := fObs_read();
-ReadStr(TempString, Zeval); //  depth of sampled soil profile
+ReadStr(TempString, Zeval_temp); //  depth of sampled soil profile
+SetZeval(Zeval_temp);
 TempString := fObs_read();
 ReadStr(TempString, dayi);
 TempString := fObs_read();
 ReadStr(TempString, monthi);
 TempString := fObs_read();
 ReadStr(TempString, yeari);
-DetermineDayNr(dayi,monthi,yeari,DayNr1Eval);
+DayNr1Eval_temp := GetDayNr1Eval();
+DetermineDayNr(dayi,monthi,yeari,DayNr1Eval_temp);
+SetDayNr1Eval(DayNr1Eval_temp);
 fObs_read(); // title
 fObs_read(); // title
 fObs_read(); // title
 fObs_read(); // title
-LineNrEval := undef_int;
+SetLineNrEval(undef_int);
 TempString := fObs_read();
 IF (NOT fObs_eof()) THEN
    BEGIN
-   LineNrEval := 11;
-   ReadStr(TempString, DayNrEval);
-   DayNrEval := DayNr1Eval + DayNrEval -1;
-   WHILE ((DayNrEval < GetSimulation_FromDayNr()) AND (LineNrEval <> undef_int)) DO
+   SetLineNrEval(11);
+   ReadStr(TempString, DayNrEval_temp);
+   SetDayNrEval(DayNrEval_temp);
+   SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
+   WHILE ((GetDayNrEval() < GetSimulation_FromDayNr()) AND (GetLineNrEval() <> undef_int)) DO
       BEGIN
       TempString := fObs_read();
       IF (fObs_eof())
-         THEN LineNrEval := undef_int
+         THEN SetLineNrEval(undef_int)
          ELSE BEGIN
-              LineNrEval := LineNrEval + 1;
-              ReadStr(TempString, DayNrEval);
-              DayNrEval := DayNr1Eval + DayNrEval -1;
+              SetLineNrEval( GetLineNrEval() + 1);
+              ReadStr(TempString, DayNrEval_temp);
+              SetDayNrEval(DayNrEval_temp);
+              SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
               END;
       END;
    END;
-IF (LineNrEval = undef_int) THEN fObs_close();
+IF (GetLineNrEval() = undef_int) THEN fObs_close();
 // open file with simulation results, field data
 IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
    THEN Str(NrRun:3,StrNr)
@@ -366,7 +352,7 @@ SetfEval_filename(CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT'));
 fEval_open(GetfEval_filename(), 'w');
 fEval_write('AquaCrop 7.0 (June 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
 fEval_write('Evaluation of simulation results - Data');
-Str(Zeval:5:2,TempString);
+Str(GetZeval():5:2,TempString);
 fEval_write('                                                                                     for soil depth: ' + Trim(TempString) + ' m');
 fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
 fEval_write('                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
@@ -968,12 +954,16 @@ VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     SumGDD_temp, SumGDDFromDay1_temp : double;
     bool_temp : boolean;
     Crop_DaysToFullCanopySF_temp : integer;
+    WaterTableInProfile_temp : boolean;
+
 
 BEGIN
 //1. Adjustments at start
 //1.1 Adjust soil water and salt content if water table IN soil profile
-CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
-IF WaterTableInProfile THEN AdjustForWatertable; 
+WaterTableInProfile_temp := GetWaterTableInProfile();
+CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile_temp);
+SetWaterTableInProfile(WaterTableInProfile_temp);
+IF GetWaterTableInProfile() THEN AdjustForWatertable; 
 IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     GwTable_temp := GetGwTable();
     GetGwtSet(GetSimulation_FromDayNr(),GwTable_temp);
@@ -981,11 +971,11 @@ IF (NOT GetSimulParam_ConstGwt()) THEN BEGIN
     END;
 
 // 1.2 Check if FromDayNr simulation needs to be adjusted from previous run if Keep initial SWC
-IF ((GetSWCIniFile() = 'KeepSWC') AND (NextSimFromDayNr <> undef_int)) THEN
+IF ((GetSWCIniFile() = 'KeepSWC') AND (GetNextSimFromDayNr() <> undef_int)) THEN
    BEGIN  // assign the adjusted DayNr defined in previous run
-   IF (NextSimFromDayNr <= GetCrop().Day1) THEN SetSimulation_FromDayNr(NextSimFromDayNr);
+   IF (GetNextSimFromDayNr() <= GetCrop().Day1) THEN SetSimulation_FromDayNr(GetNextSimFromDayNr());
    END;
-NextSimFromDayNr := undef_int;
+SetNextSimFromDayNr(undef_int);
 
 // 2. initial settings for Crop
 SetCrop_pActStom(GetCrop().pdef);
@@ -1092,8 +1082,8 @@ IF (GetCrop_subkind() = Forage)
 // 7.2 fweed
 IF (GetManagement_WeedRC() > 0)
    THEN BEGIN
-        fWeedNoS := CCmultiplierWeed(GetManagement_WeedRC(),GetCrop().CCx,GetManagement_WeedShape());
-        SetCCxCropWeedsNoSFstress( ROUND(((100* GetCrop().CCx * fWeedNoS) + 0.49))/100); // reference for plot with weed
+        SetfWeedNoS(CCmultiplierWeed(GetManagement_WeedRC(),GetCrop().CCx,GetManagement_WeedShape()));
+        SetCCxCropWeedsNoSFstress( ROUND(((100* GetCrop().CCx * GetfWeedNoS()) + 0.49))/100); // reference for plot with weed
         IF (GetManagement_FertilityStress() > 0)
            THEN BEGIN
                 fWeed := 1;
@@ -1120,30 +1110,30 @@ IF (GetManagement_WeedRC() > 0)
                                         fi,GetSimulation_YearSeason(),GetManagement_WeedAdj(),RCadj_temp);
                         SetSimulation_RCadj(RCadj_temp);
                         END
-                   ELSE fWeed := fWeedNoS;
+                   ELSE fWeed := GetfWeedNoS();
                 END;
         END
    ELSE BEGIN
-        fWeedNoS := 1;
+        SetfWeedNoS(1);
         fWeed := 1;
         SetCCxCropWeedsNoSFstress( GetCrop().CCx);
         END;
 // 7.3 CC total due to weed infestation
-CCxTotal := fWeed * GetCrop().CCx * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
-CDCTotal := GetCrop().CDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
-                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
-GDDCDCTotal := GetCrop().GDDCDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
-                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29);
+SetCCxTotal( fWeed * GetCrop().CCx * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100));
+SetCDCTotal( GetCrop().CDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29));
+SetGDDCDCTotal(GetCrop().GDDCDC * (fWeed*GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29)/
+                       (GetCrop().CCx*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100) + 2.29));
 IF (GetCrop_subkind() = Forage)
    THEN fi := MultiplierCCoSelfThinning(GetSimulation_YearSeason(),GetCrop().YearCCx,GetCrop().CCxRoot)
    ELSE fi := 1;
-CCoTotal := fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100);
+SetCCoTotal(fWeed * GetCrop().CCo * (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100));
 
 // 8. prepare output files
 // Not applicable
 
 // 9. first day
-StartMode := true;
+SetStartMode(true);
 bool_temp := (NOT GetSimulation_ResetIniSWC());
 SetPreDay(bool_temp);
 SetDayNri(GetSimulation_FromDayNr());
@@ -1270,7 +1260,7 @@ IF (GetDayNri() <= GetCrop().Day1)
                                       GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                                       GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,
                                       GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                                      CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,
+                                      GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),
                                       SumGDDforDayCC,RatDGDD,
                                       GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
                                       GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle()));
@@ -1279,7 +1269,7 @@ IF (GetDayNri() <= GetCrop().Day1)
                 END
            ELSE BEGIN // sowing or transplanting
                 SetCCiPrev(0);
-                IF (GetDayNri() = (GetCrop().Day1+GetCrop().DaysToGermination)) THEN SetCCiPrev(CCoTotal);
+                IF (GetDayNri() = (GetCrop().Day1+GetCrop().DaysToGermination)) THEN SetCCiPrev(GetCCoTotal());
                 END;
         END
    ELSE BEGIN
@@ -1291,7 +1281,7 @@ IF (GetDayNri() <= GetCrop().Day1)
                               GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                               GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,
                               GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                              CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,
+                              GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),
                               SumGDDforDayCC,RatDGDD,
                               GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
                               GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle()));
@@ -1312,11 +1302,11 @@ IF ((GetSimulation_CCini() > 0) AND (ROUND(10000*GetCCiPrev()) > 0) AND (ROUND(G
         IF ((GetSimulation_CCini() >= CCiniMin) AND (GetSimulation_CCini() <= CCiniMax)) THEN SetCCiPrev(GetSimulation_CCini()/100);
         END;
 // 13.3
-SetCrop_CCxAdjusted(CCxTotal);
-SetCrop_CCoAdjusted(CCoTotal);
+SetCrop_CCxAdjusted(GetCCxTotal());
+SetCrop_CCoAdjusted(GetCCoTotal());
 SetTimeSenescence(0);
 SetCrop_CCxWithered(0);
-NoMoreCrop := false;
+SetNoMoreCrop(false);
 SetCCiActual(GetCCiPrev());
 
 
@@ -1407,9 +1397,9 @@ IF ((GetSimulation_Zrini() > 0) AND (GetZiprev() > 0) AND (GetSimulation_Zrini()
 // 17. Multiple cuttings
 SetNrCut(0);
 SetSumInterval(0);
-SumGDDcuts := 0;
-BprevSum := 0;
-YprevSum := 0;
+SetSumGDDcuts(0);
+SetBprevSum(0);
+SetYprevSum(0);
 SetCutInfoRecord1_IntervalInfo(0);
 SetCutInfoRecord2_IntervalInfo(0);
 SetCutInfoRecord1_MassInfo(0);
@@ -1418,7 +1408,7 @@ SetDayLastCut(0);
 SetCGCref( GetCrop().CGC);
 SetGDDCGCref(GetCrop().GDDCGC);
 IF GetManagement_Cuttings_Considered() THEN OpenHarvestInfo();
-CGCadjustmentAfterCutting := false;
+SetCGCadjustmentAfterCutting(false);
 
 
 // 18. Tab sheets
@@ -1444,16 +1434,16 @@ IF (GetRootingDepth() > 0) THEN // salinity in root zone
    END;
 // Harvest Index
 SetSimulation_HIfinal(GetCrop().HI);
-HItimesBEF := undef_int;
-HItimesAT1 := 1;
-HItimesAT2 := 1;
-HItimesAT := 1;
-alfaHI := undef_int;
-alfaHIAdj := 0;
+SetHItimesBEF(undef_int);
+SetHItimesAT1(1);
+SetHItimesAT2(1);
+SetHItimesAT(1);
+SetalfaHI(undef_int);
+SetalfaHIAdj(0);
 IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering))
    THEN BEGIN // not yet flowering
-        ScorAT1 := 0;
-        ScorAT2 := 0;
+        SetScorAT1(0);
+        SetScorAT2(0);
         END
    ELSE BEGIN
         // water stress affecting leaf expansion
@@ -1464,11 +1454,11 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
         IF ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tHImax)) // not yet end period
              AND (tHImax > 0))
            THEN BEGIN // not yet end determinancy
-                ScorAT1 := 1/tHImax;
-                ScorAT1 := ScorAT1 * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering));
-                IF (ScorAT1 > 1) THEN ScorAT1 := 1;
+                SetScorAT1(1/tHImax);
+                SetScorAT1(GetScorAT1() * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering)));
+                IF (GetScorAT1() > 1) THEN SetScorAT1(1);
                 END
-           ELSE ScorAT1 := 1;  // after period of effect
+           ELSE SetScorAT1(1);  // after period of effect
         // water stress affecting stomatal closure
         // period of effect is yield formation
         IF (GetCrop().dHIdt > 99)
@@ -1477,17 +1467,17 @@ IF (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 +
         IF ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering + tHImax)) // not yet end period
               AND (tHImax > 0))
            THEN BEGIN // not yet end yield formation
-                ScorAT2 := 1/tHImax;
-                ScorAT2 := ScorAT2 * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering));
-                IF (ScorAT2 > 1) THEN ScorAT2 := 1;
+                SetScorAT2(1/tHImax);
+                SetScorAT2(GetScorAT2() * (GetSimulation_FromDayNr() - (GetSimulation_DelayedDays() + GetCrop().Day1 + GetCrop().DaysToFlowering)));
+                IF (GetScorAT2() > 1) THEN SetScorAT2(1);
                 END
-           ELSE ScorAT2 := 1;  // after period of effect
+           ELSE SetScorAT2(1);  // after period of effect
         END;
 
-IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev(),StageCode);
+IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev());
 
 // 20. Settings for start
-StartMode := true;
+SetStartMode(true);
 SetStressLeaf(undef_int);
 SetStressSenescence(undef_int);
 
@@ -1609,11 +1599,11 @@ VAR Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
 
 BEGIN
 // determine intermediate results
-DetermineDate((PreviousDayNr+1),Day1,Month1,Year1);
+DetermineDate((GetPreviousDayNr()+1),Day1,Month1,Year1);
 DetermineDate(GetDayNri(),DayN,MonthN,YearN);
 RPer := GetSumWaBal_Rain() - GetPreviousSum_Rain();
-EToPer := GetSumETo() - PreviousSumETo;
-GDDPer := GetSumGDD() - PreviousSumGDD;
+EToPer := GetSumETo() - GetPreviousSumETo();
+GDDPer := GetSumGDD() - GetPreviousSumGDD();
 IrriPer := GetSumWaBal_Irrigation() - GetPreviousSum_Irrigation();
 InfiltPer := GetSumWaBal_Infiltrated() - GetPreviousSum_Infiltrated();
 EPer := GetSumWaBal_Eact() - GetPreviousSum_Eact();
@@ -1631,8 +1621,8 @@ SalInPer := GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn();
 SalOutPer := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
 SalCRPer := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
 
-BmobPer := GetTransfer_Bmobilized() - PreviousBmob;
-BstoPer := GetSimulation_Storage_Btotal() - PreviousBsto;
+BmobPer := GetTransfer_Bmobilized() - GetPreviousBmob();
+BstoPer := GetSimulation_Storage_Btotal() - GetPreviousBsto();
 
 // write
 WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
@@ -1644,10 +1634,10 @@ WriteTheResults((undef_int),Day1,Month1,Year1,DayN,MonthN,YearN,
                 TheProjectFile);
 
 // reset previous sums
-PreviousDayNr := GetDayNri();
+SetPreviousDayNr(GetDayNri());
 SetPreviousSum_Rain(GetSumWaBal_Rain());
-PreviousSumETo := GetSumETo();
-PreviousSumGDD := GetSumGDD();
+SetPreviousSumETo(GetSumETo());
+SetPreviousSumGDD(GetSumGDD());
 SetPreviousSum_Irrigation(GetSumWaBal_Irrigation());
 SetPreviousSum_Infiltrated(GetSumWaBal_Infiltrated());
 SetPreviousSum_Eact(GetSumWaBal_Eact());
@@ -1666,8 +1656,8 @@ SetPreviousSum_SaltIn(GetSumWaBal_SaltIn());
 SetPreviousSum_SaltOut(GetSumWaBal_SaltOut());
 SetPreviousSum_CRsalt(GetSumWaBal_CRsalt());
 
-PreviousBmob := GetTransfer_Bmobilized();
-PreviousBsto := GetSimulation_Storage_Btotal();
+SetPreviousBmob(GetTransfer_Bmobilized());
+SetPreviousBsto(GetSimulation_Storage_Btotal());
 END; (* WriteIntermediatePeriod *)
 
 
@@ -1728,7 +1718,6 @@ END; (* CheckForPrint *)
 
 
 PROCEDURE WriteDailyResults(DAP : INTEGER;
-                            StageCode : ShortInt;
                             WPi : double);
 CONST NoValD = undef_double;
       NoValI = undef_int;
@@ -1739,10 +1728,10 @@ VAR Di,Mi,Yi,StrExp,StrSto,StrSalt,StrTr,StrW,Brel,Nr : INTEGER;
 BEGIN
 DetermineDate(GetDayNri(),Di,Mi,Yi);
 IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
-IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
+IF (GetStageCode() = 0) THEN DAP := undef_int; // before or after cropping
 
 // 0. info day
-writeStr(tempstring,Di:6,Mi:6,Yi:6,DAP:6,StageCode:6);
+writeStr(tempstring,Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():6);
 fDaily_write(tempstring, false);
 
 // 1. Water balance
@@ -1804,7 +1793,7 @@ IF Out2Crop THEN
    //5. Relative cover of weeds
    IF (GetCCiActual() <= 0.0000001)
       THEN StrW := undef_int
-      ELSE StrW := Round(WeedRCi);
+      ELSE StrW := Round(GetWeedRCi());
    //6. WPi adjustemnt
    IF (GetSumWaBal_Biomass() <= 0.000001) THEN WPi := 0;
    //7. Harvest Index
@@ -1828,7 +1817,7 @@ IF Out2Crop THEN
       ELSE WPy := 0.0;
    // write
    WriteStr(tempstring, GetGDDayi():9:1,GetRootingDepth():8:2,StrExp:7,StrSto:7,GetStressSenescence():7:0,StrSalt:7,StrW:7,
-         (GetCCiActual()*100):8:1,(CCiActualWeedInfested*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,GetTact():9:1,
+         (GetCCiActual()*100):8:1,(GetCCiActualWeedInfested()*100):8:1,StrTr:7,KcVal:9:2,GetTpot():9:1,GetTact():9:1,
          GetTactWeedInfested():9:1,Ratio1:6:0,(100*WPi):8:1,GetSumWaBal_Biomass():10:3,HI:8:1,GetSumWaBal_YieldPart():9:3);
    fDaily_write(tempstring, false);
    // Fresh yield
@@ -1994,12 +1983,12 @@ END; (* WriteDailyResults *)
 
 
 
-PROCEDURE WriteEvaluationData(DAP : INTEGER;
-                              StageCode : ShortInt);
+PROCEDURE WriteEvaluationData(DAP : INTEGER);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
     Nr,Di,Mi,Yi : INTEGER;
     TempString : string;
+    DayNrEval_temp : INTEGER;
 
     FUNCTION SWCZsoil(Zsoil : double) : double;
     VAR compi : INTEGER;
@@ -2033,33 +2022,34 @@ Bfield := undef_int;
 Bstd := undef_int;
 SWCfield := undef_int;
 SWCstd := undef_int;
-IF ((LineNrEval <> undef_int) AND (DayNrEval = GetDayNri())) THEN
+IF ((GetLineNrEval() <> undef_int) AND (GetDayNrEval() = GetDayNri())) THEN
    BEGIN
    // read field data
    fObs_rewind();
-   FOR Nr := 1 TO (LineNrEval -1) DO fObs_read();
+   FOR Nr := 1 TO (GetLineNrEval() -1) DO fObs_read();
    TempString := fObs_read();
    ReadStr(TempString,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
    // get Day Nr for next field data
    fObs_read();
    IF (fObs_eof())
       THEN BEGIN
-           LineNrEval := undef_int;
+           SetLineNrEval(undef_int);
            fObs_close();
            END
       ELSE BEGIN
-           LineNrEval := LineNrEval + 1;
-           ReadStr(TempString,DayNrEval);
-           DayNrEval := DayNr1Eval + DayNrEval -1;
+           SetLineNrEval(GetLineNrEval() + 1);
+           ReadStr(TempString,DayNrEval_temp);
+           SetDayNrEval(DayNrEval_temp);
+           SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
            END;
    END;
 //2. Date
 DetermineDate(GetDayNri(),Di,Mi,Yi);
 IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
-IF (StageCode = 0) THEN DAP := undef_int; // before or after cropping
+IF (GetStageCode() = 0) THEN DAP := undef_int; // before or after cropping
 //3. Write simulation results and field data
-SWCi := SWCZsoil(Zeval);
-WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,StageCode:5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
+SWCi := SWCZsoil(GetZeval());
+WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
            GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
 fEval_write(TempString);
 END; (* WriteEvaluationData *)
@@ -2096,8 +2086,12 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     PreviousStressLevel_temp, StressSFadjNEW_temp : shortint;
     CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp : double;
     StressLeaf_temp,StressSenescence_temp, TimeSenescence_temp : double;
-    SumKcTopStress_temp, SumKci_temp : double;
+    SumKcTopStress_temp, SumKci_temp, WeedRCi_temp, CCiActualWeedInfested_temp : double;
+    HItimesBEF_temp, ScorAT1_temp,ScorAT2_temp : double; 
+    HItimesAT1_temp, HItimesAT2_temp, HItimesAT_temp : double;
+    alfaHI_temp, alfaHIAdj_temp : double;
     TESTVAL : double;
+    WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
 
     PROCEDURE GetZandECgwt(DayNri : LongInt;
                        VAR ZiAqua : INTEGER;
@@ -2286,8 +2280,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     END; (* AdjustSWCRootZone *)
 
 
-    PROCEDURE InitializeTransferAssimilates(NoMoreCrop : BOOLEAN;
-                                            VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
+    PROCEDURE InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
                                             VAR StorageOn,MobilizationOn : BOOLEAN);
     BEGIN
     Bin := 0;
@@ -2296,7 +2289,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     IF (GetCrop_subkind() = Forage) THEN // only for perennial herbaceous forage crops
       BEGIN
       FracAssim := 0;
-      IF (NoMoreCrop = true)
+      IF (GetNoMoreCrop() = true)
          THEN BEGIN
               StorageOn := false;
               MobilizationOn := false;
@@ -2328,8 +2321,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
 
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
-                        DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double);
+                        DayInSeason,SumInterval : INTEGER);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
         tempstring : string;
@@ -2356,8 +2348,8 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
                 END;
             END
        ELSE BEGIN
-            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
-                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-GetBprevSum()):12:3,
+                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-GetYprevSum()):10:3);
             fHarvest_write(tempstring, false);
             IF (GetCrop().DryMatter = undef_int) THEN
                 BEGIN
@@ -2366,7 +2358,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
                 END
             ELSE
                 BEGIN
-                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-GetYprevSum())/(GetCrop().DryMatter/100)):10:3,
                         (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
                 fHarvest_write(tempstring);
                 END;
@@ -2384,7 +2376,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
        THEN RatDGDD := (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopySF)/(GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopySF);
     PotValSF := CCiNoWaterStressSF(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
         GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-        CCoTotal,CCxTotal,GetCrop().CGC,GetCrop().GDDCGC,CDCTotal,GDDCDCTotal,SumGDDadjCC,RatDGDD,
+        GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),SumGDDadjCC,RatDGDD,
         GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle());
     PotValSF := 100 * (1/GetCCxCropWeedsNoSFstress()) * PotValSF;
     END; (* GetPotValSF *)
@@ -2398,7 +2390,7 @@ IF (GetEToFile() = '(None)') THEN SetETo(5);
 IF (GetRainFile() = '(None)') THEN SetRain(0);
 
 (* 3. Start mode *)
-IF StartMode THEN StartMode := false;
+IF GetStartMode() THEN SetStartMode(false);
 
 (* 4. Get depth and quality of the groundwater*)
 IF (NOT GetSimulParam_ConstGwt()) THEN
@@ -2413,8 +2405,10 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
    GetZandECgwt(GetDayNri(),ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
    SetECiAqua(ECiAqua_temp);
-   CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile);
-   IF WaterTableInProfile THEN AdjustForWatertable;
+   WaterTableInProfile_temp := GetWaterTableInProfile();
+   CheckForWaterTableInProfile((GetZiAqua()/100),GetCompartment(),WaterTableInProfile_temp);
+   SetWaterTableInProfile(WaterTableInProfile_temp);
+   IF GetWaterTableInProfile() THEN AdjustForWatertable;
    END;
 
 (* 5. Get Irrigation *)
@@ -2465,7 +2459,7 @@ IF (GetCrop().DaysToCCini <> 0)
                                   GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
                                   GetCrop().CCo,GetCrop().CCx,GetCrop().CGC,GetCrop().GDDCGC,GetCrop().CDC,GetCrop().GDDCDC,RatDGDD,
                                   GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),
-                                  GetSimulation_EffectStress_CDecline(),(CCxTotal/GetCrop().CCx),GetCrop().ModeCycle));  // (CCxTotal/Crop.CCx) = fWeed
+                                  GetSimulation_EffectStress_CDecline(),(GetCCxTotal()/GetCrop().CCx),GetCrop().ModeCycle));  // (CCxTotal/Crop.CCx) = fWeed
                    END;
                 END
            ELSE BEGIN // before start crop
@@ -2478,7 +2472,7 @@ IF (GetCrop().DaysToCCini <> 0)
         IF (GetCrop().ModeCycle = GDDays) THEN SumGDDadjCC := GetSimulation_SumGDD();
         // CC initial (at the end of previous day) when simulation starts before sowing/transplanting,
         IF ((GetDayNri() = (GetCrop().Day1 + GetCrop().DaysToGermination)) AND (GetDayNri() > GetSimulation_FromDayNr()))
-           THEN SetCCiPrev(CCoTotal);
+           THEN SetCCiPrev(GetCCoTotal());
         END;
 
 
@@ -2518,7 +2512,7 @@ Store_temp := GetTransfer_Store();
 Mobilize_temp := GetTransfer_Mobilize();
 Bin_temp := GetBin();
 Bout_temp := GetBout();
-InitializeTransferAssimilates(NoMoreCrop,Bin_temp,Bout_temp,ToMobilize_temp,Bmobilized_temp,FracAssim,
+InitializeTransferAssimilates(Bin_temp,Bout_temp,ToMobilize_temp,Bmobilized_temp,FracAssim,
                               Store_temp,Mobilize_temp);
 SetTransfer_ToMobilize(ToMobilize_temp);
 SetTransfer_Bmobilized(Bmobilized_temp);
@@ -2531,16 +2525,20 @@ SetBout(Bout_temp);
 StressLeaf_temp := GetStressLeaf();
 StressSenescence_temp := GetStressSenescence();
 TimeSenescence_temp := GetTimeSenescence();
+NoMoreCrop_temp := GetNoMoreCrop();
+CGCadjustmentAfterCutting_temp := GetCGCadjustmentAfterCutting();
 BUDGET_module(GetDayNri(),TargetTimeVal,TargetDepthVal,VirtualTimeCC,GetSumInterval(),GetDayLastCut(),GetStressTot_NrD(),
               GetTadj(),GetGDDTadj(),
-              GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),CCxTotal,CCoTotal,CDCTotal,GDDCDCTotal,SumGDDadjCC,
+              GetGDDayi(),GetCGCref(),GetGDDCGCref(),GetCO2i(),GetCCxTotal(),GetCCoTotal(),GetCDCTotal(),GetGDDCDCTotal(),SumGDDadjCC,
               GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),
               GetDayFraction(),GetGDDayFraction(),FracAssim,
               GetStressSFadjNEW(),GetTransfer_Store(),GetTransfer_Mobilize(),
-              StressLeaf_temp,StressSenescence_temp,TimeSenescence_temp,NoMoreCrop,CGCadjustmentAfterCutting,TESTVAL);
+              StressLeaf_temp,StressSenescence_temp,TimeSenescence_temp,NoMoreCrop_temp,CGCadjustmentAfterCutting_temp,TESTVAL);
 SetStressLeaf(StressLeaf_temp);
 SetStressSenescence(StressSenescence_temp);
 SetTimeSenescence(TimeSenescence_temp);
+SetNoMoreCrop(NoMoreCrop_temp);
+SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_temp);
 
 // consider Pre-irrigation (6.) if IrriMode = Inet
 IF ((GetRootingDepth() > 0) AND (GetDayNri() = GetCrop().Day1) AND (GetIrriMode() = Inet)) THEN
@@ -2567,7 +2565,7 @@ SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
 SetSumWaBal_BiomassUnlim(BiomassUnlim_temp);
 
 (* 11. Biomass and yield *)
-IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
+IF ((GetRootingDepth() > 0) AND (GetNoMoreCrop() = false))
    THEN BEGIN
         SWCtopSoilConsidered_temp := GetSimulation_SWCtopSoilConsidered();
         DetermineRootZoneWC(GetRootingDepth(),SWCtopSoilConsidered_temp);
@@ -2607,13 +2605,23 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         Bout_temp := GetBout();
         SumKcTopStress_temp := GetSumKcTopStress();
         SumKci_temp := GetSumKci();
+        WeedRCi_temp := GetWeedRCi();
+        CCiActualWeedInfested_temp := GetCCiActualWeedInfested();
+        HItimesBEF_temp := GetHItimesBEF();
+        ScorAT1_temp := GetScorAT1();
+        ScorAT2_temp := GetScorAT2();
+        HItimesAT1_temp := GetHItimesAT1();
+        HItimesAT2_temp := GetHItimesAT2();
+        HItimesAT_temp := GetHItimesAT();
+        alfaHI_temp := GetalfaHI(); 
+        alfaHIAdj_temp := GetalfaHIAdj();
         DetermineBiomassAndYield(GetDayNri(),GetETo(),GetTmin(),GetTmax(),GetCO2i(),GetGDDayi(),GetTact(),GetSumKcTop(),GetCGCref(),GetGDDCGCref(),
                                  GetCoeffb0(),GetCoeffb1(),GetCoeffb2(),GetFracBiomassPotSF(),                             GetCoeffb0Salt(),GetCoeffb1Salt(),GetCoeffb2Salt(),GetStressTot_Salt(),SumGDDadjCC,GetCCiActual(),FracAssim,
                                  VirtualTimeCC,GetSumInterval(),
                                  Biomass_temp,BiomassPot_temp,BiomassUnlim_temp,BiomassTot_temp,
-                                 YieldPart_temp,WPi,HItimesBEF,ScorAT1,ScorAT2,HItimesAT1,HItimesAT2,
-                                 HItimesAT,alfaHI,alfaHIAdj,SumKcTopStress_temp,SumKci_temp,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
-                                 WeedRCi,CCiActualWeedInfested,TactWeedInfested_temp,
+                                 YieldPart_temp,WPi,HItimesBEF_temp,ScorAT1_temp,ScorAT2_temp,HItimesAT1_temp,HItimesAT2_temp,
+                                 HItimesAT_temp,alfaHI_temp,alfaHIAdj_temp,SumKcTopStress_temp,SumKci_temp,CCxWitheredTpot_temp,CCxWitheredTpotNoS_temp,
+                                 WeedRCi_temp,CCiActualWeedInfested_temp,TactWeedInfested_temp,
                                  StressSFadjNEW_temp,PreviousStressLevel_temp,
                                  Store_temp,Mobilize_temp,
                                  ToMobilize_temp,Bmobilized_temp,Bin_temp,Bout_temp,
@@ -2636,16 +2644,26 @@ IF ((GetRootingDepth() > 0) AND (NoMoreCrop = false))
         SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp);
         SetSumKcTopStress(SumKcTopStress_temp);
         SetSumKci(SumKci_temp);
+        SetWeedRCi(WeedRCi_temp);
+        SetCCiActualWeedInfested(CCiActualWeedInfested_temp); 
+        SetHItimesBEF(HItimesBEF_temp);
+        SetScorAT1(ScorAT1_temp);
+        SetScorAT2(ScorAT2_temp);
+        SetHItimesAT1(HItimesAT1_temp);
+        SetHItimesAT2(HItimesAT2_temp);
+        SetHItimesAT(HItimesAT_temp);
+        SetalfaHI(alfaHI_temp);
+        SetalfaHIAdj(alfaHIAdj_temp);
         END
    ELSE BEGIN
         SenStage := undef_int;
-        WeedRCi := undef_int; // no crop and no weed infestation
-        CCiActualWeedInfested := 0.0; // no crop
+        SetWeedRCi(undef_int); // no crop and no weed infestation
+        SetCCiActualWeedInfested(0.0); // no crop
         SetTactWeedInfested(0.0); // no crop
         END;
 
 (* 12. Reset after RUN *)
-IF (GetPreDay() = false) THEN PreviousDayNr := GetSimulation_FromDayNr() - 1;
+IF (GetPreDay() = false) THEN SetPreviousDayNr(GetSimulation_FromDayNr() - 1);
 SetPreDay(true);
 IF (GetDayNri() >= GetCrop().Day1) THEN
    BEGIN
@@ -2661,7 +2679,7 @@ IF GetManagement_Cuttings_Considered() THEN
    HarvestNow := false;
    DayInSeason := GetDayNri() - GetCrop().Day1 + 1;
    SetSumInterval(GetSumInterval() + 1);
-   SumGDDcuts := SumGDDcuts + GetGDDayi();
+   SetSumGDDcuts( GetSumGDDcuts() + GetGDDayi());
    CASE GetManagement_Cuttings_Generate() OF
         false : BEGIN
                 IF (GetManagement_Cuttings_FirstDayNr() <> undef_int) // adjust DayInSeason
@@ -2685,26 +2703,26 @@ IF GetManagement_Cuttings_Considered() THEN
                                  THEN HarvestNow := true;
                               END;
                      IntGDD : BEGIN
-                              IF ((SumGDDcuts >= GetCutInfoRecord1_IntervalGDD())
+                              IF ((GetSumGDDcuts() >= GetCutInfoRecord1_IntervalGDD())
                                    AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                    AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
                               END;
                      DryB   : BEGIN
-                              IF (((GetSumWabal_Biomass() - BprevSum) >= GetCutInfoRecord1_MassInfo())
+                              IF (((GetSumWabal_Biomass() - GetBprevSum()) >= GetCutInfoRecord1_MassInfo())
                                                  AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                  AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
                               END;
                      DryY   : BEGIN
-                              IF (((GetSumWabal_YieldPart() - YprevSum) >= GetCutInfoRecord1_MassInfo())
+                              IF (((GetSumWabal_YieldPart() - GetYprevSum()) >= GetCutInfoRecord1_MassInfo())
                                                    AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                    AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
                               END;
                      FreshY : BEGIN
                               // OK if Crop.DryMatter = undef_int (not specified) HarvestNow remains false
-                              IF ((((GetSumWaBal_YieldPart() - YprevSum)/(GetCrop().DryMatter/100)) >= GetCutInfoRecord1_MassInfo())
+                              IF ((((GetSumWaBal_YieldPart() - GetYprevSum())/(GetCrop().DryMatter/100)) >= GetCutInfoRecord1_MassInfo())
                                                                           AND (DayInSeason >= GetCutInfoRecord1_FromDay())
                                                                           AND (DayInSeason <= GetCutInfoRecord1_ToDay()))
                                  THEN HarvestNow := true;
@@ -2718,7 +2736,7 @@ IF GetManagement_Cuttings_Considered() THEN
       BEGIN
       SetNrCut(GetNrCut() + 1);
       SetDayLastCut(DayInSeason);
-      CGCadjustmentAfterCutting := false; // adjustement CGC
+      SetCGCadjustmentAfterCutting(false); // adjustement CGC
       IF (GetCCiPrev() > (GetManagement_Cuttings_CCcut()/100)) THEN
          BEGIN
          SetCCiPrev(GetManagement_Cuttings_CCcut()/100);
@@ -2728,15 +2746,15 @@ IF GetManagement_Cuttings_Considered() THEN
          SetCCxWitheredTpotNoS(0); //  for calculation Maximum Biomass unlimited soil fertility
          SetCrop_CCxAdjusted(GetCCiPrev()); // new
          // Increase of CGC
-         CGCadjustmentAfterCutting := true; // adjustement CGC
+         SetCGCadjustmentAfterCutting(true); // adjustement CGC
          END;
       // Record harvest
-      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval(),BprevSum,YprevSum);
+      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval());
       // Reset
       SetSumInterval(0);
-      SumGDDcuts := 0;
-      BprevSum := GetSumWaBal_Biomass();
-      YprevSum := GetSumWaBal_YieldPart();
+      SetSumGDDcuts(0);
+      SetBprevSum(GetSumWaBal_Biomass());
+      SetYprevSum(GetSumWaBal_YieldPart());
       END;
    END;
 
@@ -2759,17 +2777,17 @@ IF (GetCCiActual() > 0) THEN
       END;
    END;
 // weed stress
-IF (WeedRCi > - 0.000001) THEN
-   SetStressTot_Weed(((GetStressTot_NrD() - 1)*GetStressTot_Weed() + WeedRCi)/GetStressTot_NrD());
+IF (GetWeedRCi() > - 0.000001) THEN
+   SetStressTot_Weed(((GetStressTot_NrD() - 1)*GetStressTot_Weed() + GetWeedRCi())/GetStressTot_NrD());
 //14.c Assign crop parameters
 SetPlotVarCrop_ActVal(GetCCiActual()/GetCCxCropWeedsNoSFstress() * 100);
 SetPlotVarCrop_PotVal(100 * (1/GetCCxCropWeedsNoSFstress()) *
                               CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),GetCrop().DaysToGermination,
                               GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                               GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                              (fWeedNoS*GetCrop().CCo),(fWeedNoS*GetCrop().CCx),GetCGCref(),
-                              (GetCrop().CDC*(fWeedNoS*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
-                              GetGDDCGCref(),(GetCrop().GDDCDC*(fWeedNoS*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
+                              (GetfWeedNoS()*GetCrop().CCo),(GetfWeedNoS()*GetCrop().CCx),GetCGCref(),
+                              (GetCrop().CDC*(GetfWeedNoS()*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
+                              GetGDDCGCref(),(GetCrop().GDDCDC*(GetfWeedNoS()*GetCrop().CCx + 2.29)/(GetCrop().CCx + 2.29)),
                               SumGDDadjCC,GetCrop().ModeCycle,
                               (0),(0)));
 IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanopySF)
@@ -2778,16 +2796,16 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
                          CanopyCoverNoStressSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),GetCrop().DaysToGermination,
                          GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
                          GetCrop().GDDaysToGermination,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-                         CCoTotal,CCxTotal,GetCrop().CGC,
-                         CDCTotal,GetCrop().GDDCGC,GDDCDCTotal,
+                         GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,
+                         GetCDCTotal(),GetCrop().GDDCGC,GetGDDCDCTotal(),
                          SumGDDadjCC,GetCrop().ModeCycle,
                          GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
         END
    ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),PotValSF);
 //14.d Print ---------------------------------------
 IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
-IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode,WPi);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),StageCode);
+IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
+IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -2798,7 +2816,7 @@ IF (GetDayNri() = GetCrop().Day1)
    ELSE SetIrriInterval(GetIrriInterval() + 1);
 //15.c Rooting depth
 //15.bis extra line for standalone
-IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev(),StageCode);
+IF OutDaily THEN DetermineGrowthStage(GetDayNri(),GetCCiPrev());
 // 15.extra - reset ageing of Kc at recovery after full senescence
 IF (GetSimulation_SumEToStress() >= 0.1) THEN SetDayLastCut(GetDayNri());
 //15.d Read Climate next day, Get GDDays and update SumGDDays
@@ -2916,7 +2934,7 @@ AdjustCompartments;
 SumWaBal_temp := GetSumWaBal();
 GlobalZero(SumWabal_temp);
 SetSumWaBal(SumWaBal_temp);
-ResetPreviousSum(PreviousSumETo,PreviousSumGDD,PreviousBmob,PreviousBsto);
+ResetPreviousSum();
 InitializeSimulationRun;
 IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun);
@@ -2930,8 +2948,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
 
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
-                        DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double);
+                        DayInSeason,SumInterval : INTEGER);
     VAR Dayi,Monthi,Yeari : INTEGER;
         NoYear : BOOLEAN;
         tempstring : string;
@@ -2958,8 +2975,8 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
                 END;
             END
        ELSE BEGIN
-            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
-                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
+            WriteStr(tempstring, NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-GetBprevSum()):12:3,
+                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-GetYprevSum()):10:3);
             fHarvest_write(tempstring, False);
             IF (GetCrop().DryMatter = undef_int) THEN
                 BEGIN
@@ -2968,7 +2985,7 @@ PROCEDURE FinalizeRun1(NrRun : ShortInt;
                 END
             ELSE
                 BEGIN
-                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
+                WriteStr(tempstring, GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-GetYprevSum())/(GetCrop().DryMatter/100)):10:3,
                          (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
                 fHarvest_write(tempstring);
                 END;
@@ -2986,13 +3003,13 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
        IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
           BEGIN  // final harvest at crop maturity
           SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum);
+          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval());
           END;
-       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum); // last line at end of season
+       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval()); // last line at end of season
        END;
     // intermediate results
     IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
-        AND ((GetDayNri()-1) > PreviousDayNr)) THEN
+        AND ((GetDayNri()-1) > GetPreviousDayNr())) THEN
         BEGIN
         SetDayNri(GetDayNri()-1);
         WriteIntermediatePeriod(TheProjectFile);
@@ -3011,7 +3028,7 @@ PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
     BEGIN  // CloseEvalDataPerformEvaluation
     // 1. Close Evaluation data file  and file with observations
     fEval_close();
-    IF (LineNrEval <> undef_int) THEN fObs_close();
+    IF (GetLineNrEval() <> undef_int) THEN fObs_close();
     // 2. Specify File name Evaluation of simulation results - Statistics
     StrNr := '';
     IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);
