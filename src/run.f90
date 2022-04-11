@@ -3581,4 +3581,78 @@ subroutine OpenHarvestInfo()
 end subroutine OpenHarvestInfo
 
 
+subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
+    integer(int32), intent(in) :: FirstDayNr
+
+    character(len=:), allocatable :: totalname
+    integer(int32) :: i
+    real(dp) :: tmpRain, ETo_temp
+    real(dp) :: Tmin_temp, Tmax_temp
+    character(len=1025) :: TempString
+
+    ! ETo file
+    if (GetEToFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'EToData.SIM'
+        call fEToSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fEToSIM_read()
+            read(TempString, *) ETo_temp
+            call SetETo(ETo_temp)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fEToSIM_read()
+                read(TempString, *) ETo_temp
+                call SetETo(ETo_temp)
+            end do
+            TempString = fEToSIM_read()
+            read(TempString, *) ETo_temp
+            call SetETo(ETo_temp)
+        end if
+    end if
+    ! Rain file
+    if (GetRainFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'RainData.SIM'
+        call fRainSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fRainSIM_read()
+            read(TempString, *) tmpRain
+            call SetRain(tmpRain)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fRainSIM_read()
+                read(TempString, *) tmpRain
+                call SetRain(tmpRain)
+            end do
+            TempString = fRainSIM_read()
+            read(TempString, *) tmpRain
+            call SetRain(tmpRain)
+        end if
+    end if
+    ! Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'TempData.SIM'
+        call fTempSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fTempSIM_read()
+            read(TempString, *) Tmin_temp, Tmax_temp
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fTempSIM_read()
+                read(TempString, *) Tmin_temp, Tmax_temp
+                call SetTmin(Tmin_temp)
+                call SetTmax(Tmax_temp)
+            end do
+            TempString = fTempSIM_read()
+            read(TempString, *) Tmin_temp, Tmax_temp
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
+        end if
+    else
+        call SetTmin(GetSimulParam_Tmin())
+        call SetTmax(GetSimulParam_Tmax())
+    end if
+end subroutine OpenClimFilesAndGetDataFirstDay
+
 end module ac_run
