@@ -1205,6 +1205,9 @@ procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
 procedure __OpenPart1MultResults(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
 
+procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
+    external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
+
 
 implementation
 
