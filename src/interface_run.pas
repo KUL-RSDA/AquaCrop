@@ -315,7 +315,6 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
-
 procedure fDaily_open(constref filename : string; constref mode : string);
 
 procedure fDaily_open_wrap(
@@ -586,6 +585,11 @@ procedure SetPreviousSum_CRsalt(constref CRsalt : double);
 
 procedure RelationshipsForFertilityAndSaltStress();
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
+
+PROCEDURE WriteTitleDailyResults(
+            constref TheProjectType : repTypeProject;
+            constref TheNrRun : ShortInt);
+        external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
 

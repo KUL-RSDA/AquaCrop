@@ -3,7 +3,8 @@ module ac_run
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
-                    int32
+                    int32, &
+                    intenum
 
 use ac_global, only:    CompartmentIndividual, &
                         datatype_daily, &
@@ -54,6 +55,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_StressResponse_Calibrated, &
                         GetCrop_subkind, &
                         GetCrop_ModeCycle, &
+                        GetCrop_RootMax, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
                         GetCrop_Length_i, &
@@ -74,6 +76,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulParam_GDDMethod, &
                         GetSimulParam_Tmin, &
                         GetSimulParam_Tmax, &
+                        GetSoil_RootMax, &
                         GetSoilLayer_SAT, &
                         GetSumWaBal_Biomass, &
                         GetSumWaBal_BiomassUnlim, &
@@ -89,6 +92,13 @@ use ac_global, only:    CompartmentIndividual, &
                         GetZiAqua, &
                         GetECiAqua, &
                         LeapYear, &
+                        GetOut1Wabal, &
+                        GetOut2Crop, &
+                        GetOut3Prof, &
+                        GetOut4Salt, &
+                        GetOut5CompWC, &
+                        GetOut6CompEC, &
+                        GetOut7Clim, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
@@ -102,7 +112,8 @@ use ac_global, only:    CompartmentIndividual, &
                         SplitStringInTwoParams, &
                         undef_int, &
                         subkind_Grain, &
-                        subkind_Tuber
+                        subkind_Tuber, &
+                        typeproject_typeprm
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -2507,6 +2518,240 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
         end if
     end if
 end subroutine DetermineGrowthStage
+
+subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
+    integer(intenum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=1025) :: Str1, Str2, tempstring
+    real(dp) :: NodeD, Zprof
+    integer(int32) :: Compi
+
+    ! A. Run number
+    call fDaily_write('')
+    if (TheProjectType == typeproject_typeprm) then
+        write(Str1, '(i4)') TheNrRun
+        call fDaily_write('   Run:'// Str1)
+    end if
+
+    ! B. thickness of soil profile and root zone
+    if ((GetOut1Wabal()) .or. (GetOut3Prof()) .or. (GetOut4Salt())) then
+        Zprof = 0._dp
+        do compi =1, GetNrCompartments()
+            Zprof = Zprof + GetCompartment_Thickness(compi)
+        end do
+        write(Str1,'(f4.2)') Zprof
+        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+            write(Str2, '(f4.2)') GetCrop_RootMax()
+        else
+            write(Str2,'(f4.2)') GetSoil_RootMax()
+        end if
+    end if
+
+    ! C. 1st line title
+    call fDaily_write('   Day Month  Year   DAP Stage', .false.)
+
+    ! C1. Water balance
+    if (GetOut1Wabal()) then
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+            .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(4a)') '   WC(',Str1,')   Rain     Irri   Surf'// &
+                  '   Infilt   RO    Drain       CR    Zgwt', &
+               '       Ex       E     E/Ex     Trx       Tr  Tr/Trx    ETx      ET  ET/ETx'
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring,'(4a)') '   WC(', Str1, ')   Rain     Irri   Surf'// &
+                          '   Infilt   RO    Drain       CR    Zgwt', &
+                          '       Ex       E     E/Ex     Trx       Tr  Tr/Trx'// &
+                                                      '    ETx      ET  ET/ETx'
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! C2. Crop development and yield
+    if (GetOut2Crop()) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '      GD       Z     StExp  StSto  StSen'// &
+                          ' StSalt StWeed   CC      CCw     StTr  Kc(Tr)'// &
+                          '     Trx       Tr      TrW  Tr/Trx   WP', &
+                          '    Biomass     HI    Y(dry)  Y(fresh)  Brelative'// &
+                          '    WPet      Bin     Bout'
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring, '(2a)')  '      GD       Z     StExp  StSto'// &
+                          '  StSen StSalt StWeed   CC      CCw     StTr'// &
+                          '  Kc(Tr)     Trx       Tr      TrW  Tr/Trx   WP', &
+                          '    Biomass     HI    Y(dry)  Y(fresh)  Brelative'// &
+                          '    WPet      Bin     Bout'
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! C3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(5a)') '  WC(', Str1, ') Wr(', Str2, ')     Z'// &
+                  '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)   Wr(sen)   Wr(PWP)'
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring, '(5a)') '  WC(', Str1, ') Wr(', Str2, ')     Z'// &
+                            '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)'// &
+                                '   Wr(sen)   Wr(PWP)'
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! C4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
+                            '   Salt(', Str1, ')  SaltZ     Z       ECe'// &
+                                '    ECsw   StSalt  Zgwt    ECgw'
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
+                            '   Salt(', Str1, ')  SaltZ     Z       ECe'// &
+                                '    ECsw   StSalt  Zgwt    ECgw'
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! C5. Compartments - Soil water content  --!removed tempstring
+    if (GetOut5CompWC()) then
+        call fDaily_write('       WC01', .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            write(Str1, '(i2)') Compi
+            call fDaily_write('       WC'// Str1, .false.)
+        end do
+        write(Str1,'(i2)') GetNrCompartments()
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write('       WC'// Str1, .false.)
+        else
+            call fDaily_write('       WC'// Str1)
+        end if
+    end if
+    ! C6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        call fDaily_write('      ECe01', .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            write(Str1, '(i2)') Compi
+            call fDaily_write('      ECe'// Str1, .false.)
+        end do
+        write(Str1, '(i2)') GetNrCompartments()
+        if (GetOut7Clim()) then
+            call fDaily_write('      ECe'// Str1, .false.)
+        else
+            call fDaily_write('      ECe'// Str1)
+        end if
+    end if
+    ! C7. Climate input parameters
+    if (GetOut7Clim()) then
+        call fDaily_write('     Rain       ETo      Tmin      Tavg      Tmax      CO2')
+    end if
+
+    call fDaily_write('                              ', .false.)
+    ! D1. Water balance
+    if (GetOut1Wabal()) then
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+            .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+                  '     mm     mm       mm       mm      m ', &
+                    '       mm       mm     %        mm       mm    %' // &
+                            '        mm      mm       %'
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+                  '     mm     mm       mm       mm      m ', &
+                    '       mm       mm     %        mm       mm    %' // &
+                        '        mm      mm       %'
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! D2. Crop development and yield
+    if (GetOut2Crop()) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
+                           '      %      %      %       %       %       -'// &
+                           '        mm       mm       mm    %     g/m2', &
+                           '    ton/ha      %    ton/ha   ton/ha'// &
+                           '       %       kg/m3   ton/ha   ton/ha'
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
+                          '      %      %      %       %       %       -'// &
+                          '        mm       mm       mm    %     g/m2', &
+                          '    ton/ha      %    ton/ha   ton/ha'// &
+                          '       %       kg/m3   ton/ha   ton/ha'
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! D3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write('      mm       mm       m       mm        mm'// &
+                              '        mm        mm        mm        mm'// &
+                              '         mm', .false.)
+        else
+            call fDaily_write('      mm       mm       m       mm        mm '// &
+                              '       mm        mm        mm        mm        mm')
+        end if
+    end if
+    ! D4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write('    ton/ha    ton/ha    ton/ha    ton/ha'// &
+                              '    ton/ha     m      dS/m    dS/m      %'// &
+                              '     m      dS/m', .false.)
+        else
+            call fDaily_write('    ton/ha    ton/ha    ton/ha    ton/ha'// &
+                              '    ton/ha     m      dS/m    dS/m      %'// &
+                              '     m      dS/m')
+        end if
+    end if
+    ! D5. Compartments - Soil water content
+    if (GetOut5CompWC()) then
+        NodeD = GetCompartment_Thickness(1)/2._dp
+        write(tempstring,'(f11.2)') NodeD
+        call fDaily_write(tempstring, .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                    + GetCompartment_Thickness(Compi)/2._dp
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(tempstring, .false.)
+        end do
+        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
+                + GetCompartment_Thickness(GetNrCompartments())/2._dp
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        NodeD = GetCompartment_Thickness(1)/2._dp
+        write(tempstring,'(f11.2)') NodeD
+        call fDaily_write(tempstring, .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                    + GetCompartment_Thickness(compi)/2._dp
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(tempstring, .false.)
+        end do
+        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
+                + GetCompartment_Thickness(GetNrCompartments())/2._dp
+        if (GetOut7Clim()) then
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(tempstring, .false.)
+        else
+            write(tempstring, '(f11.2)') NodeD
+            call fDaily_write(tempstring)
+        end if
+    end if
+    ! D7. Climate input parameters
+    if (GetOut7Clim()) then
+        call fDaily_write('       mm        mm     degC      degC      degC       ppm')
+    end if
+end subroutine WriteTitleDailyResults
+
 
 
 end module ac_run
