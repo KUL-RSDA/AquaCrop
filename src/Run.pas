@@ -30,60 +30,6 @@ var  TheProjectFile : string;
 // specific for StandAlone
      NoYear : BOOLEAN;
 
-PROCEDURE OpenOutputRun(TheProjectType : repTypeProject);
-VAR totalname : string;
-
-BEGIN
-CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROseason.OUT');
-      TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMseason.OUT');
-      end;
-fRun_open(totalname, 'w');
-fRun_write('AquaCrop 7.0 (October 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
-fRun_write('');
-fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' +
-           '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' +
-           '    SaltIn   SaltOut    SaltUp  SaltProf' +
-           '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' +
-           '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN');
-fRun_write('                                           mm       mm  degC.day    ppm' +
-           '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' +
-           '    ton/ha    ton/ha    ton/ha    ton/ha' +
-           '      days       %        %        %        %        %        %  ' +
-           '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha');
-END; (* OpenOutputRun *)
-
-
-PROCEDURE OpenOutputDaily(TheProjectType : repTypeProject);
-VAR totalname, tempstring : string;
-BEGIN
-CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROday.OUT');
-      TypePRM : totalname := CONCAT(getPathNameOutp(),GetOutputName(),'PRMday.OUT');
-      end;
-fDaily_open(totalname, 'w');
-WriteStr(tempstring, 'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-fDaily_write(tempstring);
-END; (* OpenOutputDaily *)
-
-
-PROCEDURE OpenPart1MultResults(TheProjectType : repTypeProject);
-VAR totalname : string;
-    tempstring : string;
-BEGIN
-CASE TheProjectType OF
-      TypePRO : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PROharvests.OUT');
-      TypePRM : totalname := CONCAT(GetPathNameOutp(),GetOutputName(),'PRMharvests.OUT');
-      end;
-SetfHarvest_filename(totalname);
-fHarvest_open(GetfHarvest_filename(), 'w');
-WriteStr(tempstring, 'AquaCrop 7.0 (October 2021) - Output created on (date) : ',DateToStr(Date),'   at (time) : ',TimeToStr(Time));
-fHarvest_write(tempstring);
-fHarvest_write('Biomass and Yield at Multiple cuttings');
-END; (* OpenPart1MultResults *)
-
-
-
 PROCEDURE WriteTitleDailyResults(TheProjectType : repTypeProject;
                                  TheNrRun : ShortInt);
 VAR Str1,Str2, tempstring : string;
