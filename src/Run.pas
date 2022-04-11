@@ -791,22 +791,6 @@ IF (GetTemperatureFile() <> '(None)')
 END; (* OpenClimFilesAndGetDataFirstDay *)
 
 
-PROCEDURE OpenHarvestInfo();
-VAR totalname : string;
-    i : ShortInt;
-BEGIN
-IF (getManFile() <> '(None)')
-   THEN totalname := GetManFileFull()
-   ELSE totalname := CONCAT(GetPathNameSimul(),'Cuttings.AqC');
-fCuts_open(totalname, 'r');
-fCuts_read(); // description
-fCuts_read(); // AquaCrop version
-IF (GetManFile() <> '(None)') THEN For i:= 1 to 10 DO fCuts_read(); // management info
-FOR i := 1 TO 12 DO fCuts_read();  // cuttings info (already loaded)
-GetNextHarvest;
-END; (* OpenHarvestInfo *)
-
-
 PROCEDURE InitializeSimulationRun;
 VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     SumGDDforDayCC : double;
