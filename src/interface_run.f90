@@ -47,8 +47,15 @@ use ac_run, only:   fDaily_open, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
                     SetTransfer_Mobilize, &
-                    SetTransfer_Store
-
+                    SetTransfer_Store, &
+                    GetWaterTableInProfile, &
+                    SetWaterTableInProfile, &
+                    GetStartMode, &
+                    SetStartMode, &
+                    GetNoMoreCrop, &
+                    SetNoMoreCrop, &
+                    GetCGCadjustmentAfterCutting, &
+                    SetCGCadjustmentAfterCutting
 
 implicit none
 
@@ -496,5 +503,75 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
     GlobalIrriECw_f = GlobalIrriECw_in
     call SetGlobalIrriECw(GlobalIrriECw_f)    
 end subroutine SetGlobalIrriECw_wrap
+
+function GetStartMode_wrap() result(StartMode_f)
+
+    logical(1) :: StartMode_f
+
+    StartMode_f = GetStartMode()
+end function GetStartMode_wrap
+
+
+subroutine SetStartMode_wrap(StartMode_in)
+    logical(1), intent(in) :: StartMode_in
+
+    logical :: StartMode_f
+
+    StartMode_f = StartMode_in
+    call SetStartMode(StartMode_f)
+end subroutine SetStartMode_wrap
+
+
+function GetWaterTableInProfile_wrap() result(WaterTableInProfile_f)
+
+    logical(1) :: WaterTableInProfile_f
+
+    WaterTableInProfile_f = GetWaterTableInProfile()
+end function GetWaterTableInProfile_wrap
+
+
+subroutine SetWaterTableInProfile_wrap(WaterTableInProfile_in)
+    logical(1), intent(in) :: WaterTableInProfile_in
+
+    logical :: WaterTableInProfile_f
+
+    WaterTableInProfile_f = WaterTableInProfile_in
+    call SetWaterTableInProfile(WaterTableInProfile_f)
+end subroutine SetWaterTableInProfile_wrap
+
+function GetNoMoreCrop_wrap() result(NoMoreCrop_f)
+
+    logical(1) :: NoMoreCrop_f
+
+    NoMoreCrop_f = GetNoMoreCrop()
+end function GetNoMoreCrop_wrap
+
+
+subroutine SetNoMoreCrop_wrap(NoMoreCrop_in)
+    logical(1), intent(in) :: NoMoreCrop_in
+
+    logical :: NoMoreCrop_f
+
+    NoMoreCrop_f = NoMoreCrop_in
+    call SetNoMoreCrop(NoMoreCrop_f)
+end subroutine SetNoMoreCrop_wrap
+
+function GetCGCadjustmentAfterCutting_wrap() result(CGCadjustmentAfterCutting_f)
+
+    logical(1) :: CGCadjustmentAfterCutting_f
+
+    CGCadjustmentAfterCutting_f = GetCGCadjustmentAfterCutting()
+end function GetCGCadjustmentAfterCutting_wrap
+
+
+subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
+    logical(1), intent(in) :: CGCadjustmentAfterCutting_in
+
+    logical :: CGCadjustmentAfterCutting_f
+
+    CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
+    call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
+end subroutine SetCGCadjustmentAfterCutting_wrap
+
 
 end module ac_interface_run
