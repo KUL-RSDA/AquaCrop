@@ -119,6 +119,7 @@ END;
 PROCEDURE InitializeTheProgram;
 VAR
     OutputAggregate_temp : shortint;
+    outdaily_temp : boolean;
 BEGIN
 Decimalseparator := '.';
 SetPathNameOutp('OUTP/');
@@ -130,10 +131,14 @@ SetPathNameProg('');
 OutputAggregate_temp := GetOutputAggregate();
 GetTimeAggregationResults(OutputAggregate_temp);
 SetOutputAggregate(OutputAggregate_temp);
-GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily);
+outdaily_temp := GetOutDaily();
+GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,outdaily_temp);
+SetOutDaily(outdaily_temp);
 GetRequestParticularResults(Part1Mult,Part2Eval);
-PrepareReport(GetOutputAggregate(),Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
+outdaily_temp := GetOutDaily();
+PrepareReport(GetOutputAggregate(),Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,outdaily_temp,
               Part1Mult,Part2Eval);
+SetOutDaily(outdaily_temp);
 END;
 
 

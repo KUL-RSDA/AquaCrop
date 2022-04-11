@@ -1030,7 +1030,7 @@ real(dp) :: Tmin ! degC
 
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-logical :: PreDay
+logical :: PreDay, OutDaily
 
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
@@ -15032,6 +15032,19 @@ subroutine SetSurf0(Surf0_in)
 
     Surf0 = Surf0_in
 end subroutine SetSurf0
+
+logical function GetOutDaily()
+    !! Getter for the OutDaily global variable
+
+    GetOutDaily = OutDaily
+end function GetOutDaily
+
+subroutine SetOutDaily(OutDaily_in)
+    !! Setter for the OutDaily global variable
+    logical, intent(in) :: OutDaily_in
+
+    OutDaily = OutDaily_in
+end subroutine SetOutDaily
 
 
 end module ac_global

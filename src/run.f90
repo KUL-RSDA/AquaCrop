@@ -120,13 +120,85 @@ use ac_global, only:    CompartmentIndividual, &
                         SplitStringInTwoParams, &
                         subkind_Grain, &
                         subkind_Tuber, &
-                        undef_int
-
+                        undef_int, &
+                        rep_EffectStress, &
+                        EvapZmin, &
+                        IrriMode_Inet, &
+                        modeCycle_GDDays, &
+                        GetOutDaily, &
+                        plant_Seed, &
+                        subkind_Forage, &
+                        GetCompartment, &
+                        GetSimulParam_ConstGwt, &
+                        GetSWCIniFile, &
+                        GetCrop_pdef, &
+                        SetCrop_pActStom, &
+                        SetCrop_pSenAct, &
+                        GetCrop_pSenescence, &
+                        SetCrop_pLeafAct, &
+                        GetCrop_pLeafDefUL, &
+                        CO2ForSimulationPeriod, &
+                        GetCrop_ECemax, &
+                        GetCrop_ECemin, &
+                        GetSimulation_EffectStress, &
+                        GetSimulation_EffectStress_RedCGC, &
+                        GetSimulation_EffectStress_RedCCX, &
+                        GetCrop_DaysToFullCanopySF, &
+                        GetManagement_FertilityStress, &
+                        GetCrop_DaysToFullCanopySF, &
+                        SeasonalSumOfKcPot, &
+                        SetSimulation_RCadj, &
+                        GetManagement_WeedRC, &
+                        MultiplierCCxSelfThinning, &
+                        GetSimulation_YearSeason, &
+                        GetManagement_WeedRC, &
+                        GetManagement_WeedAdj, &
+                        GetSimulation_RCadj, &
+                        GetSimulation_SumGDDfromDay1, &
+                        GetCrop_Planting, &
+                        GetRootZoneSalt_KsSalt, &
+                        GetRootingDepth, &
+                        GetRootZoneSalt_KsSalt, &
+                        GetRootZoneSalt_ECswFC, &
+                        GetRootZoneSalt_ECsw, &
+                        GetRootZoneSalt_ECe, &
+                        GetManagement_BundHeight, &
+                        GetManagement_Cuttings_Considered, & 
+                        GetCrop_DaysToMaxRooting, &
+                        GetSoil_RootMax, &
+                        GetCrop_RootMin, &
+                        GetSimulation_Zrini, &
+                        GetCCiPrev, &
+                        GetCrop_GDDaysToMaxRooting, &
+                        GetSoil_RootMax, &
+                        GetCropFileFull, &
+                        GetCrop_Assimilates_Mobilized, &
+                        GetSimulation_Storage_Season, &
+                        GetSimulation_Bini, &
+                        GetSimulation_CCini, &
+                        GetCrop_PlantingDens, &
+                        GetCrop_GDDaysToFullCanopySF, &
+                        GetSimulation_ResetIniSWC, &
+                        GetManagement_WeedShape, &
+                        GetCrop_YearCCx, &
+                        GetCrop_CCxRoot, &
+                        CCmultiplierWeed, &
+                        CCmultiplierWeedAdjusted, &
+                        GetSimulation_EffectStress_CDecline, &
+                        GetCrop_SizeSeedling, &
+                        GetSimulation_Storage_CropString, &
+                        GetSimulation_Storage_Btotal, &
+                        GetCrop_RootMax, &
+                        GetCrop_RootShape, &
+                        CCiNoWaterStressSF, &
+                        MultiplierCCoSelfThinning, &
+                        ActualRootingDepth
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
-                                StressBiomassRelationship
+                                StressBiomassRelationship, &
+                                GrowingDegreeDays
 
 
 implicit none
@@ -275,6 +347,7 @@ integer(int8)  :: LineNrEval
 real(dp) :: PreviousSumETo, PreviousSumGDD, PreviousBmob,PreviousBsto
 integer(int8)  :: StageCode
 integer(int32) :: PreviousDayNr
+logical :: NoYear
 
 character(len=:), allocatable :: fEval_filename
 
@@ -1113,6 +1186,12 @@ real(dp) function GetGwTable_EC2()
     
     GetGwTable_EC2 = GwTable%EC2
 end function GetGwTable_EC2
+
+type(rep_GwTable) function GetGwTable()
+    !! Getter for the "GetGwTable" global variable.
+
+    GetGwTable = GwTable
+end function GetGwTable
 
 subroutine SetGwTable_DNr1(DNr1)
     !! Setter for the "GwTable" global variable. 
@@ -2698,6 +2777,19 @@ subroutine SetPreviousDayNr(PreviousDayNr_in)
     PreviousDayNr = PreviousDayNr_in
 end subroutine SetPreviousDayNr 
 
+logical function GetNoYear()
+    !! Getter for the NoYear global variable
+
+    GetNoYear = NoYear
+end function GetNoYear
+
+subroutine SetNoYear(NoYear_in)
+    !! Setter for the NoYear global variable
+    logical, intent(in) :: NoYear_in
+
+    NoYear = NoYear_in
+end subroutine SetNoYear
+
 
 !! END section global variables
 
@@ -2722,6 +2814,7 @@ subroutine AdjustForWatertable()
         end if
     end do
 end subroutine AdjustForWatertable
+
 
 subroutine ResetPreviousSum()
 
@@ -2751,6 +2844,7 @@ subroutine ResetPreviousSum()
     call SetPreviousBmob(0.0_dp)
     call SetPreviousBsto(0.0_dp)
 end subroutine ResetPreviousSum
+
 
 subroutine GetGwtSet(DayNrIN, GwT)
     integer(int32), intent(in) :: DayNrIN
@@ -2894,7 +2988,6 @@ subroutine GetGwtSet(DayNrIN, GwT)
     end if ! more than 1 observation
     close(f0)
 end subroutine GetGwtSet
-
 
 
 subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
@@ -3051,8 +3144,6 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
                                       GetSimulParam_GDDMethod())
     end if
 end subroutine GetSumGDDBeforeSimulation 
-
-
 
 
 subroutine RelationshipsForFertilityAndSaltStress()
@@ -3322,6 +3413,693 @@ subroutine OpenIrrigationFile()
         end select
     end if
 end subroutine OpenIrrigationFile
+
+
+subroutine InitializeSimulationRun()
+
+    integer(int32) :: tHImax, DNr1, DNr2, Dayi, DayCC
+    real(dp) :: SumGDDforDayCC
+    real(dp) :: CCiniMin, CCiniMax, RatDGDD, fWeed, fi
+    integer(int8) :: Cweed
+    integer(int32) :: Day1, Month1, Year1
+    integer(int8) :: FertStress
+    real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
+    type(rep_GwTable) :: GwTable_temp
+    integer(int8) :: RedCGC_temp, RedCCX_temp, RCadj_temp
+    type(rep_EffectStress) :: EffectStress_temp
+    real(dp) :: SumGDD_temp, SumGDDFromDay1_temp
+    logical :: bool_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+    logical :: WaterTableInProfile_temp
+
+
+    ! 1. Adjustments at start
+    ! 1.1 Adjust soil water and salt content if water table IN soil profile
+    WaterTableInProfile_temp = GetWaterTableInProfile()
+    call CheckForWaterTableInProfile((GetZiAqua()/100._dp), &
+               GetCompartment(), WaterTableInProfile_temp)
+    call SetWaterTableInProfile(WaterTableInProfile_temp)
+    if (GetWaterTableInProfile()) then
+        call AdjustForWatertable
+    end if
+    if (.not. GetSimulParam_ConstGwt()) then
+        GwTable_temp = GetGwTable()
+        call GetGwtSet(GetSimulation_FromDayNr(), GwTable_temp)
+        call SetGwTable(GwTable_temp)
+    end if
+
+    ! 1.2 Check if FromDayNr simulation needs to be adjusted 
+    ! from previous run if Keep initial SWC
+    if ((GetSWCIniFile() == 'KeepSWC') .and. &
+        (GetNextSimFromDayNr() /= undef_int)) then
+        ! assign the adjusted DayNr defined in previous run
+        if (GetNextSimFromDayNr() <= GetCrop_Day1()) then
+            call SetSimulation_FromDayNr(GetNextSimFromDayNr())
+        end if
+    end if
+    call SetNextSimFromDayNr(undef_int)
+
+    ! 2. initial settings for Crop
+    call SetCrop_pActStom(GetCrop_pdef())
+    call SetCrop_pSenAct(GetCrop_pSenescence())
+    call SetCrop_pLeafAct(GetCrop_pLeafDefUL())
+    call SetEvapoEntireSoilSurface(.true.)
+    call SetSimulation_EvapLimitON(.false.)
+    call SetSimulation_EvapWCsurf(0._dp)
+    call SetSimulation_EvapZ(EvapZmin/100._dp)
+    call SetSimulation_SumEToStress(0._dp)
+    call SetCCxWitheredTpot(0._dp) ! for calculation Maximum Biomass
+                                   ! and considering soil fertility stress
+    call SetCCxWitheredTpotNoS(0._dp) ! for calculation Maximum Biomass
+                                      ! unlimited soil fertility
+    call SetSimulation_DayAnaero(0) ! days of anaerobic conditions in
+                                    ! global root zone
+    ! germination
+    if ((GetCrop_Planting() == plant_Seed) .and. &
+        (GetSimulation_FromDayNr() <= GetCrop_Day1())) then
+        call SetSimulation_Germinate(.false.)
+    else
+        call SetSimulation_Germinate(.true.)
+        ! since already germinated no protection required
+        call SetSimulation_ProtectedSeedling(.false.)
+    end if
+    ! delayed germination
+    call SetSimulation_DelayedDays(0)
+
+    ! 3. create temperature file covering crop cycle
+    if (GetTemperatureFile() /= '(None)') then
+        if (GetSimulation_ToDayNr() < GetCrop_DayN()) then
+            call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), &
+                       GetSimulation_TodayNr())
+        else
+            call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), &
+                       GetCrop_DayN())
+        end if
+    end if
+
+    ! 4. CO2 concentration during cropping period
+    DNr1 = GetSimulation_FromDayNr()
+    if (GetCrop_Day1() > GetSimulation_FromDayNr()) then
+        DNr1 = GetCrop_Day1()
+    end if
+    DNr2 = GetSimulation_ToDayNr()
+    if (GetCrop_DayN() < GetSimulation_ToDayNr()) then
+        DNr2 = GetCrop_DayN()
+    end if
+    call SetCO2i(CO2ForSimulationPeriod(DNr1, DNr2))
+
+    ! 5. seasonals stress coefficients
+    bool_temp = ((GetCrop_ECemin() /= undef_int) .and. &
+                 (GetCrop_ECemax() /= undef_int)) .and. &
+                 (GetCrop_ECemin() < GetCrop_ECemax())
+    call SetSimulation_SalinityConsidered(bool_temp)
+    if (GetIrriMode() == IrriMode_Inet) then
+        call SetSimulation_SalinityConsidered(.false.)
+    end if
+    call SetStressTot_NrD(undef_int)
+    call SetStressTot_Salt(0._dp)
+    call SetStressTot_Temp(0._dp)
+    call SetStressTot_Exp(0._dp)
+    call SetStressTot_Sto(0._dp)
+    call SetStressTot_Weed(0._dp)
+
+    ! 6. Soil fertility stress
+    ! Coefficients for soil fertility - biomass relationship
+    ! AND for Soil salinity - CCx/KsSto relationship
+    call RelationshipsForFertilityAndSaltStress()
+
+    ! No soil fertility stress
+    if (GetManagement_FertilityStress() <= 0) then
+        call SetManagement_FertilityStress(0_int8)
+    end if
+
+    ! Reset soil fertility parameters to selected value in management
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+            GetManagement_FertilityStress(), EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    FertStress = GetManagement_FertilityStress()
+    RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+    RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+    Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+    call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
+           GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
+           GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(), &
+           GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(), &
+           Crop_DaysToFullCanopySF_temp, RedCGC_temp, RedCCX_temp, FertStress)
+    call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+    call SetManagement_FertilityStress(FertStress)
+    call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+    call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+    call SetPreviousStressLevel(int(GetManagement_FertilityStress(),kind=int32))
+    call SetStressSFadjNEW(int(GetManagement_FertilityStress(),kind=int32))
+    ! soil fertility and GDDays
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        if (GetManagement_FertilityStress() /= 0) then
+            call SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(&
+                  GetCrop_DaysToFullCanopySF(), GetCrop_Day1(), &
+                  GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(),&
+                  GetSimulParam_Tmax()))
+        else
+            call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
+        end if
+    end if
+
+    ! Maximum sum Kc (for reduction WP in season if soil fertility stress)
+    call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
+            GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
+            GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
+            GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+            GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
+            GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
+            GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &
+            GetCrop_KcTop(), GetCrop_KcDecline(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
+            GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
+            GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
+            GetCrop_ModeCycle()))
+    call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
+    call SetSumKci(0._dp)
+
+    ! 7. weed infestation and self-thinning of herbaceous perennial forage crops
+    ! CC expansion due to weed infestation and/or CC decrease as a result of
+    ! self-thinning
+    ! 7.1 initialize
+    call SetSimulation_RCadj(GetManagement_WeedRC())
+    Cweed = 0_int8
+    if (GetCrop_subkind() == subkind_Forage) then
+        fi = MultiplierCCxSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
+              int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
+    else
+        fi = 1._dp
+    end if
+    ! 7.2 fweed
+    if (GetManagement_WeedRC() > 0) then
+        call SetfWeedNoS(CCmultiplierWeed(GetManagement_WeedRC(), &
+              GetCrop_CCx(), GetManagement_WeedShape()))
+        call SetCCxCropWeedsNoSFstress( roundc(((100._dp*GetCrop_CCx() &
+                  * GetfWeedNoS()) + 0.49),mold=1)/100._dp) ! reference for plot with weed
+        if (GetManagement_FertilityStress() > 0) then
+            fWeed = 1
+            if ((fi > 0) .and. (GetCrop_subkind() == subkind_Forage)) then
+                Cweed = 1_int8
+                if (fi > 0.005) then
+                    ! calculate the adjusted weed cover
+                    call SetSimulation_RCadj(roundc(GetManagement_WeedRC() &
+                         + Cweed*(1-fi)*GetCrop_CCx()*&
+                           (1-GetSimulation_EffectStress_RedCCX()/100._dp)*&
+                           GetManagement_WeedAdj()/100._dp, mold=1_int8))
+                    if (GetSimulation_RCadj() < (100 * (1- fi/(fi + (1-fi)*&
+                          (GetManagement_WeedAdj()/100._dp))))) then
+                        call SetSimulation_RCadj(roundc(100 * (1- fi/(fi + &
+                              (1-fi)*(GetManagement_WeedAdj()/100._dp))),mold=1_int8))
+                    end if
+                    if (GetSimulation_RCadj() > 100) then
+                        call SetSimulation_RCadj(98_int8)
+                    end if
+                else
+                    call SetSimulation_RCadj(100_int8)
+                end if
+            end if
+        else
+            if (GetCrop_subkind() == subkind_Forage) then
+                RCadj_temp = GetSimulation_RCadj()
+                fweed = CCmultiplierWeedAdjusted(GetManagement_WeedRC(), &
+                          GetCrop_CCx(), GetManagement_WeedShape(), &
+                          fi, GetSimulation_YearSeason(), &
+                          GetManagement_WeedAdj(), &
+                          RCadj_temp)
+                call SetSimulation_RCadj(RCadj_temp)
+            else
+                fWeed = GetfWeedNoS()
+            end if
+        end if
+    else
+        call SetfWeedNoS(1._dp)
+        fWeed = 1
+        call SetCCxCropWeedsNoSFstress(GetCrop_CCx())
+    end if
+    ! 7.3 CC total due to weed infestation
+    call SetCCxTotal( fWeed * GetCrop_CCx() * (fi+Cweed*(1-fi)*&
+           GetManagement_WeedAdj()/100._dp))
+    call SetCDCTotal( GetCrop_CDC() * (fWeed*GetCrop_CCx()*&
+           (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) + 2.29)/ &
+           (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
+            + 2.29))
+    call SetGDDCDCTotal(GetCrop_GDDCDC() * (fWeed*GetCrop_CCx()*&
+           (fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) + 2.29)/ &
+           (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
+            + 2.29))
+    if (GetCrop_subkind() == subkind_Forage) then
+        fi = MultiplierCCoSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
+               int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
+    else
+        fi = 1
+    end if
+    call SetCCoTotal(fWeed * GetCrop_CCo() * (fi+Cweed*(1-fi)*&
+            GetManagement_WeedAdj()/100._dp))
+
+    ! 8. prepare output files
+    ! Not applicable
+
+    ! 9. first day
+    call SetStartMode(.true.)
+    bool_temp = (.not. GetSimulation_ResetIniSWC())
+    call SetPreDay(bool_temp)
+    call SetDayNri(GetSimulation_FromDayNr())
+    call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) ! start simulation run
+    call SetNoYear((Year1 == 1901));  ! for output file
+
+    ! 10. Climate
+    ! create climate files
+    call CreateDailyClimFiles(GetSimulation_FromDayNr(), &
+               GetSimulation_ToDayNr())
+    ! climatic data for first day
+    call OpenClimFilesAndGetDataFirstDay(GetDayNri())
+
+    ! Sum of GDD before start of simulation
+    call SetSimulation_SumGDD(0._dp)
+    call SetSimulation_SumGDDfromDay1(0._dp)
+    if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. & 
+        (GetCrop_Day1() < GetDayNri())) then
+        SumGDD_temp = GetSimulation_SumGDD()
+        SumGDDfromDay1_temp = GetSimulation_SumGDDfromDay1()
+        call GetSumGDDBeforeSimulation(SumGDD_temp, SumGDDfromDay1_temp)
+         ! GDDays before start of simulation
+        call SetSimulation_SumGDD(SumGDD_temp)
+        call SetSimulation_SumGDDFromDay1(SumGDDFromDay1_temp)
+    end if
+    call SetSumGDDPrev( GetSimulation_SumGDDfromDay1())
+
+    ! Sum of GDD at end of first day
+    call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), GetTmin(), &
+                   GetTmax(), GetSimulParam_GDDMethod()))
+    if (GetDayNri() >= GetCrop_Day1()) then
+        if (GetDayNri() == GetCrop_Day1()) then
+            call SetSimulation_SumGDD(GetSimulation_SumGDD() + GetGDDayi())
+        end if
+        call SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + &
+                 GetGDDayi())
+    end if
+    ! Reset cummulative sums of ETo and GDD for Run output
+    call SetSumETo(0._dp)
+    call SetSumGDD(0._dp)
+
+
+    ! 11. Irrigation
+    call SetIrriInterval(1)
+    call SetGlobalIrriECw(.true.) ! In Versions < 3.2 - Irrigation water
+                                  ! quality is not yet recorded on file
+    call OpenIrrigationFile()
+
+
+    ! 12. Adjusted time when starting as regrowth
+    if (GetCrop_DaysToCCini() /= 0) then
+        ! regrowth
+        call SetGDDTadj(undef_int)
+        call SetGDDayFraction(real(undef_int, kind=dp))
+        if (GetCrop_DaysToCCini() == undef_int) then
+            call SetTadj(GetCrop_DaysToFullCanopy() - &
+                         GetCrop_DaysToGermination())
+        else
+            call SetTadj(GetCrop_DaysToCCini())
+        end if
+        call SetDayFraction(real((GetCrop_DaysToSenescence()- &
+              GetCrop_DaysToFullCanopy())/(GetTadj() + &
+              GetCrop_DaysToGermination() + &
+              (GetCrop_DaysToSenescence()-GetCrop_DaysToFullCanopy()) ),kind=dp))
+        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+            if (GetCrop_GDDaysToCCini() == undef_int) then
+                call SetGDDTadj(GetCrop_GDDaysToFullCanopy() - &
+                       GetCrop_GDDaysToGermination())
+            else
+                call SetGDDTadj(GetCrop_GDDaysToCCini())
+            end if
+            call SetGDDayFraction(real(GetCrop_GDDaysToSenescence() - &
+                  GetCrop_GDDaysToFullCanopy(),kind=dp)/&
+                  real(GetGDDTadj() + GetCrop_GDDaysToGermination() + &
+                   (GetCrop_GDDaysToSenescence() -&
+                    GetCrop_GDDaysToFullCanopy()),kind=dp))
+        end if
+    else
+        ! sowing or transplanting
+        call SetTadj(0)
+        call SetGDDTadj(0)
+        call SetDayFraction(real(undef_int, kind=dp))
+        call SetGDDayFraction(real(undef_int, kind=dp))
+    end if
+
+
+    ! 13. Initial canopy cover
+    ! 13.1 default value
+    ! 13.1a RatDGDD for simulation of CanopyCoverNoStressSF (CCi with decline)
+    RatDGDD = 1
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
+            RatDGDD = (GetCrop_DaysToSenescence() - &
+                GetCrop_DaysToFullCanopySF())/&
+                (GetCrop_GDDaysToSenescence() - GetCrop_GDDaysToFullCanopySF())
+        end if
+    end if
+    ! 13.1b DayCC for initial canopy cover
+    Dayi = GetDayNri() - GetCrop_Day1()
+    if (GetCrop_DaysToCCini() == 0) then
+        ! sowing or transplant
+        DayCC = Dayi
+        call SetDayFraction(real(undef_int, kind=dp))
+    else
+        ! adjust time (calendar days) for regrowth
+        DayCC = Dayi + GetTadj() + GetCrop_DaysToGermination() ! adjusted time scale
+        if (DayCC > GetCrop_DaysToHarvest()) then
+            DayCC = GetCrop_DaysToHarvest() ! special case where L123 > L1234
+        end if
+        if (DayCC > GetCrop_DaysToFullCanopy()) then
+            if (Dayi <= GetCrop_DaysToSenescence()) then
+                DayCC = GetCrop_DaysToFullCanopy()  + &
+                         roundc(GetDayFraction() * &
+                         (Dayi+GetTadj()+GetCrop_DaysToGermination() -&
+                         GetCrop_DaysToFullCanopy()),mold=1) ! slow down
+            else
+                DayCC = Dayi ! switch time scale
+            end if
+        end if
+    end if
+    ! 13.1c SumGDDayCC for initial canopy cover
+    SumGDDforDayCC = undef_int
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        if (GetCrop_GDDaysToCCini() == 0) then
+            SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - GetGDDayi()
+        else
+            ! adjust time (Growing Degree Days) for regrowth
+            SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - GetGDDayi() + &
+                             GetGDDTadj() + GetCrop_GDDaysToGermination()
+            if (SumGDDforDayCC > GetCrop_GDDaysToHarvest()) then
+                SumGDDforDayCC = GetCrop_GDDaysToHarvest()
+                ! special case where L123 > L1234
+            end if
+            if (SumGDDforDayCC > GetCrop_GDDaysToFullCanopy()) then
+                if (GetSimulation_SumGDDfromDay1() <= &
+                    GetCrop_GDDaysToFullCanopy()) then
+                    SumGDDforDayCC = GetCrop_GDDaysToFullCanopy() + &
+                      roundc(GetGDDayFraction() * &
+                       (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+ &
+                       GetCrop_GDDaysToGermination()-&
+                       GetCrop_GDDaysToFullCanopy()),mold=1)
+                    ! slow down
+                else
+                    SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - &
+                                      GetGDDayi()
+                    ! switch time scale
+                end if
+            end if
+        end if
+    end if
+    ! 13.1d CCi at start of day (is CCi at end of previous day)
+    if (GetDayNri() <= GetCrop_Day1()) then
+        if (GetCrop_DaysToCCini() /= 0) then
+            ! regrowth which starts on 1st day
+            if (GetDayNri() == GetCrop_Day1()) then
+                call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
+                   GetCrop_DaysToGermination(), &
+                   GetCrop_DaysToFullCanopySF(), &
+                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), &
+                   GetCrop_GDDaysToGermination(), &
+                   GetCrop_GDDaysToFullCanopySF(), &
+                   GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
+                   GetCCoTotal(), GetCCxTotal(), GetCrop_CGC(), &
+                   GetCrop_GDDCGC(), GetCDCTotal(), GetGDDCDCTotal(), &
+                   SumGDDforDayCC, RatDGDD, &
+                   GetSimulation_EffectStress_RedCGC(), &
+                   GetSimulation_EffectStress_RedCCX(), &
+                   GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
+            else
+                call SetCCiPrev(0._dp)
+            end if
+        else
+            ! sowing or transplanting
+            call SetCCiPrev(0._dp)
+            if (GetDayNri() == (GetCrop_Day1()+GetCrop_DaysToGermination())) then
+                call SetCCiPrev(GetCCoTotal())
+            end if
+        end if
+    else
+        if (GetDayNri() > GetCrop_DayN()) then
+            call SetCCiPrev(0._dp)  ! after cropping period
+        else
+            call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
+                GetCrop_DaysToGermination(), &
+                GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
+                GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
+                GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
+                GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(),&
+                GetGDDCDCTotal(), SumGDDforDayCC, RatDGDD, &
+                GetSimulation_EffectStress_RedCGC(), &
+                GetSimulation_EffectStress_RedCCX(), &
+                GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
+        end if
+    end if
+    ! 13.2 specified CCini (%)
+    if ((GetSimulation_CCini() > epsilon(0._dp)) .and. &
+        (roundc(10000._dp*GetCCiPrev(), mold=1) > 0) .and. &
+        (roundc(GetSimulation_CCini(), mold=1) /= &
+            roundc(100._dp*GetCCiPrev(),mold=1))) then
+        ! 13.2a Minimum CC
+        CCiniMin = 100._dp * (GetCrop_SizeSeedling()/10000._dp)*&
+                    (GetCrop_PlantingDens()/10000._dp)
+        if (CCiniMin - roundc(CCiniMin*100._dp, mold=1)/100._dp >= 0.00001) then
+            CCiniMin = roundc(CCiniMin*100 + 1, mold=1)/100._dp
+        else
+            CCiniMin = roundc(CCiniMin*100, mold=1)/100._dp
+        end if
+        ! 13.2b Maximum CC
+        CCiniMax = 100._dp * GetCCiPrev()
+        CCiniMax = roundc(CCiniMax*100,mold=1)/100._dp
+        ! 13.2c accept specified CCini
+        if ((GetSimulation_CCini() >= CCiniMin) .and. &
+            (GetSimulation_CCini() <= CCiniMax)) then
+            call SetCCiPrev(GetSimulation_CCini()/100._dp)
+        end if
+    end if
+    ! 13.3
+    call SetCrop_CCxAdjusted(GetCCxTotal())
+    call SetCrop_CCoAdjusted(GetCCoTotal())
+    call SetTimeSenescence(0._dp)
+    call SetCrop_CCxWithered(0._dp)
+    call SetNoMoreCrop(.false.)
+    call SetCCiActual(GetCCiPrev())
+
+
+    ! 14. Biomass and re-setting of GlobalZero
+    if (roundc(1000._dp*GetSimulation_Bini(),mold=1) > 0) then
+        ! overwrite settings in GlobalZero (in Global)
+        call SetSumWaBal_Biomass(GetSimulation_Bini())
+        call SetSumWaBal_BiomassPot(GetSimulation_Bini())
+        call SetSumWaBal_BiomassUnlim(GetSimulation_Bini())
+        call SetSumWaBal_BiomassTot(GetSimulation_Bini())
+    end if
+
+    ! 15. Transfer of assimilates
+    if ((GetCrop_subkind() == subkind_Forage)&
+        ! only valid for perennial herbaceous forage crops
+        .and. (trim(GetCropFileFull()) == &
+               trim(GetSimulation_Storage_CropString()))&
+        ! only for the same crop
+        .and. (GetSimulation_YearSeason() > 1) &
+        ! mobilization not possible in season 1
+        .and. (GetSimulation_YearSeason() == &
+               (GetSimulation_Storage_Season() + 1))) then
+            ! season next to season in which storage took place
+            ! mobilization of assimilates
+            call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *&
+                   GetCrop_Assimilates_Mobilized()/100._dp)
+            if (roundc(1000._dp * GetTransfer_ToMobilize(),&
+                   mold=1) > 0) then ! minimum 1 kg
+                 call SetTransfer_Mobilize(.true.)
+            else
+                 call SetTransfer_Mobilize(.false.)
+            end if
+    else
+        call SetSimulation_Storage_CropString(GetCropFileFull())
+        ! no mobilization of assimilates
+        call SetTransfer_ToMobilize(0._dp)
+        call SetTransfer_Mobilize(.false.)
+    end if
+    ! Storage is off and zero at start of season
+    call SetSimulation_Storage_Season(GetSimulation_YearSeason())
+    call SetSimulation_Storage_Btotal(0._dp)
+    call SetTransfer_Store(.false.)
+    ! Nothing yet mobilized at start of season
+    call SetTransfer_Bmobilized(0._dp)
+
+
+
+    ! 16. Initial rooting depth
+    ! 16.1 default value
+    if (GetDayNri() <= GetCrop_Day1()) then
+        call SetZiprev(real(undef_int, kind=dp))
+    else
+        if (GetDayNri() > GetCrop_DayN()) then
+            call SetZiprev(real(undef_int, kind=dp))
+        else
+            call SetZiprev( ActualRootingDepth(GetDayNri()-GetCrop_Day1(),&
+                  GetCrop_DaysToGermination(),&
+                  GetCrop_DaysToMaxRooting(),&
+                  GetCrop_DaysToHarvest(),&
+                  GetCrop_GDDaysToGermination(),&
+                  GetCrop_GDDaysToMaxRooting(),&
+                  GetSumGDDPrev(),&
+                  GetCrop_RootMin(),&
+                  GetCrop_RootMax(),&
+                  GetCrop_RootShape(),&
+                  GetCrop_ModeCycle()) )
+        end if
+    end if
+    ! 16.2 specified or default Zrini (m)
+    if ((GetSimulation_Zrini() > epsilon(0._dp)) .and. &
+        (GetZiprev() > epsilon(0._dp)) .and. &
+        (GetSimulation_Zrini() <= GetZiprev())) then
+        if ((GetSimulation_Zrini() >= GetCrop_RootMin()) .and. &
+            (GetSimulation_Zrini() <= GetCrop_RootMax())) then
+            call SetZiprev( GetSimulation_Zrini())
+        else
+            if (GetSimulation_Zrini() < GetCrop_RootMin()) then
+                call SetZiprev( GetCrop_RootMin())
+            else
+                call SetZiprev( GetCrop_RootMax())
+            end if
+        end if
+        if ((roundc(GetSoil_RootMax()*1000._dp,mold=1) < &
+             roundc(GetCrop_RootMax()*1000._dp,mold=1)) &
+            .and. (GetZiprev() > GetSoil_RootMax())) then
+            call SetZiprev(real(GetSoil_RootMax(),kind=dp))
+        end if
+        call SetRootingDepth(GetZiprev())
+        ! NOT NEEDED since RootingDepth is calculated in the RUN by considering
+        ! Ziprev
+    else
+        call SetRootingDepth(ActualRootingDepth(GetDayNri()-GetCrop_Day1()+1, &
+              GetCrop_DaysToGermination(), &
+              GetCrop_DaysToMaxRooting(),&
+              GetCrop_DaysToHarvest(),&
+              GetCrop_GDDaysToGermination(),&
+              GetCrop_GDDaysToMaxRooting(),&
+              GetSumGDDPrev(),&
+              GetCrop_RootMin(),&
+              GetCrop_RootMax(),&
+              GetCrop_RootShape(),&
+              GetCrop_ModeCycle()))
+    end if
+
+    ! 17. Multiple cuttings
+    call SetNrCut(0)
+    call SetSumInterval(0)
+    call SetSumGDDcuts(0._dp)
+    call SetBprevSum(0._dp)
+    call SetYprevSum(0._dp)
+    call SetCutInfoRecord1_IntervalInfo(0)
+    call SetCutInfoRecord2_IntervalInfo(0)
+    call SetCutInfoRecord1_MassInfo(0._dp)
+    call SetCutInfoRecord2_MassInfo(0._dp)
+    call SetDayLastCut(0)
+    call SetCGCref( GetCrop_CGC())
+    call SetGDDCGCref(GetCrop_GDDCGC())
+    if (GetManagement_Cuttings_Considered()) then
+        call OpenHarvestInfo()
+    end if
+    call SetCGCadjustmentAfterCutting(.false.)
+
+
+    ! 18. Tab sheets
+
+    ! 19. Labels, Plots and displays
+    if (GetManagement_BundHeight() < 0.01) then
+        call SetSurfaceStorage(0._dp)
+        call SetECStorage(0._dp)
+    end if
+    if (GetRootingDepth() > epsilon(0._dp)) then
+        ! salinity in root zone
+        ECe_temp = GetRootZoneSalt_ECe()
+        ECsw_temp = GetRootZoneSalt_ECsw()
+        ECswFC_temp = GetRootZoneSalt_ECswFC()
+        KsSalt_temp = GetRootZoneSalt_KsSalt()
+        call DetermineRootZoneSaltContent(GetRootingDepth(), ECe_temp,&
+               ECsw_temp, ECswFC_temp, KsSalt_temp)
+        call SetRootZoneSalt_ECe(ECe_temp)
+        call SetRootZoneSalt_ECsw(ECsw_temp)
+        call SetRootZoneSalt_ECswFC(ECswFC_temp)
+        call SetRootZoneSalt_KsSalt(KsSalt_temp)
+        call SetStressTot_Salt(((GetStressTot_NrD() - 1)*GetStressTot_Salt() + &
+              100._dp*(1._dp-GetRootZoneSalt_KsSalt()))/GetStressTot_NrD())
+    end if
+    ! Harvest Index
+    call SetSimulation_HIfinal(GetCrop_HI())
+    call SetHItimesBEF(real(undef_int, kind=dp))
+    call SetHItimesAT1(1._dp)
+    call SetHItimesAT2(1._dp)
+    call SetHItimesAT(1._dp)
+    call SetalfaHI(real(undef_int, kind=dp))
+    call SetalfaHIAdj(0._dp)
+    if (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
+        GetCrop_Day1() + GetCrop_DaysToFlowering())) then
+        ! not yet flowering
+        call SetScorAT1(0._dp)
+        call SetScorAT2(0._dp)
+    else
+        ! water stress affecting leaf expansion
+        ! NOTE: time to reach end determinancy  is tHImax (i.e. flowering/2 or
+        ! senescence)
+        if (GetCrop_DeterminancyLinked()) then
+            tHImax = roundc(GetCrop_LengthFlowering()/2._dp,mold=1)
+        else
+            tHImax = (GetCrop_DaysToSenescence() - GetCrop_DaysToFlowering())
+        end if
+        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
+            GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & ! not yet end period
+            .and. (tHImax > 0)) then
+            ! not yet end determinancy
+            call SetScorAT1(1._dp/tHImax)
+            call SetScorAT1(GetScorAT1() * (GetSimulation_FromDayNr() - &
+                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
+                   GetCrop_DaysToFlowering())))
+            if (GetScorAT1() > 1._dp) then
+                call SetScorAT1(1._dp)
+            end if
+        else
+            call SetScorAT1(1._dp)  ! after period of effect
+        end if
+        ! water stress affecting stomatal closure
+        ! period of effect is yield formation
+        if (GetCrop_dHIdt() > 99._dp) then
+            tHImax = 0
+        else
+            tHImax = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
+        end if
+        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
+             GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & ! not yet end period
+             .and. (tHImax > 0)) then
+            ! not yet end yield formation
+            call SetScorAT2(1._dp/tHImax)
+            call SetScorAT2(GetScorAT2() * (GetSimulation_FromDayNr() - &
+                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
+                   GetCrop_DaysToFlowering())))
+            if (GetScorAT2() > 1._dp) then
+                call SetScorAT2(1._dp)
+            end if
+        else
+            call SetScorAT2(1._dp)  ! after period of effect
+        end if
+    end if
+
+    if (GetOutDaily()) then
+        call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
+    end if
+
+    ! 20. Settings for start
+    call SetStartMode(.true.)
+    call SetStressLeaf(real(undef_int, kind=dp))
+    call SetStressSenescence(real(undef_int, kind=dp))
+
+end subroutine InitializeSimulationRun
 
 
 end module ac_run

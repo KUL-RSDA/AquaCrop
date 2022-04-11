@@ -224,7 +224,9 @@ use ac_global, only: CheckFilesInProject, &
                      GetMultipleProjectDescription, &
                      SetMultipleProjectDescription, &
                      GetProjectDescription, &
-                     SetProjectDescription
+                     SetProjectDescription, &
+                     GetOutDaily, &
+                     SetOutDaily
 
 
 use ac_kinds, only: dp, &
@@ -2614,6 +2616,22 @@ subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, 
 end subroutine CheckForKeepSWC_wrap
 
 
+function GetOutDaily_wrap() result(OutDaily_f)
+
+    logical(1) :: OutDaily_f
+
+    OutDaily_f = GetOutDaily()
+end function GetOutDaily_wrap
+
+
+subroutine SetOutDaily_wrap(OutDaily_in)
+    logical(1), intent(in) :: OutDaily_in
+
+    logical :: OutDaily_f
+
+    OutDaily_f = OutDaily_in
+    call SetOutDaily(OutDaily_f)
+end subroutine SetOutDaily_wrap
 
 
 end module ac_interface_global
