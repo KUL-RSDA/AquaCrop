@@ -3370,7 +3370,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
 
     integer(int32) :: BrSF, RatioE, RatioT
     integer(int32) :: Year1_loc, YearN_loc
-    real(dp) :: WPy, HI
+    real(dp) :: WPy, HI, tempreal
     character(len=1025) :: TempString
 
     ! copy intent(in) variables to locals
@@ -3403,9 +3403,12 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         write(TempString, '(3i9)') Day1, Month1, Year1_loc
         call fRun_write(trim(TempString), .false.)
     end if
-
+    
+    tempreal = roundc(tempreal*10._dp, mold=1)
     ! Climatic conditions
-    write(TempString, '(3f9.1, f9.2)') Rper, EToPer,GDDPer, GetCO2i()
+    write(TempString, '(3f9.1, f9.2)') Rper, EToPer,&
+          tempreal/10._dp, GetCO2i()
+    write(*, '(f9.1)') tempreal/10._dp
     call fRun_write(trim(TempString), .false.)
     ! Soil water parameters
     if (ExPer > 0._dp) then
