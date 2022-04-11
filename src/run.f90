@@ -7,32 +7,23 @@ use ac_kinds, only: dp, &
                     intEnum
 
 use ac_global, only:    CompartmentIndividual, &
-                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
-                        DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
-                        DetermineDate, &
                         DetermineDayNr, &
-                        DetermineDayNr, &
-                        DetermineSaltContent, &
                         DetermineSaltContent, &
                         FileExists, &
-                        GetCompartment_i, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
-                        getcrop_ccsaltdistortion, &
                         GetCrop_CCx, &
                         GetCrop_CDC, &
                         GetCrop_CGC, &
-                        GetCrop_CGC, &
                         GetCrop_Day1, &
-                        GetCrop_DayN, &
                         GetCrop_DaysToCCini, &
                         GetCrop_DaysToFlowering, &
                         GetCrop_DaysToFullCanopy, &
@@ -40,6 +31,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_DaysToHarvest, &
                         GetCrop_DaysToSenescence, &
                         GetCrop_DeterminancyLinked, &
+                        GetManagement_Cuttings_Generate, &
+                        GetManagement_Cuttings_FirstDayNr, &
+                        GetManagement_Cuttings_Criterion, &
+                        GetManagement_Cuttings_Day1, &
+                        GetManagement_Cuttings_NrDays, &
                         GetCrop_dHIdt, &
                         GetCrop_GDDaysToCCini, &
                         GetCrop_GDDaysToFlowering, &
@@ -49,55 +45,39 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_GDDaysToSenescence, &
                         GetCrop_GDDCDC, &
                         GetCrop_GDDCGC, &
+                        GetCrop_GDDaysToFlowering, &
+                        GetCrop_GDDaysToHarvest, &
                         GetCrop_GDDLengthFlowering, &
                         GetCrop_GDtranspLow, &
-                        GetCrop_GDtranspLow, &
-                        GetCrop_HI, &
                         GetCrop_KcDecline, &
                         GetCrop_KcTop, &
-                        GetCrop_Length_i, &
+                        GetCrop_HI, &
                         GetCrop_LengthFlowering, &
-                        GetCrop_ModeCycle, &
+                        GetCrop_GDtranspLow, &
+                        getcrop_ccsaltdistortion, &
                         GetCrop_StressResponse, &
                         GetCrop_StressResponse_Calibrated, &
                         GetCrop_subkind, &
+                        GetCrop_ModeCycle, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
-                        GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
-                        GetECiAqua, &
-                        GetETo, &
-                        GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
-                        GetIrriFile, &
-                        GetIrriFilefull, &
-                        GetIrriFirstDayNr, &
-                        GetIrriMode, &
-                        GetManagement_FertilityStress, &
                         GetNrCompartments, &
                         GetOutputAggregate, &
                         GetOutputName, &
                         GetPathNameOutp, &
                         GetPathNameProg, &
-                        GetSimulation_DelayedDays, &
-                        GetRain, &
                         GetSimulation_FromDayNr, &
-                        GetSimulation_IrriECw, &
-                        GetSimulation_SalinityConsidered, &
                         GetSimulation_SumGDD, &
+                        GetSimulation_SalinityConsidered, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
-                        GetSimulParam_Tmax, &
                         GetSimulParam_Tmin, &
+                        GetSimulParam_Tmax, &
                         GetSoilLayer_SAT, &
-                        GetSoilLayer_SAT, &
-                        GetSumWaBal_Biomass, &
-                        GetSumWaBal_BiomassUnlim, &
-                        GetSumWaBal_SaltIn, &
-                        GetSumWaBal_SaltOut, &
-                        GetSumWaBal_CRsalt, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -105,29 +85,31 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmax, &
                         GetTmin, &
                         GetZiAqua, &
-                        IrriMode_Generate, &
-                        IrriMode_Manual, &
-                        rep_DayEventDbl, &
-                        LeapYear, &
+                        GetECiAqua, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
-                        SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
-                        GetSimulation_DelayedDays, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams, &
+                        TimeCuttings_FreshY, &
+                        TimeCuttings_IntDay, &
+                        TimeCuttings_IntGDD, &
+                        TimeCuttings_DryB, &
+                        TimeCuttings_DryY, &
+                        GetCrop_Length_i, &
+                        GetSimulation_DelayedDays, &
+                        GetManagement_FertilityStress, &
                         subkind_Grain, &
                         subkind_Tuber, &
                         typeproject_typenone, &
                         typeproject_typepro, &
                         typeproject_typeprm, &
                         undef_int
-
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -1442,7 +1424,6 @@ subroutine SetCutInfoRecord1_NoMoreInfo(NoMoreInfo)
     
     CutInfoRecord1%NoMoreInfo = NoMoreInfo
 end subroutine SetCutInfoRecord1_NoMoreInfo
-
 
 subroutine SetCutInfoRecord1_FromDay(FromDay)
     !! Setter for the "CutInfoRecord1" global variable.
@@ -2901,6 +2882,133 @@ subroutine GetGwtSet(DayNrIN, GwT)
     close(f0)
 end subroutine GetGwtSet
 
+
+subroutine GetNextHarvest()
+    logical :: InfoLoaded
+    integer(int32) :: DayNrXX
+    integer(int32) :: FromDay_temp
+    real(dp) :: IntervalInfo_temp, IntervalGDD_temp, MassInfo_temp
+    character(len=:), allocatable :: TempString
+
+    if (.not. GetManagement_Cuttings_Generate()) then
+        TempString = fCuts_read()
+        if (.not. fCuts_eof()) then
+            read(TempString, *) FromDay_temp
+            call SetCutInfoRecord1_FromDay(FromDay_temp)
+            call SetCutInfoRecord1_NoMoreInfo(.false.)
+            if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
+                ! scroll to start growing cycle
+                DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
+                 do while ((DayNrXX < GetCrop_Day1()) .or. (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.))
+                    TempString = fCuts_read()
+                    if (.not. fCuts_eof()) then
+                        read(TempString, *) FromDay_temp
+                        call SetCutInfoRecord1_FromDay(FromDay_temp)
+                        DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
+                    else
+                        call SetCutInfoRecord1_NoMoreInfo(.true.)
+                    end if
+                end do
+            end if
+        else
+            call SetCutInfoRecord1_NoMoreInfo(.true.)
+        end if
+    else
+        if (GetNrCut() == 0) then
+            if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, IntervalInfo_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
+            elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, IntervalGDD_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_IntervalGDD(IntervalGDD_temp)
+            elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, MassInfo_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_MassInfo(MassInfo_temp)
+            end if
+            if (GetCutInfoRecord1_FromDay() < GetManagement_Cuttings_Day1()) then
+                call SetCutInfoRecord1_FromDay(GetManagement_Cuttings_Day1())
+            end if           
+            InfoLoaded = .false.
+        end if
+        loop2: do 
+            TempString = fCuts_read()
+            if (.not. fCuts_eof()) then
+                if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                    read(TempString, *) FromDay_temp, IntervalInfo_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
+                elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                    read(TempString, *) FromDay_temp, IntervalGDD_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_IntervalGDD(IntervalGDD_temp)
+                elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                    read(TempString, *) FromDay_temp, MassInfo_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_MassInfo(MassInfo_temp)
+                end if
+                if (GetCutInfoRecord2_FromDay() < GetManagement_Cuttings_Day1()) then
+                    call SetCutInfoRecord2_FromDay(GetManagement_Cuttings_Day1())
+                end if
+                if (GetCutInfoRecord2_FromDay() <= GetCutInfoRecord1_FromDay()) then 
+                    ! CutInfoRecord2 becomes CutInfoRecord1
+                    call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
+                    if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                        call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
+                    elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                        call SetCutInfoRecord1_IntervalGDD(GetCutInfoRecord2_IntervalGDD())
+                    elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                        call SetCutInfoRecord1_MassInfo(GetCutInfoRecord2_MassInfo())
+                    end if
+                    call SetCutInfoRecord1_NoMoreInfo(.false.)
+                else ! complete CutInfoRecord1
+                    call SetCutInfoRecord1_ToDay(GetCutInfoRecord2_FromDay() - 1)
+                    call SetCutInfoRecord1_NoMoreInfo(.false.)
+                    if (GetManagement_Cuttings_NrDays() /= undef_int) then
+                        if (GetCutInfoRecord1_ToDay() > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) then
+                            call SetCutInfoRecord1_ToDay(GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)
+                            call SetCutInfoRecord1_NoMoreInfo(.true.)
+                        end if
+                    end if
+                    InfoLoaded = .true.
+                end if
+            else ! Eof(fCuts)
+                if (GetNrCut() > 0) then ! CutInfoRecord2 becomes CutInfoRecord1
+                    call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
+                    if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                        call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
+                    elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                        call SetCutInfoRecord1_IntervalGDD(GetCutInfoRecord2_IntervalGDD())
+                    elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                        call SetCutInfoRecord1_MassInfo(GetCutInfoRecord2_MassInfo())
+                    end if
+                end if 
+                call SetCutInfoRecord1_ToDay(GetCrop_DaysToHarvest())
+                if (GetManagement_Cuttings_NrDays() /= undef_int) then
+                    if (GetCutInfoRecord1_ToDay() > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) then
+                        call SetCutInfoRecord1_ToDay(GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)
+                    end if
+                end if
+                call SetCutInfoRecord1_NoMoreInfo(.true.)
+                InfoLoaded = .true.
+            end if
+            if (InfoLoaded .eqv. .true.) exit loop2
+        end do loop2
+    end if
+end subroutine GetNextHarvest
 
 
 subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
