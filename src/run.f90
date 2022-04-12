@@ -3855,7 +3855,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                         call SetTmin(Tmin_temp)
                         call SetTmax(Tmax_temp)
                     else
-                        read(fTemp, '(a)', iostat=rc) Tmin_temp, Tmax_temp
+                        read(fTemp, *, iostat=rc) Tmin_temp, Tmax_temp
                         call SetTmin(Tmin_temp)
                         call SetTmax(Tmax_temp)
                     end if
