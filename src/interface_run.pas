@@ -1211,6 +1211,11 @@ procedure __OpenPart1MultResults(constref TheProjectType : integer);
 procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
     external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
+procedure openharvestinfo();
+        external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
+
+procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
+        external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
 implementation
 
