@@ -3645,7 +3645,6 @@ subroutine InitializeSimulationRun()
     integer(int32) :: Crop_DaysToFullCanopySF_temp
     logical :: WaterTableInProfile_temp
 
-
     ! 1. Adjustments at start
     ! 1.1 Adjust soil water and salt content if water table IN soil profile
     WaterTableInProfile_temp = GetWaterTableInProfile()
@@ -3917,13 +3916,11 @@ subroutine InitializeSimulationRun()
     call SetSumETo(0._dp)
     call SetSumGDD(0._dp)
 
-
     ! 11. Irrigation
     call SetIrriInterval(1)
     call SetGlobalIrriECw(.true.) ! In Versions < 3.2 - Irrigation water
                                   ! quality is not yet recorded on file
     call OpenIrrigationFile()
-
 
     ! 12. Adjusted time when starting as regrowth
     if (GetCrop_DaysToCCini() /= 0) then
@@ -3960,7 +3957,6 @@ subroutine InitializeSimulationRun()
         call SetDayFraction(real(undef_int, kind=dp))
         call SetGDDayFraction(real(undef_int, kind=dp))
     end if
-
 
     ! 13. Initial canopy cover
     ! 13.1 default value
@@ -4102,7 +4098,6 @@ subroutine InitializeSimulationRun()
     call SetNoMoreCrop(.false.)
     call SetCCiActual(GetCCiPrev())
 
-
     ! 14. Biomass and re-setting of GlobalZero
     if (roundc(1000._dp*GetSimulation_Bini(), mold=1) > 0) then
         ! overwrite settings in GlobalZero (in Global)
@@ -4144,7 +4139,6 @@ subroutine InitializeSimulationRun()
     call SetTransfer_Store(.false.)
     ! Nothing yet mobilized at start of season
     call SetTransfer_Bmobilized(0._dp)
-
 
     ! 16. Initial rooting depth
     ! 16.1 default value
@@ -4220,7 +4214,6 @@ subroutine InitializeSimulationRun()
         call OpenHarvestInfo()
     end if
     call SetCGCadjustmentAfterCutting(.false.)
-
 
     ! 18. Tab sheets
 
@@ -4311,7 +4304,6 @@ subroutine InitializeSimulationRun()
     call SetStartMode(.true.)
     call SetStressLeaf(real(undef_int, kind=dp))
     call SetStressSenescence(real(undef_int, kind=dp))
-
 end subroutine InitializeSimulationRun
 
 
