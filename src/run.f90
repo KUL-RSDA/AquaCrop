@@ -274,6 +274,11 @@ use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 temperaturefilecoveringcropperiod, &
                                 GrowingDegreeDays
 
+use ac_climprocessing, only:    GetDecadeEToDataset, &
+                                GetDecadeRainDataSet, &
+                                GetMonthlyEToDataset, &
+                                GetMonthlyRainDataset
+
 
 implicit none
 
@@ -4388,6 +4393,353 @@ subroutine OpenPart1MultResults(TheProjectType)
 end subroutine OpenPart1MultResults
 
 
+
+subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
+    integer(int32), intent(in) :: FromSimDay
+    integer(int32), intent(in) :: ToSimDay
+
+    character(len=:), allocatable :: totalname, totalnameOUT
+    integer :: fETo, fRain, fTemp, fEToS, fRainS, fTempS, rc
+    character(len=255) :: StringREAD
+    integer(int32) :: i
+    integer(int32) :: RunningDay
+    real(dp) :: tmpRain
+    real(dp) :: ETo_temp
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet_temp, TmaxDataSet_temp
+    real(dp) :: Tmin_temp, Tmax_temp
+    type(rep_DayEventDbl), dimension(31) :: EToDataSet_temp, RainDataSet_temp
+
+    ! 1. ETo file
+    if (GetEToFile() /= '(None)') then
+        totalname = GetEToFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetEToRecord_DataType())
+            case(datatype_Daily)
+                open(newunit=fETo, file=trim(totalname), status='old', &
+                                                         action='read')
+                read(fETo, *, iostat=rc) ! description
+                read(fETo, *, iostat=rc) ! time step
+                read(fETo, *, iostat=rc) ! day
+                read(fETo, *, iostat=rc) ! month
+                read(fETo, *, iostat=rc) ! year
+                read(fETo, *, iostat=rc)
+                read(fETo, *, iostat=rc)
+                read(fETo, *, iostat=rc)
+                do i = GetEToRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fETo, *, iostat=rc)
+                end do
+                read(fETo, *, iostat=rc) ETo_temp
+                call SetETo(ETo_temp)
+            case(datatype_decadely)
+                EToDataSet_temp = GetEToDataSet()
+                call GetDecadeEToDataSet(FromSimDay, EToDataSet_temp)
+                call SetEToDataSet(EToDataSet_temp)
+                i = 1
+                do while (GetEToDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetETo(GetEToDataSet_Param(i))
+            case(datatype_Monthly)
+                EToDataSet_temp = GetEToDataSet()
+                call GetMonthlyEToDataSet(FromSimDay, EToDataSet_temp)
+                call SetEToDataSet(EToDataSet_temp)
+                i = 1
+                do while (GetEToDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetETo(GetEToDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'EToData.SIM'
+            open(newunit=fEToS, file=trim(totalnameOUT), status='replace', &
+                                                         action='write')
+            write(fEToS, '(f10.4)') GetETo()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetEToRecord_DataType())
+                case(datatype_Daily)
+                    if (rc == iostat_end) then
+                        rewind(fETo)
+                        read(fETo, *, iostat=rc) ! description
+                        read(fETo, *, iostat=rc) ! time step
+                        read(fETo, *, iostat=rc) ! day
+                        read(fETo, *, iostat=rc) ! month
+                        read(fETo, *, iostat=rc) ! year
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *) ETo_temp
+                        call SetETo(ETo_temp)
+                    else
+                        read(fETo, *) ETo_temp
+                        call SetETo(ETo_temp)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                        EToDataSet_temp = GetEToDataSet()
+                        call GetDecadeEToDataSet(RunningDay, EToDataSet_temp)
+                        call SetEToDataSet(EToDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetEToDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetETo(GetEToDataSet_Param(i))
+                case(datatype_Monthly)
+                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                        EToDataSet_temp = GetEToDataSet()
+                        call GetMonthlyEToDataSet(RunningDay, EToDataSet_temp)
+                        call SetEToDataSet(EToDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetEToDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetETo(GetEToDataSet_Param(i))
+                end select
+                write(fEToS, '(f10.4)') GetETo()
+            end do
+            ! Close files
+            if (GetEToRecord_DataType() == datatype_Daily) then
+                close(fETo)
+            end if
+            close(fEToS)
+        end if
+    end if
+
+    ! 2. Rain File
+    if (GetRainFile() /= '(None)') then
+        totalname = GetRainFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetRainRecord_DataType())
+            case(datatype_Daily)
+                open(newunit=fRain, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fRain, *, iostat=rc) ! description
+                read(fRain, *, iostat=rc) ! time step
+                read(fRain, *, iostat=rc) ! day
+                read(fRain, *, iostat=rc) ! month
+                read(fRain, *, iostat=rc) ! year
+                read(fRain, *, iostat=rc)
+                read(fRain, *, iostat=rc)
+                read(fRain, *, iostat=rc)
+                do i = GetRainRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fRain, *, iostat=rc)
+                end do
+                read(fRain, *, iostat=rc) tmpRain
+                call SetRain(tmpRain)
+            case(datatype_Decadely)
+                RainDataSet_temp = GetRainDataSet()
+                call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                call SetRainDataSet(RainDataSet_temp)
+                i = 1
+                do while (GetRainDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetRain(GetRainDataSet_Param(i))
+            case(datatype_Monthly)
+                RainDataSet_temp = GetRainDataSet()
+                call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                call SetRainDataSet(RainDataSet_temp)
+                i = 1
+                do while (GetRainDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetRain(GetRainDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'RainData.SIM'
+            open(newunit=fRainS, file=trim(totalnameOUT), status='replace', &
+                                                          action='write')
+            write(fRainS, '(f10.4)') GetRain()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetRainRecord_DataType())
+                case(datatype_daily)
+                    if (rc == iostat_end) then
+                        rewind(fRain)
+                        read(fRain, *, iostat=rc) ! description
+                        read(fRain, *, iostat=rc) ! time step
+                        read(fRain, *, iostat=rc) ! day
+                        read(fRain, *, iostat=rc) ! month
+                        read(fRain, *, iostat=rc) ! year
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc) tmpRain
+                        call SetRain(tmpRain)
+                    else
+                        read(fRain, *, iostat=rc) tmpRain
+                        call SetRain(tmpRain)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                        RainDataSet_temp = GetRainDataSet()
+                        call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                        call SetRainDataSet(RainDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetRainDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetRain(GetRainDataSet_Param(i))
+                case(datatype_monthly)
+                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                        RainDataSet_temp = GetRainDataSet()
+                        call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                        call SetRainDataSet(RainDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetRainDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetRain(GetRainDataSet_Param(i))
+                end select
+                write(fRainS, '(f10.4)') GetRain()
+            end do
+            ! Close files
+            if (GetRainRecord_DataType() == datatype_Daily) then
+                close(fRain)
+            end if
+            close(fRainS)
+        end if
+    end if
+
+    ! 3. Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = GetTemperatureFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetTemperatureRecord_DataType())
+            case(datatype_daily)
+                open(newunit=fTemp, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fTemp, *, iostat=rc) ! description
+                read(fTemp, *, iostat=rc) ! time step
+                read(fTemp, *, iostat=rc) ! day
+                read(fTemp, *, iostat=rc) ! month
+                read(fTemp, *, iostat=rc) ! year
+                read(fTemp, *, iostat=rc)
+                read(fTemp, *, iostat=rc)
+                read(fTemp, *, iostat=rc)
+                do i = GetTemperatureRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fTemp, *, iostat=rc)
+                end do
+                read(fTemp, '(a)', iostat=rc) StringREAD  ! i.e. DayNri
+                Tmin_temp = GetTmin()
+                Tmax_temp = GetTmax()
+                call SplitStringInTwoParams(StringREAD, Tmin_temp, Tmax_temp)
+                call SetTmin(Tmin_temp)
+                call SetTmax(Tmax_temp)
+            case(datatype_Decadely)
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetDecadeTemperatureDataSet(FromSimDay, TminDataSet_temp, &
+                                                              TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+            case(datatype_Monthly)
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetMonthlyTemperatureDataSet(FromSimDay, TminDataSet_temp, &
+                                                              TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'TempData.SIM'
+            open(newunit=fTempS, file=trim(totalnameOUT), status='replace', &
+                                                          action='write')
+            write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetTemperatureRecord_Datatype())
+                case(datatype_Daily)
+                    if (rc == iostat_end) then
+                        rewind(fTemp)
+                        read(fTemp, *, iostat=rc) ! description
+                        read(fTemp, *, iostat=rc) ! time step
+                        read(fTemp, *, iostat=rc) ! day
+                        read(fTemp, *, iostat=rc) ! month
+                        read(fTemp, *, iostat=rc) ! year
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, '(a)', iostat=rc) StringREAD
+                        Tmin_temp = GetTmin()
+                        Tmax_temp = GetTmax()
+                        call SplitStringInTwoParams(StringREAD, Tmin_temp, &
+                                                                Tmax_temp)
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                    else
+                        read(fTemp, *, iostat=rc) Tmin_temp, Tmax_temp
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetDecadeTemperatureDataSet(FromSimDay, &
+                                                         TminDataSet_temp, &
+                                                         TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetTminDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                case(datatype_Monthly)
+                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetMonthlyTemperatureDataSet(FromSimDay, &
+                                                          TminDataSet_temp, &
+                                                          TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetTminDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                end select
+                write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
+            end do
+            ! Close files
+            if (GetTemperatureRecord_datatype() == datatype_Daily) then
+                close(fTemp)
+            end if
+            close(fTempS)
+        end if
+    end if
+end subroutine CreateDailyClimFiles
+
+
+
 subroutine OpenHarvestInfo()
     character(len=:), allocatable :: totalname
     integer(int8) :: i
@@ -4486,5 +4838,6 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         call SetTmax(GetSimulParam_Tmax())
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
+
 
 end module ac_run
