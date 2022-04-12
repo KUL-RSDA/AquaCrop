@@ -3,10 +3,10 @@ module ac_run
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
-                    int32
+                    int32, &
+                    intEnum
 
 use ac_global, only:    CompartmentIndividual, &
-                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
@@ -67,6 +67,10 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_WPy, &
                         GetECiAqua, &
                         GetETo, &
+                        GetEToFile, &
+                        GetEToFilefull, &
+                        GetEToRecord_DataType, &
+                        GetEToRecord_FromDayNr, &
                         GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
@@ -74,12 +78,24 @@ use ac_global, only:    CompartmentIndividual, &
                         GetIrriFilefull, &
                         GetIrriFirstDayNr, &
                         GetIrriMode, &
+                        GetManagement_Cuttings_Criterion, &
+                        GetManagement_Cuttings_Day1, &
+                        GetManagement_Cuttings_FirstDayNr, &
+                        GetManagement_Cuttings_Generate, &
+                        GetManagement_Cuttings_NrDays, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
                         GetOutputAggregate, &
+                        GetOutputName, &
+                        GetPathNameOutp, &
                         GetPathNameProg, &
+                        GetPathNameSimul, &
                         GetSimulation_DelayedDays, &
                         GetRain, &
+                        GetRainFile, &
+                        GetRainFilefull, &
+                        GetRainRecord_DataType, &
+                        GetRainRecord_FromDayNr, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
@@ -111,6 +127,8 @@ use ac_global, only:    CompartmentIndividual, &
                         roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
+                        SetETo, &
+                        SetRain, &
                         SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
                         GetSimulation_DelayedDays, &
@@ -235,7 +253,19 @@ use ac_global, only:    CompartmentIndividual, &
                         setrootzonesalt_ecswfc, &
                         setsimulation_effectstress_redccx, &
                         setsimulation_sumetostress, &
-                        setsimulation_germinate
+                        setsimulation_germinate, &
+                        TimeCuttings_DryB, &
+                        TimeCuttings_DryY, &
+                        TimeCuttings_FreshY, &
+                        TimeCuttings_IntDay, &
+                        TimeCuttings_IntGDD, &
+                        typeproject_typenone, &
+                        typeproject_typepro, &
+                        typeproject_typeprm, &
+                        undef_int, &
+                        GetManFile, &
+                        GetManFileFull
+
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -1566,7 +1596,6 @@ subroutine SetCutInfoRecord1_NoMoreInfo(NoMoreInfo)
     
     CutInfoRecord1%NoMoreInfo = NoMoreInfo
 end subroutine SetCutInfoRecord1_NoMoreInfo
-
 
 subroutine SetCutInfoRecord1_FromDay(FromDay)
     !! Setter for the "CutInfoRecord1" global variable.
@@ -3041,6 +3070,134 @@ subroutine GetGwtSet(DayNrIN, GwT)
 end subroutine GetGwtSet
 
 
+subroutine GetNextHarvest()
+    logical :: InfoLoaded
+    integer(int32) :: DayNrXX
+    integer(int32) :: FromDay_temp
+    real(dp) :: IntervalInfo_temp, IntervalGDD_temp, MassInfo_temp
+    character(len=:), allocatable :: TempString
+
+    if (.not. GetManagement_Cuttings_Generate()) then
+        TempString = fCuts_read()
+        if (.not. fCuts_eof()) then
+            read(TempString, *) FromDay_temp
+            call SetCutInfoRecord1_FromDay(FromDay_temp)
+            call SetCutInfoRecord1_NoMoreInfo(.false.)
+            if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
+                ! scroll to start growing cycle
+                DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
+                 do while ((DayNrXX < GetCrop_Day1()) .or. (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.))
+                    TempString = fCuts_read()
+                    if (.not. fCuts_eof()) then
+                        read(TempString, *) FromDay_temp
+                        call SetCutInfoRecord1_FromDay(FromDay_temp)
+                        DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
+                    else
+                        call SetCutInfoRecord1_NoMoreInfo(.true.)
+                    end if
+                end do
+            end if
+        else
+            call SetCutInfoRecord1_NoMoreInfo(.true.)
+        end if
+    else
+        if (GetNrCut() == 0) then
+            if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, IntervalInfo_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
+            elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, IntervalGDD_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_IntervalGDD(IntervalGDD_temp)
+            elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, MassInfo_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_MassInfo(MassInfo_temp)
+            end if
+            if (GetCutInfoRecord1_FromDay() < GetManagement_Cuttings_Day1()) then
+                call SetCutInfoRecord1_FromDay(GetManagement_Cuttings_Day1())
+            end if           
+            InfoLoaded = .false.
+        end if
+        loop2: do 
+            TempString = fCuts_read()
+            if (.not. fCuts_eof()) then
+                if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                    read(TempString, *) FromDay_temp, IntervalInfo_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
+                elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                    read(TempString, *) FromDay_temp, IntervalGDD_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_IntervalGDD(IntervalGDD_temp)
+                elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                    read(TempString, *) FromDay_temp, MassInfo_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_MassInfo(MassInfo_temp)
+                end if
+                if (GetCutInfoRecord2_FromDay() < GetManagement_Cuttings_Day1()) then
+                    call SetCutInfoRecord2_FromDay(GetManagement_Cuttings_Day1())
+                end if
+                if (GetCutInfoRecord2_FromDay() <= GetCutInfoRecord1_FromDay()) then 
+                    ! CutInfoRecord2 becomes CutInfoRecord1
+                    call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
+                    if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                        call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
+                    elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                        call SetCutInfoRecord1_IntervalGDD(GetCutInfoRecord2_IntervalGDD())
+                    elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                        call SetCutInfoRecord1_MassInfo(GetCutInfoRecord2_MassInfo())
+                    end if
+                    call SetCutInfoRecord1_NoMoreInfo(.false.)
+                else ! complete CutInfoRecord1
+                    call SetCutInfoRecord1_ToDay(GetCutInfoRecord2_FromDay() - 1)
+                    call SetCutInfoRecord1_NoMoreInfo(.false.)
+                    if (GetManagement_Cuttings_NrDays() /= undef_int) then
+                        if (GetCutInfoRecord1_ToDay() > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) then
+                            call SetCutInfoRecord1_ToDay(GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)
+                            call SetCutInfoRecord1_NoMoreInfo(.true.)
+                        end if
+                    end if
+                    InfoLoaded = .true.
+                end if
+            else ! Eof(fCuts)
+                if (GetNrCut() > 0) then ! CutInfoRecord2 becomes CutInfoRecord1
+                    call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
+                    if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                        call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
+                    elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                        call SetCutInfoRecord1_IntervalGDD(GetCutInfoRecord2_IntervalGDD())
+                    elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                        call SetCutInfoRecord1_MassInfo(GetCutInfoRecord2_MassInfo())
+                    end if
+                end if 
+                call SetCutInfoRecord1_ToDay(GetCrop_DaysToHarvest())
+                if (GetManagement_Cuttings_NrDays() /= undef_int) then
+                    if (GetCutInfoRecord1_ToDay() > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) then
+                        call SetCutInfoRecord1_ToDay(GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)
+                    end if
+                end if
+                call SetCutInfoRecord1_NoMoreInfo(.true.)
+                InfoLoaded = .true.
+            end if
+            if (InfoLoaded .eqv. .true.) exit loop2
+        end do loop2
+    end if
+end subroutine GetNextHarvest
+
+
 subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
     real(dp), intent(inout) :: SumGDDtillDay
     real(dp), intent(inout) :: SumGDDtillDayM1
@@ -4152,5 +4309,182 @@ subroutine InitializeSimulationRun()
 
 end subroutine InitializeSimulationRun
 
+
+subroutine OpenOutputRun(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROseason.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMseason.OUT'
+    end select
+    call fRun_open(totalname, 'w')
+    call date_and_time(values=d)
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fRun_write(trim(tempstring))
+    call fRun_write('')
+    call fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' // &
+        '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' // &
+        '    SaltIn   SaltOut    SaltUp  SaltProf' // &
+        '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' // &
+        '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN')
+    call fRun_write('                                           mm       mm  degC.day    ppm' // &
+        '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' // &
+        '    ton/ha    ton/ha    ton/ha    ton/ha' // &
+        '      days       %        %        %        %        %        %  ' // &
+        '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha')
+end subroutine OpenOutputRun
+
+
+subroutine OpenOutputDaily(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROday.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMday.OUT'
+    end select
+    call date_and_time(values=d)
+    call fDaily_open(totalname, 'w')
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fDaily_write(trim(tempstring))
+end subroutine OpenOutputDaily
+
+
+subroutine OpenPart1MultResults(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROharvests.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMharvests.OUT'
+    end select
+    call SetfHarvest_filename(totalname)
+    call fHarvest_open(GetfHarvest_filename(), 'w')
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fHarvest_write(trim(tempstring))
+    call fHarvest_write('Biomass and Yield at Multiple cuttings')
+end subroutine OpenPart1MultResults
+
+
+subroutine OpenHarvestInfo()
+    character(len=:), allocatable :: totalname
+    integer(int8) :: i
+    character(len=:), allocatable :: TempString
+
+    if (GetManFile() /= '(None)') then
+        totalname = GetManFileFull()
+    else
+        totalname = trim(GetPathNameSimul())//'Cuttings.AqC'
+    end if
+    call fCuts_open(totalname, 'r')
+    TempString = fCuts_read() ! description
+    TempString = fCuts_read() ! AquaCrop version
+    if (GetManFile() /= '(None)') then
+        do i= 1, 10
+            TempString = fCuts_read() ! management info
+       end do
+    end if
+    do i = 1, 12
+        TempString = fCuts_read()  ! cuttings info (already loaded)
+    end do
+    call GetNextHarvest
+end subroutine OpenHarvestInfo
+
+
+subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
+    integer(int32), intent(in) :: FirstDayNr
+
+    character(len=:), allocatable :: totalname
+    integer(int32) :: i
+    real(dp) :: tmpRain, ETo_temp
+    real(dp) :: Tmin_temp, Tmax_temp
+    character(len=1025) :: TempString
+
+    ! ETo file
+    if (GetEToFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'EToData.SIM'
+        call fEToSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fEToSIM_read()
+            read(TempString, *) ETo_temp
+            call SetETo(ETo_temp)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fEToSIM_read()
+                read(TempString, *) ETo_temp
+                call SetETo(ETo_temp)
+            end do
+            TempString = fEToSIM_read()
+            read(TempString, *) ETo_temp
+            call SetETo(ETo_temp)
+        end if
+    end if
+    ! Rain file
+    if (GetRainFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'RainData.SIM'
+        call fRainSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fRainSIM_read()
+            read(TempString, *) tmpRain
+            call SetRain(tmpRain)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fRainSIM_read()
+                read(TempString, *) tmpRain
+                call SetRain(tmpRain)
+            end do
+            TempString = fRainSIM_read()
+            read(TempString, *) tmpRain
+            call SetRain(tmpRain)
+        end if
+    end if
+    ! Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'TempData.SIM'
+        call fTempSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fTempSIM_read()
+            read(TempString, *) Tmin_temp, Tmax_temp
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fTempSIM_read()
+                read(TempString, *) Tmin_temp, Tmax_temp
+                call SetTmin(Tmin_temp)
+                call SetTmax(Tmax_temp)
+            end do
+            TempString = fTempSIM_read()
+            read(TempString, *) Tmin_temp, Tmax_temp
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
+        end if
+    else
+        call SetTmin(GetSimulParam_Tmin())
+        call SetTmax(GetSimulParam_Tmax())
+    end if
+end subroutine OpenClimFilesAndGetDataFirstDay
 
 end module ac_run
