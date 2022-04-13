@@ -1217,6 +1217,10 @@ procedure openharvestinfo();
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
+procedure WriteEvaluationData(constref DAP : integer);
+        external 'aquacrop' name '__ac_run_MOD_writeevaluationdata';                              
+
+
 implementation
 
 

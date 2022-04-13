@@ -148,7 +148,10 @@ use ac_global, only:    CompartmentIndividual, &
                         typeproject_typeprm, &
                         undef_int, &
                         GetManFile, &
-                        GetManFileFull
+                        GetManFileFull, &
+                        GetCompartment_Theta, &
+                        GetClimRecord_FromY, &
+                        GetCCiActual
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -4007,5 +4010,94 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
 
+
+subroutine WriteEvaluationData(DAP)
+    integer(int32), intent(in) :: DAP
+
+    real(dp) :: SWCi, CCfield, CCstd, Bfield, Bstd, SWCfield, SWCstd
+    integer(int32) :: Nr, Di, Mi, Yi
+    character(len=:), allocatable :: TempString
+    integer(int32) :: DayNrEval_temp, DAP_temp
+
+    ! 1. Prepare field data
+    CCfield = real(undef_int, kind=dp)
+    CCstd = real(undef_int, kind=dp)
+    Bfield = real(undef_int, kind=dp)
+    Bstd = real(undef_int, kind=dp)
+    SWCfield = real(undef_int, kind=dp)
+    SWCstd = real(undef_int, kind=dp)
+    if ((GetLineNrEval() /= undef_int) .and. &
+        (GetDayNrEval() == GetDayNri())) then
+        ! read field data
+        call fObs_rewind()
+        do Nr = 1, (GetLineNrEval() -1)
+            TempString = fObs_read()
+        end do
+        TempString = fObs_read()
+        read(TempString, *) Nr, CCfield, CCstd, Bfield, Bstd, SWCfield, SWCstd
+        ! get Day Nr for next field data
+        TempString = fObs_read()
+        if (fObs_eof()) then
+            call SetLineNrEval(undef_int)
+            call fObs_close()
+        else
+            call SetLineNrEval(GetLineNrEval() + 1)
+            read(TempString, *) DayNrEval_temp
+            call SetDayNrEval(DayNrEval_temp)
+            call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+        end if
+    end if
+    ! 2. Date
+    DAP_temp = DAP
+    call DetermineDate(GetDayNri(), Di, Mi, Yi)
+    if (GetClimRecord_FromY() == 1901) then
+        Yi = Yi - 1901 + 1
+    end if
+    if (GetStageCode() == 0) then
+        DAP_temp = undef_int ! before or after cropping
+    end if
+    ! 3. Write simulation results and field data
+    SWCi = SWCZsoil(GetZeval())
+    write(TempString, '(4i6, i5, 3f8.1, 3f10.3, 3f8.1)') &
+           Di, Mi, Yi, DAP_temp, GetStageCode(), &
+          (GetCCiActual()*100._dp), CCfield, CCstd, &
+          GetSumWaBal_Biomass(), Bfield, Bstd, SWCi, SWCfield, SWCstd
+    call fEval_write(TempString)
+
+    contains
+
+    real(dp) function SWCZsoil(Zsoil)
+        real(dp), intent(in) :: Zsoil
+
+        integer(int32) :: compi
+        real(dp) :: CumDepth, Factor, frac_value, SWCact
+
+        CumDepth = 0._dp
+        compi = 0
+        SWCact = 0._dp
+        do while ((roundc(100._dp*CumDepth, mold=1) >= &
+                   roundc(100._dp*ZSoil, mold=1)) .or. &
+                  (compi == GetNrCompartments()))
+            compi = compi + 1
+            CumDepth = CumDepth + GetCompartment_Thickness(compi)
+            if (CumDepth <= Zsoil) then
+                Factor = 1._dp
+            else
+                frac_value = Zsoil - (CumDepth - &
+                             GetCompartment_Thickness(compi))
+                if (frac_value > 0) then
+                    Factor = frac_value/GetCompartment_Thickness(compi)
+                else
+                     Factor = 0._dp
+                end if
+            end if
+            SWCact = SWCact + Factor * 10._dp * &
+                     (GetCompartment_Theta(compi)*100._dp) * &
+                      GetCompartment_Thickness(compi)
+        end do
+        SWCZsoil = SWCact
+    end function SWCZsoil
+
+end subroutine WriteEvaluationData
 
 end module ac_run
