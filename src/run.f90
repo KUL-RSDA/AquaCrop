@@ -284,7 +284,10 @@ use ac_global, only:    CompartmentIndividual, &
                         undef_double, &
                         undef_int, &
                         GetManFile, &
-                        GetManFileFull
+                        GetManFileFull, &
+                        max_No_compartments, &
+                        calculateadjustedfc, &
+                        setcompartment
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -5374,6 +5377,37 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
 
+!! ===BEGIN Subroutines and functions for AdvanceOneTimeStep ===
 
+subroutine GetZandECgwt(DayNri, ZiAqua, ECiAqua)
+    integer(int32), intent(in) :: DayNri
+    integer(int32), intent(inout) :: ZiAqua
+    real(dp), intent(inout) :: ECiAqua
+
+    integer(int32) :: ZiIN
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
+
+    ZiIN = ZiAqua
+    if (GetGwTable_DNr1() == GetGwTable_DNr2()) then
+        ZiAqua  = GetGwTable_Z1()
+        ECiAqua = GetGwTable_EC1()
+    else
+        ZiAqua = GetGwTable_Z1() + &
+                 roundc((DayNri - GetGwTable_DNr1())* &
+                 (GetGwTable_Z2() - GetGwTable_Z1())/ &
+                 real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp), mold = 1)
+        ECiAqua = GetGwTable_EC1() + &
+                 (DayNri - GetGwTable_DNr1())* &
+                 (GetGwTable_EC2() - GetGwTable_EC1())/&
+                 real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp)
+    end if
+    if (ZiAqua /= ZiIN) then
+        Comp_temp = GetCompartment()
+        call CalculateAdjustedFC((ZiAqua/100._dp), Comp_temp)
+        call SetCompartment(Comp_temp)
+    end if
+end subroutine GetZandECgwt
+
+!! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
 end module ac_run

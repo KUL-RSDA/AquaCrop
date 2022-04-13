@@ -1262,6 +1262,10 @@ procedure openharvestinfo();
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
+procedure GetZandECgwt(constref DayNri : LongInt;
+                            VAR ZiAqua : INTEGER;
+                           VAR ECiAqua : double);
+         external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
 
 implementation
 

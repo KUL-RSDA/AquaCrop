@@ -495,10 +495,6 @@ WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():5,(GetCCiActual()*100):
 fEval_write(TempString);
 END; (* WriteEvaluationData *)
 
-
-
-
-
 // WRITING RESULTS section ================================================= END ====================
 
 PROCEDURE AdvanceOneTimeStep();
@@ -533,29 +529,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     alfaHI_temp, alfaHIAdj_temp : double;
     TESTVAL : double;
     WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
-
-    PROCEDURE GetZandECgwt(DayNri : LongInt;
-                       VAR ZiAqua : INTEGER;
-                       VAR ECiAqua : double);
-    VAR ZiIN : INTEGER;
-        Comp_temp : rep_comp;
-    BEGIN
-    ZiIN := ZiAqua;
-    IF (GetGwTable_DNr1() = GetGwTable_DNr2())
-       THEN BEGIN
-            ZiAqua := GetGwTable_Z1();
-            ECiAqua := GetGwTable_EC1();
-            END
-       ELSE BEGIN
-            ZiAqua := GetGwTable_Z1() + ROUND((DayNri - GetGwTable_DNr1())*(GetGwTable_Z2() - GetGwTable_Z1())/(GetGwTable_DNr2() - GetGwTable_DNr1()));
-            ECiAqua := GetGwTable_EC1() + (DayNri - GetGwTable_DNr1())*(GetGwTable_EC2() - GetGwTable_EC1())/(GetGwTable_DNr2() - GetGwTable_DNr1());
-            END;
-    IF (ZiAqua <> ZiIN) THEN BEGIN
-                             Comp_temp := GetCompartment();
-                             CalculateAdjustedFC((ZiAqua/100),Comp_temp);
-                             SetCompartment(Comp_temp);
-                             END;
-    END; (* GetZandECgwt *)
 
 
     FUNCTION IrriOutSeason(Dayi : LongInt) : INTEGER;
