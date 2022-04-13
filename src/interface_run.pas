@@ -1270,6 +1270,9 @@ procedure GetZandECgwt(constref DayNri : LongInt;
 function IrriOutSeason() : INTEGER;
          external 'aquacrop' name '__ac_run_MOD_irrioutseason';
 
+function IrriManual() : INTEGER;
+         external 'aquacrop' name '__ac_run_MOD_irrimanual';
+
 implementation
 
 

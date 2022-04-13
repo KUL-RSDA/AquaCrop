@@ -532,43 +532,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
 
 
-    FUNCTION IrriManual(Dayi : LongInt) : INTEGER;
-    VAR DNr : INTEGER;
-        StringREAD : ShortString;
-        Ir1,Ir2 : double;
-        IrriECw_temp : double;
-    BEGIN
-    IF (GetIrriFirstDayNr() = undef_int)
-       THEN DNr := Dayi - GetCrop().Day1 + 1
-       ELSE DNr := Dayi - GetIrriFirstDayNr() + 1;
-    IF (GetIrriInfoRecord1_NoMoreInfo())
-       THEN IrriManual := 0
-       ELSE BEGIN
-            IrriManual := 0;
-            IF (GetIrriInfoRecord1_TimeInfo() = DNr) THEN
-               BEGIN
-               IrriManual := GetIrriInfoRecord1_DepthInfo();
-               StringREAD := fIrri_read();
-               IF fIrri_eof()
-                  THEN SetIrriInfoRecord1_NoMoreInfo(true)
-                  ELSE BEGIN
-                       SetIrriInfoRecord1_NoMoreInfo(false);
-                       IF GetGlobalIrriECw() // Versions before 3.2
-                          THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
-                          ELSE BEGIN
-                               IrriECw_temp := GetSimulation_IrriECw();
-                               SplitStringInThreeParams(StringREAD,Ir1,Ir2,IrriECw_temp);
-                               SetSimulation_IrriECw(IrriECw_temp);
-                               END;
-                       SetIrriInfoRecord1_TimeInfo(ROUND(Ir1));
-                       SetIrriInfoRecord1_DepthInfo(ROUND(Ir2));
-                       END;
-               END;
-            END;
-    END; (* IrriManual *)
-
-
-
     PROCEDURE GetIrriParam (VAR TargetTimeVal, TargetDepthVal : integer);
     VAR DayInSeason : Integer;
         IrriECw_temp : double;
@@ -579,7 +542,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TargetDepthVal := -999;
     IF ((GetDayNri() < GetCrop().Day1) OR (GetDayNri() > GetCrop().DayN))
        THEN SetIrrigation(IrriOutSeason())
-       ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual(GetDayNri()));
+       ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual());
     IF ((GetIrriMode() = Generate) AND ((GetDayNri() >= GetCrop().Day1) AND (GetDayNri() <= GetCrop().DayN))) THEN
        BEGIN
        // read next line if required

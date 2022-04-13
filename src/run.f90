@@ -5412,7 +5412,6 @@ subroutine GetZandECgwt(DayNri, ZiAqua, ECiAqua)
 end subroutine GetZandECgwt
 
 integer(int32) function IrriOutSeason()
-
     integer(int32) :: DNr, Nri, i
     type(Rep_DayEventInt), dimension(5) :: IrriEvents
     logical :: TheEnd
@@ -5445,6 +5444,43 @@ integer(int32) function IrriOutSeason()
         end do
     end if
 end function IrriOutSeason
+
+integer(int32) function IrriManual()
+    integer(int32) :: DNr
+    character(len=:), allocatable :: StringREAD
+    real(dp) :: Ir1, Ir2
+    real(dp) :: IrriECw_temp
+
+    if (GetIrriFirstDayNr() == undef_int) then
+        DNr = GetDayNri() - GetCrop_Day1() + 1
+    else
+        DNr = GetDayNri() - GetIrriFirstDayNr() + 1
+    end if
+    if (GetIrriInfoRecord1_NoMoreInfo()) then
+        IrriManual = 0
+    else
+        IrriManual = 0
+        if (GetIrriInfoRecord1_TimeInfo() == DNr) then
+            IrriManual = GetIrriInfoRecord1_DepthInfo()
+            StringREAD = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_NoMoreInfo(.true.)
+            else
+                call SetIrriInfoRecord1_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then ! Versions before 3.2
+                    call SplitStringInTwoParams(StringREAD, Ir1, Ir2)
+                else
+                    IrriECw_temp = GetSimulation_IrriECw()
+                    call SplitStringInThreeParams(StringREAD, &
+                            Ir1, Ir2, IrriECw_temp)
+                    call SetSimulation_IrriECw(IrriECw_temp)
+                end if
+                call SetIrriInfoRecord1_TimeInfo(roundc(Ir1, mold=1))
+                call SetIrriInfoRecord1_DepthInfo(roundc(Ir2, mold=1))
+            end if
+        end if
+    end if
+end function IrriManual
 
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
