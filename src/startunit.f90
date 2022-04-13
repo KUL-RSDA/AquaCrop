@@ -24,7 +24,17 @@ use ac_global, only: GetPathNameSimul, &
                      GetOut4Salt, &
                      GetOut5CompWC, &
                      GetOut6CompEC, &
-                     GetOut7Clim
+                     GetOut7Clim, &
+                     GetPathNameOutp, &
+                     GetOutputAggregate, &
+                     GetPart1Mult, &
+                     GetPart2Eval, &
+                     GetOutDaily, &
+                     SetPathNameProg, &
+                     SetPathNameSimul, &
+                     SetPathNameList, &
+                     SetPathNameParam, &
+                     SetPathNameOutp
 
 use ac_run, only: open_file, &
                   write_file
@@ -206,5 +216,81 @@ subroutine GetTimeAggregationResults()
     end if
 end subroutine GetTimeAggregationResults
 
+subroutine PrepareReport()
+
+    call fProjects_open(&
+          (trim(GetPathNameOutp())//'ListProjectsLoaded.OUT'), 'w')
+    call fProjects_write('Intermediate results: ', .false.)
+    select case (GetOutputAggregate())
+    case (1)
+        call fProjects_write('daily results')
+    case (2)
+        call fProjects_write('10-daily results')
+    case (3)
+        call fProjects_write('monthly results')
+    case default
+        call fProjects_write('None created')
+    end select
+    call fProjects_write('')
+    if (GetOutDaily()) then
+        call fProjects_write('Daily output results:')
+        if (GetOut1Wabal()) then
+            call fProjects_write('1. - soil water balance')
+        end if
+        if (GetOut2Crop()) then
+            call fProjects_write('2. - crop development and production')
+        end if
+        if (GetOut3Prof()) then
+            call fProjects_write('3. - soil water content '// &
+                                 'in the soil profile and root zone')
+        end if
+        if (GetOut4Salt()) then
+            call fProjects_write('4. - soil salinity in the soil profile '// &
+                                 'and root zone')
+        end if
+        if (GetOut5CompWC()) then
+            call fProjects_write('5. - soil water content at various depths '// &
+                                 'of the soil profile')
+        end if
+        if (GetOut6CompEC()) then
+            call fProjects_write('6. - soil salinity at various depths '// &
+                                 'of the soil profile')
+        end if
+        if (GetOut7Clim()) then
+            call fProjects_write('7. - climate input parameters')
+        end if
+    else
+        call fProjects_write('Daily output results: None created')
+    end if
+    call fProjects_write('')
+    if (GetPart1Mult() .or.  GetPart2Eval()) then
+        call fProjects_write('Particular results:')
+        if (GetPart1Mult()) then
+            call fProjects_write('1. - biomass and yield at multiple cuttings'//&
+                                 '(for herbaceous forage crops)')
+        end if
+        if (GetPart2Eval()) then
+            call fProjects_write('2. - evaluation of simulation results '//&
+                                 '(when Field Data)')
+        end if
+    else
+        call fProjects_write('Particular results: None created')
+    end if
+end subroutine PrepareReport
+
+subroutine InitializeTheProgram()
+
+!Decimalseparator = '.' GDL, 20220413, not used?
+call SetPathNameOutp('OUTP/')
+call SetPathNameSimul('SIMUL/')
+call SetPathNameList('LIST/')
+call SetPathNameParam('PARAM/')
+call SetPathNameProg('')
+
+call GetTimeAggregationResults()
+call GetRequestDailyResults()
+call GetRequestParticularResults()
+call PrepareReport()
+end subroutine InitializeTheProgram
 
 end module ac_startunit

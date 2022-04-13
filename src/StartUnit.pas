@@ -7,7 +7,6 @@ USES Global, interface_global;
 FUNCTION GetListProjectsFile() : string;
 FUNCTION GetNumberOfProjects() : integer;
 FUNCTION GetProjectFileName(constref iproject : integer) : string;
-PROCEDURE InitializeTheProgram;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 PROCEDURE InitializeProject(constref iproject : integer;
@@ -21,40 +20,6 @@ PROCEDURE StartTheProgram;
 implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
-
-
-PROCEDURE PrepareReport();
-BEGIN
-fProjects_open(CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'), 'w');
-fProjects_write('Intermediate results: ', false);
-CASE GetOutputAggregate() OF
-     1 : fProjects_write('daily results');
-     2 : fProjects_write('10-daily results');
-     3 : fProjects_write('monthly results');
-     else fProjects_write('None created');
-     end;
-fProjects_write('');
-IF GetOutDaily()
-   THEN BEGIN
-        fProjects_write('Daily output results:');
-        IF GetOut1Wabal() THEN fProjects_write('1. - soil water balance');
-        IF GetOut2Crop() THEN fProjects_write('2. - crop development and production');
-        IF GetOut3Prof() THEN fProjects_write('3. - soil water content in the soil profile and root zone');
-        IF GetOut4Salt() THEN fProjects_write('4. - soil salinity in the soil profile and root zone');
-        IF GetOut5CompWC() THEN fProjects_write('5. - soil water content at various depths of the soil profile');
-        IF GetOut6CompEC() THEN fProjects_write('6. - soil salinity at various depths of the soil profile');
-        IF GetOut7Clim() THEN fProjects_write('7. - climate input parameters');
-        END
-   ELSE fProjects_write('Daily output results: None created');
-fProjects_write('');
-IF ((GetPart1Mult() = True) OR  (GetPart2Eval() = True))
-   THEN BEGIN
-        fProjects_write('Particular results:');
-        IF GetPart1Mult() THEN fProjects_write('1. - biomass and yield at multiple cuttings (for herbaceous forage crops)');
-        IF GetPart2Eval() THEN fProjects_write('2. - evaluation of simulation results (when Field Data)');
-        END
-   ELSE fProjects_write('Particular results: None created');
-END; (* PrepareReport *)
 
 
 FUNCTION GetListProjectsFile() : string;
@@ -111,22 +76,6 @@ BEGIN
     Close(fhandle);
 
     GetProjectFileName := Trim(TheProjectFile);
-END;
-
-
-PROCEDURE InitializeTheProgram;
-BEGIN
-Decimalseparator := '.';
-SetPathNameOutp('OUTP/');
-SetPathNameSimul('SIMUL/');
-SetPathNameList('LIST/');
-SetPathNameParam('PARAM/');
-SetPathNameProg('');
-
-GetTimeAggregationResults();
-GetRequestDailyResults();
-GetRequestParticularResults();
-PrepareReport();
 END;
 
 

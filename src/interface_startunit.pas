@@ -34,6 +34,11 @@ procedure fProjects_write_wrap(
 procedure fProjects_close();
         external 'aquacrop' name '__ac_startunit_MOD_fprojects_close';
 
+procedure PrepareReport();
+        external 'aquacrop' name '__ac_startunit_MOD_preparereport';
+
+procedure InitializeTheProgram();
+        external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
 
 implementation
 
