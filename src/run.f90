@@ -3814,7 +3814,7 @@ subroutine InitializeSimulationRun()
             fWeed = 1._dp
             if ((fi > 0._dp) .and. (GetCrop_subkind() == subkind_Forage)) then
                 Cweed = 1_int8
-                if (fi > 0.005) then
+                if (fi > 0.005_dp) then
                     ! calculate the adjusted weed cover
                     call SetSimulation_RCadj(roundc(GetManagement_WeedRC() &
                          + Cweed*(1._dp-fi)*GetCrop_CCx()*&
@@ -3854,13 +3854,13 @@ subroutine InitializeSimulationRun()
     call SetCCxTotal( fWeed * GetCrop_CCx() * (fi+Cweed*(1._dp-fi)*&
            GetManagement_WeedAdj()/100._dp))
     call SetCDCTotal( GetCrop_CDC() * (fWeed*GetCrop_CCx()*&
-           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29)/ &
+           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29_dp)/ &
            (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
-            + 2.29))
+            + 2.29_dp))
     call SetGDDCDCTotal(GetCrop_GDDCDC() * (fWeed*GetCrop_CCx()*&
-           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29)/ &
+           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29_dp)/ &
            (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
-            + 2.29))
+            + 2.29_dp))
     if (GetCrop_subkind() == subkind_Forage) then
         fi = MultiplierCCoSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
                int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
@@ -3961,7 +3961,7 @@ subroutine InitializeSimulationRun()
     ! 13. Initial canopy cover
     ! 13.1 default value
     ! 13.1a RatDGDD for simulation of CanopyCoverNoStressSF (CCi with decline)
-    RatDGDD = 1
+    RatDGDD = 1._dp
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
         if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
             RatDGDD = (GetCrop_DaysToSenescence() - &
@@ -4218,7 +4218,7 @@ subroutine InitializeSimulationRun()
     ! 18. Tab sheets
 
     ! 19. Labels, Plots and displays
-    if (GetManagement_BundHeight() < 0.01) then
+    if (GetManagement_BundHeight() < 0.01_dp) then
         call SetSurfaceStorage(0._dp)
         call SetECStorage(0._dp)
     end if
