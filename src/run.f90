@@ -4,7 +4,8 @@ use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
                     int32, &
-                    intEnum
+                    intenum
+
 
 use ac_global, only:    CompartmentIndividual, &
                         datatype_daily, &
@@ -13,15 +14,18 @@ use ac_global, only:    CompartmentIndividual, &
                         DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
-                        DetermineDate, &
                         DetermineDayNr, &
-                        DetermineDayNr, &
+                        DetermineRootZoneWC, &
                         DetermineSaltContent, &
-                        DetermineSaltContent, &
+                        ECeComp, &
+                        Equiv, &
                         FileExists, &
+                        GetCCiActual, &
+                        GetClimRecord_FromY, &
                         GetCompartment_i, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
+                        GetCompartment_Theta, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
@@ -40,6 +44,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_DaysToSenescence, &
                         GetCrop_DeterminancyLinked, &
                         GetCrop_dHIdt, &
+                        GetCrop_DryMatter, &
                         GetCrop_GDDaysToCCini, &
                         GetCrop_GDDaysToFlowering, &
                         GetCrop_GDDaysToFullCanopy, &
@@ -60,12 +65,20 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_StressResponse, &
                         GetCrop_StressResponse_Calibrated, &
                         GetCrop_subkind, &
+                        GetCrop_ModeCycle, &
+                        GetCrop_RootMax, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
                         GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetCRSalt, &
+                        GetCRWater, &
+                        GetDrain, &
+                        GetEact, &
+                        GetECdrain, &
                         GetECiAqua, &
+                        GetEpot, &
                         GetETo, &
                         GetEToFile, &
                         GetEToFilefull, &
@@ -74,9 +87,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
+                        GetInfiltrated, &
                         GetIrriFile, &
                         GetIrriFilefull, &
                         GetIrriFirstDayNr, &
+                        GetIrrigation, &
                         GetIrriMode, &
                         GetManagement_Cuttings_Criterion, &
                         GetManagement_Cuttings_Day1, &
@@ -85,6 +100,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_Cuttings_NrDays, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
+                        GetObservationsFilefull, &
                         GetOutputAggregate, &
                         GetOutputName, &
                         GetPathNameOutp, &
@@ -96,32 +112,63 @@ use ac_global, only:    CompartmentIndividual, &
                         GetRainFilefull, &
                         GetRainRecord_DataType, &
                         GetRainRecord_FromDayNr, &
+                        GetRootingDepth, &
+                        GetRootZoneSalt_ECe, &
+                        GetRootZoneSalt_ECsw, &
+                        GetRootZoneSalt_KsSalt, &
+                        GetRootZoneWC_actual, &
+                        GetRootZoneWC_FC, &
+                        GetRootZoneWC_Leaf, &
+                        GetRootZoneWC_SAT, &
+                        GetRootZoneWC_Sen, &
+                        GetRootZoneWC_Thresh, &
+                        GetRootZoneWC_WP, &
+                        GetRunoff, &
+                        GetSaltInfiltr, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
                         GetSimulation_SumGDD, &
+                        GetSimulation_SWCtopsoilConsidered, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
                         GetSimulParam_Tmax, &
                         GetSimulParam_Tmin, &
-                        GetSoilLayer_SAT, &
+                        GetSoil_RootMax, &
                         GetSoilLayer_SAT, &
                         GetSumWaBal_Biomass, &
                         GetSumWaBal_BiomassUnlim, &
                         GetSumWaBal_SaltIn, &
                         GetSumWaBal_SaltOut, &
                         GetSumWaBal_CRsalt, &
+                        GetSumWaBal_ECropCycle, &
+                        GetSumWaBal_Tact, &
+                        GetSumWaBal_YieldPart, &
+                        GetSurfaceStorage, &
+                        GetTact, &
+                        GetTactWeedInfested, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
                         GetTemperatureRecord_FromDayNr, &
                         GetTmax, &
                         GetTmin, &
+                        GetTotalSaltContent_EndDay, &
+                        GetTotalWaterContent_EndDay, &
+                        GetTpot, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
+                        KsTemperature, &
                         rep_DayEventDbl, &
                         LeapYear, &
+                        GetOut1Wabal, &
+                        GetOut2Crop, &
+                        GetOut3Prof, &
+                        GetOut4Salt, &
+                        GetOut5CompWC, &
+                        GetOut6CompEC, &
+                        GetOut7Clim, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
@@ -129,9 +176,22 @@ use ac_global, only:    CompartmentIndividual, &
                         SetCompartment_Theta, &
                         SetETo, &
                         SetRain, &
+                        SetRootZoneSalt_ECe, &
+                        SetRootZoneSalt_ECsw, &
+                        SetRootZoneSalt_KsSalt, &
+                        SetRootZoneWC_actual, &
+                        SetRootZoneWC_FC, &
+                        SetRootZoneWC_Leaf, &
+                        SetRootZoneWC_SAT, &
+                        SetRootZoneWC_Sen, &
+                        SetRootZoneWC_Thresh, &
+                        SetRootZoneWC_WP, &
                         SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
+                        SetSimulation_SWCtopSoilConsidered, &
                         GetSimulation_DelayedDays, &
+                        GetSimulation_MultipleRun, &
+                        GetSimulation_NrRuns, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
@@ -146,6 +206,7 @@ use ac_global, only:    CompartmentIndividual, &
                         typeproject_typenone, &
                         typeproject_typepro, &
                         typeproject_typeprm, &
+                        undef_double, &
                         undef_int, &
                         GetManFile, &
                         GetManFileFull
@@ -155,6 +216,11 @@ use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
                                 StressBiomassRelationship
+
+use ac_climprocessing, only:    GetDecadeEToDataset, &
+                                GetDecadeRainDataSet, &
+                                GetMonthlyEToDataset, &
+                                GetMonthlyRainDataset
 
 
 implicit none
@@ -2439,18 +2505,6 @@ subroutine SetfWeedNoS(fWeedNoS_in)
     fWeedNoS = fWeedNoS_in
 end subroutine SetfWeedNoS
 
-real(dp) function GetZeval()
-    !! Getter for the "Zeval" global variable.
-
-    GetZeval = Zeval
-end function GetZeval
-
-subroutine SetZeval(Zeval_in)
-    !! Setter for the "Zeval" global variable.
-    real(dp), intent(in) :: Zeval_in
-
-    Zeval = Zeval_in
-end subroutine SetZeval
 
 real(dp) function GetBprevSum()
     !! Getter for the "BprevSum" global variable.
@@ -2673,6 +2727,7 @@ subroutine SetDayNrEval(DayNrEval_in)
     DayNrEval = DayNrEval_in
 end subroutine SetDayNrEval
 
+
 integer(int32) function GetLineNrEval()
     !! Getter for the "LineNrEval" global variable.
 
@@ -2685,6 +2740,19 @@ subroutine SetLineNrEval(LineNrEval_in)
 
     LineNrEval = LineNrEval_in
 end subroutine SetLineNrEval
+
+real(dp) function GetZeval()
+    !! Getter for the "Zeval" global variable.
+
+    GetZeval = Zeval
+end function GetZeval
+
+subroutine SetZeval(Zeval_in)
+    !! Setter for the "Zeval" global variable.
+    real(dp), intent(in) :: Zeval_in
+
+    Zeval = Zeval_in
+end subroutine SetZeval
 
 integer(int32) function GetNextSimFromDayNr()
     !! Getter for the "NextSimFromDayNr " global variable.
@@ -3369,6 +3437,245 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev)
     end if
 end subroutine DetermineGrowthStage
 
+subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
+    integer(intenum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=1025) :: Str1, Str2, tempstring
+    real(dp) :: NodeD, Zprof
+    integer(int32) :: Compi
+
+    ! A. Run number
+    call fDaily_write('')
+    if (TheProjectType == typeproject_TypePRM) then
+        write(Str1, '(i4)') TheNrRun
+        call fDaily_write('   Run:'// trim(Str1))
+    end if
+
+    ! B. thickness of soil profile and root zone
+    if ((GetOut1Wabal()) .or. (GetOut3Prof()) .or. (GetOut4Salt())) then
+        Zprof = 0._dp
+        do compi =1, GetNrCompartments()
+            Zprof = Zprof + GetCompartment_Thickness(compi)
+        end do
+        write(Str1,'(f4.2)') Zprof
+        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
+                                roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+            write(Str2, '(f4.2)') GetCrop_RootMax()
+        else
+            write(Str2,'(f4.2)') GetSoil_RootMax()
+        end if
+    end if
+
+    ! C. 1st line title
+    call fDaily_write(trim('   Day Month  Year   DAP Stage'), .false.)
+
+    ! C1. Water balance
+    if (GetOut1Wabal()) then
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+           .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(4a)') '   WC(',trim(Str1),')   Rain     Irri   Surf'// &
+                  '   Infilt   RO    Drain       CR    Zgwt', &
+               '       Ex       E     E/Ex     Trx       Tr  Tr/Trx    ETx      ET  ET/ETx'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring,'(4a)') '   WC(', trim(Str1), ')   Rain     Irri   Surf'// &
+                          '   Infilt   RO    Drain       CR    Zgwt', &
+                          '       Ex       E     E/Ex     Trx       Tr  Tr/Trx'// &
+                                                      '    ETx      ET  ET/ETx'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C2. Crop development and yield
+    if (GetOut2Crop()) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) &
+                              .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '      GD       Z     StExp  StSto  StSen'// &
+                          ' StSalt StWeed   CC      CCw     StTr  Kc(Tr)'// &
+                          '     Trx       Tr      TrW  Tr/Trx   WP', &
+                          '    Biomass     HI    Y(dry)  Y(fresh)  Brelative'// &
+                          '    WPet      Bin     Bout'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2a)')  '      GD       Z     StExp  StSto'// &
+                          '  StSen StSalt StWeed   CC      CCw     StTr'// &
+                          '  Kc(Tr)     Trx       Tr      TrW  Tr/Trx   WP', &
+                          '    Biomass     HI    Y(dry)  Y(fresh)  Brelative'// &
+                          '    WPet      Bin     Bout'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+                                                    .or. (GetOut7Clim())) then
+            write(tempstring, '(5a)') '  WC(', trim(Str1), ') Wr(', trim(Str2), ')     Z'// &
+                  '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)   Wr(sen)   Wr(PWP)'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(5a)') '  WC(', trim(Str1), ') Wr(',trim(Str2), ')     Z'// &
+                            '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)'// &
+                                '   Wr(sen)   Wr(PWP)'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
+                            '   Salt(', trim(Str1), ')  SaltZ     Z       ECe'// &
+                                '    ECsw   StSalt  Zgwt    ECgw'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
+                            '   Salt(', trim(Str1), ')  SaltZ     Z       ECe'// &
+                                '    ECsw   StSalt  Zgwt    ECgw'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C5. Compartments - Soil water content  --!removed tempstring
+    if (GetOut5CompWC()) then
+        call fDaily_write(trim('       WC01'), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            write(Str1, '(i2)') Compi
+            call fDaily_write('       WC'// trim(Str1), .false.)
+        end do
+        write(Str1,'(i2)') GetNrCompartments()
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write('       WC'// trim(Str1), .false.)
+        else
+            call fDaily_write('       WC'// trim(Str1))
+        end if
+    end if
+    ! C6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        call fDaily_write(trim('      ECe01'), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            write(Str1, '(i2)') Compi
+            call fDaily_write('      ECe'// trim(Str1), .false.)
+        end do
+        write(Str1, '(i2)') GetNrCompartments()
+        if (GetOut7Clim()) then
+            call fDaily_write('      ECe'// trim(Str1), .false.)
+        else
+            call fDaily_write('      ECe'// trim(Str1))
+        end if
+    end if
+    ! C7. Climate input parameters
+    if (GetOut7Clim()) then
+        call fDaily_write(trim('     Rain       ETo      Tmin      Tavg      Tmax      CO2'))
+    end if
+
+    call fDaily_write('                              ', .false.)
+    ! D1. Water balance
+    if (GetOut1Wabal()) then
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+            .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+                  '     mm     mm       mm       mm      m ', &
+                    '       mm       mm     %        mm       mm    %' // &
+                            '        mm      mm       %'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+                  '     mm     mm       mm       mm      m ', &
+                    '       mm       mm     %        mm       mm    %' // &
+                        '        mm      mm       %'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D2. Crop development and yield
+    if (GetOut2Crop()) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. &
+                                    (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
+                           '      %      %      %       %       %       -'// &
+                           '        mm       mm       mm    %     g/m2', &
+                           '    ton/ha      %    ton/ha   ton/ha'// &
+                           '       %       kg/m3   ton/ha   ton/ha'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
+                          '      %      %      %       %       %       -'// &
+                          '        mm       mm       mm    %     g/m2', &
+                          '    ton/ha      %    ton/ha   ton/ha'// &
+                          '       %       kg/m3   ton/ha   ton/ha'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+                                                     .or. (GetOut7Clim())) then
+            call fDaily_write(trim('      mm       mm       m       mm        mm'// &
+                              '        mm        mm        mm        mm'// &
+                              '         mm'), .false.)
+        else
+            call fDaily_write(trim('      mm       mm       m       mm        mm '// &
+                              '       mm        mm        mm        mm        mm'))
+        end if
+    end if
+    ! D4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write(trim('    ton/ha    ton/ha    ton/ha    ton/ha'// &
+                              '    ton/ha     m      dS/m    dS/m      %'// &
+                              '     m      dS/m'), .false.)
+        else
+            call fDaily_write(trim('    ton/ha    ton/ha    ton/ha    ton/ha'// &
+                              '    ton/ha     m      dS/m    dS/m      %'// &
+                              '     m      dS/m'))
+        end if
+    end if
+    ! D5. Compartments - Soil water content
+    if (GetOut5CompWC()) then
+        NodeD = GetCompartment_Thickness(1)/2._dp
+        write(tempstring,'(f11.2)') NodeD
+        call fDaily_write(trim(tempstring), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                    + GetCompartment_Thickness(Compi)/2._dp
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        end do
+        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
+                + GetCompartment_Thickness(GetNrCompartments())/2._dp
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        NodeD = GetCompartment_Thickness(1)/2._dp
+        write(tempstring,'(f11.2)') NodeD
+        call fDaily_write(trim(tempstring), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                    + GetCompartment_Thickness(compi)/2._dp
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        end do
+        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
+                + GetCompartment_Thickness(GetNrCompartments())/2._dp
+        if (GetOut7Clim()) then
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f11.2)') NodeD
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D7. Climate input parameters
+    if (GetOut7Clim()) then
+        call fDaily_write(trim('       mm        mm     degC      degC      degC       ppm'))
+    end if
+end subroutine WriteTitleDailyResults
+
+
 
 subroutine OpenIrrigationFile()
 
@@ -3478,6 +3785,80 @@ subroutine OpenIrrigationFile()
 end subroutine OpenIrrigationFile
 
 
+subroutine CreateEvalData(NrRun)
+    integer(int8), intent(in) :: NrRun
+
+    integer(int32) :: dayi, monthi, yeari, integer_temp
+    character(len=:), allocatable :: StrNr, TempString
+    character(len=1025) :: tempstring2
+    integer, dimension(8) :: d
+
+    ! open input file with field data
+    call fObs_open(GetObservationsFilefull(), 'r') ! Observations recorded in File
+    TempString = fObs_read() ! description
+    TempString = fObs_read() ! AquaCrop Version number
+    TempString = fObs_read()
+    read(TempString, *) Zeval !  depth of sampled soil profile
+    TempString = fObs_read()
+    read(TempString, *) dayi
+    TempString = fObs_read()
+    read(TempString, *)monthi
+    TempString = fObs_read()
+    read(TempString, *) yeari
+    integer_temp = GetDayNr1Eval()
+    call DetermineDayNr(dayi, monthi, yeari, integer_temp)
+    call SetDayNr1Eval(integer_temp)
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    call SetLineNrEval(undef_int)
+    TempString = fObs_read()
+    if (.not. fObs_eof()) then
+        call SetLineNrEval(11)
+        read(TempString, *) integer_temp
+        call SetDayNrEval(integer_temp)
+        call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+        do while ((GetDayNrEval() < GetSimulation_FromDayNr()) &
+                    .and. (GetLineNrEval() /= undef_int)) 
+            TempString = fObs_read()
+            if (fObs_eof()) then
+                call SetLineNrEval(undef_int)
+            else
+                call SetLineNrEval(GetLineNrEval() + 1)
+                read(TempString, *) integer_temp
+                call SetDayNrEval(integer_temp)
+                call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+            end if
+        end do
+    end if
+    if (GetLineNrEval() == undef_int) then
+        call fObs_close()
+    end if
+    ! open file with simulation results, field data
+    if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
+        write(StrNr, '(i3)') NrRun
+    else
+        StrNr = ''
+    end if
+    call SetfEval_filename(GetPathNameSimul() // 'EvalData' // trim(StrNr) // '.OUT')
+    call fEval_open(GetfEval_filename(), 'w')
+    write(tempstring2, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fEval_write(trim(tempstring2))
+    call fEval_write('Evaluation of simulation results - Data')
+    write(TempString, '(f5.2)') GetZeval()
+    call fEval_write('                                             ' // &
+    '                                        for soil depth: ' // trim(TempString) // ' m')
+    call fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      ' // &
+    'Bobs      Bstd   SWCsim  SWCobs   SWstd')
+    call fEval_write('                                   %       %       %     ton/ha    ' // &
+    'ton/ha    ton/ha    mm       mm      mm')
+end subroutine CreateEvalData
+
+
+
 subroutine OpenOutputRun(TheProjectType)
     integer(intEnum), intent(in) :: TheProjectType
 
@@ -3554,6 +3935,353 @@ subroutine OpenPart1MultResults(TheProjectType)
     call fHarvest_write(trim(tempstring))
     call fHarvest_write('Biomass and Yield at Multiple cuttings')
 end subroutine OpenPart1MultResults
+
+
+
+subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
+    integer(int32), intent(in) :: FromSimDay
+    integer(int32), intent(in) :: ToSimDay
+
+    character(len=:), allocatable :: totalname, totalnameOUT
+    integer :: fETo, fRain, fTemp, fEToS, fRainS, fTempS, rc
+    character(len=255) :: StringREAD
+    integer(int32) :: i
+    integer(int32) :: RunningDay
+    real(dp) :: tmpRain
+    real(dp) :: ETo_temp
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet_temp, TmaxDataSet_temp
+    real(dp) :: Tmin_temp, Tmax_temp
+    type(rep_DayEventDbl), dimension(31) :: EToDataSet_temp, RainDataSet_temp
+
+    ! 1. ETo file
+    if (GetEToFile() /= '(None)') then
+        totalname = GetEToFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetEToRecord_DataType())
+            case(datatype_Daily)
+                open(newunit=fETo, file=trim(totalname), status='old', &
+                                                         action='read')
+                read(fETo, *, iostat=rc) ! description
+                read(fETo, *, iostat=rc) ! time step
+                read(fETo, *, iostat=rc) ! day
+                read(fETo, *, iostat=rc) ! month
+                read(fETo, *, iostat=rc) ! year
+                read(fETo, *, iostat=rc)
+                read(fETo, *, iostat=rc)
+                read(fETo, *, iostat=rc)
+                do i = GetEToRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fETo, *, iostat=rc)
+                end do
+                read(fETo, *, iostat=rc) ETo_temp
+                call SetETo(ETo_temp)
+            case(datatype_decadely)
+                EToDataSet_temp = GetEToDataSet()
+                call GetDecadeEToDataSet(FromSimDay, EToDataSet_temp)
+                call SetEToDataSet(EToDataSet_temp)
+                i = 1
+                do while (GetEToDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetETo(GetEToDataSet_Param(i))
+            case(datatype_Monthly)
+                EToDataSet_temp = GetEToDataSet()
+                call GetMonthlyEToDataSet(FromSimDay, EToDataSet_temp)
+                call SetEToDataSet(EToDataSet_temp)
+                i = 1
+                do while (GetEToDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetETo(GetEToDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'EToData.SIM'
+            open(newunit=fEToS, file=trim(totalnameOUT), status='replace', &
+                                                         action='write')
+            write(fEToS, '(f10.4)') GetETo()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetEToRecord_DataType())
+                case(datatype_Daily)
+                    if (rc == iostat_end) then
+                        rewind(fETo)
+                        read(fETo, *, iostat=rc) ! description
+                        read(fETo, *, iostat=rc) ! time step
+                        read(fETo, *, iostat=rc) ! day
+                        read(fETo, *, iostat=rc) ! month
+                        read(fETo, *, iostat=rc) ! year
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *) ETo_temp
+                        call SetETo(ETo_temp)
+                    else
+                        read(fETo, *) ETo_temp
+                        call SetETo(ETo_temp)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                        EToDataSet_temp = GetEToDataSet()
+                        call GetDecadeEToDataSet(RunningDay, EToDataSet_temp)
+                        call SetEToDataSet(EToDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetEToDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetETo(GetEToDataSet_Param(i))
+                case(datatype_Monthly)
+                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                        EToDataSet_temp = GetEToDataSet()
+                        call GetMonthlyEToDataSet(RunningDay, EToDataSet_temp)
+                        call SetEToDataSet(EToDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetEToDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetETo(GetEToDataSet_Param(i))
+                end select
+                write(fEToS, '(f10.4)') GetETo()
+            end do
+            ! Close files
+            if (GetEToRecord_DataType() == datatype_Daily) then
+                close(fETo)
+            end if
+            close(fEToS)
+        end if
+    end if
+
+    ! 2. Rain File
+    if (GetRainFile() /= '(None)') then
+        totalname = GetRainFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetRainRecord_DataType())
+            case(datatype_Daily)
+                open(newunit=fRain, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fRain, *, iostat=rc) ! description
+                read(fRain, *, iostat=rc) ! time step
+                read(fRain, *, iostat=rc) ! day
+                read(fRain, *, iostat=rc) ! month
+                read(fRain, *, iostat=rc) ! year
+                read(fRain, *, iostat=rc)
+                read(fRain, *, iostat=rc)
+                read(fRain, *, iostat=rc)
+                do i = GetRainRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fRain, *, iostat=rc)
+                end do
+                read(fRain, *, iostat=rc) tmpRain
+                call SetRain(tmpRain)
+            case(datatype_Decadely)
+                RainDataSet_temp = GetRainDataSet()
+                call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                call SetRainDataSet(RainDataSet_temp)
+                i = 1
+                do while (GetRainDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetRain(GetRainDataSet_Param(i))
+            case(datatype_Monthly)
+                RainDataSet_temp = GetRainDataSet()
+                call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                call SetRainDataSet(RainDataSet_temp)
+                i = 1
+                do while (GetRainDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetRain(GetRainDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'RainData.SIM'
+            open(newunit=fRainS, file=trim(totalnameOUT), status='replace', &
+                                                          action='write')
+            write(fRainS, '(f10.4)') GetRain()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetRainRecord_DataType())
+                case(datatype_daily)
+                    if (rc == iostat_end) then
+                        rewind(fRain)
+                        read(fRain, *, iostat=rc) ! description
+                        read(fRain, *, iostat=rc) ! time step
+                        read(fRain, *, iostat=rc) ! day
+                        read(fRain, *, iostat=rc) ! month
+                        read(fRain, *, iostat=rc) ! year
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc) tmpRain
+                        call SetRain(tmpRain)
+                    else
+                        read(fRain, *, iostat=rc) tmpRain
+                        call SetRain(tmpRain)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                        RainDataSet_temp = GetRainDataSet()
+                        call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                        call SetRainDataSet(RainDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetRainDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetRain(GetRainDataSet_Param(i))
+                case(datatype_monthly)
+                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                        RainDataSet_temp = GetRainDataSet()
+                        call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                        call SetRainDataSet(RainDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetRainDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetRain(GetRainDataSet_Param(i))
+                end select
+                write(fRainS, '(f10.4)') GetRain()
+            end do
+            ! Close files
+            if (GetRainRecord_DataType() == datatype_Daily) then
+                close(fRain)
+            end if
+            close(fRainS)
+        end if
+    end if
+
+    ! 3. Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = GetTemperatureFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetTemperatureRecord_DataType())
+            case(datatype_daily)
+                open(newunit=fTemp, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fTemp, *, iostat=rc) ! description
+                read(fTemp, *, iostat=rc) ! time step
+                read(fTemp, *, iostat=rc) ! day
+                read(fTemp, *, iostat=rc) ! month
+                read(fTemp, *, iostat=rc) ! year
+                read(fTemp, *, iostat=rc)
+                read(fTemp, *, iostat=rc)
+                read(fTemp, *, iostat=rc)
+                do i = GetTemperatureRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fTemp, *, iostat=rc)
+                end do
+                read(fTemp, '(a)', iostat=rc) StringREAD  ! i.e. DayNri
+                Tmin_temp = GetTmin()
+                Tmax_temp = GetTmax()
+                call SplitStringInTwoParams(StringREAD, Tmin_temp, Tmax_temp)
+                call SetTmin(Tmin_temp)
+                call SetTmax(Tmax_temp)
+            case(datatype_Decadely)
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetDecadeTemperatureDataSet(FromSimDay, TminDataSet_temp, &
+                                                              TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+            case(datatype_Monthly)
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetMonthlyTemperatureDataSet(FromSimDay, TminDataSet_temp, &
+                                                              TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'TempData.SIM'
+            open(newunit=fTempS, file=trim(totalnameOUT), status='replace', &
+                                                          action='write')
+            write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetTemperatureRecord_Datatype())
+                case(datatype_Daily)
+                    if (rc == iostat_end) then
+                        rewind(fTemp)
+                        read(fTemp, *, iostat=rc) ! description
+                        read(fTemp, *, iostat=rc) ! time step
+                        read(fTemp, *, iostat=rc) ! day
+                        read(fTemp, *, iostat=rc) ! month
+                        read(fTemp, *, iostat=rc) ! year
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, '(a)', iostat=rc) StringREAD
+                        Tmin_temp = GetTmin()
+                        Tmax_temp = GetTmax()
+                        call SplitStringInTwoParams(StringREAD, Tmin_temp, &
+                                                                Tmax_temp)
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                    else
+                        read(fTemp, *, iostat=rc) Tmin_temp, Tmax_temp
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetDecadeTemperatureDataSet(FromSimDay, &
+                                                         TminDataSet_temp, &
+                                                         TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetTminDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                case(datatype_Monthly)
+                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetMonthlyTemperatureDataSet(FromSimDay, &
+                                                          TminDataSet_temp, &
+                                                          TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetTminDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                end select
+                write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
+            end do
+            ! Close files
+            if (GetTemperatureRecord_datatype() == datatype_Daily) then
+                close(fTemp)
+            end if
+            close(fTempS)
+        end if
+    end if
+end subroutine CreateDailyClimFiles
+
 
 
 subroutine OpenHarvestInfo()
@@ -3664,22 +4392,25 @@ subroutine WriteDailyResults(DAP, WPi)
     real(dp), parameter :: NoValD = undef_double
     integer(int32), parameter :: NoValI = undef_int
     integer(int32) :: Di, Mi, Yi, StrExp, StrSto, StrSalt, &
-                      StrTr, StrW, Brel, Nr
+                      StrTr, StrW, Brel, Nr, DAP_loc
     real(dp) :: Ratio1, Ratio2, Ratio3, KsTr, HI, &
-                KcVal, WPy, SaltVal
+                KcVal, WPy, SaltVal, WPi_loc, tempreal
     logical :: SWCtopSoilConsidered_temp
-    character(len=:), allocatable :: tempstring
+    character(len=1025) :: tempstring
+
+    DAP_loc = DAP
+    WPi_loc = WPi
 
     call DetermineDate(GetDayNri(), Di, Mi, Yi)
     if (GetClimRecord_FromY() == 1901) then
         Yi = Yi - 1901 + 1
     end if
     if (GetStageCode() == 0) then
-        DAP = undef_int ! before or after cropping
+        DAP_loc = undef_int ! before or after cropping
     end if
 
     ! 0. info day
-    write(tempstring, '(3i6)') Di, Mi, Yi, DAP, GetStageCode()
+    write(tempstring, '(5i6)') Di, Mi, Yi, DAP_loc, GetStageCode()
     call fDaily_write(trim(tempstring), .false.)
 
 
@@ -3693,9 +4424,9 @@ subroutine WriteDailyResults(DAP, WPi)
             call fDaily_write(trim(tempstring), .false.)
         else
             write(tempstring, '(f10.1, f8.1, f9.1, 3f7.1, 2f9.1, f8.2)') &
-                    GetTotalWaterContent_EndDay, GetRain(), GetIrrigation(), &
+                    GetTotalWaterContent_EndDay(), GetRain(), GetIrrigation(), &
                     GetSurfaceStorage(), GetInfiltrated(), GetRunoff(), &
-                    GetDrain(), GetCRwater(), (GetZiAqua()/100._dp))
+                    GetDrain(), GetCRwater(), (GetZiAqua()/100._dp)
             call fDaily_write(trim(tempstring), .false.)
         end if
         if (GetTpot() > 0._dp) then
@@ -3726,7 +4457,7 @@ subroutine WriteDailyResults(DAP, WPi)
         else
             write(tempstring, '(2f9.1, f7.0, 2f9.1, f6.0, f9.1, f8.1, f8.0)') &
                     GetEpot(), GetEact(), Ratio3, GetTpot(), GetTact(), Ratio1, &
-                    (GetEpot()+GetTpot()), (GetEact()+GetTact()), Ratio2)
+                    (GetEpot()+GetTpot()), (GetEact()+GetTact()), Ratio2
             call fDaily_write(trim(tempstring))
         end if
     end if
@@ -3768,7 +4499,7 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         if (KsTr < 1._dp) then
-            StrTr = roundc((1._dp-KsTr)*100._dp)
+            StrTr = roundc((1._dp-KsTr)*100._dp, mold=1)
         else
             StrTr = 0._dp
         end if
@@ -3782,7 +4513,7 @@ subroutine WriteDailyResults(DAP, WPi)
 
         ! 6. WPi adjustemnt
         if (GetSumWaBal_Biomass() <= 0.000001_dp) then
-            WPi = 0._dp
+            WPi_loc = 0._dp
         end if
 
         ! 7. Harvest Index
@@ -3823,23 +4554,24 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         ! write
+        tempreal = roundc(GetGDDayi()*10._dp, mold=1)
         write(tempstring, '(f9.1, f8.2, 2i7, f7.0, 2i7, 2f8.1, i7, f9.2, ' //&
                            '3f9.1, f6.0, f8.1, f10.3, f8.1, f9.3)') &
-                GetGDDayi(), GetRootingDepth(), StrExp, StrSto, &
+                tempreal/10._dp, GetRootingDepth(), StrExp, StrSto, &
                 GetStressSenescence(), StrSalt, StrW, &
                 (GetCCiActual()*100._dp), (GetCCiActualWeedInfested()*100._dp), &
                 StrTr, KcVal, GetTpot(), GetTact(), GetTactWeedInfested(), &
-                Ratio1, (100._dp*WPi), GetSumWaBal_Biomass(), HI, &
+                Ratio1, (100._dp*WPi_loc), GetSumWaBal_Biomass(), HI, &
                 GetSumWaBal_YieldPart()
         call fDaily_write(trim(tempstring), .false.)
         ! Fresh yield
 
         if ((GetCrop_DryMatter() == undef_int) &
-            .or. (GetCrop_DryMatter() < epsilon(0._dp)) then
+            .or. (GetCrop_DryMatter() < epsilon(0._dp))) then
             write(tempstring, '(f9.3)') undef_double
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring, '(f9.3)') (GetSumWaBal_YieldPart() &
+            write(tempstring, '(f9.3)') GetSumWaBal_YieldPart() &
                                          /(GetCrop_DryMatter()/100._dp)
             call fDaily_write(trim(tempstring), .false.)
         end if
@@ -3865,7 +4597,7 @@ subroutine WriteDailyResults(DAP, WPi)
             call SetRootZoneWC_Actual(undef_double)
         else
             if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
-                == roundc(GetCrop_RootMax*1000._dp, mold=1)) then
+                == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
                 SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
                 call DetermineRootZoneWC(GetCrop_RootMax(), &
                                          SWCtopSoilConsidered_temp)
@@ -3901,8 +4633,8 @@ subroutine WriteDailyResults(DAP, WPi)
             write(tempstring, '(f10.1)') GetRootZoneWC_WP()
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring, '(f10.1)') GetRootZoneWC_WP())
-            fDaily_write(tempstring)
+            write(tempstring, '(f10.1)') GetRootZoneWC_WP()
+            call fDaily_write(tempstring)
         end if
     end if
 
@@ -3914,8 +4646,8 @@ subroutine WriteDailyResults(DAP, WPi)
         call fDaily_write(trim(tempstring), .false.)
         if (GetRootingDepth() < epsilon(0._dp)) then
             SaltVal = undef_int
-            call SetRootZoneSalt_ECe(undef_int)
-            call SetRootZoneSalt_ECsw(undef_int)
+            call SetRootZoneSalt_ECe(real(undef_int, kind=dp))
+            call SetRootZoneSalt_ECsw(real(undef_int, kind=dp))
             call SetRootZoneSalt_KsSalt(1._dp)
         else
             SaltVal = (GetRootZoneWC_SAT()*GetRootZoneSalt_ECe()*Equiv)/100._dp
@@ -3925,7 +4657,7 @@ subroutine WriteDailyResults(DAP, WPi)
                     SaltVal, GetRootingDepth(), GetRootZoneSalt_ECe(), &
                     GetRootZoneSalt_ECsw(), &
                     (100._dp*(1._dp-GetRootZoneSalt_KsSalt())), &
-                    undef_double)
+                    undef_double
             call fDaily_write(trim(tempstring), .false.)
         else
             write(tempstring, '(f10.3, f8.2, f9.2, f8.2, f7.0, f8.2)') &
@@ -3960,7 +4692,7 @@ subroutine WriteDailyResults(DAP, WPi)
         else
             write(tempstring, '(f11.1)') &
                     (GetCompartment_Theta(GetNrCompartments())*100._dp)
-            fDaily_write(tempstring)
+            call fDaily_write(tempstring)
         end if
     end if
 
@@ -3993,5 +4725,6 @@ subroutine WriteDailyResults(DAP, WPi)
         call fDaily_write(trim(tempstring))
     end if
 end subroutine WriteDailyResults
+
 
 end module ac_run

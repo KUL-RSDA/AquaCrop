@@ -314,7 +314,6 @@ procedure GetGwtSet(constref DayNrIN : LongInt;
                     VAR GwT : rep_GwTable);
         external 'aquacrop' name '__ac_run_MOD_getgwtset';
 
-
 procedure fDaily_open(constref filename : string; constref mode : string);
 
 procedure fDaily_open_wrap(
@@ -585,6 +584,13 @@ procedure SetPreviousSum_CRsalt(constref CRsalt : double);
 
 procedure RelationshipsForFertilityAndSaltStress();
         external 'aquacrop' name '__ac_run_MOD_relationshipsforfertilityandsaltstress';
+
+procedure WriteTitleDailyResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+
+procedure __WriteTitleDailyResults(constref TheProjectType : integer;
+                           constref TheNrRun : shortint);
+        external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
 
@@ -1203,10 +1209,16 @@ procedure fHarvest_write_wrap(
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
+procedure CreateEvalData(NrRun : ShortInt);
+    external 'aquacrop' name '__ac_run_MOD_createevaldata';
+
 procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
 
 procedure __OpenPart1MultResults(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
+
+procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
+    external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
 procedure openharvestinfo();
         external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
@@ -1214,8 +1226,8 @@ procedure openharvestinfo();
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
-procedure WriteDailyResults(DAP : INTEGER;
-                            WPi : double);
+procedure WriteDailyResults(constref DAP : INTEGER;
+                            constref WPi : double);
         external 'aquacrop' name '__ac_run_MOD_writedailyresults';
 
 implementation
@@ -1668,6 +1680,15 @@ procedure SetRainDataSet_i(constref i : integer;
 begin
     SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
     SetRainDataSet_Param(i, RainDataSet_i.Param);
+end;
+
+procedure WriteTitleDailyResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __WriteTitleDailyResults(int_typeproject, TheNrRun);
 end;
 
 function GetPreviousSum() : rep_sum;
