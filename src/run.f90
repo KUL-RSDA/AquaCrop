@@ -3404,11 +3404,10 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         call fRun_write(trim(TempString), .false.)
     end if
     
-    tempreal = roundc(tempreal*10._dp, mold=1)
+    tempreal = roundc(GDDPer*10._dp, mold=1)
     ! Climatic conditions
     write(TempString, '(3f9.1, f9.2)') Rper, EToPer,&
           tempreal/10._dp, GetCO2i()
-    write(*, '(f9.1)') tempreal/10._dp
     call fRun_write(trim(TempString), .false.)
     ! Soil water parameters
     if (ExPer > 0._dp) then
