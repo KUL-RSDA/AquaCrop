@@ -22,43 +22,40 @@ implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
-VAR fProjects : textFile;
-
 
 PROCEDURE PrepareReport(OutputAggregate : ShortInt;
                         Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
                         Part1Mult,Part2Eval : BOOLEAN);
 BEGIN
-Assign(fProjects,CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'));
-Rewrite(fProjects);
-WRITE(fProjects,'Intermediate results: ');
+fProjects_open(CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'), 'w');
+fProjects_write('Intermediate results: ', false);
 CASE OutputAggregate OF
-     1 : WRITELN(fProjects,'daily results');
-     2 : WRITELN(fProjects,'10-daily results');
-     3 : WRITELN(fProjects,'monthly results');
-     else WRITELN(fProjects,'None created');
+     1 : fProjects_write('daily results');
+     2 : fProjects_write('10-daily results');
+     3 : fProjects_write('monthly results');
+     else fProjects_write('None created');
      end;
-WRITELN(fProjects);
+fProjects_write('');
 IF OutDaily
    THEN BEGIN
-        WRITELN(fProjects,'Daily output results:');
-        IF Out1Wabal THEN WRITELN(fProjects,'1. - soil water balance');
-        IF Out2Crop THEN WRITELN(fProjects,'2. - crop development and production');
-        IF Out3Prof THEN WRITELN(fProjects,'3. - soil water content in the soil profile and root zone');
-        IF Out4Salt THEN WRITELN(fProjects,'4. - soil salinity in the soil profile and root zone');
-        IF Out5CompWC THEN WRITELN(fProjects,'5. - soil water content at various depths of the soil profile');
-        IF Out6CompEC THEN WRITELN(fProjects,'6. - soil salinity at various depths of the soil profile');
-        IF Out7Clim THEN WRITELN(fProjects,'7. - climate input parameters');
+        fProjects_write('Daily output results:');
+        IF Out1Wabal THEN fProjects_write('1. - soil water balance');
+        IF Out2Crop THEN fProjects_write('2. - crop development and production');
+        IF Out3Prof THEN fProjects_write('3. - soil water content in the soil profile and root zone');
+        IF Out4Salt THEN fProjects_write('4. - soil salinity in the soil profile and root zone');
+        IF Out5CompWC THEN fProjects_write('5. - soil water content at various depths of the soil profile');
+        IF Out6CompEC THEN fProjects_write('6. - soil salinity at various depths of the soil profile');
+        IF Out7Clim THEN fProjects_write('7. - climate input parameters');
         END
-   ELSE WRITELN(fProjects,'Daily output results: None created');
-WRITELN(fProjects);
+   ELSE fProjects_write('Daily output results: None created');
+fProjects_write('');
 IF ((Part1Mult = True) OR  (Part2Eval = True))
    THEN BEGIN
-        WRITELN(fProjects,'Particular results:');
-        IF Part1Mult THEN WRITELN(fProjects,'1. - biomass and yield at multiple cuttings (for herbaceous forage crops)');
-        IF Part2Eval THEN WRITELN(fProjects,'2. - evaluation of simulation results (when Field Data)');
+        fProjects_write('Particular results:');
+        IF Part1Mult THEN fProjects_write('1. - biomass and yield at multiple cuttings (for herbaceous forage crops)');
+        IF Part2Eval THEN fProjects_write('2. - evaluation of simulation results (when Field Data)');
         END
-   ELSE WRITELN(fProjects,'Particular results: None created');
+   ELSE fProjects_write('Particular results: None created');
 END; (* PrepareReport *)
 
 
@@ -200,7 +197,7 @@ END; // GetProjectType
 PROCEDURE InitializeProject(constref iproject : integer;
                             constref TheProjectFile : string;
                             constref TheProjectType : repTypeProject);
-VAR NrString,TestFile : string;
+VAR NrString,TestFile, tempstring : string;
     CanSelect,ProgramParametersAvailable : BOOLEAN;
     TotalSimRuns : Integer;
     SimNr : ShortInt;
@@ -409,17 +406,32 @@ BEGIN
         IF CanSelect THEN
         BEGIN
             IF (ProgramParametersAvailable = True)
-            THEN WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - with its program parameters')
-            ELSE WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - default setting of program parameters');
+            THEN BEGIN
+                WriteStr(tempstring, Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - with its program parameters');
+                fProjects_write(tempstring);
+            END
+            ELSE BEGIN
+                WriteStr(tempstring,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - default setting of program parameters');
+                fProjects_write(tempstring);
+            END;
         END
-        ELSE WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project NOT loaded',
+        ELSE BEGIN
+            WriteStr(tempstring,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project NOT loaded',
                      ' - Missing Environment and/or Simulation file(s)');
+            fProjects_write(tempstring);
+        END;
     END
     ELSE
     BEGIN // not a project file or missing in the LIST  dirtectory
         IF CanSelect
-        THEN WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : is NOT a project file')
-        ELSE WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : project file NOT available in LIST directory');
+        THEN BEGIN
+            WriteStr(tempstring, Trim(NrString),'. - ',Trim(TheProjectFile),' : is NOT a project file');
+            fProjects_write(tempstring);
+        END
+        ELSE BEGIN
+            WriteStr(tempstring, Trim(NrString),'. - ',Trim(TheProjectFile),' : project file NOT available in LIST directory');
+            fProjects_write(tempstring);
+        END;
     END;
 END;
 
@@ -430,7 +442,7 @@ VAR
     fend : TextFile;
 
 BEGIN
-    Close(fProjects);
+    fProjects_close();
 
     // all done
     Assign(fend,CONCAT(GetPathNameOutp(),'AllDone.OUT'));
@@ -442,7 +454,7 @@ END;
 
 PROCEDURE WriteProjectsInfo(constref line : string);
 BEGIN
-    WRITELN(fProjects, line);
+    fProjects_write('');
 END;
 
 
