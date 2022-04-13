@@ -295,72 +295,6 @@ END; (* WriteTitlePart1MultResults *)
 
 
 
-PROCEDURE CreateEvalData(NrRun : ShortInt);
-VAR dayi, monthi, yeari : INTEGER;
-    StrNr,TempString : string;
-    Zeval_temp : double;
-    DayNr1Eval_temp, DayNrEval_temp : INTEGER;
-
-BEGIN
-// open input file with field data
-fObs_open(GetObservationsFilefull(), 'r'); // Observations recorded in File
-fObs_read(); // description
-fObs_read(); // AquaCrop Version number
-TempString := fObs_read();
-ReadStr(TempString, Zeval_temp); //  depth of sampled soil profile
-SetZeval(Zeval_temp);
-TempString := fObs_read();
-ReadStr(TempString, dayi);
-TempString := fObs_read();
-ReadStr(TempString, monthi);
-TempString := fObs_read();
-ReadStr(TempString, yeari);
-DayNr1Eval_temp := GetDayNr1Eval();
-DetermineDayNr(dayi,monthi,yeari,DayNr1Eval_temp);
-SetDayNr1Eval(DayNr1Eval_temp);
-fObs_read(); // title
-fObs_read(); // title
-fObs_read(); // title
-fObs_read(); // title
-SetLineNrEval(undef_int);
-TempString := fObs_read();
-IF (NOT fObs_eof()) THEN
-   BEGIN
-   SetLineNrEval(11);
-   ReadStr(TempString, DayNrEval_temp);
-   SetDayNrEval(DayNrEval_temp);
-   SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
-   WHILE ((GetDayNrEval() < GetSimulation_FromDayNr()) AND (GetLineNrEval() <> undef_int)) DO
-      BEGIN
-      TempString := fObs_read();
-      IF (fObs_eof())
-         THEN SetLineNrEval(undef_int)
-         ELSE BEGIN
-              SetLineNrEval( GetLineNrEval() + 1);
-              ReadStr(TempString, DayNrEval_temp);
-              SetDayNrEval(DayNrEval_temp);
-              SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
-              END;
-      END;
-   END;
-IF (GetLineNrEval() = undef_int) THEN fObs_close();
-// open file with simulation results, field data
-IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
-   THEN Str(NrRun:3,StrNr)
-   ELSE StrNr := '';
-SetfEval_filename(CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT'));
-fEval_open(GetfEval_filename(), 'w');
-fEval_write('AquaCrop 7.0 (June 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
-fEval_write('Evaluation of simulation results - Data');
-Str(GetZeval():5:2,TempString);
-fEval_write('                                                                                     for soil depth: ' + Trim(TempString) + ' m');
-fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
-fEval_write('                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
-END; (* CreateEvalData *)
-
-
-
-
 PROCEDURE InitializeSimulationRun;
 VAR tHImax,DNr1,DNr2,Dayi,DayCC : integer;
     SumGDDforDayCC : double;
@@ -1407,7 +1341,7 @@ END; (* WriteDailyResults *)
 PROCEDURE WriteEvaluationData(DAP : INTEGER);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
-    Nr,Di,Mi,Yi : INTEGER;
+    Nr,Di,Mi,Yi: INTEGER;
     TempString : string;
     DayNrEval_temp : INTEGER;
 

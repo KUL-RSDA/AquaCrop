@@ -85,6 +85,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_Cuttings_NrDays, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
+                        GetObservationsFilefull, &
                         GetOutputAggregate, &
                         GetOutputName, &
                         GetPathNameOutp, &
@@ -132,6 +133,8 @@ use ac_global, only:    CompartmentIndividual, &
                         SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
                         GetSimulation_DelayedDays, &
+                        GetSimulation_MultipleRun, &
+                        GetSimulation_NrRuns, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
@@ -2444,18 +2447,6 @@ subroutine SetfWeedNoS(fWeedNoS_in)
     fWeedNoS = fWeedNoS_in
 end subroutine SetfWeedNoS
 
-real(dp) function GetZeval()
-    !! Getter for the "Zeval" global variable.
-
-    GetZeval = Zeval
-end function GetZeval
-
-subroutine SetZeval(Zeval_in)
-    !! Setter for the "Zeval" global variable.
-    real(dp), intent(in) :: Zeval_in
-
-    Zeval = Zeval_in
-end subroutine SetZeval
 
 real(dp) function GetBprevSum()
     !! Getter for the "BprevSum" global variable.
@@ -2678,6 +2669,7 @@ subroutine SetDayNrEval(DayNrEval_in)
     DayNrEval = DayNrEval_in
 end subroutine SetDayNrEval
 
+
 integer(int32) function GetLineNrEval()
     !! Getter for the "LineNrEval" global variable.
 
@@ -2690,6 +2682,19 @@ subroutine SetLineNrEval(LineNrEval_in)
 
     LineNrEval = LineNrEval_in
 end subroutine SetLineNrEval
+
+real(dp) function GetZeval()
+    !! Getter for the "Zeval" global variable.
+
+    GetZeval = Zeval
+end function GetZeval
+
+subroutine SetZeval(Zeval_in)
+    !! Setter for the "Zeval" global variable.
+    real(dp), intent(in) :: Zeval_in
+
+    Zeval = Zeval_in
+end subroutine SetZeval
 
 integer(int32) function GetNextSimFromDayNr()
     !! Getter for the "NextSimFromDayNr " global variable.
@@ -3483,6 +3488,80 @@ subroutine OpenIrrigationFile()
 end subroutine OpenIrrigationFile
 
 
+subroutine CreateEvalData(NrRun)
+    integer(int8), intent(in) :: NrRun
+
+    integer(int32) :: dayi, monthi, yeari, integer_temp
+    character(len=:), allocatable :: StrNr, TempString
+    character(len=1025) :: tempstring2
+    integer, dimension(8) :: d
+
+    ! open input file with field data
+    call fObs_open(GetObservationsFilefull(), 'r') ! Observations recorded in File
+    TempString = fObs_read() ! description
+    TempString = fObs_read() ! AquaCrop Version number
+    TempString = fObs_read()
+    read(TempString, *) Zeval !  depth of sampled soil profile
+    TempString = fObs_read()
+    read(TempString, *) dayi
+    TempString = fObs_read()
+    read(TempString, *)monthi
+    TempString = fObs_read()
+    read(TempString, *) yeari
+    integer_temp = GetDayNr1Eval()
+    call DetermineDayNr(dayi, monthi, yeari, integer_temp)
+    call SetDayNr1Eval(integer_temp)
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    call SetLineNrEval(undef_int)
+    TempString = fObs_read()
+    if (.not. fObs_eof()) then
+        call SetLineNrEval(11)
+        read(TempString, *) integer_temp
+        call SetDayNrEval(integer_temp)
+        call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+        do while ((GetDayNrEval() < GetSimulation_FromDayNr()) &
+                    .and. (GetLineNrEval() /= undef_int)) 
+            TempString = fObs_read()
+            if (fObs_eof()) then
+                call SetLineNrEval(undef_int)
+            else
+                call SetLineNrEval(GetLineNrEval() + 1)
+                read(TempString, *) integer_temp
+                call SetDayNrEval(integer_temp)
+                call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+            end if
+        end do
+    end if
+    if (GetLineNrEval() == undef_int) then
+        call fObs_close()
+    end if
+    ! open file with simulation results, field data
+    if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
+        write(StrNr, '(i3)') NrRun
+    else
+        StrNr = ''
+    end if
+    call SetfEval_filename(GetPathNameSimul() // 'EvalData' // trim(StrNr) // '.OUT')
+    call fEval_open(GetfEval_filename(), 'w')
+    write(tempstring2, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fEval_write(trim(tempstring2))
+    call fEval_write('Evaluation of simulation results - Data')
+    write(TempString, '(f5.2)') GetZeval()
+    call fEval_write('                                             ' // &
+    '                                        for soil depth: ' // trim(TempString) // ' m')
+    call fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      ' // &
+    'Bobs      Bstd   SWCsim  SWCobs   SWstd')
+    call fEval_write('                                   %       %       %     ton/ha    ' // &
+    'ton/ha    ton/ha    mm       mm      mm')
+end subroutine CreateEvalData
+
+
+
 subroutine OpenOutputRun(TheProjectType)
     integer(intEnum), intent(in) :: TheProjectType
 
@@ -4006,6 +4085,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         call SetTmax(GetSimulParam_Tmax())
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
+
 
 
 end module ac_run
