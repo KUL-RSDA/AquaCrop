@@ -723,6 +723,30 @@ function GetNoYear() : boolean;
 procedure SetNoYear(constref NoYear_in : boolean);
         external 'aquacrop' name '__ac_interface_run_MOD_setnoyear_wrap';
 
+function GetWaterTableInProfile() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getwatertableinprofile_wrap';
+
+procedure SetWaterTableInProfile(constref WaterTableInProfile_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setwatertableinprofile_wrap';
+
+function GetStartMode() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getstartmode_wrap';
+
+procedure SetStartMode(constref StartMode_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setstartmode_wrap';
+
+function GetNoMoreCrop() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getnomorecrop_wrap';
+
+procedure SetNoMoreCrop(constref NoMoreCrop_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setnomorecrop_wrap';
+
+function GetCGCadjustmentAfterCutting() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getcgcadjustmentaftercutting_wrap';
+
+procedure SetCGCadjustmentAfterCutting(constref CGCadjustmentAfterCutting_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setcgcadjustmentaftercutting_wrap';
+
 procedure fObs_open(constref filename : string; constref mode : string);
 
 procedure fObs_open_wrap(
@@ -793,6 +817,9 @@ function GetStressSFadjNEW() : shortint;
 
 procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
     external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
+
+procedure GetNextHarvest()
+    external 'aquacrop' name '__ac_run_MOD_getnextharvest';     
 
 function GetCCxWitheredTpot() : double;
     external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
@@ -877,6 +904,16 @@ function GetCGCref() : double;
 
 procedure SetCGCref(constref CGCref : double);
     external 'aquacrop' name '__ac_run_MOD_setcgcref';
+
+procedure OpenOutputRun(constref TheProjectType : repTypeProject);
+
+procedure __OpenOutputRun(constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_openoutputrun';
+
+procedure OpenOutputDaily(constref TheProjectType : repTypeProject);
+
+procedure __OpenOutputDaily(constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_openoutputdaily';
 
 function GetSumETo() : double;
     external 'aquacrop' name '__ac_run_MOD_getsumeto';
@@ -1172,7 +1209,6 @@ procedure fHarvest_write_wrap(
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
-
 procedure WriteTitlePart1MultResults(constref TheProjectType : repTypeProject;
                           constref TheNrRun : Shortint);
 
@@ -1200,6 +1236,22 @@ procedure WriteTheResults_wrap(constref ANumber : ShortInt;
                          constref strlen : integer);
     external 'aquacrop' name '__ac_interface_run_MOD_writetheresults_wrap';
 
+procedure CreateEvalData(NrRun : ShortInt);
+    external 'aquacrop' name '__ac_run_MOD_createevaldata';
+
+procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
+
+procedure __OpenPart1MultResults(constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
+
+procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
+    external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
+
+procedure openharvestinfo();
+        external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
+
+procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
+        external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
 
 implementation
@@ -1228,6 +1280,15 @@ end;
     
 
 
+procedure OpenOutputRun(constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __OpenOutputRun(int_typeproject);
+end;
+
+
 procedure WriteTitlePart1MultResults(constref TheProjectType : repTypeProject;
                           constref TheNrRun : Shortint);
 var
@@ -1236,6 +1297,24 @@ begin
     int_typeproject := ord(TheProjectType);
     __WriteTitlePart1MultResults(int_typeproject, TheNrRun);
 end;
+
+
+procedure OpenOutputDaily(constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __OpenOutputDaily(int_typeproject);
+end;
+
+procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __OpenPart1MultResults(int_typeproject);
+end;
+
 
 function GetfEval_filename() : string;
 var
@@ -1751,6 +1830,8 @@ begin;
      line_len := Length(line);
      fHarvest_write_wrap(line_ptr, line_len, advance);
 end;
+
+
 
 
 initialization

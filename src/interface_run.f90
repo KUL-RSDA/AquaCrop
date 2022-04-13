@@ -31,11 +31,10 @@ use ac_run, only:   fDaily_open, &
                     fEval_write, &
                     GetCutInfoRecord1_NoMoreInfo, &
                     GetCutInfoRecord2_NoMoreInfo, &
+                    GetCutInfoRecord1_FromDay, &
                     GetfEval_filename, &
                     fHarvest_open, &
                     fHarvest_write, &
-                    GetCutInfoRecord1_NoMoreInfo, &
-                    GetCutInfoRecord2_NoMoreInfo, &
                     GetfHarvest_filename, &
                     GetGlobalIrriECw, &
                     GetIrriInfoRecord1_NoMoreInfo, &
@@ -45,6 +44,7 @@ use ac_run, only:   fDaily_open, &
                     GetTransfer_Store, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
+                    SetCutInfoRecord1_FromDay, &
                     SetfEval_filename, &
                     SetfHarvest_filename, &
                     SetGlobalIrriECw, &
@@ -53,8 +53,15 @@ use ac_run, only:   fDaily_open, &
                     SetNoYear, &
                     SetTransfer_Mobilize, &
                     SetTransfer_Store, &
-                    WriteTheResults
-
+                    WriteTheResults, &
+                    GetWaterTableInProfile, &
+                    SetWaterTableInProfile, &
+                    GetStartMode, &
+                    SetStartMode, &
+                    GetNoMoreCrop, &
+                    SetNoMoreCrop, &
+                    GetCGCadjustmentAfterCutting, &
+                    SetCGCadjustmentAfterCutting
 
 implicit none
 
@@ -88,6 +95,7 @@ subroutine fDaily_write_wrap(line_ptr, line_len, advance)
     advance_f = advance
     call fDaily_write(line, advance_f)
 end subroutine fDaily_write_wrap
+
 
 subroutine fRun_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
@@ -434,6 +442,7 @@ subroutine SetTransfer_Store_wrap(Store)
     call SetTransfer_Store(Store_f)    
 end subroutine SetTransfer_Store_wrap
 
+
 function GetfEval_filename_wrap() result(filename_ptr)
     type(c_ptr) :: filename_ptr
 
@@ -520,8 +529,6 @@ subroutine SetNoYear_wrap(NoYear_in)
 end subroutine SetNoYear_wrap
 
 
-
-
 subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                            YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
                            ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
@@ -568,5 +575,78 @@ subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                            SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
                            TheProjectFile)
 end subroutine WriteTheResults_wrap
+
+
+
+function GetStartMode_wrap() result(StartMode_f)
+
+    logical(1) :: StartMode_f
+
+    StartMode_f = GetStartMode()
+end function GetStartMode_wrap
+
+
+subroutine SetStartMode_wrap(StartMode_in)
+    logical(1), intent(in) :: StartMode_in
+
+    logical :: StartMode_f
+
+    StartMode_f = StartMode_in
+    call SetStartMode(StartMode_f)
+end subroutine SetStartMode_wrap
+
+
+function GetWaterTableInProfile_wrap() result(WaterTableInProfile_f)
+
+    logical(1) :: WaterTableInProfile_f
+
+    WaterTableInProfile_f = GetWaterTableInProfile()
+end function GetWaterTableInProfile_wrap
+
+
+subroutine SetWaterTableInProfile_wrap(WaterTableInProfile_in)
+    logical(1), intent(in) :: WaterTableInProfile_in
+
+    logical :: WaterTableInProfile_f
+
+    WaterTableInProfile_f = WaterTableInProfile_in
+    call SetWaterTableInProfile(WaterTableInProfile_f)
+end subroutine SetWaterTableInProfile_wrap
+
+function GetNoMoreCrop_wrap() result(NoMoreCrop_f)
+
+    logical(1) :: NoMoreCrop_f
+
+    NoMoreCrop_f = GetNoMoreCrop()
+end function GetNoMoreCrop_wrap
+
+
+subroutine SetNoMoreCrop_wrap(NoMoreCrop_in)
+    logical(1), intent(in) :: NoMoreCrop_in
+
+    logical :: NoMoreCrop_f
+
+    NoMoreCrop_f = NoMoreCrop_in
+    call SetNoMoreCrop(NoMoreCrop_f)
+end subroutine SetNoMoreCrop_wrap
+
+function GetCGCadjustmentAfterCutting_wrap() result(CGCadjustmentAfterCutting_f)
+
+    logical(1) :: CGCadjustmentAfterCutting_f
+
+    CGCadjustmentAfterCutting_f = GetCGCadjustmentAfterCutting()
+end function GetCGCadjustmentAfterCutting_wrap
+
+
+subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
+    logical(1), intent(in) :: CGCadjustmentAfterCutting_in
+
+    logical :: CGCadjustmentAfterCutting_f
+
+    CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
+    call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
+end subroutine SetCGCadjustmentAfterCutting_wrap
+
+
 
 end module ac_interface_run
