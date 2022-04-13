@@ -15,7 +15,6 @@ VAR DataPath,ObsPath : BOOLEAN;
 
 // Extra for stand alone procedure
     PathNameList,PathNameParam : string;
-    Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
     Part1Mult,Part2Eval : BOOLEAN;
 
 

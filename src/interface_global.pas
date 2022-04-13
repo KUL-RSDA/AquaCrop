@@ -3055,6 +3055,11 @@ function __GetIrriMode(): integer;
 
 function GetIrriMode(): rep_IrriMode;
 
+procedure __SetIrriMode(constref IrriMode : integer);
+        external 'aquacrop' name '__ac_global_MOD_setirrimode';
+
+procedure SetIrriMode(constref IrriMode : rep_IrriMode);
+
 procedure NoIrrigation();
         external 'aquacrop' name '__ac_global_MOD_noirrigation';
 
@@ -3063,11 +3068,6 @@ procedure LoadIrriScheduleInfo(constref FullName : string);
 procedure LoadIrriScheduleInfo_wrap(constref FullName : PChar;
                            constref strlen1 : integer);  
         external 'aquacrop' name '__ac_interface_global_MOD_loadirrischeduleinfo_wrap';
-
-procedure __SetIrriMode(constref IrriMode : integer);
-        external 'aquacrop' name '__ac_global_MOD_setirrimode';
-
-procedure SetIrriMode(constref IrriMode : rep_IrriMode);
 
 function __GetIrriMethod(): integer;
         external 'aquacrop' name '__ac_global_MOD_getirrimethod';
@@ -4604,6 +4604,48 @@ function GetPreDay() : boolean;
 procedure SetPreDay(constref PreDay_in : boolean);
     external 'aquacrop' name '__ac_interface_global_MOD_setpreday_wrap';
 
+function GetOut1Wabal() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout1wabal_wrap';
+
+procedure SetOut1Wabal(constref Out1Wabal_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout1wabal_wrap';
+
+function GetOut2Crop() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout2crop_wrap';
+
+procedure SetOut2Crop(constref Out2Crop_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout2crop_wrap';
+
+function GetOut3Prof() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout3prof_wrap';
+
+procedure SetOut3Prof(constref Out3Prof_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout3prof_wrap';
+
+function GetOut4Salt() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout4salt_wrap';
+
+procedure SetOut4Salt(constref Out4Salt_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout4salt_wrap';
+
+function GetOut5CompWC() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout5compwc_wrap';
+
+procedure SetOut5CompWC(constref Out5CompWC_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout5compwc_wrap';
+
+function GetOut6CompEC() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout6compec_wrap';
+
+procedure SetOut6CompEC(constref Out6CompEC_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout6compec_wrap';
+
+function GetOut7Clim() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getout7clim_wrap';
+
+procedure SetOut7Clim(constref Out7Clim_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setout7clim_wrap';
+
 function GetIniPercTAW() : shortint;
     external 'aquacrop' name '__ac_global_MOD_getiniperctaw';
 
@@ -4770,6 +4812,11 @@ function GetSurf0() : double;
 procedure SetSurf0(constref Surf0_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsurf0';
 
+function GetOutDaily() : boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getoutdaily_wrap';
+
+procedure SetOutDaily(constref OutDaily_in : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setoutdaily_wrap';
 
 implementation
 

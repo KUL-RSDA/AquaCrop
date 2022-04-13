@@ -511,22 +511,6 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
 end subroutine SetGlobalIrriECw_wrap
 
 
-function GetNoYear_wrap() result(NoYear_f)
-
-    logical(1) :: NoYear_f
-
-    NoYear_f = GetNoYear()
-end function GetNoYear_wrap
-
-
-subroutine SetNoYear_wrap(NoYear_in)
-    logical(1), intent(in) :: NoYear_in
-
-    logical :: NoYear_f
-
-    NoYear_f = NoYear_in
-    call SetNoYear(NoYear_f)    
-end subroutine SetNoYear_wrap
 
 
 subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
@@ -646,6 +630,24 @@ subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
     CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
     call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
 end subroutine SetCGCadjustmentAfterCutting_wrap
+
+
+function GetNoYear_wrap() result(NoYear_f)
+
+    logical(1) :: NoYear_f
+
+    NoYear_f = GetNoYear()
+end function GetNoYear_wrap
+
+
+subroutine SetNoYear_wrap(NoYear_in)
+    logical(1), intent(in) :: NoYear_in
+
+    logical :: NoYear_f
+
+    NoYear_f = NoYear_in
+    call SetNoYear(NoYear_f)    
+end subroutine SetNoYear_wrap
 
 
 
