@@ -120,6 +120,7 @@ PROCEDURE InitializeTheProgram;
 VAR
     OutputAggregate_temp : shortint;
     outdaily_temp : boolean;
+    out1wabal_temp, out2crop_temp, out3prof_temp, out4salt_temp, out5compwc_temp, out6compec_temp, out7clim_temp: boolean;
 BEGIN
 Decimalseparator := '.';
 SetPathNameOutp('OUTP/');
@@ -131,13 +132,41 @@ SetPathNameProg('');
 OutputAggregate_temp := GetOutputAggregate();
 GetTimeAggregationResults(OutputAggregate_temp);
 SetOutputAggregate(OutputAggregate_temp);
+out1wabal_temp := GetOut1Wabal();
+out2crop_temp := GetOut2Crop();
+out3prof_temp := GetOut3Prof();
+out4salt_temp := GetOut4Salt();
+out5compwc_temp := GetOut5CompWC();
+out6compec_temp := GetOut6CompEC();
+out7clim_temp := GetOut7Clim();
 outdaily_temp := GetOutDaily();
-GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,outdaily_temp);
-SetOutDaily(outdaily_temp);
+GetRequestDailyResults(out1wabal_temp, out2crop_temp, out3prof_temp, out4salt_temp, out5compwc_temp, out6compec_temp, out7clim_temp, outdaily_temp);
 GetRequestParticularResults(Part1Mult,Part2Eval);
+SetOut1Wabal(out1wabal_temp);
+SetOut2Crop(out2crop_temp);
+SetOut3Prof(out3prof_temp);
+SetOut4Salt(out4salt_temp);
+SetOut5CompWC(out5compwc_temp);
+SetOut6CompEC(out6compec_temp);
+SetOut7Clim(out7clim_temp);
+SetOutDaily(outdaily_temp);
+out1wabal_temp := GetOut1Wabal();
+out2crop_temp := GetOut2Crop();
+out3prof_temp := GetOut3Prof();
+out4salt_temp := GetOut4Salt();
+out5compwc_temp := GetOut5CompWC();
+out6compec_temp := GetOut6CompEC();
+out7clim_temp := GetOut7Clim();
 outdaily_temp := GetOutDaily();
-PrepareReport(GetOutputAggregate(),Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,outdaily_temp,
+PrepareReport(GetOutputAggregate(),out1wabal_temp,out2crop_temp, out3prof_temp, out4salt_temp, out5compwc_temp, out6compec_temp, out7clim_temp,outdaily_temp,
               Part1Mult,Part2Eval);
+SetOut1Wabal(out1wabal_temp);
+SetOut2Crop(out2crop_temp);
+SetOut3Prof(out3prof_temp);
+SetOut4Salt(out4salt_temp);
+SetOut5CompWC(out5compwc_temp);
+SetOut6CompEC(out6compec_temp);
+SetOut7Clim(out7clim_temp);
 SetOutDaily(outdaily_temp);
 END;
 

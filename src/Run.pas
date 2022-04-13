@@ -28,236 +28,6 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 var  TheProjectFile : string;
 
 
-PROCEDURE WriteTitleDailyResults(TheProjectType : repTypeProject;
-                                 TheNrRun : ShortInt);
-VAR Str1,Str2, tempstring : string;
-    NodeD,Zprof : double;
-    Compi : INTEGER;
-BEGIN
-// A. Run number
-fDaily_write('');
-IF (TheProjectType = TypePRM) THEN
-   BEGIN
-   Str(TheNrRun:4, Str1);
-   WriteStr(tempstring, '   Run:',Str1);
-   fDaily_write(tempstring);
-   END;
-
-// B. thickness of soil profile and root zone
-IF ((Out1Wabal) OR (Out3Prof = true) OR (Out4Salt = true)) THEN
-   BEGIN
-   Zprof := 0;
-   FOR compi :=1 to GetNrCompartments() DO Zprof := Zprof + GetCompartment_Thickness(compi);
-   Str(Zprof:4:2,Str1);
-   IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
-      THEN Str(GetCrop().RootMax:4:2,Str2)
-      ELSE Str(GetSoil().RootMax:4:2,Str2);
-   END;
-
-// C. 1st line title
-//WriteStr(tempstring, '   Day Month  Year   DAP Stage');
-fDaily_write('   Day Month  Year   DAP Stage', false);
-
-// C1. Water balance
-IF Out1Wabal THEN
-   BEGIN
-   IF ((Out2Crop = true) OR (Out3Prof = true) OR (Out4Salt = true)
-      OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) 
-        THEN BEGIN
-            WriteStr(tempstring, '   WC(',Str1,')   Rain     Irri   Surf   Infilt   RO    Drain       CR    Zgwt',
-               '       Ex       E     E/Ex     Trx       Tr  Tr/Trx    ETx      ET  ET/ETx');
-            fDaily_write(tempstring, False);
-            END
-        ELSE BEGIN
-            WriteStr(tempstring, '   WC(',Str1,')   Rain     Irri   Surf   Infilt   RO    Drain       CR    Zgwt',
-               '       Ex       E     E/Ex     Trx       Tr  Tr/Trx    ETx      ET  ET/ETx');
-            fDaily_write(tempstring);
-        END;
-   END;
-// C2. Crop development and yield
-IF Out2Crop THEN
-   BEGIN
-   IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
-      BEGIN
-      WriteStr(tempstring, '      GD       Z     StExp  StSto  StSen StSalt StWeed   CC      CCw     StTr  Kc(Tr)     Trx       Tr      TrW  Tr/Trx   WP',
-        '    Biomass     HI    Y(dry)  Y(fresh)  Brelative    WPet      Bin     Bout');
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN 
-      WriteStr(tempstring, '      GD       Z     StExp  StSto  StSen StSalt StWeed   CC      CCw     StTr  Kc(Tr)     Trx       Tr      TrW  Tr/Trx   WP',
-        '    Biomass     HI    Y(dry)  Y(fresh)  Brelative    WPet      Bin     Bout');
-      fDaily_write(tempstring);
-      END;
-   END;
-// C3. Profile/Root zone - Soil water content
-IF Out3Prof THEN
-   BEGIN
-   IF ((Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
-      BEGIN
-      WriteStr(tempstring,'  WC(',Str1,') Wr(',Str2,')     Z       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)   Wr(sen)   Wr(PWP)');
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN
-      WriteStr(tempstring,'  WC(',Str1,') Wr(',Str2,')     Z       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)   Wr(sen)   Wr(PWP)');
-      fDaily_write(tempstring);
-      END;
-   END;
-// C4. Profile/Root zone - soil salinity
-IF Out4Salt THEN
-   BEGIN
-   IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN 
-      BEGIN 
-      WriteStr(tempstring,'    SaltIn    SaltOut   SaltUp   Salt(',Str1,')  SaltZ     Z       ECe    ECsw   StSalt  Zgwt    ECgw');
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN
-      WriteStr(tempstring,'    SaltIn    SaltOut   SaltUp   Salt(',Str1,')  SaltZ     Z       ECe    ECsw   StSalt  Zgwt    ECgw');
-      fDaily_write(tempstring);
-      END;
-   END;
-// C5. Compartments - Soil water content
-IF Out5CompWC THEN
-   BEGIN
-    fDaily_write('       WC01', false);
-   FOR Compi := 2 TO (GetNrCompartments()-1) DO
-       BEGIN
-       Str(Compi:2,Str1);
-       WriteStr(tempstring,'       WC',Str1);
-       fDaily_write(tempstring, False);
-       END;
-   Str(GetNrCompartments():2,Str1);
-   IF ((Out6CompEC = true) OR (Out7Clim = true)) THEN
-      BEGIN 
-      WriteStr(tempstring,'       WC',Str1);
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN
-      WriteStr(tempstring, '       WC',Str1);
-      fDaily_write(tempstring);
-      END;
-   END;
-// C6. Compartmens - Electrical conductivity of the saturated soil-paste extract
-IF Out6CompEC THEN
-   BEGIN
-   fDaily_write('      ECe01', false);
-   FOR Compi := 2 TO (GetNrCompartments()-1) DO
-       BEGIN
-       Str(Compi:2,Str1);
-       WriteStr(tempstring,'      ECe',Str1);
-       fDaily_write(tempstring, False);
-       END;
-   Str(GetNrCompartments():2,Str1);
-   IF (Out7Clim = true) THEN
-      BEGIN
-      WriteStr(tempstring,'      ECe',Str1);
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN
-      WriteStr(tempstring,'      ECe',Str1);
-      fDaily_write(tempstring);
-      END;
-   END;
-// C7. Climate input parameters
-IF Out7Clim THEN fDaily_write('     Rain       ETo      Tmin      Tavg      Tmax      CO2');
-
-fDaily_write('                              ', false);
-// D1. Water balance
-IF Out1Wabal THEN
-   BEGIN
-   IF ((Out2Crop = true) OR (Out3Prof = true) OR (Out4Salt = true)
-      OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN 
-        BEGIN 
-            WriteStr(tempstring, '        mm      mm       mm     mm     mm     mm       mm       mm      m ',
-               '       mm       mm     %        mm       mm    %        mm      mm       %');
-            fDaily_write(tempstring, False);
-        END
-      ELSE BEGIN
-            WriteStr(tempstring,'        mm      mm       mm     mm     mm     mm       mm       mm      m ',
-               '       mm       mm     %        mm       mm    %        mm      mm       %');
-            fDaily_write(tempstring);
-      END;
-   END;
-// D2. Crop development and yield
-IF Out2Crop THEN
-   BEGIN
-   IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
-      BEGIN
-      WriteStr(tempstring, '  degC-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
-        '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
-      fDaily_write(tempstring, False);   
-      END
-      ELSE BEGIN
-        WriteStr(tempstring, '  degC-day     m       %      %      %      %      %      %       %       %       -        mm       mm       mm    %     g/m2',
-        '    ton/ha      %    ton/ha   ton/ha       %       kg/m3   ton/ha   ton/ha');
-       fDaily_write(tempstring);  
-      END;
-   END;
-// D3. Profile/Root zone - Soil water content
-IF Out3Prof THEN
-   BEGIN
-   IF ((Out4Salt) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
-      fDaily_write('      mm       mm       m       mm        mm        mm        mm        mm        mm         mm', false)
-      ELSE fDaily_write('      mm       mm       m       mm        mm        mm        mm        mm        mm        mm');
-   END;
-// D4. Profile/Root zone - soil salinity
-IF Out4Salt THEN
-   BEGIN
-   IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
-      fDaily_write('    ton/ha    ton/ha    ton/ha    ton/ha    ton/ha     m      dS/m    dS/m      %     m      dS/m', false)
-      ELSE fDaily_write('    ton/ha    ton/ha    ton/ha    ton/ha    ton/ha     m      dS/m    dS/m      %     m      dS/m');
-   END;
-// D5. Compartments - Soil water content
-IF Out5CompWC THEN
-   BEGIN
-   NodeD := GetCompartment_Thickness(1)/2;
-   WriteStr(tempstring, NodeD:11:2);
-   fDaily_write(tempstring, False);
-   FOR Compi := 2 TO (GetNrCompartments()-1) DO
-       BEGIN
-       NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(Compi)/2;
-       WriteStr(tempstring, NodeD:11:2);
-       fDaily_write(tempstring, False);
-       END;
-   NodeD := NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2 + GetCompartment_Thickness(GetNrCompartments())/2;
-   IF ((Out6CompEC = true) OR (Out7Clim = true)) THEN
-      BEGIN
-      WriteStr(tempstring, NodeD:11:2);
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN
-      WriteStr(tempstring, NodeD:11:2);
-      fDaily_write(tempstring);
-      END;
-   END;
-// D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
-IF Out6CompEC THEN
-   BEGIN
-   NodeD := GetCompartment_Thickness(1)/2;
-   WriteStr(tempstring, NodeD:11:2);
-   fDaily_write(tempstring, False);
-   FOR Compi := 2 TO (GetNrCompartments()-1) DO
-       BEGIN
-       NodeD := NodeD + GetCompartment_Thickness(Compi-1)/2 + GetCompartment_Thickness(compi)/2;
-       WriteStr(tempstring, NodeD:11:2);
-       fDaily_write(tempstring, False);
-       END;
-   NodeD := NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2 + GetCompartment_Thickness(GetNrCompartments())/2;
-   IF (Out7Clim = true) THEN
-      BEGIN
-      WriteStr(tempstring, NodeD:11:2);
-      fDaily_write(tempstring, False);
-      END
-      ELSE BEGIN
-      WriteStr(tempstring, NodeD:11:2);
-      fDaily_write(tempstring);
-      END;
-   END;
-// D7. Climate input parameters
-IF Out7Clim THEN fDaily_write('       mm        mm     degC      degC      degC       ppm');
-//end;
-END; (* WriteTitleDailyResults *)
-
-
 PROCEDURE WriteTitlePart1MultResults(TheProjectType : repTypeProject;
                                      TheNrRun : ShortInt);
 VAR Str1 : string;
@@ -292,72 +62,6 @@ Str(Nr:6:0,Str1);
 WriteStr(tempstring, Str1,Dayi:6,Monthi:6,Yeari:6,Nr:34:3,Nr:20:3,Nr:20:3);
 fHarvest_write(tempstring);
 END; (* WriteTitlePart1MultResults *)
-
-
-
-PROCEDURE CreateEvalData(NrRun : ShortInt);
-VAR dayi, monthi, yeari : INTEGER;
-    StrNr,TempString : string;
-    Zeval_temp : double;
-    DayNr1Eval_temp, DayNrEval_temp : INTEGER;
-
-BEGIN
-// open input file with field data
-fObs_open(GetObservationsFilefull(), 'r'); // Observations recorded in File
-fObs_read(); // description
-fObs_read(); // AquaCrop Version number
-TempString := fObs_read();
-ReadStr(TempString, Zeval_temp); //  depth of sampled soil profile
-SetZeval(Zeval_temp);
-TempString := fObs_read();
-ReadStr(TempString, dayi);
-TempString := fObs_read();
-ReadStr(TempString, monthi);
-TempString := fObs_read();
-ReadStr(TempString, yeari);
-DayNr1Eval_temp := GetDayNr1Eval();
-DetermineDayNr(dayi,monthi,yeari,DayNr1Eval_temp);
-SetDayNr1Eval(DayNr1Eval_temp);
-fObs_read(); // title
-fObs_read(); // title
-fObs_read(); // title
-fObs_read(); // title
-SetLineNrEval(undef_int);
-TempString := fObs_read();
-IF (NOT fObs_eof()) THEN
-   BEGIN
-   SetLineNrEval(11);
-   ReadStr(TempString, DayNrEval_temp);
-   SetDayNrEval(DayNrEval_temp);
-   SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
-   WHILE ((GetDayNrEval() < GetSimulation_FromDayNr()) AND (GetLineNrEval() <> undef_int)) DO
-      BEGIN
-      TempString := fObs_read();
-      IF (fObs_eof())
-         THEN SetLineNrEval(undef_int)
-         ELSE BEGIN
-              SetLineNrEval( GetLineNrEval() + 1);
-              ReadStr(TempString, DayNrEval_temp);
-              SetDayNrEval(DayNrEval_temp);
-              SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
-              END;
-      END;
-   END;
-IF (GetLineNrEval() = undef_int) THEN fObs_close();
-// open file with simulation results, field data
-IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1))
-   THEN Str(NrRun:3,StrNr)
-   ELSE StrNr := '';
-SetfEval_filename(CONCAT(GetPathNameSimul(),'EvalData',Trim(StrNr),'.OUT'));
-fEval_open(GetfEval_filename(), 'w');
-fEval_write('AquaCrop 7.0 (June 2021) - Output created on (date) : ' + DateToStr(Date) + '   at (time) : ' + TimeToStr(Time));
-fEval_write('Evaluation of simulation results - Data');
-Str(GetZeval():5:2,TempString);
-fEval_write('                                                                                     for soil depth: ' + Trim(TempString) + ' m');
-fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      Bobs      Bstd   SWCsim  SWCobs   SWstd');
-fEval_write('                                   %       %       %     ton/ha    ton/ha    ton/ha    mm       mm      mm');
-END; (* CreateEvalData *)
-
 
 
 // WRITING RESULTS section ================================================= START ====================
@@ -609,7 +313,7 @@ writeStr(tempstring,Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():6);
 fDaily_write(tempstring, false);
 
 // 1. Water balance
-IF Out1Wabal THEN
+IF GetOut1Wabal() THEN
    BEGIN
    IF (GetZiAqua() = undef_int) THEN
       BEGIN
@@ -628,8 +332,8 @@ IF Out1Wabal THEN
                         ELSE Ratio2 := 100.0;
    IF (GetEpot() > 0) THEN Ratio3 := 100*GetEact()/GetEpot()
                  ELSE Ratio3 := 100;
-   IF ((Out2Crop = true) OR (Out3Prof = true) OR (Out4Salt = true)
-      OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
+   IF ((GetOut2Crop() = true) OR (GetOut3Prof() = true) OR (GetOut4Salt() = true)
+      OR (GetOut5CompWC() = true) OR (GetOut6CompEC() = true) OR (GetOut7Clim() = true)) THEN
       BEGIN
       WriteStr(tempstring, GetEpot():9:1,GetEact():9:1,Ratio3:7:0,GetTpot():9:1,GetTact():9:1,Ratio1:6:0,(GetEpot()+GetTpot()):9:1,(GetEact()+GetTact()):8:1,Ratio2:8:0);
       fDaily_write(tempstring, false);
@@ -641,7 +345,7 @@ IF Out1Wabal THEN
    END;
 
 // 2. Crop development and yield
-IF Out2Crop THEN
+IF GetOut2Crop() THEN
    BEGIN
    //1. relative transpiration
    IF (GetTpot() > 0) THEN Ratio1 := 100*GetTact()/GetTpot()
@@ -705,7 +409,7 @@ IF Out2Crop THEN
       fDaily_write(tempstring, false);
       END;
    // finalize
-   IF ((Out3Prof = true) OR (Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
+   IF ((GetOut3Prof() = true) OR (GetOut4Salt() = true) OR (GetOut5CompWC() = true) OR (GetOut6CompEC() = true) OR (GetOut7Clim() = true)) THEN
       BEGIN
       WriteStr(tempstring, Brel:8,WPy:12:2,GetBin():9:3,GetBout():9:3);
       fDaily_write(tempstring, false);
@@ -717,7 +421,7 @@ IF Out2Crop THEN
    END;
 
 // 3. Profile/Root zone - Soil water content
-IF Out3Prof THEN
+IF GetOut3Prof() THEN
    BEGIN
    WriteStr(tempstring, GetTotalWaterContent().EndDay:10:1);
    fDaily_write(tempstring, false);
@@ -756,7 +460,7 @@ IF Out3Prof THEN
    WriteStr(tempstring, GetRootZoneWC().actual:8:1,GetRootZoneWC().SAT:10:1,GetRootZoneWC().FC:10:1,GetRootZoneWC().Leaf:10:1,
       GetRootZoneWC().Thresh:10:1,GetRootZoneWC().Sen:10:1);
    fDaily_write(tempstring, false);
-   IF ((Out4Salt = true) OR (Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true)) THEN
+   IF ((GetOut4Salt() = true) OR (GetOut5CompWC() = true) OR (GetOut6CompEC() = true) OR (GetOut7Clim() = true)) THEN
       BEGIN
       WriteStr(tempstring, GetRootZoneWC().WP:10:1);
       fDaily_write(tempstring, false);
@@ -768,7 +472,7 @@ IF Out3Prof THEN
    END;
    
 // 4. Profile/Root zone - soil salinity
-IF Out4Salt THEN
+IF GetOut4Salt() THEN
    BEGIN
    WriteStr(tempstring, GetSaltInfiltr():9:3,(GetDrain()*GetECdrain()*Equiv/100):10:3,(GetCRsalt()/100):10:3,GetTotalSaltContent().EndDay:10:3);
    fDaily_write(tempstring, false);
@@ -791,7 +495,7 @@ IF Out4Salt THEN
                  (100*(1-GetRootZoneSalt().KsSalt)):7:0,(GetZiAqua()/100):8:2);
       fDaily_write(tempstring, false);
       END;
-   IF ((Out5CompWC = true) OR (Out6CompEC = true) OR (Out7Clim = true))
+   IF ((GetOut5CompWC() = true) OR (GetOut6CompEC() = true) OR (GetOut7Clim() = true))
       THEN BEGIN
       WriteStr(tempstring, GetECiAqua():8:2);
       fDaily_write(tempstring, false);
@@ -803,7 +507,7 @@ IF Out4Salt THEN
    END;
 
 // 5. Compartments - Soil water content
-IF Out5CompWC THEN
+IF GetOut5CompWC() THEN
    BEGIN
    WriteStr(tempstring, (GetCompartment_Theta(1)*100):11:1);
    fDaily_write(tempstring, false);
@@ -811,7 +515,7 @@ IF Out5CompWC THEN
     BEGIN WriteStr(tempstring, (GetCompartment_Theta(Nr)*100):11:1);
           fDaily_write(tempstring, false);
     END;
-   IF ((Out6CompEC = true) OR (Out7Clim = true))
+   IF ((GetOut6CompEC() = true) OR (GetOut7Clim() = true))
       THEN BEGIN
       WriteStr(tempstring, (GetCompartment_Theta(GetNrCompartments())*100):11:1);
       fDaily_write(tempstring, false);
@@ -823,7 +527,7 @@ IF Out5CompWC THEN
    END;
 
 // 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
-IF Out6CompEC THEN
+IF GetOut6CompEC() THEN
    BEGIN
    SaltVal := ECeComp(GetCompartment_i(1));
    WriteStr(tempstring, SaltVal:11:1);
@@ -835,7 +539,7 @@ IF Out6CompEC THEN
        fDaily_write(tempstring, false);
        END;
    SaltVal := ECeComp(GetCompartment_i(GetNrCompartments()));
-   IF (Out7Clim = true)
+   IF (GetOut7Clim = true)
       THEN BEGIN
       WriteStr(tempstring, SaltVal:11:1);
       fDaily_write(tempstring, false);
@@ -847,7 +551,7 @@ IF Out6CompEC THEN
    END;
 
 // 7. Climate input parameters
-IF Out7Clim THEN
+IF GetOut7Clim() THEN
    BEGIN
    Ratio1 := (GetTmin() + GetTmax())/2;
    WriteStr(tempstring,GetRain():9:1,GetETo():10:1,GetTmin():10:1,Ratio1:10:1,GetTmax():10:1,GetCO2i():10:2);
@@ -860,7 +564,7 @@ END; (* WriteDailyResults *)
 PROCEDURE WriteEvaluationData(DAP : INTEGER);
                               
 VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
-    Nr,Di,Mi,Yi : INTEGER;
+    Nr,Di,Mi,Yi: INTEGER;
     TempString : string;
     DayNrEval_temp : INTEGER;
 

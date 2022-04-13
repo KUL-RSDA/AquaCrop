@@ -1031,6 +1031,13 @@ real(dp) :: Tmin ! degC
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay, OutDaily
+logical :: Out1Wabal
+logical :: Out2Crop
+logical :: Out3Prof
+logical :: Out4Salt
+logical :: Out5CompWC
+logical :: Out6CompEC
+logical :: Out7Clim
 
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
@@ -14744,6 +14751,97 @@ subroutine SetPreDay(PreDay_in)
 
     PreDay = PreDay_in
 end subroutine SetPreDay
+
+logical function GetOut1Wabal()
+    !! Getter for the "Out1Wabal" global variable.
+
+    GetOut1Wabal = Out1Wabal
+end function GetOut1Wabal
+
+subroutine SetOut1Wabal(Out1Wabal_in)
+    !! Setter for the "Out1Wabal" global variable.
+    logical, intent(in) :: Out1Wabal_in
+
+    Out1Wabal = Out1Wabal_in
+end subroutine SetOut1Wabal
+
+logical function GetOut2Crop()
+    !! Getter for the "Out2Crop" global variable.
+
+    GetOut2Crop = Out2Crop
+end function GetOut2Crop
+
+subroutine SetOut2Crop(Out2Crop_in)
+    !! Setter for the "Out2Crop" global variable.
+    logical, intent(in) :: Out2Crop_in
+
+    Out2Crop = Out2Crop_in
+end subroutine SetOut2Crop
+
+logical function GetOut3Prof()
+    !! Getter for the "Out3Prof" global variable.
+
+    GetOut3Prof= Out3Prof
+end function GetOut3Prof
+
+subroutine SetOut3Prof(Out3Prof_in)
+    !! Setter for the "Out3Prof" global variable.
+    logical, intent(in) :: Out3Prof_in
+
+    Out3Prof = Out3Prof_in
+end subroutine SetOut3Prof
+
+logical function GetOut4Salt()
+    !! Getter for the "Out4Salt" global variable.
+
+    GetOut4Salt= Out4Salt
+end function GetOut4Salt
+
+subroutine SetOut4Salt(Out4Salt_in)
+    !! Setter for the "Out4Salt" global variable.
+    logical, intent(in) :: Out4Salt_in
+
+    Out4Salt = Out4Salt_in
+end subroutine SetOut4Salt
+
+logical function GetOut5CompWC()
+    !! Getter for the "Out5CompWC" global variable.
+
+    GetOut5CompWC= Out5CompWC
+end function GetOut5CompWC
+
+subroutine SetOut5CompWC(Out5CompWC_in)
+    !! Setter for the "Out5CompWC" global variable.
+    logical, intent(in) :: Out5CompWC_in
+
+    Out5CompWC = Out5CompWC_in
+end subroutine SetOut5CompWC
+
+logical function GetOut6CompEC()
+    !! Getter for the "Out6CompEC" global variable.
+
+    GetOut6CompEC= Out6CompEC
+end function GetOut6CompEC
+
+subroutine SetOut6CompEC(Out6CompEC_in)
+    !! Setter for the "Out6CompEC" global variable.
+    logical, intent(in) :: Out6CompEC_in
+
+    Out6CompEC = Out6CompEC_in
+end subroutine SetOut6CompEC
+
+logical function GetOut7Clim()
+    !! Getter for the "Out7Clim" global variable.
+
+    GetOut7Clim= Out7Clim
+end function GetOut7Clim
+
+subroutine SetOut7Clim(Out7Clim_in)
+    !! Setter for the "Out7Clim" global variable.
+    logical, intent(in) :: Out7Clim_in
+
+    Out7Clim = Out7Clim_in
+end subroutine SetOut7Clim
 
 integer(int8) function GetIniPercTAW()
     !! Getter for the "IniPercTAW" global variable.
