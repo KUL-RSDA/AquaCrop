@@ -3599,7 +3599,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         Year1_loc = 9999
         YearN_loc = 9999
     end if
-    if (ANumber == undef_int) then ! intermediate results
+    if (ANumber == int(undef_int, int8)) then ! intermediate results
         select case (GetOutputAggregate())
         case(1)
             write(TempString, '(a, 3i9)') '      Day', Day1, Month1, Year1_loc
@@ -3667,7 +3667,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
     call fRun_write(trim(TempString), .false.)
 
     ! Crop yield
-    if (ANumber /= undef_int) then ! end of simulation run
+    if (ANumber /= int(undef_int, int8)) then ! end of simulation run
         ! Water Use Efficiency yield
         if (((GetSumWaBal_Tact() > 0._dp) .or. (GetSumWaBal_ECropCycle() > 0._dp)) &
             .and. (GetSumWaBal_YieldPart() > 0._dp)) then
@@ -3686,7 +3686,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         end if
 
         ! Fresh yield
-        if ((GetCrop_DryMatter() == undef_int) &
+        if ((GetCrop_DryMatter() == int(undef_int, int8)) &
             .or. (GetCrop_DryMatter() < epsilon(0._dp))) then
             write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
                                                     undef_double, WPy
