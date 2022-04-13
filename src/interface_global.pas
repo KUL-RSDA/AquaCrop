@@ -4812,6 +4812,11 @@ function GetSurf0() : double;
 procedure SetSurf0(constref Surf0_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsurf0';
 
+function GetOutDaily() : boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getoutdaily_wrap';
+
+procedure SetOutDaily(constref OutDaily_in : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setoutdaily_wrap';
 
 implementation
 

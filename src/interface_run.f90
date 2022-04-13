@@ -55,7 +55,9 @@ use ac_run, only:   fDaily_open, &
                     GetNoMoreCrop, &
                     SetNoMoreCrop, &
                     GetCGCadjustmentAfterCutting, &
-                    SetCGCadjustmentAfterCutting
+                    SetCGCadjustmentAfterCutting, &
+                    GetNoYear, &
+                    SetNoYear
 
 implicit none
 
@@ -572,6 +574,24 @@ subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
     CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
     call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
 end subroutine SetCGCadjustmentAfterCutting_wrap
+
+
+function GetNoYear_wrap() result(NoYear_f)
+
+    logical(1) :: NoYear_f
+
+    NoYear_f = GetNoYear()
+end function GetNoYear_wrap
+
+
+subroutine SetNoYear_wrap(NoYear_in)
+    logical(1), intent(in) :: NoYear_in
+
+    logical :: NoYear_f
+
+    NoYear_f = NoYear_in
+    call SetNoYear(NoYear_f)    
+end subroutine SetNoYear_wrap
 
 
 end module ac_interface_run

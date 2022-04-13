@@ -15,7 +15,7 @@ VAR DataPath,ObsPath : BOOLEAN;
 
 // Extra for stand alone procedure
     PathNameList,PathNameParam : string;
-    OutDaily,Part1Mult,Part2Eval : BOOLEAN;
+    Part1Mult,Part2Eval : BOOLEAN;
 
 
 PROCEDURE AppendCropFilePerennials(totalname : string;

@@ -1143,6 +1143,12 @@ function GetPreviousDayNr() : integer;
 procedure SetPreviousDayNr(constref PreviousDayNr : integer);
     external 'aquacrop' name '__ac_run_MOD_setpreviousdaynr';
 
+function GetNoYear() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getnoyear_wrap';
+
+procedure SetNoYear(constref NoYear_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setnoyear_wrap';
+
 function GetfEval_filename() : string;
 
 function GetfEval_filename_wrap() : PChar;
@@ -1208,6 +1214,9 @@ procedure fHarvest_write_wrap(
 
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
+
+procedure InitializeSimulationRun();
+        external 'aquacrop' name '__ac_run_MOD_initializesimulationrun';
 
 procedure CreateEvalData(NrRun : ShortInt);
     external 'aquacrop' name '__ac_run_MOD_createevaldata';
