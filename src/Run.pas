@@ -1190,7 +1190,7 @@ IF GetManagement_Cuttings_Considered() THEN
          SetCGCadjustmentAfterCutting(true); // adjustement CGC
          END;
       // Record harvest
-      IF Part1Mult THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval());
+      IF GetPart1Mult() THEN RecordHarvest(GetNrCut(),GetDayNri(),DayInSeason,GetSumInterval());
       // Reset
       SetSumInterval(0);
       SetSumGDDcuts(0);
@@ -1246,7 +1246,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
 //14.d Print ---------------------------------------
 IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
 IF GetOutDaily() THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
+IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
 
 (* 15. Prepare Next day *)
 //15.a Date
@@ -1313,7 +1313,7 @@ BEGIN
 TheProjectFile := TheProjectFile_;
 OpenOutputRun(TheProjectType); // open seasonal results .out
 IF GetOutDaily() THEN OpenOutputDaily(TheProjectType);  // Open Daily results .OUT
-IF Part1Mult THEN OpenPart1MultResults(TheProjectType); // Open Multiple harvests in season .OUT
+IF GetPart1Mult() THEN OpenPart1MultResults(TheProjectType); // Open Multiple harvests in season .OUT
 END;  // InitializeSimulation
 
 
@@ -1321,7 +1321,7 @@ PROCEDURE FinalizeSimulation();
 BEGIN
 fRun_close(); // Close Run.out
 IF GetOutDaily() THEN fDaily_close();  // Close Daily.OUT
-IF Part1Mult THEN fHarvest_close();  // Close Multiple harvests in season
+IF GetPart1Mult() THEN fHarvest_close();  // Close Multiple harvests in season
 END;  // FinalizeSimulation
 
 
@@ -1378,8 +1378,8 @@ SetSumWaBal(SumWaBal_temp);
 ResetPreviousSum();
 InitializeSimulationRun;
 IF GetOutDaily() THEN WriteTitleDailyResults(TheProjectType,NrRun);
-IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun);
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun);
+IF GetPart1Mult() THEN WriteTitlePart1MultResults(TheProjectType,NrRun);
+IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun);
 END; // InitializeRun
 
 
@@ -1439,7 +1439,7 @@ BEGIN
 IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
     BEGIN
     // multiple cuttings
-    IF Part1Mult THEN
+    IF GetPart1Mult() THEN
        BEGIN
        IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
           BEGIN  // final harvest at crop maturity
@@ -1511,7 +1511,7 @@ BEGIN
 CloseClimateFiles();
 CloseIrrigationFile();
 CloseManagementFile();
-IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun);
+IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun);
 END; // FinalizeRun2
 
 

@@ -5,22 +5,14 @@ interface
 uses Global, interface_global, InitialSettings, interface_initialsettings, Run, interface_run;
 
 
-procedure GetTimeAggregationResults(VAR OutputAggregate : ShortInt);
+procedure GetTimeAggregationResults();
     external 'aquacrop' name '__ac_startunit_MOD_gettimeaggregationresults';
 
-procedure GetRequestDailyResults(VAR Out1Wabal : boolean; 
-                                 VAR Out2Cro : boolean; 
-                                 VAR Out3Prof : boolean;
-                                 VAR Out4Salt : boolean;
-                                 VAR Out5CompWC : boolean;
-                                 VAR Out6CompEC : boolean;
-                                 VAR Out7Clim : boolean;
-                                 VAR OutDaily : boolean);
-    external 'aquacrop' name '__ac_interface_startunit_MOD_getrequestdailyresults_wrap';
+procedure GetRequestDailyResults();
+    external 'aquacrop' name '__ac_startunit_MOD_getrequestdailyresults';
 
-procedure GetRequestParticularResults(VAR Part1Mult : boolean;
-                                      VAR Part2Eval : boolean);
-    external 'aquacrop' name '__ac_interface_startunit_MOD_getrequestparticularresults_wrap';
+procedure GetRequestParticularResults();
+    external 'aquacrop' name '__ac_startunit_MOD_getrequestparticularresults';
 
 procedure fProjects_open(constref filename : string; constref mode : string);
 
@@ -42,6 +34,11 @@ procedure fProjects_write_wrap(
 procedure fProjects_close();
         external 'aquacrop' name '__ac_startunit_MOD_fprojects_close';
 
+procedure PrepareReport();
+        external 'aquacrop' name '__ac_startunit_MOD_preparereport';
+
+procedure InitializeTheProgram();
+        external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
 
 implementation
 
