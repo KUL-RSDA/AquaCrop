@@ -5382,8 +5382,7 @@ end subroutine OpenClimFilesAndGetDataFirstDay
 
 !! ===BEGIN Subroutines and functions for AdvanceOneTimeStep ===
 
-subroutine GetZandECgwt(DayNri, ZiAqua, ECiAqua)
-    integer(int32), intent(in) :: DayNri
+subroutine GetZandECgwt(ZiAqua, ECiAqua)
     integer(int32), intent(inout) :: ZiAqua
     real(dp), intent(inout) :: ECiAqua
 
@@ -5396,11 +5395,11 @@ subroutine GetZandECgwt(DayNri, ZiAqua, ECiAqua)
         ECiAqua = GetGwTable_EC1()
     else
         ZiAqua = GetGwTable_Z1() + &
-                 roundc((DayNri - GetGwTable_DNr1())* &
+                 roundc((GetDayNri() - GetGwTable_DNr1())* &
                  (GetGwTable_Z2() - GetGwTable_Z1())/ &
                  real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp), mold = 1)
         ECiAqua = GetGwTable_EC1() + &
-                 (DayNri - GetGwTable_DNr1())* &
+                 (GetDayNri() - GetGwTable_DNr1())* &
                  (GetGwTable_EC2() - GetGwTable_EC1())/&
                  real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp)
     end if

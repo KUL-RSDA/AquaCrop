@@ -747,7 +747,7 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
         END;
    ZiAqua_temp := GetZiAqua();
    ECiAqua_temp := GetECiAqua();
-   GetZandECgwt(GetDayNri(),ZiAqua_temp,ECiAqua_temp);
+   GetZandECgwt(ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
    SetECiAqua(ECiAqua_temp);
    WaterTableInProfile_temp := GetWaterTableInProfile();
