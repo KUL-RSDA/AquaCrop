@@ -23,11 +23,11 @@ implementation
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
 
-PROCEDURE PrepareReport(OutputAggregate : ShortInt);
+PROCEDURE PrepareReport();
 BEGIN
 fProjects_open(CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'), 'w');
 fProjects_write('Intermediate results: ', false);
-CASE OutputAggregate OF
+CASE GetOutputAggregate() OF
      1 : fProjects_write('daily results');
      2 : fProjects_write('10-daily results');
      3 : fProjects_write('monthly results');
@@ -126,7 +126,7 @@ SetPathNameProg('');
 GetTimeAggregationResults();
 GetRequestDailyResults();
 GetRequestParticularResults();
-PrepareReport(GetOutputAggregate());
+PrepareReport();
 END;
 
 
