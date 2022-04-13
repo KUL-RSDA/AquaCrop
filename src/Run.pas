@@ -495,6 +495,7 @@ WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():5,(GetCCiActual()*100):
 fEval_write(TempString);
 END; (* WriteEvaluationData *)
 
+
 // WRITING RESULTS section ================================================= END ====================
 
 PROCEDURE AdvanceOneTimeStep();
@@ -529,39 +530,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     alfaHI_temp, alfaHIAdj_temp : double;
     TESTVAL : double;
     WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
-
-
-    FUNCTION IrriOutSeason(Dayi : LongInt) : INTEGER;
-    VAR DNr, Nri : INTEGER;
-        IrriEvents : rep_IrriOutSeasonEvents;
-        TheEnd : BOOLEAN;
-    BEGIN
-    DNr := Dayi - GetSimulation_FromDayNr() + 1;
-    IrriEvents := GetIrriBeforeSeason();
-    IF (Dayi > GetCrop().DayN) THEN
-       BEGIN
-       DNr := Dayi - GetCrop().DayN;
-       IrriEvents := GetIrriAfterSeason();
-       END;
-    IF (DNr < 1)
-       THEN IrriOutSeason := 0
-       ELSE BEGIN
-            TheEnd := false;
-            Nri := 0;
-            REPEAT
-              Nri := Nri + 1;
-              IF (IrriEvents[Nri].DayNr = DNr)
-                 THEN BEGIN
-                      IrriOutSeason := IrriEvents[Nri].Param;
-                      TheEnd := true;
-                      END
-                 ELSE IrriOutSeason := 0;
-            UNTIL ((Nri = 5) OR (IrriEvents[Nri].DayNr = 0)
-               OR (IrriEvents[Nri].DayNr > DNr)
-               OR TheEnd);
-            END;
-    END; (* IrriOutSeason *)
-
 
 
     FUNCTION IrriManual(Dayi : LongInt) : INTEGER;
@@ -610,7 +578,7 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TargetTimeVal := -999;
     TargetDepthVal := -999;
     IF ((GetDayNri() < GetCrop().Day1) OR (GetDayNri() > GetCrop().DayN))
-       THEN SetIrrigation(IrriOutSeason(GetDayNri()))
+       THEN SetIrrigation(IrriOutSeason())
        ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual(GetDayNri()));
     IF ((GetIrriMode() = Generate) AND ((GetDayNri() >= GetCrop().Day1) AND (GetDayNri() <= GetCrop().DayN))) THEN
        BEGIN

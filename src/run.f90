@@ -287,7 +287,10 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManFileFull, &
                         max_No_compartments, &
                         calculateadjustedfc, &
-                        setcompartment
+                        setcompartment, &
+                        Rep_DayEventInt, &
+                        GetIrriBeforeSeason_i, &
+                        GetIrriAfterSeason_i
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -5407,6 +5410,41 @@ subroutine GetZandECgwt(DayNri, ZiAqua, ECiAqua)
         call SetCompartment(Comp_temp)
     end if
 end subroutine GetZandECgwt
+
+integer(int32) function IrriOutSeason()
+
+    integer(int32) :: DNr, Nri, i
+    type(Rep_DayEventInt), dimension(5) :: IrriEvents
+    logical :: TheEnd
+
+    DNr = GetDayNri() - GetSimulation_FromDayNr() + 1
+    do i = 1, 5  
+        IrriEvents(i) = GetIrriBeforeSeason_i(i)
+    end do
+    if (GetDayNri() > GetCrop_DayN()) then
+        DNr = GetDayNri() - GetCrop_DayN()
+        do i = 1, 5
+            IrriEvents(i) = GetIrriAfterSeason_i(i)
+        end do
+    end if
+    if (DNr < 1) then
+        IrriOutSeason = 0
+    else
+        TheEnd = .false.
+        Nri = 0
+        do while (.not. ((Nri == 5) .or. (IrriEvents(Nri)%DayNr == 0) &
+              .or. (IrriEvents(Nri)%DayNr > DNr) &
+              .or. TheEnd))
+            Nri = Nri + 1
+            if (IrriEvents(Nri)%DayNr == DNr) then
+                IrriOutSeason = IrriEvents(Nri)%Param
+                TheEnd = .true.
+            else
+                IrriOutSeason = 0
+            end if
+        end do
+    end if
+end function IrriOutSeason
 
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
