@@ -2660,7 +2660,7 @@ end subroutine SetOut5CompWC_wrap
 
 
 function GetOut6CompEC_wrap() result(Out6CompEC_f)
-    !! Wrapper for [[ac_global:GetOut7Clim]] for foreign languages
+    !! Wrapper for [[ac_global:GetOut6CompEC] for foreign languages
     logical(1) :: Out6CompEC_f
 
     Out6CompEC_f= GetOut6CompEC()

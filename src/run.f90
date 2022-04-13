@@ -2528,10 +2528,10 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     integer(int32) :: Compi
 
     ! A. Run number
-    call fDaily_write(trim(''))
+    call fDaily_write('')
     if (TheProjectType == typeproject_TypePRM) then
         write(Str1, '(i4)') TheNrRun
-        call fDaily_write(trim('   Run:'// Str1))
+        call fDaily_write('   Run:'// trim(Str1))
     end if
 
     ! B. thickness of soil profile and root zone
@@ -2541,7 +2541,8 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
             Zprof = Zprof + GetCompartment_Thickness(compi)
         end do
         write(Str1,'(f4.2)') Zprof
-        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
+                                roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
             write(Str2, '(f4.2)') GetCrop_RootMax()
         else
             write(Str2,'(f4.2)') GetSoil_RootMax()
@@ -2554,13 +2555,13 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     ! C1. Water balance
     if (GetOut1Wabal()) then
         if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
-            .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
-            write(tempstring,'(4a)') '   WC(',Str1,')   Rain     Irri   Surf'// &
+           .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(4a)') '   WC(',trim(Str1),')   Rain     Irri   Surf'// &
                   '   Infilt   RO    Drain       CR    Zgwt', &
                '       Ex       E     E/Ex     Trx       Tr  Tr/Trx    ETx      ET  ET/ETx'
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring,'(4a)') '   WC(', Str1, ')   Rain     Irri   Surf'// &
+            write(tempstring,'(4a)') '   WC(', trim(Str1), ')   Rain     Irri   Surf'// &
                           '   Infilt   RO    Drain       CR    Zgwt', &
                           '       Ex       E     E/Ex     Trx       Tr  Tr/Trx'// &
                                                       '    ETx      ET  ET/ETx'
@@ -2569,7 +2570,8 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
     ! C2. Crop development and yield
     if (GetOut2Crop()) then
-        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) &
+                              .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
             write(tempstring, '(2a)') '      GD       Z     StExp  StSto  StSen'// &
                           ' StSalt StWeed   CC      CCw     StTr  Kc(Tr)'// &
                           '     Trx       Tr      TrW  Tr/Trx   WP', &
@@ -2587,12 +2589,13 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
     ! C3. Profile/Root zone - Soil water content
     if (GetOut3Prof()) then
-        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
-            write(tempstring, '(5a)') '  WC(', Str1, ') Wr(', Str2, ')     Z'// &
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+                                                    .or. (GetOut7Clim())) then
+            write(tempstring, '(5a)') '  WC(', trim(Str1), ') Wr(', trim(Str2), ')     Z'// &
                   '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)   Wr(sen)   Wr(PWP)'
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring, '(5a)') '  WC(', Str1, ') Wr(', Str2, ')     Z'// &
+            write(tempstring, '(5a)') '  WC(', trim(Str1), ') Wr(',trim(Str2), ')     Z'// &
                             '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)'// &
                                 '   Wr(sen)   Wr(PWP)'
             call fDaily_write(trim(tempstring))
@@ -2602,12 +2605,12 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     if (GetOut4Salt()) then
         if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
             write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
-                            '   Salt(', Str1, ')  SaltZ     Z       ECe'// &
+                            '   Salt(', trim(Str1), ')  SaltZ     Z       ECe'// &
                                 '    ECsw   StSalt  Zgwt    ECgw'
             call fDaily_write(trim(tempstring), .false.)
         else
             write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
-                            '   Salt(', Str1, ')  SaltZ     Z       ECe'// &
+                            '   Salt(', trim(Str1), ')  SaltZ     Z       ECe'// &
                                 '    ECsw   StSalt  Zgwt    ECgw'
             call fDaily_write(trim(tempstring))
         end if
@@ -2617,13 +2620,13 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
         call fDaily_write(trim('       WC01'), .false.)
         do Compi = 2, (GetNrCompartments()-1)
             write(Str1, '(i2)') Compi
-            call fDaily_write(trim('       WC'// Str1), .false.)
+            call fDaily_write('       WC'// trim(Str1), .false.)
         end do
         write(Str1,'(i2)') GetNrCompartments()
         if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
-            call fDaily_write(trim('       WC'// Str1), .false.)
+            call fDaily_write('       WC'// trim(Str1), .false.)
         else
-            call fDaily_write(trim('       WC'// Str1))
+            call fDaily_write('       WC'// trim(Str1))
         end if
     end if
     ! C6. Compartmens - Electrical conductivity of the saturated soil-paste extract
@@ -2631,13 +2634,13 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
         call fDaily_write(trim('      ECe01'), .false.)
         do Compi = 2, (GetNrCompartments()-1)
             write(Str1, '(i2)') Compi
-            call fDaily_write(trim('      ECe'// Str1), .false.)
+            call fDaily_write('      ECe'// trim(Str1), .false.)
         end do
         write(Str1, '(i2)') GetNrCompartments()
         if (GetOut7Clim()) then
-            call fDaily_write(trim('      ECe'// Str1), .false.)
+            call fDaily_write('      ECe'// trim(Str1), .false.)
         else
-            call fDaily_write(trim('      ECe'// Str1))
+            call fDaily_write('      ECe'// trim(Str1))
         end if
     end if
     ! C7. Climate input parameters
@@ -2645,7 +2648,7 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
         call fDaily_write(trim('     Rain       ETo      Tmin      Tavg      Tmax      CO2'))
     end if
 
-    call fDaily_write(trim('                              '), .false.)
+    call fDaily_write('                              ', .false.)
     ! D1. Water balance
     if (GetOut1Wabal()) then
         if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
@@ -2665,7 +2668,8 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
     ! D2. Crop development and yield
     if (GetOut2Crop()) then
-        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. &
+                                    (GetOut6CompEC()) .or. (GetOut7Clim())) then
             write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
                            '      %      %      %       %       %       -'// &
                            '        mm       mm       mm    %     g/m2', &
@@ -2683,7 +2687,8 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
     ! D3. Profile/Root zone - Soil water content
     if (GetOut3Prof()) then
-        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+                                                     .or. (GetOut7Clim())) then
             call fDaily_write(trim('      mm       mm       m       mm        mm'// &
                               '        mm        mm        mm        mm'// &
                               '         mm'), .false.)
