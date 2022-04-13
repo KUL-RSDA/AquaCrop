@@ -4085,7 +4085,7 @@ subroutine WriteEvaluationData(DAP)
             else
                 frac_value = Zsoil - (CumDepth - &
                              GetCompartment_Thickness(compi))
-                if (frac_value > 0) then
+                if (frac_value > 0._dp) then
                     Factor = frac_value/GetCompartment_Thickness(compi)
                 else
                      Factor = 0._dp
