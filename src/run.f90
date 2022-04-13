@@ -41,6 +41,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_DaysToSenescence, &
                         GetCrop_DeterminancyLinked, &
                         GetCrop_dHIdt, &
+                        GetCrop_DryMatter, &
                         GetCrop_GDDaysToCCini, &
                         GetCrop_GDDaysToFlowering, &
                         GetCrop_GDDaysToFullCanopy, &
@@ -103,6 +104,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
+                        GetSimulation_Storage_Btotal, &
                         GetSimulation_SumGDD, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
@@ -115,12 +117,16 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSumWaBal_SaltIn, &
                         GetSumWaBal_SaltOut, &
                         GetSumWaBal_CRsalt, &
+                        GetSumWaBal_ECropCycle, &
+                        GetSUmWaBal_Tact, &
+                        GetSumWaBal_YieldPart, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
                         GetTemperatureRecord_FromDayNr, &
                         GetTmax, &
                         GetTmin, &
+                        GetTotalSaltContent_endDay, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
@@ -275,6 +281,7 @@ use ac_global, only:    CompartmentIndividual, &
                         typeproject_typenone, &
                         typeproject_typepro, &
                         typeproject_typeprm, &
+                        undef_double, &
                         undef_int, &
                         GetManFile, &
                         GetManFileFull
@@ -446,6 +453,7 @@ character(len=:), allocatable :: fEval_filename
 logical :: WaterTableInProfile, StartMode, NoMoreCrop, CGCadjustmentAfterCutting
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
                          ! irrigation water was not yet recorded
+
 
 
 contains
@@ -2042,6 +2050,7 @@ subroutine SetGlobalIrriECw(GlobalIrriECw_in)
 
     GlobalIrriECw = GlobalIrriECw_in
 end subroutine SetGlobalIrriECw
+
 
 logical function GetWaterTableInProfile()
     !! Getter for the "WaterTableInProfile" global variable.
@@ -3882,6 +3891,212 @@ subroutine OpenIrrigationFile()
 end subroutine OpenIrrigationFile
 
 
+
+subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
+    integer(intEnum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=:), allocatable :: Str1
+    integer(int32) :: Dayi, Monthi, Yeari
+    real(dp) :: Nr
+    character(len=:), allocatable :: tempstring
+
+    ! A. Run number
+    call fHarvest_write('')
+    if (TheProjectType == typeproject_TypePRM) then
+        write(Str1, '(i4)') TheNrRun
+        call fHarvest_write('   Run:' // Str1)
+    end if
+
+    ! B. Title
+    call fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    ' // &
+        'Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)')
+    call fHarvest_write('                                 days     ton/ha    ' // &
+        'ton/ha    ton/ha    ton/ha    ton/ha    ton/ha')
+
+    ! C. start crop cycle
+    call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
+    call SetNoYear(Yeari == 1901)
+    if (GetNoYear()) then
+        if (Dayi == 0) then
+            Dayi = 1
+        end if
+        Yeari = 9999
+    end if
+    Nr = 0
+    write(Str1, '(f6.0)') Nr
+    write(tempstring, '(a, 3i6, f34.3, 2f20.3)') Str1, Dayi, Monthi, Yeari, &
+                                                 Nr, Nr, Nr
+    call fHarvest_write(tempstring)
+end subroutine WriteTitlePart1MultResults
+
+
+subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile)
+    integer(int8), intent(in) :: ANumber
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(in) :: Month1
+    integer(int32), intent(in) :: Year1
+    integer(int32), intent(in) :: DayN
+    integer(int32), intent(in) :: MonthN
+    integer(int32), intent(in) :: YearN
+    real(dp), intent(in) :: RPer
+    real(dp), intent(in) :: EToPer
+    real(dp), intent(in) :: GDDPer
+    real(dp), intent(in) :: IrriPer
+    real(dp), intent(in) :: InfiltPer
+    real(dp), intent(in) :: ROPer
+    real(dp), intent(in) :: DrainPer
+    real(dp), intent(in) :: CRwPer
+    real(dp), intent(in) :: EPer
+    real(dp), intent(in) :: ExPer
+    real(dp), intent(in) :: TrPer
+    real(dp), intent(in) :: TrWPer
+    real(dp), intent(in) :: TrxPer
+    real(dp), intent(in) :: SalInPer
+    real(dp), intent(in) :: SalOutPer
+    real(dp), intent(in) :: SalCRPer
+    real(dp), intent(in) :: BiomassPer
+    real(dp), intent(in) :: BUnlimPer
+    real(dp), intent(in) :: BmobPer
+    real(dp), intent(in) :: BstoPer
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: BrSF, RatioE, RatioT
+    integer(int32) :: Year1_loc, YearN_loc
+    real(dp) :: WPy, HI, tempreal
+    character(len=1025) :: TempString
+
+    ! copy intent(in) variables to locals
+    Year1_loc = Year1
+    YearN_loc = YearN
+
+    ! start
+    if (GetNoYear()) then
+        Year1_loc = 9999
+        YearN_loc = 9999
+    end if
+    if (ANumber == int(undef_int, int8)) then ! intermediate results
+        select case (GetOutputAggregate())
+        case(1)
+            write(TempString, '(a, 3i9)') '      Day', Day1, Month1, Year1_loc
+        case(2)
+            write(TempString, '(a, 3i9)') '    10Day', Day1, Month1, Year1_loc
+        case(3)
+            write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
+        end select
+    call fRun_write(trim(TempString), .false.)
+
+    else
+        write(TempString, '(i0)') ANumber
+        TempString = 'Tot(' // trim(TempString) // ')'
+        do while (len(trim(TempString)) < 9) 
+            TempString = ' ' // trim(TempString)
+        end do
+        call fRun_write(trim(TempString), .false.)
+        write(TempString, '(3i9)') Day1, Month1, Year1_loc
+        call fRun_write(trim(TempString), .false.)
+    end if
+    
+    tempreal = roundc(GDDPer*10._dp, mold=1)
+    ! Climatic conditions
+    write(TempString, '(3f9.1, f9.2)') Rper, EToPer,&
+          tempreal/10._dp, GetCO2i()
+    call fRun_write(trim(TempString), .false.)
+    ! Soil water parameters
+    if (ExPer > 0._dp) then
+        RatioE = roundc(100._dp*EPer/ExPer, mold=1)
+    else
+        RatioE = undef_int
+    end if
+    if (TrxPer > 0._dp) then
+        RatioT = roundc(100._dp*TrPer/TrxPer, mold=1)
+    else
+        RatioT = undef_int
+    end if
+
+    write(TempString, '(6f9.1, i9, 2f9.1, i9)') IrriPer, InfiltPer, ROPer, &
+                    DrainPer, CRwPer, EPer, RatioE, TrPer, TrWPer, RatioT
+    call fRun_write(trim(TempString), .false.)
+
+    ! Soil Salinity
+    write(TempString, '(4f10.3)') SalInPer, SalOutPer, SalCRPer, &
+                                  GetTotalSaltContent_EndDay()
+    call fRun_write(trim(TempString), .false.)
+
+    ! seasonal stress
+    write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
+                    GetManagement_FertilityStress(), GetStressTot_Weed(), &
+                    GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
+    call fRun_write(trim(TempString), .false.)
+
+    ! Biomass production
+    if ((BiomassPer > 0._dp) .and. (BUnlimPer > 0._dp)) then
+        BrSF = roundc(100._dp*BiomassPer/BUnlimPer, mold=1)
+        if (BrSF > 100) then
+            BrSF = 100
+        end if
+    else
+        BrSF = undef_int
+    end if
+
+    write(TempString, '(f10.3, i9)') BiomassPer, BrSF
+    call fRun_write(trim(TempString), .false.)
+
+    ! Crop yield
+    if (ANumber /= int(undef_int, int8)) then ! end of simulation run
+        ! Water Use Efficiency yield
+        if (((GetSumWaBal_Tact() > 0._dp) .or. (GetSumWaBal_ECropCycle() > 0._dp)) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            WPy = (GetSumWaBal_YieldPart()*1000._dp) &
+                    /((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10._dp)
+        else
+            WPy = 0.0_dp
+        end if
+
+        ! Harvest Index
+        if ((GetSumWaBal_Biomass() > 0._dp) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            HI = 100._dp*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
+        else
+            HI = undef_double
+        end if
+
+        ! Fresh yield
+        if ((GetCrop_DryMatter() == int(undef_int, int8)) &
+            .or. (GetCrop_DryMatter() < epsilon(0._dp))) then
+            write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
+                                                    undef_double, WPy
+        else
+            write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp)), WPy
+        end if
+        call fRun_write(trim(TempString), .false.)
+
+        ! Transfer of assimilates
+        write(TempString, '(2f9.3)') GetTransfer_Bmobilized(), &
+                                     GetSimulation_Storage_Btotal()
+        call fRun_write(trim(TempString), .false.)
+    else
+        write(TempString, '(4i9, 2f9.3)') undef_int, undef_int, undef_int, &
+                                          undef_int, BmobPer, BstoPer
+        call fRun_write(trim(TempString), .false.)
+    end if
+
+    ! End
+    write(TempString, '(3i9)') DayN, MonthN, YearN_loc
+    call fRun_write(trim(TempString), .false.)
+
+    ! Project
+    call fRun_write('  ' // TheProjectFile)
+end subroutine WriteTheResults 
+
+
+
 subroutine InitializeSimulationRun()
 
     integer(int32) :: tHImax, DNr1, DNr2, Dayi, DayCC
@@ -4559,6 +4774,7 @@ subroutine InitializeSimulationRun()
     call SetStressLeaf(real(undef_int, kind=dp))
     call SetStressSenescence(real(undef_int, kind=dp))
 end subroutine InitializeSimulationRun
+
 
 
 subroutine CreateEvalData(NrRun)
