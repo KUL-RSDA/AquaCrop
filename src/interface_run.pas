@@ -1274,17 +1274,16 @@ procedure openharvestinfo();
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
-procedure InitializeSimulation( constref TheProjectFile_ : string;
-						constref TheProjectType : repTypeProject);
+procedure InitializeSimulation(constref TheProjectFile_ : string;
+                               constref TheProjectType : repTypeProject);
 
-procedure InitializeSimulation_wrap(
-            constref filename_ptr : PChar;
-            constref filename_len : integer;
-			constref TheProjectType : integer);
+procedure InitializeSimulation_wrap(constref filename_ptr : PChar;
+                                    constref filename_len : integer;
+                                    constref TheProjectType : integer);
         external 'aquacrop' name '__ac_interface_run_MOD_initializesimulation_wrap';
 
 PROCEDURE FinalizeSimulation();
-         external 'aquacrop' name '__ac_run_MOD_finalizesimulation';
+        external 'aquacrop' name '__ac_run_MOD_finalizesimulation';
 
 procedure GetZandECgwt(VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
@@ -1921,16 +1920,16 @@ end;
 
 
 procedure InitializeSimulation(constref TheProjectFile_ : string;
-						       constref TheProjectType : repTypeProject);
+                               constref TheProjectType : repTypeProject);
 var
-	p : PChar;
-	strlen : integer;
+    p : PChar;
+    strlen : integer;
     int_typeproject : integer;
 begin
-	p := PChar(TheProjectFile_);
-	strlen := Length(TheProjectFile_);
+    p := PChar(TheProjectFile_);
+    strlen := Length(TheProjectFile_);
     int_typeproject := ord(TheProjectType);
-	InitializeSimulation_wrap(p,strlen, int_typeproject);
+    InitializeSimulation_wrap(p,strlen, int_typeproject);
 end;
 
 

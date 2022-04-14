@@ -483,16 +483,15 @@ subroutine fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     call fEval_open(filename, mode)
 end subroutine fEval_open_wrap
 
-subroutine InitializeSimulation_wrap(TheProjectFile_,&
-									strlen, TheProjectType)
+subroutine InitializeSimulation_wrap(TheProjectFile_,strlen, TheProjectType)
     type(c_ptr), intent(in) :: TheProjectFile_
     integer(int32), intent(in) :: strlen
     integer(intenum), intent(in) :: TheProjectType
 
-	character(len=strlen) :: string
+    character(len=strlen) :: string
 
     string = pointer2string(TheProjectFile_, strlen)
-	call InitializeSimulation(string, TheProjectType)
+    call InitializeSimulation(string, TheProjectType)
 end subroutine InitializeSimulation_wrap
 
 
