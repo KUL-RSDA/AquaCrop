@@ -4075,9 +4075,9 @@ subroutine WriteEvaluationData(DAP)
         CumDepth = 0._dp
         compi = 0
         SWCact = 0._dp
-        do while ((roundc(100._dp*CumDepth, mold=1) >= &
+        do while (.not. ((roundc(100._dp*CumDepth, mold=1) >= &
                    roundc(100._dp*ZSoil, mold=1)) .or. &
-                  (compi == GetNrCompartments()))
+                  (compi == GetNrCompartments())))
             compi = compi + 1
             CumDepth = CumDepth + GetCompartment_Thickness(compi)
             if (CumDepth <= Zsoil) then
