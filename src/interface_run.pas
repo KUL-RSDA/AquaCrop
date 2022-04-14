@@ -1272,7 +1272,24 @@ function IrriOutSeason() : INTEGER;
 function IrriManual() : INTEGER;
          external 'aquacrop' name '__ac_run_MOD_irrimanual';
 
+procedure WriteIntermediatePeriod(TheProjectFile : string);
+
+procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
+                                        constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_writeintermediateperiod_wrap';
+
+
 implementation
+
+procedure WriteIntermediatePeriod(TheProjectFile : string);
+var
+    TheProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    TheProjectFile_ptr := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen);
+end;
 
 
 procedure WriteTheResults(constref ANumber : ShortInt;

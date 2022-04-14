@@ -113,12 +113,23 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSoil_RootMax, &
                         GetSoilLayer_SAT, &
                         GetSumWaBal_Biomass, &
+                        GetSumWaBal_BiomassPot, &
                         GetSumWaBal_BiomassUnlim, &
                         GetSumWaBal_SaltIn, &
                         GetSumWaBal_SaltOut, &
                         GetSumWaBal_CRsalt, &
+                        GetSumWaBal_CRwater, &
+                        GetSumWaBal_Drain, &
                         GetSumWaBal_ECropCycle, &
+                        GetSumWaBal_Infiltrated, &
+                        GetSumWaBal_Irrigation, &
+                        GetSumWaBal_Rain, &
+                        GetSumWaBal_Runoff, &
+                        GetSumWaBal_Eact, &
+                        GetSUmWaBal_Epot, &
                         GetSUmWaBal_Tact, &
+                        GetSumWaBal_Tpot, &
+                        GetSumWaBal_TrW, &
                         GetSumWaBal_YieldPart, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
@@ -5379,6 +5390,74 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         call SetTmax(GetSimulParam_Tmax())
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
+
+subroutine WriteIntermediatePeriod(TheProjectFile)
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: Day1, Month1, Year1, DayN, MonthN, YearN
+    real(dp) :: RPer, EToPer, GDDPer, IrriPer, InfiltPer, EPer, &
+                ExPer, TrPer, TrWPer, TrxPer, DrainPer, BiomassPer, BUnlimPer
+    real(dp) :: ROPer, CRwPer, SalInPer, SalOutPer, SalCRPer, BmobPer, BstoPer
+
+    ! determine intermediate results
+    call DetermineDate((GetPreviousDayNr()+1), Day1, Month1, Year1)
+    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+    RPer = GetSumWaBal_Rain() - GetPreviousSum_Rain()
+    EToPer = GetSumETo() - GetPreviousSumETo()
+    GDDPer = GetSumGDD() - GetPreviousSumGDD()
+    IrriPer = GetSumWaBal_Irrigation() - GetPreviousSum_Irrigation()
+    InfiltPer = GetSumWaBal_Infiltrated() - GetPreviousSum_Infiltrated()
+    EPer = GetSumWaBal_Eact() - GetPreviousSum_Eact()
+    ExPer = GetSumWaBal_Epot() - GetPreviousSum_Epot()
+    TrPer = GetSumWaBal_Tact() - GetPreviousSum_Tact()
+    TrWPer = GetSumWaBal_TrW() - GetPreviousSum_TrW()
+    TrxPer = GetSumWaBal_Tpot() - GetPreviousSum_Tpot()
+    DrainPer = GetSumWaBal_Drain() - GetPreviousSum_Drain()
+    BiomassPer = GetSumWaBal_Biomass() - GetPreviousSum_Biomass()
+    BUnlimPer = GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim()
+
+    ROPer = GetSumWaBal_Runoff() - GetPreviousSum_Runoff()
+    CRwPer = GetSumWaBal_CRwater() - GetPreviousSum_CRwater()
+    SalInPer = GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn()
+    SalOutPer = GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut()
+    SalCRPer = GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt()
+
+    BmobPer = GetTransfer_Bmobilized() - GetPreviousBmob()
+    BstoPer = GetSimulation_Storage_Btotal() - GetPreviousBsto()
+
+    ! write
+    call WriteTheResults(int(undef_int, kind=int8), Day1, Month1, Year1, DayN, &
+                         MonthN, YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                         ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                         TrxPer, SalInPer, SalOutPer, SalCRPer, BiomassPer, &
+                         BUnlimPer, BmobPer, BstoPer, TheProjectFile)
+
+    ! reset previous sums
+    call SetPreviousDayNr(GetDayNri())
+    call SetPreviousSum_Rain(GetSumWaBal_Rain())
+    call SetPreviousSumETo(GetSumETo())
+    call SetPreviousSumGDD(GetSumGDD())
+    call SetPreviousSum_Irrigation(GetSumWaBal_Irrigation())
+    call SetPreviousSum_Infiltrated(GetSumWaBal_Infiltrated())
+    call SetPreviousSum_Eact(GetSumWaBal_Eact())
+    call SetPreviousSum_Epot(GetSumWaBal_Epot())
+    call SetPreviousSum_Tact(GetSumWaBal_Tact())
+    call SetPreviousSum_TrW(GetSumWaBal_TrW())
+    call SetPreviousSum_Tpot(GetSumWaBal_Tpot())
+    call SetPreviousSum_Drain(GetSumWaBal_Drain())
+    call SetPreviousSum_Biomass(GetSumWaBal_Biomass())
+    call SetPreviousSum_BiomassPot(GetSumWaBal_BiomassPot())
+    call SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim())
+
+    call SetPreviousSum_Runoff(GetSumWaBal_Runoff())
+    call SetPreviousSum_CRwater(GetSumWaBal_CRwater())
+    call SetPreviousSum_SaltIn(GetSumWaBal_SaltIn())
+    call SetPreviousSum_SaltOut(GetSumWaBal_SaltOut())
+    call SetPreviousSum_CRsalt(GetSumWaBal_CRsalt())
+
+    call SetPreviousBmob(GetTransfer_Bmobilized())
+    call SetPreviousBsto(GetSimulation_Storage_Btotal())
+end subroutine WriteIntermediatePeriod
 
 !! ===BEGIN Subroutines and functions for AdvanceOneTimeStep ===
 
