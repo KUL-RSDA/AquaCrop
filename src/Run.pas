@@ -4,7 +4,7 @@ interface
 
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_climprocessing, interface_simul, interface_inforesults;
 
-PROCEDURE FinalizeSimulation();
+
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
 
@@ -1137,14 +1137,6 @@ REPEAT
   AdvanceOneTimeStep()
 UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
-
-
-PROCEDURE FinalizeSimulation();
-BEGIN
-fRun_close(); // Close Run.out
-IF GetOutDaily() THEN fDaily_close();  // Close Daily.OUT
-IF GetPart1Mult() THEN fHarvest_close();  // Close Multiple harvests in season
-END;  // FinalizeSimulation
 
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);

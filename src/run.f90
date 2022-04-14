@@ -5426,6 +5426,18 @@ subroutine InitializeSimulation(TheProjectFile_, TheProjectType)
 end subroutine InitializeSimulation
 
 
+subroutine FinalizeSimulation()
+
+    call fRun_close() ! Close Run.out
+    if (GetOutDaily()) then
+        call fDaily_close()  ! Close Daily.OUT
+    end if
+    if (GetPart1Mult()) then
+        call fHarvest_close()  ! Close Multiple harvests in season
+    end if
+end subroutine FinalizeSimulation
+
+
 subroutine WriteIntermediatePeriod(TheProjectFile)
     character(len=*), intent(in) :: TheProjectFile
 

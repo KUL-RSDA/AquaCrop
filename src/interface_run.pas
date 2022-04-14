@@ -1283,6 +1283,9 @@ procedure InitializeSimulation_wrap(
 			constref TheProjectType : integer);
         external 'aquacrop' name '__ac_interface_run_MOD_initializesimulation_wrap';
 
+PROCEDURE FinalizeSimulation();
+         external 'aquacrop' name '__ac_run_MOD_finalizesimulation';
+
 procedure GetZandECgwt(VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
          external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
