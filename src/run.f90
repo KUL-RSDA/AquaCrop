@@ -5569,9 +5569,7 @@ integer(int32) function IrriOutSeason()
     else
         TheEnd = .false.
         Nri = 0
-        do while (.not. ((Nri == 5) .or. (IrriEvents(Nri)%DayNr == 0) &
-              .or. (IrriEvents(Nri)%DayNr > DNr) &
-              .or. TheEnd))
+        loop: do
             Nri = Nri + 1
             if (IrriEvents(Nri)%DayNr == DNr) then
                 IrriOutSeason = IrriEvents(Nri)%Param
@@ -5579,7 +5577,10 @@ integer(int32) function IrriOutSeason()
             else
                 IrriOutSeason = 0
             end if
-        end do
+            if ((Nri == 5) .or. (IrriEvents(Nri)%DayNr == 0) &
+              .or. (IrriEvents(Nri)%DayNr > DNr) &
+              .or. (TheEnd)) exit loop
+        end do loop
     end if
 end function IrriOutSeason
 
