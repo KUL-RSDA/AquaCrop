@@ -8,7 +8,8 @@ use ac_kinds, only: int8, &
                     int32, &
                     dp
 
-use ac_run, only:   fDaily_open, &
+use ac_run, only:   CheckForPrint, &
+                    fDaily_open, &
                     fDaily_write, &
                     fRun_open, &
                     fRun_write, &
@@ -69,6 +70,17 @@ implicit none
 
 
 contains
+
+subroutine CheckForPrint_wrap(TheProjectFile, strlen)
+    !! Wrapper for [[ac_run:CheckForPrint]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFile, strlen)
+    call CheckForPrint(string)
+end subroutine CheckForPrint_wrap
 
 subroutine fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
