@@ -1250,7 +1250,7 @@ procedure WriteTheResults_wrap(constref ANumber : ShortInt;
     external 'aquacrop' name '__ac_interface_run_MOD_writetheresults_wrap';
 
 procedure InitializeSimulationRun();
-        external 'aquacrop' name '__ac_run_MOD_initializesimulationrun';
+    external 'aquacrop' name '__ac_run_MOD_initializesimulationrun';
 
 procedure CreateEvalData(NrRun : ShortInt);
     external 'aquacrop' name '__ac_run_MOD_createevaldata';
@@ -1264,10 +1264,10 @@ procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
     external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
 procedure openharvestinfo();
-        external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
+    external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
 
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
-        external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
+    external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
 procedure WriteSimPeriod(constref NrRun : ShortInt;
                          constref TheProjectFile : string);
@@ -1279,13 +1279,16 @@ procedure WriteSimPeriod_wrap(constref NrRun : ShortInt;
 
 procedure GetZandECgwt(VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
-         external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
+    external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
 
 function IrriOutSeason() : INTEGER;
-         external 'aquacrop' name '__ac_run_MOD_irrioutseason';
+    external 'aquacrop' name '__ac_run_MOD_irrioutseason';
 
 function IrriManual() : INTEGER;
-         external 'aquacrop' name '__ac_run_MOD_irrimanual';
+    external 'aquacrop' name '__ac_run_MOD_irrimanual';
+
+procedure GetIrriParam (VAR TargetTimeVal, TargetDepthVal : integer);
+    external 'aquacrop' name '__ac_run_MOD_getirriparam';
 
 procedure WriteIntermediatePeriod(TheProjectFile : string);
 

@@ -325,8 +325,16 @@ use ac_global, only:    AdjustSizeCompartments, &
                         setcompartment, &
                         Rep_DayEventInt, &
                         GetIrriBeforeSeason_i, &
-                        GetIrriAfterSeason_i
-
+                        GetIrriAfterSeason_i, &
+                        GetGenerateTimeMode, &
+                        GenerateTimeMode_WaterBetweenBunds, & 
+                        GenerateDepthMode_FixDepth, &
+                        GenerateTimeMode_FixInt, &
+                        GenerateTimeMode_AllRAW, &
+                        GenerateTimeMode_AllDepl, &
+                        GetGenerateDepthMode, &
+                        GetSurfaceStorage, &
+                        SetIrrigation
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -1408,6 +1416,20 @@ end subroutine SetPlotVarCrop_ActVal
 
 ! IrriInfoRecord1
 
+function GetIrriInfoRecord1() result(IrriInfoRecord1_out)
+    !! Getter for the "IrriInfoRecord1" global variable.
+    type(repIrriInfoRecord) :: IrriInfoRecord1_out
+
+    IrriInfoRecord1_out = IrriInfoRecord1
+end function GetIrriInfoRecord1
+
+subroutine SetIrriInfoRecord1(IrriInfoRecord1_in)
+    !! Setter for the "TminDatSet" global variable.
+    type(repIrriInfoRecord), intent(in) :: IrriInfoRecord1_in
+
+    IrriInfoRecord1 = IrriInfoRecord1_in
+end subroutine SetIrriInfoRecord1
+
 logical function GetIrriInfoRecord1_NoMoreInfo()
     !! Getter for the "IrriInfoRecord1" global variable.
     
@@ -1474,6 +1496,20 @@ subroutine SetIrriInfoRecord1_DepthInfo(DepthInfo)
 end subroutine SetIrriInfoRecord1_DepthInfo
 
 ! IrriInfoRecord2
+
+function GetIrriInfoRecord2() result(IrriInfoRecord2_out)
+    !! Getter for the "IrriInfoRecord2" global variable.
+    type(repIrriInfoRecord) :: IrriInfoRecord2_out
+
+    IrriInfoRecord2_out = IrriInfoRecord2
+end function GetIrriInfoRecord2
+
+subroutine SetIrriInfoRecord2(IrriInfoRecord2_in)
+    !! Setter for the "TminDatSet" global variable.
+    type(repIrriInfoRecord), intent(in) :: IrriInfoRecord2_in
+
+    IrriInfoRecord2 = IrriInfoRecord2_in
+end subroutine SetIrriInfoRecord2
 
 logical function GetIrriInfoRecord2_NoMoreInfo()
     !! Getter for the "IrriInfoRecord2" global variable.
@@ -5662,6 +5698,91 @@ integer(int32) function IrriManual()
         end if
     end if
 end function IrriManual
+
+subroutine GetIrriParam(TargetTimeVal, TargetDepthVal)
+    integer(int32), intent(inout) :: TargetTimeVal
+    integer(int32), intent(inout) :: TargetDepthVal
+
+    integer(int32) :: DayInSeason
+    integer(int32) :: FromDay_temp, TimeInfo_temp, DepthInfo_temp
+    real(dp)       :: IrriECw_temp
+    character(len=:), allocatable :: TempString
+
+    TargetTimeVal = -999
+    TargetDepthVal = -999
+    if ((GetDayNri() < GetCrop_Day1()) .or. &
+        (GetDayNri() > GetCrop_DayN())) then
+        call SetIrrigation(real(IrriOutSeason(), kind=dp))
+    elseif (GetIrriMode() == IrriMode_Manual) then
+        call SetIrrigation(real(IrriManual(), kind=dp))
+    end if
+    if ((GetIrriMode() == IrriMode_Generate) .and. &
+        ((GetDayNri() >= GetCrop_Day1()) .and. &
+         (GetDayNri() <= GetCrop_DayN()))) then
+        ! read next line if required
+        DayInSeason = GetDayNri() - GetCrop_Day1() + 1
+        if (DayInSeason > GetIrriInfoRecord1_ToDay()) then
+            ! read next line
+            call SetIrriInfoRecord1(GetIrriInfoRecord2())
+
+            TempString = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_ToDay(GetCrop_DayN() - &
+                        GetCrop_Day1() + 1)
+            else
+                call SetIrriInfoRecord2_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then ! Versions before 3.2
+                    read(TempString,*) FromDay_temp, &
+                      TimeInfo_temp, DepthInfo_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                else
+                    read(TempString,*) FromDay_temp, &
+                      TimeInfo_temp, DepthInfo_temp, IrriEcw_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                    call SetSimulation_IrriEcw(IrriEcw_temp)
+                end if
+                call SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1)
+            end if
+        end if
+        ! get TargetValues
+        TargetDepthVal = GetIrriInfoRecord1_DepthInfo()
+        select case (GetGenerateTimeMode())
+        case (GenerateTimeMode_AllDepl)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+        case (GenerateTimeMode_AllRAW)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+        case (GenerateTimeMode_FixInt)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+            if (TargetTimeVal > GetIrriInterval()) then ! do not yet irrigate
+                TargetTimeVal = 0
+            elseif (TargetTimeVal == GetIrriInterval()) then ! irrigate
+                TargetTimeVal = 1
+            else
+                ! still to solve
+                TargetTimeVal = 1 ! temporary solution
+            end if
+            if ((TargetTimeVal == 1) .and. &
+                (GetGenerateDepthMode() == GenerateDepthMode_FixDepth)) then
+                call SetIrrigation(real(TargetDepthVal, kind=dp))
+            end if
+        case (GenerateTimeMode_WaterBetweenBunds)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+            if ( (GetManagement_BundHeight() >= 0.01_dp) &
+                .and. (GetGenerateDepthMode() == GenerateDepthMode_FixDepth) &
+                .and. (TargetTimeVal < (1000._dp * GetManagement_BundHeight())) &
+                .and. (TargetTimeVal >= roundc(GetSurfaceStorage(), mold=1))) then
+                call SetIrrigation(real(TargetDepthVal, kind=dp))
+            else
+                call SetIrrigation(0._dp)
+            end if
+            TargetTimeVal = -999 ! no need for check in SIMUL
+       end select
+    end if
+end subroutine GetIrriParam
 
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
