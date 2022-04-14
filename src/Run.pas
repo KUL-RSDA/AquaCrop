@@ -51,43 +51,7 @@ END; (* WriteSimPeriod *)
 
 
 
-PROCEDURE CheckForPrint(TheProjectFile : string);
-VAR DayN,MonthN,YearN,DayEndM : INTEGER;
-    SaltIn,SaltOut,CRsalt,BiomassDay,BUnlimDay : double;
-    WriteNow : BOOLEAN;
 
-BEGIN
-DetermineDate(GetDayNri(),DayN,MonthN,YearN);
-CASE GetOutputAggregate() OF
-  1 :   BEGIN // daily output
-        BiomassDay := GetSumWaBal_Biomass() - GetPreviousSum_Biomass();
-        BUnlimDay := GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim();
-        SaltIn := GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn();
-        SaltOut := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
-        CRsalt := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
-        WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
-                       GetRain(),GetETo(),GetGDDayi(),
-                       GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
-                       GetEact(),GetEpot(),GetTact(),GetTactWeedInfested(),GetTpot(),
-                       SaltIn,SaltOut,CRsalt,
-                       BiomassDay,BUnlimDay,GetBin(),GetBout(),
-                       TheProjectFile);
-        SetPreviousSum_Biomass(GetSumWaBal_Biomass());
-        SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim());
-        SetPreviousSum_SaltIn(GetSumWaBal_SaltIn());
-        SetPreviousSum_SaltOut(GetSumWaBal_SaltOut());
-        SetPreviousSum_CRsalt(GetSumWaBal_CRsalt());
-        END;
-  2,3 : BEGIN  // 10-day or monthly output
-        WriteNow := false;
-        DayEndM := DaysInMonth[MonthN];
-        IF (LeapYear(YearN) AND (MonthN = 2)) THEN DayEndM := 29;
-        IF (DayN = DayEndM) THEN WriteNow := true;  // 10-day and month
-        IF ((GetOutputAggregate() = 2) AND ((DayN = 10) OR (DayN = 20))) THEN WriteNow := true; // 10-day
-        IF WriteNow THEN WriteIntermediatePeriod(TheProjectFile);
-        END;
-    end;
-END; (* CheckForPrint *)
 
 
 PROCEDURE WriteDailyResults(DAP : INTEGER;

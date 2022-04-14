@@ -69,7 +69,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetCRwater, &
+                        GetDrain, &
+                        GetEact, &
                         GetECiAqua, &
+                        GetEpot, &
                         GetETo, &
                         GetEToFile, &
                         GetEToFilefull, &
@@ -78,9 +82,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
+                        GetInfiltrated, &
                         GetIrriFile, &
                         GetIrriFilefull, &
                         GetIrriFirstDayNr, &
+                        GetIrrigation, &
                         GetIrriMode, &
                         GetManagement_Cuttings_Criterion, &
                         GetManagement_Cuttings_Day1, &
@@ -101,6 +107,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetRainFilefull, &
                         GetRainRecord_DataType, &
                         GetRainRecord_FromDayNr, &
+                        GetRunoff, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
@@ -131,6 +138,8 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSumWaBal_Tpot, &
                         GetSumWaBal_TrW, &
                         GetSumWaBal_YieldPart, &
+                        GetTact, &
+                        GetTactWeedInfested, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -138,6 +147,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmax, &
                         GetTmin, &
                         GetTotalSaltContent_endDay, &
+                        GetTpot, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
@@ -2970,6 +2980,56 @@ subroutine ResetPreviousSum()
     call SetPreviousBmob(0.0_dp)
     call SetPreviousBsto(0.0_dp)
 end subroutine ResetPreviousSum
+
+
+subroutine CheckForPrint(TheProjectFile)
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: DayN, MonthN, YearN, DayEndM
+    real(dp) :: SaltIn, SaltOut, CRsalt, BiomassDay, BUnlimDay
+    logical :: WriteNow
+
+    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+    
+    select case (GetOutputAggregate())
+    case (1)
+        ! 1: daily output
+        BiomassDay = GetSumWaBal_Biomass() - GetPreviousSum_Biomass()
+        BUnlimDay = GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim()
+        SaltIn = GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn()
+        SaltOut = GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut()
+        CRsalt = GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt()
+        call WriteTheResults(int(undef_int,kind=int8), DayN, MonthN, YearN, DayN, MonthN, & 
+                             YearN, GetRain(), GetETo(), GetGDDayi(), GetIrrigation(), &
+                             GetInfiltrated(), GetRunoff(), GetDrain(), &
+                             GetCRwater(), GetEact(), GetEpot(), GetTact(), &
+                             GetTactWeedInfested(), GetTpot(), SaltIn, SaltOut, &
+                             CRsalt, BiomassDay, BUnlimDay, GetBin(), GetBout(), &
+                             TheProjectFile)
+        call SetPreviousSum_Biomass(GetSumWaBal_Biomass())
+        call SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim())
+        call SetPreviousSum_SaltIn(GetSumWaBal_SaltIn())
+        call SetPreviousSum_SaltOut(GetSumWaBal_SaltOut())
+        call SetPreviousSum_CRsalt(GetSumWaBal_CRsalt())
+    
+    case (2,3)
+        ! 2 or 3: 10-day or monthly output
+        WriteNow = .false.
+        DayEndM = DaysInMonth(MonthN)
+        if (LeapYear(YearN) .and. (MonthN == 2)) then
+            DayEndM = 29
+        end if
+        if (DayN == DayEndM) then
+            WriteNow = .true.  ! 10-day and month
+        end if
+        if ((GetOutputAggregate() == 2) .and. ((DayN == 10) .or. (DayN == 20))) then
+            WriteNow = .true. ! 10-day
+        end if
+        if (WriteNow) then
+            call WriteIntermediatePeriod(TheProjectFile)
+        end if
+    end select
+end subroutine CheckForPrint
 
 
 subroutine GetGwtSet(DayNrIN, GwT)

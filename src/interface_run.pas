@@ -388,6 +388,13 @@ function GetDayNri() : LongInt;
 procedure SetDayNri(constref DayNri_in : LongInt);
     external 'aquacrop' name '__ac_run_MOD_setdaynri';
 
+procedure CheckForPrint(constref TheProjectFile : string);
+
+procedure CheckForPrint_wrap(
+            constref TheProjectFile : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_checkforprint_wrap';
+
 procedure fRun_open(constref filename : string; constref mode : string);
 
 procedure fRun_open_wrap(
@@ -1542,6 +1549,16 @@ begin;
     SetCutInfoRecord2_IntervalInfo(CutInfoRecord2.IntervalInfo);
     SetCutInfoRecord2_IntervalGDD(CutInfoRecord2.IntervalGDD);
     SetCutInfoRecord2_MassInfo(CutInfoRecord2.MassInfo);
+end;
+
+procedure CheckForPrint(constref TheProjectFile : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(TheProjectFile);
+     strlen := Length(TheProjectFile);
+     CheckForPrint_wrap(p, strlen);
 end;
 
 procedure fDaily_open(constref filename : string; constref mode : string);
