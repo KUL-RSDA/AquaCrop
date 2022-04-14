@@ -9,8 +9,6 @@ PROCEDURE InitializeSimulation(TheProjectFile_ : string;
 
 PROCEDURE FinalizeSimulation();
 
-PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
-
 PROCEDURE AdvanceOneTimeStep();
 
 PROCEDURE FinalizeRun1(NrRun : ShortInt;
@@ -1145,63 +1143,6 @@ IF GetOutDaily() THEN fDaily_close();  // Close Daily.OUT
 IF GetPart1Mult() THEN fHarvest_close();  // Close Multiple harvests in season
 END;  // FinalizeSimulation
 
-
-PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
-VAR SumWaBal_temp, PreviousSum_temp : rep_sum;
-
-    PROCEDURE AdjustCompartments;
-    VAR TotDepth : double;
-        i : ShortInt;
-        Comp_temp : rep_Comp;
-    BEGIN
-    //Adjust size of compartments if required
-    TotDepth := 0;
-    FOR i := 1 to GetNrCompartments() DO TotDepth := TotDepth + GetCompartment_Thickness(i);
-    IF GetSimulation_MultipleRunWithKeepSWC() // Project with a sequence of simulation runs and KeepSWC
-       THEN BEGIN
-            IF (ROUND(GetSimulation_MultipleRunConstZrx()*1000) > ROUND(TotDepth*1000))
-               THEN AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx());
-            END
-       ELSE BEGIN
-            IF (ROUND(GetCrop().RootMax*1000) > ROUND(TotDepth*1000)) THEN
-               BEGIN
-               IF (ROUND(GetSoil().RootMax*1000) = ROUND(GetCrop().RootMax*1000))
-                  THEN BEGIN // no restrictive soil layer
-                       AdjustSizeCompartments(GetCrop().RootMax);
-                       // adjust soil water content
-                       Comp_temp := GetCompartment();
-
-                       CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
-                       SetCompartment(Comp_temp);
-                       IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
-                       END
-                  ELSE BEGIN // restrictive soil layer
-                       IF (ROUND(GetSoil().RootMax*1000) > ROUND(TotDepth*1000)) THEN
-                          BEGIN
-                          AdjustSizeCompartments(GetSoil().RootMax);
-                          // adjust soil water content
-                          Comp_temp := GetCompartment();
-                          CalculateAdjustedFC((GetZiAqua()/100),Comp_temp);
-                          SetCompartment(Comp_temp);
-                          IF GetSimulation_IniSWC_AtFC() THEN ResetSWCToFC;
-                          END
-                       END;
-               END;
-            END;
-    END; // AdjustCompartments
-
-BEGIN
-LoadSimulationRunProject(GetMultipleProjectFileFull(),NrRun);
-AdjustCompartments;
-SumWaBal_temp := GetSumWaBal();
-GlobalZero(SumWabal_temp);
-SetSumWaBal(SumWaBal_temp);
-ResetPreviousSum();
-InitializeSimulationRun;
-IF GetOutDaily() THEN WriteTitleDailyResults(TheProjectType,NrRun);
-IF GetPart1Mult() THEN WriteTitlePart1MultResults(TheProjectType,NrRun);
-IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun);
-END; // InitializeRun
 
 
 PROCEDURE FinalizeRun1(NrRun : ShortInt;

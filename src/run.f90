@@ -7,7 +7,8 @@ use ac_kinds, only: dp, &
                     intenum
 
 
-use ac_global, only:    CompartmentIndividual, &
+use ac_global, only:    AdjustSizeCompartments, &
+                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
@@ -297,6 +298,19 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManFile, &
                         GetManFileFull, &
                         max_No_compartments, &
+                        GetSimulation_MultipleRunWithKeepSWC, &
+                        GetSimulation_MultipleRunConstZrx, &
+                        GetSimulation_IniSWC_AtFC, &
+                        GetMultipleProjectFileFull, &
+                        GetSUmWaBal, &
+                        GetPart1Mult, &
+                        GetPart2Eval, &
+                        GetObservationsFile, &
+                        CalculateAdjustedFC, &
+                        ResetSWCToFC, &
+                        SetSumWaBal, &
+                        GlobalZero, &
+                        SetCompartment, &
                         calculateadjustedfc, &
                         setcompartment, &
                         Rep_DayEventInt, &
@@ -307,6 +321,7 @@ use ac_global, only:    CompartmentIndividual, &
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
+                                LoadSimulationRunProject, &
                                 StressBiomassRelationship, &
                                 temperaturefilecoveringcropperiod, &
                                 GrowingDegreeDays
@@ -2942,27 +2957,28 @@ subroutine AdjustForWatertable()
 end subroutine AdjustForWatertable
 
 
-subroutine ResetPreviousSum()
+subroutine ResetPreviousSum(PreviousSum)
+    type(rep_sum), intent(inout) :: PreviousSum
 
-    call SetPreviousSum_Epot(0.0_dp)
-    call SetPreviousSum_Tpot(0.0_dp)
-    call SetPreviousSum_Rain(0.0_dp)
-    call SetPreviousSum_Irrigation(0.0_dp)
-    call SetPreviousSum_Infiltrated(0.0_dp)
-    call SetPreviousSum_Runoff(0.0_dp)
-    call SetPreviousSum_Drain(0.0_dp)
-    call SetPreviousSum_Eact(0.0_dp)
-    call SetPreviousSum_Tact(0.0_dp)
-    call SetPreviousSum_TrW(0.0_dp)
-    call SetPreviousSum_ECropCycle(0.0_dp)
-    call SetPreviousSum_CRwater(0.0_dp)
-    call SetPreviousSum_Biomass(0.0_dp)
-    call SetPreviousSum_YieldPart(0.0_dp)
-    call SetPreviousSum_BiomassPot(0.0_dp)
-    call SetPreviousSum_BiomassUnlim(0.0_dp)
-    call SetPreviousSum_SaltIn(0.0_dp)
-    call SetPreviousSum_SaltOut(0.0_dp)
-    call SetPreviousSum_CRsalt(0.0_dp)
+    PreviousSum%Epot = 0._dp
+    PreviousSum%Tpot = 0._dp
+    PreviousSum%Rain = 0._dp
+    PreviousSum%Irrigation = 0._dp
+    PreviousSum%Infiltrated = 0._dp
+    PreviousSum%Runoff = 0._dp
+    PreviousSum%Drain = 0._dp
+    PreviousSum%Eact = 0._dp
+    PreviousSum%Tact = 0._dp
+    PreviousSum%TrW = 0._dp
+    PreviousSum%ECropCycle = 0._dp
+    PreviousSum%CRwater = 0._dp
+    PreviousSum%Biomass = 0._dp
+    PreviousSum%YieldPart = 0._dp
+    PreviousSum%BiomassPot = 0._dp
+    PreviousSum%BiomassUnlim = 0._dp
+    PreviousSum%SaltIn = 0._dp
+    PreviousSum%SaltOut = 0._dp
+    PreviousSum%CRsalt = 0._dp
     call SetSumETo(0.0_dp)
     call SetSumGDD(0.0_dp)
     call SetPreviousSumETo(0.0_dp)
@@ -5588,6 +5604,93 @@ integer(int32) function IrriManual()
 end function IrriManual
 
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
+
+
+subroutine InitializeRun(NrRun, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    integer(intEnum), intent(in) :: TheProjectType
+
+    type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+
+    call LoadSimulationRunProject(GetMultipleProjectFileFull(), &
+                                  int(NrRun, kind=int32))
+    call AdjustCompartments()
+    SumWaBal_temp = GetSumWaBal()
+    call GlobalZero(SumWaBal_temp)
+    call SetSumWaBal(SumWaBal_temp)
+    PreviousSum_temp = GetPreviousSum()
+    call ResetPreviousSum(PreviousSum_temp)
+    call SetPreviousSum(PreviousSum_temp)
+    call InitializeSimulationRun()
+
+    if (GetOutDaily()) then
+        call WriteTitleDailyResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart1Mult()) then
+        call WriteTitlePart1MultResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+        call CreateEvalData(NrRun)
+    end if
+
+
+    contains
+
+    subroutine AdjustCompartments()
+
+        real(dp) :: TotDepth
+        integer(int32) :: i
+        type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Comp_temp
+
+        ! Adjust size of compartments if required
+        TotDepth = 0._dp
+        do i = 1, GetNrCompartments() 
+            TotDepth = TotDepth + GetCompartment_Thickness(i)
+        end do
+        if (GetSimulation_MultipleRunWithKeepSWC()) then 
+            ! Project with a sequence of simulation runs and KeepSWC
+            if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) &
+                > roundc(TotDepth*1000._dp, mold=1)) then
+                call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
+            end if
+        else
+            if (roundc(GetCrop_RootMax()*1000._dp, mold=1) &
+                > roundc(TotDepth*1000._dp, mold=1)) then
+                if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                    == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+                    ! no restrictive soil layer
+                    call AdjustSizeCompartments(GetCrop_RootMax())
+                    ! adjust soil water content
+                    Comp_temp = GetCompartment()
+                    call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+                    call SetCompartment(Comp_temp)
+                    if (GetSimulation_IniSWC_AtFC()) then
+                        call ResetSWCToFC()
+                    end if
+                else
+                    ! restrictive soil layer
+                    if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                        > roundc(TotDepth*1000._dp, mold=1)) then
+                        call AdjustSizeCompartments(real(GetSoil_RootMax(), &
+                                                            kind=dp))
+                        ! adjust soil water content
+                        Comp_temp = GetCompartment()
+                        call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+                        call SetCompartment(Comp_temp)
+                        if (GetSimulation_IniSWC_AtFC()) then
+                            call ResetSWCToFC()
+                        end if
+                    end if
+                end if
+            end if
+        end if
+    end subroutine AdjustCompartments
+
+end subroutine InitializeRun
+
 
 
 end module ac_run

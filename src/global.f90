@@ -7165,6 +7165,7 @@ subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgr
     end if
 end subroutine GetFileForProgramParameters
     
+
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 
@@ -7197,6 +7198,7 @@ subroutine GlobalZero(SumWabal)
         GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
     end do
 end subroutine GlobalZero 
+
 
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
