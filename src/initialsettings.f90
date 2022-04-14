@@ -206,6 +206,7 @@ subroutine InitializeSettings()
     integer(int32) :: Nri
     integer(int32) :: Crop_Day1_temp
     integer(int32) :: Crop_DayN_temp
+    type(rep_sum) :: SumWaBal_temp
 
     ! 1. Program settings
     ! Settings of Program parameters
@@ -469,7 +470,9 @@ subroutine InitializeSettings()
     call SetSurfaceStorage(0._dp)
     call SetECstorage(0.0_dp)
     call SetDaySubmerged(0)
-    call GlobalZero()
+    SumWaBal_temp = GetSumWaBal()
+    call GlobalZero(SumWaBal_temp)
+    call SetSumWaBal(SumWaBal_temp)
     call SetDrain(0.0_dp) ! added 4.0
     call SetRunoff(0.0_dp)! added 4.0
     call SetInfiltrated(0.0_dp) ! added 4.0

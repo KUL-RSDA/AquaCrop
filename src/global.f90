@@ -7165,30 +7165,32 @@ subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgr
     end if
 end subroutine GetFileForProgramParameters
     
-subroutine GlobalZero()
+
+subroutine GlobalZero(SumWabal)
+    type(rep_sum), intent(inout) :: SumWabal
 
     integer(int32) :: i
     
-    call SetSumWabal_Epot(0._dp)
-    call SetSumWabal_Tpot(0._dp)
-    call SetSumWabal_Rain(0._dp)
-    call SetSumWabal_Irrigation(0._dp)
-    call SetSumWabal_Infiltrated(0._dp)
-    call SetSumWabal_Runoff(0._dp)
-    call SetSumWabal_Drain(0._dp)
-    call SetSumWabal_Eact(0._dp)
-    call SetSumWabal_Tact(0._dp)
-    call SetSumWabal_TrW(0._dp)
-    call SetSumWabal_ECropCycle(0._dp)
-    call SetSumWabal_Biomass(0._dp)
-    call SetSumWabal_BiomassPot(0._dp)
-    call SetSumWabal_BiomassUnlim(0._dp)
-    call SetSumWabal_BiomassTot(0._dp) ! crop and weeds (for soil fertility stress)
-    call SetSumWabal_YieldPart(0._dp)
-    call SetSumWabal_SaltIn(0._dp)
-    call SetSumWabal_SaltOut(0._dp)
-    call SetSumWabal_CRwater(0._dp)
-    call SetSumWabal_CRsalt(0._dp)
+    SumWabal%Epot = 0.0_dp
+    SumWabal%Tpot = 0.0_dp
+    SumWabal%Rain = 0.0_dp
+    SumWabal%Irrigation = 0.0_dp
+    SumWabal%Infiltrated = 0.0_dp
+    SumWabal%Runoff = 0.0_dp
+    SumWabal%Drain = 0.0_dp
+    SumWabal%Eact = 0.0_dp
+    SumWabal%Tact = 0.0_dp
+    SumWabal%TrW = 0.0_dp
+    SumWabal%ECropCycle = 0.0_dp
+    SumWabal%Biomass = 0._dp
+    SumWabal%BiomassPot = 0._dp
+    SumWabal%BiomassUnlim = 0._dp
+    SumWabal%BiomassTot = 0._dp ! crop and weeds (for soil fertility stress)
+    SumWabal%YieldPart = 0._dp
+    SumWabal%SaltIn = 0._dp
+    SumWabal%SaltOut = 0._dp
+    SumWabal%CRwater = 0._dp
+    SumWabal%CRsalt = 0._dp
     call SetTotalWaterContent_BeginDay(0._dp)
     
     do i =1, GetNrCompartments()
@@ -7196,6 +7198,7 @@ subroutine GlobalZero()
         GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
     end do
 end subroutine GlobalZero 
+
 
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
