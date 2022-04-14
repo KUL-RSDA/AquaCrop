@@ -310,7 +310,12 @@ use ac_global, only:    AdjustSizeCompartments, &
                         ResetSWCToFC, &
                         SetSumWaBal, &
                         GlobalZero, &
-                        SetCompartment
+                        SetCompartment, &
+                        calculateadjustedfc, &
+                        setcompartment, &
+                        Rep_DayEventInt, &
+                        GetIrriBeforeSeason_i, &
+                        GetIrriAfterSeason_i
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
@@ -5402,7 +5407,6 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
 
-
 subroutine WriteIntermediatePeriod(TheProjectFile)
     character(len=*), intent(in) :: TheProjectFile
 
@@ -5469,9 +5473,111 @@ subroutine WriteIntermediatePeriod(TheProjectFile)
 
     call SetPreviousBmob(GetTransfer_Bmobilized())
     call SetPreviousBsto(GetSimulation_Storage_Btotal())
-end subroutine WriteIntermediatePeriod 
+end subroutine WriteIntermediatePeriod
 
+!! ===BEGIN Subroutines and functions for AdvanceOneTimeStep ===
 
+subroutine GetZandECgwt(ZiAqua, ECiAqua)
+    integer(int32), intent(inout) :: ZiAqua
+    real(dp), intent(inout) :: ECiAqua
+
+    integer(int32) :: ZiIN
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
+
+    ZiIN = ZiAqua
+    if (GetGwTable_DNr1() == GetGwTable_DNr2()) then
+        ZiAqua  = GetGwTable_Z1()
+        ECiAqua = GetGwTable_EC1()
+    else
+        ZiAqua = GetGwTable_Z1() + &
+                 roundc((GetDayNri() - GetGwTable_DNr1())* &
+                 (GetGwTable_Z2() - GetGwTable_Z1())/ &
+                 real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp), mold = 1)
+        ECiAqua = GetGwTable_EC1() + &
+                 (GetDayNri() - GetGwTable_DNr1())* &
+                 (GetGwTable_EC2() - GetGwTable_EC1())/&
+                 real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp)
+    end if
+    if (ZiAqua /= ZiIN) then
+        Comp_temp = GetCompartment()
+        call CalculateAdjustedFC((ZiAqua/100._dp), Comp_temp)
+        call SetCompartment(Comp_temp)
+    end if
+end subroutine GetZandECgwt
+
+integer(int32) function IrriOutSeason()
+    integer(int32) :: DNr, Nri, i
+    type(Rep_DayEventInt), dimension(5) :: IrriEvents
+    logical :: TheEnd
+
+    DNr = GetDayNri() - GetSimulation_FromDayNr() + 1
+    do i = 1, 5  
+        IrriEvents(i) = GetIrriBeforeSeason_i(i)
+    end do
+    if (GetDayNri() > GetCrop_DayN()) then
+        DNr = GetDayNri() - GetCrop_DayN()
+        do i = 1, 5
+            IrriEvents(i) = GetIrriAfterSeason_i(i)
+        end do
+    end if
+    if (DNr < 1) then
+        IrriOutSeason = 0
+    else
+        TheEnd = .false.
+        Nri = 0
+        loop: do
+            Nri = Nri + 1
+            if (IrriEvents(Nri)%DayNr == DNr) then
+                IrriOutSeason = IrriEvents(Nri)%Param
+                TheEnd = .true.
+            else
+                IrriOutSeason = 0
+            end if
+            if ((Nri == 5) .or. (IrriEvents(Nri)%DayNr == 0) &
+              .or. (IrriEvents(Nri)%DayNr > DNr) &
+              .or. (TheEnd)) exit loop
+        end do loop
+    end if
+end function IrriOutSeason
+
+integer(int32) function IrriManual()
+    integer(int32) :: DNr
+    character(len=:), allocatable :: StringREAD
+    real(dp) :: Ir1, Ir2
+    real(dp) :: IrriECw_temp
+
+    if (GetIrriFirstDayNr() == undef_int) then
+        DNr = GetDayNri() - GetCrop_Day1() + 1
+    else
+        DNr = GetDayNri() - GetIrriFirstDayNr() + 1
+    end if
+    if (GetIrriInfoRecord1_NoMoreInfo()) then
+        IrriManual = 0
+    else
+        IrriManual = 0
+        if (GetIrriInfoRecord1_TimeInfo() == DNr) then
+            IrriManual = GetIrriInfoRecord1_DepthInfo()
+            StringREAD = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_NoMoreInfo(.true.)
+            else
+                call SetIrriInfoRecord1_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then ! Versions before 3.2
+                    call SplitStringInTwoParams(StringREAD, Ir1, Ir2)
+                else
+                    IrriECw_temp = GetSimulation_IrriECw()
+                    call SplitStringInThreeParams(StringREAD, &
+                            Ir1, Ir2, IrriECw_temp)
+                    call SetSimulation_IrriECw(IrriECw_temp)
+                end if
+                call SetIrriInfoRecord1_TimeInfo(roundc(Ir1, mold=1))
+                call SetIrriInfoRecord1_DepthInfo(roundc(Ir2, mold=1))
+            end if
+        end if
+    end if
+end function IrriManual
+
+!! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
 subroutine InitializeRun(NrRun, TheProjectType)
     integer(int8), intent(in) :: NrRun
