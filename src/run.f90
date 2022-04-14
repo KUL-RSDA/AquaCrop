@@ -26,6 +26,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
+                        GetPart2Eval, &
                         getcrop_ccsaltdistortion, &
                         GetCrop_CCx, &
                         GetCrop_CDC, &
@@ -89,6 +90,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_Cuttings_NrDays, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
+                        GetObservationsFile, &
                         GetObservationsFilefull, &
                         GetOutputAggregate, &
                         GetOutputName, &
@@ -309,6 +311,8 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
                                 GetDecadeRainDataSet, &
                                 GetMonthlyEToDataset, &
                                 GetMonthlyRainDataset
+
+use ac_inforesults, only:       WriteAssessmentSimulation
 
 
 implicit none
@@ -3792,6 +3796,79 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
 end subroutine WriteTitleDailyResults
 
+
+subroutine FinalizeRun2(NrRun, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    integer(intenum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalnameEvalStat, StrNr
+
+    ! CloseEvalDataPerformEvaluation
+    ! 1. Close Evaluation data file  and file with observations
+    call fEval_close()
+    if (GetLineNrEval() /= undef_int) then
+        call fObs_close()
+    end if
+    ! 2. Specify File name Evaluation of simulation results - Statistics
+    StrNr = ''
+    if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
+        write(StrNr, '(i3)') NrRun
+    end if
+    select case (TheProjectType)
+    case(typeproject_typepro)
+        totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PROevaluation%OUT'
+    case(typeproject_typeprm)
+        write(StrNr, '(i3)') NrRun
+        totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PRM' // trim(StrNr) // 'evaluation%OUT'
+    end select
+    ! 3. Create Evaluation statistics file
+    call WriteAssessmentSimulation(StrNr, totalnameEvalStat, TheProjectType, &
+    GetSimulation_FromDayNr(), GetSimulation_ToDayNr())
+    ! 4. Delete Evaluation data file
+    call fEval_erase()
+    ! CloseEvalDataPerformEvaluation
+
+    call CloseClimateFiles()
+    call CloseIrrigationFile()
+    call CloseManagementFile()
+
+    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+        call CloseEvalDataPerformEvaluation(NrRun)
+    end if
+
+    contains 
+
+    subroutine CloseEvalDataPerformEvaluation(NrRun)
+        integer(int8), intent(in) :: NrRun
+    end subroutine CloseEvalDataPerformEvaluation
+
+    subroutine CloseClimateFiles()
+        if (GetEToFile() /= '(None)') then
+            call fEToSIM_close()
+        end if
+        if (GetRainFile() /= '(None)') then
+            call fRainSIM_close()
+        end if
+        if (GetTemperatureFile() /= '(None)') then
+            call fTempSIM_close()
+        end if
+    end subroutine CloseClimateFiles
+
+
+    subroutine CloseIrrigationFile()
+        if ((GetIrriMode() == IrriMode_Manual) .or. (GetIrriMode() == IrriMode_Generate)) then
+            call fIrri_close()
+        end if
+    end subroutine CloseIrrigationFile
+
+
+    subroutine CloseManagementFile()
+        if (GetManagement_Cuttings_Considered()) then
+            call fCuts_close()
+        end if
+    end subroutine CloseManagementFile
+
+end subroutine FinalizeRun2
 
 
 subroutine OpenIrrigationFile()

@@ -168,7 +168,7 @@ pluginbarev70.o: pluginbarev70.F90 \
 
 SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
       ClimProcessing.pas InitialSettings.pas StartUnit.pas \
-      DefaultCropSoil.pas RootUnit.pas Simul.pas \
+      DefaultCropSoil.pas RootUnit.pas Simul.pas InfoResults.pas \
       interface_global.pas interface_tempprocessing.pas \
       interface_climprocessing.pas interface_initialsettings.pas \
       interface_run.pas interface_startunit.pas interface_defaultcropsoil.pas \

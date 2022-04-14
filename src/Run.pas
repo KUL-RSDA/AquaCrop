@@ -16,7 +16,6 @@ PROCEDURE AdvanceOneTimeStep();
 PROCEDURE FinalizeRun1(NrRun : ShortInt;
                        TheProjectFile : string;
                        TheProjectType : repTypeProject);
-PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
@@ -1391,60 +1390,6 @@ IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
     WriteSimPeriod(NrRun,TheProjectFile);
     END;
 END; // FinalizeRun1
-
-
-PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
-
-    PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt);
-    VAR totalnameEvalStat,StrNr : string;
-
-    BEGIN  // CloseEvalDataPerformEvaluation
-    // 1. Close Evaluation data file  and file with observations
-    fEval_close();
-    IF (GetLineNrEval() <> undef_int) THEN fObs_close();
-    // 2. Specify File name Evaluation of simulation results - Statistics
-    StrNr := '';
-    IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);
-    CASE TheProjectType OF
-      TypePRO : totalnameEvalStat := CONCAT(GetPathNameOutp(),GetOutputName(),'PROevaluation.OUT');
-      TypePRM : BEGIN
-                Str(NrRun:3,StrNr);
-                totalnameEvalStat := CONCAT(GetPathNameOutp(),GetOutputName(),'PRM',Trim(StrNr),'evaluation.OUT');
-                END;
-      end;
-    // 3. Create Evaluation statistics file
-    WriteAssessmentSimulation(StrNr,totalnameEvalStat,TheProjectType,
-                              GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
-    // 4. Delete Evaluation data file
-    fEval_erase();
-    END; // CloseEvalDataPerformEvaluation
-
-
-    PROCEDURE CloseClimateFiles();
-    BEGIN
-    IF (GetEToFile() <> '(None)') THEN fEToSIM_close();
-    IF (GetRainFile() <> '(None)') THEN fRainSIM_close();
-    IF (GetTemperatureFile() <> '(None)') THEN fTempSIM_close();
-    END; // CloseClimateFiles
-
-
-    PROCEDURE CloseIrrigationFile();
-    BEGIN
-    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN fIrri_close();
-    END; // CloseIrrigationFile
-
-
-    PROCEDURE CloseManagementFile();
-    BEGIN
-    IF GetManagement_Cuttings_Considered() THEN fCuts_close();
-    END; // CloseManagementFile
-
-BEGIN
-CloseClimateFiles();
-CloseIrrigationFile();
-CloseManagementFile();
-IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun);
-END; // FinalizeRun2
 
 
 PROCEDURE RunSimulation(TheProjectFile_ : string;
