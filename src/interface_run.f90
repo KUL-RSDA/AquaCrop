@@ -36,8 +36,10 @@ use ac_run, only:   fDaily_open, &
                     GetGlobalIrriECw, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
+                    GetTheProjectFile, &
                     GetTransfer_Mobilize, &
                     GetTransfer_Store, &
+                    InitializeSimulation, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
                     SetCutInfoRecord1_FromDay, &
@@ -46,6 +48,7 @@ use ac_run, only:   fDaily_open, &
                     SetGlobalIrriECw, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
+                    SetTheProjectFile
                     SetTransfer_Mobilize, &
                     SetTransfer_Store, &
                     GetWaterTableInProfile, &
@@ -472,6 +475,18 @@ subroutine fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     call fEval_open(filename, mode)
 end subroutine fEval_open_wrap
 
+subroutine InitializeSimulation_wrap(TheProjectFile_ptr,&
+									strlen, TheProjectType)
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+    type(repTypeProject), intent(in) :: TheProjectType
+
+	character(len=strlen) :: string
+
+    TheProjectFile_ = pointer2string(TheProjectFile_ptr, strlen)
+	call InitializeSimulation(TheProjectFile_, TheProjectType)
+end subroutine InitializeSimulation_wrap
+
 
 subroutine fEval_write_wrap(line_ptr, line_len, advance)
     type(c_ptr), intent(in) :: line_ptr
@@ -572,6 +587,26 @@ subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
     CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
     call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
 end subroutine SetCGCadjustmentAfterCutting_wrap
+
+function GetTheProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetTheProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTheProjectFile())
+end function GetTheProjectFile_wrap
+
+
+subroutine SetTheProjectFile_wrap(TheProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetTheProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFile, strlen)
+    call SetTheProjectFile(string)
+end subroutine SetTheProjectFile_wrap
+
 
 
 end module ac_interface_run

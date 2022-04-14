@@ -4,9 +4,6 @@ interface
 
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_climprocessing, interface_simul, interface_inforesults;
 
-PROCEDURE InitializeSimulation(TheProjectFile_ : string;
-                               TheProjectType : repTypeProject);
-
 PROCEDURE FinalizeSimulation();
 
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
@@ -25,7 +22,6 @@ implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
-var  TheProjectFile : string;
 
 // specific for StandAlone
      NoYear : BOOLEAN;
@@ -1931,7 +1927,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
         END
    ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),PotValSF);
 //14.d Print ---------------------------------------
-IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
+IF (GetOutputAggregate() > 0) THEN CheckForPrint(GetTheProjectFile());
 IF OutDaily THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
 
@@ -1993,15 +1989,6 @@ REPEAT
 UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
 
-
-PROCEDURE InitializeSimulation(TheProjectFile_ : string;
-                               TheProjectType : repTypeProject);
-BEGIN
-TheProjectFile := TheProjectFile_;
-OpenOutputRun(TheProjectType); // open seasonal results .out
-IF OutDaily THEN OpenOutputDaily(TheProjectType);  // Open Daily results .OUT
-IF Part1Mult THEN OpenPart1MultResults(TheProjectType); // Open Multiple harvests in season .OUT
-END;  // InitializeSimulation
 
 
 PROCEDURE FinalizeSimulation();

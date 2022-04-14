@@ -280,6 +280,18 @@ procedure SetCutInfoRecord2_IntervalGDD(constref IntervalGDD : double);
 procedure SetCutInfoRecord2_MassInfo(constref MassInfo : double);
         external 'aquacrop' name '__ac_run_MOD_setcutinforecord2_massinfo';
 
+function GetProjectDescription(): string;
+
+function GetTheProjectFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_gettheprojectfile_wrap';
+
+procedure SetTheProjectFile(constref str : string);
+
+procedure SetTheProjectFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_settheprojectfile_wrap';
+
 function GetTransfer_Store(): boolean;
         external 'aquacrop' name '__ac_interface_run_MOD_gettransfer_store_wrap';
 
@@ -713,6 +725,17 @@ function fCuts_eof() : boolean;
 
 procedure fCuts_close();
         external 'aquacrop' name '__ac_run_MOD_fcuts_close';
+
+procedure InitializeSimulation(constref TheProjectFile_ : string;
+                               constref TheProjectType : repTypeProject)
+
+procedure InitializeSimulation_wrap(
+            constref TheProjectFile__ptr : PChar;
+            constref TheProjectFile__len : integer;);
+        external 'aquacrop' name '__ac_interface_run_MOD_initializesimulation_wrap';
+
+procedure __InitializeSimulation(constref TheProjectFile_ : string; constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_initializesimulation';
 
 procedure OpenIrrigationFile();
         external 'aquacrop' name '__ac_run_MOD_openirrigationfile';
@@ -1225,6 +1248,15 @@ procedure openharvestinfo();
 
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
+
+procedure InitializeSimulation( constref TheProjectFile_ : string;
+						constref TheProjectType : repTypeProject);
+
+procedure InitializeSimulation_wrap(
+            constref filename_ptr : PChar;
+            constref filename_len : integer:
+			constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_initializesimulation_wrap';
 
 implementation
 
@@ -1779,6 +1811,40 @@ begin;
      fHarvest_write_wrap(line_ptr, line_len, advance);
 end;
 
+
+function GetTheProjectFile(): string;
+var
+     p : PChar;
+begin;
+     p := GetTheProjectFile_wrap();
+     GetTheProjectFile := AnsiString(p);
+end;
+
+
+procedure SetTheProjectFile(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTheProjectFile_wrap(p, strlen);
+end;
+
+
+procedure InitializeSimulation(constref TheProjectFile_ : string;
+						       constref TheProjectType : repTypeProject);
+var
+	TheProjectFile_ptr : PChar
+	constref strlen : integer;
+    int_typeproject : integer;
+begin
+	TheProjectFile_ptr := PChar(TheProjectFile_)
+	strlen := Length(TheProjectFile_)
+    int_typeproject := ord(TheProjectType);
+	InitializeSimulation_wrap(TheProjectFile_ptr,&
+							  strlen, int_typeproject)
+end;
 
 
 
