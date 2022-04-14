@@ -1262,8 +1262,31 @@ procedure openharvestinfo();
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
+procedure WriteSimPeriod(constref NrRun : ShortInt;
+                         constref TheProjectFile : string);
+
+procedure WriteSimPeriod_wrap(constref NrRun : ShortInt;
+                         constref TheProjectFile_ptr : PChar;
+                         constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_writesimperiod_wrap';
+
+
 
 implementation
+
+
+
+procedure WriteSimPeriod(constref NrRun : ShortInt;
+                         constref TheProjectFile : string);
+var
+    TheProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    TheProjectFile_ptr := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen);
+end;
+
 
 
 procedure WriteTheResults(constref ANumber : ShortInt;

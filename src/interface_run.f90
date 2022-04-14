@@ -61,7 +61,8 @@ use ac_run, only:   fDaily_open, &
                     GetNoMoreCrop, &
                     SetNoMoreCrop, &
                     GetCGCadjustmentAfterCutting, &
-                    SetCGCadjustmentAfterCutting
+                    SetCGCadjustmentAfterCutting, &
+                    WriteSimPeriod
 
 implicit none
 
@@ -649,6 +650,17 @@ subroutine SetNoYear_wrap(NoYear_in)
     call SetNoYear(NoYear_f)    
 end subroutine SetNoYear_wrap
 
+
+subroutine WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen)
+    integer(int8), intent(in) :: NrRun
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
+    call WriteSimPeriod(NrRun, TheProjectFile)
+end subroutine WriteSimPeriod_wrap
 
 
 end module ac_interface_run
