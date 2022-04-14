@@ -1262,12 +1262,21 @@ procedure openharvestinfo();
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
         external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
+procedure GetZandECgwt(VAR ZiAqua : INTEGER;
+                       VAR ECiAqua : double);
+         external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
+
+function IrriOutSeason() : INTEGER;
+         external 'aquacrop' name '__ac_run_MOD_irrioutseason';
+
+function IrriManual() : INTEGER;
+         external 'aquacrop' name '__ac_run_MOD_irrimanual';
+
 procedure WriteIntermediatePeriod(TheProjectFile : string);
 
 procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
                                         constref strlen : integer);
     external 'aquacrop' name '__ac_interface_run_MOD_writeintermediateperiod_wrap';
-
 
 
 implementation

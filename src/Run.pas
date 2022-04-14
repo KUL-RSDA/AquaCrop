@@ -428,9 +428,6 @@ fEval_write(TempString);
 END; (* WriteEvaluationData *)
 
 
-
-
-
 // WRITING RESULTS section ================================================= END ====================
 
 PROCEDURE AdvanceOneTimeStep();
@@ -466,99 +463,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TESTVAL : double;
     WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
 
-    PROCEDURE GetZandECgwt(DayNri : LongInt;
-                       VAR ZiAqua : INTEGER;
-                       VAR ECiAqua : double);
-    VAR ZiIN : INTEGER;
-        Comp_temp : rep_comp;
-    BEGIN
-    ZiIN := ZiAqua;
-    IF (GetGwTable_DNr1() = GetGwTable_DNr2())
-       THEN BEGIN
-            ZiAqua := GetGwTable_Z1();
-            ECiAqua := GetGwTable_EC1();
-            END
-       ELSE BEGIN
-            ZiAqua := GetGwTable_Z1() + ROUND((DayNri - GetGwTable_DNr1())*(GetGwTable_Z2() - GetGwTable_Z1())/(GetGwTable_DNr2() - GetGwTable_DNr1()));
-            ECiAqua := GetGwTable_EC1() + (DayNri - GetGwTable_DNr1())*(GetGwTable_EC2() - GetGwTable_EC1())/(GetGwTable_DNr2() - GetGwTable_DNr1());
-            END;
-    IF (ZiAqua <> ZiIN) THEN BEGIN
-                             Comp_temp := GetCompartment();
-                             CalculateAdjustedFC((ZiAqua/100),Comp_temp);
-                             SetCompartment(Comp_temp);
-                             END;
-    END; (* GetZandECgwt *)
-
-
-    FUNCTION IrriOutSeason(Dayi : LongInt) : INTEGER;
-    VAR DNr, Nri : INTEGER;
-        IrriEvents : rep_IrriOutSeasonEvents;
-        TheEnd : BOOLEAN;
-    BEGIN
-    DNr := Dayi - GetSimulation_FromDayNr() + 1;
-    IrriEvents := GetIrriBeforeSeason();
-    IF (Dayi > GetCrop().DayN) THEN
-       BEGIN
-       DNr := Dayi - GetCrop().DayN;
-       IrriEvents := GetIrriAfterSeason();
-       END;
-    IF (DNr < 1)
-       THEN IrriOutSeason := 0
-       ELSE BEGIN
-            TheEnd := false;
-            Nri := 0;
-            REPEAT
-              Nri := Nri + 1;
-              IF (IrriEvents[Nri].DayNr = DNr)
-                 THEN BEGIN
-                      IrriOutSeason := IrriEvents[Nri].Param;
-                      TheEnd := true;
-                      END
-                 ELSE IrriOutSeason := 0;
-            UNTIL ((Nri = 5) OR (IrriEvents[Nri].DayNr = 0)
-               OR (IrriEvents[Nri].DayNr > DNr)
-               OR TheEnd);
-            END;
-    END; (* IrriOutSeason *)
-
-
-
-    FUNCTION IrriManual(Dayi : LongInt) : INTEGER;
-    VAR DNr : INTEGER;
-        StringREAD : ShortString;
-        Ir1,Ir2 : double;
-        IrriECw_temp : double;
-    BEGIN
-    IF (GetIrriFirstDayNr() = undef_int)
-       THEN DNr := Dayi - GetCrop().Day1 + 1
-       ELSE DNr := Dayi - GetIrriFirstDayNr() + 1;
-    IF (GetIrriInfoRecord1_NoMoreInfo())
-       THEN IrriManual := 0
-       ELSE BEGIN
-            IrriManual := 0;
-            IF (GetIrriInfoRecord1_TimeInfo() = DNr) THEN
-               BEGIN
-               IrriManual := GetIrriInfoRecord1_DepthInfo();
-               StringREAD := fIrri_read();
-               IF fIrri_eof()
-                  THEN SetIrriInfoRecord1_NoMoreInfo(true)
-                  ELSE BEGIN
-                       SetIrriInfoRecord1_NoMoreInfo(false);
-                       IF GetGlobalIrriECw() // Versions before 3.2
-                          THEN SplitStringInTwoParams(StringREAD,Ir1,Ir2)
-                          ELSE BEGIN
-                               IrriECw_temp := GetSimulation_IrriECw();
-                               SplitStringInThreeParams(StringREAD,Ir1,Ir2,IrriECw_temp);
-                               SetSimulation_IrriECw(IrriECw_temp);
-                               END;
-                       SetIrriInfoRecord1_TimeInfo(ROUND(Ir1));
-                       SetIrriInfoRecord1_DepthInfo(ROUND(Ir2));
-                       END;
-               END;
-            END;
-    END; (* IrriManual *)
-
-
 
     PROCEDURE GetIrriParam (VAR TargetTimeVal, TargetDepthVal : integer);
     VAR DayInSeason : Integer;
@@ -569,8 +473,8 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     TargetTimeVal := -999;
     TargetDepthVal := -999;
     IF ((GetDayNri() < GetCrop().Day1) OR (GetDayNri() > GetCrop().DayN))
-       THEN SetIrrigation(IrriOutSeason(GetDayNri()))
-       ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual(GetDayNri()));
+       THEN SetIrrigation(IrriOutSeason())
+       ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual());
     IF ((GetIrriMode() = Generate) AND ((GetDayNri() >= GetCrop().Day1) AND (GetDayNri() <= GetCrop().DayN))) THEN
        BEGIN
        // read next line if required
@@ -775,7 +679,7 @@ IF (NOT GetSimulParam_ConstGwt()) THEN
         END;
    ZiAqua_temp := GetZiAqua();
    ECiAqua_temp := GetECiAqua();
-   GetZandECgwt(GetDayNri(),ZiAqua_temp,ECiAqua_temp);
+   GetZandECgwt(ZiAqua_temp,ECiAqua_temp);
    SetZiAqua(ZiAqua_temp);
    SetECiAqua(ECiAqua_temp);
    WaterTableInProfile_temp := GetWaterTableInProfile();
