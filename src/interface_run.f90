@@ -62,7 +62,8 @@ use ac_run, only:   fDaily_open, &
                     SetNoMoreCrop, &
                     GetCGCadjustmentAfterCutting, &
                     SetCGCadjustmentAfterCutting, &
-                    WriteSimPeriod
+                    WriteSimPeriod, &
+                    WriteIntermediatePeriod
 
 implicit none
 
@@ -661,6 +662,19 @@ subroutine WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen)
     TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
     call WriteSimPeriod(NrRun, TheProjectFile)
 end subroutine WriteSimPeriod_wrap
+
+
+
+subroutine WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen)
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
+    call WriteIntermediatePeriod(TheProjectFile)
+end subroutine WriteIntermediatePeriod_wrap
+
 
 
 end module ac_interface_run
