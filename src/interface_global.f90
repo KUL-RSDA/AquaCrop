@@ -238,7 +238,17 @@ use ac_global, only: CheckFilesInProject, &
                      GetOut7Clim, &
                      SetOut7Clim, &
                      GetProjectDescription, &
-                     SetProjectDescription
+                     SetProjectDescription, &
+                     GetOutDaily, &
+                     SetOutDaily, &
+                     GetPathNameList, &
+                     SetPathNameList, &
+                     GetPathNameParam, &
+                     SetPathNameParam, &
+                     GetPart1Mult, &
+                     GetPart2Eval, &
+                     SetPart1Mult, &
+                     SetPart2Eval             
 
 
 use ac_kinds, only: dp, &
@@ -2754,6 +2764,98 @@ subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, 
 end subroutine CheckForKeepSWC_wrap
 
 
+function GetOutDaily_wrap() result(OutDaily_f)
+
+    logical(1) :: OutDaily_f
+
+    OutDaily_f = GetOutDaily()
+end function GetOutDaily_wrap
+
+
+subroutine SetOutDaily_wrap(OutDaily_in)
+    logical(1), intent(in) :: OutDaily_in
+
+    logical :: OutDaily_f
+
+    OutDaily_f = OutDaily_in
+    call SetOutDaily(OutDaily_f)
+end subroutine SetOutDaily_wrap
+
+
+function GetPathNameList_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameList]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetPathNameList())
+end function GetPathNameList_wrap
+
+    
+subroutine SetPathNameList_wrap(PathNameList, strlen)
+    !! Wrapper for [[ac_global:SetPathNameList]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameList
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(PathNameList, strlen)
+    call SetPathNameList(string)
+end subroutine SetPathNameList_wrap
+
+
+function GetPathNameParam_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameParam]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetPathNameParam())
+end function GetPathNameParam_wrap
+
+    
+subroutine SetPathNameParam_wrap(PathNameParam, strlen)
+    !! Wrapper for [[ac_global:SetPathNameParam]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameParam
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(PathNameParam, strlen)
+    call SetPathNameParam(string)
+end subroutine SetPathNameParam_wrap
+
+
+function GetPart1Mult_wrap() result(Part1Mult_f)
+
+    logical(1) :: Part1Mult_f
+
+    Part1Mult_f = GetPart1Mult()
+end function GetPart1Mult_wrap
+
+
+subroutine SetPart1Mult_wrap(Part1Mult_in)
+    logical(1), intent(in) :: Part1Mult_in
+
+    logical :: Part1Mult_f
+
+    Part1Mult_f = Part1Mult_in
+    call SetPart1Mult(Part1Mult_f)
+end subroutine SetPart1Mult_wrap
+
+
+function GetPart2Eval_wrap() result(Part2Eval_f)
+
+    logical(1) :: Part2Eval_f
+
+    Part2Eval_f = GetPart2Eval()
+end function GetPart2Eval_wrap
+
+
+subroutine SetPart2Eval_wrap(Part2Eval_in)
+    logical(1), intent(in) :: Part2Eval_in
+
+    logical :: Part2Eval_f
+
+    Part2Eval_f = Part2Eval_in
+    call SetPart2Eval(Part2Eval_f)
+end subroutine SetPart2Eval_wrap
 
 
 end module ac_interface_global

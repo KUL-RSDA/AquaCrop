@@ -5,7 +5,8 @@ uses
   interface_global in 'interface_global.pas',
   Run in 'Run.pas',
   interface_run in 'interface_run.pas',
-  StartUnit in 'StartUnit.pas';
+  StartUnit in 'StartUnit.pas',
+  interface_startunit in 'interface_startunit.pas';
 
 
 PROCEDURE WriteProjectsInfo_wrap(constref line : PChar);

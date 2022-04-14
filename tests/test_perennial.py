@@ -169,8 +169,8 @@ def test_perennial():
         print('{0} maxnumdev [%] = {1:.3f} (column index {2})'.format(
                                             filename, maxdev, maxcol))
 
-        # Certain small deviations are tolerated in the daily output
-        tolerated_deviations = {'day': 35, 'season': 0}[suffix]
+        # Certain small deviations are tolerated in the daily/season output
+        tolerated_deviations = {'day': 35, 'season': 8}[suffix]
         msg = '{0} small deviation(s) currently allowed for this test case'
         print(msg.format(tolerated_deviations))
 

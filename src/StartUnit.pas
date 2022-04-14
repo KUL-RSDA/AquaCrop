@@ -7,7 +7,6 @@ USES Global, interface_global;
 FUNCTION GetListProjectsFile() : string;
 FUNCTION GetNumberOfProjects() : integer;
 FUNCTION GetProjectFileName(constref iproject : integer) : string;
-PROCEDURE InitializeTheProgram;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 PROCEDURE InitializeProject(constref iproject : integer;
@@ -23,45 +22,9 @@ implementation
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
 
-PROCEDURE PrepareReport(OutputAggregate : ShortInt;
-                        Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
-                        Part1Mult,Part2Eval : BOOLEAN);
-BEGIN
-fProjects_open(CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'), 'w');
-fProjects_write('Intermediate results: ', false);
-CASE OutputAggregate OF
-     1 : fProjects_write('daily results');
-     2 : fProjects_write('10-daily results');
-     3 : fProjects_write('monthly results');
-     else fProjects_write('None created');
-     end;
-fProjects_write('');
-IF OutDaily
-   THEN BEGIN
-        fProjects_write('Daily output results:');
-        IF Out1Wabal THEN fProjects_write('1. - soil water balance');
-        IF Out2Crop THEN fProjects_write('2. - crop development and production');
-        IF Out3Prof THEN fProjects_write('3. - soil water content in the soil profile and root zone');
-        IF Out4Salt THEN fProjects_write('4. - soil salinity in the soil profile and root zone');
-        IF Out5CompWC THEN fProjects_write('5. - soil water content at various depths of the soil profile');
-        IF Out6CompEC THEN fProjects_write('6. - soil salinity at various depths of the soil profile');
-        IF Out7Clim THEN fProjects_write('7. - climate input parameters');
-        END
-   ELSE fProjects_write('Daily output results: None created');
-fProjects_write('');
-IF ((Part1Mult = True) OR  (Part2Eval = True))
-   THEN BEGIN
-        fProjects_write('Particular results:');
-        IF Part1Mult THEN fProjects_write('1. - biomass and yield at multiple cuttings (for herbaceous forage crops)');
-        IF Part2Eval THEN fProjects_write('2. - evaluation of simulation results (when Field Data)');
-        END
-   ELSE fProjects_write('Particular results: None created');
-END; (* PrepareReport *)
-
-
 FUNCTION GetListProjectsFile() : string;
 BEGIN
-    GetListProjectsFile := CONCAT(PathNameList,'ListProjects.txt');
+    GetListProjectsFile := CONCAT(GetPathNameList(),'ListProjects.txt');
 END;
 
 
@@ -116,56 +79,6 @@ BEGIN
 END;
 
 
-PROCEDURE InitializeTheProgram;
-VAR
-    OutputAggregate_temp : shortint;
-    out1wabal_temp, out2crop_temp, out3prof_temp, out4salt_temp, out5compwc_temp, out6compec_temp, out7clim_temp: boolean;
-BEGIN
-Decimalseparator := '.';
-SetPathNameOutp('OUTP/');
-SetPathNameSimul('SIMUL/');
-PathNameList :=  'LIST/';
-PathNameParam := 'PARAM/';
-SetPathNameProg('');
-
-OutputAggregate_temp := GetOutputAggregate();
-GetTimeAggregationResults(OutputAggregate_temp);
-SetOutputAggregate(OutputAggregate_temp);
-out1wabal_temp := GetOut1Wabal();
-out2crop_temp := GetOut2Crop();
-out3prof_temp := GetOut3Prof();
-out4salt_temp := GetOut4Salt();
-out5compwc_temp := GetOut5CompWC();
-out6compec_temp := GetOut6CompEC();
-out7clim_temp := GetOut7Clim();
-GetRequestDailyResults(out1wabal_temp, out2crop_temp, out3prof_temp, out4salt_temp, out5compwc_temp, out6compec_temp, out7clim_temp, OutDaily);
-GetRequestParticularResults(Part1Mult,Part2Eval);
-SetOut1Wabal(out1wabal_temp);
-SetOut2Crop(out2crop_temp);
-SetOut3Prof(out3prof_temp);
-SetOut4Salt(out4salt_temp);
-SetOut5CompWC(out5compwc_temp);
-SetOut6CompEC(out6compec_temp);
-SetOut7Clim(out7clim_temp);
-out1wabal_temp := GetOut1Wabal();
-out2crop_temp := GetOut2Crop();
-out3prof_temp := GetOut3Prof();
-out4salt_temp := GetOut4Salt();
-out5compwc_temp := GetOut5CompWC();
-out6compec_temp := GetOut6CompEC();
-out7clim_temp := GetOut7Clim();
-PrepareReport(GetOutputAggregate(),out1wabal_temp,out2crop_temp, out3prof_temp, out4salt_temp, out5compwc_temp, out6compec_temp, out7clim_temp,OutDaily,
-              Part1Mult,Part2Eval);
-SetOut1Wabal(out1wabal_temp);
-SetOut2Crop(out2crop_temp);
-SetOut3Prof(out3prof_temp);
-SetOut4Salt(out4salt_temp);
-SetOut5CompWC(out5compwc_temp);
-SetOut6CompEC(out6compec_temp);
-SetOut7Clim(out7clim_temp);
-END;
-
-
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 VAR i,lgth : INTEGER;
@@ -217,7 +130,7 @@ VAR NrString,TestFile, tempstring : string;
     // file name program parameters
     FullFileNameProgramParameters := Copy(TheFileNameProgram,1,(TheLength-3));
     // path file progrm parameters
-    FullFileNameProgramParameters := CONCAT(Trim(PathNameParam),FullFileNameProgramParameters);
+    FullFileNameProgramParameters := CONCAT(Trim(GetPathNameParam()),FullFileNameProgramParameters);
     // extension file program parameters
     IF (TheExtension = 'PRO')
        THEN FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PP1')
@@ -336,7 +249,7 @@ BEGIN
     // check if project file exists
     IF (TheProjectType <> TypeNone) THEN
     BEGIN
-        TestFile := CONCAT(PathNameList,TheProjectFile);
+        TestFile := CONCAT(GetPathNameList(),TheProjectFile);
         IF (FileExists(TestFile) = false) THEN CanSelect := false;
     END;
 
@@ -349,7 +262,7 @@ BEGIN
         TypePRO : BEGIN
             // 2. Assign single project file
             SetProjectFile(TheProjectFile);
-            SetProjectFileFull(CONCAT(PathNameList,GetProjectFile()));
+            SetProjectFileFull(CONCAT(GetPathNameList(),GetProjectFile()));
             //3. Check if Environment and Simulation Files exist
             CanSelect := true;
             CheckFilesInProject(GetProjectFileFull(),(1),CanSelect);
@@ -368,7 +281,7 @@ BEGIN
         TypePRM : BEGIN
             // 2. Assign multiple project file
             SetMultipleProjectFile(TheProjectFile);
-            SetMultipleProjectFileFull(CONCAT(PathNameList,GetMultipleProjectFile()));
+            SetMultipleProjectFileFull(CONCAT(GetPathNameList(),GetMultipleProjectFile()));
             //2bis. Get number of Simulation Runs
             GetNumberSimulationRuns(GetMultipleProjectFileFull(),TotalSimRuns);
             //3. Check if Environment and Simulation Files exist for all runs

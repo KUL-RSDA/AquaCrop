@@ -1030,7 +1030,7 @@ real(dp) :: Tmin ! degC
 
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-logical :: PreDay
+logical :: PreDay, OutDaily
 logical :: Out1Wabal
 logical :: Out2Crop
 logical :: Out3Prof
@@ -1038,7 +1038,9 @@ logical :: Out4Salt
 logical :: Out5CompWC
 logical :: Out6CompEC
 logical :: Out7Clim
+logical :: Part1Mult,Part2Eval
 
+character(len=:), allocatable :: PathNameList,PathNameParam
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -15131,5 +15133,72 @@ subroutine SetSurf0(Surf0_in)
     Surf0 = Surf0_in
 end subroutine SetSurf0
 
+logical function GetOutDaily()
+    !! Getter for the OutDaily global variable
+
+    GetOutDaily = OutDaily
+end function GetOutDaily
+
+subroutine SetOutDaily(OutDaily_in)
+    !! Setter for the OutDaily global variable
+    logical, intent(in) :: OutDaily_in
+
+    OutDaily = OutDaily_in
+end subroutine SetOutDaily
+
+function GetPathNameParam() result(str)
+    !! Getter for the "PathNameParam" global variable.
+    character(len=len(PathNameParam)) :: str 
+
+    str = PathNameParam
+end function GetPathNameParam
+
+subroutine SetPathNameParam(str)
+    !! Setter for the "PathNameParam" global variable.
+    character(len=*), intent(in) :: str
+
+    PathNameParam = str
+end subroutine SetPathNameParam
+
+function GetPathNameList() result(str)
+    !! Getter for the "PathNameList" global variable.
+    character(len=len(PathNameList)) :: str  
+
+    str = PathNameList
+end function GetPathNameList
+
+subroutine SetPathNameList(str)
+    !! Setter for the "PathNameList" global variable. 
+    character(len=*), intent(in) :: str
+
+    PathNameList = str
+end subroutine SetPathNameList
+
+
+logical function GetPart1Mult()
+    !! Getter for the Part1Mult global variable
+
+    GetPart1Mult = Part1Mult
+end function GetPart1Mult
+
+subroutine SetPart1Mult(Part1Mult_in)
+    !! Setter for the Part1Mult global variable
+    logical, intent(in) :: Part1Mult_in
+
+    Part1Mult = Part1Mult_in
+end subroutine SetPart1Mult
+
+logical function GetPart2Eval()
+    !! Getter for the Part2Eval global variable
+
+    GetPart2Eval = Part2Eval
+end function GetPart2Eval
+
+subroutine SetPart2Eval(Part2Eval_in)
+    !! Setter for the Part2Eval global variable
+    logical, intent(in) :: Part2Eval_in
+
+    Part2Eval = Part2Eval_in
+end subroutine SetPart2Eval
 
 end module ac_global
