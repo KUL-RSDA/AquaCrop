@@ -479,27 +479,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     END; (* GetIrriParam *)
 
 
-    PROCEDURE AdjustSWCRootZone(VAR PreIrri : double);
-    VAR compi,layeri : ShortInt;
-        SumDepth,ThetaPercRaw : double;
-    BEGIN
-    compi := 0;
-    SumDepth := 0;
-    PreIrri := 0;
-    REPEAT
-      compi := compi + 1;
-      SumDepth := SumDepth + GetCompartment_Thickness(compi);
-      layeri := GetCompartment_Layer(compi);
-      ThetaPercRaw := GetSoilLayer_i(layeri).FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(GetSoilLayer_i(layeri).FC/100-GetSoilLayer_i(layeri).WP/100);
-      IF (GetCompartment_Theta(compi) < ThetaPercRaw) THEN
-         BEGIN
-         PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
-         SetCompartment_Theta(compi, ThetaPercRaw);
-         END;
-    UNTIL ((SumDepth >= GetRootingDepth()) OR (compi = GetNrCompartments()))
-    END; (* AdjustSWCRootZone *)
-
-
     PROCEDURE InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
                                             VAR StorageOn,MobilizationOn : BOOLEAN);
     BEGIN

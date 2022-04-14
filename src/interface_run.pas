@@ -1287,6 +1287,9 @@ function IrriOutSeason() : INTEGER;
 function IrriManual() : INTEGER;
          external 'aquacrop' name '__ac_run_MOD_irrimanual';
 
+procedure AdjustSWCRootZone(VAR PreIrri : double);
+    external 'aquacrop' name '__ac_run_MOD_adjustswcrootzone';
+
 procedure WriteIntermediatePeriod(TheProjectFile : string);
 
 procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
