@@ -5391,6 +5391,32 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
     end if
 end subroutine OpenClimFilesAndGetDataFirstDay
 
+
+subroutine WriteSimPeriod(NrRun, TheProjectFile)
+    integer(int8), intent(in) :: NrRun
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: Day1, Month1, Year1, DayN, MonthN, YearN
+
+    call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) 
+    ! Start simulation run
+    call DetermineDate(GetSimulation_ToDayNr(), DayN, MonthN, YearN) 
+    ! End simulation run
+    call WriteTheResults(NrRun, Day1, Month1, Year1, DayN, MonthN, YearN, &
+                        GetSumWaBal_Rain(), GetSumETo(), GetSumGDD(), &
+                        GetSumWaBal_Irrigation(), GetSumWaBal_Infiltrated(), &
+                        GetSumWaBal_Runoff(), GetSumWaBal_Drain(), &
+                        GetSumWaBal_CRwater(), GetSumWaBal_Eact(), &
+                        GetSumWaBal_Epot(), GetSumWaBal_Tact(), &
+                        GetSumWaBal_TrW(), GetSumWaBal_Tpot(), &
+                        GetSumWaBal_SaltIn(), GetSumWaBal_SaltOut(), &
+                        GetSumWaBal_CRsalt(), GetSumWaBal_Biomass(), &
+                        GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
+                        GetSimulation_Storage_Btotal(), TheProjectFile)
+end subroutine WriteSimPeriod
+
+
+
 subroutine WriteIntermediatePeriod(TheProjectFile)
     character(len=*), intent(in) :: TheProjectFile
 
@@ -5562,5 +5588,6 @@ integer(int32) function IrriManual()
 end function IrriManual
 
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
+
 
 end module ac_run

@@ -34,21 +34,6 @@ var  TheProjectFile : string;
 
 
 
-PROCEDURE WriteSimPeriod(NrRun : ShortInt;
-                         TheProjectFile : string);
-VAR Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
-BEGIN
-DetermineDate(GetSimulation_FromDayNr(),Day1,Month1,Year1); // Start simulation run
-DetermineDate(GetSimulation_ToDayNr(),DayN,MonthN,YearN); // End simulation run
-WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
-               GetSumWaBal_Rain(),GetSumETo(),GetSumGDD(),
-               GetSumWaBal_Irrigation(),GetSumWaBal_Infiltrated(),GetSumWaBal_Runoff(),GetSumWaBal_Drain(),GetSumWaBal_CRwater(),
-               GetSumWaBal_Eact(),GetSumWaBal_Epot(),GetSumWaBal_Tact(),GetSumWaBal_TrW(),GetSumWaBal_Tpot(),
-               GetSumWaBal_SaltIn(),GetSumWaBal_SaltOut(),GetSumWaBal_CRsalt(),
-               GetSumWaBal_Biomass(),GetSumWaBal_BiomassUnlim(),GetTransfer_Bmobilized(),GetSimulation_Storage_Btotal(),
-               TheProjectFile);
-END; (* WriteSimPeriod *)
-
 
 
 PROCEDURE CheckForPrint(TheProjectFile : string);
