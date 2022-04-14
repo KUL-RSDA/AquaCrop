@@ -479,44 +479,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     END; (* GetIrriParam *)
 
 
-    PROCEDURE InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
-                                            VAR StorageOn,MobilizationOn : BOOLEAN);
-    BEGIN
-    Bin := 0;
-    Bout := 0;
-    FracAssim := 0;
-    IF (GetCrop_subkind() = Forage) THEN // only for perennial herbaceous forage crops
-      BEGIN
-      FracAssim := 0;
-      IF (GetNoMoreCrop() = true)
-         THEN BEGIN
-              StorageOn := false;
-              MobilizationOn := false;
-              END
-         ELSE BEGIN
-              // Start of storage period ?
-              //IF ((GetDayNri() - Simulation.DelayedDays - Crop.Day1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
-              IF ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1 + 1) = (GetCrop().DaysToHarvest - GetCrop_Assimilates().Period + 1)) THEN
-                 BEGIN
-                 // switch storage on
-                 StorageOn := true;
-                 // switch mobilization off
-                 IF (MobilizationOn = true) THEN AssimToMobilize := AssimMobilized;
-                 MobilizationOn := false;
-                 END;
-              // Fraction of assimilates transferred
-              IF (MobilizationOn = true) THEN FracAssim := (AssimToMobilize-AssimMobilized)/AssimToMobilize;
-              IF ((StorageOn = true) AND (GetCrop_Assimilates().Period > 0))
-                 THEN FracAssim := (GetCrop_Assimilates().Stored/100) *
-                 //(((GetDayNri() - Simulation.DelayedDays - Crop.Day1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
-                 (((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1 + 1)-(GetCrop().DaysToHarvest-GetCrop_Assimilates().Period))/GetCrop_Assimilates().Period);
-              IF (FracAssim < 0) THEN FracAssim := 0;
-              IF (FracAssim > 1) THEN FracAssim := 1;
-              END;
-      END;
-    END;  (* InitializeTransferAssimilates *)
-
-
 
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;

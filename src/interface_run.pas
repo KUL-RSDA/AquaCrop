@@ -1290,6 +1290,10 @@ function IrriManual() : INTEGER;
 procedure AdjustSWCRootZone(VAR PreIrri : double);
     external 'aquacrop' name '__ac_run_MOD_adjustswcrootzone';
 
+procedure InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
+                                        VAR StorageOn,MobilizationOn : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_run_MOD_initializetransferassimilates_wrap';
+
 procedure WriteIntermediatePeriod(TheProjectFile : string);
 
 procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
