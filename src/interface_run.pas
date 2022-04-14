@@ -1268,9 +1268,27 @@ procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
                                         constref strlen : integer);
     external 'aquacrop' name '__ac_interface_run_MOD_writeintermediateperiod_wrap';
 
+procedure InitializeRun(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+
+procedure _InitializeRun(constref NrRun : ShortInt; 
+                         constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_initializerun';
+
 
 
 implementation
+
+procedure InitializeRun(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    _InitializeRun(NrRun, int_typeproject);
+end;
+
+
 
 procedure WriteIntermediatePeriod(TheProjectFile : string);
 var

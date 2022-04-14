@@ -204,7 +204,6 @@ subroutine InitializeSettings()
 
     character(len=1025) :: TempString1, TempString2, CO2descr
     integer(int32) :: Nri
-    type(rep_sum) :: SumWaBal_temp
     integer(int32) :: Crop_Day1_temp
     integer(int32) :: Crop_DayN_temp
 
@@ -470,9 +469,7 @@ subroutine InitializeSettings()
     call SetSurfaceStorage(0._dp)
     call SetECstorage(0.0_dp)
     call SetDaySubmerged(0)
-    SumWaBal_temp = GetSumWaBal()
-    call GlobalZero(SumWaBal_temp)
-    call SetSumWaBal(SumWaBal_temp)
+    call GlobalZero()
     call SetDrain(0.0_dp) ! added 4.0
     call SetRunoff(0.0_dp)! added 4.0
     call SetInfiltrated(0.0_dp) ! added 4.0
