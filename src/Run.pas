@@ -50,10 +50,6 @@ WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
 END; (* WriteSimPeriod *)
 
 
-
-
-
-
 PROCEDURE WriteDailyResults(DAP : INTEGER;
                             WPi : double);
 CONST NoValD = undef_double;
