@@ -1310,6 +1310,15 @@ procedure _InitializeRun(constref NrRun : ShortInt;
                          constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_initializerun';
 
+procedure RecordHarvest(constref NrCut : integer;
+                        constref DayInSeason : integer)
+    external 'aquacrop' name '__ac_run_MOD_recordharvest';
+
+procedure GetPotValSF(constref DAP : integer;
+                      constref SumGDDAdjCC : double;
+                      VAR PotValSF : double);
+    external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
+
 
 implementation
 
