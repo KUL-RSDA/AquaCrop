@@ -40,7 +40,20 @@ procedure PrepareReport();
 procedure InitializeTheProgram();
         external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
 
+function GetListProjectsFile() : string;
+
+function GetListProjectsFile_wrap() : PChar;
+    external 'aquacrop' name '__ac_interface_startunit_MOD_getlistprojectsfile_wrap';
+
 implementation
+
+function GetListProjectsFile() : string;
+var
+    p : PChar;
+begin
+    p := GetListProjectsFile_wrap;
+    GetListProjectsFile := Ansistring(p);
+end;
 
 procedure fProjects_open(constref filename : string; constref mode : string);
 var

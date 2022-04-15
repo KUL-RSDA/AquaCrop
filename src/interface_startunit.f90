@@ -8,7 +8,8 @@ use ac_interface_global, only: pointer2string, &
 use ac_kinds, only: int32
 
 use ac_startunit, only: fProjects_open, &
-                        fProjects_write
+                        fProjects_write, &
+                        GetListProjectsFile
 
 implicit none
 
@@ -42,5 +43,11 @@ subroutine fProjects_write_wrap(line_ptr, line_len, advance)
     advance_f = advance
     call fProjects_write(line, advance_f)
 end subroutine fProjects_write_wrap
+
+function GetListProjectsFile_wrap() result(ptr)
+    type(c_ptr) :: ptr
+
+    ptr = string2pointer(GetListProjectsFile())
+end function GetListProjectsFile_wrap
 
 end module ac_interface_startunit

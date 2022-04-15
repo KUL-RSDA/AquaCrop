@@ -29,6 +29,7 @@ use ac_global, only: GetPathNameSimul, &
                      GetOutputAggregate, &
                      GetPart1Mult, &
                      GetPart2Eval, &
+                     GetPathNameList, &
                      GetOutDaily, &
                      SetPathNameProg, &
                      SetPathNameSimul, &
@@ -281,16 +282,24 @@ end subroutine PrepareReport
 subroutine InitializeTheProgram()
 
 !Decimalseparator = '.' GDL, 20220413, not used?
-call SetPathNameOutp('OUTP/')
-call SetPathNameSimul('SIMUL/')
-call SetPathNameList('LIST/')
-call SetPathNameParam('PARAM/')
-call SetPathNameProg('')
+    call SetPathNameOutp('OUTP/')
+    call SetPathNameSimul('SIMUL/')
+    call SetPathNameList('LIST/')
+    call SetPathNameParam('PARAM/')
+    call SetPathNameProg('')
 
-call GetTimeAggregationResults()
-call GetRequestDailyResults()
-call GetRequestParticularResults()
-call PrepareReport()
+    call GetTimeAggregationResults()
+    call GetRequestDailyResults()
+    call GetRequestParticularResults()
+    call PrepareReport()
 end subroutine InitializeTheProgram
+
+
+function GetListProjectsFile() result(ListProjectsFile)
+    character(len=:), allocatable :: ListProjectsFile
+
+    ListProjectsFile = GetPathNameList() // 'ListProjects.txt'
+
+end function GetListProjectsFile
 
 end module ac_startunit

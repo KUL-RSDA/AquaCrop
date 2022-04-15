@@ -4,7 +4,6 @@ interface
 
 USES Global, interface_global;
 
-FUNCTION GetListProjectsFile() : string;
 FUNCTION GetNumberOfProjects() : integer;
 FUNCTION GetProjectFileName(constref iproject : integer) : string;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
@@ -20,12 +19,6 @@ PROCEDURE StartTheProgram;
 implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
-
-
-FUNCTION GetListProjectsFile() : string;
-BEGIN
-    GetListProjectsFile := CONCAT(GetPathNameList(),'ListProjects.txt');
-END;
 
 
 FUNCTION GetNumberOfProjects() : integer;
