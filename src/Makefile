@@ -7,7 +7,7 @@ PC = fpc
 PCFLAGS = -Mdelphi
 
 FC = gfortran
-FCFLAGS = -fPIC -shared
+FCFLAGS = -fPIC -shared -fall-intrinsics
 
 ifeq ($(DEBUG), 1)
     # For debugging and development

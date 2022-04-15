@@ -204,9 +204,9 @@ subroutine InitializeSettings()
 
     character(len=1025) :: TempString1, TempString2, CO2descr
     integer(int32) :: Nri
-    type(rep_sum) :: SumWaBal_temp
     integer(int32) :: Crop_Day1_temp
     integer(int32) :: Crop_DayN_temp
+    type(rep_sum) :: SumWaBal_temp
 
     ! 1. Program settings
     ! Settings of Program parameters

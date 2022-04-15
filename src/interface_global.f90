@@ -223,8 +223,32 @@ use ac_global, only: CheckFilesInProject, &
                      SetPreDay, &
                      GetMultipleProjectDescription, &
                      SetMultipleProjectDescription, &
+                     GetOut1Wabal, &
+                     SetOut1Wabal, &
+                     GetOut2Crop, &
+                     SetOut2Crop, &
+                     GetOut3Prof, &
+                     SetOut3Prof, &
+                     GetOut4Salt, &
+                     SetOut4Salt, &
+                     GetOut5CompWC, &
+                     SetOut5CompWC, &
+                     GetOut6CompEC, &
+                     SetOut6CompEC, &
+                     GetOut7Clim, &
+                     SetOut7Clim, &
                      GetProjectDescription, &
-                     SetProjectDescription
+                     SetProjectDescription, &
+                     GetOutDaily, &
+                     SetOutDaily, &
+                     GetPathNameList, &
+                     SetPathNameList, &
+                     GetPathNameParam, &
+                     SetPathNameParam, &
+                     GetPart1Mult, &
+                     GetPart2Eval, &
+                     SetPart1Mult, &
+                     SetPart2Eval             
 
 
 use ac_kinds, only: dp, &
@@ -2554,6 +2578,132 @@ subroutine SetPreDay_wrap(PreDay)
     call SetPreDay(bool)
 end subroutine SetPreDay_wrap
 
+function GetOut1Wabal_wrap() result(Out1Wabal_f)
+    !! Wrapper for [[ac_global:GetOut1Wabal]] for foreign languages
+    logical(1) :: Out1Wabal_f
+
+    Out1Wabal_f = GetOut1Wabal()
+end function GetOut1Wabal_wrap
+
+
+subroutine SetOut1Wabal_wrap(Out1Wabal_in)
+    !! Wrapper for [[ac_global:GetOut1Wabal]] for foreign languages.
+    logical(1), intent(in) :: Out1Wabal_in
+
+    logical :: Out1Wabal_f
+
+    Out1Wabal_f = Out1Wabal_in
+    call SetOut1Wabal(Out1Wabal_f)
+end subroutine SetOut1Wabal_wrap
+
+function GetOut2Crop_wrap() result(Out2Crop_f)
+    !! Wrapper for [[ac_global:GetOut2Crop]] for foreign languages
+    logical(1) :: Out2Crop_f
+
+    Out2Crop_f= GetOut2Crop()
+end function GetOut2Crop_wrap
+
+
+subroutine SetOut2Crop_wrap(Out2Crop_in)
+    !! Wrapper for [[ac_global:GetOut2Crop]] for foreign languages.
+    logical(1), intent(in) :: Out2Crop_in
+
+    logical :: Out2Crop_f
+
+    Out2Crop_f = Out2Crop_in
+    call SetOut2Crop(Out2Crop_f)
+end subroutine SetOut2Crop_wrap
+
+function GetOut3Prof_wrap() result(Out3Prof_f)
+    !! Wrapper for [[ac_global:GetOut3Prof]] for foreign languages
+    logical(1) :: Out3Prof_f
+
+    Out3Prof_f= GetOut3Prof()
+end function GetOut3Prof_wrap
+
+
+subroutine SetOut3Prof_wrap(Out3Prof_in)
+    !! Wrapper for [[ac_global:GetOut3Prof]] for foreign languages.
+    logical(1), intent(in) :: Out3Prof_in
+
+    logical :: Out3Prof_f
+
+    Out3Prof_f = Out3Prof_in
+    call SetOut3Prof(Out3Prof_f)
+end subroutine SetOut3Prof_wrap
+
+
+function GetOut4Salt_wrap() result(Out4Salt_f)
+    !! Wrapper for [[ac_global:GetOut4Salt]] for foreign languages
+    logical(1) :: Out4Salt_f
+
+    Out4Salt_f= GetOut4Salt()
+end function GetOut4Salt_wrap
+
+subroutine SetOut4Salt_wrap(Out4Salt_in)
+    !! Wrapper for [[ac_global:GetOut4Salt]] for foreign languages.
+    logical(1), intent(in) :: Out4Salt_in
+
+    logical :: Out4Salt_f
+
+    Out4Salt_f = Out4Salt_in
+    call SetOut4Salt(Out4Salt_f)
+end subroutine SetOut4Salt_wrap
+
+
+function GetOut5CompWC_wrap() result(Out5CompWC_f)
+    !! Wrapper for [[ac_global:GetOut5CompWC]] for foreign languages
+    logical(1) :: Out5CompWC_f
+
+    Out5CompWC_f= GetOut5CompWC()
+end function GetOut5CompWC_wrap
+
+subroutine SetOut5CompWC_wrap(Out5CompWC_in)
+    !! Wrapper for [[ac_global:GetOut5CompWC]] for foreign languages.
+    logical(1), intent(in) :: Out5CompWC_in
+
+    logical :: Out5CompWC_f
+
+    Out5CompWC_f = Out5CompWC_in
+    call SetOut5CompWC(Out5CompWC_f)
+end subroutine SetOut5CompWC_wrap
+
+
+function GetOut6CompEC_wrap() result(Out6CompEC_f)
+    !! Wrapper for [[ac_global:GetOut6CompEC] for foreign languages
+    logical(1) :: Out6CompEC_f
+
+    Out6CompEC_f= GetOut6CompEC()
+end function GetOut6CompEC_wrap
+
+subroutine SetOut6CompEC_wrap(Out6CompEC_in)
+    !! Wrapper for [[ac_global:GetOut6CompEC]] for foreign languages.
+    logical(1), intent(in) :: Out6CompEC_in
+
+    logical :: Out6CompEC_f
+
+    Out6CompEC_f = Out6CompEC_in
+    call SetOut6CompEC(Out6CompEC_f)
+end subroutine SetOut6CompEC_wrap
+
+function GetOut7Clim_wrap() result(Out7Clim_f)
+    !! Wrapper for [[ac_global:GetOut7Clim]] for foreign languages
+    logical(1) :: Out7Clim_f
+
+    Out7Clim_f= GetOut7Clim()
+end function GetOut7Clim_wrap
+
+
+subroutine SetOut7Clim_wrap(Out7Clim_in)
+    !! Wrapper for [[ac_global:GetOut7Clim]] for foreign languages.
+    logical(1), intent(in) :: Out7Clim_in
+
+    logical :: Out7Clim_f
+
+    Out7Clim_f = Out7Clim_in
+    call SetOut7Clim(Out7Clim_f)
+end subroutine SetOut7Clim_wrap
+
 
 function GetMultipleProjectDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectDescription]] for foreign languages.
@@ -2614,6 +2764,98 @@ subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, 
 end subroutine CheckForKeepSWC_wrap
 
 
+function GetOutDaily_wrap() result(OutDaily_f)
+
+    logical(1) :: OutDaily_f
+
+    OutDaily_f = GetOutDaily()
+end function GetOutDaily_wrap
+
+
+subroutine SetOutDaily_wrap(OutDaily_in)
+    logical(1), intent(in) :: OutDaily_in
+
+    logical :: OutDaily_f
+
+    OutDaily_f = OutDaily_in
+    call SetOutDaily(OutDaily_f)
+end subroutine SetOutDaily_wrap
+
+
+function GetPathNameList_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameList]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetPathNameList())
+end function GetPathNameList_wrap
+
+    
+subroutine SetPathNameList_wrap(PathNameList, strlen)
+    !! Wrapper for [[ac_global:SetPathNameList]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameList
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(PathNameList, strlen)
+    call SetPathNameList(string)
+end subroutine SetPathNameList_wrap
+
+
+function GetPathNameParam_wrap() result(c_pointer)
+    !! Wrapper for [[ac_global:GetPathNameParam]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetPathNameParam())
+end function GetPathNameParam_wrap
+
+    
+subroutine SetPathNameParam_wrap(PathNameParam, strlen)
+    !! Wrapper for [[ac_global:SetPathNameParam]] for foreign languages.
+    type(c_ptr), intent(in) :: PathNameParam
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+    
+    string = pointer2string(PathNameParam, strlen)
+    call SetPathNameParam(string)
+end subroutine SetPathNameParam_wrap
+
+
+function GetPart1Mult_wrap() result(Part1Mult_f)
+
+    logical(1) :: Part1Mult_f
+
+    Part1Mult_f = GetPart1Mult()
+end function GetPart1Mult_wrap
+
+
+subroutine SetPart1Mult_wrap(Part1Mult_in)
+    logical(1), intent(in) :: Part1Mult_in
+
+    logical :: Part1Mult_f
+
+    Part1Mult_f = Part1Mult_in
+    call SetPart1Mult(Part1Mult_f)
+end subroutine SetPart1Mult_wrap
+
+
+function GetPart2Eval_wrap() result(Part2Eval_f)
+
+    logical(1) :: Part2Eval_f
+
+    Part2Eval_f = GetPart2Eval()
+end function GetPart2Eval_wrap
+
+
+subroutine SetPart2Eval_wrap(Part2Eval_in)
+    logical(1), intent(in) :: Part2Eval_in
+
+    logical :: Part2Eval_f
+
+    Part2Eval_f = Part2Eval_in
+    call SetPart2Eval(Part2Eval_f)
+end subroutine SetPart2Eval_wrap
 
 
 end module ac_interface_global

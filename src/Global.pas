@@ -13,12 +13,6 @@ VAR DataPath,ObsPath : BOOLEAN;
     MinInt, MaxInt : INTEGER;
 
 
-// Extra for stand alone procedure
-    PathNameList,PathNameParam : string;
-    Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
-    Part1Mult,Part2Eval : BOOLEAN;
-
-
 PROCEDURE AppendCropFilePerennials(totalname : string;
                                    GenrateTheOnset,GenerateTheEnd : BOOLEAN;
                                    CriterionNrOnset,Day1Onset,Month1Onset,LengthOnset,SuccessiveDaysOnset,OccurrenceOnset : INTEGER;

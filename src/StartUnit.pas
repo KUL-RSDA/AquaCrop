@@ -7,7 +7,6 @@ USES Global, interface_global;
 FUNCTION GetListProjectsFile() : string;
 FUNCTION GetNumberOfProjects() : integer;
 FUNCTION GetProjectFileName(constref iproject : integer) : string;
-PROCEDURE InitializeTheProgram;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 PROCEDURE InitializeProject(constref iproject : integer;
@@ -22,49 +21,10 @@ implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
-VAR fProjects : textFile;
-
-
-PROCEDURE PrepareReport(OutputAggregate : ShortInt;
-                        Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
-                        Part1Mult,Part2Eval : BOOLEAN);
-BEGIN
-Assign(fProjects,CONCAT(GetPathNameOutp(),'ListProjectsLoaded.OUT'));
-Rewrite(fProjects);
-WRITE(fProjects,'Intermediate results: ');
-CASE OutputAggregate OF
-     1 : WRITELN(fProjects,'daily results');
-     2 : WRITELN(fProjects,'10-daily results');
-     3 : WRITELN(fProjects,'monthly results');
-     else WRITELN(fProjects,'None created');
-     end;
-WRITELN(fProjects);
-IF OutDaily
-   THEN BEGIN
-        WRITELN(fProjects,'Daily output results:');
-        IF Out1Wabal THEN WRITELN(fProjects,'1. - soil water balance');
-        IF Out2Crop THEN WRITELN(fProjects,'2. - crop development and production');
-        IF Out3Prof THEN WRITELN(fProjects,'3. - soil water content in the soil profile and root zone');
-        IF Out4Salt THEN WRITELN(fProjects,'4. - soil salinity in the soil profile and root zone');
-        IF Out5CompWC THEN WRITELN(fProjects,'5. - soil water content at various depths of the soil profile');
-        IF Out6CompEC THEN WRITELN(fProjects,'6. - soil salinity at various depths of the soil profile');
-        IF Out7Clim THEN WRITELN(fProjects,'7. - climate input parameters');
-        END
-   ELSE WRITELN(fProjects,'Daily output results: None created');
-WRITELN(fProjects);
-IF ((Part1Mult = True) OR  (Part2Eval = True))
-   THEN BEGIN
-        WRITELN(fProjects,'Particular results:');
-        IF Part1Mult THEN WRITELN(fProjects,'1. - biomass and yield at multiple cuttings (for herbaceous forage crops)');
-        IF Part2Eval THEN WRITELN(fProjects,'2. - evaluation of simulation results (when Field Data)');
-        END
-   ELSE WRITELN(fProjects,'Particular results: None created');
-END; (* PrepareReport *)
-
 
 FUNCTION GetListProjectsFile() : string;
 BEGIN
-    GetListProjectsFile := CONCAT(PathNameList,'ListProjects.txt');
+    GetListProjectsFile := CONCAT(GetPathNameList(),'ListProjects.txt');
 END;
 
 
@@ -119,27 +79,6 @@ BEGIN
 END;
 
 
-PROCEDURE InitializeTheProgram;
-VAR
-    OutputAggregate_temp : shortint;
-BEGIN
-Decimalseparator := '.';
-SetPathNameOutp('OUTP/');
-SetPathNameSimul('SIMUL/');
-PathNameList :=  'LIST/';
-PathNameParam := 'PARAM/';
-SetPathNameProg('');
-
-OutputAggregate_temp := GetOutputAggregate();
-GetTimeAggregationResults(OutputAggregate_temp);
-SetOutputAggregate(OutputAggregate_temp);
-GetRequestDailyResults(Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily);
-GetRequestParticularResults(Part1Mult,Part2Eval);
-PrepareReport(GetOutputAggregate(),Out1Wabal,Out2Crop,Out3Prof,Out4Salt,Out5CompWC,Out6CompEC,Out7Clim,OutDaily,
-              Part1Mult,Part2Eval);
-END;
-
-
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 VAR i,lgth : INTEGER;
@@ -171,7 +110,7 @@ END; // GetProjectType
 PROCEDURE InitializeProject(constref iproject : integer;
                             constref TheProjectFile : string;
                             constref TheProjectType : repTypeProject);
-VAR NrString,TestFile : string;
+VAR NrString,TestFile, tempstring : string;
     CanSelect,ProgramParametersAvailable : BOOLEAN;
     TotalSimRuns : Integer;
     SimNr : ShortInt;
@@ -191,7 +130,7 @@ VAR NrString,TestFile : string;
     // file name program parameters
     FullFileNameProgramParameters := Copy(TheFileNameProgram,1,(TheLength-3));
     // path file progrm parameters
-    FullFileNameProgramParameters := CONCAT(Trim(PathNameParam),FullFileNameProgramParameters);
+    FullFileNameProgramParameters := CONCAT(Trim(GetPathNameParam()),FullFileNameProgramParameters);
     // extension file program parameters
     IF (TheExtension = 'PRO')
        THEN FullFileNameProgramParameters := CONCAT(FullFileNameProgramParameters,'PP1')
@@ -310,7 +249,7 @@ BEGIN
     // check if project file exists
     IF (TheProjectType <> TypeNone) THEN
     BEGIN
-        TestFile := CONCAT(PathNameList,TheProjectFile);
+        TestFile := CONCAT(GetPathNameList(),TheProjectFile);
         IF (FileExists(TestFile) = false) THEN CanSelect := false;
     END;
 
@@ -323,7 +262,7 @@ BEGIN
         TypePRO : BEGIN
             // 2. Assign single project file
             SetProjectFile(TheProjectFile);
-            SetProjectFileFull(CONCAT(PathNameList,GetProjectFile()));
+            SetProjectFileFull(CONCAT(GetPathNameList(),GetProjectFile()));
             //3. Check if Environment and Simulation Files exist
             CanSelect := true;
             CheckFilesInProject(GetProjectFileFull(),(1),CanSelect);
@@ -342,7 +281,7 @@ BEGIN
         TypePRM : BEGIN
             // 2. Assign multiple project file
             SetMultipleProjectFile(TheProjectFile);
-            SetMultipleProjectFileFull(CONCAT(PathNameList,GetMultipleProjectFile()));
+            SetMultipleProjectFileFull(CONCAT(GetPathNameList(),GetMultipleProjectFile()));
             //2bis. Get number of Simulation Runs
             GetNumberSimulationRuns(GetMultipleProjectFileFull(),TotalSimRuns);
             //3. Check if Environment and Simulation Files exist for all runs
@@ -380,17 +319,32 @@ BEGIN
         IF CanSelect THEN
         BEGIN
             IF (ProgramParametersAvailable = True)
-            THEN WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - with its program parameters')
-            ELSE WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - default setting of program parameters');
+            THEN BEGIN
+                WriteStr(tempstring, Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - with its program parameters');
+                fProjects_write(tempstring);
+            END
+            ELSE BEGIN
+                WriteStr(tempstring,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project loaded - default setting of program parameters');
+                fProjects_write(tempstring);
+            END;
         END
-        ELSE WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project NOT loaded',
+        ELSE BEGIN
+            WriteStr(tempstring,Trim(NrString),'. - ',Trim(TheProjectFile),' : Project NOT loaded',
                      ' - Missing Environment and/or Simulation file(s)');
+            fProjects_write(tempstring);
+        END;
     END
     ELSE
     BEGIN // not a project file or missing in the LIST  dirtectory
         IF CanSelect
-        THEN WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : is NOT a project file')
-        ELSE WRITELN(fProjects,Trim(NrString),'. - ',Trim(TheProjectFile),' : project file NOT available in LIST directory');
+        THEN BEGIN
+            WriteStr(tempstring, Trim(NrString),'. - ',Trim(TheProjectFile),' : is NOT a project file');
+            fProjects_write(tempstring);
+        END
+        ELSE BEGIN
+            WriteStr(tempstring, Trim(NrString),'. - ',Trim(TheProjectFile),' : project file NOT available in LIST directory');
+            fProjects_write(tempstring);
+        END;
     END;
 END;
 
@@ -401,7 +355,7 @@ VAR
     fend : TextFile;
 
 BEGIN
-    Close(fProjects);
+    fProjects_close();
 
     // all done
     Assign(fend,CONCAT(GetPathNameOutp(),'AllDone.OUT'));
@@ -413,7 +367,7 @@ END;
 
 PROCEDURE WriteProjectsInfo(constref line : string);
 BEGIN
-    WRITELN(fProjects, line);
+    fProjects_write('');
 END;
 
 

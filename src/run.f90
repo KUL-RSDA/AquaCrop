@@ -3,27 +3,37 @@ module ac_run
 use iso_fortran_env, only: iostat_end
 use ac_kinds, only: dp, &
                     int8, &
-                    int32
+                    int32, &
+                    intenum
 
-use ac_global, only:    CompartmentIndividual, &
+
+use ac_global, only:    AdjustSizeCompartments, &
+                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
                         DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
+                        DetermineDate, &
+                        DetermineDayNr, &
                         DetermineDayNr, &
                         DetermineSaltContent, &
+                        DetermineSaltContent, &
                         FileExists, &
+                        GetCompartment_i, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
+                        getcrop_ccsaltdistortion, &
                         GetCrop_CCx, &
                         GetCrop_CDC, &
                         GetCrop_CGC, &
+                        GetCrop_CGC, &
                         GetCrop_Day1, &
+                        GetCrop_DayN, &
                         GetCrop_DaysToCCini, &
                         GetCrop_DaysToFlowering, &
                         GetCrop_DaysToFullCanopy, &
@@ -32,6 +42,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_DaysToSenescence, &
                         GetCrop_DeterminancyLinked, &
                         GetCrop_dHIdt, &
+                        GetCrop_DryMatter, &
                         GetCrop_GDDaysToCCini, &
                         GetCrop_GDDaysToFlowering, &
                         GetCrop_GDDaysToFullCanopy, &
@@ -40,75 +51,310 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_GDDaysToSenescence, &
                         GetCrop_GDDCDC, &
                         GetCrop_GDDCGC, &
-                        GetCrop_GDDaysToFlowering, &
-                        GetCrop_GDDaysToHarvest, &
                         GetCrop_GDDLengthFlowering, &
                         GetCrop_GDtranspLow, &
+                        GetCrop_GDtranspLow, &
+                        GetCrop_HI, &
                         GetCrop_KcDecline, &
                         GetCrop_KcTop, &
-                        GetCrop_HI, &
+                        GetCrop_Length_i, &
                         GetCrop_LengthFlowering, &
-                        GetCrop_GDtranspLow, &
-                        getcrop_ccsaltdistortion, &
+                        GetCrop_ModeCycle, &
                         GetCrop_StressResponse, &
                         GetCrop_StressResponse_Calibrated, &
                         GetCrop_subkind, &
                         GetCrop_ModeCycle, &
+                        GetCrop_RootMax, &
                         GetCrop_Tbase, &
                         GetCrop_Tupper, &
                         GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetCRwater, &
+                        GetDrain, &
+                        GetEact, &
+                        GetECiAqua, &
+                        GetEpot, &
                         GetETo, &
+                        GetEToFile, &
+                        GetEToFilefull, &
+                        GetEToRecord_DataType, &
+                        GetEToRecord_FromDayNr, &
                         GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
+                        GetInfiltrated, &
+                        GetIrriFile, &
+                        GetIrriFilefull, &
+                        GetIrriFirstDayNr, &
+                        GetIrrigation, &
+                        GetIrriMode, &
+                        GetManagement_Cuttings_Criterion, &
+                        GetManagement_Cuttings_Day1, &
+                        GetManagement_Cuttings_FirstDayNr, &
+                        GetManagement_Cuttings_Generate, &
+                        GetManagement_Cuttings_NrDays, &
+                        GetManagement_FertilityStress, &
                         GetNrCompartments, &
+                        GetObservationsFilefull, &
                         GetOutputAggregate, &
+                        GetOutputName, &
+                        GetPathNameOutp, &
                         GetPathNameProg, &
+                        GetPathNameSimul, &
+                        GetSimulation_DelayedDays, &
                         GetRain, &
+                        GetRainFile, &
+                        GetRainFilefull, &
+                        GetRainRecord_DataType, &
+                        GetRainRecord_FromDayNr, &
+                        GetRunoff, &
                         GetSimulation_FromDayNr, &
-                        GetSimulation_SumGDD, &
+                        GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
+                        GetSimulation_Storage_Btotal, &
+                        GetSimulation_SumGDD, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
-                        GetSimulParam_Tmin, &
                         GetSimulParam_Tmax, &
+                        GetSimulParam_Tmin, &
+                        GetSoil_RootMax, &
                         GetSoilLayer_SAT, &
                         GetSumWaBal_Biomass, &
+                        GetSumWaBal_BiomassPot, &
                         GetSumWaBal_BiomassUnlim, &
                         GetSumWaBal_SaltIn, &
                         GetSumWaBal_SaltOut, &
                         GetSumWaBal_CRsalt, &
+                        GetSumWaBal_CRwater, &
+                        GetSumWaBal_Drain, &
+                        GetSumWaBal_ECropCycle, &
+                        GetSumWaBal_Infiltrated, &
+                        GetSumWaBal_Irrigation, &
+                        GetSumWaBal_Rain, &
+                        GetSumWaBal_Runoff, &
+                        GetSumWaBal_Eact, &
+                        GetSUmWaBal_Epot, &
+                        GetSUmWaBal_Tact, &
+                        GetSumWaBal_Tpot, &
+                        GetSumWaBal_TrW, &
+                        GetSumWaBal_YieldPart, &
+                        GetTact, &
+                        GetTactWeedInfested, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
                         GetTemperatureRecord_FromDayNr, &
                         GetTmax, &
                         GetTmin, &
+                        GetTotalSaltContent_endDay, &
+                        GetTpot, &
                         GetZiAqua, &
-                        GetECiAqua, &
+                        IrriMode_Generate, &
+                        IrriMode_Manual, &
+                        rep_DayEventDbl, &
                         LeapYear, &
+                        GetOut1Wabal, &
+                        GetOut2Crop, &
+                        GetOut3Prof, &
+                        GetOut4Salt, &
+                        GetOut5CompWC, &
+                        GetOut6CompEC, &
+                        GetOut7Clim, &
                         rep_DayEventDbl, &
                         rep_sum, &
                         roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
+                        SetETo, &
+                        SetRain, &
+                        SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
                         GetSimulation_DelayedDays, &
+                        GetSimulation_MultipleRun, &
+                        GetSimulation_NrRuns, &
                         SetTmax, &
                         SetTmin, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams, &
-                        undef_int, &
                         subkind_Grain, &
-                        subkind_Tuber
+                        subkind_Tuber, &
+                        undef_int, &
+                        rep_EffectStress, &
+                        EvapZmin, &
+                        IrriMode_Inet, &
+                        modeCycle_GDDays, &
+                        GetOutDaily, &
+                        plant_Seed, &
+                        subkind_Forage, &
+                        GetCompartment, &
+                        GetSimulParam_ConstGwt, &
+                        GetSWCIniFile, &
+                        GetCrop_pdef, &
+                        SetCrop_pActStom, &
+                        SetCrop_pSenAct, &
+                        GetCrop_pSenescence, &
+                        SetCrop_pLeafAct, &
+                        GetCrop_pLeafDefUL, &
+                        CO2ForSimulationPeriod, &
+                        GetCrop_ECemax, &
+                        GetCrop_ECemin, &
+                        GetSimulation_EffectStress, &
+                        GetSimulation_EffectStress_RedCGC, &
+                        GetSimulation_EffectStress_RedCCX, &
+                        GetCrop_DaysToFullCanopySF, &
+                        GetManagement_FertilityStress, &
+                        GetCrop_DaysToFullCanopySF, &
+                        SeasonalSumOfKcPot, &
+                        SetSimulation_RCadj, &
+                        GetManagement_WeedRC, &
+                        MultiplierCCxSelfThinning, &
+                        GetSimulation_YearSeason, &
+                        GetManagement_WeedRC, &
+                        GetManagement_WeedAdj, &
+                        GetSimulation_RCadj, &
+                        GetSimulation_SumGDDfromDay1, &
+                        GetCrop_Planting, &
+                        GetRootZoneSalt_KsSalt, &
+                        GetRootingDepth, &
+                        GetRootZoneSalt_KsSalt, &
+                        GetRootZoneSalt_ECswFC, &
+                        GetRootZoneSalt_ECsw, &
+                        GetRootZoneSalt_ECe, &
+                        GetManagement_BundHeight, &
+                        GetManagement_Cuttings_Considered, & 
+                        GetCrop_DaysToMaxRooting, &
+                        GetSoil_RootMax, &
+                        GetCrop_RootMin, &
+                        GetSimulation_Zrini, &
+                        GetCCiPrev, &
+                        GetCrop_GDDaysToMaxRooting, &
+                        GetSoil_RootMax, &
+                        GetCropFileFull, &
+                        GetCrop_Assimilates_Mobilized, &
+                        GetSimulation_Storage_Season, &
+                        GetSimulation_Bini, &
+                        GetSimulation_CCini, &
+                        GetCrop_PlantingDens, &
+                        GetCrop_GDDaysToFullCanopySF, &
+                        GetSimulation_ResetIniSWC, &
+                        GetManagement_WeedShape, &
+                        GetCrop_YearCCx, &
+                        GetCrop_CCxRoot, &
+                        CCmultiplierWeed, &
+                        CCmultiplierWeedAdjusted, &
+                        GetSimulation_EffectStress_CDecline, &
+                        GetCrop_SizeSeedling, &
+                        GetSimulation_Storage_CropString, &
+                        GetSimulation_Storage_Btotal, &
+                        GetCrop_RootMax, &
+                        GetCrop_RootShape, &
+                        CCiNoWaterStressSF, &
+                        MultiplierCCoSelfThinning, &
+                        ActualRootingDepth, &
+                        setcrop_gddaystofullcanopysf, &
+                        setsimulation_sumgddfromday1, &
+                        determinerootzonesaltcontent, &
+                        setsimulation_storage_btotal, &
+                        setcciprev, &
+                        setsimulation_delayeddays, &
+                        setcrop_ccoadjusted, &
+                        setsumwabal_biomasstot, &
+                        setsumwabal_biomasspot, &
+                        checkforwatertableinprofile, &
+                        setsimulation_dayanaero, &
+                        setecstorage, &
+                        setsumwabal_biomassunlim, &
+                        setsimulation_hifinal, &
+                        setcrop_ccxwithered, &
+                        timetomaxcanopysf, &
+                        setsimulation_fromdaynr, &
+                        setsimulation_salinityconsidered, &
+                        setsurfacestorage, &
+                        setevapoentiresoilsurface, &
+                        setsimulation_evapz, &
+                        setmanagement_fertilitystress, &
+                        setrootzonesalt_ecsw, &
+                        setrootzonesalt_ece, &
+                        setsimulation_evaplimiton, &
+                        setrootingdepth, &
+                        setcrop_ccxadjusted, &
+                        setsimulation_effectstress_redcgc, &
+                        setsimulation_evapwcsurf, &
+                        setcrop_daystofullcanopysf, &
+                        cropstressparameterssoilfertility, &
+                        setsimulation_protectedseedling, &
+                        setsumwabal_biomass, &
+                        setcciactual, &
+                        setsimulation_effectstress, &
+                        setrootzonesalt_kssalt, &
+                        setsimulation_storage_cropstring, &
+                        setpreday, &
+                        setsimulation_storage_season, &
+                        setrootzonesalt_ecswfc, &
+                        setsimulation_effectstress_redccx, &
+                        setsimulation_sumetostress, &
+                        setsimulation_germinate, &
+                        TimeCuttings_DryB, &
+                        TimeCuttings_DryY, &
+                        TimeCuttings_FreshY, &
+                        TimeCuttings_IntDay, &
+                        TimeCuttings_IntGDD, &
+                        typeproject_typenone, &
+                        typeproject_typepro, &
+                        typeproject_typeprm, &
+                        undef_double, &
+                        undef_int, &
+                        GetManFile, &
+                        GetManFileFull, &
+                        max_No_compartments, &
+                        GetSimulation_MultipleRunWithKeepSWC, &
+                        GetSimulation_MultipleRunConstZrx, &
+                        GetSimulation_IniSWC_AtFC, &
+                        GetMultipleProjectFileFull, &
+                        GetSUmWaBal, &
+                        GetPart1Mult, &
+                        GetPart2Eval, &
+                        GetObservationsFile, &
+                        CalculateAdjustedFC, &
+                        ResetSWCToFC, &
+                        SetSumWaBal, &
+                        GlobalZero, &
+                        SetCompartment, &
+                        calculateadjustedfc, &
+                        setcompartment, &
+                        Rep_DayEventInt, &
+                        GetIrriBeforeSeason_i, &
+                        GetIrriAfterSeason_i, &
+                        GetGenerateTimeMode, &
+                        GenerateTimeMode_WaterBetweenBunds, & 
+                        GenerateDepthMode_FixDepth, &
+                        GenerateTimeMode_FixInt, &
+                        GenerateTimeMode_AllRAW, &
+                        GenerateTimeMode_AllDepl, &
+                        GetGenerateDepthMode, &
+                        GetSurfaceStorage, &
+                        SetIrrigation, &
+                        GetSoilLayer_WP, &
+                        GetSoilLayer_FC, &
+                        GetSimulParam_PercRAW, &
+                        GetCompartment_Theta, &
+                        GetCrop_Assimilates_Period, &
+                        GetCrop_Assimilates_Stored
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
-                                StressBiomassRelationship
+                                LoadSimulationRunProject, &
+                                StressBiomassRelationship, &
+                                temperaturefilecoveringcropperiod, &
+                                GrowingDegreeDays
+
+use ac_climprocessing, only:    GetDecadeEToDataset, &
+                                GetDecadeRainDataSet, &
+                                GetMonthlyEToDataset, &
+                                GetMonthlyRainDataset
 
 
 implicit none
@@ -187,12 +433,16 @@ type rep_Transfer
 end type rep_Transfer
 
 
+integer :: fDaily  ! file handle
+integer :: fDaily_iostat  ! IO status
 integer :: fRun  ! file handle
 integer :: fRun_iostat  ! IO status
 integer :: fIrri  ! file handle
 integer :: fIrri_iostat  ! IO status
 integer :: fEToSIM ! file handle
 integer :: fEToSIM_iostat ! IO status
+integer :: fEval ! file handle
+integer :: fEval_iostat ! IO status
 integer :: fRainSIM ! file handle
 integer :: fRainSIM_iostat ! IO status
 integer :: fTempSIM ! file handle
@@ -201,7 +451,9 @@ integer :: fCuts ! file handle
 integer :: fCuts_iostat ! IO status
 integer :: fObs ! file handle
 integer :: fObs_iostat ! IO status
-
+integer :: fHarvest  ! file handle
+integer :: fHarvest_iostat  ! IO status
+character(len=:), allocatable :: fHarvest_filename  ! file name
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -225,12 +477,41 @@ real(dp) :: Bout
 real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
+real(dp) :: SumETo,SumGDD, Ziprev,SumGDDPrev
 real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
 real(dp) :: DayFraction,GDDayFraction
 real(dp) :: CGCref,GDDCGCref 
+real(dp) :: TimeSenescence !! calendar days or GDDays
+real(dp) :: SumKcTop, SumKcTopStress, SumKci
+real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
+real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
+real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
+real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
+real(dp) :: alfaHI, alfaHIAdj
+
+!! DelayedGermination
+integer(int32) :: NextSimFromDayNr !! the Simulation.FromDayNr for next run if delayed germination and KeepSWC
+
+!! Evaluation
+integer(int32) :: DayNr1Eval,DayNrEval
+integer(int8)  :: LineNrEval
+
+!! specific for StandAlone
+real(dp) :: PreviousSumETo, PreviousSumGDD, PreviousBmob,PreviousBsto
+integer(int8)  :: StageCode
+integer(int32) :: PreviousDayNr
+logical :: NoYear
+
+character(len=:), allocatable :: fEval_filename
+
+logical :: WaterTableInProfile, StartMode, NoMoreCrop, CGCadjustmentAfterCutting
+logical :: GlobalIrriECw ! for versions before 3.2 where EC of 
+                         ! irrigation water was not yet recorded
+
+
 
 contains
 
@@ -310,6 +591,42 @@ end function read_file
 
 !! Section for Getters and Setters for global variables
 
+! fDaily
+
+
+subroutine fDaily_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fDaily' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fDaily, filename, mode, fDaily_iostat)
+end subroutine fDaily_open
+
+
+subroutine fDaily_write(line, advance_in)
+    !! Writes the given line to the fDaily file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fDaily, line, advance, fDaily_iostat)
+end subroutine fDaily_write
+
+
+subroutine fDaily_close()
+    close(fDaily)
+end subroutine fDaily_close
+
 ! fRun
 
 subroutine fRun_open(filename, mode)
@@ -344,6 +661,62 @@ end subroutine fRun_write
 subroutine fRun_close()
     close(fRun)
 end subroutine fRun_close
+
+! fEval
+
+subroutine fEval_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fEval' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fEval, filename, mode, fEval_iostat)
+end subroutine fEval_open
+
+
+subroutine fEval_write(line, advance_in)
+    !! Writes the given line to the fEval file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fEval, line, advance, fEval_iostat)
+end subroutine fEval_write
+
+
+subroutine fEval_close()
+    close(fEval)
+end subroutine fEval_close
+
+subroutine fEval_erase()
+    call unlink(GetfEval_filename())
+end subroutine fEval_erase
+
+
+function GetfEval_filename() result(filename)
+    !! Getter for the fEval_filename
+    
+    character(len=:), allocatable :: filename
+
+    filename = fEval_filename
+end function GetfEval_filename
+
+subroutine SetfEval_filename(filename)
+    !! Setter for the fEval_filename
+    character(len=*), intent(in) :: filename
+
+    fEval_filename = filename
+end subroutine SetfEval_filename
+
 
 
 ! fIrri
@@ -530,6 +903,57 @@ subroutine fObs_rewind()
     rewind(fObs)
 end subroutine fObs_rewind
 
+
+! fHarvest
+
+function GetfHarvest_filename() result(str)
+    !! Getter for the "fHarvest_filename" global variable.
+    character(len=len(fHarvest_filename)) :: str
+
+    str = fHarvest_filename
+end function GetfHarvest_filename
+
+
+subroutine SetfHarvest_filename(str)
+    !! Setter for the "fHarvest_filename" global variable.
+    character(len=*), intent(in) :: str
+
+    fHarvest_filename = str
+end subroutine SetfHarvest_filename
+
+
+subroutine fHarvest_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fHarvest' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fHarvest, filename, mode, fHarvest_iostat)
+end subroutine fHarvest_open
+
+
+subroutine fHarvest_write(line, advance_in)
+    !! Writes the given line to the fHarvest file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fHarvest, line, advance, fHarvest_iostat)
+end subroutine fHarvest_write
+
+
+subroutine fHarvest_close()
+    close(fHarvest)
+end subroutine fHarvest_close
 
 ! Bin
 
@@ -920,6 +1344,19 @@ real(dp) function GetGwTable_EC2()
     GetGwTable_EC2 = GwTable%EC2
 end function GetGwTable_EC2
 
+type(rep_GwTable) function GetGwTable()
+    !! Getter for the "GetGwTable" global variable.
+
+    GetGwTable = GwTable
+end function GetGwTable
+
+subroutine SetGwTable(GwT)
+    !! Setter for the "GwTable" global variable. 
+    type(rep_GWTable), intent(in) :: GwT
+
+    GwTable = GwT
+end subroutine SetGwTable
+
 subroutine SetGwTable_DNr1(DNr1)
     !! Setter for the "GwTable" global variable. 
     integer(int32), intent(in) :: DNr1
@@ -985,6 +1422,20 @@ subroutine SetPlotVarCrop_ActVal(ActVal)
 end subroutine SetPlotVarCrop_ActVal
 
 ! IrriInfoRecord1
+
+function GetIrriInfoRecord1() result(IrriInfoRecord1_out)
+    !! Getter for the "IrriInfoRecord1" global variable.
+    type(repIrriInfoRecord) :: IrriInfoRecord1_out
+
+    IrriInfoRecord1_out = IrriInfoRecord1
+end function GetIrriInfoRecord1
+
+subroutine SetIrriInfoRecord1(IrriInfoRecord1_in)
+    !! Setter for the "TminDatSet" global variable.
+    type(repIrriInfoRecord), intent(in) :: IrriInfoRecord1_in
+
+    IrriInfoRecord1 = IrriInfoRecord1_in
+end subroutine SetIrriInfoRecord1
 
 logical function GetIrriInfoRecord1_NoMoreInfo()
     !! Getter for the "IrriInfoRecord1" global variable.
@@ -1052,6 +1503,20 @@ subroutine SetIrriInfoRecord1_DepthInfo(DepthInfo)
 end subroutine SetIrriInfoRecord1_DepthInfo
 
 ! IrriInfoRecord2
+
+function GetIrriInfoRecord2() result(IrriInfoRecord2_out)
+    !! Getter for the "IrriInfoRecord2" global variable.
+    type(repIrriInfoRecord) :: IrriInfoRecord2_out
+
+    IrriInfoRecord2_out = IrriInfoRecord2
+end function GetIrriInfoRecord2
+
+subroutine SetIrriInfoRecord2(IrriInfoRecord2_in)
+    !! Setter for the "TminDatSet" global variable.
+    type(repIrriInfoRecord), intent(in) :: IrriInfoRecord2_in
+
+    IrriInfoRecord2 = IrriInfoRecord2_in
+end subroutine SetIrriInfoRecord2
 
 logical function GetIrriInfoRecord2_NoMoreInfo()
     !! Getter for the "IrriInfoRecord2" global variable.
@@ -1242,7 +1707,6 @@ subroutine SetCutInfoRecord1_NoMoreInfo(NoMoreInfo)
     
     CutInfoRecord1%NoMoreInfo = NoMoreInfo
 end subroutine SetCutInfoRecord1_NoMoreInfo
-
 
 subroutine SetCutInfoRecord1_FromDay(FromDay)
     !! Setter for the "CutInfoRecord1" global variable.
@@ -1659,6 +2123,72 @@ subroutine SetRainDataSet_Param(i, Param_in)
     RainDataSet(i)%Param = Param_in
 end subroutine SetRainDataSet_Param
 
+logical function GetGlobalIrriECw()
+    !! Getter for the GlobalIrriECw global variable
+
+    GetGlobalIrriECw = GlobalIrriECw
+end function GetGlobalIrriECw
+
+subroutine SetGlobalIrriECw(GlobalIrriECw_in)
+    !! Setter for the GlobalIrriECw global variable
+    logical, intent(in) :: GlobalIrriECw_in
+
+    GlobalIrriECw = GlobalIrriECw_in
+end subroutine SetGlobalIrriECw
+
+
+logical function GetWaterTableInProfile()
+    !! Getter for the "WaterTableInProfile" global variable.
+
+    GetWaterTableInProfile = WaterTableInProfile
+end function GetWaterTableInProfile
+
+subroutine SetWaterTableInProfile(WaterTableInProfile_in)
+    !! Setter for the "WaterTableInProfile" global variable.
+    logical, intent(in) :: WaterTableInProfile_in
+
+    WaterTableInProfile = WaterTableInProfile_in
+end subroutine SetWaterTableInProfile
+
+logical function GetStartMode()
+    !! Getter for the "StartMode" global variable. 
+
+    GetStartMode = StartMode 
+end function GetStartMode
+
+subroutine SetStartMode(StartMode_in)
+    !! Setter for the "StartMode" global variable. 
+    logical, intent(in) :: StartMode_in
+
+    StartMode = StartMode_in
+end subroutine SetStartMode
+
+logical function GetNoMoreCrop()
+    !! Getter for the "NoMoreCrop" global variable.
+
+    GetNoMoreCrop = NoMoreCrop
+end function GetNoMoreCrop
+
+subroutine SetNoMoreCrop(NoMoreCrop_in)
+    !! Setter for the "NoMoreCrop" global variable.
+    logical, intent(in) :: NoMoreCrop_in
+
+    NoMoreCrop = NoMoreCrop_in
+end subroutine SetNoMoreCrop
+
+logical function GetCGCadjustmentAfterCutting()
+    !! Getter for the "CGCadjustmentAfterCutting" global variable.
+
+    GetCGCadjustmentAfterCutting = CGCadjustmentAfterCutting
+end function GetCGCadjustmentAfterCutting
+
+subroutine SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_in)
+    !! Setter for the "CGCadjustmentAfterCutting" global variable.
+    logical, intent(in) :: CGCadjustmentAfterCutting_in
+
+    CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_in
+end subroutine SetCGCadjustmentAfterCutting
+
 integer(int32) function GetIrriInterval()
     !! Getter for the "IrriInterval" global variable.
 
@@ -1945,6 +2475,515 @@ subroutine SetGDDCGCref(GDDCGCref_in)
     GDDCGCref = GDDCGCref_in
 end subroutine SetGDDCGCref
 
+real(dp) function GetSumETo()
+    !! Getter for the "SumETo" global variable.
+
+    GetSumETo = SumETo
+end function GetSumETo
+
+subroutine SetSumETo(SumETo_in)
+    !! Setter for the "SumETo" global variable.
+    real(dp), intent(in) :: SumETo_in
+
+    SumETo = SumETo_in
+end subroutine SetSumETo
+
+real(dp) function GetSumGDD()
+    !! Getter for the "SumGDD" global variable.
+
+    GetSumGDD = SumGDD
+end function GetSumGDD
+
+subroutine SetSumGDD(SumGDD_in)
+    !! Setter for the "SumGDD" global variable.
+    real(dp), intent(in) :: SumGDD_in
+
+    SumGDD = SumGDD_in
+end subroutine SetSumGDD
+
+real(dp) function GetTimeSenescence()
+    !! Getter for the "TimeSenescence" global variable.
+
+    GetTimeSenescence = TimeSenescence
+end function GetTimeSenescence
+
+subroutine SetTimeSenescence(TimeSenescence_in)
+    !! Setter for the "TimeSenescence" global variable.
+    real(dp), intent(in) :: TimeSenescence_in
+
+    TimeSenescence = TimeSenescence_in
+end subroutine SetTimeSenescence
+
+real(dp) function GetSumKcTop()
+    !! Getter for the "SumKcTop" global variable.
+
+    GetSumKcTop = SumKcTop
+end function GetSumKcTop
+
+subroutine SetSumKcTop(SumKcTop_in)
+    !! Setter for the "SumKcTop" global variable.
+    real(dp), intent(in) :: SumKcTop_in
+
+    SumKcTop = SumKcTop_in
+end subroutine SetSumKcTop
+
+real(dp) function GetSumKcTopStress()
+    !! Getter for the "SumKcTopStress" global variable.
+
+    GetSumKcTopStress = SumKcTopStress
+end function GetSumKcTopStress
+
+subroutine SetSumKcTopStress(SumKcTopStress_in)
+    !! Setter for the "SumKcTopStress" global variable.
+    real(dp), intent(in) :: SumKcTopStress_in
+
+    SumKcTopStress = SumKcTopStress_in
+end subroutine SetSumKcTopStress
+
+real(dp) function GetSumKci()
+    !! Getter for the "SumKci" global variable.
+
+    GetSumKci = SumKci
+end function GetSumKci
+
+subroutine SetSumKci(SumKci_in)
+    !! Setter for the "SumKci" global variable.
+    real(dp), intent(in) :: SumKci_in
+
+    SumKci = SumKci_in
+end subroutine SetSumKci
+
+real(dp) function GetCCxCropWeedsNoSFstress()
+    !! Getter for the "CCxCropWeedsNoSFstress" global variable.
+
+    GetCCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress
+end function GetCCxCropWeedsNoSFstress
+
+subroutine SetCCxCropWeedsNoSFstress(CCxCropWeedsNoSFstress_in)
+    !! Setter for the "CCxCropWeedsNoSFstress" global variable.
+    real(dp), intent(in) :: CCxCropWeedsNoSFstress_in
+
+    CCxCropWeedsNoSFstress = CCxCropWeedsNoSFstress_in
+end subroutine SetCCxCropWeedsNoSFstress
+
+real(dp) function GetZiprev()
+    !! Getter for the "Ziprev" global variable.
+
+    GetZiprev = Ziprev
+end function GetZiprev
+
+subroutine SetZiprev(Ziprev_in)
+    !! Setter for the "Ziprev" global variable.
+    real(dp), intent(in) :: Ziprev_in
+
+    Ziprev = Ziprev_in
+end subroutine SetZiprev
+
+real(dp) function GetSumGDDPrev()
+    !! Getter for the "SumGDDPrev" global variable.
+
+    GetSumGDDPrev = SumGDDPrev
+end function GetSumGDDPrev
+
+subroutine SetSumGDDPrev(SumGDDPrev_in)
+    !! Setter for the "SumGDDPrev" global variable.
+    real(dp), intent(in) :: SumGDDPrev_in
+
+    SumGDDPrev = SumGDDPrev_in
+end subroutine SetSumGDDPrev
+
+real(dp) function GetCCoTotal()
+    !! Getter for the "CCoTotal" global variable.
+
+    GetCCoTotal = CCoTotal
+end function GetCCoTotal
+
+subroutine SetCCoTotal(CCoTotal_in)
+    !! Setter for the "CCoTotal" global variable.
+    real(dp), intent(in) :: CCoTotal_in
+
+    CCoTotal = CCoTotal_in 
+end subroutine SetCCoTotal
+
+real(dp) function GetCCxTotal()
+    !! Getter for the "CCxTotal" global variable.
+
+    GetCCxTotal = CCxTotal
+end function GetCCxTotal
+
+subroutine SetCCxTotal(CCxTotal_in)
+    !! Setter for the "CCxTotal" global variable.
+    real(dp), intent(in) :: CCxTotal_in
+
+    CCxTotal = CCxTotal_in 
+end subroutine SetCCxTotal
+
+real(dp) function GetCDCTotal()
+    !! Getter for the "CDCTotal" global variable.
+
+    GetCDCTotal = CDCTotal
+end function GetCDCTotal
+
+subroutine SetCDCTotal(CDCTotal_in)
+    !! Setter for the "CDCTotal" global variable.
+    real(dp), intent(in) :: CDCTotal_in
+
+    CDCTotal = CDCTotal_in 
+end subroutine SetCDCTotal
+
+real(dp) function GetGDDCDCTotal()
+    !! Getter for the "GDDCDCTotal" global variable.
+
+    GetGDDCDCTotal = GDDCDCTotal
+end function GetGDDCDCTotal
+
+subroutine SetGDDCDCTotal(GDDCDCTotal_in)
+    !! Setter for the "GDDCDCTotal" global variable.
+    real(dp), intent(in) :: GDDCDCTotal_in
+
+    GDDCDCTotal = GDDCDCTotal_in
+end subroutine SetGDDCDCTotal
+
+real(dp) function GetWeedRCi()
+    !! Getter for the "WeedRCi" global variable.
+
+    GetWeedRCi = WeedRCi
+end function GetWeedRCi
+
+subroutine SetWeedRCi(WeedRCi_in)
+    !! Setter for the "WeedRCi" global variable.
+    real(dp), intent(in) :: WeedRCi_in
+
+    WeedRCi = WeedRCi_in
+end subroutine SetWeedRCi
+
+real(dp) function GetCCiActualWeedInfested()
+    !! Getter for the "CCiActualWeedInfested" global variable.
+
+    GetCCiActualWeedInfested = CCiActualWeedInfested
+end function GetCCiActualWeedInfested
+
+subroutine SetCCiActualWeedInfested(CCiActualWeedInfested_in)
+    !! Setter for the "CCiActualWeedInfested" global variable.
+    real(dp), intent(in) :: CCiActualWeedInfested_in
+
+    CCiActualWeedInfested = CCiActualWeedInfested_in
+end subroutine SetCCiActualWeedInfested
+
+real(dp) function GetfWeedNoS()
+    !! Getter for the "fWeedNoS" global variable.
+
+    GetfWeedNoS = fWeedNoS
+end function GetfWeedNoS
+
+subroutine SetfWeedNoS(fWeedNoS_in)
+    !! Setter for the "fWeedNoS" global variable.
+    real(dp), intent(in) :: fWeedNoS_in
+
+    fWeedNoS = fWeedNoS_in
+end subroutine SetfWeedNoS
+
+
+real(dp) function GetBprevSum()
+    !! Getter for the "BprevSum" global variable.
+
+    GetBprevSum = BprevSum
+end function GetBprevSum
+
+subroutine SetBprevSum(BprevSum_in)
+    !! Setter for the "BprevSum" global variable.
+    real(dp), intent(in) :: BprevSum_in
+
+    BprevSum = BprevSum_in
+end subroutine SetBprevSum
+
+real(dp) function GetYprevSum()
+    !! Getter for the "YprevSum" global variable.
+
+    GetYprevSum = YprevSum
+end function GetYprevSum
+
+subroutine SetYprevSum(YprevSum_in)
+    !! Setter for the "YprevSum" global variable.
+    real(dp), intent(in) :: YprevSum_in
+
+    YprevSum = YprevSum_in
+end subroutine SetYprevSum
+
+real(dp) function GetSumGDDcuts()
+    !! Getter for the "SumGDDcuts" global variable.
+
+    GetSumGDDcuts = SumGDDcuts
+end function GetSumGDDcuts
+
+subroutine SetSumGDDcuts(SumGDDcuts_in)
+    !! Setter for the "SumGDDcuts" global variable.
+    real(dp), intent(in) :: SumGDDcuts_in
+
+    SumGDDcuts = SumGDDcuts_in
+end subroutine SetSumGDDcuts
+
+real(dp) function GetHItimesBEF()
+    !! Getter for the "HItimesBEF" global variable.
+
+    GetHItimesBEF = HItimesBEF
+end function GetHItimesBEF
+
+subroutine SetHItimesBEF(HItimesBEF_in)
+    !! Setter for the "HItimesBEF" global variable.
+    real(dp), intent(in) :: HItimesBEF_in
+
+    HItimesBEF = HItimesBEF_in
+end subroutine SetHItimesBEF
+
+real(dp) function GetScorAT1()
+    !! Getter for the "ScorAT1" global variable.
+
+    GetScorAT1 = ScorAT1
+end function GetScorAT1
+
+subroutine SetScorAT1(ScorAT1_in)
+    !! Setter for the "ScorAT1" global variable.
+    real(dp), intent(in) :: ScorAT1_in
+
+    ScorAT1 = ScorAT1_in
+end subroutine SetScorAT1
+
+real(dp) function GetScorAT2()
+    !! Getter for the "ScorAT2" global variable.
+
+    GetScorAT2 = ScorAT2
+end function GetScorAT2
+
+subroutine SetScorAT2(ScorAT2_in)
+    !! Setter for the "ScorAT2" global variable.
+    real(dp), intent(in) :: ScorAT2_in
+
+    ScorAT2 = ScorAT2_in
+end subroutine SetScorAT2
+
+real(dp) function GetHItimesAT1()
+    !! Getter for the "HItimesAT1" global variable.
+
+    GetHItimesAT1 = HItimesAT1
+end function GetHItimesAT1
+
+subroutine SetHItimesAT1(HItimesAT1_in)
+    !! Setter for the "HItimesAT1" global variable.
+    real(dp), intent(in) :: HItimesAT1_in
+
+    HItimesAT1 = HItimesAT1_in
+end subroutine SetHItimesAT1
+
+real(dp) function GetHItimesAT2()
+    !! Getter for the "HItimesAT2" global variable.
+
+    GetHItimesAT2 = HItimesAT2
+end function GetHItimesAT2
+
+subroutine SetHItimesAT2(HItimesAT2_in)
+    !! Setter for the "HItimesAT2" global variable.
+    real(dp), intent(in) :: HItimesAT2_in
+
+    HItimesAT2 = HItimesAT2_in
+end subroutine SetHItimesAT2
+
+real(dp) function GetHItimesAT()
+    !! Getter for the "HItimesAT" global variable.
+
+    GetHItimesAT = HItimesAT
+end function GetHItimesAT
+
+subroutine SetHItimesAT(HItimesAT_in)
+    !! Setter for the "HItimesAT" global variable.
+    real(dp), intent(in) :: HItimesAT_in
+
+    HItimesAT = HItimesAT_in
+end subroutine SetHItimesAT
+
+real(dp) function GetalfaHI()
+    !! Getter for the "alfaHI" global variable.
+
+    GetalfaHI = alfaHI
+end function GetalfaHI
+
+subroutine SetalfaHI(alfaHI_in)
+    !! Setter for the "alfaHI" global variable.
+    real(dp), intent(in) :: alfaHI_in
+
+    alfaHI = alfaHI_in
+end subroutine SetalfaHI
+
+real(dp) function GetalfaHIAdj()
+    !! Getter for the "alfaHIAdj" global variable.
+
+    GetalfaHIAdj = alfaHIAdj
+end function GetalfaHIAdj
+
+subroutine SetalfaHIAdj(alfaHIAdj_in)
+    !! Setter for the "alfaHIAdj" global variable.
+    real(dp), intent(in) :: alfaHIAdj_in
+
+    alfaHIAdj = alfaHIAdj_in
+end subroutine SetalfaHIAdj
+
+real(dp) function GetPreviousSumETo()
+    !! Getter for the "PreviousSumETo" global variable.
+
+    GetPreviousSumETo = PreviousSumETo
+end function GetPreviousSumETo
+
+subroutine SetPreviousSumETo(PreviousSumETo_in)
+    !! Setter for the "PreviousSumETo" global variable.
+    real(dp), intent(in) :: PreviousSumETo_in
+
+    PreviousSumETo = PreviousSumETo_in
+end subroutine SetPreviousSumETo
+
+real(dp) function GetPreviousSumGDD()
+    !! Getter for the "PreviousSumGDD" global variable.
+
+    GetPreviousSumGDD = PreviousSumGDD
+end function GetPreviousSumGDD
+
+subroutine SetPreviousSumGDD(PreviousSumGDD_in)
+    !! Setter for the "PreviousSumGDD" global variable.
+    real(dp), intent(in) :: PreviousSumGDD_in
+
+    PreviousSumGDD = PreviousSumGDD_in
+end subroutine SetPreviousSumGDD
+
+real(dp) function GetPreviousBmob()
+    !! Getter for the "PreviousBmob" global variable.
+
+    GetPreviousBmob = PreviousBmob
+end function GetPreviousBmob
+
+subroutine SetPreviousBmob(PreviousBmob_in)
+    !! Setter for the "PreviousBmob" global variable.
+    real(dp), intent(in) :: PreviousBmob_in
+
+    PreviousBmob = PreviousBmob_in
+end subroutine SetPreviousBmob
+
+real(dp) function GetPreviousBsto()
+    !! Getter for the "PreviousBsto" global variable.
+
+    GetPreviousBsto = PreviousBsto
+end function GetPreviousBsto
+
+subroutine SetPreviousBsto(PreviousBsto_in)
+    !! Setter for the "PreviousBsto" global variable.
+    real(dp), intent(in) :: PreviousBsto_in
+
+    PreviousBsto = PreviousBsto_in
+end subroutine SetPreviousBsto
+
+integer(int32) function GetDayNr1Eval()
+    !! Getter for the "DayNr1Eval" global variable.
+
+    GetDayNr1Eval = DayNr1Eval
+end function GetDayNr1Eval
+
+subroutine SetDayNr1Eval(DayNr1Eval_in)
+    !! Setter for the "DayNr1Eval" global variable.
+    integer(int32), intent(in) :: DayNr1Eval_in
+
+    DayNr1Eval = DayNr1Eval_in
+end subroutine SetDayNr1Eval
+
+integer(int32) function GetDayNrEval()
+    !! Getter for the "DayNrEval" global variable.
+
+    GetDayNrEval = DayNrEval
+end function GetDayNrEval
+
+subroutine SetDayNrEval(DayNrEval_in)
+    !! Setter for the "DayNrEval" global variable.
+    integer(int32), intent(in) :: DayNrEval_in
+
+    DayNrEval = DayNrEval_in
+end subroutine SetDayNrEval
+
+
+integer(int32) function GetLineNrEval()
+    !! Getter for the "LineNrEval" global variable.
+
+    GetLineNrEval = LineNrEval
+end function GetLineNrEval
+
+subroutine SetLineNrEval(LineNrEval_in)
+    !! Setter for the "LineNrEval" global variable.
+    integer(int32), intent(in) :: LineNrEval_in
+
+    LineNrEval = LineNrEval_in
+end subroutine SetLineNrEval
+
+real(dp) function GetZeval()
+    !! Getter for the "Zeval" global variable.
+
+    GetZeval = Zeval
+end function GetZeval
+
+subroutine SetZeval(Zeval_in)
+    !! Setter for the "Zeval" global variable.
+    real(dp), intent(in) :: Zeval_in
+
+    Zeval = Zeval_in
+end subroutine SetZeval
+
+integer(int32) function GetNextSimFromDayNr()
+    !! Getter for the "NextSimFromDayNr " global variable.
+
+    GetNextSimFromDayNr = NextSimFromDayNr
+end function GetNextSimFromDayNr
+
+subroutine SetNextSimFromDayNr(NextSimFromDayNr_in)
+    !! Setter for the "NextSimFromDayNr " global variable.
+    integer(int32), intent(in) :: NextSimFromDayNr_in
+
+    NextSimFromDayNr = NextSimFromDayNr_in
+end subroutine SetNextSimFromDayNr
+
+integer(int8) function GetStageCode()
+    !! Getter for the "StageCode" global variable.
+
+    GetStageCode = StageCode
+end function GetStageCode
+
+subroutine SetStageCode(StageCode_in)
+    !! Setter for the "StageCode" global variable.
+    integer(int8), intent(in) :: StageCode_in
+
+    StageCode = StageCode_in
+end subroutine SetStageCode
+
+integer(int32) function GetPreviousDayNr()
+    !! Getter for the "PreviousDayNr" global variable.
+
+    GetPreviousDayNr = PreviousDayNr
+end function GetPreviousDayNr 
+
+subroutine SetPreviousDayNr(PreviousDayNr_in)
+    !! Setter for the "PreviousDayNr" global variable.
+    integer(int32), intent(in) :: PreviousDayNr_in
+
+    PreviousDayNr = PreviousDayNr_in
+end subroutine SetPreviousDayNr 
+
+logical function GetNoYear()
+    !! Getter for the NoYear global variable
+
+    GetNoYear = NoYear
+end function GetNoYear
+
+subroutine SetNoYear(NoYear_in)
+    !! Setter for the NoYear global variable
+    logical, intent(in) :: NoYear_in
+
+    NoYear = NoYear_in
+end subroutine SetNoYear
+
 
 !! END section global variables
 
@@ -1970,41 +3009,87 @@ subroutine AdjustForWatertable()
     end do
 end subroutine AdjustForWatertable
 
-subroutine ResetPreviousSum(SumETo, SumGDD, PreviousSumETo, &
-        PreviousSumGDD, PreviousBmob, PreviousBsto)
-    real(dp), intent(inout) :: SumETo
-    real(dp), intent(inout) :: SumGDD
-    real(dp), intent(inout) :: PreviousSumETo
-    real(dp), intent(inout) :: PreviousSumGDD
-    real(dp), intent(inout) :: PreviousBmob
-    real(dp), intent(inout) :: PreviousBsto
 
-    call SetPreviousSum_Epot(0.0_dp)
-    call SetPreviousSum_Tpot(0.0_dp)
-    call SetPreviousSum_Rain(0.0_dp)
-    call SetPreviousSum_Irrigation(0.0_dp)
-    call SetPreviousSum_Infiltrated(0.0_dp)
-    call SetPreviousSum_Runoff(0.0_dp)
-    call SetPreviousSum_Drain(0.0_dp)
-    call SetPreviousSum_Eact(0.0_dp)
-    call SetPreviousSum_Tact(0.0_dp)
-    call SetPreviousSum_TrW(0.0_dp)
-    call SetPreviousSum_ECropCycle(0.0_dp)
-    call SetPreviousSum_CRwater(0.0_dp)
-    call SetPreviousSum_Biomass(0.0_dp)
-    call SetPreviousSum_YieldPart(0.0_dp)
-    call SetPreviousSum_BiomassPot(0.0_dp)
-    call SetPreviousSum_BiomassUnlim(0.0_dp)
-    call SetPreviousSum_SaltIn(0.0_dp)
-    call SetPreviousSum_SaltOut(0.0_dp)
-    call SetPreviousSum_CRsalt(0.0_dp)
-    SumETo = 0.0_dp
-    SumGDD = 0.0_dp
-    PreviousSumETo = 0.0_dp
-    PreviousSumGDD = 0.0_dp
-    PreviousBmob = 0.0_dp
-    PreviousBsto = 0.0_dp
+subroutine ResetPreviousSum(PreviousSum)
+    type(rep_sum), intent(inout) :: PreviousSum
+
+    PreviousSum%Epot = 0._dp
+    PreviousSum%Tpot = 0._dp
+    PreviousSum%Rain = 0._dp
+    PreviousSum%Irrigation = 0._dp
+    PreviousSum%Infiltrated = 0._dp
+    PreviousSum%Runoff = 0._dp
+    PreviousSum%Drain = 0._dp
+    PreviousSum%Eact = 0._dp
+    PreviousSum%Tact = 0._dp
+    PreviousSum%TrW = 0._dp
+    PreviousSum%ECropCycle = 0._dp
+    PreviousSum%CRwater = 0._dp
+    PreviousSum%Biomass = 0._dp
+    PreviousSum%YieldPart = 0._dp
+    PreviousSum%BiomassPot = 0._dp
+    PreviousSum%BiomassUnlim = 0._dp
+    PreviousSum%SaltIn = 0._dp
+    PreviousSum%SaltOut = 0._dp
+    PreviousSum%CRsalt = 0._dp
+    call SetSumETo(0.0_dp)
+    call SetSumGDD(0.0_dp)
+    call SetPreviousSumETo(0.0_dp)
+    call SetPreviousSumGDD(0.0_dp)
+    call SetPreviousBmob(0.0_dp)
+    call SetPreviousBsto(0.0_dp)
 end subroutine ResetPreviousSum
+
+
+subroutine CheckForPrint(TheProjectFile)
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: DayN, MonthN, YearN, DayEndM
+    real(dp) :: SaltIn, SaltOut, CRsalt, BiomassDay, BUnlimDay
+    logical :: WriteNow
+
+    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+    
+    select case (GetOutputAggregate())
+    case (1)
+        ! 1: daily output
+        BiomassDay = GetSumWaBal_Biomass() - GetPreviousSum_Biomass()
+        BUnlimDay = GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim()
+        SaltIn = GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn()
+        SaltOut = GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut()
+        CRsalt = GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt()
+        call WriteTheResults(int(undef_int,kind=int8), DayN, MonthN, YearN, DayN, MonthN, & 
+                             YearN, GetRain(), GetETo(), GetGDDayi(), GetIrrigation(), &
+                             GetInfiltrated(), GetRunoff(), GetDrain(), &
+                             GetCRwater(), GetEact(), GetEpot(), GetTact(), &
+                             GetTactWeedInfested(), GetTpot(), SaltIn, SaltOut, &
+                             CRsalt, BiomassDay, BUnlimDay, GetBin(), GetBout(), &
+                             TheProjectFile)
+        call SetPreviousSum_Biomass(GetSumWaBal_Biomass())
+        call SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim())
+        call SetPreviousSum_SaltIn(GetSumWaBal_SaltIn())
+        call SetPreviousSum_SaltOut(GetSumWaBal_SaltOut())
+        call SetPreviousSum_CRsalt(GetSumWaBal_CRsalt())
+    
+    case (2,3)
+        ! 2 or 3: 10-day or monthly output
+        WriteNow = .false.
+        DayEndM = DaysInMonth(MonthN)
+        if (LeapYear(YearN) .and. (MonthN == 2)) then
+            DayEndM = 29
+        end if
+        if (DayN == DayEndM) then
+            WriteNow = .true.  ! 10-day and month
+        end if
+        if ((GetOutputAggregate() == 2) .and. ((DayN == 10) .or. (DayN == 20))) then
+            WriteNow = .true. ! 10-day
+        end if
+        if (WriteNow) then
+            call WriteIntermediatePeriod(TheProjectFile)
+        end if
+    end select
+end subroutine CheckForPrint
+
 
 subroutine GetGwtSet(DayNrIN, GwT)
     integer(int32), intent(in) :: DayNrIN
@@ -2149,6 +3234,133 @@ subroutine GetGwtSet(DayNrIN, GwT)
     close(f0)
 end subroutine GetGwtSet
 
+
+subroutine GetNextHarvest()
+    logical :: InfoLoaded
+    integer(int32) :: DayNrXX
+    integer(int32) :: FromDay_temp
+    real(dp) :: IntervalInfo_temp, IntervalGDD_temp, MassInfo_temp
+    character(len=:), allocatable :: TempString
+
+    if (.not. GetManagement_Cuttings_Generate()) then
+        TempString = fCuts_read()
+        if (.not. fCuts_eof()) then
+            read(TempString, *) FromDay_temp
+            call SetCutInfoRecord1_FromDay(FromDay_temp)
+            call SetCutInfoRecord1_NoMoreInfo(.false.)
+            if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
+                ! scroll to start growing cycle
+                DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
+                 do while ((DayNrXX < GetCrop_Day1()) .or. (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.))
+                    TempString = fCuts_read()
+                    if (.not. fCuts_eof()) then
+                        read(TempString, *) FromDay_temp
+                        call SetCutInfoRecord1_FromDay(FromDay_temp)
+                        DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
+                    else
+                        call SetCutInfoRecord1_NoMoreInfo(.true.)
+                    end if
+                end do
+            end if
+        else
+            call SetCutInfoRecord1_NoMoreInfo(.true.)
+        end if
+    else
+        if (GetNrCut() == 0) then
+            if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, IntervalInfo_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
+            elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, IntervalGDD_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_IntervalGDD(IntervalGDD_temp)
+            elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                TempString = fCuts_read()
+                read(TempString, *) FromDay_temp, MassInfo_temp
+                call SetCutInfoRecord1_FromDay(FromDay_temp)
+                call SetCutInfoRecord1_MassInfo(MassInfo_temp)
+            end if
+            if (GetCutInfoRecord1_FromDay() < GetManagement_Cuttings_Day1()) then
+                call SetCutInfoRecord1_FromDay(GetManagement_Cuttings_Day1())
+            end if           
+            InfoLoaded = .false.
+        end if
+        loop2: do 
+            TempString = fCuts_read()
+            if (.not. fCuts_eof()) then
+                if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                    read(TempString, *) FromDay_temp, IntervalInfo_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_IntervalInfo(roundc(IntervalInfo_temp, mold=1))
+                elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                    read(TempString, *) FromDay_temp, IntervalGDD_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_IntervalGDD(IntervalGDD_temp)
+                elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                    .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                    read(TempString, *) FromDay_temp, MassInfo_temp
+                    call SetCutInfoRecord2_FromDay(FromDay_temp)
+                    call SetCutInfoRecord2_MassInfo(MassInfo_temp)
+                end if
+                if (GetCutInfoRecord2_FromDay() < GetManagement_Cuttings_Day1()) then
+                    call SetCutInfoRecord2_FromDay(GetManagement_Cuttings_Day1())
+                end if
+                if (GetCutInfoRecord2_FromDay() <= GetCutInfoRecord1_FromDay()) then 
+                    ! CutInfoRecord2 becomes CutInfoRecord1
+                    call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
+                    if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                        call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
+                    elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                        call SetCutInfoRecord1_IntervalGDD(GetCutInfoRecord2_IntervalGDD())
+                    elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                        call SetCutInfoRecord1_MassInfo(GetCutInfoRecord2_MassInfo())
+                    end if
+                    call SetCutInfoRecord1_NoMoreInfo(.false.)
+                else ! complete CutInfoRecord1
+                    call SetCutInfoRecord1_ToDay(GetCutInfoRecord2_FromDay() - 1)
+                    call SetCutInfoRecord1_NoMoreInfo(.false.)
+                    if (GetManagement_Cuttings_NrDays() /= undef_int) then
+                        if (GetCutInfoRecord1_ToDay() > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) then
+                            call SetCutInfoRecord1_ToDay(GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)
+                            call SetCutInfoRecord1_NoMoreInfo(.true.)
+                        end if
+                    end if
+                    InfoLoaded = .true.
+                end if
+            else ! Eof(fCuts)
+                if (GetNrCut() > 0) then ! CutInfoRecord2 becomes CutInfoRecord1
+                    call SetCutInfoRecord1_FromDay(GetCutInfoRecord2_FromDay())
+                    if (GetManagement_Cuttings_Criterion() == TimeCuttings_IntDay) then
+                        call SetCutInfoRecord1_IntervalInfo(GetCutInfoRecord2_IntervalInfo())
+                    elseif (GetManagement_Cuttings_Criterion() == TimeCuttings_IntGDD) then
+                        call SetCutInfoRecord1_IntervalGDD(GetCutInfoRecord2_IntervalGDD())
+                    elseif ((GetManagement_Cuttings_Criterion() == TimeCuttings_DryB) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_DryY) & 
+                            .or. (GetManagement_Cuttings_Criterion() == TimeCuttings_FreshY)) then
+                        call SetCutInfoRecord1_MassInfo(GetCutInfoRecord2_MassInfo())
+                    end if
+                end if 
+                call SetCutInfoRecord1_ToDay(GetCrop_DaysToHarvest())
+                if (GetManagement_Cuttings_NrDays() /= undef_int) then
+                    if (GetCutInfoRecord1_ToDay() > (GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)) then
+                        call SetCutInfoRecord1_ToDay(GetManagement_Cuttings_Day1() + GetManagement_Cuttings_NrDays() -1)
+                    end if
+                end if
+                call SetCutInfoRecord1_NoMoreInfo(.true.)
+                InfoLoaded = .true.
+            end if
+            if (InfoLoaded .eqv. .true.) exit loop2
+        end do loop2
+    end if
+end subroutine GetNextHarvest
 
 
 subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
@@ -2307,8 +3519,6 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
 end subroutine GetSumGDDBeforeSimulation 
 
 
-
-
 subroutine RelationshipsForFertilityAndSaltStress()
 
     real(dp) :: Coeffb0_temp
@@ -2429,46 +3639,2333 @@ end subroutine RelationshipsForFertilityAndSaltStress
 
 
 ! extra for output of daily results  -----------------------------
-subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
+subroutine DetermineGrowthStage(Dayi, CCiPrev)
     integer(int32), intent(in) :: Dayi
     real(dp), intent(in) :: CCiPrev
-    integer(int8), intent(inout)  :: Code
 
     integer(int32) :: VirtualDay
 
     VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
     if (VirtualDay < 0) then
-        Code = 0_int8 ! before cropping period
+        call SetStageCode(0_int8) ! before cropping period
     else
         if (VirtualDay < GetCrop_DaysToGermination()) then
-            Code = 1_int8 ! sown --> emergence OR transplant recovering
+            call SetStageCode(1_int8) ! sown --> emergence OR transplant recovering
         else
-            Code = 2_int8 ! vegetative development
+            call SetStageCode(2_int8) ! vegetative development
             if ((GetCrop_subkind() == subkind_Grain) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
                 if (VirtualDay < (GetCrop_DaysToFlowering() + &
                                   GetCrop_LengthFlowering())) then
-                    Code = 3_int8 ! flowering
+                    call SetStageCode(3_int8) ! flowering
                 else
-                    Code = 4_int8 ! yield formation
+                    call SetStageCode(4_int8) ! yield formation
                 end if
             end if
             if ((GetCrop_subkind() == subkind_Tuber) .and. &
                 (VirtualDay >= GetCrop_DaysToFlowering())) then
-                Code = 4_int8 ! yield formation
+                call SetStageCode(4_int8) ! yield formation
             end if
             if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
                 (CCiPrev < epsilon(0._dp))) then
-                Code = int(undef_int, kind=int8)  ! no growth stage
+                call SetStageCode(int(undef_int, kind=int8))  ! no growth stage
             end if
             if (VirtualDay >= &
                 (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
                  GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
-                Code = 0_int8 ! after cropping period
+                call SetStageCode(0_int8) ! after cropping period
             end if
         end if
     end if
 end subroutine DetermineGrowthStage
+
+subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
+    integer(intenum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=1025) :: Str1, Str2, tempstring
+    real(dp) :: NodeD, Zprof
+    integer(int32) :: Compi
+
+    ! A. Run number
+    call fDaily_write('')
+    if (TheProjectType == typeproject_TypePRM) then
+        write(Str1, '(i4)') TheNrRun
+        call fDaily_write('   Run:'// trim(Str1))
+    end if
+
+    ! B. thickness of soil profile and root zone
+    if ((GetOut1Wabal()) .or. (GetOut3Prof()) .or. (GetOut4Salt())) then
+        Zprof = 0._dp
+        do compi =1, GetNrCompartments()
+            Zprof = Zprof + GetCompartment_Thickness(compi)
+        end do
+        write(Str1,'(f4.2)') Zprof
+        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
+                                roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+            write(Str2, '(f4.2)') GetCrop_RootMax()
+        else
+            write(Str2,'(f4.2)') GetSoil_RootMax()
+        end if
+    end if
+
+    ! C. 1st line title
+    call fDaily_write(trim('   Day Month  Year   DAP Stage'), .false.)
+
+    ! C1. Water balance
+    if (GetOut1Wabal()) then
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+           .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(4a)') '   WC(',trim(Str1),')   Rain     Irri   Surf'// &
+                  '   Infilt   RO    Drain       CR    Zgwt', &
+               '       Ex       E     E/Ex     Trx       Tr  Tr/Trx    ETx      ET  ET/ETx'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring,'(4a)') '   WC(', trim(Str1), ')   Rain     Irri   Surf'// &
+                          '   Infilt   RO    Drain       CR    Zgwt', &
+                          '       Ex       E     E/Ex     Trx       Tr  Tr/Trx'// &
+                                                      '    ETx      ET  ET/ETx'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C2. Crop development and yield
+    if (GetOut2Crop()) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) &
+                              .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '      GD       Z     StExp  StSto  StSen'// &
+                          ' StSalt StWeed   CC      CCw     StTr  Kc(Tr)'// &
+                          '     Trx       Tr      TrW  Tr/Trx   WP', &
+                          '    Biomass     HI    Y(dry)  Y(fresh)  Brelative'// &
+                          '    WPet      Bin     Bout'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2a)')  '      GD       Z     StExp  StSto'// &
+                          '  StSen StSalt StWeed   CC      CCw     StTr'// &
+                          '  Kc(Tr)     Trx       Tr      TrW  Tr/Trx   WP', &
+                          '    Biomass     HI    Y(dry)  Y(fresh)  Brelative'// &
+                          '    WPet      Bin     Bout'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+                                                    .or. (GetOut7Clim())) then
+            write(tempstring, '(5a)') '  WC(', trim(Str1), ') Wr(', trim(Str2), ')     Z'// &
+                  '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)   Wr(sen)   Wr(PWP)'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(5a)') '  WC(', trim(Str1), ') Wr(',trim(Str2), ')     Z'// &
+                            '       Wr    Wr(SAT)    Wr(FC)   Wr(exp)   Wr(sto)'// &
+                                '   Wr(sen)   Wr(PWP)'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
+                            '   Salt(', trim(Str1), ')  SaltZ     Z       ECe'// &
+                                '    ECsw   StSalt  Zgwt    ECgw'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(3a)') '    SaltIn    SaltOut   SaltUp'// &
+                            '   Salt(', trim(Str1), ')  SaltZ     Z       ECe'// &
+                                '    ECsw   StSalt  Zgwt    ECgw'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! C5. Compartments - Soil water content  --!removed tempstring
+    if (GetOut5CompWC()) then
+        call fDaily_write(trim('       WC01'), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            write(Str1, '(i2)') Compi
+            call fDaily_write('       WC'// trim(Str1), .false.)
+        end do
+        write(Str1,'(i2)') GetNrCompartments()
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write('       WC'// trim(Str1), .false.)
+        else
+            call fDaily_write('       WC'// trim(Str1))
+        end if
+    end if
+    ! C6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        call fDaily_write(trim('      ECe01'), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            write(Str1, '(i2)') Compi
+            call fDaily_write('      ECe'// trim(Str1), .false.)
+        end do
+        write(Str1, '(i2)') GetNrCompartments()
+        if (GetOut7Clim()) then
+            call fDaily_write('      ECe'// trim(Str1), .false.)
+        else
+            call fDaily_write('      ECe'// trim(Str1))
+        end if
+    end if
+    ! C7. Climate input parameters
+    if (GetOut7Clim()) then
+        call fDaily_write(trim('     Rain       ETo      Tmin      Tavg      Tmax      CO2'))
+    end if
+
+    call fDaily_write('                              ', .false.)
+    ! D1. Water balance
+    if (GetOut1Wabal()) then
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+            .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+                  '     mm     mm       mm       mm      m ', &
+                    '       mm       mm     %        mm       mm    %' // &
+                            '        mm      mm       %'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+                  '     mm     mm       mm       mm      m ', &
+                    '       mm       mm     %        mm       mm    %' // &
+                        '        mm      mm       %'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D2. Crop development and yield
+    if (GetOut2Crop()) then
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) .or. &
+                                    (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
+                           '      %      %      %       %       %       -'// &
+                           '        mm       mm       mm    %     g/m2', &
+                           '    ton/ha      %    ton/ha   ton/ha'// &
+                           '       %       kg/m3   ton/ha   ton/ha'
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2a)') '  degC-day     m       %      %      %'// &
+                          '      %      %      %       %       %       -'// &
+                          '        mm       mm       mm    %     g/m2', &
+                          '    ton/ha      %    ton/ha   ton/ha'// &
+                          '       %       kg/m3   ton/ha   ton/ha'
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+                                                     .or. (GetOut7Clim())) then
+            call fDaily_write(trim('      mm       mm       m       mm        mm'// &
+                              '        mm        mm        mm        mm'// &
+                              '         mm'), .false.)
+        else
+            call fDaily_write(trim('      mm       mm       m       mm        mm '// &
+                              '       mm        mm        mm        mm        mm'))
+        end if
+    end if
+    ! D4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            call fDaily_write(trim('    ton/ha    ton/ha    ton/ha    ton/ha'// &
+                              '    ton/ha     m      dS/m    dS/m      %'// &
+                              '     m      dS/m'), .false.)
+        else
+            call fDaily_write(trim('    ton/ha    ton/ha    ton/ha    ton/ha'// &
+                              '    ton/ha     m      dS/m    dS/m      %'// &
+                              '     m      dS/m'))
+        end if
+    end if
+    ! D5. Compartments - Soil water content
+    if (GetOut5CompWC()) then
+        NodeD = GetCompartment_Thickness(1)/2._dp
+        write(tempstring,'(f11.2)') NodeD
+        call fDaily_write(trim(tempstring), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                    + GetCompartment_Thickness(Compi)/2._dp
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        end do
+        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
+                + GetCompartment_Thickness(GetNrCompartments())/2._dp
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        NodeD = GetCompartment_Thickness(1)/2._dp
+        write(tempstring,'(f11.2)') NodeD
+        call fDaily_write(trim(tempstring), .false.)
+        do Compi = 2, (GetNrCompartments()-1)
+            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                    + GetCompartment_Thickness(compi)/2._dp
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        end do
+        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
+                + GetCompartment_Thickness(GetNrCompartments())/2._dp
+        if (GetOut7Clim()) then
+            write(tempstring,'(f11.2)') NodeD
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f11.2)') NodeD
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+    ! D7. Climate input parameters
+    if (GetOut7Clim()) then
+        call fDaily_write(trim('       mm        mm     degC      degC      degC       ppm'))
+    end if
+end subroutine WriteTitleDailyResults
+
+
+
+subroutine OpenIrrigationFile()
+
+    character(len=:), allocatable :: totalname
+    character(len=255) :: StringREAD
+    integer(int32) :: i, DNr
+    real(dp) :: Ir1, Ir2
+    real(dp) :: VersionNr
+    integer(int32) :: FromDay_temp, TimeInfo_temp, DepthInfo_temp
+    real(dp) :: IrriECw_temp
+    character(len=1025) :: TempString
+
+    if ((GetIrriMode() == IrriMode_Manual) &
+        .or. (GetIrriMode() == IrriMode_Generate)) then
+        if (GetIrriFile() /= '(None)') then
+            totalname = GetIrriFileFull()
+        else
+            totalname = GetPathNameProg() // 'IrriSchedule.AqC'
+        end if
+        call fIrri_open(totalname, 'r')
+        TempString = fIrri_read() ! description
+        TempString = fIrri_read() ! AquaCrop version
+        read(TempString, *) VersionNr
+        
+        if (roundc(VersionNr*10, mold=1) < 32) then
+            call SetGlobalIrriECw(.true.)
+        else
+            call SetGlobalIrriECw(.false.)
+        end if
+        do i = 1, 6 
+            TempString = fIrri_read()  ! irrigation info (already loaded)
+        end do
+        select case (GetIrriMode())
+        case (IrriMode_Manual)
+            if (GetIrriFirstDayNr() == undef_int) then
+                DNr = GetDayNri() - GetCrop_Day1() + 1
+            else
+                DNr = GetDayNri() - GetIrriFirstDayNr() + 1
+            end if
+            loop: do
+                StringREAD = fIrri_read()
+                if (fIrri_eof()) then
+                    call SetIrriInfoRecord1_NoMoreInfo(.true.)
+                else
+                    call SetIrriInfoRecord1_NoMoreInfo(.false.)
+                    if (GetGlobalIrriECw()) then
+                        call SplitStringInTwoParams(StringREAD, Ir1, Ir2)
+                    else
+                        IrriECw_temp = GetSimulation_IrriECw()
+                        call SplitStringInThreeParams(StringREAD, Ir1, Ir2, &
+                                                      IrriECw_temp)
+                        call SetSimulation_IrriECw(IrriECw_temp)
+                    end if
+                    call SetIrriInfoRecord1_TimeInfo(roundc(Ir1, mold=1))
+                    call SetIrriInfoRecord1_DepthInfo(roundc(Ir2, mold=1))
+                end if
+                if ((GetIrriInfoRecord1_NoMoreInfo()) &
+                    .or. (GetIrriInfoRecord1_TimeInfo() >= DNr)) exit loop
+            end do loop
+        case(IrriMode_Generate)
+            do i = 1, 2 
+                TempString = fIrri_read() 
+                ! time and depth criterion (already loaded)
+            end do
+            call SetIrriInfoRecord1_NoMoreInfo(.false.)
+            if (roundc(VersionNr*10, mold=1) < 32) then
+                TempString = fIrri_read()
+                read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                    DepthInfo_temp
+                call SetIrriInfoRecord1_FromDay(FromDay_temp)
+                call SetIrriInfoRecord1_TimeInfo(TimeInfo_temp)
+                call SetIrriInfoRecord1_DepthInfo(DepthInfo_temp)
+            else
+                TempString = fIrri_read()
+                read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                    DepthInfo_temp, IrriECw_temp
+                call SetIrriInfoRecord1_FromDay(FromDay_temp)
+                call SetIrriInfoRecord1_TimeInfo(TimeInfo_temp)
+                call SetIrriInfoRecord1_DepthInfo(DepthInfo_temp)
+                call SetSimulation_IrriECw(IrriECw_temp)
+            end if
+            
+            TempString = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_ToDay(GetCrop_DayN() &
+                                              - GetCrop_Day1() + 1)
+            else
+                call SetIrriInfoRecord2_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then
+                    read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                        DepthInfo_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                else
+                    read(TempString, *) FromDay_temp, TimeInfo_temp, &
+                                        DepthInfo_temp, IrriEcw_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                    call SetSimulation_IrriECw(IrriECw_temp)
+                end if
+                call SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1)
+            end if
+        end select
+    end if
+end subroutine OpenIrrigationFile
+
+
+
+subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
+    integer(intEnum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=:), allocatable :: Str1
+    integer(int32) :: Dayi, Monthi, Yeari
+    real(dp) :: Nr
+    character(len=:), allocatable :: tempstring
+
+    ! A. Run number
+    call fHarvest_write('')
+    if (TheProjectType == typeproject_TypePRM) then
+        write(Str1, '(i4)') TheNrRun
+        call fHarvest_write('   Run:' // Str1)
+    end if
+
+    ! B. Title
+    call fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    ' // &
+        'Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)')
+    call fHarvest_write('                                 days     ton/ha    ' // &
+        'ton/ha    ton/ha    ton/ha    ton/ha    ton/ha')
+
+    ! C. start crop cycle
+    call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
+    call SetNoYear(Yeari == 1901)
+    if (GetNoYear()) then
+        if (Dayi == 0) then
+            Dayi = 1
+        end if
+        Yeari = 9999
+    end if
+    Nr = 0
+    write(Str1, '(f6.0)') Nr
+    write(tempstring, '(a, 3i6, f34.3, 2f20.3)') Str1, Dayi, Monthi, Yeari, &
+                                                 Nr, Nr, Nr
+    call fHarvest_write(tempstring)
+end subroutine WriteTitlePart1MultResults
+
+
+subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile)
+    integer(int8), intent(in) :: ANumber
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(in) :: Month1
+    integer(int32), intent(in) :: Year1
+    integer(int32), intent(in) :: DayN
+    integer(int32), intent(in) :: MonthN
+    integer(int32), intent(in) :: YearN
+    real(dp), intent(in) :: RPer
+    real(dp), intent(in) :: EToPer
+    real(dp), intent(in) :: GDDPer
+    real(dp), intent(in) :: IrriPer
+    real(dp), intent(in) :: InfiltPer
+    real(dp), intent(in) :: ROPer
+    real(dp), intent(in) :: DrainPer
+    real(dp), intent(in) :: CRwPer
+    real(dp), intent(in) :: EPer
+    real(dp), intent(in) :: ExPer
+    real(dp), intent(in) :: TrPer
+    real(dp), intent(in) :: TrWPer
+    real(dp), intent(in) :: TrxPer
+    real(dp), intent(in) :: SalInPer
+    real(dp), intent(in) :: SalOutPer
+    real(dp), intent(in) :: SalCRPer
+    real(dp), intent(in) :: BiomassPer
+    real(dp), intent(in) :: BUnlimPer
+    real(dp), intent(in) :: BmobPer
+    real(dp), intent(in) :: BstoPer
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: BrSF, RatioE, RatioT
+    integer(int32) :: Year1_loc, YearN_loc
+    real(dp) :: WPy, HI, tempreal
+    character(len=1025) :: TempString
+
+    ! copy intent(in) variables to locals
+    Year1_loc = Year1
+    YearN_loc = YearN
+
+    ! start
+    if (GetNoYear()) then
+        Year1_loc = 9999
+        YearN_loc = 9999
+    end if
+    if (ANumber == int(undef_int, int8)) then ! intermediate results
+        select case (GetOutputAggregate())
+        case(1)
+            write(TempString, '(a, 3i9)') '      Day', Day1, Month1, Year1_loc
+        case(2)
+            write(TempString, '(a, 3i9)') '    10Day', Day1, Month1, Year1_loc
+        case(3)
+            write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
+        end select
+    call fRun_write(trim(TempString), .false.)
+
+    else
+        write(TempString, '(i0)') ANumber
+        TempString = 'Tot(' // trim(TempString) // ')'
+        do while (len(trim(TempString)) < 9) 
+            TempString = ' ' // trim(TempString)
+        end do
+        call fRun_write(trim(TempString), .false.)
+        write(TempString, '(3i9)') Day1, Month1, Year1_loc
+        call fRun_write(trim(TempString), .false.)
+    end if
+    
+    tempreal = roundc(GDDPer*10._dp, mold=1)
+    ! Climatic conditions
+    write(TempString, '(3f9.1, f9.2)') Rper, EToPer,&
+          tempreal/10._dp, GetCO2i()
+    call fRun_write(trim(TempString), .false.)
+    ! Soil water parameters
+    if (ExPer > 0._dp) then
+        RatioE = roundc(100._dp*EPer/ExPer, mold=1)
+    else
+        RatioE = undef_int
+    end if
+    if (TrxPer > 0._dp) then
+        RatioT = roundc(100._dp*TrPer/TrxPer, mold=1)
+    else
+        RatioT = undef_int
+    end if
+
+    write(TempString, '(6f9.1, i9, 2f9.1, i9)') IrriPer, InfiltPer, ROPer, &
+                    DrainPer, CRwPer, EPer, RatioE, TrPer, TrWPer, RatioT
+    call fRun_write(trim(TempString), .false.)
+
+    ! Soil Salinity
+    write(TempString, '(4f10.3)') SalInPer, SalOutPer, SalCRPer, &
+                                  GetTotalSaltContent_EndDay()
+    call fRun_write(trim(TempString), .false.)
+
+    ! seasonal stress
+    write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
+                    GetManagement_FertilityStress(), GetStressTot_Weed(), &
+                    GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
+    call fRun_write(trim(TempString), .false.)
+
+    ! Biomass production
+    if ((BiomassPer > 0._dp) .and. (BUnlimPer > 0._dp)) then
+        BrSF = roundc(100._dp*BiomassPer/BUnlimPer, mold=1)
+        if (BrSF > 100) then
+            BrSF = 100
+        end if
+    else
+        BrSF = undef_int
+    end if
+
+    write(TempString, '(f10.3, i9)') BiomassPer, BrSF
+    call fRun_write(trim(TempString), .false.)
+
+    ! Crop yield
+    if (ANumber /= int(undef_int, int8)) then ! end of simulation run
+        ! Water Use Efficiency yield
+        if (((GetSumWaBal_Tact() > 0._dp) .or. (GetSumWaBal_ECropCycle() > 0._dp)) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            WPy = (GetSumWaBal_YieldPart()*1000._dp) &
+                    /((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10._dp)
+        else
+            WPy = 0.0_dp
+        end if
+
+        ! Harvest Index
+        if ((GetSumWaBal_Biomass() > 0._dp) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            HI = 100._dp*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
+        else
+            HI = undef_double
+        end if
+
+        ! Fresh yield
+        if ((GetCrop_DryMatter() == int(undef_int, int8)) &
+            .or. (GetCrop_DryMatter() < epsilon(0._dp))) then
+            write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
+                                                    undef_double, WPy
+        else
+            write(TempString, '(f9.1, 2f9.3, f9.2)') HI, GetSumWaBal_YieldPart(), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp)), WPy
+        end if
+        call fRun_write(trim(TempString), .false.)
+
+        ! Transfer of assimilates
+        write(TempString, '(2f9.3)') GetTransfer_Bmobilized(), &
+                                     GetSimulation_Storage_Btotal()
+        call fRun_write(trim(TempString), .false.)
+    else
+        write(TempString, '(4i9, 2f9.3)') undef_int, undef_int, undef_int, &
+                                          undef_int, BmobPer, BstoPer
+        call fRun_write(trim(TempString), .false.)
+    end if
+
+    ! End
+    write(TempString, '(3i9)') DayN, MonthN, YearN_loc
+    call fRun_write(trim(TempString), .false.)
+
+    ! Project
+    call fRun_write('  ' // TheProjectFile)
+end subroutine WriteTheResults 
+
+
+
+subroutine InitializeSimulationRun()
+
+    integer(int32) :: tHImax, DNr1, DNr2, Dayi, DayCC
+    real(dp) :: SumGDDforDayCC
+    real(dp) :: CCiniMin, CCiniMax, RatDGDD, fWeed, fi
+    integer(int8) :: Cweed
+    integer(int32) :: Day1, Month1, Year1
+    integer(int8) :: FertStress
+    real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
+    type(rep_GwTable) :: GwTable_temp
+    integer(int8) :: RedCGC_temp, RedCCX_temp, RCadj_temp
+    type(rep_EffectStress) :: EffectStress_temp
+    real(dp) :: SumGDD_temp, SumGDDFromDay1_temp
+    logical :: bool_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+    logical :: WaterTableInProfile_temp
+
+    ! 1. Adjustments at start
+    ! 1.1 Adjust soil water and salt content if water table IN soil profile
+    WaterTableInProfile_temp = GetWaterTableInProfile()
+    call CheckForWaterTableInProfile((GetZiAqua()/100._dp), &
+               GetCompartment(), WaterTableInProfile_temp)
+    call SetWaterTableInProfile(WaterTableInProfile_temp)
+    if (GetWaterTableInProfile()) then
+        call AdjustForWatertable
+    end if
+    if (.not. GetSimulParam_ConstGwt()) then
+        GwTable_temp = GetGwTable()
+        call GetGwtSet(GetSimulation_FromDayNr(), GwTable_temp)
+        call SetGwTable(GwTable_temp)
+    end if
+
+    ! 1.2 Check if FromDayNr simulation needs to be adjusted 
+    ! from previous run if Keep initial SWC
+    if ((GetSWCIniFile() == 'KeepSWC') .and. &
+        (GetNextSimFromDayNr() /= undef_int)) then
+        ! assign the adjusted DayNr defined in previous run
+        if (GetNextSimFromDayNr() <= GetCrop_Day1()) then
+            call SetSimulation_FromDayNr(GetNextSimFromDayNr())
+        end if
+    end if
+    call SetNextSimFromDayNr(undef_int)
+
+    ! 2. initial settings for Crop
+    call SetCrop_pActStom(GetCrop_pdef())
+    call SetCrop_pSenAct(GetCrop_pSenescence())
+    call SetCrop_pLeafAct(GetCrop_pLeafDefUL())
+    call SetEvapoEntireSoilSurface(.true.)
+    call SetSimulation_EvapLimitON(.false.)
+    call SetSimulation_EvapWCsurf(0._dp)
+    call SetSimulation_EvapZ(EvapZmin/100._dp)
+    call SetSimulation_SumEToStress(0._dp)
+    call SetCCxWitheredTpot(0._dp) ! for calculation Maximum Biomass
+                                   ! and considering soil fertility stress
+    call SetCCxWitheredTpotNoS(0._dp) ! for calculation Maximum Biomass
+                                      ! unlimited soil fertility
+    call SetSimulation_DayAnaero(0_int8) ! days of anaerobic conditions in
+                                    ! global root zone
+    ! germination
+    if ((GetCrop_Planting() == plant_Seed) .and. &
+        (GetSimulation_FromDayNr() <= GetCrop_Day1())) then
+        call SetSimulation_Germinate(.false.)
+    else
+        call SetSimulation_Germinate(.true.)
+        ! since already germinated no protection required
+        call SetSimulation_ProtectedSeedling(.false.)
+    end if
+    ! delayed germination
+    call SetSimulation_DelayedDays(0)
+
+    ! 3. create temperature file covering crop cycle
+    if (GetTemperatureFile() /= '(None)') then
+        if (GetSimulation_ToDayNr() < GetCrop_DayN()) then
+            call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), &
+                       GetSimulation_TodayNr())
+        else
+            call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), &
+                       GetCrop_DayN())
+        end if
+    end if
+
+    ! 4. CO2 concentration during cropping period
+    DNr1 = GetSimulation_FromDayNr()
+    if (GetCrop_Day1() > GetSimulation_FromDayNr()) then
+        DNr1 = GetCrop_Day1()
+    end if
+    DNr2 = GetSimulation_ToDayNr()
+    if (GetCrop_DayN() < GetSimulation_ToDayNr()) then
+        DNr2 = GetCrop_DayN()
+    end if
+    call SetCO2i(CO2ForSimulationPeriod(DNr1, DNr2))
+
+    ! 5. seasonals stress coefficients
+    bool_temp = ((GetCrop_ECemin() /= undef_int) .and. &
+                 (GetCrop_ECemax() /= undef_int)) .and. &
+                 (GetCrop_ECemin() < GetCrop_ECemax())
+    call SetSimulation_SalinityConsidered(bool_temp)
+    if (GetIrriMode() == IrriMode_Inet) then
+        call SetSimulation_SalinityConsidered(.false.)
+    end if
+    call SetStressTot_NrD(undef_int)
+    call SetStressTot_Salt(0._dp)
+    call SetStressTot_Temp(0._dp)
+    call SetStressTot_Exp(0._dp)
+    call SetStressTot_Sto(0._dp)
+    call SetStressTot_Weed(0._dp)
+
+    ! 6. Soil fertility stress
+    ! Coefficients for soil fertility - biomass relationship
+    ! AND for Soil salinity - CCx/KsSto relationship
+    call RelationshipsForFertilityAndSaltStress()
+
+    ! No soil fertility stress
+    if (GetManagement_FertilityStress() <= 0) then
+        call SetManagement_FertilityStress(0_int8)
+    end if
+
+    ! Reset soil fertility parameters to selected value in management
+    EffectStress_temp = GetSimulation_EffectStress()
+    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
+            GetManagement_FertilityStress(), EffectStress_temp)
+    call SetSimulation_EffectStress(EffectStress_temp)
+    FertStress = GetManagement_FertilityStress()
+    RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+    RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+    Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+    call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
+           GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
+           GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(), &
+           GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(), &
+           Crop_DaysToFullCanopySF_temp, RedCGC_temp, RedCCX_temp, FertStress)
+    call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+    call SetManagement_FertilityStress(FertStress)
+    call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+    call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+    call SetPreviousStressLevel(int(GetManagement_FertilityStress(),kind=int32))
+    call SetStressSFadjNEW(int(GetManagement_FertilityStress(),kind=int32))
+    ! soil fertility and GDDays
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        if (GetManagement_FertilityStress() /= 0_int8) then
+            call SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(&
+                  GetCrop_DaysToFullCanopySF(), GetCrop_Day1(), &
+                  GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(),&
+                  GetSimulParam_Tmax()))
+        else
+            call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
+        end if
+    end if
+
+    ! Maximum sum Kc (for reduction WP in season if soil fertility stress)
+    call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
+            GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
+            GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
+            GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+            GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
+            GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
+            GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &
+            GetCrop_KcTop(), GetCrop_KcDecline(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
+            GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
+            GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
+            GetCrop_ModeCycle()))
+    call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
+    call SetSumKci(0._dp)
+
+    ! 7. weed infestation and self-thinning of herbaceous perennial forage crops
+    ! CC expansion due to weed infestation and/or CC decrease as a result of
+    ! self-thinning
+    ! 7.1 initialize
+    call SetSimulation_RCadj(GetManagement_WeedRC())
+    Cweed = 0_int8
+    if (GetCrop_subkind() == subkind_Forage) then
+        fi = MultiplierCCxSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
+              int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
+    else
+        fi = 1._dp
+    end if
+    ! 7.2 fweed
+    if (GetManagement_WeedRC() > 0_int8) then
+        call SetfWeedNoS(CCmultiplierWeed(GetManagement_WeedRC(), &
+              GetCrop_CCx(), GetManagement_WeedShape()))
+        call SetCCxCropWeedsNoSFstress( roundc(((100._dp*GetCrop_CCx() &
+                  * GetfWeedNoS()) + 0.49),mold=1)/100._dp) ! reference for plot with weed
+        if (GetManagement_FertilityStress() > 0_int8) then
+            fWeed = 1._dp
+            if ((fi > 0._dp) .and. (GetCrop_subkind() == subkind_Forage)) then
+                Cweed = 1_int8
+                if (fi > 0.005_dp) then
+                    ! calculate the adjusted weed cover
+                    call SetSimulation_RCadj(roundc(GetManagement_WeedRC() &
+                         + Cweed*(1._dp-fi)*GetCrop_CCx()*&
+                           (1._dp-GetSimulation_EffectStress_RedCCX()/100._dp)*&
+                           GetManagement_WeedAdj()/100._dp, mold=1_int8))
+                    if (GetSimulation_RCadj() < (100._dp * (1._dp- fi/(fi + (1._dp-fi)*&
+                          (GetManagement_WeedAdj()/100._dp))))) then
+                        call SetSimulation_RCadj(roundc(100._dp * (1._dp- fi/(fi + &
+                              (1._dp-fi)*(GetManagement_WeedAdj()/100._dp))),mold=1_int8))
+                    end if
+                    if (GetSimulation_RCadj() > 100_int8) then
+                        call SetSimulation_RCadj(98_int8)
+                    end if
+                else
+                    call SetSimulation_RCadj(100_int8)
+                end if
+            end if
+        else
+            if (GetCrop_subkind() == subkind_Forage) then
+                RCadj_temp = GetSimulation_RCadj()
+                fweed = CCmultiplierWeedAdjusted(GetManagement_WeedRC(), &
+                          GetCrop_CCx(), GetManagement_WeedShape(), &
+                          fi, GetSimulation_YearSeason(), &
+                          GetManagement_WeedAdj(), &
+                          RCadj_temp)
+                call SetSimulation_RCadj(RCadj_temp)
+            else
+                fWeed = GetfWeedNoS()
+            end if
+        end if
+    else
+        call SetfWeedNoS(1._dp)
+        fWeed = 1._dp
+        call SetCCxCropWeedsNoSFstress(GetCrop_CCx())
+    end if
+    ! 7.3 CC total due to weed infestation
+    call SetCCxTotal( fWeed * GetCrop_CCx() * (fi+Cweed*(1._dp-fi)*&
+           GetManagement_WeedAdj()/100._dp))
+    call SetCDCTotal( GetCrop_CDC() * (fWeed*GetCrop_CCx()*&
+           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29_dp)/ &
+           (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
+            + 2.29_dp))
+    call SetGDDCDCTotal(GetCrop_GDDCDC() * (fWeed*GetCrop_CCx()*&
+           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29_dp)/ &
+           (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
+            + 2.29_dp))
+    if (GetCrop_subkind() == subkind_Forage) then
+        fi = MultiplierCCoSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
+               int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
+    else
+        fi = 1._dp
+    end if
+    call SetCCoTotal(fWeed * GetCrop_CCo() * (fi+Cweed*(1._dp-fi)*&
+            GetManagement_WeedAdj()/100._dp))
+
+    ! 8. prepare output files
+    ! Not applicable
+
+    ! 9. first day
+    call SetStartMode(.true.)
+    bool_temp = (.not. GetSimulation_ResetIniSWC())
+    call SetPreDay(bool_temp)
+    call SetDayNri(GetSimulation_FromDayNr())
+    call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) ! start simulation run
+    call SetNoYear((Year1 == 1901));  ! for output file
+
+    ! 10. Climate
+    ! create climate files
+    call CreateDailyClimFiles(GetSimulation_FromDayNr(), &
+               GetSimulation_ToDayNr())
+    ! climatic data for first day
+    call OpenClimFilesAndGetDataFirstDay(GetDayNri())
+
+    ! Sum of GDD before start of simulation
+    call SetSimulation_SumGDD(0._dp)
+    call SetSimulation_SumGDDfromDay1(0._dp)
+    if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. & 
+        (GetCrop_Day1() < GetDayNri())) then
+        SumGDD_temp = GetSimulation_SumGDD()
+        SumGDDfromDay1_temp = GetSimulation_SumGDDfromDay1()
+        call GetSumGDDBeforeSimulation(SumGDD_temp, SumGDDfromDay1_temp)
+         ! GDDays before start of simulation
+        call SetSimulation_SumGDD(SumGDD_temp)
+        call SetSimulation_SumGDDFromDay1(SumGDDFromDay1_temp)
+    end if
+    call SetSumGDDPrev( GetSimulation_SumGDDfromDay1())
+
+    ! Sum of GDD at end of first day
+    call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), GetTmin(), &
+                   GetTmax(), GetSimulParam_GDDMethod()))
+    if (GetDayNri() >= GetCrop_Day1()) then
+        if (GetDayNri() == GetCrop_Day1()) then
+            call SetSimulation_SumGDD(GetSimulation_SumGDD() + GetGDDayi())
+        end if
+        call SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + &
+                 GetGDDayi())
+    end if
+    ! Reset cummulative sums of ETo and GDD for Run output
+    call SetSumETo(0._dp)
+    call SetSumGDD(0._dp)
+
+    ! 11. Irrigation
+    call SetIrriInterval(1)
+    call SetGlobalIrriECw(.true.) ! In Versions < 3.2 - Irrigation water
+                                  ! quality is not yet recorded on file
+    call OpenIrrigationFile()
+
+    ! 12. Adjusted time when starting as regrowth
+    if (GetCrop_DaysToCCini() /= 0) then
+        ! regrowth
+        call SetGDDTadj(undef_int)
+        call SetGDDayFraction(real(undef_int, kind=dp))
+        if (GetCrop_DaysToCCini() == undef_int) then
+            call SetTadj(GetCrop_DaysToFullCanopy() - &
+                         GetCrop_DaysToGermination())
+        else
+            call SetTadj(GetCrop_DaysToCCini())
+        end if
+        call SetDayFraction(real((GetCrop_DaysToSenescence()- &
+              GetCrop_DaysToFullCanopy()),kind=dp)/real(GetTadj() + &
+              GetCrop_DaysToGermination() + &
+              (GetCrop_DaysToSenescence()-GetCrop_DaysToFullCanopy()),kind=dp))
+        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+            if (GetCrop_GDDaysToCCini() == undef_int) then
+                call SetGDDTadj(GetCrop_GDDaysToFullCanopy() - &
+                       GetCrop_GDDaysToGermination())
+            else
+                call SetGDDTadj(GetCrop_GDDaysToCCini())
+            end if
+            call SetGDDayFraction(real(GetCrop_GDDaysToSenescence() - &
+                  GetCrop_GDDaysToFullCanopy(),kind=dp)/ &
+                  real(GetGDDTadj() + GetCrop_GDDaysToGermination() + &
+                   (GetCrop_GDDaysToSenescence() -&
+                    GetCrop_GDDaysToFullCanopy()),kind=dp))
+        end if
+    else
+        ! sowing or transplanting
+        call SetTadj(0)
+        call SetGDDTadj(0)
+        call SetDayFraction(real(undef_int, kind=dp))
+        call SetGDDayFraction(real(undef_int, kind=dp))
+    end if
+
+    ! 13. Initial canopy cover
+    ! 13.1 default value
+    ! 13.1a RatDGDD for simulation of CanopyCoverNoStressSF (CCi with decline)
+    RatDGDD = 1._dp
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
+            RatDGDD = (GetCrop_DaysToSenescence() - &
+                       GetCrop_DaysToFullCanopySF()) / &
+                      real(GetCrop_GDDaysToSenescence() -&
+                           GetCrop_GDDaysToFullCanopySF(), kind=dp)
+        end if
+    end if
+    ! 13.1b DayCC for initial canopy cover
+    Dayi = GetDayNri() - GetCrop_Day1()
+    if (GetCrop_DaysToCCini() == 0) then
+        ! sowing or transplant
+        DayCC = Dayi
+        call SetDayFraction(real(undef_int, kind=dp))
+    else
+        ! adjust time (calendar days) for regrowth
+        DayCC = Dayi + GetTadj() + GetCrop_DaysToGermination() ! adjusted time scale
+        if (DayCC > GetCrop_DaysToHarvest()) then
+            DayCC = GetCrop_DaysToHarvest() ! special case where L123 > L1234
+        end if
+        if (DayCC > GetCrop_DaysToFullCanopy()) then
+            if (Dayi <= GetCrop_DaysToSenescence()) then
+                DayCC = GetCrop_DaysToFullCanopy()  + &
+                         roundc(GetDayFraction() * &
+                         (Dayi+GetTadj()+GetCrop_DaysToGermination() -&
+                         GetCrop_DaysToFullCanopy()),mold=1) ! slow down
+            else
+                DayCC = Dayi ! switch time scale
+            end if
+        end if
+    end if
+    ! 13.1c SumGDDayCC for initial canopy cover
+    SumGDDforDayCC = undef_int
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        if (GetCrop_GDDaysToCCini() == 0) then
+            SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - GetGDDayi()
+        else
+            ! adjust time (Growing Degree Days) for regrowth
+            SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - GetGDDayi() + &
+                             GetGDDTadj() + GetCrop_GDDaysToGermination()
+            if (SumGDDforDayCC > GetCrop_GDDaysToHarvest()) then
+                SumGDDforDayCC = GetCrop_GDDaysToHarvest()
+                ! special case where L123 > L1234
+            end if
+            if (SumGDDforDayCC > GetCrop_GDDaysToFullCanopy()) then
+                if (GetSimulation_SumGDDfromDay1() <= &
+                    GetCrop_GDDaysToFullCanopy()) then
+                    SumGDDforDayCC = GetCrop_GDDaysToFullCanopy() + &
+                      roundc(GetGDDayFraction() * &
+                       (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+ &
+                       GetCrop_GDDaysToGermination()- &
+                       GetCrop_GDDaysToFullCanopy()),mold=1)
+                    ! slow down
+                else
+                    SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - &
+                                      GetGDDayi()
+                    ! switch time scale
+                end if
+            end if
+        end if
+    end if
+    ! 13.1d CCi at start of day (is CCi at end of previous day)
+    if (GetDayNri() <= GetCrop_Day1()) then
+        if (GetCrop_DaysToCCini() /= 0) then
+            ! regrowth which starts on 1st day
+            if (GetDayNri() == GetCrop_Day1()) then
+                call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
+                   GetCrop_DaysToGermination(), &
+                   GetCrop_DaysToFullCanopySF(), &
+                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), &
+                   GetCrop_GDDaysToGermination(), &
+                   GetCrop_GDDaysToFullCanopySF(), &
+                   GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
+                   GetCCoTotal(), GetCCxTotal(), GetCrop_CGC(), &
+                   GetCrop_GDDCGC(), GetCDCTotal(), GetGDDCDCTotal(), &
+                   SumGDDforDayCC, RatDGDD, &
+                   GetSimulation_EffectStress_RedCGC(), &
+                   GetSimulation_EffectStress_RedCCX(), &
+                   GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
+            else
+                call SetCCiPrev(0._dp)
+            end if
+        else
+            ! sowing or transplanting
+            call SetCCiPrev(0._dp)
+            if (GetDayNri() == (GetCrop_Day1()+GetCrop_DaysToGermination())) then
+                call SetCCiPrev(GetCCoTotal())
+            end if
+        end if
+    else
+        if (GetDayNri() > GetCrop_DayN()) then
+            call SetCCiPrev(0._dp)  ! after cropping period
+        else
+            call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
+                GetCrop_DaysToGermination(), &
+                GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
+                GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
+                GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
+                GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(),&
+                GetGDDCDCTotal(), SumGDDforDayCC, RatDGDD, &
+                GetSimulation_EffectStress_RedCGC(), &
+                GetSimulation_EffectStress_RedCCX(), &
+                GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
+        end if
+    end if
+    ! 13.2 specified CCini (%)
+    if ((GetSimulation_CCini() > 0._dp) .and. &
+        (roundc(10000._dp*GetCCiPrev(), mold=1) > 0) .and. &
+        (roundc(GetSimulation_CCini(), mold=1) /= &
+            roundc(100._dp*GetCCiPrev(),mold=1))) then
+        ! 13.2a Minimum CC
+        CCiniMin = 100._dp * (GetCrop_SizeSeedling()/10000._dp)*&
+                    (GetCrop_PlantingDens()/10000._dp)
+        if (CCiniMin - roundc(CCiniMin*100._dp, mold=1)/100._dp >= 0.00001) then
+            CCiniMin = roundc(CCiniMin*100._dp + 1._dp, mold=1)/100._dp
+        else
+            CCiniMin = roundc(CCiniMin*100._dp, mold=1)/100._dp
+        end if
+        ! 13.2b Maximum CC
+        CCiniMax = 100._dp * GetCCiPrev()
+        CCiniMax = roundc(CCiniMax*100._dp, mold=1)/100._dp
+        ! 13.2c accept specified CCini
+        if ((GetSimulation_CCini() >= CCiniMin) .and. &
+            (GetSimulation_CCini() <= CCiniMax)) then
+            call SetCCiPrev(GetSimulation_CCini()/100._dp)
+        end if
+    end if
+    ! 13.3
+    call SetCrop_CCxAdjusted(GetCCxTotal())
+    call SetCrop_CCoAdjusted(GetCCoTotal())
+    call SetTimeSenescence(0._dp)
+    call SetCrop_CCxWithered(0._dp)
+    call SetNoMoreCrop(.false.)
+    call SetCCiActual(GetCCiPrev())
+
+    ! 14. Biomass and re-setting of GlobalZero
+    if (roundc(1000._dp*GetSimulation_Bini(), mold=1) > 0) then
+        ! overwrite settings in GlobalZero (in Global)
+        call SetSumWaBal_Biomass(GetSimulation_Bini())
+        call SetSumWaBal_BiomassPot(GetSimulation_Bini())
+        call SetSumWaBal_BiomassUnlim(GetSimulation_Bini())
+        call SetSumWaBal_BiomassTot(GetSimulation_Bini())
+    end if
+
+    ! 15. Transfer of assimilates
+    if ((GetCrop_subkind() == subkind_Forage)&
+        ! only valid for perennial herbaceous forage crops
+        .and. (trim(GetCropFileFull()) == &
+               trim(GetSimulation_Storage_CropString()))&
+        ! only for the same crop
+        .and. (GetSimulation_YearSeason() > 1) &
+        ! mobilization not possible in season 1
+        .and. (GetSimulation_YearSeason() == &
+               (GetSimulation_Storage_Season() + 1))) then
+            ! season next to season in which storage took place
+            ! mobilization of assimilates
+            call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *&
+                   GetCrop_Assimilates_Mobilized()/100._dp)
+            if (roundc(1000._dp * GetTransfer_ToMobilize(),&
+                   mold=1) > 0) then ! minimum 1 kg
+                 call SetTransfer_Mobilize(.true.)
+            else
+                 call SetTransfer_Mobilize(.false.)
+            end if
+    else
+        call SetSimulation_Storage_CropString(GetCropFileFull())
+        ! no mobilization of assimilates
+        call SetTransfer_ToMobilize(0._dp)
+        call SetTransfer_Mobilize(.false.)
+    end if
+    ! Storage is off and zero at start of season
+    call SetSimulation_Storage_Season(GetSimulation_YearSeason())
+    call SetSimulation_Storage_Btotal(0._dp)
+    call SetTransfer_Store(.false.)
+    ! Nothing yet mobilized at start of season
+    call SetTransfer_Bmobilized(0._dp)
+
+    ! 16. Initial rooting depth
+    ! 16.1 default value
+    if (GetDayNri() <= GetCrop_Day1()) then
+        call SetZiprev(real(undef_int, kind=dp))
+    else
+        if (GetDayNri() > GetCrop_DayN()) then
+            call SetZiprev(real(undef_int, kind=dp))
+        else
+            call SetZiprev( ActualRootingDepth(GetDayNri()-GetCrop_Day1(),&
+                  GetCrop_DaysToGermination(),&
+                  GetCrop_DaysToMaxRooting(),&
+                  GetCrop_DaysToHarvest(),&
+                  GetCrop_GDDaysToGermination(),&
+                  GetCrop_GDDaysToMaxRooting(),&
+                  GetSumGDDPrev(),&
+                  GetCrop_RootMin(),&
+                  GetCrop_RootMax(),&
+                  GetCrop_RootShape(),&
+                  GetCrop_ModeCycle()) )
+        end if
+    end if
+    ! 16.2 specified or default Zrini (m)
+    if ((GetSimulation_Zrini() > 0._dp) .and. &
+        (GetZiprev() > 0._dp) .and. &
+        (GetSimulation_Zrini() <= GetZiprev())) then
+        if ((GetSimulation_Zrini() >= GetCrop_RootMin()) .and. &
+            (GetSimulation_Zrini() <= GetCrop_RootMax())) then
+            call SetZiprev( GetSimulation_Zrini())
+        else
+            if (GetSimulation_Zrini() < GetCrop_RootMin()) then
+                call SetZiprev( GetCrop_RootMin())
+            else
+                call SetZiprev( GetCrop_RootMax())
+            end if
+        end if
+        if ((roundc(GetSoil_RootMax()*1000._dp, mold=1) < &
+             roundc(GetCrop_RootMax()*1000._dp, mold=1)) &
+            .and. (GetZiprev() > GetSoil_RootMax())) then
+            call SetZiprev(real(GetSoil_RootMax(), kind=dp))
+        end if
+        call SetRootingDepth(GetZiprev())
+        ! NOT NEEDED since RootingDepth is calculated in the RUN by considering
+        ! Ziprev
+    else
+        call SetRootingDepth(ActualRootingDepth(GetDayNri()-GetCrop_Day1()+1, &
+              GetCrop_DaysToGermination(), &
+              GetCrop_DaysToMaxRooting(),&
+              GetCrop_DaysToHarvest(),&
+              GetCrop_GDDaysToGermination(),&
+              GetCrop_GDDaysToMaxRooting(),&
+              GetSumGDDPrev(),&
+              GetCrop_RootMin(),&
+              GetCrop_RootMax(),&
+              GetCrop_RootShape(),&
+              GetCrop_ModeCycle()))
+    end if
+
+    ! 17. Multiple cuttings
+    call SetNrCut(0)
+    call SetSumInterval(0)
+    call SetSumGDDcuts(0._dp)
+    call SetBprevSum(0._dp)
+    call SetYprevSum(0._dp)
+    call SetCutInfoRecord1_IntervalInfo(0)
+    call SetCutInfoRecord2_IntervalInfo(0)
+    call SetCutInfoRecord1_MassInfo(0._dp)
+    call SetCutInfoRecord2_MassInfo(0._dp)
+    call SetDayLastCut(0)
+    call SetCGCref( GetCrop_CGC())
+    call SetGDDCGCref(GetCrop_GDDCGC())
+    if (GetManagement_Cuttings_Considered()) then
+        call OpenHarvestInfo()
+    end if
+    call SetCGCadjustmentAfterCutting(.false.)
+
+    ! 18. Tab sheets
+
+    ! 19. Labels, Plots and displays
+    if (GetManagement_BundHeight() < 0.01_dp) then
+        call SetSurfaceStorage(0._dp)
+        call SetECStorage(0._dp)
+    end if
+    if (GetRootingDepth() > 0._dp) then
+        ! salinity in root zone
+        ECe_temp = GetRootZoneSalt_ECe()
+        ECsw_temp = GetRootZoneSalt_ECsw()
+        ECswFC_temp = GetRootZoneSalt_ECswFC()
+        KsSalt_temp = GetRootZoneSalt_KsSalt()
+        call DetermineRootZoneSaltContent(GetRootingDepth(), ECe_temp,&
+               ECsw_temp, ECswFC_temp, KsSalt_temp)
+        call SetRootZoneSalt_ECe(ECe_temp)
+        call SetRootZoneSalt_ECsw(ECsw_temp)
+        call SetRootZoneSalt_ECswFC(ECswFC_temp)
+        call SetRootZoneSalt_KsSalt(KsSalt_temp)
+        call SetStressTot_Salt(((GetStressTot_NrD() - 1._dp)*GetStressTot_Salt() + &
+              100._dp*(1._dp-GetRootZoneSalt_KsSalt()))/real(GetStressTot_NrD(), kind=dp))
+    end if
+    ! Harvest Index
+    call SetSimulation_HIfinal(GetCrop_HI())
+    call SetHItimesBEF(real(undef_int, kind=dp))
+    call SetHItimesAT1(1._dp)
+    call SetHItimesAT2(1._dp)
+    call SetHItimesAT(1._dp)
+    call SetalfaHI(real(undef_int, kind=dp))
+    call SetalfaHIAdj(0._dp)
+    if (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
+        GetCrop_Day1() + GetCrop_DaysToFlowering())) then
+        ! not yet flowering
+        call SetScorAT1(0._dp)
+        call SetScorAT2(0._dp)
+    else
+        ! water stress affecting leaf expansion
+        ! NOTE: time to reach end determinancy  is tHImax (i.e. flowering/2 or
+        ! senescence)
+        if (GetCrop_DeterminancyLinked()) then
+            tHImax = roundc(GetCrop_LengthFlowering()/2._dp, mold=1)
+        else
+            tHImax = (GetCrop_DaysToSenescence() - GetCrop_DaysToFlowering())
+        end if
+        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
+            GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & ! not yet end period
+            .and. (tHImax > 0)) then
+            ! not yet end determinancy
+            call SetScorAT1(1._dp/tHImax)
+            call SetScorAT1(GetScorAT1() * (GetSimulation_FromDayNr() - &
+                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
+                   GetCrop_DaysToFlowering())))
+            if (GetScorAT1() > 1._dp) then
+                call SetScorAT1(1._dp)
+            end if
+        else
+            call SetScorAT1(1._dp)  ! after period of effect
+        end if
+        ! water stress affecting stomatal closure
+        ! period of effect is yield formation
+        if (GetCrop_dHIdt() > 99._dp) then
+            tHImax = 0
+        else
+            tHImax = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
+        end if
+        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
+             GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & ! not yet end period
+             .and. (tHImax > 0)) then
+            ! not yet end yield formation
+            call SetScorAT2(1._dp/real(tHImax, kind=dp))
+            call SetScorAT2(GetScorAT2() * (GetSimulation_FromDayNr() - &
+                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
+                   GetCrop_DaysToFlowering())))
+            if (GetScorAT2() > 1._dp) then
+                call SetScorAT2(1._dp)
+            end if
+        else
+            call SetScorAT2(1._dp)  ! after period of effect
+        end if
+    end if
+
+    if (GetOutDaily()) then
+        call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
+    end if
+
+    ! 20. Settings for start
+    call SetStartMode(.true.)
+    call SetStressLeaf(real(undef_int, kind=dp))
+    call SetStressSenescence(real(undef_int, kind=dp))
+end subroutine InitializeSimulationRun
+
+
+
+subroutine CreateEvalData(NrRun)
+    integer(int8), intent(in) :: NrRun
+
+    integer(int32) :: dayi, monthi, yeari, integer_temp
+    character(len=:), allocatable :: StrNr, TempString
+    character(len=1025) :: tempstring2
+    integer, dimension(8) :: d
+
+    ! open input file with field data
+    call fObs_open(GetObservationsFilefull(), 'r') ! Observations recorded in File
+    TempString = fObs_read() ! description
+    TempString = fObs_read() ! AquaCrop Version number
+    TempString = fObs_read()
+    read(TempString, *) Zeval !  depth of sampled soil profile
+    TempString = fObs_read()
+    read(TempString, *) dayi
+    TempString = fObs_read()
+    read(TempString, *)monthi
+    TempString = fObs_read()
+    read(TempString, *) yeari
+    integer_temp = GetDayNr1Eval()
+    call DetermineDayNr(dayi, monthi, yeari, integer_temp)
+    call SetDayNr1Eval(integer_temp)
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    TempString = fObs_read() ! title
+    call SetLineNrEval(undef_int)
+    TempString = fObs_read()
+    if (.not. fObs_eof()) then
+        call SetLineNrEval(11)
+        read(TempString, *) integer_temp
+        call SetDayNrEval(integer_temp)
+        call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+        do while ((GetDayNrEval() < GetSimulation_FromDayNr()) &
+                    .and. (GetLineNrEval() /= undef_int)) 
+            TempString = fObs_read()
+            if (fObs_eof()) then
+                call SetLineNrEval(undef_int)
+            else
+                call SetLineNrEval(GetLineNrEval() + 1)
+                read(TempString, *) integer_temp
+                call SetDayNrEval(integer_temp)
+                call SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1)
+            end if
+        end do
+    end if
+    if (GetLineNrEval() == undef_int) then
+        call fObs_close()
+    end if
+    ! open file with simulation results, field data
+    if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
+        write(StrNr, '(i3)') NrRun
+    else
+        StrNr = ''
+    end if
+    call SetfEval_filename(GetPathNameSimul() // 'EvalData' // trim(StrNr) // '.OUT')
+    call fEval_open(GetfEval_filename(), 'w')
+    write(tempstring2, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
+    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fEval_write(trim(tempstring2))
+    call fEval_write('Evaluation of simulation results - Data')
+    write(TempString, '(f5.2)') GetZeval()
+    call fEval_write('                                             ' // &
+    '                                        for soil depth: ' // trim(TempString) // ' m')
+    call fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      ' // &
+    'Bobs      Bstd   SWCsim  SWCobs   SWstd')
+    call fEval_write('                                   %       %       %     ton/ha    ' // &
+    'ton/ha    ton/ha    mm       mm      mm')
+end subroutine CreateEvalData
+
+
+subroutine OpenOutputRun(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROseason.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMseason.OUT'
+    end select
+    call fRun_open(totalname, 'w')
+    call date_and_time(values=d)
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fRun_write(trim(tempstring))
+    call fRun_write('')
+    call fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' // &
+        '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' // &
+        '    SaltIn   SaltOut    SaltUp  SaltProf' // &
+        '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' // &
+        '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN')
+    call fRun_write('                                           mm       mm  degC.day    ppm' // &
+        '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' // &
+        '    ton/ha    ton/ha    ton/ha    ton/ha' // &
+        '      days       %        %        %        %        %        %  ' // &
+        '  ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha')
+end subroutine OpenOutputRun
+
+
+subroutine OpenOutputDaily(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROday.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMday.OUT'
+    end select
+    call date_and_time(values=d)
+    call fDaily_open(totalname, 'w')
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fDaily_write(trim(tempstring))
+end subroutine OpenOutputDaily
+
+
+subroutine OpenPart1MultResults(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+    integer, dimension(8) :: d
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROharvests.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMharvests.OUT'
+    end select
+    call SetfHarvest_filename(totalname)
+    call fHarvest_open(GetfHarvest_filename(), 'w')
+    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
+        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
+        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    call fHarvest_write(trim(tempstring))
+    call fHarvest_write('Biomass and Yield at Multiple cuttings')
+end subroutine OpenPart1MultResults
+
+
+
+subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
+    integer(int32), intent(in) :: FromSimDay
+    integer(int32), intent(in) :: ToSimDay
+
+    character(len=:), allocatable :: totalname, totalnameOUT
+    integer :: fETo, fRain, fTemp, fEToS, fRainS, fTempS, rc
+    character(len=255) :: StringREAD
+    integer(int32) :: i
+    integer(int32) :: RunningDay
+    real(dp) :: tmpRain
+    real(dp) :: ETo_temp
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet_temp, TmaxDataSet_temp
+    real(dp) :: Tmin_temp, Tmax_temp
+    type(rep_DayEventDbl), dimension(31) :: EToDataSet_temp, RainDataSet_temp
+
+    ! 1. ETo file
+    if (GetEToFile() /= '(None)') then
+        totalname = GetEToFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetEToRecord_DataType())
+            case(datatype_Daily)
+                open(newunit=fETo, file=trim(totalname), status='old', &
+                                                         action='read')
+                read(fETo, *, iostat=rc) ! description
+                read(fETo, *, iostat=rc) ! time step
+                read(fETo, *, iostat=rc) ! day
+                read(fETo, *, iostat=rc) ! month
+                read(fETo, *, iostat=rc) ! year
+                read(fETo, *, iostat=rc)
+                read(fETo, *, iostat=rc)
+                read(fETo, *, iostat=rc)
+                do i = GetEToRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fETo, *, iostat=rc)
+                end do
+                read(fETo, *, iostat=rc) ETo_temp
+                call SetETo(ETo_temp)
+            case(datatype_decadely)
+                EToDataSet_temp = GetEToDataSet()
+                call GetDecadeEToDataSet(FromSimDay, EToDataSet_temp)
+                call SetEToDataSet(EToDataSet_temp)
+                i = 1
+                do while (GetEToDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetETo(GetEToDataSet_Param(i))
+            case(datatype_Monthly)
+                EToDataSet_temp = GetEToDataSet()
+                call GetMonthlyEToDataSet(FromSimDay, EToDataSet_temp)
+                call SetEToDataSet(EToDataSet_temp)
+                i = 1
+                do while (GetEToDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetETo(GetEToDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'EToData.SIM'
+            open(newunit=fEToS, file=trim(totalnameOUT), status='replace', &
+                                                         action='write')
+            write(fEToS, '(f10.4)') GetETo()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetEToRecord_DataType())
+                case(datatype_Daily)
+                    if (rc == iostat_end) then
+                        rewind(fETo)
+                        read(fETo, *, iostat=rc) ! description
+                        read(fETo, *, iostat=rc) ! time step
+                        read(fETo, *, iostat=rc) ! day
+                        read(fETo, *, iostat=rc) ! month
+                        read(fETo, *, iostat=rc) ! year
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *, iostat=rc)
+                        read(fETo, *) ETo_temp
+                        call SetETo(ETo_temp)
+                    else
+                        read(fETo, *) ETo_temp
+                        call SetETo(ETo_temp)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                        EToDataSet_temp = GetEToDataSet()
+                        call GetDecadeEToDataSet(RunningDay, EToDataSet_temp)
+                        call SetEToDataSet(EToDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetEToDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetETo(GetEToDataSet_Param(i))
+                case(datatype_Monthly)
+                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                        EToDataSet_temp = GetEToDataSet()
+                        call GetMonthlyEToDataSet(RunningDay, EToDataSet_temp)
+                        call SetEToDataSet(EToDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetEToDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetETo(GetEToDataSet_Param(i))
+                end select
+                write(fEToS, '(f10.4)') GetETo()
+            end do
+            ! Close files
+            if (GetEToRecord_DataType() == datatype_Daily) then
+                close(fETo)
+            end if
+            close(fEToS)
+        end if
+    end if
+
+    ! 2. Rain File
+    if (GetRainFile() /= '(None)') then
+        totalname = GetRainFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetRainRecord_DataType())
+            case(datatype_Daily)
+                open(newunit=fRain, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fRain, *, iostat=rc) ! description
+                read(fRain, *, iostat=rc) ! time step
+                read(fRain, *, iostat=rc) ! day
+                read(fRain, *, iostat=rc) ! month
+                read(fRain, *, iostat=rc) ! year
+                read(fRain, *, iostat=rc)
+                read(fRain, *, iostat=rc)
+                read(fRain, *, iostat=rc)
+                do i = GetRainRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fRain, *, iostat=rc)
+                end do
+                read(fRain, *, iostat=rc) tmpRain
+                call SetRain(tmpRain)
+            case(datatype_Decadely)
+                RainDataSet_temp = GetRainDataSet()
+                call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                call SetRainDataSet(RainDataSet_temp)
+                i = 1
+                do while (GetRainDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetRain(GetRainDataSet_Param(i))
+            case(datatype_Monthly)
+                RainDataSet_temp = GetRainDataSet()
+                call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                call SetRainDataSet(RainDataSet_temp)
+                i = 1
+                do while (GetRainDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetRain(GetRainDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'RainData.SIM'
+            open(newunit=fRainS, file=trim(totalnameOUT), status='replace', &
+                                                          action='write')
+            write(fRainS, '(f10.4)') GetRain()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetRainRecord_DataType())
+                case(datatype_daily)
+                    if (rc == iostat_end) then
+                        rewind(fRain)
+                        read(fRain, *, iostat=rc) ! description
+                        read(fRain, *, iostat=rc) ! time step
+                        read(fRain, *, iostat=rc) ! day
+                        read(fRain, *, iostat=rc) ! month
+                        read(fRain, *, iostat=rc) ! year
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc)
+                        read(fRain, *, iostat=rc) tmpRain
+                        call SetRain(tmpRain)
+                    else
+                        read(fRain, *, iostat=rc) tmpRain
+                        call SetRain(tmpRain)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                        RainDataSet_temp = GetRainDataSet()
+                        call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                        call SetRainDataSet(RainDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetRainDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetRain(GetRainDataSet_Param(i))
+                case(datatype_monthly)
+                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                        RainDataSet_temp = GetRainDataSet()
+                        call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                        call SetRainDataSet(RainDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetRainDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetRain(GetRainDataSet_Param(i))
+                end select
+                write(fRainS, '(f10.4)') GetRain()
+            end do
+            ! Close files
+            if (GetRainRecord_DataType() == datatype_Daily) then
+                close(fRain)
+            end if
+            close(fRainS)
+        end if
+    end if
+
+    ! 3. Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = GetTemperatureFilefull()
+        if (FileExists(totalname)) then
+            ! open file and find first day of simulation period
+            select case (GetTemperatureRecord_DataType())
+            case(datatype_daily)
+                open(newunit=fTemp, file=trim(totalname), status='old', &
+                                                          action='read')
+                read(fTemp, *, iostat=rc) ! description
+                read(fTemp, *, iostat=rc) ! time step
+                read(fTemp, *, iostat=rc) ! day
+                read(fTemp, *, iostat=rc) ! month
+                read(fTemp, *, iostat=rc) ! year
+                read(fTemp, *, iostat=rc)
+                read(fTemp, *, iostat=rc)
+                read(fTemp, *, iostat=rc)
+                do i = GetTemperatureRecord_FromDayNr(), (FromSimDay - 1) 
+                    read(fTemp, *, iostat=rc)
+                end do
+                read(fTemp, '(a)', iostat=rc) StringREAD  ! i.e. DayNri
+                Tmin_temp = GetTmin()
+                Tmax_temp = GetTmax()
+                call SplitStringInTwoParams(StringREAD, Tmin_temp, Tmax_temp)
+                call SetTmin(Tmin_temp)
+                call SetTmax(Tmax_temp)
+            case(datatype_Decadely)
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetDecadeTemperatureDataSet(FromSimDay, TminDataSet_temp, &
+                                                              TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+            case(datatype_Monthly)
+                TminDataSet_temp = GetTminDataSet()
+                TmaxDataSet_temp = GetTmaxDataSet()
+                call GetMonthlyTemperatureDataSet(FromSimDay, TminDataSet_temp, &
+                                                              TmaxDataSet_temp)
+                call SetTminDataSet(TminDataSet_temp)
+                call SetTmaxDataSet(TmaxDataSet_temp)
+                i = 1
+                do while (GetTminDataSet_DayNr(i) /= FromSimDay) 
+                    i = i+1
+                end do
+                call SetTmin(GetTminDataSet_Param(i))
+                call SetTmax(GetTmaxDataSet_Param(i))
+            end select
+
+            ! create SIM file and record first day
+            totalnameOUT = GetPathNameSimul() // 'TempData.SIM'
+            open(newunit=fTempS, file=trim(totalnameOUT), status='replace', &
+                                                          action='write')
+            write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
+            ! next days of simulation period
+            do RunningDay = (FromSimDay + 1), ToSimDay 
+                select case (GetTemperatureRecord_Datatype())
+                case(datatype_Daily)
+                    if (rc == iostat_end) then
+                        rewind(fTemp)
+                        read(fTemp, *, iostat=rc) ! description
+                        read(fTemp, *, iostat=rc) ! time step
+                        read(fTemp, *, iostat=rc) ! day
+                        read(fTemp, *, iostat=rc) ! month
+                        read(fTemp, *, iostat=rc) ! year
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, *, iostat=rc)
+                        read(fTemp, '(a)', iostat=rc) StringREAD
+                        Tmin_temp = GetTmin()
+                        Tmax_temp = GetTmax()
+                        call SplitStringInTwoParams(StringREAD, Tmin_temp, &
+                                                                Tmax_temp)
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                    else
+                        read(fTemp, *, iostat=rc) Tmin_temp, Tmax_temp
+                        call SetTmin(Tmin_temp)
+                        call SetTmax(Tmax_temp)
+                    end if
+                case(datatype_Decadely)
+                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetDecadeTemperatureDataSet(FromSimDay, &
+                                                         TminDataSet_temp, &
+                                                         TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetTminDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                case(datatype_Monthly)
+                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                        TminDataSet_temp = GetTminDataSet()
+                        TmaxDataSet_temp = GetTmaxDataSet()
+                        call GetMonthlyTemperatureDataSet(FromSimDay, &
+                                                          TminDataSet_temp, &
+                                                          TmaxDataSet_temp)
+                        call SetTminDataSet(TminDataSet_temp)
+                        call SetTmaxDataSet(TmaxDataSet_temp)
+                    end if
+                    i = 1
+                    do while (GetTminDataSet_DayNr(i) /= RunningDay) 
+                        i = i+1
+                    end do
+                    call SetTmin(GetTminDataSet_Param(i))
+                    call SetTmax(GetTmaxDataSet_Param(i))
+                end select
+                write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
+            end do
+            ! Close files
+            if (GetTemperatureRecord_datatype() == datatype_Daily) then
+                close(fTemp)
+            end if
+            close(fTempS)
+        end if
+    end if
+end subroutine CreateDailyClimFiles
+
+
+
+subroutine OpenHarvestInfo()
+    character(len=:), allocatable :: totalname
+    integer(int8) :: i
+    character(len=:), allocatable :: TempString
+
+    if (GetManFile() /= '(None)') then
+        totalname = GetManFileFull()
+    else
+        totalname = trim(GetPathNameSimul())//'Cuttings.AqC'
+    end if
+    call fCuts_open(totalname, 'r')
+    TempString = fCuts_read() ! description
+    TempString = fCuts_read() ! AquaCrop version
+    if (GetManFile() /= '(None)') then
+        do i= 1, 10
+            TempString = fCuts_read() ! management info
+       end do
+    end if
+    do i = 1, 12
+        TempString = fCuts_read()  ! cuttings info (already loaded)
+    end do
+    call GetNextHarvest
+end subroutine OpenHarvestInfo
+
+
+subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
+    integer(int32), intent(in) :: FirstDayNr
+
+    character(len=:), allocatable :: totalname
+    integer(int32) :: i
+    real(dp) :: tmpRain, ETo_temp
+    real(dp) :: Tmin_temp, Tmax_temp
+    character(len=1025) :: TempString
+
+    ! ETo file
+    if (GetEToFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'EToData.SIM'
+        call fEToSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fEToSIM_read()
+            read(TempString, *) ETo_temp
+            call SetETo(ETo_temp)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fEToSIM_read()
+                read(TempString, *) ETo_temp
+                call SetETo(ETo_temp)
+            end do
+            TempString = fEToSIM_read()
+            read(TempString, *) ETo_temp
+            call SetETo(ETo_temp)
+        end if
+    end if
+    ! Rain file
+    if (GetRainFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'RainData.SIM'
+        call fRainSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fRainSIM_read()
+            read(TempString, *) tmpRain
+            call SetRain(tmpRain)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fRainSIM_read()
+                read(TempString, *) tmpRain
+                call SetRain(tmpRain)
+            end do
+            TempString = fRainSIM_read()
+            read(TempString, *) tmpRain
+            call SetRain(tmpRain)
+        end if
+    end if
+    ! Temperature file
+    if (GetTemperatureFile() /= '(None)') then
+        totalname = trim(GetPathNameSimul())//'TempData.SIM'
+        call fTempSIM_open(totalname, 'r')
+        if (FirstDayNr == GetSimulation_FromDayNr()) then
+            TempString = fTempSIM_read()
+            read(TempString, *) Tmin_temp, Tmax_temp
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
+        else
+            do i = GetSimulation_FromDayNr(), (FirstDayNr - 1)
+                TempString = fTempSIM_read()
+                read(TempString, *) Tmin_temp, Tmax_temp
+                call SetTmin(Tmin_temp)
+                call SetTmax(Tmax_temp)
+            end do
+            TempString = fTempSIM_read()
+            read(TempString, *) Tmin_temp, Tmax_temp
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
+        end if
+    else
+        call SetTmin(GetSimulParam_Tmin())
+        call SetTmax(GetSimulParam_Tmax())
+    end if
+end subroutine OpenClimFilesAndGetDataFirstDay
+
+
+subroutine WriteSimPeriod(NrRun, TheProjectFile)
+    integer(int8), intent(in) :: NrRun
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: Day1, Month1, Year1, DayN, MonthN, YearN
+
+    call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) 
+    ! Start simulation run
+    call DetermineDate(GetSimulation_ToDayNr(), DayN, MonthN, YearN) 
+    ! End simulation run
+    call WriteTheResults(NrRun, Day1, Month1, Year1, DayN, MonthN, YearN, &
+                        GetSumWaBal_Rain(), GetSumETo(), GetSumGDD(), &
+                        GetSumWaBal_Irrigation(), GetSumWaBal_Infiltrated(), &
+                        GetSumWaBal_Runoff(), GetSumWaBal_Drain(), &
+                        GetSumWaBal_CRwater(), GetSumWaBal_Eact(), &
+                        GetSumWaBal_Epot(), GetSumWaBal_Tact(), &
+                        GetSumWaBal_TrW(), GetSumWaBal_Tpot(), &
+                        GetSumWaBal_SaltIn(), GetSumWaBal_SaltOut(), &
+                        GetSumWaBal_CRsalt(), GetSumWaBal_Biomass(), &
+                        GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
+                        GetSimulation_Storage_Btotal(), TheProjectFile)
+end subroutine WriteSimPeriod
+
+
+
+subroutine WriteIntermediatePeriod(TheProjectFile)
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: Day1, Month1, Year1, DayN, MonthN, YearN
+    real(dp) :: RPer, EToPer, GDDPer, IrriPer, InfiltPer, EPer, &
+                ExPer, TrPer, TrWPer, TrxPer, DrainPer, BiomassPer, BUnlimPer
+    real(dp) :: ROPer, CRwPer, SalInPer, SalOutPer, SalCRPer, BmobPer, BstoPer
+
+    ! determine intermediate results
+    call DetermineDate((GetPreviousDayNr()+1), Day1, Month1, Year1)
+    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+    RPer = GetSumWaBal_Rain() - GetPreviousSum_Rain()
+    EToPer = GetSumETo() - GetPreviousSumETo()
+    GDDPer = GetSumGDD() - GetPreviousSumGDD()
+    IrriPer = GetSumWaBal_Irrigation() - GetPreviousSum_Irrigation()
+    InfiltPer = GetSumWaBal_Infiltrated() - GetPreviousSum_Infiltrated()
+    EPer = GetSumWaBal_Eact() - GetPreviousSum_Eact()
+    ExPer = GetSumWaBal_Epot() - GetPreviousSum_Epot()
+    TrPer = GetSumWaBal_Tact() - GetPreviousSum_Tact()
+    TrWPer = GetSumWaBal_TrW() - GetPreviousSum_TrW()
+    TrxPer = GetSumWaBal_Tpot() - GetPreviousSum_Tpot()
+    DrainPer = GetSumWaBal_Drain() - GetPreviousSum_Drain()
+    BiomassPer = GetSumWaBal_Biomass() - GetPreviousSum_Biomass()
+    BUnlimPer = GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim()
+
+    ROPer = GetSumWaBal_Runoff() - GetPreviousSum_Runoff()
+    CRwPer = GetSumWaBal_CRwater() - GetPreviousSum_CRwater()
+    SalInPer = GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn()
+    SalOutPer = GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut()
+    SalCRPer = GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt()
+
+    BmobPer = GetTransfer_Bmobilized() - GetPreviousBmob()
+    BstoPer = GetSimulation_Storage_Btotal() - GetPreviousBsto()
+
+    ! write
+    call WriteTheResults(int(undef_int, kind=int8), Day1, Month1, Year1, DayN, &
+                         MonthN, YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                         ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                         TrxPer, SalInPer, SalOutPer, SalCRPer, BiomassPer, &
+                         BUnlimPer, BmobPer, BstoPer, TheProjectFile)
+
+    ! reset previous sums
+    call SetPreviousDayNr(GetDayNri())
+    call SetPreviousSum_Rain(GetSumWaBal_Rain())
+    call SetPreviousSumETo(GetSumETo())
+    call SetPreviousSumGDD(GetSumGDD())
+    call SetPreviousSum_Irrigation(GetSumWaBal_Irrigation())
+    call SetPreviousSum_Infiltrated(GetSumWaBal_Infiltrated())
+    call SetPreviousSum_Eact(GetSumWaBal_Eact())
+    call SetPreviousSum_Epot(GetSumWaBal_Epot())
+    call SetPreviousSum_Tact(GetSumWaBal_Tact())
+    call SetPreviousSum_TrW(GetSumWaBal_TrW())
+    call SetPreviousSum_Tpot(GetSumWaBal_Tpot())
+    call SetPreviousSum_Drain(GetSumWaBal_Drain())
+    call SetPreviousSum_Biomass(GetSumWaBal_Biomass())
+    call SetPreviousSum_BiomassPot(GetSumWaBal_BiomassPot())
+    call SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim())
+
+    call SetPreviousSum_Runoff(GetSumWaBal_Runoff())
+    call SetPreviousSum_CRwater(GetSumWaBal_CRwater())
+    call SetPreviousSum_SaltIn(GetSumWaBal_SaltIn())
+    call SetPreviousSum_SaltOut(GetSumWaBal_SaltOut())
+    call SetPreviousSum_CRsalt(GetSumWaBal_CRsalt())
+
+    call SetPreviousBmob(GetTransfer_Bmobilized())
+    call SetPreviousBsto(GetSimulation_Storage_Btotal())
+end subroutine WriteIntermediatePeriod
+
+!! ===BEGIN Subroutines and functions for AdvanceOneTimeStep ===
+
+subroutine GetZandECgwt(ZiAqua, ECiAqua)
+    integer(int32), intent(inout) :: ZiAqua
+    real(dp), intent(inout) :: ECiAqua
+
+    integer(int32) :: ZiIN
+    type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
+
+    ZiIN = ZiAqua
+    if (GetGwTable_DNr1() == GetGwTable_DNr2()) then
+        ZiAqua  = GetGwTable_Z1()
+        ECiAqua = GetGwTable_EC1()
+    else
+        ZiAqua = GetGwTable_Z1() + &
+                 roundc((GetDayNri() - GetGwTable_DNr1())* &
+                 (GetGwTable_Z2() - GetGwTable_Z1())/ &
+                 real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp), mold = 1)
+        ECiAqua = GetGwTable_EC1() + &
+                 (GetDayNri() - GetGwTable_DNr1())* &
+                 (GetGwTable_EC2() - GetGwTable_EC1())/&
+                 real(GetGwTable_DNr2() - GetGwTable_DNr1(), kind=dp)
+    end if
+    if (ZiAqua /= ZiIN) then
+        Comp_temp = GetCompartment()
+        call CalculateAdjustedFC((ZiAqua/100._dp), Comp_temp)
+        call SetCompartment(Comp_temp)
+    end if
+end subroutine GetZandECgwt
+
+integer(int32) function IrriOutSeason()
+    integer(int32) :: DNr, Nri, i
+    type(Rep_DayEventInt), dimension(5) :: IrriEvents
+    logical :: TheEnd
+
+    DNr = GetDayNri() - GetSimulation_FromDayNr() + 1
+    do i = 1, 5  
+        IrriEvents(i) = GetIrriBeforeSeason_i(i)
+    end do
+    if (GetDayNri() > GetCrop_DayN()) then
+        DNr = GetDayNri() - GetCrop_DayN()
+        do i = 1, 5
+            IrriEvents(i) = GetIrriAfterSeason_i(i)
+        end do
+    end if
+    if (DNr < 1) then
+        IrriOutSeason = 0
+    else
+        TheEnd = .false.
+        Nri = 0
+        loop: do
+            Nri = Nri + 1
+            if (IrriEvents(Nri)%DayNr == DNr) then
+                IrriOutSeason = IrriEvents(Nri)%Param
+                TheEnd = .true.
+            else
+                IrriOutSeason = 0
+            end if
+            if ((Nri == 5) .or. (IrriEvents(Nri)%DayNr == 0) &
+              .or. (IrriEvents(Nri)%DayNr > DNr) &
+              .or. (TheEnd)) exit loop
+        end do loop
+    end if
+end function IrriOutSeason
+
+integer(int32) function IrriManual()
+    integer(int32) :: DNr
+    character(len=:), allocatable :: StringREAD
+    real(dp) :: Ir1, Ir2
+    real(dp) :: IrriECw_temp
+
+    if (GetIrriFirstDayNr() == undef_int) then
+        DNr = GetDayNri() - GetCrop_Day1() + 1
+    else
+        DNr = GetDayNri() - GetIrriFirstDayNr() + 1
+    end if
+    if (GetIrriInfoRecord1_NoMoreInfo()) then
+        IrriManual = 0
+    else
+        IrriManual = 0
+        if (GetIrriInfoRecord1_TimeInfo() == DNr) then
+            IrriManual = GetIrriInfoRecord1_DepthInfo()
+            StringREAD = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_NoMoreInfo(.true.)
+            else
+                call SetIrriInfoRecord1_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then ! Versions before 3.2
+                    call SplitStringInTwoParams(StringREAD, Ir1, Ir2)
+                else
+                    IrriECw_temp = GetSimulation_IrriECw()
+                    call SplitStringInThreeParams(StringREAD, &
+                            Ir1, Ir2, IrriECw_temp)
+                    call SetSimulation_IrriECw(IrriECw_temp)
+                end if
+                call SetIrriInfoRecord1_TimeInfo(roundc(Ir1, mold=1))
+                call SetIrriInfoRecord1_DepthInfo(roundc(Ir2, mold=1))
+            end if
+        end if
+    end if
+end function IrriManual
+
+
+subroutine GetIrriParam(TargetTimeVal, TargetDepthVal)
+    integer(int32), intent(inout) :: TargetTimeVal
+    integer(int32), intent(inout) :: TargetDepthVal
+
+    integer(int32) :: DayInSeason
+    integer(int32) :: FromDay_temp, TimeInfo_temp, DepthInfo_temp
+    real(dp)       :: IrriECw_temp
+    character(len=:), allocatable :: TempString
+
+    TargetTimeVal = -999
+    TargetDepthVal = -999
+    if ((GetDayNri() < GetCrop_Day1()) .or. &
+        (GetDayNri() > GetCrop_DayN())) then
+        call SetIrrigation(real(IrriOutSeason(), kind=dp))
+    elseif (GetIrriMode() == IrriMode_Manual) then
+        call SetIrrigation(real(IrriManual(), kind=dp))
+    end if
+    if ((GetIrriMode() == IrriMode_Generate) .and. &
+        ((GetDayNri() >= GetCrop_Day1()) .and. &
+         (GetDayNri() <= GetCrop_DayN()))) then
+        ! read next line if required
+        DayInSeason = GetDayNri() - GetCrop_Day1() + 1
+        if (DayInSeason > GetIrriInfoRecord1_ToDay()) then
+            ! read next line
+            call SetIrriInfoRecord1(GetIrriInfoRecord2())
+
+            TempString = fIrri_read()
+            if (fIrri_eof()) then
+                call SetIrriInfoRecord1_ToDay(GetCrop_DayN() - &
+                        GetCrop_Day1() + 1)
+            else
+                call SetIrriInfoRecord2_NoMoreInfo(.false.)
+                if (GetGlobalIrriECw()) then ! Versions before 3.2
+                    read(TempString,*) FromDay_temp, &
+                      TimeInfo_temp, DepthInfo_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                else
+                    read(TempString,*) FromDay_temp, &
+                      TimeInfo_temp, DepthInfo_temp, IrriEcw_temp
+                    call SetIrriInfoRecord2_FromDay(FromDay_temp)
+                    call SetIrriInfoRecord2_TimeInfo(TimeInfo_temp)
+                    call SetIrriInfoRecord2_DepthInfo(DepthInfo_temp)
+                    call SetSimulation_IrriEcw(IrriEcw_temp)
+                end if
+                call SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1)
+            end if
+        end if
+        ! get TargetValues
+        TargetDepthVal = GetIrriInfoRecord1_DepthInfo()
+        select case (GetGenerateTimeMode())
+        case (GenerateTimeMode_AllDepl)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+        case (GenerateTimeMode_AllRAW)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+        case (GenerateTimeMode_FixInt)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+            if (TargetTimeVal > GetIrriInterval()) then ! do not yet irrigate
+                TargetTimeVal = 0
+            elseif (TargetTimeVal == GetIrriInterval()) then ! irrigate
+                TargetTimeVal = 1
+            else
+                ! still to solve
+                TargetTimeVal = 1 ! temporary solution
+            end if
+            if ((TargetTimeVal == 1) .and. &
+                (GetGenerateDepthMode() == GenerateDepthMode_FixDepth)) then
+                call SetIrrigation(real(TargetDepthVal, kind=dp))
+            end if
+        case (GenerateTimeMode_WaterBetweenBunds)
+            TargetTimeVal = GetIrriInfoRecord1_TimeInfo()
+            if ( (GetManagement_BundHeight() >= 0.01_dp) &
+                .and. (GetGenerateDepthMode() == GenerateDepthMode_FixDepth) &
+                .and. (TargetTimeVal < (1000._dp * GetManagement_BundHeight())) &
+                .and. (TargetTimeVal >= roundc(GetSurfaceStorage(), mold=1))) then
+                call SetIrrigation(real(TargetDepthVal, kind=dp))
+            else
+                call SetIrrigation(0._dp)
+            end if
+            TargetTimeVal = -999 ! no need for check in SIMUL
+       end select
+    end if
+end subroutine GetIrriParam
+
+
+subroutine AdjustSWCRootZone(PreIrri)
+    real(dp), intent(inout) :: PreIrri
+
+    integer(int32) :: compi, layeri
+    real(dp) :: SumDepth, ThetaPercRAW
+
+    compi = 0
+    SumDepth = 0
+    PreIrri = 0._dp
+    loop: do
+        compi = compi + 1
+        SumDepth = SumDepth + GetCompartment_Thickness(compi)
+        layeri = GetCompartment_Layer(compi)
+        ThetaPercRaw = GetSoilLayer_FC(layeri)/100._dp &
+                        - GetSimulParam_PercRAW()/100._dp &
+                        * GetCrop_pdef() &
+                        * (GetSoilLayer_FC(layeri)/100._dp &
+                                - GetSoilLayer_WP(layeri)/100._dp)
+        if (GetCompartment_Theta(compi) < ThetaPercRaw) then
+            PreIrri = PreIrri &
+                      + (ThetaPercRaw - GetCompartment_Theta(compi)) &
+                      *1000._dp*GetCompartment_Thickness(compi)
+            call SetCompartment_Theta(compi, ThetaPercRaw)
+        end if
+        if ((SumDepth >= GetRootingDepth()) &
+                .or. (compi == GetNrCompartments())) exit loop
+    end do loop
+end subroutine AdjustSWCRootZone 
+
+
+subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON, MobilizationON)
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: FracAssim
+    logical, intent(inout) :: StorageON
+    logical, intent(inout) :: MobilizationON
+
+    Bin = 0._dp
+    Bout = 0._dp
+    FracAssim = 0._dp
+    if (GetCrop_subkind() == subkind_Forage) then
+        ! only for perennial herbaceous forage crops
+        FracAssim = 0._dp
+        if (GetNoMoreCrop()) then
+            StorageOn = .false.
+            MobilizationOn = .false.
+        else
+            ! Start of storage period ?
+            if ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop_Day1() + 1) &
+                == (GetCrop_DaysToHarvest() - GetCrop_Assimilates_Period() + 1)) then
+                ! switch storage on
+                StorageOn = .true.
+                ! switch mobilization off
+                if (MobilizationOn) then
+                    AssimToMobilize = AssimMobilized
+                end if
+                MobilizationOn = .false.
+            end if
+            ! Fraction of assimilates transferred
+            if (MobilizationOn) then
+                FracAssim = (AssimToMobilize-AssimMobilized)/AssimToMobilize
+            end if
+            if ((StorageOn) .and. (GetCrop_Assimilates_Period() > 0)) then
+                FracAssim = (GetCrop_Assimilates_Stored()/100._dp) &
+                            * (((GetDayNri() - GetSimulation_DelayedDays() &
+                                    - GetCrop_Day1() + 1._dp) &
+                                -(GetCrop_DaysToHarvest() &
+                                    - GetCrop_Assimilates_Period()))&
+                                /GetCrop_Assimilates_Period())
+            end if
+            if (FracAssim < 0._dp) then
+                FracAssim = 0._dp
+            end if
+            if (FracAssim > 1._dp) then
+                FracAssim = 1._dp
+            end if
+        end if
+    end if
+end subroutine InitializeTransferAssimilates 
+
+
+!! ===END Subroutines and functions for AdvanceOneTimeStep ===
+
+
+subroutine InitializeRun(NrRun, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    integer(intEnum), intent(in) :: TheProjectType
+
+    type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+
+    call LoadSimulationRunProject(GetMultipleProjectFileFull(), &
+                                  int(NrRun, kind=int32))
+    call AdjustCompartments()
+    SumWaBal_temp = GetSumWaBal()
+    call GlobalZero(SumWaBal_temp)
+    call SetSumWaBal(SumWaBal_temp)
+    PreviousSum_temp = GetPreviousSum()
+    call ResetPreviousSum(PreviousSum_temp)
+    call SetPreviousSum(PreviousSum_temp)
+    call InitializeSimulationRun()
+
+    if (GetOutDaily()) then
+        call WriteTitleDailyResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart1Mult()) then
+        call WriteTitlePart1MultResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+        call CreateEvalData(NrRun)
+    end if
+
+
+    contains
+
+    subroutine AdjustCompartments()
+
+        real(dp) :: TotDepth
+        integer(int32) :: i
+        type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Comp_temp
+
+        ! Adjust size of compartments if required
+        TotDepth = 0._dp
+        do i = 1, GetNrCompartments() 
+            TotDepth = TotDepth + GetCompartment_Thickness(i)
+        end do
+        if (GetSimulation_MultipleRunWithKeepSWC()) then 
+            ! Project with a sequence of simulation runs and KeepSWC
+            if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) &
+                > roundc(TotDepth*1000._dp, mold=1)) then
+                call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
+            end if
+        else
+            if (roundc(GetCrop_RootMax()*1000._dp, mold=1) &
+                > roundc(TotDepth*1000._dp, mold=1)) then
+                if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                    == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+                    ! no restrictive soil layer
+                    call AdjustSizeCompartments(GetCrop_RootMax())
+                    ! adjust soil water content
+                    Comp_temp = GetCompartment()
+                    call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+                    call SetCompartment(Comp_temp)
+                    if (GetSimulation_IniSWC_AtFC()) then
+                        call ResetSWCToFC()
+                    end if
+                else
+                    ! restrictive soil layer
+                    if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                        > roundc(TotDepth*1000._dp, mold=1)) then
+                        call AdjustSizeCompartments(real(GetSoil_RootMax(), &
+                                                            kind=dp))
+                        ! adjust soil water content
+                        Comp_temp = GetCompartment()
+                        call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+                        call SetCompartment(Comp_temp)
+                        if (GetSimulation_IniSWC_AtFC()) then
+                            call ResetSWCToFC()
+                        end if
+                    end if
+                end if
+            end if
+        end if
+    end subroutine AdjustCompartments
+
+end subroutine InitializeRun
+
 
 subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
     integer(int8), intent(in) :: NrRun
@@ -2484,7 +5981,7 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
                 ! final harvest at crop maturity
                 call SetNrCut(GetNrCut() + 1)
                 call RecordHarvest(GetNrCut(), GetDayNri(), (GetDayNri() &
-                                   -GetCrop()%Day1+1), GetSumInterval())
+                                   -GetCrop_Day1()+1), GetSumInterval())
             end if
             call RecordHarvest((9999), GetDayNri(), (GetDayNri()&
                  -GetCrop_Day1()+1), GetSumInterval()) ! last line at end of season
@@ -2493,9 +5990,9 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
         if ((GetOutputAggregate() == 2) .or. (GetOutputAggregate() == 3) ! 10-day and monthly results
             .and. ((GetDayNri()-1) > GetPreviousDayNr())) then
             call SetDayNri(GetDayNri()-1)
-            call WriteIntermediatePeriod(TheProjectFile)
+            call WriteIntermediatePeriod(trim(TheProjectFile))
         end if
-        call WriteSimPeriod(NrRun, TheProjectFile)
+        call WriteSimPeriod(NrRun, trim(TheProjectFile))
     end if
 
     contains
