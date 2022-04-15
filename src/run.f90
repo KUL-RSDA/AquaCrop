@@ -5754,6 +5754,34 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
     end if
 end subroutine InitializeTransferAssimilates 
 
+
+subroutine GetPotValSF(DAP, SumGDDAdjCC, PotValSF)
+    integer(int32), intent(in) :: DAP
+    real(dp), intent(in) :: SumGDDAdjCC
+    real(dp), intent(inout) :: PotValSF
+
+    real(dp) :: RatDGDD
+
+    RatDGDD = 1._dp
+    if ((GetCrop_ModeCycle() == modecycle_GDDays) &
+        .and. (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence())) then
+        RatDGDD = (GetCrop_DaysToSenescence()-GetCrop_DaysToFullCanopySF()) &
+                    /(GetCrop_GDDaysToSenescence()-GetCrop_GDDaysToFullCanopySF())
+    end if
+
+    PotValSF = CCiNoWaterStressSF(DAP, GetCrop_DaysToGermination(), &
+                    GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
+                    GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                    GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
+                    GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
+                    GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(), &
+                    GetGDDCDCTotal(), SumGDDadjCC, RatDGDD, &
+                    GetSimulation_EffectStress_RedCGC(), &
+                    GetSimulation_EffectStress_RedCCX(), &
+                    GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle())
+    PotValSF = 100._dp * (1._dp/GetCCxCropWeedsNoSFstress()) * PotValSF
+end subroutine GetPotValSF 
+
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
 

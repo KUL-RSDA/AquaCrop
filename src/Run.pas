@@ -478,22 +478,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
        END;
     END; (* GetIrriParam *)
 
-
-
-    PROCEDURE GetPotValSF(DAP : INTEGER;
-                      VAR PotValSF : double);
-    VAR RatDGDD : double;
-    BEGIN (* GetPotValSF *)
-    RatDGDD := 1;
-    IF ((GetCrop_ModeCycle() = GDDays) AND (GetCrop().GDDaysToFullCanopySF < GetCrop().GDDaysToSenescence))
-       THEN RatDGDD := (GetCrop().DaysToSenescence-GetCrop().DaysToFullCanopySF)/(GetCrop().GDDaysToSenescence-GetCrop().GDDaysToFullCanopySF);
-    PotValSF := CCiNoWaterStressSF(DAP,GetCrop().DaysToGermination,GetCrop().DaysToFullCanopySF,GetCrop().DaysToSenescence,GetCrop().DaysToHarvest,
-        GetCrop().GDDaysToGermination,GetCrop().GDDaysToFullCanopySF,GetCrop().GDDaysToSenescence,GetCrop().GDDaysToHarvest,
-        GetCCoTotal(),GetCCxTotal(),GetCrop().CGC,GetCrop().GDDCGC,GetCDCTotal(),GetGDDCDCTotal(),SumGDDadjCC,RatDGDD,
-        GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX(),GetSimulation_EffectStress_CDecline(),GetCrop_ModeCycle());
-    PotValSF := 100 * (1/GetCCxCropWeedsNoSFstress()) * PotValSF;
-    END; (* GetPotValSF *)
-
 BEGIN (* AdvanceOneTimeStep *)
 
 (* 1. Get ETo *)
@@ -914,7 +898,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
                          SumGDDadjCC,GetCrop().ModeCycle,
                          GetSimulation_EffectStress_RedCGC(),GetSimulation_EffectStress_RedCCX());
         END
-   ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1),PotValSF);
+   ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1), SumGDDAdjCC, PotValSF);
 //14.d Print ---------------------------------------
 IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
 IF GetOutDaily() THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
