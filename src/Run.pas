@@ -382,7 +382,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, BiomassTot_temp : double;
     YieldPart_temp : double;
     ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp : double;
-    FromDay_temp, TimeInfo_temp, DepthInfo_temp : integer;
     GwTable_temp : rep_GwTable;
     Store_temp, Mobilize_temp : boolean;
     ToMobilize_temp, Bmobilized_temp, ETo_tmp : double;
@@ -405,78 +404,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     alfaHI_temp, alfaHIAdj_temp : double;
     TESTVAL : double;
     WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
-
-
-    PROCEDURE GetIrriParam (VAR TargetTimeVal, TargetDepthVal : integer);
-    VAR DayInSeason : Integer;
-        IrriECw_temp : double;
-        TempString : string;
-
-    BEGIN
-    TargetTimeVal := -999;
-    TargetDepthVal := -999;
-    IF ((GetDayNri() < GetCrop().Day1) OR (GetDayNri() > GetCrop().DayN))
-       THEN SetIrrigation(IrriOutSeason())
-       ELSE IF (GetIrriMode() = Manual) THEN SetIrrigation(IrriManual());
-    IF ((GetIrriMode() = Generate) AND ((GetDayNri() >= GetCrop().Day1) AND (GetDayNri() <= GetCrop().DayN))) THEN
-       BEGIN
-       // read next line if required
-       DayInSeason := GetDayNri() - GetCrop().Day1 + 1;
-       IF (DayInSeason > GetIrriInfoRecord1_ToDay()) THEN // read next line
-          BEGIN
-          SetIrriInfoRecord1(GetIrriInfoRecord2());
-
-          TempString := fIrri_read();
-          IF fIrri_eof()
-             THEN SetIrriInfoRecord1_ToDay(GetCrop().DayN - GetCrop().Day1 + 1)
-             ELSE BEGIN
-                  SetIrriInfoRecord2_NoMoreInfo(false);
-                  IF GetGlobalIrriECw() // Versions before 3.2
-                     THEN BEGIN
-                          ReadStr(TempString,FromDay_temp,TimeInfo_temp,DepthInfo_temp);
-                          SetIrriInfoRecord2_FromDay(FromDay_temp);
-                          SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
-                          SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
-                          END
-                     ELSE BEGIN
-                          ReadStr(TempString,FromDay_temp,TimeInfo_temp, DepthInfo_temp,IrriEcw_temp);
-                          SetIrriInfoRecord2_FromDay(FromDay_temp);
-                          SetIrriInfoRecord2_TimeInfo(TimeInfo_temp);
-                          SetIrriInfoRecord2_DepthInfo(DepthInfo_temp);
-                          SetSimulation_IrriEcw(IrriEcw_temp);
-                          END;
-                  SetIrriInfoRecord1_ToDay(GetIrriInfoRecord2_FromDay() - 1);
-                  END;
-          END;
-       // get TargetValues
-       TargetDepthVal := GetIrriInfoRecord1_DepthInfo();
-       CASE GetGenerateTimeMode() OF
-          AllDepl : TargetTimeVal := GetIrriInfoRecord1_TimeInfo();
-          AllRAW  : TargetTimeVal := GetIrriInfoRecord1_TimeInfo();
-          FixInt  : BEGIN
-                    TargetTimeVal := GetIrriInfoRecord1_TimeInfo();
-                    IF (TargetTimeVal > GetIrriInterval()) // do not yet irrigate
-                       THEN TargetTimeVal := 0
-                       ELSE IF (TargetTimeVal = GetIrriInterval()) // irrigate
-                               THEN TargetTimeVal := 1
-                               ELSE BEGIN  // still to solve
-                                    TargetTimeVal := 1; // voorlopige oplossing
-                                    END;
-                    IF ((TargetTimeVal = 1) AND (GetGenerateDepthMode() = FixDepth)) THEN SetIrrigation(TargetDepthVal);
-                    END;
-          WaterBetweenBunds : BEGIN
-                              TargetTimeVal := GetIrriInfoRecord1_TimeInfo();
-                              IF  ((GetManagement_BundHeight() >= 0.01)
-                               AND (GetGenerateDepthMode() = FixDepth)
-                               AND (TargetTimeVal < (1000 * GetManagement_BundHeight()))
-                               AND (TargetTimeVal >= ROUND(GetSurfaceStorage())))
-                                   THEN SetIrrigation(TargetDepthVal)
-                                   ELSE SetIrrigation(0);
-                              TargetTimeVal := -999; // no need for check in SIMUL
-                              END;
-          end;
-       END;
-    END; (* GetIrriParam *)
 
 BEGIN (* AdvanceOneTimeStep *)
 
