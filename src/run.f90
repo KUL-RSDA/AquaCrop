@@ -5581,8 +5581,6 @@ subroutine WriteSimPeriod(NrRun, TheProjectFile)
 end subroutine WriteSimPeriod
 
 
->>>>>>> 7c32844a350e61302103722fa4bbe773d692a0d7
-
 subroutine WriteIntermediatePeriod(TheProjectFile)
     character(len=*), intent(in) :: TheProjectFile
 
