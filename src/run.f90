@@ -2470,5 +2470,85 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev, Code)
     end if
 end subroutine DetermineGrowthStage
 
+subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    character(len=*), intent(in) :: TheProjectFile
+    type(repTypeProject), intent(in) :: TheProjectType
+
+
+    ! 16. Finalise 
+    if ((GetDayNri()-1) == GetSimulation_ToDayNr()) then
+        ! multiple cuttings
+        if (GetPart1Mult()) then
+            if (GetManagement_Cuttings_HarvestEnd() .eqv. .true.) then
+                ! final harvest at crop maturity
+                call SetNrCut(GetNrCut() + 1)
+                call RecordHarvest(GetNrCut(), GetDayNri(), (GetDayNri() &
+                                   -GetCrop()%Day1+1), GetSumInterval())
+            end if
+            call RecordHarvest((9999), GetDayNri(), (GetDayNri()&
+                 -GetCrop_Day1()+1), GetSumInterval()) ! last line at end of season
+        end if
+        ! intermediate results
+        if ((GetOutputAggregate() == 2) .or. (GetOutputAggregate() == 3) ! 10-day and monthly results
+            .and. ((GetDayNri()-1) > GetPreviousDayNr())) then
+            call SetDayNri(GetDayNri()-1)
+            call WriteIntermediatePeriod(TheProjectFile)
+        end if
+        call WriteSimPeriod(NrRun, TheProjectFile)
+    end if
+
+    contains
+
+    subroutine RecordHarvest(NrCut, DayNri, DayInSeason, SumInterval)
+        integer(int32), intent(in) :: NrCut
+        integer(int32), intent(in) :: DayNri
+        integer(int32), intent(in) :: DayInSeason
+        integer(int32), intent(in) :: SumInterval
+
+        integer(int32) :: Dayi, Monthi, Yeari
+        logical :: NoYear
+        character(len=*) :: tempstring
+        call fHarvest_open(GetfHarvest_filename(), 'a')
+        call DetermineDate_Day1(GetCrop(), Dayi, Monthi, Yeari)
+        NoYear = (Yeari == 1901)
+        call DetermineDate(DayNri, Dayi, Monthi, Yeari)
+        if (NoYear then
+            Yeari = 9999
+        end if
+        if (NrCut = 9999) then
+            ! last line at end of season
+            write(tempstring,'(4i6', 'f34.3)') NrCut, Dayi, &
+                          Monthi, Yeari, GetSumWaBal_Biomass()) 
+            call fHarvest_write(tempstring, .false.)
+            if (GetCrop_DryMatter() == undef_int) then
+                write(tempstring, '(f20.3)') GetSumWaBal_YieldPart()
+                call fHarvest_write(tempstring)
+            else
+                write(tempstring, '(2f20.3)')GetSumWaBal_YieldPart() &
+                        (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp)))
+                call fHarvest_write(tempstring)
+            end if
+        else
+            write(tempstring, '(6i6,f12.3,f10.3,f10.3)') &
+                  NrCut, Dayi, Monthi, Yeari, & 
+                  DayInSeason, SumInterval, (GetSumWaBal_Biomass()&
+                  -GetBprevSum()), GetSumWaBal_Biomass(), &
+                  (GetSumWaBal_YieldPart()-GetYprevSum()))
+            call fHarvest_write(tempstring, .false.)
+            if (GetCrop_DryMatter() == undef_int) then
+                write(tempstring, '(f10.3)') GetSumWaBal_YieldPart()
+                call fHarvest_write(tempstring)
+            else
+                write(tempstring, '(3f10.3)')GetSumWaBal_YieldPart(), &
+                        ((GetSumWaBal_YieldPart()-GetYprevSum()) &
+                        /(GetCrop_DryMatter()/100._dp)), &
+                        (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp)))
+                call fHarvest_write(tempstring)
+            end if
+        end if
+    end subroutine RecordHarvest
+end subroutine FinalizeRun1
+
 
 end module ac_run

@@ -13,9 +13,6 @@ PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
 
 PROCEDURE AdvanceOneTimeStep();
 
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
 PROCEDURE RunSimulation(TheProjectFile_ : string;
@@ -2922,69 +2919,6 @@ IF OutDaily THEN WriteTitleDailyResults(TheProjectType,NrRun,fDaily);
 IF Part1Mult THEN WriteTitlePart1MultResults(TheProjectType,NrRun,fHarvest);
 IF (Part2Eval AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun,fEval);
 END; // InitializeRun
-
-
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
-
-    PROCEDURE RecordHarvest(NrCut : INTEGER;
-                        DayNri : LongInt;
-                        DayInSeason,SumInterval : INTEGER;
-                        BprevSum,YprevSum : double;
-                        VAR fHarvest : text);
-    VAR Dayi,Monthi,Yeari : INTEGER;
-        NoYear : BOOLEAN;
-    BEGIN
-    Append(fHarvest);
-    DetermineDate(GetCrop().Day1,Dayi,Monthi,Yeari);
-    NoYear := (Yeari = 1901);
-    DetermineDate(DayNri,Dayi,Monthi,Yeari);
-    IF NoYear THEN Yeari := 9999;
-    IF (NrCut = 9999)
-       THEN BEGIN
-            // last line at end of season
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,GetSumWaBal_Biomass():34:3);
-            IF (GetCrop().DryMatter = undef_int)
-               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3)
-               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():20:3,(GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):20:3);
-            END
-       ELSE BEGIN
-            WRITE(fHarvest,NrCut:6,Dayi:6,Monthi:6,Yeari:6,DayInSeason:6,SumInterval:6,(GetSumWaBal_Biomass()-BprevSum):12:3,
-                  GetSumWaBal_Biomass():10:3,(GetSumWaBal_YieldPart()-YprevSum):10:3);
-            IF (GetCrop().DryMatter = undef_int)
-               THEN WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3)
-               ELSE WRITELN(fHarvest,GetSumWaBal_YieldPart():10:3,((GetSumWaBal_YieldPart()-YprevSum)/(GetCrop().DryMatter/100)):10:3,
-                         (GetSumWaBal_YieldPart()/(GetCrop().DryMatter/100)):10:3);
-            END;
-    END; // RecordHarvest
-
-BEGIN
-
-(* 16. Finalise *)
-IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
-    BEGIN
-    // multiple cuttings
-    IF Part1Mult THEN
-       BEGIN
-       IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
-          BEGIN  // final harvest at crop maturity
-          SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum,fHarvest);
-          END;
-       RecordHarvest((9999),GetDayNri(),(GetDayNri()-GetCrop().Day1+1),GetSumInterval(),BprevSum,YprevSum,fHarvest); // last line at end of season
-       END;
-    // intermediate results
-    IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
-        AND ((GetDayNri()-1) > PreviousDayNr)) THEN
-        BEGIN
-        SetDayNri(GetDayNri()-1);
-        WriteIntermediatePeriod(TheProjectFile);
-        END;
-    //
-    WriteSimPeriod(NrRun,TheProjectFile);
-    END;
-END; // FinalizeRun1
 
 
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
