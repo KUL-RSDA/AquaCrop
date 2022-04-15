@@ -406,66 +406,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
     WaterTableInProfile_temp, NoMoreCrop_temp, CGCadjustmentAfterCutting_temp : boolean;
 
 
-    PROCEDURE AdjustSWCRootZone(VAR PreIrri : double);
-    VAR compi,layeri : ShortInt;
-        SumDepth,ThetaPercRaw : double;
-    BEGIN
-    compi := 0;
-    SumDepth := 0;
-    PreIrri := 0;
-    REPEAT
-      compi := compi + 1;
-      SumDepth := SumDepth + GetCompartment_Thickness(compi);
-      layeri := GetCompartment_Layer(compi);
-      ThetaPercRaw := GetSoilLayer_i(layeri).FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(GetSoilLayer_i(layeri).FC/100-GetSoilLayer_i(layeri).WP/100);
-      IF (GetCompartment_Theta(compi) < ThetaPercRaw) THEN
-         BEGIN
-         PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
-         SetCompartment_Theta(compi, ThetaPercRaw);
-         END;
-    UNTIL ((SumDepth >= GetRootingDepth()) OR (compi = GetNrCompartments()))
-    END; (* AdjustSWCRootZone *)
-
-
-    PROCEDURE InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
-                                            VAR StorageOn,MobilizationOn : BOOLEAN);
-    BEGIN
-    Bin := 0;
-    Bout := 0;
-    FracAssim := 0;
-    IF (GetCrop_subkind() = Forage) THEN // only for perennial herbaceous forage crops
-      BEGIN
-      FracAssim := 0;
-      IF (GetNoMoreCrop() = true)
-         THEN BEGIN
-              StorageOn := false;
-              MobilizationOn := false;
-              END
-         ELSE BEGIN
-              // Start of storage period ?
-              //IF ((GetDayNri() - Simulation.DelayedDays - Crop.Day1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
-              IF ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1 + 1) = (GetCrop().DaysToHarvest - GetCrop_Assimilates().Period + 1)) THEN
-                 BEGIN
-                 // switch storage on
-                 StorageOn := true;
-                 // switch mobilization off
-                 IF (MobilizationOn = true) THEN AssimToMobilize := AssimMobilized;
-                 MobilizationOn := false;
-                 END;
-              // Fraction of assimilates transferred
-              IF (MobilizationOn = true) THEN FracAssim := (AssimToMobilize-AssimMobilized)/AssimToMobilize;
-              IF ((StorageOn = true) AND (GetCrop_Assimilates().Period > 0))
-                 THEN FracAssim := (GetCrop_Assimilates().Stored/100) *
-                 //(((GetDayNri() - Simulation.DelayedDays - Crop.Day1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
-                 (((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1 + 1)-(GetCrop().DaysToHarvest-GetCrop_Assimilates().Period))/GetCrop_Assimilates().Period);
-              IF (FracAssim < 0) THEN FracAssim := 0;
-              IF (FracAssim > 1) THEN FracAssim := 1;
-              END;
-      END;
-    END;  (* InitializeTransferAssimilates *)
-
-
-
     PROCEDURE RecordHarvest(NrCut : INTEGER;
                         DayNri : LongInt;
                         DayInSeason,SumInterval : INTEGER);

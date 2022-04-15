@@ -334,7 +334,14 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GenerateTimeMode_AllDepl, &
                         GetGenerateDepthMode, &
                         GetSurfaceStorage, &
-                        SetIrrigation
+                        SetIrrigation, &
+                        GetSoilLayer_WP, &
+                        GetSoilLayer_FC, &
+                        GetSimulParam_PercRAW, &
+                        GetCompartment_Theta, &
+                        GetCrop_Assimilates_Period, &
+                        GetCrop_Assimilates_Stored
+
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
@@ -5699,6 +5706,7 @@ integer(int32) function IrriManual()
     end if
 end function IrriManual
 
+
 subroutine GetIrriParam(TargetTimeVal, TargetDepthVal)
     integer(int32), intent(inout) :: TargetTimeVal
     integer(int32), intent(inout) :: TargetDepthVal
@@ -5783,6 +5791,92 @@ subroutine GetIrriParam(TargetTimeVal, TargetDepthVal)
        end select
     end if
 end subroutine GetIrriParam
+
+
+subroutine AdjustSWCRootZone(PreIrri)
+    real(dp), intent(inout) :: PreIrri
+
+    integer(int32) :: compi, layeri
+    real(dp) :: SumDepth, ThetaPercRAW
+
+    compi = 0
+    SumDepth = 0
+    PreIrri = 0._dp
+    loop: do
+        compi = compi + 1
+        SumDepth = SumDepth + GetCompartment_Thickness(compi)
+        layeri = GetCompartment_Layer(compi)
+        ThetaPercRaw = GetSoilLayer_FC(layeri)/100._dp &
+                        - GetSimulParam_PercRAW()/100._dp &
+                        * GetCrop_pdef() &
+                        * (GetSoilLayer_FC(layeri)/100._dp &
+                                - GetSoilLayer_WP(layeri)/100._dp)
+        if (GetCompartment_Theta(compi) < ThetaPercRaw) then
+            PreIrri = PreIrri &
+                      + (ThetaPercRaw - GetCompartment_Theta(compi)) &
+                      *1000._dp*GetCompartment_Thickness(compi)
+            call SetCompartment_Theta(compi, ThetaPercRaw)
+        end if
+        if ((SumDepth >= GetRootingDepth()) &
+                .or. (compi == GetNrCompartments())) exit loop
+    end do loop
+end subroutine AdjustSWCRootZone 
+
+
+subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON, MobilizationON)
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: FracAssim
+    logical, intent(inout) :: StorageON
+    logical, intent(inout) :: MobilizationON
+
+    Bin = 0._dp
+    Bout = 0._dp
+    FracAssim = 0._dp
+    if (GetCrop_subkind() == subkind_Forage) then
+        ! only for perennial herbaceous forage crops
+        FracAssim = 0._dp
+        if (GetNoMoreCrop()) then
+            StorageOn = .false.
+            MobilizationOn = .false.
+        else
+            ! Start of storage period ?
+            if ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop_Day1() + 1) &
+                == (GetCrop_DaysToHarvest() - GetCrop_Assimilates_Period() + 1)) then
+                ! switch storage on
+                StorageOn = .true.
+                ! switch mobilization off
+                if (MobilizationOn) then
+                    AssimToMobilize = AssimMobilized
+                end if
+                MobilizationOn = .false.
+            end if
+            ! Fraction of assimilates transferred
+            if (MobilizationOn) then
+                FracAssim = (AssimToMobilize-AssimMobilized)/AssimToMobilize
+            end if
+            if ((StorageOn) .and. (GetCrop_Assimilates_Period() > 0)) then
+                FracAssim = (GetCrop_Assimilates_Stored()/100._dp) &
+                            * (((GetDayNri() - GetSimulation_DelayedDays() &
+                                    - GetCrop_Day1() + 1._dp) &
+                                -(GetCrop_DaysToHarvest() &
+                                    - GetCrop_Assimilates_Period()))&
+                                /GetCrop_Assimilates_Period())
+            end if
+            if (FracAssim < 0._dp) then
+                FracAssim = 0._dp
+            end if
+            if (FracAssim > 1._dp) then
+                FracAssim = 1._dp
+            end if
+        end if
+    end if
+end subroutine InitializeTransferAssimilates 
+
 
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 

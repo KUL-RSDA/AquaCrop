@@ -64,7 +64,8 @@ use ac_run, only:   CheckForPrint, &
                     GetCGCadjustmentAfterCutting, &
                     SetCGCadjustmentAfterCutting, &
                     WriteSimPeriod, &
-                    WriteIntermediatePeriod
+                    WriteIntermediatePeriod, &
+                    InitializeTransferAssimilates
 
 implicit none
 
@@ -686,6 +687,29 @@ subroutine WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen)
     TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
     call WriteIntermediatePeriod(TheProjectFile)
 end subroutine WriteIntermediatePeriod_wrap
+
+
+subroutine InitializeTransferAssimilates_wrap(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON, MobilizationON)
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: FracAssim
+    logical(1), intent(inout) :: StorageON
+    logical(1), intent(inout) :: MobilizationON
+
+    logical :: StorageON_f, MobilizationON_f
+
+    StorageON_f = StorageON
+    MobilizationON_f = MobilizationON
+    call InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON_f, MobilizationON_f)
+    StorageON = StorageON_f
+    MobilizationON = MobilizationON_f
+end subroutine InitializeTransferAssimilates_wrap
 
 
 
