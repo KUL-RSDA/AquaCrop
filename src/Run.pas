@@ -21,8 +21,6 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 
-
-
 // WRITING RESULTS section ================================================= START ====================
 
 
