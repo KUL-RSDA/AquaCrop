@@ -5529,12 +5529,11 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
 end subroutine OpenClimFilesAndGetDataFirstDay
 
 
-subroutine InitializeSimulation(TheProjectFile_, TheProjectType)
-    character(len=*), intent(in) :: TheProjectFile_
+subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFileStr
     integer(intenum), intent(in) :: TheProjectType
 
-
-    call SetTheProjectFile(trim(TheProjectFile_))
+    call SetTheProjectFile(trim(TheProjectFileStr))
     call OpenOutputRun(TheProjectType) ! open seasonal results .out
     if (GetOutDaily()) then
         call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT

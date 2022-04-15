@@ -497,14 +497,14 @@ subroutine fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     call fEval_open(filename, mode)
 end subroutine fEval_open_wrap
 
-subroutine InitializeSimulation_wrap(TheProjectFile_,strlen, TheProjectType)
-    type(c_ptr), intent(in) :: TheProjectFile_
+subroutine InitializeSimulation_wrap(TheProjectFileStr,strlen, TheProjectType)
+    type(c_ptr), intent(in) :: TheProjectFileStr
     integer(int32), intent(in) :: strlen
     integer(intenum), intent(in) :: TheProjectType
 
     character(len=strlen) :: string
 
-    string = pointer2string(TheProjectFile_, strlen)
+    string = pointer2string(TheProjectFileStr, strlen)
     call InitializeSimulation(string, TheProjectType)
 end subroutine InitializeSimulation_wrap
 
@@ -662,7 +662,7 @@ subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
 end subroutine SetCGCadjustmentAfterCutting_wrap
 
 function GetTheProjectFile_wrap() result(c_pointer)
-    !! Wrapper for [[ac_global:GetTheProjectFile]] for foreign languages.
+    !! Wrapper for [[ac_run:GetTheProjectFile]] for foreign languages.
     type(c_ptr) :: c_pointer
 
     c_pointer = string2pointer(GetTheProjectFile())

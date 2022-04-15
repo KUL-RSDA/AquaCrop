@@ -1282,7 +1282,7 @@ procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
     external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
 
 
-procedure InitializeSimulation(constref TheProjectFile_ : string;
+procedure InitializeSimulation(constref TheProjectFileStr : string;
                                constref TheProjectType : repTypeProject);
 
 procedure InitializeSimulation_wrap(constref filename_ptr : PChar;
@@ -1988,15 +1988,15 @@ begin;
 end;
 
 
-procedure InitializeSimulation(constref TheProjectFile_ : string;
+procedure InitializeSimulation(constref TheProjectFileStr : string;
                                constref TheProjectType : repTypeProject);
 var
     p : PChar;
     strlen : integer;
     int_typeproject : integer;
 begin
-    p := PChar(TheProjectFile_);
-    strlen := Length(TheProjectFile_);
+    p := PChar(TheProjectFileStr);
+    strlen := Length(TheProjectFileStr);
     int_typeproject := ord(TheProjectType);
     InitializeSimulation_wrap(p,strlen, int_typeproject);
 end;
