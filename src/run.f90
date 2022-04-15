@@ -5842,6 +5842,56 @@ subroutine InitializeRun(NrRun, TheProjectType)
 
 end subroutine InitializeRun
 
+!--------duplicate nested in AdvanceOneTimeStep and FinalizeRun1----------!
+subroutine RecordHarvest(NrCut, DayInSeason)
+    integer(int32), intent(in) :: DayInSeason
+    integer(int32), intent(in) :: NrCut
+
+    integer(int32) :: Dayi, Monthi, Yeari
+    logical :: NoYear
+    character(len=:), allocatable :: tempstring
+
+    call fHarvest_open(GetfHarvest_filename(), 'a')
+    call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
+    NoYear = (Yeari == 1901)
+    call DetermineDate(GetDayNri(), Dayi, Monthi, Yeari)
+    if (NoYear) then
+        Yeari = 9999
+    end if
+
+    if (NrCut == 9999) then
+        ! last line at end of season
+        write(tempstring, '(4i6, f34.3)') NrCut, Dayi, Monthi, Yeari, &
+                                          GetSumWaBal_Biomass()
+        call fHarvest_write(tempstring, .false.)
+        if (GetCrop_DryMatter() == undef_int) then
+            write(tempstring, '(f20.3)') GetSumWaBal_YieldPart()
+            call fHarvest_write(trim(tempstring))
+        else
+            write(tempstring, '(2f20.3)') GetSumWaBal_YieldPart(), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp))
+            call fHarvest_write(trim(tempstring))
+        end if
+    else
+        write(tempstring, '(6i6, f12.3, 2f10.3)') NrCut, Dayi, Monthi, Yeari, &
+                DayInSeason, GetSumInterval(), (GetSumWaBal_Biomass()-GetBprevSum()), &
+                GetSumWaBal_Biomass(), (GetSumWaBal_YieldPart()-GetYprevSum())
+        call fHarvest_write(trim(tempstring), .false.)
+        if (GetCrop_DryMatter() == undef_int) then
+            write(tempstring, '(f10.3)') GetSumWaBal_YieldPart()
+            call fHarvest_write(trim(tempstring))
+        else
+            write(tempstring, '(3f10.3)') GetSumWaBal_YieldPart(), &
+                ((GetSumWaBal_YieldPart()-GetYprevSum()) &
+                        /(GetCrop_DryMatter()/100._dp)), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp))
+            call fHarvest_write(trim(tempstring))
+        end if
+    end if
+end subroutine RecordHarvest
+
+!--------end duplicate--------!
+
 
 
 end module ac_run
