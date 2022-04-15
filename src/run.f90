@@ -6014,7 +6014,7 @@ subroutine RecordHarvest(NrCut, DayInSeason)
         ! last line at end of season
         write(tempstring, '(4i6, f34.3)') NrCut, Dayi, Monthi, Yeari, &
                                           GetSumWaBal_Biomass()
-        call fHarvest_write(tempstring, .false.)
+        call fHarvest_write(trim(tempstring), .false.)
         if (GetCrop_DryMatter() == undef_int) then
             write(tempstring, '(f20.3)') GetSumWaBal_YieldPart()
             call fHarvest_write(trim(tempstring))
