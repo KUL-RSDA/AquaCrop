@@ -6,8 +6,6 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
 
 
 
-PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
-
 PROCEDURE AdvanceOneTimeStep();
 
 PROCEDURE FinalizeRun1(NrRun : ShortInt;
@@ -25,65 +23,9 @@ uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults
 
 
 
-
 // WRITING RESULTS section ================================================= START ====================
 
 
-
-PROCEDURE WriteSimPeriod(NrRun : ShortInt;
-                         TheProjectFile : string);
-VAR Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
-BEGIN
-DetermineDate(GetSimulation_FromDayNr(),Day1,Month1,Year1); // Start simulation run
-DetermineDate(GetSimulation_ToDayNr(),DayN,MonthN,YearN); // End simulation run
-WriteTheResults(NrRun,Day1,Month1,Year1,DayN,MonthN,YearN,
-               GetSumWaBal_Rain(),GetSumETo(),GetSumGDD(),
-               GetSumWaBal_Irrigation(),GetSumWaBal_Infiltrated(),GetSumWaBal_Runoff(),GetSumWaBal_Drain(),GetSumWaBal_CRwater(),
-               GetSumWaBal_Eact(),GetSumWaBal_Epot(),GetSumWaBal_Tact(),GetSumWaBal_TrW(),GetSumWaBal_Tpot(),
-               GetSumWaBal_SaltIn(),GetSumWaBal_SaltOut(),GetSumWaBal_CRsalt(),
-               GetSumWaBal_Biomass(),GetSumWaBal_BiomassUnlim(),GetTransfer_Bmobilized(),GetSimulation_Storage_Btotal(),
-               TheProjectFile);
-END; (* WriteSimPeriod *)
-
-
-
-PROCEDURE CheckForPrint(TheProjectFile : string);
-VAR DayN,MonthN,YearN,DayEndM : INTEGER;
-    SaltIn,SaltOut,CRsalt,BiomassDay,BUnlimDay : double;
-    WriteNow : BOOLEAN;
-
-BEGIN
-DetermineDate(GetDayNri(),DayN,MonthN,YearN);
-CASE GetOutputAggregate() OF
-  1 :   BEGIN // daily output
-        BiomassDay := GetSumWaBal_Biomass() - GetPreviousSum_Biomass();
-        BUnlimDay := GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim();
-        SaltIn := GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn();
-        SaltOut := GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut();
-        CRsalt := GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt();
-        WriteTheResults((undef_int),DayN,MonthN,YearN,DayN,MonthN,YearN,
-                       GetRain(),GetETo(),GetGDDayi(),
-                       GetIrrigation(),GetInfiltrated(),GetRunoff(),GetDrain(),GetCRwater(),
-                       GetEact(),GetEpot(),GetTact(),GetTactWeedInfested(),GetTpot(),
-                       SaltIn,SaltOut,CRsalt,
-                       BiomassDay,BUnlimDay,GetBin(),GetBout(),
-                       TheProjectFile);
-        SetPreviousSum_Biomass(GetSumWaBal_Biomass());
-        SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim());
-        SetPreviousSum_SaltIn(GetSumWaBal_SaltIn());
-        SetPreviousSum_SaltOut(GetSumWaBal_SaltOut());
-        SetPreviousSum_CRsalt(GetSumWaBal_CRsalt());
-        END;
-  2,3 : BEGIN  // 10-day or monthly output
-        WriteNow := false;
-        DayEndM := DaysInMonth[MonthN];
-        IF (LeapYear(YearN) AND (MonthN = 2)) THEN DayEndM := 29;
-        IF (DayN = DayEndM) THEN WriteNow := true;  // 10-day and month
-        IF ((GetOutputAggregate() = 2) AND ((DayN = 10) OR (DayN = 20))) THEN WriteNow := true; // 10-day
-        IF WriteNow THEN WriteIntermediatePeriod(TheProjectFile);
-        END;
-    end;
-END; (* CheckForPrint *)
 
 
 PROCEDURE WriteDailyResults(DAP : INTEGER;
@@ -530,65 +472,6 @@ VAR PotValSF,KsTr,WPi,TESTVALY,PreIrri,StressStomata,FracAssim : double;
           end;
        END;
     END; (* GetIrriParam *)
-
-
-    PROCEDURE AdjustSWCRootZone(VAR PreIrri : double);
-    VAR compi,layeri : ShortInt;
-        SumDepth,ThetaPercRaw : double;
-    BEGIN
-    compi := 0;
-    SumDepth := 0;
-    PreIrri := 0;
-    REPEAT
-      compi := compi + 1;
-      SumDepth := SumDepth + GetCompartment_Thickness(compi);
-      layeri := GetCompartment_Layer(compi);
-      ThetaPercRaw := GetSoilLayer_i(layeri).FC/100 - GetSimulParam_PercRAW()/100*GetCrop().pdef*(GetSoilLayer_i(layeri).FC/100-GetSoilLayer_i(layeri).WP/100);
-      IF (GetCompartment_Theta(compi) < ThetaPercRaw) THEN
-         BEGIN
-         PreIrri := PreIrri + (ThetaPercRaw - GetCompartment_Theta(compi))*1000*GetCompartment_Thickness(compi);
-         SetCompartment_Theta(compi, ThetaPercRaw);
-         END;
-    UNTIL ((SumDepth >= GetRootingDepth()) OR (compi = GetNrCompartments()))
-    END; (* AdjustSWCRootZone *)
-
-
-    PROCEDURE InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
-                                            VAR StorageOn,MobilizationOn : BOOLEAN);
-    BEGIN
-    Bin := 0;
-    Bout := 0;
-    FracAssim := 0;
-    IF (GetCrop_subkind() = Forage) THEN // only for perennial herbaceous forage crops
-      BEGIN
-      FracAssim := 0;
-      IF (GetNoMoreCrop() = true)
-         THEN BEGIN
-              StorageOn := false;
-              MobilizationOn := false;
-              END
-         ELSE BEGIN
-              // Start of storage period ?
-              //IF ((GetDayNri() - Simulation.DelayedDays - Crop.Day1) = (Crop.DaysToHarvest - Crop.Assimilates.Period + 1)) THEN
-              IF ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1 + 1) = (GetCrop().DaysToHarvest - GetCrop_Assimilates().Period + 1)) THEN
-                 BEGIN
-                 // switch storage on
-                 StorageOn := true;
-                 // switch mobilization off
-                 IF (MobilizationOn = true) THEN AssimToMobilize := AssimMobilized;
-                 MobilizationOn := false;
-                 END;
-              // Fraction of assimilates transferred
-              IF (MobilizationOn = true) THEN FracAssim := (AssimToMobilize-AssimMobilized)/AssimToMobilize;
-              IF ((StorageOn = true) AND (GetCrop_Assimilates().Period > 0))
-                 THEN FracAssim := (GetCrop_Assimilates().Stored/100) *
-                 //(((GetDayNri() - Simulation.DelayedDays - Crop.Day1)-(Crop.DaysToHarvest-Crop.Assimilates.Period))/Crop.Assimilates.Period);
-                 (((GetDayNri() - GetSimulation_DelayedDays() - GetCrop().Day1 + 1)-(GetCrop().DaysToHarvest-GetCrop_Assimilates().Period))/GetCrop_Assimilates().Period);
-              IF (FracAssim < 0) THEN FracAssim := 0;
-              IF (FracAssim > 1) THEN FracAssim := 1;
-              END;
-      END;
-    END;  (* InitializeTransferAssimilates *)
 
 
 
@@ -1139,6 +1022,7 @@ UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
 
 
+
 PROCEDURE InitializeRun(NrRun : ShortInt; TheProjectType : repTypeProject);
 VAR SumWaBal_temp, PreviousSum_temp : rep_sum;
 
@@ -1195,6 +1079,8 @@ IF GetOutDaily() THEN WriteTitleDailyResults(TheProjectType,NrRun);
 IF GetPart1Mult() THEN WriteTitlePart1MultResults(TheProjectType,NrRun);
 IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN CreateEvalData(NrRun);
 END; // InitializeRun
+
+
 
 
 PROCEDURE FinalizeRun1(NrRun : ShortInt;

@@ -7,7 +7,8 @@ use ac_kinds, only: dp, &
                     intenum
 
 
-use ac_global, only:    CompartmentIndividual, &
+use ac_global, only:    AdjustSizeCompartments, &
+                        CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
@@ -69,7 +70,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
+                        GetCRwater, &
+                        GetDrain, &
+                        GetEact, &
                         GetECiAqua, &
+                        GetEpot, &
                         GetETo, &
                         GetEToFile, &
                         GetEToFilefull, &
@@ -78,9 +83,11 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManagement_FertilityStress, &
                         GetGroundWaterFile, &
                         GetGroundWaterFileFull, &
+                        GetInfiltrated, &
                         GetIrriFile, &
                         GetIrriFilefull, &
                         GetIrriFirstDayNr, &
+                        GetIrrigation, &
                         GetIrriMode, &
                         GetManagement_Cuttings_Criterion, &
                         GetManagement_Cuttings_Day1, &
@@ -102,6 +109,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetRainFilefull, &
                         GetRainRecord_DataType, &
                         GetRainRecord_FromDayNr, &
+                        GetRunoff, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
@@ -132,6 +140,8 @@ use ac_global, only:    CompartmentIndividual, &
                         GetSumWaBal_Tpot, &
                         GetSumWaBal_TrW, &
                         GetSumWaBal_YieldPart, &
+                        GetTact, &
+                        GetTactWeedInfested, &
                         GetTemperatureFile, &
                         GetTemperatureFilefull, &
                         GetTemperatureRecord_DataType, &
@@ -139,6 +149,7 @@ use ac_global, only:    CompartmentIndividual, &
                         GetTmax, &
                         GetTmin, &
                         GetTotalSaltContent_endDay, &
+                        GetTpot, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
@@ -298,16 +309,36 @@ use ac_global, only:    CompartmentIndividual, &
                         GetManFile, &
                         GetManFileFull, &
                         max_No_compartments, &
+                        GetSimulation_MultipleRunWithKeepSWC, &
+                        GetSimulation_MultipleRunConstZrx, &
+                        GetSimulation_IniSWC_AtFC, &
+                        GetMultipleProjectFileFull, &
+                        GetSUmWaBal, &
+                        GetPart1Mult, &
+                        GetPart2Eval, &
+                        GetObservationsFile, &
+                        CalculateAdjustedFC, &
+                        ResetSWCToFC, &
+                        SetSumWaBal, &
+                        GlobalZero, &
+                        SetCompartment, &
                         calculateadjustedfc, &
                         setcompartment, &
                         Rep_DayEventInt, &
                         GetIrriBeforeSeason_i, &
-                        GetIrriAfterSeason_i
+                        GetIrriAfterSeason_i, &
+                        GetSoilLayer_WP, &
+                        GetSoilLayer_FC, &
+                        GetSimulParam_PercRAW, &
+                        GetCompartment_Theta, &
+                        GetCrop_Assimilates_Period, &
+                        GetCrop_Assimilates_Stored
 
 
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
+                                LoadSimulationRunProject, &
                                 StressBiomassRelationship, &
                                 temperaturefilecoveringcropperiod, &
                                 GrowingDegreeDays
@@ -2960,27 +2991,28 @@ subroutine AdjustForWatertable()
 end subroutine AdjustForWatertable
 
 
-subroutine ResetPreviousSum()
+subroutine ResetPreviousSum(PreviousSum)
+    type(rep_sum), intent(inout) :: PreviousSum
 
-    call SetPreviousSum_Epot(0.0_dp)
-    call SetPreviousSum_Tpot(0.0_dp)
-    call SetPreviousSum_Rain(0.0_dp)
-    call SetPreviousSum_Irrigation(0.0_dp)
-    call SetPreviousSum_Infiltrated(0.0_dp)
-    call SetPreviousSum_Runoff(0.0_dp)
-    call SetPreviousSum_Drain(0.0_dp)
-    call SetPreviousSum_Eact(0.0_dp)
-    call SetPreviousSum_Tact(0.0_dp)
-    call SetPreviousSum_TrW(0.0_dp)
-    call SetPreviousSum_ECropCycle(0.0_dp)
-    call SetPreviousSum_CRwater(0.0_dp)
-    call SetPreviousSum_Biomass(0.0_dp)
-    call SetPreviousSum_YieldPart(0.0_dp)
-    call SetPreviousSum_BiomassPot(0.0_dp)
-    call SetPreviousSum_BiomassUnlim(0.0_dp)
-    call SetPreviousSum_SaltIn(0.0_dp)
-    call SetPreviousSum_SaltOut(0.0_dp)
-    call SetPreviousSum_CRsalt(0.0_dp)
+    PreviousSum%Epot = 0._dp
+    PreviousSum%Tpot = 0._dp
+    PreviousSum%Rain = 0._dp
+    PreviousSum%Irrigation = 0._dp
+    PreviousSum%Infiltrated = 0._dp
+    PreviousSum%Runoff = 0._dp
+    PreviousSum%Drain = 0._dp
+    PreviousSum%Eact = 0._dp
+    PreviousSum%Tact = 0._dp
+    PreviousSum%TrW = 0._dp
+    PreviousSum%ECropCycle = 0._dp
+    PreviousSum%CRwater = 0._dp
+    PreviousSum%Biomass = 0._dp
+    PreviousSum%YieldPart = 0._dp
+    PreviousSum%BiomassPot = 0._dp
+    PreviousSum%BiomassUnlim = 0._dp
+    PreviousSum%SaltIn = 0._dp
+    PreviousSum%SaltOut = 0._dp
+    PreviousSum%CRsalt = 0._dp
     call SetSumETo(0.0_dp)
     call SetSumGDD(0.0_dp)
     call SetPreviousSumETo(0.0_dp)
@@ -2988,6 +3020,56 @@ subroutine ResetPreviousSum()
     call SetPreviousBmob(0.0_dp)
     call SetPreviousBsto(0.0_dp)
 end subroutine ResetPreviousSum
+
+
+subroutine CheckForPrint(TheProjectFile)
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: DayN, MonthN, YearN, DayEndM
+    real(dp) :: SaltIn, SaltOut, CRsalt, BiomassDay, BUnlimDay
+    logical :: WriteNow
+
+    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+    
+    select case (GetOutputAggregate())
+    case (1)
+        ! 1: daily output
+        BiomassDay = GetSumWaBal_Biomass() - GetPreviousSum_Biomass()
+        BUnlimDay = GetSumWaBal_BiomassUnlim() - GetPreviousSum_BiomassUnlim()
+        SaltIn = GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn()
+        SaltOut = GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut()
+        CRsalt = GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt()
+        call WriteTheResults(int(undef_int,kind=int8), DayN, MonthN, YearN, DayN, MonthN, & 
+                             YearN, GetRain(), GetETo(), GetGDDayi(), GetIrrigation(), &
+                             GetInfiltrated(), GetRunoff(), GetDrain(), &
+                             GetCRwater(), GetEact(), GetEpot(), GetTact(), &
+                             GetTactWeedInfested(), GetTpot(), SaltIn, SaltOut, &
+                             CRsalt, BiomassDay, BUnlimDay, GetBin(), GetBout(), &
+                             TheProjectFile)
+        call SetPreviousSum_Biomass(GetSumWaBal_Biomass())
+        call SetPreviousSum_BiomassUnlim(GetSumWaBal_BiomassUnlim())
+        call SetPreviousSum_SaltIn(GetSumWaBal_SaltIn())
+        call SetPreviousSum_SaltOut(GetSumWaBal_SaltOut())
+        call SetPreviousSum_CRsalt(GetSumWaBal_CRsalt())
+    
+    case (2,3)
+        ! 2 or 3: 10-day or monthly output
+        WriteNow = .false.
+        DayEndM = DaysInMonth(MonthN)
+        if (LeapYear(YearN) .and. (MonthN == 2)) then
+            DayEndM = 29
+        end if
+        if (DayN == DayEndM) then
+            WriteNow = .true.  ! 10-day and month
+        end if
+        if ((GetOutputAggregate() == 2) .and. ((DayN == 10) .or. (DayN == 20))) then
+            WriteNow = .true. ! 10-day
+        end if
+        if (WriteNow) then
+            call WriteIntermediatePeriod(TheProjectFile)
+        end if
+    end select
+end subroutine CheckForPrint
 
 
 subroutine GetGwtSet(DayNrIN, GwT)
@@ -5438,6 +5520,32 @@ subroutine FinalizeSimulation()
 end subroutine FinalizeSimulation
 
 
+subroutine WriteSimPeriod(NrRun, TheProjectFile)
+    integer(int8), intent(in) :: NrRun
+    character(len=*), intent(in) :: TheProjectFile
+
+    integer(int32) :: Day1, Month1, Year1, DayN, MonthN, YearN
+
+    call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) 
+    ! Start simulation run
+    call DetermineDate(GetSimulation_ToDayNr(), DayN, MonthN, YearN) 
+    ! End simulation run
+    call WriteTheResults(NrRun, Day1, Month1, Year1, DayN, MonthN, YearN, &
+                        GetSumWaBal_Rain(), GetSumETo(), GetSumGDD(), &
+                        GetSumWaBal_Irrigation(), GetSumWaBal_Infiltrated(), &
+                        GetSumWaBal_Runoff(), GetSumWaBal_Drain(), &
+                        GetSumWaBal_CRwater(), GetSumWaBal_Eact(), &
+                        GetSumWaBal_Epot(), GetSumWaBal_Tact(), &
+                        GetSumWaBal_TrW(), GetSumWaBal_Tpot(), &
+                        GetSumWaBal_SaltIn(), GetSumWaBal_SaltOut(), &
+                        GetSumWaBal_CRsalt(), GetSumWaBal_Biomass(), &
+                        GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
+                        GetSimulation_Storage_Btotal(), TheProjectFile)
+end subroutine WriteSimPeriod
+
+
+>>>>>>> 7c32844a350e61302103722fa4bbe773d692a0d7
+
 subroutine WriteIntermediatePeriod(TheProjectFile)
     character(len=*), intent(in) :: TheProjectFile
 
@@ -5608,6 +5716,179 @@ integer(int32) function IrriManual()
     end if
 end function IrriManual
 
+
+subroutine AdjustSWCRootZone(PreIrri)
+    real(dp), intent(inout) :: PreIrri
+
+    integer(int32) :: compi, layeri
+    real(dp) :: SumDepth, ThetaPercRAW
+
+    compi = 0
+    SumDepth = 0
+    PreIrri = 0._dp
+    loop: do
+        compi = compi + 1
+        SumDepth = SumDepth + GetCompartment_Thickness(compi)
+        layeri = GetCompartment_Layer(compi)
+        ThetaPercRaw = GetSoilLayer_FC(layeri)/100._dp &
+                        - GetSimulParam_PercRAW()/100._dp &
+                        * GetCrop_pdef() &
+                        * (GetSoilLayer_FC(layeri)/100._dp &
+                                - GetSoilLayer_WP(layeri)/100._dp)
+        if (GetCompartment_Theta(compi) < ThetaPercRaw) then
+            PreIrri = PreIrri &
+                      + (ThetaPercRaw - GetCompartment_Theta(compi)) &
+                      *1000._dp*GetCompartment_Thickness(compi)
+            call SetCompartment_Theta(compi, ThetaPercRaw)
+        end if
+        if ((SumDepth >= GetRootingDepth()) &
+                .or. (compi == GetNrCompartments())) exit loop
+    end do loop
+end subroutine AdjustSWCRootZone 
+
+
+subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON, MobilizationON)
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: FracAssim
+    logical, intent(inout) :: StorageON
+    logical, intent(inout) :: MobilizationON
+
+    Bin = 0._dp
+    Bout = 0._dp
+    FracAssim = 0._dp
+    if (GetCrop_subkind() == subkind_Forage) then
+        ! only for perennial herbaceous forage crops
+        FracAssim = 0._dp
+        if (GetNoMoreCrop()) then
+            StorageOn = .false.
+            MobilizationOn = .false.
+        else
+            ! Start of storage period ?
+            if ((GetDayNri() - GetSimulation_DelayedDays() - GetCrop_Day1() + 1) &
+                == (GetCrop_DaysToHarvest() - GetCrop_Assimilates_Period() + 1)) then
+                ! switch storage on
+                StorageOn = .true.
+                ! switch mobilization off
+                if (MobilizationOn) then
+                    AssimToMobilize = AssimMobilized
+                end if
+                MobilizationOn = .false.
+            end if
+            ! Fraction of assimilates transferred
+            if (MobilizationOn) then
+                FracAssim = (AssimToMobilize-AssimMobilized)/AssimToMobilize
+            end if
+            if ((StorageOn) .and. (GetCrop_Assimilates_Period() > 0)) then
+                FracAssim = (GetCrop_Assimilates_Stored()/100._dp) &
+                            * (((GetDayNri() - GetSimulation_DelayedDays() &
+                                    - GetCrop_Day1() + 1._dp) &
+                                -(GetCrop_DaysToHarvest() &
+                                    - GetCrop_Assimilates_Period()))&
+                                /GetCrop_Assimilates_Period())
+            end if
+            if (FracAssim < 0._dp) then
+                FracAssim = 0._dp
+            end if
+            if (FracAssim > 1._dp) then
+                FracAssim = 1._dp
+            end if
+        end if
+    end if
+end subroutine InitializeTransferAssimilates 
+
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
+
+
+subroutine InitializeRun(NrRun, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    integer(intEnum), intent(in) :: TheProjectType
+
+    type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+
+    call LoadSimulationRunProject(GetMultipleProjectFileFull(), &
+                                  int(NrRun, kind=int32))
+    call AdjustCompartments()
+    SumWaBal_temp = GetSumWaBal()
+    call GlobalZero(SumWaBal_temp)
+    call SetSumWaBal(SumWaBal_temp)
+    PreviousSum_temp = GetPreviousSum()
+    call ResetPreviousSum(PreviousSum_temp)
+    call SetPreviousSum(PreviousSum_temp)
+    call InitializeSimulationRun()
+
+    if (GetOutDaily()) then
+        call WriteTitleDailyResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart1Mult()) then
+        call WriteTitlePart1MultResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+        call CreateEvalData(NrRun)
+    end if
+
+
+    contains
+
+    subroutine AdjustCompartments()
+
+        real(dp) :: TotDepth
+        integer(int32) :: i
+        type(CompartmentIndividual), &
+                dimension(max_No_compartments) :: Comp_temp
+
+        ! Adjust size of compartments if required
+        TotDepth = 0._dp
+        do i = 1, GetNrCompartments() 
+            TotDepth = TotDepth + GetCompartment_Thickness(i)
+        end do
+        if (GetSimulation_MultipleRunWithKeepSWC()) then 
+            ! Project with a sequence of simulation runs and KeepSWC
+            if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) &
+                > roundc(TotDepth*1000._dp, mold=1)) then
+                call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
+            end if
+        else
+            if (roundc(GetCrop_RootMax()*1000._dp, mold=1) &
+                > roundc(TotDepth*1000._dp, mold=1)) then
+                if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                    == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+                    ! no restrictive soil layer
+                    call AdjustSizeCompartments(GetCrop_RootMax())
+                    ! adjust soil water content
+                    Comp_temp = GetCompartment()
+                    call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+                    call SetCompartment(Comp_temp)
+                    if (GetSimulation_IniSWC_AtFC()) then
+                        call ResetSWCToFC()
+                    end if
+                else
+                    ! restrictive soil layer
+                    if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                        > roundc(TotDepth*1000._dp, mold=1)) then
+                        call AdjustSizeCompartments(real(GetSoil_RootMax(), &
+                                                            kind=dp))
+                        ! adjust soil water content
+                        Comp_temp = GetCompartment()
+                        call CalculateAdjustedFC(GetZiAqua()/100._dp, Comp_temp)
+                        call SetCompartment(Comp_temp)
+                        if (GetSimulation_IniSWC_AtFC()) then
+                            call ResetSWCToFC()
+                        end if
+                    end if
+                end if
+            end if
+        end if
+    end subroutine AdjustCompartments
+
+end subroutine InitializeRun
+
+
 
 end module ac_run

@@ -3171,9 +3171,9 @@ procedure SetTemperatureRecord_ToString_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
-PROCEDURE GlobalZero(
+procedure GlobalZero(
         VAR SumWabal : rep_sum);
-     external 'aquacrop' name '__ac_global_MOD_globalzero'; 
+     external 'aquacrop' name '__ac_global_MOD_globalzero';  
      
 function GetClimRecord(): rep_clim;
 
