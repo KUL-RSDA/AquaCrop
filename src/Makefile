@@ -91,6 +91,7 @@ interface_initialsettings.o: interface_initialsettings.f90 \
 
 run.o: run.f90 \
     global.o \
+    inforesults.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
