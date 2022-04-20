@@ -533,7 +533,6 @@ UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
 
 
-
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 VAR NrRun : ShortInt;

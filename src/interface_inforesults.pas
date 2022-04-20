@@ -36,15 +36,17 @@ procedure StatisticAnalysis_wrap(
                     var ArrayObsSim : rep_ArrayObsSim);
     external 'aquacrop' name '__ac_interface_inforesults_MOD_statisticanalysis_wrap';
 
-procedure WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
-                                    TheProjectType : repTypeProject;
-                                    RangeMin,RangeMax : LongInt);
+procedure WriteAssessmentSimulation(constref StrNr, totalnameEvalStat : string;
+                                    constref TheProjectType : repTypeProject;
+                                    constref RangeMin, RangeMax : integer);
 
 procedure WriteAssessmentSimulation_wrap(
-                                    p1,p2 : PChar;
-                                    strlen1, strlen2 : integer;
-                                    TheProjectType : integer;
-                                    RangeMin,RangeMax : LongInt);
+                                    //constref p1, p2 : PChar;
+                                    //constref strlen1, strlen2 : integer;
+                                    constref p2 : PChar;
+                                    constref strlen2 : integer;
+                                    constref TheProjectType : ShortInt;
+                                    constref RangeMin, RangeMax : integer);
     external 'aquacrop' name '__ac_interface_inforesults_MOD_writeassessmentsimulation_wrap';
 
 
@@ -73,23 +75,25 @@ begin
 end;
 
 
-procedure WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
-                                    TheProjectType : repTypeProject;
-                                    RangeMin,RangeMax : LongInt);
+procedure WriteAssessmentSimulation(constref StrNr, totalnameEvalStat : string;
+                                    constref TheProjectType : repTypeProject;
+                                    constref RangeMin, RangeMax : integer);
 var
-    int_projecttype : integer;
-    p1 : PChar;
+    int_projecttype : ShortInt;
+    //p1 : PChar;
     p2 : PChar;
-    strlen1 : integer;
+    //strlen1 : integer;
     strlen2 : integer;
 begin
     int_projecttype := ord(TheProjectType);
-    p1 := PChar(StrNr);
+    //p1 := PChar(StrNr);
     p2 := PChar(totalnameEvalStat);
-    strlen1 := Length(StrNr);
+    //strlen1 := Length(StrNr);
     strlen2 := Length(totalnameEvalStat);
-    WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2,
-                                   int_projecttype, RangeMin, RangeMax)
+    writeln('PPP :', StrNr, ':', totalnameEvalStat, ': ', strlen2);
+    //WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2,
+    //                             int_projecttype, RangeMin, RangeMax)
+    WriteAssessmentSimulation_wrap(p2, strlen2, int_projecttype, RangeMin, RangeMax)
 end;
 
 

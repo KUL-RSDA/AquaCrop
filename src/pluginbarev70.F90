@@ -76,7 +76,6 @@ end do
 
 if (nprojects == 0) then
     call WriteProjectsInfo('')
-    call WriteProjectsInfo('Projects loaded: None')
 
     if (ListProjectFileExist) then
         call WriteProjectsInfo('File ''ListProjects.txt'' does not contain ANY project file')
