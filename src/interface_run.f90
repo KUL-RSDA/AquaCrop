@@ -6,7 +6,8 @@ use ac_interface_global, only: pointer2string, &
                                string2pointer
 use ac_kinds, only: int8, &
                     int32, &
-                    dp
+                    dp, &
+                    intenum
 
 use ac_run, only:   CheckForPrint, &
                     fDaily_open, &

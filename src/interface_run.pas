@@ -1271,9 +1271,6 @@ procedure FinalizeRun1_wrap(constref NrRun : ShortInt;
                             constref TheProjectType : integer);
         external 'aquacrop' name '__ac_interface_run_MOD_finalizerun1_wrap';
 
-procedure __OpenPart1MultResults(constref TheProjectType : integer);
-    external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
-
 procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
     external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
@@ -1323,6 +1320,15 @@ procedure InitializeRun(constref NrRun : ShortInt;
 procedure _InitializeRun(constref NrRun : ShortInt; 
                          constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_initializerun';
+
+procedure RecordHarvest(constref NrCut : integer;
+                        constref DayInSeason : integer)
+    external 'aquacrop' name '__ac_run_MOD_recordharvest';
+
+procedure GetPotValSF(constref DAP : integer;
+                      constref SumGDDAdjCC : double;
+                      VAR PotValSF : double);
+    external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
 
 
 implementation
@@ -1968,7 +1974,7 @@ begin
     strlen := Length(TheProjectFile);
     int_typeproject := ord(TheProjectType);
     FinalizeRun1_wrap(NrRun, p,strlen, int_typeproject);
-end
+end;
 
 initialization
 
