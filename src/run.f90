@@ -99,6 +99,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetObservationsFilefull, &
                         GetOutputAggregate, &
                         GetOutputName, &
+                        getpart1mult, &
                         GetPathNameOutp, &
                         GetPathNameProg, &
                         GetPathNameSimul, &
@@ -432,6 +433,7 @@ type rep_Transfer
         !! Cumulative sum of assimilates (ton/ha) mobilized form root system
 end type rep_Transfer
 
+character(len=:), allocatable :: TheProjectFile
 
 integer :: fDaily  ! file handle
 integer :: fDaily_iostat  ! IO status
@@ -590,6 +592,22 @@ end function read_file
 
 
 !! Section for Getters and Setters for global variables
+
+! TheProjectFile
+
+function GetTheProjectFile() result(str)
+    !! Getter for the "TheProjectFile" global variable.
+    character(len=len(TheProjectFile)) :: str
+
+    str = TheProjectFile
+end function GetTheProjectFile
+
+subroutine SetTheProjectFile(str)
+    !! Setter for the "TheProjectFile" global variable.
+    character(len=*), intent(in) :: str
+
+    TheProjectFile = str
+end subroutine SetTheProjectFile
 
 ! fDaily
 
@@ -5511,6 +5529,33 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
 end subroutine OpenClimFilesAndGetDataFirstDay
 
 
+subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFileStr
+    integer(intenum), intent(in) :: TheProjectType
+
+    call SetTheProjectFile(trim(TheProjectFileStr))
+    call OpenOutputRun(TheProjectType) ! open seasonal results .out
+    if (GetOutDaily()) then
+        call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT
+    end if
+    if (GetPart1Mult()) then
+        call OpenPart1MultResults(TheProjectType) ! Open Multiple harvests in season .OUT
+    end if
+end subroutine InitializeSimulation
+
+
+subroutine FinalizeSimulation()
+
+    call fRun_close() ! Close Run.out
+    if (GetOutDaily()) then
+        call fDaily_close()  ! Close Daily.OUT
+    end if
+    if (GetPart1Mult()) then
+        call fHarvest_close()  ! Close Multiple harvests in season
+    end if
+end subroutine FinalizeSimulation
+
+
 subroutine WriteSimPeriod(NrRun, TheProjectFile)
     integer(int8), intent(in) :: NrRun
     character(len=*), intent(in) :: TheProjectFile
@@ -5533,7 +5578,6 @@ subroutine WriteSimPeriod(NrRun, TheProjectFile)
                         GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
                         GetSimulation_Storage_Btotal(), TheProjectFile)
 end subroutine WriteSimPeriod
-
 
 
 subroutine WriteIntermediatePeriod(TheProjectFile)

@@ -4,10 +4,7 @@ interface
 
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_climprocessing, interface_simul, interface_inforesults;
 
-PROCEDURE InitializeSimulation(TheProjectFile_ : string;
-                               TheProjectType : repTypeProject);
 
-PROCEDURE FinalizeSimulation();
 
 PROCEDURE AdvanceOneTimeStep();
 
@@ -22,10 +19,6 @@ PROCEDURE RunSimulation(TheProjectFile_ : string;
 implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
-
-var  TheProjectFile : string;
-
-
 
 
 // WRITING RESULTS section ================================================= START ====================
@@ -827,7 +820,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
         END
    ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1), SumGDDAdjCC, PotValSF);
 //14.d Print ---------------------------------------
-IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
+IF (GetOutputAggregate() > 0) THEN CheckForPrint(GetTheProjectFile());
 IF GetOutDaily() THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
 IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
 
@@ -888,25 +881,6 @@ REPEAT
   AdvanceOneTimeStep()
 UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
-
-
-PROCEDURE InitializeSimulation(TheProjectFile_ : string;
-                               TheProjectType : repTypeProject);
-BEGIN
-TheProjectFile := TheProjectFile_;
-OpenOutputRun(TheProjectType); // open seasonal results .out
-IF GetOutDaily() THEN OpenOutputDaily(TheProjectType);  // Open Daily results .OUT
-IF GetPart1Mult() THEN OpenPart1MultResults(TheProjectType); // Open Multiple harvests in season .OUT
-END;  // InitializeSimulation
-
-
-PROCEDURE FinalizeSimulation();
-BEGIN
-fRun_close(); // Close Run.out
-IF GetOutDaily() THEN fDaily_close();  // Close Daily.OUT
-IF GetPart1Mult() THEN fHarvest_close();  // Close Multiple harvests in season
-END;  // FinalizeSimulation
-
 
 
 PROCEDURE FinalizeRun1(NrRun : ShortInt;
@@ -1012,7 +986,7 @@ FOR NrRun := 1 TO NrRuns DO
 BEGIN
    InitializeRun(NrRun, TheProjectType);
    FileManagement();
-   FinalizeRun1(NrRun, TheProjectFile, TheProjectType);
+   FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType);
    FinalizeRun2(NrRun, TheProjectType);
 END;
 
