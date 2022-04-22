@@ -302,4 +302,30 @@ function GetListProjectsFile() result(ListProjectsFile)
 
 end function GetListProjectsFile
 
+
+integer(int32) function GetNumberOfProjects()
+
+    integer(int32) :: NrProjects
+    character(len=:), allocatable :: ListProjectsFile
+    logical :: ListProjectFileExist
+
+    integer :: fhandle, rc
+
+    ListProjectsFile = GetListProjectsFile()
+    ListProjectFileExist = FileExists(ListProjectsFile)
+    NrProjects = 0
+
+    if (ListProjectFileExist) then
+        open(newunit=fhandle, file=trim(ListProjectsFile), &
+             status='old', action='read', iostat=rc)
+        read(fhandle, *, iostat=rc)
+        do while (rc /= iostat_end) 
+            NrProjects = NrProjects + 1
+            read(fhandle, *, iostat=rc)
+        end do
+        close(fhandle)
+    end if
+    GetNumberOfProjects = NrProjects
+end function GetNumberOfProjects
+
 end module ac_startunit

@@ -4,7 +4,6 @@ interface
 
 USES Global, interface_global;
 
-FUNCTION GetNumberOfProjects() : integer;
 FUNCTION GetProjectFileName(constref iproject : integer) : string;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
@@ -20,32 +19,6 @@ implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
-
-FUNCTION GetNumberOfProjects() : integer;
-VAR
-    NrProjects : integer;
-    ListProjectsFile : string;
-    ListProjectFileExist : boolean;
-    fhandle : TextFile;
-BEGIN
-    ListProjectsFile := GetListProjectsFile();
-    ListProjectFileExist := FileExists(ListProjectsFile);
-    NrProjects := 0;
-
-    IF ListProjectFileExist THEN
-    BEGIN
-        Assign(fhandle, ListProjectsFile);
-        Reset(fhandle);
-        WHILE NOT EOF(fhandle) DO
-        BEGIN
-            READLN(fhandle);
-            NrProjects := NrProjects + 1;
-        END;
-        Close(fhandle);
-    END;
-
-    GetNumberOfProjects := NrProjects;
-END;
 
 
 FUNCTION GetProjectFileName(constref iproject : integer) : string;

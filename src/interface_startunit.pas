@@ -45,6 +45,9 @@ function GetListProjectsFile() : string;
 function GetListProjectsFile_wrap() : PChar;
     external 'aquacrop' name '__ac_interface_startunit_MOD_getlistprojectsfile_wrap';
 
+function GetNumberOfProjects() : integer;
+        external 'aquacrop' name '__ac_startunit_MOD_getnumberofprojects';
+
 implementation
 
 function GetListProjectsFile() : string;
