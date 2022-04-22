@@ -309,7 +309,6 @@ integer(int32) function GetNumberOfProjects()
     integer(int32) :: NrProjects
     character(len=:), allocatable :: ListProjectsFile
     logical :: ListProjectFileExist
-
     integer :: fhandle, rc
 
     ListProjectsFile = GetListProjectsFile()

@@ -21,7 +21,7 @@ procedure fProjects_open_wrap(
             constref filename_len : integer;
             constref mode_ptr : PChar;
             constref mode_len : integer);
-        external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_open_wrap';
+    external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_open_wrap';
 
 procedure fProjects_write(constref line : string; constref advance : boolean = True);
 
@@ -29,16 +29,16 @@ procedure fProjects_write_wrap(
             constref line_ptr : PChar;
             constref line_len : integer;
             constref advance : boolean);
-        external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_write_wrap';
+    external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_write_wrap';
 
 procedure fProjects_close();
-        external 'aquacrop' name '__ac_startunit_MOD_fprojects_close';
+    external 'aquacrop' name '__ac_startunit_MOD_fprojects_close';
 
 procedure PrepareReport();
-        external 'aquacrop' name '__ac_startunit_MOD_preparereport';
+    external 'aquacrop' name '__ac_startunit_MOD_preparereport';
 
 procedure InitializeTheProgram();
-        external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
+    external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
 
 function GetListProjectsFile() : string;
 
@@ -46,7 +46,7 @@ function GetListProjectsFile_wrap() : PChar;
     external 'aquacrop' name '__ac_interface_startunit_MOD_getlistprojectsfile_wrap';
 
 function GetNumberOfProjects() : integer;
-        external 'aquacrop' name '__ac_startunit_MOD_getnumberofprojects';
+    external 'aquacrop' name '__ac_startunit_MOD_getnumberofprojects';
 
 function GetProjectFileName(constref iproject : integer) : string;
 
