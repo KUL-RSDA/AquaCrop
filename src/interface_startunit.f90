@@ -10,7 +10,8 @@ use ac_kinds, only: int32, &
 
 use ac_startunit, only: fProjects_open, &
                         fProjects_write, &
-                        InitializeProject
+                        InitializeProject, &
+                        WriteProjectsInfo
 
 implicit none
 
@@ -57,5 +58,15 @@ subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
     TheProjectFile = pointer2string(p, strlen)
     call InitializeProject(iproject, TheProjectFile, TheprojectType)
 end subroutine InitializeProject_wrap
+
+subroutine WriteProjectsInfo_wrap(p, strlen)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: line
+
+    line = pointer2string(p, strlen)
+    call WriteProjectsInfo(line)
+end subroutine WriteProjectsInfo_wrap
 
 end module ac_interface_startunit

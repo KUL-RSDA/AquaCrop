@@ -9,8 +9,6 @@ FUNCTION GetNumberOfProjects() : integer;
 FUNCTION GetProjectFileName(constref iproject : integer) : string;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
-PROCEDURE FinalizeTheProgram;
-PROCEDURE WriteProjectsInfo(constref line : string);
 PROCEDURE StartTheProgram;
 
 
@@ -102,28 +100,6 @@ IF (lgth > 0) THEN
       END;
    END;
 END; // GetProjectType
-
-
-
-PROCEDURE FinalizeTheProgram;
-VAR
-    fend : TextFile;
-
-BEGIN
-    fProjects_close();
-
-    // all done
-    Assign(fend,CONCAT(GetPathNameOutp(),'AllDone.OUT'));
-    Rewrite(fend);
-    WRITELN(fend,'All done');
-    Close(fend);
-END;
-
-
-PROCEDURE WriteProjectsInfo(constref line : string);
-BEGIN
-    fProjects_write('');
-END;
 
 
 PROCEDURE StartTheProgram;

@@ -657,4 +657,24 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
 end subroutine InitializeProject
 
+
+subroutine FinalizeTheProgram()
+
+    integer :: fend
+
+    call fProjects_close()
+
+    ! all done
+    open(newunit=fend, file=(GetPathNameOutp() // 'AllDone.OUT'), &
+         status='replace', action='write')
+    write(fend, '(a)') 'All done'
+end subroutine FinalizeTheProgram
+
+
+subroutine WriteProjectsInfo(line)
+    character(len=*), intent(in) :: line
+
+    call fProjects_write('')
+end subroutine WriteProjectsInfo
+
 end module ac_startunit
