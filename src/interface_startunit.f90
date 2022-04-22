@@ -5,10 +5,12 @@ use, intrinsic :: iso_c_binding, only: c_ptr
 use ac_interface_global, only: pointer2string, &
                                string2pointer
 
-use ac_kinds, only: int32
+use ac_kinds, only: int32, &
+                    intEnum
 
 use ac_startunit, only: fProjects_open, &
-                        fProjects_write
+                        fProjects_write, &
+                        InitializeProject
 
 implicit none
 
@@ -42,5 +44,18 @@ subroutine fProjects_write_wrap(line_ptr, line_len, advance)
     advance_f = advance
     call fProjects_write(line, advance_f)
 end subroutine fProjects_write_wrap
+
+
+subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(p, strlen)
+    call InitializeProject(iproject, TheProjectFile, TheprojectType)
+end subroutine InitializeProject_wrap
 
 end module ac_interface_startunit

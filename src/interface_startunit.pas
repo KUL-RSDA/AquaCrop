@@ -40,7 +40,32 @@ procedure PrepareReport();
 procedure InitializeTheProgram();
         external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
 
+procedure InitializeProject(constref iproject : integer;
+                            constref TheProjectFile : string;
+                            constref TheProjectType : repTypeProject);
+
+procedure InitializeProject_wrap(constref iproject : integer;
+                            constref TheProjectFile : PChar;
+                            constref strlen : integer;
+                            constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_startunit_MOD_initializeproject_wrap';
+
 implementation
+
+procedure InitializeProject(constref iproject : integer;
+                            constref TheProjectFile : string;
+                            constref TheProjectType : repTypeProject);
+var
+    int_projecttype : integer;
+    p : PChar;
+    strlen : integer;
+begin
+    int_projecttype := ord(TheProjectType);
+    p := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    InitializeProject_wrap(iproject, p, strlen, int_projecttype);
+end;
+
 
 procedure fProjects_open(constref filename : string; constref mode : string);
 var
