@@ -48,14 +48,28 @@ function GetListProjectsFile_wrap() : PChar;
 function GetNumberOfProjects() : integer;
         external 'aquacrop' name '__ac_startunit_MOD_getnumberofprojects';
 
+function GetProjectFileName(constref iproject : integer) : string;
+
+function GetProjectFileName_wrap(constref iproject : integer) : PChar;
+    external 'aquacrop' name '__ac_interface_startunit_MOD_getprojectfilename_wrap';
+
+
 implementation
 
 function GetListProjectsFile() : string;
 var
     p : PChar;
 begin
-    p := GetListProjectsFile_wrap;
+    p := GetListProjectsFile_wrap();
     GetListProjectsFile := Ansistring(p);
+end;
+
+function GetProjectFilename(constref iproject : integer) : string;
+var
+    p : PChar;
+begin
+    p := GetProjectFilename_wrap(iproject);
+    GetProjectFileName := Ansistring(p);
 end;
 
 procedure fProjects_open(constref filename : string; constref mode : string);

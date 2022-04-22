@@ -4,7 +4,6 @@ interface
 
 USES Global, interface_global;
 
-FUNCTION GetProjectFileName(constref iproject : integer) : string;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 PROCEDURE InitializeProject(constref iproject : integer;
@@ -19,30 +18,6 @@ implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
-
-
-FUNCTION GetProjectFileName(constref iproject : integer) : string;
-VAR
-    jproject : integer;
-    ListProjectsFile, TheProjectFile : string;
-    fhandle : TextFile;
-BEGIN
-    {$I+}  // turn on IO checks
-    ListProjectsFile := GetListProjectsFile();
-    Assert(FileExists(ListProjectsFile), 'ListProjectsFile does not exist');
-
-    Assign(fhandle, ListProjectsFile);
-    Reset(fhandle);
-
-    // Read until we arrive at the selected project
-    FOR jproject := 1 to iproject DO
-    BEGIN
-        READLN(fhandle, TheProjectFile);
-    END;
-    Close(fhandle);
-
-    GetProjectFileName := Trim(TheProjectFile);
-END;
 
 
 PROCEDURE GetProjectType(constref TheProjectFile : string;

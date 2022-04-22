@@ -5,7 +5,8 @@ use ac_kinds, only: int32,&
 
 use iso_fortran_env, only: iostat_end
 
-use ac_global, only: GetPathNameSimul, &
+use ac_global, only: assert, &
+                     GetPathNameSimul, &
                      FileExists, &
                      SetOut1Wabal, &
                      SetOut2Crop, &
@@ -327,5 +328,29 @@ integer(int32) function GetNumberOfProjects()
     end if
     GetNumberOfProjects = NrProjects
 end function GetNumberOfProjects
+
+
+function GetProjectFileName(iproject) result(ProjectFileName_out)
+    integer(int32), intent(in) :: iproject
+    character(len=:), allocatable :: ProjectFileName_out
+
+    integer(int32) :: jproject
+    character(len=:), allocatable :: ListProjectsFile
+    character(len=1025) :: TheProjectFile
+    integer :: fhandle
+
+    ListProjectsFile = GetListProjectsFile()
+    call assert(FileExists(ListProjectsFile), 'ListProjectsFile does not exist')
+
+    open(newunit=fhandle, file=trim(ListProjectsFile), status='old', action='read')
+
+    ! Read until we arrive at the selected project
+    do jproject = 1, iproject 
+        read(fhandle, *) TheProjectFile
+    end do
+    close(fhandle)
+
+    ProjectFileName_out = trim(TheProjectFile)
+end function GetProjectFileName
 
 end module ac_startunit

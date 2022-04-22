@@ -9,7 +9,8 @@ use ac_kinds, only: int32
 
 use ac_startunit, only: fProjects_open, &
                         fProjects_write, &
-                        GetListProjectsFile
+                        GetListProjectsFile, &
+                        GetProjectFilename
 
 implicit none
 
@@ -49,5 +50,13 @@ function GetListProjectsFile_wrap() result(ptr)
 
     ptr = string2pointer(GetListProjectsFile())
 end function GetListProjectsFile_wrap
+
+
+function GetProjectFilename_wrap(iproject) result(ptr)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr) :: ptr
+
+    ptr = string2pointer(GetProjectFilename(iproject))
+end function GetProjectFilename_wrap
 
 end module ac_interface_startunit
