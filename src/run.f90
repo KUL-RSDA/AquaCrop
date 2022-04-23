@@ -358,7 +358,6 @@ use ac_global, only:    AdjustSizeCompartments, &
                         seteciaqua, &
                         setsimulation_swctopsoilconsidered, &
                         settactweedinfested, &
-                     !GDL20220423!   writedailyresults, &
                         setziaqua, &
                         determinerootzonewc
                   
