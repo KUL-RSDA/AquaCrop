@@ -1344,6 +1344,8 @@ procedure GetPotValSF(constref DAP : integer;
                       VAR PotValSF : double);
     external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
 
+procedure AdvanceOneTimeStep();
+    external 'aquacrop' name '__ac_run_MOD_advanceonetimestep';
 
 implementation
 
