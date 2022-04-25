@@ -93,6 +93,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetManagement_Cuttings_Day1, &
                         GetManagement_Cuttings_FirstDayNr, &
                         GetManagement_Cuttings_Generate, &
+                        GetManagement_Cuttings_HarvestEnd, &
                         GetManagement_Cuttings_NrDays, &
                         GetManagement_FertilityStress, &
                         GetNrCompartments, &
@@ -6179,5 +6180,32 @@ end subroutine RecordHarvest
 
 !--------end duplicate--------!
 
+subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    character(len=*), intent(in) :: TheProjectFile
+    integer(intEnum), intent(in) :: TheProjectType
+
+    ! 16. Finalise 
+    if ((GetDayNri()-1) == GetSimulation_ToDayNr()) then
+        ! multiple cuttings
+        if (GetPart1Mult()) then
+            if (GetManagement_Cuttings_HarvestEnd() .eqv. .true.) then
+                ! final harvest at crop maturity
+                call SetNrCut(GetNrCut() + 1)
+                call RecordHarvest(GetNrCut(), &
+                                  (GetDayNri() - GetCrop_Day1()+1))
+            end if
+            call RecordHarvest((9999), &
+                 (GetDayNri() - GetCrop_Day1()+1)) ! last line at end of season
+        end if
+        ! intermediate results
+        if ((GetOutputAggregate() == 2) .or. (GetOutputAggregate() == 3) & ! 10-day and monthly results
+            .and. ((GetDayNri()-1) > GetPreviousDayNr())) then
+            call SetDayNri(GetDayNri()-1)
+            call WriteIntermediatePeriod(TheProjectFile)
+        end if
+        call WriteSimPeriod(NrRun, TheProjectFile)
+    end if
+end subroutine FinalizeRun1
 
 end module ac_run

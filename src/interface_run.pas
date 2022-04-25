@@ -1272,6 +1272,17 @@ procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
 procedure __OpenPart1MultResults(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
 
+procedure FinalizeRun1(constref NrRun : ShortInt;
+                       constref TheProjectFile : string;
+                       constref TheProjectType : repTypeProject);
+
+
+procedure FinalizeRun1_wrap(constref NrRun : ShortInt; 
+                            constref filename_ptr : PChar;
+                            constref filename_len : integer;
+                            constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_finalizerun1_wrap';
+
 procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
     external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
@@ -1997,6 +2008,22 @@ begin;
      p := PChar(str);
      strlen := Length(str);
      SetTheProjectFile_wrap(p, strlen);
+end;
+
+
+procedure FinalizeRun1(constref NrRun : ShortInt;
+                       constref TheProjectFile : string;
+                       constref TheProjectType : repTypeProject);
+var
+    p : PChar;
+    strlen : integer;
+    int_typeproject : integer;
+
+begin
+    p := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    int_typeproject := ord(TheProjectType);
+    FinalizeRun1_wrap(NrRun, p,strlen, int_typeproject);
 end;
 
 

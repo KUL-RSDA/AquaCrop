@@ -8,9 +8,6 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
 
 PROCEDURE AdvanceOneTimeStep();
 
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
 
 PROCEDURE RunSimulation(TheProjectFile_ : string;
@@ -809,36 +806,6 @@ REPEAT
 UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
 
-
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
-BEGIN
-
-(* 16. Finalise *)
-IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
-    BEGIN
-    // multiple cuttings
-    IF GetPart1Mult() THEN
-       BEGIN
-       IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
-          BEGIN  // final harvest at crop maturity
-          SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),(GetDayNri()-GetCrop().Day1+1));
-          END;
-       RecordHarvest((9999),(GetDayNri()-GetCrop().Day1+1)); // last line at end of season
-       END;
-    // intermediate results
-    IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
-        AND ((GetDayNri()-1) > GetPreviousDayNr())) THEN
-        BEGIN
-        SetDayNri(GetDayNri()-1);
-        WriteIntermediatePeriod(TheProjectFile);
-        END;
-    //
-    WriteSimPeriod(NrRun,TheProjectFile);
-    END;
-END; // FinalizeRun1
 
 
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
