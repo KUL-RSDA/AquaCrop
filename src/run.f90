@@ -6073,7 +6073,7 @@ subroutine WriteEvaluationData(DAP)
             if ((roundc(100._dp*CumDepth, mold=1) >= &
                    roundc(100._dp*ZSoil, mold=1)) .or. &
                   (compi == GetNrCompartments())) exit loop
-        end do
+        end do loop
         SWCZsoil = SWCact
     end function SWCZsoil
 
@@ -6798,7 +6798,7 @@ subroutine AdvanceOneTimeStep()
         !!      - GetCrop_Day1()+1), WPi)
     end if
     if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-        !GDL20220423! WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop_Day1()+1))
+        call WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop_Day1()+1))
     end if
 
     ! 15. Prepare Next day 
