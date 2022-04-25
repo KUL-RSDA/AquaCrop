@@ -54,7 +54,27 @@ function GetProjectFileName_wrap(constref iproject : integer) : PChar;
     external 'aquacrop' name '__ac_interface_startunit_MOD_getprojectfilename_wrap';
 
 
+procedure InitializeProject(constref iproject : integer;
+                            constref TheProjectFile : string;
+                            constref TheProjectType : repTypeProject);
+
+procedure InitializeProject_wrap(constref iproject : integer;
+                            constref TheProjectFile : PChar;
+                            constref strlen : integer;
+                            constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_startunit_MOD_initializeproject_wrap';
+
+procedure FinalizeTheProgram;
+        external 'aquacrop' name '__ac_startunit_MOD_finalizetheprogram';
+
+procedure WriteProjectsInfo(constref line : string);
+
+procedure WriteProjectsInfo_wrap(constref p : PChar;
+                            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_startunit_MOD_writeprojectsinfo_wrap';
+
 implementation
+
 
 function GetListProjectsFile() : string;
 var
@@ -71,6 +91,33 @@ begin
     p := GetProjectFilename_wrap(iproject);
     GetProjectFileName := Ansistring(p);
 end;
+
+
+procedure WriteProjectsInfo(constref line : string);
+var
+    p : PChar;
+    strlen : integer;
+begin
+    p := PChar(line);
+    strlen := Length(line);
+    WriteProjectsInfo_wrap(p, strlen);
+end;
+
+
+procedure InitializeProject(constref iproject : integer;
+                            constref TheProjectFile : string;
+                            constref TheProjectType : repTypeProject);
+var
+    int_projecttype : integer;
+    p : PChar;
+    strlen : integer;
+begin
+    int_projecttype := ord(TheProjectType);
+    p := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    InitializeProject_wrap(iproject, p, strlen, int_projecttype);
+end;
+
 
 procedure fProjects_open(constref filename : string; constref mode : string);
 var
