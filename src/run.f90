@@ -6038,7 +6038,7 @@ subroutine WriteEvaluationData(DAP)
             if ((roundc(100._dp*CumDepth, mold=1) >= &
                    roundc(100._dp*ZSoil, mold=1)) .or. &
                   (compi == GetNrCompartments())) exit loop
-        end do
+        end do loop
         SWCZsoil = SWCact
     end function SWCZsoil
 
