@@ -6057,11 +6057,11 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
             if (GetManagement_Cuttings_HarvestEnd() .eqv. .true.) then
                 ! final harvest at crop maturity
                 call SetNrCut(GetNrCut() + 1)
-                call RecordHarvest(GetNrCut(), (GetDayNri() &
-                                   -GetCrop_Day1()+1))
+                call RecordHarvest(GetNrCut(), &
+                                  (GetDayNri() - GetCrop_Day1()+1))
             end if
-            call RecordHarvest((9999), (GetDayNri()&
-                 -GetCrop_Day1()+1)) ! last line at end of season
+            call RecordHarvest((9999), &
+                 (GetDayNri() - GetCrop_Day1()+1)) ! last line at end of season
         end if
         ! intermediate results
         if ((GetOutputAggregate() == 2) .or. (GetOutputAggregate() == 3) & ! 10-day and monthly results
