@@ -1,40 +1,103 @@
 module ac_startunit
 
 use ac_kinds, only: int32,&
-                    int8
+                    int8, &
+                    intEnum, &
+                    dp
 
 use iso_fortran_env, only: iostat_end
 
-use ac_global, only: GetPathNameSimul, &
-                     FileExists, &
-                     SetOut1Wabal, &
-                     SetOut2Crop, &
-                     SetOut3Prof, &
-                     SetOut4Salt, &
-                     SetOut5CompWC, &
-                     SetOut6CompEC, &
-                     SetOut7Clim, &
-                     SetOutDaily, &
-                     SetPart1Mult, &
-                     SetPart2Eval, &
-                     SetOutputAggregate, &
-                     GetOut1Wabal, &
-                     GetOut2Crop, &
-                     GetOut3Prof, &
-                     GetOut4Salt, &
-                     GetOut5CompWC, &
-                     GetOut6CompEC, &
-                     GetOut7Clim, &
-                     GetPathNameOutp, &
-                     GetOutputAggregate, &
-                     GetPart1Mult, &
-                     GetPart2Eval, &
-                     GetOutDaily, &
-                     SetPathNameProg, &
-                     SetPathNameSimul, &
-                     SetPathNameList, &
-                     SetPathNameParam, &
-                     SetPathNameOutp
+use ac_global, only:    GetPathNameSimul, &
+                        CheckFilesInProject, &
+                        ComposeOutputFilename, &
+                        FileExists, &
+                        SetMultipleProjectFile, &
+                        SetOut1Wabal, &
+                        SetOut2Crop, &
+                        SetOut3Prof, &
+                        SetOut4Salt, &
+                        SetOut5CompWC, &
+                        SetOut6CompEC, &
+                        SetOut7Clim, &
+                        SetOutDaily, &
+                        SetPart1Mult, &
+                        SetPart2Eval, &
+                        SetOutputAggregate, &
+                        GetOut1Wabal, &
+                        GetOut2Crop, &
+                        GetOut3Prof, &
+                        GetOut4Salt, &
+                        GetOut5CompWC, &
+                        GetOut6CompEC, &
+                        GetOut7Clim, &
+                        GetPathNameOutp, &
+                        GetOutputAggregate, &
+                        GetPart1Mult, &
+                        GetprojectFile, &
+                        GetPart2Eval, &
+                        GetOutDaily, &
+                        SetMultipleProjectDescription, &
+                        SetPathNameProg, &
+                        SetPathNameSimul, &
+                        SetPathNameList, &
+                        SetPathNameParam, &
+                        SetPathNameOutp, &
+                        SetProjectFile, &
+                        SetProjectFilefull, &
+                        typeproject_typenone, &
+                        typeproject_typepro, &
+                        typeproject_typeprm, &
+                        SetSimulation_MultipleRun, &
+                        SetSimulation_NrRuns, &
+                        GetSimulation_MultipleRunWithKeepSWC, &
+                        GetSimulation_MultipleRunConstZrx, &
+                        GetMultipleProjectFilefull, &
+                        SetSimulation_MultipleRunWithKeepSWC, &
+                        SetSimulation_MultipleRunCOnstZrx, &
+                        SetSimulParam_EvapDeclineFactor, &
+                        SetSimulParam_KcWetBare, &
+                        SetSimulParam_PercCCxHIfinal, &
+                        SetSimulParam_RootPercentZmin, &
+                        SetSimulParam_MaxRootZoneExpansion, &
+                        SetSimulParam_KsShapeFactorRoot, &
+                        SetSimulParam_TAWGermination, &
+                        SetSimulParam_pAdjFAO, &
+                        SetSimulParam_DelayLowOxygen, &
+                        SetSimulParam_ExpFSen, &
+                        SetSimulParam_Beta, &
+                        SetSimulParam_ThicknessTopSWC, &
+                        SetSimulParam_EvapZmax, &
+                        SetSimulParam_RunoffDepth, &
+                        SetSimulParam_CNcorrection, &
+                        SetSimulParam_SaltDiff, &
+                        SetSimulParam_SaltSolub, &
+                        SetSimulParam_RootNrDF, &
+                        SetSimulParam_IniAbstract, &
+                        SetSimulParam_Tmin, &
+                        SetTmin, &
+                        SetSimulParam_Tmax, &
+                        SetSimulParam_GDDMethod, &
+                        SetSimulParam_EffectiveRain_Method, &
+                        SetSimulParam_EffectiveRain_ShowersInDecade, &
+                        SetSimulParam_EffectiveRain_PercentEffRain, &
+                        SetSimulParam_EffectiveRain_RootNrEvap, &
+                        EffectiveRainMethod_Full, &
+                        EffectiveRainMethod_usda, &
+                        EffectiveRainMethod_percentage, &
+                        GetSimulParam_GDDMethod, &
+                        GetPathNameParam, &
+                        GetPathNameList, &
+                        GetProjectfilefull, &
+                        GetFullfilenameProgramParameters, &
+                        GetMultipleProjectFile, &
+                        GetSimulation_NrRuns, &
+                        SetMultipleProjectFilefull, &
+                        GetNumberSimulationRuns, &
+                        SetprojectDescription, &
+                        CheckForKeepSWC, &
+                        SetFullfilenameProgramParameters
+
+use ac_initialsettings, only: InitializeSettings
 
 use ac_run, only: open_file, &
                   write_file
@@ -292,5 +355,326 @@ call GetRequestDailyResults()
 call GetRequestParticularResults()
 call PrepareReport()
 end subroutine InitializeTheProgram
+
+
+subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
+    integer(int32), intent(in) :: iproject
+    character(len=*), intent(in) :: TheProjectFile
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=1025) :: NrString, TestFile, tempstring
+    logical :: CanSelect, ProgramParametersAvailable
+    integer(int32) :: TotalSimRuns
+    integer(int8) :: SimNr
+    character(len=:), allocatable :: FullFileNameProgramParametersLocal
+    logical :: MultipleRunWithKeepSWC_temp
+    real(dp) :: MultipleRunConstZrx_temp
+
+
+    write(NrString, '(i8)') iproject
+    CanSelect = .true.
+
+    ! check if project file exists
+    if (TheProjectType /= typeproject_TypeNone) then
+        TestFile = GetPathNameList() // TheProjectFile
+        if (.not. FileExists(TestFile)) then
+            CanSelect = .false.
+        end if
+    end if
+
+    if ((TheProjectType /= typeproject_TypeNone) .and. CanSelect) then
+        ! run the project after cheking environment and simumation files
+        ! 1. Set No specific project
+        call InitializeSettings()
+        
+        select case(TheProjectType)
+        case(typeproject_TypePRO)
+            ! 2. Assign single project file
+            call SetProjectFile(TheProjectFile)
+            call SetProjectFileFull(GetPathNameList() // GetProjectFile())
+            ! 3. Check if Environment and Simulation Files exist
+            CanSelect = .true.
+            call CheckFilesInProject(GetProjectFileFull(), 1, CanSelect)
+            ! 4. load project parameters
+            if (CanSelect) then
+                call SetProjectDescription('undefined')
+                FullFileNameProgramParametersLocal = GetFullFileNameProgramParameters()
+                call ComposeFileForProgramParameters(GetProjectFile(), &
+                                         FullFileNameProgramParametersLocal)
+                call SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal)
+                call LoadProgramParametersProjectPlugIn(&
+                                GetFullFileNameProgramParameters(), &
+                                ProgramParametersAvailable)
+                call ComposeOutputFileName(GetProjectFile())
+            end if
+        
+        case(typeproject_TypePRM)
+            ! 2. Assign multiple project file
+            call SetMultipleProjectFile(TheProjectFile)
+            call SetMultipleProjectFileFull(GetPathNameList() // &
+                                    GetMultipleProjectFile())
+            ! 2bis. Get number of Simulation Runs
+            call GetNumberSimulationRuns(GetMultipleProjectFileFull(), &
+                                         TotalSimRuns)
+            ! 3. Check if Environment and Simulation Files exist for all runs
+            CanSelect = .true.
+            SimNr = 0_int8
+            do while (CanSelect .and. (SimNr < TotalSimRuns)) 
+                SimNr = SimNr + 1_int8
+                call CheckFilesInProject(GetMultipleProjectFileFull(), &
+                                    int(SimNr, kind=int32), CanSelect)
+            end do
+            
+            ! 4. load project parameters
+            if (CanSelect) then
+                call SetMultipleProjectDescription('undefined')
+                FullFileNameProgramParametersLocal = GetFullFileNameProgramParameters()
+                call ComposeFileForProgramParameters(GetMultipleProjectFile(), &
+                                            FullFileNameProgramParametersLocal)
+                call SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal)
+                call LoadProgramParametersProjectPlugIn(&
+                                GetFullFileNameProgramParameters(), &
+                                ProgramParametersAvailable)
+                call ComposeOutputFileName(GetMultipleProjectFile())
+                call SetSimulation_MultipleRun(.true.)
+                call SetSimulation_NrRuns(TotalSimRuns)
+                MultipleRunWithKeepSWC_temp = GetSimulation_MultipleRunWithKeepSWC()
+                MultipleRunConstZrx_temp = GetSimulation_MultipleRunConstZrx()
+                call CheckForKeepSWC(GetMultipleProjectFileFull(), &
+                                     GetSimulation_NrRuns(), &
+                                     MultipleRunWithKeepSWC_temp, &
+                                     MultipleRunConstZrx_temp)
+                call SetSimulation_MultipleRunWithKeepSWC(MultipleRunWithKeepSWC_temp)
+                call SetSimulation_MultipleRunConstZrx(MultipleRunConstZrx_temp)
+            end if
+        end select
+
+        ! 5. Run
+        if (CanSelect) then
+            if (ProgramParametersAvailable) then
+                write(tempstring, '(4a)') trim(NrString), '. - ', &
+                                         trim(TheProjectFile), &
+                                ' : Project loaded - with its program parameters'
+                call fProjects_write(trim(tempstring))
+            else
+                write(tempstring, '(4a)') trim(NrString), '. - ', &
+                                         trim(TheProjectFile), &
+                       ' : Project loaded - default setting of program parameters'
+                call fProjects_write(trim(tempstring))
+            end if
+        else
+            write(tempstring, '(4a)') trim(NrString), '. - ', &
+                                     trim(TheProjectFile), ' : Project NOT loaded', &
+                            ' - Missing Environment and/or Simulation file(s)'
+            call fProjects_write(trim(tempstring))
+        end if
+    else
+        ! not a project file or missing in the LIST  dirtectory
+        if (CanSelect) then
+            write(tempstring, '(4a)') trim(NrString), '. - ', &
+                                     trim(TheProjectFile), ' : is NOT a project file'
+            call fProjects_write(trim(tempstring))
+        else
+            write(tempstring, '(4a)') trim(NrString), '. - ', &
+                                     trim(TheProjectFile), &
+                                ' : project file NOT available in LIST directory'
+            call fProjects_write(trim(tempstring))
+        end if
+    end if
+
+    contains
+
+    subroutine ComposeFileForProgramParameters(TheFileNameProgram, &
+                    FullFileNameProgramParameters)
+        character(len=*), intent(in) :: TheFileNameProgram
+        character(len=*), intent(inout) :: FullFileNameProgramParameters
+
+        integer(int32) :: TheLength
+        character(len=len(TheFileNameProgram)) :: tempstring
+        character(len=3) :: TheExtension
+
+        FullFileNameProgramParameters = ''
+        TheLength = len(TheFileNameProgram)
+        tempstring = TheFileNameProgram
+        TheExtension = tempstring(TheLength-2:3) ! PRO or PRM
+        ! file name program parameters
+        FullFileNameProgramParameters = tempstring(1:TheLength-3)
+        ! path file progrm parameters
+        FullFileNameProgramParameters = trim(GetPathNameParam()) // &
+                                    FullFileNameProgramParameters
+        ! extension file program parameters
+        if (TheExtension == 'PRO') then
+            FullFileNameProgramParameters = FullFileNameProgramParameters // 'PP1'
+        else
+            FullFileNameProgramParameters = FullFileNameProgramParameters // 'PPn'
+        end if
+    end subroutine ComposeFileForProgramParameters
+
+
+    subroutine LoadProgramParametersProjectPlugIn(&
+                            FullFileNameProgramParameters, &
+                            ProgramParametersAvailable)
+        character(len=*), intent(in) :: FullFileNameProgramParameters
+        logical, intent(inout) :: ProgramParametersAvailable
+
+        integer :: f0
+        integer(int32) :: i, simul_RpZmi, simul_lowox
+        integer(int8) :: effrainperc, effrainshow, effrainrootE, &
+                         simul_saltdiff, simul_saltsolub, simul_root, &
+                        simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
+                        simul_beta, simul_Tswc, simul_EZma, simul_GDD
+        real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, &
+                    simul_expFsen, simul_Tmi, simul_Tma, Tmin_temp
+
+        if (FileExists(FullFileNameProgramParameters)) then
+            ! load set of program parameters
+            ProgramParametersAvailable = .true.
+            open(newunit=f0, file=trim(FullFileNameProgramParameters), &
+                 status='old', action='read')
+            ! crop
+            read(f0, *) simul_ed ! evaporation decline factor in stage 2
+            call SetSimulParam_EvapDeclineFactor(simul_ed)
+            read(f0, *) simul_kcWB ! Kc wet bare soil [-]
+            call SetSimulParam_KcWetBare(simul_kcWB)
+            read(f0, *) simul_pCCHIf 
+                ! CC threshold below which HI no longer increase(% of 100)
+            call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
+            
+            read(f0, *) simul_RpZmi 
+                ! Starting depth of root sine function (% of Zmin)
+            call SetSimulParam_RootPercentZmin(simul_RpZmi)
+            read(f0, *) simul_RZEma ! cm/day
+            call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
+            
+            call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
+            read(f0, *) simul_SFR 
+                ! Shape factor for effect water stress on rootzone expansion
+            call SetSimulParam_KsShapeFactorRoot(simul_SFR)
+            read(f0, *) simul_TAWg  
+                ! Soil water content (% TAW) required at sowing depth for germination
+            
+            call SetSimulParam_TAWGermination(simul_TAWg)
+            read(f0, *) simul_pfao 
+                ! Adjustment factor for FAO-adjustment soil water depletion 
+                ! (p) for various ET
+            call SetSimulParam_pAdjFAO(simul_pfao)
+            read(f0, *) simul_lowox 
+                ! number of days for full effect of deficient aeration
+            
+            call SetSimulParam_DelayLowOxygen(simul_lowox)
+            read(f0, *) simul_expFsen 
+                ! exponent of senescence factor adjusting drop in 
+                ! photosynthetic activity of dying crop
+            call SetSimulParam_ExpFsen(simul_expFsen)
+            read(f0, *) simul_beta 
+                ! Decrease (percentage) of p(senescence) once early 
+                ! canopy senescence is triggered
+            
+            call SetSimulParam_Beta(simul_beta)
+            read(f0, *) simul_Tswc  ! Thickness top soil (cm) in which 
+                                    ! soil water depletion has to be determined
+            call SetSimulParam_ThicknessTopSWC(simul_Tswc)
+            ! field
+            
+            read(f0, *) simul_EZma 
+                ! maximum water extraction depth by soil evaporation [cm]
+            call SetSimulParam_EvapZmax(simul_EZma)
+            ! soil
+            read(f0, *) simul_rod 
+                ! considered depth (m) of soil profile for calculation 
+                ! of mean soil water content
+            
+            call SetSimulParam_RunoffDepth(simul_rod)
+            read(f0, *) i   ! correction CN for Antecedent Moisture Class
+            if (i == 1) then
+                call SetSimulParam_CNcorrection(.true.)
+                
+            else
+                call SetSimulParam_CNcorrection(.false.)
+            end if
+            read(f0, *) simul_saltdiff ! salt diffusion factor (%)
+            call SetSimulParam_SaltDiff(simul_saltdiff)
+            read(f0, *) simul_saltsolub ! salt solubility (g/liter)
+            
+            call SetSimulParam_SaltSolub(simul_saltsolub)
+            read(f0, *) simul_root ! shape factor capillary rise factor
+            call SetSimulParam_RootNrDF(simul_root)
+            call SetSimulParam_IniAbstract(5_int8) 
+                ! fixed in Version 5.0 cannot be changed since linked 
+                ! with equations for CN AMCII and CN converions
+            
+            ! Temperature
+            read(f0, *) Tmin_temp
+                ! Default minimum temperature (degC) if no 
+                ! temperature file is specified
+            call SetTmin(Tmin_temp)
+            call SetSimulParam_Tmin(simul_Tmi)
+            read(f0, *) simul_Tma
+                ! Default maximum temperature (degC) if 
+                ! no temperature file is specified
+            
+            call SetSimulParam_Tmax(simul_Tma)
+            read(f0, *) simul_GDD ! Default method for GDD calculations
+            call SetSimulParam_GDDMethod(simul_GDD)
+            if (GetSimulParam_GDDMethod() > 3) then
+                call SetSimulParam_GDDMethod(3_int8)
+            end if
+            
+            if (GetSimulParam_GDDMethod() < 1) then
+                call SetSimulParam_GDDMethod(1_int8)
+            end if
+            ! Rainfall
+            read(f0, *) i
+            select case(i)
+            case(0)
+                call SetSimulParam_EffectiveRain_Method(&
+                    EffectiveRainMethod_Full)
+            case(1)
+                call SetSimulParam_EffectiveRain_Method(&
+                    EffectiveRainMethod_USDA)
+            case(2)
+                call SetSimulParam_EffectiveRain_Method(&
+                    EffectiveRainMethod_Percentage)
+            end select
+
+            read(f0, *) effrainperc ! IF Method is Percentage
+            call SetSimulParam_EffectiveRain_PercentEffRain(effrainperc)
+            read(f0, *) effrainshow  ! For estimation of surface run-off
+            call SetSimulParam_EffectiveRain_ShowersInDecade(effrainshow)
+
+            read(f0, *) effrainrootE ! For reduction of soil evaporation
+            call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
+
+            ! close
+            close(f0)
+
+        else
+            ! take the default set of program parameters 
+            ! (already read in InitializeSettings)
+            ProgramParametersAvailable = .false.
+        end if
+        end subroutine LoadProgramParametersProjectPlugIn
+
+end subroutine InitializeProject
+
+
+subroutine FinalizeTheProgram()
+
+    integer :: fend
+
+    call fProjects_close()
+
+    ! all done
+    open(newunit=fend, file=(GetPathNameOutp() // 'AllDone.OUT'), &
+         status='replace', action='write')
+    write(fend, '(a)') 'All done'
+end subroutine FinalizeTheProgram
+
+
+subroutine WriteProjectsInfo(line)
+    character(len=*), intent(in) :: line
+
+    call fProjects_write('')
+end subroutine WriteProjectsInfo
 
 end module ac_startunit
