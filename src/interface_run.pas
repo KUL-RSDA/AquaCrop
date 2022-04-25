@@ -1302,6 +1302,9 @@ procedure WriteSimPeriod_wrap(constref NrRun : ShortInt;
     external 'aquacrop' name '__ac_interface_run_MOD_writesimperiod_wrap';
 
 
+procedure WriteEvaluationData(constref DAP : integer);
+        external 'aquacrop' name '__ac_run_MOD_writeevaluationdata';                              
+
 procedure GetZandECgwt(VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
     external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
