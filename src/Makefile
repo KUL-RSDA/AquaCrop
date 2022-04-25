@@ -91,7 +91,11 @@ interface_initialsettings.o: interface_initialsettings.f90 \
 
 run.o: run.f90 \
     global.o \
-    kinds.o
+    kinds.o \
+    rootunit.o \
+    simul.o \
+    tempprocessing.o \
+    climprocessing.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_run.o: interface_run.f90 \
