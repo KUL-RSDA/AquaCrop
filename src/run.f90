@@ -99,6 +99,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetObservationsFilefull, &
                         GetOutputAggregate, &
                         GetOutputName, &
+                        getpart1mult, &
                         GetPathNameOutp, &
                         GetPathNameProg, &
                         GetPathNameSimul, &
@@ -432,6 +433,7 @@ type rep_Transfer
         !! Cumulative sum of assimilates (ton/ha) mobilized form root system
 end type rep_Transfer
 
+character(len=:), allocatable :: TheProjectFile
 
 integer :: fDaily  ! file handle
 integer :: fDaily_iostat  ! IO status
@@ -590,6 +592,22 @@ end function read_file
 
 
 !! Section for Getters and Setters for global variables
+
+! TheProjectFile
+
+function GetTheProjectFile() result(str)
+    !! Getter for the "TheProjectFile" global variable.
+    character(len=len(TheProjectFile)) :: str
+
+    str = TheProjectFile
+end function GetTheProjectFile
+
+subroutine SetTheProjectFile(str)
+    !! Setter for the "TheProjectFile" global variable.
+    character(len=*), intent(in) :: str
+
+    TheProjectFile = str
+end subroutine SetTheProjectFile
 
 ! fDaily
 
@@ -5511,6 +5529,33 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
 end subroutine OpenClimFilesAndGetDataFirstDay
 
 
+subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFileStr
+    integer(intenum), intent(in) :: TheProjectType
+
+    call SetTheProjectFile(trim(TheProjectFileStr))
+    call OpenOutputRun(TheProjectType) ! open seasonal results .out
+    if (GetOutDaily()) then
+        call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT
+    end if
+    if (GetPart1Mult()) then
+        call OpenPart1MultResults(TheProjectType) ! Open Multiple harvests in season .OUT
+    end if
+end subroutine InitializeSimulation
+
+
+subroutine FinalizeSimulation()
+
+    call fRun_close() ! Close Run.out
+    if (GetOutDaily()) then
+        call fDaily_close()  ! Close Daily.OUT
+    end if
+    if (GetPart1Mult()) then
+        call fHarvest_close()  ! Close Multiple harvests in season
+    end if
+end subroutine FinalizeSimulation
+
+
 subroutine WriteSimPeriod(NrRun, TheProjectFile)
     integer(int8), intent(in) :: NrRun
     character(len=*), intent(in) :: TheProjectFile
@@ -5533,7 +5578,6 @@ subroutine WriteSimPeriod(NrRun, TheProjectFile)
                         GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
                         GetSimulation_Storage_Btotal(), TheProjectFile)
 end subroutine WriteSimPeriod
-
 
 
 subroutine WriteIntermediatePeriod(TheProjectFile)
@@ -5878,6 +5922,33 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
 end subroutine InitializeTransferAssimilates 
 
 
+subroutine GetPotValSF(DAP, SumGDDAdjCC, PotValSF)
+    integer(int32), intent(in) :: DAP
+    real(dp), intent(in) :: SumGDDAdjCC
+    real(dp), intent(inout) :: PotValSF
+
+    real(dp) :: RatDGDD
+
+    RatDGDD = 1._dp
+    if ((GetCrop_ModeCycle() == modecycle_GDDays) &
+        .and. (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence())) then
+        RatDGDD = (GetCrop_DaysToSenescence()-GetCrop_DaysToFullCanopySF()) &
+                    /(GetCrop_GDDaysToSenescence()-GetCrop_GDDaysToFullCanopySF())
+    end if
+
+    PotValSF = CCiNoWaterStressSF(DAP, GetCrop_DaysToGermination(), &
+                    GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
+                    GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                    GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
+                    GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
+                    GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(), &
+                    GetGDDCDCTotal(), SumGDDadjCC, RatDGDD, &
+                    GetSimulation_EffectStress_RedCGC(), &
+                    GetSimulation_EffectStress_RedCCX(), &
+                    GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle())
+    PotValSF = 100._dp * (1._dp/GetCCxCropWeedsNoSFstress()) * PotValSF
+end subroutine GetPotValSF 
+
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
 
@@ -5965,6 +6036,56 @@ subroutine InitializeRun(NrRun, TheProjectType)
     end subroutine AdjustCompartments
 
 end subroutine InitializeRun
+
+!--------duplicate nested in AdvanceOneTimeStep and FinalizeRun1----------!
+subroutine RecordHarvest(NrCut, DayInSeason)
+    integer(int32), intent(in) :: DayInSeason
+    integer(int32), intent(in) :: NrCut
+
+    integer(int32) :: Dayi, Monthi, Yeari
+    logical :: NoYear
+    character(len=:), allocatable :: tempstring
+
+    call fHarvest_open(GetfHarvest_filename(), 'a')
+    call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
+    NoYear = (Yeari == 1901)
+    call DetermineDate(GetDayNri(), Dayi, Monthi, Yeari)
+    if (NoYear) then
+        Yeari = 9999
+    end if
+
+    if (NrCut == 9999) then
+        ! last line at end of season
+        write(tempstring, '(4i6, f34.3)') NrCut, Dayi, Monthi, Yeari, &
+                                          GetSumWaBal_Biomass()
+        call fHarvest_write(trim(tempstring), .false.)
+        if (GetCrop_DryMatter() == undef_int) then
+            write(tempstring, '(f20.3)') GetSumWaBal_YieldPart()
+            call fHarvest_write(trim(tempstring))
+        else
+            write(tempstring, '(2f20.3)') GetSumWaBal_YieldPart(), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp))
+            call fHarvest_write(trim(tempstring))
+        end if
+    else
+        write(tempstring, '(6i6, f12.3, 2f10.3)') NrCut, Dayi, Monthi, Yeari, &
+                DayInSeason, GetSumInterval(), (GetSumWaBal_Biomass()-GetBprevSum()), &
+                GetSumWaBal_Biomass(), (GetSumWaBal_YieldPart()-GetYprevSum())
+        call fHarvest_write(trim(tempstring), .false.)
+        if (GetCrop_DryMatter() == undef_int) then
+            write(tempstring, '(f10.3)') GetSumWaBal_YieldPart()
+            call fHarvest_write(trim(tempstring))
+        else
+            write(tempstring, '(3f10.3)') GetSumWaBal_YieldPart(), &
+                ((GetSumWaBal_YieldPart()-GetYprevSum()) &
+                        /(GetCrop_DryMatter()/100._dp)), &
+                (GetSumWaBal_YieldPart()/(GetCrop_DryMatter()/100._dp))
+            call fHarvest_write(trim(tempstring))
+        end if
+    end if
+end subroutine RecordHarvest
+
+!--------end duplicate--------!
 
 
 

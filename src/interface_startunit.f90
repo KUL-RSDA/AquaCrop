@@ -5,10 +5,16 @@ use, intrinsic :: iso_c_binding, only: c_ptr
 use ac_interface_global, only: pointer2string, &
                                string2pointer
 
-use ac_kinds, only: int32
+use ac_kinds, only: int32, &
+                    intEnum
 
 use ac_startunit, only: fProjects_open, &
-                        fProjects_write
+                        fProjects_write, &
+                        GetListProjectsFile, &
+                        GetProjectFilename, &
+                        InitializeProject, &
+                        WriteProjectsInfo, &
+                        GetProjectType
 
 implicit none
 
@@ -49,10 +55,49 @@ subroutine GetProjectType_wrap(p,strlen, TheProjectType)
     integer(int32), intent(in) :: strlen
     integer(intenum), intent(inout) :: TheProjectType
 
+    character(len=strlen) :: TheProjectFile_
+
+    TheProjectFile_ = pointer2string(p, strlen)
+    call GetProjectType(TheProjectFile_, TheProjectType)
+end subroutine GetProjectType_wrap
+
+function GetListProjectsFile_wrap() result(ptr)
+    type(c_ptr) :: ptr
+
+    ptr = string2pointer(GetListProjectsFile())
+end function GetListProjectsFile_wrap
+
+
+function GetProjectFilename_wrap(iproject) result(ptr)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr) :: ptr
+
+    ptr = string2pointer(GetProjectFilename(iproject))
+end function GetProjectFilename_wrap
+
+
+subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intEnum), intent(in) :: TheProjectType
+
     character(len=strlen) :: TheProjectFile
 
     TheProjectFile = pointer2string(p, strlen)
-    call GetProjectType(TheProjectFile, TheProjectType)
-end subroutine GetProjectType_wrap
+
+    call InitializeProject(iproject, TheProjectFile, TheprojectType)
+end subroutine InitializeProject_wrap
+
+subroutine WriteProjectsInfo_wrap(p, strlen)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: line
+
+    line = pointer2string(p, strlen)
+    call WriteProjectsInfo(line)
+end subroutine WriteProjectsInfo_wrap
+
 
 end module ac_interface_startunit
