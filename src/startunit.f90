@@ -1,7 +1,9 @@
 module ac_startunit
 
 use ac_kinds, only: int32,&
-                    int8
+                    int8, &
+                    intEnum, &
+                    dp
 
 use iso_fortran_env, only: iostat_end
 
@@ -34,7 +36,12 @@ use ac_global, only: GetPathNameSimul, &
                      SetPathNameSimul, &
                      SetPathNameList, &
                      SetPathNameParam, &
-                     SetPathNameOutp
+                     SetPathNameOutp, &
+                     typeproject_typenone, &
+                     typeproject_typeprm, &
+                     typeproject_typepro
+
+use ac_initialsettings, only: InitializeSettings
 
 use ac_run, only: open_file, &
                   write_file
@@ -61,6 +68,42 @@ subroutine fProjects_open(filename, mode)
     call open_file(fProjects, filename, mode, fProjects_iostat)
 end subroutine fProjects_open
 
+
+subroutine GetProjectType(TheProjectFile, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFile
+    integer(intenum), intent(inout) :: TheProjectType 
+   
+    integer(int8) :: i
+    integer(int32) :: lgth
+    character(len=3) :: TheExtension
+
+    TheProjectType = typeproject_typenone
+    lgth = len(TheProjectFile)
+    if (lgth > 0) then
+        i = 1
+        do while ((TheProjectFile(i) /= '.') .and. (i < lgth))
+            i = i +1
+        end do
+        if (i == (lgth - 3)) then
+            associate(s => TheProjectFile)
+                TheExtension = s(i+1:i+3)
+            end associate
+           ! TheExtension = TheProjectFileStr(i+1:i+3) 
+!            do i = 1, 3
+!                TheExtension(i) = TheExtension(i)   !uppercase
+!            end do
+            if (TheExtension == 'PRO') then
+                TheProjectType = typeproject_typepro
+            else
+                if (TheExtension == 'PRM') then
+                    TheProjectType = typeproject_typeprm
+                else
+                    TheProjectType = typeproject_typenone
+                end if
+            end if
+        end if
+    end if
+end subroutine GetProjectType
 
 subroutine fProjects_write(line, advance_in)
     !! Writes the given line to the fProjects file.

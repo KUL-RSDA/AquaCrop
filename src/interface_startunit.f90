@@ -43,4 +43,16 @@ subroutine fProjects_write_wrap(line_ptr, line_len, advance)
     call fProjects_write(line, advance_f)
 end subroutine fProjects_write_wrap
 
+
+subroutine GetProjectType_wrap(p,strlen, TheProjectType)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intenum), intent(inout) :: TheProjectType
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(p, strlen)
+    call GetProjectType(TheProjectFile, TheProjectType)
+end subroutine GetProjectType_wrap
+
 end module ac_interface_startunit
