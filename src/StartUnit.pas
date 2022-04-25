@@ -6,7 +6,6 @@ USES Global, interface_global;
 
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
-PROCEDURE StartTheProgram;
 
 
 implementation

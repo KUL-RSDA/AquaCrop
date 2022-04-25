@@ -749,6 +749,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 end subroutine InitializeProject
 
 
+
 subroutine FinalizeTheProgram()
 
     integer :: fend
@@ -768,5 +769,42 @@ subroutine WriteProjectsInfo(line)
     call fProjects_write('')
 end subroutine WriteProjectsInfo
 
+subroutine StartTheProgram()
+
+    integer(int32) :: VARiproject, nprojects
+    character(len=*) :: ListProjectsFile, TheProjectFile
+    logical :: ListProjectFileExist
+    type(repTypeProject) :: TheProjectType
+
+    call InitializeTheProgram
+
+    ListProjectsFile = GetListProjectsFile()
+    ListProjectFileExist = FileExists(ListProjectsFile)
+    nprojects = GetNumberOfProjects()
+
+    if (nprojects > 0) then
+        call WriteProjectsInfo('')
+        call WriteProjectsInfo('Projects handled:')
+    end if
+
+    do iproject = 1, nprojects
+        TheProjectFile = GetProjectFileName(iproject)
+        call GetProjectType(TheProjectFile, TheProjectType)
+        call InitializeProject(iproject, TheProjectFile, TheProjectType)
+        call RunSimulation(TheProjectFile, TheProjectType)
+    end do
+
+    if (nprojects == 0) then
+        call WriteProjectsInfo('')
+        call WriteProjectsInfo('Projects loaded: None')
+        
+        if (ListProjectFileExist) then
+            call WriteProjectsInfo('File ''ListProjects%txt'' does not contain ANY project file')
+        else
+            call WriteProjectsInfo('Missing File ''ListProjects%txt'' in LIST directory')
+        end if
+    end if
+    call FinalizeTheProgram
+end subroutine StartTheProgram
 
 end module ac_startunit
