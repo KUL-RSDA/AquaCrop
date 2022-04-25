@@ -7,7 +7,39 @@ use ac_kinds, only: int32,&
 
 use iso_fortran_env, only: iostat_end
 
-use ac_global, only:    GetPathNameSimul, &
+use ac_global, only:    assert, &
+                        GetPathNameSimul, &
+                        FileExists, &
+                        SetOut1Wabal, &
+                        SetOut2Crop, &
+                        SetOut3Prof, &
+                        SetOut4Salt, &
+                        SetOut5CompWC, &
+                        SetOut6CompEC, &
+                        SetOut7Clim, &
+                        SetOutDaily, &
+                        SetPart1Mult, &
+                        SetPart2Eval, &
+                        SetOutputAggregate, &
+                        GetOut1Wabal, &
+                        GetOut2Crop, &
+                        GetOut3Prof, &
+                        GetOut4Salt, &
+                        GetOut5CompWC, &
+                        GetOut6CompEC, &
+                        GetOut7Clim, &
+                        GetPathNameOutp, &
+                        GetOutputAggregate, &
+                        GetPart1Mult, &
+                        GetPart2Eval, &
+                        GetPathNameList, &
+                        GetOutDaily, &
+                        SetPathNameProg, &
+                        SetPathNameSimul, &
+                        SetPathNameList, &
+                        SetPathNameParam, &
+                        SetPathNameOutp, &
+                        GetPathNameSimul, &
                         CheckFilesInProject, &
                         ComposeOutputFilename, &
                         FileExists, &
@@ -98,6 +130,7 @@ use ac_global, only:    GetPathNameSimul, &
                         SetFullfilenameProgramParameters
 
 use ac_initialsettings, only: InitializeSettings
+
 
 use ac_run, only: open_file, &
                   write_file
@@ -344,17 +377,75 @@ end subroutine PrepareReport
 subroutine InitializeTheProgram()
 
 !Decimalseparator = '.' GDL, 20220413, not used?
-call SetPathNameOutp('OUTP/')
-call SetPathNameSimul('SIMUL/')
-call SetPathNameList('LIST/')
-call SetPathNameParam('PARAM/')
-call SetPathNameProg('')
+    call SetPathNameOutp('OUTP/')
+    call SetPathNameSimul('SIMUL/')
+    call SetPathNameList('LIST/')
+    call SetPathNameParam('PARAM/')
+    call SetPathNameProg('')
 
-call GetTimeAggregationResults()
-call GetRequestDailyResults()
-call GetRequestParticularResults()
-call PrepareReport()
+    call GetTimeAggregationResults()
+    call GetRequestDailyResults()
+    call GetRequestParticularResults()
+    call PrepareReport()
 end subroutine InitializeTheProgram
+
+
+function GetListProjectsFile() result(ListProjectsFile)
+    character(len=:), allocatable :: ListProjectsFile
+
+    ListProjectsFile = GetPathNameList() // 'ListProjects.txt'
+
+end function GetListProjectsFile
+
+
+integer(int32) function GetNumberOfProjects()
+
+    integer(int32) :: NrProjects
+    character(len=:), allocatable :: ListProjectsFile
+    logical :: ListProjectFileExist
+    integer :: fhandle, rc
+
+    ListProjectsFile = GetListProjectsFile()
+    ListProjectFileExist = FileExists(ListProjectsFile)
+    NrProjects = 0
+
+    if (ListProjectFileExist) then
+        open(newunit=fhandle, file=trim(ListProjectsFile), &
+             status='old', action='read', iostat=rc)
+        read(fhandle, *, iostat=rc)
+        do while (rc /= iostat_end) 
+            NrProjects = NrProjects + 1
+            read(fhandle, *, iostat=rc)
+        end do
+        close(fhandle)
+    end if
+    GetNumberOfProjects = NrProjects
+end function GetNumberOfProjects
+
+
+function GetProjectFileName(iproject) result(ProjectFileName_out)
+    integer(int32), intent(in) :: iproject
+    character(len=:), allocatable :: ProjectFileName_out
+
+    integer(int32) :: jproject
+    character(len=:), allocatable :: ListProjectsFile
+    character(len=1025) :: TheProjectFile
+    integer :: fhandle
+
+    ListProjectsFile = GetListProjectsFile()
+    call assert(FileExists(ListProjectsFile), 'ListProjectsFile does not exist')
+
+    open(newunit=fhandle, file=trim(ListProjectsFile), status='old', action='read')
+
+    ! Read until we arrive at the selected project
+    do jproject = 1, iproject 
+        read(fhandle, *) TheProjectFile
+    end do
+    close(fhandle)
+
+    ProjectFileName_out = trim(TheProjectFile)
+end function GetProjectFileName
+
 
 
 subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
@@ -676,5 +767,6 @@ subroutine WriteProjectsInfo(line)
 
     call fProjects_write('')
 end subroutine WriteProjectsInfo
+
 
 end module ac_startunit

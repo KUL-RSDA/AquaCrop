@@ -4,9 +4,6 @@ interface
 
 USES Global, interface_global;
 
-FUNCTION GetListProjectsFile() : string;
-FUNCTION GetNumberOfProjects() : integer;
-FUNCTION GetProjectFileName(constref iproject : integer) : string;
 PROCEDURE GetProjectType(constref TheProjectFile : string;
                          VAR TheProjectType : repTypeProject);
 PROCEDURE StartTheProgram;
@@ -16,62 +13,6 @@ implementation
 
 USES SysUtils,InitialSettings,interface_initialsettings,Run,interface_run, interface_startunit;
 
-
-FUNCTION GetListProjectsFile() : string;
-BEGIN
-    GetListProjectsFile := CONCAT(GetPathNameList(),'ListProjects.txt');
-END;
-
-
-FUNCTION GetNumberOfProjects() : integer;
-VAR
-    NrProjects : integer;
-    ListProjectsFile : string;
-    ListProjectFileExist : boolean;
-    fhandle : TextFile;
-BEGIN
-    ListProjectsFile := GetListProjectsFile();
-    ListProjectFileExist := FileExists(ListProjectsFile);
-    NrProjects := 0;
-
-    IF ListProjectFileExist THEN
-    BEGIN
-        Assign(fhandle, ListProjectsFile);
-        Reset(fhandle);
-        WHILE NOT EOF(fhandle) DO
-        BEGIN
-            READLN(fhandle);
-            NrProjects := NrProjects + 1;
-        END;
-        Close(fhandle);
-    END;
-
-    GetNumberOfProjects := NrProjects;
-END;
-
-
-FUNCTION GetProjectFileName(constref iproject : integer) : string;
-VAR
-    jproject : integer;
-    ListProjectsFile, TheProjectFile : string;
-    fhandle : TextFile;
-BEGIN
-    {$I+}  // turn on IO checks
-    ListProjectsFile := GetListProjectsFile();
-    Assert(FileExists(ListProjectsFile), 'ListProjectsFile does not exist');
-
-    Assign(fhandle, ListProjectsFile);
-    Reset(fhandle);
-
-    // Read until we arrive at the selected project
-    FOR jproject := 1 to iproject DO
-    BEGIN
-        READLN(fhandle, TheProjectFile);
-    END;
-    Close(fhandle);
-
-    GetProjectFileName := Trim(TheProjectFile);
-END;
 
 
 PROCEDURE GetProjectType(constref TheProjectFile : string;

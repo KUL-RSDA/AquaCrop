@@ -21,7 +21,7 @@ procedure fProjects_open_wrap(
             constref filename_len : integer;
             constref mode_ptr : PChar;
             constref mode_len : integer);
-        external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_open_wrap';
+    external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_open_wrap';
 
 procedure fProjects_write(constref line : string; constref advance : boolean = True);
 
@@ -29,16 +29,30 @@ procedure fProjects_write_wrap(
             constref line_ptr : PChar;
             constref line_len : integer;
             constref advance : boolean);
-        external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_write_wrap';
+    external 'aquacrop' name '__ac_interface_startunit_MOD_fprojects_write_wrap';
 
 procedure fProjects_close();
-        external 'aquacrop' name '__ac_startunit_MOD_fprojects_close';
+    external 'aquacrop' name '__ac_startunit_MOD_fprojects_close';
 
 procedure PrepareReport();
-        external 'aquacrop' name '__ac_startunit_MOD_preparereport';
+    external 'aquacrop' name '__ac_startunit_MOD_preparereport';
 
 procedure InitializeTheProgram();
-        external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
+    external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
+
+function GetListProjectsFile() : string;
+
+function GetListProjectsFile_wrap() : PChar;
+    external 'aquacrop' name '__ac_interface_startunit_MOD_getlistprojectsfile_wrap';
+
+function GetNumberOfProjects() : integer;
+    external 'aquacrop' name '__ac_startunit_MOD_getnumberofprojects';
+
+function GetProjectFileName(constref iproject : integer) : string;
+
+function GetProjectFileName_wrap(constref iproject : integer) : PChar;
+    external 'aquacrop' name '__ac_interface_startunit_MOD_getprojectfilename_wrap';
+
 
 procedure InitializeProject(constref iproject : integer;
                             constref TheProjectFile : string;
@@ -60,6 +74,24 @@ procedure WriteProjectsInfo_wrap(constref p : PChar;
         external 'aquacrop' name '__ac_interface_startunit_MOD_writeprojectsinfo_wrap';
 
 implementation
+
+
+function GetListProjectsFile() : string;
+var
+    p : PChar;
+begin
+    p := GetListProjectsFile_wrap();
+    GetListProjectsFile := Ansistring(p);
+end;
+
+function GetProjectFilename(constref iproject : integer) : string;
+var
+    p : PChar;
+begin
+    p := GetProjectFilename_wrap(iproject);
+    GetProjectFileName := Ansistring(p);
+end;
+
 
 procedure WriteProjectsInfo(constref line : string);
 var

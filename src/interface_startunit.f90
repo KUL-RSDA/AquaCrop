@@ -10,6 +10,8 @@ use ac_kinds, only: int32, &
 
 use ac_startunit, only: fProjects_open, &
                         fProjects_write, &
+                        GetListProjectsFile, &
+                        GetProjectFilename, &
                         InitializeProject, &
                         WriteProjectsInfo
 
@@ -47,6 +49,21 @@ subroutine fProjects_write_wrap(line_ptr, line_len, advance)
 end subroutine fProjects_write_wrap
 
 
+function GetListProjectsFile_wrap() result(ptr)
+    type(c_ptr) :: ptr
+
+    ptr = string2pointer(GetListProjectsFile())
+end function GetListProjectsFile_wrap
+
+
+function GetProjectFilename_wrap(iproject) result(ptr)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr) :: ptr
+
+    ptr = string2pointer(GetProjectFilename(iproject))
+end function GetProjectFilename_wrap
+
+
 subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
     integer(int32), intent(in) :: iproject
     type(c_ptr), intent(in) :: p
@@ -68,5 +85,6 @@ subroutine WriteProjectsInfo_wrap(p, strlen)
     line = pointer2string(p, strlen)
     call WriteProjectsInfo(line)
 end subroutine WriteProjectsInfo_wrap
+
 
 end module ac_interface_startunit
