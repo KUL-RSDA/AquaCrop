@@ -4,10 +4,7 @@ interface
 
 uses Global, interface_global, interface_run, interface_rootunit, interface_tempprocessing, interface_climprocessing, interface_simul, interface_inforesults;
 
-PROCEDURE InitializeSimulation(TheProjectFile_ : string;
-                               TheProjectType : repTypeProject);
 
-PROCEDURE FinalizeSimulation();
 
 PROCEDURE AdvanceOneTimeStep();
 
@@ -19,10 +16,6 @@ PROCEDURE RunSimulation(TheProjectFile_ : string;
 implementation
 
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
-
-var  TheProjectFile : string;
-
-
 
 
 // WRITING RESULTS section ================================================= START ====================
@@ -293,79 +286,6 @@ IF GetOut7Clim() THEN
    fDaily_write(tempstring);
    END;
 END; (* WriteDailyResults *)
-
-
-
-PROCEDURE WriteEvaluationData(DAP : INTEGER);
-                              
-VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
-    Nr,Di,Mi,Yi: INTEGER;
-    TempString : string;
-    DayNrEval_temp : INTEGER;
-
-    FUNCTION SWCZsoil(Zsoil : double) : double;
-    VAR compi : INTEGER;
-        CumDepth,Factor,frac_value,SWCact : double;
-    BEGIN
-    CumDepth := 0;
-    compi := 0;
-    SWCact := 0;
-    REPEAT
-      compi := compi + 1;
-      CumDepth := CumDepth + GetCompartment_Thickness(compi);
-      IF (CumDepth <= Zsoil)
-         THEN Factor := 1
-         ELSE BEGIN
-              frac_value := Zsoil - (CumDepth - GetCompartment_Thickness(compi));
-              IF (frac_value > 0)
-                 THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                 ELSE Factor := 0;
-              END;
-      SWCact := SWCact + Factor * 10 * (GetCompartment_Theta(compi)*100) * GetCompartment_Thickness(compi);
-
-    UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = GetNrCompartments()));
-    SWCZsoil := SWCact;
-    END; (* SWCZsoil *)
-
-BEGIN
-//1. Prepare field data
-CCfield := undef_int;
-CCstd := undef_int;
-Bfield := undef_int;
-Bstd := undef_int;
-SWCfield := undef_int;
-SWCstd := undef_int;
-IF ((GetLineNrEval() <> undef_int) AND (GetDayNrEval() = GetDayNri())) THEN
-   BEGIN
-   // read field data
-   fObs_rewind();
-   FOR Nr := 1 TO (GetLineNrEval() -1) DO fObs_read();
-   TempString := fObs_read();
-   ReadStr(TempString,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
-   // get Day Nr for next field data
-   fObs_read();
-   IF (fObs_eof())
-      THEN BEGIN
-           SetLineNrEval(undef_int);
-           fObs_close();
-           END
-      ELSE BEGIN
-           SetLineNrEval(GetLineNrEval() + 1);
-           ReadStr(TempString,DayNrEval_temp);
-           SetDayNrEval(DayNrEval_temp);
-           SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
-           END;
-   END;
-//2. Date
-DetermineDate(GetDayNri(),Di,Mi,Yi);
-IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
-IF (GetStageCode() = 0) THEN DAP := undef_int; // before or after cropping
-//3. Write simulation results and field data
-SWCi := SWCZsoil(GetZeval());
-WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
-           GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
-fEval_write(TempString);
-END; (* WriteEvaluationData *)
 
 
 // WRITING RESULTS section ================================================= END ====================
@@ -824,7 +744,7 @@ IF ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= GetCrop().DaysToFullCanop
         END
    ELSE GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1), SumGDDAdjCC, PotValSF);
 //14.d Print ---------------------------------------
-IF (GetOutputAggregate() > 0) THEN CheckForPrint(TheProjectFile);
+IF (GetOutputAggregate() > 0) THEN CheckForPrint(GetTheProjectFile());
 IF GetOutDaily() THEN WriteDailyResults((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1),WPi);
 IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop().Day1+1));
 
@@ -886,23 +806,6 @@ REPEAT
 UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
 
-
-PROCEDURE InitializeSimulation(TheProjectFile_ : string;
-                               TheProjectType : repTypeProject);
-BEGIN
-TheProjectFile := TheProjectFile_;
-OpenOutputRun(TheProjectType); // open seasonal results .out
-IF GetOutDaily() THEN OpenOutputDaily(TheProjectType);  // Open Daily results .OUT
-IF GetPart1Mult() THEN OpenPart1MultResults(TheProjectType); // Open Multiple harvests in season .OUT
-END;  // InitializeSimulation
-
-
-PROCEDURE FinalizeSimulation();
-BEGIN
-fRun_close(); // Close Run.out
-IF GetOutDaily() THEN fDaily_close();  // Close Daily.OUT
-IF GetPart1Mult() THEN fHarvest_close();  // Close Multiple harvests in season
-END;  // FinalizeSimulation
 
 
 PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
@@ -977,7 +880,7 @@ FOR NrRun := 1 TO NrRuns DO
 BEGIN
    InitializeRun(NrRun, TheProjectType);
    FileManagement();
-   FinalizeRun1(NrRun, TheProjectFile, TheProjectType);
+   FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType);
    FinalizeRun2(NrRun, TheProjectType);
 END;
 
