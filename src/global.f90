@@ -1059,6 +1059,18 @@ end interface roundc
 contains
 
 
+subroutine assert(condition, message)
+    !! Prints an error message if the condition is not met,
+    !! and then shuts down the whole program.
+    logical, intent(in) :: condition
+    character(len=*), intent(in) :: message
+    if (.not. condition) then
+        print *, 'ABORT: ', message
+        stop 1
+    end if
+end subroutine assert
+
+
 function roundc_int32(x, mold) result(y)
     !! Returns commercial rounds, following Pascal's banker's rules for rounding
     real(dp), intent(in) :: x
@@ -7165,6 +7177,7 @@ subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgr
     end if
 end subroutine GetFileForProgramParameters
     
+
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 
@@ -7197,6 +7210,7 @@ subroutine GlobalZero(SumWabal)
         GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
     end do
 end subroutine GlobalZero 
+
 
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
