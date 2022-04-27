@@ -8,10 +8,6 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
 
 PROCEDURE AdvanceOneTimeStep();
 
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
-
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 
