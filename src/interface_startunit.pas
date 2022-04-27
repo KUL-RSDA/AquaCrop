@@ -116,7 +116,7 @@ procedure GetProjectType(constref TheProjectFile_: string;
 var
     p : PChar;
     strlen : integer;
-    int_typeproject : integer;
+    int_projecttype : integer;
 
 begin
     p := PChar(TheProjectFile_);
