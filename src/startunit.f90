@@ -130,15 +130,15 @@ use ac_global, only:    assert, &
                         SetFullfilenameProgramParameters
 
 use ac_initialsettings, only: InitializeSettings
-
-
 use ac_run, only: open_file, &
                   write_file
-
+use ac_utils, only: upper_case
 implicit none
+
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
+
 
 contains
 
@@ -311,29 +311,28 @@ subroutine GetTimeAggregationResults()
     end if
 end subroutine GetTimeAggregationResults
 
-subroutine GetProjectType(TheProjectFile_, TheProjectType)
-    character(len=*), intent(in) :: TheProjectFile_
+
+subroutine GetProjectType(TheProjectFile, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFile
     integer(intenum), intent(inout) :: TheProjectType 
    
-    integer(int8) :: i
-    integer(int32) :: lgth
+    integer :: i
+    integer :: lgth
     character(len=3) :: TheExtension
 
     TheProjectType = typeproject_typenone
-    lgth = len(TheProjectFile_)
+    lgth = len(TheProjectFile)
+
     if (lgth > 0) then
         i = 1
-        do while ((TheProjectFile_(i) /= '.') .and. (i < lgth))
-            i = i +1
+        do while ((TheProjectFile(i:i) /= '.') .and. (i < lgth))
+            i = i + 1
         end do
+
         if (i == (lgth - 3)) then
-            associate(s => TheProjectFile_)
-                TheExtension = s(i+1:i+3)
-            end associate
-           ! TheExtension = TheProjectFile_(i+1:i+3) 
-!            do i = 1, 3
-!                TheExtension(i) = TheExtension(i)   !uppercase
-!            end do
+            TheExtension = TheProjectFile(i+1:i+3)
+            call upper_case(TheExtension)
+
             if (TheExtension == 'PRO') then
                 TheProjectType = typeproject_typepro
             else
@@ -346,6 +345,7 @@ subroutine GetProjectType(TheProjectFile_, TheProjectType)
         end if
     end if
 end subroutine GetProjectType
+
 
 subroutine PrepareReport()
 
