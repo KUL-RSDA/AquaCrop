@@ -8,11 +8,6 @@ uses Global, interface_global, interface_run, interface_rootunit, interface_temp
 
 PROCEDURE AdvanceOneTimeStep();
 
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
-PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
-
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 
@@ -289,79 +284,6 @@ IF GetOut7Clim() THEN
    fDaily_write(tempstring);
    END;
 END; (* WriteDailyResults *)
-
-
-
-PROCEDURE WriteEvaluationData(DAP : INTEGER);
-                              
-VAR SWCi,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd : double;
-    Nr,Di,Mi,Yi: INTEGER;
-    TempString : string;
-    DayNrEval_temp : INTEGER;
-
-    FUNCTION SWCZsoil(Zsoil : double) : double;
-    VAR compi : INTEGER;
-        CumDepth,Factor,frac_value,SWCact : double;
-    BEGIN
-    CumDepth := 0;
-    compi := 0;
-    SWCact := 0;
-    REPEAT
-      compi := compi + 1;
-      CumDepth := CumDepth + GetCompartment_Thickness(compi);
-      IF (CumDepth <= Zsoil)
-         THEN Factor := 1
-         ELSE BEGIN
-              frac_value := Zsoil - (CumDepth - GetCompartment_Thickness(compi));
-              IF (frac_value > 0)
-                 THEN Factor := frac_value/GetCompartment_Thickness(compi)
-                 ELSE Factor := 0;
-              END;
-      SWCact := SWCact + Factor * 10 * (GetCompartment_Theta(compi)*100) * GetCompartment_Thickness(compi);
-
-    UNTIL ((ROUND(100*CumDepth) >= ROUND(100*ZSoil)) OR (compi = GetNrCompartments()));
-    SWCZsoil := SWCact;
-    END; (* SWCZsoil *)
-
-BEGIN
-//1. Prepare field data
-CCfield := undef_int;
-CCstd := undef_int;
-Bfield := undef_int;
-Bstd := undef_int;
-SWCfield := undef_int;
-SWCstd := undef_int;
-IF ((GetLineNrEval() <> undef_int) AND (GetDayNrEval() = GetDayNri())) THEN
-   BEGIN
-   // read field data
-   fObs_rewind();
-   FOR Nr := 1 TO (GetLineNrEval() -1) DO fObs_read();
-   TempString := fObs_read();
-   ReadStr(TempString,Nr,CCfield,CCstd,Bfield,Bstd,SWCfield,SWCstd);
-   // get Day Nr for next field data
-   fObs_read();
-   IF (fObs_eof())
-      THEN BEGIN
-           SetLineNrEval(undef_int);
-           fObs_close();
-           END
-      ELSE BEGIN
-           SetLineNrEval(GetLineNrEval() + 1);
-           ReadStr(TempString,DayNrEval_temp);
-           SetDayNrEval(DayNrEval_temp);
-           SetDayNrEval(GetDayNr1Eval() + GetDayNrEval() -1);
-           END;
-   END;
-//2. Date
-DetermineDate(GetDayNri(),Di,Mi,Yi);
-IF (GetClimRecord_FromY() = 1901) THEN Yi := Yi - 1901 + 1;
-IF (GetStageCode() = 0) THEN DAP := undef_int; // before or after cropping
-//3. Write simulation results and field data
-SWCi := SWCZsoil(GetZeval());
-WriteStr(TempString, Di:6,Mi:6,Yi:6,DAP:6,GetStageCode():5,(GetCCiActual()*100):8:1,CCfield:8:1,CCstd:8:1,
-           GetSumWaBal_Biomass:10:3,Bfield:10:3,Bstd:10:3,SWCi:8:1,SWCfield:8:1,SWCstd:8:1);
-fEval_write(TempString);
-END; (* WriteEvaluationData *)
 
 
 // WRITING RESULTS section ================================================= END ====================
@@ -882,90 +804,6 @@ REPEAT
 UNTIL ((GetDayNri()-1) = RepeatToDay);
 END; // FileManagement
 
-
-PROCEDURE FinalizeRun1(NrRun : ShortInt;
-                       TheProjectFile : string;
-                       TheProjectType : repTypeProject);
-BEGIN
-
-(* 16. Finalise *)
-IF  ((GetDayNri()-1) = GetSimulation_ToDayNr()) THEN
-    BEGIN
-    // multiple cuttings
-    IF GetPart1Mult() THEN
-       BEGIN
-       IF (GetManagement_Cuttings_HarvestEnd() = true) THEN
-          BEGIN  // final harvest at crop maturity
-          SetNrCut(GetNrCut() + 1);
-          RecordHarvest(GetNrCut(),(GetDayNri()-GetCrop().Day1+1));
-          END;
-       RecordHarvest((9999),(GetDayNri()-GetCrop().Day1+1)); // last line at end of season
-       END;
-    // intermediate results
-    IF ((GetOutputAggregate() = 2) OR (GetOutputAggregate() = 3) // 10-day and monthly results
-        AND ((GetDayNri()-1) > GetPreviousDayNr())) THEN
-        BEGIN
-        SetDayNri(GetDayNri()-1);
-        WriteIntermediatePeriod(TheProjectFile);
-        END;
-    //
-    WriteSimPeriod(NrRun,TheProjectFile);
-    END;
-END; // FinalizeRun1
-
-
-PROCEDURE FinalizeRun2(NrRun : ShortInt; TheProjectType : repTypeProject);
-
-    PROCEDURE CloseEvalDataPerformEvaluation (NrRun : ShortInt);
-    VAR totalnameEvalStat,StrNr : string;
-
-    BEGIN  // CloseEvalDataPerformEvaluation
-    // 1. Close Evaluation data file  and file with observations
-    fEval_close();
-    IF (GetLineNrEval() <> undef_int) THEN fObs_close();
-    // 2. Specify File name Evaluation of simulation results - Statistics
-    StrNr := '';
-    IF (GetSimulation_MultipleRun() AND (GetSimulation_NrRuns() > 1)) THEN Str(NrRun:3,StrNr);
-    CASE TheProjectType OF
-      TypePRO : totalnameEvalStat := CONCAT(GetPathNameOutp(),GetOutputName(),'PROevaluation.OUT');
-      TypePRM : BEGIN
-                Str(NrRun:3,StrNr);
-                totalnameEvalStat := CONCAT(GetPathNameOutp(),GetOutputName(),'PRM',Trim(StrNr),'evaluation.OUT');
-                END;
-      end;
-    // 3. Create Evaluation statistics file
-    WriteAssessmentSimulation(StrNr,totalnameEvalStat,TheProjectType,
-                              GetSimulation_FromDayNr(),GetSimulation_ToDayNr());
-    // 4. Delete Evaluation data file
-    fEval_erase();
-    END; // CloseEvalDataPerformEvaluation
-
-
-    PROCEDURE CloseClimateFiles();
-    BEGIN
-    IF (GetEToFile() <> '(None)') THEN fEToSIM_close();
-    IF (GetRainFile() <> '(None)') THEN fRainSIM_close();
-    IF (GetTemperatureFile() <> '(None)') THEN fTempSIM_close();
-    END; // CloseClimateFiles
-
-
-    PROCEDURE CloseIrrigationFile();
-    BEGIN
-    IF ((GetIrriMode() = Manual) OR (GetIrriMode() = Generate)) THEN fIrri_close();
-    END; // CloseIrrigationFile
-
-
-    PROCEDURE CloseManagementFile();
-    BEGIN
-    IF GetManagement_Cuttings_Considered() THEN fCuts_close();
-    END; // CloseManagementFile
-
-BEGIN
-CloseClimateFiles();
-CloseIrrigationFile();
-CloseManagementFile();
-IF (GetPart2Eval() AND (GetObservationsFile() <> '(None)')) THEN CloseEvalDataPerformEvaluation(NrRun);
-END; // FinalizeRun2
 
 
 PROCEDURE RunSimulation(TheProjectFile_ : string;
