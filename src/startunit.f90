@@ -130,21 +130,21 @@ use ac_global, only:    assert, &
                         SetFullfilenameProgramParameters
 
 use ac_initialsettings, only: InitializeSettings
-
-
 use ac_run, only: open_file, &
                   write_file
+
+use ac_utils, only: upper_case
 
 implicit none
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
 
+
 contains
 
 
 !! Section for Getters and Setters for global variables
-
 ! fProjects
 
 subroutine fProjects_open(filename, mode)
@@ -156,7 +156,6 @@ subroutine fProjects_open(filename, mode)
 
     call open_file(fProjects, filename, mode, fProjects_iostat)
 end subroutine fProjects_open
-
 
 subroutine fProjects_write(line, advance_in)
     !! Writes the given line to the fProjects file.
@@ -311,6 +310,39 @@ subroutine GetTimeAggregationResults()
         close(f0)
     end if
 end subroutine GetTimeAggregationResults
+
+
+subroutine GetProjectType(TheProjectFile, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFile
+    integer(intenum), intent(inout) :: TheProjectType 
+   
+    integer :: i
+    integer :: lgth
+    character(len=3) :: TheExtension
+
+    TheProjectType = typeproject_typenone
+    lgth = len(TheProjectFile)
+    if (lgth > 0) then
+        i = 1
+        do while ((TheProjectFile(i:i) /= '.') .and. (i < lgth))
+            i = i + 1
+        end do
+        if (i == (lgth - 3)) then
+            TheExtension = TheProjectFile(i+1:i+3)
+            call upper_case(TheExtension)
+            if (TheExtension == 'PRO') then
+                TheProjectType = typeproject_typepro
+            else
+                if (TheExtension == 'PRM') then
+                    TheProjectType = typeproject_typeprm
+                else
+                    TheProjectType = typeproject_typenone
+                end if
+            end if
+        end if
+    end if
+end subroutine GetProjectType
+
 
 subroutine PrepareReport()
 
@@ -771,15 +803,15 @@ end subroutine WriteProjectsInfo
 
 subroutine StartTheProgram()
 
-    integer(int32) :: VARiproject, nprojects
-    character(len=*) :: ListProjectsFile, TheProjectFile
+    integer(int32) :: iproject, nprojects
+    character(len=1025) :: ListProjectsFile, TheProjectFile
     logical :: ListProjectFileExist
-    type(repTypeProject) :: TheProjectType
+    integer(int8) :: TheProjectType
 
     call InitializeTheProgram
 
     ListProjectsFile = GetListProjectsFile()
-    ListProjectFileExist = FileExists(ListProjectsFile)
+    ListProjectFileExist = FileExists(trim(ListProjectsFile))
     nprojects = GetNumberOfProjects()
 
     if (nprojects > 0) then
@@ -799,9 +831,9 @@ subroutine StartTheProgram()
         call WriteProjectsInfo('Projects loaded: None')
         
         if (ListProjectFileExist) then
-            call WriteProjectsInfo('File ''ListProjects%txt'' does not contain ANY project file')
+            call WriteProjectsInfo('File ''ListProjects.txt'' does not contain ANY project file')
         else
-            call WriteProjectsInfo('Missing File ''ListProjects%txt'' in LIST directory')
+            call WriteProjectsInfo('Missing File ''ListProjects.txt'' in LIST directory')
         end if
     end if
     call FinalizeTheProgram

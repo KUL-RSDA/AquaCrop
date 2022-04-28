@@ -611,6 +611,13 @@ procedure __WriteTitleDailyResults(constref TheProjectType : integer;
                            constref TheNrRun : shortint);
         external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
+procedure FinalizeRun2(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+
+procedure __FinalizeRun2(constref NrRun : ShortInt; 
+                        constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_run_MOD_finalizerun2';
+
 procedure fEToSIM_open(constref filename : string; constref mode : string);
 
 procedure fEToSIM_open_wrap(
@@ -1898,6 +1905,15 @@ begin
     __WriteTitleDailyResults(int_typeproject, TheNrRun);
 end;
 
+procedure FinalizeRun2(constref NrRun : Shortint;
+                          constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __FinalizeRun2(int_typeproject, NrRun);
+end;
+
 function GetPreviousSum() : rep_sum;
 begin;
     GetPreviousSum.Epot := GetPreviousSum_Epot();
@@ -2039,6 +2055,7 @@ begin
     int_typeproject := ord(TheProjectType);
     InitializeSimulation_wrap(p,strlen, int_typeproject);
 end;
+
 
 
 

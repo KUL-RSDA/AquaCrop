@@ -13,7 +13,8 @@ use ac_startunit, only: fProjects_open, &
                         GetListProjectsFile, &
                         GetProjectFilename, &
                         InitializeProject, &
-                        WriteProjectsInfo
+                        WriteProjectsInfo, &
+                        GetProjectType
 
 implicit none
 
@@ -49,6 +50,17 @@ subroutine fProjects_write_wrap(line_ptr, line_len, advance)
 end subroutine fProjects_write_wrap
 
 
+subroutine GetProjectType_wrap(p,strlen, TheProjectType)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intenum), intent(inout) :: TheProjectType
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(p, strlen)
+    call GetProjectType(TheProjectFile, TheProjectType)
+end subroutine GetProjectType_wrap
+
 function GetListProjectsFile_wrap() result(ptr)
     type(c_ptr) :: ptr
 
@@ -73,6 +85,7 @@ subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
     character(len=strlen) :: TheProjectFile
 
     TheProjectFile = pointer2string(p, strlen)
+
     call InitializeProject(iproject, TheProjectFile, TheprojectType)
 end subroutine InitializeProject_wrap
 
