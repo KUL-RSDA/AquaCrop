@@ -55,10 +55,10 @@ subroutine GetProjectType_wrap(p,strlen, TheProjectType)
     integer(int32), intent(in) :: strlen
     integer(intenum), intent(inout) :: TheProjectType
 
-    character(len=strlen) :: TheProjectFile_
+    character(len=strlen) :: TheProjectFile
 
-    TheProjectFile_ = pointer2string(p, strlen)
-    call GetProjectType(TheProjectFile_, TheProjectType)
+    TheProjectFile = pointer2string(p, strlen)
+    call GetProjectType(TheProjectFile, TheProjectType)
 end subroutine GetProjectType_wrap
 
 function GetListProjectsFile_wrap() result(ptr)
