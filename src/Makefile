@@ -103,8 +103,9 @@ interface_run.o: interface_run.f90 \
 startunit.o: startunit.f90 \
     global.o \
     initialsettings.o \
+    kinds.o \
     run.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_startunit.o: interface_startunit.f90 \
@@ -151,6 +152,9 @@ simul.o: simul.f90 \
 interface_simul.o: interface_simul.f90 \
     simul.o \
     kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+utils.o: utils.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 aquacrop_wrap.o: aquacrop_wrap.F90 \
