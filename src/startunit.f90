@@ -130,8 +130,6 @@ use ac_global, only:    assert, &
                         SetFullfilenameProgramParameters
 
 use ac_initialsettings, only: InitializeSettings
-
-
 use ac_run, only: open_file, &
                   write_file
 
@@ -139,8 +137,10 @@ use ac_utils, only: upper_case
 
 implicit none
 
+
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
+
 
 contains
 
@@ -313,6 +313,7 @@ subroutine GetTimeAggregationResults()
     end if
 end subroutine GetTimeAggregationResults
 
+
 subroutine GetProjectType(TheProjectFile, TheProjectType)
     character(len=*), intent(in) :: TheProjectFile
     integer(intenum), intent(inout) :: TheProjectType 
@@ -343,6 +344,7 @@ subroutine GetProjectType(TheProjectFile, TheProjectType)
         end if
     end if
 end subroutine GetProjectType
+
 
 subroutine PrepareReport()
 
