@@ -2296,27 +2296,27 @@ end subroutine SetSumInterval
 integer(int32) function GetPreviousStressLevel()
     !! Getter for the "PreviousStressLevel" global variable.
 
-    GetPreviousStressLevel = PreviousStressLevel
+    GetPreviousStressLevel = int(PreviousStressLevel, kind=int32)
 end function GetPreviousStressLevel
 
 subroutine SetPreviousStressLevel(PreviousStressLevel_in)
     !! Setter for the "PreviousStressLevel" global variable.
     integer(int32), intent(in) :: PreviousStressLevel_in
 
-    PreviousStressLevel = PreviousStressLevel_in
+    PreviousStressLevel = int(PreviousStressLevel_in, kind=int8)
 end subroutine SetPreviousStressLevel
 
 integer(int32) function GetStressSFadjNEW()
     !! Getter for the "StressSFadjNEW" global variable.
 
-    GetStressSFadjNEW = StressSFadjNEW
+    GetStressSFadjNEW = int(StressSFadjNEW, kind=int32)
 end function GetStressSFadjNEW
 
 subroutine SetStressSFadjNEW(StressSFadjNEW_in)
     !! Setter for the "StressSFadjNEW" global variable. 
     integer(int32), intent(in) :: StressSFadjNEW_in
 
-    StressSFadjNEW = StressSFadjNEW_in 
+    StressSFadjNEW = int(StressSFadjNEW_in, kind=int8)
 end subroutine SetStressSFadjNEW
 
 real(dp) function GetCCxWitheredTpot()
@@ -2935,14 +2935,14 @@ end subroutine SetDayNrEval
 integer(int32) function GetLineNrEval()
     !! Getter for the "LineNrEval" global variable.
 
-    GetLineNrEval = LineNrEval
+    GetLineNrEval = int(LineNrEval, kind=int32)
 end function GetLineNrEval
 
 subroutine SetLineNrEval(LineNrEval_in)
     !! Setter for the "LineNrEval" global variable.
     integer(int32), intent(in) :: LineNrEval_in
 
-    LineNrEval = LineNrEval_in
+    LineNrEval = int(LineNrEval_in, kind=int8)
 end subroutine SetLineNrEval
 
 real(dp) function GetZeval()
@@ -3598,7 +3598,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
     end if
 
     ! 1.b Soil fertility : FracBiomassPotSF
-    if ((GetManagement_FertilityStress() /= 0._dp) .and. &
+    if ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
         BioLow = 100_int8
         StrLow = 0._dp
@@ -6122,6 +6122,7 @@ subroutine WriteEvaluationData(DAP)
     end function SWCZsoil
 
 end subroutine WriteEvaluationData
+
 
 subroutine InitializeRun(NrRun, TheProjectType)
     integer(int8), intent(in) :: NrRun

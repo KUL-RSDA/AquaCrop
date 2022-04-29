@@ -3688,7 +3688,7 @@ subroutine SaveCrop(totalname)
     '       : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)'
     write(fhandle, '(i6,a)') GetCrop_SumEToDelaySenescence(), &
     '         : Sum(ETo) during dormant period to be exceeded before crop is permanently wilted'
-    if (GetCrop_pPollination() == undef_int) then
+    if (abs(GetCrop_pPollination() - undef_int) < epsilon(0._dp)) then
         write(fhandle, '(f9.2,a)') GetCrop_pPollination(), &
         '      : Soil water depletion factor for pollination - Not Applicable'
     else
@@ -6276,7 +6276,7 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
     logical :: GoOn
 
     ! from specific layers to Compartments
-    do Compi = 1, NrComp 
+    do Compi = 1, int(NrComp, kind=int8)
         Comp(Compi)%Theta = 0._dp
         Comp(Compi)%WFactor = 0._dp  ! used for ECe in this procedure
     end do
@@ -6307,7 +6307,7 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
                                     /(Comp(Compi)%Thickness)
                 ! add next layer
                 if (Layeri < NrLay) then
-                    Layeri = Layeri + 1
+                    Layeri = Layeri + 1_int8
                     SDLay = SDLay + LayThickness(Layeri)
                 else
                     GoOn = .false.
@@ -6321,14 +6321,14 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
         ! next Compartment
     end do
     if (.not. GoOn) then
-        do i = (Compi+1), NrComp 
+        do i = (Compi+1_int8), int(NrComp, kind=int8)
             Comp(i)%Theta = LayVolPr(NrLay)/100._dp
             Comp(i)%WFactor = LayECdS(NrLay)
         end do
     end if
         
     ! final check of SWC
-    do Compi = 1, NrComp 
+    do Compi = 1_int8, int(NrComp, kind=int8) 
         if (Comp(Compi)%Theta > &
                 (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
             Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer)) &
@@ -6336,7 +6336,7 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
         end if
     end do
     ! salt distribution in cellls
-    do Compi = 1, NrComp 
+    do Compi = 1_int8, int(NrComp, kind=int8) 
         call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
     end do
 end subroutine TranslateIniLayersToSWProfile
@@ -6423,7 +6423,7 @@ subroutine TranslateIniPointsToSWProfile(NrLoc, LocDepth, LocVolPr, LocECdS, &
                                       + (10._dp*(D2-DTopComp) &
                                          *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
                                          *((ECTopComp+ECbotComp)/2._dp)
-                if (Depthi == D2) then
+                if (abs(Depthi - D2) < epsilon(0._dp)) then
                     AddComp = .true.
                 else
                     AddComp = .false.
@@ -6664,8 +6664,8 @@ subroutine AdjustSizeCompartments(CropZx)
 
     ! 1. Save intial soil water profile (required when initial soil 
     ! water profile is NOT reset at start simulation - see 7.)
-    PrevNrComp = GetNrCompartments()
-    do compi = 1, prevnrComp 
+    PrevNrComp = int(GetNrCompartments(), kind=int8)
+    do compi = 1, PrevNrComp 
         PrevThickComp(compi) = GetCompartment_Thickness(compi)
         PrevVolPrComp(compi) = 100._dp*GetCompartment_Theta(compi)
     end do
