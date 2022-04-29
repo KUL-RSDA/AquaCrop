@@ -6129,9 +6129,18 @@ subroutine InitializeRun(NrRun, TheProjectType)
     integer(intEnum), intent(in) :: TheProjectType
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+    character(len=1024), allocatable :: filename
 
-    call LoadSimulationRunProject(GetMultipleProjectFileFull(), &
-                                  int(NrRun, kind=int32))
+    ! NOTE: Previously, the code would give deviations for the Perennial
+    ! test when compiling with the foss-2018a toolchain and the DEBUG=1
+    ! and FORTRAN_EXE=0 options. By using a 'filename' local variable,
+    ! the test passes again. Also inserting a print statement (instead
+    ! of using this local variable) at this location tends to have the
+    ! same effect. This behavior started after InitializeRun got converted
+    ! to Fortran (commit a042e73f7b3a2f69b8077f1baac004886c355224).
+    filename = GetMultipleProjectFileFull()
+    call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
+
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
     call GlobalZero(SumWaBal_temp)
