@@ -4225,8 +4225,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         case(3)
             write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
         end select
-    call fRun_write(trim(TempString), .false.)
-
+        call fRun_write(trim(TempString), .false.)
     else
         write(TempString, '(i0)') ANumber
         TempString = 'Tot(' // trim(TempString) // ')'
@@ -4264,10 +4263,14 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                                   GetTotalSaltContent_EndDay()
     call fRun_write(trim(TempString), .false.)
 
-    ! seasonal stress
-    write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
-                    GetManagement_FertilityStress(), GetStressTot_Weed(), &
-                    GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
+    ! Seasonal stress
+    write(TempString, '(7i9)') GetStressTot_NrD(), &
+                               roundc(GetStressTot_Salt(), mold=1), &
+                               GetManagement_FertilityStress(), &
+                               roundc(GetStressTot_Weed(), mold=1), &
+                               roundc(GetStressTot_Temp(), mold=1), &
+                               roundc(GetStressTot_Exp(), mold=1), &
+                               roundc(GetStressTot_Sto(), mold=1)
     call fRun_write(trim(TempString), .false.)
 
     ! Biomass production
