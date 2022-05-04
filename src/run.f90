@@ -2296,27 +2296,27 @@ end subroutine SetSumInterval
 integer(int32) function GetPreviousStressLevel()
     !! Getter for the "PreviousStressLevel" global variable.
 
-    GetPreviousStressLevel = PreviousStressLevel
+    GetPreviousStressLevel = int(PreviousStressLevel, kind=int32)
 end function GetPreviousStressLevel
 
 subroutine SetPreviousStressLevel(PreviousStressLevel_in)
     !! Setter for the "PreviousStressLevel" global variable.
     integer(int32), intent(in) :: PreviousStressLevel_in
 
-    PreviousStressLevel = PreviousStressLevel_in
+    PreviousStressLevel = int(PreviousStressLevel_in, kind=int8)
 end subroutine SetPreviousStressLevel
 
 integer(int32) function GetStressSFadjNEW()
     !! Getter for the "StressSFadjNEW" global variable.
 
-    GetStressSFadjNEW = StressSFadjNEW
+    GetStressSFadjNEW = int(StressSFadjNEW, kind=int32)
 end function GetStressSFadjNEW
 
 subroutine SetStressSFadjNEW(StressSFadjNEW_in)
     !! Setter for the "StressSFadjNEW" global variable. 
     integer(int32), intent(in) :: StressSFadjNEW_in
 
-    StressSFadjNEW = StressSFadjNEW_in 
+    StressSFadjNEW = int(StressSFadjNEW_in, kind=int8)
 end subroutine SetStressSFadjNEW
 
 real(dp) function GetCCxWitheredTpot()
@@ -2935,14 +2935,14 @@ end subroutine SetDayNrEval
 integer(int32) function GetLineNrEval()
     !! Getter for the "LineNrEval" global variable.
 
-    GetLineNrEval = LineNrEval
+    GetLineNrEval = int(LineNrEval, kind=int32)
 end function GetLineNrEval
 
 subroutine SetLineNrEval(LineNrEval_in)
     !! Setter for the "LineNrEval" global variable.
     integer(int32), intent(in) :: LineNrEval_in
 
-    LineNrEval = LineNrEval_in
+    LineNrEval = int(LineNrEval_in, kind=int8)
 end subroutine SetLineNrEval
 
 real(dp) function GetZeval()
@@ -3598,7 +3598,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
     end if
 
     ! 1.b Soil fertility : FracBiomassPotSF
-    if ((GetManagement_FertilityStress() /= 0._dp) .and. &
+    if ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
         BioLow = 100_int8
         StrLow = 0._dp
@@ -4225,8 +4225,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         case(3)
             write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
         end select
-    call fRun_write(trim(TempString), .false.)
-
+        call fRun_write(trim(TempString), .false.)
     else
         write(TempString, '(i0)') ANumber
         TempString = 'Tot(' // trim(TempString) // ')'
@@ -4264,10 +4263,14 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                                   GetTotalSaltContent_EndDay()
     call fRun_write(trim(TempString), .false.)
 
-    ! seasonal stress
-    write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
-                    GetManagement_FertilityStress(), GetStressTot_Weed(), &
-                    GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
+    ! Seasonal stress
+    write(TempString, '(7i9)') GetStressTot_NrD(), &
+                               roundc(GetStressTot_Salt(), mold=1), &
+                               GetManagement_FertilityStress(), &
+                               roundc(GetStressTot_Weed(), mold=1), &
+                               roundc(GetStressTot_Temp(), mold=1), &
+                               roundc(GetStressTot_Exp(), mold=1), &
+                               roundc(GetStressTot_Sto(), mold=1)
     call fRun_write(trim(TempString), .false.)
 
     ! Biomass production
@@ -6123,14 +6126,24 @@ subroutine WriteEvaluationData(DAP)
 
 end subroutine WriteEvaluationData
 
+
 subroutine InitializeRun(NrRun, TheProjectType)
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+    character(len=1024), allocatable :: filename
 
-    call LoadSimulationRunProject(GetMultipleProjectFileFull(), &
-                                  int(NrRun, kind=int32))
+    ! NOTE: Previously, the code would give deviations for the Perennial
+    ! test when compiling with the foss-2018a toolchain and the DEBUG=1
+    ! and FORTRAN_EXE=0 options. By using a 'filename' local variable,
+    ! the test passes again. Also inserting a print statement (instead
+    ! of using this local variable) at this location tends to have the
+    ! same effect. This behavior started after InitializeRun got converted
+    ! to Fortran (commit a042e73f7b3a2f69b8077f1baac004886c355224).
+    filename = GetMultipleProjectFileFull()
+    call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
+
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
     call GlobalZero(SumWaBal_temp)

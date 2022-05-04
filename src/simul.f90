@@ -989,7 +989,8 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             if (BioAdj <= epsilon(1._dp)) then
                 StressSFadjNEW = 80
             else
-                StressSFadjNEW = roundc(Coeffb0 + Coeffb1*BioAdj + Coeffb2*BioAdj*BioAdj, mold=1)
+                StressSFadjNEW = roundc(Coeffb0 + Coeffb1*BioAdj + Coeffb2*BioAdj*BioAdj, &
+                                        mold=1_int8)
                 if (StressSFadjNEW < 0) then
                     StressSFadjNEW = GetManagement_FertilityStress()
                 end if
@@ -1785,7 +1786,7 @@ subroutine calculate_drainage()
                 else
                     excess = 0.0_dp
                 end if
-                if ((excess == 0) .or. (pre_nr == 1)) exit loop
+                if ((abs(excess) < epsilon(0._dp)) .or. (pre_nr == 1)) exit loop
             end do loop
             ! redistribute excess
         end if
@@ -2953,7 +2954,7 @@ subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
                     else
                         excess = 0.0_dp
                     end if
-                    if ((excess == epsilon(0._dp)) .or. (pre_comp == 1)) exit loop2
+                    if ((excess < epsilon(0._dp)) .or. (pre_comp == 1)) exit loop2
                 end do loop2
                 if (excess > 0._dp) then
                     call SetRunoff(GetRunoff() + excess)
@@ -3026,7 +3027,7 @@ subroutine calculate_infiltration(InfiltratedRain, InfiltratedIrrigation, &
         do while((amount_still_to_store > 0._dp) &
                 .and. ((compi < GetNrCompartments()) &
                     .or. (DeltaZ > 0._dp))) 
-            if (DeltaZ == epsilon(0._dp)) then
+            if (abs(DeltaZ) < epsilon(0._dp)) then
                 compi = compi + 1
                 DeltaZ = GetCompartment_Thickness(compi)
             end if
@@ -3326,7 +3327,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
             end if
         end if
         StressLeaf = undef_int
-        if ((SumGDDadjCC == GetCrop_GDDaysToGermination()) &
+        if ((abs(SumGDDadjCC - GetCrop_GDDaysToGermination()) < epsilon(0._dp)) &
                 .and. (GetCrop_DaysToCCini() == 0)) then
             call SetCCiPrev(CCoTotal)
         end if
@@ -4107,9 +4108,9 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
             call NoEffectStress(SalinityEffectStress)
         else
             if ((CCxRedD > 100._dp) .or. (SaltStress >= 99.9_dp)) then
-                CCxRed = 100._dp
+                CCxRed = 100_int8
             else
-                CCxRed = real(roundc(CCxRedD, mold=1), kind=dp)
+                CCxRed = roundc(CCxRedD, mold=1_int8)
             end if
             call CropStressParametersSoilSalinity(CCxRed, &
                                                   GetCrop_CCsaltDistortion(), &
@@ -4164,8 +4165,8 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
         call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
         call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
         if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-            if ((GetManagement_FertilityStress() /= 0._dp) &
-                    .or. (SaltStress /= 0._dp)) then
+            if ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) &
+                    .or. (abs(SaltStress) > epsilon(0._dp))) then
                 call SetCrop_GDDaysToFullCanopySF(&
                              GrowingDegreeDays(GetCrop_DaysToFullCanopySF(), &
                                                GetCrop_Day1(), &

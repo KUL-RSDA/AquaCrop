@@ -357,7 +357,7 @@ subroutine GetDecadeEToDataSet(DayNri, EToDataSet)
     end if
     call GetSetofThree(DayN, Deci, Monthi, Yeari, C1, C2, C3)
     call DetermineDayNr(Dayi, Monthi, Yeari, DNR)
-    if (C2 == 0) then
+    if (abs(C2) < epsilon(0._dp)) then
         do Nri = 1, ni 
             EToDataSet(Nri)%DayNr = DNR+Nri-1
             EToDataSet(Nri)%Param = 0._dp
