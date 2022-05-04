@@ -6503,7 +6503,7 @@ subroutine WriteDailyResults(DAP, WPi)
         ! write
         write(tempstring, '(f9.1, f8.2, 3i7, 2i7, 2f8.1, i7, f9.2, ' //&
                            '3f9.1, i6, f8.1, f10.3, f8.1, f9.3)') &
-                GetGDDayi() + 9._dp*epsilon(0._dp), GetRootingDepth(), &
+                GetGDDayi(), GetRootingDepth(), &
                 StrExp, StrSto, &
                 roundc(GetStressSenescence(), mold=1), StrSalt, StrW, &
                 (GetCCiActual()*100._dp), (GetCCiActualWeedInfested()*100._dp), &
@@ -6666,11 +6666,6 @@ subroutine WriteDailyResults(DAP, WPi)
     ! 7. Climate input parameters
     if (GetOut7Clim()) then
         tempreal = (GetTmin() + GetTmax())/2._dp
-        if (tempreal > 0._dp) then
-            tempreal = tempreal + 9._dp*epsilon(0._dp)
-        else
-            tempreal = tempreal - 9._dp*epsilon(0._dp)
-        end if
         write(tempstring, '(f9.1, 4f10.1, f10.2)') GetRain(), GetETo(), &
               GetTmin(), tempreal, GetTmax(), GetCO2i()
         call fDaily_write(trim(tempstring))
