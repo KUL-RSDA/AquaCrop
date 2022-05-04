@@ -6331,6 +6331,7 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
     end if
 end subroutine FinalizeRun1
 
+
 subroutine WriteDailyResults(DAP, WPi)
     integer(int32), intent(in) :: DAP
     real(dp), intent(in) :: WPi
@@ -6339,8 +6340,8 @@ subroutine WriteDailyResults(DAP, WPi)
     integer(int32), parameter :: NoValI = undef_int
     integer(int32) :: Di, Mi, Yi, StrExp, StrSto, StrSalt, &
                       StrTr, StrW, Brel, Nr, DAP_loc
-    real(dp) :: Ratio1, Ratio2, Ratio3, KsTr, HI, &
-                KcVal, WPy, SaltVal, WPi_loc, tempreal
+    integer(int32) :: Ratio1, Ratio2, Ratio3
+    real(dp) :: KsTr, HI, KcVal, WPy, SaltVal, WPi_loc, tempreal
     logical :: SWCtopSoilConsidered_temp
     character(len=1025) :: tempstring
 
@@ -6376,32 +6377,32 @@ subroutine WriteDailyResults(DAP, WPi)
             call fDaily_write(trim(tempstring), .false.)
         end if
         if (GetTpot() > 0._dp) then
-            Ratio1 = 100._dp * GetTact()/GetTpot()
+            Ratio1 = roundc(100._dp * GetTact()/GetTpot(), mold=1)
         else
-            Ratio1 = 100.0_dp
+            Ratio1 = 100
         end if
 
         if ((GetEpot()+GetTpot()) > 0._dp) then
-            Ratio2 = 100._dp * (GetEact()+GetTact())/(GetEpot()+GetTpot())
+            Ratio2 = roundc(100._dp * (GetEact()+GetTact())/(GetEpot()+GetTpot()), mold=1)
         else
-            Ratio2 = 100.0_dp
+            Ratio2 = 100
         end if
 
         if (GetEpot() > 0._dp) then
-            Ratio3 = 100._dp * GetEact()/GetEpot()
+            Ratio3 = roundc(100._dp * GetEact()/GetEpot(), mold=1)
         else
-            Ratio3 = 100._dp
+            Ratio3 = 100
         end if
 
         if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
             .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
             .or. (GetOut7Clim())) then
-            write(tempstring, '(2f9.1, f7.0, 2f9.1, f6.0, f9.1, f8.1, f8.0)') &
+            write(tempstring, '(2f9.1, i7, 2f9.1, i6, f9.1, f8.1, i8)') &
                     GetEpot(), GetEact(), Ratio3, GetTpot(), GetTact(), Ratio1, &
                     (GetEpot()+GetTpot()), (GetEact()+GetTact()), Ratio2
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring, '(2f9.1, f7.0, 2f9.1, f6.0, f9.1, f8.1, f8.0)') &
+            write(tempstring, '(2f9.1, i7, 2f9.1, i6, f9.1, f8.1, i8)') &
                     GetEpot(), GetEact(), Ratio3, GetTpot(), GetTact(), Ratio1, &
                     (GetEpot()+GetTpot()), (GetEact()+GetTact()), Ratio2
             call fDaily_write(trim(tempstring))
@@ -6413,9 +6414,9 @@ subroutine WriteDailyResults(DAP, WPi)
     if (GetOut2Crop()) then
         ! 1. relative transpiration
         if (GetTpot() > 0._dp) then
-            Ratio1 = 100._dp * GetTact()/GetTpot()
+            Ratio1 = roundc(100._dp * GetTact()/GetTpot(), mold=1)
         else
-            Ratio1 = 100.0_dp
+            Ratio1 = 100
         end if
         ! 2. Water stresses
         if (GetStressLeaf() < 0._dp) then
@@ -6500,11 +6501,11 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         ! write
-        write(tempstring, '(f9.1, f8.2, 2i7, f7.0, 2i7, 2f8.1, i7, f9.2, ' //&
-                           '3f9.1, f6.0, f8.1, f10.3, f8.1, f9.3)') &
+        write(tempstring, '(f9.1, f8.2, 3i7, 2i7, 2f8.1, i7, f9.2, ' //&
+                           '3f9.1, i6, f8.1, f10.3, f8.1, f9.3)') &
                 GetGDDayi() + 9._dp*epsilon(0._dp), GetRootingDepth(), &
                 StrExp, StrSto, &
-                GetStressSenescence(), StrSalt, StrW, &
+                roundc(GetStressSenescence(), mold=1), StrSalt, StrW, &
                 (GetCCiActual()*100._dp), (GetCCiActualWeedInfested()*100._dp), &
                 StrTr, KcVal, GetTpot(), GetTact(), GetTactWeedInfested(), &
                 Ratio1, (100._dp*WPi_loc), GetSumWaBal_Biomass(), HI, &
@@ -6599,17 +6600,17 @@ subroutine WriteDailyResults(DAP, WPi)
             SaltVal = (GetRootZoneWC_SAT()*GetRootZoneSalt_ECe()*Equiv)/100._dp
         end if
         if (GetZiAqua() == undef_int) then
-            write(tempstring, '(f10.3, f8.2, f9.2, f8.2, f7.0, f8.2)') &
+            write(tempstring, '(f10.3, f8.2, f9.2, f8.2, i7, f8.2)') &
                     SaltVal, GetRootingDepth(), GetRootZoneSalt_ECe(), &
                     GetRootZoneSalt_ECsw(), &
-                    (100._dp*(1._dp-GetRootZoneSalt_KsSalt())), &
+                    roundc(100._dp*(1._dp-GetRootZoneSalt_KsSalt()), mold=1), &
                     undef_double
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring, '(f10.3, f8.2, f9.2, f8.2, f7.0, f8.2)') &
+            write(tempstring, '(f10.3, f8.2, f9.2, f8.2, i7, f8.2)') &
                     SaltVal, GetRootingDepth(), GetRootZoneSalt_ECe(), &
                     GetRootZoneSalt_ECsw(), &
-                    (100._dp*(1._dp-GetRootZoneSalt_KsSalt())), &
+                    roundc(100._dp*(1._dp-GetRootZoneSalt_KsSalt()), mold=1), &
                     (GetZiAqua()/100._dp)
             call fDaily_write(trim(tempstring), .false.)
         end if
@@ -6664,15 +6665,14 @@ subroutine WriteDailyResults(DAP, WPi)
 
     ! 7. Climate input parameters
     if (GetOut7Clim()) then
-        Ratio1 = ((GetTmin() + GetTmax())/2._dp)
-        if (Ratio1 > 0._dp) then
-            Ratio1 = Ratio1 + 9._dp*epsilon(0._dp)
+        tempreal = (GetTmin() + GetTmax())/2._dp
+        if (tempreal > 0._dp) then
+            tempreal = tempreal + 9._dp*epsilon(0._dp)
         else
-            Ratio1 = Ratio1 - 9._dp*epsilon(0._dp)
+            tempreal = tempreal - 9._dp*epsilon(0._dp)
         end if
         write(tempstring, '(f9.1, 4f10.1, f10.2)') GetRain(), GetETo(), &
-                                                   GetTmin(), Ratio1, GetTmax(), &
-                                                   GetCO2i()
+              GetTmin(), tempreal, GetTmax(), GetCO2i()
         call fDaily_write(trim(tempstring))
     end if
 end subroutine WriteDailyResults
