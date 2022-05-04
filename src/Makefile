@@ -91,6 +91,7 @@ interface_initialsettings.o: interface_initialsettings.f90 \
 
 run.o: run.f90 \
     global.o \
+    inforesults.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
@@ -102,8 +103,9 @@ interface_run.o: interface_run.f90 \
 startunit.o: startunit.f90 \
     global.o \
     initialsettings.o \
+    kinds.o \
     run.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_startunit.o: interface_startunit.f90 \
@@ -152,6 +154,9 @@ interface_simul.o: interface_simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+utils.o: utils.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 aquacrop_wrap.o: aquacrop_wrap.F90 \
     interface_global.o \
     kinds.o
@@ -168,7 +173,7 @@ pluginbarev70.o: pluginbarev70.F90 \
 
 SRC = PlugInBareV70.dpr Global.pas Run.pas TempProcessing.pas \
       ClimProcessing.pas InitialSettings.pas StartUnit.pas \
-      DefaultCropSoil.pas RootUnit.pas Simul.pas \
+      DefaultCropSoil.pas RootUnit.pas Simul.pas InfoResults.pas \
       interface_global.pas interface_tempprocessing.pas \
       interface_climprocessing.pas interface_initialsettings.pas \
       interface_run.pas interface_startunit.pas interface_defaultcropsoil.pas \

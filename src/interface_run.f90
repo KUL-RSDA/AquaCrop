@@ -2,13 +2,21 @@ module ac_interface_run
 
 use, intrinsic :: iso_c_binding, only: c_char, &
                                        c_ptr
+
 use ac_interface_global, only: pointer2string, &
                                string2pointer
-use ac_kinds, only: int32
-use ac_run, only:   fDaily_open, &
+                               
+use ac_kinds, only: int8, &
+                    int32, &
+                    dp, &
+                    intenum
+
+use ac_run, only:   CheckForPrint, &
+                    fDaily_open, &
                     fDaily_write, &
                     fRun_open, &
                     fRun_write, &
+                    FinalizeRun1, &
                     fIrri_eof, &
                     fIrri_open, &
                     fIrri_read, &
@@ -36,8 +44,11 @@ use ac_run, only:   fDaily_open, &
                     GetGlobalIrriECw, &
                     GetIrriInfoRecord1_NoMoreInfo, &
                     GetIrriInfoRecord2_NoMoreInfo, &
+                    GetTheProjectFile, &
+                    GetNoYear, &
                     GetTransfer_Mobilize, &
                     GetTransfer_Store, &
+                    InitializeSimulation, &
                     SetCutInfoRecord1_NoMoreInfo, &
                     SetCutInfoRecord2_NoMoreInfo, &
                     SetCutInfoRecord1_FromDay, &
@@ -46,8 +57,11 @@ use ac_run, only:   fDaily_open, &
                     SetGlobalIrriECw, &
                     SetIrriInfoRecord1_NoMoreInfo, &
                     SetIrriInfoRecord2_NoMoreInfo, &
+                    SetTheProjectFile, &
+                    SetNoYear, &
                     SetTransfer_Mobilize, &
                     SetTransfer_Store, &
+                    WriteTheResults, &
                     GetWaterTableInProfile, &
                     SetWaterTableInProfile, &
                     GetStartMode, &
@@ -55,12 +69,26 @@ use ac_run, only:   fDaily_open, &
                     GetNoMoreCrop, &
                     SetNoMoreCrop, &
                     GetCGCadjustmentAfterCutting, &
-                    SetCGCadjustmentAfterCutting
+                    SetCGCadjustmentAfterCutting, &
+                    WriteSimPeriod, &
+                    WriteIntermediatePeriod, &
+                    InitializeTransferAssimilates
 
 implicit none
 
 
 contains
+
+subroutine CheckForPrint_wrap(TheProjectFile, strlen)
+    !! Wrapper for [[ac_run:CheckForPrint]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFile, strlen)
+    call CheckForPrint(string)
+end subroutine CheckForPrint_wrap
 
 subroutine fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
@@ -472,6 +500,17 @@ subroutine fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     call fEval_open(filename, mode)
 end subroutine fEval_open_wrap
 
+subroutine InitializeSimulation_wrap(TheProjectFileStr,strlen, TheProjectType)
+    type(c_ptr), intent(in) :: TheProjectFileStr
+    integer(int32), intent(in) :: strlen
+    integer(intenum), intent(in) :: TheProjectType
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFileStr, strlen)
+    call InitializeSimulation(string, TheProjectType)
+end subroutine InitializeSimulation_wrap
+
 
 subroutine fEval_write_wrap(line_ptr, line_len, advance)
     type(c_ptr), intent(in) :: line_ptr
@@ -503,6 +542,58 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
     GlobalIrriECw_f = GlobalIrriECw_in
     call SetGlobalIrriECw(GlobalIrriECw_f)    
 end subroutine SetGlobalIrriECw_wrap
+
+
+
+
+subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile_ptr, strlen)
+    integer(int8), intent(in) :: ANumber
+    integer(int32), intent(in) :: Day1
+    integer(int32), intent(in) :: Month1
+    integer(int32), intent(in) :: Year1
+    integer(int32), intent(in) :: DayN
+    integer(int32), intent(in) :: MonthN
+    integer(int32), intent(in) :: YearN
+    real(dp), intent(in) :: RPer
+    real(dp), intent(in) :: EToPer
+    real(dp), intent(in) :: GDDPer
+    real(dp), intent(in) :: IrriPer
+    real(dp), intent(in) :: InfiltPer
+    real(dp), intent(in) :: ROPer
+    real(dp), intent(in) :: DrainPer
+    real(dp), intent(in) :: CRwPer
+    real(dp), intent(in) :: EPer
+    real(dp), intent(in) :: ExPer
+    real(dp), intent(in) :: TrPer
+    real(dp), intent(in) :: TrWPer
+    real(dp), intent(in) :: TrxPer
+    real(dp), intent(in) :: SalInPer
+    real(dp), intent(in) :: SalOutPer
+    real(dp), intent(in) :: SalCRPer
+    real(dp), intent(in) :: BiomassPer
+    real(dp), intent(in) :: BUnlimPer
+    real(dp), intent(in) :: BmobPer
+    real(dp), intent(in) :: BstoPer
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
+    call WriteTheResults (ANumber, Day1, Month1, Year1, DayN, MonthN, &
+                           YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+                           ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+                           TrxPer, SalInPer, SalOutPer, &
+                           SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
+                           TheProjectFile)
+end subroutine WriteTheResults_wrap
+
+
 
 function GetStartMode_wrap() result(StartMode_f)
 
@@ -572,6 +663,104 @@ subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
     CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
     call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
 end subroutine SetCGCadjustmentAfterCutting_wrap
+
+function GetTheProjectFile_wrap() result(c_pointer)
+    !! Wrapper for [[ac_run:GetTheProjectFile]] for foreign languages.
+    type(c_ptr) :: c_pointer
+
+    c_pointer = string2pointer(GetTheProjectFile())
+end function GetTheProjectFile_wrap
+
+
+subroutine SetTheProjectFile_wrap(TheProjectFile, strlen)
+    !! Wrapper for [[ac_global:SetTheProjectFile]] for foreign languages.
+    type(c_ptr), intent(in) :: TheProjectFile
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFile, strlen)
+    call SetTheProjectFile(string)
+end subroutine SetTheProjectFile_wrap
+
+
+
+function GetNoYear_wrap() result(NoYear_f)
+
+    logical(1) :: NoYear_f
+
+    NoYear_f = GetNoYear()
+end function GetNoYear_wrap
+
+
+subroutine SetNoYear_wrap(NoYear_in)
+    logical(1), intent(in) :: NoYear_in
+
+    logical :: NoYear_f
+
+    NoYear_f = NoYear_in
+    call SetNoYear(NoYear_f)    
+end subroutine SetNoYear_wrap
+
+
+subroutine WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen)
+    integer(int8), intent(in) :: NrRun
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
+    call WriteSimPeriod(NrRun, TheProjectFile)
+end subroutine WriteSimPeriod_wrap
+
+
+
+subroutine WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen)
+    type(c_ptr), intent(in) :: TheProjectFile_ptr
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
+    call WriteIntermediatePeriod(TheProjectFile)
+end subroutine WriteIntermediatePeriod_wrap
+
+
+subroutine InitializeTransferAssimilates_wrap(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON, MobilizationON)
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: FracAssim
+    logical(1), intent(inout) :: StorageON
+    logical(1), intent(inout) :: MobilizationON
+
+    logical :: StorageON_f, MobilizationON_f
+
+    StorageON_f = StorageON
+    MobilizationON_f = MobilizationON
+    call InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
+                                         AssimMobilized, FracAssim, &
+                                         StorageON_f, MobilizationON_f)
+    StorageON = StorageON_f
+    MobilizationON = MobilizationON_f
+end subroutine InitializeTransferAssimilates_wrap
+
+subroutine FinalizeRun1_wrap(NrRun,TheProjectFile,strlen, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    type(c_ptr), intent(in) :: TheProjectFile
+    integer(int32), intent(in) :: strlen
+    integer(intenum), intent(in) :: TheProjectType
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFile, strlen)
+    call FinalizeRun1(NrRun,string, TheProjectType)
+end subroutine FinalizeRun1_wrap
+
 
 
 end module ac_interface_run

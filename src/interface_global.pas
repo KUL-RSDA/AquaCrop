@@ -3171,9 +3171,9 @@ procedure SetTemperatureRecord_ToString_wrap(
             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_settemperaturerecord_tostring_wrap';
 
-PROCEDURE GlobalZero(
+procedure GlobalZero(
         VAR SumWabal : rep_sum);
-     external 'aquacrop' name '__ac_global_MOD_globalzero'; 
+     external 'aquacrop' name '__ac_global_MOD_globalzero';  
      
 function GetClimRecord(): rep_clim;
 
@@ -4812,6 +4812,47 @@ function GetSurf0() : double;
 procedure SetSurf0(constref Surf0_in : double);
     external 'aquacrop' name '__ac_global_MOD_setsurf0';
 
+function GetOutDaily() : boolean;
+        external 'aquacrop' name '__ac_interface_global_MOD_getoutdaily_wrap';
+
+procedure SetOutDaily(constref OutDaily_in : boolean);
+        external 'aquacrop' name '__ac_interface_global_MOD_setoutdaily_wrap';
+
+function GetPathNameList(): string;
+
+function GetPathNameList_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnamelist_wrap';
+
+procedure SetPathNameList(constref str : string);
+
+procedure SetPathNameList_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnamelist_wrap';
+
+function GetPathNameParam(): string;
+
+function GetPathNameParam_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_global_MOD_getpathnameparam_wrap';
+
+procedure SetPathNameParam(constref str : string);
+
+procedure SetPathNameParam_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_global_MOD_setpathnameparam_wrap';
+
+function GetPart1Mult() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getpart1mult_wrap';
+
+procedure SetPart1Mult(constref Part1Mult_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setpart1mult_wrap';
+
+function GetPart2Eval() : boolean;
+    external 'aquacrop' name '__ac_interface_global_MOD_getpart2eval_wrap';
+
+procedure SetPart2Eval(constref Part2Eval_in : boolean);
+    external 'aquacrop' name '__ac_interface_global_MOD_setpart2eval_wrap';
 
 implementation
 
@@ -8054,6 +8095,47 @@ begin;
      p := PChar(str);
      strlen := Length(str);
      SetProjectDescription_wrap(p, strlen);
+end;
+
+
+function GetPathNameParam(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameParam_wrap();
+    GetPathNameParam := AnsiString(p);
+end;
+
+procedure SetPathNameParam(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameParam_wrap(p, strlen);
+end;
+
+function GetPathNameList(): string;
+var
+    p : PChar;
+
+begin;
+    p := GetPathNameList_wrap();
+    GetPathNameList := AnsiString(p);
+end;
+
+procedure SetPathNameList(constref str : string);
+var
+    p : PChar;
+    strlen : integer;
+
+begin;
+    p := PChar(str);
+    strlen := Length(str);
+    SetPathNameList_wrap(p, strlen);
 end;
 
 

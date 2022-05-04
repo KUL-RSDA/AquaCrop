@@ -280,6 +280,18 @@ procedure SetCutInfoRecord2_IntervalGDD(constref IntervalGDD : double);
 procedure SetCutInfoRecord2_MassInfo(constref MassInfo : double);
         external 'aquacrop' name '__ac_run_MOD_setcutinforecord2_massinfo';
 
+function GetTheProjectFile(): string;
+
+function GetTheProjectFile_wrap(): PChar;
+        external 'aquacrop' name '__ac_interface_run_MOD_gettheprojectfile_wrap';
+
+procedure SetTheProjectFile(constref str : string);
+
+procedure SetTheProjectFile_wrap(
+            constref p : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_settheprojectfile_wrap';
+
 function GetTransfer_Store(): boolean;
         external 'aquacrop' name '__ac_interface_run_MOD_gettransfer_store_wrap';
 
@@ -307,7 +319,7 @@ procedure SetTransfer_Bmobilized(constref Bmobilized : double);
 procedure AdjustForWatertable;
         external 'aquacrop' name '__ac_run_MOD_adjustforwatertable';
 
-procedure ResetPreviousSum;
+procedure ResetPreviousSum(VAR PreviousSum : rep_sum);
     external 'aquacrop' name '__ac_run_MOD_resetprevioussum';
 
 procedure GetGwtSet(constref DayNrIN : LongInt;
@@ -387,6 +399,13 @@ function GetDayNri() : LongInt;
 
 procedure SetDayNri(constref DayNri_in : LongInt);
     external 'aquacrop' name '__ac_run_MOD_setdaynri';
+
+procedure CheckForPrint(constref TheProjectFile : string);
+
+procedure CheckForPrint_wrap(
+            constref TheProjectFile : PChar;
+            constref strlen : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_checkforprint_wrap';
 
 procedure fRun_open(constref filename : string; constref mode : string);
 
@@ -591,6 +610,13 @@ procedure WriteTitleDailyResults(constref TheProjectType : repTypeProject;
 procedure __WriteTitleDailyResults(constref TheProjectType : integer;
                            constref TheNrRun : shortint);
         external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
+
+procedure FinalizeRun2(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+
+procedure __FinalizeRun2(constref NrRun : ShortInt; 
+                        constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_run_MOD_finalizerun2';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
 
@@ -1131,7 +1157,7 @@ function GetNextSimFromDayNr() : integer;
 procedure SetNextSimFromDayNr(constref NextSimFromDayNr : integer);
     external 'aquacrop' name '__ac_run_MOD_setnextsimfromdaynr';
 
-function GetStageCode() : integer;
+function GetStageCode() : shortint;
     external 'aquacrop' name '__ac_run_MOD_getstagecode';
 
 procedure SetStageCode(constref StageCode : integer);
@@ -1142,6 +1168,12 @@ function GetPreviousDayNr() : integer;
 
 procedure SetPreviousDayNr(constref PreviousDayNr : integer);
     external 'aquacrop' name '__ac_run_MOD_setpreviousdaynr';
+
+function GetNoYear() : boolean;
+        external 'aquacrop' name '__ac_interface_run_MOD_getnoyear_wrap';
+
+procedure SetNoYear(constref NoYear_in : boolean);
+        external 'aquacrop' name '__ac_interface_run_MOD_setnoyear_wrap';
 
 function GetfEval_filename() : string;
 
@@ -1209,6 +1241,36 @@ procedure fHarvest_write_wrap(
 procedure fHarvest_close();
         external 'aquacrop' name '__ac_run_MOD_fharvest_close';
 
+procedure WriteTitlePart1MultResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+
+procedure __WriteTitlePart1MultResults(constref TheProjectType : integer;
+                           constref TheNrRun : shortint);
+    external 'aquacrop' name '__ac_run_MOD_writetitlepart1multresults';
+
+procedure WriteTheResults(constref ANumber : ShortInt;
+                         constref Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
+                         constref RPer,EToPer,GDDPer,
+                         IrriPer,InfiltPer,ROPer,DrainPer,CRwPer,
+                         EPer,ExPer,TrPer,TrWPer,TrxPer,
+                         SalInPer,SalOutPer,SalCRPer,
+                         BiomassPer,BUnlimPer,BmobPer,BstoPer : double;
+                         constref TheProjectFile : string);
+
+procedure WriteTheResults_wrap(constref ANumber : ShortInt;
+                         constref Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
+                         constref RPer,EToPer,GDDPer,
+                         IrriPer,InfiltPer,ROPer,DrainPer,CRwPer,
+                         EPer,ExPer,TrPer,TrWPer,TrxPer,
+                         SalInPer,SalOutPer,SalCRPer,
+                         BiomassPer,BUnlimPer,BmobPer,BstoPer : double;
+                         constref TheProjectFile_ptr : PChar;
+                         constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_writetheresults_wrap';
+
+procedure InitializeSimulationRun();
+    external 'aquacrop' name '__ac_run_MOD_initializesimulationrun';
+
 procedure CreateEvalData(NrRun : ShortInt);
     external 'aquacrop' name '__ac_run_MOD_createevaldata';
 
@@ -1217,20 +1279,156 @@ procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
 procedure __OpenPart1MultResults(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
 
+procedure FinalizeRun1(constref NrRun : ShortInt;
+                       constref TheProjectFile : string;
+                       constref TheProjectType : repTypeProject);
+
+
+procedure FinalizeRun1_wrap(constref NrRun : ShortInt; 
+                            constref filename_ptr : PChar;
+                            constref filename_len : integer;
+                            constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_finalizerun1_wrap';
+
 procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
     external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
 procedure openharvestinfo();
-        external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
+    external 'aquacrop' name '__ac_run_MOD_openharvestinfo';
 
 procedure openclimfilesandgetdatafirstday(constref FirstDayNr : LongInt);
-        external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
+    external 'aquacrop' name '__ac_run_MOD_openclimfilesandgetdatafirstday';
+
+
+procedure InitializeSimulation(constref TheProjectFileStr : string;
+                               constref TheProjectType : repTypeProject);
+
+procedure InitializeSimulation_wrap(constref filename_ptr : PChar;
+                                    constref filename_len : integer;
+                                    constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_initializesimulation_wrap';
+
+PROCEDURE FinalizeSimulation();
+        external 'aquacrop' name '__ac_run_MOD_finalizesimulation';
+
+procedure WriteSimPeriod(constref NrRun : ShortInt;
+                         constref TheProjectFile : string);
+
+procedure WriteSimPeriod_wrap(constref NrRun : ShortInt;
+                         constref TheProjectFile_ptr : PChar;
+                         constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_writesimperiod_wrap';
+
+
+procedure WriteEvaluationData(constref DAP : integer);
+        external 'aquacrop' name '__ac_run_MOD_writeevaluationdata';                              
+
+procedure GetZandECgwt(VAR ZiAqua : INTEGER;
+                       VAR ECiAqua : double);
+    external 'aquacrop' name '__ac_run_MOD_getzandecgwt';
+
+function IrriOutSeason() : INTEGER;
+    external 'aquacrop' name '__ac_run_MOD_irrioutseason';
+
+function IrriManual() : INTEGER;
+    external 'aquacrop' name '__ac_run_MOD_irrimanual';
+
+procedure GetIrriParam (VAR TargetTimeVal, TargetDepthVal : integer);
+    external 'aquacrop' name '__ac_run_MOD_getirriparam';
+
+procedure AdjustSWCRootZone(VAR PreIrri : double);
+    external 'aquacrop' name '__ac_run_MOD_adjustswcrootzone';
+
+procedure InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
+                                        VAR StorageOn,MobilizationOn : BOOLEAN);
+    external 'aquacrop' name '__ac_interface_run_MOD_initializetransferassimilates_wrap';
+
+procedure WriteIntermediatePeriod(TheProjectFile : string);
+
+procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
+                                        constref strlen : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_writeintermediateperiod_wrap';
+
+procedure InitializeRun(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+
+procedure _InitializeRun(constref NrRun : ShortInt; 
+                         constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_initializerun';
+
+procedure RecordHarvest(constref NrCut : integer;
+                        constref DayInSeason : integer)
+    external 'aquacrop' name '__ac_run_MOD_recordharvest';
+
+procedure GetPotValSF(constref DAP : integer;
+                      constref SumGDDAdjCC : double;
+                      VAR PotValSF : double);
+    external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
+
 
 procedure WriteDailyResults(constref DAP : INTEGER;
                             constref WPi : double);
         external 'aquacrop' name '__ac_run_MOD_writedailyresults';
 
 implementation
+
+procedure InitializeRun(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    _InitializeRun(NrRun, int_typeproject);
+end;
+
+
+
+procedure WriteIntermediatePeriod(TheProjectFile : string);
+var
+    TheProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    TheProjectFile_ptr := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen);
+end;
+
+
+
+procedure WriteSimPeriod(constref NrRun : ShortInt;
+                         constref TheProjectFile : string);
+var
+    TheProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    TheProjectFile_ptr := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen);
+end;
+
+
+
+procedure WriteTheResults(constref ANumber : ShortInt;
+                         constref Day1,Month1,Year1,DayN,MonthN,YearN : INTEGER;
+                         constref RPer,EToPer,GDDPer,
+                         IrriPer,InfiltPer,ROPer,DrainPer,CRwPer,
+                         EPer,ExPer,TrPer,TrWPer,TrxPer,
+                         SalInPer,SalOutPer,SalCRPer,
+                         BiomassPer,BUnlimPer,BmobPer,BstoPer : double;
+                         constref TheProjectFile : string);
+var
+    TheProjectFile_ptr : PChar;
+    strlen : integer;
+begin
+    TheProjectFile_ptr := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, YearN, 
+                         RPer,EToPer,GDDPer, IrriPer,InfiltPer,ROPer,DrainPer,CRwPer,
+                         EPer,ExPer,TrPer,TrWPer,TrxPer, SalInPer,SalOutPer,SalCRPer,
+                         BiomassPer,BUnlimPer,BmobPer,BstoPer,
+                         TheProjectFile_ptr, strlen);
+end;
+    
 
 
 procedure OpenOutputRun(constref TheProjectType : repTypeProject);
@@ -1239,6 +1437,16 @@ var
 begin
     int_typeproject := ord(TheProjectType);
     __OpenOutputRun(int_typeproject);
+end;
+
+
+procedure WriteTitlePart1MultResults(constref TheProjectType : repTypeProject;
+                          constref TheNrRun : Shortint);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __WriteTitlePart1MultResults(int_typeproject, TheNrRun);
 end;
 
 
@@ -1450,6 +1658,16 @@ begin;
     SetCutInfoRecord2_IntervalInfo(CutInfoRecord2.IntervalInfo);
     SetCutInfoRecord2_IntervalGDD(CutInfoRecord2.IntervalGDD);
     SetCutInfoRecord2_MassInfo(CutInfoRecord2.MassInfo);
+end;
+
+procedure CheckForPrint(constref TheProjectFile : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(TheProjectFile);
+     strlen := Length(TheProjectFile);
+     CheckForPrint_wrap(p, strlen);
 end;
 
 procedure fDaily_open(constref filename : string; constref mode : string);
@@ -1691,6 +1909,15 @@ begin
     __WriteTitleDailyResults(int_typeproject, TheNrRun);
 end;
 
+procedure FinalizeRun2(constref NrRun : Shortint;
+                          constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __FinalizeRun2(int_typeproject, NrRun);
+end;
+
 function GetPreviousSum() : rep_sum;
 begin;
     GetPreviousSum.Epot := GetPreviousSum_Epot();
@@ -1781,6 +2008,56 @@ begin;
      line_ptr := PChar(line);
      line_len := Length(line);
      fHarvest_write_wrap(line_ptr, line_len, advance);
+end;
+
+
+function GetTheProjectFile(): string;
+var
+     p : PChar;
+begin;
+     p := GetTheProjectFile_wrap();
+     GetTheProjectFile := AnsiString(p);
+end;
+
+
+procedure SetTheProjectFile(constref str : string);
+var
+     p : PChar;
+     strlen : integer;
+begin;
+     p := PChar(str);
+     strlen := Length(str);
+     SetTheProjectFile_wrap(p, strlen);
+end;
+
+
+procedure FinalizeRun1(constref NrRun : ShortInt;
+                       constref TheProjectFile : string;
+                       constref TheProjectType : repTypeProject);
+var
+    p : PChar;
+    strlen : integer;
+    int_typeproject : integer;
+
+begin
+    p := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    int_typeproject := ord(TheProjectType);
+    FinalizeRun1_wrap(NrRun, p,strlen, int_typeproject);
+end;
+
+
+procedure InitializeSimulation(constref TheProjectFileStr : string;
+                               constref TheProjectType : repTypeProject);
+var
+    p : PChar;
+    strlen : integer;
+    int_typeproject : integer;
+begin
+    p := PChar(TheProjectFileStr);
+    strlen := Length(TheProjectFileStr);
+    int_typeproject := ord(TheProjectType);
+    InitializeSimulation_wrap(p,strlen, int_typeproject);
 end;
 
 

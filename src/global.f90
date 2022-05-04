@@ -1030,7 +1030,7 @@ real(dp) :: Tmin ! degC
 
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
-logical :: PreDay
+logical :: PreDay, OutDaily
 logical :: Out1Wabal
 logical :: Out2Crop
 logical :: Out3Prof
@@ -1038,7 +1038,9 @@ logical :: Out4Salt
 logical :: Out5CompWC
 logical :: Out6CompEC
 logical :: Out7Clim
+logical :: Part1Mult,Part2Eval
 
+character(len=:), allocatable :: PathNameList,PathNameParam
 
 type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment
 type(SoilLayerIndividual), dimension(max_SoilLayers) :: soillayer
@@ -1055,6 +1057,18 @@ end interface roundc
 
 
 contains
+
+
+subroutine assert(condition, message)
+    !! Prints an error message if the condition is not met,
+    !! and then shuts down the whole program.
+    logical, intent(in) :: condition
+    character(len=*), intent(in) :: message
+    if (.not. condition) then
+        print *, 'ABORT: ', message
+        stop 1
+    end if
+end subroutine assert
 
 
 function roundc_int32(x, mold) result(y)
@@ -3674,7 +3688,7 @@ subroutine SaveCrop(totalname)
     '       : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)'
     write(fhandle, '(i6,a)') GetCrop_SumEToDelaySenescence(), &
     '         : Sum(ETo) during dormant period to be exceeded before crop is permanently wilted'
-    if (GetCrop_pPollination() == undef_int) then
+    if (abs(GetCrop_pPollination() - undef_int) < epsilon(0._dp)) then
         write(fhandle, '(f9.2,a)') GetCrop_pPollination(), &
         '      : Soil water depletion factor for pollination - Not Applicable'
     else
@@ -6262,7 +6276,7 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
     logical :: GoOn
 
     ! from specific layers to Compartments
-    do Compi = 1, NrComp 
+    do Compi = 1, int(NrComp, kind=int8)
         Comp(Compi)%Theta = 0._dp
         Comp(Compi)%WFactor = 0._dp  ! used for ECe in this procedure
     end do
@@ -6293,7 +6307,7 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
                                     /(Comp(Compi)%Thickness)
                 ! add next layer
                 if (Layeri < NrLay) then
-                    Layeri = Layeri + 1
+                    Layeri = Layeri + 1_int8
                     SDLay = SDLay + LayThickness(Layeri)
                 else
                     GoOn = .false.
@@ -6307,14 +6321,14 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
         ! next Compartment
     end do
     if (.not. GoOn) then
-        do i = (Compi+1), NrComp 
+        do i = (Compi+1_int8), int(NrComp, kind=int8)
             Comp(i)%Theta = LayVolPr(NrLay)/100._dp
             Comp(i)%WFactor = LayECdS(NrLay)
         end do
     end if
         
     ! final check of SWC
-    do Compi = 1, NrComp 
+    do Compi = 1_int8, int(NrComp, kind=int8) 
         if (Comp(Compi)%Theta > &
                 (GetSoilLayer_SAT(Comp(compi)%Layer))/100._dp) then
             Comp(Compi)%Theta = (GetSoilLayer_SAT(Comp(compi)%Layer)) &
@@ -6322,7 +6336,7 @@ subroutine TranslateIniLayersToSWProfile(NrLay, LayThickness, LayVolPr, LayECdS,
         end if
     end do
     ! salt distribution in cellls
-    do Compi = 1, NrComp 
+    do Compi = 1_int8, int(NrComp, kind=int8) 
         call DetermineSaltContent(Comp(Compi)%WFactor, Comp(Compi))
     end do
 end subroutine TranslateIniLayersToSWProfile
@@ -6409,7 +6423,7 @@ subroutine TranslateIniPointsToSWProfile(NrLoc, LocDepth, LocVolPr, LocECdS, &
                                       + (10._dp*(D2-DTopComp) &
                                          *GetSoilLayer_SAT(Comp(Compi)%Layer)) &
                                          *((ECTopComp+ECbotComp)/2._dp)
-                if (Depthi == D2) then
+                if (abs(Depthi - D2) < epsilon(0._dp)) then
                     AddComp = .true.
                 else
                     AddComp = .false.
@@ -6650,8 +6664,8 @@ subroutine AdjustSizeCompartments(CropZx)
 
     ! 1. Save intial soil water profile (required when initial soil 
     ! water profile is NOT reset at start simulation - see 7.)
-    PrevNrComp = GetNrCompartments()
-    do compi = 1, prevnrComp 
+    PrevNrComp = int(GetNrCompartments(), kind=int8)
+    do compi = 1, PrevNrComp 
         PrevThickComp(compi) = GetCompartment_Thickness(compi)
         PrevVolPrComp(compi) = 100._dp*GetCompartment_Theta(compi)
     end do
@@ -7163,6 +7177,7 @@ subroutine GetFileForProgramParameters(TheFullFileNameProgram, FullFileNameProgr
     end if
 end subroutine GetFileForProgramParameters
     
+
 subroutine GlobalZero(SumWabal)
     type(rep_sum), intent(inout) :: SumWabal
 
@@ -7195,6 +7210,7 @@ subroutine GlobalZero(SumWabal)
         GetCompartment_theta(i)*1000._dp*GetCompartment_Thickness(i))
     end do
 end subroutine GlobalZero 
+
 
 subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
     character(len=*), intent(in) :: FullNameProjectFile
@@ -15131,5 +15147,72 @@ subroutine SetSurf0(Surf0_in)
     Surf0 = Surf0_in
 end subroutine SetSurf0
 
+logical function GetOutDaily()
+    !! Getter for the OutDaily global variable
+
+    GetOutDaily = OutDaily
+end function GetOutDaily
+
+subroutine SetOutDaily(OutDaily_in)
+    !! Setter for the OutDaily global variable
+    logical, intent(in) :: OutDaily_in
+
+    OutDaily = OutDaily_in
+end subroutine SetOutDaily
+
+function GetPathNameParam() result(str)
+    !! Getter for the "PathNameParam" global variable.
+    character(len=len(PathNameParam)) :: str 
+
+    str = PathNameParam
+end function GetPathNameParam
+
+subroutine SetPathNameParam(str)
+    !! Setter for the "PathNameParam" global variable.
+    character(len=*), intent(in) :: str
+
+    PathNameParam = str
+end subroutine SetPathNameParam
+
+function GetPathNameList() result(str)
+    !! Getter for the "PathNameList" global variable.
+    character(len=len(PathNameList)) :: str  
+
+    str = PathNameList
+end function GetPathNameList
+
+subroutine SetPathNameList(str)
+    !! Setter for the "PathNameList" global variable. 
+    character(len=*), intent(in) :: str
+
+    PathNameList = str
+end subroutine SetPathNameList
+
+
+logical function GetPart1Mult()
+    !! Getter for the Part1Mult global variable
+
+    GetPart1Mult = Part1Mult
+end function GetPart1Mult
+
+subroutine SetPart1Mult(Part1Mult_in)
+    !! Setter for the Part1Mult global variable
+    logical, intent(in) :: Part1Mult_in
+
+    Part1Mult = Part1Mult_in
+end subroutine SetPart1Mult
+
+logical function GetPart2Eval()
+    !! Getter for the Part2Eval global variable
+
+    GetPart2Eval = Part2Eval
+end function GetPart2Eval
+
+subroutine SetPart2Eval(Part2Eval_in)
+    !! Setter for the Part2Eval global variable
+    logical, intent(in) :: Part2Eval_in
+
+    Part2Eval = Part2Eval_in
+end subroutine SetPart2Eval
 
 end module ac_global

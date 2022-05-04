@@ -5,12 +5,16 @@ use, intrinsic :: iso_c_binding, only: c_ptr
 use ac_interface_global, only: pointer2string, &
                                string2pointer
 
-use ac_kinds, only: int32
+use ac_kinds, only: int32, &
+                    intEnum
 
-use ac_startunit, only: GetRequestDailyResults, &
-                        GetRequestParticularResults, &
-                        fProjects_open, &
-                        fProjects_write
+use ac_startunit, only: fProjects_open, &
+                        fProjects_write, &
+                        GetListProjectsFile, &
+                        GetProjectFilename, &
+                        InitializeProject, &
+                        WriteProjectsInfo, &
+                        GetProjectType
 
 implicit none
 
@@ -45,55 +49,55 @@ subroutine fProjects_write_wrap(line_ptr, line_len, advance)
     call fProjects_write(line, advance_f)
 end subroutine fProjects_write_wrap
 
-subroutine GetRequestDailyResults_wrap(Out1Wabal, Out2Crop, Out3Prof, &
-                          Out4Salt, Out5CompWC, Out6CompEC, Out7Clim, OutDaily)
-    logical, intent(inout) :: Out1Wabal
-    logical, intent(inout) :: Out2Crop
-    logical, intent(inout) :: Out3Prof
-    logical, intent(inout) :: Out4Salt
-    logical, intent(inout) :: Out5CompWC
-    logical, intent(inout) :: Out6CompEC
-    logical, intent(inout) :: Out7Clim
-    logical, intent(inout) :: OutDaily
 
-    logical :: Out1Wabal_f,Out2Crop_f,Out3Prof_f,Out4Salt_f,Out5CompWC_f, &
-               Out6CompEC_f, Out7Clim_f, OutDaily_f
+subroutine GetProjectType_wrap(p,strlen, TheProjectType)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intenum), intent(inout) :: TheProjectType
 
-    Out1Wabal_f = Out1Wabal
-    Out2Crop_f = Out2Crop
-    Out3Prof_f = Out3Prof
-    Out4Salt_f = Out4Salt
-    Out5CompWC_f = Out5CompWC
-    Out6CompEC_f = Out6CompEC
-    Out7Clim_f = Out7Clim
-    OutDaily_f = OutDaily
+    character(len=strlen) :: TheProjectFile
 
-    call GetRequestDailyResults(Out1Wabal_f, Out2Crop_f, Out3Prof_f, &
-                                    Out4Salt_f, Out5CompWC_f, Out6CompEC_f, &
-                                                    Out7Clim_f, OutDaily_f)
-    Out1Wabal = Out1Wabal_f
-    Out2Crop = Out2Crop_f
-    Out3Prof = Out3Prof_f
-    Out4Salt = Out4Salt_f
-    Out5CompWC = Out5CompWC_f
-    Out6CompEC = Out6CompEC_f
-    Out7Clim = Out7Clim_f
-    OutDaily = OutDaily_f
-end subroutine GetRequestDailyResults_wrap
+    TheProjectFile = pointer2string(p, strlen)
+    call GetProjectType(TheProjectFile, TheProjectType)
+end subroutine GetProjectType_wrap
 
-subroutine GetRequestParticularResults_wrap(Part1Mult, Part2Eval)
-    logical, intent(inout) :: Part1Mult
-    logical, intent(inout) :: Part2Eval
+function GetListProjectsFile_wrap() result(ptr)
+    type(c_ptr) :: ptr
 
-    logical ::  Part1Mult_f, Part2Eval_f
+    ptr = string2pointer(GetListProjectsFile())
+end function GetListProjectsFile_wrap
 
-    Part1Mult_f = Part1Mult
-    Part2Eval_f = Part2Eval
 
-    call GetRequestParticularResults(Part1Mult_f, Part2Eval_f)
+function GetProjectFilename_wrap(iproject) result(ptr)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr) :: ptr
 
-    Part1Mult = Part1Mult_f
-    Part2Eval = Part2Eval_f
-end subroutine GetRequestParticularResults_wrap
+    ptr = string2pointer(GetProjectFilename(iproject))
+end function GetProjectFilename_wrap
+
+
+subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
+    integer(int32), intent(in) :: iproject
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=strlen) :: TheProjectFile
+
+    TheProjectFile = pointer2string(p, strlen)
+
+    call InitializeProject(iproject, TheProjectFile, TheprojectType)
+end subroutine InitializeProject_wrap
+
+subroutine WriteProjectsInfo_wrap(p, strlen)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+
+    character(len=strlen) :: line
+
+    line = pointer2string(p, strlen)
+    call WriteProjectsInfo(line)
+end subroutine WriteProjectsInfo_wrap
+
 
 end module ac_interface_startunit
