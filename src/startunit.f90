@@ -131,12 +131,12 @@ use ac_global, only:    assert, &
 
 use ac_initialsettings, only: InitializeSettings
 use ac_run, only: open_file, &
-                  write_file
+                  write_file, &
+                  RunSimulation
 
 use ac_utils, only: upper_case
 
 implicit none
-
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
@@ -146,7 +146,6 @@ contains
 
 
 !! Section for Getters and Setters for global variables
-
 ! fProjects
 
 subroutine fProjects_open(filename, mode)
@@ -783,6 +782,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 end subroutine InitializeProject
 
 
+
 subroutine FinalizeTheProgram()
 
     integer :: fend
@@ -802,5 +802,42 @@ subroutine WriteProjectsInfo(line)
     call fProjects_write('')
 end subroutine WriteProjectsInfo
 
+subroutine StartTheProgram()
+
+    integer(int32) :: iproject, nprojects
+    character(len=1025) :: ListProjectsFile, TheProjectFile
+    logical :: ListProjectFileExist
+    integer(int8) :: TheProjectType
+
+    call InitializeTheProgram
+
+    ListProjectsFile = GetListProjectsFile()
+    ListProjectFileExist = FileExists(trim(ListProjectsFile))
+    nprojects = GetNumberOfProjects()
+
+    if (nprojects > 0) then
+        call WriteProjectsInfo('')
+        call WriteProjectsInfo('Projects handled:')
+    end if
+
+    do iproject = 1, nprojects
+        TheProjectFile = GetProjectFileName(iproject)
+        call GetProjectType(trim(TheProjectFile), TheProjectType)
+        call InitializeProject(iproject, trim(TheProjectFile), TheProjectType)
+        call RunSimulation(TheProjectFile, TheProjectType)
+    end do
+
+    if (nprojects == 0) then
+        call WriteProjectsInfo('')
+        call WriteProjectsInfo('Projects loaded: None')
+        
+        if (ListProjectFileExist) then
+            call WriteProjectsInfo('File ''ListProjects.txt'' does not contain ANY project file')
+        else
+            call WriteProjectsInfo('Missing File ''ListProjects.txt'' in LIST directory')
+        end if
+    end if
+    call FinalizeTheProgram
+end subroutine StartTheProgram
 
 end module ac_startunit
