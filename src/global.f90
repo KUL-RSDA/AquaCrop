@@ -1079,7 +1079,7 @@ function roundc_int32(x, mold) result(y)
         !! Integer determining the kind of the integer result
     integer(int32) :: y
 
-   if (abs(x - floor(x, kind=int32) - 0.5_dp) < epsilon(1._dp)) then
+   if (abs(x - floor(x, kind=int32) - 0.5_dp) < epsilon(0._dp)) then
        if (x > 0) then
           if (mod(abs(trunc(x)),2) == 0) then
               y = floor(x, kind=int32)
@@ -1107,7 +1107,7 @@ function roundc_int8(x, mold) result(y)
         !! Integer determining the kind of the integer result
     integer(int8) :: y
 
-    if (abs(x - floor(x, kind=int32) - 0.5_dp) < epsilon(1._dp)) then
+    if (abs(x - floor(x, kind=int32) - 0.5_dp) < epsilon(0._dp)) then
        if (x > 0) then
           if (mod(abs(trunc(x)),2) == 0) then
              y = floor(x, kind=int8)

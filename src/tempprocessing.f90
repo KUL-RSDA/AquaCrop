@@ -836,7 +836,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
 
     TDayMin_local = TDayMin
     TDayMax_local = TDayMax
-    GDDays = 0
+    GDDays = 0._dp
     if (ValPeriod > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax

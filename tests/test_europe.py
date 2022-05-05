@@ -257,18 +257,10 @@ def test_europe(row, col, use_irrigation):
         # a few pixels are known to display small deviations in *PRMday.out.
 
         # Make a dictionnary for the number of allowed small deviations
-        # per special case
+        # per special case (currently empty, i.e. no exceptions).
         special_cases = {
-            (30, 20, True, 'day'):  2,
-            (50, 27, True, 'day'):  1,
-            (7, 39, True, 'day'):   2,
-            (0, 45, True, 'day'):   1,
-            (18, 59, True, 'day'):  1,
-            (18, 60, True, 'day'):  2,
-            (13, 63, True, 'day'):  1,
-            (12, 64, True, 'day'):  2,
-            (39, 8, True, 'day'):   1,
         }
+
         if (row, col, use_irrigation, suffix) in special_cases:
             tolerated_deviations = special_cases.get((row, col, use_irrigation, suffix))
             msg = '{0} small deviation(s) currently allowed for this test case'

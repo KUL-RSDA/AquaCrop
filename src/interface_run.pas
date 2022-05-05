@@ -1366,6 +1366,10 @@ procedure GetPotValSF(constref DAP : integer;
     external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
 
 
+procedure WriteDailyResults(constref DAP : INTEGER;
+                            constref WPi : double);
+        external 'aquacrop' name '__ac_run_MOD_writedailyresults';
+
 implementation
 
 procedure InitializeRun(constref NrRun : ShortInt; 
