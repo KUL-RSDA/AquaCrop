@@ -130,15 +130,17 @@ use ac_global, only:    assert, &
                         SetFullfilenameProgramParameters
 
 use ac_initialsettings, only: InitializeSettings
-
-
 use ac_run, only: open_file, &
                   write_file
 
+use ac_utils, only: upper_case
+
 implicit none
+
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
+
 
 contains
 
@@ -156,7 +158,6 @@ subroutine fProjects_open(filename, mode)
 
     call open_file(fProjects, filename, mode, fProjects_iostat)
 end subroutine fProjects_open
-
 
 subroutine fProjects_write(line, advance_in)
     !! Writes the given line to the fProjects file.
@@ -311,6 +312,39 @@ subroutine GetTimeAggregationResults()
         close(f0)
     end if
 end subroutine GetTimeAggregationResults
+
+
+subroutine GetProjectType(TheProjectFile, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFile
+    integer(intenum), intent(inout) :: TheProjectType 
+   
+    integer :: i
+    integer :: lgth
+    character(len=3) :: TheExtension
+
+    TheProjectType = typeproject_typenone
+    lgth = len(TheProjectFile)
+    if (lgth > 0) then
+        i = 1
+        do while ((TheProjectFile(i:i) /= '.') .and. (i < lgth))
+            i = i + 1
+        end do
+        if (i == (lgth - 3)) then
+            TheExtension = TheProjectFile(i+1:i+3)
+            call upper_case(TheExtension)
+            if (TheExtension == 'PRO') then
+                TheProjectType = typeproject_typepro
+            else
+                if (TheExtension == 'PRM') then
+                    TheProjectType = typeproject_typeprm
+                else
+                    TheProjectType = typeproject_typenone
+                end if
+            end if
+        end if
+    end if
+end subroutine GetProjectType
+
 
 subroutine PrepareReport()
 

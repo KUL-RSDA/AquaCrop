@@ -2,8 +2,10 @@ module ac_interface_run
 
 use, intrinsic :: iso_c_binding, only: c_char, &
                                        c_ptr
+
 use ac_interface_global, only: pointer2string, &
                                string2pointer
+                               
 use ac_kinds, only: int8, &
                     int32, &
                     dp, &
@@ -14,6 +16,7 @@ use ac_run, only:   CheckForPrint, &
                     fDaily_write, &
                     fRun_open, &
                     fRun_write, &
+                    FinalizeRun1, &
                     fIrri_eof, &
                     fIrri_open, &
                     fIrri_read, &
@@ -745,6 +748,18 @@ subroutine InitializeTransferAssimilates_wrap(Bin, Bout, AssimToMobilize, &
     StorageON = StorageON_f
     MobilizationON = MobilizationON_f
 end subroutine InitializeTransferAssimilates_wrap
+
+subroutine FinalizeRun1_wrap(NrRun,TheProjectFile,strlen, TheProjectType)
+    integer(int8), intent(in) :: NrRun
+    type(c_ptr), intent(in) :: TheProjectFile
+    integer(int32), intent(in) :: strlen
+    integer(intenum), intent(in) :: TheProjectType
+
+    character(len=strlen) :: string
+
+    string = pointer2string(TheProjectFile, strlen)
+    call FinalizeRun1(NrRun,string, TheProjectType)
+end subroutine FinalizeRun1_wrap
 
 
 

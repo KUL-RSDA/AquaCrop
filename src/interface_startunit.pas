@@ -73,6 +73,14 @@ procedure WriteProjectsInfo_wrap(constref p : PChar;
                             constref strlen : integer);
         external 'aquacrop' name '__ac_interface_startunit_MOD_writeprojectsinfo_wrap';
 
+procedure GetProjectType(constref TheProjectFile : string;
+                         VAR TheProjectType : repTypeProject);
+
+procedure GetProjectType_wrap(constref TheProjectFile : PChar;
+                              constref strlen : integer;
+                              VAR TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_startunit_MOD_getprojecttype_wrap';
+
 implementation
 
 
@@ -102,6 +110,21 @@ begin
     strlen := Length(line);
     WriteProjectsInfo_wrap(p, strlen);
 end;
+
+procedure GetProjectType(constref TheProjectFile: string;
+                         VAR TheProjectType : repTypeProject);
+var
+    p : PChar;
+    strlen : integer;
+    int_projecttype : integer;
+
+begin
+    p := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    int_projecttype := ord(TheProjectType);
+    GetProjectType_wrap(p,strlen, int_projecttype);
+    TheProjectType := repTypeProject(int_projecttype);
+end; 
 
 
 procedure InitializeProject(constref iproject : integer;

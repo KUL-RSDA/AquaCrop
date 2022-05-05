@@ -611,6 +611,13 @@ procedure __WriteTitleDailyResults(constref TheProjectType : integer;
                            constref TheNrRun : shortint);
         external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
+procedure FinalizeRun2(constref NrRun : ShortInt; 
+                        constref TheProjectType : repTypeProject);
+
+procedure __FinalizeRun2(constref NrRun : ShortInt; 
+                        constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_run_MOD_finalizerun2';
+
 procedure fEToSIM_open(constref filename : string; constref mode : string);
 
 procedure fEToSIM_open_wrap(
@@ -1150,7 +1157,7 @@ function GetNextSimFromDayNr() : integer;
 procedure SetNextSimFromDayNr(constref NextSimFromDayNr : integer);
     external 'aquacrop' name '__ac_run_MOD_setnextsimfromdaynr';
 
-function GetStageCode() : integer;
+function GetStageCode() : shortint;
     external 'aquacrop' name '__ac_run_MOD_getstagecode';
 
 procedure SetStageCode(constref StageCode : integer);
@@ -1272,6 +1279,17 @@ procedure OpenPart1MultResults(constref TheProjectType : repTypeProject);
 procedure __OpenPart1MultResults(constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_openpart1multresults';
 
+procedure FinalizeRun1(constref NrRun : ShortInt;
+                       constref TheProjectFile : string;
+                       constref TheProjectType : repTypeProject);
+
+
+procedure FinalizeRun1_wrap(constref NrRun : ShortInt; 
+                            constref filename_ptr : PChar;
+                            constref filename_len : integer;
+                            constref TheProjectType : integer);
+        external 'aquacrop' name '__ac_interface_run_MOD_finalizerun1_wrap';
+
 procedure CreateDailyClimFiles(constref FromSimDay,ToSimDay : LongInt);
     external 'aquacrop' name '__ac_run_MOD_createdailyclimfiles';
 
@@ -1349,6 +1367,10 @@ procedure GetPotValSF(constref DAP : integer;
 
 procedure AdvanceOneTimeStep();
     external 'aquacrop' name '__ac_run_MOD_advanceonetimestep';
+
+procedure WriteDailyResults(constref DAP : INTEGER;
+                            constref WPi : double);
+        external 'aquacrop' name '__ac_run_MOD_writedailyresults';
 
 implementation
 
@@ -1889,6 +1911,15 @@ begin
     __WriteTitleDailyResults(int_typeproject, TheNrRun);
 end;
 
+procedure FinalizeRun2(constref NrRun : Shortint;
+                          constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    __FinalizeRun2(int_typeproject, NrRun);
+end;
+
 function GetPreviousSum() : rep_sum;
 begin;
     GetPreviousSum.Epot := GetPreviousSum_Epot();
@@ -2002,6 +2033,22 @@ begin;
 end;
 
 
+procedure FinalizeRun1(constref NrRun : ShortInt;
+                       constref TheProjectFile : string;
+                       constref TheProjectType : repTypeProject);
+var
+    p : PChar;
+    strlen : integer;
+    int_typeproject : integer;
+
+begin
+    p := PChar(TheProjectFile);
+    strlen := Length(TheProjectFile);
+    int_typeproject := ord(TheProjectType);
+    FinalizeRun1_wrap(NrRun, p,strlen, int_typeproject);
+end;
+
+
 procedure InitializeSimulation(constref TheProjectFileStr : string;
                                constref TheProjectType : repTypeProject);
 var
@@ -2014,6 +2061,7 @@ begin
     int_typeproject := ord(TheProjectType);
     InitializeSimulation_wrap(p,strlen, int_typeproject);
 end;
+
 
 
 
