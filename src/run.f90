@@ -6456,68 +6456,68 @@ subroutine AdvanceOneTimeStep()
                         ! switch time scale
                     end if
                 endif
-                ! CC initial (at the end of previous day) when simulation starts
-                ! before regrowth,
-                if ((GetDayNri() == GetCrop_Day1()) .and. &
-                    (GetDayNri() > GetSimulation_FromDayNr())) then
-                    RatDGDD = 1._dp
-                    if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
-                        (GetCrop_GDDaysToFullCanopySF() < &
-                         GetCrop_GDDaysToSenescence())) then
-                        RatDGDD = (GetCrop_DaysToSenescence() - &
-                          GetCrop_DaysToFullCanopySF())/ &
-                          real((GetCrop_GDDaysToSenescence() - &
-                          GetCrop_GDDaysToFullCanopySF()), kind=dp)
-                    end if
-                    EffectStress_temp = GetSimulation_EffectStress()
-                    call CropStressParametersSoilFertility(&
-                            GetCrop_StressResponse(), &
-                            GetStressSFadjNEW(), EffectStress_temp)
-                    call SetSimulation_EffectStress(EffectStress_temp)
-                    call SetCCiPrev(CCiniTotalFromTimeToCCini(&
-                            GetCrop_DaysToCCini(), &
-                            GetCrop_GDDaysToCCini(), &
-                            GetCrop_DaysToGermination(), &
-                            GetCrop_DaysToFullCanopy(), &
-                            GetCrop_DaysToFullCanopySF(), &
-                            GetCrop_DaysToSenescence(), &
-                            GetCrop_DaysToHarvest(), &
-                            GetCrop_GDDaysToGermination(), &
-                            GetCrop_GDDaysToFullCanopy(), &
-                            GetCrop_GDDaysToFullCanopySF(), &
-                            GetCrop_GDDaysToSenescence(), &
-                            GetCrop_GDDaysToHarvest(), GetCrop_CCo(), &
-                            GetCrop_CCx(), GetCrop_CGC(), &
-                            GetCrop_GDDCGC(), GetCrop_CDC(), &
-                            GetCrop_GDDCDC(), RatDGDD, &
-                            GetSimulation_EffectStress_RedCGC(), &
-                            GetSimulation_EffectStress_RedCCX(), &
-                            GetSimulation_EffectStress_CDecline(), &
-                            (GetCCxTotal()/GetCrop_CCx()), GetCrop_ModeCycle()))
-                    ! (CCxTotal/Crop.CCx) = fWeed
+            end if
+            ! CC initial (at the end of previous day) when simulation starts
+            ! before regrowth,
+            if ((GetDayNri() == GetCrop_Day1()) .and. &
+                (GetDayNri() > GetSimulation_FromDayNr())) then
+                RatDGDD = 1._dp
+                if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
+                    (GetCrop_GDDaysToFullCanopySF() < &
+                     GetCrop_GDDaysToSenescence())) then
+                    RatDGDD = (GetCrop_DaysToSenescence() - &
+                      GetCrop_DaysToFullCanopySF())/ &
+                      real((GetCrop_GDDaysToSenescence() - &
+                      GetCrop_GDDaysToFullCanopySF()), kind=dp)
                 end if
-            else
-                ! before start crop
-                VirtualTimeCC = GetDayNri() - GetSimulation_DelayedDays() - &
-                                GetCrop_Day1()
-                if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-                    SumGDDadjCC = GetSimulation_SumGDD()
-                end if
+                EffectStress_temp = GetSimulation_EffectStress()
+                call CropStressParametersSoilFertility(&
+                        GetCrop_StressResponse(), &
+                        GetStressSFadjNEW(), EffectStress_temp)
+                call SetSimulation_EffectStress(EffectStress_temp)
+                call SetCCiPrev(CCiniTotalFromTimeToCCini(&
+                        GetCrop_DaysToCCini(), &
+                        GetCrop_GDDaysToCCini(), &
+                        GetCrop_DaysToGermination(), &
+                        GetCrop_DaysToFullCanopy(), &
+                        GetCrop_DaysToFullCanopySF(), &
+                        GetCrop_DaysToSenescence(), &
+                        GetCrop_DaysToHarvest(), &
+                        GetCrop_GDDaysToGermination(), &
+                        GetCrop_GDDaysToFullCanopy(), &
+                        GetCrop_GDDaysToFullCanopySF(), &
+                        GetCrop_GDDaysToSenescence(), &
+                        GetCrop_GDDaysToHarvest(), GetCrop_CCo(), &
+                        GetCrop_CCx(), GetCrop_CGC(), &
+                        GetCrop_GDDCGC(), GetCrop_CDC(), &
+                        GetCrop_GDDCDC(), RatDGDD, &
+                        GetSimulation_EffectStress_RedCGC(), &
+                        GetSimulation_EffectStress_RedCCX(), &
+                        GetSimulation_EffectStress_CDecline(), &
+                        (GetCCxTotal()/GetCrop_CCx()), GetCrop_ModeCycle()))
+                ! (CCxTotal/Crop.CCx) = fWeed
             end if
         else
-            ! sown or transplanted
+            ! before start crop
             VirtualTimeCC = GetDayNri() - GetSimulation_DelayedDays() - &
                             GetCrop_Day1()
             if (GetCrop_ModeCycle() == modeCycle_GDDays) then
                 SumGDDadjCC = GetSimulation_SumGDD()
             end if
-            ! CC initial (at the end of previous day) when simulation starts
-            ! before sowing/transplanting,
-            if ((GetDayNri() == (GetCrop_Day1() + &
-                                 GetCrop_DaysToGermination())) &
-                .and. (GetDayNri() > GetSimulation_FromDayNr())) then
-                call SetCCiPrev(GetCCoTotal())
-            end if
+        end if
+    else
+        ! sown or transplanted
+        VirtualTimeCC = GetDayNri() - GetSimulation_DelayedDays() - &
+                        GetCrop_Day1()
+        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+            SumGDDadjCC = GetSimulation_SumGDD()
+        end if
+        ! CC initial (at the end of previous day) when simulation starts
+        ! before sowing/transplanting,
+        if ((GetDayNri() == (GetCrop_Day1() + &
+                             GetCrop_DaysToGermination())) &
+            .and. (GetDayNri() > GetSimulation_FromDayNr())) then
+            call SetCCiPrev(GetCCoTotal())
         end if
     end if
 
@@ -6620,7 +6620,7 @@ subroutine AdvanceOneTimeStep()
          if (GetStressTot_NrD() < 0) then
             call SetStressTot_NrD(1)
           else
-            call SetStressTot_NrD(GetStressTot_NrD() +1)
+            call SetStressTot_NrD(GetStressTot_NrD() + 1)
            end if
      end if
 
@@ -6962,8 +6962,8 @@ subroutine AdvanceOneTimeStep()
         else
             TempString = fTempSIM_read()
             read(TempString, *) Tmin_temp, Tmax_temp
-                call SetTmin(Tmin_temp)
-                call SetTmax(Tmax_temp)
+            call SetTmin(Tmin_temp)
+            call SetTmax(Tmax_temp)
         end if
         call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
                 GetTmin(), GetTmax(), GetSimulParam_GDDMethod()))
