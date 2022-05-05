@@ -170,7 +170,7 @@ def test_perennial():
                                             filename, maxdev, maxcol))
 
         # Certain small deviations are tolerated in the daily/season output
-        tolerated_deviations = {'day': 35, 'season': 8}[suffix]
+        tolerated_deviations = {'day': 0, 'season': 0}[suffix]
         msg = '{0} small deviation(s) currently allowed for this test case'
         print(msg.format(tolerated_deviations))
 
