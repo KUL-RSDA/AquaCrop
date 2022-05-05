@@ -72,7 +72,8 @@ use ac_run, only:   CheckForPrint, &
                     SetCGCadjustmentAfterCutting, &
                     WriteSimPeriod, &
                     WriteIntermediatePeriod, &
-                    InitializeTransferAssimilates
+                    InitializeTransferAssimilates, &
+                    RunSimulation
 
 implicit none
 
@@ -760,6 +761,18 @@ subroutine FinalizeRun1_wrap(NrRun,TheProjectFile,strlen, TheProjectType)
     string = pointer2string(TheProjectFile, strlen)
     call FinalizeRun1(NrRun,string, TheProjectType)
 end subroutine FinalizeRun1_wrap
+
+
+subroutine RunSimulation_wrap(p, strlen, TheProjectType)
+    type(c_ptr), intent(in) :: p
+    integer(int32), intent(in) :: strlen
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=strlen) :: string
+
+    string = pointer2string(p, strlen)
+    call RunSimulation(string, TheProjectType)
+end subroutine RunSimulation_wrap
 
 
 
