@@ -7359,5 +7359,32 @@ subroutine FileManagement()
 end subroutine FileManagement
 
 
+subroutine RunSimulation(TheProjectFile_, TheProjectType)
+    character(len=*), intent(in) :: TheProjectFile_
+    integer(intEnum), intent(in) :: TheProjectType
+
+    integer(int8) :: NrRun
+    integer(int32) :: NrRuns
+
+    call InitializeSimulation(TheProjectFile_, TheProjectType)
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        NrRuns = 1
+    case(typeproject_TypePRM)
+        NrRuns = GetSimulation_NrRuns()
+    end select
+
+    do NrRun = 1, NrRuns 
+        call InitializeRun(NrRun, TheProjectType)
+        call FileManagement()
+        call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
+        call FinalizeRun2(NrRun, TheProjectType)
+    end do
+
+    call FinalizeSimulation()
+end subroutine RunSimulation
+
+
 
 end module ac_run
