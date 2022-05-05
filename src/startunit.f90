@@ -131,7 +131,8 @@ use ac_global, only:    assert, &
 
 use ac_initialsettings, only: InitializeSettings
 use ac_run, only: open_file, &
-                  write_file
+                  write_file, &
+                  RunSimulation
 
 use ac_utils, only: upper_case
 
