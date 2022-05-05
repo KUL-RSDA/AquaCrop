@@ -15,17 +15,6 @@ implementation
 uses SysUtils,TempProcessing,ClimProcessing,RootUnit,Simul,StartUnit,InfoResults;
 
 
-PROCEDURE FileManagement();
-VAR RepeatToDay : LongInt;
-
-BEGIN (* FileManagement *)
-RepeatToDay := GetSimulation_ToDayNr();
-REPEAT
-  AdvanceOneTimeStep()
-UNTIL ((GetDayNri()-1) = RepeatToDay);
-END; // FileManagement
-
-
 PROCEDURE RunSimulation(TheProjectFile_ : string;
                         TheProjectType : repTypeProject);
 VAR NrRun : ShortInt;

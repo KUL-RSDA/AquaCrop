@@ -1370,7 +1370,10 @@ procedure AdvanceOneTimeStep();
 
 procedure WriteDailyResults(constref DAP : INTEGER;
                             constref WPi : double);
-        external 'aquacrop' name '__ac_run_MOD_writedailyresults';
+    external 'aquacrop' name '__ac_run_MOD_writedailyresults';
+
+procedure FileManagement();
+    external 'aquacrop' name '__ac_run_MOD_filemanagement';
 
 implementation
 

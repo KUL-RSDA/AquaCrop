@@ -7347,5 +7347,17 @@ subroutine WriteDailyResults(DAP, WPi)
 end subroutine WriteDailyResults
 
 
+subroutine FileManagement()
+
+    integer(int32) :: RepeatToDay
+
+    RepeatToDay = GetSimulation_ToDayNr()
+    loop: do
+        call AdvanceOneTimeStep()
+        if ((GetDayNri()-1) == RepeatToDay) exit loop
+    end do loop
+end subroutine FileManagement
+
+
 
 end module ac_run
