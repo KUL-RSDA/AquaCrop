@@ -1157,7 +1157,7 @@ function GetNextSimFromDayNr() : integer;
 procedure SetNextSimFromDayNr(constref NextSimFromDayNr : integer);
     external 'aquacrop' name '__ac_run_MOD_setnextsimfromdaynr';
 
-function GetStageCode() : integer;
+function GetStageCode() : shortint;
     external 'aquacrop' name '__ac_run_MOD_getstagecode';
 
 procedure SetStageCode(constref StageCode : integer);
@@ -1365,6 +1365,10 @@ procedure GetPotValSF(constref DAP : integer;
                       VAR PotValSF : double);
     external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
 
+
+procedure WriteDailyResults(constref DAP : INTEGER;
+                            constref WPi : double);
+        external 'aquacrop' name '__ac_run_MOD_writedailyresults';
 
 implementation
 

@@ -15,15 +15,18 @@ use ac_global, only:    AdjustSizeCompartments, &
                         DaysInMonth, &
                         DegreesDay, &
                         DetermineDate, &
-                        DetermineDate, &
                         DetermineDayNr, &
-                        DetermineDayNr, &
+                        DetermineRootZoneWC, &
                         DetermineSaltContent, &
-                        DetermineSaltContent, &
+                        ECeComp, &
+                        Equiv, &
                         FileExists, &
+                        GetCCiActual, &
+                        GetClimRecord_FromY, &
                         GetCompartment_i, &
                         GetCompartment_i, &
                         GetCompartment_Layer, &
+                        GetCompartment_Theta, &
                         GetCompartment_Thickness, &
                         GetCrop_CCEffectEvapLate, &
                         GetCrop_CCo, &
@@ -71,9 +74,11 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCrop_Length_i, &
                         GetCrop_WP, &
                         GetCrop_WPy, &
-                        GetCRwater, &
+                        GetCRSalt, &
+                        GetCRWater, &
                         GetDrain, &
                         GetEact, &
+                        GetECdrain, &
                         GetECiAqua, &
                         GetEpot, &
                         GetETo, &
@@ -112,12 +117,25 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetRainFilefull, &
                         GetRainRecord_DataType, &
                         GetRainRecord_FromDayNr, &
+                        GetRootingDepth, &
+                        GetRootZoneSalt_ECe, &
+                        GetRootZoneSalt_ECsw, &
+                        GetRootZoneSalt_KsSalt, &
+                        GetRootZoneWC_actual, &
+                        GetRootZoneWC_FC, &
+                        GetRootZoneWC_Leaf, &
+                        GetRootZoneWC_SAT, &
+                        GetRootZoneWC_Sen, &
+                        GetRootZoneWC_Thresh, &
+                        GetRootZoneWC_WP, &
                         GetRunoff, &
+                        GetSaltInfiltr, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
                         GetSimulation_SalinityConsidered, &
                         GetSimulation_Storage_Btotal, &
                         GetSimulation_SumGDD, &
+                        GetSimulation_SWCtopsoilConsidered, &
                         GetSimulation_ToDayNr, &
                         GetSimulParam_GDDMethod, &
                         GetSimulParam_Tmax, &
@@ -143,6 +161,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetSumWaBal_Tpot, &
                         GetSumWaBal_TrW, &
                         GetSumWaBal_YieldPart, &
+                        GetSurfaceStorage, &
                         GetTact, &
                         GetTactWeedInfested, &
                         GetTemperatureFile, &
@@ -152,10 +171,12 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetTmax, &
                         GetTmin, &
                         GetTotalSaltContent_endDay, &
+                        GetTotalWaterContent_EndDay, &
                         GetTpot, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
+                        KsTemperature, &
                         rep_DayEventDbl, &
                         LeapYear, &
                         GetOut1Wabal, &
@@ -172,8 +193,19 @@ use ac_global, only:    AdjustSizeCompartments, &
                         SetCompartment_Theta, &
                         SetETo, &
                         SetRain, &
+                        SetRootZoneSalt_ECe, &
+                        SetRootZoneSalt_ECsw, &
+                        SetRootZoneSalt_KsSalt, &
+                        SetRootZoneWC_actual, &
+                        SetRootZoneWC_FC, &
+                        SetRootZoneWC_Leaf, &
+                        SetRootZoneWC_SAT, &
+                        SetRootZoneWC_Sen, &
+                        SetRootZoneWC_Thresh, &
+                        SetRootZoneWC_WP, &
                         SetSimulation_IrriECw, &
                         SetSimulation_SumGDD, &
+                        SetSimulation_SWCtopSoilConsidered, &
                         GetSimulation_DelayedDays, &
                         GetSimulation_MultipleRun, &
                         GetSimulation_NrRuns, &
@@ -2296,27 +2328,27 @@ end subroutine SetSumInterval
 integer(int32) function GetPreviousStressLevel()
     !! Getter for the "PreviousStressLevel" global variable.
 
-    GetPreviousStressLevel = PreviousStressLevel
+    GetPreviousStressLevel = int(PreviousStressLevel, kind=int32)
 end function GetPreviousStressLevel
 
 subroutine SetPreviousStressLevel(PreviousStressLevel_in)
     !! Setter for the "PreviousStressLevel" global variable.
     integer(int32), intent(in) :: PreviousStressLevel_in
 
-    PreviousStressLevel = PreviousStressLevel_in
+    PreviousStressLevel = int(PreviousStressLevel_in, kind=int8)
 end subroutine SetPreviousStressLevel
 
 integer(int32) function GetStressSFadjNEW()
     !! Getter for the "StressSFadjNEW" global variable.
 
-    GetStressSFadjNEW = StressSFadjNEW
+    GetStressSFadjNEW = int(StressSFadjNEW, kind=int32)
 end function GetStressSFadjNEW
 
 subroutine SetStressSFadjNEW(StressSFadjNEW_in)
     !! Setter for the "StressSFadjNEW" global variable. 
     integer(int32), intent(in) :: StressSFadjNEW_in
 
-    StressSFadjNEW = StressSFadjNEW_in 
+    StressSFadjNEW = int(StressSFadjNEW_in, kind=int8)
 end subroutine SetStressSFadjNEW
 
 real(dp) function GetCCxWitheredTpot()
@@ -2935,14 +2967,14 @@ end subroutine SetDayNrEval
 integer(int32) function GetLineNrEval()
     !! Getter for the "LineNrEval" global variable.
 
-    GetLineNrEval = LineNrEval
+    GetLineNrEval = int(LineNrEval, kind=int32)
 end function GetLineNrEval
 
 subroutine SetLineNrEval(LineNrEval_in)
     !! Setter for the "LineNrEval" global variable.
     integer(int32), intent(in) :: LineNrEval_in
 
-    LineNrEval = LineNrEval_in
+    LineNrEval = int(LineNrEval_in, kind=int8)
 end subroutine SetLineNrEval
 
 real(dp) function GetZeval()
@@ -3598,7 +3630,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
     end if
 
     ! 1.b Soil fertility : FracBiomassPotSF
-    if ((GetManagement_FertilityStress() /= 0._dp) .and. &
+    if ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
         BioLow = 100_int8
         StrLow = 0._dp
@@ -4225,8 +4257,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
         case(3)
             write(TempString, '(a, 3i9)') '    Month', Day1, Month1, Year1_loc
         end select
-    call fRun_write(trim(TempString), .false.)
-
+        call fRun_write(trim(TempString), .false.)
     else
         write(TempString, '(i0)') ANumber
         TempString = 'Tot(' // trim(TempString) // ')'
@@ -4264,10 +4295,14 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                                   GetTotalSaltContent_EndDay()
     call fRun_write(trim(TempString), .false.)
 
-    ! seasonal stress
-    write(TempString, '(i9, f9.0, i9, 4f9.0)') GetStressTot_NrD(), GetStressTot_Salt(), &
-                    GetManagement_FertilityStress(), GetStressTot_Weed(), &
-                    GetStressTot_Temp(), GetStressTot_Exp(), GetStressTot_Sto()
+    ! Seasonal stress
+    write(TempString, '(7i9)') GetStressTot_NrD(), &
+                               roundc(GetStressTot_Salt(), mold=1), &
+                               GetManagement_FertilityStress(), &
+                               roundc(GetStressTot_Weed(), mold=1), &
+                               roundc(GetStressTot_Temp(), mold=1), &
+                               roundc(GetStressTot_Exp(), mold=1), &
+                               roundc(GetStressTot_Sto(), mold=1)
     call fRun_write(trim(TempString), .false.)
 
     ! Biomass production
@@ -6123,14 +6158,24 @@ subroutine WriteEvaluationData(DAP)
 
 end subroutine WriteEvaluationData
 
+
 subroutine InitializeRun(NrRun, TheProjectType)
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+    character(len=1024), allocatable :: filename
 
-    call LoadSimulationRunProject(GetMultipleProjectFileFull(), &
-                                  int(NrRun, kind=int32))
+    ! NOTE: Previously, the code would give deviations for the Perennial
+    ! test when compiling with the foss-2018a toolchain and the DEBUG=1
+    ! and FORTRAN_EXE=0 options. By using a 'filename' local variable,
+    ! the test passes again. Also inserting a print statement (instead
+    ! of using this local variable) at this location tends to have the
+    ! same effect. This behavior started after InitializeRun got converted
+    ! to Fortran (commit a042e73f7b3a2f69b8077f1baac004886c355224).
+    filename = GetMultipleProjectFileFull()
+    call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
+
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
     call GlobalZero(SumWaBal_temp)
@@ -6285,5 +6330,347 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
         call WriteSimPeriod(NrRun, TheProjectFile)
     end if
 end subroutine FinalizeRun1
+
+
+subroutine WriteDailyResults(DAP, WPi)
+    integer(int32), intent(in) :: DAP
+    real(dp), intent(in) :: WPi
+
+    real(dp), parameter :: NoValD = undef_double
+    integer(int32), parameter :: NoValI = undef_int
+    integer(int32) :: Di, Mi, Yi, StrExp, StrSto, StrSalt, &
+                      StrTr, StrW, Brel, Nr, DAP_loc
+    integer(int32) :: Ratio1, Ratio2, Ratio3
+    real(dp) :: KsTr, HI, KcVal, WPy, SaltVal, WPi_loc, tempreal
+    logical :: SWCtopSoilConsidered_temp
+    character(len=1025) :: tempstring
+
+    DAP_loc = DAP
+    WPi_loc = WPi
+
+    call DetermineDate(GetDayNri(), Di, Mi, Yi)
+    if (GetClimRecord_FromY() == 1901) then
+        Yi = Yi - 1901 + 1
+    end if
+    if (GetStageCode() == 0) then
+        DAP_loc = undef_int ! before or after cropping
+    end if
+
+    ! 0. info day
+    write(tempstring, '(5i6)') Di, Mi, Yi, DAP_loc, GetStageCode()
+    call fDaily_write(trim(tempstring), .false.)
+
+
+    ! 1. Water balance
+    if (GetOut1Wabal()) then
+        if (GetZiAqua() == undef_int) then
+            write(tempstring, '(f10.1, f8.1, f9.1, 3f7.1, 2f9.1, f8.2)') &
+                    GetTotalWaterContent_EndDay(), GetRain(), GetIrrigation(), &
+                    GetSurfaceStorage(), GetInfiltrated(), GetRunoff(), &
+                    GetDrain(), GetCRwater(), undef_double
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f10.1, f8.1, f9.1, 3f7.1, 2f9.1, f8.2)') &
+                    GetTotalWaterContent_EndDay(), GetRain(), GetIrrigation(), &
+                    GetSurfaceStorage(), GetInfiltrated(), GetRunoff(), &
+                    GetDrain(), GetCRwater(), (GetZiAqua()/100._dp)
+            call fDaily_write(trim(tempstring), .false.)
+        end if
+        if (GetTpot() > 0._dp) then
+            Ratio1 = roundc(100._dp * GetTact()/GetTpot(), mold=1)
+        else
+            Ratio1 = 100
+        end if
+
+        if ((GetEpot()+GetTpot()) > 0._dp) then
+            Ratio2 = roundc(100._dp * (GetEact()+GetTact())/(GetEpot()+GetTpot()), mold=1)
+        else
+            Ratio2 = 100
+        end if
+
+        if (GetEpot() > 0._dp) then
+            Ratio3 = roundc(100._dp * GetEact()/GetEpot(), mold=1)
+        else
+            Ratio3 = 100
+        end if
+
+        if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
+            .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+            .or. (GetOut7Clim())) then
+            write(tempstring, '(2f9.1, i7, 2f9.1, i6, f9.1, f8.1, i8)') &
+                    GetEpot(), GetEact(), Ratio3, GetTpot(), GetTact(), Ratio1, &
+                    (GetEpot()+GetTpot()), (GetEact()+GetTact()), Ratio2
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(2f9.1, i7, 2f9.1, i6, f9.1, f8.1, i8)') &
+                    GetEpot(), GetEact(), Ratio3, GetTpot(), GetTact(), Ratio1, &
+                    (GetEpot()+GetTpot()), (GetEact()+GetTact()), Ratio2
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+
+
+    ! 2. Crop development and yield
+    if (GetOut2Crop()) then
+        ! 1. relative transpiration
+        if (GetTpot() > 0._dp) then
+            Ratio1 = roundc(100._dp * GetTact()/GetTpot(), mold=1)
+        else
+            Ratio1 = 100
+        end if
+        ! 2. Water stresses
+        if (GetStressLeaf() < 0._dp) then
+            StrExp = undef_int
+        else
+            StrExp = roundc(GetStressLeaf(), mold=1)
+        end if
+        if (GetTpot() < epsilon(0._dp)) then
+            StrSto = undef_int
+        else
+            StrSto = roundc(100._dp * (1._dp - GetTact()/GetTpot()), mold=1)
+        end if
+
+        ! 3. Salinity stress
+        if (GetRootZoneSalt_KsSalt() < 0._dp) then
+            StrSalt = undef_int
+        else
+            StrSalt = roundc(100._dp * (1._dp - GetRootZoneSalt_KsSalt()), &
+                                                                    mold=1)
+        end if
+
+        ! 4. Air temperature stress
+        if (GetCCiActual() <= 0.0000001_dp) then
+            KsTr = 1._dp
+        else
+            KsTr = KsTemperature(0._dp, GetCrop_GDtranspLow(), GetGDDayi())
+        end if
+
+        if (KsTr < 1._dp) then
+            StrTr = roundc((1._dp-KsTr)*100._dp, mold=1)
+        else
+            StrTr = 0._dp
+        end if
+
+        ! 5. Relative cover of weeds
+        if (GetCCiActual() <= 0.0000001_dp) then
+            StrW = undef_int
+        else
+            StrW = roundc(GetWeedRCi(), mold=1)
+        end if
+
+        ! 6. WPi adjustemnt
+        if (GetSumWaBal_Biomass() <= 0.000001_dp) then
+            WPi_loc = 0._dp
+        end if
+
+        ! 7. Harvest Index
+        if ((GetSumWaBal_Biomass() > 0._dp) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            HI = 100._dp * (GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
+        else
+            HI = undef_double
+        end if
+
+        ! 8. Relative Biomass
+        if ((GetSumWaBal_Biomass() > 0._dp) &
+            .and. (GetSumWaBal_BiomassUnlim() > 0._dp)) then
+            Brel = roundc(100._dp * GetSumWaBal_Biomass() &
+                          /GetSumWaBal_BiomassUnlim(), mold=1)
+            if (Brel > 100._dp) then
+                Brel = 100._dp
+            end if
+        else
+            Brel = undef_int
+        end if
+
+        ! 9. Kc coefficient
+        if ((GetETo() > 0._dp) .and. (GetTpot() > 0._dp) &
+            .and. (StrTr < 100)) then
+            KcVal = GetTpot()/(GetETo()*KsTr)
+        else
+            KcVal = undef_int
+        end if
+
+        ! 10. Water Use Efficiency yield
+        if (((GetSumWaBal_Tact() > 0._dp) .or. (GetSumWaBal_ECropCycle() > 0._dp)) &
+            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+            WPy = (GetSumWaBal_YieldPart()*1000._dp) &
+                    /((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10._dp)
+        else
+            WPy = 0.0_dp
+        end if
+
+        ! write
+        write(tempstring, '(f9.1, f8.2, 3i7, 2i7, 2f8.1, i7, f9.2, ' //&
+                           '3f9.1, i6, f8.1, f10.3, f8.1, f9.3)') &
+                GetGDDayi(), GetRootingDepth(), &
+                StrExp, StrSto, &
+                roundc(GetStressSenescence(), mold=1), StrSalt, StrW, &
+                (GetCCiActual()*100._dp), (GetCCiActualWeedInfested()*100._dp), &
+                StrTr, KcVal, GetTpot(), GetTact(), GetTactWeedInfested(), &
+                Ratio1, (100._dp*WPi_loc), GetSumWaBal_Biomass(), HI, &
+                GetSumWaBal_YieldPart()
+        call fDaily_write(trim(tempstring), .false.)
+        ! Fresh yield
+
+        if ((GetCrop_DryMatter() == undef_int) &
+            .or. (GetCrop_DryMatter() < epsilon(0._dp))) then
+            write(tempstring, '(f9.3)') undef_double
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f9.3)') GetSumWaBal_YieldPart() &
+                                         /(GetCrop_DryMatter()/100._dp)
+            call fDaily_write(trim(tempstring), .false.)
+        end if
+
+        ! finalize
+        if ((GetOut3Prof()) .or. (GetOut4Salt()) .or. (GetOut5CompWC()) &
+            .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(i8, f12.2, 2f9.3)') Brel, WPy, &
+                                                    GetBin(), GetBout()
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(i8, f12.2, 2f9.3)') Brel, WPy, &
+                                                    GetBin(), GetBout()
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+
+    ! 3. Profile/Root zone - Soil water content
+    if (GetOut3Prof()) then
+        write(tempstring, '(f10.1)') GetTotalWaterContent_EndDay()
+        call fDaily_write(trim(tempstring), .false.)
+        if (GetRootingDepth() < epsilon(0._dp)) then
+            call SetRootZoneWC_Actual(undef_double)
+        else
+            if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+                == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+                SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+                call DetermineRootZoneWC(GetCrop_RootMax(), &
+                                         SWCtopSoilConsidered_temp)
+                call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+            else
+                SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+                call DetermineRootZoneWC(GetCrop_RootMax(), SWCtopSoilConsidered_temp)
+                call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+            end if
+        end if
+        write(tempstring, '(f9.1, f8.2)') GetRootZoneWC_actual(), GetRootingDepth()
+        call fDaily_write(trim(tempstring), .false.)
+        if (GetRootingDepth() < epsilon(0._dp)) then
+            call SetRootZoneWC_Actual(undef_double)
+            call SetRootZoneWC_FC(undef_double)
+            call SetRootZoneWC_WP(undef_double)
+            call SetRootZoneWC_SAT(undef_double)
+            call SetRootZoneWC_Thresh(undef_double)
+            call SetRootZoneWC_Leaf(undef_double)
+            call SetRootZoneWC_Sen(undef_double)
+        else
+            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+            call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
+            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        end if
+
+        write(tempstring, '(f8.1, 5f10.1)') GetRootZoneWC_actual(), &
+                GetRootZoneWC_SAT(), GetRootZoneWC_FC(), GetRootZoneWC_Leaf(), &
+                GetRootZoneWC_Thresh(), GetRootZoneWC_Sen()
+        call fDaily_write(trim(tempstring), .false.)
+        if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
+            .or. (GetOut7Clim())) then
+            write(tempstring, '(f10.1)') GetRootZoneWC_WP()
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f10.1)') GetRootZoneWC_WP()
+            call fDaily_write(tempstring)
+        end if
+    end if
+
+    ! 4. Profile/Root zone - soil salinity
+    if (GetOut4Salt()) then
+        write(tempstring, '(f9.3, 3f10.3)') GetSaltInfiltr(), &
+                (GetDrain()*GetECdrain()*Equiv/100._dp), &
+                (GetCRsalt()/100._dp), GetTotalSaltContent_EndDay()
+        call fDaily_write(trim(tempstring), .false.)
+        if (GetRootingDepth() < epsilon(0._dp)) then
+            SaltVal = undef_int
+            call SetRootZoneSalt_ECe(real(undef_int, kind=dp))
+            call SetRootZoneSalt_ECsw(real(undef_int, kind=dp))
+            call SetRootZoneSalt_KsSalt(1._dp)
+        else
+            SaltVal = (GetRootZoneWC_SAT()*GetRootZoneSalt_ECe()*Equiv)/100._dp
+        end if
+        if (GetZiAqua() == undef_int) then
+            write(tempstring, '(f10.3, f8.2, f9.2, f8.2, i7, f8.2)') &
+                    SaltVal, GetRootingDepth(), GetRootZoneSalt_ECe(), &
+                    GetRootZoneSalt_ECsw(), &
+                    roundc(100._dp*(1._dp-GetRootZoneSalt_KsSalt()), mold=1), &
+                    undef_double
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f10.3, f8.2, f9.2, f8.2, i7, f8.2)') &
+                    SaltVal, GetRootingDepth(), GetRootZoneSalt_ECe(), &
+                    GetRootZoneSalt_ECsw(), &
+                    roundc(100._dp*(1._dp-GetRootZoneSalt_KsSalt()), mold=1), &
+                    (GetZiAqua()/100._dp)
+            call fDaily_write(trim(tempstring), .false.)
+        end if
+        if ((GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(f8.2)') GetECiAqua()
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f8.2)') GetECiAqua()
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+
+    ! 5. Compartments - Soil water content
+    if (GetOut5CompWC()) then
+        write(tempstring, '(f11.1)') (GetCompartment_Theta(1)*100._dp)
+        call fDaily_write(trim(tempstring), .false.)
+        do Nr = 2, (GetNrCompartments()-1) 
+            write(tempstring, '(f11.1)') &
+                    (GetCompartment_Theta(Nr)*100._dp)
+            call fDaily_write(trim(tempstring), .false.)
+        end do
+        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
+            write(tempstring, '(f11.1)') &
+                    (GetCompartment_Theta(GetNrCompartments())*100._dp)
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f11.1)') &
+                    (GetCompartment_Theta(GetNrCompartments())*100._dp)
+            call fDaily_write(tempstring)
+        end if
+    end if
+
+    ! 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    if (GetOut6CompEC()) then
+        SaltVal = ECeComp(GetCompartment_i(1))
+        write(tempstring, '(f11.1)') SaltVal
+        call fDaily_write(trim(tempstring), .false.)
+        do Nr = 2, (GetNrCompartments()-1) 
+            SaltVal = ECeComp(GetCompartment_i(Nr))
+            write(tempstring, '(f11.1)') SaltVal
+            call fDaily_write(trim(tempstring), .false.)
+        end do
+        SaltVal = ECeComp(GetCompartment_i(GetNrCompartments()))
+        if (GetOut7Clim()) then
+            write(tempstring, '(f11.1)') SaltVal
+            call fDaily_write(trim(tempstring), .false.)
+        else
+            write(tempstring, '(f11.1)') SaltVal
+            call fDaily_write(trim(tempstring))
+        end if
+    end if
+
+    ! 7. Climate input parameters
+    if (GetOut7Clim()) then
+        tempreal = (GetTmin() + GetTmax())/2._dp
+        write(tempstring, '(f9.1, 4f10.1, f10.2)') GetRain(), GetETo(), &
+              GetTmin(), tempreal, GetTmax(), GetCO2i()
+        call fDaily_write(trim(tempstring))
+    end if
+end subroutine WriteDailyResults
+
 
 end module ac_run

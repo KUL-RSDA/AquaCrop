@@ -836,7 +836,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
 
     TDayMin_local = TDayMin
     TDayMax_local = TDayMax
-    GDDays = 0
+    GDDays = 0._dp
     if (ValPeriod > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax
@@ -3354,7 +3354,7 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     do Si = 1, 8
         ! various stress levels
         ! stress effect
-        SiPr = 10*(Si-1)
+        SiPr = int(10*(Si-1), kind=int8)
         StressMatrix(Si)%StressProc = SiPr
         call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
         ! adjusted length of Max canopy cover
@@ -3564,7 +3564,7 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     do Si = 1, 10
         ! various CCx reduction
         ! CCx reduction
-        SiPr = 10*(Si-1)
+        SiPr = int(10*(Si-1), kind=int8)
         StressMatrix(Si)%CCxReduction = SiPr
         ! adjustment CC
         call CropStressParametersSoilSalinity(SiPr, TheCCsaltDistortion, &
