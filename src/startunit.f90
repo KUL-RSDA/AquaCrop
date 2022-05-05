@@ -821,8 +821,8 @@ subroutine StartTheProgram()
 
     do iproject = 1, nprojects
         TheProjectFile = GetProjectFileName(iproject)
-        call GetProjectType(TheProjectFile, TheProjectType)
-        call InitializeProject(iproject, TheProjectFile, TheProjectType)
+        call GetProjectType(trim(TheProjectFile), TheProjectType)
+        call InitializeProject(iproject, trim(TheProjectFile), TheProjectType)
         call RunSimulation(TheProjectFile, TheProjectType)
     end do
 
