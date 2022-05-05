@@ -6400,7 +6400,7 @@ subroutine AdvanceOneTimeStep()
                       GetCompartment(), WaterTableInProfile_temp)
         call SetWaterTableInProfile(WaterTableInProfile_temp)
         if (GetWaterTableInProfile()) then
-            call AdjustForWatertable
+            call AdjustForWatertable()
         end if
     end if
 
@@ -6432,8 +6432,8 @@ subroutine AdvanceOneTimeStep()
                               GetCrop_DaysToGermination() - &
                               GetCrop_DaysToFullCanopy()), mold=1) ! slow down
                 else
-                    VirtualTimeCC = (GetDayNri() - &
-                       GetSimulation_DelayedDays() - GetCrop_Day1()) ! switch time scale
+                    VirtualTimeCC = GetDayNri() - &
+                       GetSimulation_DelayedDays() - GetCrop_Day1() ! switch time scale
                 end if
             end if
             if (GetCrop_ModeCycle() == modeCycle_GDDays) then
@@ -6543,7 +6543,7 @@ subroutine AdvanceOneTimeStep()
                    GetCrop_ModeCycle()))
             call SetZiprev(GetRootingDepth())   
             ! IN CASE rootzone drops below groundwate table
-            if ((GetZiAqua() < epsilon(0._dp)) .and. (GetRootingDepth() > &
+            if ((GetZiAqua() >= 0._dp) .and. (GetRootingDepth() > &
                 (GetZiAqua()/100._dp)) .and. (GetCrop_AnaeroPoint() > 0)) then
                 call SetRootingDepth(GetZiAqua()/100._dp)
                 if (GetRootingDepth() < GetCrop_RootMin()) then
@@ -6563,7 +6563,7 @@ subroutine AdvanceOneTimeStep()
         call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
         if (GetIrriMode() == IrriMode_Inet) then
            call AdjustSWCRootZone(PreIrri)  ! required to start germination
-         end if
+        end if
     end if
 
     ! 8. Transfer of Assimilates  
@@ -6634,7 +6634,7 @@ subroutine AdvanceOneTimeStep()
 
     ! 11. Biomass and yield 
     if ((GetRootingDepth() > 0._dp) .and. (GetNoMoreCrop() .eqv. .false.)) then
-         SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+        SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
         call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
         call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
         ! temperature stress affecting crop transpiration
@@ -6775,7 +6775,7 @@ subroutine AdvanceOneTimeStep()
             if ((DayInSeason >= GetCutInfoRecord1_FromDay()) .and. &
                 (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.)) then
                 HarvestNow = .true.
-                call GetNextHarvest
+                call GetNextHarvest()
             end if
             if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then 
                ! reset DayInSeason
@@ -6784,7 +6784,7 @@ subroutine AdvanceOneTimeStep()
         case (.true.)
             if ((DayInSeason > GetCutInfoRecord1_ToDay()) .and. &
                 (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.)) then
-                call GetNextHarvest
+                call GetNextHarvest()
             end if
             select case (GetManagement_Cuttings_Criterion())
             case (TimeCuttings_IntDay)
