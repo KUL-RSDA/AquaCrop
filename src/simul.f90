@@ -1054,7 +1054,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         if (DiFlor <= epsilon(1._dp)) then
             fi = 0._dp
         else
-            TimePerc = 100._dp * (DiFlor/GetCrop_LengthFlowering())
+            TimePerc = 100._dp * (DiFlor * 1._dp/GetCrop_LengthFlowering())
             if (TimePerc > 100._dp) then
                 fi = 1._dp
             else
