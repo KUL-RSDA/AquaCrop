@@ -83,7 +83,11 @@ def test_harvest():
         filename = 'test_defaultPRO{0}.OUT'.format(suffix)
 
         reference_file = os.path.join(test_dir, 'OUTP', filename)
-        with open(reference_file, 'r') as f:
+        if filename.endswith('day.OUT') or filename.endswith('season.OUT'):
+            encoding = 'ISO-8859-1'
+        else:
+            encoding = 'utf-8'
+        with open(reference_file, 'r', encoding=encoding) as f:
             ref_lines = f.readlines()
 
         output_file = os.path.join(work_dir, 'OUTP', filename)
@@ -93,6 +97,19 @@ def test_harvest():
         assert len(ref_lines) == len(out_lines), \
                ('Different number of lines in output and reference files ',
                 reference_file, output_file)
+
+        for i, (ref_line, out_line) in enumerate(zip(ref_lines, out_lines)):
+            if i == 0:
+                # Only elementary checks for the header line
+                assert ref_line.startswith('AquaCrop'), (i, ref_line, out_line)
+                assert out_line.startswith('AquaCrop'), (i, ref_line, out_line)
+                assert 'Output created on' in out_line, (i, ref_line, out_line)
+                assert 'Output created on' in ref_line, (i, ref_line, out_line)
+            else:
+                ref_line = ref_line.replace('°C', 'degC')
+                assert ref_line == out_line, (i, ref_line, out_line)
+
+        print('{0} checks = OK'.format(filename))
 
     os.chdir(cwd)
     shutil.rmtree(work_dir)
