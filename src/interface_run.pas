@@ -1365,12 +1365,39 @@ procedure GetPotValSF(constref DAP : integer;
                       VAR PotValSF : double);
     external 'aquacrop' name '__ac_run_MOD_getpotvalsf';
 
+procedure AdvanceOneTimeStep();
+    external 'aquacrop' name '__ac_run_MOD_advanceonetimestep';
 
 procedure WriteDailyResults(constref DAP : INTEGER;
                             constref WPi : double);
-        external 'aquacrop' name '__ac_run_MOD_writedailyresults';
+    external 'aquacrop' name '__ac_run_MOD_writedailyresults';
+
+procedure FileManagement();
+    external 'aquacrop' name '__ac_run_MOD_filemanagement';
+
+procedure RunSimulation(constref TheProjectFile_ : string;
+                        constref TheProjectType : repTypeProject);
+
+procedure RunSimulation_wrap(constref TheProjectFile_ : PChar;
+                        constref strlen : integer;
+                        constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_interface_run_MOD_runsimulation_wrap';
 
 implementation
+
+procedure RunSimulation(constref TheProjectFile_ : string;
+                        constref TheProjectType : repTypeProject);
+var
+    p : PChar;
+    strlen : integer;
+    int_typeproject : integer;
+begin
+    p := PChar(TheProjectFile_);
+    strlen := Length(TheProjectFile_);
+    int_typeproject := ord(TheProjectType);
+    RunSimulation_wrap(p, strlen, int_typeproject);
+end;
+
 
 procedure InitializeRun(constref NrRun : ShortInt; 
                         constref TheProjectType : repTypeProject);

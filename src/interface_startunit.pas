@@ -37,6 +37,9 @@ procedure fProjects_close();
 procedure PrepareReport();
     external 'aquacrop' name '__ac_startunit_MOD_preparereport';
 
+procedure StartTheProgram();
+    external 'aquacrop' name '__ac_startunit_MOD_starttheprogram';
+
 procedure InitializeTheProgram();
     external 'aquacrop' name '__ac_startunit_MOD_initializetheprogram';
 
