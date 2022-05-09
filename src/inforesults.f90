@@ -267,8 +267,8 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
                             ArrayObsSim(Nri)%StdObsi, &
                             ArrayObsSim(Nri)%Simi, '      ', &
                             ArrayObsSim(Nri)%DDi, ' ', &
-                            NameMonth(ArrayObsSim(Nri)%MMi), &
-                            ' ', YearString
+                            trim(NameMonth(ArrayObsSim(Nri)%MMi)), &
+                            ' ', trim(YearString)
         end do
         write(fAssm, '(a)')
         write(fAssm, '(a, i5)') &
@@ -317,13 +317,13 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
             else
                 write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
             end if
-            write(fAssm, '(i6, 3f14.3, a, i2, 4a)') &
+            write(fAssm, '(i6, f16.3, 2f14.3, a, i2, 4a)') &
                             Nri, ArrayObsSim(Nri)%Obsi, &
                             ArrayObsSim(Nri)%StdObsi, &
                             ArrayObsSim(Nri)%Simi, '      ', &
                             ArrayObsSim(Nri)%DDi, ' ', &
-                            NameMonth(ArrayObsSim(Nri)%MMi), &
-                            ' ', YearString
+                            trim(NameMonth(ArrayObsSim(Nri)%MMi)), &
+                            ' ', trim(YearString)
         end do
         write(fAssm, '(a)')
         write(fAssm, '(a, i5)') &
@@ -376,16 +376,16 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
                             ArrayObsSim(Nri)%StdObsi, &
                             ArrayObsSim(Nri)%Simi, '      ', &
                             ArrayObsSim(Nri)%DDi, ' ', &
-                            NameMonth(ArrayObsSim(Nri)%MMi), &
-                            ' ', YearString
+                            trim(NameMonth(ArrayObsSim(Nri)%MMi)), &
+                            ' ', trim(YearString)
         end do
         write(fAssm, '(a)')
         write(fAssm, '(a, i5)') &
         '  Valid observations/simulations sets (n) ....... : ', Nobs
         write(fAssm, '(a, f7.1, a)') &
-        '  Average of observed Soil water content ........ : ', ObsAver, '  mm'
+        '  Average of observed Soil water content ........ : ', ObsAver, '   mm'
         write(fAssm, '(a, f7.1, a)') &
-        '  Average of simulated Soil water content ....... : ', SimAver, '  mm'
+        '  Average of simulated Soil water content ....... : ', SimAver, '   mm'
         write(fAssm, '(a)')
         write(fAssm, '(a, f8.2)') &
         '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
