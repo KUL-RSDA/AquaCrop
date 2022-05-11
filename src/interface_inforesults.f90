@@ -43,19 +43,26 @@ subroutine StatisticAnalysis_wrap(TypeObsSim, RangeObsMin, RangeObsMax, StrNr_pt
 end subroutine StatisticAnalysis_wrap
 
 
-subroutine WriteAssessmentSimulation_wrap(p, strlen, &
+subroutine WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2, &
                                           TheProjectType, RangeMin, RangeMax)
-    type(c_ptr), intent(in) :: p
-    integer(int32), intent(in) :: strlen
+    !! Wrapper for WriteAssessmentSimulation for foreign languages.
+    !!
+    !! NOTE: issues are likely to arise if one of the two pointer/strlen
+    !! combinations corresponds to an empty string.
+    type(c_ptr), intent(in) :: p1
+    type(c_ptr), intent(in) :: p2
+    integer(int32), intent(in) :: strlen1
+    integer(int32), intent(in) :: strlen2
     integer(intEnum), intent(in) :: TheProjectType
     integer(int32), intent(in) :: RangeMin
     integer(int32), intent(in) :: RangeMax
 
-    character(len=strlen), allocatable :: string
+    character(len=strlen1) :: string1
+    character(len=strlen2) :: string2
 
-    string = pointer2string(p, strlen)
-
-    call WriteAssessmentSimulation('', string, &
+    string1 = pointer2string(p1, strlen1)
+    string2 = pointer2string(p2, strlen2)
+    call WriteAssessmentSimulation(string1, string2, &
                                    TheProjectType, RangeMin, RangeMax)
 end subroutine WriteAssessmentSimulation_wrap
 
