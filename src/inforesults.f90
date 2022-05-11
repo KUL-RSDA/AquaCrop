@@ -127,11 +127,13 @@ subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
         real(dp), intent(inout) :: SimAver
 
         character(len=:), allocatable :: OutputName
+        character(len=1024) :: buffer
         integer :: fOut
         integer(int8) :: Dayi, Monthi
         integer(int32) :: SkipLines, NCi, NCobs, Yeari
-        integer(int32) :: i, rc
+        integer(int32) :: i, status
         real(dp) :: VarObsi, VarSimi, VarStdi
+        real(dp), dimension(:), allocatable :: dummy_array
 
         Nobs = 0
         ObsAver = 0._dp
@@ -145,30 +147,34 @@ subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
         read(fOut, *) ! 
         read(fOut, *) ! list of variables
         read(fOut, *) ! units
+
         ! find first day
         SkipLines = RangeObsMin - GetSimulation_FromDayNr()
         do i = 1, SkipLines 
-            read(fOut, *, iostat = rc)
+            read(fOut, *)
         end do
 
         ! get Sim and Obs in range
         select case (TypeObsSim)
-            case(typeObsSim_ObsSimCC)
-                NCobs = 2
-            case (typeObsSim_ObsSimB)
-                NCobs = 5
-            case (typeObsSim_ObsSimSWC)
-                NCobs = 8
-            case default
-                NCobs = 5
+        case(typeObsSim_ObsSimCC)
+            NCobs = 2
+        case (typeObsSim_ObsSimB)
+            NCobs = 5
+        case (typeObsSim_ObsSimSWC)
+            NCobs = 8
+        case default
+            NCobs = 5
         end select
-        do i = RangeObsMin, RangeObsMax 
-            if (rc /= iostat_end) then
-                read(fOut, *) Dayi, Monthi, Yeari
-                do NCi = 1, NCobs 
-                    read(fOut, *) VarSimi
-                end do
-                read(fOut, *) VarSimi, VarObsi, VarStdi
+
+        allocate(dummy_array(NCobs))
+
+        do i = RangeObsMin, RangeObsMax
+            read(fOut, '(a)', iostat=status) buffer
+
+            if (status /= iostat_end) then
+                read(buffer, *) Dayi, Monthi, Yeari, dummy_array, &
+                                VarSimi, VarObsi, VarStdi
+
                 if ((roundc(VarObsi, mold=1) /= undef_int) &
                                 .and. (Nobs < 100)) then
                     Nobs = Nobs + 1
@@ -183,6 +189,7 @@ subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
                 end if
             end if
         end do
+
         ! close file
         close(fOut)
 
@@ -214,6 +221,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
 
     ! 1. Open file for assessment
     call date_and_time(values=d)
+
     open(newunit=fAssm, file=trim(totalnameEvalStat), status='replace', action='write')
     write(fAssm, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
     'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
@@ -222,7 +230,9 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
     if (TheProjectType == typeProject_TypePRM) then
         write(fAssm, '(2a)') '** Run number:', StrNr
     end if
-    write(fAssm)
+    write(fAssm, '(a)')
+
+    close(fAssm)
 
     ! 2. Run analysis
 
@@ -231,7 +241,11 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
     call StatisticAnalysis(TypeObsSim, RangeMin, RangeMax, StrNr, Nobs, &
                            ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
                            NScoeff, IndexAg, ArrayObsSim)
-    write(fAssm)
+
+    open(newunit=fAssm, file=trim(totalnameEvalStat), status='old', &
+         position='append', action='write')
+
+    write(fAssm, '(a)')
     write(fAssm, '(a)') &
     '  ASSESSMENT OF CANOPY COVER --------------------------------------'
     if (Nobs > 1) then
@@ -252,17 +266,17 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
                             ArrayObsSim(Nri)%StdObsi, &
                             ArrayObsSim(Nri)%Simi, '      ', &
                             ArrayObsSim(Nri)%DDi, ' ', &
-                            NameMonth(ArrayObsSim(Nri)%MMi), &
-                            ' ', YearString
+                            trim(NameMonth(ArrayObsSim(Nri)%MMi)), &
+                            ' ', trim(YearString)
         end do
-        write(fAssm)
+        write(fAssm, '(a)')
         write(fAssm, '(a, i5)') &
-        '  Valid observations/simulations sets (n) .......  : ', Nobs
+        '  Valid observations/simulations sets (n) ....... : ', Nobs
         write(fAssm, '(a, f7.1, a)') &
         '  Average of observed Canopy Cover .............. : ', ObsAver, '   %'
         write(fAssm, '(a, f7.1, a)') &
         '  Average of simulated Canopy Cover ............. : ', SimAver, '   %'
-        write(fAssm)
+        write(fAssm, '(a)')
         write(fAssm, '(a, f8.2)') &
         '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
         write(fAssm, '(a, f7.1, a)') &
@@ -285,8 +299,8 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
     call StatisticAnalysis(TypeObsSim, RangeMin, RangeMax, StrNr, Nobs, &
                            ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
                            NScoeff, IndexAg, ArrayObsSim)
-    write(fAssm)
-    write(fAssm)
+    write(fAssm, '(a)')
+    write(fAssm, '(a)')
     write(fAssm, '(a)') &
     '  ASSESSMENT OF BIOMASS PRODUCTION --------------------------------'
     if (Nobs > 1) then
@@ -302,22 +316,22 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
             else
                 write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
             end if
-            write(fAssm, '(i6, 3f14.1, a, i2, 4a)') &
+            write(fAssm, '(i6, f16.3, 2f14.3, a, i2, 4a)') &
                             Nri, ArrayObsSim(Nri)%Obsi, &
                             ArrayObsSim(Nri)%StdObsi, &
                             ArrayObsSim(Nri)%Simi, '      ', &
                             ArrayObsSim(Nri)%DDi, ' ', &
-                            NameMonth(ArrayObsSim(Nri)%MMi), &
-                            ' ', YearString
+                            trim(NameMonth(ArrayObsSim(Nri)%MMi)), &
+                            ' ', trim(YearString)
         end do
-        write(fAssm)
+        write(fAssm, '(a)')
         write(fAssm, '(a, i5)') &
         '  Valid observations/simulations sets (n) ....... : ', Nobs
         write(fAssm, '(a, f9.3, a)') &
         '  Average of observed Biomass production ........ : ', ObsAver, '   ton/ha'
         write(fAssm, '(a, f9.3, a)') & 
         '  Average of simulated Biomass production ....... : ', SimAver, '   ton/ha'
-        write(fAssm)
+        write(fAssm, '(a)')
         write(fAssm, '(a, f8.2)') &
         '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
         write(fAssm, '(a, f9.3, a)') &
@@ -339,8 +353,8 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
     call StatisticAnalysis(TypeObsSim, RangeMin, RangeMax, StrNr, Nobs, &
                            ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE, &
                            NScoeff, IndexAg, ArrayObsSim)
-    write(fAssm)
-    write(fAssm)
+    write(fAssm, '(a)')
+    write(fAssm, '(a)')
     write(fAssm, '(a)') &
     '  ASSESSMENT OF SOIL WATER CONTENT --------------------------------'
     if (Nobs > 1) then
@@ -361,21 +375,21 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
                             ArrayObsSim(Nri)%StdObsi, &
                             ArrayObsSim(Nri)%Simi, '      ', &
                             ArrayObsSim(Nri)%DDi, ' ', &
-                            NameMonth(ArrayObsSim(Nri)%MMi), &
-                            ' ', YearString
+                            trim(NameMonth(ArrayObsSim(Nri)%MMi)), &
+                            ' ', trim(YearString)
         end do
-        write(fAssm)
+        write(fAssm, '(a)')
         write(fAssm, '(a, i5)') &
         '  Valid observations/simulations sets (n) ....... : ', Nobs
         write(fAssm, '(a, f7.1, a)') &
-        '  Average of observed Soil Water Content ........ : ', ObsAver, '   %'
+        '  Average of observed Soil water content ........ : ', ObsAver, '   mm'
         write(fAssm, '(a, f7.1, a)') &
-        '  Average of simulated Soil Water Content ....... : ', SimAver, '   %'
-        write(fAssm)
+        '  Average of simulated Soil water content ....... : ', SimAver, '   mm'
+        write(fAssm, '(a)')
         write(fAssm, '(a, f8.2)') &
         '  Pearson Correlation Coefficient (r) ........... : ', PearsonCoeff
         write(fAssm, '(a, f7.1, a)') &
-        '  Root mean square error (RMSE) ................. : ', RMSE, '   % CC'
+        '  Root mean square error (RMSE) ................. : ', RMSE, '   mm'
         write(fAssm, '(a, f7.1, a)') &
         '  Normalized root mean square error  CV(RMSE).... : ', NRMSE, '   %'
         write(fAssm, '(a, f8.2)') &
@@ -387,12 +401,10 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
     end if
     write(fAssm, '(a)') &
     '  ----------------------------------------------------------------'
-    write(fAssm)
+    write(fAssm, '(a)')
 
     ! 3. Close file for assessment
     close(fAssm)
 end subroutine WriteAssessmentSimulation
-
-
 
 end module ac_inforesults

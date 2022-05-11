@@ -45,6 +45,10 @@ end subroutine StatisticAnalysis_wrap
 
 subroutine WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2, &
                                           TheProjectType, RangeMin, RangeMax)
+    !! Wrapper for WriteAssessmentSimulation for foreign languages.
+    !!
+    !! NOTE: issues are likely to arise if one of the two pointer/strlen
+    !! combinations corresponds to an empty string.
     type(c_ptr), intent(in) :: p1
     type(c_ptr), intent(in) :: p2
     integer(int32), intent(in) :: strlen1
@@ -61,7 +65,5 @@ subroutine WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2, &
     call WriteAssessmentSimulation(string1, string2, &
                                    TheProjectType, RangeMin, RangeMax)
 end subroutine WriteAssessmentSimulation_wrap
-
-    
 
 end module ac_interface_inforesults

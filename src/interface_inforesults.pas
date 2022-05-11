@@ -36,12 +36,13 @@ procedure StatisticAnalysis_wrap(
                     var ArrayObsSim : rep_ArrayObsSim);
     external 'aquacrop' name '__ac_interface_inforesults_MOD_statisticanalysis_wrap';
 
+
 procedure WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
                                     TheProjectType : repTypeProject;
                                     RangeMin,RangeMax : LongInt);
 
 procedure WriteAssessmentSimulation_wrap(
-                                    p1,p2 : PChar;
+                                    p1, p2 : PChar;
                                     strlen1, strlen2 : integer;
                                     TheProjectType : integer;
                                     RangeMin,RangeMax : LongInt);
@@ -91,7 +92,6 @@ begin
     WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2,
                                    int_projecttype, RangeMin, RangeMax)
 end;
-
 
 initialization
 

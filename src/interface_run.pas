@@ -612,10 +612,10 @@ procedure __WriteTitleDailyResults(constref TheProjectType : integer;
         external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
 procedure FinalizeRun2(constref NrRun : ShortInt; 
-                        constref TheProjectType : repTypeProject);
+                       constref TheProjectType : repTypeProject);
 
 procedure __FinalizeRun2(constref NrRun : ShortInt; 
-                        constref TheProjectType : integer);
+                         constref TheProjectType : integer);
         external 'aquacrop' name '__ac_run_MOD_finalizerun2';
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
@@ -1942,7 +1942,7 @@ var
     int_typeproject : integer;
 begin
     int_typeproject := ord(TheProjectType);
-    __FinalizeRun2(int_typeproject, NrRun);
+    __FinalizeRun2(NrRun, int_typeproject);
 end;
 
 function GetPreviousSum() : rep_sum;

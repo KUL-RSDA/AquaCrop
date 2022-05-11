@@ -2145,6 +2145,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     read(f0, *, iostat=rc)  ! Info Temperature
     read(f0, *, iostat=rc) TempString  ! TemperatureFile
     call SetTemperatureFile(trim(TempString))
+
     if (GetTemperatureFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathTemperatureFile
         call SetTemperatureFilefull(GetTemperatureFile())  ! no file 
@@ -2158,7 +2159,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         temperature_record = GetTemperatureRecord()
         TemperatureDescriptionLocal = GetTemperatureDescription()
         call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
-                       temperature_record) 
+                       temperature_record)
         call SetTemperatureDescription(TemperatureDescriptionLocal)
         call CompleteClimateDescription(temperature_record)
         call SetTemperatureRecord(temperature_record)

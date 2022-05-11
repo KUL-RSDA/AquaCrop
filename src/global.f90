@@ -2451,7 +2451,6 @@ subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
     integer(int32), intent(inout) :: DayNr
 
     DayNr = trunc((Yeari - 1901)*365.25_dp + ElapsedDays(Monthi) + Dayi + 0.05_dp)
-    
 end subroutine DetermineDayNr
 
 
@@ -6035,7 +6034,9 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
         open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
         iostat=rc)
     else
-        write(*,*) 'Climate file not found'
+        call backtrace
+        write(*,*) 'Climate file not found: ' // trim(FullName)
+        return
     end if
 
     read(fhandle, *, iostat=rc) ClimateDescription

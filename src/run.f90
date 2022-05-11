@@ -8,6 +8,7 @@ use ac_kinds, only: dp, &
 
 
 use ac_global, only:    AdjustSizeCompartments, &
+                        assert, &
                         CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
@@ -351,6 +352,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetSimulation_MultipleRunConstZrx, &
                         GetSimulation_IniSWC_AtFC, &
                         GetMultipleProjectFileFull, &
+                        GetProjectFileFull, &
                         GetSUmWaBal, &
                         GetPart1Mult, &
                         GetPart2Eval, &
@@ -419,9 +421,8 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
                                 GetMonthlyRainDataset
 
 use ac_inforesults, only:       WriteAssessmentSimulation
-
-
 implicit none
+
 
 type rep_GwTable 
     integer(int32) :: DNr1, DNr2
@@ -4030,28 +4031,35 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
     subroutine CloseEvalDataPerformEvaluation(NrRun)
         integer(int8), intent(in) :: NrRun
 
-        character(len=:), allocatable :: totalnameEvalStat, StrNr
+        character(len=:), allocatable :: totalnameEvalStat
+        character(len=1024) :: StrNr
 
         ! 1. Close Evaluation data file  and file with observations
         call fEval_close()
         if (GetLineNrEval() /= undef_int) then
             call fObs_close()
         end if
+
         ! 2. Specify File name Evaluation of simulation results - Statistics
         StrNr = ''
         if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
-            write(StrNr, '(i3)') NrRun
+            write(StrNr, '(i0)') NrRun
         end if
+
         select case (TheProjectType)
         case(typeproject_typepro)
-            totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PROevaluation%OUT'
+            totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PROevaluation.OUT'
         case(typeproject_typeprm)
-            write(StrNr, '(i3)') NrRun
-            totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PRM' // trim(StrNr) // 'evaluation%OUT'
+            write(StrNr, '(i0)') NrRun
+            totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PRM' // trim(StrNr) // 'evaluation.OUT'
         end select
+
         ! 3. Create Evaluation statistics file
-        call WriteAssessmentSimulation(StrNr, totalnameEvalStat, TheProjectType, &
-        GetSimulation_FromDayNr(), GetSimulation_ToDayNr())
+        call WriteAssessmentSimulation(trim(StrNr), totalnameEvalStat, &
+                                       TheProjectType, &
+                                       GetSimulation_FromDayNr(), &
+                                       GetSimulation_ToDayNr())
+
         ! 4. Delete Evaluation data file
         call fEval_erase()
     end subroutine CloseEvalDataPerformEvaluation
@@ -4199,16 +4207,15 @@ subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
     integer(intEnum), intent(in) :: TheProjectType
     integer(int8), intent(in) :: TheNrRun
 
-    character(len=:), allocatable :: Str1
     integer(int32) :: Dayi, Monthi, Yeari
     real(dp) :: Nr
-    character(len=:), allocatable :: tempstring
+    character(len=1024) :: tempstring
 
     ! A. Run number
     call fHarvest_write('')
     if (TheProjectType == typeproject_TypePRM) then
-        write(Str1, '(i4)') TheNrRun
-        call fHarvest_write('   Run:' // Str1)
+        write(tempstring, '(i4)') TheNrRun
+        call fHarvest_write('   Run:' // trim(tempstring))
     end if
 
     ! B. Title
@@ -4226,11 +4233,10 @@ subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
         end if
         Yeari = 9999
     end if
-    Nr = 0
-    write(Str1, '(f6.0)') Nr
-    write(tempstring, '(a, 3i6, f34.3, 2f20.3)') Str1, Dayi, Monthi, Yeari, &
-                                                 Nr, Nr, Nr
-    call fHarvest_write(tempstring)
+    Nr = 0._dp
+    write(tempstring, '(i6, 3i6, f34.3, 2f20.3)') 0, Dayi, Monthi, Yeari, &
+                                                  Nr, Nr, Nr
+    call fHarvest_write(trim(tempstring))
 end subroutine WriteTitlePart1MultResults
 
 
@@ -5087,8 +5093,8 @@ subroutine CreateEvalData(NrRun)
     integer(int8), intent(in) :: NrRun
 
     integer(int32) :: dayi, monthi, yeari, integer_temp
-    character(len=:), allocatable :: StrNr, TempString
-    character(len=1025) :: tempstring2
+    character(len=:), allocatable :: TempString
+    character(len=1025) :: StrNr, tempstring2
     integer, dimension(8) :: d
 
     ! open input file with field data
@@ -5135,7 +5141,7 @@ subroutine CreateEvalData(NrRun)
     end if
     ! open file with simulation results, field data
     if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
-        write(StrNr, '(i3)') NrRun
+        write(StrNr, '(i0)') NrRun
     else
         StrNr = ''
     end if
@@ -6108,7 +6114,7 @@ subroutine WriteEvaluationData(DAP)
 
     real(dp) :: SWCi, CCfield, CCstd, Bfield, Bstd, SWCfield, SWCstd
     integer(int32) :: Nr, Di, Mi, Yi
-    character(len=:), allocatable :: TempString
+    character(len=1024) :: TempString
     integer(int32) :: DayNrEval_temp, DAP_temp
 
     ! 1. Prepare field data
@@ -6154,7 +6160,7 @@ subroutine WriteEvaluationData(DAP)
            Di, Mi, Yi, DAP_temp, GetStageCode(), &
           (GetCCiActual()*100._dp), CCfield, CCstd, &
           GetSumWaBal_Biomass(), Bfield, Bstd, SWCi, SWCfield, SWCstd
-    call fEval_write(TempString)
+    call fEval_write(trim(TempString))
 
     contains
 
@@ -6208,7 +6214,16 @@ subroutine InitializeRun(NrRun, TheProjectType)
     ! of using this local variable) at this location tends to have the
     ! same effect. This behavior started after InitializeRun got converted
     ! to Fortran (commit a042e73f7b3a2f69b8077f1baac004886c355224).
-    filename = GetMultipleProjectFileFull()
+    if (TheProjectType == typeproject_typepro) then
+        call assert(NrRun == 1, 'NrRun needs to be 1 for PRO-type projects')
+        filename = GetProjectFileFull()
+    elseif (TheProjectType == typeproject_typeprm) then
+        filename = GetMultipleProjectFileFull()
+    else
+        ! Do nothing
+        return
+    end if
+
     call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
 
     call AdjustCompartments()
@@ -6234,6 +6249,7 @@ subroutine InitializeRun(NrRun, TheProjectType)
 
 
     contains
+
 
     subroutine AdjustCompartments()
 
@@ -6295,7 +6311,7 @@ subroutine RecordHarvest(NrCut, DayInSeason)
 
     integer(int32) :: Dayi, Monthi, Yeari
     logical :: NoYear
-    character(len=:), allocatable :: tempstring
+    character(len=1024) :: tempstring
 
     call fHarvest_open(GetfHarvest_filename(), 'a')
     call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
