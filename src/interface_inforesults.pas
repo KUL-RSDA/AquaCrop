@@ -41,10 +41,8 @@ procedure WriteAssessmentSimulation(constref StrNr, totalnameEvalStat : string;
                                     constref RangeMin, RangeMax : integer);
 
 procedure WriteAssessmentSimulation_wrap(
-                                    //constref p1, p2 : PChar;
-                                    //constref strlen1, strlen2 : integer;
-                                    constref p2 : PChar;
-                                    constref strlen2 : integer;
+                                    constref p : PChar;
+                                    constref strlen : integer;
                                     constref TheProjectType : ShortInt;
                                     constref RangeMin, RangeMax : integer);
     external 'aquacrop' name '__ac_interface_inforesults_MOD_writeassessmentsimulation_wrap';
@@ -80,20 +78,13 @@ procedure WriteAssessmentSimulation(constref StrNr, totalnameEvalStat : string;
                                     constref RangeMin, RangeMax : integer);
 var
     int_projecttype : ShortInt;
-    //p1 : PChar;
-    p2 : PChar;
-    //strlen1 : integer;
-    strlen2 : integer;
+    p : PChar;
+    strlen : integer;
 begin
     int_projecttype := ord(TheProjectType);
-    //p1 := PChar(StrNr);
-    p2 := PChar(totalnameEvalStat);
-    //strlen1 := Length(StrNr);
-    strlen2 := Length(totalnameEvalStat);
-    writeln('PPP :', StrNr, ':', totalnameEvalStat, ': ', strlen2);
-    //WriteAssessmentSimulation_wrap(p1, p2, strlen1, strlen2,
-    //                             int_projecttype, RangeMin, RangeMax)
-    WriteAssessmentSimulation_wrap(p2, strlen2, int_projecttype, RangeMin, RangeMax)
+    p := PChar(totalnameEvalStat);
+    strlen := Length(totalnameEvalStat);
+    WriteAssessmentSimulation_wrap(p, strlen, int_projecttype, RangeMin, RangeMax)
 end;
 
 

@@ -221,7 +221,6 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
 
     ! 1. Open file for assessment
     call date_and_time(values=d)
-    print *, 'FFF ', totalnameEvalStat
 
     open(newunit=fAssm, file=trim(totalnameEvalStat), status='replace', action='write')
     write(fAssm, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
