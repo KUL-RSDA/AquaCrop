@@ -14744,19 +14744,6 @@ subroutine SetDaySubmerged(DaySubmerged_in)
     DaySubmerged = DaySubmerged_in
 end subroutine SetDaySubmerged
 
-integer(int32) function GetReadNextClimRecord()
-    !! Getter for the "ReadNextClimRecord" global variable.
-
-    GetReadNextClimRecord = ReadNextClimRecord
-end function GetReadNextClimRecord
-
-subroutine SetReadNextClimRecord(ReadNextClimRecord_in)
-    !! Setter for the "ReadNextClimRecord" global variable.
-    integer(int32), intent(in) :: ReadNextClimRecord_in
-
-    ReadNextClimRecord = ReadNextClimRecord_in
-end subroutine SetReadNextClimRecord
-
 real(dp) function GetCRsalt()
     !! Getter for the "CRsalt" global variable.
 
