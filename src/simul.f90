@@ -882,7 +882,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                 ! weighted correction
                 ScorAT1 = ScorAT1 + Dcor/tmax1
                 DayCor = dayi - (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())
-                HItimesAT1  = (tmax1/DayCor) * ScorAT1
+                HItimesAT1  = (tmax1*1._dp/DayCor) * ScorAT1
             end if
             
             ! 2.6 determine effect of water stress affecting stomatal closure after flowering
@@ -911,7 +911,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                 ! weighted correction
                 ScorAT2 = ScorAT2 + Dcor/tmax2
                 DayCor = dayi - (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())
-                HItimesAT2  = (tmax2/DayCor) * ScorAT2
+                HItimesAT2  = (tmax2*1._dp/DayCor) * ScorAT2
             end if
             
             ! 2.7 total multiplier after flowering
@@ -942,7 +942,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                     end if
                 end if
             end if
-            
+
             ! 2.8 Limit HI to allowable maximum increase
             HItimesTotal = HItimesBEF * HItimesAT
             if (HItimesTotal > (1._dp +(GetCrop_DHImax()/100._dp))) then
@@ -969,14 +969,12 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                 ! with correction for transferred assimilates
                 if (GetSimulation_RCadj() > 0._dp) then 
                     YieldPart = YieldPart + (WPi*(TrW/ETo) + Bin - Bout) * (alfa/100._dp)
-                    
                 else
                     YieldPart = YieldPart + (WPi*(Tact/ETo) + Bin - Bout) * (alfa/100._dp)
                 end if
             end if
         end if
     end if
-        
         
         
     ! 3. Dynamic adjustment of soil fertility stress
