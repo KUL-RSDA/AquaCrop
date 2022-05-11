@@ -107,7 +107,18 @@ def test_harvest():
                 assert 'Output created on' in ref_line, (i, ref_line, out_line)
             else:
                 ref_line = ref_line.replace('  °C', 'degC')
-                assert ref_line == out_line, (i, ref_line, out_line)
+
+                try:
+                    assert ref_line == out_line, (i, ref_line, out_line)
+                except AssertionError:
+                    print('WARN: need item-by-item check (line {0})'.format(i))
+                    items_ref = ref_line.split()
+                    items_out = out_line.split()
+                    for icol, (item_ref, item_out) in enumerate(zip(items_ref,
+                                                                    items_out)):
+                        if item_ref != item_out:
+                            is_close = np.isclose(float(item_ref), float(item_out))
+                            assert is_close, (i, icol, item_ref, item_out)
 
         print('{0} checks = OK'.format(filename))
 
