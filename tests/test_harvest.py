@@ -106,7 +106,7 @@ def test_harvest():
                 assert 'Output created on' in out_line, (i, ref_line, out_line)
                 assert 'Output created on' in ref_line, (i, ref_line, out_line)
             else:
-                ref_line = ref_line.replace('°C', 'degC')
+                ref_line = ref_line.replace('  °C', 'degC')
                 assert ref_line == out_line, (i, ref_line, out_line)
 
         print('{0} checks = OK'.format(filename))
