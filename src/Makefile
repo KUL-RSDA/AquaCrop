@@ -30,17 +30,32 @@ EXECUTABLE = PlugInBareV70
 
 FLIB = libaquacrop.so
 
-$(FLIB): global.o \
-    interface_global.o \
-    interface_tempprocessing.o \
-    interface_climprocessing.o \
-    interface_initialsettings.o \
-    interface_run.o \
-    interface_startunit.o \
+OBJ = climprocessing.o \
+    defaultcropsoil.o \
+    global.o  \
+    inforesults.o \
+    initialsettings.o \
+    kinds.o \
+    rootunit.o \
+    run.o \
+    simul.o \
+    startunit.o \
+    tempprocessing.o \
+    utils.o
+
+OBJ_INTERFACE = interface_climprocessing.o \
     interface_defaultcropsoil.o \
+    interface_global.o \
     interface_inforesults.o \
+    interface_initialsettings.o \
     interface_rootunit.o \
-    interface_simul.o  
+    interface_run.o \
+    interface_simul.o \
+    interface_startunit.o \
+    interface_tempprocessing.o
+
+$(FLIB): $(OBJ) \
+    $(OBJ_INTERFACE)
 	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
 
 fortranclean:
@@ -161,15 +176,11 @@ interface_simul.o: interface_simul.f90 \
 utils.o: utils.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-aquacrop_wrap.o: aquacrop_wrap.F90 \
-    interface_global.o \
-    kinds.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
 pluginbarev70.o: pluginbarev70.F90 \
-    aquacrop_wrap.o \
     global.o \
-    kinds.o
+    kinds.o \
+    run.o \
+    startunit.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 
@@ -188,13 +199,8 @@ SRC = Global.pas \
       interface_tempprocessing.pas \
       PlugInBareV70.dpr
 
-PLIB = libPlugInBareV70.so
-
-$(PLIB): $(SRC) $(FLIB) PlugInBareV70.pas
-	$(PC) $(PCFLAGS) PlugInBareV70.pas
-
 pascalclean: fortranclean
-	$(RM) $(wildcard *.o) $(wildcard *.ppu) $(PLIB)
+	$(RM) $(wildcard *.o) $(wildcard *.ppu)
 
 
 # Finally, the actual 'executable' and 'clean' targets
@@ -206,8 +212,8 @@ $(EXECUTABLE): $(SRC) $(FLIB)
 
 else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
-$(EXECUTABLE): pluginbarev70.o $(PLIB)
-	$(FC) pluginbarev70.o aquacrop_wrap.o -o $(EXECUTABLE) -L$(PWD) -laquacrop -lPlugInBareV70
+$(EXECUTABLE): pluginbarev70.o
+	$(FC) pluginbarev70.o $(OBJ) -o $(EXECUTABLE)
 endif
 
 clean: pascalclean fortranclean

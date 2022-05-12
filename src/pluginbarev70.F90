@@ -1,27 +1,27 @@
 program pluginbarev70
 
-use ac_global, only: typeproject_typeprm, &
+use ac_global, only: GetSimulation_NrRuns, &
+                     GetSimulation_ToDayNr, &
+                     typeproject_typeprm, &
                      typeproject_typepro
-use ac_kinds, only: intEnum
-use aquacrop_wrap, only: AdvanceOneTimeStep, &
-                         FinalizeRun1, &
-                         FinalizeRun2, &
-                         FinalizeTheProgram, &
-                         FinalizeSimulation, &
-                         GetDayNri, &
-                         GetListProjectsFile, &
-                         GetNumberOfProjects, &
-                         GetProjectFileName, &
-                         GetProjectType, &
-                         GetSimulation_NrRuns, &
-                         GetSimulation_ToDayNr, &
-                         InitializeProject, &
-                         InitializeRun, &
-                         InitializeSimulation, &
-                         InitializeTheProgram, &
-                         WriteProjectsInfo
+use ac_kinds, only: int8, &
+                    intEnum
+use ac_run, only: AdvanceOneTimeStep, &
+                  FinalizeRun1, &
+                  FinalizeRun2, &
+                  FinalizeSimulation, &
+                  GetDayNri, &
+                  InitializeRun, &
+                  InitializeSimulation
+use ac_startunit, only: FinalizeTheProgram, &
+                        GetListProjectsFile, &
+                        GetNumberOfProjects, &
+                        GetProjectFileName, &
+                        GetProjectType, &
+                        InitializeProject, &
+                        InitializeTheProgram, &
+                        WriteProjectsInfo
 implicit none
-
 
 integer :: daynr, todaynr, iproject, nprojects, irun, nruns
 integer(intEnum) :: TheProjectType
@@ -57,7 +57,7 @@ do iproject = 1, nprojects
     end if
 
     do irun = 1, nruns
-        call InitializeRun(irun, TheProjectType);
+        call InitializeRun(int(irun, kind=int8), TheProjectType);
 
         todaynr = GetSimulation_ToDayNr()
 
@@ -67,11 +67,11 @@ do iproject = 1, nprojects
             if ((daynr - 1) == todaynr) exit time_loop
         end do time_loop
 
-        call FinalizeRun1(irun, TheProjectFile, TheProjectType);
-        call FinalizeRun2(irun, TheProjectType);
+        call FinalizeRun1(int(irun, kind=int8), TheProjectFile, TheProjectType)
+        call FinalizeRun2(int(irun, kind=int8), TheProjectType)
     end do
 
-    call FinalizeSimulation();
+    call FinalizeSimulation()
 end do
 
 if (nprojects == 0) then
