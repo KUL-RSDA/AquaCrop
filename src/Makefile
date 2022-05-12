@@ -1,7 +1,7 @@
 # Compiler options
 
 DEBUG = 0
-FORTRAN_EXE = 0
+FORTRAN_EXE = 1
 
 PC = fpc
 PCFLAGS = -Mdelphi
