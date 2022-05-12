@@ -1,8 +1,11 @@
 unit interface_inforesults;
 
+
 interface
 
-uses Global, interface_global;
+
+uses interface_global;
+
 
 type 
     rep_EventObsSim = Record
