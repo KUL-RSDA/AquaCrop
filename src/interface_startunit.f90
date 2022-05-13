@@ -1,7 +1,5 @@
 module ac_interface_startunit
 
-use ac_interface_global, only: pointer2string, &
-                               string2pointer
 use ac_kinds, only: int32, &
                     intEnum
 use ac_startunit, only: fProjects_open, &
@@ -11,6 +9,8 @@ use ac_startunit, only: fProjects_open, &
                         GetProjectType, &
                         InitializeProject, &
                         WriteProjectsInfo
+use ac_utils, only: pointer2string, &
+                    string2pointer
 use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 

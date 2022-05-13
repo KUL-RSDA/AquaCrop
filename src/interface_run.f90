@@ -1,7 +1,5 @@
 module ac_interface_run
 
-use ac_interface_global, only: pointer2string, &
-                               string2pointer
 use ac_kinds, only: int8, &
                     int32, &
                     dp, &
@@ -69,8 +67,9 @@ use ac_run, only:   CheckForPrint, &
                     WriteIntermediatePeriod, &
                     InitializeTransferAssimilates, &
                     RunSimulation
-use, intrinsic :: iso_c_binding, only: c_char, &
-                                       c_ptr
+use ac_utils, only: pointer2string, &
+                    string2pointer
+use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 
 

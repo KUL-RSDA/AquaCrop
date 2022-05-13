@@ -3,10 +3,10 @@ module ac_interface_inforesults
 use ac_inforesults, only:   StatisticAnalysis, &
                             rep_EventObsSim, &
                             WriteAssessmentSimulation
-use ac_interface_global, only:  pointer2string
 use ac_kinds, only: dp, &
                     intEnum, &
                     int32
+use ac_utils, only: pointer2string
 use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 

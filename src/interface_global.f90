@@ -249,9 +249,11 @@ use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     int8
+use ac_utils, only: pointer2string, &
+                    string2pointer, &
+                    threestrings2threepointers, &
+                    twostrings2twopointers
 use, intrinsic :: iso_c_binding, only: c_f_pointer, &
-                                       c_loc, &
-                                       c_null_char, &
                                        c_ptr
 implicit none
 
@@ -279,80 +281,6 @@ function pointer2array_dp(c_pointer, arrlen, mold) result(array)
     call c_f_pointer(c_pointer, f_pointer, [arrlen])
     array(:) = f_pointer(:)
 end function pointer2array_dp
-
-
-function pointer2string(c_pointer, strlen) result(string)
-    !! Returns a Fortran string from a C-pointer plus the string length.
-    type(c_ptr), intent(in) :: c_pointer
-        !! C-style pointer
-    integer(int32), intent(in) :: strlen
-        !! Length of the string
-    character(len=strlen) :: string
-
-    character, pointer, dimension(:) :: f_pointer
-    integer :: i
-
-    call c_f_pointer(c_pointer, f_pointer, [strlen])
-
-    do i = 1, strlen
-        string(i:i) = f_pointer(i)
-    end do
-end function pointer2string
-
-
-function string2pointer(string) result(c_pointer)
-    !! Returns a C-pointer from a Fortran string.
-    character(len=*), intent(in) :: string
-    type(c_ptr) :: c_pointer
-
-    character(len=:), allocatable, target, save :: f_string
-
-    f_string = string // c_null_char
-    c_pointer = c_loc(f_string)
-end function string2pointer
-
-
-subroutine twostrings2twopointers(string1, string2, c_pointer1, c_pointer2)
-    !! Returns two C-pointers for two Fortran strings.
-    character(len=*), intent(in) :: string1
-    character(len=*), intent(in) :: string2
-    type(c_ptr), intent(inout) :: c_pointer1
-    type(c_ptr), intent(inout) :: c_pointer2
-
-    character(len=:), allocatable, target, save :: f_string1
-    character(len=:), allocatable, target, save :: f_string2
-
-    f_string1 = string1 // c_null_char
-    c_pointer1 = c_loc(f_string1)
-
-    f_string2 = string2 // c_null_char
-    c_pointer2 = c_loc(f_string2)
-end subroutine twostrings2twopointers
-
-
-subroutine threestrings2threepointers(string1, string2, string3, &
-                                    c_pointer1, c_pointer2, c_pointer3)
-    !! Returns three C-pointers for three Fortran strings.
-    character(len=*), intent(in) :: string1
-    character(len=*), intent(in) :: string2
-    character(len=*), intent(in) :: string3
-    type(c_ptr), intent(inout) :: c_pointer1
-    type(c_ptr), intent(inout) :: c_pointer2
-    type(c_ptr), intent(inout) :: c_pointer3
-
-    character(len=:), allocatable, target, save :: f_string1
-    character(len=:), allocatable, target, save :: f_string2
-    character(len=:), allocatable, target, save :: f_string3
-
-    f_string1 = string1 // c_null_char
-    c_pointer1 = c_loc(f_string1)
-
-    f_string2 = string2 // c_null_char
-    c_pointer2 = c_loc(f_string2)
-
-    f_string3 = string3 // c_null_char
-    c_pointer3 = c_loc(f_string3)
-end subroutine threestrings2threepointers
 
 
 function GetCrop_Assimilates_On_wrap() result(On)
