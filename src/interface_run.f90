@@ -1,16 +1,11 @@
 module ac_interface_run
 
-use, intrinsic :: iso_c_binding, only: c_char, &
-                                       c_ptr
-
 use ac_interface_global, only: pointer2string, &
                                string2pointer
-                               
 use ac_kinds, only: int8, &
                     int32, &
                     dp, &
                     intenum
-
 use ac_run, only:   CheckForPrint, &
                     fDaily_open, &
                     fDaily_write, &
@@ -74,11 +69,13 @@ use ac_run, only:   CheckForPrint, &
                     WriteIntermediatePeriod, &
                     InitializeTransferAssimilates, &
                     RunSimulation
-
+use, intrinsic :: iso_c_binding, only: c_char, &
+                                       c_ptr
 implicit none
 
 
 contains
+
 
 subroutine CheckForPrint_wrap(TheProjectFile, strlen)
     !! Wrapper for [[ac_run:CheckForPrint]] for foreign languages.

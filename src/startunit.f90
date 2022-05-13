@@ -1,12 +1,5 @@
 module ac_startunit
 
-use ac_kinds, only: int32,&
-                    int8, &
-                    intEnum, &
-                    dp
-
-use iso_fortran_env, only: iostat_end
-
 use ac_global, only:    GetPathNameSimul, &
                         FileExists, &
                         SetOut1Wabal, &
@@ -127,14 +120,19 @@ use ac_global, only:    GetPathNameSimul, &
                         SetprojectDescription, &
                         CheckForKeepSWC, &
                         SetFullfilenameProgramParameters
-
 use ac_initialsettings, only: InitializeSettings
+use ac_kinds, only: int32,&
+                    int8, &
+                    intEnum, &
+                    dp
 use ac_run, only: open_file, &
-                  write_file, &
-                  RunSimulation
+                  RunSimulation, &
+                  write_file
 use ac_utils, only: assert, &
                     upper_case
+use iso_fortran_env, only: iostat_end
 implicit none
+
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status

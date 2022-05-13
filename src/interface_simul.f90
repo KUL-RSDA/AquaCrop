@@ -1,24 +1,19 @@
 module ac_interface_simul
+
 use ac_kinds, only: dp, &
                     int8, &
                     int32
 use ac_simul, only: AdjustpSenescenceToETo, &
                     BUDGET_module, &
+                    DetermineBiomassAndYield, &
                     DetermineCCi, &
                     DetermineCCiGDD, &
                     ExtractWaterFromEvapLayer
-
-
-use ac_simul, only: DetermineBiomassAndYield
-
-use ac_kinds, only: dp, &
-                    int32, &
-                    int8
-
 implicit none
 
 
 contains
+
 
 subroutine DetermineBiomassAndYield_wrap(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                                     GDDayi, Tact, SumKcTop, CGCref, GDDCGCref, &

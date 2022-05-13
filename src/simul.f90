@@ -1,11 +1,5 @@
 module ac_simul
 
-use ac_kinds, only:  dp, &
-                     int8, &
-                     int32, &
-                     intEnum
-
-
 use ac_global, only: ActiveCells, &
                      adjustedksstotoecsw, &
                      BMRange, &
@@ -386,11 +380,16 @@ use ac_global, only: ActiveCells, &
                      TimeToMaxCanopySF, &
                      undef_double, &
                      undef_int
-use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
-                                GrowingDegreeDays, &
-                                SumCalendarDays
+use ac_kinds, only:  dp, &
+                     int8, &
+                     int32, &
+                     intEnum
+use ac_tempprocessing, only: CropStressParametersSoilSalinity, &
+                             GrowingDegreeDays, &
+                             SumCalendarDays
 use ac_utils, only: roundc
 implicit none
+
 
 integer(intEnum), parameter :: whichtheta_AtSat = 0
     !! index of AtSat in whichtheta enumerated type

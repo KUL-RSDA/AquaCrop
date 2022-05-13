@@ -1,13 +1,5 @@
 module ac_tempprocessing
 
-use ac_kinds,  only: dp, &
-                     int8, &
-                     int16, &   
-                     int32, &
-                     intEnum
-
-use iso_fortran_env, only: iostat_end
-
 use ac_global , only: undef_int, &
                       modeCycle_GDDays, &
                       modeCycle_CalendarDays, &
@@ -268,7 +260,13 @@ use ac_global , only: undef_int, &
                       setgroundwaterfile,&
                       setsimulation_surfacestorageini,&
                       translateinipointstoswprofile
+use ac_kinds,  only: dp, &
+                     int8, &
+                     int16, &
+                     int32, &
+                     intEnum
 use ac_utils, only: roundc
+use iso_fortran_env, only: iostat_end
 implicit none
 
 

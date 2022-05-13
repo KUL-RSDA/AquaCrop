@@ -1,11 +1,5 @@
 module ac_inforesults
 
-use ac_kinds, only: dp, &
-                    int8, &
-                    int16, &
-                    int32, &
-                    intEnum
-use iso_fortran_env, only: iostat_end
 use ac_global, only:    typeObsSim_ObsSimCC, &
                         typeObsSim_ObsSimB, &
                         typeObsSim_ObsSimSWC, &
@@ -14,8 +8,15 @@ use ac_global, only:    typeObsSim_ObsSimCC, &
                         GetSimulation_FromDayNr, &
                         typeProject_TypePRM, &
                         NameMonth
+use ac_kinds, only: dp, &
+                    int8, &
+                    int16, &
+                    int32, &
+                    intEnum
 use ac_utils, only: roundc
+use iso_fortran_env, only: iostat_end
 implicit none
+
 
 type rep_EventObsSim 
     real(dp) :: Obsi
@@ -34,6 +35,7 @@ end type rep_EventObsSim
 
 
 contains
+
 
 subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
                              Nobs, ObsAver, SimAver, PearsonCoeff, RMSE, &

@@ -1,20 +1,18 @@
 module ac_interface_inforesults
 
-use, intrinsic :: iso_c_binding, only: c_ptr
-
-use ac_kinds, only: dp, &
-                    intEnum, &
-                    int32
-
-use ac_interface_global, only:  pointer2string
 use ac_inforesults, only:   StatisticAnalysis, &
                             rep_EventObsSim, &
                             WriteAssessmentSimulation
-
+use ac_interface_global, only:  pointer2string
+use ac_kinds, only: dp, &
+                    intEnum, &
+                    int32
+use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 
 
 contains
+
 
 subroutine StatisticAnalysis_wrap(TypeObsSim, RangeObsMin, RangeObsMax, StrNr_ptr, &
                              strlen, Nobs, ObsAver, SimAver, PearsonCoeff, RMSE, &

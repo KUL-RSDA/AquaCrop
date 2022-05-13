@@ -1,10 +1,5 @@
 module ac_defaultcropsoil
 
-use ac_kinds, only: int8, &
-                    int16, &
-                    int32, &
-                    dp
-
 use ac_global , only:   DetermineParametersCR, &
                         GetCropFileFull, &
                         GetCrop_CCo, &
@@ -132,10 +127,15 @@ use ac_global , only:   DetermineParametersCR, &
                         subkind_Grain, &
                         undef_double, &
                         undef_int
+use ac_kinds, only: int8, &
+                    int16, &
+                    int32, &
+                    dp
 implicit none
 
 
 contains
+
 
 subroutine ResetDefaultCrop()
 

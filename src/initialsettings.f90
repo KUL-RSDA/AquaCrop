@@ -1,8 +1,7 @@
 module ac_initialsettings
 
-use ac_kinds, only: dp, &
-                    int8, &
-                    int32
+use ac_defaultcropsoil, only :  ResetDefaultSoil, &
+                                ResetDefaultCrop
 use ac_global, only:    SetSimulParam_PercRAW, &
                         SetNrCompartments, &
                         SetSimulParam_CompDefThick, &
@@ -190,15 +189,14 @@ use ac_global, only:    SetSimulParam_PercRAW, &
                         SetSimulParam_EffectiveRain_RootNrEvap, &
                         SetSimulParam_EffectiveRain_ShowersInDecade, &
                         SetSimulParam_EffectiveRain_PercentEffRain
-                        
-
-use ac_defaultcropsoil, only :  ResetDefaultSoil, &
-                                ResetDefaultCrop
-
+use ac_kinds, only: dp, &
+                    int8, &
+                    int32
 implicit none
 
 
 contains
+
 
 subroutine InitializeSettings()
 

@@ -1,28 +1,21 @@
 module ac_interface_tempprocessing
 
-use, intrinsic :: iso_c_binding, only: c_f_pointer, &
-                                       c_loc, &
-                                       c_null_char, &
-                                       c_ptr
-
+use ac_global, only: rep_EffectStress, &
+                     rep_Shapes
+use ac_interface_global, only: pointer2string
 use ac_kinds,  only: dp, &
                      int8, &
                      int16, &
                      int32, &
                      intEnum
-
-use ac_global, only: rep_EffectStress, rep_Shapes
-
 use ac_tempprocessing, only: Bnormalized, BiomassRatio,&
-                             StressBiomassRelationship, &
                              CCxSaltStressRelationship, &
-                             LoadSimulationRunProject
-
-use ac_interface_global, only: pointer2string
-
-use ac_global, only: rep_EffectStress
-
-
+                             LoadSimulationRunProject, &
+                             StressBiomassRelationship
+use, intrinsic :: iso_c_binding, only: c_f_pointer, &
+                                       c_loc, &
+                                       c_null_char, &
+                                       c_ptr
 implicit none
 
 

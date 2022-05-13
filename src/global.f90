@@ -9,8 +9,8 @@ use ac_kinds, only: dp, &
 use ac_utils, only: roundc, &
                     trunc
 use iso_fortran_env, only: iostat_end
-
 implicit none
+
 
 real(dp), parameter :: equiv = 0.64_dp
     !! conversion factor: 1 dS/m = 0.64 g/l

@@ -1,9 +1,5 @@
 module ac_interface_global
 
-use, intrinsic :: iso_c_binding, only: c_f_pointer, &
-                                       c_loc, &
-                                       c_null_char, &
-                                       c_ptr
 use ac_global, only: CheckFilesInProject, &
                      DetermineLengthGrowthStages, &
                      TimeToMaxCanopySF, &
@@ -249,14 +245,15 @@ use ac_global, only: CheckFilesInProject, &
                      GetPart2Eval, &
                      SetPart1Mult, &
                      SetPart2Eval             
-
-
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     int8
+use, intrinsic :: iso_c_binding, only: c_f_pointer, &
+                                       c_loc, &
+                                       c_null_char, &
+                                       c_ptr
 implicit none
-
 
 
 interface pointer2array
