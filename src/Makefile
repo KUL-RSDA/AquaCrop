@@ -20,15 +20,18 @@ else
 endif
 
 
-# Default target
+# Main targets
 
-EXECUTABLE = PlugInBareV70
-.DEFAULT_GOAL = $(EXECUTABLE)
+EXECUTABLE = aquacrop
+LIBRARY = libaquacrop.so
+
+bin: $(EXECUTABLE)
+lib: $(LIBRARY)
+all: bin lib
+.DEFAULT_GOAL = all
 
 
 # Fortran-related targets
-
-FLIB = libaquacrop.so
 
 OBJ = climprocessing.o \
     defaultcropsoil.o \
@@ -54,12 +57,12 @@ OBJ_INTERFACE = interface_climprocessing.o \
     interface_startunit.o \
     interface_tempprocessing.o
 
-$(FLIB): $(OBJ) \
+$(LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
-	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(FLIB)
+	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
 
 fortranclean:
-	$(RM) $(wildcard *.mod) $(wildcard *.o) $(FLIB)
+	$(RM) $(wildcard *.mod) $(wildcard *.o) $(LIBRARY)
 
 kinds.o: kinds.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
@@ -176,7 +179,7 @@ interface_simul.o: interface_simul.f90 \
 utils.o: utils.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-pluginbarev70.o: pluginbarev70.F90 \
+aquacrop.o: aquacrop.F90 \
     global.o \
     kinds.o \
     run.o \
@@ -197,7 +200,7 @@ SRC = Global.pas \
       interface_simul.pas \
       interface_startunit.pas \
       interface_tempprocessing.pas \
-      PlugInBareV70.dpr
+      aquacrop.dpr
 
 pascalclean: fortranclean
 	$(RM) $(wildcard *.o) $(wildcard *.ppu)
@@ -207,13 +210,13 @@ pascalclean: fortranclean
 
 ifeq ($(FORTRAN_EXE), 0)
 # Pascal-based executable
-$(EXECUTABLE): $(SRC) $(FLIB)
-	$(PC) $(PCFLAGS) PlugInBareV70.dpr
+$(EXECUTABLE): $(SRC) $(LIBRARY)
+	$(PC) $(PCFLAGS) aquacrop.dpr
 
 else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
-$(EXECUTABLE): pluginbarev70.o
-	$(FC) pluginbarev70.o $(OBJ) -o $(EXECUTABLE)
+$(EXECUTABLE): aquacrop.o
+	$(FC) aquacrop.o $(OBJ) -o $(EXECUTABLE)
 endif
 
 clean: pascalclean fortranclean

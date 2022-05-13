@@ -1,4 +1,4 @@
-program pluginbarev70
+program aquacrop
 
 use ac_global, only: GetSimulation_NrRuns, &
                      GetSimulation_ToDayNr, &
@@ -86,4 +86,4 @@ end if
 
 call FinalizeTheProgram()
 
-end program pluginbarev70
+end program aquacrop

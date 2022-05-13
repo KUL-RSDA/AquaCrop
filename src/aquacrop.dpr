@@ -1,4 +1,4 @@
-program PlugInBareV70;
+program aquacrop;
 
 uses
   interface_climprocessing in 'interface_climprocessing.pas',
