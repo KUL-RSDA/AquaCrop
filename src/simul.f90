@@ -287,7 +287,6 @@ use ac_global, only: ActiveCells, &
                      rep_Crop, &
                      rep_EffectStress, &
                      rep_Soil, &
-                     roundc, &
                      SaltSolutionDeposit, &
                      SaltSolutionDeposit, &
                      SetCCiActual, &
@@ -387,14 +386,10 @@ use ac_global, only: ActiveCells, &
                      TimeToMaxCanopySF, &
                      undef_double, &
                      undef_int
-
-
-                      
 use ac_tempprocessing, only:    CropStressParametersSoilSalinity, &
                                 GrowingDegreeDays, &
                                 SumCalendarDays
-
-
+use ac_utils, only: roundc
 implicit none
 
 integer(intEnum), parameter :: whichtheta_AtSat = 0

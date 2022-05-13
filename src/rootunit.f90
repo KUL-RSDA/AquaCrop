@@ -1,8 +1,7 @@
 module ac_rootunit
 
-    use ac_kinds, only: dp, sp, int32, int16, int8, intEnum
-    use ac_global, only: undef_int,&
-                         roundc,&
+   use ac_kinds, only: dp, sp, int32, int16, int8, intEnum
+   use ac_global, only: undef_int,&
                          ActualRootingDepth,&
                          GetCompartment_Layer,&
                          GetCompartment_Theta,&
@@ -24,6 +23,7 @@ module ac_rootunit
                          SetSoil_RootMax,&
                          SetSimulation_SCor
 
+use ac_utils, only: roundc
     implicit none
 
 

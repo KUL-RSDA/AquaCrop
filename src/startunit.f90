@@ -7,8 +7,7 @@ use ac_kinds, only: int32,&
 
 use iso_fortran_env, only: iostat_end
 
-use ac_global, only:    assert, &
-                        GetPathNameSimul, &
+use ac_global, only:    GetPathNameSimul, &
                         FileExists, &
                         SetOut1Wabal, &
                         SetOut2Crop, &
@@ -133,9 +132,8 @@ use ac_initialsettings, only: InitializeSettings
 use ac_run, only: open_file, &
                   write_file, &
                   RunSimulation
-
-use ac_utils, only: upper_case
-
+use ac_utils, only: assert, &
+                    upper_case
 implicit none
 
 integer :: fProjects  ! file handle

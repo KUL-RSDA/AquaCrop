@@ -12,9 +12,9 @@ use ac_global, only:    typeObsSim_ObsSimCC, &
                         undef_int, &
                         GetPathNameSimul, &
                         GetSimulation_FromDayNr, &
-                        roundc, &
                         typeProject_TypePRM, &
                         NameMonth
+use ac_utils, only: roundc
 implicit none
 
 type rep_EventObsSim 

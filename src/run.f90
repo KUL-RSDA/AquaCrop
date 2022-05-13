@@ -8,7 +8,6 @@ use ac_kinds, only: dp, &
 
 
 use ac_global, only:    AdjustSizeCompartments, &
-                        assert, &
                         CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
@@ -189,7 +188,6 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetOut7Clim, &
                         rep_DayEventDbl, &
                         rep_sum, &
-                        roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
                         SetETo, &
@@ -421,6 +419,8 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
                                 GetMonthlyRainDataset
 
 use ac_inforesults, only:       WriteAssessmentSimulation
+use ac_utils, only: assert, &
+                    roundc
 implicit none
 
 

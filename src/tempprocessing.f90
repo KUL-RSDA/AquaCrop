@@ -9,7 +9,6 @@ use ac_kinds,  only: dp, &
 use iso_fortran_env, only: iostat_end
 
 use ac_global , only: undef_int, &
-                      roundc, &
                       modeCycle_GDDays, &
                       modeCycle_CalendarDays, &
                       DaysinMonth, &
@@ -269,8 +268,7 @@ use ac_global , only: undef_int, &
                       setgroundwaterfile,&
                       setsimulation_surfacestorageini,&
                       translateinipointstoswprofile
-
-
+use ac_utils, only: roundc
 implicit none
 
 
