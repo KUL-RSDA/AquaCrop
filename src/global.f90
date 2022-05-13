@@ -7,6 +7,8 @@ use ac_kinds, only: dp, &
                     intEnum, &
                     sp
 use ac_utils, only: roundc, &
+                    GetReleaseDate, &
+                    GetVersionString, &
                     trunc
 use iso_fortran_env, only: iostat_end
 implicit none
@@ -1055,7 +1057,7 @@ type(rep_DayEventInt), dimension(5) :: IrriAfterSeason
 contains
 
 
-real(dp) function AquaCropVersion(FullNameXXFile)
+real(dp) function DeduceAquaCropVersion(FullNameXXFile)
     character(len=*), intent(in) :: FullNameXXFile
 
     integer :: fhandle
@@ -1069,8 +1071,8 @@ real(dp) function AquaCropVersion(FullNameXXFile)
 
     close(fhandle)
 
-    AquaCropVersion = VersionNr
-end function AquaCropVersion
+    DeduceAquaCropVersion = VersionNr
+end function DeduceAquaCropVersion
 
 
 real(sp) function RootMaxInSoilProfile(ZmaxCrop, TheNrSoilLayers, TheSoilLayer)
@@ -3508,7 +3510,8 @@ subroutine SaveCrop(totalname)
     open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
     write(fhandle, '(a)') GetCropDescription()
     ! AquaCrop version
-    write(fhandle, '(a)') '     7.0       : AquaCrop Version (June 2021)'
+    write(fhandle, '("     ", a, "       : AquaCrop Version (", a, ")")') &
+          GetVersionString(), GetReleaseDate()
     write(fhandle, '(a)') '     1         : File not protected'
 
     ! SubKind
@@ -3995,8 +3998,10 @@ subroutine SaveProfile(totalname)
 
     open(newunit=fhandle, file=trim(totalname), status='replace', action='write')
     write(fhandle, '(a)') GetProfDescription()
-    write(fhandle, '(a)') &
-    '        7.0                 : AquaCrop Version (June 2021)'    ! AquaCrop version
+
+    write(fhandle, &
+          '("        ", a, "                 : AquaCrop Version (", a, ")")') &
+          GetVersionString(), GetReleaseDate()    ! AquaCrop version
     write(fhandle, '(i9, a)') GetSoil_CNvalue(), &
     '                   : CN (Curve Number)'
     write(fhandle, '(i9, a)') GetSoil_REW(), &

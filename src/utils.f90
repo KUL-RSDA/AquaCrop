@@ -32,6 +32,57 @@ subroutine assert(condition, message)
 end subroutine assert
 
 
+function GetAquaCropDescription() result(str)
+    !! Returns a string with the aquacrop version and release date.
+    character(len=:), allocatable :: str
+
+    str = 'AquaCrop ' // GetVersionString() // ' (' // GetReleaseDate() // ')'
+end function GetAquaCropDescription
+
+
+function GetAquaCropDescriptionWithTimeStamp() result(str)
+    !! Same as GetAquaCropDescription(), but with a time stamp.
+    character(len=:), allocatable :: str
+
+    integer, dimension(8) :: d
+
+    call date_and_time(values=d)
+
+    str = GetAquaCropDescription() // ' - Output created on (date) : ' // &
+          int2str(d(3)) // '-' // int2str(d(2)) // '-' // int2str(d(1)) // &
+          '   at (time) : ' // int2str(d(5)) // ':' // int2str(d(6)) // &
+          ':' // int2str(d(7))
+end function GetAquaCropDescriptionWithTimeStamp
+
+
+function GetReleaseDate() result(str)
+    !! Returns a string containing the month and year of the release.
+    character(len=:), allocatable :: str
+
+    str = 'October 2021'
+end function GetReleaseDate
+
+
+function GetVersionString() result(str)
+    !! Returns a string containing the version number (major+minor).
+    character(len=:), allocatable :: str
+
+    str = '7.0'
+end function GetVersionString
+
+
+function int2str(num) result(str)
+    !! Converts an integer into a string.
+    integer, intent(in) :: num
+    character(len=:), allocatable :: str
+
+    character(len=128) :: tmp
+
+    write(tmp, '(i0)') num
+    str = trim(tmp)
+end function int2str
+
+
 function roundc_int32(x, mold) result(y)
     !! Returns commercial rounds, following Pascal's banker's rules for rounding
     real(dp), intent(in) :: x
