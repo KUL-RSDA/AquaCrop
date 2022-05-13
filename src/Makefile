@@ -64,28 +64,9 @@ $(LIBRARY): $(OBJ) \
 fortranclean:
 	$(RM) $(wildcard *.mod) $(wildcard *.o) $(LIBRARY)
 
-kinds.o: kinds.f90
-	$(FC) $(FCFLAGS) -c $< -o $@
 
-global.o: global.f90 \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_global.o: interface_global.f90 \
-    global.o \
-    kinds.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-tempprocessing.o: tempprocessing.f90 \
-    global.o \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_tempprocessing.o: interface_tempprocessing.f90 \
-    tempprocessing.o \
-    kinds.o
+aquacrop.o: aquacrop.F90 \
+    startunit.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 climprocessing.o: climprocessing.f90 \
@@ -93,9 +74,20 @@ climprocessing.o: climprocessing.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-interface_climprocessing.o: interface_climprocessing.f90 \
-    climprocessing.o \
+defaultcropsoil.o: defaultcropsoil.f90 \
+    global.o \
     kinds.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+global.o: global.f90 \
+    kinds.o \
+    utils.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+inforesults.o: inforesults.f90 \
+    global.o \
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 initialsettings.o: initialsettings.f90 \
@@ -104,9 +96,13 @@ initialsettings.o: initialsettings.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-interface_initialsettings.o: interface_initialsettings.f90 \
-    initialsettings.o \
-    kinds.o
+kinds.o: kinds.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+rootunit.o: rootunit.f90 \
+    global.o \
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 run.o: run.f90 \
@@ -120,8 +116,9 @@ run.o: run.f90 \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-interface_run.o: interface_run.f90 \
-    run.o \
+simul.o: simul.f90 \
+    global.o \
+    tempprocessing.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
@@ -133,13 +130,19 @@ startunit.o: startunit.f90 \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-interface_startunit.o: interface_startunit.f90 \
-    startunit.o \
+tempprocessing.o: tempprocessing.f90 \
+    global.o \
+    kinds.o \
+    utils.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+utils.o: utils.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-defaultcropsoil.o: defaultcropsoil.f90 \
-    global.o \
+
+interface_climprocessing.o: interface_climprocessing.f90 \
+    climprocessing.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
@@ -148,10 +151,9 @@ interface_defaultcropsoil.o: interface_defaultcropsoil.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-inforesults.o: inforesults.f90 \
+interface_global.o: interface_global.f90 \
     global.o \
-    kinds.o \
-    utils.o
+    kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_inforesults.o: interface_inforesults.f90 \
@@ -159,10 +161,9 @@ interface_inforesults.o: interface_inforesults.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-rootunit.o: rootunit.f90 \
-    global.o \
-    kinds.o \
-    utils.o
+interface_initialsettings.o: interface_initialsettings.f90 \
+    initialsettings.o \
+    kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_rootunit.o: interface_rootunit.f90 \
@@ -170,9 +171,8 @@ interface_rootunit.o: interface_rootunit.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-simul.o: simul.f90 \
-    global.o \
-    tempprocessing.o \
+interface_run.o: interface_run.f90 \
+    run.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
@@ -181,12 +181,14 @@ interface_simul.o: interface_simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-utils.o: utils.f90 \
+interface_startunit.o: interface_startunit.f90 \
+    startunit.o \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-aquacrop.o: aquacrop.F90 \
-    startunit.o
+interface_tempprocessing.o: interface_tempprocessing.f90 \
+    tempprocessing.o \
+    kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 
