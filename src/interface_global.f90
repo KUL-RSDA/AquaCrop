@@ -253,34 +253,11 @@ use ac_utils, only: pointer2string, &
                     string2pointer, &
                     threestrings2threepointers, &
                     twostrings2twopointers
-use, intrinsic :: iso_c_binding, only: c_f_pointer, &
-                                       c_ptr
+use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 
 
-interface pointer2array
-    module procedure pointer2array_dp
-end interface pointer2array
-
-
 contains
-
-
-function pointer2array_dp(c_pointer, arrlen, mold) result(array)
-    !! Returns a Fortran string from a C-pointer plus the array length.
-    type(c_ptr), intent(in) :: c_pointer
-        !! C-style pointer
-    integer(int32), intent(in) :: arrlen
-        !! Length of the array
-    real(dp), intent(in) :: mold
-        !! Defines the type of array
-    real(dp), dimension(arrlen) :: array
-
-    real(dp), pointer, dimension(:) :: f_pointer
-
-    call c_f_pointer(c_pointer, f_pointer, [arrlen])
-    array(:) = f_pointer(:)
-end function pointer2array_dp
 
 
 function GetCrop_Assimilates_On_wrap() result(On)
