@@ -800,6 +800,7 @@ subroutine WriteProjectsInfo(line)
     call fProjects_write('')
 end subroutine WriteProjectsInfo
 
+
 subroutine StartTheProgram()
 
     integer(int32) :: iproject, nprojects
@@ -830,9 +831,9 @@ subroutine StartTheProgram()
         call WriteProjectsInfo('Projects loaded: None')
         
         if (ListProjectFileExist) then
-            call WriteProjectsInfo('File ''ListProjects.txt'' does not contain ANY project file')
+            call WriteProjectsInfo('File "ListProjects.txt" does not contain ANY project file')
         else
-            call WriteProjectsInfo('Missing File ''ListProjects.txt'' in LIST directory')
+            call WriteProjectsInfo('Missing File "ListProjects.txt" in LIST directory')
         end if
     end if
     call FinalizeTheProgram

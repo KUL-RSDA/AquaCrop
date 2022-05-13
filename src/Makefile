@@ -186,9 +186,6 @@ utils.o: utils.f90 \
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 aquacrop.o: aquacrop.F90 \
-    global.o \
-    kinds.o \
-    run.o \
     startunit.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
