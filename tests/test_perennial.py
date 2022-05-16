@@ -195,8 +195,12 @@ def test_perennial():
                 reference_file, output_file)
 
         for i, (ref_line, out_line) in enumerate(zip(ref_lines, out_lines)):
-            ref_line = ref_line.replace('°C', 'degC')
-            assert ref_line == out_line, (i, ref_line, out_line)
+            if 'AquaCrop Version' in ref_line:
+                # This is a line with the AquaCrop version and release date
+                assert 'AquaCrop Version' in out_line, (i, ref_line, out_line)
+            else:
+                ref_line = ref_line.replace('°C', 'degC')
+                assert ref_line == out_line, (i, ref_line, out_line)
 
         print('{0} checks = OK'.format(filename))
 
