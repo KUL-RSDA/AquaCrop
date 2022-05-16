@@ -5,9 +5,9 @@
 
 Building the Aquacrop executable requires:
 
-* GNU Make
-* the GNU Fortran compiler
-* the Free Pascal compiler (optional)
+* GNU Make (>= v3.82 should work)
+* a GNU Fortran compiler (>= v6.4.0 should work)
+* (optional) a Free Pascal compiler (>= v3.2.0 should work)
 
 The main `make` targets are `bin` (producing an `aquacrop` executable),
 `lib` (producing a `libaquacrop.so` library). The default target is
