@@ -1489,6 +1489,13 @@ type(rep_plotPar) function GetPlotVarCrop()
     GetPlotVarCrop = PlotVarCrop
 end function GetPlotVarCrop
 
+subroutine SetPlotVarCrop(PlotVarCrop_in)
+    !! Setter for the "PlotVarCrop" global variable.
+    type(rep_plotPar), intent(in) :: PlotVarCrop_in
+
+    PlotVarCrop = PlotVarCrop_in
+end subroutine SetPlotVarCrop
+
 subroutine SetPlotVarCrop_PotVal(PotVal)
     !! Setter for the "PlotVarCrop" global variable. 
     real(dp), intent(in) :: PotVal
@@ -1679,6 +1686,12 @@ end subroutine SetIrriInfoRecord2_DepthInfo
 
 ! StressTot
 
+type(rep_StressTot) function GetStressTot()
+    !! Getter for the "StressTot" global variable.
+
+    GetStressTot = StressTot
+end function GetStressTot
+
 real(dp) function GetStressTot_Salt()
     !! Getter for the "StressTot" global variable.
     
@@ -1714,6 +1727,13 @@ integer(int32) function GetStressTot_NrD()
     
     GetStressTot_NrD = StressTot%NrD
 end function GetStressTot_NrD
+
+subroutine SetStressTot(StressTot_in)
+    !! Setter for the "StressTot" global variable. 
+    type(rep_StressTot), intent(in) :: StressTot_in
+
+    StressTot = StressTot_in
+end subroutine SetStressTot
 
 subroutine SetStressTot_Salt(Salt)
     !! Setter for the "StressTot" global variable. 
@@ -1759,6 +1779,12 @@ end subroutine SetStressTot_NrD
 
 ! CutInfoRecord1
 
+type(repCutInfoRecord) function GetCutInfoRecord1()
+    !! Getter for the "CutInfoRecord1" global variable.
+
+    GetCutInfoRecord1 = CutInfoRecord1
+end function GetCutInfoRecord1
+
 logical function GetCutInfoRecord1_NoMoreInfo()
     !! Getter for the "CutInfoRecord1" global variable.
     
@@ -1794,6 +1820,13 @@ real(dp) function GetCutInfoRecord1_MassInfo()
     
     GetCutInfoRecord1_MassInfo = CutInfoRecord1%MassInfo
 end function GetCutInfoRecord1_MassInfo
+
+subroutine SetCutInfoRecord1(CutInfoRecord1_in)
+    !! Setter for the "CutInfoRecord1" global variable. 
+    type(repCutInfoRecord), intent(in) :: CutInfoRecord1_in
+
+    CutInfoRecord1 = CutInfoRecord1_in
+end subroutine SetCutInfoRecord1
 
 subroutine SetCutInfoRecord1_NoMoreInfo(NoMoreInfo)
     !! Setter for the "CutInfoRecord1" global variable.
@@ -1840,6 +1873,12 @@ end subroutine SetCutInfoRecord1_MassInfo
 
 ! CutInfoRecord2
 
+type(repCutInfoRecord) function GetCutInfoRecord2()
+    !! Getter for the "CutInfoRecord2" global variable.
+
+    GetCutInfoRecord2 = CutInfoRecord2
+end function GetCutInfoRecord2
+
 logical function GetCutInfoRecord2_NoMoreInfo()
     !! Getter for the "CutInfoRecord2" global variable.
     
@@ -1875,6 +1914,13 @@ real(dp) function GetCutInfoRecord2_MassInfo()
     
     GetCutInfoRecord2_MassInfo = CutInfoRecord2%MassInfo
 end function GetCutInfoRecord2_MassInfo
+
+subroutine SetCutInfoRecord2(CutInfoRecord2_in)
+    !! Setter for the "CutInfoRecord2" global variable. 
+    type(repCutInfoRecord), intent(in) :: CutInfoRecord2_in
+
+    CutInfoRecord2 = CutInfoRecord2_in
+end subroutine SetCutInfoRecord2
 
 subroutine SetCutInfoRecord2_NoMoreInfo(NoMoreInfo)
     !! Setter for the "CutInfoRecord2" global variable.
@@ -1920,6 +1966,12 @@ end subroutine SetCutInfoRecord2_MassInfo
 
 ! Transfer
 
+type(rep_Transfer) function GetTransfer()
+    !! Getter for the "Transfer" global variable.
+
+    GetTransfer = Transfer
+end function GetTransfer
+
 logical function GetTransfer_Store()
     !! Getter for the "Transfer" global variable.
     
@@ -1943,6 +1995,13 @@ real(dp) function GetTransfer_Bmobilized()
     
     GetTransfer_Bmobilized = Transfer%Bmobilized
 end function GetTransfer_Bmobilized
+
+subroutine SetTransfer(Transfer_in)
+    !! Setter for the "Transfer" global variable. 
+    type(rep_Transfer), intent(in) :: Transfer_in
+
+    Transfer = Transfer_in
+end subroutine SetTransfer
 
 subroutine SetTransfer_Store(Store)
     !! Setter for the "Transfer" global variable.

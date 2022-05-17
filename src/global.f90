@@ -8608,6 +8608,13 @@ real(dp) function GetIrriECw_PreSeason()
     GetIrriECw_PreSeason = IrriECw%PreSeason
 end function GetIrriECw_PreSeason
 
+subroutine SetIrriECw(IrriECw_in)
+    !! Setter for the "IrriECw" global variable.
+    type(rep_IrriECw), intent(in) :: IrriECw_in
+
+    IrriECw = IrriECw_in
+end subroutine SetIrriECw
+
 subroutine SetIrriECw_PreSeason(PreSeason)
     !! Setter for the "IrriECw" global variable.
     real(dp), intent(in) :: PreSeason
@@ -8925,6 +8932,11 @@ subroutine SetRainDescription(str)
     RainDescription = str
 end subroutine SetRainDescription
 
+type(rep_Manag) function GetManagement()
+    !! Getter for the "Management" global variable.
+
+    GetManagement = Management
+end function GetManagement
 
 integer(int8) function GetManagement_Mulch()
     !! Getter for the "Management" global variable.
@@ -9161,6 +9173,13 @@ integer(int32) function GetManagement_Cuttings_FirstDayNr()
 
     GetManagement_Cuttings_FirstDayNr = Cuttings%FirstDayNr
 end function GetManagement_Cuttings_FirstDayNr
+
+subroutine SetManagement(Management_in)
+    !! Setter for the "Management" global variable.
+    type(rep_Manag), intent(in) :: Management_in
+
+    Management = Management_in
+end subroutine SetManagement
 
 subroutine SetManagement_Cuttings_Considered(Considered)
     !! Setter for the "Cuttings" global variable.
@@ -10099,6 +10118,13 @@ integer(int8) function GetSoil_CNvalue()
 
     GetSoil_CNvalue = soil%CNvalue
 end function GetSoil_CNvalue
+
+subroutine SetSoil(Soil_in)
+    !! Setter for the "Soil" global variable.
+    type(rep_soil), intent(in) :: Soil_in
+
+    Soil = Soil_in
+end subroutine SetSoil
 
 subroutine SetSoil_REW(REW)
     !! Setter for the "Soil" global variable.
@@ -12222,6 +12248,13 @@ real(dp) function GetRootZoneSalt_KsSalt()
     GetRootZoneSalt_KsSalt = RootZoneSalt%KsSalt
 end function GetRootZoneSalt_KsSalt
 
+subroutine SetRootZoneSalt(RootZoneSalt_in)
+    !! Setter for the RootZoneSalt global variable.
+    type(rep_rootzonesalt), intent(in) :: RootZoneSalt_in
+
+    RootZoneSalt = RootZoneSalt_in
+end subroutine SetRootZoneSalt
+
 subroutine SetRootZoneSalt_ECe(ECe)
     !! Setter for the "RootZoneSalt" global variable.
     real(dp), intent(in) :: ECe
@@ -12577,9 +12610,16 @@ function GetIrriAfterSeason_Param(i) result(Param)
     Param = IrriAfterSeason(i)%Param
 end function GetIrriAfterSeason_Param
 
+function GetIrriAfterSeason() result(IrriAfterSeason_out)
+    !! Getter for the "IrriAfterSeason" global variable.
+    type(rep_DayEventInt), dimension(5) :: IrriAfterSeason_out
+
+    IrriAfterSeason_out = IrriAfterSeason
+end function GetIrriAfterSeason
+
 subroutine SetIrriAfterSeason(IrriAfterSeason_in)
     !! Setter for the "IrriAfterSeason" global variable.
-    type(rep_DayEventInt), intent(in) :: IrriAfterSeason_in
+    type(rep_DayEventInt), dimension(5), intent(in) :: IrriAfterSeason_in
 
     IrriAfterSeason = IrriAfterSeason_in
 end subroutine SetIrriAfterSeason
@@ -12632,9 +12672,16 @@ function GetIrriBeforeSeason_Param(i) result(Param)
     Param = IrriBeforeSeason(i)%Param
 end function GetIrriBeforeSeason_Param
 
+function GetIrriBeforeSeason() result(IrriBeforeSeason_out)
+    !! Getter for the "IrriBeforeSeason" global variable.
+    type(rep_DayEventInt), dimension(5) :: IrriBeforeSeason_out
+
+    IrriBeforeSeason_out = IrriBeforeSeason
+end function GetIrriBeforeSeason
+
 subroutine SetIrriBeforeSeason(IrriBeforeSeason_in)
     !! Setter for the "IrriBeforeSeason" global variable.
-    type(rep_DayEventInt), intent(in) :: IrriBeforeSeason_in
+    type(rep_DayEventInt), dimension(5), intent(in) :: IrriBeforeSeason_in
 
     IrriBeforeSeason = IrriBeforeSeason_in
 end subroutine SetIrriBeforeSeason
@@ -12747,6 +12794,13 @@ integer(int32) function GetClimRecord_NrObs()
 
     GetClimRecord_NrObs = ClimRecord%NrObs
 end function GetClimRecord_NrObs
+
+subroutine SetClimRecord(rec_in)
+    !! Setter for the "ClimRecord" global variable.
+    type(rep_clim), intent(in) :: rec_in
+
+    ClimRecord = rec_in
+end subroutine SetClimRecord
 
 subroutine SetClimRecord_DataType(DataType)
     !! Setter for the "ClimRecord" global variable.
