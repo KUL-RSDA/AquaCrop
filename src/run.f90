@@ -1024,6 +1024,15 @@ subroutine fHarvest_write(line, advance_in)
         advance = .true.
     end if
     call write_file(fHarvest, line, advance, fHarvest_iostat)
+
+    if (advance) then
+        ! For some reason (a compiler bug?) we need to explicitly flush
+        ! the buffer here. Otherwise, with GNU Fortran v10.2.1 and DEBUG=0,
+        ! the last line of test_defaultPROharvests.OUT in the Harvest test
+        ! does not get written. This does not occur when either DEBUG=1 is
+        ! applied or when using GNU Fortran v6.4.0.
+        call flush(fHarvest)
+    end if
 end subroutine fHarvest_write
 
 
