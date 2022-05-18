@@ -1,14 +1,6 @@
 module ac_startunit
 
-use ac_kinds, only: int32,&
-                    int8, &
-                    intEnum, &
-                    dp
-
-use iso_fortran_env, only: iostat_end
-
-use ac_global, only:    assert, &
-                        GetPathNameSimul, &
+use ac_global, only:    GetPathNameSimul, &
                         FileExists, &
                         SetOut1Wabal, &
                         SetOut2Crop, &
@@ -128,15 +120,19 @@ use ac_global, only:    assert, &
                         SetprojectDescription, &
                         CheckForKeepSWC, &
                         SetFullfilenameProgramParameters
-
 use ac_initialsettings, only: InitializeSettings
+use ac_kinds, only: int32,&
+                    int8, &
+                    intEnum, &
+                    dp
 use ac_run, only: open_file, &
-                  write_file, &
-                  RunSimulation
-
-use ac_utils, only: upper_case
-
+                  RunSimulation, &
+                  write_file
+use ac_utils, only: assert, &
+                    upper_case
+use iso_fortran_env, only: iostat_end
 implicit none
+
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
@@ -802,6 +798,7 @@ subroutine WriteProjectsInfo(line)
     call fProjects_write('')
 end subroutine WriteProjectsInfo
 
+
 subroutine StartTheProgram()
 
     integer(int32) :: iproject, nprojects
@@ -832,9 +829,9 @@ subroutine StartTheProgram()
         call WriteProjectsInfo('Projects loaded: None')
         
         if (ListProjectFileExist) then
-            call WriteProjectsInfo('File ''ListProjects.txt'' does not contain ANY project file')
+            call WriteProjectsInfo('File "ListProjects.txt" does not contain ANY project file')
         else
-            call WriteProjectsInfo('Missing File ''ListProjects.txt'' in LIST directory')
+            call WriteProjectsInfo('Missing File "ListProjects.txt" in LIST directory')
         end if
     end if
     call FinalizeTheProgram

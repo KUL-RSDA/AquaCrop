@@ -1,21 +1,23 @@
 module ac_inforesults
 
-use ac_kinds, only: dp, &
-                    int8, &
-                    int16, &
-                    int32, &
-                    intEnum
-use iso_fortran_env, only: iostat_end
 use ac_global, only:    typeObsSim_ObsSimCC, &
                         typeObsSim_ObsSimB, &
                         typeObsSim_ObsSimSWC, &
                         undef_int, &
                         GetPathNameSimul, &
                         GetSimulation_FromDayNr, &
-                        roundc, &
                         typeProject_TypePRM, &
                         NameMonth
+use ac_kinds, only: dp, &
+                    int8, &
+                    int16, &
+                    int32, &
+                    intEnum
+use ac_utils, only: GetAquaCropDescriptionWithTimeStamp, &
+                    roundc
+use iso_fortran_env, only: iostat_end
 implicit none
+
 
 type rep_EventObsSim 
     real(dp) :: Obsi
@@ -34,6 +36,7 @@ end type rep_EventObsSim
 
 
 contains
+
 
 subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
                              Nobs, ObsAver, SimAver, PearsonCoeff, RMSE, &
@@ -217,15 +220,10 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
                 NScoeff, IndexAg
     type(rep_EventObsSim), dimension(100) :: ArrayObsSim
     character(len=:), allocatable :: YearString
-    integer, dimension(8) :: d
 
     ! 1. Open file for assessment
-    call date_and_time(values=d)
-
     open(newunit=fAssm, file=trim(totalnameEvalStat), status='replace', action='write')
-    write(fAssm, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
-    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
-    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    write(fAssm, '(a)') GetAquaCropDescriptionWithTimeStamp()
     write(fAssm, '(a)') 'Evaluation of simulation results - Statistics'
     if (TheProjectType == typeProject_TypePRM) then
         write(fAssm, '(2a)') '** Run number:', StrNr

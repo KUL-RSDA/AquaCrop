@@ -1,8 +1,10 @@
 unit interface_tempprocessing;
 
+
 interface
 
-uses Global, interface_global;
+
+uses interface_global;
 
 
 procedure AdjustMONTHandYEAR(

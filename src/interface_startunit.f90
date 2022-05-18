@@ -1,25 +1,22 @@
 module ac_interface_startunit
 
-use, intrinsic :: iso_c_binding, only: c_ptr
-
-use ac_interface_global, only: pointer2string, &
-                               string2pointer
-
 use ac_kinds, only: int32, &
                     intEnum
-
 use ac_startunit, only: fProjects_open, &
                         fProjects_write, &
                         GetListProjectsFile, &
                         GetProjectFilename, &
+                        GetProjectType, &
                         InitializeProject, &
-                        WriteProjectsInfo, &
-                        GetProjectType
-
+                        WriteProjectsInfo
+use ac_utils, only: pointer2string, &
+                    string2pointer
+use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 
 
 contains
+
 
 subroutine fProjects_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr

@@ -1,6 +1,6 @@
 src/*.o
 src/*.ppu
-src/PlugInBareV70
+src/aquacrop
 src/*.mod
 src/*.so
 __pycache__

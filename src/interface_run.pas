@@ -1,8 +1,11 @@
 unit interface_run;
 
+
 interface
 
-uses Global, interface_global;
+
+uses interface_global;
+
 
 TYPE rep_GwTable = RECORD
      DNr1, DNr2 : LongInt;

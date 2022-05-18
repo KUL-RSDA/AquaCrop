@@ -1,14 +1,10 @@
 module ac_run
 
-use iso_fortran_env, only: iostat_end
-use ac_kinds, only: dp, &
-                    int8, &
-                    int32, &
-                    intenum
-
-
+use ac_climprocessing, only:    GetDecadeEToDataset, &
+                                GetDecadeRainDataSet, &
+                                GetMonthlyEToDataset, &
+                                GetMonthlyRainDataset
 use ac_global, only:    AdjustSizeCompartments, &
-                        assert, &
                         CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
@@ -189,7 +185,6 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetOut7Clim, &
                         rep_DayEventDbl, &
                         rep_sum, &
-                        roundc, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
                         SetETo, &
@@ -400,27 +395,26 @@ use ac_global, only:    AdjustSizeCompartments, &
                         settactweedinfested, &
                         setziaqua, &
                         determinerootzonewc
-                  
-
+use ac_inforesults, only:       WriteAssessmentSimulation
+use ac_kinds, only: dp, &
+                    int8, &
+                    int32, &
+                    intenum
 use ac_rootunit, only:  AdjustedRootingDepth
 use ac_simul,    only:  Budget_module, &
                         determinepotentialbiomass, &
                         determinebiomassandyield
-
 use ac_tempprocessing, only:    CCxSaltStressRelationship, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
+                                GrowingDegreeDays, &
                                 LoadSimulationRunProject, &
                                 StressBiomassRelationship, &
-                                temperaturefilecoveringcropperiod, &
-                                GrowingDegreeDays
-
-use ac_climprocessing, only:    GetDecadeEToDataset, &
-                                GetDecadeRainDataSet, &
-                                GetMonthlyEToDataset, &
-                                GetMonthlyRainDataset
-
-use ac_inforesults, only:       WriteAssessmentSimulation
+                                temperaturefilecoveringcropperiod
+use ac_utils, only: assert, &
+                    GetAquaCropDescriptionWithTimeStamp, &
+                    roundc
+use iso_fortran_env, only: iostat_end
 implicit none
 
 
@@ -1030,6 +1024,15 @@ subroutine fHarvest_write(line, advance_in)
         advance = .true.
     end if
     call write_file(fHarvest, line, advance, fHarvest_iostat)
+
+    if (advance) then
+        ! For some reason (a compiler bug?) we need to explicitly flush
+        ! the buffer here. Otherwise, with GNU Fortran v10.2.1 and DEBUG=0,
+        ! the last line of test_defaultPROharvests.OUT in the Harvest test
+        ! does not get written. This does not occur when either DEBUG=1 is
+        ! applied or when using GNU Fortran v6.4.0.
+        call flush(fHarvest)
+    end if
 end subroutine fHarvest_write
 
 
@@ -5154,7 +5157,6 @@ subroutine CreateEvalData(NrRun)
     integer(int32) :: dayi, monthi, yeari, integer_temp
     character(len=:), allocatable :: TempString
     character(len=1025) :: StrNr, tempstring2
-    integer, dimension(8) :: d
 
     ! open input file with field data
     call fObs_open(GetObservationsFilefull(), 'r') ! Observations recorded in File
@@ -5205,10 +5207,9 @@ subroutine CreateEvalData(NrRun)
         StrNr = ''
     end if
     call SetfEval_filename(GetPathNameSimul() // 'EvalData' // trim(StrNr) // '.OUT')
+
     call fEval_open(GetfEval_filename(), 'w')
-    write(tempstring2, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
-    'AquaCrop 7.0 (June 2021) - Output created on (date) : ', d(3), '-', d(2), &
-    '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    write(tempstring2, '(a)') GetAquaCropDescriptionWithTimeStamp()
     call fEval_write(trim(tempstring2))
     call fEval_write('Evaluation of simulation results - Data')
     write(TempString, '(f5.2)') GetZeval()
@@ -5226,7 +5227,6 @@ subroutine OpenOutputRun(TheProjectType)
 
     character(len=:), allocatable :: totalname
     character(len=1025) :: tempstring
-    integer, dimension(8) :: d
 
     select case (TheProjectType)
     case(typeproject_TypePRO)
@@ -5234,12 +5234,11 @@ subroutine OpenOutputRun(TheProjectType)
     case(typeproject_TypePRM)
         totalname = GetPathNameOutp() // GetOutputName() // 'PRMseason.OUT'
     end select
+
     call fRun_open(totalname, 'w')
-    call date_and_time(values=d)
-    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
-        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
-        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    write(tempstring, '(a)') GetAquaCropDescriptionWithTimeStamp()
     call fRun_write(trim(tempstring))
+
     call fRun_write('')
     call fRun_write('    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2' // &
         '      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx' // &
@@ -5259,7 +5258,6 @@ subroutine OpenOutputDaily(TheProjectType)
 
     character(len=:), allocatable :: totalname
     character(len=1025) :: tempstring
-    integer, dimension(8) :: d
 
     select case (TheProjectType)
     case(typeproject_TypePRO)
@@ -5267,11 +5265,9 @@ subroutine OpenOutputDaily(TheProjectType)
     case(typeproject_TypePRM)
         totalname = GetPathNameOutp() // GetOutputName() // 'PRMday.OUT'
     end select
-    call date_and_time(values=d)
+
     call fDaily_open(totalname, 'w')
-    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
-        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
-        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    write(tempstring, '(a)') GetAquaCropDescriptionWithTimeStamp()
     call fDaily_write(trim(tempstring))
 end subroutine OpenOutputDaily
 
@@ -5281,7 +5277,6 @@ subroutine OpenPart1MultResults(TheProjectType)
 
     character(len=:), allocatable :: totalname
     character(len=1025) :: tempstring
-    integer, dimension(8) :: d
 
     select case (TheProjectType)
     case(typeproject_TypePRO)
@@ -5291,13 +5286,10 @@ subroutine OpenPart1MultResults(TheProjectType)
     end select
     call SetfHarvest_filename(totalname)
     call fHarvest_open(GetfHarvest_filename(), 'w')
-    write(tempstring, '(a, i2, a, i2, a, i4, a, i2, a, i2, a, i2)') &
-        'AquaCrop 7.0 (October 2021) - Output created on (date) : ', d(3), '-', d(2), &
-        '-', d(1), '   at (time) : ', d(5), ':', d(6), ':', d(7)
+    write(tempstring, '(a)') GetAquaCropDescriptionWithTimeStamp()
     call fHarvest_write(trim(tempstring))
     call fHarvest_write('Biomass and Yield at Multiple cuttings')
 end subroutine OpenPart1MultResults
-
 
 
 subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)

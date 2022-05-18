@@ -1,9 +1,5 @@
 module ac_climprocessing
 
-use ac_kinds, only: dp, &
-                    int8, &
-                    int32, &
-                    sp
 use ac_global, only:    DaysInMonth, &
                         DetermineDate, &
                         DetermineDayNr, &
@@ -24,6 +20,10 @@ use ac_global, only:    DaysInMonth, &
                         GetRainRecord_ToY, &
                         LeapYear, &
                         rep_DayEventDbl
+use ac_kinds, only: dp, &
+                    int8, &
+                    int32, &
+                    sp
 implicit none
 
 

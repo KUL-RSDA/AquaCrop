@@ -5,33 +5,30 @@
 
 Building the Aquacrop executable requires:
 
-* GNU Make
-* the Free Pascal compiler
-* the GNU Fortran compiler
+* GNU Make (>= v3.82 should work)
+* a GNU Fortran compiler (>= v6.4.0 should work)
+* (optional) a Free Pascal compiler (>= v3.2.0 should work)
 
-Running `make` with the default options will build the executable by:
-1. compiling the Fortran library code into a shared library `libaquacrop.so`,
-2. compiling the Pascal code into a `PlugInBareV70` executable, which makes use
-   of `libaquacrop.so`.
+The main `make` targets are `bin` (producing an `aquacrop` executable),
+`lib` (producing a `libaquacrop.so` library). The default target is
+`all`, which combines the `bin` and `lib` targets.
 
-If the `FORTRAN_EXE` option is set to `1` (instead of the default `0`),
-the executable will be built by
-1. compiling the Fortran library code into a shared library `libaquacrop.so`,
-2. compiling the Pascal code into a shared library `libPlugInBareV70.so`,
-   which makes use of `libaquacrop.so`,
-3. compiling the Fortran program code (`pluginbarev70.F90` and
-   `aquacrop_wrap.F90`) into a `PlugInBareV70` executable, which makes use of
-   `libPlugInBareV70.so`.
+If the `FORTRAN_EXE` option is set to `0` (instead of the default `1`),
+the `aquacrop` binary is built from the Pascal code instead, linked to
+the (Fortran-compiled) `libaquacrop.so` library.
+
+> Note: The coupling is rather trivial since the Pascal program consists
+  of a single call to `StartTheProgram()`, but it still provides a basic
+  check of the Pascal interface.
 
 For example:
 ```bash
 cd AquaCrop/src
 make
-make clean          # cleans both the Fortran and Pascal build artifacts
-make DEBUG=1        # adds debug options to both compilers
-make FORTRAN_EXE=1  # builds a Fortran-based executable (instead of Pascal-based)
+make clean          # cleans all build artifacts (binaries, object files, ...)
+make DEBUG=1        # uses debug options for compiling
+make FORTRAN_EXE=0  # builds a Pascal-based executable (instead of Fortran-based)
 ```
-
 
 ## Testing
 
@@ -43,15 +40,14 @@ Running the test suite requires:
 * An `$AQUACROP_COMMAND` environment variable point to the AquaCrop
   executable that you want to use.
 
-> Note: you will need to add the directory with the shared libraries (such as
-  `libaquacrop.so`) to your `$LD_LIBRARY_PATH`, because the AquaCrop executable
-  is dynamically linked to them.
-
+> Note: when using executables built with `FORTRAN_EXE=0`, you will need to add
+  the directory with the `libaquacrop.so` library to your `$LD_LIBRARY_PATH`,
+  because the AquaCrop executable is dynamically linked to it.
 
 For example:
 ```bash
 export AQUACROP_TEST_ROOT=/path/to/your/aquacrop/test/root/dir
-export AQUACROP_COMMAND=$PWD/AquaCrop/src/PlugInBareV70
+export AQUACROP_COMMAND=$PWD/AquaCrop/src/aquacrop
 export LD_LIBRARY_PATH=$PWD/AquaCrop/src:$LD_LIBRARY_PATH
 
 cd AquaCrop/tests

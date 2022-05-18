@@ -1,8 +1,11 @@
 unit interface_rootunit;
 
+
 interface
 
-uses Global, interface_global;
+
+uses interface_global;
+
 
 function __AdjustedRootingDepth(
         constref CCAct :  double;

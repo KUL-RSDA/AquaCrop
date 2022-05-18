@@ -476,9 +476,9 @@ type
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
 
-function AquaCropVersion(FullNameXXFile : string) : double;
-         external 'aquacrop' name '__ac_global_MOD_aquacropversion';
-         
+function DeduceAquaCropVersion(FullNameXXFile : string) : double;
+         external 'aquacrop' name '__ac_global_MOD_deduceaquacropversion';
+
 
 function RootMaxInSoilProfile(
             constref ZmaxCrop : double;

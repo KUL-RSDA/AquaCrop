@@ -1,8 +1,8 @@
 unit interface_simul;
 
+
 interface
 
-uses Global, interface_global, TempProcessing, interface_tempprocessing;
 
 type
     rep_control = (begin_day,end_day);
