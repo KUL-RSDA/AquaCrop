@@ -24,6 +24,7 @@ use ac_global , only: undef_int, &
                       DetermineDayNr, &
                       DetermineDate, &
                       ECeComp, &
+                      FileExists, &
                       GetDaySwitchToLinear, &
                       HarvestIndexGrowthCoefficient, &
                       LeapYear, &
@@ -270,6 +271,7 @@ use iso_fortran_env, only: iostat_end
 implicit none
 
 
+logical :: TemperatureFilefull_exists
 real(dp), dimension(:), allocatable :: Tmin, Tmax  !! (daily) temperature data
 
 
@@ -858,8 +860,8 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 end subroutine GetMonthlyTemperatureDataSet
 
 
-integer(int32) function GrowingDegreeDays(ValPeriod, &
-               FirstDayPeriod, Tbase, Tupper, TDayMin, TDayMax)
+integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
+                                          Tupper, TDayMin, TDayMax)
     integer(int32), intent(in) :: ValPeriod
     integer(int32), intent(in) :: FirstDayPeriod
     real(dp), intent(in) :: Tbase
@@ -899,11 +901,9 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                 AdjustDayNri = .false.
             end if
 
-            totalname = GetTemperatureFilefull()
-            inquire(file=trim(totalname), exist=file_exists)
-
-            if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
-                .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
+            if (TemperatureFilefull_exists .and. &
+                (GetTemperatureRecord_ToDayNr() > DayNri) .and. &
+                (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingDays = ValPeriod
 
                 select case (GetTemperatureRecord_DataType())
@@ -1027,8 +1027,8 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
 end function GrowingDegreeDays
 
 
-integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
-                           Tbase, Tupper, TDayMin, TDayMax)
+integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
+                                        TDayMin, TDayMax)
     integer(int32), intent(in) :: ValGDDays
     integer(int32), intent(in) :: FirstDayCrop
     real(dp), intent(in) :: Tbase
@@ -1039,7 +1039,6 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
     integer(int32) :: i
     integer(int32) :: fhandle, rc
     integer(int32) :: NrCDays
-    character(len=:), allocatable :: totalname
     real(dp) :: RemainingGDDays, DayGDD
     integer(int32) :: DayNri
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
@@ -1072,11 +1071,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             else
                 AdjustDayNri = .false.
             end if
-            totalname = GetTemperatureFilefull()
-            inquire(file=trim(totalname), exist=file_exists)
 
-            if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
-                .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
+            if (TemperatureFilefull_exists .and. &
+                (GetTemperatureRecord_ToDayNr() > DayNri) .and. &
+                (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingGDDays = ValGDDays
 
                 select case (GetTemperatureRecord_DataType())
@@ -2115,6 +2113,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     integer(int32) :: ZiAqua_temp
     type(rep_clim) :: etorecord_tmp, rainrecord_tmp
     real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
+    logical :: file_exists
 
     open(newunit=f0, file=trim(NameFileFull), &
               status='old', action='read', iostat=rc)
@@ -2173,7 +2172,10 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     else
         read(f0, *, iostat=rc) TempString ! PathTemperatureFile
         call SetTemperatureFilefull(trim(TempString)//trim(GetTemperatureFile()))
-        call ReadTemperatureFilefull()
+
+        TemperatureFilefull_exists = FileExists(GetTemperatureFilefull())
+        if (TemperatureFilefull_exists) call ReadTemperatureFilefull()
+
         temperature_record = GetTemperatureRecord()
         TemperatureDescriptionLocal = GetTemperatureDescription()
         call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
