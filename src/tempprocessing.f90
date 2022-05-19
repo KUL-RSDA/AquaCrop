@@ -270,6 +270,9 @@ use iso_fortran_env, only: iostat_end
 implicit none
 
 
+real(dp), dimension(:), allocatable :: Tmin, Tmax  !! (daily) temperature data
+
+
 contains
 
 
@@ -294,6 +297,50 @@ subroutine AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
         YFile = Yfile + 1
     end if
 end subroutine AdjustDecadeMONTHandYEAR
+
+
+subroutine ReadTemperatureFilefull()
+    !! Reads the contents of the TemperatureFilefull file,
+    !! storing the temperatures in the Tmin and Tmax arrays.
+
+    character(len=:), allocatable :: filename
+    integer :: fhandle, i, nlines, nrows, rc
+
+    filename = GetTemperatureFilefull()
+    open(newunit=fhandle, file=trim(filename), status='old', action='read')
+
+    ! Count the number of lines
+    nlines = 0
+    do
+        read(fhandle, '(a)', iostat=rc)
+        if (rc == iostat_end) then
+            exit
+        else
+            nlines = nlines + 1
+        end if
+    end do
+
+    ! Now read in the actual content
+    nrows = nlines - 8
+    if (allocated(Tmin)) deallocate(Tmin)
+    if (allocated(Tmax)) deallocate(Tmax)
+    allocate(Tmin(nrows), Tmax(nrows))
+
+    rewind(fhandle)
+    read(fhandle, *) ! description
+    read(fhandle, *) ! time step
+    read(fhandle, *) ! day
+    read(fhandle, *) ! month
+    read(fhandle, *) ! year
+    read(fhandle, *)
+    read(fhandle, *)
+    read(fhandle, *)
+    do i = 1, nrows
+        read(fhandle, *) Tmin(i), Tmax(i)
+    end do
+
+    close(fhandle)
+end subroutine ReadTemperatureFilefull
 
 
 subroutine SetDayNrToYundef(DayNri)
@@ -833,6 +880,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
     TDayMin_local = TDayMin
     TDayMax_local = TDayMax
     GDDays = 0._dp
+
     if (ValPeriod > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax
@@ -850,65 +898,51 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
             else
                 AdjustDayNri = .false.
             end if
+
             totalname = GetTemperatureFilefull()
             inquire(file=trim(totalname), exist=file_exists)
+
             if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
                 .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingDays = ValPeriod
+
                 select case (GetTemperatureRecord_DataType())
                 case (datatype_daily)
-                    open(newunit=fhandle, file=trim(totalname), &
-                     status='old', action='read', iostat=rc)
-                    read(fhandle, *, iostat=rc) ! description
-                    read(fhandle, *, iostat=rc) ! time step
-                    read(fhandle, *, iostat=rc) ! day
-                    read(fhandle, *, iostat=rc) ! month
-                    read(fhandle, *, iostat=rc) ! year
-                    read(fhandle, *, iostat=rc)
-                    read(fhandle, *, iostat=rc)
-                    read(fhandle, *, iostat=rc)
-                    do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1)
-                         read(fhandle, *, iostat=rc)
-                    end do
-                    read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
-                    call SplitStringInTwoParams(StringREAD, TDayMin_local, TDayMax_local)
-                    DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin_local, TDayMax_local, GetSimulParam_GDDMethod())
+                    ! Tmin and Tmax arrays contain the TemperatureFilefull data
+                    i = DayNri - GetTemperatureRecord_FromDayNr() + 1
+                    TDayMin_local = Tmin(i)
+                    TDayMax_local = Tmax(i)
+
+                    DayGDD = DegreesDay(Tbase, Tupper, TDayMin_local, &
+                                        TDayMax_local, &
+                                        GetSimulParam_GDDMethod())
                     GDDays = GDDays + DayGDD
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
+
                     do while ((RemainingDays > 0) &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
-                        if (rc == iostat_end) then
-                            rewind(fhandle)
-                            read(fhandle, *, iostat=rc) ! description
-                            read(fhandle, *, iostat=rc) ! time step
-                            read(fhandle, *, iostat=rc) ! day
-                            read(fhandle, *, iostat=rc) ! month
-                            read(fhandle, *, iostat=rc) ! year
-                            read(fhandle, *, iostat=rc)
-                            read(fhandle, *, iostat=rc)
-                            read(fhandle, *, iostat=rc)
-                            read(fhandle, '(a)', iostat=rc) StringREAD
-                            call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin_local, TDayMax_local)
-                        else
-                            read(fhandle, '(a)', iostat=rc) StringREAD
-                            call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin_local, TDayMax_local)
+
+                        i = i + 1
+                        if (i == size(Tmin)) then
+                            i = 1
                         end if
-                        DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin_local, TDayMax_local,&
-                                     GetSimulParam_GDDMethod())
+                        TDayMin_local = Tmin(i)
+                        TDayMax_local = Tmax(i)
+
+                        DayGDD = DegreesDay(Tbase, Tupper, TDayMin_local, &
+                                            TDayMax_local, &
+                                            GetSimulParam_GDDMethod())
                         GDDays = GDDays + DayGDD
                         RemainingDays = RemainingDays - 1
                         DayNri = DayNri + 1
                     end do
+
                     if (RemainingDays > 0) then
                         GDDays = undef_int
                     end if
-                    close(fhandle)
+
                 case(datatype_decadely)
                     call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
                                 TmaxDataSet)
@@ -946,6 +980,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, &
                     if (RemainingDays > 0) then
                         GDDays = undef_int
                     end if
+
                 case(datatype_monthly)
                     call GetMonthlyTemperatureDataSet(DayNri, &
                             TminDataSet, TmaxDataSet)
@@ -1039,63 +1074,48 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
             end if
             totalname = GetTemperatureFilefull()
             inquire(file=trim(totalname), exist=file_exists)
+
             if (file_exists .and. (GetTemperatureRecord_ToDayNr() > DayNri) &
                 .and. (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingGDDays = ValGDDays
+
                 select case (GetTemperatureRecord_DataType())
                 case (datatype_daily)
-                    open(newunit=fhandle, file=trim(totalname), &
-                         status='old', action='read', iostat=rc)
-                    read(fhandle, *, iostat=rc) ! description
-                    read(fhandle, *, iostat=rc) ! time step
-                    read(fhandle, *, iostat=rc) ! day
-                    read(fhandle, *, iostat=rc) ! month
-                    read(fhandle, *, iostat=rc) ! year
-                    read(fhandle, *, iostat=rc)
-                    read(fhandle, *, iostat=rc)
-                    read(fhandle, *, iostat=rc)
-                    do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1)
-                         read(fhandle, *, iostat=rc)
-                    end do
-                    read(fhandle, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
-                    call SplitStringInTwoParams(StringREAD, TDayMin_loc, TDayMax_loc)
-                    DayGDD = DegreesDay(Tbase, Tupper, &
-                                 TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
+                    ! Tmin and Tmax arrays contain the TemperatureFilefull data
+                    i = DayNri - GetTemperatureRecord_FromDayNr() + 1
+                    TDayMin_loc = Tmin(i)
+                    TDayMax_loc = Tmax(i)
+
+                    DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
+                                        TDayMax_loc, &
+                                        GetSimulParam_GDDMethod())
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
+
                     do while ((RemainingGDDays > 0) &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
-                        if (rc == iostat_end) then
-                            rewind(fhandle)
-                            read(fhandle, *, iostat=rc) ! description
-                            read(fhandle, *, iostat=rc) ! time step
-                            read(fhandle, *, iostat=rc) ! day
-                            read(fhandle, *, iostat=rc) ! month
-                            read(fhandle, *, iostat=rc) ! year
-                            read(fhandle, *, iostat=rc)
-                            read(fhandle, *, iostat=rc)
-                            read(fhandle, *, iostat=rc)
-                            read(fhandle, '(a)', iostat=rc) StringREAD
-                            call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin_loc, TDayMax_loc)
-                        else
-                            read(fhandle, '(a)', iostat=rc) StringREAD
-                            call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin_loc, TDayMax_loc)
+
+                        i = i + 1
+                        if (i == size(Tmin)) then
+                            i = 1
                         end if
-                        DayGDD = DegreesDay(Tbase, Tupper, &
-                                     TDayMin_loc, TDayMax_loc,&
-                                     GetSimulParam_GDDMethod())
+                        TDayMin_loc = Tmin(i)
+                        TDayMax_loc = Tmax(i)
+
+                        DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
+                                            TDayMax_loc, &
+                                            GetSimulParam_GDDMethod())
                         NrCDays = NrCDays + 1
                         RemainingGDDays = RemainingGDDays - DayGDD
                         DayNri = DayNri + 1
                     end do
+
                     if (RemainingGDDays > 0) then
                         NrCDays = undef_int
                     end if
-                    close(fhandle)
+
                 case(datatype_decadely)
                     call GetDecadeTemperatureDataSet(DayNri, &
                       TminDataSet, TmaxDataSet)
@@ -1132,6 +1152,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, &
                     if (RemainingGDDays > 0) then
                         NrCDays = undef_int
                     end if
+
                 case(datatype_monthly)
                     call GetMonthlyTemperatureDataSet(DayNri, &
                            TminDataSet, TmaxDataSet)
@@ -2151,7 +2172,8 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
           trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' deg'))
     else
         read(f0, *, iostat=rc) TempString ! PathTemperatureFile
-        call SetTemperatureFileFull(trim(TempString)//trim(GetTemperatureFile()))
+        call SetTemperatureFilefull(trim(TempString)//trim(GetTemperatureFile()))
+        call ReadTemperatureFilefull()
         temperature_record = GetTemperatureRecord()
         TemperatureDescriptionLocal = GetTemperatureDescription()
         call LoadClim(GetTemperatureFileFull(), TemperatureDescriptionLocal,&
