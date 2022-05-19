@@ -1207,7 +1207,6 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
     integer(int32) :: i
     integer(int32) :: fhandle, rc
     real(dp) :: MaxGDDays, DayGDD
-    character(len=:), allocatable :: totalname
     integer(int32) :: DayNri
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     character(len=255) :: StringREAD
@@ -1228,55 +1227,37 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
             FromDayNr = GetTemperatureRecord_FromDayNr()  ! since we have 365 days anyway
         end if
         DayNri = FromDayNr
-        totalname = GetTemperatureFilefull()
-        inquire(file=trim(totalname), exist=file_exists)
-        if (file_exists .and. (GetTemperatureRecord_ToDayNr() > FromDayNr) &
-             .and. (GetTemperatureRecord_FromDayNr() <= FromDayNr)) then
+
+        if (TemperatureFilefull_exists .and. &
+            (GetTemperatureRecord_ToDayNr() > FromDayNr) .and. &
+            (GetTemperatureRecord_FromDayNr() <= FromDayNr)) then
+
             select case (GetTemperatureRecord_DataType())
             case (datatype_daily)
-                open(newunit=fhandle, file=trim(totalname), &
-                status='old', action='read', iostat=rc)
-                read(fhandle, *, iostat=rc) ! description
-                read(fhandle, *, iostat=rc) ! time step
-                read(fhandle, *, iostat=rc) ! day
-                read(fhandle, *, iostat=rc) ! month
-                read(fhandle, *, iostat=rc) ! year
-                read(fhandle, *, iostat=rc)
-                read(fhandle, *, iostat=rc)
-                read(fhandle, *, iostat=rc)
-                do i = GetTemperatureRecord_FromDayNr(), (FromDayNr - 1)
-                    read(fhandle, *, iostat=rc)
-                end do
-                read(fhandle, '(a)', iostat=rc) StringREAD
-                call SplitStringInTwoParams(StringREAD, TDayMin, TDayMax)
+                ! Tmin and Tmax arrays contain the TemperatureFilefull data
+                i = DayNri - GetTemperatureRecord_FromDayNr() + 1
+                TDayMin = Tmin(i)
+                TDayMax = Tmax(i)
+
                 DayNri = DayNri + 1
                 DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
-                            GetSimulParam_GDDMethod())
+                                    GetSimulParam_GDDMethod())
                 MaxGDDays = MaxGDDays + DayGDD
+
                 do while (DayNri < GetTemperatureRecord_ToDayNr())
-                    if (rc == iostat_end) then
-                        rewind(fhandle)
-                        read(fhandle, *, iostat=rc) ! description
-                        read(fhandle, *, iostat=rc) ! time step
-                        read(fhandle, *, iostat=rc) ! day
-                        read(fhandle, *, iostat=rc) ! month
-                        read(fhandle, *, iostat=rc) ! year
-                        read(fhandle, *, iostat=rc)
-                        read(fhandle, *, iostat=rc)
-                        read(fhandle, *, iostat=rc)
-                        read(fhandle, '(a)', iostat=rc) StringREAD
-                        call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
-                    else
-                        read(fhandle, '(a)', iostat=rc) StringREAD
-                        call SplitStringInTwoParams(StringREAD, &
-                                     TDayMin, TDayMax)
+                    i = i + 1
+                    if (i == size(Tmin)) then
+                        i = 1
                     end if
+                    TDayMin = Tmin(i)
+                    TDayMax = Tmax(i)
+
                     DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
-                                GetSimulParam_GDDMethod())
+                                        GetSimulParam_GDDMethod())
                     MaxGDDays = MaxGDDays + DayGDD
                     DayNri = DayNri + 1
                 end do
+
             case (datatype_decadely)
                 call GetDecadeTemperatureDataSet(DayNri, TminDataSet,&
                          TmaxDataSet)
@@ -1306,6 +1287,7 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
                     MaxGDDays = MaxGDDays + DayGDD
                     DayNri = DayNri + 1
                 end do
+
             case (datatype_monthly)
                 call GetMonthlyTemperatureDataSet(DayNri, TminDataSet,&
                            TmaxDataSet)
@@ -1926,35 +1908,23 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
     integer(int32), intent(in) :: CropFirstDay
     integer(int32), intent(in) :: CropLastDay
 
-    character(len=:), allocatable :: totalname, totalnameOUT
-    integer(int32) :: fhandle1, fhandle2
+    character(len=:), allocatable :: totalnameOUT
+    integer(int32) :: fhandle
     integer(int32) :: i, RunningDay, rc
     character(len=255) :: StringREAD
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     real(dp) :: Tlow, Thigh
     logical  :: file_exists
 
-    totalname = GetTemperatureFilefull()
-    inquire(file=trim(totalname), exist=file_exists)
-    if (file_exists) then
+    if (TemperatureFilefull_exists) then
         ! open file and find first day of cropping period
         select case (GetTemperatureRecord_DataType())
-        case (datatype_daily) 
-            open(newunit=fhandle1, file=trim(totalname), &
-                     status='old', action='read', iostat=rc)
-            read(fhandle1, *, iostat=rc) ! description
-            read(fhandle1, *, iostat=rc) ! time step
-            read(fhandle1, *, iostat=rc) ! day
-            read(fhandle1, *, iostat=rc) ! month
-            read(fhandle1, *, iostat=rc) ! year
-            read(fhandle1, *, iostat=rc)
-            read(fhandle1, *, iostat=rc)
-            read(fhandle1, *, iostat=rc)
-            do i = GetTemperatureRecord_FromDayNr(), (CropFirstDay - 1)
-                read(fhandle1, *, iostat=rc)
-            end do
-            read(fhandle1, '(a)', iostat=rc) StringREAD ! i.e. Crop.Day1
-            call SplitStringInTwoParams(StringREAD, Tlow, Thigh)
+        case (datatype_daily)
+            ! Tmin and Tmax arrays contain the TemperatureFilefull data
+            i = CropFirstDay - GetTemperatureRecord_FromDayNr() + 1
+            Tlow = Tmin(i)
+            Thigh = Tmax(i)
+
         case (datatype_decadely)
             call GetDecadeTemperatureDataSet(CropFirstDay, TminDataSet, &
                         TmaxDataSet)
@@ -1964,6 +1934,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             end do
             Tlow = TminDataSet(i)%Param
             Thigh = TmaxDataSet(i)%Param
+
         case (datatype_monthly)
             call GetMonthlyTemperatureDataSet(CropFirstDay, TminDataSet, TmaxDataSet)
             i = 1
@@ -1973,30 +1944,24 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             Tlow = TminDataSet(i)%Param
             Thigh = TmaxDataSet(i)%Param
         end select
+
         ! create SIM file and record first day
-        totalnameOUT = trim(GetPathNameSimul())//'TCrop.SIM'
-        open(newunit=fhandle2, file=trim(totalnameOUT), &
+        totalnameOUT = trim(GetPathNameSimul()) // 'TCrop.SIM'
+        open(newunit=fhandle, file=trim(totalnameOUT), &
              action='write')
-        write(fhandle2, '(2f10.4)') Tlow, Thigh
+        write(fhandle, '(2f10.4)') Tlow, Thigh
+
         ! next days of simulation period
         do RunningDay = (CropFirstDay + 1), CropLastDay
             select case (GetTemperatureRecord_DataType())
-            case (datatype_daily)  
-                if (rc == iostat_end) then
-                    rewind(fhandle1)
-                    read(fhandle1, *, iostat=rc) ! description
-                    read(fhandle1, *, iostat=rc) ! time step
-                    read(fhandle1, *, iostat=rc) ! day
-                    read(fhandle1, *, iostat=rc) ! month
-                    read(fhandle1, *, iostat=rc) ! year
-                    read(fhandle1, *, iostat=rc)
-                    read(fhandle1, *, iostat=rc)
-                    read(fhandle1, *, iostat=rc)
-                    read(fhandle1, '(a)', iostat=rc) StringREAD
-                    call SplitStringInTwoParams(StringREAD, Tlow, Thigh)
-                else
-                    read(fhandle1, *, iostat=rc) Tlow, Thigh
+            case (datatype_daily)
+                i = i + 1
+                if (i == size(Tmin)) then
+                    i = 1
                 end if
+                Tlow = Tmin(i)
+                Thigh = Tmax(i)
+
             case (datatype_decadely)
                 if (RunningDay > TminDataSet(31)%DayNr) then
                     call GetDecadeTemperatureDataSet(RunningDay, TminDataSet,&
@@ -2008,6 +1973,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
                 end do
                 Tlow = TminDataSet(i)%Param
                 Thigh = TmaxDataSet(i)%Param
+
             case (datatype_monthly)
                if (RunningDay > TminDataSet(31)%DayNr) then
                     call GetMonthlyTemperatureDataSet(RunningDay, TminDataSet,&
@@ -2020,13 +1986,11 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
                Tlow = TminDataSet(i)%Param
                Thigh = TmaxDataSet(i)%Param
             end select
-            write(fhandle2, '(2f10.4)') Tlow, Thigh
+
+            write(fhandle, '(2f10.4)') Tlow, Thigh
         end do
-        ! Close files
-        if (GetTemperatureRecord_DataType() == datatype_daily) then
-           close(fhandle1)
-        end if
-        close(fhandle2)
+
+        close(fhandle)
     else
         write(*,*) 'ERROR: no valid air temperature file'
         return
