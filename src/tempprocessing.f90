@@ -870,13 +870,10 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
     real(dp), intent(in) :: TDayMax
 
     integer(int32) :: i, RemainingDays
-    character(len=:), allocatable :: totalname
-    integer(int32) :: fhandle, rc
     integer(int32) :: DayNri
     real(dp)       :: GDDays, DayGDD
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
-    character(len=255) :: StringREAD
-    logical :: AdjustDayNri, file_exists
+    logical :: AdjustDayNri
     real(dp) :: TDayMin_local, TDayMax_local
 
     TDayMin_local = TDayMin
@@ -1037,13 +1034,11 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
     real(dp), intent(in) :: TDayMax
 
     integer(int32) :: i
-    integer(int32) :: fhandle, rc
     integer(int32) :: NrCDays
     real(dp) :: RemainingGDDays, DayGDD
     integer(int32) :: DayNri
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
-    logical :: AdjustDayNri, file_exists
-    character(len=255) :: StringREAD
+    logical :: AdjustDayNri
     real(dp) :: TDayMin_loc, TDayMax_loc
 
     TDayMin_loc = TDayMin
@@ -1205,12 +1200,9 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
     real(dp), intent(inout) :: TDayMax
 
     integer(int32) :: i
-    integer(int32) :: fhandle, rc
     real(dp) :: MaxGDDays, DayGDD
     integer(int32) :: DayNri
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
-    character(len=255) :: StringREAD
-    logical :: file_exists
 
     MaxGDDays = 100000._dp
     if (GetTemperatureFile() == '(None)') then
@@ -1910,11 +1902,9 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
 
     character(len=:), allocatable :: totalnameOUT
     integer(int32) :: fhandle
-    integer(int32) :: i, RunningDay, rc
-    character(len=255) :: StringREAD
+    integer(int32) :: i, RunningDay
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     real(dp) :: Tlow, Thigh
-    logical  :: file_exists
 
     if (TemperatureFilefull_exists) then
         ! open file and find first day of cropping period
@@ -2077,7 +2067,6 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     integer(int32) :: ZiAqua_temp
     type(rep_clim) :: etorecord_tmp, rainrecord_tmp
     real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
-    logical :: file_exists
 
     open(newunit=f0, file=trim(NameFileFull), &
               status='old', action='read', iostat=rc)
@@ -3167,7 +3156,6 @@ real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
     logical, intent(in) :: DeterminantCropType
     logical, intent(in) :: FertilityStressOn
 
-    integer(int32), parameter :: k = 2
     real(dp), parameter :: CO2iLocal = 369.41_dp
 
     real(dp) :: SumKcTop, HIGC, HIGClinear
@@ -3286,9 +3274,6 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp), intent(inout) :: BM50
     real(dp), intent(inout) :: BM60
     real(dp), intent(inout) :: BM70
-
-    real(dp), parameter :: EToStandard = 5._dp
-    integer(int32), parameter :: k = 2
 
     type StressIndexes
         integer(int8) :: StressProc
