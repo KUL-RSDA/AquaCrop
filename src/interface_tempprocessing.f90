@@ -99,6 +99,7 @@ real(dp) function Bnormalized_wrap(&
             bool_testrecord)
 end function Bnormalized_wrap
 
+
 subroutine LoadSimulationRunProject_wrap(NameFileFull, strlen, NrRun)
     !! Wrapper
     type(c_ptr), intent(in) :: NameFileFull
@@ -110,6 +111,7 @@ subroutine LoadSimulationRunProject_wrap(NameFileFull, strlen, NrRun)
     string = pointer2string(NameFileFull, strlen)
     call LoadSimulationRunProject(string, NrRun)
 end subroutine LoadSimulationRunProject_wrap
+
 
 real(dp) function BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,&
            TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
@@ -319,6 +321,5 @@ subroutine CCxSaltStressRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,&
        Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
        Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
 end subroutine CCxSaltStressRelationship_wrap
-
 
 end module ac_interface_tempprocessing

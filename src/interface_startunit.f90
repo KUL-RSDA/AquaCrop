@@ -58,6 +58,7 @@ subroutine GetProjectType_wrap(p,strlen, TheProjectType)
     call GetProjectType(TheProjectFile, TheProjectType)
 end subroutine GetProjectType_wrap
 
+
 function GetListProjectsFile_wrap() result(ptr)
     type(c_ptr) :: ptr
 
@@ -86,6 +87,7 @@ subroutine InitializeProject_wrap(iproject, p, strlen, TheProjectType)
     call InitializeProject(iproject, TheProjectFile, TheprojectType)
 end subroutine InitializeProject_wrap
 
+
 subroutine WriteProjectsInfo_wrap(p, strlen)
     type(c_ptr), intent(in) :: p
     integer(int32), intent(in) :: strlen
@@ -95,6 +97,5 @@ subroutine WriteProjectsInfo_wrap(p, strlen)
     line = pointer2string(p, strlen)
     call WriteProjectsInfo(line)
 end subroutine WriteProjectsInfo_wrap
-
 
 end module ac_interface_startunit

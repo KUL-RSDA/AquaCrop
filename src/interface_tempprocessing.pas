@@ -281,6 +281,7 @@ begin;
     LoadSimulationRunProject_wrap(p1, strlen1, NrRun);
 end;
 
+
 procedure BTransferPeriod(
             constref TheDaysToCCini,TheGDDaysToCCini,
                      L0,L12,L123,L1234,GDDL0,GDDL12,GDDL123,GDDL1234 : INTEGER;
@@ -302,6 +303,7 @@ begin;
              Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,
              int_modeCycle, TempAssimPeriod, TempAssimStored, SumBtot, SumBstored);
 end;
+
 
 function Bnormalized(
             constref TheDaysToCCini,TheGDDaysToCCini,
@@ -331,6 +333,7 @@ begin
                       FertilityStressOn, TestRecord);
 end;
 
+
 function  BiomassRatio(
             constref TempDaysToCCini,TempGDDaysToCCini : INTEGER;
             constref TempCCo,TempCGC,TempCCx,TempCDC,TempGDDCGC,TempGDDCDC,TempdHIdt : double;
@@ -357,6 +360,7 @@ begin
            TempWP, ShapeFweed, int_modeCycle, SFInfo, SFInfoStress,
            WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn);
 end;
+
 
 procedure StressBiomassRelationship(
             constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
@@ -389,6 +393,7 @@ begin
             BM10, BM20, BM30, BM40, BM50, BM60, BM70);
 end;
 
+
 procedure CCxSaltStressRelationship(
             constref TheDaysToCCini,TheGDDaysToCCini : INTEGER;
             constref L0,L12,L123,L1234,
@@ -419,6 +424,7 @@ begin
        Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,
        Salt40, Salt50, Salt60, Salt70, Salt80, Salt90);
 end;
+
 
 initialization
 

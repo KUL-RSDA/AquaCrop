@@ -55,6 +55,7 @@ function AdjustedRootingDepth(
 
 implementation
 
+
 function AdjustedRootingDepth(
         constref CCAct :  double;
         constref CCpot :  double;
@@ -85,6 +86,7 @@ begin
         StressLeaf, StressSenescence, DAP, L0, LZmax, L1234, GDDL0, GDDLZmax,
         GDDL1234, SumGDDPrev, SumGDD, Zmin, Zmax, Ziprev, ShapeFactor, int_TypeDays);
 end;
+
 
 initialization
 

@@ -116,7 +116,6 @@ procedure surface_transpiration(
 // BUDGET_module
 //-----------------------------------------------------------------------------
 
-
 function calculate_delta_theta(
              constref theta, thetaAdjFC : double;
              constref NrLayer : integer): double;
@@ -288,6 +287,7 @@ procedure BUDGET_module(constref dayi : LongInt;
 
 
 implementation
+
 
 function WCEvapLayer(constref Zlayer : double;
                      constref AtTheta : rep_WhichTheta) : double;

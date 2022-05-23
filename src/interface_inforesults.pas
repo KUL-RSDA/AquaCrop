@@ -39,7 +39,6 @@ procedure StatisticAnalysis_wrap(
                     var ArrayObsSim : rep_ArrayObsSim);
     external 'aquacrop' name '__ac_interface_inforesults_MOD_statisticanalysis_wrap';
 
-
 procedure WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
                                     TheProjectType : repTypeProject;
                                     RangeMin,RangeMax : LongInt);

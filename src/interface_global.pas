@@ -404,9 +404,6 @@ type
          CropDay1Previous : LongInt;  // previous daynumber at the start of teh crop cycle
          End;
 
-
-
-
      rep_MonthInteger = ARRAY[1..12] OF INTEGER;
 
      rep_param = RECORD  // DEFAULT.PAR
@@ -479,13 +476,11 @@ type
 function DeduceAquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_deduceaquacropversion';
 
-
 function RootMaxInSoilProfile(
             constref ZmaxCrop : double;
             constref TheNrSoilLayers : shortint;
             constref TheSoilLayer : rep_SoilLayer) : single;
          external 'aquacrop' name '__ac_global_MOD_rootmaxinsoilprofile';
-
 
 procedure ZrAdjustedToRestrictiveLayers(ZrIN : double;
                                         TheNrSoilLayers : ShortInt;

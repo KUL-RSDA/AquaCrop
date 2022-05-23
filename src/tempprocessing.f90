@@ -429,7 +429,9 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         TmaxDataSet(Nri)%Param = 0._dp
     end do
 
+
     contains
+
 
     subroutine GetSetofThree(DayN, Deci, Monthi, Yeari, &
                      C1Min, C1Max, C2Min, C2Max, C3Min, C3Max)
@@ -571,6 +573,7 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         close(fhandle)
     end subroutine GetSetofThree
 
+
     subroutine GetParameters(C1, C2, C3, UL, LL, Mid)
         real(dp), intent(in) :: C1
         real(dp), intent(in) :: C2
@@ -584,7 +587,6 @@ subroutine GetDecadeTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         Mid = 2._dp*C2 - (UL+LL)/2._dp
         ! --previous decade-->/UL/....... Mid ......../LL/<--next decade--
     end subroutine GetParameters
-
 end subroutine GetDecadeTemperatureDataSet
 
 
@@ -633,7 +635,9 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         TmaxDataSet(Dayi)%Param = 0._dp
     end do
 
+
     contains
+
 
     subroutine GetSetofThreeMonths(Monthi, Yeari, &
             C1Min, C2Min, C3Min, C1Max, C2Max, C3Max, X1, X2, X3, t1)
@@ -826,6 +830,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         close(fhandle)
     end subroutine GetSetofThreeMonths
 
+
     subroutine ReadMonth(CiMin, CiMax, fhandle, rc)
         real(dp), intent(inout) :: CiMin
         real(dp), intent(inout) :: CiMax
@@ -842,6 +847,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         CiMax = CiMax * ni
     end subroutine ReadMonth
 
+
     subroutine GetInterpolationParameters(C1, C2, C3, &
                           aOver3, bOver2, c)
         real(dp), intent(in) :: C1
@@ -856,7 +862,6 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         bOver2 = (-6._dp*C1+9._dp*C2-3._dp*C3)/(6._dp*30._dp*30._dp)
         c = (11._dp*C1-7._dp*C2+2._dp*C3)/(6._dp*30._dp)
     end subroutine GetInterpolationParameters
-
 end subroutine GetMonthlyTemperatureDataSet
 
 
@@ -1677,7 +1682,9 @@ subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
         close(fhandle)
     end if
 
+
     contains
+
 
     real(dp) function FractionFlowering(Dayi)
       integer(int32), intent(in) :: Dayi
@@ -1702,6 +1709,7 @@ subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
       FractionFlowering = F
     end function FractionFlowering
 
+
     real(dp) function FractionPeriod(DiFlor,TempLengthFlowering)
         integer(int32), intent(in) :: DiFlor,TempLengthFlowering
 
@@ -1723,7 +1731,6 @@ subroutine HIadjColdHeat(TempFlower, TempLengthFlowering, &
         end if
         FractionPeriod = fi
     end function FractionPeriod
-
 end subroutine HIadjColdHeat
 
 
@@ -2501,7 +2508,9 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
 
     close(f0)
 
+
     contains
+
 
     subroutine GetFileDescription(TheFileFullName, TheDescription)
         character(len=*), intent(in) :: TheFileFullName
@@ -3428,6 +3437,7 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
         b0 = real(undef_int, kind=dp)
     end if
 end subroutine StressBiomassRelationship
+
 
 subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
        L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&

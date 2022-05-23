@@ -1386,7 +1386,9 @@ procedure RunSimulation_wrap(constref TheProjectFile_ : PChar;
                         constref TheProjectType : integer);
     external 'aquacrop' name '__ac_interface_run_MOD_runsimulation_wrap';
 
+
 implementation
+
 
 procedure RunSimulation(constref TheProjectFile_ : string;
                         constref TheProjectType : repTypeProject);
@@ -1412,7 +1414,6 @@ begin
 end;
 
 
-
 procedure WriteIntermediatePeriod(TheProjectFile : string);
 var
     TheProjectFile_ptr : PChar;
@@ -1422,7 +1423,6 @@ begin
     strlen := Length(TheProjectFile);
     WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen);
 end;
-
 
 
 procedure WriteSimPeriod(constref NrRun : ShortInt;
@@ -1435,7 +1435,6 @@ begin
     strlen := Length(TheProjectFile);
     WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen);
 end;
-
 
 
 procedure WriteTheResults(constref ANumber : ShortInt;
@@ -1458,7 +1457,6 @@ begin
                          BiomassPer,BUnlimPer,BmobPer,BstoPer,
                          TheProjectFile_ptr, strlen);
 end;
-
 
 
 procedure OpenOutputRun(constref TheProjectType : repTypeProject);
@@ -1516,6 +1514,7 @@ begin
     SetfEval_filename_wrap(filename_ptr, strlen);
 end;
 
+
 procedure fEval_open(constref filename : string; constref mode : string);
 var
      filename_ptr, mode_ptr : PChar;
@@ -1527,6 +1526,7 @@ begin;
      mode_len := Length(mode);
      fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
+
 
 procedure fEval_write(constref line : string; constref advance : boolean = True);
 var
@@ -1546,11 +1546,13 @@ begin
     for i := 1 to 31 do GetTminDataSet[i] := GetTminDataSet_i(i);
 end;
 
+
 function GetTminDataSet_i(constref i : integer) : rep_DayEventDbl;
 begin
     GetTminDataSet_i.DayNr := GetTminDataSet_DayNr(i);
     GetTminDataSet_i.Param := GetTminDataSet_Param(i);
 end;
+
 
 procedure SetTminDataSet(constref TminDataSet_in : rep_SimulationEventsDbl);
 var
@@ -1559,12 +1561,14 @@ begin
     for i := 1 to 31 do SetTminDataSet_i(i, TminDataSet_in[i]);
 end;
 
+
 procedure SetTminDataSet_i(constref i : integer;
                           constref TminDataSet_i : rep_DayEventDbl);
 begin
     SetTminDataSet_DayNr(i, TminDataSet_i.DayNr);
     SetTminDataSet_Param(i, TminDataSet_i.Param);
 end;
+
 
 function GetTmaxDataSet() : rep_SimulationEventsDbl;
 var
@@ -1573,11 +1577,13 @@ begin
     for i := 1 to 31 do GetTmaxDataSet[i] := GetTmaxDataSet_i(i);
 end;
 
+
 function GetTmaxDataSet_i(constref i : integer) : rep_DayEventDbl;
 begin
     GetTmaxDataSet_i.DayNr := GetTmaxDataSet_DayNr(i);
     GetTmaxDataSet_i.Param := GetTmaxDataSet_Param(i);
 end;
+
 
 procedure SetTmaxDataSet(constref TmaxDataSet_in : rep_SimulationEventsDbl);
 var
@@ -1585,6 +1591,7 @@ var
 begin
     for i := 1 to 31 do SetTmaxDataSet_i(i, TmaxDataSet_in[i]);
 end;
+
 
 procedure SetTmaxDataSet_i(constref i : integer;
                           constref TmaxDataSet_i : rep_DayEventDbl);
@@ -1604,6 +1611,7 @@ begin;
     GetGwTable.EC2 := GetGwTable_EC2();
 end;
 
+
 procedure SetGwTable(constref GwTable : rep_GwTable);
 begin;
     SetGwTable_DNr1(GwTable.DNr1);
@@ -1614,6 +1622,7 @@ begin;
     SetGwTable_EC2(GwTable.EC2);
 end;
 
+
 function GetIrriInfoRecord1() : repIrriInfoRecord;
 begin;
     GetIrriInfoRecord1.NoMoreInfo := GetIrriInfoRecord1_NoMoreInfo();
@@ -1623,6 +1632,7 @@ begin;
     GetIrriInfoRecord1.DepthInfo := GetIrriInfoRecord1_DepthInfo();
 end;
 
+
 function GetIrriInfoRecord2() : repIrriInfoRecord;
 begin;
     GetIrriInfoRecord2.NoMoreInfo := GetIrriInfoRecord2_NoMoreInfo();
@@ -1631,6 +1641,7 @@ begin;
     GetIrriInfoRecord2.TimeInfo := GetIrriInfoRecord2_TimeInfo();
     GetIrriInfoRecord2.DepthInfo := GetIrriInfoRecord2_DepthInfo();
 end;
+
 
 function GetCutInfoRecord1() : repCutInfoRecord;
 begin;
@@ -1642,6 +1653,7 @@ begin;
     GetCutInfoRecord1.MassInfo := GetCutInfoRecord1_MassInfo();
 end;
 
+
 function GetCutInfoRecord2() : repCutInfoRecord;
 begin;
     GetCutInfoRecord2.NoMoreInfo := GetCutInfoRecord2_NoMoreInfo();
@@ -1652,6 +1664,7 @@ begin;
     GetCutInfoRecord2.MassInfo := GetCutInfoRecord2_MassInfo();
 end;
 
+
 procedure SetIrriInfoRecord1(constref IrriInfoRecord1 : repIrriInfoRecord);
 begin;
     SetIrriInfoRecord1_NoMoreInfo(IrriInfoRecord1.NoMoreInfo);
@@ -1661,6 +1674,7 @@ begin;
     SetIrriInfoRecord1_DepthInfo(IrriInfoRecord1.DepthInfo);
 end;
 
+
 procedure SetIrriInfoRecord2(constref IrriInfoRecord2 : repIrriInfoRecord);
 begin;
     SetIrriInfoRecord2_NoMoreInfo(IrriInfoRecord2.NoMoreInfo);
@@ -1669,6 +1683,7 @@ begin;
     SetIrriInfoRecord2_TimeInfo(IrriInfoRecord2.TimeInfo);
     SetIrriInfoRecord2_DepthInfo(IrriInfoRecord2.DepthInfo);
 end;
+
 
 procedure SetCutInfoRecord1(constref CutInfoRecord1 : repCutInfoRecord);
 begin;
@@ -1680,6 +1695,7 @@ begin;
     SetCutInfoRecord1_MassInfo(CutInfoRecord1.MassInfo);
 end;
 
+
 procedure SetCutInfoRecord2(constref CutInfoRecord2 : repCutInfoRecord);
 begin;
     SetCutInfoRecord2_NoMoreInfo(CutInfoRecord2.NoMoreInfo);
@@ -1690,6 +1706,7 @@ begin;
     SetCutInfoRecord2_MassInfo(CutInfoRecord2.MassInfo);
 end;
 
+
 procedure CheckForPrint(constref TheProjectFile : string);
 var
      p : PChar;
@@ -1699,6 +1716,7 @@ begin;
      strlen := Length(TheProjectFile);
      CheckForPrint_wrap(p, strlen);
 end;
+
 
 procedure fDaily_open(constref filename : string; constref mode : string);
 var
@@ -1712,6 +1730,7 @@ begin;
      fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
 
+
 procedure fDaily_write(constref line : string; constref advance : boolean = True);
 var
      line_ptr : PChar;
@@ -1721,6 +1740,7 @@ begin;
      line_len := Length(line);
      fDaily_write_wrap(line_ptr, line_len, advance);
 end;
+
 
 procedure fRun_open(constref filename : string; constref mode : string);
 var
@@ -1734,6 +1754,7 @@ begin;
      fRun_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
 
+
 procedure fRun_write(constref line : string; constref advance : boolean = True);
 var
      line_ptr : PChar;
@@ -1743,6 +1764,7 @@ begin;
      line_len := Length(line);
      fRun_write_wrap(line_ptr, line_len, advance);
 end;
+
 
 procedure fIrri_open(constref filename : string; constref mode : string);
 var
@@ -1756,6 +1778,7 @@ begin;
      fIrri_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
 
+
 function fIrri_read() : string;
 var
      line_ptr : PChar;
@@ -1763,7 +1786,6 @@ begin;
      line_ptr := fIrri_read_wrap();
      fIrri_read := AnsiString(line_ptr);
 end;
-
 
 
 procedure fEToSIM_open(constref filename : string; constref mode : string);
@@ -1866,6 +1888,7 @@ begin;
      fObs_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len);
 end;
 
+
 function fObs_read() : string;
 var
      line_ptr : PChar;
@@ -1874,6 +1897,7 @@ begin;
      fObs_read := AnsiString(line_ptr);
 end;
 
+
 function GetEToDataSet() : rep_SimulationEventsDbl;
 var
     i : integer;
@@ -1881,11 +1905,13 @@ begin
     for i := 1 to 31 do GetEToDataSet[i] := GetEToDataSet_i(i);
 end;
 
+
 function GetEToDataSet_i(constref i : integer) : rep_DayEventDbl;
 begin
     GetEToDataSet_i.DayNr := GetEToDataSet_DayNr(i);
     GetEToDataSet_i.Param := GetEToDataSet_Param(i);
 end;
+
 
 procedure SetEToDataSet(constref EToDataSet_in : rep_SimulationEventsDbl);
 var
@@ -1893,6 +1919,7 @@ var
 begin
     for i := 1 to 31 do SetEToDataSet_i(i, EToDataSet_in[i]);
 end;
+
 
 procedure SetEToDataSet_i(constref i : integer;
                           constref EToDataSet_i : rep_DayEventDbl);
@@ -1902,7 +1929,6 @@ begin
 end;
 
 
-
 function GetRainDataSet() : rep_SimulationEventsDbl;
 var
     i : integer;
@@ -1910,11 +1936,13 @@ begin
     for i := 1 to 31 do GetRainDataSet[i] := GetRainDataSet_i(i);
 end;
 
+
 function GetRainDataSet_i(constref i : integer) : rep_DayEventDbl;
 begin
     GetRainDataSet_i.DayNr := GetRainDataSet_DayNr(i);
     GetRainDataSet_i.Param := GetRainDataSet_Param(i);
 end;
+
 
 procedure SetRainDataSet(constref RainDataSet_in : rep_SimulationEventsDbl);
 var
@@ -1923,12 +1951,14 @@ begin
     for i := 1 to 31 do SetRainDataSet_i(i, RainDataSet_in[i]);
 end;
 
+
 procedure SetRainDataSet_i(constref i : integer;
                           constref RainDataSet_i : rep_DayEventDbl);
 begin
     SetRainDataSet_DayNr(i, RainDataSet_i.DayNr);
     SetRainDataSet_Param(i, RainDataSet_i.Param);
 end;
+
 
 procedure WriteTitleDailyResults(constref TheProjectType : repTypeProject;
                           constref TheNrRun : Shortint);
@@ -1939,6 +1969,7 @@ begin
     __WriteTitleDailyResults(int_typeproject, TheNrRun);
 end;
 
+
 procedure FinalizeRun2(constref NrRun : Shortint;
                           constref TheProjectType : repTypeProject);
 var
@@ -1947,6 +1978,7 @@ begin
     int_typeproject := ord(TheProjectType);
     __FinalizeRun2(NrRun, int_typeproject);
 end;
+
 
 function GetPreviousSum() : rep_sum;
 begin;
@@ -1971,6 +2003,7 @@ begin;
     GetPreviousSum.SaltOut := GetPreviousSum_SaltOut();
     GetPreviousSum.CRsalt := GetPreviousSum_CRsalt();
 end;
+
 
 procedure SetPreviousSum(constref PreviousSum : rep_sum);
 begin;
@@ -2089,8 +2122,6 @@ begin
     int_typeproject := ord(TheProjectType);
     InitializeSimulation_wrap(p,strlen, int_typeproject);
 end;
-
-
 
 
 initialization

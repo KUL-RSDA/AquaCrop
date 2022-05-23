@@ -154,6 +154,7 @@ subroutine fProjects_open(filename, mode)
     call open_file(fProjects, filename, mode, fProjects_iostat)
 end subroutine fProjects_open
 
+
 subroutine fProjects_write(line, advance_in)
     !! Writes the given line to the fProjects file.
     character(len=*), intent(in) :: line
@@ -236,6 +237,7 @@ subroutine GetRequestDailyResults()
     end if
 end subroutine GetRequestDailyResults
 
+
 subroutine GetRequestParticularResults()
 
     integer :: fhandle, rc
@@ -268,6 +270,7 @@ subroutine GetRequestParticularResults()
         close(fhandle)
     end if
 end subroutine GetRequestParticularResults
+
 
 subroutine GetTimeAggregationResults()
 
@@ -403,9 +406,10 @@ subroutine PrepareReport()
     end if
 end subroutine PrepareReport
 
+
 subroutine InitializeTheProgram()
 
-!Decimalseparator = '.' GDL, 20220413, not used?
+    !Decimalseparator = '.' GDL, 20220413, not used?
     call SetPathNameOutp('OUTP/')
     call SetPathNameSimul('SIMUL/')
     call SetPathNameList('LIST/')
@@ -474,7 +478,6 @@ function GetProjectFileName(iproject) result(ProjectFileName_out)
 
     ProjectFileName_out = trim(TheProjectFile)
 end function GetProjectFileName
-
 
 
 subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
@@ -602,7 +605,9 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
         end if
     end if
 
+
     contains
+
 
     subroutine ComposeFileForProgramParameters(TheFileNameProgram, &
                     FullFileNameProgramParameters)
@@ -767,16 +772,13 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
             ! close
             close(f0)
-
         else
             ! take the default set of program parameters
             ! (already read in InitializeSettings)
             ProgramParametersAvailable = .false.
         end if
         end subroutine LoadProgramParametersProjectPlugIn
-
 end subroutine InitializeProject
-
 
 
 subroutine FinalizeTheProgram()

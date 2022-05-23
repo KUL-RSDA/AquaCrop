@@ -84,7 +84,6 @@ subroutine GetInterpolationParameters(C1, C2, C3, aOver3, bOver2, c)
 end subroutine GetInterpolationParameters
 
 
-
 subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
     integer(int32), intent(in) :: DayNri
     type(rep_DayEventDbl), dimension(31), intent(inout) :: EToDataSet
@@ -94,7 +93,6 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
     integer(int32) :: X1, X2, X3, t1, t2
     real(dp) :: C1, C2, C3
     real(dp) :: aOver3, bOver2, c
-
 
     ! GetMonthlyEToDataSet
     call DetermineDate(DayNri, Dayi, Monthi, Yeari)
@@ -321,9 +319,7 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
 
         close(fETo)
     end subroutine GetSetofThreeMonths
-
 end subroutine GetMonthlyEToDataSet
-
 
 
 subroutine GetDecadeEToDataSet(DayNri, EToDataSet)
@@ -513,9 +509,7 @@ subroutine GetDecadeEToDataSet(DayNri, EToDataSet)
         end if
         close(fETo)
     end subroutine GetSetofThree
-
 end subroutine GetDecadeEToDataSet
-
 
 
 subroutine GetDecadeRainDataSet(DayNri, RainDataSet)
@@ -604,9 +598,7 @@ subroutine GetDecadeRainDataSet(DayNri, RainDataSet)
         RainDataSet(Nri)%DayNr = DNR+ni-1
         RainDataSet(Nri)%Param = 0._dp
     end do
-
 end subroutine GetDecadeRainDataSet
-
 
 
 subroutine GetMonthlyRainDataSet(DayNri, RainDataSet)
@@ -773,8 +765,6 @@ subroutine GetMonthlyRainDataSet(DayNri, RainDataSet)
         end if
         close(fRain)
     end subroutine GetSetofThreeMonths
-
 end subroutine GetMonthlyRainDataSet
-
 
 end module ac_climprocessing

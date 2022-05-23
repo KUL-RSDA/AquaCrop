@@ -315,6 +315,4 @@ subroutine ResetDefaultSoil()
     call SaveProfile(GetProfFilefull())
 end subroutine ResetDefaultSoil
 
-
-
 end module ac_defaultcropsoil

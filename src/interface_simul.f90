@@ -287,5 +287,4 @@ subroutine BUDGET_module_wrap(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC
     CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_f
 end subroutine BUDGET_module_wrap
 
-
 end module ac_interface_simul

@@ -401,7 +401,6 @@ subroutine InitializeSettings()
     call GenerateCO2Description(GetCO2FileFull(), CO2descr)
     call SetCO2Description(CO2descr)
 
-
     ! 5.5 Climate file
     call SetClimateFile('(None)')
     call SetClimateFileFull(GetClimateFile())
@@ -447,7 +446,6 @@ subroutine InitializeSettings()
     call SetMultipleProjectFileFull(GetProjectFileFull())
     call SetMultipleProjectDescription(GetProjectDescription())
 
-
     ! 9. Observations file
     call SetObservationsFile('(None)')
     call SetObservationsFileFull(GetObservationsFile())
@@ -485,6 +483,5 @@ subroutine InitializeSettings()
     call SetSimulation_LengthCuttingInterval(40) ! Default length of
                                                  ! cutting interval (days)
 end subroutine InitializeSettings
-
 
 end module ac_initialsettings
