@@ -6724,13 +6724,12 @@ subroutine AdvanceOneTimeStep()
                 ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
     type(rep_GwTable) :: GwTable_temp
     logical :: Store_temp, Mobilize_temp
-    real(dp) :: ToMobilize_temp, Bmobilized_temp, ETo_tmp
+    real(dp) :: ToMobilize_temp, Bmobilized_temp
     type(rep_EffectStress) :: EffectStress_temp
     logical :: SWCtopSOilConsidered_temp
     integer(int32) :: ZiAqua_temp
-    real(dp) :: ECiAqua_temp, tmpRain, TactWeedInfested_temp,&
-                Tmin_temp, Tmax_temp, Bin_temp, Bout_temp
-    character(len=:), allocatable :: TempString
+    real(dp) :: ECiAqua_temp, TactWeedInfested_temp,&
+                Bin_temp, Bout_temp
     integer(int32) :: TargetTimeVal, TargetDepthVal
     integer(int8) :: PreviousStressLevel_temp, StressSFadjNEW_temp
     real(dp) :: CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp, &
@@ -7319,6 +7318,12 @@ subroutine AdvanceOneTimeStep()
     if (GetSimulation_SumEToStress() >= 0.1_dp) then
        call SetDayLastCut(GetDayNri())
     end if
+end subroutine AdvanceOneTimeStep
+
+subroutine ReadClimateNextDay()
+    real(dp) :: ETo_tmp
+    real(dp) :: tmpRain, Tmin_temp, Tmax_temp
+    character(len=:), allocatable :: TempString
     ! 15.d Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         if (GetEToFile() /= '(None)') then
@@ -7348,9 +7353,7 @@ subroutine AdvanceOneTimeStep()
                    + GetGDDayi())
         end if
     end if
-end subroutine AdvanceOneTimeStep
-
-
+end subroutine ReadClimateNextDay
 
 subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
     integer(int8), intent(in) :: NrRun
@@ -7729,6 +7732,7 @@ subroutine FileManagement()
     RepeatToDay = GetSimulation_ToDayNr()
     loop: do
         call AdvanceOneTimeStep()
+        call ReadClimateNextDay()
         if ((GetDayNri()-1) == RepeatToDay) exit loop
     end do loop
 end subroutine FileManagement
