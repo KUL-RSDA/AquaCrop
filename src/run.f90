@@ -7321,9 +7321,11 @@ subroutine AdvanceOneTimeStep()
 end subroutine AdvanceOneTimeStep
 
 subroutine ReadClimateNextDay()
+    
     real(dp) :: ETo_tmp
     real(dp) :: tmpRain, Tmin_temp, Tmax_temp
     character(len=:), allocatable :: TempString
+    
     ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         if (GetEToFile() /= '(None)') then
@@ -7349,6 +7351,7 @@ subroutine ReadClimateNextDay()
 end subroutine ReadClimateNextDay
 
 subroutine SetGDDVariablesNextDay()
+    
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
                 GetTmin(), GetTmax(), GetSimulParam_GDDMethod()))
