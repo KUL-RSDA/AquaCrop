@@ -7,7 +7,7 @@ interface
 uses interface_global;
 
 
-type 
+type
     rep_EventObsSim = Record
         Obsi : double;
         StdObsi : double;
@@ -71,7 +71,7 @@ begin
     int_typeObsSim := ord(TypeObsSim);
     p := PChar(StrNr);
     strlen := Length(StrNr);
-    StatisticAnalysis_wrap(int_TypeObsSim, RangeObsMin, RangeObsMax, p, strlen, 
+    StatisticAnalysis_wrap(int_TypeObsSim, RangeObsMin, RangeObsMax, p, strlen,
                            Nobs, ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE,
                            NScoeff, IndexAg, ArrayObsSim);
 end;
@@ -100,4 +100,3 @@ initialization
 
 
 end.
-

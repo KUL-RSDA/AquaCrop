@@ -79,11 +79,11 @@ real(dp) function Bnormalized_wrap(&
     integer(intEnum), intent(in) :: TheModeCycle
     logical(1), intent(in) :: FertilityStressOn
     logical(1), intent(in) :: TestRecord
-   
+
     logical :: bool_fertilitystresson, bool_testrecord
 
     bool_fertilitystresson = FertilityStressOn
-    bool_testrecord = TestRecord 
+    bool_testrecord = TestRecord
 
     Bnormalized_wrap = Bnormalized(TheDaysToCCini,TheGDDaysToCCini,&
             L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,&
@@ -233,7 +233,7 @@ subroutine StressBiomassRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp), intent(inout) :: BM70
 
     logical :: bool_cropdeterm
- 
+
     bool_cropdeterm = CropDeterm
 
     call StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&

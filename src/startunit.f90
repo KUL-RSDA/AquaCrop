@@ -194,7 +194,7 @@ subroutine GetRequestDailyResults()
     FullFileName = GetPathNameSimul() // 'DailyResults.SIM'
     if (FileExists(FullFileName) .eqv. .true.) then
         open(newunit=fhandle, file=trim(FullFileName), status='old', action='read')
-        loop: do 
+        loop: do
             read(fhandle, *,iostat=rc) TempString
             n = len(TempString)
             if (n > 0) then
@@ -311,8 +311,8 @@ end subroutine GetTimeAggregationResults
 
 subroutine GetProjectType(TheProjectFile, TheProjectType)
     character(len=*), intent(in) :: TheProjectFile
-    integer(intenum), intent(inout) :: TheProjectType 
-   
+    integer(intenum), intent(inout) :: TheProjectType
+
     integer :: i
     integer :: lgth
     character(len=3) :: TheExtension
@@ -442,7 +442,7 @@ integer(int32) function GetNumberOfProjects()
         open(newunit=fhandle, file=trim(ListProjectsFile), &
              status='old', action='read', iostat=rc)
         read(fhandle, *, iostat=rc)
-        do while (rc /= iostat_end) 
+        do while (rc /= iostat_end)
             NrProjects = NrProjects + 1
             read(fhandle, *, iostat=rc)
         end do
@@ -467,7 +467,7 @@ function GetProjectFileName(iproject) result(ProjectFileName_out)
     open(newunit=fhandle, file=trim(ListProjectsFile), status='old', action='read')
 
     ! Read until we arrive at the selected project
-    do jproject = 1, iproject 
+    do jproject = 1, iproject
         read(fhandle, *) TheProjectFile
     end do
     close(fhandle)
@@ -506,7 +506,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
         ! run the project after cheking environment and simumation files
         ! 1. Set No specific project
         call InitializeSettings()
-        
+
         select case(TheProjectType)
         case(typeproject_TypePRO)
             ! 2. Assign single project file
@@ -527,7 +527,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                                 ProgramParametersAvailable)
                 call ComposeOutputFileName(GetProjectFile())
             end if
-        
+
         case(typeproject_TypePRM)
             ! 2. Assign multiple project file
             call SetMultipleProjectFile(TheProjectFile)
@@ -539,12 +539,12 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             ! 3. Check if Environment and Simulation Files exist for all runs
             CanSelect = .true.
             SimNr = 0_int8
-            do while (CanSelect .and. (SimNr < TotalSimRuns)) 
+            do while (CanSelect .and. (SimNr < TotalSimRuns))
                 SimNr = SimNr + 1_int8
                 call CheckFilesInProject(GetMultipleProjectFileFull(), &
                                     int(SimNr, kind=int32), CanSelect)
             end do
-            
+
             ! 4. load project parameters
             if (CanSelect) then
                 call SetMultipleProjectDescription('undefined')
@@ -656,90 +656,90 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             call SetSimulParam_EvapDeclineFactor(simul_ed)
             read(f0, *) simul_kcWB ! Kc wet bare soil [-]
             call SetSimulParam_KcWetBare(simul_kcWB)
-            read(f0, *) simul_pCCHIf 
+            read(f0, *) simul_pCCHIf
                 ! CC threshold below which HI no longer increase(% of 100)
             call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
-            
-            read(f0, *) simul_RpZmi 
+
+            read(f0, *) simul_RpZmi
                 ! Starting depth of root sine function (% of Zmin)
             call SetSimulParam_RootPercentZmin(simul_RpZmi)
             read(f0, *) simul_RZEma ! cm/day
             call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
-            
+
             call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
-            read(f0, *) simul_SFR 
+            read(f0, *) simul_SFR
                 ! Shape factor for effect water stress on rootzone expansion
             call SetSimulParam_KsShapeFactorRoot(simul_SFR)
-            read(f0, *) simul_TAWg  
+            read(f0, *) simul_TAWg
                 ! Soil water content (% TAW) required at sowing depth for germination
-            
+
             call SetSimulParam_TAWGermination(simul_TAWg)
-            read(f0, *) simul_pfao 
-                ! Adjustment factor for FAO-adjustment soil water depletion 
+            read(f0, *) simul_pfao
+                ! Adjustment factor for FAO-adjustment soil water depletion
                 ! (p) for various ET
             call SetSimulParam_pAdjFAO(simul_pfao)
-            read(f0, *) simul_lowox 
+            read(f0, *) simul_lowox
                 ! number of days for full effect of deficient aeration
-            
+
             call SetSimulParam_DelayLowOxygen(simul_lowox)
-            read(f0, *) simul_expFsen 
-                ! exponent of senescence factor adjusting drop in 
+            read(f0, *) simul_expFsen
+                ! exponent of senescence factor adjusting drop in
                 ! photosynthetic activity of dying crop
             call SetSimulParam_ExpFsen(simul_expFsen)
-            read(f0, *) simul_beta 
-                ! Decrease (percentage) of p(senescence) once early 
+            read(f0, *) simul_beta
+                ! Decrease (percentage) of p(senescence) once early
                 ! canopy senescence is triggered
-            
+
             call SetSimulParam_Beta(simul_beta)
-            read(f0, *) simul_Tswc  ! Thickness top soil (cm) in which 
+            read(f0, *) simul_Tswc  ! Thickness top soil (cm) in which
                                     ! soil water depletion has to be determined
             call SetSimulParam_ThicknessTopSWC(simul_Tswc)
             ! field
-            
-            read(f0, *) simul_EZma 
+
+            read(f0, *) simul_EZma
                 ! maximum water extraction depth by soil evaporation [cm]
             call SetSimulParam_EvapZmax(simul_EZma)
             ! soil
-            read(f0, *) simul_rod 
-                ! considered depth (m) of soil profile for calculation 
+            read(f0, *) simul_rod
+                ! considered depth (m) of soil profile for calculation
                 ! of mean soil water content
-            
+
             call SetSimulParam_RunoffDepth(simul_rod)
             read(f0, *) i   ! correction CN for Antecedent Moisture Class
             if (i == 1) then
                 call SetSimulParam_CNcorrection(.true.)
-                
+
             else
                 call SetSimulParam_CNcorrection(.false.)
             end if
             read(f0, *) simul_saltdiff ! salt diffusion factor (%)
             call SetSimulParam_SaltDiff(simul_saltdiff)
             read(f0, *) simul_saltsolub ! salt solubility (g/liter)
-            
+
             call SetSimulParam_SaltSolub(simul_saltsolub)
             read(f0, *) simul_root ! shape factor capillary rise factor
             call SetSimulParam_RootNrDF(simul_root)
-            call SetSimulParam_IniAbstract(5_int8) 
-                ! fixed in Version 5.0 cannot be changed since linked 
+            call SetSimulParam_IniAbstract(5_int8)
+                ! fixed in Version 5.0 cannot be changed since linked
                 ! with equations for CN AMCII and CN converions
-            
+
             ! Temperature
             read(f0, *) Tmin_temp
-                ! Default minimum temperature (degC) if no 
+                ! Default minimum temperature (degC) if no
                 ! temperature file is specified
             call SetTmin(Tmin_temp)
             call SetSimulParam_Tmin(simul_Tmi)
             read(f0, *) simul_Tma
-                ! Default maximum temperature (degC) if 
+                ! Default maximum temperature (degC) if
                 ! no temperature file is specified
-            
+
             call SetSimulParam_Tmax(simul_Tma)
             read(f0, *) simul_GDD ! Default method for GDD calculations
             call SetSimulParam_GDDMethod(simul_GDD)
             if (GetSimulParam_GDDMethod() > 3) then
                 call SetSimulParam_GDDMethod(3_int8)
             end if
-            
+
             if (GetSimulParam_GDDMethod() < 1) then
                 call SetSimulParam_GDDMethod(1_int8)
             end if
@@ -769,7 +769,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             close(f0)
 
         else
-            ! take the default set of program parameters 
+            ! take the default set of program parameters
             ! (already read in InitializeSettings)
             ProgramParametersAvailable = .false.
         end if
@@ -827,7 +827,7 @@ subroutine StartTheProgram()
     if (nprojects == 0) then
         call WriteProjectsInfo('')
         call WriteProjectsInfo('Projects loaded: None')
-        
+
         if (ListProjectFileExist) then
             call WriteProjectsInfo('File "ListProjects.txt" does not contain ANY project file')
         else

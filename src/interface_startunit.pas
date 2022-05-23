@@ -129,7 +129,7 @@ begin
     int_projecttype := ord(TheProjectType);
     GetProjectType_wrap(p,strlen, int_projecttype);
     TheProjectType := repTypeProject(int_projecttype);
-end; 
+end;
 
 
 procedure InitializeProject(constref iproject : integer;
@@ -175,4 +175,3 @@ initialization
 
 
 end.
-

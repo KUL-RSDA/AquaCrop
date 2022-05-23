@@ -413,7 +413,7 @@ subroutine SetCutInfoRecord1_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetCutInfoRecord1_NoMoreInfo(NoMoreInfo_f)    
+    call SetCutInfoRecord1_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetCutInfoRecord1_NoMoreInfo_wrap
 
 subroutine SetCutInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
@@ -422,7 +422,7 @@ subroutine SetCutInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetCutInfoRecord2_NoMoreInfo(NoMoreInfo_f)    
+    call SetCutInfoRecord2_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetCutInfoRecord2_NoMoreInfo_wrap
 
 subroutine SetIrriInfoRecord1_NoMoreInfo_wrap(NoMoreInfo)
@@ -431,7 +431,7 @@ subroutine SetIrriInfoRecord1_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetIrriInfoRecord1_NoMoreInfo(NoMoreInfo_f)    
+    call SetIrriInfoRecord1_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetIrriInfoRecord1_NoMoreInfo_wrap
 
 subroutine SetIrriInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
@@ -440,7 +440,7 @@ subroutine SetIrriInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetIrriInfoRecord2_NoMoreInfo(NoMoreInfo_f)    
+    call SetIrriInfoRecord2_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetIrriInfoRecord2_NoMoreInfo_wrap
 
 subroutine SetTransfer_Mobilize_wrap(Mobilize)
@@ -449,7 +449,7 @@ subroutine SetTransfer_Mobilize_wrap(Mobilize)
     logical :: Mobilize_f
 
     Mobilize_f = Mobilize
-    call SetTransfer_Mobilize(Mobilize_f)    
+    call SetTransfer_Mobilize(Mobilize_f)
 end subroutine SetTransfer_Mobilize_wrap
 
 subroutine SetTransfer_Store_wrap(Store)
@@ -458,7 +458,7 @@ subroutine SetTransfer_Store_wrap(Store)
     logical :: Store_f
 
     Store_f = Store
-    call SetTransfer_Store(Store_f)    
+    call SetTransfer_Store(Store_f)
 end subroutine SetTransfer_Store_wrap
 
 
@@ -470,7 +470,7 @@ function GetfEval_filename_wrap() result(filename_ptr)
     filename = GetfEval_filename()
     filename_ptr = string2pointer(filename)
 end function GetfEval_filename_wrap
-    
+
 
 subroutine SetfEval_filename_wrap(filename_ptr, strlen)
     type(c_ptr), intent(in) :: filename_ptr
@@ -537,7 +537,7 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
     logical :: GlobalIrriECw_f
 
     GlobalIrriECw_f = GlobalIrriECw_in
-    call SetGlobalIrriECw(GlobalIrriECw_f)    
+    call SetGlobalIrriECw(GlobalIrriECw_f)
 end subroutine SetGlobalIrriECw_wrap
 
 
@@ -696,7 +696,7 @@ subroutine SetNoYear_wrap(NoYear_in)
     logical :: NoYear_f
 
     NoYear_f = NoYear_in
-    call SetNoYear(NoYear_f)    
+    call SetNoYear(NoYear_f)
 end subroutine SetNoYear_wrap
 
 

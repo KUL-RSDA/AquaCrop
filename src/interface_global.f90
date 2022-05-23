@@ -145,7 +145,7 @@ use ac_global, only: CheckFilesInProject, &
                      SetTemperatureFilefull, &
                      SetTemperatureDescription, &
                      GetClimDescription, &
-                     SetClimDescription, & 
+                     SetClimDescription, &
                      SplitStringInTwoParams, &
                      SplitStringInThreeParams, &
                      SetTemperatureRecord_FromString, &
@@ -244,7 +244,7 @@ use ac_global, only: CheckFilesInProject, &
                      GetPart1Mult, &
                      GetPart2Eval, &
                      SetPart1Mult, &
-                     SetPart2Eval             
+                     SetPart2Eval
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
@@ -470,9 +470,9 @@ subroutine TimeToMaxCanopySF_wrap(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
     integer(int8), intent(inout) :: RedCGC
     integer(int8), intent(inout) :: RedCCx
     integer(int8), intent(inout) :: ClassSF
-    
+
     logical :: DeterminantCrop_f
-    
+
     DeterminantCrop_f = DeterminantCrop
     call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LToFlor, &
                                   LFlor, DeterminantCrop_f, L12SF, RedCGC, &
@@ -514,7 +514,7 @@ subroutine LoadIrriScheduleInfo_wrap(FullName, strlen1)
     call LoadIrriScheduleInfo(string1)
 end subroutine LoadIrriScheduleInfo_wrap
 
-subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, & 
+subroutine LoadClimate_wrap(FullName, strlen1, ClimateDescription, strlen2, &
                             TempFile, strlen3, EToFile, strlen4, &
                             RainFile, strlen5, CO2File, strlen6)
     !! Wrapper for [[ac_global:LoadClimate]] for foreign languages.
@@ -635,7 +635,7 @@ subroutine SetEToFile_wrap(EToFile, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+
     string = pointer2string(EToFile, strlen)
     call SetEToFile(string)
 end subroutine SetEToFile_wrap
@@ -654,7 +654,7 @@ subroutine SetEToFileFull_wrap(EToFileFull, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+
     string = pointer2string(EToFileFull, strlen)
     call SetEToFileFull(string)
 end subroutine SetEToFileFull_wrap
@@ -673,7 +673,7 @@ subroutine SetEToDescription_wrap(EToDescription, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+
     string = pointer2string(EToDescription, strlen)
     call SetEToDescription(string)
 end subroutine SetEToDescription_wrap
@@ -739,7 +739,7 @@ end subroutine SetIrriFileFull_wrap
 function GetClimateFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateFile]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetClimateFile())
 end function GetClimateFile_wrap
 
@@ -759,7 +759,7 @@ end subroutine SetClimateFile_wrap
 function GetClimateFileFull_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateFileFull]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetClimateFileFull())
 end function GetClimateFileFull_wrap
 
@@ -789,7 +789,7 @@ end subroutine SetIrriDescription_wrap
 function GetClimateDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimateDescription]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetClimateDescription())
 end function GetClimateDescription_wrap
 
@@ -808,7 +808,7 @@ end subroutine SetClimateDescription_wrap
 function GetClimFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetClimFile]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetClimFile())
 end function GetClimFile_wrap
 
@@ -828,7 +828,7 @@ end subroutine SetClimFile_wrap
 function GetSWCiniFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetSWCiniFile]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetSWCiniFile())
 end function GetSWCiniFile_wrap
 
@@ -848,7 +848,7 @@ end subroutine SetSWCiniFile_wrap
 function GetSWCiniFileFull_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetSWCiniFileFull]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetSWCiniFileFull())
 end function GetSWCiniFileFull_wrap
 
@@ -867,7 +867,7 @@ end subroutine SetSWCiniFileFull_wrap
 function GetSWCiniDescription_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetSWCiniDescription]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetSWCiniDescription())
 end function GetSWCiniDescription_wrap
 
@@ -920,7 +920,7 @@ end subroutine SetSimulParam_ConstGwt_wrap
 function GetPathNameProg_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameProg]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetPathNameProg())
 end function GetPathNameProg_wrap
 
@@ -939,7 +939,7 @@ end subroutine SetPathNameProg_wrap
 function GetPathNameOutp_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameOutp]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetPathNameOutp())
 end function GetPathNameOutp_wrap
 
@@ -958,7 +958,7 @@ end subroutine SetPathNameOutp_wrap
 function GetPathNameSimul_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetPathNameSimul]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetPathNameSimul())
 end function GetPathNameSimul_wrap
 
@@ -977,7 +977,7 @@ end subroutine SetPathNameSimul_wrap
 function GetOutputName_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetOutputName]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetOutputName())
 end function GetOutputName_wrap
 
@@ -1030,7 +1030,7 @@ end subroutine SetPerennialPeriod_GenerateEnd_wrap
 function GetProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetProjectFile]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetProjectFile())
 end function GetProjectFile_wrap
 
@@ -1050,7 +1050,7 @@ end subroutine SetProjectFile_wrap
 function GetProjectFileFull_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetProjectFileFull]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetProjectFileFull())
 end function GetProjectFileFull_wrap
 
@@ -1070,7 +1070,7 @@ end subroutine SetProjectFileFull_wrap
 function GetMultipleProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectFile]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetMultipleProjectFile())
 end function GetMultipleProjectFile_wrap
 
@@ -1140,7 +1140,7 @@ end subroutine SetEndSeason_GenerateTempOn_wrap
 function GetMultipleProjectFileFull_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetMultipleProjectFileFull]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetMultipleProjectFileFull())
 end function GetMultipleProjectFileFull_wrap
 
@@ -1160,7 +1160,7 @@ end subroutine SetMultipleProjectFileFull_wrap
 function GetFullFileNameProgramParameters_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetFullFileNameProgramParameters]] for foreign languages.
     type(c_ptr) :: c_pointer
-    
+
     c_pointer = string2pointer(GetFullFileNameProgramParameters())
 end function GetFullFileNameProgramParameters_wrap
 
@@ -1191,7 +1191,7 @@ subroutine SetRainFile_wrap(RainFile, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
- 
+
     string = pointer2string(RainFile, strlen)
     call SetRainFile(string)
 end subroutine SetRainFile_wrap
@@ -1210,7 +1210,7 @@ subroutine SetRainFileFull_wrap(RainFileFull, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
- 
+
     string = pointer2string(RainFileFull, strlen)
     call SetRainFileFull(string)
 end subroutine SetRainFileFull_wrap
@@ -1230,12 +1230,12 @@ subroutine SetRainDescription_wrap(RainDescription, strlen)
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
- 
+
     string = pointer2string(RainDescription, strlen)
     call SetRainDescription(string)
 end subroutine SetRainDescription_wrap
 
-    
+
 function GetCalendarFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_global:GetCalendarFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -1466,7 +1466,7 @@ subroutine SetManagement_Cuttings_Considered_wrap(Considered)
     logical :: Considered_f
 
     Considered_f = Considered
-    call SetManagement_Cuttings_Considered(Considered_f)    
+    call SetManagement_Cuttings_Considered(Considered_f)
 end subroutine SetManagement_Cuttings_Considered_wrap
 
 
@@ -1476,7 +1476,7 @@ subroutine SetManagement_Cuttings_Generate_wrap(Generate)
     logical :: Generate_f
 
     Generate_f = Generate
-    call SetManagement_Cuttings_Generate(Generate_f)    
+    call SetManagement_Cuttings_Generate(Generate_f)
 end subroutine SetManagement_Cuttings_Generate_wrap
 
 
@@ -1486,7 +1486,7 @@ subroutine SetManagement_Cuttings_HarvestEnd_wrap(HarvestEnd)
     logical :: HarvestEnd_f
 
     HarvestEnd_f = HarvestEnd
-    call SetManagement_Cuttings_HarvestEnd(HarvestEnd_f)    
+    call SetManagement_Cuttings_HarvestEnd(HarvestEnd_f)
 end subroutine SetManagement_Cuttings_HarvestEnd_wrap
 
 
@@ -1504,7 +1504,7 @@ subroutine SetManagement_RunoffOn_wrap(RunoffOn)
     logical :: RunoffOn_f
 
     RunoffOn_f = RunoffOn
-    call SetManagement_RunoffOn(RunoffOn_f)    
+    call SetManagement_RunoffOn(RunoffOn_f)
 end subroutine SetManagement_RunoffOn_wrap
 
 function GetOffSeasonFile_wrap() result(c_pointer)
@@ -2239,7 +2239,7 @@ end subroutine SetOffSeasonDescription_wrap
 
 subroutine LoadProgramParametersProject_wrap(FullFileNameProgramParameters, &
                                              strlen)
-    !! Wrapper for [[ac_global:LoadProgramParametersProject_]] 
+    !! Wrapper for [[ac_global:LoadProgramParametersProject_]]
     !! for foreign languages.
     type(c_ptr), intent(in) :: FullFileNameProgramParameters
     integer(int32), intent(in) :: strlen
@@ -2311,11 +2311,11 @@ subroutine LoadClim_wrap(FullName_ptr, strlen1, ClimateDescription_ptr, &
     DataType = ClimateRecord%DataType
     FromD = ClimateRecord%FromD
     FromM = ClimateRecord%FromM
-    FromY = ClimateRecord%FromY 
+    FromY = ClimateRecord%FromY
     ToD = ClimateRecord%ToD
     ToM = ClimateRecord%ToM
     ToY = ClimateRecord%ToY
-    FromDayNr = ClimateRecord%FromDayNr  
+    FromDayNr = ClimateRecord%FromDayNr
     ToDayNr = ClimateRecord%ToDayNr
     call threestrings2threepointers(ClimateRecord%FromString, &
                                   ClimateRecord%ToString, &
@@ -2691,14 +2691,14 @@ function GetPathNameList_wrap() result(c_pointer)
     c_pointer = string2pointer(GetPathNameList())
 end function GetPathNameList_wrap
 
-    
+
 subroutine SetPathNameList_wrap(PathNameList, strlen)
     !! Wrapper for [[ac_global:SetPathNameList]] for foreign languages.
     type(c_ptr), intent(in) :: PathNameList
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+
     string = pointer2string(PathNameList, strlen)
     call SetPathNameList(string)
 end subroutine SetPathNameList_wrap
@@ -2711,14 +2711,14 @@ function GetPathNameParam_wrap() result(c_pointer)
     c_pointer = string2pointer(GetPathNameParam())
 end function GetPathNameParam_wrap
 
-    
+
 subroutine SetPathNameParam_wrap(PathNameParam, strlen)
     !! Wrapper for [[ac_global:SetPathNameParam]] for foreign languages.
     type(c_ptr), intent(in) :: PathNameParam
     integer(int32), intent(in) :: strlen
 
     character(len=strlen) :: string
-    
+
     string = pointer2string(PathNameParam, strlen)
     call SetPathNameParam(string)
 end subroutine SetPathNameParam_wrap

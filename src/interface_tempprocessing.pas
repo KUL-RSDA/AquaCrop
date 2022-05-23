@@ -297,7 +297,7 @@ begin;
     int_modeCycle := ord(TheModeCycle);
     BTransferPeriod_wrap(TheDaysToCCini, TheGDDaysToCCini,
              L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,
-             CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, 
+             CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop,
              KcDeclAgeing, CCeffectProcent, WPbio, TheCO2,
              Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,
              int_modeCycle, TempAssimPeriod, TempAssimStored, SumBtot, SumBstored);
@@ -328,7 +328,7 @@ begin
                       DeltaWeedStress,
                       StrResCDecline,ShapeFweed,
                       int_modeCycle,
-                      FertilityStressOn, TestRecord); 
+                      FertilityStressOn, TestRecord);
 end;
 
 function  BiomassRatio(
@@ -348,9 +348,9 @@ var
 begin
    int_modeCycle := ord(TempModeCycle);
    BiomassRatio := BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,
-           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, 
+           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC,
            TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,
-           TempL123, TempHarvest, TempFlower, TempGDDL0, 
+           TempL123, TempHarvest, TempFlower, TempGDDL0,
            GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,
            TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,
            TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,
@@ -385,7 +385,7 @@ begin
             CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,
             Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,
             CO2Given, CropDNr1, CropDeterm, CropSResp, int_subkind,
-            int_modeCycle, b0, b1, b2, 
+            int_modeCycle, b0, b1, b2,
             BM10, BM20, BM30, BM40, BM50, BM60, BM70);
 end;
 
@@ -424,4 +424,3 @@ initialization
 
 
 end.
-

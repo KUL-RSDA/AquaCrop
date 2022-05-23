@@ -152,67 +152,67 @@ subroutine ResetDefaultCrop()
     call SetCrop_pLeafDefLL(0.60_dp) ! Soil water depletion factor for leaf
                                      ! expansion (p-leaf) - Lower Limit
     call SetCrop_KsShapeFactorLeaf(3._dp) ! Shape factor for Water stress
-                                          ! coefficient Leaf expansion 
+                                          ! coefficient Leaf expansion
                                           ! (0 = straight line)
-    call SetCrop_pdef(0.50_dp) ! Soil water depletion fraction for stomatal 
+    call SetCrop_pdef(0.50_dp) ! Soil water depletion fraction for stomatal
                                ! control (p - stomatal)
     call SetCrop_KsShapeFactorStomata(3._dp) ! Shape factor for Water stress
-                                        ! coefficient Stomatal Control 
+                                        ! coefficient Stomatal Control
                                         ! (0 = straight line)
-    call SetCrop_pSenescence(0.85_dp) ! Soil water depletion factor for 
+    call SetCrop_pSenescence(0.85_dp) ! Soil water depletion factor for
                                       ! canopy senescence (p-senescence)
-    call SetCrop_KsShapeFactorSenescence(3._dp) ! Shape factor for Water 
-                                        ! stress coefficient Canopy 
+    call SetCrop_KsShapeFactorSenescence(3._dp) ! Shape factor for Water
+                                        ! stress coefficient Canopy
                                         ! Senescence (0 = straight line)
-    call SetCrop_SumEToDelaySenescence(50) ! Sum(ETo) during stress period to be 
+    call SetCrop_SumEToDelaySenescence(50) ! Sum(ETo) during stress period to be
                                       ! exceeded before senescence is triggered
     call SetCrop_pPollination(0.90_dp)
     call SetCrop_AnaeroPoint(5) ! Vol% for Anaerobiotic point (* (SAT - [vol%])
-                                ! at which deficient aeration occurs 
+                                ! at which deficient aeration occurs
 
     call SetCrop_StressResponse_Stress(50_int8)  ! Soil fertility stress at
                                                  ! calibration (%)
-    call SetCrop_StressResponse_ShapeCGC(2.16_dp)  ! Shape factor for response 
-                                                   ! of Canopy Growth Coefficient 
+    call SetCrop_StressResponse_ShapeCGC(2.16_dp)  ! Shape factor for response
+                                                   ! of Canopy Growth Coefficient
                                                    ! to soil fertility stress
-    call SetCrop_StressResponse_ShapeCCX(0.79_dp) ! Shape factor for response of 
+    call SetCrop_StressResponse_ShapeCCX(0.79_dp) ! Shape factor for response of
                               ! Maximum Canopy Coefficient to soil fertility stress
-    call SetCrop_StressResponse_ShapeWP(1.67_dp)  ! Shape factor for response of 
+    call SetCrop_StressResponse_ShapeWP(1.67_dp)  ! Shape factor for response of
                               ! Crop water productivity to soil fertility stress
-    call SetCrop_StressResponse_ShapeCDecline(1.67_dp) ! Shape factor for response 
+    call SetCrop_StressResponse_ShapeCDecline(1.67_dp) ! Shape factor for response
                               ! of Canopy cover decline to soil fertility stress
     call SetCrop_StressResponse_Calibrated(.true.)
 
     call SetCrop_ECemin(2_int8) ! Electrical Conductivity of soil saturation
-                                ! extract at which crop starts to be affected by 
+                                ! extract at which crop starts to be affected by
                                 ! soil salinity (dS/m)
-    call SetCrop_ECemax(12_int8) ! Electrical Conductivity of soil saturation 
+    call SetCrop_ECemax(12_int8) ! Electrical Conductivity of soil saturation
                                  ! extract at which crop can no longer grow (dS/m)
-    call SetCrop_CCsaltDistortion(25_int8) ! Calibrated distortion canopy cover 
-                                           ! for calibration of simulation of 
+    call SetCrop_CCsaltDistortion(25_int8) ! Calibrated distortion canopy cover
+                                           ! for calibration of simulation of
                                            ! effect of salinity stress (%)
-    call SetCrop_ResponseECsw(100) ! Calibrated response of Ks stomata to ECsw for 
+    call SetCrop_ResponseECsw(100) ! Calibrated response of Ks stomata to ECsw for
                                    ! calibration: From 0 (none) to +125 (very strong)
-    call SetCrop_Tcold(8_int8) ! Minimum air temperature below which pollination 
+    call SetCrop_Tcold(8_int8) ! Minimum air temperature below which pollination
                                ! starts to fail (cold stress) (degC)
-    call SetCrop_Theat(40_int8) ! Maximum air temperature above which pollination 
+    call SetCrop_Theat(40_int8) ! Maximum air temperature above which pollination
                                 ! starts to fail (heat stress) (degC)
-    call SetCrop_GDtranspLow(11.1_dp) ! Minimum growing degrees required for full 
+    call SetCrop_GDtranspLow(11.1_dp) ! Minimum growing degrees required for full
                                       ! crop transpiration (degC - day)
-    call SetCrop_KcTop(1.10_dp) ! Crop coefficient when complete cover and prior to 
+    call SetCrop_KcTop(1.10_dp) ! Crop coefficient when complete cover and prior to
                                 ! senescence (Kc,top)
-    call SetCrop_KcDecline(0.150_dp) ! Decline crop coefficient (%/day) as a result 
+    call SetCrop_KcDecline(0.150_dp) ! Decline crop coefficient (%/day) as a result
                                      ! of ageing, nitrogen defficiency, etc.
     call SetCrop_RootMin(0.30_dp) ! Minimum rooting depth (m)
     call SetCrop_RootMax(1.00_dp) ! Maximum rooting depth (m)
-    call SetCrop_RootMinYear1(GetCrop_RootMin()) ! Minimum rooting depth in first 
+    call SetCrop_RootMinYear1(GetCrop_RootMin()) ! Minimum rooting depth in first
                                                  ! year in meter (for perennials)
     call SetCrop_RootShape(15_int8) ! Shape factor describing root zone expansion
-    call SetCrop_SmaxTopQuarter(0.048_dp) ! Maximum root water extraction (m3water/m3soil.day) 
+    call SetCrop_SmaxTopQuarter(0.048_dp) ! Maximum root water extraction (m3water/m3soil.day)
                                           ! in top quarter of root zone
-    call SetCrop_SmaxBotQuarter(0.012_dp) ! Maximum root water extraction (m3water/m3soil.day) 
+    call SetCrop_SmaxBotQuarter(0.012_dp) ! Maximum root water extraction (m3water/m3soil.day)
                                           ! in bottom quarter of root zone
-    call SetCrop_CCEffectEvapLate(50) ! Effect of canopy cover on reduction soil evap 
+    call SetCrop_CCEffectEvapLate(50) ! Effect of canopy cover on reduction soil evap
                                       ! in late season stage
     call SetCrop_SizeSeedling(6.50_dp) ! Canopy cover per seedling (cm2)
     call SetCrop_SizePlant(GetCrop_SizeSeedling()) ! Canopy cover when regrowth (cm2)
@@ -221,14 +221,14 @@ subroutine ResetDefaultCrop()
                         * (GetCrop_PlantingDens()/10000._dp)) ! Starting canopy size
                                                               ! (CCo) in fraction
     call SetCrop_CCini(GetCrop_CCo())
-    call SetCrop_CGC(0.15_dp) ! Canopy growth coefficient (CGC): Increase in canopy 
+    call SetCrop_CGC(0.15_dp) ! Canopy growth coefficient (CGC): Increase in canopy
                               ! cover (in fraction) per day
-    call SetCrop_YearCCx(int(undef_int, int8)) ! the number of years at which CCx declines to 90% 
+    call SetCrop_YearCCx(int(undef_int, int8)) ! the number of years at which CCx declines to 90%
                                     ! of its value due to self-thining - Perennials
-    call SetCrop_CCxRoot(real(undef_int, kind=dp)) ! shape factor of the decline of CCx over the 
+    call SetCrop_CCxRoot(real(undef_int, kind=dp)) ! shape factor of the decline of CCx over the
                                     ! years due to self-thinning - Perennials
     call SetCrop_CCx(0.80_dp) ! Maximum canopy cover (CCx) in fraction
-    call SetCrop_CDC(0.1275_dp) ! Canopy decline coefficient (CDC): Decrease in 
+    call SetCrop_CDC(0.1275_dp) ! Canopy decline coefficient (CDC): Decrease in
                                 ! canopy cover (in fraction) per day
     call SetCrop_DaysToCCini(0)
     call SetCrop_DaysToGermination(5) ! Calendar Days: from sowing to germination
@@ -241,13 +241,13 @@ subroutine ResetDefaultCrop()
     call SetCrop_DeterminancyLinked(.true.)
     call SetCrop_fExcess(50_int16) ! Potential excess of fruits (%)
     call SetCrop_WP(17.0_dp) ! (normalized) Water productivity (gram/m2)
-    call SetCrop_WPy(100) ! (normalized) Water productivity during yield formation 
+    call SetCrop_WPy(100) ! (normalized) Water productivity during yield formation
                           ! (Percent of WP)
-    call SetCrop_AdaptedToCO2(50_int8) ! Percentage adapted to elevated atmospheric 
+    call SetCrop_AdaptedToCO2(50_int8) ! Percentage adapted to elevated atmospheric
                                        ! CO2 concentration
     call SetCrop_HI(50) ! HI harvest index (percentage)
     call SetCrop_DryMatter(25_int8) ! dry matter content (%) of fresh yield
-    call SetCrop_HIincrease(5_int8) ! Possible increase (%) of HI due to water 
+    call SetCrop_HIincrease(5_int8) ! Possible increase (%) of HI due to water
                                     ! stress before flowering
     call SetCrop_aCoeff(10._dp) ! Coefficient describing positive impact of
                                 ! restricted vegetative growth at flowering on HI
@@ -261,17 +261,17 @@ subroutine ResetDefaultCrop()
     call SetCrop_GDDaysToSenescence(-9) ! GDDays: from sowing to start senescence
     call SetCrop_GDDaysToHarvest(-9) ! GDDays: from sowing to harvest
     call SetCrop_GDDaysToFlowering(-9) ! GDDays: from sowing to flowering
-    call SetCrop_GDDLengthFlowering(-9) ! Length of the flowering stage 
+    call SetCrop_GDDLengthFlowering(-9) ! Length of the flowering stage
                                         ! (growing degree days)
     call SetCrop_GDDaysToHIo(-9)
-    call SetCrop_GDDCGC(-9.000000_dp) ! CGC for GGDays: Increase in canopy cover 
+    call SetCrop_GDDCGC(-9.000000_dp) ! CGC for GGDays: Increase in canopy cover
                                       ! (in fraction) per growing-degree day
-    call SetCrop_GDDCDC(-9.000000_dp) ! CDC for GGDays: Decrease in canopy cover 
+    call SetCrop_GDDCDC(-9.000000_dp) ! CDC for GGDays: Decrease in canopy cover
                                       ! (in fraction) growing-degree day
 
-    call SetCrop_Assimilates_On(.false.)  ! transfer of assimilates from above ground 
+    call SetCrop_Assimilates_On(.false.)  ! transfer of assimilates from above ground
                                           ! parts to root system is NOT considered
-    call SetCrop_Assimilates_Period(0)  ! Number of days before end of season at 
+    call SetCrop_Assimilates_Period(0)  ! Number of days before end of season at
                                         ! which storage starts
     call SetCrop_Assimilates_Stored(0_int8)  ! Percentage of assimilates transferred
                                              ! to root system at end of season

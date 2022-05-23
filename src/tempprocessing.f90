@@ -55,7 +55,7 @@ use ac_global , only: undef_int, &
                       CalculateETpot, &
                       CalculateAdjustedFC, &
                       GetPathNameSimul, &
-                      GetTemperatureFile, &                     
+                      GetTemperatureFile, &
                       GetTemperatureFilefull, &
                       GetTemperatureDescription, &
                       GetEToFile, GetEToFilefull, &
@@ -120,7 +120,7 @@ use ac_global , only: undef_int, &
                       SetCrop_DaysToHIo, &
                       SetCrop_DaysToGermination, &
                       SetCrop_LengthFlowering, &
-                      SetCrop_Length, &    
+                      SetCrop_Length, &
                       SetCrop_DaysToFullCanopy, &
                       SetCrop_dHIdt, &
                       SetCrop_DaysToMaxRooting, &
@@ -153,7 +153,7 @@ use ac_global , only: undef_int, &
                       GetCrop_GDDaysToMaxRooting, &
                       GetCrop_DaysToGermination, &
                       GetCrop_DaysToFullCanopy, &
-                      GetCrop_DaysToFlowering, & 
+                      GetCrop_DaysToFlowering, &
                       GetCrop_LengthFlowering, &
                       GetCrop_DaysToSenescence, &
                       GetCrop_DaysToHarvest, &
@@ -168,7 +168,7 @@ use ac_global , only: undef_int, &
                       GetCrop_DaysToCCini, GetCrop_Planting, &
                       GetCrop_subkind, &
                       GetCrop_ModeCycle, &
-                      GetCrop_Tbase, & 
+                      GetCrop_Tbase, &
                       GetCrop_Tupper, &
                       GetCrop_Planting, &
                       GetCrop_CCini, &
@@ -1017,7 +1017,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
                 end select
             end if !if temperaturefull file exists
         end if !if temperature file
-    else    
+    else
         GDDays = undef_int
     endif !end valperiod>0
     GrowingDegreeDays = roundc(GDDays, mold=1_int32)
@@ -1161,7 +1161,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
                     do while ((RemainingGDDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) & 
+                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                          .or. AdjustDayNri))
                         if (DayNri > TminDataSet(31)%DayNr) then
                             call GetMonthlyTemperatureDataSet(DayNri, &
@@ -1383,7 +1383,7 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
         DFlor = SumCalendarDays(GDDFlor, PlantDayNr,&
                   Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
         if (DFlor /= undef_int) then
-            if (InfoCropType == subkind_Grain) then 
+            if (InfoCropType == subkind_Grain) then
                 LengthFlor = SumCalendarDays(GDDLengthFlor, (PlantDayNr+DFlor),&
                    Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
             else
@@ -1565,7 +1565,7 @@ subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
 end subroutine GDDCDCToCDC
 
 
-integer(int32) function RoundedOffGDD(PeriodGDD, PeriodDay,& 
+integer(int32) function RoundedOffGDD(PeriodGDD, PeriodDay,&
            FirstDayPeriod, TempTbase, TempTupper, TempTmin, TempTmax)
     integer(int32), intent(in) :: PeriodGDD
     integer(int32), intent(in) :: PeriodDay
@@ -1592,7 +1592,7 @@ integer(int32) function RoundedOffGDD(PeriodGDD, PeriodDay,&
             RoundedOffGDD = PeriodUpdatedGDD
         end if
     else
-        RoundedOffGDD = GrowingDegreeDays(PeriodDay, FirstDayPeriod,& 
+        RoundedOffGDD = GrowingDegreeDays(PeriodDay, FirstDayPeriod,&
                      TempTbase, TempTupper, TempTmin_t, TempTmax_t)
     end if
 end function RoundedOffGDD
@@ -1989,8 +1989,8 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
 end subroutine TemperatureFileCoveringCropPeriod
 
 
-subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,& 
-                TheCropDay1, TheModeCycle, TheTbase, TheTupper,& 
+subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
+                TheCropDay1, TheModeCycle, TheTbase, TheTupper,&
                 L123, L1234, GDD123, GDD1234)
     type(rep_CropFileSet), intent(in) :: TheCropFileSet
     integer(int32), intent(in) :: LseasonDays
@@ -2082,7 +2082,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! Year of cultivation and Simulation and Cropping period
-    read(f0, *, iostat=rc) YearSeason_temp ! year number of cultivation 
+    read(f0, *, iostat=rc) YearSeason_temp ! year number of cultivation
                                            !(1 = seeding/planting year)
     call SetSimulation_YearSeason(YearSeason_temp);
     read(f0, *, iostat=rc) TempSimDayNr1 ! First day of simulation period
@@ -2117,7 +2117,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
 
     if (GetTemperatureFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathTemperatureFile
-        call SetTemperatureFilefull(GetTemperatureFile())  ! no file 
+        call SetTemperatureFilefull(GetTemperatureFile())  ! no file
         write(TempString1,'(f8.1)') GetSimulParam_Tmin()
         write(TempString2,'(f8.1)') GetSimulParam_Tmax()
         call SetTemperatureDescription(('Default temperature data: Tmin = '// &
@@ -2144,7 +2144,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     call SetEToFile(trim(TempString))
     if (GetEToFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathETo
-        call SetEToFilefull(GetEToFile())  ! no file 
+        call SetEToFilefull(GetEToFile())  ! no file
         call SetEToDescription('Specify ETo data when Running AquaCrop')
     else
         read(f0,* , iostat=rc) TempString  ! PathETo
@@ -2163,13 +2163,13 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     call SetRainFile(trim(TempString))
     if (GetRainFile() == '(None)') then
         read(f0, *, iostat=rc)  ! PathRain
-        call SetRainFilefull(GetRainFile())  ! no file 
+        call SetRainFilefull(GetRainFile())  ! no file
         call SetRainDescription('Specify Rain data when Running AquaCrop')
     else
         read(f0, *, iostat=rc) TempString  ! PathRain
         call SetRainFileFull(trim(TempString)// GetRainFile())
         rain_descr = Getraindescription()
-        rainrecord_tmp = GetRainRecord() 
+        rainrecord_tmp = GetRainRecord()
         call LoadClim(GetRainFilefull(), rain_descr, rainrecord_tmp)
         call SetRainDescription(rain_descr)
         call CompleteClimateDescription(rainrecord_tmp)
@@ -2261,7 +2261,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     if (GetClimFile() == '(None)') then
         Crop_Day1_temp = GetCrop_Day1()
         Crop_DayN_temp = GetCrop_DayN()
-        call AdjustCropYearToClimFile(Crop_Day1_temp, Crop_DayN_temp) 
+        call AdjustCropYearToClimFile(Crop_Day1_temp, Crop_DayN_temp)
         ! adjusting Crop.Day1 and Crop.DayN to ClimFile
         call SetCrop_Day1(Crop_Day1_temp)
         call SetCrop_DayN(Crop_DayN_temp)
@@ -2269,12 +2269,12 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
     end if
 
-    ! adjusting ClimRecord.'TO' for undefined year with 365 days 
+    ! adjusting ClimRecord.'TO' for undefined year with 365 days
     if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
         .and. (GetClimRecord_NrObs() == 365)) then
         call AdjustClimRecordTo(GetCrop_DayN())
     end if
-    ! adjusting simulation period 
+    ! adjusting simulation period
     call AdjustSimPeriod
 
     ! 4. Irrigation
@@ -2373,7 +2373,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         do i = 1, GetNrCompartments()
             TotDepth = TotDepth + GetCompartment_Thickness(i)
         end do
-        if (GetSimulation_MultipleRunWithKeepSWC()) then 
+        if (GetSimulation_MultipleRunWithKeepSWC()) then
         ! Project with a sequence of simulation runs and KeepSWC
             if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) > &
                 roundc(TotDepth*1000._dp, mold=1)) then
@@ -2385,7 +2385,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
                 if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
                     roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
                     call AdjustSizeCompartments(&
-                            real(GetCrop_RootMax(), kind=dp)) 
+                            real(GetCrop_RootMax(), kind=dp))
                     ! no restrictive soil layer
                 else
                     ! restrictive soil layer
@@ -2401,7 +2401,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call SetSWCIniFile(trim(TempString))
         if (GetSWCIniFile() == '(None)') then
             read(f0, *, iostat=rc)  ! PathSWCIniFile
-            call SetSWCiniFileFull(GetSWCiniFile()) ! no file 
+            call SetSWCiniFileFull(GetSWCiniFile()) ! no file
             call SetSWCiniDescription(&
                      'Soil water profile at Field Capacity')
         else
@@ -2449,7 +2449,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     ! 10. load the groundwater file if it exists (only possible for Version 4.0
     ! and higher)
     if ((roundc(10*VersionNr, mold=1) >= 40) .and.&
-        (GetGroundWaterFile() /= '(None)')) then 
+        (GetGroundWaterFile() /= '(None)')) then
           ! the groundwater file is only available in Version 4.0 or higher
         ZiAqua_temp = GetZiAqua()
         ECiAqua_temp = GetECiAqua()
@@ -2967,7 +2967,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                  else
                      SumGDDforPlot = SumGDD
                      if (SumGDDforPlot > GDDL1234) then
-                         SumGDDforPlot = GDDL1234 
+                         SumGDDforPlot = GDDL1234
                          ! special case where L123 > L1234
                      end if
                      if (SumGDDforPlot > GDDL12) then

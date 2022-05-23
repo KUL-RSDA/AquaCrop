@@ -614,10 +614,10 @@ procedure __WriteTitleDailyResults(constref TheProjectType : integer;
                            constref TheNrRun : shortint);
         external 'aquacrop' name '__ac_run_MOD_writetitledailyresults';
 
-procedure FinalizeRun2(constref NrRun : ShortInt; 
+procedure FinalizeRun2(constref NrRun : ShortInt;
                        constref TheProjectType : repTypeProject);
 
-procedure __FinalizeRun2(constref NrRun : ShortInt; 
+procedure __FinalizeRun2(constref NrRun : ShortInt;
                          constref TheProjectType : integer);
         external 'aquacrop' name '__ac_run_MOD_finalizerun2';
 
@@ -826,7 +826,7 @@ procedure SetDayLastCut(constref DayLastCut : integer);
 function GetNrCut() : integer;
     external 'aquacrop' name '__ac_run_MOD_getnrcut';
 
-procedure SetNrCut(constref NrCut : integer); 
+procedure SetNrCut(constref NrCut : integer);
     external 'aquacrop' name '__ac_run_MOD_setnrcut';
 
 function GetSumInterval() : integer;
@@ -848,7 +848,7 @@ procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
     external 'aquacrop' name '__ac_run_MOD_setstresssfadjnew';
 
 procedure GetNextHarvest()
-    external 'aquacrop' name '__ac_run_MOD_getnextharvest';     
+    external 'aquacrop' name '__ac_run_MOD_getnextharvest';
 
 function GetCCxWitheredTpot() : double;
     external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
@@ -974,7 +974,7 @@ function GetSumKcTopStress() : double;
 procedure SetSumKcTopStress(constref SumKcTopStress : double);
     external 'aquacrop' name '__ac_run_MOD_setsumkctopstress';
 
-function GetSumKci() : double; 
+function GetSumKci() : double;
     external 'aquacrop' name '__ac_run_MOD_getsumkci';
 
 procedure SetSumKci(constref SumKci : double);
@@ -1287,7 +1287,7 @@ procedure FinalizeRun1(constref NrRun : ShortInt;
                        constref TheProjectType : repTypeProject);
 
 
-procedure FinalizeRun1_wrap(constref NrRun : ShortInt; 
+procedure FinalizeRun1_wrap(constref NrRun : ShortInt;
                             constref filename_ptr : PChar;
                             constref filename_len : integer;
                             constref TheProjectType : integer);
@@ -1324,7 +1324,7 @@ procedure WriteSimPeriod_wrap(constref NrRun : ShortInt;
 
 
 procedure WriteEvaluationData(constref DAP : integer);
-        external 'aquacrop' name '__ac_run_MOD_writeevaluationdata';                              
+        external 'aquacrop' name '__ac_run_MOD_writeevaluationdata';
 
 procedure GetZandECgwt(VAR ZiAqua : INTEGER;
                        VAR ECiAqua : double);
@@ -1352,10 +1352,10 @@ procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
                                         constref strlen : integer);
     external 'aquacrop' name '__ac_interface_run_MOD_writeintermediateperiod_wrap';
 
-procedure InitializeRun(constref NrRun : ShortInt; 
+procedure InitializeRun(constref NrRun : ShortInt;
                         constref TheProjectType : repTypeProject);
 
-procedure _InitializeRun(constref NrRun : ShortInt; 
+procedure _InitializeRun(constref NrRun : ShortInt;
                          constref TheProjectType : integer);
     external 'aquacrop' name '__ac_run_MOD_initializerun';
 
@@ -1402,7 +1402,7 @@ begin
 end;
 
 
-procedure InitializeRun(constref NrRun : ShortInt; 
+procedure InitializeRun(constref NrRun : ShortInt;
                         constref TheProjectType : repTypeProject);
 var
     int_typeproject : integer;
@@ -1452,13 +1452,13 @@ var
 begin
     TheProjectFile_ptr := PChar(TheProjectFile);
     strlen := Length(TheProjectFile);
-    WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, YearN, 
+    WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, YearN,
                          RPer,EToPer,GDDPer, IrriPer,InfiltPer,ROPer,DrainPer,CRwPer,
                          EPer,ExPer,TrPer,TrWPer,TrxPer, SalInPer,SalOutPer,SalCRPer,
                          BiomassPer,BUnlimPer,BmobPer,BstoPer,
                          TheProjectFile_ptr, strlen);
 end;
-    
+
 
 
 procedure OpenOutputRun(constref TheProjectType : repTypeProject);
@@ -1602,7 +1602,7 @@ begin;
     GetGwTable.Z2 := GetGwTable_Z2();
     GetGwTable.EC1 := GetGwTable_EC1();
     GetGwTable.EC2 := GetGwTable_EC2();
-end; 
+end;
 
 procedure SetGwTable(constref GwTable : rep_GwTable);
 begin;
@@ -1621,7 +1621,7 @@ begin;
     GetIrriInfoRecord1.ToDay := GetIrriInfoRecord1_ToDay();
     GetIrriInfoRecord1.TimeInfo := GetIrriInfoRecord1_TimeInfo();
     GetIrriInfoRecord1.DepthInfo := GetIrriInfoRecord1_DepthInfo();
-end; 
+end;
 
 function GetIrriInfoRecord2() : repIrriInfoRecord;
 begin;
@@ -1640,7 +1640,7 @@ begin;
     GetCutInfoRecord1.IntervalInfo := GetCutInfoRecord1_IntervalInfo();
     GetCutInfoRecord1.IntervalGDD := GetCutInfoRecord1_IntervalGDD();
     GetCutInfoRecord1.MassInfo := GetCutInfoRecord1_MassInfo();
-end; 
+end;
 
 function GetCutInfoRecord2() : repCutInfoRecord;
 begin;
@@ -2097,4 +2097,3 @@ initialization
 
 
 end.
-
