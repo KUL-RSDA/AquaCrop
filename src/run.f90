@@ -7324,7 +7324,7 @@ subroutine ReadClimateNextDay()
     real(dp) :: ETo_tmp
     real(dp) :: tmpRain, Tmin_temp, Tmax_temp
     character(len=:), allocatable :: TempString
-    ! 15.d Read Climate next day, Get GDDays and update SumGDDays
+    ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         if (GetEToFile() /= '(None)') then
             TempString = fEToSIM_read()
@@ -7345,6 +7345,11 @@ subroutine ReadClimateNextDay()
             call SetTmin(Tmin_temp)
             call SetTmax(Tmax_temp)
         end if
+    end if
+end subroutine ReadClimateNextDay
+
+subroutine SetGDDVariablesNextDay()
+    if (GetDayNri() <= GetSimulation_ToDayNr()) then
         call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
                 GetTmin(), GetTmax(), GetSimulParam_GDDMethod()))
         if (GetDayNri() >= GetCrop_Day1()) then
@@ -7353,7 +7358,7 @@ subroutine ReadClimateNextDay()
                    + GetGDDayi())
         end if
     end if
-end subroutine ReadClimateNextDay
+end subroutine SetGDDVariablesNextDay
 
 subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
     integer(int8), intent(in) :: NrRun
@@ -7733,6 +7738,7 @@ subroutine FileManagement()
     loop: do
         call AdvanceOneTimeStep()
         call ReadClimateNextDay()
+        call SetGDDVariablesNextDay()
         if ((GetDayNri()-1) == RepeatToDay) exit loop
     end do loop
 end subroutine FileManagement
