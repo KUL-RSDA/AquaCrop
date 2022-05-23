@@ -4,6 +4,7 @@ import tempfile
 import time
 import pytest
 import numpy as np
+from utils import create_working_directory
 
 
 def is_within_one_significant_digit(str_ref, str_val):
@@ -108,7 +109,7 @@ def test_europe(row, col, use_irrigation):
         return
 
     # Create a temporary working directory for the current test
-    work_dir = tempfile.mkdtemp(dir=cwd)
+    work_dir = create_working_directory()
 
     irrigation_suffix = 'Irr' if use_irrigation else 'noIrr'
 

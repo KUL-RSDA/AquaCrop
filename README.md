@@ -64,3 +64,7 @@ pytest test_europe.py --collect-only
 # Run just two subcases of the "Europe" test case:
 pytest test_europe.py -k 'False-1-16 or True-19-0'
 ```
+
+> Note: by default, the tests will make use of temporary working directories
+  inside $TMPDIR. The location of these directories can be changed by setting
+  the `AQUACROP_TMPDIR` variable accordingly.

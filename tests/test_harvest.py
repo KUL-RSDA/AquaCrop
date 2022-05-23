@@ -8,6 +8,7 @@ import tempfile
 import time
 import pytest
 import numpy as np
+from utils import create_working_directory
 
 
 def test_harvest():
@@ -22,7 +23,7 @@ def test_harvest():
     input_dir = os.path.join(test_dir, 'INPUT')
 
     # Create a temporary working directory for the current test
-    work_dir = tempfile.mkdtemp(dir=cwd)
+    work_dir = create_working_directory()
     os.chdir(work_dir)
 
     # Create and populate the LIST, PARAM, OUTP
