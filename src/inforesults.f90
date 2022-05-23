@@ -19,7 +19,7 @@ use iso_fortran_env, only: iostat_end
 implicit none
 
 
-type rep_EventObsSim 
+type rep_EventObsSim
     real(dp) :: Obsi
         !! Undocumented
     real(dp) :: StdObsi
@@ -32,7 +32,7 @@ type rep_EventObsSim
         !! Undocumented
     integer(int32) :: YYYYi
         !! Undocumented
-end type rep_EventObsSim 
+end type rep_EventObsSim
 
 
 contains
@@ -68,7 +68,7 @@ subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
         SumSqrDsim = 0._dp
         SumSqrDiv = 0._dp
         dDeNom = 0._dp
-        do Nri = 1, Nobs 
+        do Nri = 1, Nobs
             R2tel = R2tel + (ArrayObsSim(Nri)%Obsi-ObsAver) &
                             * (ArrayObsSim(Nri)%Simi-SimAver)
             SumSqrDobs = SumSqrDobs + (ArrayObsSim(Nri)%Obsi-ObsAver)**2
@@ -147,13 +147,13 @@ subroutine StatisticAnalysis(TypeObsSim, RangeObsMin, RangeObsMax, StrNr, &
         open(newunit=fOut, file=trim(OutputName), status='old', action='read')
         read(fOut, *) ! AquaCrop Version - Date and Time
         read(fOut, *) ! title
-        read(fOut, *) ! 
+        read(fOut, *) !
         read(fOut, *) ! list of variables
         read(fOut, *) ! units
 
         ! find first day
         SkipLines = RangeObsMin - GetSimulation_FromDayNr()
-        do i = 1, SkipLines 
+        do i = 1, SkipLines
             read(fOut, *)
         end do
 
@@ -253,7 +253,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
         '    Nr        Observed    +/- St Dev     Simulated    Date'
         write(fAssm, '(a)') &
         '  ----------------------------------------------------------------'
-        do Nri = 1, Nobs 
+        do Nri = 1, Nobs
             if (ArrayObsSim(Nri)%YYYYi <= 1901) then
                 YearString = ''
             else
@@ -308,7 +308,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
         '    Nr        Observed    +/- St Dev     Simulated    Date'
         write(fAssm, '(a)') &
         '  ----------------------------------------------------------------'
-        do Nri = 1, Nobs 
+        do Nri = 1, Nobs
             if (ArrayObsSim(Nri)%YYYYi <= 1901) then
                 YearString = ''
             else
@@ -327,7 +327,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
         '  Valid observations/simulations sets (n) ....... : ', Nobs
         write(fAssm, '(a, f9.3, a)') &
         '  Average of observed Biomass production ........ : ', ObsAver, '   ton/ha'
-        write(fAssm, '(a, f9.3, a)') & 
+        write(fAssm, '(a, f9.3, a)') &
         '  Average of simulated Biomass production ....... : ', SimAver, '   ton/ha'
         write(fAssm, '(a)')
         write(fAssm, '(a, f8.2)') &
@@ -362,7 +362,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
         '    Nr        Observed    +/- St Dev     Simulated    Date'
         write(fAssm, '(a)') &
         '  ----------------------------------------------------------------'
-        do Nri = 1, Nobs 
+        do Nri = 1, Nobs
             if (ArrayObsSim(Nri)%YYYYi <= 1901) then
                 YearString = ''
             else

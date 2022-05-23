@@ -139,7 +139,7 @@ use ac_global, only:    SetSimulParam_PercRAW, &
                         SetOffSeasonFilefull, &
                         GetOffSeasonFile, &
                         NoManagementOffSeason, &
-                        SetProjectFile, & 
+                        SetProjectFile, &
                         SetProjectFilefull, &
                         GetProjectFile, &
                         SetSimulation_MultipleRun, &
@@ -210,95 +210,95 @@ subroutine InitializeSettings()
     ! Settings of Program parameters
     ! 1a. General.PAR
 
-    call SetSimulParam_PercRAW(50) ! Threshold [% of RAW] 
+    call SetSimulParam_PercRAW(50) ! Threshold [% of RAW]
                                    ! for determination of Inet
-    call SetNrCompartments(12) ! Number of soil compartments (maximum is 12) 
+    call SetNrCompartments(12) ! Number of soil compartments (maximum is 12)
                           ! (not a program parameter)
-    call SetSimulParam_CompDefThick(0.10_dp) ! Default thickness of 
+    call SetSimulParam_CompDefThick(0.10_dp) ! Default thickness of
                                              ! soil compartments [m]
-    call SetSimulParam_CropDay1(81) ! DayNumber of first day cropping period 
+    call SetSimulParam_CropDay1(81) ! DayNumber of first day cropping period
                                     ! (1..365)
-    call SetSimulParam_Tbase(10.0_dp)  ! Default base temperature (degC) below 
+    call SetSimulParam_Tbase(10.0_dp)  ! Default base temperature (degC) below
                                        ! which no crop development
-    call SetSimulParam_Tupper(30.0_dp) ! Default upper temperature threshold 
+    call SetSimulParam_Tupper(30.0_dp) ! Default upper temperature threshold
                                        ! for crop development
-    call SetSimulParam_IrriFwInSeason(100_int8) ! Percentage of soil surface 
+    call SetSimulParam_IrriFwInSeason(100_int8) ! Percentage of soil surface
                                         ! wetted by irrigation in crop season
-    call SetSimulParam_IrriFwOffSeason(100_int8) ! Percentage of soil surface 
+    call SetSimulParam_IrriFwOffSeason(100_int8) ! Percentage of soil surface
                                             ! wetted by irrigation off-season
 
     ! 1b. Soil.PAR - 6 parameters
 
-    call SetSimulParam_RunoffDepth(0.30_dp) ! considered depth (m) of 
+    call SetSimulParam_RunoffDepth(0.30_dp) ! considered depth (m) of
               ! soil profile for calculation of mean soil water content
     call SetSimulParam_CNcorrection(.true.)
     call SetSimulParam_SaltDiff(20_int8) ! salt diffusion factor (%)
     call SetSimulParam_SaltSolub(100_int8) ! salt solubility (g/liter)
     call SetSimulParam_RootNrDF(16_int8) ! shape factor capillary rise factor
-    call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be 
+    call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be
         ! changed since linked with equations for CN AMCII and CN converions
 
     ! 1c. Rainfall.PAR - 4 parameters
     call SetSimulParam_EffectiveRain_Method(EffectiveRainMethod_USDA)
-    call SetSimulParam_EffectiveRain_PercentEffRain(70_int8) ! IF Method is 
+    call SetSimulParam_EffectiveRain_PercentEffRain(70_int8) ! IF Method is
                                                              ! Percentage
-    call SetSimulParam_EffectiveRain_ShowersInDecade(2_int8) ! For estimation 
+    call SetSimulParam_EffectiveRain_ShowersInDecade(2_int8) ! For estimation
                                                           ! of surface run-off
-    call SetSimulParam_EffectiveRain_RootNrEvap(5_int8) ! For reduction of 
+    call SetSimulParam_EffectiveRain_RootNrEvap(5_int8) ! For reduction of
                                                         ! soil evaporation
 
     ! 1d. Crop.PAR  - 12 parameters
-    call SetSimulParam_EvapDeclineFactor(4_int8) ! evaporation decline 
+    call SetSimulParam_EvapDeclineFactor(4_int8) ! evaporation decline
                                                  ! factor in stage 2
     call SetSimulParam_KcWetBare(1.10_dp) ! Kc wet bare soil [-]
-    call SetSimulParam_PercCCxHIfinal(5_int8) ! CC threshold below which HI no 
+    call SetSimulParam_PercCCxHIfinal(5_int8) ! CC threshold below which HI no
                                               ! longer increase(% of 100)
-    call SetSimulParam_RootPercentZmin(70) ! Starting depth of root sine 
+    call SetSimulParam_RootPercentZmin(70) ! Starting depth of root sine
                                            ! function (% of Zmin)
     call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
-    call SetSimulParam_KsShapeFactorRoot(-6_int8) ! Shape factor for effect 
+    call SetSimulParam_KsShapeFactorRoot(-6_int8) ! Shape factor for effect
                                         ! water stress on rootzone expansion
-    call SetSimulParam_TAWGermination(20_int8) ! Soil water content (% TAW) 
+    call SetSimulParam_TAWGermination(20_int8) ! Soil water content (% TAW)
                                  ! required at sowing depth for germination
-    call SetSimulParam_pAdjFAO(1._dp) ! Adjustment factor for FAO-adjustment 
+    call SetSimulParam_pAdjFAO(1._dp) ! Adjustment factor for FAO-adjustment
                                     ! soil water depletion (p) for various ET
-    call SetSimulParam_DelayLowOxygen(3) ! number of days for full effect of 
+    call SetSimulParam_DelayLowOxygen(3) ! number of days for full effect of
                                          ! deficient aeration
-    call SetSimulParam_ExpFsen(1.00_dp) ! exponent of senescence factor 
+    call SetSimulParam_ExpFsen(1.00_dp) ! exponent of senescence factor
                 ! adjusting drop in photosynthetic activity of dying crop
-    call SetSimulParam_Beta(12_int8) ! Decrease (percentage) of p(senescence) 
+    call SetSimulParam_Beta(12_int8) ! Decrease (percentage) of p(senescence)
                                   ! once early canopy senescence is triggered
-    call SetSimulParam_ThicknessTopSWC(10_int8) ! Thickness top soil (cm) in 
+    call SetSimulParam_ThicknessTopSWC(10_int8) ! Thickness top soil (cm) in
                             ! which soil water depletion has to be determined
 
     ! 1e. Field.PAR - 1 parameter
-    call SetSimulParam_EvapZmax(30_int8) ! maximum water extraction depth by 
+    call SetSimulParam_EvapZmax(30_int8) ! maximum water extraction depth by
                                          ! soil evaporation [cm]
 
     ! 1f. Temperature.PAR - 3 parameters
-    call SetSimulParam_Tmin(12.0_dp) ! Default minimum temperature (degC) if no 
+    call SetSimulParam_Tmin(12.0_dp) ! Default minimum temperature (degC) if no
                                      ! temperature file is specified
-    call SetSimulParam_Tmax(28.0_dp) ! Default maximum temperature (degC) if no 
+    call SetSimulParam_Tmax(28.0_dp) ! Default maximum temperature (degC) if no
                                      ! temperature file is specified
     call SetSimulParam_GDDMethod(3_int8) ! Default method for GDD calculations
 
 
 
     call SetPreDay(.false.)
-    call SetIniPercTAW(50_int8) ! Default Value for Percentage TAW for Display 
+    call SetIniPercTAW(50_int8) ! Default Value for Percentage TAW for Display
                                 ! in Initial Soil Water Content Menu
 
     ! Default for soil compartments
-    if (GetNrCompartments() > max_No_compartments) then 
+    if (GetNrCompartments() > max_No_compartments) then
         ! Savety check of value in General.PAR;
         call SetNrCompartments(max_No_compartments)
     end if
-    do Nri = 1, max_No_compartments 
+    do Nri = 1, max_No_compartments
         ! required for formactivate ParamNew
         call SetCompartment_Thickness(Nri, GetSimulParam_CompDefThick())
     end do
     ! Default CropDay1 - Savety check of value in General.PAR
-    do while (GetSimulParam_CropDay1() > 365) 
+    do while (GetSimulParam_CropDay1() > 365)
         call SetSimulParam_CropDay1(GetSimulParam_CropDay1()-365)
     end do
     if (GetSimulParam_CropDay1() < 1) then
@@ -307,7 +307,7 @@ subroutine InitializeSettings()
 
     ! 2a. Ground water table
     call SetGroundWaterFile('(None)')
-    call SetGroundWaterFilefull(GetGroundWaterFile())  ! no file 
+    call SetGroundWaterFilefull(GetGroundWaterFile())  ! no file
     call SetGroundWaterDescription('no shallow groundwater table')
     call SetZiAqua(undef_int)
     call SetECiAqua(real(undef_int, kind=dp))
@@ -322,13 +322,13 @@ subroutine InitializeSettings()
                                  ! SoilLayer)) in LoadProfile
     call SetCrop_RootMin(0.30_dp) ! Minimum rooting depth (m)
     call SetCrop_RootMax(1.00_dp) ! Maximum rooting depth (m)
-    ! Crop.RootMin, RootMax, and Soil.RootMax are 
+    ! Crop.RootMin, RootMax, and Soil.RootMax are
     ! correctly calculated in LoadCrop
     call LoadProfile(GetProfFilefull())
-    call CompleteProfileDescription ! Simulation.ResetIniSWC AND 
-                        ! specify_soil_layer whcih contains 
+    call CompleteProfileDescription ! Simulation.ResetIniSWC AND
+                        ! specify_soil_layer whcih contains
                         ! PROCEDURE DeclareInitialCondAtFCandNoSalt,
-                        ! in which SWCiniFile := '(None)', and settings 
+                        ! in which SWCiniFile := '(None)', and settings
                         ! for Soil water and Salinity content
 
     ! 2c. Complete initial conditions (crop development)
@@ -358,13 +358,13 @@ subroutine InitializeSettings()
 
     ! 4. Field Management
     call SetManFile('(None)')
-    call SetManFilefull(GetManFile())  ! no file 
+    call SetManFilefull(GetManFile())  ! no file
     call NoManagement()
 
     ! 5. Climate
     ! 5.1 Temperature
     call SetTemperatureFile('(None)')
-    call SetTemperatureFilefull(GetTemperatureFile())  ! no file 
+    call SetTemperatureFilefull(GetTemperatureFile())  ! no file
     write(TempString1, '(f8.1)') GetSimulParam_Tmin()
     write(TempString2, '(f8.1)') GetSimulParam_Tmax()
     call SetTemperatureDescription('')
@@ -376,7 +376,7 @@ subroutine InitializeSettings()
 
     ! 5.2 ETo
     call SetEToFile('(None)')
-    call SetEToFilefull(GetEToFile())  ! no file 
+    call SetEToFilefull(GetEToFile())  ! no file
     call SetEToDescription('')
     call SetEToRecord_DataType(datatype_Daily)
     call SetEToRecord_NrObs(0)
@@ -386,7 +386,7 @@ subroutine InitializeSettings()
 
     ! 5.3 Rain
     call SetRainFile('(None)')
-    call SetRainFilefull(GetRainFile())  ! no file 
+    call SetRainFilefull(GetRainFile())  ! no file
     call SetRainDescription('')
     call SetRainRecord_DataType(datatype_Daily)
     call SetRainRecord_NrObs(0)
@@ -401,7 +401,6 @@ subroutine InitializeSettings()
     call GenerateCO2Description(GetCO2FileFull(), CO2descr)
     call SetCO2Description(CO2descr)
 
-
     ! 5.5 Climate file
     call SetClimateFile('(None)')
     call SetClimateFileFull(GetClimateFile())
@@ -410,23 +409,23 @@ subroutine InitializeSettings()
     ! 5.6 Set Climate and Simulation Period
     call SetClimData
     call SetSimulation_LinkCropToSimPeriod(.true.)
-    ! adjusting Crop.Day1 and Crop.DayN to ClimFile 
+    ! adjusting Crop.Day1 and Crop.DayN to ClimFile
     Crop_Day1_temp = GetCrop_Day1()
     Crop_DayN_temp = GetCrop_DayN()
     call AdjustCropYearToClimFile(Crop_Day1_temp, Crop_DayN_temp)
     call SetCrop_Day1(Crop_Day1_temp)
     call SetCrop_DayN(Crop_DayN_temp)
-    ! adjusting ClimRecord.'TO' for undefined year with 365 days 
+    ! adjusting ClimRecord.'TO' for undefined year with 365 days
     if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
         .and. (GetClimRecord_NrObs() == 365)) then
         call AdjustClimRecordTo(GetCrop_DayN())
     end if
-    ! adjusting simulation period 
+    ! adjusting simulation period
     call AdjustSimPeriod()
 
     ! 6. irrigation
     call SetIrriFile('(None)')
-    call SetIrriFilefull(GetIrriFile())  ! no file 
+    call SetIrriFilefull(GetIrriFile())  ! no file
     call NoIrrigation()
 
     ! 7. Off-season
@@ -438,7 +437,7 @@ subroutine InitializeSettings()
     call SetProjectFile('(None)')
     call SetProjectFileFull(GetProjectFile())
     call SetProjectDescription('No specific project')
-    call SetSimulation_MultipleRun(.false.) ! No sequence of simulation 
+    call SetSimulation_MultipleRun(.false.) ! No sequence of simulation
                                             ! runs in the project
     call SetSimulation_NrRuns(1)
     call SetSimulation_MultipleRunWithKeepSWC(.false.)
@@ -446,7 +445,6 @@ subroutine InitializeSettings()
     call SetMultipleProjectFile(GetProjectFile())
     call SetMultipleProjectFileFull(GetProjectFileFull())
     call SetMultipleProjectDescription(GetProjectDescription())
-
 
     ! 9. Observations file
     call SetObservationsFile('(None)')
@@ -480,11 +478,10 @@ subroutine InitializeSettings()
     call SetSimulation_EvapLimitON(.false.)
     call SetMaxPlotNew(50)
     call SetMaxPlotTr(10_int8)
-    call SetSimulation_InitialStep(10) ! Length of period (days) for displaying 
+    call SetSimulation_InitialStep(10) ! Length of period (days) for displaying
                                     ! intermediate results during simulation run
-    call SetSimulation_LengthCuttingInterval(40) ! Default length of 
+    call SetSimulation_LengthCuttingInterval(40) ! Default length of
                                                  ! cutting interval (days)
 end subroutine InitializeSettings
-
 
 end module ac_initialsettings

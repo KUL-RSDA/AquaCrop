@@ -87,6 +87,7 @@ subroutine CheckForPrint_wrap(TheProjectFile, strlen)
     call CheckForPrint(string)
 end subroutine CheckForPrint_wrap
 
+
 subroutine fDaily_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
     integer(int32), intent(in) :: filename_len
@@ -207,7 +208,6 @@ subroutine fTempSIM_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
 end subroutine fTempSIM_open_wrap
 
 
-
 function fEToSIM_read_wrap() result(line_ptr)
     type(c_ptr) :: line_ptr
 
@@ -283,6 +283,7 @@ function fCuts_eof_wrap() result(eof)
 
     eof = fCuts_eof()
 end function fCuts_eof_wrap
+
 
 subroutine fObs_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     type(c_ptr), intent(in) :: filename_ptr
@@ -372,12 +373,14 @@ function GetCutInfoRecord1_NoMoreInfo_wrap() result(NoMoreInfo_f)
     NoMoreInfo_f = GetCutInfoRecord1_NoMoreInfo()
 end function GetCutInfoRecord1_NoMoreInfo_wrap
 
+
 function GetCutInfoRecord2_NoMoreInfo_wrap() result(NoMoreInfo_f)
 
     logical(1) :: NoMoreInfo_f
 
     NoMoreInfo_f = GetCutInfoRecord2_NoMoreInfo()
 end function GetCutInfoRecord2_NoMoreInfo_wrap
+
 
 function GetIrriInfoRecord1_NoMoreInfo_wrap() result(NoMoreInfo_f)
 
@@ -386,12 +389,14 @@ function GetIrriInfoRecord1_NoMoreInfo_wrap() result(NoMoreInfo_f)
     NoMoreInfo_f = GetIrriInfoRecord1_NoMoreInfo()
 end function GetIrriInfoRecord1_NoMoreInfo_wrap
 
+
 function GetIrriInfoRecord2_NoMoreInfo_wrap() result(NoMoreInfo_f)
 
     logical(1) :: NoMoreInfo_f
 
     NoMoreInfo_f = GetIrriInfoRecord2_NoMoreInfo()
 end function GetIrriInfoRecord2_NoMoreInfo_wrap
+
 
 function GetTransfer_Mobilize_wrap() result(Mobilize_f)
 
@@ -400,6 +405,7 @@ function GetTransfer_Mobilize_wrap() result(Mobilize_f)
     Mobilize_f = GetTransfer_Mobilize()
 end function GetTransfer_Mobilize_wrap
 
+
 function GetTransfer_Store_wrap() result(Store_f)
 
     logical(1) :: Store_f
@@ -407,14 +413,16 @@ function GetTransfer_Store_wrap() result(Store_f)
     Store_f = GetTransfer_Store()
 end function GetTransfer_Store_wrap
 
+
 subroutine SetCutInfoRecord1_NoMoreInfo_wrap(NoMoreInfo)
     logical(1), intent(in) :: NoMoreInfo
 
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetCutInfoRecord1_NoMoreInfo(NoMoreInfo_f)    
+    call SetCutInfoRecord1_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetCutInfoRecord1_NoMoreInfo_wrap
+
 
 subroutine SetCutInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
     logical(1), intent(in) :: NoMoreInfo
@@ -422,8 +430,9 @@ subroutine SetCutInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetCutInfoRecord2_NoMoreInfo(NoMoreInfo_f)    
+    call SetCutInfoRecord2_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetCutInfoRecord2_NoMoreInfo_wrap
+
 
 subroutine SetIrriInfoRecord1_NoMoreInfo_wrap(NoMoreInfo)
     logical(1), intent(in) :: NoMoreInfo
@@ -431,8 +440,9 @@ subroutine SetIrriInfoRecord1_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetIrriInfoRecord1_NoMoreInfo(NoMoreInfo_f)    
+    call SetIrriInfoRecord1_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetIrriInfoRecord1_NoMoreInfo_wrap
+
 
 subroutine SetIrriInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
     logical(1), intent(in) :: NoMoreInfo
@@ -440,8 +450,9 @@ subroutine SetIrriInfoRecord2_NoMoreInfo_wrap(NoMoreInfo)
     logical :: NoMoreInfo_f
 
     NoMoreInfo_f = NoMoreInfo
-    call SetIrriInfoRecord2_NoMoreInfo(NoMoreInfo_f)    
+    call SetIrriInfoRecord2_NoMoreInfo(NoMoreInfo_f)
 end subroutine SetIrriInfoRecord2_NoMoreInfo_wrap
+
 
 subroutine SetTransfer_Mobilize_wrap(Mobilize)
     logical(1), intent(in) :: Mobilize
@@ -449,8 +460,9 @@ subroutine SetTransfer_Mobilize_wrap(Mobilize)
     logical :: Mobilize_f
 
     Mobilize_f = Mobilize
-    call SetTransfer_Mobilize(Mobilize_f)    
+    call SetTransfer_Mobilize(Mobilize_f)
 end subroutine SetTransfer_Mobilize_wrap
+
 
 subroutine SetTransfer_Store_wrap(Store)
     logical(1), intent(in) :: Store
@@ -458,7 +470,7 @@ subroutine SetTransfer_Store_wrap(Store)
     logical :: Store_f
 
     Store_f = Store
-    call SetTransfer_Store(Store_f)    
+    call SetTransfer_Store(Store_f)
 end subroutine SetTransfer_Store_wrap
 
 
@@ -470,7 +482,7 @@ function GetfEval_filename_wrap() result(filename_ptr)
     filename = GetfEval_filename()
     filename_ptr = string2pointer(filename)
 end function GetfEval_filename_wrap
-    
+
 
 subroutine SetfEval_filename_wrap(filename_ptr, strlen)
     type(c_ptr), intent(in) :: filename_ptr
@@ -496,6 +508,7 @@ subroutine fEval_open_wrap(filename_ptr, filename_len, mode_ptr, mode_len)
     mode = pointer2string(mode_ptr, mode_len)
     call fEval_open(filename, mode)
 end subroutine fEval_open_wrap
+
 
 subroutine InitializeSimulation_wrap(TheProjectFileStr,strlen, TheProjectType)
     type(c_ptr), intent(in) :: TheProjectFileStr
@@ -537,10 +550,8 @@ subroutine SetGlobalIrriECw_wrap(GlobalIrriECw_in)
     logical :: GlobalIrriECw_f
 
     GlobalIrriECw_f = GlobalIrriECw_in
-    call SetGlobalIrriECw(GlobalIrriECw_f)    
+    call SetGlobalIrriECw(GlobalIrriECw_f)
 end subroutine SetGlobalIrriECw_wrap
-
-
 
 
 subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
@@ -591,7 +602,6 @@ subroutine WriteTheResults_wrap(ANumber, Day1, Month1, Year1, DayN, MonthN, &
 end subroutine WriteTheResults_wrap
 
 
-
 function GetStartMode_wrap() result(StartMode_f)
 
     logical(1) :: StartMode_f
@@ -627,6 +637,7 @@ subroutine SetWaterTableInProfile_wrap(WaterTableInProfile_in)
     call SetWaterTableInProfile(WaterTableInProfile_f)
 end subroutine SetWaterTableInProfile_wrap
 
+
 function GetNoMoreCrop_wrap() result(NoMoreCrop_f)
 
     logical(1) :: NoMoreCrop_f
@@ -644,6 +655,7 @@ subroutine SetNoMoreCrop_wrap(NoMoreCrop_in)
     call SetNoMoreCrop(NoMoreCrop_f)
 end subroutine SetNoMoreCrop_wrap
 
+
 function GetCGCadjustmentAfterCutting_wrap() result(CGCadjustmentAfterCutting_f)
 
     logical(1) :: CGCadjustmentAfterCutting_f
@@ -660,6 +672,7 @@ subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
     CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
     call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
 end subroutine SetCGCadjustmentAfterCutting_wrap
+
 
 function GetTheProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_run:GetTheProjectFile]] for foreign languages.
@@ -681,7 +694,6 @@ subroutine SetTheProjectFile_wrap(TheProjectFile, strlen)
 end subroutine SetTheProjectFile_wrap
 
 
-
 function GetNoYear_wrap() result(NoYear_f)
 
     logical(1) :: NoYear_f
@@ -696,7 +708,7 @@ subroutine SetNoYear_wrap(NoYear_in)
     logical :: NoYear_f
 
     NoYear_f = NoYear_in
-    call SetNoYear(NoYear_f)    
+    call SetNoYear(NoYear_f)
 end subroutine SetNoYear_wrap
 
 
@@ -710,7 +722,6 @@ subroutine WriteSimPeriod_wrap(NrRun, TheProjectFile_ptr, strlen)
     TheProjectFile = pointer2string(TheProjectFile_ptr, strlen)
     call WriteSimPeriod(NrRun, TheProjectFile)
 end subroutine WriteSimPeriod_wrap
-
 
 
 subroutine WriteIntermediatePeriod_wrap(TheProjectFile_ptr, strlen)
@@ -746,6 +757,7 @@ subroutine InitializeTransferAssimilates_wrap(Bin, Bout, AssimToMobilize, &
     MobilizationON = MobilizationON_f
 end subroutine InitializeTransferAssimilates_wrap
 
+
 subroutine FinalizeRun1_wrap(NrRun,TheProjectFile,strlen, TheProjectType)
     integer(int8), intent(in) :: NrRun
     type(c_ptr), intent(in) :: TheProjectFile
@@ -769,7 +781,5 @@ subroutine RunSimulation_wrap(p, strlen, TheProjectType)
     string = pointer2string(p, strlen)
     call RunSimulation(string, TheProjectType)
 end subroutine RunSimulation_wrap
-
-
 
 end module ac_interface_run

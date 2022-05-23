@@ -7,7 +7,7 @@ interface
 uses interface_global;
 
 
-type 
+type
     rep_EventObsSim = Record
         Obsi : double;
         StdObsi : double;
@@ -38,7 +38,6 @@ procedure StatisticAnalysis_wrap(
                     var NRMSE, NScoeff, IndexAg : double;
                     var ArrayObsSim : rep_ArrayObsSim);
     external 'aquacrop' name '__ac_interface_inforesults_MOD_statisticanalysis_wrap';
-
 
 procedure WriteAssessmentSimulation(StrNr,totalnameEvalStat : string;
                                     TheProjectType : repTypeProject;
@@ -71,7 +70,7 @@ begin
     int_typeObsSim := ord(TypeObsSim);
     p := PChar(StrNr);
     strlen := Length(StrNr);
-    StatisticAnalysis_wrap(int_TypeObsSim, RangeObsMin, RangeObsMax, p, strlen, 
+    StatisticAnalysis_wrap(int_TypeObsSim, RangeObsMin, RangeObsMax, p, strlen,
                            Nobs, ObsAver, SimAver, PearsonCoeff, RMSE, NRMSE,
                            NScoeff, IndexAg, ArrayObsSim);
 end;
@@ -100,4 +99,3 @@ initialization
 
 
 end.
-

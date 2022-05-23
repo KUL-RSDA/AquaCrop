@@ -79,11 +79,11 @@ real(dp) function Bnormalized_wrap(&
     integer(intEnum), intent(in) :: TheModeCycle
     logical(1), intent(in) :: FertilityStressOn
     logical(1), intent(in) :: TestRecord
-   
+
     logical :: bool_fertilitystresson, bool_testrecord
 
     bool_fertilitystresson = FertilityStressOn
-    bool_testrecord = TestRecord 
+    bool_testrecord = TestRecord
 
     Bnormalized_wrap = Bnormalized(TheDaysToCCini,TheGDDaysToCCini,&
             L0,L12,L12SF,L123,L1234,LFlor,GDDL0,GDDL12,GDDL12SF,&
@@ -99,6 +99,7 @@ real(dp) function Bnormalized_wrap(&
             bool_testrecord)
 end function Bnormalized_wrap
 
+
 subroutine LoadSimulationRunProject_wrap(NameFileFull, strlen, NrRun)
     !! Wrapper
     type(c_ptr), intent(in) :: NameFileFull
@@ -110,6 +111,7 @@ subroutine LoadSimulationRunProject_wrap(NameFileFull, strlen, NrRun)
     string = pointer2string(NameFileFull, strlen)
     call LoadSimulationRunProject(string, NrRun)
 end subroutine LoadSimulationRunProject_wrap
+
 
 real(dp) function BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,&
            TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
@@ -233,7 +235,7 @@ subroutine StressBiomassRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp), intent(inout) :: BM70
 
     logical :: bool_cropdeterm
- 
+
     bool_cropdeterm = CropDeterm
 
     call StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
@@ -319,6 +321,5 @@ subroutine CCxSaltStressRelationship_wrap(TheDaysToCCini, TheGDDaysToCCini,&
        Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
        Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
 end subroutine CCxSaltStressRelationship_wrap
-
 
 end module ac_interface_tempprocessing
