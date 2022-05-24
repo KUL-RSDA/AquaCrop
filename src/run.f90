@@ -7320,6 +7320,7 @@ subroutine AdvanceOneTimeStep()
     end if
 end subroutine AdvanceOneTimeStep
 
+
 subroutine ReadClimateNextDay()
     
     real(dp) :: ETo_tmp
@@ -7350,6 +7351,7 @@ subroutine ReadClimateNextDay()
     end if
 end subroutine ReadClimateNextDay
 
+
 subroutine SetGDDVariablesNextDay()
     
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
@@ -7362,6 +7364,7 @@ subroutine SetGDDVariablesNextDay()
         end if
     end if
 end subroutine SetGDDVariablesNextDay
+
 
 subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
     integer(int8), intent(in) :: NrRun
