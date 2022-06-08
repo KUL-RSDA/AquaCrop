@@ -4776,7 +4776,8 @@ end subroutine WriteTheResults
 
 
 subroutine InitializeSimulationRunPart1()
-
+    !! Part1 (before reading the climate) of the initialization of a run
+    !! Initializes parameters and states
     integer(int32) :: DNr1, DNr2
     real(dp) :: fWeed, fi
     integer(int8) :: Cweed
@@ -5028,7 +5029,7 @@ end subroutine InitializeSimulationRunPart1
 
 
 subroutine InitializeClimate()
-
+    !! Creates the Climate SIM files and reads climate of first day 
     ! 10. Climate
     ! create climate files
     call CreateDailyClimFiles(GetSimulation_FromDayNr(), &
@@ -5039,6 +5040,8 @@ end subroutine InitializeClimate
 
 
 subroutine InitializeSimulationRunPart2()
+    !! Part2 (after reading the climate) of the initialization of a run
+    !! Initializes parameters and states
 
     integer(int32) :: tHImax, Dayi, DayCC
     real(dp) :: SumGDDforDayCC
