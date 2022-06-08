@@ -6573,6 +6573,10 @@ end subroutine WriteEvaluationData
 
 
 subroutine InitializeRunPart1(NrRun, TheProjectType)
+    !! Part1 (before reading the climate) of the run initialization
+    !! Loads the run input from the project file
+    !! Initializes parameters and states
+    !! Calls InitializeSimulationRunPart1
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
@@ -6664,6 +6668,9 @@ end subroutine InitializeRunPart1
 
 
 subroutine InitializeRunPart2(NrRun, TheProjectType)
+    !! Part2 (after reading the climate) of the run initialization
+    !! Calls InitializeSimulationRunPart2
+    !! Initializes write out for the run
 
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
