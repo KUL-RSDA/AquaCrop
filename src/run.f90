@@ -5033,6 +5033,7 @@ subroutine InitializeClimate()
     !! Creates the Climate SIM files and reads climate of first day 
     ! 10. Climate
     ! create climate files
+
     call CreateDailyClimFiles(GetSimulation_FromDayNr(), &
                GetSimulation_ToDayNr())
     ! climatic data for first day
