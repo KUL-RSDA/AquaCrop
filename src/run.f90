@@ -4775,19 +4775,16 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
 end subroutine WriteTheResults
 
 
-subroutine InitializeSimulationRun()
+subroutine InitializeSimulationRunPart1()
 
-    integer(int32) :: tHImax, DNr1, DNr2, Dayi, DayCC
-    real(dp) :: SumGDDforDayCC
-    real(dp) :: CCiniMin, CCiniMax, RatDGDD, fWeed, fi
+    integer(int32) :: DNr1, DNr2
+    real(dp) :: fWeed, fi
     integer(int8) :: Cweed
     integer(int32) :: Day1, Month1, Year1
     integer(int8) :: FertStress
-    real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
     type(rep_GwTable) :: GwTable_temp
     integer(int8) :: RedCGC_temp, RedCCX_temp, RCadj_temp
     type(rep_EffectStress) :: EffectStress_temp
-    real(dp) :: SumGDD_temp, SumGDDFromDay1_temp
     logical :: bool_temp
     integer(int32) :: Crop_DaysToFullCanopySF_temp
     logical :: WaterTableInProfile_temp
@@ -5027,6 +5024,10 @@ subroutine InitializeSimulationRun()
     call SetDayNri(GetSimulation_FromDayNr())
     call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) ! start simulation run
     call SetNoYear((Year1 == 1901));  ! for output file
+end subroutine InitializeSimulationRunPart1
+
+
+subroutine InitializeClimate()
 
     ! 10. Climate
     ! create climate files
@@ -5034,6 +5035,16 @@ subroutine InitializeSimulationRun()
                GetSimulation_ToDayNr())
     ! climatic data for first day
     call OpenClimFilesAndGetDataFirstDay(GetDayNri())
+end subroutine InitializeClimate
+
+
+subroutine InitializeSimulationRunPart2()
+
+    integer(int32) :: tHImax, Dayi, DayCC
+    real(dp) :: SumGDDforDayCC
+    real(dp) :: CCiniMin, CCiniMax, RatDGDD
+    real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
+    real(dp) :: SumGDD_temp, SumGDDFromDay1_temp
 
     ! Sum of GDD before start of simulation
     call SetSimulation_SumGDD(0._dp)
@@ -5451,7 +5462,7 @@ subroutine InitializeSimulationRun()
     call SetStartMode(.true.)
     call SetStressLeaf(real(undef_int, kind=dp))
     call SetStressSenescence(real(undef_int, kind=dp))
-end subroutine InitializeSimulationRun
+end subroutine InitializeSimulationRunPart2
 
 
 subroutine CreateEvalData(NrRun)
@@ -6558,7 +6569,7 @@ subroutine WriteEvaluationData(DAP)
 end subroutine WriteEvaluationData
 
 
-subroutine InitializeRun(NrRun, TheProjectType)
+subroutine InitializeRunPart1(NrRun, TheProjectType)
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
@@ -6591,20 +6602,7 @@ subroutine InitializeRun(NrRun, TheProjectType)
     PreviousSum_temp = GetPreviousSum()
     call ResetPreviousSum(PreviousSum_temp)
     call SetPreviousSum(PreviousSum_temp)
-    call InitializeSimulationRun()
-
-    if (GetOutDaily()) then
-        call WriteTitleDailyResults(TheProjectType, NrRun)
-    end if
-
-    if (GetPart1Mult()) then
-        call WriteTitlePart1MultResults(TheProjectType, NrRun)
-    end if
-
-    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-        call CreateEvalData(NrRun)
-    end if
-
+    call InitializeSimulationRunPart1()
 
     contains
 
@@ -6659,7 +6657,28 @@ subroutine InitializeRun(NrRun, TheProjectType)
             end if
         end if
     end subroutine AdjustCompartments
-end subroutine InitializeRun
+end subroutine InitializeRunPart1
+
+
+subroutine InitializeRunPart2(NrRun, TheProjectType)
+
+    integer(int8), intent(in) :: NrRun
+    integer(intEnum), intent(in) :: TheProjectType
+    
+    call InitializeSimulationRunPart2()
+
+    if (GetOutDaily()) then
+        call WriteTitleDailyResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart1Mult()) then
+        call WriteTitlePart1MultResults(TheProjectType, NrRun)
+    end if
+
+    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+        call CreateEvalData(NrRun)
+    end if
+end subroutine InitializeRunPart2
 
 
 !--------duplicate nested in AdvanceOneTimeStep and FinalizeRun1----------!
@@ -7767,7 +7786,9 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
     end select
 
     do NrRun = 1, NrRuns
-        call InitializeRun(NrRun, TheProjectType)
+        call InitializeRunPart1(NrRun, TheProjectType)
+        call InitializeClimate()
+        call InitializeRunPart2(NrRun, TheProjectType)
         call FileManagement()
         call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
         call FinalizeRun2(NrRun, TheProjectType)
