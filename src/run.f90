@@ -4778,6 +4778,7 @@ end subroutine WriteTheResults
 subroutine InitializeSimulationRunPart1()
     !! Part1 (before reading the climate) of the initialization of a run
     !! Initializes parameters and states
+
     integer(int32) :: DNr1, DNr2
     real(dp) :: fWeed, fi
     integer(int8) :: Cweed
@@ -6671,7 +6672,6 @@ subroutine InitializeRunPart2(NrRun, TheProjectType)
     !! Part2 (after reading the climate) of the run initialization
     !! Calls InitializeSimulationRunPart2
     !! Initializes write out for the run
-
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
     
