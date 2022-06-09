@@ -1352,12 +1352,19 @@ procedure WriteIntermediatePeriod_wrap( constref TheProjectFile_ptr : PChar;
                                         constref strlen : integer);
     external 'aquacrop' name '__ac_interface_run_MOD_writeintermediateperiod_wrap';
 
-procedure InitializeRun(constref NrRun : ShortInt;
-                        constref TheProjectType : repTypeProject);
+procedure InitializeRunPart1(constref NrRun : ShortInt;
+                             constref TheProjectType : repTypeProject);
 
-procedure _InitializeRun(constref NrRun : ShortInt;
-                         constref TheProjectType : integer);
-    external 'aquacrop' name '__ac_run_MOD_initializerun';
+procedure _InitializeRunPart1(constref NrRun : ShortInt;
+                              constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_initializerunpart1';
+
+procedure InitializeRunPart2(constref NrRun : ShortInt;
+                             constref TheProjectType : repTypeProject);
+
+procedure _InitializeRunPart2(constref NrRun : ShortInt;
+                              constref TheProjectType : integer);
+    external 'aquacrop' name '__ac_run_MOD_initializerunpart2';
 
 procedure RecordHarvest(constref NrCut : integer;
                         constref DayInSeason : integer)
@@ -1404,13 +1411,23 @@ begin
 end;
 
 
-procedure InitializeRun(constref NrRun : ShortInt;
-                        constref TheProjectType : repTypeProject);
+procedure InitializeRunPart1(constref NrRun : ShortInt;
+                             constref TheProjectType : repTypeProject);
 var
     int_typeproject : integer;
 begin
     int_typeproject := ord(TheProjectType);
-    _InitializeRun(NrRun, int_typeproject);
+    _InitializeRunPart1(NrRun, int_typeproject);
+end;
+
+
+procedure InitializeRunPart2(constref NrRun : ShortInt;
+                             constref TheProjectType : repTypeProject);
+var
+    int_typeproject : integer;
+begin
+    int_typeproject := ord(TheProjectType);
+    _InitializeRunPart2(NrRun, int_typeproject);
 end;
 
 

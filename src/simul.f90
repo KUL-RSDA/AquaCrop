@@ -4248,6 +4248,7 @@ end function WCEvapLayer
 subroutine PrepareStage2()
 
     integer(intEnum) :: AtTheta
+    integer(int8) :: EvapStartStg2
     real(dp) :: WSAT, WFC, Wact
 
     call SetSimulation_EvapZ(EvapZmin/100)
@@ -4257,12 +4258,14 @@ subroutine PrepareStage2()
     WFC = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
     AtTheta = whichtheta_AtAct
     Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
-    call SetSimulation_EvapStartStg2(roundc(100._dp &
-          * (Wact - (WFC-GetSoil_REW()))/(WSAT-(WFC-GetSoil_REW())), &
-                                                      mold=1_int8))
-    if (GetSimulation_EvapStartStg2() < 0) then
-        call SetSimulation_EvapStartStg2(0_int8)
+
+    if ((Wact - (WFC-GetSoil_REW())) < 0._dp) then
+        EvapStartStg2 = 0_int8
+    else
+        EvapStartStg2 = roundc(100._dp * (Wact - (WFC-GetSoil_REW())) &
+                               / (WSAT - (WFC-GetSoil_REW())), mold=1_int8)
     end if
+    call SetSimulation_EvapStartStg2(EvapStartStg2)
 end subroutine PrepareStage2
 
 
