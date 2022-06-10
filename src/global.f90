@@ -4819,6 +4819,8 @@ end subroutine ResetSWCToFC
 
 
 subroutine LoadCrop(FullName)
+    !! Reads in crop data from the given file.
+    !! Further initializations happen via a call to LoadCropProcessing().
     character(len=*), intent(in) :: FullName
 
     integer :: fhandle
@@ -4944,16 +4946,6 @@ subroutine LoadCrop(FullName)
                           ! to soil salinity stress NO LONGER VALID
     end if
 
-    ! continue with soil fertility/salinity stress
-    if ((GetCrop_StressResponse_ShapeCGC() > 24.9_dp) &
-                .and. (GetCrop_StressResponse_ShapeCCX() > 24.9_dp) &
-                .and. (GetCrop_StressResponse_ShapeWP() > 24.9_dp) &
-                .and. (GetCrop_StressResponse_ShapeCDecline() > 24.9_dp)) then
-        call SetCrop_StressResponse_Calibrated(.false.)
-    else
-        call SetCrop_StressResponse_Calibrated(.true.)
-    end if
-
     ! temperature stress
     read(fhandle, *) TempShortInt   ! Minimum air temperature below which
                                     ! pollination starts to fail
@@ -5037,10 +5029,6 @@ subroutine LoadCrop(FullName)
     end if
     read(fhandle, *) TempInt
     call SetCrop_PlantingDens(TempInt)
-    call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
-                        * (GetCrop_SizeSeedling()/10000._dp))
-    call SetCrop_CCini((GetCrop_PlantingDens()/10000._dp) &
-                        * (GetCrop_SizePlant()/10000._dp))
     read(fhandle, *) TempDouble
     call SetCrop_CGC(TempDouble)
 
@@ -5313,6 +5301,30 @@ subroutine LoadCrop(FullName)
         end if
     end if
     close(fhandle)
+
+    call LoadCropProcessing()
+end subroutine LoadCrop
+
+
+subroutine LoadCropProcessing()
+    !! Further initializations after crop profile attributes have been set
+    !! (e.g. via a call to LoadProfile()).
+
+    ! continue with soil fertility/salinity stress
+    if ((GetCrop_StressResponse_ShapeCGC() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeCCX() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeWP() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeCDecline() > 24.9_dp)) then
+        call SetCrop_StressResponse_Calibrated(.false.)
+    else
+        call SetCrop_StressResponse_Calibrated(.true.)
+    end if
+
+    call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
+                        * (GetCrop_SizeSeedling()/10000._dp))
+    call SetCrop_CCini((GetCrop_PlantingDens()/10000._dp) &
+                        * (GetCrop_SizePlant()/10000._dp))
+
     ! maximum rooting depth in given soil profile
     call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(),&
                                               GetSoil_NrSoilLayers(),&
@@ -5330,8 +5342,7 @@ subroutine LoadCrop(FullName)
         call SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int)
         call SetCropFileSet_GDDaysToHarvest(undef_int)
     end if
-
-end subroutine LoadCrop
+end subroutine LoadCropProcessing
 
 
 real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, &

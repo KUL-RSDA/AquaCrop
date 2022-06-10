@@ -251,7 +251,8 @@ use ac_global , only: undef_int, &
                       setrainrecord,&
                       setobservationsdescription,&
                       adjustclimrecordto,&
-                      loadcrop,&
+                      LoadCrop, &
+                      LoadCropProcessing, &
                       setsimulation_todaynr,&
                       noirrigation,&
                       setsimulation_thetaini_i,&
@@ -2223,6 +2224,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     read(f0, *, iostat=rc) TempString  ! PathCropFile
     if (GetCropFile() == '(None)') then
         call SetCropFilefull(GetCropFile())
+        call LoadCropProcessing()
     else
         call SetCropFilefull(trim(TempString)//GetCropFile())
         call LoadCrop(GetCropFilefull())
