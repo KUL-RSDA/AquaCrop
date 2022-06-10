@@ -6662,7 +6662,7 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
                            ConstZrxForRun)
     !! @NOTE This procedure will try to read from crop and soil profile files.
     !! If those files do not exist, the necessary information is gathered from
-    !! Crop and Soil global variable attributes instead. 
+    !! Crop and Soil global variable attributes instead.
     character(len=*), intent(in) :: FullNameProjectFile
     integer(int32), intent(in) :: TotalNrOfRuns
     logical, intent(inout) :: RunWithKeepSWC
@@ -7580,6 +7580,8 @@ end subroutine CompleteProfileDescription
 
 
 subroutine LoadProfile(FullName)
+    !! Reads in soil data from the given file.
+    !! Further initializations happen via a call to LoadProfileProcessing().
     character(len=*), intent(in) :: FullName
 
     integer :: fhandle
@@ -7589,10 +7591,9 @@ subroutine LoadProfile(FullName)
     integer(int8) :: TempShortInt
     character(len=1024) :: ProfDescriptionLocal
     real(dp) :: thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp
-    real(dp) :: cra_temp, crb_temp, dx_temp
+    real(dp) :: cra_temp, crb_temp
     character(len=25) :: description_temp
     integer(int8) :: penetrability_temp, gravelm_temp
-    real(dp), dimension(11) :: saltmob_temp
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, *) ProfDescriptionLocal
@@ -7602,8 +7603,6 @@ subroutine LoadProfile(FullName)
     call SetSoil_CNvalue(TempShortInt)
     read(fhandle, *) TempShortInt
     call SetSoil_REW(TempShortInt)
-    call SetSimulation_SurfaceStorageIni(0.0_dp)
-    call SetSimulation_ECStorageIni(0.0_dp)
     read(fhandle, *) TempShortInt
     call SetSoil_NrSoilLayers(TempShortInt)
     read(fhandle, *) ! depth of restrictive soil layer which is no longer applicable
@@ -7667,7 +7666,32 @@ subroutine LoadProfile(FullName)
                                                     GetSoilLayer_GravelMass(i)))
             end if
         end if
+    end do
 
+    close(fhandle)
+    call LoadProfileProcessing(FullName)
+end subroutine LoadProfile
+
+
+subroutine LoadProfileProcessing(FullName)
+    !! Further initializations after soil profile attributes have been set
+    !! (e.g. via a call to LoadProfile()). The given file is only read to
+    !! obtain the version number.
+    character(len=*), intent(in) :: FullName
+
+    integer(int32) :: i, fhandle
+    real(dp) :: cra_temp, crb_temp, dx_temp, VersionNr
+    real(dp), dimension(11) :: saltmob_temp
+
+    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
+    read(fhandle, '(a)')  ! description
+    read(fhandle, *) VersionNr  ! AquaCrop version
+    close(fhandle)
+
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+
+    do i = 1, GetSoil_NrSoilLayers()
         ! determine drainage coefficient
         call SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_InfRate(i)))
 
@@ -7713,12 +7737,11 @@ subroutine LoadProfile(FullName)
         end if
     end do
 
-    close(fhandle)
     call DetermineNrandThicknessCompartments()
     call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
                                               GetSoil_NrSoilLayers(), &
                                               GetSoilLayer()))
-end subroutine LoadProfile
+end subroutine LoadProfileProcessing
 
 
 subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
