@@ -38,7 +38,8 @@ use ac_global , only: undef_int, &
                       AdjustOnsetSearchPeriod, &
                       adjustcropyeartoclimfile, &
                       GenerateCO2Description, &
-                      LoadProfile,&
+                      LoadProfile, &
+                      LoadProfileProcessing, &
                       LoadClim, &
                       LoadIrriScheduleInfo,&
                       LoadManagement, &
@@ -2381,7 +2382,9 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     else
         ! start with load and complete profile description (see 5.) which reset
         ! SWC to FC by default
-        if (GetProfFile() /= '(None)') then
+        if (GetProfFile() == '(None)') then
+            call LoadProfileProcessing(GetProfFilefull())
+        else
             call LoadProfile(GetProfFilefull())
         end if
         call CompleteProfileDescription
