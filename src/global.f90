@@ -6660,6 +6660,9 @@ end subroutine AdjustSizeCompartments
 
 subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
                            ConstZrxForRun)
+    !! @NOTE This procedure will try to read from crop and soil profile files.
+    !! If those files do not exist, the necessary information is gathered from
+    !! Crop and Soil global variable attributes instead. 
     character(len=*), intent(in) :: FullNameProjectFile
     integer(int32), intent(in) :: TotalNrOfRuns
     logical, intent(inout) :: RunWithKeepSWC
@@ -6700,8 +6703,12 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     read(fhandle0, *) ! info Soil file
     read(fhandle0, *) FileName
     read(fhandle0, *) PathName
-    FullFileName = trim(PathName) // trim(FileName)
-    call LoadProfile(FullFileName)
+
+    if (trim(FileName) /= '(None)') then
+        FullFileName = trim(PathName) // trim(FileName)
+        call LoadProfile(FullFileName)
+    end if
+
     TheNrSoilLayers = GetSoil_NrSoilLayers()
     TheSoilLayer = GetSoilLayer()
 
@@ -6755,36 +6762,43 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
             read(fhandle0, *) ! Crop file title
             read(fhandle0, *) FileName
             read(fhandle0, *) PathName
-            FullFileName = trim(PathName) // trim(FileName)
-            open(newunit=fhandlex, file=trim(FullFileName), &
-                                    status='old', action ='read')
-            read(fhandlex, *) ! description
-            read(fhandlex, *) VersionNrCrop
-            if (roundc(VersionNrCrop*10, mold=1) <= 31) then
-                do i = 1, 29
-                    read(fhandlex, *)  ! no Salinity stress
-                        ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
-                end do
+
+            if (trim(FileName) == '(None)') then
+                Zrxi = GetCrop_RootMax()
             else
-                if (roundc(VersionNrCrop*10, mold=1) <= 50) then
-                    do i = 1, 32
-                        read(fhandlex, *) ! no distortion to salinity and
-                                          ! response to ECsw factor
+                FullFileName = trim(PathName) // trim(FileName)
+                open(newunit=fhandlex, file=trim(FullFileName), &
+                                        status='old', action ='read')
+                read(fhandlex, *) ! description
+                read(fhandlex, *) VersionNrCrop
+                if (roundc(VersionNrCrop*10, mold=1) <= 31) then
+                    do i = 1, 29
+                        read(fhandlex, *)  ! no Salinity stress
+                            ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
                     end do
                 else
-                    do i = 1, 34
-                        read(fhandlex, *)
-                    end do
+                    if (roundc(VersionNrCrop*10, mold=1) <= 50) then
+                        do i = 1, 32
+                            read(fhandlex, *) ! no distortion to salinity and
+                                              ! response to ECsw factor
+                        end do
+                    else
+                        do i = 1, 34
+                            read(fhandlex, *)
+                        end do
+                    end if
                 end if
+                read(fhandlex, *) Zrni ! minimum rooting depth
+                read(fhandlex, *) Zrxi ! maximum rooting depth
+                close(fhandlex)
             end if
-            read(fhandlex, *) Zrni ! minimum rooting depth
-            read(fhandlex, *) Zrxi ! maximum rooting depth
+
             ZrSoili = RootMaxInSoilProfile(Zrxi, TheNrSoilLayers, &
                                            TheSoilLayer)
             if (ZrSoili > ConstZrxForRun) then
                 ConstZrxForRun = ZrSoili
             end if
-            close(fhandlex)
+
             ! Remaining files: Irri (3), Field (3), Soil (3), Gwt (3),
             ! Inni (3), Off (3) and FieldData (3) file
             do i = 1, 21
