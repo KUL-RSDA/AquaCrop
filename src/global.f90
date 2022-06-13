@@ -7680,24 +7680,19 @@ subroutine LoadProfile(FullName)
     end do
 
     close(fhandle)
-    call LoadProfileProcessing(FullName)
+    call LoadProfileProcessing(VersionNr)
 end subroutine LoadProfile
 
 
-subroutine LoadProfileProcessing(FullName)
+subroutine LoadProfileProcessing(VersionNr)
     !! Further initializations after soil profile attributes have been set
-    !! (e.g. via a call to LoadProfile()). The given file is only read to
-    !! obtain the version number.
-    character(len=*), intent(in) :: FullName
+    !! (e.g. via a call to LoadProfile()).
+    real(dp), intent(in) :: VersionNr
+        !! AquaCrop Version (e.g. 7.0)
 
-    integer(int32) :: i, fhandle
-    real(dp) :: cra_temp, crb_temp, dx_temp, VersionNr
+    integer(int32) :: i
+    real(dp) :: cra_temp, crb_temp, dx_temp
     real(dp), dimension(11) :: saltmob_temp
-
-    open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, '(a)')  ! description
-    read(fhandle, *) VersionNr  ! AquaCrop version
-    close(fhandle)
 
     call SetSimulation_SurfaceStorageIni(0.0_dp)
     call SetSimulation_ECStorageIni(0.0_dp)

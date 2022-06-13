@@ -2385,7 +2385,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         ! start with load and complete profile description (see 5.) which reset
         ! SWC to FC by default
         if (GetProfFile() == '(None)') then
-            call LoadProfileProcessing(GetProfFilefull())
+            call LoadProfileProcessing(VersionNr)
         else
             call LoadProfile(GetProfFilefull())
         end if
