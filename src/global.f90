@@ -4997,9 +4997,6 @@ subroutine LoadCrop(FullName)
     call SetCrop_RootMin(TempDouble)
     read(fhandle, *) TempDouble
     call SetCrop_RootMax(TempDouble)
-    if (GetCrop_RootMin() > GetCrop_RootMax()) then
-        call SetCrop_RootMin(GetCrop_RootMax()) ! security for sine function
-    end if
     read(fhandle, *) TempShortInt
     call SetCrop_RootShape(TempShortInt)
     read(fhandle, *) TempDouble
@@ -5058,13 +5055,8 @@ subroutine LoadCrop(FullName)
     call SetCrop_DaysToFlowering(TempInt)
     read(fhandle, *) TempInt
     call SetCrop_LengthFlowering(TempInt)
+
     ! -----  UPDATE crop development for Version 3.1
-    ! leafy vegetable crop has an Harvest Index which builds up starting from sowing
-    if ((GetCrop_subkind() == subkind_Vegetative) &
-            .or. (GetCrop_subkind() == subkind_Forage)) then
-        call SetCrop_DaysToFlowering(0)
-        call SetCrop_LengthFlowering(0)
-    end if
 
     ! Crop.DeterminancyLinked
     read(fhandle, *) XX
@@ -5078,8 +5070,8 @@ subroutine LoadCrop(FullName)
     ! Potential excess of fruits (%) and building up HI
     if ((GetCrop_subkind() == subkind_Vegetative) &
             .or. (GetCrop_subkind() == subkind_Forage)) then
-        read(fhandle, *)  ! PercCycle no longer considered
-        call SetCrop_fExcess(int(undef_int, kind=int16))
+        read(fhandle, *)  ! PercCycle no longer considered;
+                          ! fExcess attribute will be set in LoadCropProcessing
     else
         read(fhandle, *) TempInt
         call SetCrop_fExcess(int(TempInt, kind=int16))
@@ -5146,14 +5138,6 @@ subroutine LoadCrop(FullName)
     call SetCrop_GDDaysToHIo(TempInt)
 
     ! -----  UPDATE yield response to water for Version 3.1
-    ! leafy vegetable crop has an Harvest Index which builds up
-    ! starting from sowing
-    if ((GetCrop_ModeCycle() == ModeCycle_GDDays) &
-            .and. ((GetCrop_subkind() == subkind_Vegetative) &
-                .or. (GetCrop_subkind() == subkind_Forage))) then
-        call SetCrop_GDDaysToFlowering(0)
-        call SetCrop_GDDLengthFlowering(0)
-    end if
 
     ! extra version 6.2
     if (roundc(VersionNr*10, mold=1) < 62) then
@@ -5320,10 +5304,35 @@ subroutine LoadCropProcessing()
         call SetCrop_StressResponse_Calibrated(.true.)
     end if
 
+    if (GetCrop_RootMin() > GetCrop_RootMax()) then
+        call SetCrop_RootMin(GetCrop_RootMax()) ! security for sine function
+    end if
+
     call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
                         * (GetCrop_SizeSeedling()/10000._dp))
     call SetCrop_CCini((GetCrop_PlantingDens()/10000._dp) &
                         * (GetCrop_SizePlant()/10000._dp))
+
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+            .or. (GetCrop_subkind() == subkind_Forage)) then
+        call SetCrop_fExcess(int(undef_int, kind=int16))
+    end if
+
+    ! leafy vegetable crop has an Harvest Index which builds up starting from sowing
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+            .or. (GetCrop_subkind() == subkind_Forage)) then
+        call SetCrop_DaysToFlowering(0)
+        call SetCrop_LengthFlowering(0)
+    end if
+
+    ! leafy vegetable crop has an Harvest Index which builds up
+    ! starting from sowing
+    if ((GetCrop_ModeCycle() == ModeCycle_GDDays) &
+            .and. ((GetCrop_subkind() == subkind_Vegetative) &
+                .or. (GetCrop_subkind() == subkind_Forage))) then
+        call SetCrop_GDDaysToFlowering(0)
+        call SetCrop_GDDLengthFlowering(0)
+    end if
 
     ! maximum rooting depth in given soil profile
     call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(),&
