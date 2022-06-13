@@ -7632,11 +7632,6 @@ subroutine LoadProfile(FullName)
             call SetSoilLayer_WP(i, WP_temp)
             call SetSoilLayer_InfRate(i, infrate_temp)
             call SetSoilLayer_Description(i, description_temp)
-            ! Default values for Penetrability and Gravel
-            call SetSoilLayer_Penetrability(i, 100_int8)
-            call SetSoilLayer_GravelMass(i, 0_int8)
-            ! determine volume gravel
-            call SetSoilLayer_GravelVol(i, 0._dp)
         else
             if (roundc(VersionNr*10, mold=1) < 60) then
                             ! UPDATE required for Version 6.0
@@ -7651,11 +7646,6 @@ subroutine LoadProfile(FullName)
                 call SetSoilLayer_CRa(i, cra_temp)
                 call SetSoilLayer_CRb(i, crb_temp)
                 call SetSoilLayer_Description(i, description_temp)
-                ! Default values for Penetrability and Gravel
-                call SetSoilLayer_Penetrability(i, 100_int8)
-                call SetSoilLayer_GravelMass(i, 0_int8)
-                ! determine volume gravel
-                call SetSoilLayer_GravelVol(i, 0._dp)
             else
                 read(fhandle, *) thickness_temp, SAT_temp, FC_temp, WP_temp, &
                                  infrate_temp, penetrability_temp, &
@@ -7671,10 +7661,6 @@ subroutine LoadProfile(FullName)
                 call SetSoilLayer_CRa(i, cra_temp)
                 call SetSoilLayer_CRb(i, crb_temp)
                 call SetSoilLayer_Description(i, description_temp)
-                ! determine volume gravel
-                call SetSoilLayer_GravelVol(i, &
-                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
-                                                    GetSoilLayer_GravelMass(i)))
             end if
         end if
     end do
@@ -7740,6 +7726,24 @@ subroutine LoadProfileProcessing(VersionNr)
                                        cra_temp, crb_temp)
             call SetSoilLayer_CRa(i, cra_temp)
             call SetSoilLayer_CRb(i, crb_temp)
+            ! Default values for Penetrability and Gravel
+            call SetSoilLayer_Penetrability(i, 100_int8)
+            call SetSoilLayer_GravelMass(i, 0_int8)
+            ! determine volume gravel
+            call SetSoilLayer_GravelVol(i, 0._dp)
+        else
+            if (roundc(VersionNr*10, mold=1) < 60) then
+                ! Default values for Penetrability and Gravel
+                call SetSoilLayer_Penetrability(i, 100_int8)
+                call SetSoilLayer_GravelMass(i, 0_int8)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, 0._dp)
+            else
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, &
+                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
+                                                    GetSoilLayer_GravelMass(i)))
+            end if
         end if
     end do
 
