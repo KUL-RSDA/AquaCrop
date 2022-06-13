@@ -606,179 +606,178 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
     end if
 
 
-    contains
-
-
-    subroutine ComposeFileForProgramParameters(TheFileNameProgram, &
-                    FullFileNameProgramParameters)
-        character(len=*), intent(in) :: TheFileNameProgram
-        character(len=*), intent(inout) :: FullFileNameProgramParameters
-
-        integer(int32) :: TheLength
-        character(len=len(TheFileNameProgram)) :: tempstring
-        character(len=3) :: TheExtension
-
-        FullFileNameProgramParameters = ''
-        TheLength = len(TheFileNameProgram)
-        tempstring = TheFileNameProgram
-        TheExtension = tempstring(TheLength-2:3) ! PRO or PRM
-        ! file name program parameters
-        FullFileNameProgramParameters = tempstring(1:TheLength-3)
-        ! path file progrm parameters
-        FullFileNameProgramParameters = trim(GetPathNameParam()) // &
-                                    FullFileNameProgramParameters
-        ! extension file program parameters
-        if (TheExtension == 'PRO') then
-            FullFileNameProgramParameters = FullFileNameProgramParameters // 'PP1'
-        else
-            FullFileNameProgramParameters = FullFileNameProgramParameters // 'PPn'
-        end if
-    end subroutine ComposeFileForProgramParameters
-
-
-    subroutine LoadProgramParametersProjectPlugIn(&
-                            FullFileNameProgramParameters, &
-                            ProgramParametersAvailable)
-        character(len=*), intent(in) :: FullFileNameProgramParameters
-        logical, intent(inout) :: ProgramParametersAvailable
-
-        integer :: f0
-        integer(int32) :: i, simul_RpZmi, simul_lowox
-        integer(int8) :: effrainperc, effrainshow, effrainrootE, &
-                         simul_saltdiff, simul_saltsolub, simul_root, &
-                        simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
-                        simul_beta, simul_Tswc, simul_EZma, simul_GDD
-        real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, &
-                    simul_expFsen, simul_Tmi, simul_Tma, Tmin_temp
-
-        if (FileExists(FullFileNameProgramParameters)) then
-            ! load set of program parameters
-            ProgramParametersAvailable = .true.
-            open(newunit=f0, file=trim(FullFileNameProgramParameters), &
-                 status='old', action='read')
-            ! crop
-            read(f0, *) simul_ed ! evaporation decline factor in stage 2
-            call SetSimulParam_EvapDeclineFactor(simul_ed)
-            read(f0, *) simul_kcWB ! Kc wet bare soil [-]
-            call SetSimulParam_KcWetBare(simul_kcWB)
-            read(f0, *) simul_pCCHIf
-                ! CC threshold below which HI no longer increase(% of 100)
-            call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
-
-            read(f0, *) simul_RpZmi
-                ! Starting depth of root sine function (% of Zmin)
-            call SetSimulParam_RootPercentZmin(simul_RpZmi)
-            read(f0, *) simul_RZEma ! cm/day
-            call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
-
-            call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
-            read(f0, *) simul_SFR
-                ! Shape factor for effect water stress on rootzone expansion
-            call SetSimulParam_KsShapeFactorRoot(simul_SFR)
-            read(f0, *) simul_TAWg
-                ! Soil water content (% TAW) required at sowing depth for germination
-
-            call SetSimulParam_TAWGermination(simul_TAWg)
-            read(f0, *) simul_pfao
-                ! Adjustment factor for FAO-adjustment soil water depletion
-                ! (p) for various ET
-            call SetSimulParam_pAdjFAO(simul_pfao)
-            read(f0, *) simul_lowox
-                ! number of days for full effect of deficient aeration
-
-            call SetSimulParam_DelayLowOxygen(simul_lowox)
-            read(f0, *) simul_expFsen
-                ! exponent of senescence factor adjusting drop in
-                ! photosynthetic activity of dying crop
-            call SetSimulParam_ExpFsen(simul_expFsen)
-            read(f0, *) simul_beta
-                ! Decrease (percentage) of p(senescence) once early
-                ! canopy senescence is triggered
-
-            call SetSimulParam_Beta(simul_beta)
-            read(f0, *) simul_Tswc  ! Thickness top soil (cm) in which
-                                    ! soil water depletion has to be determined
-            call SetSimulParam_ThicknessTopSWC(simul_Tswc)
-            ! field
-
-            read(f0, *) simul_EZma
-                ! maximum water extraction depth by soil evaporation [cm]
-            call SetSimulParam_EvapZmax(simul_EZma)
-            ! soil
-            read(f0, *) simul_rod
-                ! considered depth (m) of soil profile for calculation
-                ! of mean soil water content
-
-            call SetSimulParam_RunoffDepth(simul_rod)
-            read(f0, *) i   ! correction CN for Antecedent Moisture Class
-            if (i == 1) then
-                call SetSimulParam_CNcorrection(.true.)
-
-            else
-                call SetSimulParam_CNcorrection(.false.)
-            end if
-            read(f0, *) simul_saltdiff ! salt diffusion factor (%)
-            call SetSimulParam_SaltDiff(simul_saltdiff)
-            read(f0, *) simul_saltsolub ! salt solubility (g/liter)
-
-            call SetSimulParam_SaltSolub(simul_saltsolub)
-            read(f0, *) simul_root ! shape factor capillary rise factor
-            call SetSimulParam_RootNrDF(simul_root)
-            call SetSimulParam_IniAbstract(5_int8)
-                ! fixed in Version 5.0 cannot be changed since linked
-                ! with equations for CN AMCII and CN converions
-
-            ! Temperature
-            read(f0, *) Tmin_temp
-                ! Default minimum temperature (degC) if no
-                ! temperature file is specified
-            call SetTmin(Tmin_temp)
-            call SetSimulParam_Tmin(simul_Tmi)
-            read(f0, *) simul_Tma
-                ! Default maximum temperature (degC) if
-                ! no temperature file is specified
-
-            call SetSimulParam_Tmax(simul_Tma)
-            read(f0, *) simul_GDD ! Default method for GDD calculations
-            call SetSimulParam_GDDMethod(simul_GDD)
-            if (GetSimulParam_GDDMethod() > 3) then
-                call SetSimulParam_GDDMethod(3_int8)
-            end if
-
-            if (GetSimulParam_GDDMethod() < 1) then
-                call SetSimulParam_GDDMethod(1_int8)
-            end if
-            ! Rainfall
-            read(f0, *) i
-            select case(i)
-            case(0)
-                call SetSimulParam_EffectiveRain_Method(&
-                    EffectiveRainMethod_Full)
-            case(1)
-                call SetSimulParam_EffectiveRain_Method(&
-                    EffectiveRainMethod_USDA)
-            case(2)
-                call SetSimulParam_EffectiveRain_Method(&
-                    EffectiveRainMethod_Percentage)
-            end select
-
-            read(f0, *) effrainperc ! IF Method is Percentage
-            call SetSimulParam_EffectiveRain_PercentEffRain(effrainperc)
-            read(f0, *) effrainshow  ! For estimation of surface run-off
-            call SetSimulParam_EffectiveRain_ShowersInDecade(effrainshow)
-
-            read(f0, *) effrainrootE ! For reduction of soil evaporation
-            call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
-
-            ! close
-            close(f0)
-        else
-            ! take the default set of program parameters
-            ! (already read in InitializeSettings)
-            ProgramParametersAvailable = .false.
-        end if
-        end subroutine LoadProgramParametersProjectPlugIn
 end subroutine InitializeProject
+
+
+subroutine ComposeFileForProgramParameters(TheFileNameProgram, &
+                FullFileNameProgramParameters)
+    character(len=*), intent(in) :: TheFileNameProgram
+    character(len=*), intent(inout) :: FullFileNameProgramParameters
+
+    integer(int32) :: TheLength
+    character(len=len(TheFileNameProgram)) :: tempstring
+    character(len=3) :: TheExtension
+
+    FullFileNameProgramParameters = ''
+    TheLength = len(TheFileNameProgram)
+    tempstring = TheFileNameProgram
+    TheExtension = tempstring(TheLength-2:3) ! PRO or PRM
+    ! file name program parameters
+    FullFileNameProgramParameters = tempstring(1:TheLength-3)
+    ! path file progrm parameters
+    FullFileNameProgramParameters = trim(GetPathNameParam()) // &
+                                FullFileNameProgramParameters
+    ! extension file program parameters
+    if (TheExtension == 'PRO') then
+        FullFileNameProgramParameters = FullFileNameProgramParameters // 'PP1'
+    else
+        FullFileNameProgramParameters = FullFileNameProgramParameters // 'PPn'
+    end if
+end subroutine ComposeFileForProgramParameters
+
+
+subroutine LoadProgramParametersProjectPlugIn(&
+                        FullFileNameProgramParameters, &
+                        ProgramParametersAvailable)
+    character(len=*), intent(in) :: FullFileNameProgramParameters
+    logical, intent(inout) :: ProgramParametersAvailable
+
+    integer :: f0
+    integer(int32) :: i, simul_RpZmi, simul_lowox
+    integer(int8) :: effrainperc, effrainshow, effrainrootE, &
+                     simul_saltdiff, simul_saltsolub, simul_root, &
+                    simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
+                    simul_beta, simul_Tswc, simul_EZma, simul_GDD
+    real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, &
+                simul_expFsen, simul_Tmi, simul_Tma, Tmin_temp
+
+    if (FileExists(FullFileNameProgramParameters)) then
+        ! load set of program parameters
+        ProgramParametersAvailable = .true.
+        open(newunit=f0, file=trim(FullFileNameProgramParameters), &
+             status='old', action='read')
+        ! crop
+        read(f0, *) simul_ed ! evaporation decline factor in stage 2
+        call SetSimulParam_EvapDeclineFactor(simul_ed)
+        read(f0, *) simul_kcWB ! Kc wet bare soil [-]
+        call SetSimulParam_KcWetBare(simul_kcWB)
+        read(f0, *) simul_pCCHIf
+            ! CC threshold below which HI no longer increase(% of 100)
+        call SetSimulParam_PercCCxHIfinal(simul_pCCHIf)
+
+        read(f0, *) simul_RpZmi
+            ! Starting depth of root sine function (% of Zmin)
+        call SetSimulParam_RootPercentZmin(simul_RpZmi)
+        read(f0, *) simul_RZEma ! cm/day
+        call SetSimulParam_MaxRootZoneExpansion(simul_RZEma)
+
+        call SetSimulParam_MaxRootZoneExpansion(5.00_dp) ! fixed at 5 cm/day
+        read(f0, *) simul_SFR
+            ! Shape factor for effect water stress on rootzone expansion
+        call SetSimulParam_KsShapeFactorRoot(simul_SFR)
+        read(f0, *) simul_TAWg
+            ! Soil water content (% TAW) required at sowing depth for germination
+
+        call SetSimulParam_TAWGermination(simul_TAWg)
+        read(f0, *) simul_pfao
+            ! Adjustment factor for FAO-adjustment soil water depletion
+            ! (p) for various ET
+        call SetSimulParam_pAdjFAO(simul_pfao)
+        read(f0, *) simul_lowox
+            ! number of days for full effect of deficient aeration
+
+        call SetSimulParam_DelayLowOxygen(simul_lowox)
+        read(f0, *) simul_expFsen
+            ! exponent of senescence factor adjusting drop in
+            ! photosynthetic activity of dying crop
+        call SetSimulParam_ExpFsen(simul_expFsen)
+        read(f0, *) simul_beta
+            ! Decrease (percentage) of p(senescence) once early
+            ! canopy senescence is triggered
+
+        call SetSimulParam_Beta(simul_beta)
+        read(f0, *) simul_Tswc  ! Thickness top soil (cm) in which
+                                ! soil water depletion has to be determined
+        call SetSimulParam_ThicknessTopSWC(simul_Tswc)
+        ! field
+
+        read(f0, *) simul_EZma
+            ! maximum water extraction depth by soil evaporation [cm]
+        call SetSimulParam_EvapZmax(simul_EZma)
+        ! soil
+        read(f0, *) simul_rod
+            ! considered depth (m) of soil profile for calculation
+            ! of mean soil water content
+
+        call SetSimulParam_RunoffDepth(simul_rod)
+        read(f0, *) i   ! correction CN for Antecedent Moisture Class
+        if (i == 1) then
+            call SetSimulParam_CNcorrection(.true.)
+
+        else
+            call SetSimulParam_CNcorrection(.false.)
+        end if
+        read(f0, *) simul_saltdiff ! salt diffusion factor (%)
+        call SetSimulParam_SaltDiff(simul_saltdiff)
+        read(f0, *) simul_saltsolub ! salt solubility (g/liter)
+
+        call SetSimulParam_SaltSolub(simul_saltsolub)
+        read(f0, *) simul_root ! shape factor capillary rise factor
+        call SetSimulParam_RootNrDF(simul_root)
+        call SetSimulParam_IniAbstract(5_int8)
+            ! fixed in Version 5.0 cannot be changed since linked
+            ! with equations for CN AMCII and CN converions
+
+        ! Temperature
+        read(f0, *) Tmin_temp
+            ! Default minimum temperature (degC) if no
+            ! temperature file is specified
+        call SetTmin(Tmin_temp)
+        call SetSimulParam_Tmin(simul_Tmi)
+        read(f0, *) simul_Tma
+            ! Default maximum temperature (degC) if
+            ! no temperature file is specified
+
+        call SetSimulParam_Tmax(simul_Tma)
+        read(f0, *) simul_GDD ! Default method for GDD calculations
+        call SetSimulParam_GDDMethod(simul_GDD)
+        if (GetSimulParam_GDDMethod() > 3) then
+            call SetSimulParam_GDDMethod(3_int8)
+        end if
+
+        if (GetSimulParam_GDDMethod() < 1) then
+            call SetSimulParam_GDDMethod(1_int8)
+        end if
+        ! Rainfall
+        read(f0, *) i
+        select case(i)
+        case(0)
+            call SetSimulParam_EffectiveRain_Method(&
+                EffectiveRainMethod_Full)
+        case(1)
+            call SetSimulParam_EffectiveRain_Method(&
+                EffectiveRainMethod_USDA)
+        case(2)
+            call SetSimulParam_EffectiveRain_Method(&
+                EffectiveRainMethod_Percentage)
+        end select
+
+        read(f0, *) effrainperc ! IF Method is Percentage
+        call SetSimulParam_EffectiveRain_PercentEffRain(effrainperc)
+        read(f0, *) effrainshow  ! For estimation of surface run-off
+        call SetSimulParam_EffectiveRain_ShowersInDecade(effrainshow)
+
+        read(f0, *) effrainrootE ! For reduction of soil evaporation
+        call SetSimulParam_EffectiveRain_RootNrEvap(effrainrootE)
+
+        ! close
+        close(f0)
+    else
+        ! take the default set of program parameters
+        ! (already read in InitializeSettings)
+        ProgramParametersAvailable = .false.
+    end if
+end subroutine LoadProgramParametersProjectPlugIn
 
 
 subroutine FinalizeTheProgram()
