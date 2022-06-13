@@ -7,6 +7,7 @@ Building the Aquacrop executable requires:
 
 * GNU Make (>= v3.82 should work)
 * a GNU Fortran compiler (>= v6.4.0 should work)
+  MinGW can be used when (cross)compiling for Windows.
 * (optional) a Free Pascal compiler (>= v3.2.0 should work)
 
 The main `make` targets are `bin` (producing an `aquacrop` executable),
@@ -28,6 +29,8 @@ make
 make clean          # cleans all build artifacts (binaries, object files, ...)
 make DEBUG=1        # uses debug options for compiling
 make FORTRAN_EXE=0  # builds a Pascal-based executable (instead of Fortran-based)
+make STATIC=1       # builds a statically-linked binary for distribution
+                    # as a standalone executable
 ```
 
 ## Testing

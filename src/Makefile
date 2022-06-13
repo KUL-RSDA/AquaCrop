@@ -2,21 +2,30 @@
 
 DEBUG = 0
 FORTRAN_EXE = 1
+STATIC = 0
 
 PC = fpc
 PCFLAGS = -Mdelphi
 
 FC = gfortran
-FCFLAGS = -fPIC -shared -fall-intrinsics
+FCFLAGS =
+LDFLAGS =
 
-ifeq ($(DEBUG), 1)
-    # For debugging and development
-    PCFLAGS += -gl -fPIC
-    FCFLAGS += -g -fPIC -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
-               -fcheck=all -fbacktrace -std=f2008
+ifeq ($(STATIC), 1)
+    # For statically compiled (release) executables
+    FCFLAGS += -O2 -mtune=generic -funroll-loops
+    LDFLAGS += -static
 else
-    # For production
-    FCFLAGS += -O2 -march=native -funroll-loops
+    FCFLAGS += -fPIC -shared -fall-intrinsics
+    ifeq ($(DEBUG), 1)
+        # For debugging and development
+        PCFLAGS += -gl -fPIC
+        FCFLAGS += -g -fPIC -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
+                   -fcheck=all -fbacktrace -std=f2008
+    else
+        # For production
+        FCFLAGS += -O2 -march=native -funroll-loops
+    endif
 endif
 
 
@@ -221,7 +230,7 @@ $(EXECUTABLE): $(SRC) $(LIBRARY)
 else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
 $(EXECUTABLE): aquacrop.o
-	$(FC) aquacrop.o $(OBJ) -o $(EXECUTABLE)
+	$(FC) $(LDFLAGS) aquacrop.o $(OBJ) -o $(EXECUTABLE)
 endif
 
 clean: pascalclean fortranclean
