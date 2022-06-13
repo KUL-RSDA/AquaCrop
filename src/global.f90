@@ -6660,9 +6660,9 @@ end subroutine AdjustSizeCompartments
 
 subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
                            ConstZrxForRun)
-    !! @NOTE This procedure will try to read from crop and soil profile files.
-    !! If those files do not exist, the necessary information is gathered from
-    !! Crop and Soil global variable attributes instead.
+    !! @NOTE This procedure will try to read from the soil profile file.
+    !! If this file does not exist, the necessary information is gathered
+    !! from the attributes of the Soil global variable instead.
     character(len=*), intent(in) :: FullNameProjectFile
     integer(int32), intent(in) :: TotalNrOfRuns
     logical, intent(inout) :: RunWithKeepSWC
