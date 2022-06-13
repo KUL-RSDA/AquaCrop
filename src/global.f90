@@ -6763,35 +6763,32 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
             read(fhandle0, *) FileName
             read(fhandle0, *) PathName
 
-            if (trim(FileName) == '(None)') then
-                Zrxi = GetCrop_RootMax()
+            ! Obtain maximum rooting depth from the crop file
+            FullFileName = trim(PathName) // trim(FileName)
+            open(newunit=fhandlex, file=trim(FullFileName), &
+                                    status='old', action ='read')
+            read(fhandlex, *) ! description
+            read(fhandlex, *) VersionNrCrop
+            if (roundc(VersionNrCrop*10, mold=1) <= 31) then
+                do i = 1, 29
+                    read(fhandlex, *)  ! no Salinity stress
+                        ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
+                end do
             else
-                FullFileName = trim(PathName) // trim(FileName)
-                open(newunit=fhandlex, file=trim(FullFileName), &
-                                        status='old', action ='read')
-                read(fhandlex, *) ! description
-                read(fhandlex, *) VersionNrCrop
-                if (roundc(VersionNrCrop*10, mold=1) <= 31) then
-                    do i = 1, 29
-                        read(fhandlex, *)  ! no Salinity stress
-                            ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
+                if (roundc(VersionNrCrop*10, mold=1) <= 50) then
+                    do i = 1, 32
+                        read(fhandlex, *) ! no distortion to salinity and
+                                          ! response to ECsw factor
                     end do
                 else
-                    if (roundc(VersionNrCrop*10, mold=1) <= 50) then
-                        do i = 1, 32
-                            read(fhandlex, *) ! no distortion to salinity and
-                                              ! response to ECsw factor
-                        end do
-                    else
-                        do i = 1, 34
-                            read(fhandlex, *)
-                        end do
-                    end if
+                    do i = 1, 34
+                        read(fhandlex, *)
+                    end do
                 end if
-                read(fhandlex, *) Zrni ! minimum rooting depth
-                read(fhandlex, *) Zrxi ! maximum rooting depth
-                close(fhandlex)
             end if
+            read(fhandlex, *) Zrni ! minimum rooting depth
+            read(fhandlex, *) Zrxi ! maximum rooting depth
+            close(fhandlex)
 
             ZrSoili = RootMaxInSoilProfile(Zrxi, TheNrSoilLayers, &
                                            TheSoilLayer)

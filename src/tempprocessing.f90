@@ -2221,12 +2221,8 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     read(f0, *, iostat=rc) TempString  ! CropFile
     call SetCropFile(trim(TempString))
     read(f0, *, iostat=rc) TempString  ! PathCropFile
-    if (GetCropFile() == '(None)') then
-        call SetCropFilefull(GetCropFile())
-    else
-        call SetCropFilefull(trim(TempString)//GetCropFile())
-        call LoadCrop(GetCropFilefull())
-    end if
+    call SetCropFilefull(trim(TempString)//GetCropFile())
+    call LoadCrop(GetCropFilefull())
 
     ! Adjust crop parameters of Perennials
     if (GetCrop_subkind() == subkind_Forage) then
