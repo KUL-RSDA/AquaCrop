@@ -39,7 +39,7 @@ endif
 
 EXECUTABLE = aquacrop
 STATIC_LIBRARY = libaquacrop.a
-DYNAMIC_LIBRARY = libaquacrop.so
+SHARED_LIBRARY = libaquacrop.so
 ifeq ($(STATIC), 1)
     LIBRARY = $(STATIC_LIBRARY)
 else
