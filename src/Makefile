@@ -13,6 +13,12 @@ LDFLAGS =
 
 ifeq ($(STATIC), 1)
     # For statically compiled (release) executables
+    ifneq ($(DEBUG), 0)
+        $(error DEBUG=0 is required for STATIC=1 build)
+    endif
+    ifneq ($(FORTRAN_EXE), 1)
+        $(error FORTRAN_EXE=1 is required for STATIC=1 build)
+    endif
     FCFLAGS += -O2 -mtune=generic -funroll-loops
     LDFLAGS += -static
 else
@@ -32,7 +38,13 @@ endif
 # Main targets
 
 EXECUTABLE = aquacrop
-LIBRARY = libaquacrop.so
+STATIC_LIBRARY = libaquacrop.a
+DYNAMIC_LIBRARY = libaquacrop.so
+ifeq ($(STATIC), 1)
+    LIBRARY = $(STATIC_LIBRARY)
+else
+    LIBRARY = $(SHARED_LIBRARY)
+endif
 
 bin: $(EXECUTABLE)
 lib: $(LIBRARY)
@@ -66,12 +78,16 @@ OBJ_INTERFACE = interface_climprocessing.o \
     interface_startunit.o \
     interface_tempprocessing.o
 
-$(LIBRARY): $(OBJ) \
+$(STATIC_LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
-	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
+	$(AR) cr $(STATIC_LIBRARY) $(OBJ) $(OBJ_INTERFACE)
+
+$(SHARED_LIBRARY): $(OBJ) \
+    $(OBJ_INTERFACE)
+	$(FC) $(LDFLAGS) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
 
 fortranclean:
-	$(RM) $(wildcard *.mod) $(wildcard *.o) $(LIBRARY)
+	$(RM) $(wildcard *.mod) $(wildcard *.o) $(STATIC_LIBRARY) $(SHARED_LIBRARY)
 
 
 aquacrop.o: aquacrop.F90 \
