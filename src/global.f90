@@ -6704,10 +6704,13 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     read(fhandle0, *) FileName
     read(fhandle0, *) PathName
 
-    if (trim(FileName) == '(None)') then
+    if (trim(FileName) == '(External)') then
         ! Note: here we use the AquaCrop version number and assume that
         ! the same version can be used in finalizing the soil settings.
         call LoadProfileProcessing(VersionNr)
+    elseif (trim(FileName) == '(None)') then
+        FullFileName = GetPathNameSimul() // 'DEFAULT.SOL'
+        call LoadProfile(FullFileName)
     else
         FullFileName = trim(PathName) // trim(FileName)
         call LoadProfile(FullFileName)
