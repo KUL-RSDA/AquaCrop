@@ -6672,7 +6672,7 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     integer(int32) :: i, Runi
     character(len=1025) :: FileName, PathName, FullFileName
     real(dp) :: Zrni, Zrxi, ZrSoili
-    real(dp) :: VersionNrCrop
+    real(dp) :: VersionNr, VersionNrCrop
     integer(int8) :: TheNrSoilLayers
     type(SoilLayerIndividual), dimension(max_SoilLayers) :: TheSoilLayer
     character(len=:), allocatable :: PreviousProfFilefull
@@ -6685,7 +6685,7 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     open(newunit=fhandle0, file=trim(FullNameProjectFile), status='old', &
                                                            action ='read')
     read(fhandle0, *) ! Description
-    read(fhandle0, *)  ! AquaCrop version Nr
+    read(fhandle0, *) VersionNr ! AquaCrop version Nr
     do i = 1, 5
         read(fhandle0, *) ! Type Year, and Simulation
                           ! and Cropping period of run 1
@@ -6704,7 +6704,11 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     read(fhandle0, *) FileName
     read(fhandle0, *) PathName
 
-    if (trim(FileName) /= '(None)') then
+    if (trim(FileName) == '(None)') then
+        ! Note: here we use the AquaCrop version number and assume that
+        ! the same version can be used in finalizing the soil settings.
+        call LoadProfileProcessing(VersionNr)
+    else
         FullFileName = trim(PathName) // trim(FileName)
         call LoadProfile(FullFileName)
     end if
