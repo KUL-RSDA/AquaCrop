@@ -4,8 +4,8 @@ unit interface_initialsettings;
 interface
 
 
-procedure InitializeSettings;
-    external 'aquacrop' name '__ac_initialsettings_MOD_initializesettings';
+procedure InitializeSettings(constref initialize_soil : boolean);
+    external 'aquacrop' name '__ac_interface_initialsettings_MOD_initializesettings_wrap';
 
 
 implementation
