@@ -6676,6 +6676,7 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     integer(int8) :: TheNrSoilLayers
     type(SoilLayerIndividual), dimension(max_SoilLayers) :: TheSoilLayer
     character(len=:), allocatable :: PreviousProfFilefull
+    logical :: has_external
 
     ! 1. Initial settings
     RunWithKeepSWC = .false.
@@ -6704,7 +6705,9 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     read(fhandle0, *) FileName
     read(fhandle0, *) PathName
 
-    if (trim(FileName) == '(External)') then
+    has_external = trim(FileName) == '(External)'
+
+    if (has_external) then
         ! Note: here we use the AquaCrop version number and assume that
         ! the same version can be used in finalizing the soil settings.
         call LoadProfileProcessing(VersionNr)
@@ -6814,8 +6817,10 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     close(fhandle0)
 
     ! 6. Reload existing soil file
-    call SetProfFilefull(PreviousProfFilefull)
-    call LoadProfile(GetProfFilefull())
+    if (.not. has_external) then
+        call SetProfFilefull(PreviousProfFilefull)
+        call LoadProfile(GetProfFilefull())
+    end if
 end subroutine CheckForKeepSWC
 
 
