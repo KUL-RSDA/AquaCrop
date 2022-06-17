@@ -4819,6 +4819,8 @@ end subroutine ResetSWCToFC
 
 
 subroutine LoadCrop(FullName)
+    !! Reads in crop data from the given file.
+    !! Further initializations happen via a call to LoadCropProcessing().
     character(len=*), intent(in) :: FullName
 
     integer :: fhandle
@@ -4944,16 +4946,6 @@ subroutine LoadCrop(FullName)
                           ! to soil salinity stress NO LONGER VALID
     end if
 
-    ! continue with soil fertility/salinity stress
-    if ((GetCrop_StressResponse_ShapeCGC() > 24.9_dp) &
-                .and. (GetCrop_StressResponse_ShapeCCX() > 24.9_dp) &
-                .and. (GetCrop_StressResponse_ShapeWP() > 24.9_dp) &
-                .and. (GetCrop_StressResponse_ShapeCDecline() > 24.9_dp)) then
-        call SetCrop_StressResponse_Calibrated(.false.)
-    else
-        call SetCrop_StressResponse_Calibrated(.true.)
-    end if
-
     ! temperature stress
     read(fhandle, *) TempShortInt   ! Minimum air temperature below which
                                     ! pollination starts to fail
@@ -5005,9 +4997,6 @@ subroutine LoadCrop(FullName)
     call SetCrop_RootMin(TempDouble)
     read(fhandle, *) TempDouble
     call SetCrop_RootMax(TempDouble)
-    if (GetCrop_RootMin() > GetCrop_RootMax()) then
-        call SetCrop_RootMin(GetCrop_RootMax()) ! security for sine function
-    end if
     read(fhandle, *) TempShortInt
     call SetCrop_RootShape(TempShortInt)
     read(fhandle, *) TempDouble
@@ -5037,10 +5026,6 @@ subroutine LoadCrop(FullName)
     end if
     read(fhandle, *) TempInt
     call SetCrop_PlantingDens(TempInt)
-    call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
-                        * (GetCrop_SizeSeedling()/10000._dp))
-    call SetCrop_CCini((GetCrop_PlantingDens()/10000._dp) &
-                        * (GetCrop_SizePlant()/10000._dp))
     read(fhandle, *) TempDouble
     call SetCrop_CGC(TempDouble)
 
@@ -5070,13 +5055,8 @@ subroutine LoadCrop(FullName)
     call SetCrop_DaysToFlowering(TempInt)
     read(fhandle, *) TempInt
     call SetCrop_LengthFlowering(TempInt)
+
     ! -----  UPDATE crop development for Version 3.1
-    ! leafy vegetable crop has an Harvest Index which builds up starting from sowing
-    if ((GetCrop_subkind() == subkind_Vegetative) &
-            .or. (GetCrop_subkind() == subkind_Forage)) then
-        call SetCrop_DaysToFlowering(0)
-        call SetCrop_LengthFlowering(0)
-    end if
 
     ! Crop.DeterminancyLinked
     read(fhandle, *) XX
@@ -5090,8 +5070,8 @@ subroutine LoadCrop(FullName)
     ! Potential excess of fruits (%) and building up HI
     if ((GetCrop_subkind() == subkind_Vegetative) &
             .or. (GetCrop_subkind() == subkind_Forage)) then
-        read(fhandle, *)  ! PercCycle no longer considered
-        call SetCrop_fExcess(int(undef_int, kind=int16))
+        read(fhandle, *)  ! PercCycle no longer considered;
+                          ! fExcess attribute will be set in LoadCropProcessing
     else
         read(fhandle, *) TempInt
         call SetCrop_fExcess(int(TempInt, kind=int16))
@@ -5158,14 +5138,6 @@ subroutine LoadCrop(FullName)
     call SetCrop_GDDaysToHIo(TempInt)
 
     ! -----  UPDATE yield response to water for Version 3.1
-    ! leafy vegetable crop has an Harvest Index which builds up
-    ! starting from sowing
-    if ((GetCrop_ModeCycle() == ModeCycle_GDDays) &
-            .and. ((GetCrop_subkind() == subkind_Vegetative) &
-                .or. (GetCrop_subkind() == subkind_Forage))) then
-        call SetCrop_GDDaysToFlowering(0)
-        call SetCrop_GDDLengthFlowering(0)
-    end if
 
     ! extra version 6.2
     if (roundc(VersionNr*10, mold=1) < 62) then
@@ -5313,6 +5285,55 @@ subroutine LoadCrop(FullName)
         end if
     end if
     close(fhandle)
+
+    call LoadCropProcessing()
+end subroutine LoadCrop
+
+
+subroutine LoadCropProcessing()
+    !! Further initializations after crop profile attributes have been set
+    !! (e.g. via a call to LoadProfile()).
+
+    ! continue with soil fertility/salinity stress
+    if ((GetCrop_StressResponse_ShapeCGC() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeCCX() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeWP() > 24.9_dp) &
+                .and. (GetCrop_StressResponse_ShapeCDecline() > 24.9_dp)) then
+        call SetCrop_StressResponse_Calibrated(.false.)
+    else
+        call SetCrop_StressResponse_Calibrated(.true.)
+    end if
+
+    if (GetCrop_RootMin() > GetCrop_RootMax()) then
+        call SetCrop_RootMin(GetCrop_RootMax()) ! security for sine function
+    end if
+
+    call SetCrop_CCo((GetCrop_PlantingDens()/10000._dp) &
+                        * (GetCrop_SizeSeedling()/10000._dp))
+    call SetCrop_CCini((GetCrop_PlantingDens()/10000._dp) &
+                        * (GetCrop_SizePlant()/10000._dp))
+
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+            .or. (GetCrop_subkind() == subkind_Forage)) then
+        call SetCrop_fExcess(int(undef_int, kind=int16))
+    end if
+
+    ! leafy vegetable crop has an Harvest Index which builds up starting from sowing
+    if ((GetCrop_subkind() == subkind_Vegetative) &
+            .or. (GetCrop_subkind() == subkind_Forage)) then
+        call SetCrop_DaysToFlowering(0)
+        call SetCrop_LengthFlowering(0)
+    end if
+
+    ! leafy vegetable crop has an Harvest Index which builds up
+    ! starting from sowing
+    if ((GetCrop_ModeCycle() == ModeCycle_GDDays) &
+            .and. ((GetCrop_subkind() == subkind_Vegetative) &
+                .or. (GetCrop_subkind() == subkind_Forage))) then
+        call SetCrop_GDDaysToFlowering(0)
+        call SetCrop_GDDLengthFlowering(0)
+    end if
+
     ! maximum rooting depth in given soil profile
     call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(),&
                                               GetSoil_NrSoilLayers(),&
@@ -5330,8 +5351,7 @@ subroutine LoadCrop(FullName)
         call SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int)
         call SetCropFileSet_GDDaysToHarvest(undef_int)
     end if
-
-end subroutine LoadCrop
+end subroutine LoadCropProcessing
 
 
 real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, &
@@ -6660,6 +6680,9 @@ end subroutine AdjustSizeCompartments
 
 subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
                            ConstZrxForRun)
+    !! @NOTE This procedure will try to read from crop and soil profile files.
+    !! If those files do not exist, the necessary information is gathered from
+    !! Crop and Soil global variable attributes instead.
     character(len=*), intent(in) :: FullNameProjectFile
     integer(int32), intent(in) :: TotalNrOfRuns
     logical, intent(inout) :: RunWithKeepSWC
@@ -6700,8 +6723,12 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     read(fhandle0, *) ! info Soil file
     read(fhandle0, *) FileName
     read(fhandle0, *) PathName
-    FullFileName = trim(PathName) // trim(FileName)
-    call LoadProfile(FullFileName)
+
+    if (trim(FileName) /= '(None)') then
+        FullFileName = trim(PathName) // trim(FileName)
+        call LoadProfile(FullFileName)
+    end if
+
     TheNrSoilLayers = GetSoil_NrSoilLayers()
     TheSoilLayer = GetSoilLayer()
 
@@ -6755,36 +6782,43 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
             read(fhandle0, *) ! Crop file title
             read(fhandle0, *) FileName
             read(fhandle0, *) PathName
-            FullFileName = trim(PathName) // trim(FileName)
-            open(newunit=fhandlex, file=trim(FullFileName), &
-                                    status='old', action ='read')
-            read(fhandlex, *) ! description
-            read(fhandlex, *) VersionNrCrop
-            if (roundc(VersionNrCrop*10, mold=1) <= 31) then
-                do i = 1, 29
-                    read(fhandlex, *)  ! no Salinity stress
-                        ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
-                end do
+
+            if (trim(FileName) == '(None)') then
+                Zrxi = GetCrop_RootMax()
             else
-                if (roundc(VersionNrCrop*10, mold=1) <= 50) then
-                    do i = 1, 32
-                        read(fhandlex, *) ! no distortion to salinity and
-                                          ! response to ECsw factor
+                FullFileName = trim(PathName) // trim(FileName)
+                open(newunit=fhandlex, file=trim(FullFileName), &
+                                        status='old', action ='read')
+                read(fhandlex, *) ! description
+                read(fhandlex, *) VersionNrCrop
+                if (roundc(VersionNrCrop*10, mold=1) <= 31) then
+                    do i = 1, 29
+                        read(fhandlex, *)  ! no Salinity stress
+                            ! (No Reponse Stomata + ECemin + ECemax + ShapeKsSalt)
                     end do
                 else
-                    do i = 1, 34
-                        read(fhandlex, *)
-                    end do
+                    if (roundc(VersionNrCrop*10, mold=1) <= 50) then
+                        do i = 1, 32
+                            read(fhandlex, *) ! no distortion to salinity and
+                                              ! response to ECsw factor
+                        end do
+                    else
+                        do i = 1, 34
+                            read(fhandlex, *)
+                        end do
+                    end if
                 end if
+                read(fhandlex, *) Zrni ! minimum rooting depth
+                read(fhandlex, *) Zrxi ! maximum rooting depth
+                close(fhandlex)
             end if
-            read(fhandlex, *) Zrni ! minimum rooting depth
-            read(fhandlex, *) Zrxi ! maximum rooting depth
+
             ZrSoili = RootMaxInSoilProfile(Zrxi, TheNrSoilLayers, &
                                            TheSoilLayer)
             if (ZrSoili > ConstZrxForRun) then
                 ConstZrxForRun = ZrSoili
             end if
-            close(fhandlex)
+
             ! Remaining files: Irri (3), Field (3), Soil (3), Gwt (3),
             ! Inni (3), Off (3) and FieldData (3) file
             do i = 1, 21
@@ -7566,6 +7600,8 @@ end subroutine CompleteProfileDescription
 
 
 subroutine LoadProfile(FullName)
+    !! Reads in soil data from the given file.
+    !! Further initializations happen via a call to LoadProfileProcessing().
     character(len=*), intent(in) :: FullName
 
     integer :: fhandle
@@ -7575,10 +7611,9 @@ subroutine LoadProfile(FullName)
     integer(int8) :: TempShortInt
     character(len=1024) :: ProfDescriptionLocal
     real(dp) :: thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp
-    real(dp) :: cra_temp, crb_temp, dx_temp
+    real(dp) :: cra_temp, crb_temp
     character(len=25) :: description_temp
     integer(int8) :: penetrability_temp, gravelm_temp
-    real(dp), dimension(11) :: saltmob_temp
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, *) ProfDescriptionLocal
@@ -7588,8 +7623,6 @@ subroutine LoadProfile(FullName)
     call SetSoil_CNvalue(TempShortInt)
     read(fhandle, *) TempShortInt
     call SetSoil_REW(TempShortInt)
-    call SetSimulation_SurfaceStorageIni(0.0_dp)
-    call SetSimulation_ECStorageIni(0.0_dp)
     read(fhandle, *) TempShortInt
     call SetSoil_NrSoilLayers(TempShortInt)
     read(fhandle, *) ! depth of restrictive soil layer which is no longer applicable
@@ -7608,11 +7641,6 @@ subroutine LoadProfile(FullName)
             call SetSoilLayer_WP(i, WP_temp)
             call SetSoilLayer_InfRate(i, infrate_temp)
             call SetSoilLayer_Description(i, description_temp)
-            ! Default values for Penetrability and Gravel
-            call SetSoilLayer_Penetrability(i, 100_int8)
-            call SetSoilLayer_GravelMass(i, 0_int8)
-            ! determine volume gravel
-            call SetSoilLayer_GravelVol(i, 0._dp)
         else
             if (roundc(VersionNr*10, mold=1) < 60) then
                             ! UPDATE required for Version 6.0
@@ -7627,11 +7655,6 @@ subroutine LoadProfile(FullName)
                 call SetSoilLayer_CRa(i, cra_temp)
                 call SetSoilLayer_CRb(i, crb_temp)
                 call SetSoilLayer_Description(i, description_temp)
-                ! Default values for Penetrability and Gravel
-                call SetSoilLayer_Penetrability(i, 100_int8)
-                call SetSoilLayer_GravelMass(i, 0_int8)
-                ! determine volume gravel
-                call SetSoilLayer_GravelVol(i, 0._dp)
             else
                 read(fhandle, *) thickness_temp, SAT_temp, FC_temp, WP_temp, &
                                  infrate_temp, penetrability_temp, &
@@ -7647,13 +7670,29 @@ subroutine LoadProfile(FullName)
                 call SetSoilLayer_CRa(i, cra_temp)
                 call SetSoilLayer_CRb(i, crb_temp)
                 call SetSoilLayer_Description(i, description_temp)
-                ! determine volume gravel
-                call SetSoilLayer_GravelVol(i, &
-                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
-                                                    GetSoilLayer_GravelMass(i)))
             end if
         end if
+    end do
 
+    close(fhandle)
+    call LoadProfileProcessing(VersionNr)
+end subroutine LoadProfile
+
+
+subroutine LoadProfileProcessing(VersionNr)
+    !! Further initializations after soil profile attributes have been set
+    !! (e.g. via a call to LoadProfile()).
+    real(dp), intent(in) :: VersionNr
+        !! AquaCrop Version (e.g. 7.0)
+
+    integer(int32) :: i
+    real(dp) :: cra_temp, crb_temp, dx_temp
+    real(dp), dimension(11) :: saltmob_temp
+
+    call SetSimulation_SurfaceStorageIni(0.0_dp)
+    call SetSimulation_ECStorageIni(0.0_dp)
+
+    do i = 1, GetSoil_NrSoilLayers()
         ! determine drainage coefficient
         call SetSoilLayer_tau(i, TauFromKsat(GetSoilLayer_InfRate(i)))
 
@@ -7696,15 +7735,32 @@ subroutine LoadProfile(FullName)
                                        cra_temp, crb_temp)
             call SetSoilLayer_CRa(i, cra_temp)
             call SetSoilLayer_CRb(i, crb_temp)
+            ! Default values for Penetrability and Gravel
+            call SetSoilLayer_Penetrability(i, 100_int8)
+            call SetSoilLayer_GravelMass(i, 0_int8)
+            ! determine volume gravel
+            call SetSoilLayer_GravelVol(i, 0._dp)
+        else
+            if (roundc(VersionNr*10, mold=1) < 60) then
+                ! Default values for Penetrability and Gravel
+                call SetSoilLayer_Penetrability(i, 100_int8)
+                call SetSoilLayer_GravelMass(i, 0_int8)
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, 0._dp)
+            else
+                ! determine volume gravel
+                call SetSoilLayer_GravelVol(i, &
+                            FromGravelMassToGravelVolume(GetSoilLayer_SAT(i), &
+                                                    GetSoilLayer_GravelMass(i)))
+            end if
         end if
     end do
 
-    close(fhandle)
     call DetermineNrandThicknessCompartments()
     call SetSoil_RootMax(RootMaxInSoilProfile(GetCrop_RootMax(), &
                                               GetSoil_NrSoilLayers(), &
                                               GetSoilLayer()))
-end subroutine LoadProfile
+end subroutine LoadProfileProcessing
 
 
 subroutine DetermineRootZoneWC(RootingDepth, ZtopSWCconsidered)
