@@ -3,6 +3,7 @@ src/*.ppu
 src/aquacrop
 src/*.mod
 src/*.so
+src/*.a
 __pycache__
 tests/tmp*
 tests/log*.txt

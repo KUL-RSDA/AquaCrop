@@ -2,28 +2,49 @@
 
 DEBUG = 0
 FORTRAN_EXE = 1
+STATIC = 0
 
 PC = fpc
 PCFLAGS = -Mdelphi
 
 FC = gfortran
-FCFLAGS = -fPIC -shared -fall-intrinsics
+FCFLAGS =
+LDFLAGS =
 
-ifeq ($(DEBUG), 1)
-    # For debugging and development
-    PCFLAGS += -gl -fPIC
-    FCFLAGS += -g -fPIC -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
-               -fcheck=all -fbacktrace -std=f2008
+ifeq ($(STATIC), 1)
+    # For statically compiled (release) executables
+    ifneq ($(DEBUG), 0)
+        $(error DEBUG=0 is required for STATIC=1 build)
+    endif
+    ifneq ($(FORTRAN_EXE), 1)
+        $(error FORTRAN_EXE=1 is required for STATIC=1 build)
+    endif
+    FCFLAGS += -O2 -mtune=generic -funroll-loops
+    LDFLAGS += -static
 else
-    # For production
-    FCFLAGS += -O2 -march=native -funroll-loops
+    FCFLAGS += -fPIC -shared -fall-intrinsics
+    ifeq ($(DEBUG), 1)
+        # For debugging and development
+        PCFLAGS += -gl -fPIC
+        FCFLAGS += -g -fPIC -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
+                   -fcheck=all -fbacktrace -std=f2008
+    else
+        # For production
+        FCFLAGS += -O2 -march=native -funroll-loops
+    endif
 endif
 
 
 # Main targets
 
 EXECUTABLE = aquacrop
-LIBRARY = libaquacrop.so
+STATIC_LIBRARY = libaquacrop.a
+SHARED_LIBRARY = libaquacrop.so
+ifeq ($(STATIC), 1)
+    LIBRARY = $(STATIC_LIBRARY)
+else
+    LIBRARY = $(SHARED_LIBRARY)
+endif
 
 bin: $(EXECUTABLE)
 lib: $(LIBRARY)
@@ -57,12 +78,16 @@ OBJ_INTERFACE = interface_climprocessing.o \
     interface_startunit.o \
     interface_tempprocessing.o
 
-$(LIBRARY): $(OBJ) \
+$(STATIC_LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
-	$(FC) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
+	$(AR) cr $(STATIC_LIBRARY) $(OBJ) $(OBJ_INTERFACE)
+
+$(SHARED_LIBRARY): $(OBJ) \
+    $(OBJ_INTERFACE)
+	$(FC) $(LDFLAGS) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
 
 fortranclean:
-	$(RM) $(wildcard *.mod) $(wildcard *.o) $(LIBRARY)
+	$(RM) $(wildcard *.mod) $(wildcard *.o) $(STATIC_LIBRARY) $(SHARED_LIBRARY)
 
 
 aquacrop.o: aquacrop.F90 \
@@ -221,7 +246,7 @@ $(EXECUTABLE): $(SRC) $(LIBRARY)
 else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
 $(EXECUTABLE): aquacrop.o
-	$(FC) aquacrop.o $(OBJ) -o $(EXECUTABLE)
+	$(FC) $(LDFLAGS) aquacrop.o $(OBJ) -o $(EXECUTABLE)
 endif
 
 clean: pascalclean fortranclean
