@@ -5030,7 +5030,7 @@ end subroutine InitializeSimulationRunPart1
 
 
 subroutine InitializeClimate()
-    !! Creates the Climate SIM files and reads climate of first day 
+    !! Creates the Climate SIM files and reads climate of first day
 
     ! 10. Climate
     ! create climate files
@@ -6675,7 +6675,7 @@ subroutine InitializeRunPart2(NrRun, TheProjectType)
     !! Initializes write out for the run
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
-    
+
     call InitializeSimulationRunPart2()
 
     if (GetOutDaily()) then
@@ -7352,11 +7352,11 @@ end subroutine AdvanceOneTimeStep
 
 
 subroutine ReadClimateNextDay()
-    
+
     real(dp) :: ETo_tmp
     real(dp) :: tmpRain, Tmin_temp, Tmax_temp
     character(len=:), allocatable :: TempString
-    
+
     ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         if (GetEToFile() /= '(None)') then
@@ -7383,7 +7383,7 @@ end subroutine ReadClimateNextDay
 
 
 subroutine SetGDDVariablesNextDay()
-    
+
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
                 GetTmin(), GetTmax(), GetSimulParam_GDDMethod()))
