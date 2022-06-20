@@ -60,6 +60,7 @@ OBJ = climprocessing.o \
     inforesults.o \
     initialsettings.o \
     kinds.o \
+    project_input.o \
     rootunit.o \
     run.o \
     simul.o \
@@ -124,6 +125,9 @@ initialsettings.o: initialsettings.f90 \
 kinds.o: kinds.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+project_input.o: project_input.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 rootunit.o: rootunit.f90 \
     global.o \
     kinds.o \
@@ -158,6 +162,7 @@ startunit.o: startunit.f90 \
 tempprocessing.o: tempprocessing.f90 \
     global.o \
     kinds.o \
+    project_input.o \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
