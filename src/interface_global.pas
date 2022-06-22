@@ -2374,14 +2374,11 @@ function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
 procedure LoadProjectDescription(
-            constref FullNameProjectFile : string;
             var DescriptionOfProject : string);
 
 procedure LoadProjectDescription_wrap(
-            constref FullNameProjectFile : PChar;
-            constref strlen1 : integer;
             var DescriptionOfProject : PChar;
-            constref strlen2 : integer);
+            constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_loadprojectdescription_wrap';
 
 procedure CheckFilesInProject(
@@ -6094,19 +6091,16 @@ begin;
 end;
 
 procedure LoadProjectDescription(
-            constref FullNameProjectFile : string;
             var DescriptionOfProject: string);
 var
-    p1, p2 : PChar;
-    strlen1, strlen2 : integer;
+    p : PChar;
+    strlen : integer;
 
 begin;
-    p1 := PChar(FullNameProjectFile);
-    p2 := PChar(DescriptionOfProject);
-    strlen1 := Length(FullNameProjectFile);
-    strlen2 := Length(DescriptionOfProject);
-    LoadProjectDescription_wrap(p1, strlen1, p2, strlen2);
-    DescriptionOfProject := AnsiString(p2);
+    p := PChar(DescriptionOfProject);
+    strlen := Length(DescriptionOfProject);
+    LoadProjectDescription_wrap(p, strlen);
+    DescriptionOfProject := AnsiString(p);
 end;
 
 function GetTemperatureRecord_DataType(): rep_datatype;
