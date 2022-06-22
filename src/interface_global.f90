@@ -2754,21 +2754,14 @@ subroutine SetProjectDescription_wrap(ProjectDescription, strlen)
 end subroutine SetProjectDescription_wrap
 
 
-subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, &
-                                RunwithKeepSWC, ConstZrxForRun)
-    type(c_ptr), intent(in) :: FullNameProjectFile_ptr
-    integer(int32), intent(in) :: strlen
-    integer(int32), intent(in) :: TotalNrOfRuns
-    logical(1), intent(inout) :: RunWithKeepSWC
-    real(dp), intent(inout) :: ConstZrxForRun
+subroutine CheckForKeepSWC_wrap(RunwithKeepSWC, ConstZrxForRun)
+    logical(1), intent(out) :: RunWithKeepSWC
+    real(dp), intent(out) :: ConstZrxForRun
 
-    character(len=strlen) :: FullNameProjectFile
     logical :: RunWithKeepSWC_f
 
-    FullNameprojectFile = pointer2string(FullNameProjectFile_ptr, strlen)
     RunWithKeepSWC_f = RunWithKeepSWC
-    call CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, &
-                         RunWithKeepSWC_f, ConstZrxForRun)
+    call CheckForKeepSWC(RunWithKeepSWC_f, ConstZrxForRun)
     RunWithKeepSWC = RunWithKeepSWC_f
 end subroutine CheckForKeepSWC_wrap
 

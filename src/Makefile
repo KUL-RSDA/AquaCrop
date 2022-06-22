@@ -108,6 +108,7 @@ defaultcropsoil.o: defaultcropsoil.f90 \
 
 global.o: global.f90 \
     kinds.o \
+    project_input.o \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 

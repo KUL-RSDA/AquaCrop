@@ -569,9 +569,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                 call SetSimulation_NrRuns(TotalSimRuns)
                 MultipleRunWithKeepSWC_temp = GetSimulation_MultipleRunWithKeepSWC()
                 MultipleRunConstZrx_temp = GetSimulation_MultipleRunConstZrx()
-                call CheckForKeepSWC(GetMultipleProjectFileFull(), &
-                                     GetSimulation_NrRuns(), &
-                                     MultipleRunWithKeepSWC_temp, &
+                call CheckForKeepSWC(MultipleRunWithKeepSWC_temp, &
                                      MultipleRunConstZrx_temp)
                 call SetSimulation_MultipleRunWithKeepSWC(MultipleRunWithKeepSWC_temp)
                 call SetSimulation_MultipleRunConstZrx(MultipleRunConstZrx_temp)

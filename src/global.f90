@@ -6,6 +6,8 @@ use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
                     sp
+use ac_project_input, only: GetNumberSimulationRuns, &
+                            ProjectInput
 use ac_utils, only: roundc, &
                     GetReleaseDate, &
                     GetVersionString, &
@@ -6619,21 +6621,17 @@ subroutine AdjustSizeCompartments(CropZx)
 end subroutine AdjustSizeCompartments
 
 
-subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
-                           ConstZrxForRun)
+subroutine CheckForKeepSWC(RunWithKeepSWC, ConstZrxForRun)
     !! @NOTE This procedure will try to read from the soil profile file.
     !! If this file does not exist, the necessary information is gathered
     !! from the attributes of the Soil global variable instead.
-    character(len=*), intent(in) :: FullNameProjectFile
-    integer(int32), intent(in) :: TotalNrOfRuns
-    logical, intent(inout) :: RunWithKeepSWC
-    real(dp), intent(inout) :: ConstZrxForRun
+    logical, intent(out) :: RunWithKeepSWC
+    real(dp), intent(out) :: ConstZrxForRun
 
-    integer :: fhandle0, fhandlex
-    integer(int32) :: i, Runi
-    character(len=1025) :: FileName, PathName, FullFileName
+    integer(int32) :: fhandlex, i, Runi, TotalNrOfRuns
+    character(len=1025) :: FileName, FullFileName
     real(dp) :: Zrni, Zrxi, ZrSoili
-    real(dp) :: VersionNr, VersionNrCrop
+    real(dp) :: VersionNrCrop
     integer(int8) :: TheNrSoilLayers
     type(SoilLayerIndividual), dimension(max_SoilLayers) :: TheSoilLayer
     character(len=:), allocatable :: PreviousProfFilefull
@@ -6643,99 +6641,52 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
     RunWithKeepSWC = .false.
     ConstZrxForRun = real(undef_int, kind=dp)
 
-    ! 2. Open project file
-    open(newunit=fhandle0, file=trim(FullNameProjectFile), status='old', &
-                                                           action ='read')
-    read(fhandle0, *) ! Description
-    read(fhandle0, *) VersionNr ! AquaCrop version Nr
-    do i = 1, 5
-        read(fhandle0, *) ! Type Year, and Simulation
-                          ! and Cropping period of run 1
-    end do
-
-    ! 3. Look for restrictive soil layer
+    ! 2. Look for restrictive soil layer
     ! restricted to run 1 since with KeepSWC,
     ! the soil file has to be common between runs
     PreviousProfFilefull = GetProfFilefull() ! keep name soil file
                                              ! (to restore after check)
-    do i = 1, 27
-        read(fhandle0, *) ! Climate (5x3 = 15),Calendar (3),Crop (3),
-                          ! Irri (3) and Field (3) file
-    end do
-    read(fhandle0, *) ! info Soil file
-    read(fhandle0, *) FileName
-    read(fhandle0, *) PathName
 
-    has_external = trim(FileName) == '(External)'
+    Filename = ProjectInput(1)%Soil_Filename
+    has_external = Filename == '(External)'
 
     if (has_external) then
         ! Note: here we use the AquaCrop version number and assume that
         ! the same version can be used in finalizing the soil settings.
-        call LoadProfileProcessing(VersionNr)
+        call LoadProfileProcessing(ProjectInput(1)%VersionNr)
     elseif (trim(FileName) == '(None)') then
         FullFileName = GetPathNameSimul() // 'DEFAULT.SOL'
         call LoadProfile(FullFileName)
     else
-        FullFileName = trim(PathName) // trim(FileName)
+        FullFileName = ProjectInput(1)%Soil_Directory // FileName
         call LoadProfile(FullFileName)
     end if
 
     TheNrSoilLayers = GetSoil_NrSoilLayers()
     TheSoilLayer = GetSoilLayer()
 
-    ! 3.bis  groundwater file
-    do i = 1, 3
-        read(fhandle0, *)
-    end do
-
-    ! 4. Check if runs with KeepSWC exist
+    ! 3. Check if runs with KeepSWC exist
     Runi = 1
+    TotalNrOfRuns = GetNumberSimulationRuns()
     do while ((RunWithKeepSWC .eqv. .false.) .and. (Runi <= TotalNrOfRuns))
-        if (Runi > 1) then
-            do i = 1, 44
-                read(fhandle0, *)  ! 5 + 42 lines with files
-            end do
-        end if
-        read(fhandle0, *) ! info Initial Conditions file
-        read(fhandle0, *) FileName
-        read(fhandle0, *) ! Pathname
-        if (trim(FileName) == 'KeepSWC') then
+        if (ProjectInput(Runi)%SWCIni_Filename == 'KeepSWC') then
             RunWithKeepSWC = .true.
         end if
         Runi = Runi + 1
     end do
+
     if (RunWithKeepSWC .eqv. .false.) then
         ConstZrxForRun = real(undef_int, kind=dp) ! reset
     end if
 
-    ! 5. Look for maximum root zone depth IF RunWithKeepSWC
+    ! 4. Look for maximum root zone depth IF RunWithKeepSWC
     if (RunWithKeepSWC .eqv. .true.) then
-        rewind(fhandle0)
-        read(fhandle0, *) ! Description
-        read(fhandle0, *)  ! AquaCrop version Nr
-        do i = 1, 5
-            read(fhandle0, *) ! Type Year, and Simulation and
-                              ! Cropping period of run 1
-        end do
         Runi = 1
         do while (Runi <= TotalNrOfRuns)
-            ! Simulation and Cropping period
-            if (Runi > 1) then
-                do i = 1, 5
-                    read(fhandle0, *)
-                end do
-            end if
-            ! 5 Climate files (15) + Calendar file (3)
-            do i = 1, 18
-                read(fhandle0, *)
-            end do
-            ! Crop file
-            read(fhandle0, *) ! Crop file title
-            read(fhandle0, *) FileName
-            read(fhandle0, *) PathName
-
             ! Obtain maximum rooting depth from the crop file
-            FullFileName = trim(PathName) // trim(FileName)
+            FullFileName = ProjectInput(Runi)%Crop_Directory // &
+                           ProjectInput(Runi)%Crop_Filename
+
             open(newunit=fhandlex, file=trim(FullFileName), &
                                     status='old', action ='read')
             read(fhandlex, *) ! description
@@ -6767,17 +6718,11 @@ subroutine CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, RunWithKeepSWC, &
                 ConstZrxForRun = ZrSoili
             end if
 
-            ! Remaining files: Irri (3), Field (3), Soil (3), Gwt (3),
-            ! Inni (3), Off (3) and FieldData (3) file
-            do i = 1, 21
-                read(fhandle0, *)
-            end do
             Runi = Runi + 1
         end do
     end if
-    close(fhandle0)
 
-    ! 6. Reload existing soil file
+    ! 5. Reload existing soil file
     if (.not. has_external) then
         call SetProfFilefull(PreviousProfFilefull)
         call LoadProfile(GetProfFilefull())

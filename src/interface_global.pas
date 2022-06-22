@@ -4766,17 +4766,8 @@ procedure SetTactWeedInfested(constref TactWeedInfested_in : double);
     external 'aquacrop' name '__ac_global_MOD_settactweedinfested';
 
 procedure CheckForKeepSWC(
-                    constref FullNameProjectFile : string;
-                    constref TotalNrOfRuns : INTEGER;
-                    VAR RunWithKeepSWC : BOOLEAN;
-                    VAR ConstZrxForRun : double);
-
-procedure CheckForKeepSWC_wrap(
-                    constref FullNameProjectFile : PChar;
-                    constref strlen : integer;
-                    constref TotalNrRuns : integer;
-                    var RunWithKeepSWC : boolean;
-                    var ConstZrxForRun : double);
+                    OUT RunWithKeepSWC : BOOLEAN;
+                    OUT ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
 
 function GetTmin() : double;
@@ -4840,23 +4831,6 @@ procedure SetPart2Eval(constref Part2Eval_in : boolean);
     external 'aquacrop' name '__ac_interface_global_MOD_setpart2eval_wrap';
 
 implementation
-
-
-procedure CheckForKeepSWC(
-                    constref FullNameProjectFile : string;
-                    constref TotalNrOfRuns : INTEGER;
-                    VAR RunWithKeepSWC : BOOLEAN;
-                    VAR ConstZrxForRun : double);
-var
-    FullNameProjectFile_ptr : PChar;
-    strlen : integer;
-begin
-    FullNameProjectFile_ptr := PChar(FullNameProjectFile);
-    strlen := Length(FullNameProjectFile);
-    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns,
-                         RunWithKeepSWC, ConstZrxForRun);
-end;
-
 
 
 procedure LoadGroundWater(
