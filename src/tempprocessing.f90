@@ -38,7 +38,8 @@ use ac_global , only: undef_int, &
                       AdjustOnsetSearchPeriod, &
                       adjustcropyeartoclimfile, &
                       GenerateCO2Description, &
-                      LoadProfile,&
+                      LoadProfile, &
+                      LoadProfileProcessing, &
                       LoadClim, &
                       LoadIrriScheduleInfo,&
                       LoadManagement, &
@@ -2222,6 +2223,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     read(f0, *, iostat=rc) TempString  ! PathCropFile
     call SetCropFilefull(trim(TempString)//GetCropFile())
     call LoadCrop(GetCropFilefull())
+
     ! Adjust crop parameters of Perennials
     if (GetCrop_subkind() == subkind_Forage) then
         ! adjust crop characteristics to the Year (Seeding/Planting or
@@ -2333,7 +2335,15 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     read(f0, *, iostat=rc) TempString ! ProfFile
     call SetProfFile(trim(TempString))
     read(f0, *, iostat=rc) TempString ! PathProfFile
-    call SetProfFilefull(trim(TempString)//GetProfFile())
+
+    if (GetProfFile() == '(External)') then
+        call SetProfFilefull(GetProfFile())
+    elseif (GetProfFile() == '(None)') then
+        call SetProfFilefull(GetPathNameSimul() // 'DEFAULT.SOL')
+    else
+        call SetProfFilefull(trim(TempString) // GetProfFile())
+    end if
+
     ! The load of profile is delayed to check if soil water profile need to be
     ! reset (see 8.)
 
@@ -2372,7 +2382,11 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     else
         ! start with load and complete profile description (see 5.) which reset
         ! SWC to FC by default
-        call LoadProfile(GetProfFilefull())
+        if (GetProfFile() == '(External)') then
+            call LoadProfileProcessing(VersionNr)
+        else
+            call LoadProfile(GetProfFilefull())
+        end if
         call CompleteProfileDescription
 
         ! Adjust size of compartments if required
