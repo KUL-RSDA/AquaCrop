@@ -508,7 +508,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
     if ((TheProjectType /= typeproject_TypeNone) .and. CanSelect) then
         ! run the project after cheking environment and simumation files
         ! 1. Set No specific project
-        call InitializeSettings()
+        call InitializeSettings(use_default_soil_file=.true.)
 
         select case(TheProjectType)
         case(typeproject_TypePRO)

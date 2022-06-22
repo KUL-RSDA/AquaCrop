@@ -198,7 +198,9 @@ implicit none
 contains
 
 
-subroutine InitializeSettings()
+subroutine InitializeSettings(use_default_soil_file)
+    logical, intent(in) :: use_default_soil_file
+        !! Whether to make use of a 'DEFAULT.sol' soil file.
 
     character(len=1025) :: TempString1, TempString2, CO2descr
     integer(int32) :: Nri
@@ -314,17 +316,21 @@ subroutine InitializeSettings()
     call SetSimulParam_ConstGwt(.true.)
 
     ! 2b. Soil profile and initial soil water content
-    call ResetDefaultSoil ! Reset the soil profile to its default values
-    call SetProfFile('DEFAULT.SOL')
-    call SetProfFilefull(GetPathNameSimul() // GetProfFile())
+    call ResetDefaultSoil(use_default_soil_file) ! Reset the soil profile to its default values
     ! required for SetSoil_RootMax(RootMaxInSoilProfile(GetCrop().RootMax,
                                  ! GetCrop().RootMin,GetSoil().NrSoilLayers,
                                  ! SoilLayer)) in LoadProfile
     call SetCrop_RootMin(0.30_dp) ! Minimum rooting depth (m)
     call SetCrop_RootMax(1.00_dp) ! Maximum rooting depth (m)
-    ! Crop.RootMin, RootMax, and Soil.RootMax are
-    ! correctly calculated in LoadCrop
-    call LoadProfile(GetProfFilefull())
+
+    if (use_default_soil_file) then
+        call SetProfFile('DEFAULT.SOL')
+        call SetProfFilefull(GetPathNameSimul() // GetProfFile())
+        ! Crop.RootMin, RootMax, and Soil.RootMax are
+        ! correctly calculated in LoadCrop
+        call LoadProfile(GetProfFilefull())
+    end if
+
     call CompleteProfileDescription ! Simulation.ResetIniSWC AND
                         ! specify_soil_layer whcih contains
                         ! PROCEDURE DeclareInitialCondAtFCandNoSalt,

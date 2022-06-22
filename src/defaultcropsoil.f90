@@ -283,7 +283,9 @@ subroutine ResetDefaultCrop()
 end subroutine ResetDefaultCrop
 
 
-subroutine ResetDefaultSoil()
+subroutine ResetDefaultSoil(use_default_soil_file)
+    logical, intent(in) :: use_default_soil_file
+        !! Whether to write a 'DEFAULT.SOL' file.
 
     real(dp) :: cra_temp, crb_temp
     character(len=25) :: TempString
@@ -311,8 +313,11 @@ subroutine ResetDefaultSoil()
                                 GetSoilLayer_InfRate(1), cra_temp, crb_temp)
     call SetSoilLayer_CRa(1, cra_temp)
     call SetSoilLayer_CRb(1, crb_temp)
-    call SetProfFilefull(GetPathNameSimul() // 'DEFAULT.SOL')
-    call SaveProfile(GetProfFilefull())
+
+    if (use_default_soil_file) then
+        call SetProfFilefull(GetPathNameSimul() // 'DEFAULT.SOL')
+        call SaveProfile(GetProfFilefull())
+    end if
 end subroutine ResetDefaultSoil
 
 end module ac_defaultcropsoil
