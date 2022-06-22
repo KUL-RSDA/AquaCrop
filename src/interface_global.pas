@@ -1451,16 +1451,6 @@ procedure GetDaySwitchToLinear(
                var HIGClinear : double);
         external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
 
-procedure GetNumberSimulationRuns(
-            constref TempFileNameFull : string;
-            var NrRuns : integer);
-
-procedure GetNumberSimulationRuns_wrap(
-            constref TempFileNameFull : PChar;
-            constref strlen : integer;
-            var NrRuns : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
-
 function GetCO2File(): string;
 
 function GetCO2File_wrap(): PChar;
@@ -5184,19 +5174,6 @@ var
 begin;
     int_IrriMethod := ord(IrriMethod);
     __SetIrriMethod(int_IrriMethod);
-end;
-
-procedure GetNumberSimulationRuns(
-            constref TempFileNameFull : string;
-            var NrRuns : integer);
-var
-    p : PChar;
-    strlen : integer;
-
-begin;
-    p := PChar(TempFileNameFull);
-    strlen := Length(TempFileNameFull);
-    GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
 end;
 
 function FileExists(constref full_name : string) : boolean;

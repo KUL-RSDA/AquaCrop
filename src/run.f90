@@ -6603,7 +6603,6 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
         return
     end if
 
-    call ProjectInput%read_project_file(trim(filename), int(NrRun, kind=int32))
     call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
 
     call AdjustCompartments()

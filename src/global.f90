@@ -3008,45 +3008,6 @@ subroutine GetDaySwitchToLinear(HImax, dHIdt, HIGC, tSwitch, HIGClinear)
 end subroutine GetDaySwitchToLinear
 
 
-subroutine GetNumberSimulationRuns(TempFileNameFull, NrRuns)
-    character(len=*), intent(in) :: TempFileNameFull
-    integer(int32), intent(inout) :: NrRuns
-
-    integer :: fhandle
-    integer(int32) :: NrFileLines, rc, i
-
-    NrRuns = 1
-
-    open(newunit=fhandle, file=trim(TempFileNameFull), status='old', &
-         action='read', iostat=rc)
-    read(fhandle, *, iostat=rc)  ! Description
-    read(fhandle, *, iostat=rc)  ! AquaCrop version Nr
-
-    do i = 1, 5
-        read(fhandle, *, iostat=rc) ! Type year and Simulation and Cropping period Run 1
-    end do
-
-    NrFileLines = 42 ! Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
-    do i = 1, NrFileLines
-        read(fhandle, *, iostat=rc) ! Files Run 1
-    end do
-
-    read_loop: do
-        i = 0
-        do while (i < (NrFileLines+5))
-            read(fhandle, *, iostat=rc)
-            if (rc == iostat_end) exit read_loop
-            i = i + 1
-        end do
-
-        if (i == (NrFileLines+5)) then
-            NrRuns = NrRuns + 1
-        end if
-    end do read_loop
-    close(fhandle)
-end subroutine GetNumberSimulationRuns
-
-
 logical function FileExists(full_name)
     character(len=*), intent(in) :: full_name
 

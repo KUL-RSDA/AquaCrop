@@ -73,6 +73,7 @@ OBJ_INTERFACE = interface_climprocessing.o \
     interface_global.o \
     interface_inforesults.o \
     interface_initialsettings.o \
+    interface_project_input.o \
     interface_rootunit.o \
     interface_run.o \
     interface_simul.o \
@@ -196,6 +197,10 @@ interface_initialsettings.o: interface_initialsettings.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+interface_project_input.o: interface_project_input.f90 \
+    project_input.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 interface_rootunit.o: interface_rootunit.f90 \
     rootunit.o \
     kinds.o
@@ -230,6 +235,7 @@ SRC = Global.pas \
       interface_global.pas \
       interface_inforesults.pas \
       interface_initialsettings.pas \
+      interface_project_input.pas \
       interface_rootunit.pas \
       interface_run.pas \
       interface_simul.pas \

@@ -2073,16 +2073,17 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
 
     ! 0. Year of cultivation and Simulation and Cropping period
-    call SetSimulation_YearSeason(ProjectInput%Simulation_YearSeason)
-    call SetCrop_Day1(ProjectInput%Crop_Day1)
-    call SetCrop_DayN(ProjectInput%Crop_DayN)
+    call SetSimulation_YearSeason(ProjectInput(NrRun)%Simulation_YearSeason)
+    call SetCrop_Day1(ProjectInput(NrRun)%Crop_Day1)
+    call SetCrop_DayN(ProjectInput(NrRun)%Crop_DayN)
 
     ! 1. Climate
-    call SetClimateFile(ProjectInput%Climate_Filename)
+    call SetClimateFile(ProjectInput(NrRun)%Climate_Filename)
     if (GetClimateFile() == '(None)') then
         call SetClimateFileFull(GetClimateFile())
     else
-        call SetClimateFileFull(ProjectInput%Climate_Directory // GetClimateFile())
+        call SetClimateFileFull(ProjectInput(NrRun)%Climate_Directory &
+                                // GetClimateFile())
         open(newunit=fClim, file=trim(GetClimateFileFull()), &
              status='old', action='read', iostat=rc)
         ! 1.0 Description
@@ -2092,7 +2093,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! 1.1 Temperature
-    call SetTemperatureFile(ProjectInput%Temperature_Filename)
+    call SetTemperatureFile(ProjectInput(NrRun)%Temperature_Filename)
 
     if (GetTemperatureFile() == '(None)') then
         call SetTemperatureFilefull(GetTemperatureFile())  ! no file
@@ -2101,7 +2102,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         call SetTemperatureDescription(('Default temperature data: Tmin = '// &
           trim(TempString1)// ' and Tmax = '// trim(TempString2) // ' deg'))
     else
-        call SetTemperatureFilefull(ProjectInput%Temperature_Directory &
+        call SetTemperatureFilefull(ProjectInput(NrRun)%Temperature_Directory &
                                     // GetTemperatureFile())
         TemperatureFilefull_exists = FileExists(GetTemperatureFilefull())
         if (TemperatureFilefull_exists) call ReadTemperatureFilefull()
@@ -2116,12 +2117,12 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! 1.2 ETo
-    call SetEToFile(ProjectInput%ETo_Filename)
+    call SetEToFile(ProjectInput(NrRun)%ETo_Filename)
     if (GetEToFile() == '(None)') then
         call SetEToFilefull(GetEToFile())  ! no file
         call SetEToDescription('Specify ETo data when Running AquaCrop')
     else
-        call SetEToFilefull(ProjectInput%ETo_Directory // GetEToFile())
+        call SetEToFilefull(ProjectInput(NrRun)%ETo_Directory // GetEToFile())
         eto_descr = GetEToDescription()
         etorecord_tmp = GetEToRecord()
         call LoadClim(GetEToFilefull(), eto_descr, etorecord_tmp)
@@ -2131,12 +2132,13 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! 1.3 Rain
-    call SetRainFile(ProjectInput%Rain_Filename)
+    call SetRainFile(ProjectInput(NrRun)%Rain_Filename)
     if (GetRainFile() == '(None)') then
         call SetRainFilefull(GetRainFile())  ! no file
         call SetRainDescription('Specify Rain data when Running AquaCrop')
     else
-        call SetRainFileFull(ProjectInput%Rain_Directory // GetRainFile())
+        call SetRainFileFull(ProjectInput(NrRun)%Rain_Directory &
+                             // GetRainFile())
         rain_descr = Getraindescription()
         rainrecord_tmp = GetRainRecord()
         call LoadClim(GetRainFilefull(), rain_descr, rainrecord_tmp)
@@ -2146,9 +2148,10 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! 1.4 CO2
-    call SetCO2File(ProjectInput%CO2_Filename)
+    call SetCO2File(ProjectInput(NrRun)%CO2_Filename)
     if (GetCO2File() /= '(None)') then
-        call SetCO2FileFull(ProjectInput%CO2_Directory // GetCO2File())
+        call SetCO2FileFull(ProjectInput(NrRun)%CO2_Directory &
+                            // GetCO2File())
         CO2descr =  GetCO2Description()
         call GenerateCO2Description(GetCO2FileFull(), CO2descr)
         call SetCO2Description(CO2descr)
@@ -2157,11 +2160,11 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     call AdjustOnsetSearchPeriod() ! Set initial StartSearch and StopSearchDayNr
 
     ! 2. Calendar
-    call SetCalendarFile(trim(ProjectInput%Calendar_Filename))
+    call SetCalendarFile(trim(ProjectInput(NrRun)%Calendar_Filename))
     if (GetCalendarFile() == '(None)') then
         call SetCalendarDescription('No calendar for the Seeding/Planting year')
     else
-        call SetCalendarFileFull(ProjectInput%Calendar_Directory &
+        call SetCalendarFileFull(ProjectInput(NrRun)%Calendar_Directory &
                                  // GetCalendarFile())
         CalendarDescriptionLocal = GetCalendarDescription()
         call GetFileDescription(GetCalendarFileFull(), CalendarDescriptionLocal)
@@ -2170,8 +2173,8 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
 
     ! 3. Crop
     call SetSimulation_LinkCropToSimPeriod(.true.)
-    call SetCropFile(ProjectInput%Crop_Filename)
-    call SetCropFilefull(ProjectInput%Crop_Directory // GetCropFile())
+    call SetCropFile(ProjectInput(NrRun)%Crop_Filename)
+    call SetCropFilefull(ProjectInput(NrRun)%Crop_Directory // GetCropFile())
     call LoadCrop(GetCropFilefull())
 
     ! Adjust crop parameters of Perennials
@@ -2237,24 +2240,25 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     call AdjustSimPeriod
 
     ! 4. Irrigation
-    call SetIrriFile(ProjectInput%Irrigation_Filename)
+    call SetIrriFile(ProjectInput(NrRun)%Irrigation_Filename)
     if (GetIrriFile() == '(None)') then
         call SetIrriFileFull(GetIrriFile())
         call NoIrrigation
         ! IrriDescription := 'Rainfed cropping';
     else
-        call SetIrriFileFull(ProjectInput%Irrigation_Directory &
+        call SetIrriFileFull(ProjectInput(NrRun)%Irrigation_Directory &
                              // GetIrriFile())
         call LoadIrriScheduleInfo(GetIrriFileFull())
     end if
 
     ! 5. Field Management
-    call SetManFile(ProjectInput%Management_Filename)
+    call SetManFile(ProjectInput(NrRun)%Management_Filename)
     if (GetManFile() == '(None)') then
         call SetManFileFull(GetManFile())
         call SetManDescription('No specific field management')
     else
-        call SetManFileFull(ProjectInput%Management_Directory // GetManFile())
+        call SetManFileFull(ProjectInput(NrRun)%Management_Directory &
+                            // GetManFile())
         call LoadManagement(GetManFilefull())
         ! reset canopy development to soil fertility
         FertStress = GetManagement_FertilityStress()
@@ -2274,40 +2278,41 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! 6. Soil Profile
-    call SetProfFile(ProjectInput%Soil_Filename)
+    call SetProfFile(ProjectInput(NrRun)%Soil_Filename)
     if (GetProfFile() == '(External)') then
         call SetProfFilefull(GetProfFile())
     elseif (GetProfFile() == '(None)') then
         call SetProfFilefull(GetPathNameSimul() // 'DEFAULT.SOL')
     else
-        call SetProfFilefull(ProjectInput%Soil_Directory // GetProfFile())
+        call SetProfFilefull(ProjectInput(NrRun)%Soil_Directory &
+                             // GetProfFile())
     end if
 
     ! The load of profile is delayed to check if soil water profile need to be
     ! reset (see 8.)
 
     ! 7. Groundwater
-    call SetGroundWaterFile(ProjectInput%GroundWater_Filename)
+    call SetGroundWaterFile(ProjectInput(NrRun)%GroundWater_Filename)
     if (GetGroundWaterFile() == '(None)') then
         call SetGroundWaterFilefull(GetGroundWaterFile())
         call SetGroundWaterDescription('no shallow groundwater table')
     else
-        call SetGroundWaterFilefull(ProjectInput%GroundWater_Directory &
+        call SetGroundWaterFilefull(ProjectInput(NrRun)%GroundWater_Directory &
                                     // GetGroundWaterFile())
         ! Loading the groundwater is done after loading the soil profile (see
         ! 9.)
     end if
 
     ! 8. Set simulation period
-    call SetSimulation_FromDayNr(ProjectInput%Simulation_DayNr1)
-    call SetSimulation_ToDayNr(ProjectInput%Simulation_DayNrN)
+    call SetSimulation_FromDayNr(ProjectInput(NrRun)%Simulation_DayNr1)
+    call SetSimulation_ToDayNr(ProjectInput(NrRun)%Simulation_DayNrN)
     if ((GetCrop_Day1() /= GetSimulation_FromDayNr()) .or. &
         (GetCrop_DayN() /= GetSimulation_ToDayNr())) then
         call SetSimulation_LinkCropToSimPeriod(.false.)
     end if
 
     ! 9. Initial conditions
-    if (ProjectInput%SWCIni_Filename == 'KeepSWC') then
+    if (ProjectInput(NrRun)%SWCIni_Filename == 'KeepSWC') then
         ! No load of soil file (which reset thickness compartments and Soil
         ! water content to FC)
         call SetSWCIniFile('KeepSWC')
@@ -2316,7 +2321,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
         ! start with load and complete profile description (see 5.) which reset
         ! SWC to FC by default
         if (GetProfFile() == '(External)') then
-            call LoadProfileProcessing(ProjectInput%VersionNr)
+            call LoadProfileProcessing(ProjectInput(NrRun)%VersionNr)
         else
             call LoadProfile(GetProfFilefull())
         end if
@@ -2352,13 +2357,13 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
             end if
         end if
 
-        call SetSWCIniFile(ProjectInput%SWCIni_Filename)
+        call SetSWCIniFile(ProjectInput(NrRun)%SWCIni_Filename)
         if (GetSWCIniFile() == '(None)') then
             call SetSWCiniFileFull(GetSWCiniFile()) ! no file
             call SetSWCiniDescription(&
                      'Soil water profile at Field Capacity')
         else
-            call SetSWCiniFileFull(ProjectInput%SWCIni_Directory &
+            call SetSWCiniFileFull(ProjectInput(NrRun)%SWCIni_Directory &
                                    // GetSWCIniFile())
             SurfaceStorage_temp = GetSurfaceStorage()
             call LoadInitialConditions(GetSWCiniFileFull(),&
@@ -2402,7 +2407,7 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
 
     ! 10. load the groundwater file if it exists (only possible for Version 4.0
     ! and higher)
-    if ((roundc(10*ProjectInput%VersionNr, mold=1) >= 40) .and. &
+    if ((roundc(10*ProjectInput(NrRun)%VersionNr, mold=1) >= 40) .and. &
         (GetGroundWaterFile() /= '(None)')) then
           ! the groundwater file is only available in Version 4.0 or higher
         ZiAqua_temp = GetZiAqua()
@@ -2424,23 +2429,23 @@ subroutine LoadSimulationRunProject(NameFileFull, NrRun)
     end if
 
     ! 11. Off-season conditions
-    call SetOffSeasonFile(ProjectInput%OffSeason_Filename)
+    call SetOffSeasonFile(ProjectInput(NrRun)%OffSeason_Filename)
     if (GetOffSeasonFile() == '(None)') then
         call SetOffSeasonFileFull(GetOffSeasonFile())
         call SetOffSeasonDescription('No specific off-season conditions')
     else
-        call SetOffSeasonFileFull(ProjectInput%OffSeason_Directory &
+        call SetOffSeasonFileFull(ProjectInput(NrRun)%OffSeason_Directory &
                                   // GetOffSeasonFile())
         call LoadOffSeason(GetOffSeasonFilefull())
     end if
 
     ! 12. Field data
-    call SetObservationsFile(ProjectInput%Observations_Filename)
+    call SetObservationsFile(ProjectInput(NrRun)%Observations_Filename)
     if (GetObservationsFile() == '(None)') then
         call SetObservationsFileFull(GetObservationsFile())
         call SetObservationsDescription('No field observations')
     else
-        call SetObservationsFileFull(ProjectInput%Observations_Directory &
+        call SetObservationsFileFull(ProjectInput(NrRun)%Observations_Directory &
                                      // GetObservationsFile())
         observations_descr = GetObservationsDescription()
         call GetFileDescription(GetObservationsFileFull(), observations_descr)

@@ -3,6 +3,7 @@ module ac_project_input
 use ac_kinds, only: dp, &
                     int8, &
                     int32
+use iso_fortran_env, only: iostat_end
 implicit none
 
 
@@ -111,10 +112,86 @@ type ProjectInput_type
 end type ProjectInput_type
 
 
-type(ProjectInput_type) :: ProjectInput
+type(ProjectInput_type), dimension(:), allocatable :: ProjectInput
+    !! Project file input data for every run in a project
 
 
 contains
+
+
+subroutine initialize_project_input(filename, NrRuns)
+    !! Initializes the ProjectInput module variable,
+    !! if it has not yet been allocated.
+    character(len=*), intent(in) :: filename
+        !! PRM or PRO file name
+    integer(int32), intent(in), optional :: NrRuns
+        !! total number of runs (if known beforehand)
+
+    integer :: i, NrRuns_local
+
+    if (allocated(ProjectInput)) return
+
+    if (present(NrRuns)) then
+        NrRuns_local = NrRuns
+    else
+        call ReadNumberSimulationRuns(filename, NrRuns_local)
+    end if
+    allocate(ProjectInput(NrRuns_local))
+
+    do i = 1, NrRuns_local
+        call ProjectInput(i)%read_project_file(filename, i)
+    end do
+end subroutine initialize_project_input
+
+
+subroutine ReadNumberSimulationRuns(TempFileNameFull, NrRuns)
+    !! Reads the project file to get the total number of runs.
+    character(len=*), intent(in) :: TempFileNameFull
+        !! PRM or PRO file name
+    integer(int32), intent(out) :: NrRuns
+        !! total number of runs
+
+    integer :: fhandle
+    integer(int32) :: NrFileLines, rc, i
+
+    NrRuns = 1
+
+    open(newunit=fhandle, file=trim(TempFileNameFull), status='old', &
+         action='read', iostat=rc)
+    read(fhandle, *, iostat=rc)  ! Description
+    read(fhandle, *, iostat=rc)  ! AquaCrop version Nr
+
+    do i = 1, 5
+        read(fhandle, *, iostat=rc) ! Type year and Simulation and Cropping period Run 1
+    end do
+
+    NrFileLines = 42 ! Clim(15),Calendar(3),Crop(3),Irri(3),Field(3),Soil(3),Gwt(3),Inni(3),Off(3),FieldData(3)
+    do i = 1, NrFileLines
+        read(fhandle, *, iostat=rc) ! Files Run 1
+    end do
+
+    read_loop: do
+        i = 0
+        do while (i < (NrFileLines+5))
+            read(fhandle, *, iostat=rc)
+            if (rc == iostat_end) exit read_loop
+            i = i + 1
+        end do
+
+        if (i == (NrFileLines+5)) then
+            NrRuns = NrRuns + 1
+        end if
+    end do read_loop
+    close(fhandle)
+end subroutine ReadNumberSimulationRuns
+
+
+function GetNumberSimulationRuns() result(NrRuns)
+    !! Returns the total number of runs.
+    integer :: NrRuns
+
+    NrRuns = size(ProjectInput)
+end function GetNumberSimulationRuns
 
 
 subroutine read_project_file(self, filename, NrRun)

@@ -39,7 +39,6 @@ use ac_global, only: CheckFilesInProject, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
                      GetFullFileNameProgramParameters, &
-                     GetNumberSimulationRuns, &
                      GetSimulParam_CNcorrection, &
                      GetsimulParam_ConstGwt, &
                      GetPathNameProg, &
@@ -334,19 +333,6 @@ subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
     bool = Calibrated
     call SetCrop_StressResponse_Calibrated(bool)
 end subroutine SetCrop_StressResponse_Calibrated_wrap
-
-
-subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
-    !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
-    type(c_ptr), intent(in) :: TempFileNameFull
-    integer(int32), intent(in) :: strlen
-    integer(int32), intent(out) :: NrRuns
-
-    character(len=strlen) :: string
-
-    string = pointer2string(TempFileNameFull, strlen)
-    call GetNumberSimulationRuns(string, NrRuns)
-end subroutine GetNumberSimulationRuns_wrap
 
 
 subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
