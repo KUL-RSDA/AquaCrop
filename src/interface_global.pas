@@ -2385,17 +2385,9 @@ procedure LoadProjectDescription_wrap(
         external 'aquacrop' name '__ac_interface_global_MOD_loadprojectdescription_wrap';
 
 procedure CheckFilesInProject(
-            constref TempFullFilename : string;
             constref Runi : integer;
-            var AllOK : boolean);
-
-procedure CheckFilesInProject_wrap(
-            constref TempFullFilename : PChar;
-            constref strlen : integer;
-            constref Runi : integer;
-            var AllOK : boolean);
+            out AllOK : boolean);
         external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
-
 
 function GetIrriECw(): rep_IrriECw;
         external 'aquacrop' name '__ac_global_MOD_getirriecw';
@@ -6115,21 +6107,6 @@ begin;
     strlen2 := Length(DescriptionOfProject);
     LoadProjectDescription_wrap(p1, strlen1, p2, strlen2);
     DescriptionOfProject := AnsiString(p2);
-end;
-
-
-procedure CheckFilesInProject(
-            constref TempFullFilename : string;
-            constref Runi : integer;
-            var AllOK : boolean);
-var
-    p : PChar;
-    strlen : integer;
-
-begin;
-    p := PChar(TempFullFilename);
-    strlen := Length(TempFullFilename);
-    CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
 end;
 
 function GetTemperatureRecord_DataType(): rep_datatype;

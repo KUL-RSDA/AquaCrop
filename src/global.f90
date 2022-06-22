@@ -7108,61 +7108,49 @@ subroutine LoadProjectDescription(FullNameProjectFile, DescriptionOfProject)
 end subroutine LoadProjectDescription
 
 
-subroutine CheckFilesInProject(TempFullFilename, Runi, AllOK)
-    character(len=*), intent(in) :: TempFullFilename
+subroutine CheckFilesInProject(Runi, AllOK)
     integer(int32), intent(in) :: Runi
-    logical, intent(inout) :: AllOK
-
-    integer :: fhandle
-    character(len=:), allocatable :: TempFileName, TempPathName, TempFullName
-    character(len=1024) :: buffer
-    integer(int32) :: i, TotalFiles
+    logical, intent(out) :: AllOK
 
     AllOK = .true.
-    open(newunit=fhandle, file=trim(TempFullFilename), status='old', &
-        action='read')
-    read(fhandle, *) ! Description
-    read(fhandle, *)  ! AquaCrop version Nr
-
-    ! Prepare
-    if (Runi > 1) then
-        do i = 1, 5
-            read(fhandle, *) ! Type year and Simulation and Cropping period of run 1
-        end do
-        do i = 1, 42
-            read(fhandle, *) ! files previous runs
-        end do
-    end if
-
-    ! Type Year and Simulation and Cropping period of the run
-    do i = 1, 5
-        read(fhandle, *)
-    end do
 
     ! Check the 14 files
-    i = 1
-    TotalFiles = 14
-    do while (AllOK .and. (i <= TotalFiles))
-        read(fhandle, *) ! Info
-        read(fhandle, *) buffer  ! FileName
-        TempFileName = trim(buffer)
-        if (trim(TempFileName) == '(None)') then
-            read(fhandle, *)
-        else
-            if ((i == (TotalFiles-2)) .and. (trim(TempFileName) == 'KeepSWC')) then ! file initial conditions
-                read(fhandle, *) ! Keep initial SWC
-            else
-                read(fhandle, *) buffer ! PathName
-                TempPathName = trim(buffer)
-                TempFullName = trim(TempPathName) // trim(TempFileName)
-                if (FileExists(trim(TempFullName)) .eqv. .false.) then
-                    AllOK = .false.
-                end if
+    associate(input => ProjectInput(Runi))
+    call check_file(input%Climate_Directory, input%Climate_Filename)
+    call check_file(input%Temperature_Directory, input%Temperature_Filename)
+    call check_file(input%ETo_Directory, input%ETo_Filename)
+    call check_file(input%Rain_Directory, input%Rain_Filename)
+    call check_file(input%CO2_Directory, input%CO2_Filename)
+    call check_file(input%Calendar_Directory, input%Calendar_Filename)
+    call check_file(input%Crop_Directory, input%Crop_Filename)
+    call check_file(input%Irrigation_Directory, input%Irrigation_Filename)
+    call check_file(input%Management_Directory, input%Management_Filename)
+    call check_file(input%GroundWater_Directory, input%GroundWater_Filename)
+    call check_file(input%Soil_Directory, input%Soil_Filename)
+
+    if (ProjectInput(Runi)%SWCIni_Filename /= 'KeepSWC') then
+        call check_file(input%SWCIni_Directory, input%SWCIni_Filename)
+    end if
+
+    call check_file(input%OffSeason_Directory, input%OffSeason_Filename)
+    call check_file(input%Observations_Directory, input%Observations_Filename)
+    end associate
+
+
+    contains
+
+
+    subroutine check_file(directory, filename)
+        ! Sets AllOK to false if expected file does not exist.
+        character(len=*), intent(in) :: directory
+        character(len=*), intent(in) :: filename
+
+        if (filename /= '(None)') then
+            if (.not. FileExists(directory // filename)) then
+                AllOK = .false.
             end if
         end if
-        i = i + 1
-    end do
-    close(fhandle)
+    end subroutine check_file
 end subroutine CheckFilesInProject
 
 

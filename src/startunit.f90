@@ -520,7 +520,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
             ! 3. Check if Environment and Simulation Files exist
             CanSelect = .true.
-            call CheckFilesInProject(GetProjectFileFull(), 1, CanSelect)
+            call CheckFilesInProject(1, CanSelect)
 
             ! 4. load project parameters
             if (CanSelect) then
@@ -550,8 +550,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             SimNr = 0_int8
             do while (CanSelect .and. (SimNr < TotalSimRuns))
                 SimNr = SimNr + 1_int8
-                call CheckFilesInProject(GetMultipleProjectFileFull(), &
-                                    int(SimNr, kind=int32), CanSelect)
+                call CheckFilesInProject(int(SimNr, kind=int32), CanSelect)
             end do
 
             ! 4. load project parameters

@@ -424,17 +424,15 @@ subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
 end subroutine LoadProjectDescription_wrap
 
 
-subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
+subroutine CheckFilesInProject_wrap(Runi, AllOK)
     !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
-    type(c_ptr), intent(in) :: TempFullFilename
-    integer(int32), intent(in) :: strlen
     integer(int32), intent(in) :: Runi
-    logical, intent(inout) :: AllOK
+    logical(1), intent(out) :: AllOK
 
-    character(len=strlen) :: string
+    logical :: AllOK_f
 
-    string = pointer2string(TempFullFilename, strlen)
-    call CheckFilesInProject(string, Runi, AllOK)
+    call CheckFilesInProject(Runi, AllOK_f)
+    AllOK = AllOK_f
 end subroutine CheckFilesInProject_wrap
 
 
