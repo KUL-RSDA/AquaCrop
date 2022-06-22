@@ -400,6 +400,7 @@ use ac_kinds, only: dp, &
                     int8, &
                     int32, &
                     intenum
+use ac_project_input, only: ProjectInput
 use ac_rootunit, only:  AdjustedRootingDepth
 use ac_simul,    only:  Budget_module, &
                         determinepotentialbiomass, &
@@ -6602,6 +6603,7 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
         return
     end if
 
+    call ProjectInput%read_project_file(trim(filename), int(NrRun, kind=int32))
     call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
 
     call AdjustCompartments()

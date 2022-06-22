@@ -111,6 +111,9 @@ type ProjectInput_type
 end type ProjectInput_type
 
 
+type(ProjectInput_type) :: ProjectInput
+
+
 contains
 
 
