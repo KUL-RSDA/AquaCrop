@@ -127,7 +127,9 @@ initialsettings.o: initialsettings.f90 \
 kinds.o: kinds.f90
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-project_input.o: project_input.f90
+project_input.o: project_input.f90 \
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 rootunit.o: rootunit.f90 \
