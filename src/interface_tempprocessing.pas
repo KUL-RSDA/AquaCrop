@@ -118,14 +118,8 @@ procedure AdjustCropFileParameters(
          external 'aquacrop' name '__ac_tempprocessing_MOD_adjustcropfileparameters';
 
 procedure LoadSimulationRunProject(
-            constref NameFileFull : string;
             constref NrRun : INTEGER);
-
-procedure LoadSimulationRunProject_wrap(
-            constref IrriFileFull : PChar;
-            constref strlen1 : integer;
-            constref NrRun : INTEGER);
-         external 'aquacrop' name '__ac_interface_tempprocessing_MOD_loadsimulationrunproject_wrap';
+         external 'aquacrop' name '__ac_tempprocessing_MOD_loadsimulationrunproject';
 
 procedure BTransferPeriod(
             constref TheDaysToCCini,TheGDDaysToCCini,
@@ -267,19 +261,6 @@ procedure CCxSaltStressRelationship(
 
 
 implementation
-
-
-procedure LoadSimulationRunProject(
-            constref NameFileFull : string;
-            constref NrRun : INTEGER);
-var
-    p1 : PChar;
-    strlen1: integer;
-begin;
-    p1 := PChar(NameFileFull);
-    strlen1 := Length(NameFileFull);
-    LoadSimulationRunProject_wrap(p1, strlen1, NrRun);
-end;
 
 
 procedure BTransferPeriod(

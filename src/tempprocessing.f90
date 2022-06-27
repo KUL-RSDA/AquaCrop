@@ -2043,8 +2043,7 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
 end subroutine AdjustCropFileParameters
 
 
-subroutine LoadSimulationRunProject(NameFileFull, NrRun)
-    character(len=*), intent(in) :: NameFileFull
+subroutine LoadSimulationRunProject(NrRun)
     integer(int32), intent(in) :: NrRun
 
     integer(int32) :: fClim, i, rc
