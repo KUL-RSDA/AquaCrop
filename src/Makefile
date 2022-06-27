@@ -175,58 +175,74 @@ utils.o: utils.f90 \
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 
+# Interface Fortran code: always adding the parent module and the kinds and
+# utils modules as dependencies for convenience, even if not actually used.
+
 interface_climprocessing.o: interface_climprocessing.f90 \
     climprocessing.o \
-    kinds.o
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_defaultcropsoil.o: interface_defaultcropsoil.f90 \
     defaultcropsoil.o \
-    kinds.o
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_global.o: interface_global.f90 \
     global.o \
-    kinds.o
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_inforesults.o: interface_inforesults.f90 \
     inforesults.o \
-    kinds.o
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_initialsettings.o: interface_initialsettings.f90 \
     initialsettings.o \
-    kinds.o
+    kinds.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_project_input.o: interface_project_input.f90 \
-    project_input.o
+    kinds.o \
+    project_input.o \
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_rootunit.o: interface_rootunit.f90 \
+    kinds.o \
     rootunit.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_run.o: interface_run.f90 \
+    kinds.o \
     run.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_simul.o: interface_simul.f90 \
+    kinds.o \
     simul.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_startunit.o: interface_startunit.f90 \
+    kinds.o \
     startunit.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 interface_tempprocessing.o: interface_tempprocessing.f90 \
+    global.o \
+    kinds.o \
     tempprocessing.o \
-    kinds.o
+    utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
 
