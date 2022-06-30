@@ -39,7 +39,6 @@ use ac_global, only: CheckFilesInProject, &
                      GetMultipleProjectFile, &
                      GetMultipleProjectFileFull, &
                      GetFullFileNameProgramParameters, &
-                     GetNumberSimulationRuns, &
                      GetSimulParam_CNcorrection, &
                      GetsimulParam_ConstGwt, &
                      GetPathNameProg, &
@@ -336,19 +335,6 @@ subroutine SetCrop_StressResponse_Calibrated_wrap(Calibrated)
 end subroutine SetCrop_StressResponse_Calibrated_wrap
 
 
-subroutine GetNumberSimulationRuns_wrap(TempFileNameFull, strlen, NrRuns)
-    !! Wrapper for [[ac_global:GetNumberSimulationRuns]] for foreign languages.
-    type(c_ptr), intent(in) :: TempFileNameFull
-    integer(int32), intent(in) :: strlen
-    integer(int32), intent(out) :: NrRuns
-
-    character(len=strlen) :: string
-
-    string = pointer2string(TempFileNameFull, strlen)
-    call GetNumberSimulationRuns(string, NrRuns)
-end subroutine GetNumberSimulationRuns_wrap
-
-
 subroutine ComposeOutputFileName_wrap(TheProjectFileName, strlen)
     !! Wrapper for [[ac_global:ComposeOutputFileName]] for foreign languages.
     type(c_ptr), intent(in) :: TheProjectFileName
@@ -420,35 +406,29 @@ subroutine SplitStringInThreeParams_wrap(StringIN, strlen, Par1, Par2, Par3)
 end subroutine SplitStringInThreeParams_wrap
 
 
-subroutine LoadProjectDescription_wrap(FullNameProjectFile, strlen1, &
-                                                DescriptionOfProject, strlen2)
+subroutine LoadProjectDescription_wrap(DescriptionOfProject, strlen)
     !! Wrapper for [[ac_global:LoadProjectDescription]] for foreign languages.
-    type(c_ptr), intent(in) :: FullNameProjectFile
-    integer(int32), intent(in) :: strlen1
     type(c_ptr), intent(inout) :: DescriptionOfProject
-    integer(int32), intent(in) :: strlen2
-
-    character(len=strlen1) :: string1
-    character(len=strlen2) :: string2
-
-    string1 = pointer2string(FullNameProjectFile, strlen1)
-    string2 = pointer2string(DescriptionOfProject, strlen2)
-    call LoadProjectDescription(string1, string2)
-    DescriptionOfProject = string2pointer(string2)
-end subroutine LoadProjectDescription_wrap
-
-
-subroutine CheckFilesInProject_wrap(TempFullFilename, strlen, Runi, AllOK)
-    !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
-    type(c_ptr), intent(in) :: TempFullFilename
     integer(int32), intent(in) :: strlen
-    integer(int32), intent(in) :: Runi
-    logical, intent(inout) :: AllOK
 
     character(len=strlen) :: string
 
-    string = pointer2string(TempFullFilename, strlen)
-    call CheckFilesInProject(string, Runi, AllOK)
+    string = pointer2string(DescriptionOfProject, strlen)
+    call LoadProjectDescription(string)
+
+    DescriptionOfProject = string2pointer(string)
+end subroutine LoadProjectDescription_wrap
+
+
+subroutine CheckFilesInProject_wrap(Runi, AllOK)
+    !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
+    integer(int32), intent(in) :: Runi
+    logical(1), intent(out) :: AllOK
+
+    logical :: AllOK_f
+
+    call CheckFilesInProject(Runi, AllOK_f)
+    AllOK = AllOK_f
 end subroutine CheckFilesInProject_wrap
 
 
@@ -2768,21 +2748,14 @@ subroutine SetProjectDescription_wrap(ProjectDescription, strlen)
 end subroutine SetProjectDescription_wrap
 
 
-subroutine CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns, &
-                                RunwithKeepSWC, ConstZrxForRun)
-    type(c_ptr), intent(in) :: FullNameProjectFile_ptr
-    integer(int32), intent(in) :: strlen
-    integer(int32), intent(in) :: TotalNrOfRuns
-    logical(1), intent(inout) :: RunWithKeepSWC
-    real(dp), intent(inout) :: ConstZrxForRun
+subroutine CheckForKeepSWC_wrap(RunwithKeepSWC, ConstZrxForRun)
+    logical(1), intent(out) :: RunWithKeepSWC
+    real(dp), intent(out) :: ConstZrxForRun
 
-    character(len=strlen) :: FullNameProjectFile
     logical :: RunWithKeepSWC_f
 
-    FullNameprojectFile = pointer2string(FullNameProjectFile_ptr, strlen)
     RunWithKeepSWC_f = RunWithKeepSWC
-    call CheckForKeepSWC(FullNameProjectFile, TotalNrOfRuns, &
-                         RunWithKeepSWC_f, ConstZrxForRun)
+    call CheckForKeepSWC(RunWithKeepSWC_f, ConstZrxForRun)
     RunWithKeepSWC = RunWithKeepSWC_f
 end subroutine CheckForKeepSWC_wrap
 

@@ -400,6 +400,7 @@ use ac_kinds, only: dp, &
                     int8, &
                     int32, &
                     intenum
+use ac_project_input, only: ProjectInput
 use ac_rootunit, only:  AdjustedRootingDepth
 use ac_simul,    only:  Budget_module, &
                         determinepotentialbiomass, &
@@ -5030,7 +5031,7 @@ end subroutine InitializeSimulationRunPart1
 
 
 subroutine InitializeClimate()
-    !! Creates the Climate SIM files and reads climate of first day 
+    !! Creates the Climate SIM files and reads climate of first day
 
     ! 10. Climate
     ! create climate files
@@ -6583,26 +6584,13 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     integer(intEnum), intent(in) :: TheProjectType
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
-    character(len=1024), allocatable :: filename
 
-    ! NOTE: Previously, the code would give deviations for the Perennial
-    ! test when compiling with the foss-2018a toolchain and the DEBUG=1
-    ! and FORTRAN_EXE=0 options. By using a 'filename' local variable,
-    ! the test passes again. Also inserting a print statement (instead
-    ! of using this local variable) at this location tends to have the
-    ! same effect. This behavior started after InitializeRun got converted
-    ! to Fortran (commit a042e73f7b3a2f69b8077f1baac004886c355224).
-    if (TheProjectType == typeproject_typepro) then
-        call assert(NrRun == 1, 'NrRun needs to be 1 for PRO-type projects')
-        filename = GetProjectFileFull()
-    elseif (TheProjectType == typeproject_typeprm) then
-        filename = GetMultipleProjectFileFull()
-    else
+    if (TheProjectType == typeproject_typenone) then
         ! Do nothing
         return
     end if
 
-    call LoadSimulationRunProject(trim(filename), int(NrRun, kind=int32))
+    call LoadSimulationRunProject(int(NrRun, kind=int32))
 
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
@@ -6675,7 +6663,7 @@ subroutine InitializeRunPart2(NrRun, TheProjectType)
     !! Initializes write out for the run
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
-    
+
     call InitializeSimulationRunPart2()
 
     if (GetOutDaily()) then
@@ -7352,11 +7340,11 @@ end subroutine AdvanceOneTimeStep
 
 
 subroutine ReadClimateNextDay()
-    
+
     real(dp) :: ETo_tmp
     real(dp) :: tmpRain, Tmin_temp, Tmax_temp
     character(len=:), allocatable :: TempString
-    
+
     ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         if (GetEToFile() /= '(None)') then
@@ -7383,7 +7371,7 @@ end subroutine ReadClimateNextDay
 
 
 subroutine SetGDDVariablesNextDay()
-    
+
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
         call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
                 GetTmin(), GetTmax(), GetSimulParam_GDDMethod()))

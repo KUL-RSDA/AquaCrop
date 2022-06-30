@@ -116,7 +116,6 @@ use ac_global, only:    GetPathNameSimul, &
                         GetMultipleProjectFile, &
                         GetSimulation_NrRuns, &
                         SetMultipleProjectFilefull, &
-                        GetNumberSimulationRuns, &
                         SetprojectDescription, &
                         CheckForKeepSWC, &
                         SetFullfilenameProgramParameters
@@ -125,6 +124,8 @@ use ac_kinds, only: int32,&
                     int8, &
                     intEnum, &
                     dp
+use ac_project_input, only: GetNumberSimulationRuns, &
+                            initialize_project_input
 use ac_run, only: open_file, &
                   RunSimulation, &
                   write_file
@@ -512,12 +513,15 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
         select case(TheProjectType)
         case(typeproject_TypePRO)
-            ! 2. Assign single project file
+            ! 2. Assign single project file and read its contents
             call SetProjectFile(TheProjectFile)
             call SetProjectFileFull(GetPathNameList() // GetProjectFile())
+            call initialize_project_input(GetProjectFileFull(), NrRuns=1)
+
             ! 3. Check if Environment and Simulation Files exist
             CanSelect = .true.
-            call CheckFilesInProject(GetProjectFileFull(), 1, CanSelect)
+            call CheckFilesInProject(1, CanSelect)
+
             ! 4. load project parameters
             if (CanSelect) then
                 call SetProjectDescription('undefined')
@@ -532,20 +536,21 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             end if
 
         case(typeproject_TypePRM)
-            ! 2. Assign multiple project file
+            ! 2. Assign multiple project file and read its contents
             call SetMultipleProjectFile(TheProjectFile)
             call SetMultipleProjectFileFull(GetPathNameList() // &
-                                    GetMultipleProjectFile())
+                                            GetMultipleProjectFile())
+            call initialize_project_input(GetMultipleProjectFileFull())
+
             ! 2bis. Get number of Simulation Runs
-            call GetNumberSimulationRuns(GetMultipleProjectFileFull(), &
-                                         TotalSimRuns)
+            TotalSimRuns = GetNumberSimulationRuns()
+
             ! 3. Check if Environment and Simulation Files exist for all runs
             CanSelect = .true.
             SimNr = 0_int8
             do while (CanSelect .and. (SimNr < TotalSimRuns))
                 SimNr = SimNr + 1_int8
-                call CheckFilesInProject(GetMultipleProjectFileFull(), &
-                                    int(SimNr, kind=int32), CanSelect)
+                call CheckFilesInProject(int(SimNr, kind=int32), CanSelect)
             end do
 
             ! 4. load project parameters
@@ -563,9 +568,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                 call SetSimulation_NrRuns(TotalSimRuns)
                 MultipleRunWithKeepSWC_temp = GetSimulation_MultipleRunWithKeepSWC()
                 MultipleRunConstZrx_temp = GetSimulation_MultipleRunConstZrx()
-                call CheckForKeepSWC(GetMultipleProjectFileFull(), &
-                                     GetSimulation_NrRuns(), &
-                                     MultipleRunWithKeepSWC_temp, &
+                call CheckForKeepSWC(MultipleRunWithKeepSWC_temp, &
                                      MultipleRunConstZrx_temp)
                 call SetSimulation_MultipleRunWithKeepSWC(MultipleRunWithKeepSWC_temp)
                 call SetSimulation_MultipleRunConstZrx(MultipleRunConstZrx_temp)

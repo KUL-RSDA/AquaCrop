@@ -1451,16 +1451,6 @@ procedure GetDaySwitchToLinear(
                var HIGClinear : double);
         external 'aquacrop' name '__ac_global_MOD_getdayswitchtolinear';
 
-procedure GetNumberSimulationRuns(
-            constref TempFileNameFull : string;
-            var NrRuns : integer);
-
-procedure GetNumberSimulationRuns_wrap(
-            constref TempFileNameFull : PChar;
-            constref strlen : integer;
-            var NrRuns : integer);
-        external 'aquacrop' name '__ac_interface_global_MOD_getnumbersimulationruns_wrap';
-
 function GetCO2File(): string;
 
 function GetCO2File_wrap(): PChar;
@@ -2384,28 +2374,17 @@ function LeapYear(constref Year : integer) : boolean;
         external 'aquacrop' name '__ac_global_MOD_leapyear';
 
 procedure LoadProjectDescription(
-            constref FullNameProjectFile : string;
             var DescriptionOfProject : string);
 
 procedure LoadProjectDescription_wrap(
-            constref FullNameProjectFile : PChar;
-            constref strlen1 : integer;
             var DescriptionOfProject : PChar;
-            constref strlen2 : integer);
+            constref strlen : integer);
         external 'aquacrop' name '__ac_interface_global_MOD_loadprojectdescription_wrap';
 
 procedure CheckFilesInProject(
-            constref TempFullFilename : string;
             constref Runi : integer;
-            var AllOK : boolean);
-
-procedure CheckFilesInProject_wrap(
-            constref TempFullFilename : PChar;
-            constref strlen : integer;
-            constref Runi : integer;
-            var AllOK : boolean);
+            out AllOK : boolean);
         external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
-
 
 function GetIrriECw(): rep_IrriECw;
         external 'aquacrop' name '__ac_global_MOD_getirriecw';
@@ -4776,17 +4755,8 @@ procedure SetTactWeedInfested(constref TactWeedInfested_in : double);
     external 'aquacrop' name '__ac_global_MOD_settactweedinfested';
 
 procedure CheckForKeepSWC(
-                    constref FullNameProjectFile : string;
-                    constref TotalNrOfRuns : INTEGER;
-                    VAR RunWithKeepSWC : BOOLEAN;
-                    VAR ConstZrxForRun : double);
-
-procedure CheckForKeepSWC_wrap(
-                    constref FullNameProjectFile : PChar;
-                    constref strlen : integer;
-                    constref TotalNrRuns : integer;
-                    var RunWithKeepSWC : boolean;
-                    var ConstZrxForRun : double);
+                    OUT RunWithKeepSWC : BOOLEAN;
+                    OUT ConstZrxForRun : double);
     external 'aquacrop ' name '__ac_interface_global_MOD_checkforkeepswc_wrap';
 
 function GetTmin() : double;
@@ -4850,23 +4820,6 @@ procedure SetPart2Eval(constref Part2Eval_in : boolean);
     external 'aquacrop' name '__ac_interface_global_MOD_setpart2eval_wrap';
 
 implementation
-
-
-procedure CheckForKeepSWC(
-                    constref FullNameProjectFile : string;
-                    constref TotalNrOfRuns : INTEGER;
-                    VAR RunWithKeepSWC : BOOLEAN;
-                    VAR ConstZrxForRun : double);
-var
-    FullNameProjectFile_ptr : PChar;
-    strlen : integer;
-begin
-    FullNameProjectFile_ptr := PChar(FullNameProjectFile);
-    strlen := Length(FullNameProjectFile);
-    CheckForKeepSWC_wrap(FullNameProjectFile_ptr, strlen, TotalNrOfRuns,
-                         RunWithKeepSWC, ConstZrxForRun);
-end;
-
 
 
 procedure LoadGroundWater(
@@ -5184,19 +5137,6 @@ var
 begin;
     int_IrriMethod := ord(IrriMethod);
     __SetIrriMethod(int_IrriMethod);
-end;
-
-procedure GetNumberSimulationRuns(
-            constref TempFileNameFull : string;
-            var NrRuns : integer);
-var
-    p : PChar;
-    strlen : integer;
-
-begin;
-    p := PChar(TempFileNameFull);
-    strlen := Length(TempFileNameFull);
-    GetNumberSimulationRuns_wrap(p, strlen, NrRuns);
 end;
 
 function FileExists(constref full_name : string) : boolean;
@@ -6151,34 +6091,16 @@ begin;
 end;
 
 procedure LoadProjectDescription(
-            constref FullNameProjectFile : string;
             var DescriptionOfProject: string);
-var
-    p1, p2 : PChar;
-    strlen1, strlen2 : integer;
-
-begin;
-    p1 := PChar(FullNameProjectFile);
-    p2 := PChar(DescriptionOfProject);
-    strlen1 := Length(FullNameProjectFile);
-    strlen2 := Length(DescriptionOfProject);
-    LoadProjectDescription_wrap(p1, strlen1, p2, strlen2);
-    DescriptionOfProject := AnsiString(p2);
-end;
-
-
-procedure CheckFilesInProject(
-            constref TempFullFilename : string;
-            constref Runi : integer;
-            var AllOK : boolean);
 var
     p : PChar;
     strlen : integer;
 
 begin;
-    p := PChar(TempFullFilename);
-    strlen := Length(TempFullFilename);
-    CheckFilesInProject_wrap(p, strlen, Runi, AllOK);
+    p := PChar(DescriptionOfProject);
+    strlen := Length(DescriptionOfProject);
+    LoadProjectDescription_wrap(p, strlen);
+    DescriptionOfProject := AnsiString(p);
 end;
 
 function GetTemperatureRecord_DataType(): rep_datatype;

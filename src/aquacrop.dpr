@@ -6,6 +6,7 @@ uses
   interface_global in 'interface_global.pas',
   interface_inforesults in 'interface_inforesults.pas',
   interface_initialsettings in 'interface_initialsettings.pas',
+  interface_project_input in 'interface_project_input.pas',
   interface_rootunit in 'interface_rootunit.pas',
   interface_run in 'interface_run.pas',
   interface_simul in 'interface_simul.pas',

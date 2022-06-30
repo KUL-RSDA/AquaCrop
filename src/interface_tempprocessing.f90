@@ -9,10 +9,7 @@ use ac_kinds,  only: dp, &
                      intEnum
 use ac_tempprocessing, only: Bnormalized, BiomassRatio,&
                              CCxSaltStressRelationship, &
-                             LoadSimulationRunProject, &
                              StressBiomassRelationship
-use ac_utils, only: pointer2string
-use, intrinsic :: iso_c_binding, only: c_ptr
 implicit none
 
 
@@ -98,19 +95,6 @@ real(dp) function Bnormalized_wrap(&
             bool_fertilitystresson,&
             bool_testrecord)
 end function Bnormalized_wrap
-
-
-subroutine LoadSimulationRunProject_wrap(NameFileFull, strlen, NrRun)
-    !! Wrapper
-    type(c_ptr), intent(in) :: NameFileFull
-    integer(int32), intent(in) :: strlen
-    integer(int32), intent(in) :: NrRun
-
-    character(len=strlen) :: string
-
-    string = pointer2string(NameFileFull, strlen)
-    call LoadSimulationRunProject(string, NrRun)
-end subroutine LoadSimulationRunProject_wrap
 
 
 real(dp) function BiomassRatio_wrap(TempDaysToCCini, TempGDDaysToCCini,&
