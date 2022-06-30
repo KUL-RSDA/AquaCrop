@@ -2078,7 +2078,7 @@ subroutine LoadSimulationRunProject(NrRun)
 
     ! 1. Climate
     call SetClimateFile(ProjectInput(NrRun)%Climate_Filename)
-    if (GetClimateFile() == '(None)') then
+    if ((GetClimateFile() == '(None)') .or. (GetClimateFile() == '(External)')) then
         call SetClimateFileFull(GetClimateFile())
     else
         call SetClimateFileFull(ProjectInput(NrRun)%Climate_Directory &
@@ -2155,7 +2155,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call GenerateCO2Description(GetCO2FileFull(), CO2descr)
         call SetCO2Description(CO2descr)
     end if
-    call SetClimData()
+    if (GetClimateFile() /= '(External)') then
+        call SetClimData()
+    end if
     call AdjustOnsetSearchPeriod() ! Set initial StartSearch and StopSearchDayNr
 
     ! 2. Calendar
