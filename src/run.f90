@@ -656,7 +656,7 @@ end function read_file
 
 function GetTheProjectFile() result(str)
     !! Getter for the "TheProjectFile" global variable.
-    character(len=len(TheProjectFile)) :: str
+    character(len=:), allocatable :: str
 
     str = TheProjectFile
 end function GetTheProjectFile
@@ -991,7 +991,7 @@ end subroutine fObs_rewind
 
 function GetfHarvest_filename() result(str)
     !! Getter for the "fHarvest_filename" global variable.
-    character(len=len(fHarvest_filename)) :: str
+    character(len=:), allocatable :: str
 
     str = fHarvest_filename
 end function GetfHarvest_filename
