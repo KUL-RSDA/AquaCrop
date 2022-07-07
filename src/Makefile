@@ -22,25 +22,25 @@ ifeq ($(STATIC), 1)
 endif
 
 ifeq ($(FC), gfortran)
-	ifeq ($(STATIC), 1)
-	    # For statically compiled (release) executables
-	    FCFLAGS += -O2 -mtune=generic -funroll-loops
-	    LDFLAGS_EXE += -static
-	    LDFLAGS_LIB += -static
-	else
-	    FCFLAGS += -fPIC -fall-intrinsics
+    ifeq ($(STATIC), 1)
+        # For statically compiled (release) executables
+        FCFLAGS += -O2 -mtune=generic -funroll-loops
+        LDFLAGS_EXE += -static
+        LDFLAGS_LIB += -static
+    else
+        FCFLAGS += -fPIC -fall-intrinsics
         LDFLAGS_LIB += -shared
 
-	    ifeq ($(DEBUG), 1)
-	        # For debugging and development
-	        PCFLAGS += -gl
-	        FCFLAGS += -g -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
-	                   -fcheck=all -fbacktrace -std=f2008
-	    else
-	        # For production
-	        FCFLAGS += -O2 -march=native -funroll-loops
-	    endif
-	endif
+        ifeq ($(DEBUG), 1)
+            # For debugging and development
+            PCFLAGS += -gl
+            FCFLAGS += -g -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
+                       -fcheck=all -fbacktrace -std=f2008
+        else
+            # For production
+            FCFLAGS += -O2 -march=native -funroll-loops
+        endif
+    endif
 else ifeq ($(FC), ifort)
     ifneq ($(FORTRAN_EXE), 1)
         $(error FORTRAN_EXE=1 is required for FC=ifort)
