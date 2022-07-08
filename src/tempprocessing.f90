@@ -1327,7 +1327,7 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
               Tbase, Tupper, NoTempFileTMin, NoTempFileTMax,&
               GDDL0, GDDL12, GDDFlor, GDDLengthFlor, GDDL123,&
               GDDHarvest, GDDLZmax, GDDHImax, GDDCGC, GDDCDC,&
-              CCo, CCx, IsCGCGiven, HIndex, TheDaysToCCini,&
+              CCo, CCx, IsCGCGiven, HIndex, TheDaysToCCini, TheGDDaysToCCini,&
               ThePlanting, D0, D12, DFlor, LengthFlor,&
               D123, DHarvest, DLZmax, LHImax, StLength,&
               CGC, CDC, dHIdt, Succes)
@@ -1352,6 +1352,7 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
     logical, intent(in) :: IsCGCGiven
     integer(int32), intent(in) :: HIndex
     integer(int32), intent(in) :: TheDaysToCCini
+    integer(int32), intent(in) :: TheGDDaysToCCini
     integer(intEnum), intent(in) :: ThePlanting
     integer(int32), intent(inout) :: D0
     integer(int32), intent(inout) :: D12
@@ -1367,22 +1368,37 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
     real(dp), intent(inout) :: dHIdt
     logical, intent(inout) :: Succes
 
-    real(dp) :: tmp_NoTempFileTMin,tmp_NoTempFileTMax
+    real(dp) :: tmp_NoTempFileTMin, tmp_NoTempFileTMax
+    integer :: ExtraDays, ExtraGDDays
 
     tmp_NoTempFileTMin = NoTempFileTMin
     tmp_NoTempFileTMax = NoTempFileTMax
 
     Succes = .true.
-    D0 = SumCalendarDays(GDDL0, PlantDayNr, &
-            Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
-    D12 = SumCalendarDays(GDDL12, PlantDayNr,&
-            Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+    if (TheDaysToCCini == 0) then
+        ! planting/sowing
+        D0 = SumCalendarDays(GDDL0, PlantDayNr, Tbase, Tupper, &
+                             NoTempFileTMin, NoTempFileTMax)
+        D12 = SumCalendarDays(GDDL12, PlantDayNr, Tbase, Tupper, &
+                              NoTempFileTMin, NoTempFileTMax)
+    else
+        ! regrowth
+        if (TheDaysToCCini > 0) THEN
+           ! CCini < CCx
+           ExtraGDDays = GDDL12 - GDDL0 - TheGDDaysToCCini
+           ExtraDays = SumCalendarDays(ExtraGDDays, PlantDayNr, Tbase, &
+                                       Tupper, NoTempFileTMin, NoTempFileTMax)
+           D12 = D0 + TheDaysToCCini + ExtraDays
+        end if
+    end if
+
     if (InfoCropType /= subkind_Forage) then
         D123 = SumCalendarDays(GDDL123, PlantDayNr,&
                  Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
         DHarvest = SumCalendarDays(GDDHarvest, PlantDayNr,&
                      Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
     end if
+
     DLZmax = SumCalendarDays(GDDLZmax, PlantDayNr,&
                Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
     select case (InfoCropType)
@@ -1499,7 +1515,7 @@ subroutine AdjustCalendarCrop(FirstCropDay)
           GetCrop_GDDaysToMaxRooting(), Crop_GDDaysToHIo_temp, &
           GetCrop_GDDCGC(), GetCrop_GDDCDC(), GetCrop_CCo(), &
           GetCrop_CCx(), CGCisGiven, GetCrop_HI(), &
-          GetCrop_DaysToCCini(), GetCrop_Planting(), &
+          GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), GetCrop_Planting(), &
           Crop_DaysToGermination_temp, Crop_DaysToFullCanopy_temp,&
           Crop_DaysToFlowering_temp, Crop_LengthFlowering_temp, &
           Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp, &
