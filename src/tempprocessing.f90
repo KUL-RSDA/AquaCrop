@@ -2047,13 +2047,18 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
     ! time to senescence  (reference is given in TheCropFileSet
     if (TheModeCycle == modeCycle_GDDays) then
         GDD123 = GDD1234 - TheCropFileSet%GDDaysFromSenescenceToEnd
-        Tmin_tmp = GetSimulParam_Tmin()
-        Tmax_tmp = GetSimulParam_Tmax()
-        L123 = SumCalendarDays(GDD123, TheCropDay1,&
-                    TheTbase, TheTupper,&
-                    Tmin_tmp, Tmax_tmp)
+        if (GDD123 >= GDD1234) then
+            GDD123 = GDD1234
+            L123 = LseasonDays
+        else
+            Tmin_tmp = GetSimulParam_Tmin()
+            Tmax_tmp = GetSimulParam_Tmax()
+            L123 = SumCalendarDays(GDD123, TheCropDay1, TheTbase, TheTupper, &
+                                   Tmin_tmp, Tmax_tmp)
+        end if
     else
         L123 = L1234 - TheCropFileSet%DaysFromSenescenceToEnd
+        if (L123 >= L1234) L123 = LseasonDays
         GDD123 = undef_int
     end if
 end subroutine AdjustCropFileParameters
