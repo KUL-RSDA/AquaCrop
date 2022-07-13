@@ -173,6 +173,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetZiAqua, &
                         IrriMode_Generate, &
                         IrriMode_Manual, &
+                        KsAny, &
                         KsTemperature, &
                         rep_DayEventDbl, &
                         LeapYear, &
@@ -6409,6 +6410,9 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
     logical, intent(inout) :: StorageON
     logical, intent(inout) :: MobilizationON
 
+    integer(int32) :: c1, c2
+    real(dp) :: x
+
     Bin = 0._dp
     Bout = 0._dp
     FracAssim = 0._dp
@@ -6435,12 +6439,13 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
                 FracAssim = (AssimToMobilize-AssimMobilized)/AssimToMobilize
             end if
             if ((StorageOn) .and. (GetCrop_Assimilates_Period() > 0)) then
-                FracAssim = (GetCrop_Assimilates_Stored()/100._dp) &
-                            * (((GetDayNri() - GetSimulation_DelayedDays() &
-                                    - GetCrop_Day1() + 1._dp) &
-                                -(GetCrop_DaysToHarvest() &
-                                    - GetCrop_Assimilates_Period()))&
-                                /GetCrop_Assimilates_Period())
+                ! Use convex function
+                c1 = GetDayNri() - GetSimulation_DelayedDays() &
+                     - GetCrop_Day1() + 1
+                c2 = GetCrop_DaysToHarvest() - GetCrop_Assimilates_Period()
+                x = (c1 - c2) * 1._dp / GetCrop_Assimilates_Period()
+                FracAssim = (GetCrop_Assimilates_Stored() / 100._dp) &
+                            * (1._dp - Ksany(x, 0._dp, 1._dp, -5._dp))
             end if
             if (FracAssim < 0._dp) then
                 FracAssim = 0._dp
