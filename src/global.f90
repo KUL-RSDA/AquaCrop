@@ -1745,7 +1745,6 @@ integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
     real(dp), intent(in) :: TheCropCCx
     real(dp), intent(in) :: TheCropCGC
 
-
     integer(int32) :: ElapsedTime
     real(dp) :: TheCropCCo
     real(dp) :: TheCropCCini
@@ -1759,12 +1758,8 @@ integer(int32) function TimeToCCini(ThePlantingType, TheCropPlantingDens, &
         if (TheCropCCini >= (0.98_dp*TheCropCCx)) then
             ElapsedTime = undef_int
         else
-            if (TheCropCCini <= TheCropCCx/2) then
-                ElapsedTime = roundc(((log(TheCropCCini/TheCropCCo))/TheCropCGC), mold=1_int32)
-            else
-                ElapsedTime = (-1)* roundc(((log(((TheCropCCx-TheCropCCini)* &
-                     TheCropCCo)/(0.25_dp*TheCropCCx*TheCropCCx)))/TheCropCGC), mold=1_int32)
-            end if
+            ElapsedTime = DaysToReachCCwithGivenCGC(TheCropCCini, TheCropCCo, &
+                                                    TheCropCCx, TheCropCGC, 0)
         end if
     end if
     TimeToCCini = ElapsedTime
