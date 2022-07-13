@@ -3964,9 +3964,15 @@ subroutine SaveCrop(totalname)
     call SetCropFileSet_DaysFromSenescenceToEnd(GetCrop_DaysToHarvest() &
                                             - GetCrop_DaysToSenescence())
     call SetCropFileSet_DaysToHarvest(GetCrop_DaysToHarvest())
-    call SetCropFileSet_GDDaysFromSenescenceToEnd(GetCrop_GDDaysToHarvest() &
-                                            - GetCrop_GDDaysToSenescence())
-    call SetCropFileSet_GDDaysToHarvest(GetCrop_GDDaysToHarvest())
+
+    if (GetCrop_ModeCycle() == ModeCycle_GDDays) then
+        call SetCropFileSet_GDDaysFromSenescenceToEnd( &
+                GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())
+        call SetCropFileSet_GDDaysToHarvest(GetCrop_GDDaysToHarvest())
+    else
+        call SetCropFileSet_GDDaysFromSenescenceToEnd(undef_int)
+        call SetCropFileSet_GDDaysToHarvest(undef_int)
+    end if
 end subroutine SaveCrop
 
 
