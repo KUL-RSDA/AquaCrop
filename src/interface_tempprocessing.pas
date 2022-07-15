@@ -63,6 +63,7 @@ procedure AdjustCalendarDays(
             constref IsCGCGiven : BOOLEAN;
             constref HIndex : INTEGER;
             constref TheDaysToCCini : INTEGER;
+            constref TheGDDaysToCCini : INTEGER;
             constref ThePlanting : rep_planting;
             VAR D0,D12,DFlor,LengthFlor,D123,DHarvest,DLZmax,LHImax : INTEGER;
             VAR StLength : rep_int_array;
