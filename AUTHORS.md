@@ -1,4 +1,4 @@
-The AquaCrop source code has been developed by the following people
+The AquaCrop v7.0 open source code in Fortran has been developed by the following people
 (listed in alphabetical order):
 
 * Michel Bechtold (KU Leuven)
@@ -8,5 +8,11 @@ The AquaCrop source code has been developed by the following people
 * Zdenko Heyvaert (KU Leuven)
 * Jonas Mortelmans (KU Leuven)
 * Dirk Raes (KU Leuven)
-* Samuel Anton Sherrer (TU Wien)
+* Samuel Anton Sherrer (KU Leuven)
 * Maxime Van den Bossche (KU Leuven)
+
+The original AquaCrop source code (in Pascal) was developed by:
+* Dirk Raes (KU Leuven)
+* Elias Fereres (IAS-CISIC & University of Cordoba)
+* Pasquale Steduto (FAO)
+* Theodore Hsiao (UC Davis)
