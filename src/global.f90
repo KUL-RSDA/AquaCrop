@@ -5929,7 +5929,6 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
         open(newunit=fhandle, file=trim(FullName), status='old', action='read', &
         iostat=rc)
     else
-        call backtrace
         write(*,*) 'Climate file not found: ' // trim(FullName)
         return
     end if
@@ -6730,14 +6729,85 @@ subroutine CheckForKeepSWC(RunWithKeepSWC, ConstZrxForRun)
 end subroutine CheckForKeepSWC
 
 
+subroutine InitializeGlobalStrings()
+    !! Initializes all allocatable strings which are global variables
+    !! themselves or attributes of derived type global variables.
+
+    call SetRainFile('')
+    call SetRainFileFull('')
+    call SetRainDescription('')
+    call SetEToFile('')
+    call SetEToFileFull('')
+    call SetEToDescription('')
+    call SetCalendarFile('')
+    call SetCalendarFileFull('')
+    call SetCalendarDescription('')
+    call SetCO2File('')
+    call SetCO2FileFull('')
+    call SetCO2Description('')
+    call SetIrriFile('')
+    call SetIrriFileFull('')
+    call SetCropFile('')
+    call SetCropFileFull('')
+    call SetCropDescription('')
+    call SetPathNameProg('')
+    call SetPathNameOutp('')
+    call SetPathNameSimul('')
+    call SetProfFile('')
+    call SetProfFilefull('')
+    call SetProfDescription('')
+    call SetManFile('')
+    call SetManFilefull('')
+    call SetObservationsFile('')
+    call SetObservationsFilefull('')
+    call SetObservationsDescription('')
+    call SetOffSeasonFile('')
+    call SetOffSeasonFilefull('')
+    call SetOutputName('')
+    call SetGroundWaterFile('')
+    call SetGroundWaterFilefull('')
+    call SetClimateFile('')
+    call SetClimateFileFull('')
+    call SetClimateDescription('')
+    call SetIrriDescription('')
+    call SetClimFile('')
+    call SetSWCiniFile('')
+    call SetSWCiniFileFull('')
+    call SetSWCiniDescription('')
+    call SetProjectDescription('')
+    call SetProjectFile('')
+    call SetProjectFileFull('')
+    call SetMultipleProjectDescription('')
+    call SetMultipleProjectFile('')
+    call SetTemperatureFile('')
+    call SetTemperatureFileFull('')
+    call SetTemperatureDescription('')
+    call SetMultipleProjectFileFull('')
+    call SetFullFileNameProgramParameters('')
+    call SetManDescription('')
+    call SetClimDescription('')
+    call SetOffSeasonDescription('')
+    call SetGroundwaterDescription('')
+    call SetPathNameList('')
+    call SetPathNameParam('')
+
+    call SetTemperatureRecord_FromString('')
+    call SetTemperatureRecord_ToString('')
+    call SetClimRecord_FromString('')
+    call SetClimRecord_ToString('')
+    call SetRainRecord_FromString('')
+    call SetRainRecord_ToString('')
+    call SetEToRecord_FromString('')
+    call SetEToRecord_ToString('')
+    call SetSimulation_Storage_CropString('')
+end subroutine InitializeGlobalStrings
 
 
 !! Global variables section !!
 
-
 function GetIrriFile() result(str)
     !! Getter for the "IrriFile" global variable.
-    character(len=len(IrriFile)) :: str
+    character(len=:), allocatable :: str
 
     str = IrriFile
 end function GetIrriFile
@@ -6753,7 +6823,7 @@ end subroutine SetIrriFile
 
 function GetIrriFileFull() result(str)
     !! Getter for the "IrriFileFull" global variable.
-    character(len=len(IrriFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = IrriFileFull
 end function GetIrriFileFull
@@ -6769,7 +6839,7 @@ end subroutine SetIrriFileFull
 
 function GetClimateFile() result(str)
     !! Getter for the "ClimateFile" global variable.
-    character(len=len(ClimateFile)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimateFile
 end function GetClimateFile
@@ -6785,7 +6855,7 @@ end subroutine SetClimateFile
 
 function GetClimateFileFull() result(str)
     !! Getter for the "ClimateFileFull" global variable.
-    character(len=len(ClimateFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimateFileFull
 end function GetClimateFileFull
@@ -6801,7 +6871,7 @@ end subroutine SetClimateFileFull
 
 function GetClimateDescription() result(str)
     !! Getter for the "ClimateDescription" global variable.
-    character(len=len(ClimateDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimateDescription
 end function GetClimateDescription
@@ -6817,7 +6887,7 @@ end subroutine SetClimateDescription
 
 function GetClimFile() result(str)
     !! Getter for the "ClimFile" global variable.
-    character(len=len(ClimFile)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimFile
 end function GetClimFile
@@ -6833,7 +6903,7 @@ end subroutine SetClimFile
 
 function GetSWCiniFile() result(str)
     !! Getter for the "SWCiniFile" global variable.
-    character(len=len(SWCiniFile)) :: str
+    character(len=:), allocatable :: str
 
     str = SWCiniFile
 end function GetSWCiniFile
@@ -6849,7 +6919,7 @@ end subroutine SetSWCiniFile
 
 function GetSWCiniDescription() result(str)
     !! Getter for the "SWCiniDescription" global variable.
-    character(len=len(SWCiniDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = SWCiniDescription
 end function GetSWCiniDescription
@@ -6865,7 +6935,7 @@ end subroutine SetSWCiniDescription
 
 function GetSWCiniFileFull() result(str)
     !! Getter for the "SWCiniFileFull" global variable.
-    character(len=len(SWCiniFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = SWCiniFileFull
 end function GetSWCiniFileFull
@@ -6881,7 +6951,7 @@ end subroutine SetSWCiniFileFull
 
 function GetPathNameProg() result(str)
     !! Getter for the "PathNameProg" global variable.
-    character(len=len(PathNameProg)) :: str
+    character(len=:), allocatable :: str
 
     str = PathNameProg
 end function GetPathNameProg
@@ -6897,7 +6967,7 @@ end subroutine SetPathNameProg
 
 function GetPathNameOutp() result(str)
     !! Getter for the "PathNameOutp" global variable.
-    character(len=len(PathNameOutp)) :: str
+    character(len=:), allocatable :: str
 
     str = PathNameOutp
 end function GetPathNameOutp
@@ -6913,7 +6983,7 @@ end subroutine SetPathNameOutp
 
 function GetPathNameSimul() result(str)
     !! Getter for the "PathNameSimul" global variable.
-    character(len=len(PathNameSimul)) :: str
+    character(len=:), allocatable :: str
 
     str = PathNameSimul
 end function GetPathNameSimul
@@ -6929,7 +6999,7 @@ end subroutine SetPathNameSimul
 
 function GetProjectFile() result(str)
     !! Getter for the "ProjectFile" global variable.
-    character(len=len(ProjectFile)) :: str
+    character(len=:), allocatable :: str
 
     str = ProjectFile
 end function GetProjectFile
@@ -6945,7 +7015,7 @@ end subroutine SetProjectFile
 
 function GetProjectFileFull() result(str)
     !! Getter for the "ProjectFileFull" global variable.
-    character(len=len(ProjectFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = ProjectFileFull
 end function GetProjectFileFull
@@ -6961,7 +7031,7 @@ end subroutine SetProjectFileFull
 
 function GetMultipleProjectFile() result(str)
     !! Getter for the "MultipleProjectFile" global variable.
-    character(len=len(MultipleProjectFile)) :: str
+    character(len=:), allocatable :: str
 
     str = MultipleProjectFile
 end function GetMultipleProjectFile
@@ -6977,7 +7047,7 @@ end subroutine SetMultipleProjectFile
 
 function GetMultipleProjectFileFull() result(str)
     !! Getter for the "MultipleProjectFileFull" global variable.
-    character(len=len(MultipleProjectFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = MultipleProjectFileFull
 end function GetMultipleProjectFileFull
@@ -6993,7 +7063,7 @@ end subroutine SetMultipleProjectFileFull
 
 function GetFullFileNameProgramParameters() result(str)
     !! Getter for the "FullFileNameProgramParameters" global variable.
-    character(len=len(FullFileNameProgramParameters)) :: str
+    character(len=:), allocatable :: str
 
     str = FullFileNameProgramParameters
 end function GetFullFileNameProgramParameters
@@ -8191,7 +8261,7 @@ end subroutine CompleteClimateDescription
 
 function GetOutputName() result(str)
     !! Getter for the "OutputName" global variable.
-    character(len=len(OutputName)) :: str
+    character(len=:), allocatable :: str
 
     str = OutputName
 end function GetOutputName
@@ -8207,7 +8277,7 @@ end subroutine SetOutputName
 
 function GetCO2File() result(str)
     !! Getter for the "CO2File" global variable.
-    character(len=len(CO2File)) :: str
+    character(len=:), allocatable :: str
 
     str = CO2File
 end function GetCO2File
@@ -8223,7 +8293,7 @@ end subroutine SetCO2File
 
 function GetCO2FileFull() result(str)
     !! Getter for the "CO2FileFull" global variable.
-    character(len=len(CO2FileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = CO2FileFull
 end function GetCO2FileFull
@@ -8239,7 +8309,7 @@ end subroutine SetCO2FileFull
 
 function GetCO2Description() result(str)
     !! Getter for the "CO2Description" global variable.
-    character(len=len(CO2Description)) :: str
+    character(len=:), allocatable :: str
 
     str = CO2Description
 end function GetCO2Description
@@ -8427,7 +8497,7 @@ end subroutine SetRootZoneWC_ZtopThresh
 
 function GetCalendarFile() result(str)
     !! Getter for the "CalendarFile" global variable.
-    character(len=len(CalendarFile)) :: str
+    character(len=:), allocatable :: str
 
     str = CalendarFile
 end function GetCalendarFile
@@ -8443,7 +8513,7 @@ end subroutine SetCalendarFile
 
 function GetCalendarFileFull() result(str)
     !! Getter for the "CalendarFileFull" global variable.
-    character(len=len(CalendarFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = CalendarFileFull
 end function GetCalendarFileFull
@@ -8459,7 +8529,7 @@ end subroutine SetCalendarFileFull
 
 function GetCalendarDescription() result(str)
     !! Getter for the "CalendarDescription" global variable.
-    character(len=len(CalendarDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = CalendarDescription
 end function GetCalendarDescription
@@ -8475,7 +8545,7 @@ end subroutine SetCalendarDescription
 
 function GetCropFile() result(str)
     !! Getter for the "CropFile" global variable.
-    character(len=len(CropFile)) :: str
+    character(len=:), allocatable :: str
 
     str = CropFile
 end function GetCropFile
@@ -8491,7 +8561,7 @@ end subroutine SetCropFile
 
 function GetCropFileFull() result(str)
     !! Getter for the "CropFile" global variable.
-    character(len=len(CropFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = CropFileFull
 end function GetCropFileFull
@@ -8507,7 +8577,7 @@ end subroutine SetCropFileFull
 
 function GetCropDescription() result(str)
     !! Getter for the "CropDescription" global variable.
-    character(len=len(CropDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = CropDescription
 end function GetCropDescription
@@ -8568,7 +8638,7 @@ end subroutine SetIrriECw_PostSeason
 
 function GetProfFile() result(str)
     !! Getter for the "ProfFile" global variable.
-    character(len=len(ProfFile)) :: str
+    character(len=:), allocatable :: str
 
     str = ProfFile
 end function GetProfFile
@@ -8584,7 +8654,7 @@ end subroutine SetProfFile
 
 function GetProfFilefull() result(str)
     !! Getter for the "ProfFilefull" global variable.
-    character(len=len(ProfFilefull)) :: str
+    character(len=:), allocatable :: str
 
     str = ProfFilefull
 end function GetProfFilefull
@@ -8600,7 +8670,7 @@ end subroutine SetProfFilefull
 
 function GetProfDescription() result(str)
     !! Getter for the "ProfDescription" global variable.
-    character(len=len(ProfDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = ProfDescription
 end function GetProfDescription
@@ -8616,7 +8686,7 @@ end subroutine SetProfDescription
 
 function GetManFile() result(str)
     !! Getter for the "ManFile" global variable.
-    character(len=len(ManFile)) :: str
+    character(len=:), allocatable :: str
 
     str = ManFile
 end function GetManFile
@@ -8632,7 +8702,7 @@ end subroutine SetManFile
 
 function GetManFilefull() result(str)
     !! Getter for the "ManFilefull" global variable.
-    character(len=len(ManFilefull)) :: str
+    character(len=:), allocatable :: str
 
     str = ManFilefull
 end function GetManFilefull
@@ -8648,7 +8718,7 @@ end subroutine SetManFilefull
 
 function GetOffSeasonFile() result(str)
     !! Getter for the "OffSeasonFile" global variable.
-    character(len=len(OffSeasonFile)) :: str
+    character(len=:), allocatable :: str
 
     str = OffSeasonFile
 end function GetOffSeasonFile
@@ -8664,7 +8734,7 @@ end subroutine SetOffSeasonFile
 
 function GetOffSeasonFilefull() result(str)
     !! Getter for the "OffSeasonFilefull" global variable.
-    character(len=len(OffSeasonFilefull)) :: str
+    character(len=:), allocatable :: str
 
     str = OffSeasonFilefull
 end function GetOffSeasonFilefull
@@ -8680,7 +8750,7 @@ end subroutine SetOffSeasonFilefull
 
 function GetObservationsFile() result(str)
     !! Getter for the "ObservationsFile" global variable.
-    character(len=len(ObservationsFile)) :: str
+    character(len=:), allocatable :: str
 
     str = ObservationsFile
 end function GetObservationsFile
@@ -8696,7 +8766,7 @@ end subroutine SetObservationsFile
 
 function GetObservationsFilefull() result(str)
     !! Getter for the "ObservationsFilefull" global variable.
-    character(len=len(ObservationsFilefull)) :: str
+    character(len=:), allocatable :: str
 
     str = ObservationsFilefull
 end function GetObservationsFilefull
@@ -8712,7 +8782,7 @@ end subroutine SetObservationsFilefull
 
 function GetObservationsDescription() result(str)
     !! Getter for the "ObservationsDescription" global variable.
-    character(len=len(ObservationsDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = ObservationsDescription
 end function GetObservationsDescription
@@ -8728,7 +8798,7 @@ end subroutine SetObservationsDescription
 
 function GetGroundWaterFile() result(str)
     !! Getter for the "GroundWaterFile" global variable.
-    character(len=len(GroundWaterFile)) :: str
+    character(len=:), allocatable :: str
 
     str = GroundWaterFile
 end function GetGroundWaterFile
@@ -8744,7 +8814,7 @@ end subroutine SetGroundWaterFile
 
 function GetGroundWaterFilefull() result(str)
     !! Getter for the "GroundWaterFilefull" global variable.
-    character(len=len(GroundWaterFilefull)) :: str
+    character(len=:), allocatable :: str
 
     str = GroundWaterFilefull
 end function GetGroundWaterFilefull
@@ -8799,7 +8869,7 @@ end subroutine SetCropFileSet_GDDaysToHarvest
 
 function GetEToFile() result(str)
     !! Getter for the "EToFile" global variable.
-    character(len=len(EToFile)) :: str
+    character(len=:), allocatable :: str
 
     str = EToFile
 end function GetEToFile
@@ -8815,7 +8885,7 @@ end subroutine SetEToFile
 
 function GetEToFileFull() result(str)
     !! Getter for the "EToFileFull" global variable.
-    character(len=len(EToFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = EToFileFull
 end function GetEToFileFull
@@ -8831,7 +8901,7 @@ end subroutine SetEToFileFull
 
 function GetEToDescription() result(str)
     !! Getter for the "EToDescription" global variable.
-    character(len=len(EToDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = EToDescription
 end function GetEToDescription
@@ -8847,7 +8917,7 @@ end subroutine SetEToDescription
 
 function GetRainFile() result(str)
     !! Getter for the "RainFile" global variable.
-    character(len=len(RainFile)) :: str
+    character(len=:), allocatable :: str
 
     str = RainFile
 end function GetRainFile
@@ -8863,7 +8933,7 @@ end subroutine SetRainFile
 
 function GetRainFileFull() result(str)
     !! Getter for the "RainFileFull" global variable.
-    character(len=len(RainFileFull)) :: str
+    character(len=:), allocatable :: str
 
     str = RainFileFull
 end function GetRainFileFull
@@ -8879,7 +8949,7 @@ end subroutine SetRainFileFull
 
 function GetRainDescription() result(str)
     !! Getter for the "RainDescription" global variable.
-    character(len=len(RainDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = RainDescription
 end function GetRainDescription
@@ -12792,7 +12862,7 @@ end subroutine SetIrriMethod
 
 function GetTemperatureFile() result(str)
     !! Getter for the "TemperatureFile" global variable.
-    character(len=len(TemperatureFile)) :: str
+    character(len=:), allocatable :: str
 
     str = TemperatureFile
 end function GetTemperatureFile
@@ -12808,7 +12878,7 @@ end subroutine SetTemperatureFile
 
 function GetTemperatureFilefull() result(str)
     !! Getter for the "TemperatureFilefull" global variable.
-    character(len=len(TemperatureFilefull)) :: str
+    character(len=:), allocatable :: str
 
     str = TemperatureFilefull
 end function GetTemperatureFilefull
@@ -12824,7 +12894,7 @@ end subroutine SetTemperatureFilefull
 
 function GetTemperatureDescription() result(str)
     !! Getter for the "TemperatureDescription" global variable.
-    character(len=len(TemperatureDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = TemperatureDescription
 end function GetTemperatureDescription
@@ -12840,7 +12910,7 @@ end subroutine SetTemperatureDescription
 
 function GetClimDescription() result(str)
     !! Getter for the "ClimDescription" global variable.
-    character(len=len(ClimDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimDescription
 end function GetClimDescription
@@ -12944,7 +13014,7 @@ end function GetTemperatureRecord_ToDayNr
 
 function GetTemperatureRecord_FromString() result(str)
     !! Getter for the "TemperatureRecord" global variable.
-    character(len=len(TemperatureRecord%FromString)) :: str
+    character(len=:), allocatable :: str
 
     str = TemperatureRecord%FromString
 end function GetTemperatureRecord_FromString
@@ -12952,7 +13022,7 @@ end function GetTemperatureRecord_FromString
 
 function GetTemperatureRecord_ToString() result(str)
     !! Getter for the "TemperatureRecord" global variable.
-    character(len=len(TemperatureRecord%ToString)) :: str
+    character(len=:), allocatable :: str
 
     str = TemperatureRecord%ToString
 end function GetTemperatureRecord_ToString
@@ -13296,7 +13366,7 @@ end function GetClimRecord_ToDayNr
 
 function GetClimRecord_FromString() result(str)
     !! Getter for the "ClimRecord" global variable.
-    character(len=len(ClimRecord%FromString)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimRecord%FromString
 end function GetClimRecord_FromString
@@ -13304,7 +13374,7 @@ end function GetClimRecord_FromString
 
 function GetClimRecord_ToString() result(str)
     !! Getter for the "ClimRecord" global variable.
-    character(len=len(ClimRecord%ToString)) :: str
+    character(len=:), allocatable :: str
 
     str = ClimRecord%ToString
 end function GetClimRecord_ToString
@@ -13493,7 +13563,7 @@ end function GetRainRecord_ToDayNr
 
 function GetRainRecord_FromString() result(str)
     !! Getter for the "RainRecord" global variable.
-    character(len=len(RainRecord%FromString)) :: str
+    character(len=:), allocatable :: str
 
     str = RainRecord%FromString
 end function GetRainRecord_FromString
@@ -13501,7 +13571,7 @@ end function GetRainRecord_FromString
 
 function GetRainRecord_ToString() result(str)
     !! Getter for the "RainRecord" global variable.
-    character(len=len(RainRecord%ToString)) :: str
+    character(len=:), allocatable :: str
 
     str = RainRecord%ToString
 end function GetRainRecord_ToString
@@ -13690,7 +13760,7 @@ end function GetEToRecord_ToDayNr
 
 function GetEToRecord_FromString() result(str)
     !! Getter for the "EToRecord" global variable.
-    character(len=len(EToRecord%FromString)) :: str
+    character(len=:), allocatable :: str
 
     str = EToRecord%FromString
 end function GetEToRecord_FromString
@@ -13698,7 +13768,7 @@ end function GetEToRecord_FromString
 
 function GetEToRecord_ToString() result(str)
     !! Getter for the "EToRecord" global variable.
-    character(len=len(EToRecord%ToString)) :: str
+    character(len=:), allocatable :: str
 
     str = EToRecord%ToString
 end function GetEToRecord_ToString
@@ -15365,7 +15435,7 @@ end subroutine SetSoilLayer_CRb
 
 function GetManDescription() result(str)
     !! Getter for the "ManDescription" global variable.
-    character(len=len(ManDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = ManDescription
 end function GetManDescription
@@ -15486,7 +15556,7 @@ end subroutine SetECstorage
 
 function GetOffSeasonDescription() result(str)
     !! Getter for the "OffSeasonDescription" global variable.
-    character(len=len(OffSeasonDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = OffSeasonDescription
 end function GetOffSeasonDescription
@@ -15502,7 +15572,7 @@ end subroutine SetOffSeasonDescription
 
 function GetGroundwaterDescription() result(str)
     !! Getter for the "GroundwaterDescription" global variable.
-    character(len=len(GroundwaterDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = GroundwaterDescription
 end function GetGroundwaterDescription
@@ -15878,7 +15948,7 @@ end subroutine SetTpot
 
 function GetMultipleProjectDescription() result(str)
     !! Getter for the "MultipleProjectDescription" global variable.
-    character(len=len(MultipleProjectDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = MultipleProjectDescription
 end function GetMultipleProjectDescription
@@ -15894,7 +15964,7 @@ end subroutine SetMultipleProjectDescription
 
 function GetProjectDescription() result(str)
     !! Getter for the "ProjectDescription" global variable.
-    character(len=len(ProjectDescription)) :: str
+    character(len=:), allocatable :: str
 
     str = ProjectDescription
 end function GetProjectDescription
@@ -16075,7 +16145,7 @@ end subroutine SetOutDaily
 
 function GetPathNameParam() result(str)
     !! Getter for the "PathNameParam" global variable.
-    character(len=len(PathNameParam)) :: str
+    character(len=:), allocatable :: str
 
     str = PathNameParam
 end function GetPathNameParam
@@ -16091,7 +16161,7 @@ end subroutine SetPathNameParam
 
 function GetPathNameList() result(str)
     !! Getter for the "PathNameList" global variable.
-    character(len=len(PathNameList)) :: str
+    character(len=:), allocatable :: str
 
     str = PathNameList
 end function GetPathNameList

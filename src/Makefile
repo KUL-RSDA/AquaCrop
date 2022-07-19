@@ -9,28 +9,56 @@ PCFLAGS = -Mdelphi
 
 FC = gfortran
 FCFLAGS =
-LDFLAGS =
+LDFLAGS_EXE =
+LDFLAGS_LIB =
 
 ifeq ($(STATIC), 1)
-    # For statically compiled (release) executables
     ifneq ($(DEBUG), 0)
         $(error DEBUG=0 is required for STATIC=1 build)
     endif
     ifneq ($(FORTRAN_EXE), 1)
         $(error FORTRAN_EXE=1 is required for STATIC=1 build)
     endif
-    FCFLAGS += -O2 -mtune=generic -funroll-loops
-    LDFLAGS += -static
-else
-    FCFLAGS += -fPIC -shared -fall-intrinsics
+endif
+
+ifeq ($(FC), gfortran)
+    ifeq ($(STATIC), 1)
+        # For statically compiled (release) executables
+        FCFLAGS += -O2 -mtune=generic -funroll-loops
+        LDFLAGS_EXE += -static
+        LDFLAGS_LIB += -static
+    else
+        FCFLAGS += -fPIC -fall-intrinsics
+        LDFLAGS_LIB += -shared
+
+        ifeq ($(DEBUG), 1)
+            # For debugging and development
+            PCFLAGS += -gl
+            FCFLAGS += -g -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
+                       -fcheck=all -fbacktrace -std=f2008
+        else
+            # For production
+            FCFLAGS += -O2 -march=native -funroll-loops
+        endif
+    endif
+else ifeq ($(FC), ifort)
+    ifneq ($(FORTRAN_EXE), 1)
+        $(error FORTRAN_EXE=1 is required for FC=ifort)
+    endif
+    ifneq ($(STATIC), 0)
+        $(error STATIC=0 is required for FC=ifort)
+    endif
+
+    LDFLAGS_LIB += -shared
+    FCFLAGS += -fPIC
+
     ifeq ($(DEBUG), 1)
         # For debugging and development
-        PCFLAGS += -gl -fPIC
-        FCFLAGS += -g -fPIC -Wall -Wextra -Wimplicit-interface -fmax-errors=1 \
-                   -fcheck=all -fbacktrace -std=f2008
+        FCFLAGS += -g -fpe0 -warn -traceback -debug extended -stand f08 \
+                   -check all -check noarg_temp_created
     else
         # For production
-        FCFLAGS += -O2 -march=native -funroll-loops
+        FCFLAGS += -O2 -fp-model strict -xHost
     endif
 endif
 
@@ -86,7 +114,7 @@ $(STATIC_LIBRARY): $(OBJ) \
 
 $(SHARED_LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
-	$(FC) $(LDFLAGS) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
+	$(FC) $(LDFLAGS_LIB) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
 
 fortranclean:
 	$(RM) $(wildcard *.mod) $(wildcard *.o) $(STATIC_LIBRARY) $(SHARED_LIBRARY)
@@ -276,7 +304,7 @@ $(EXECUTABLE): $(SRC) $(LIBRARY)
 else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
 $(EXECUTABLE): aquacrop.o
-	$(FC) $(LDFLAGS) aquacrop.o $(OBJ) -o $(EXECUTABLE)
+	$(FC) $(LDFLAGS_EXE) aquacrop.o $(OBJ) -o $(EXECUTABLE)
 endif
 
 clean: pascalclean fortranclean

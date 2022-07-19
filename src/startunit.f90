@@ -2,6 +2,7 @@ module ac_startunit
 
 use ac_global, only:    GetPathNameSimul, &
                         FileExists, &
+                        InitializeGlobalStrings, &
                         SetOut1Wabal, &
                         SetOut2Crop, &
                         SetOut3Prof, &
@@ -810,7 +811,8 @@ subroutine StartTheProgram()
     logical :: ListProjectFileExist
     integer(int8) :: TheProjectType
 
-    call InitializeTheProgram
+    call InitializeGlobalStrings()
+    call InitializeTheProgram()
 
     ListProjectsFile = GetListProjectsFile()
     ListProjectFileExist = FileExists(trim(ListProjectsFile))

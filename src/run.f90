@@ -656,7 +656,7 @@ end function read_file
 
 function GetTheProjectFile() result(str)
     !! Getter for the "TheProjectFile" global variable.
-    character(len=len(TheProjectFile)) :: str
+    character(len=:), allocatable :: str
 
     str = TheProjectFile
 end function GetTheProjectFile
@@ -991,7 +991,7 @@ end subroutine fObs_rewind
 
 function GetfHarvest_filename() result(str)
     !! Getter for the "fHarvest_filename" global variable.
-    character(len=len(fHarvest_filename)) :: str
+    character(len=:), allocatable :: str
 
     str = fHarvest_filename
 end function GetfHarvest_filename
@@ -6732,8 +6732,10 @@ end subroutine RecordHarvest
 !--------end duplicate--------!
 
 
-subroutine AdvanceOneTimeStep()
-    real(dp) :: PotValSF, KsTr, WPi, TESTVALY, PreIrri, StressStomata, FracAssim
+subroutine AdvanceOneTimeStep(WPi)
+    real(dp), intent(inout) :: WPi
+
+    real(dp) :: PotValSF, KsTr, TESTVALY, PreIrri, StressStomata, FracAssim
     logical :: HarvestNow
     integer(int32) :: VirtualTimeCC, DayInSeason
     real(dp) :: SumGDDadjCC, RatDGDD, &
@@ -7757,10 +7759,13 @@ end subroutine WriteDailyResults
 subroutine FileManagement()
 
     integer(int32) :: RepeatToDay
+    real(dp) :: WPi
 
+    WPi = 0._dp
     RepeatToDay = GetSimulation_ToDayNr()
+
     loop: do
-        call AdvanceOneTimeStep()
+        call AdvanceOneTimeStep(WPi)
         call ReadClimateNextDay()
         call SetGDDVariablesNextDay()
         if ((GetDayNri()-1) == RepeatToDay) exit loop
