@@ -14,7 +14,11 @@ AquaCrop v7.0 source code:
   * Windows
   * Linux
   * MacOS
-* NASA’s Land Information System (LIS, via https://github.com/NASA-LIS/LISF)
+
+From v7.0 onwards, it will furthermore be possible to use AquaCrop
+as a crop model within [NASA’s Land Information System (LIS)](
+https://github.com/NASA-LIS/LISF). More information can be found in
+the LIS section below.
 
 ## Running the executable
 
@@ -106,3 +110,13 @@ pytest test_europe.py -k 'False-1-16 or True-19-0'
 > Note: by default, the tests will make use of temporary working directories
   inside $TMPDIR. The location of these directories can be changed by setting
   the `AQUACROP_TMPDIR` variable accordingly.
+
+## LIS integration
+
+The distribution of AquaCrop v.7.0 within LIS is currently being tested and reviewed.
+To use AquaCrop v7.0 together with NASA’s [Land Information System (LIS)](
+https://github.com/NASA-LIS/LISF), you currently need to:
+* build the AquaCrop shared library,
+* clone/download and compile the following development branch:
+  [https://github.com/mbechtold/LISF/tree/ac.7.0_integration](
+   https://github.com/mbechtold/LISF/tree/ac.7.0_integration)
