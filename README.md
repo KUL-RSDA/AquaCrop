@@ -14,7 +14,7 @@ AquaCrop v7.0 source code:
   * Windows
   * Linux
   * MacOS
-* NASA’s Land Information System (LIS)
+* NASA’s Land Information System (LIS, via https://github.com/NASA-LIS/LISF)
 
 ## Running the executable
 
