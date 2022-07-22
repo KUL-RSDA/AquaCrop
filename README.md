@@ -9,8 +9,8 @@ and a range of new and/or updated scientific features.
 
 The following applications are publicly distributed along with the 
 AquaCrop v7.0 source code:
-* AquaCrop standard Windows graphical user interface
-* AquaCrop Windows standalone executable for
+* AquaCrop standard Windows graphical user interface (under [Releases](https://github.com/KUL-RSDA/AquaCrop/releases))
+* AquaCrop Windows standalone executable (under [Releases](https://github.com/KUL-RSDA/AquaCrop/releases)) for
   * Windows
   * Linux
   * MacOS
