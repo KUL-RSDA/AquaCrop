@@ -138,6 +138,8 @@ implicit none
 
 integer :: fProjects  ! file handle
 integer :: fProjects_iostat  ! IO status
+character(len=1024), dimension(:), allocatable :: ProjectFileNames
+    !! Names of the project file(s)
 
 
 contains
@@ -433,52 +435,65 @@ function GetListProjectsFile() result(ListProjectsFile)
 end function GetListProjectsFile
 
 
-integer(int32) function GetNumberOfProjects()
+subroutine InitializeProjectFileNames()
+    !! Initializes the ProjectFileNames module variable array
+    !! by reading from a ListProjects.txt file.
 
-    integer(int32) :: NrProjects
     character(len=:), allocatable :: ListProjectsFile
+    character(len=1024) :: buffer
     logical :: ListProjectFileExist
-    integer :: fhandle, rc
+    integer :: fhandle, i, NrProjects, rc
 
     ListProjectsFile = GetListProjectsFile()
     ListProjectFileExist = FileExists(ListProjectsFile)
-    NrProjects = 0
 
     if (ListProjectFileExist) then
+        ! First pass to get the number of projects
         open(newunit=fhandle, file=trim(ListProjectsFile), &
              status='old', action='read', iostat=rc)
+        NrProjects = 0
         read(fhandle, *, iostat=rc)
         do while (rc /= iostat_end)
             NrProjects = NrProjects + 1
             read(fhandle, *, iostat=rc)
         end do
+        allocate(ProjectFileNames(NrProjects))
+
+        ! Second pass to read in the file names
+        rewind(fhandle)
+        do i = 1, NrProjects
+            read(fhandle, *) buffer
+            ProjectFileNames(i) = trim(buffer)
+        end do
+
         close(fhandle)
+    else
+        call assert(.false., 'ListProjectsFile does not exist')
     end if
-    GetNumberOfProjects = NrProjects
+end subroutine InitializeProjectFileNames
+
+
+integer(int32) function GetNumberOfProjects()
+    !! Returns the total number of projects.
+
+    if (.not. allocated(ProjectFileNames)) then
+        call InitializeProjectFileNames()
+    end if
+
+    GetNumberOfProjects = size(ProjectFileNames)
 end function GetNumberOfProjects
 
 
 function GetProjectFileName(iproject) result(ProjectFileName_out)
+    !! Returns the project file name for the given project index.
     integer(int32), intent(in) :: iproject
     character(len=:), allocatable :: ProjectFileName_out
 
-    integer(int32) :: jproject
-    character(len=:), allocatable :: ListProjectsFile
-    character(len=1025) :: TheProjectFile
-    integer :: fhandle
+    if (.not. allocated(ProjectFileNames)) then
+        call InitializeProjectFileNames()
+    end if
 
-    ListProjectsFile = GetListProjectsFile()
-    call assert(FileExists(ListProjectsFile), 'ListProjectsFile does not exist')
-
-    open(newunit=fhandle, file=trim(ListProjectsFile), status='old', action='read')
-
-    ! Read until we arrive at the selected project
-    do jproject = 1, iproject
-        read(fhandle, *) TheProjectFile
-    end do
-    close(fhandle)
-
-    ProjectFileName_out = trim(TheProjectFile)
+    ProjectFileName_out = trim(ProjectFileNames(iproject))
 end function GetProjectFileName
 
 
