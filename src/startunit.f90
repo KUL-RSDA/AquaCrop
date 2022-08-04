@@ -440,6 +440,7 @@ subroutine InitializeProjectFileNames()
     !! by reading from a ListProjects.txt file.
 
     character(len=:), allocatable :: ListProjectsFile
+    character(len=:), allocatable :: cmd, ListProjectsFileTemp
     character(len=1024) :: buffer
     logical :: ListProjectFileExist
     integer :: fhandle, i, NrProjects, rc
@@ -448,27 +449,44 @@ subroutine InitializeProjectFileNames()
     ListProjectFileExist = FileExists(ListProjectsFile)
 
     if (ListProjectFileExist) then
-        ! First pass to get the number of projects
-        open(newunit=fhandle, file=trim(ListProjectsFile), &
+        open(newunit=fhandle, file=ListProjectsFile, &
              status='old', action='read', iostat=rc)
-        NrProjects = 0
-        read(fhandle, *, iostat=rc)
-        do while (rc /= iostat_end)
-            NrProjects = NrProjects + 1
-            read(fhandle, *, iostat=rc)
-        end do
-        allocate(ProjectFileNames(NrProjects))
-
-        ! Second pass to read in the file names
-        rewind(fhandle)
-        do i = 1, NrProjects
-            read(fhandle, *) buffer
-            ProjectFileNames(i) = trim(buffer)
-        end do
-
-        close(fhandle)
     else
-        call assert(.false., 'ListProjectsFile does not exist')
+        ! No project list file exists, so make a temporary one instead
+        ! from the available *.PRO and *.PRM files
+        ListProjectsFileTemp = GetPathNameList() // '/ListProjectsTemp.txt'
+
+        cmd = 'ls -1 ' // trim(GetPathNameList()) // ' | ' // &
+              'grep -E ".*.PR[O,M]$" > ' // ListProjectsFileTemp
+        call execute_command_line(cmd, exitstat=rc)
+        call assert(rc == 0, 'Failed to create ' // ListProjectsFileTemp)
+
+        open(newunit=fhandle, file=ListProjectsFileTemp, &
+             status='old', action='read', iostat=rc)
+    end if
+
+    ! First pass to get the number of projects
+    NrProjects = 0
+    read(fhandle, *, iostat=rc)
+    do while (rc /= iostat_end)
+        NrProjects = NrProjects + 1
+        read(fhandle, *, iostat=rc)
+    end do
+    allocate(ProjectFileNames(NrProjects))
+
+    ! Second pass to read in the file names
+    rewind(fhandle)
+    do i = 1, NrProjects
+        read(fhandle, *) buffer
+        ProjectFileNames(i) = trim(buffer)
+    end do
+
+    close(fhandle)
+
+    if (.not. ListProjectFileExist) then
+        ! Remove the temporary ListProjectsTemp.txt file
+        call unlink(ListProjectsFileTemp, rc)
+        call assert(rc == 0, 'Failed to delete ' // ListProjectsFileTemp)
     end if
 end subroutine InitializeProjectFileNames
 
