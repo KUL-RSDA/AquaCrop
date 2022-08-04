@@ -454,7 +454,7 @@ subroutine InitializeProjectFileNames()
     else
         ! No project list file exists, so make a temporary one instead
         ! from the available *.PRO and *.PRM files
-        ListProjectsFileTemp = GetPathNameList() // '/ListProjectsTemp.txt'
+        ListProjectsFileTemp = GetPathNameList() // 'ListProjectsTemp.txt'
 
         cmd = 'ls -1 ' // trim(GetPathNameList()) // ' | ' // &
               'grep -E ".*.PR[O,M]$" > ' // ListProjectsFileTemp
@@ -485,8 +485,9 @@ subroutine InitializeProjectFileNames()
 
     if (.not. ListProjectFileExist) then
         ! Remove the temporary ListProjectsTemp.txt file
-        call unlink(ListProjectsFileTemp, rc)
-        call assert(rc == 0, 'Failed to delete ' // ListProjectsFileTemp)
+        ! It would be nice to add a second argument to get the return code,
+        ! but Intel Fortran yields a segmentation fault if that is attempted.
+        call unlink(ListProjectsFileTemp)
     end if
 end subroutine InitializeProjectFileNames
 
