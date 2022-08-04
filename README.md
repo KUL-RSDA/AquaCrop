@@ -38,7 +38,8 @@ Building the Aquacrop executable on a Linux system requires:
 
 * GNU Make (>= v3.82)
 * a GNU or Intel Fortran compiler (GNU Fortran >= v6.4.0 and ifort >= v18.0.1).
-  MinGW can be used to (cross)compile for Windows.
+  MinGW can be used to (cross)compile for Windows. In that case `make` needs
+  to be called with an additional `CPPFLAGS=-D_WINDOWS` option.
 * (optional) a Free Pascal compiler (>= v3.2.0).
 
 ```bash
