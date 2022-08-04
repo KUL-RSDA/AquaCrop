@@ -8,7 +8,7 @@ PC = fpc
 PCFLAGS = -Mdelphi
 
 FC = gfortran
-FCFLAGS =
+FCFLAGS = $(CPPFLAGS)
 LDFLAGS_EXE =
 LDFLAGS_LIB =
 
@@ -183,7 +183,7 @@ simul.o: simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-startunit.o: startunit.f90 \
+startunit.o: startunit.F90 \
     global.o \
     initialsettings.o \
     kinds.o \

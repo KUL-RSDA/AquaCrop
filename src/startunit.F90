@@ -456,8 +456,13 @@ subroutine InitializeProjectFileNames()
         ! from the available *.PRO and *.PRM files
         ListProjectsFileTemp = GetPathNameList() // 'ListProjectsTemp.txt'
 
+#if defined(_WINDOWS)
+        cmd = 'dir \b ' // trim(GetPathNameList()) // ' | ' // &
+              'findstr /i /r /c:".*.PR[O,M]$" > ' ListProjectsFileTemp
+#else
         cmd = 'ls -1 ' // trim(GetPathNameList()) // ' | ' // &
               'grep -E ".*.PR[O,M]$" > ' // ListProjectsFileTemp
+#endif
         call execute_command_line(cmd, exitstat=rc)
         call assert(rc == 0, 'Failed to create ' // ListProjectsFileTemp)
 
