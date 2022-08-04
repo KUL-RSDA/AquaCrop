@@ -9,8 +9,10 @@ and a range of new and/or updated scientific features.
 
 The following applications are publicly distributed along with the
 AquaCrop v7.0 source code:
-* AquaCrop standard Windows graphical user interface (under [Releases](https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop Windows standalone executable (under [Releases](https://github.com/KUL-RSDA/AquaCrop/releases)) for
+* AquaCrop standard Windows graphical user interface (under [Releases](
+  https://github.com/KUL-RSDA/AquaCrop/releases))
+* AquaCrop Windows standalone executable (under [Releases](
+  https://github.com/KUL-RSDA/AquaCrop/releases)) for
   * Windows
   * Linux
   * MacOS
@@ -113,9 +115,10 @@ pytest test_europe.py -k 'False-1-16 or True-19-0'
 
 ## LIS integration
 
-The distribution of AquaCrop v.7.0 within LIS is currently being tested and reviewed.
-To use AquaCrop v7.0 together with NASA’s [Land Information System (LIS)](
-https://github.com/NASA-LIS/LISF), you currently need to:
+The distribution of AquaCrop v.7.0 within LIS is currently being tested
+and reviewed. To use AquaCrop v7.0 together with NASA's
+[Land Information System (LIS)](https://github.com/NASA-LIS/LISF),
+you currently need to:
 * build the AquaCrop shared library,
 * clone/download and compile the following development branch:
   [https://github.com/mbechtold/LISF/tree/ac.7.0_integration](
