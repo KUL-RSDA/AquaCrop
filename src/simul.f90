@@ -1005,8 +1005,16 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             end if
         end if
     else
-        StressSFadjNEW = 0
+        if (GetManagement_FertilityStress() == 0 .or. &
+            .not. GetCrop_StressResponse_Calibrated()) then
+            ! no (calibrated) soil fertility stress
+            StressSFadjNEW = 0
+        else
+            ! BiomassUnlim is too small
+            StressSFadjNEW = GetManagement_FertilityStress()
+        end if
     end if
+
     PreviousStressLevel = StressSFadjNEW
     SumKcTopStress = (1._dp - StressSFadjNEW/100._dp) * SumKcTop
 
