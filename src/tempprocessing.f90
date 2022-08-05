@@ -2115,7 +2115,8 @@ subroutine LoadSimulationRunProject(NrRun)
     ! 1.1 Temperature
     call SetTemperatureFile(ProjectInput(NrRun)%Temperature_Filename)
 
-    if (GetTemperatureFile() == '(None)') then
+    if ((GetTemperatureFile() == '(None)') .or. &
+        (GetTemperatureFile() == '(External)')) then
         call SetTemperatureFilefull(GetTemperatureFile())  ! no file
         write(TempString1,'(f8.1)') GetSimulParam_Tmin()
         write(TempString2,'(f8.1)') GetSimulParam_Tmax()
@@ -2138,7 +2139,8 @@ subroutine LoadSimulationRunProject(NrRun)
 
     ! 1.2 ETo
     call SetEToFile(ProjectInput(NrRun)%ETo_Filename)
-    if (GetEToFile() == '(None)') then
+    if ((GetEToFile() == '(None)') .or. &
+        (GetEToFile() == '(External)')) then
         call SetEToFilefull(GetEToFile())  ! no file
         call SetEToDescription('Specify ETo data when Running AquaCrop')
     else
@@ -2153,7 +2155,8 @@ subroutine LoadSimulationRunProject(NrRun)
 
     ! 1.3 Rain
     call SetRainFile(ProjectInput(NrRun)%Rain_Filename)
-    if (GetRainFile() == '(None)') then
+    if ((GetRainFile() == '(None)') .or. &
+        (GetRainFile() == '(External)')) then
         call SetRainFilefull(GetRainFile())  ! no file
         call SetRainDescription('Specify Rain data when Running AquaCrop')
     else
