@@ -114,7 +114,7 @@ $(STATIC_LIBRARY): $(OBJ) \
 
 $(SHARED_LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
-	$(FC) $(LDFLAGS_LIB) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
+	$(FC) $(LDFLAGS_LIB) $(FCFLAGS) $(wildcard *.f90) startunit.F90 -o $(LIBRARY)
 
 fortranclean:
 	$(RM) $(wildcard *.mod) $(wildcard *.o) $(STATIC_LIBRARY) $(SHARED_LIBRARY)
