@@ -21,7 +21,7 @@ ifeq ($(STATIC), 1)
     endif
 endif
 
-ifeq ($(FC), gfortran)
+ifeq ($(findstring gfortran, $(FC)), gfortran)
     ifeq ($(STATIC), 1)
         # For statically compiled (release) executables
         FCFLAGS += -O2 -mtune=generic -funroll-loops
