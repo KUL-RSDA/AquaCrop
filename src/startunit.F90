@@ -439,11 +439,14 @@ subroutine InitializeProjectFileNames()
     !! Initializes the ProjectFileNames module variable array
     !! by reading from a ListProjects.txt file.
 
-    character(len=:), allocatable :: ListProjectsFile
+    character(len=:), allocatable :: ListProjectsFile, PathNameList
     character(len=:), allocatable :: cmd, ListProjectsFileTemp
     character(len=1024) :: buffer
     logical :: ListProjectFileExist
     integer :: fhandle, i, NrProjects, rc
+#if defined(_WINDOWS)
+    integer :: strlen
+#endif
 
     ListProjectsFile = GetListProjectsFile()
     ListProjectFileExist = FileExists(ListProjectsFile)
@@ -454,13 +457,18 @@ subroutine InitializeProjectFileNames()
     else
         ! No project list file exists, so make a temporary one instead
         ! from the available *.PRO and *.PRM files
-        ListProjectsFileTemp = GetPathNameList() // 'ListProjectsTemp.txt'
+        PathNameList = GetPathNameList()
+        ListProjectsFileTemp = PathNameList // 'ListProjectsTemp.txt'
 
 #if defined(_WINDOWS)
-        cmd = 'dir \b ' // trim(GetPathNameList()) // ' | ' // &
-              'findstr /i /r /c:".*.PR[O,M]$" > ' ListProjectsFileTemp
+        ! 'dir' does not like the trailing forward slash in PathNameList
+        strlen = len(PathNameList)
+        PathNameList = PathNameList(1:strlen-1)
+
+        cmd = 'dir /b ' // PathNameList // ' | ' // &
+              'findstr /i /r /c:".*.PR[O,M]$" > ' // ListProjectsFileTemp
 #else
-        cmd = 'ls -1 ' // trim(GetPathNameList()) // ' | ' // &
+        cmd = 'ls -1 ' // PathNameList // ' | ' // &
               'grep -E ".*.PR[O,M]$" > ' // ListProjectsFileTemp
 #endif
         call execute_command_line(cmd, exitstat=rc)
