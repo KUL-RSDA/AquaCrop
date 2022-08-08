@@ -14,7 +14,7 @@ The AquaCrop v7.0 open source code in Fortran has been established by
 * Zdenko Heyvaert (KU Leuven)
 * Jonas Mortelmans (KU Leuven)
 * Dirk Raes (KU Leuven)
-* Samuel Anton Sherrer (KU Leuven)
+* Samuel Anton Scherrer (KU Leuven)
 * Maxime Van den Bossche (KU Leuven)
 
 When using AquaCrop v7.0 open source code, please refer to the following papers, 
