@@ -1,16 +1,18 @@
 # AquaCrop
 
-AquaCrop v7.0 (July 2022) is the first open-source Fortran-based version 
-of AquaCrop, developed at KU Leuven, and officially distributed by FAO. 
-Compared to AquaCrop v6.0, the AquaCrop v7.0 features bug fixes, 
-performance improvements and internal restructuring, 
-a translation from Pascal to Fortran, 
+AquaCrop v7.0 (July 2022) is the first open-source Fortran-based version
+of AquaCrop, developed at KU Leuven, and officially distributed by FAO.
+Compared to AquaCrop v6.0, the AquaCrop v7.0 features bug fixes,
+performance improvements and internal restructuring,
+a translation from Pascal to Fortran,
 and a range of new and/or updated scientific features.
 
-The following applications are publicly distributed along with the 
+The following applications are publicly distributed along with the
 AquaCrop v7.0 source code:
-* AquaCrop standard Windows graphical user interface (under [Releases](https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop Windows standalone executable (under [Releases](https://github.com/KUL-RSDA/AquaCrop/releases)) for
+* AquaCrop standard Windows graphical user interface (under [Releases](
+  https://github.com/KUL-RSDA/AquaCrop/releases))
+* AquaCrop Windows standalone executable (under [Releases](
+  https://github.com/KUL-RSDA/AquaCrop/releases)) for
   * Windows
   * Linux
   * MacOS
@@ -22,21 +24,22 @@ the LIS section below.
 
 ## Running the executable
 
-Download the ZIP file with the AquaCrop v7.0 executable for 
+Download the ZIP file with the AquaCrop v7.0 executable for
 Windows, Linux or MacOS from the release page.
-A simple simulation example is provided along with the executable: 
+A simple simulation example is provided along with the executable:
 follow the instructions in README.md to run a testcase.
 
 ## Building the executable
 
-Either unzip the ZIP file from the release page, or if you wish to contribute to 
+Either unzip the ZIP file from the release page, or if you wish to contribute to
 the code, then fork the repository and locally clone your fork.
 
 Building the Aquacrop executable on a Linux system requires:
 
 * GNU Make (>= v3.82)
-* a GNU or Intel Fortran compiler (GNU Fortran >= v6.4.0 and ifort >= v18.0.1). 
-  MinGW can be used to (cross)compile for Windows.
+* a GNU or Intel Fortran compiler (GNU Fortran >= v6.4.0 and ifort >= v18.0.1).
+  MinGW can be used to (cross)compile for Windows. In that case `make` needs
+  to be called with an additional `CPPFLAGS=-D_WINDOWS` option.
 * (optional) a Free Pascal compiler (>= v3.2.0).
 
 ```bash
@@ -113,9 +116,10 @@ pytest test_europe.py -k 'False-1-16 or True-19-0'
 
 ## LIS integration
 
-The distribution of AquaCrop v.7.0 within LIS is currently being tested and reviewed.
-To use AquaCrop v7.0 together with NASA’s [Land Information System (LIS)](
-https://github.com/NASA-LIS/LISF), you currently need to:
+The distribution of AquaCrop v.7.0 within LIS is currently being tested
+and reviewed. To use AquaCrop v7.0 together with NASA's
+[Land Information System (LIS)](https://github.com/NASA-LIS/LISF),
+you currently need to:
 * build the AquaCrop shared library,
 * clone/download and compile the following development branch:
   [https://github.com/mbechtold/LISF/tree/ac.7.0_integration](

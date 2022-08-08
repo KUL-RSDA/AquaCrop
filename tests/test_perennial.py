@@ -31,8 +31,12 @@ def is_within_one_significant_digit(str_ref, str_val):
     return is_ok
 
 
+@pytest.fixture
+def omit_listprojects(request):
+    return request.config.getoption("--omit_listprojects")
 
-def test_perennial():
+
+def test_perennial(omit_listprojects):
     print('========= Perennial Test =========')
     cwd = os.getcwd()
 
@@ -62,9 +66,11 @@ def test_perennial():
     ppn_file_out = os.path.join(work_dir, 'PARAM', ppn_name)
     shutil.copyfile(ppn_file_inp, ppn_file_out)
 
-    listprojects_file = os.path.join(work_dir, 'LIST', 'ListProjects.txt')
-    with open(listprojects_file, 'w') as f:
-        f.write(prm_name + '\n')
+    print('Using ListProjects.txt: {0}'.format(not omit_listprojects))
+    if not omit_listprojects:
+        listprojects_file = os.path.join(work_dir, 'LIST', 'ListProjects.txt')
+        with open(listprojects_file, 'w') as f:
+            f.write(prm_name + '\n')
 
     # Copy the SIMUL input directory as well
     shutil.copytree(os.path.join(input_dir, 'SIMUL'),

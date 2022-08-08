@@ -8,7 +8,7 @@ PC = fpc
 PCFLAGS = -Mdelphi
 
 FC = gfortran
-FCFLAGS =
+FCFLAGS = $(CPPFLAGS)
 LDFLAGS_EXE =
 LDFLAGS_LIB =
 
@@ -21,7 +21,7 @@ ifeq ($(STATIC), 1)
     endif
 endif
 
-ifeq ($(FC), gfortran)
+ifeq ($(findstring gfortran, $(FC)), gfortran)
     ifeq ($(STATIC), 1)
         # For statically compiled (release) executables
         FCFLAGS += -O2 -mtune=generic -funroll-loops
@@ -114,7 +114,7 @@ $(STATIC_LIBRARY): $(OBJ) \
 
 $(SHARED_LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
-	$(FC) $(LDFLAGS_LIB) $(FCFLAGS) $(wildcard *.f90) -o $(LIBRARY)
+	$(FC) $(LDFLAGS_LIB) $(FCFLAGS) $(wildcard *.f90) startunit.F90 -o $(LIBRARY)
 
 fortranclean:
 	$(RM) $(wildcard *.mod) $(wildcard *.o) $(STATIC_LIBRARY) $(SHARED_LIBRARY)
@@ -183,7 +183,7 @@ simul.o: simul.f90 \
     kinds.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-startunit.o: startunit.f90 \
+startunit.o: startunit.F90 \
     global.o \
     initialsettings.o \
     kinds.o \
