@@ -1,7 +1,7 @@
 # AquaCrop
 
-AquaCrop v7.0 (July 2022) is the first open-source Fortran-based version
-of AquaCrop, developed at KU Leuven, and officially distributed by FAO.
+Starting from v7.0, AquaCrop is released as an open source Fortran code,
+developed at KU Leuven and officially distributed by FAO.
 Compared to AquaCrop v6.0, the AquaCrop v7.0 features bug fixes,
 performance improvements and internal restructuring,
 a translation from Pascal to Fortran,
