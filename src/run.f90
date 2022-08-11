@@ -601,11 +601,11 @@ subroutine open_file(fhandle, filename, mode, iostat)
             open(newunit=fhandle, file=trim(filename), status='old', &
                  position='append', action='write', iostat=iostat)
         else
-            open(newunit=fhandle, file=trim(filename), status='replace', &
+            open(newunit=fhandle, file=trim(filename), status='new', &
                  action='write', iostat=iostat)
         end if
     elseif (mode == 'w') then
-        open(newunit=fhandle, file=trim(filename), status='new', &
+        open(newunit=fhandle, file=trim(filename), status='replace', &
              action='write', iostat=iostat)
     end if
 end subroutine open_file

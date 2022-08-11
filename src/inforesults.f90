@@ -257,6 +257,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
             if (ArrayObsSim(Nri)%YYYYi <= 1901) then
                 YearString = ''
             else
+                YearString = '    '
                 write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
             end if
             write(fAssm, '(i6, 3f14.1, a, i2, 4a)') &
@@ -312,6 +313,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
             if (ArrayObsSim(Nri)%YYYYi <= 1901) then
                 YearString = ''
             else
+                YearString = '    '
                 write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
             end if
             write(fAssm, '(i6, f16.3, 2f14.3, a, i2, 4a)') &
@@ -366,6 +368,7 @@ subroutine WriteAssessmentSimulation(StrNr, totalnameEvalStat, &
             if (ArrayObsSim(Nri)%YYYYi <= 1901) then
                 YearString = ''
             else
+                YearString = '    '
                 write(YearString, '(i4)') ArrayObsSim(Nri)%YYYYi
             end if
             write(fAssm, '(i6, 3f14.1, a, i2, 4a)') &
