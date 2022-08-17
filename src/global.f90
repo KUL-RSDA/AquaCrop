@@ -6562,7 +6562,7 @@ subroutine AdjustSizeCompartments(CropZx)
     ! 2. Actual total depth of compartments
     TotDepthC = 0._dp
     do i = 1, GetNrCompartments()
-        TotDepthC = TotDepthC + GetCompartment_Thickness(compi)
+        TotDepthC = TotDepthC + GetCompartment_Thickness(i)
     end do
 
     ! 3. Increase number of compartments (if less than 12)
