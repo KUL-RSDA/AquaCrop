@@ -1590,7 +1590,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                 else
                     WeedRCDayCalc = TempWeedRCinput * (1 + &
                                         (TempWeedDeltaRC/100._dp) &
-                                         * (TheDay-L12SF) / (TempL123-L12SF))
+                                         * (TheDay-L12SF) / real(TempL123-L12SF,kind=dp))
                 end if
             end if
         else
@@ -1602,7 +1602,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                     WeedRCDayCalc = TempWeedRCinput * (1 + &
                                         (TempWeedDeltaRC/100._dp) &
                                          * (GDDayi-GDDL12SF) &
-                                         / (TempGDDL123-GDDL12SF))
+                                         / real(TempGDDL123-GDDL12SF,kind=dp))
                 end if
             end if
         end if
@@ -3394,7 +3394,7 @@ subroutine LoadManagement(FullName)
         if (roundc(VersionNr*10, mold=1) < 51) then
             call SetManagement_WeedDeltaRC(0)
         else
-            read(fhandle, *) TempShortInt
+            read(fhandle, *) TempInt
             call SetManagement_WeedDeltaRC(TempInt)
         end if
         read(fhandle, *) TempDouble ! shape factor of the CC expansion
