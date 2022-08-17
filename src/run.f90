@@ -7639,7 +7639,7 @@ subroutine WriteDailyResults(DAP, WPi)
                 call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
             else
                 SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-                call DetermineRootZoneWC(GetCrop_RootMax(), SWCtopSoilConsidered_temp)
+                call DetermineRootZoneWC(real(GetSoil_RootMax(), kind=dp), SWCtopSoilConsidered_temp)
                 call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
             end if
         end if

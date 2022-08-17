@@ -1088,18 +1088,18 @@ real(sp) function RootMaxInSoilProfile(ZmaxCrop, TheNrSoilLayers, TheSoilLayer)
     Zsoil = 0._dp
 
     layi = 0
-    do while ((layi < TheNrSoilLayers) .and. (Zmax > 0))
+    do while ((layi < TheNrSoilLayers) .and. (Zmax > 0._dp))
         layi = layi + 1
 
         if ((TheSoilLayer(layi)%Penetrability < 100) .and. &
             (roundc(Zsoil*1000, mold=1_int32) < roundc(ZmaxCrop*1000, mold=1_int32))) then
-            Zmax = undef_int
+            Zmax = real(undef_int, kind=dp)
         end if
 
         Zsoil = Zsoil + TheSoilLayer(layi)%Thickness
     end do
 
-    if (Zmax < 0) then
+    if (Zmax < 0._dp) then
         call ZrAdjustedToRestrictiveLayers(ZmaxCrop, TheNrSoilLayers, &
                                            TheSoilLayer, Zmax)
     end if
@@ -6714,7 +6714,7 @@ subroutine CheckForKeepSWC(RunWithKeepSWC, ConstZrxForRun)
 
             ZrSoili = RootMaxInSoilProfile(Zrxi, TheNrSoilLayers, &
                                            TheSoilLayer)
-            if (ZrSoili > ConstZrxForRun) then
+            if (real(ZrSoili, kind=dp) > ConstZrxForRun) then
                 ConstZrxForRun = ZrSoili
             end if
 
