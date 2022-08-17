@@ -2107,7 +2107,7 @@ subroutine LoadSimulationRunProject(NrRun)
         open(newunit=fClim, file=trim(GetClimateFileFull()), &
              status='old', action='read', iostat=rc)
         ! 1.0 Description
-        read(fClim, *, iostat=rc) TempString
+        read(fClim, '(a)', iostat=rc) TempString
         call SetClimateDescription(trim(TempString))
         close(fClim)
     end if

@@ -2853,7 +2853,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     character(len=1025) :: StringREAD
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *, iostat=rc) IrriDescription
+    read(fhandle, '(a)', iostat=rc) IrriDescription
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
 
     ! irrigation method
@@ -3240,7 +3240,7 @@ subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile
 
     open(newunit=fhandle, file=trim(FullName), status='old', &
          action='read')
-    read(fhandle, *) ClimateDescription
+    read(fhandle, '(a)') ClimateDescription
     read(fhandle) ! AquaCrop Version
     read(fhandle, *) TempFile
     read(fhandle, *) EToFile
@@ -3265,7 +3265,7 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     GetOnsetTemp = .false.
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) CalendarDescription
+    read(fhandle, '(a)') CalendarDescription
     read(fhandle, *) ! AquaCrop Version
 
     ! Specification of Onset and End growing season
@@ -3346,7 +3346,7 @@ subroutine LoadManagement(FullName)
     character(len=1025) :: mandescription_temp
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) mandescription_temp
+    read(fhandle, '(a)') mandescription_temp
     call SetManDescription(trim(mandescription_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
     ! mulches
@@ -4802,7 +4802,7 @@ subroutine LoadCrop(FullName)
     character(len=1024) :: CropDescriptionLocal
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) CropDescriptionLocal
+    read(fhandle, '(a)') CropDescriptionLocal
     call SetCropDescription(trim(CropDescriptionLocal))
     read(fhandle, *) VersionNr ! AquaCrop version
     read(fhandle, *)  ! Protected or Open file
@@ -5769,7 +5769,7 @@ subroutine LoadOffSeason(FullName)
     else
         write(*,*) 'LoadOffSeason file not found'
     end if
-    read(fhandle, *) OffSeasonDescr_temp
+    read(fhandle, '(a)') OffSeasonDescr_temp
     call SetOffSeasonDescription(trim(OffSeasonDescr_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
     ! mulches
@@ -5934,7 +5934,7 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
         return
     end if
 
-    read(fhandle, *, iostat=rc) ClimateDescription
+    read(fhandle, '(a)', iostat=rc) ClimateDescription
     read(fhandle, *, iostat=rc) Ni
     if (Ni == 1) then
         ClimateRecord%DataType = datatype_Daily
@@ -5987,7 +5987,7 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
     else
         write(*,*) 'Groundwater file not found'
     end if
-    read(fhandle, *) GroundWaterDescription
+    read(fhandle, '(a)') GroundWaterDescription
     read(fhandle, *) ! AquaCrop Version
 
     ! mode groundwater table
@@ -7564,7 +7564,7 @@ subroutine LoadProfile(FullName)
     integer(int8) :: penetrability_temp, gravelm_temp
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) ProfDescriptionLocal
+    read(fhandle, '(a)') ProfDescriptionLocal
     call SetProfDescription(trim(ProfDescriptionLocal))
     read(fhandle, *) VersionNr  ! AquaCrop version
     read(fhandle, *) TempShortInt
