@@ -1088,18 +1088,18 @@ real(sp) function RootMaxInSoilProfile(ZmaxCrop, TheNrSoilLayers, TheSoilLayer)
     Zsoil = 0._dp
 
     layi = 0
-    do while ((layi < TheNrSoilLayers) .and. (Zmax > 0))
+    do while ((layi < TheNrSoilLayers) .and. (Zmax > 0._dp))
         layi = layi + 1
 
         if ((TheSoilLayer(layi)%Penetrability < 100) .and. &
             (roundc(Zsoil*1000, mold=1_int32) < roundc(ZmaxCrop*1000, mold=1_int32))) then
-            Zmax = undef_int
+            Zmax = real(undef_int, kind=dp)
         end if
 
         Zsoil = Zsoil + TheSoilLayer(layi)%Thickness
     end do
 
-    if (Zmax < 0) then
+    if (Zmax < 0._dp) then
         call ZrAdjustedToRestrictiveLayers(ZmaxCrop, TheNrSoilLayers, &
                                            TheSoilLayer, Zmax)
     end if
@@ -1590,7 +1590,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                 else
                     WeedRCDayCalc = TempWeedRCinput * (1 + &
                                         (TempWeedDeltaRC/100._dp) &
-                                         * (TheDay-L12SF) / (TempL123-L12SF))
+                                         * (TheDay-L12SF) / real(TempL123-L12SF,kind=dp))
                 end if
             end if
         else
@@ -1602,7 +1602,7 @@ real(dp) function GetWeedRC(TheDay, GDDayi, fCCx, TempWeedRCinput, TempWeedAdj,&
                     WeedRCDayCalc = TempWeedRCinput * (1 + &
                                         (TempWeedDeltaRC/100._dp) &
                                          * (GDDayi-GDDL12SF) &
-                                         / (TempGDDL123-GDDL12SF))
+                                         / real(TempGDDL123-GDDL12SF,kind=dp))
                 end if
             end if
         end if
@@ -2853,7 +2853,7 @@ subroutine LoadIrriScheduleInfo(FullName)
     character(len=1025) :: StringREAD
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *, iostat=rc) IrriDescription
+    read(fhandle, '(a)', iostat=rc) IrriDescription
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
 
     ! irrigation method
@@ -3240,7 +3240,7 @@ subroutine LoadClimate(FullName, ClimateDescription, TempFile, EToFile, RainFile
 
     open(newunit=fhandle, file=trim(FullName), status='old', &
          action='read')
-    read(fhandle, *) ClimateDescription
+    read(fhandle, '(a)') ClimateDescription
     read(fhandle) ! AquaCrop Version
     read(fhandle, *) TempFile
     read(fhandle, *) EToFile
@@ -3265,7 +3265,7 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     GetOnsetTemp = .false.
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) CalendarDescription
+    read(fhandle, '(a)') CalendarDescription
     read(fhandle, *) ! AquaCrop Version
 
     ! Specification of Onset and End growing season
@@ -3346,7 +3346,7 @@ subroutine LoadManagement(FullName)
     character(len=1025) :: mandescription_temp
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) mandescription_temp
+    read(fhandle, '(a)') mandescription_temp
     call SetManDescription(trim(mandescription_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
     ! mulches
@@ -3394,7 +3394,7 @@ subroutine LoadManagement(FullName)
         if (roundc(VersionNr*10, mold=1) < 51) then
             call SetManagement_WeedDeltaRC(0)
         else
-            read(fhandle, *) TempShortInt
+            read(fhandle, *) TempInt
             call SetManagement_WeedDeltaRC(TempInt)
         end if
         read(fhandle, *) TempDouble ! shape factor of the CC expansion
@@ -4802,7 +4802,7 @@ subroutine LoadCrop(FullName)
     character(len=1024) :: CropDescriptionLocal
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) CropDescriptionLocal
+    read(fhandle, '(a)') CropDescriptionLocal
     call SetCropDescription(trim(CropDescriptionLocal))
     read(fhandle, *) VersionNr ! AquaCrop version
     read(fhandle, *)  ! Protected or Open file
@@ -5769,7 +5769,7 @@ subroutine LoadOffSeason(FullName)
     else
         write(*,*) 'LoadOffSeason file not found'
     end if
-    read(fhandle, *) OffSeasonDescr_temp
+    read(fhandle, '(a)') OffSeasonDescr_temp
     call SetOffSeasonDescription(trim(OffSeasonDescr_temp))
     read(fhandle, *) VersionNr ! AquaCrop Version
     ! mulches
@@ -5934,7 +5934,7 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
         return
     end if
 
-    read(fhandle, *, iostat=rc) ClimateDescription
+    read(fhandle, '(a)', iostat=rc) ClimateDescription
     read(fhandle, *, iostat=rc) Ni
     if (Ni == 1) then
         ClimateRecord%DataType = datatype_Daily
@@ -5987,7 +5987,7 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
     else
         write(*,*) 'Groundwater file not found'
     end if
-    read(fhandle, *) GroundWaterDescription
+    read(fhandle, '(a)') GroundWaterDescription
     read(fhandle, *) ! AquaCrop Version
 
     ! mode groundwater table
@@ -6562,7 +6562,7 @@ subroutine AdjustSizeCompartments(CropZx)
     ! 2. Actual total depth of compartments
     TotDepthC = 0._dp
     do i = 1, GetNrCompartments()
-        TotDepthC = TotDepthC + GetCompartment_Thickness(compi)
+        TotDepthC = TotDepthC + GetCompartment_Thickness(i)
     end do
 
     ! 3. Increase number of compartments (if less than 12)
@@ -6714,7 +6714,7 @@ subroutine CheckForKeepSWC(RunWithKeepSWC, ConstZrxForRun)
 
             ZrSoili = RootMaxInSoilProfile(Zrxi, TheNrSoilLayers, &
                                            TheSoilLayer)
-            if (ZrSoili > ConstZrxForRun) then
+            if (real(ZrSoili, kind=dp) > ConstZrxForRun) then
                 ConstZrxForRun = ZrSoili
             end if
 
@@ -7564,7 +7564,7 @@ subroutine LoadProfile(FullName)
     integer(int8) :: penetrability_temp, gravelm_temp
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, *) ProfDescriptionLocal
+    read(fhandle, '(a)') ProfDescriptionLocal
     call SetProfDescription(trim(ProfDescriptionLocal))
     read(fhandle, *) VersionNr  ! AquaCrop version
     read(fhandle, *) TempShortInt

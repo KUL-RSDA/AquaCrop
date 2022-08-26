@@ -3713,7 +3713,7 @@ subroutine GetNextHarvest()
             if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
                 ! scroll to start growing cycle
                 DayNrXX = GetManagement_Cuttings_FirstDayNr() + GetCutInfoRecord1_FromDay() -1
-                 do while ((DayNrXX < GetCrop_Day1()) .or. (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.))
+                 do while ((DayNrXX < GetCrop_Day1()) .and. (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.))
                     TempString = fCuts_read()
                     if (.not. fCuts_eof()) then
                         read(TempString, *) FromDay_temp
@@ -7639,7 +7639,7 @@ subroutine WriteDailyResults(DAP, WPi)
                 call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
             else
                 SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-                call DetermineRootZoneWC(GetCrop_RootMax(), SWCtopSoilConsidered_temp)
+                call DetermineRootZoneWC(real(GetSoil_RootMax(), kind=dp), SWCtopSoilConsidered_temp)
                 call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
             end if
         end if

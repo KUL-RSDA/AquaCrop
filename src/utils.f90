@@ -43,15 +43,20 @@ end function GetAquaCropDescription
 function GetAquaCropDescriptionWithTimeStamp() result(str)
     !! Same as GetAquaCropDescription(), but with a time stamp.
     character(len=:), allocatable :: str
+    character(len=10) :: datestr
+    character(len=8)  :: timestr
 
     integer, dimension(8) :: d
 
     call date_and_time(values=d)
 
+    WRITE(datestr,10)d(3),d(2),d(1)
+    WRITE(timestr,8)d(5),d(6),d(7)
+ 10 FORMAT(I2.2, '-', I2.2, '-', I4.4)
+ 8  FORMAT(I2.2, ':', I2.2, ':', I2.2)
     str = GetAquaCropDescription() // ' - Output created on (date) : ' // &
-          int2str(d(3)) // '-' // int2str(d(2)) // '-' // int2str(d(1)) // &
-          '   at (time) : ' // int2str(d(5)) // ':' // int2str(d(6)) // &
-          ':' // int2str(d(7))
+          datestr // '   at (time) : ' // timestr
+    
 end function GetAquaCropDescriptionWithTimeStamp
 
 

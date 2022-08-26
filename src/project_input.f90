@@ -159,8 +159,6 @@ subroutine initialize_project_input(filename, NrRuns)
 
     integer :: i, NrRuns_local
 
-    if (allocated(ProjectInput)) return
-
     if (present(NrRuns)) then
         NrRuns_local = NrRuns
     else

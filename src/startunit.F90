@@ -537,7 +537,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
     character(len=1025) :: NrString, TestFile, tempstring
     logical :: CanSelect, ProgramParametersAvailable
     integer(int32) :: TotalSimRuns
-    integer(int8) :: SimNr
+    integer(int32) :: SimNr
     character(len=:), allocatable :: FullFileNameProgramParametersLocal
     logical :: MultipleRunWithKeepSWC_temp
     real(dp) :: MultipleRunConstZrx_temp
@@ -595,10 +595,10 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
             ! 3. Check if Environment and Simulation Files exist for all runs
             CanSelect = .true.
-            SimNr = 0_int8
+            SimNr = 0_int32
             do while (CanSelect .and. (SimNr < TotalSimRuns))
-                SimNr = SimNr + 1_int8
-                call CheckFilesInProject(int(SimNr, kind=int32), CanSelect)
+                SimNr = SimNr + 1_int32
+                call CheckFilesInProject(SimNr, CanSelect)
             end do
 
             ! 4. load project parameters

@@ -2699,6 +2699,12 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                                      Compx%Depo(celx_local))
             mmx = mmx/2._dp
             do while (Compx%Salt(celx_local) < 0._dp)
+                ! index zero problem
+                ! TO DO: likely also happened with original Pascal code, 
+                !        but Pascal code tolerates it
+                if (celx_local == 1_int32) then 
+                    celx_local = size(Compx%Salt)
+                end if
                 Compx%Salt(celx_local-1) = Compx%Salt(celx_local-1) &
                                            + Compx%Salt(celx_local)
                 Compx%Salt(celx_local) = 0._dp
