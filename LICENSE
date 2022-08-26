@@ -3,29 +3,25 @@ COPYRIGHT
 All rights reserved.
 
 The open-source AquaCrop v7.0 software in Fortran was developed by KU Leuven 
-based on the AquaCrop software in Pascal, copyright FAO.
+and FAO, based on the AquaCrop software in Pascal, developed by FAO in 
+close cooperation with universities and research centers.
 
 FAO and KU Leuven encourage the reproduction and dissemination of material in this
-information product. Non-commercial uses will be authorized free of charge,
-upon request.
+information product. Except where otherwise indicated, material may be copied, 
+downloaded and printed for private study, research and teaching purposes, 
+or for use in non-commercial products or services, provided that
+appropriate acknowledgements of FAO and KU Leuven as the sources and
+copyright holders are given and that FAO’s and KU Leuven’s endorsements 
+of users’ views, products or services are not implied in any way.
 
-Reproduction for resale or other commercial purposes, including educational
-purposes, may incur fees.
-
-Applications for permission to reproduce or disseminate FAO copyright
-materials, and all queries concerning rights and licenses, should be addressed
-by e-mail to:
+All requests for translation and adaptation rights, 
+and for resale and other commercial use rights, 
+as well as applications for permission to 
+reproduce or disseminate FAO and KU Leuven copyright materials, 
+and all queries concerning rights and licenses, should be addressed to:
 
 copyright@fao.org
-
-Applications for permission to use, reproduce or disseminate KU Leuven copyright
-materials, and all queries concerning rights and licenses, should be addressed
-by e-mail to: 
-
 lrd.ip@kuleuven.be
 
-This project has received funding from the European Union’s Horizon 2020 
-research and innovation programme under grant agreement No 773903.
-
-© FAO [2012]
+© FAO [2022]
 © KU Leuven [2022]
