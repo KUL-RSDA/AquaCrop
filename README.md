@@ -9,7 +9,7 @@ a translation from Pascal to Fortran,
 and a range of new and/or updated scientific features.
 
 The following applications are publicly distributed:
-* AquaCrop v7.0 version-controlled open *source code* (this GitHub page, and zip-file under [Releases](
+* AquaCrop v7.0 version-controlled open **source code** (this GitHub page, and zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
 * AquaCrop v7.0 vstandard Windows **graphical user interface** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
