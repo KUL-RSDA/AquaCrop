@@ -8,11 +8,12 @@ performance improvements and internal restructuring,
 a translation from Pascal to Fortran,
 and a range of new and/or updated scientific features.
 
-The following applications are publicly distributed along with the
-AquaCrop v7.0 source code:
-* AquaCrop standard Windows **graphical user interface** (under [Releases](
+The following applications are publicly distributed:
+* AquaCrop v7.0 version-controlled open source code (this GitHub page, and zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop Windows **standalone executable** (under [Releases](
+* AquaCrop v7.0 vstandard Windows **graphical user interface** (zip-file under [Releases](
+  https://github.com/KUL-RSDA/AquaCrop/releases))
+* AquaCrop v7.0 **standalone executable** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases)) for
   * Windows
   * Linux
@@ -27,13 +28,15 @@ the LIS section below.
 
 Online documentation and contact information is available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
 
+Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum for FAQ and to contribute.
+
 ## Running the executable
 
 Download the ZIP file with the AquaCrop v7.0 executable for
 Windows, Linux or MacOS from the release page. 
 Consult the reference manual (FAO website) for details about the AquaCrop stand-alone program.
 
-Optionally, it can be verified if the executable produces the expected output on the user's system, but running a self-contained testcase for which reference output is provided (under [Releases](
+Optionally, it can be verified if the executable produces the expected output on the user's system, by running a self-contained testcase for which reference output is provided (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases)).
 
 ## Building the executable
@@ -82,9 +85,11 @@ make STATIC=1       # builds a statically-linked binary for distribution
 make FC=ifort       # use the Intel Fortran compiler instead of GNU Fortran
 ```
 
-## Optional contributing
+## Optional contributing and support
 
-Please follow good practices. New features, enhancements or suggestions will be considered and reviewed only once a year by the core AquaCrop developers.
+Please follow good practices. New features, enhancements or suggestions will only be considered and reviewed once a year by the core AquaCrop developers.
+
+We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of Documentation or the FAO Contact did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or Documentation. Please do not open an "Issue" to ask your question and do not offer new Pull Requests without any prior Discussion with the AquaCrop core team.
 
 ## Optional code development and testing of source code changes against reference output
 
