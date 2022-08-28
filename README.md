@@ -9,7 +9,7 @@ a translation from Pascal to Fortran,
 and a range of new and/or updated scientific features.
 
 The following applications are publicly distributed:
-* AquaCrop v7.0 version-controlled open source code (this GitHub page, and zip-file under [Releases](
+* AquaCrop v7.0 version-controlled open *source code* (this GitHub page, and zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
 * AquaCrop v7.0 vstandard Windows **graphical user interface** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
@@ -28,7 +28,7 @@ the LIS section below.
 
 Online documentation and contact information is available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
 
-Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum for FAQ and to contribute.
+Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum for FAQ, or to contribute.
 
 ## Running the executable
 
