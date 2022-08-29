@@ -89,7 +89,7 @@ make FC=ifort       # use the Intel Fortran compiler instead of GNU Fortran
 
 Please follow good practices. New features, enhancements or suggestions will only be considered and reviewed once a year by the core AquaCrop developers.
 
-We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of Documentation or the FAO Contact did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or Documentation. Please do not open an "Issue" to ask your question and do not offer new Pull Requests without any prior Discussion with the AquaCrop core team.
+We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of Documentation or the FAO Contact (aquacrop@fao.org) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or Documentation. Please do not open an "Issue" to ask your question and do not offer new Pull Requests without any prior Discussion with the AquaCrop core team.
 
 ## Optional code development and testing of source code changes against reference output
 
@@ -134,8 +134,7 @@ pytest test_europe.py -k 'False-1-16 or True-19-0'
 ## LIS integration
 
 The distribution of AquaCrop v.7.0 within LIS is currently being reviewed
-and will be accessible after approval of an upcoming pull request to NASA via
-[Land Information System (LIS)](https://github.com/NASA-LIS/LISF).
+and will be accessible after approval of an upcoming pull request to NASA via the [Land Information System (LIS) GitHub page](https://github.com/NASA-LIS/LISF).
 
 ## Citation
 
