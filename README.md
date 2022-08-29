@@ -89,7 +89,7 @@ make FC=ifort       # use the Intel Fortran compiler instead of GNU Fortran
 
 Please follow good practices. New features, enhancements or suggestions will only be considered and reviewed once a year by the core AquaCrop developers.
 
-We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of documentation or the FAO Contact (aquacrop@fao.org) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
+We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) or the FAO Contact (aquacrop@fao.org) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
 
 ## Optional code development and testing of source code changes against reference output
 
