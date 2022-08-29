@@ -133,8 +133,8 @@ pytest test_europe.py -k 'False-1-16 or True-19-0'
 
 ## LIS integration
 
-The distribution of AquaCrop v.7.0 within LIS is currently being reviewed
-and will be accessible after approval of an upcoming pull request to NASA via the [Land Information System (LIS) GitHub page](https://github.com/NASA-LIS/LISF).
+The distribution of AquaCrop v.7.0 within NASA's LIS is currently being reviewed
+and will be accessible after approval of an upcoming pull request to NASA via the [LIS GitHub page](https://github.com/NASA-LIS/LISF).
 
 ## Citation
 
