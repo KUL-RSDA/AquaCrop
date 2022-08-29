@@ -1,6 +1,6 @@
 The original AquaCrop source code (in Pascal) was developed by:
 * Dirk Raes (KU Leuven)
-* Elias Fereres (IAS-CISIC & University of Cordoba)
+* Elias Fereres (IAS-CSIC & University of Cordoba)
 * Pasquale Steduto (former FAO)
 * Theodore Hsiao (UC Davis)
 
