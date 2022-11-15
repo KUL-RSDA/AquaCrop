@@ -5087,6 +5087,12 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                     else
                         ! CDC is adjusted to degree of stress
                         ! time required to reach CCiprev with CDCadjusted
+                        if (GetCCiTopEarlySen()== 0._dp) then
+                            call SetCCiTopEarlySen(epsilon(1._dp))
+                        end if
+                        if (CDCadjusted == 0._dp) then
+                            CDCadjusted = epsilon(1._dp)
+                        end if
                         tTemp = (log(1._dp &
                                      + (1._dp &
                                         - GetCCiPrev()/GetCCiTopEarlySen()) &
