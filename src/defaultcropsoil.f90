@@ -137,7 +137,9 @@ implicit none
 contains
 
 
-subroutine ResetDefaultCrop()
+subroutine ResetDefaultCrop(use_default_crop_file)
+    logical, intent(in) :: use_default_crop_file
+        !! Whether to write a 'DEFAULT.CRO' file.
 
     call SetCropDescription('a generic crop')
     call SetCrop_subkind(subkind_Grain)
@@ -277,9 +279,10 @@ subroutine ResetDefaultCrop()
                                              ! to root system at end of season
     call SetCrop_Assimilates_Mobilized(0_int8) ! Percentage stored assimilates,
                                     ! transferred to above ground parts in next season
-
-    call SetCropFilefull(GetPathNameSimul() // 'DEFAULT.CRO')
-    call SaveCrop(GetCropFilefull())
+    if (use_default_crop_file) then
+        call SetCropFilefull(GetPathNameSimul() // 'DEFAULT.CRO')
+        call SaveCrop(GetCropFilefull())
+    end if
 end subroutine ResetDefaultCrop
 
 

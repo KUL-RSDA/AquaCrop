@@ -198,8 +198,9 @@ implicit none
 contains
 
 
-subroutine InitializeSettings(use_default_soil_file)
+subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     logical, intent(in) :: use_default_soil_file
+    logical, intent(in) :: use_default_crop_file
         !! Whether to make use of a 'DEFAULT.sol' soil file.
 
     character(len=1025) :: TempString1, TempString2, CO2descr
@@ -344,7 +345,7 @@ subroutine InitializeSettings(use_default_soil_file)
 
 
     ! 3. Crop characteristics and cropping period
-    call ResetDefaultCrop ! Reset the crop to its default values
+    call ResetDefaultCrop(use_default_crop_file) ! Reset the crop to its default values
     call SetCropFile('DEFAULT.CRO')
     call SetCropFilefull(GetPathNameSimul() // GetCropFile())
     ! LoadCrop ==============================
