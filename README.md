@@ -1,6 +1,6 @@
 # AquaCrop
 
-AquaCrop v7.0 is released as an open-source Fortran code, 
+AquaCrop v7.0 is released as open-source Fortran code, 
 developed at KU Leuven and FAO (FAO and KU Leuven copyright),
 and based on the original AquaCrop v6.0 (FAO copyright). 
 Compared to AquaCrop v6.0, the AquaCrop v7.0 features bug fixes,
@@ -11,7 +11,7 @@ and a range of new and/or updated scientific features.
 The following applications are publicly distributed:
 * AquaCrop v7.0 version-controlled open **source code** (this GitHub page, and zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop v7.0 vstandard Windows **graphical user interface** (zip-file under [Releases](
+* AquaCrop v7.0 standard Windows **graphical user interface** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
 * AquaCrop v7.0 **standalone executable** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases)) for
@@ -64,7 +64,7 @@ The main `make` targets are `bin` (producing an `aquacrop` executable),
 ## Optional build instructions
 
 If the `FORTRAN_EXE` option is set to `0` (instead of the default `1`),
-the `aquacrop` binary is built from the Pascal code instead, linked to
+the `aquacrop` binary is built from the original Pascal code (instead of the Fortran version), linked to
 the (Fortran-compiled) `libaquacrop.so` library. This approach can
 currently only be used together with a GNU Fortran compiler.
 
