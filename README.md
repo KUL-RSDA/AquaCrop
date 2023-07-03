@@ -1,4 +1,4 @@
-# FAO AquaCrop href="https://www.fao.org/typo3temp/pics/f0401eaec2.jpg"
+# FAO AquaCrop
 
 AquaCrop v7.0 is released as open-source Fortran code, 
 developed at KU Leuven and FAO (FAO and KU Leuven copyright),
