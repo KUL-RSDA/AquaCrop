@@ -64,7 +64,7 @@ function GetReleaseDate() result(str)
     !! Returns a string containing the month and year of the release.
     character(len=:), allocatable :: str
 
-    str = 'August 2022'
+    str = 'August 2023'
 end function GetReleaseDate
 
 
@@ -72,7 +72,7 @@ function GetVersionString() result(str)
     !! Returns a string containing the version number (major+minor).
     character(len=:), allocatable :: str
 
-    str = '7.0'
+    str = '7.1'
 end function GetVersionString
 
 

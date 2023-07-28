@@ -540,7 +540,7 @@ real(dp) :: GDDayi
 real(dp) :: CO2i
 real(dp) :: FracBiomassPotSF
 real(dp) :: SumETo,SumGDD, Ziprev,SumGDDPrev
-real(dp) :: CCxWitheredTpot,CCxWitheredTpotNoS
+real(dp) :: CCxWitheredTpotNoS
 real(dp) :: Coeffb0,Coeffb1,Coeffb2
 real(dp) :: Coeffb0Salt,Coeffb1Salt,Coeffb2Salt
 real(dp) :: StressLeaf,StressSenescence !! stress for leaf expansion and senescence
@@ -569,7 +569,7 @@ logical :: NoYear
 
 character(len=:), allocatable :: fEval_filename
 
-logical :: WaterTableInProfile, StartMode, NoMoreCrop, CGCadjustmentAfterCutting
+logical :: WaterTableInProfile, StartMode, NoMoreCrop
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of
                          ! irrigation water was not yet recorded
 
@@ -2517,21 +2517,6 @@ subroutine SetNoMoreCrop(NoMoreCrop_in)
 end subroutine SetNoMoreCrop
 
 
-logical function GetCGCadjustmentAfterCutting()
-    !! Getter for the "CGCadjustmentAfterCutting" global variable.
-
-    GetCGCadjustmentAfterCutting = CGCadjustmentAfterCutting
-end function GetCGCadjustmentAfterCutting
-
-
-subroutine SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_in)
-    !! Setter for the "CGCadjustmentAfterCutting" global variable.
-    logical, intent(in) :: CGCadjustmentAfterCutting_in
-
-    CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_in
-end subroutine SetCGCadjustmentAfterCutting
-
-
 integer(int32) function GetIrriInterval()
     !! Getter for the "IrriInterval" global variable.
 
@@ -2650,21 +2635,6 @@ subroutine SetStressSFadjNEW(StressSFadjNEW_in)
 
     StressSFadjNEW = int(StressSFadjNEW_in, kind=int8)
 end subroutine SetStressSFadjNEW
-
-
-real(dp) function GetCCxWitheredTpot()
-    !! Getter for the "CCxWitheredTpot" global variable.
-
-    GetCCxWitheredTpot = CCxWitheredTpot
-end function GetCCxWitheredTpot
-
-
-subroutine SetCCxWitheredTpot(CCxWitheredTpot_in)
-    !! Setter for the "CCxWitheredTpot" global variable.
-    real(dp), intent(in) :: CCxWitheredTpot_in
-
-    CCxWitheredTpot = CCxWitheredTpot_in
-end subroutine SetCCxWitheredTpot
 
 
 real(dp) function GetCCxWitheredTpotNoS()
@@ -4729,6 +4699,18 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
     call fRun_write(trim(TempString), .false.)
 
     ! Crop yield
+    ! Harvest Index
+    if ((GetSumWaBal_Biomass() > 0._dp) &
+        .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+        HI = 100._dp*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
+    else
+        if (GetSumWaBal_Biomass() > 0._dp) then
+            HI = 0._dp
+        else
+            HI = undef_double
+        end if
+    end if
+
     if (ANumber /= int(undef_int, int8)) then ! end of simulation run
         ! Water Use Efficiency yield
         if (((GetSumWaBal_Tact() > 0._dp) .or. (GetSumWaBal_ECropCycle() > 0._dp)) &
@@ -4737,14 +4719,6 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                     /((GetSumWaBal_Tact()+GetSumWaBal_ECropCycle())*10._dp)
         else
             WPy = 0.0_dp
-        end if
-
-        ! Harvest Index
-        if ((GetSumWaBal_Biomass() > 0._dp) &
-            .and. (GetSumWaBal_YieldPart() > 0._dp)) then
-            HI = 100._dp*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
-        else
-            HI = undef_double
         end if
 
         ! Fresh yield
@@ -4763,7 +4737,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                                      GetSimulation_Storage_Btotal()
         call fRun_write(trim(TempString), .false.)
     else
-        write(TempString, '(4i9, 2f9.3)') undef_int, undef_int, undef_int, &
+        write(TempString, '(f9.1, 4i9, 2f9.3)') HI, undef_int, undef_int, undef_int, &
                                           undef_int, BmobPer, BstoPer
         call fRun_write(trim(TempString), .false.)
     end if
@@ -4828,8 +4802,6 @@ subroutine InitializeSimulationRunPart1()
     call SetSimulation_EvapWCsurf(0._dp)
     call SetSimulation_EvapZ(EvapZmin/100._dp)
     call SetSimulation_SumEToStress(0._dp)
-    call SetCCxWitheredTpot(0._dp) ! for calculation Maximum Biomass
-                                   ! and considering soil fertility stress
     call SetCCxWitheredTpotNoS(0._dp) ! for calculation Maximum Biomass
                                       ! unlimited soil fertility
     call SetSimulation_DayAnaero(0_int8) ! days of anaerobic conditions in
@@ -5284,8 +5256,13 @@ subroutine InitializeSimulationRunPart2()
                (GetSimulation_Storage_Season() + 1))) then
             ! season next to season in which storage took place
             ! mobilization of assimilates
-            call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *&
-                   GetCrop_Assimilates_Mobilized()/100._dp)
+            if (GetSimulation_YearSeason() == 2) then
+                call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *& 
+                    0.2 * GetCrop_Assimilates_Mobilized()/100._dp)
+            else
+                call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *&
+                    GetCrop_Assimilates_Mobilized()/100._dp)
+            endif
             if (roundc(1000._dp * GetTransfer_ToMobilize(),&
                    mold=1) > 0) then ! minimum 1 kg
                  call SetTransfer_Mobilize(.true.)
@@ -5378,7 +5355,6 @@ subroutine InitializeSimulationRunPart2()
     if (GetManagement_Cuttings_Considered()) then
         call OpenHarvestInfo()
     end if
-    call SetCGCadjustmentAfterCutting(.false.)
 
     ! 18. Tab sheets
 
@@ -6401,7 +6377,8 @@ end subroutine AdjustSWCRootZone
 
 subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
                                          AssimMobilized, FracAssim, &
-                                         StorageON, MobilizationON)
+                                         StorageON, MobilizationON, &
+                                         HarvestNow)
     real(dp), intent(inout) :: Bin
     real(dp), intent(inout) :: Bout
     real(dp), intent(inout) :: AssimToMobilize
@@ -6409,9 +6386,10 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
     real(dp), intent(inout) :: FracAssim
     logical, intent(inout) :: StorageON
     logical, intent(inout) :: MobilizationON
+    logical, intent(in) :: HarvestNow
 
     integer(int32) :: c1, c2
-    real(dp) :: x
+    real(dp) :: x, FracSto, tmob
 
     Bin = 0._dp
     Bout = 0._dp
@@ -6436,16 +6414,46 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
             end if
             ! Fraction of assimilates transferred
             if (MobilizationOn) then
-                FracAssim = (AssimToMobilize-AssimMobilized)/AssimToMobilize
+                tmob = (AssimToMobilize-AssimMobilized)/AssimToMobilize
+                if (AssimToMobilize > AssimMobilized) then
+                    FracAssim = (exp(-5._dp*tmob) - 1._dp)/(exp(-5._dp) - 1._dp)
+                    if (GetCCiActual() > (0.9_dp*(GetCCxTotal() &
+                        * (1._dp - GetSimulation_EffectStress_RedCCX()/100._dp)))) then
+                        FracAssim = FracAssim * ((GetCCxTotal()*(1._dp &
+                        - GetSimulation_EffectStress_RedCCX()/100._dp)) &
+                        - GetCCiActual()) &
+                        / (0.1*(GetCCxTotal()*(1._dp &
+                        - GetSimulation_EffectStress_RedCCX()/100._dp)))
+                    end if
+                    if (FracAssim < 0._dp) then
+                        FracAssim = 0._dp
+                    end if
+                else
+                    ! everything is mobilized
+                    FracAssim = 0._dp
+                end if
             end if
+
             if ((StorageOn) .and. (GetCrop_Assimilates_Period() > 0)) then
+                if (HarvestNow) then
+                    FracSto = 0._dp
+                else
+                    if ((GetCCiActual() > GetManagement_Cuttings_CCcut()/100._dp) &
+                        .and. (GetCCiActual() < (GetCCxTotal()*(1._dp &
+                        - GetSimulation_EffectStress_RedCCX()/100._dp)))) then
+                        FracSto = (GetCCiActual() - GetManagement_Cuttings_CCcut()/100._dp) &
+                            /((GetCCxTotal()*(1._dp - GetSimulation_EffectStress_RedCCX()/100._dp)) &
+                            - GetManagement_Cuttings_CCcut()/100._dp)
+                    else 
+                        FracSto = 1._dp
+                    end if
+                end if
                 ! Use convex function
-                c1 = GetDayNri() - GetSimulation_DelayedDays() &
-                     - GetCrop_Day1() + 1
-                c2 = GetCrop_DaysToHarvest() - GetCrop_Assimilates_Period()
-                x = (c1 - c2) * 1._dp / GetCrop_Assimilates_Period()
-                FracAssim = (GetCrop_Assimilates_Stored() / 100._dp) &
-                            * (1._dp - Ksany(x, 0._dp, 1._dp, -5._dp))
+                FracAssim = FracSto * (GetCrop_Assimilates_Stored()/100._dp) &
+                    * (1._dp-KsAny((((GetDayNri() - GetSimulation_DelayedDays() &
+                    - GetCrop_Day1() + 1._dp) &
+                    - (GetCrop_DaysToHarvest()-GetCrop_Assimilates_Period())) &
+                    /GetCrop_Assimilates_Period()),0._dp,1._dp,-5._dp))
             end if
             if (FracAssim < 0._dp) then
                 FracAssim = 0._dp
@@ -6757,15 +6765,14 @@ subroutine AdvanceOneTimeStep(WPi)
                 Bin_temp, Bout_temp
     integer(int32) :: TargetTimeVal, TargetDepthVal
     integer(int8) :: PreviousStressLevel_temp, StressSFadjNEW_temp
-    real(dp) :: CCxWitheredTpot_temp, CCxWitheredTpotNoS_temp, &
+    real(dp) :: CCxWitheredTpotNoS_temp, &
                 StressLeaf_temp, StressSenescence_temp, TimeSenescence_temp, &
                 SumKcTopStress_temp, SumKci_temp, WeedRCi_temp, &
                 CCiActualWeedInfested_temp, HItimesBEF_temp, &
                 ScorAT1_temp, ScorAT2_temp, HItimesAT1_temp, &
                 HItimesAT2_temp, HItimesAT_temp, alfaHI_temp, &
                 alfaHIAdj_temp, TESTVAL
-    logical :: WaterTableInProfile_temp, NoMoreCrop_temp, &
-               CGCadjustmentAfterCutting_temp
+    logical :: WaterTableInProfile_temp, NoMoreCrop_temp
 
     ! 1. Get ETo
     if (GetEToFile() == '(None)') then
@@ -6974,7 +6981,7 @@ subroutine AdvanceOneTimeStep(WPi)
     Bout_temp = GetBout()
     call InitializeTransferAssimilates(Bin_temp, Bout_temp, &
           ToMobilize_temp, Bmobilized_temp, FracAssim, Store_temp, &
-          Mobilize_temp)
+          Mobilize_temp, HarvestNow)
     call SetTransfer_ToMobilize(ToMobilize_temp)
     call SetTransfer_Bmobilized(Bmobilized_temp)
     call SetTransfer_Store(Store_temp)
@@ -6987,7 +6994,6 @@ subroutine AdvanceOneTimeStep(WPi)
     StressSenescence_temp = GetStressSenescence()
     TimeSenescence_temp = GetTimeSenescence()
     NoMoreCrop_temp = GetNoMoreCrop()
-    CGCadjustmentAfterCutting_temp = GetCGCadjustmentAfterCutting()
     call BUDGET_module(GetDayNri(), TargetTimeVal, TargetDepthVal, &
            VirtualTimeCC, GetSumInterval(), GetDayLastCut(), &
            GetStressTot_NrD(), GetTadj(), GetGDDTadj(), GetGDDayi(), &
@@ -6999,12 +7005,11 @@ subroutine AdvanceOneTimeStep(WPi)
            GetDayFraction(), GetGDDayFraction(), FracAssim, &
            GetStressSFadjNEW(), GetTransfer_Store(), GetTransfer_Mobilize(), &
            StressLeaf_temp, StressSenescence_temp, TimeSenescence_temp, &
-           NoMoreCrop_temp, CGCadjustmentAfterCutting_temp, TESTVAL)
+           NoMoreCrop_temp, TESTVAL)
     call SetStressLeaf(StressLeaf_temp)
     call SetStressSenescence(StressSenescence_temp)
     call SetTimeSenescence(TimeSenescence_temp)
     call SetNoMoreCrop(NoMoreCrop_temp)
-    call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_temp)
 
     ! consider Pre-irrigation (6.) if IrriMode = Inet
     if ((GetRootingDepth() > 0._dp) .and. (GetDayNri() == GetCrop_Day1()) &
@@ -7071,7 +7076,6 @@ subroutine AdvanceOneTimeStep(WPi)
          TactWeedInfested_temp = GetTactWeedInfested()
          PreviousStressLevel_temp = GetPreviousStressLevel()
          StressSFadjNEW_temp = GetStressSFadjNEW()
-         CCxWitheredTpot_temp = GetCCxWitheredTpot()
          CCxWitheredTpotNoS_temp = GetCCxWitheredTpotNoS()
          Bin_temp = GetBin()
          Bout_temp = GetBout()
@@ -7099,8 +7103,7 @@ subroutine AdvanceOneTimeStep(WPi)
                HItimesBEF_temp, ScorAT1_temp, ScorAT2_temp, &
                HItimesAT1_temp, HItimesAT2_temp, HItimesAT_temp, &
                alfaHI_temp, alfaHIAdj_temp, &
-               SumKcTopStress_temp, SumKci_temp, CCxWitheredTpot_temp, &
-               CCxWitheredTpotNoS_temp, &
+               SumKcTopStress_temp, SumKci_temp, &
                WeedRCi_temp, CCiActualWeedInfested_temp, &
                TactWeedInfested_temp, StressSFadjNEW_temp, &
                PreviousStressLevel_temp, Store_temp, &
@@ -7120,7 +7123,6 @@ subroutine AdvanceOneTimeStep(WPi)
          call SetBout(Bout_temp)
          call SetPreviousStressLevel(int(PreviousStressLevel_temp, kind=int32))
          call SetStressSFadjNEW(int(StressSFadjNEW_temp, kind=int32))
-         call SetCCxWitheredTpot(CCxWitheredTpot_temp)
          call SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp)
          call SetSumKcTopStress(SumKcTopStress_temp)
          call SetSumKci(SumKci_temp)
@@ -7227,18 +7229,13 @@ subroutine AdvanceOneTimeStep(WPi)
         if (HarvestNow .eqv. .true.) then
             call SetNrCut(GetNrCut() + 1)
             call SetDayLastCut(DayInSeason)
-            call SetCGCadjustmentAfterCutting(.false.) ! adjustement CGC
             if (GetCCiPrev() > (GetManagement_Cuttings_CCcut()/100._dp)) then
                 call SetCCiPrev(GetManagement_Cuttings_CCcut()/100._dp)
                 ! ook nog CCwithered
                 call SetCrop_CCxWithered(0._dp)  ! or CCiPrev ??
-                call SetCCxWitheredTpot(0._dp)
-                   ! for calculation Maximum Biomass but considering soil fertility stress
                 call SetCCxWitheredTpotNoS(0._dp)
                    ! for calculation Maximum Biomass unlimited soil fertility
                 call SetCrop_CCxAdjusted(GetCCiPrev()) ! new
-                ! Increase of CGC
-                 call SetCGCadjustmentAfterCutting(.true.) ! adjustement CGC
             end if
             ! Record harvest
             if (GetPart1Mult()) then

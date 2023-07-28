@@ -770,12 +770,6 @@ function GetNoMoreCrop() : boolean;
 procedure SetNoMoreCrop(constref NoMoreCrop_in : boolean);
         external 'aquacrop' name '__ac_interface_run_MOD_setnomorecrop_wrap';
 
-function GetCGCadjustmentAfterCutting() : boolean;
-        external 'aquacrop' name '__ac_interface_run_MOD_getcgcadjustmentaftercutting_wrap';
-
-procedure SetCGCadjustmentAfterCutting(constref CGCadjustmentAfterCutting_in : boolean);
-        external 'aquacrop' name '__ac_interface_run_MOD_setcgcadjustmentaftercutting_wrap';
-
 procedure fObs_open(constref filename : string; constref mode : string);
 
 procedure fObs_open_wrap(
@@ -849,12 +843,6 @@ procedure SetStressSFadjNEW(constref StressSFadjNEW : shortint);
 
 procedure GetNextHarvest()
     external 'aquacrop' name '__ac_run_MOD_getnextharvest';
-
-function GetCCxWitheredTpot() : double;
-    external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpot';
-
-procedure SetCCxWitheredTpot(constref CCxWitheredTpot : double);
-    external 'aquacrop' name '__ac_run_MOD_setccxwitheredtpot';
 
 function GetCCxWitheredTpotNoS() : double;
     external 'aquacrop' name '__ac_run_MOD_getccxwitheredtpotnos';
@@ -1343,7 +1331,7 @@ procedure AdjustSWCRootZone(VAR PreIrri : double);
     external 'aquacrop' name '__ac_run_MOD_adjustswcrootzone';
 
 procedure InitializeTransferAssimilates(VAR Bin,Bout,AssimToMobilize,AssimMobilized,FracAssim : double;
-                                        VAR StorageOn,MobilizationOn : BOOLEAN);
+                                        VAR StorageOn,MobilizationOn,HarvestNow : BOOLEAN);
     external 'aquacrop' name '__ac_interface_run_MOD_initializetransferassimilates_wrap';
 
 procedure WriteIntermediatePeriod(TheProjectFile : string);

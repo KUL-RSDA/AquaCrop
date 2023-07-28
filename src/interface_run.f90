@@ -61,8 +61,6 @@ use ac_run, only:   CheckForPrint, &
                     SetStartMode, &
                     GetNoMoreCrop, &
                     SetNoMoreCrop, &
-                    GetCGCadjustmentAfterCutting, &
-                    SetCGCadjustmentAfterCutting, &
                     WriteSimPeriod, &
                     WriteIntermediatePeriod, &
                     InitializeTransferAssimilates, &
@@ -656,24 +654,6 @@ subroutine SetNoMoreCrop_wrap(NoMoreCrop_in)
 end subroutine SetNoMoreCrop_wrap
 
 
-function GetCGCadjustmentAfterCutting_wrap() result(CGCadjustmentAfterCutting_f)
-
-    logical(1) :: CGCadjustmentAfterCutting_f
-
-    CGCadjustmentAfterCutting_f = GetCGCadjustmentAfterCutting()
-end function GetCGCadjustmentAfterCutting_wrap
-
-
-subroutine SetCGCadjustmentAfterCutting_wrap(CGCadjustmentAfterCutting_in)
-    logical(1), intent(in) :: CGCadjustmentAfterCutting_in
-
-    logical :: CGCadjustmentAfterCutting_f
-
-    CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting_in
-    call SetCGCadjustmentAfterCutting(CGCadjustmentAfterCutting_f)
-end subroutine SetCGCadjustmentAfterCutting_wrap
-
-
 function GetTheProjectFile_wrap() result(c_pointer)
     !! Wrapper for [[ac_run:GetTheProjectFile]] for foreign languages.
     type(c_ptr) :: c_pointer
@@ -737,7 +717,8 @@ end subroutine WriteIntermediatePeriod_wrap
 
 subroutine InitializeTransferAssimilates_wrap(Bin, Bout, AssimToMobilize, &
                                          AssimMobilized, FracAssim, &
-                                         StorageON, MobilizationON)
+                                         StorageON, MobilizationON, &
+                                         HarvestNow)
     real(dp), intent(inout) :: Bin
     real(dp), intent(inout) :: Bout
     real(dp), intent(inout) :: AssimToMobilize
@@ -745,16 +726,19 @@ subroutine InitializeTransferAssimilates_wrap(Bin, Bout, AssimToMobilize, &
     real(dp), intent(inout) :: FracAssim
     logical(1), intent(inout) :: StorageON
     logical(1), intent(inout) :: MobilizationON
+    logical(1), intent(inout) :: HarvestNow
 
-    logical :: StorageON_f, MobilizationON_f
+    logical :: StorageON_f, MobilizationON_f, HarvestNow_f
 
     StorageON_f = StorageON
     MobilizationON_f = MobilizationON
     call InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
                                          AssimMobilized, FracAssim, &
-                                         StorageON_f, MobilizationON_f)
+                                         StorageON_f, MobilizationON_f, &
+                                         HarvestNow_f)
     StorageON = StorageON_f
     MobilizationON = MobilizationON_f
+    HarvestNow = HarvestNow_f
 end subroutine InitializeTransferAssimilates_wrap
 
 

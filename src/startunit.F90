@@ -1,6 +1,7 @@
 module ac_startunit
 
-use ac_global, only:    GetPathNameSimul, &
+use ac_global, only:    undef_int, &
+                        GetPathNameSimul, &
                         FileExists, &
                         InitializeGlobalStrings, &
                         SetOut1Wabal, &
@@ -36,6 +37,7 @@ use ac_global, only:    GetPathNameSimul, &
                         CheckFilesInProject, &
                         ComposeOutputFilename, &
                         FileExists, &
+                        rep_FileOK, &
                         SetMultipleProjectFile, &
                         SetOut1Wabal, &
                         SetOut2Crop, &
@@ -131,7 +133,8 @@ use ac_run, only: open_file, &
                   RunSimulation, &
                   write_file
 use ac_utils, only: assert, &
-                    upper_case
+                    upper_case, &
+                    int2str
 use iso_fortran_env, only: iostat_end
 implicit none
 
@@ -538,13 +541,16 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
     logical :: CanSelect, ProgramParametersAvailable
     integer(int32) :: TotalSimRuns
     integer(int32) :: SimNr
+    integer(int32) :: WrongSimNr
     character(len=:), allocatable :: FullFileNameProgramParametersLocal
     logical :: MultipleRunWithKeepSWC_temp
     real(dp) :: MultipleRunConstZrx_temp
+    type(rep_FileOK) :: FileOK
 
 
     write(NrString, '(i8)') iproject
     CanSelect = .true.
+    WrongSimNr = undef_int
 
     ! check if project file exists
     if (TheProjectType /= typeproject_TypeNone) then
@@ -569,7 +575,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
             ! 3. Check if Environment and Simulation Files exist
             CanSelect = .true.
-            call CheckFilesInProject(1, CanSelect)
+            call CheckFilesInProject(1, CanSelect, FileOK)
 
             ! 4. load project parameters
             if (CanSelect) then
@@ -599,7 +605,10 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             SimNr = 0_int32
             do while (CanSelect .and. (SimNr < TotalSimRuns))
                 SimNr = SimNr + 1_int32
-                call CheckFilesInProject(SimNr, CanSelect)
+                call CheckFilesInProject(SimNr, CanSelect, FileOK)
+                if (.not. CanSelect) then
+                    WrongSimNr = SimNr
+                endif
             end do
 
             ! 4. load project parameters
@@ -638,9 +647,42 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                 call fProjects_write(trim(tempstring))
             end if
         else
-            write(tempstring, '(4a)') trim(NrString), '. - ', &
-                                     trim(TheProjectFile), ' : Project NOT loaded', &
-                            ' - Missing Environment and/or Simulation file(s)'
+            !write(tempstring, '(4a)') trim(NrString), '. - ', &
+            !                         trim(TheProjectFile), ' : Project NOT loaded', &
+            !                ' - Missing Environment and/or Simulation file(s) in &
+            !            Run number ', '0'
+            !            !Run number ', int2str(WrongSimNr)
+            write(tempstring, '(4a)') '          - Cannot find file(s) for: '    
+            if (.not. FileOK%Climate_Filename) &
+                write(tempstring, '(4a)') 'Climate (CLI), '
+            if (.not. FileOK%Temperature_Filename) & 
+                write(tempstring, '(4a)') 'Temperature (Tnx of TMP), '
+            if (.not. FileOK%ETo_Filename) &
+                write(tempstring, '(4a)') 'Reference ET (ETo), '
+            if (.not. FileOK%Rain_Filename) &
+                write(tempstring, '(4a)') 'Rainfall (PLU), '
+            if (.not. FileOK%CO2_Filename) &
+                write(tempstring, '(4a)') 'CO2 (CO2), '
+            if (.not. FileOK%Calendar_Filename) &
+                write(tempstring, '(4a)') 'Calendar (CAL), '
+            if (.not. FileOK%Crop_Filename) &
+                write(tempstring, '(4a)') 'Crop (CRO), '
+            if (.not. FileOK%Irrigation_Filename) &
+                write(tempstring, '(4a)') 'Irrigation (Irr), '
+            if (.not. FileOK%Management_Filename) &
+                write(tempstring, '(4a)') 'Field Management (MAN), '
+            if (.not. FileOK%GroundWater_Filename) &
+                write(tempstring, '(4a)') 'Soil profile (SOL), '
+            if (.not. FileOK%Soil_Filename) &
+                write(tempstring, '(4a)') 'Groundwater (GWT), '
+            if (.not. FileOK%SWCIni_Filename) &
+                write(tempstring, '(4a)') 'Initial conditions (SW0), '
+            if (.not. FileOK%OffSeason_Filename) &
+                write(tempstring, '(4a)') 'Off-season (OFF), '
+            if (.not. FileOK%Observations_Filename) &
+                write(tempstring, '(4a)') 'Field data (OBS), '
+            write(tempstring, '(4a)') '          - Check file Name(s), Path(s) &
+                               or Structure of project file.'
             call fProjects_write(trim(tempstring))
         end if
     else
