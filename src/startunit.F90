@@ -588,6 +588,8 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                                 GetFullFileNameProgramParameters(), &
                                 ProgramParametersAvailable)
                 call ComposeOutputFileName(GetProjectFile())
+            else
+                WrongSimNr = 1_int32
             end if
 
         case(typeproject_TypePRM)
@@ -647,40 +649,67 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                 call fProjects_write(trim(tempstring))
             end if
         else
-            !write(tempstring, '(4a)') trim(NrString), '. - ', &
-            !                         trim(TheProjectFile), ' : Project NOT loaded', &
-            !                ' - Missing Environment and/or Simulation file(s) in &
-            !            Run number ', '0'
-            !            !Run number ', int2str(WrongSimNr)
-            write(tempstring, '(4a)') '          - Cannot find file(s) for: '    
-            if (.not. FileOK%Climate_Filename) &
-                write(tempstring, '(4a)') 'Climate (CLI), '
-            if (.not. FileOK%Temperature_Filename) & 
-                write(tempstring, '(4a)') 'Temperature (Tnx of TMP), '
-            if (.not. FileOK%ETo_Filename) &
-                write(tempstring, '(4a)') 'Reference ET (ETo), '
-            if (.not. FileOK%Rain_Filename) &
-                write(tempstring, '(4a)') 'Rainfall (PLU), '
-            if (.not. FileOK%CO2_Filename) &
-                write(tempstring, '(4a)') 'CO2 (CO2), '
-            if (.not. FileOK%Calendar_Filename) &
-                write(tempstring, '(4a)') 'Calendar (CAL), '
-            if (.not. FileOK%Crop_Filename) &
-                write(tempstring, '(4a)') 'Crop (CRO), '
-            if (.not. FileOK%Irrigation_Filename) &
-                write(tempstring, '(4a)') 'Irrigation (Irr), '
-            if (.not. FileOK%Management_Filename) &
-                write(tempstring, '(4a)') 'Field Management (MAN), '
-            if (.not. FileOK%GroundWater_Filename) &
-                write(tempstring, '(4a)') 'Soil profile (SOL), '
-            if (.not. FileOK%Soil_Filename) &
-                write(tempstring, '(4a)') 'Groundwater (GWT), '
-            if (.not. FileOK%SWCIni_Filename) &
-                write(tempstring, '(4a)') 'Initial conditions (SW0), '
-            if (.not. FileOK%OffSeason_Filename) &
-                write(tempstring, '(4a)') 'Off-season (OFF), '
-            if (.not. FileOK%Observations_Filename) &
-                write(tempstring, '(4a)') 'Field data (OBS), '
+            write(tempstring, '(7a)') trim(NrString), '. - ', &
+                                     trim(TheProjectFile), ' : Project NOT loaded', &
+                            ' - Missing Environment and/or Simulation file(s) in Run number ', &
+                            int2str(WrongSimNr), ': '
+            call fProjects_write(trim(tempstring))
+            if (.not. FileOK%Climate_Filename) then
+                write(tempstring, '(4a)') '               Climate (CLI), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Temperature_Filename) then
+                write(tempstring, '(4a)') '               Temperature (Tnx of TMP), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%ETo_Filename) then
+                write(tempstring, '(4a)') '               Reference ET (ETo), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Rain_Filename) then
+                write(tempstring, '(4a)') '               Rainfall (PLU), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%CO2_Filename) then
+                write(tempstring, '(4a)') '               CO2 (CO2), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Calendar_Filename) then
+                write(tempstring, '(4a)') '               Calendar (CAL), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Crop_Filename) then
+                write(tempstring, '(4a)') '               Crop (CRO), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Irrigation_Filename) then
+                write(tempstring, '(4a)') '               Irrigation (Irr), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Management_Filename) then
+                write(tempstring, '(4a)') '               Field Management (MAN), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%GroundWater_Filename) then
+                write(tempstring, '(4a)') '               Soil profile (SOL), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Soil_Filename) then
+                write(tempstring, '(4a)') '               Groundwater (GWT), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%SWCIni_Filename) then
+                write(tempstring, '(4a)') '               Initial conditions (SW0), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%OffSeason_Filename) then
+                write(tempstring, '(4a)') '               Off-season (OFF), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Observations_Filename) then
+                write(tempstring, '(4a)') '               Field data (OBS), '
+                call fProjects_write(trim(tempstring))
+            end if
             write(tempstring, '(4a)') '          - Check file Name(s), Path(s) &
                                or Structure of project file.'
             call fProjects_write(trim(tempstring))

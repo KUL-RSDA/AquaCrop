@@ -4326,6 +4326,7 @@ function __SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
+                         constref TheCCxWithered : double;
                          constref PercCCxHIfinal        : ShortInt;
                          constref TempPlanting : rep_Planting;
                          var PercentLagPhase : ShortInt;
@@ -4334,6 +4335,7 @@ function HarvestIndexDay(constref DAP  : LongInt;
 function __HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
+                         constref TheCCxWithered : double;
                          constref PercCCxHIfinal        : ShortInt;
                          constref int_planting : integer;
                          var PercentLagPhase : ShortInt;
@@ -4919,6 +4921,7 @@ end;
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
+                         constref TheCCxWithered : double;
                          constref PercCCxHIfinal        : ShortInt;
                          constref TempPlanting : rep_Planting;
                          var PercentLagPhase : ShortInt;
@@ -4928,7 +4931,7 @@ var
 begin
     int_planting := ord(TempPlanting);
     HarvestIndexDay := __HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt,
-                                         CCi, CCxadjusted, PercCCxHIfinal,
+                                         CCi, CCxadjusted, TheCCxWithered, PercCCxHIfinal,
                                          int_planting, PercentLagPhase,
                                          HIfinal);
 end;
