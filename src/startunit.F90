@@ -542,7 +542,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
     integer(int32) :: TotalSimRuns
     integer(int32) :: SimNr
     integer(int32) :: WrongSimNr
-    character(len=:), allocatable :: FullFileNameProgramParametersLocal
+    character(len=1025) :: FullFileNameProgramParametersLocal
     logical :: MultipleRunWithKeepSWC_temp
     real(dp) :: MultipleRunConstZrx_temp
     type(rep_FileOK) :: FileOK
@@ -580,7 +580,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             ! 4. load project parameters
             if (CanSelect) then
                 call SetProjectDescription('undefined')
-                FullFileNameProgramParametersLocal = GetFullFileNameProgramParameters()
+                FullFileNameProgramParametersLocal = ''
                 call ComposeFileForProgramParameters(GetProjectFile(), &
                                          FullFileNameProgramParametersLocal)
                 call SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal)
@@ -616,7 +616,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             ! 4. load project parameters
             if (CanSelect) then
                 call SetMultipleProjectDescription('undefined')
-                FullFileNameProgramParametersLocal = GetFullFileNameProgramParameters()
+                FullFileNameProgramParametersLocal = ''
                 call ComposeFileForProgramParameters(GetMultipleProjectFile(), &
                                             FullFileNameProgramParametersLocal)
                 call SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal)
@@ -739,22 +739,25 @@ subroutine ComposeFileForProgramParameters(TheFileNameProgram, &
 
     integer(int32) :: TheLength
     character(len=len(TheFileNameProgram)) :: tempstring
+    character(len=1024) :: tempstring2
     character(len=3) :: TheExtension
 
-    FullFileNameProgramParameters = ''
     TheLength = len(TheFileNameProgram)
     tempstring = TheFileNameProgram
-    TheExtension = tempstring(TheLength-2:3) ! PRO or PRM
+    TheExtension = tempstring((TheLength-2):TheLength) ! PRO or PRM
     ! file name program parameters
-    FullFileNameProgramParameters = tempstring(1:TheLength-3)
+    tempstring = TheFileNameProgram
+    FullFileNameProgramParameters = trim(tempstring(1:(TheLength-3)))
     ! path file progrm parameters
-    FullFileNameProgramParameters = trim(GetPathNameParam()) // &
-                                FullFileNameProgramParameters
+    write(tempstring2,'(2a)') GetPathNameParam(),trim(FullFileNameProgramParameters)
+    FullFileNameProgramParameters = tempstring2
     ! extension file program parameters
     if (TheExtension == 'PRO') then
-        FullFileNameProgramParameters = FullFileNameProgramParameters // 'PP1'
+        write(tempstring2,'(2a)') trim(FullFileNameProgramParameters),'PP1'
+        FullFileNameProgramParameters = trim(tempstring2)
     else
-        FullFileNameProgramParameters = FullFileNameProgramParameters // 'PPn'
+        write(tempstring2,'(2a)') trim(FullFileNameProgramParameters),'PPn'
+        FullFileNameProgramParameters = trim(tempstring2)
     end if
 end subroutine ComposeFileForProgramParameters
 

@@ -5605,7 +5605,7 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
         tMax = roundc(HImax/dHIdt_local, mold=1)
         if ((HIfinal == HImax) .and. (t <= tmax) &
                               .and. (CCi <= (PercCCxHIfinal/100._dp)) &
-                              .and. (TheCCxWithered > 0._dp) &
+                              .and. (TheCCxWithered > epsilon(0._dp)) &
                               .and. (CCi < TheCCxWithered) &
                               .and. (GetCrop_subkind() /= subkind_Vegetative) &
                               .and. (GetCrop_subkind() /= subkind_Forage)) then

@@ -4219,7 +4219,7 @@ subroutine PrepareStage2()
     AtTheta = whichtheta_AtAct
     Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
 
-    if ((Wact - (WFC-GetSoil_REW())) < 0._dp) then
+    if ((Wact - (WFC-GetSoil_REW())) <= epsilon(0._dp)) then
         EvapStartStg2 = 0_int8
     else
         EvapStartStg2 = roundc(100._dp * (Wact - (WFC-GetSoil_REW())) &

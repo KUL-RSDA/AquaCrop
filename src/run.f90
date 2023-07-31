@@ -4700,11 +4700,11 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
 
     ! Crop yield
     ! Harvest Index
-    if ((GetSumWaBal_Biomass() > 0._dp) &
-        .and. (GetSumWaBal_YieldPart() > 0._dp)) then
+    if ((GetSumWaBal_Biomass() > epsilon(0._dp)) &
+        .and. (GetSumWaBal_YieldPart() > epsilon(0._dp))) then
         HI = 100._dp*(GetSumWaBal_YieldPart())/(GetSumWaBal_Biomass())
     else
-        if (GetSumWaBal_Biomass() > 0._dp) then
+        if (GetSumWaBal_Biomass() > epsilon(0._dp)) then
             HI = 0._dp
         else
             HI = undef_double
@@ -6418,14 +6418,14 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
                 if (AssimToMobilize > AssimMobilized) then
                     FracAssim = (exp(-5._dp*tmob) - 1._dp)/(exp(-5._dp) - 1._dp)
                     if (GetCCiActual() > (0.9_dp*(GetCCxTotal() &
-                        * (1._dp - GetSimulation_EffectStress_RedCCX()/100._dp)))) then
+                        * (1._dp - real(GetSimulation_EffectStress_RedCCX(), kind=dp)/100._dp)))) then
                         FracAssim = FracAssim * ((GetCCxTotal()*(1._dp &
-                        - GetSimulation_EffectStress_RedCCX()/100._dp)) &
+                        - real(GetSimulation_EffectStress_RedCCX(), kind=dp)/100._dp)) &
                         - GetCCiActual()) &
                         / (0.1*(GetCCxTotal()*(1._dp &
-                        - GetSimulation_EffectStress_RedCCX()/100._dp)))
+                        - real(GetSimulation_EffectStress_RedCCX(), kind=dp)/100._dp)))
                     end if
-                    if (FracAssim < 0._dp) then
+                    if (FracAssim < epsilon(0._dp)) then
                         FracAssim = 0._dp
                     end if
                 else
@@ -6440,9 +6440,9 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
                 else
                     if ((GetCCiActual() > GetManagement_Cuttings_CCcut()/100._dp) &
                         .and. (GetCCiActual() < (GetCCxTotal()*(1._dp &
-                        - GetSimulation_EffectStress_RedCCX()/100._dp)))) then
+                        - real(GetSimulation_EffectStress_RedCCX(),kind=dp)/100._dp)))) then
                         FracSto = (GetCCiActual() - GetManagement_Cuttings_CCcut()/100._dp) &
-                            /((GetCCxTotal()*(1._dp - GetSimulation_EffectStress_RedCCX()/100._dp)) &
+                            /((GetCCxTotal()*(1._dp - real(GetSimulation_EffectStress_RedCCX(),kind=dp)/100._dp)) &
                             - GetManagement_Cuttings_CCcut()/100._dp)
                     else 
                         FracSto = 1._dp
@@ -6453,7 +6453,7 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
                     * (1._dp-KsAny((((GetDayNri() - GetSimulation_DelayedDays() &
                     - GetCrop_Day1() + 1._dp) &
                     - (GetCrop_DaysToHarvest()-GetCrop_Assimilates_Period())) &
-                    /GetCrop_Assimilates_Period()),0._dp,1._dp,-5._dp))
+                    /real(GetCrop_Assimilates_Period(),kind=dp)),0._dp,1._dp,-5._dp))
             end if
             if (FracAssim < 0._dp) then
                 FracAssim = 0._dp
