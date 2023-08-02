@@ -865,7 +865,9 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                       + GetCrop_DaysToFlowering()+ tmax1)) & ! and not yet end period
                 .and. (tmax1 > 0) & ! otherwise no effect
                 .and. (roundc(GetCrop_aCoeff(), mold=1) /= undef_int) & ! otherwise no effect
-                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                ! possible precision issue in pascal code
+                ! added -epsilon(0._dp) for zero-diff with pascal version output
+                .and. (GetCCiactual() > (0.001_dp-epsilon(0._dp)))) then ! and as long as green canopy cover remains (for correction to stresses)
                 ! determine KsLeaf
                 call AdjustpLeafToETo(ETo, pLeafULAct, pLeafLLAct)
                 Ksleaf = KsAny(Wrel, pLeafULAct, pLeafLLAct, GetCrop_KsShapeFactorLeaf())
@@ -889,7 +891,9 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                       + GetCrop_DaysToFlowering() + tmax2)) & ! and not yet end period
                 .and. (tmax2 > 0) & ! otherwise no effect
                 .and. (roundc(GetCrop_bCoeff(), mold=1) /= undef_int) & ! otherwise no effect
-                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                ! possible precision issue in pascal code
+                ! added -epsilon(0._dp) for zero-diff with pascal version output
+                .and. (GetCCiactual() > (0.001_dp-epsilon(0._dp)))) then ! and as long as green canopy cover remains (for correction to stresses)
                 ! determine KsStomatal
                 call AdjustpStomatalToETo(ETo, pStomatULAct)
                 pLL = 1._dp
