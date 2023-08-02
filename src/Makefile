@@ -1,11 +1,7 @@
 # Compiler options
 
 DEBUG = 0
-FORTRAN_EXE = 1
 STATIC = 0
-
-PC = fpc
-PCFLAGS = -Mdelphi
 
 FC = gfortran
 FCFLAGS = $(CPPFLAGS)
@@ -95,18 +91,6 @@ OBJ = climprocessing.o \
     startunit.o \
     tempprocessing.o \
     utils.o
-
-OBJ_INTERFACE = interface_climprocessing.o \
-    interface_defaultcropsoil.o \
-    interface_global.o \
-    interface_inforesults.o \
-    interface_initialsettings.o \
-    interface_project_input.o \
-    interface_rootunit.o \
-    interface_run.o \
-    interface_simul.o \
-    interface_startunit.o \
-    interface_tempprocessing.o
 
 $(STATIC_LIBRARY): $(OBJ) \
     $(OBJ_INTERFACE)
@@ -206,106 +190,11 @@ utils.o: utils.f90 \
 # Interface Fortran code: always adding the parent module and the kinds and
 # utils modules as dependencies for convenience, even if not actually used.
 
-interface_climprocessing.o: interface_climprocessing.f90 \
-    climprocessing.o \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_defaultcropsoil.o: interface_defaultcropsoil.f90 \
-    defaultcropsoil.o \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_global.o: interface_global.f90 \
-    global.o \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_inforesults.o: interface_inforesults.f90 \
-    inforesults.o \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_initialsettings.o: interface_initialsettings.f90 \
-    initialsettings.o \
-    kinds.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_project_input.o: interface_project_input.f90 \
-    kinds.o \
-    project_input.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_rootunit.o: interface_rootunit.f90 \
-    kinds.o \
-    rootunit.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_run.o: interface_run.f90 \
-    kinds.o \
-    run.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_simul.o: interface_simul.f90 \
-    kinds.o \
-    simul.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_startunit.o: interface_startunit.f90 \
-    kinds.o \
-    startunit.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-interface_tempprocessing.o: interface_tempprocessing.f90 \
-    global.o \
-    kinds.o \
-    tempprocessing.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
-
-# Pascal-related targets
-
-SRC = Global.pas \
-      interface_climprocessing.pas \
-      interface_defaultcropsoil.pas \
-      interface_global.pas \
-      interface_inforesults.pas \
-      interface_initialsettings.pas \
-      interface_project_input.pas \
-      interface_rootunit.pas \
-      interface_run.pas \
-      interface_simul.pas \
-      interface_startunit.pas \
-      interface_tempprocessing.pas \
-      aquacrop.dpr
-
-pascalclean: fortranclean
-	$(RM) $(wildcard *.o) $(wildcard *.ppu)
-
-
 # Finally, the actual 'executable' and 'clean' targets
 
-ifeq ($(FORTRAN_EXE), 0)
-# Pascal-based executable
-$(EXECUTABLE): $(SRC) $(LIBRARY)
-	$(PC) $(PCFLAGS) aquacrop.dpr
-
-else ifeq ($(FORTRAN_EXE), 1)
 # Fortran-based executable
 $(EXECUTABLE): aquacrop.o
 	$(FC) $(LDFLAGS_EXE) aquacrop.o $(OBJ) -o $(EXECUTABLE)
-endif
 
-clean: pascalclean fortranclean
+clean: fortranclean
 	$(RM) $(EXECUTABLE)
