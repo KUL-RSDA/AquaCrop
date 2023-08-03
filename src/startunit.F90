@@ -713,6 +713,8 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             write(tempstring, '(4a)') '          - Check file Name(s), Path(s) &
                                or Structure of project file.'
             call fProjects_write(trim(tempstring))
+            write(*,*) 'Missing Environment and/or Simulation file(s):'
+            write(*,*) 'Check OUTP/ListProjectsLoaded.OUT for information.'
         end if
     else
         ! not a project file or missing in the LIST  dirtectory
