@@ -141,7 +141,6 @@ use ac_global, only: ActiveCells, &
                      GetIrriMode, &
                      GetManagement_BundHeight, &
                      GetManagement_CNcorrection, &
-                     GetManagement_Cuttings_CGCPlus, &
                      GetManagement_EffectMulchInS, &
                      GetManagement_EffectMulchOffS, &
                      GetManagement_FertilityStress, &
@@ -536,7 +535,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                                     BiomassTot, YieldPart, WPi, HItimesBEF, &
                                     ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, &
                                     HItimesAT, alfa, alfaMax, SumKcTopStress, &
-                                    SumKci, CCxWitheredTpot, CCxWitheredTpotNoS, &
+                                    SumKci, &
                                     WeedRCi, CCw, Trw, StressSFadjNEW, &
                                     PreviousStressLevel, StoreAssimilates, &
                                     MobilizeAssimilates, AssimToMobilize, &
@@ -581,8 +580,6 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
     real(dp), intent(inout) :: alfaMax
     real(dp), intent(inout) :: SumKcTopStress
     real(dp), intent(inout) :: SumKci
-    real(dp), intent(inout) :: CCxWitheredTpot
-    real(dp), intent(inout) :: CCxWitheredTpotNoS
     real(dp), intent(inout) :: WeedRCi
     real(dp), intent(inout) :: CCw
     real(dp), intent(inout) :: Trw
@@ -624,7 +621,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             HIfinal_temp = GetSimulation_HIfinal()
             alfa = HarvestIndexDay((dayi-GetCrop_Day1()), GetCrop_DaysToFlowering(), &
                                    GetCrop_HI(), GetCrop_dHIdt(), GetCCiactual(), &
-                                   GetCrop_CCxAdjusted(), GetSimulParam_PercCCxHIfinal(), &
+                                   GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), GetSimulParam_PercCCxHIfinal(), &
                                    GetCrop_Planting(), PercentLagPhase, HIfinal_temp)
             call SetSimulation_HIfinal(HIfinal_temp)
         end if
@@ -742,9 +739,6 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             ! 1. Mobilize assimilates at start of season
             if (MobilizeAssimilates .eqv. .true.) then
                 ! mass to mobilize
-                if (FracAssim < 0.05_dp) then
-                    FracAssim = 0.05_dp
-                end if
                 Bin = FracAssim * WPi *(TrW/ETo)  ! ton/ha
                 if ((AssimMobilized + Bin) > AssimToMobilize) then
                     Bin = AssimToMobilize - AssimMobilized
@@ -805,7 +799,12 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                     HItimesBEF = HImultiplier(RatioBM, RBM, GetCrop_HIincrease())
                 end if
                 if (GetCCiActual() <= 0.01_dp) then
-                    HItimesBEF = 0._dp ! no green canopy cover left at start of flowering;
+                    if ((GetCrop_CCxWithered() > 0._dp) &
+                        .and. (GetCCiActual() < GetCrop_CCxWithered())) then
+                        HItimesBEF = 0._dp ! no green canopy cover left at start of flowering;
+                    else
+                        HItimesBEF = 1._dp
+                    end if
                 end if
             end if
 
@@ -866,7 +865,9 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                       + GetCrop_DaysToFlowering()+ tmax1)) & ! and not yet end period
                 .and. (tmax1 > 0) & ! otherwise no effect
                 .and. (roundc(GetCrop_aCoeff(), mold=1) /= undef_int) & ! otherwise no effect
-                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                ! possible precision issue in pascal code
+                ! added -epsilon(0._dp) for zero-diff with pascal version output
+                .and. (GetCCiactual() > (0.001_dp-epsilon(0._dp)))) then ! and as long as green canopy cover remains (for correction to stresses)
                 ! determine KsLeaf
                 call AdjustpLeafToETo(ETo, pLeafULAct, pLeafLLAct)
                 Ksleaf = KsAny(Wrel, pLeafULAct, pLeafLLAct, GetCrop_KsShapeFactorLeaf())
@@ -890,7 +891,9 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                       + GetCrop_DaysToFlowering() + tmax2)) & ! and not yet end period
                 .and. (tmax2 > 0) & ! otherwise no effect
                 .and. (roundc(GetCrop_bCoeff(), mold=1) /= undef_int) & ! otherwise no effect
-                .and. (GetCCiactual() > 0.001_dp)) then ! and as long as green canopy cover remains (for correction to stresses)
+                ! possible precision issue in pascal code
+                ! added -epsilon(0._dp) for zero-diff with pascal version output
+                .and. (GetCCiactual() > (0.001_dp-epsilon(0._dp)))) then ! and as long as green canopy cover remains (for correction to stresses)
                 ! determine KsStomatal
                 call AdjustpStomatalToETo(ETo, pStomatULAct)
                 pLL = 1._dp
@@ -951,13 +954,10 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         end if
     end if
 
-    ! 2bis. yield leafy vegetable crops
+    ! 2bis. yield leafy vegetable crops and forage crops
     if ((GetCrop_subkind() == subkind_Vegetative) .or. (GetCrop_subkind() == subkind_Forage)) then
         if (dayi >= (GetSimulation_DelayedDays() + GetCrop_Day1() + GetCrop_DaysToFlowering())) then
             ! calculation starts at crop day 1 (since days to flowering is 0)
-            if ((100._dp*CCw) < GetSimulParam_PercCCxHIfinal()) then
-                alfa = 0._dp
-            end if
             if (roundc(100._dp*ETo, mold=1)> 0._dp) then
                 ! with correction for transferred assimilates
                 if (GetSimulation_RCadj() > 0._dp) then
@@ -3235,7 +3235,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                            StressLeaf, FracAssim, MobilizationON, &
                            StorageON, SumGDDAdjCC, VirtualTimeCC, &
                            StressSenescence, TimeSenescence, NoMoreCrop, &
-                           CDCTotal, CGCAdjustmentAfterCutting, GDDayFraction, &
+                           CDCTotal, GDDayFraction, &
                            GDDayi, GDDCDCTotal, GDDTadj)
     real(dp), intent(in) :: CCxTotal
     real(dp), intent(in) :: CCoTotal
@@ -3249,7 +3249,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
     real(dp), intent(inout) :: TimeSenescence
     logical, intent(inout) :: NoMoreCrop
     real(dp), intent(in) :: CDCTotal
-    logical, intent(inout) :: CGCAdjustmentAfterCutting
     real(dp), intent(in) :: GDDayFraction
     real(dp), intent(in) :: GDDayi
     real(dp), intent(in) :: GDDCDCTotal
@@ -3377,7 +3376,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                         .and. (GetCCiPrev() <= (1.25_dp * CCoTotal)))) then
                 ! 2.a First day or very small CC as a result of senescence
                 ! (no adjustment for leaf stress)
-                CGCadjustmentAfterCutting = .false.
                 if (GetSimulation_ProtectedSeedling()) then
                     call SetCCiActual(CanopyCoverNoStressSF(&
                                 (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
@@ -3465,14 +3463,10 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                             GetSimulation_EffectStress_RedCCX()))
                     call SetCrop_CCoAdjusted(CCoTotal)
                     StressLeaf = -33._dp ! maximum canopy is reached;
-                    CGCadjustmentAfterCutting = .false.
-                        ! no increase of Canopy development after Cutting
                 end if
                 if (GetCCiActual() > CCxSFCD) then
                     call SetCCiActual(CCxSFCD)
                     StressLeaf = -33._dp ! maximum canopy is reached;
-                    CGCadjustmentAfterCutting = .false.
-                        ! no increase of Canopy development after Cutting
                 end if
             end if
             call SetCrop_CCxAdjusted(GetCCiActual())
@@ -3481,8 +3475,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         ! (Mid-season (from tFinalCCx) or Late season stage)
         else
             StressLeaf = -33._dp ! maximum canopy is reached;
-            CGCadjustmentAfterCutting = .false.
-                ! no increase of Canopy development after Cutting
             if (GetCrop_CCxAdjusted() < 0._dp) then
                 call SetCrop_CCxAdjusted(GetCCiPrev())
             end if
@@ -3625,7 +3617,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
 
             if (TheSenescenceON) then
                 ! CanopySenescence
-                CGCadjustmentAfterCutting = .false.
                 call SetSimulation_EvapLimitON(.true.)
                 ! consider withered crop when not yet in late season
                 if (abs(TimeSenescence) < epsilon(0._dp)) then
@@ -3798,7 +3789,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         real(dp), intent(inout) :: GDDCGCadjusted
 
         real(dp) :: Wrelative
-        real(dp) :: KsLeaf, MaxVal
+        real(dp) :: KsLeaf
         real(dp) :: SWCeffectiveRootZone, FCeffectiveRootZone, &
                     WPeffectiveRootZone
 
@@ -3842,47 +3833,6 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                     GDDCGCadjusted = CGCGDDSF * KsLeaf
                     StressLeaf = 100._dp * (1._dp - KsLeaf)
                 end if
-            end if
-        end if
-
-        ! effect of transfer of assimilates on CGCGDD
-        if ((GDDCGCadjusted > 0.000001_dp) & ! CGCGDD can be adjusted
-            .and. (((GetCrop_subkind() == subkind_Forage) &
-                    .and. ((StorageON) .or. (MobilizationON))) &
-                                        ! transfer assimilates
-                    .or. (CGCadjustmentAfterCutting))) then
-                    ! increase of Canopy development after Cutting
-            ! decrease CGC during storage
-            if ((GetCrop_subkind() == subkind_Forage) .and. (StorageON)) then
-                GDDCGCadjusted = GDDCGCadjusted * (1._dp - FracAssim)
-            end if
-            ! increase CGC after cutting
-            if ((CGCadjustmentAfterCutting) &
-                    .and. (StorageON .eqv. .false.)) then
-                GDDCGCadjusted = GDDCGCadjusted &
-                                * (1._dp + GetManagement_Cuttings_CGCPlus() &
-                                                                  /100._dp)
-            end if
-            ! increase CGC during mobilization
-            if ((GetCrop_subkind() == subkind_Forage) &
-                    .and. (MobilizationON) &
-                    .and. (CGCadjustmentAfterCutting .eqv. .false.)) then
-                if ((CCxSFCD <= epsilon(0._dp)) &
-                    .or. (GetCCiPrev() >= 0.9_dp*CCxSFCD)) then
-                    MaxVal = 0._dp
-                else
-                    MaxVal = (1._dp - GetCCiPrev()/(0.9_dp*CCxSFCD))
-                    if (MaxVal > 1._dp) then
-                        MaxVal = 1._dp
-                    end if
-                    if (MaxVal < 0._dp) then
-                        MaxVal = 0._dp
-                    end if
-                end if
-                if (MaxVal > (FracAssim/2._dp)) then
-                    MaxVal = FracAssim/2._dp
-                end if
-                GDDCGCadjusted = GDDCGCadjusted * (1._dp + Maxval)
             end if
         end if
     end subroutine DetermineGDDCGCadjusted
@@ -4273,7 +4223,7 @@ subroutine PrepareStage2()
     AtTheta = whichtheta_AtAct
     Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
 
-    if ((Wact - (WFC-GetSoil_REW())) < 0._dp) then
+    if ((Wact - (WFC-GetSoil_REW())) <= epsilon(0._dp)) then
         EvapStartStg2 = 0_int8
     else
         EvapStartStg2 = roundc(100._dp * (Wact - (WFC-GetSoil_REW())) &
@@ -4661,7 +4611,7 @@ end subroutine CalculateSoilEvaporationStage2
 subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                         MobilizationON, StorageON, Tadj, VirtualTimeCC, &
                         StressSenescence, TimeSenescence, NoMoreCrop, &
-                        CDCTotal, CGCAdjustmentAfterCutting, DayFraction, &
+                        CDCTotal, DayFraction, &
                         GDDCDCTotal, TESTVAL)
     real(dp), intent(in) :: CCxTotal
     real(dp), intent(in) :: CCoTotal
@@ -4675,7 +4625,6 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
     real(dp), intent(inout) :: TimeSenescence
     logical, intent(inout) :: NoMoreCrop
     real(dp), intent(in) :: CDCTotal
-    logical, intent(inout) :: CGCAdjustmentAfterCutting
     real(dp), intent(in) :: DayFraction
     real(dp), intent(in) :: GDDCDCTotal
     real(dp), intent(inout) :: TESTVAL
@@ -4788,7 +4737,6 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                     .and. (GetCCiPrev() <= (1.25_dp * CCoTotal)))) then
                 ! 2.a first day or very small CC as a result of senescence
                 ! (no adjustment for leaf stress)
-                CGCadjustmentAfterCutting = .false.
                 if (GetSimulation_ProtectedSeedling()) then
                     call SetCCiActual(CanopyCoverNoStressSF(&
                             (VirtualTimeCC+GetSimulation_DelayedDays()+1), &
@@ -4882,13 +4830,11 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                             GetSimulation_EffectStress_RedCCX()))
                     call SetCrop_CCoAdjusted(CCoTotal)
                     StressLeaf = -33._dp ! maximum canopy is reached;
-                    CGCadjustmentAfterCutting = .false.
                     ! no increase anymore of CGC after cutting
                 end if
                 if (GetCCiActual() > CCxSFCD) then
                     call SetCCiActual(CCxSFCD)
                     StressLeaf = -33._dp ! maximum canopy is reached;
-                    CGCadjustmentAfterCutting = .false.
                     ! no increase anymore of CGC after cutting
                 end if
             end if
@@ -4897,7 +4843,6 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
             ! 3. Canopy can no longer develop (Mid-season (from tFinalCCx) or Late season stage)
         else
             StressLeaf = -33._dp ! maximum canopy is reached;
-            CGCadjustmentAfterCutting = .false. ! no increase anymore of CGC after cutting
             if (GetCrop_CCxAdjusted() < 0._dp) then
                 call SetCrop_CCxAdjusted(GetCCiPrev())
             end if
@@ -5035,7 +4980,6 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
 
             if (TheSenescenceON) then
                 ! CanopySenescence
-                CGCadjustmentAfterCutting = .false.
                 call SetSimulation_EvapLimitON(.true.)
                 ! consider withered crop when not yet in late season
                 if (abs(TimeSenescence) < epsilon(0._dp)) then
@@ -5227,7 +5171,7 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
     subroutine DetermineCGCadjusted(CGCadjusted)
         real(dp), intent(inout) :: CGCadjusted
 
-        real(dp) :: Wrelative, MaxVal
+        real(dp) :: Wrelative
         real(dp) :: KsLeaf
         real(dp) :: SWCeffectiveRootZone, FCeffectiveRootZone, &
                     WPeffectiveRootZone
@@ -5269,44 +5213,6 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                                pLeafLLAct, GetCrop_KsShapeFactorLeaf())
                 CGCadjusted = CGCSF * KsLeaf
                 StressLeaf = 100._dp * (1._dp - KsLeaf)
-            end if
-        end if
-
-        ! effect of transfer of assimilates on CGC
-        if ((CGCadjusted > 0.000001_dp) & ! CGC can be adjusted
-            .and. (((GetCrop_subkind() == subkind_Forage) &
-            .and. ((StorageON) .or. (MobilizationON))) & ! transfer assimilates
-            .or. (CGCadjustmentAfterCutting))) then
-                ! increase of Canopy development after Cutting
-            ! decrease CGC during storage
-            if ((GetCrop_subkind() == subkind_Forage) .and. (StorageON)) then
-                CGCadjusted = CGCadjusted * (1._dp - FracAssim)
-            end if
-            ! increase CGC after cutting
-            if ((CGCadjustmentAfterCutting) .and. (StorageON)) then
-                CGCadjusted = CGCadjusted &
-                             * (1._dp + GetManagement_Cuttings_CGCPlus() &
-                                                               /100._dp)
-            end if
-            ! increase CGC during mobilization
-            if ((GetCrop_subkind() == subkind_Forage) .and. (MobilizationON) &
-                .and. (.not. CGCadjustmentAfterCutting)) then
-                if ((CCxSFCD < epsilon(0._dp)) &
-                    .or. (GetCCiPrev() >= 0.9_dp * CCxSFCD)) then
-                    MaxVal = 0._dp
-                else
-                    MaxVal = (1._dp - GetCCiPrev()/(0.9_dp * CCxSFCD))
-                    if (MaxVal > 1._dp) then
-                        MaxVal = 1._dp
-                    end if
-                    if (MaxVal < 0._dp) then
-                        MaxVal = 0._dp
-                    end if
-                end if
-                if (MaxVal > (FracAssim/2._dp)) then
-                    MaxVal = FracAssim/2._dp
-                end if
-                CGCadjusted = CGCadjusted * (1._dp + Maxval)
             end if
         end if
 
@@ -5516,7 +5422,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                          DayFraction, GDDayFraction, FracAssim, &
                          StressSFadjNEW, StorageON, MobilizationON, &
                          StressLeaf, StressSenescence, TimeSenescence, &
-                         NoMoreCrop, CGCadjustmentAfterCutting, TESTVAL)
+                         NoMoreCrop, TESTVAL)
     integer(int32), intent(in) :: dayi
     integer(int32), intent(in) :: TargetTimeVal
     integer(int32), intent(in) :: TargetDepthVal
@@ -5549,7 +5455,6 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     real(dp), intent(inout) :: StressSenescence
     real(dp), intent(inout) :: TimeSenescence
     logical, intent(inout) :: NoMoreCrop
-    logical, intent(inout) :: CGCadjustmentAfterCutting
     real(dp), intent(inout) :: TESTVAL
 
 
@@ -5663,13 +5568,13 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                                  MobilizationON, StorageON, SumGDDAdjCC, &
                                  VirtualTimeCC, StressSenescence, &
                                  TimeSenescence, NoMoreCrop, CDCTotal, &
-                                 CGCAdjustmentAfterCutting, GDDayFraction, &
+                                 GDDayFraction, &
                                  GDDayi, GDDCDCTotal, GDDTadj)
             case default
             call DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                               MobilizationON, StorageON, Tadj, VirtualTimeCC, &
                               StressSenescence, TimeSenescence, NoMoreCrop, &
-                              CDCTotal, CGCAdjustmentAfterCutting, &
+                              CDCTotal, &
                               DayFraction, GDDCDCTotal, TESTVAL)
         end select
     end if

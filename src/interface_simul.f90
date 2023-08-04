@@ -25,7 +25,7 @@ subroutine DetermineBiomassAndYield_wrap(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, 
                                     BiomassTot, YieldPart, WPi, HItimesBEF, &
                                     ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, &
                                     HItimesAT, alfa, alfaMax, SumKcTopStress, &
-                                    SumKci, CCxWitheredTpot, CCxWitheredTpotNoS, &
+                                    SumKci, &
                                     WeedRCi, CCw, Trw, StressSFadjNEW, &
                                     PreviousStressLevel, StoreAssimilates, &
                                     MobilizeAssimilates, AssimToMobilize, &
@@ -70,8 +70,6 @@ subroutine DetermineBiomassAndYield_wrap(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, 
     real(dp), intent(inout) :: alfaMax
     real(dp), intent(inout) :: SumKcTopStress
     real(dp), intent(inout) :: SumKci
-    real(dp), intent(inout) :: CCxWitheredTpot
-    real(dp), intent(inout) :: CCxWitheredTpotNoS
     real(dp), intent(inout) :: WeedRCi
     real(dp), intent(inout) :: CCw
     real(dp), intent(inout) :: Trw
@@ -101,7 +99,7 @@ subroutine DetermineBiomassAndYield_wrap(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, 
                                     BiomassTot, YieldPart, WPi, HItimesBEF, &
                                     ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, &
                                     HItimesAT, alfa, alfaMax, SumKcTopStress, &
-                                    SumKci, CCxWitheredTpot, CCxWitheredTpotNoS, &
+                                    SumKci, &
                                     WeedRCi, CCw, Trw, StressSFadjNEW, &
                                     PreviousStressLevel, StoreAssimilates_f, &
                                     MobilizeAssimilates_f, AssimToMobilize, &
@@ -129,7 +127,7 @@ subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, &
                            StressLeaf, FracAssim, MobilizationON, &
                            StorageON, SumGDDAdjCC, VirtualTimeCC, &
                            StressSenescence, TimeSenescence, NoMoreCrop, &
-                           CDCTotal, CGCAdjustmentAfterCutting, GDDayFraction, &
+                           CDCTotal, GDDayFraction, &
                            GDDayi, GDDCDCTotal, GDDTadj)
     real(dp), intent(in) :: CCxTotal
     real(dp), intent(in) :: CCoTotal
@@ -143,28 +141,24 @@ subroutine DetermineCCiGDD_wrap(CCxTotal, CCoTotal, &
     real(dp), intent(inout) :: TimeSenescence
     logical(1), intent(inout) :: NoMoreCrop
     real(dp), intent(in) :: CDCTotal
-    logical(1), intent(inout) :: CGCAdjustmentAfterCutting
     real(dp), intent(in) :: GDDayFraction
     real(dp), intent(in) :: GDDayi
     real(dp), intent(in) :: GDDCDCTotal
     integer(int32), intent(in) :: GDDTadj
 
-    logical :: MobilizationON_f, StorageON_f, NoMoreCrop_f, &
-               CGCAdjustmentAfterCutting_f
+    logical :: MobilizationON_f, StorageON_f, NoMoreCrop_f
 
     MobilizationON_f = MobilizationON
     StorageON_f = StorageON
     NoMoreCrop_f = NoMoreCrop
-    CGCAdjustmentAfterCutting_f = CGCAdjustmentAfterCutting
 
     call DetermineCCiGDD(CCxTotal, CCoTotal, &
                            StressLeaf, FracAssim, MobilizationON_f, &
                            StorageON_f, SumGDDAdjCC, VirtualTimeCC, &
                            StressSenescence, TimeSenescence, NoMoreCrop_f, &
-                           CDCTotal, CGCAdjustmentAfterCutting_f, GDDayFraction, &
+                           CDCTotal, GDDayFraction, &
                            GDDayi, GDDCDCTotal, GDDTadj)
     NoMoreCrop = NoMoreCrop_f
-    CGCAdjustmentAfterCutting = CGCAdjustmentAfterCutting_f
 end subroutine DetermineCCiGDD_wrap
 
 
@@ -184,7 +178,7 @@ end subroutine ExtractWaterFromEvapLayer_wrap
 subroutine DetermineCCi_wrap(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                         MobilizationON, StorageON, Tadj, VirtualTimeCC, &
                         StressSenescence, TimeSenescence, NoMoreCrop, &
-                        CDCTotal, CGCAdjustmentAfterCutting, DayFraction, &
+                        CDCTotal, DayFraction, &
                         GDDCDCTotal, TESTVAL)
     real(dp), intent(in) :: CCxTotal
     real(dp), intent(in) :: CCoTotal
@@ -198,26 +192,22 @@ subroutine DetermineCCi_wrap(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
     real(dp), intent(inout) :: TimeSenescence
     logical, intent(inout) :: NoMoreCrop
     real(dp), intent(in) :: CDCTotal
-    logical, intent(inout) :: CGCAdjustmentAfterCutting
     real(dp), intent(in) :: DayFraction
     real(dp), intent(in) :: GDDCDCTotal
     real(dp), intent(inout) :: TESTVAL
 
-    logical :: MobilizationON_f, StorageON_f, NoMoreCrop_f, &
-               CGCAdjustmentAfterCutting_f
+    logical :: MobilizationON_f, StorageON_f, NoMoreCrop_f
 
     MobilizationON_f = MobilizationON
     StorageON_f = StorageON
     NoMoreCrop_f = NoMoreCrop
-    CGCAdjustmentAfterCutting_f = CGCAdjustmentAfterCutting
 
     call DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                         MobilizationON_f, StorageON_f, Tadj, VirtualTimeCC, &
                         StressSenescence, TimeSenescence, NoMoreCrop_f, &
-                        CDCTotal, CGCAdjustmentAfterCutting_f, DayFraction, &
+                        CDCTotal, DayFraction, &
                         GDDCDCTotal, TESTVAL)
     NoMoreCrop = NoMoreCrop_f
-    CGCAdjustmentAfterCutting = CGCAdjustmentAfterCutting_f
 end subroutine DetermineCCi_wrap
 
 
@@ -229,7 +219,7 @@ subroutine BUDGET_module_wrap(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC
                          DayFraction, GDDayFraction, FracAssim, &
                          StressSFadjNEW, StorageON, MobilizationON, &
                          StressLeaf, StressSenescence, TimeSenescence, &
-                         NoMoreCrop, CGCadjustmentAfterCutting, TESTVAL)
+                         NoMoreCrop, TESTVAL)
     integer(int32), intent(in) :: dayi
     integer(int32), intent(in) :: TargetTimeVal
     integer(int32), intent(in) :: TargetDepthVal
@@ -262,16 +252,14 @@ subroutine BUDGET_module_wrap(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC
     real(dp), intent(inout) :: StressSenescence
     real(dp), intent(inout) :: TimeSenescence
     logical(1), intent(inout) :: NoMoreCrop
-    logical(1), intent(inout) :: CGCadjustmentAfterCutting
     real(dp), intent(inout) :: TESTVAL
 
     logical :: StorageON_f, MobilizationON_f, &
-               NoMoreCrop_f, CGCadjustmentAfterCutting_f
+               NoMoreCrop_f
 
     StorageON_f = StorageON
     MobilizationON_f = MobilizationON
     NoMoreCrop_f = NoMoreCrop
-    CGCadjustmentAfterCutting_f = CGCadjustmentAfterCutting
 
     call BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                          SumInterval, DayLastCut, NrDayGrow, Tadj, GDDTadj, &
@@ -281,10 +269,9 @@ subroutine BUDGET_module_wrap(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC
                          DayFraction, GDDayFraction, FracAssim, &
                          StressSFadjNEW, StorageON_f, MobilizationON_f, &
                          StressLeaf, StressSenescence, TimeSenescence, &
-                         NoMoreCrop_f, CGCadjustmentAfterCutting_f, TESTVAL)
+                         NoMoreCrop_f, TESTVAL)
 
     NoMoreCrop = NoMoreCrop_f
-    CGCadjustmentAfterCutting = CGCadjustmentAfterCutting_f
 end subroutine BUDGET_module_wrap
 
 end module ac_interface_simul

@@ -66,8 +66,6 @@ procedure DetermineBiomassAndYield(
             VAR alfaMax : double;
             VAR SumKcTopStress : double;
             VAR SumKci : double;
-            VAR CCxWitheredTpot : double;
-            VAR CCxWitheredTpotNoS : double;
             VAR WeedRCi : double;
             VAR CCw : double;
             VAR Trws : double;
@@ -191,7 +189,6 @@ procedure DetermineCCiGDD(
             var TimeSenescence : double;
             var NoMoreCrop : boolean;
             constref CDCTotal : double;
-            var CGCAdjustmentAfterCutting : boolean;
             constref GDDayFraction, GDDayi, GDDCDCTotal : double;
             constref GDDTadj : integer);
     external 'aquacrop' name '__ac_interface_simul_MOD_determineccigdd_wrap';
@@ -250,7 +247,6 @@ procedure DetermineCCi(
                 var StressSenescence, TimeSenescence : double;
                 var NoMoreCrop : boolean;
                 constref CDCTotal : double;
-                var CGCAdjustmentAfterCutting : boolean;
                 constref DayFraction, GDDCDCTotal : double;
                 var TESTVAL : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_determinecci_wrap';
@@ -276,7 +272,7 @@ procedure BUDGET_module(constref dayi : LongInt;
                         constref StorageON,MobilizationON : BOOLEAN;
                         VAR StressLeaf,StressSenescence : double;
                         VAR TimeSenescence : double;
-                        VAR NoMoreCrop,CGCadjustmentAfterCutting : BOOLEAN;
+                        VAR NoMoreCrop : BOOLEAN;
                         VAR TESTVAL : double);
     external 'aquacrop' name '__ac_interface_simul_MOD_budget_module_wrap';
 

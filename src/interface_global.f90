@@ -243,7 +243,8 @@ use ac_global, only: CheckFilesInProject, &
                      GetPart1Mult, &
                      GetPart2Eval, &
                      SetPart1Mult, &
-                     SetPart2Eval
+                     SetPart2Eval, &
+                     rep_FileOK
 use ac_kinds, only: dp, &
                     int32, &
                     intEnum, &
@@ -420,15 +421,18 @@ subroutine LoadProjectDescription_wrap(DescriptionOfProject, strlen)
 end subroutine LoadProjectDescription_wrap
 
 
-subroutine CheckFilesInProject_wrap(Runi, AllOK)
+subroutine CheckFilesInProject_wrap(Runi, AllOK, FileOK)
     !! Wrapper for [[ac_global:CheckFilesInProject]] for foreign languages.
     integer(int32), intent(in) :: Runi
     logical(1), intent(out) :: AllOK
+    type(rep_FileOK), intent(out) :: FileOK
 
     logical :: AllOK_f
+    type(rep_FileOK) :: FileOK_f
 
-    call CheckFilesInProject(Runi, AllOK_f)
+    call CheckFilesInProject(Runi, AllOK_f, FileOK_f)
     AllOK = AllOK_f
+    FileOK = FileOK_f
 end subroutine CheckFilesInProject_wrap
 
 

@@ -24,6 +24,7 @@ type
 
     rep_string25 = string[25]; (* Description SoilLayer *)
     repstring17 = string[17]; (* Date string *)
+    rep_CheckFileArray = ARRAY[1..14] of Boolean;
 
     rep_salt = ARRAY[1..11] of double; (* saltcontent in g/m2 *)
 
@@ -192,7 +193,6 @@ type
      rep_Cuttings = Record
          Considered : BOOLEAN;
          CCcut      : Integer; // Canopy cover (%) after cutting
-         CGCPlus    : Integer; // Increase (percentage) of CGC after cutting
          Day1       : Integer; // first day after time window for generating cuttings (1 = start crop cycle)
          NrDays     : Integer; // number of days of time window for generate cuttings (-9 is whole crop cycle)
          Generate   : Boolean; // ture: generate cuttings; false : schedule for cuttings
@@ -472,6 +472,22 @@ type
 
     repTypeProject = (TypePRO,TypePRM,TypeNone);
 
+    rep_FileOK = Record
+        Climate_Filename          : Boolean;
+        Temperature_Filename      : Boolean;
+        ETo_Filename              : Boolean;
+        Rain_Filename             : Boolean;
+        CO2_Filename              : Boolean;
+        Calendar_Filename         : Boolean;
+        Crop_Filename             : Boolean;
+        Irrigation_Filename       : Boolean;
+        Management_Filename       : Boolean;
+        GroundWater_Filename      : Boolean;
+        Soil_Filename             : Boolean;
+        SWCIni_Filename           : Boolean;
+        OffSeason_Filename        : Boolean;
+        Observations_Filename     : Boolean;
+        end;
 
 function DeduceAquaCropVersion(FullNameXXFile : string) : double;
          external 'aquacrop' name '__ac_global_MOD_deduceaquacropversion';
@@ -1917,7 +1933,6 @@ procedure SetSimulParam_EffectiveRain_ShowersInDecade(constref ShowersInDecade :
 procedure SetSimulParam_EffectiveRain_RootNrEvap(constref RootNrEvap : shortint);
     external 'aquacrop' name '__ac_global_MOD_getsimulparam_effectiverain_rootnrevap';
 
-
 function GetPathNameProg(): string;
 
 function GetPathNameProg_wrap(): PChar;
@@ -2383,7 +2398,8 @@ procedure LoadProjectDescription_wrap(
 
 procedure CheckFilesInProject(
             constref Runi : integer;
-            out AllOK : boolean);
+            out AllOK : boolean;
+            out FileOK : rep_FileOK);
         external 'aquacrop' name '__ac_interface_global_MOD_checkfilesinproject_wrap';
 
 function GetIrriECw(): rep_IrriECw;
@@ -2397,9 +2413,6 @@ procedure SetIrriECw_PostSeason(constref PostSeason : double);
 
 function GetManagement_Cuttings_Considered(): boolean;
         external 'aquacrop' name '__ac_interface_global_MOD_getmanagement_cuttings_considered_wrap';
-
-function GetManagement_Cuttings_CGCPlus(): integer;
-        external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cgcplus';
 
 function GetManagement_Cuttings_CCcut(): integer;
         external 'aquacrop' name '__ac_global_MOD_getmanagement_cuttings_cccut';
@@ -2429,9 +2442,6 @@ procedure SetManagement_Cuttings_Considered(constref Considered : boolean);
 
 procedure SetManagement_Cuttings_CCcut(constref CCcut : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cccut';
-
-procedure SetManagement_Cuttings_CGCPlus(constref CGCPlus : integer);
-        external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_cgcplus';
 
 procedure SetManagement_Cuttings_Day1(constref Day1 : integer);
         external 'aquacrop' name '__ac_global_MOD_setmanagement_cuttings_day1';
@@ -4316,6 +4326,7 @@ function __SeasonalSumOfKcPot(constref TheDaysToCCini,TheGDDaysToCCini : integer
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
+                         constref TheCCxWithered : double;
                          constref PercCCxHIfinal        : ShortInt;
                          constref TempPlanting : rep_Planting;
                          var PercentLagPhase : ShortInt;
@@ -4324,6 +4335,7 @@ function HarvestIndexDay(constref DAP  : LongInt;
 function __HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
+                         constref TheCCxWithered : double;
                          constref PercCCxHIfinal        : ShortInt;
                          constref int_planting : integer;
                          var PercentLagPhase : ShortInt;
@@ -4909,6 +4921,7 @@ end;
 function HarvestIndexDay(constref DAP  : LongInt;
                          constref DaysToFlower,HImax : integer;
                          constref dHIdt,CCi,CCxadjusted : double;
+                         constref TheCCxWithered : double;
                          constref PercCCxHIfinal        : ShortInt;
                          constref TempPlanting : rep_Planting;
                          var PercentLagPhase : ShortInt;
@@ -4918,7 +4931,7 @@ var
 begin
     int_planting := ord(TempPlanting);
     HarvestIndexDay := __HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt,
-                                         CCi, CCxadjusted, PercCCxHIfinal,
+                                         CCi, CCxadjusted, TheCCxWithered, PercCCxHIfinal,
                                          int_planting, PercentLagPhase,
                                          HIfinal);
 end;

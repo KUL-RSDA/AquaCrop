@@ -420,8 +420,6 @@ type rep_Cuttings
         !! Undocumented
     integer(int32) :: CCcut
         !! Canopy cover (%) after cutting
-    integer(int32) :: CGCPlus
-        !! Increase (percentage) of CGC after cutting
     integer(int32) :: Day1
         !! first day after time window for generating cuttings (1 = start crop cycle)
     integer(int32) :: NrDays
@@ -912,6 +910,23 @@ type rep_PerennialPeriod
         !! Undocumented
 end type rep_PerennialPeriod
 
+type rep_FileOK
+    logical :: Climate_Filename
+    logical :: Temperature_Filename
+    logical :: ETo_Filename
+    logical :: Rain_Filename
+    logical :: CO2_Filename
+    logical :: Calendar_Filename
+    logical :: Crop_Filename
+    logical :: Irrigation_Filename
+    logical :: Management_Filename
+    logical :: GroundWater_Filename
+    logical :: Soil_Filename
+    logical :: SWCIni_Filename
+    logical :: OffSeason_Filename
+    logical :: Observations_Filename
+end type rep_FileOK
+    
 character(len=:), allocatable :: RainFile
 character(len=:), allocatable :: RainFileFull
 character(len=:), allocatable :: RainDescription
@@ -3323,7 +3338,6 @@ subroutine NoManagement()
     ! multiple cuttings
     call SetManagement_Cuttings_Considered(.false.)
     call SetManagement_Cuttings_CCcut(30)
-    call SetManagement_Cuttings_CGCPlus(20)
     call SetManagement_Cuttings_Day1(1)
     call SetManagement_Cuttings_NrDays(undef_int)
     call SetManagement_Cuttings_Generate(.false.)
@@ -3421,8 +3435,9 @@ subroutine LoadManagement(FullName)
         end if
         read(fhandle, *) TempInt  ! Canopy cover (%) after cutting
         call SetManagement_Cuttings_CCcut(TempInt)
+        ! Next line is expected to be present in the input file, however
+        ! A PARAMETER THAT IS NO LONGER USED since AquaCrop version 7.1
         read(fhandle, *) TempInt ! Increase (percentage) of CGC after cutting
-        call SetManagement_Cuttings_CGCPlus(TempInt)
         read(fhandle, *) TempInt ! Considered first day when generating cuttings
                                  ! (1 = start of growth cycle)
         call SetManagement_Cuttings_Day1(TempInt)
@@ -3469,7 +3484,6 @@ subroutine LoadManagement(FullName)
     else
         call SetManagement_Cuttings_Considered(.false.)
         call SetManagement_Cuttings_CCcut(30)
-        call SetManagement_Cuttings_CGCPlus(20)
         call SetManagement_Cuttings_Day1(1)
         call SetManagement_Cuttings_NrDays(undef_int)
         call SetManagement_Cuttings_Generate(.false.)
@@ -5514,7 +5528,8 @@ end function SeasonalSumOfKcPot
 
 
 real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
-                                  CCxadjusted, PercCCxHIfinal, TempPlanting, &
+                                  CCxadjusted, TheCCxWithered, &
+                                  PercCCxHIfinal, TempPlanting, &
                                   PercentLagPhase, HIfinal)
     integer(int32), intent(in) :: DAP
     integer(int32), intent(in) :: DaysToFlower
@@ -5522,6 +5537,7 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
     real(dp), intent(in) :: dHIdt
     real(dp), intent(in) :: CCi
     real(dp), intent(in) :: CCxadjusted
+    real(dp), intent(in) :: TheCCxWithered
     integer(int8), intent(in) :: PercCCxHIfinal
     integer(intEnum), intent(in) :: TempPlanting
     integer(int8), intent(inout) :: PercentLagPhase
@@ -5590,6 +5606,8 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
         tMax = roundc(HImax/dHIdt_local, mold=1)
         if ((HIfinal == HImax) .and. (t <= tmax) &
                               .and. (CCi <= (PercCCxHIfinal/100._dp)) &
+                              .and. (TheCCxWithered > epsilon(0._dp)) &
+                              .and. (CCi < TheCCxWithered) &
                               .and. (GetCrop_subkind() /= subkind_Vegetative) &
                               .and. (GetCrop_subkind() /= subkind_Forage)) then
             HIfinal = roundc(HIday, mold=1)
@@ -7173,32 +7191,50 @@ subroutine LoadProjectDescription(DescriptionOfProject)
 end subroutine LoadProjectDescription
 
 
-subroutine CheckFilesInProject(Runi, AllOK)
+subroutine CheckFilesInProject(Runi, AllOK, FileOK)
     integer(int32), intent(in) :: Runi
     logical, intent(out) :: AllOK
+    type(rep_FileOK), intent(out) :: FileOK
 
+    logical :: FileOK_tmp
+    
     AllOK = .true.
+    FileOK_tmp = .true.
 
     ! Check the 14 files
     associate(input => ProjectInput(Runi))
     call check_file(input%Climate_Directory, input%Climate_Filename)
+    FileOK%Climate_Filename = FileOK_tmp
     call check_file(input%Temperature_Directory, input%Temperature_Filename)
+    FileOK%Temperature_Filename = FileOK_tmp
     call check_file(input%ETo_Directory, input%ETo_Filename)
+    FileOK%ETo_Filename = FileOK_tmp
     call check_file(input%Rain_Directory, input%Rain_Filename)
+    FileOK%Rain_Filename = FileOK_tmp
     call check_file(input%CO2_Directory, input%CO2_Filename)
+    FileOK%CO2_Filename = FileOK_tmp
     call check_file(input%Calendar_Directory, input%Calendar_Filename)
+    FileOK%Calendar_Filename = FileOK_tmp
     call check_file(input%Crop_Directory, input%Crop_Filename)
+    FileOK%Crop_Filename = FileOK_tmp
     call check_file(input%Irrigation_Directory, input%Irrigation_Filename)
+    FileOK%Irrigation_Filename = FileOK_tmp
     call check_file(input%Management_Directory, input%Management_Filename)
+    FileOK%Management_Filename = FileOK_tmp
     call check_file(input%GroundWater_Directory, input%GroundWater_Filename)
+    FileOK%GroundWater_Filename = FileOK_tmp
     call check_file(input%Soil_Directory, input%Soil_Filename)
+    FileOK%Soil_Filename = FileOK_tmp
 
     if (ProjectInput(Runi)%SWCIni_Filename /= 'KeepSWC') then
         call check_file(input%SWCIni_Directory, input%SWCIni_Filename)
+        FileOK%SWCIni_Filename = FileOK_tmp
     end if
 
     call check_file(input%OffSeason_Directory, input%OffSeason_Filename)
+    FileOK%OffSeason_Filename = FileOK_tmp
     call check_file(input%Observations_Directory, input%Observations_Filename)
+    FileOK%Observations_Filename = FileOK_tmp
     end associate
 
 
@@ -7213,6 +7249,9 @@ subroutine CheckFilesInProject(Runi, AllOK)
         if (filename /= '(None)') then
             if (.not. FileExists(directory // filename)) then
                 AllOK = .false.
+                FileOK_tmp = .false.
+            else
+                FileOK_tmp = .true.
             end if
         end if
     end subroutine check_file
@@ -9195,13 +9234,6 @@ integer(int32) function GetManagement_Cuttings_CCcut()
 end function GetManagement_Cuttings_CCcut
 
 
-integer(int32) function GetManagement_Cuttings_CGCPlus()
-    !! Getter for the "Cuttings" global variable.
-
-    GetManagement_Cuttings_CGCPlus = Cuttings%CGCPlus
-end function GetManagement_Cuttings_CGCPlus
-
-
 integer(int32) function GetManagement_Cuttings_Day1()
     !! Getter for the "Cuttings" global variable.
 
@@ -9266,14 +9298,6 @@ subroutine SetManagement_Cuttings_CCcut(CCcut)
 
     Cuttings%CCcut = CCcut
 end subroutine SetManagement_Cuttings_CCcut
-
-
-subroutine SetManagement_Cuttings_CGCPlus(CGCPlus)
-    !! Setter for the "Cuttings" global variable.
-    integer(int32), intent(in) :: CGCPlus
-
-    Cuttings%CGCPlus = CGCPlus
-end subroutine SetManagement_Cuttings_CGCPlus
 
 
 subroutine SetManagement_Cuttings_Day1(Day1)
@@ -16204,5 +16228,6 @@ subroutine SetPart2Eval(Part2Eval_in)
 
     Part2Eval = Part2Eval_in
 end subroutine SetPart2Eval
+
 
 end module ac_global
