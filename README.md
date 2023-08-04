@@ -77,10 +77,6 @@ Running the test suite requires:
 * An `$AQUACROP_COMMAND` environment variable point to the AquaCrop
   executable that the user wants to use.
 
-> Note: when using executables built with `FORTRAN_EXE=0`, the user needs to add
-  the directory with the `libaquacrop.so` library to the `$LD_LIBRARY_PATH`,
-  because the AquaCrop executable is dynamically linked to it.
-
 For example:
 ```bash
 export AQUACROP_TEST_ROOT=/path/to/your/aquacrop/test/root/dir
