@@ -40,7 +40,7 @@ Windows, Linux or MacOS from the release page.
 Consult the reference manual (FAO website) for details about the AquaCrop stand-alone program.
 
 Optionally, it can be verified if the executable produces the expected output on the user's system, by running a self-contained testcase for which reference output is provided (zip-file under [Releases](
-  https://github.com/KUL-RSDA/AquaCrop/releases)).
+  https://github.com/KUL-RSDA/AquaCrop/releases)). Please carefully read the README file to run the testcase.
 
 ## Building the executable
 
