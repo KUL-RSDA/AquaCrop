@@ -50,7 +50,6 @@ The source code is under the `src` directory. Building the Aquacrop executable o
 * a GNU or Intel Fortran compiler (GNU Fortran >= v6.4.0 and ifort >= v18.0.1).
   MinGW can be used to (cross)compile for Windows. In that case `make` needs
   to be called with an additional `CPPFLAGS=-D_WINDOWS` option.
-* (optional) a Free Pascal compiler (>= v3.2.0).
 
 ```bash
 cd AquaCrop/src
@@ -60,30 +59,6 @@ make
 The main `make` targets are `bin` (producing an `aquacrop` executable),
 `lib` (producing a `libaquacrop.so` library). The default target is
 `all`, which combines the `bin` and `lib` targets.
-
-## Optional build instructions
-
-If the `FORTRAN_EXE` option is set to `0` (instead of the default `1`),
-the `aquacrop` binary is built from the original Pascal code (instead of the Fortran version), linked to
-the (Fortran-compiled) `libaquacrop.so` library. This approach can
-currently only be used together with a GNU Fortran compiler.
-
-> Note: The coupling is rather trivial since the Pascal program consists
-  of a single call to `StartTheProgram()`, but it still provides a basic
-  check of the Pascal interface.
-
-For example:
-```bash
-cd AquaCrop/src
-make
-make clean          # cleans all build artifacts (binaries, object files, ...)
-make DEBUG=1        # uses debug options for compiling
-make FORTRAN_EXE=0  # builds a Pascal-based executable (instead of Fortran-based)
-make STATIC=1       # builds a statically-linked binary for distribution
-                    # as a standalone executable (only for GNU Fortran and
-                    # with DEBUG=0 and FORTRAN_EXE=1)
-make FC=ifort       # use the Intel Fortran compiler instead of GNU Fortran
-```
 
 ## Optional contributing and support
 

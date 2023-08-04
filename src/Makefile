@@ -12,9 +12,6 @@ ifeq ($(STATIC), 1)
     ifneq ($(DEBUG), 0)
         $(error DEBUG=0 is required for STATIC=1 build)
     endif
-    ifneq ($(FORTRAN_EXE), 1)
-        $(error FORTRAN_EXE=1 is required for STATIC=1 build)
-    endif
 endif
 
 ifeq ($(findstring gfortran, $(FC)), gfortran)
@@ -38,9 +35,6 @@ ifeq ($(findstring gfortran, $(FC)), gfortran)
         endif
     endif
 else ifeq ($(FC), ifort)
-    ifneq ($(FORTRAN_EXE), 1)
-        $(error FORTRAN_EXE=1 is required for FC=ifort)
-    endif
     ifneq ($(STATIC), 0)
         $(error STATIC=0 is required for FC=ifort)
     endif
