@@ -3435,7 +3435,8 @@ subroutine LoadManagement(FullName)
         end if
         read(fhandle, *) TempInt  ! Canopy cover (%) after cutting
         call SetManagement_Cuttings_CCcut(TempInt)
-        ! Next line NO LONGER CONSIDERED since AquaCrop version 7.1
+        ! Next line is expected to be present in the input file, however
+        ! A PARAMETER THAT IS NO LONGER USED since AquaCrop version 7.1
         read(fhandle, *) TempInt ! Increase (percentage) of CGC after cutting
         read(fhandle, *) TempInt ! Considered first day when generating cuttings
                                  ! (1 = start of growth cycle)

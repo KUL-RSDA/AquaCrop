@@ -6388,8 +6388,7 @@ subroutine InitializeTransferAssimilates(Bin, Bout, AssimToMobilize, &
     logical, intent(inout) :: MobilizationON
     logical, intent(in) :: HarvestNow
 
-    integer(int32) :: c1, c2
-    real(dp) :: x, FracSto, tmob
+    real(dp) :: FracSto, tmob
 
     Bin = 0._dp
     Bout = 0._dp
