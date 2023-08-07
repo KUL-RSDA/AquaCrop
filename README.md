@@ -2,21 +2,21 @@
 
 <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSEmcLG0zbWXIaLClg09v77ZccbFH_zuDVRbH-eBLxAdmcZ4nZ7" align="right" width="200px">
 
-AquaCrop v7.0 is released as open-source Fortran code, 
+AquaCrop v7.0 (and higher versions) is released as open-source Fortran code, 
 developed at KU Leuven and the Food and Agriculture Organization (FAO) 
 of the United Nations (FAO and KU Leuven copyright),
 and based on the original AquaCrop v6.0 (FAO copyright). 
-Compared to AquaCrop v6.0, the AquaCrop v7.0 features bug fixes,
-performance improvements and internal restructuring,
-a translation from Pascal to Fortran,
-and a range of new and/or updated scientific features.
+Compared to AquaCrop v6.0, the AquaCrop v7.0 (and higher versions)
+features bug fixes, performance improvements and internal restructuring,
+a translation from Pascal to Fortran, and a range of new and/or updated 
+scientific features.
 
 The following applications are publicly distributed:
-* AquaCrop v7.0 version-controlled open **source code** (this GitHub page, and zip-file under [Releases](
+* AquaCrop v7.1 version-controlled open **source code** (this GitHub page, and zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop v7.0 standard Windows **graphical user interface** (zip-file under [Releases](
+* AquaCrop v7.1 standard Windows **graphical user interface** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop v7.0 **standalone executable** (zip-file under [Releases](
+* AquaCrop v7.1 **standalone executable** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases)) for
   * Windows
   * Linux
@@ -29,7 +29,7 @@ the LIS section below.
 
 ## Documentation
 
-Online documentation and contact information is available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
+Online documentation and contact information are available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
 
 Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum for FAQ, or to contribute.
 
