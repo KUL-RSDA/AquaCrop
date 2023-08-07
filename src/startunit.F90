@@ -1,6 +1,7 @@
 module ac_startunit
 
-use ac_global, only:    GetPathNameSimul, &
+use ac_global, only:    undef_int, &
+                        GetPathNameSimul, &
                         FileExists, &
                         InitializeGlobalStrings, &
                         SetOut1Wabal, &
@@ -36,6 +37,7 @@ use ac_global, only:    GetPathNameSimul, &
                         CheckFilesInProject, &
                         ComposeOutputFilename, &
                         FileExists, &
+                        rep_FileOK, &
                         SetMultipleProjectFile, &
                         SetOut1Wabal, &
                         SetOut2Crop, &
@@ -131,7 +133,8 @@ use ac_run, only: open_file, &
                   RunSimulation, &
                   write_file
 use ac_utils, only: assert, &
-                    upper_case
+                    upper_case, &
+                    int2str
 use iso_fortran_env, only: iostat_end
 implicit none
 
@@ -538,13 +541,16 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
     logical :: CanSelect, ProgramParametersAvailable
     integer(int32) :: TotalSimRuns
     integer(int32) :: SimNr
-    character(len=:), allocatable :: FullFileNameProgramParametersLocal
+    integer(int32) :: WrongSimNr
+    character(len=1025) :: FullFileNameProgramParametersLocal
     logical :: MultipleRunWithKeepSWC_temp
     real(dp) :: MultipleRunConstZrx_temp
+    type(rep_FileOK) :: FileOK
 
 
     write(NrString, '(i8)') iproject
     CanSelect = .true.
+    WrongSimNr = undef_int
 
     ! check if project file exists
     if (TheProjectType /= typeproject_TypeNone) then
@@ -569,12 +575,12 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
 
             ! 3. Check if Environment and Simulation Files exist
             CanSelect = .true.
-            call CheckFilesInProject(1, CanSelect)
+            call CheckFilesInProject(1, CanSelect, FileOK)
 
             ! 4. load project parameters
             if (CanSelect) then
                 call SetProjectDescription('undefined')
-                FullFileNameProgramParametersLocal = GetFullFileNameProgramParameters()
+                FullFileNameProgramParametersLocal = ''
                 call ComposeFileForProgramParameters(GetProjectFile(), &
                                          FullFileNameProgramParametersLocal)
                 call SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal)
@@ -582,6 +588,8 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                                 GetFullFileNameProgramParameters(), &
                                 ProgramParametersAvailable)
                 call ComposeOutputFileName(GetProjectFile())
+            else
+                WrongSimNr = 1_int32
             end if
 
         case(typeproject_TypePRM)
@@ -599,13 +607,16 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             SimNr = 0_int32
             do while (CanSelect .and. (SimNr < TotalSimRuns))
                 SimNr = SimNr + 1_int32
-                call CheckFilesInProject(SimNr, CanSelect)
+                call CheckFilesInProject(SimNr, CanSelect, FileOK)
+                if (.not. CanSelect) then
+                    WrongSimNr = SimNr
+                endif
             end do
 
             ! 4. load project parameters
             if (CanSelect) then
                 call SetMultipleProjectDescription('undefined')
-                FullFileNameProgramParametersLocal = GetFullFileNameProgramParameters()
+                FullFileNameProgramParametersLocal = ''
                 call ComposeFileForProgramParameters(GetMultipleProjectFile(), &
                                             FullFileNameProgramParametersLocal)
                 call SetFullFileNameProgramParameters(FullFileNameProgramParametersLocal)
@@ -638,10 +649,72 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                 call fProjects_write(trim(tempstring))
             end if
         else
-            write(tempstring, '(4a)') trim(NrString), '. - ', &
+            write(tempstring, '(7a)') trim(NrString), '. - ', &
                                      trim(TheProjectFile), ' : Project NOT loaded', &
-                            ' - Missing Environment and/or Simulation file(s)'
+                            ' - Missing Environment and/or Simulation file(s) in Run number ', &
+                            int2str(WrongSimNr), ': '
             call fProjects_write(trim(tempstring))
+            if (.not. FileOK%Climate_Filename) then
+                write(tempstring, '(4a)') '               Climate (CLI), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Temperature_Filename) then
+                write(tempstring, '(4a)') '               Temperature (Tnx of TMP), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%ETo_Filename) then
+                write(tempstring, '(4a)') '               Reference ET (ETo), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Rain_Filename) then
+                write(tempstring, '(4a)') '               Rainfall (PLU), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%CO2_Filename) then
+                write(tempstring, '(4a)') '               CO2 (CO2), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Calendar_Filename) then
+                write(tempstring, '(4a)') '               Calendar (CAL), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Crop_Filename) then
+                write(tempstring, '(4a)') '               Crop (CRO), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Irrigation_Filename) then
+                write(tempstring, '(4a)') '               Irrigation (Irr), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Management_Filename) then
+                write(tempstring, '(4a)') '               Field Management (MAN), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%GroundWater_Filename) then
+                write(tempstring, '(4a)') '               Soil profile (SOL), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Soil_Filename) then
+                write(tempstring, '(4a)') '               Groundwater (GWT), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%SWCIni_Filename) then
+                write(tempstring, '(4a)') '               Initial conditions (SW0), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%OffSeason_Filename) then
+                write(tempstring, '(4a)') '               Off-season (OFF), '
+                call fProjects_write(trim(tempstring))
+            end if
+            if (.not. FileOK%Observations_Filename) then
+                write(tempstring, '(4a)') '               Field data (OBS), '
+                call fProjects_write(trim(tempstring))
+            end if
+            write(tempstring, '(4a)') '          - Check file Name(s), Path(s) &
+                               or Structure of project file.'
+            call fProjects_write(trim(tempstring))
+            write(*,*) 'Missing Environment and/or Simulation file(s):'
+            write(*,*) 'Check OUTP/ListProjectsLoaded.OUT for information.'
         end if
     else
         ! not a project file or missing in the LIST  dirtectory
@@ -668,22 +741,25 @@ subroutine ComposeFileForProgramParameters(TheFileNameProgram, &
 
     integer(int32) :: TheLength
     character(len=len(TheFileNameProgram)) :: tempstring
+    character(len=1024) :: tempstring2
     character(len=3) :: TheExtension
 
-    FullFileNameProgramParameters = ''
     TheLength = len(TheFileNameProgram)
     tempstring = TheFileNameProgram
-    TheExtension = tempstring(TheLength-2:3) ! PRO or PRM
+    TheExtension = tempstring((TheLength-2):TheLength) ! PRO or PRM
     ! file name program parameters
-    FullFileNameProgramParameters = tempstring(1:TheLength-3)
+    tempstring = TheFileNameProgram
+    FullFileNameProgramParameters = trim(tempstring(1:(TheLength-3)))
     ! path file progrm parameters
-    FullFileNameProgramParameters = trim(GetPathNameParam()) // &
-                                FullFileNameProgramParameters
+    write(tempstring2,'(2a)') GetPathNameParam(),trim(FullFileNameProgramParameters)
+    FullFileNameProgramParameters = tempstring2
     ! extension file program parameters
     if (TheExtension == 'PRO') then
-        FullFileNameProgramParameters = FullFileNameProgramParameters // 'PP1'
+        write(tempstring2,'(2a)') trim(FullFileNameProgramParameters),'PP1'
+        FullFileNameProgramParameters = trim(tempstring2)
     else
-        FullFileNameProgramParameters = FullFileNameProgramParameters // 'PPn'
+        write(tempstring2,'(2a)') trim(FullFileNameProgramParameters),'PPn'
+        FullFileNameProgramParameters = trim(tempstring2)
     end if
 end subroutine ComposeFileForProgramParameters
 
