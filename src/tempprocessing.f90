@@ -1539,10 +1539,6 @@ subroutine AdjustCalendarCrop(FirstCropDay)
     case default
         Succes = .true.
     end select
-    if (.not. Succes) then
-        write(*,*) "ERROR AdjustCalendarCrop: looks like we ran out of ideas"
-        return
-    end if
 end subroutine AdjustCalendarCrop
 
 
