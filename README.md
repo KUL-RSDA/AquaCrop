@@ -69,41 +69,6 @@ Please follow good practices. New features, enhancements or suggestions will onl
 
 We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) or the FAO Contact (aquacrop@fao.org) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
 
-## Optional code development and testing of source code changes against reference output
-
-A test suite for code development is available under the `tests` directory.
-Running the test suite requires:
-
-* Python3 with the `pytest` and `NumPy` packages
-* An `$AQUACROP_TEST_ROOT` environment variable pointing to the location
-  where the test suite input and reference output files are stored.
-* An `$AQUACROP_COMMAND` environment variable point to the AquaCrop
-  executable that the user wants to use.
-
-For example:
-```bash
-export AQUACROP_TEST_ROOT=/path/to/your/aquacrop/test/root/dir
-export AQUACROP_COMMAND=$PWD/AquaCrop/src/aquacrop
-export LD_LIBRARY_PATH=$PWD/AquaCrop/src:$LD_LIBRARY_PATH
-
-cd AquaCrop/tests
-
-# Run the whole test suite (will take about one hour):
-pytest
-
-# Run only 'Perennial' test case, with output shown:
-pytest -s test_perennial.py
-
-# Show all the so-called "parametrizations" of the "Europe" test case:
-pytest test_europe.py --collect-only
-
-# Run just two subcases of the "Europe" test case:
-pytest test_europe.py -k 'False-1-16 or True-19-0'
-```
-
-> Note: by default, the tests will make use of temporary working directories
-  inside $TMPDIR. The location of these directories can be changed by setting
-  the `AQUACROP_TMPDIR` variable accordingly.
 
 ## LIS integration
 
