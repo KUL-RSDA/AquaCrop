@@ -1,0 +1,7 @@
+In the absence of the 'ParticularResults.SIM' file in the 'SIMUL' subdirectory, no (1) simulated biomass and yield at mutliple cuttings of herbaceous forage crops during the season, or (2) Evaluation of simulation results (when Field data), will be provided. 
+IF this type of output is required, copy one or more of the lines below in a text file 'ParticularResults.SIM'.
+(note that recording all particular outputs, might slow donw significantly the speed of the Plug-In program)
+
+ 1 : Biomass and Yield at Multiple cuttings (for herbaceous forage crops)
+ 2 : Evaluation of simulation results (when Field Data)
+

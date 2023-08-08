@@ -1,0 +1,102 @@
+Ottawa variety - Alfalfa - Louvain-La-Neuve (Belgium) -  adjusted for Ottawa - calibrated for Soil Fertility
+     7.0       : AquaCrop Version (June 2021)
+     1         : File not protected
+     4         : forage crop
+     1         : Crop is sown in 1st year
+     0         : Determination of crop cycle : by growing degree-days
+     1         : Soil water depletion factors (p) are adjusted by ETo
+     5.0       : Base temperature (°C) below which crop development does not progress
+    30.0       : Upper temperature (°C) above which crop development no longer increases with an increase in temperature
+  1920         : Total length of crop cycle in growing degree-days
+     0.15      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold
+     0.55      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold
+     3.0       : Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)
+     0.60      : Soil water depletion fraction for stomatal control (p - sto) - Upper threshold
+     3.0       : Shape factor for water stress coefficient for stomatal control (0.0 = straight line)
+     0.70      : Soil water depletion factor for canopy senescence (p - sen) - Upper threshold
+     3.0       : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)
+   600         : Sum(ETo) during dormant period to be exceeded before crop is permanently wilted
+     0.90      : Soil water depletion factor for pollination (p - pol) - Upper threshold
+     2         : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)
+    50         : Considered soil fertility stress for calibration of stress response (%)
+     2.35      : Shape factor for the response of canopy expansion to soil fertility stress
+     0.79      : Shape factor for the response of maximum canopy cover to soil fertility stress
+    -0.16      : Shape factor for the response of crop Water Productivity to soil fertility stress
+     6.26      : Shape factor for the response of decline of canopy cover to soil fertility stress
+    -9         : dummy - Parameter no Longer required
+     8         : Minimum air temperature below which pollination starts to fail (cold stress) (°C)
+    40         : Maximum air temperature above which pollination starts to fail (heat stress) (°C)
+     8.0       : Minimum growing degrees required for full crop transpiration (°C - day)
+     2         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
+    16         : Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
+    -9         : Dummy - no longer applicable
+    25         : Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))
+   100         : Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))
+     1.15      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
+     0.050     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
+     0.30      : Minimum effective rooting depth (m)
+     3.00      : Maximum effective rooting depth (m)
+    15         : Shape factor describing root zone expansion
+     0.020     : Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone
+     0.010     : Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone
+    60         : Effect of canopy cover in reducing soil evaporation in late season stage
+     2.50      : Soil surface covered by an individual seedling at 90 % emergence (cm2)
+    19.38      : Canopy size of individual plant (re-growth) at 1st day (cm2)
+  2000000      : Number of plants per hectare
+     0.17713   : Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)
+     9         : Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials
+     0.50      : Shape factor of the decline of CCx over the years due to self-thinning - for Perennials
+    -9         : dummy - Parameter no Longer required
+     0.95      : Maximum canopy cover (CCx) in fraction soil cover
+     0.03636   : Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)
+     2         : Calendar Days: from sowing to emergence
+   178         : Calendar Days: from sowing to maximum rooting depth
+   180         : Calendar Days: from sowing to start senescence
+   180         : Calendar Days: from sowing to maturity (length of crop cycle)
+     0         : Calendar Days: from sowing to flowering
+     0         : Length of the flowering stage (days)
+     0         : Crop determinancy unlinked with flowering
+    -9         : parameter NO LONGER required
+    17         : Building up of Harvest Index starting at sowing/transplanting (days)
+    15.0       : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
+   100         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
+    50         : Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration
+   100         : Reference Harvest Index (HIo) (%)
+    -9         : Possible increase (%) of HI due to water stress before flowering
+    -9.0       : No impact on HI of restricted vegetative growth during yield formation 
+    -9.0       : No effect on HI of stomatal closure during yield formation
+    -9         : Allowable maximum increase (%) of specified HI
+     5         : GDDays: from sowing to emergence
+  1920         : GDDays: from sowing to maximum rooting depth
+  1920         : GDDays: from sowing to start senescence
+  1920         : GDDays: from sowing to maturity (length of crop cycle)
+     0         : GDDays: from sowing to flowering
+     0         : Length of the flowering stage (growing degree days)
+     0.012000  : CGC for GGDays: Increase in canopy cover (in fraction soil cover per growing-degree day)
+     0.006000  : CDC for GGDays: Decrease in canopy cover (in fraction per growing-degree day)
+   118         : GDDays: building-up of Harvest Index during yield formation
+    20         : dry matter content (%) of fresh yield
+     0.30      : Minimum effective rooting depth (m) in first year (for perennials)
+     1         : Crop is sown in 1st year (for perennials)
+     1         : Transfer of assimilates from above ground parts to root system is considered
+   100         : Number of days at end of season during which assimilates are stored in root system
+    65         : Percentage of assimilates transferred to root system at last day of season
+    60         : Percentage of stored assimilates transferred to above ground parts in next season
+
+ Internal crop calendar
+ ========================================================
+    13         : The Restart of growth is generated by Growing-degree days
+     1         : First Day for the time window (Restart of growth)
+     4         : First Month for the time window (Restart of growth)
+   120         : Length (days) of the time window (Restart of growth)
+    20.0       : Threshold for the Restart criterion: Growing-degree days
+     8         : Number of successive days for the Restart criterion
+     2         : Number of occurrences before the Restart criterion applies
+    63         : The End of growth is generated by Growing-degree days
+    31         : Last Day for the time window (End of growth)
+    10         : Last Month for the time window (End of growth)
+     0         : Number of years to add to the Onset year
+    60         : Length (days) of the time window (End of growth)
+    10.0       : Threshold for the End criterion: Growing-degree days
+     8         : Number of successive days for the End criterion
+     1         : Number of occurrences before the End criterion applies

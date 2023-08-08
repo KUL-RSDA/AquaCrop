@@ -1,0 +1,143 @@
+Ottawa (Canada)
+      7.0       : AquaCrop Version (April 2021)
+      1         : Year number of cultivation (Seeding/planting year)
+  41414         : First day of simulation period - 21 May 2014      
+  41577         : Last day of simulation period - 31 October 2014  
+  41414         : First day of cropping period - 21 May 2014      
+  41577         : Last day of cropping period - 31 October 2014  
+-- 1. Climate (CLI) file
+   Ottawa.CLI
+   './DATA/'
+   1.1 Temperature (Tnx or TMP) file
+   Ottawa.Tnx
+   './DATA/'
+   1.2 Reference ET (ETo) file
+   Ottawa.ETo
+   './DATA/'
+   1.3 Rain (PLU) file
+   Ottawa.PLU
+   './DATA/'
+   1.4 Atmospheric CO2 concentration (CO2) file
+   MaunaLoa.CO2
+   './SIMUL/'
+-- 2. Calendar (CAL) file
+   21May.CAL
+   './DATA/'
+-- 3. Crop (CRO) file
+   AlfOttawaGDD.CRO
+   './DATA/'
+-- 4. Irrigation management (IRR) file
+   (None)
+   (None)
+-- 5. Field management (MAN) file
+   Ottawa.MAN
+   './DATA/'
+-- 6. Soil profile (SOL) file
+   Ottawa.SOL
+   './DATA/'
+-- 7. Groundwater table (GWT) file
+   (None)
+   (None)
+-- 8. Initial conditions (SW0) file
+   (None)
+   (None)
+-- 9. Off-season conditions (OFF) file
+   (None)
+   (None)
+-- 10. Field data (OBS) file
+   Ottawa.OBS
+   './OBS/'
+      2         : Year number of cultivation (Non-seeding/planting year)
+  41578         : First day of simulation period - 1 November 2014  
+  41935         : Last day of simulation period - 24 October 2015  
+  41759         : First day of cropping period - 1 May 2015       
+  41935         : Last day of cropping period - 24 October 2015  
+-- 1. Climate (CLI) file
+   Ottawa.CLI
+   './DATA/'
+   1.1 Temperature (Tnx or TMP) file
+   Ottawa.Tnx
+   './DATA/'
+   1.2 Reference ET (ETo) file
+   Ottawa.ETo
+   './DATA/'
+   1.3 Rain (PLU) file
+   Ottawa.PLU
+   './DATA/'
+   1.4 Atmospheric CO2 concentration (CO2) file
+   MaunaLoa.CO2
+   './SIMUL/'
+-- 2. Calendar (CAL) file
+   21May.CAL
+   './DATA/'
+-- 3. Crop (CRO) file
+   AlfOttawaGDD.CRO
+   './DATA/'
+-- 4. Irrigation management (IRR) file
+   (None)
+   (None)
+-- 5. Field management (MAN) file
+   Ottawa.MAN
+   './DATA/'
+-- 6. Soil profile (SOL) file
+   Ottawa.SOL
+   './DATA/'
+-- 7. Groundwater table (GWT) file
+   (None)
+   (None)
+-- 8. Initial conditions (SW0) file
+   KeepSWC
+   Keep soil water profile of previous run
+-- 9. Off-season conditions (OFF) file
+   (None)
+   (None)
+-- 10. Field data (OBS) file
+   Ottawa.OBS
+   './OBS/'
+      3         : Year number of cultivation (Non-seeding/planting year)
+  41936         : First day of simulation period - 25 October 2015  
+  42305         : Last day of simulation period - 28 October 2016  
+  42131         : First day of cropping period - 7 May 2016       
+  42305         : Last day of cropping period - 28 October 2016  
+-- 1. Climate (CLI) file
+   Ottawa.CLI
+   './DATA/'
+   1.1 Temperature (Tnx or TMP) file
+   Ottawa.Tnx
+   './DATA/'
+   1.2 Reference ET (ETo) file
+   Ottawa.ETo
+   './DATA/'
+   1.3 Rain (PLU) file
+   Ottawa.PLU
+   './DATA/'
+   1.4 Atmospheric CO2 concentration (CO2) file
+   MaunaLoa.CO2
+   './SIMUL/'
+-- 2. Calendar (CAL) file
+   21May.CAL
+   './DATA/'
+-- 3. Crop (CRO) file
+   AlfOttawaGDD.CRO
+   './DATA/'
+-- 4. Irrigation management (IRR) file
+   (None)
+   (None)
+-- 5. Field management (MAN) file
+   Ottawa.MAN
+   './DATA/'
+-- 6. Soil profile (SOL) file
+   Ottawa.SOL
+   './DATA/'
+-- 7. Groundwater table (GWT) file
+   (None)
+   (None)
+-- 8. Initial conditions (SW0) file
+   KeepSWC
+   Keep soil water profile of previous run
+-- 9. Off-season conditions (OFF) file
+   (None)
+   (None)
+-- 10. Field data (OBS) file
+   Ottawa.OBS
+   './OBS/'

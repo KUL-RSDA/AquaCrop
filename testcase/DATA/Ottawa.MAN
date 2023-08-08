@@ -1,0 +1,32 @@
+Ottawa, Canada
+     7.0       : AquaCrop Version (June 2021)
+     0         : percentage (%) of ground surface covered by mulches IN growing period
+    50         : effect (%) of mulches on reduction of soil evaporation
+    50         : Degree of soil fertility stress (%) - Effect is crop specific
+     0.00      : height (m) of soil bunds
+     0         : surface runoff NOT affected by field surface practices
+     0         : N/A (surface runoff is not affected or completely prevented)
+     0         : relative cover of weeds at canopy closure (%)
+     0         : increase of relative cover of weeds in mid-season (+%)
+   100.00      : shape factor of the CC expansion function in a weed infested field
+   100         : replacement (%) by weeds of the self-thinned part of the CC - only for perennials
+     1         : Multiple cuttings are considered
+    25         : Canopy cover (%) after cutting
+    20         : Increase (%) of Canopy Growth Coefficient (CGC) after cutting
+     1         : First day of window for multiple cuttings (1 = start of growth cycle)
+    -9         : Number of days in window for multiple cuttings (-9 = total growth cycle)
+     0         : Multiple cuttings schedule is specified
+     0         : Time criterion: Not Applicable
+     0         : final harvest at crop maturity is not considered
+ 41274         : dayNr for Day 1 of list of cuttings
+
+ Harvest Day
+==============
+   194
+   243
+   536
+   572
+   607
+   897
+   932
+   972

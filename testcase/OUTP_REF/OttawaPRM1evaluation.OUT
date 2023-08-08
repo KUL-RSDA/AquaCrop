@@ -1,0 +1,46 @@
+AquaCrop 7.1 (August 2023) - Output created on (date) : 08-08-2023   at (time) : 14:35:36
+Evaluation of simulation results - Statistics
+** Run number:1
+
+
+  ASSESSMENT OF CANOPY COVER --------------------------------------
+  No statistic analysis (insufficient data)
+  ----------------------------------------------------------------
+
+
+  ASSESSMENT OF BIOMASS PRODUCTION --------------------------------
+              --------- Biomass (ton/ha) ---------
+    Nr        Observed    +/- St Dev     Simulated    Date
+  ----------------------------------------------------------------
+     1           0.045        -9.000         0.075      24 May 2014
+     2           0.386        -9.000         0.856       9 June 2014
+     3           1.039        -9.000         1.805      18 June 2014
+     4           1.217        -9.000         2.635      25 June 2014
+     5           2.390        -9.000         3.610       3 July 2014
+     6           3.191        -9.000         4.453      10 July 2014
+     7           3.606        -9.000         4.807      13 July 2014
+     8           3.947        -9.000         4.950      15 July 2014
+     9           4.407        -9.000         5.776      24 July 2014
+    10           4.853        -9.000         6.322      30 July 2014
+    11           6.189        -9.000         6.913       7 August 2014
+    12           6.263        -9.000         7.318      14 August 2014
+    13           6.901        -9.000         7.512      18 August 2014
+    14           7.168        -9.000         7.763      24 August 2014
+    15           7.242        -9.000         8.007      31 August 2014
+
+  Valid observations/simulations sets (n) ....... :    15
+  Average of observed Biomass production ........ :     3.923   ton/ha
+  Average of simulated Biomass production ....... :     4.853   ton/ha
+
+  Pearson Correlation Coefficient (r) ........... :     0.99
+  Root mean square error (RMSE) ................. :     1.011   ton/ha
+  Normalized root mean square error  CV(RMSE).... :    25.8   %
+  Nash-Sutcliffe model efficiency coefficient (EF):     0.83
+  Willmotts index of agreement (d) .............. :     0.96
+  ----------------------------------------------------------------
+
+
+  ASSESSMENT OF SOIL WATER CONTENT --------------------------------
+  No statistic analysis (insufficient data)
+  ----------------------------------------------------------------
+
