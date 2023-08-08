@@ -1,24 +1,28 @@
-This archive file contains a set of three AquaCrop testcases that 
-you may use to verify the correct execution of the precompiled 
-static AquaCrop executable on your hardware. Note that only x86_64 
-CPU architectures are supported.
+# Testcase
 
+This archive file contains an AquaCrop testcase that you may use 
+to verify the correct execution of the precompiled static AquaCrop 
+executable on your hardware. Note that only x86_64 CPU architectures 
+are supported. The reference output (./OUTP_REF) was generated with 
+AquaCropV7.1.
+
+## Running the testcase
 To run the test, copy the executable to the present directory and
 follow the instructions below for your operating system:
 
-* Linux:
+* **Linux**:
 
   Open a terminal, change to the present directory and execute
   "./aquacrop".
 
-* MacOS:
+* **MacOS**:
 
   Open a terminal, change to the present directory and execute
   "./aquacrop". If you receive a security alert upon runtime, then locate
   the AquaCrop executable in your Finder, CTRL+click on the executable
   and click on "Open". Then, execute "./aquacrop".
 
-* Windows:
+* **Windows**:
 
   You can either:
   - Open a Windows Powershell or CMD shell, change to the present
@@ -37,23 +41,24 @@ follow the instructions below for your operating system:
 
 The calculation should finish after a few seconds.
 
+## Verifying the output
 Except for the first lines with the output creation dates, the resulting
 output files in the "OUTP" directory should be identical to the reference
 output files included in "OUTP_REF". You can check the differences by
 opening a terminal and executing the following commands:
 
-* Linux and MacOS:
+* **Linux and MacOS**:
 
-  diff OUTP/AllDone.OUT OUTP_REF/AllDone.OUT
-  diff OUTP/ListProjectsLoaded.OUT OUTP_REF/ListProjectsLoaded.OUT
-  diff OUTP/***.OUT OUTP_REF/***.OUT
-  ...
+        diff OUTP/AllDone.OUT OUTP_REF/AllDone.OUT
+        diff OUTP/ListProjectsLoaded.OUT OUTP_REF/ListProjectsLoaded.OUT
+        diff OUTP/xxx.OUT OUTP_REF/xxx.OUT
+        ...
 
-* Windows:
+* **Windows**:
 
-  fc.exe OUTP\AllDone.OUT OUTP_REF\AllDone.OUT
-  fc.exe OUTP\ListProjectsLoaded.OUT OUTP_REF\ListProjectsLoaded.OUT
-  fc.exe OUTP\***.OUT OUTP_REF\***.OUT
-  ...
+        fc.exe OUTP\AllDone.OUT OUTP_REF\AllDone.OUT
+        fc.exe OUTP\ListProjectsLoaded.OUT OUTP_REF\ListProjectsLoaded.OUT
+        fc.exe OUTP\xxx.OUT OUTP_REF\xxx.OUT
+        ...
 
-Where *** represents any output (.OUT) file.
+Where xxx represents any output (.OUT) file.
