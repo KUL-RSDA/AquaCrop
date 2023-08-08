@@ -1,19 +1,22 @@
-# AquaCrop
+# FAO AquaCrop
 
-AquaCrop v7.0 is released as open-source Fortran code, 
-developed at KU Leuven and FAO (FAO and KU Leuven copyright),
+<img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSEmcLG0zbWXIaLClg09v77ZccbFH_zuDVRbH-eBLxAdmcZ4nZ7" align="right" width="200px">
+
+AquaCrop v7.0 and higher versions are released as open-source Fortran code, 
+developed at KU Leuven and the Food and Agriculture Organization (FAO) 
+of the United Nations (FAO and KU Leuven copyright),
 and based on the original AquaCrop v6.0 (FAO copyright). 
-Compared to AquaCrop v6.0, the AquaCrop v7.0 features bug fixes,
-performance improvements and internal restructuring,
-a translation from Pascal to Fortran,
-and a range of new and/or updated scientific features.
+Compared to AquaCrop v6.0, the AquaCrop v7.0 and higher versions
+feature bug fixes, performance improvements and internal restructuring,
+a translation from Pascal to Fortran, and a range of new and/or updated 
+scientific features.
 
 The following applications are publicly distributed:
-* AquaCrop v7.0 version-controlled open **source code** (this GitHub page, and zip-file under [Releases](
+* AquaCrop version-controlled open **source code** (this GitHub page, and zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop v7.0 standard Windows **graphical user interface** (zip-file under [Releases](
+* AquaCrop standard Windows **graphical user interface** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases))
-* AquaCrop v7.0 **standalone executable** (zip-file under [Releases](
+* AquaCrop **standalone executable** (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases)) for
   * Windows
   * Linux
@@ -26,7 +29,7 @@ the LIS section below.
 
 ## Documentation
 
-Online documentation and contact information is available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
+Online documentation and contact information are available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
 
 Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum for FAQ, or to contribute.
 
@@ -37,7 +40,7 @@ Windows, Linux or MacOS from the release page.
 Consult the reference manual (FAO website) for details about the AquaCrop stand-alone program.
 
 Optionally, it can be verified if the executable produces the expected output on the user's system, by running a self-contained testcase for which reference output is provided (zip-file under [Releases](
-  https://github.com/KUL-RSDA/AquaCrop/releases)).
+  https://github.com/KUL-RSDA/AquaCrop/releases)). Please carefully read the README file to run the testcase.
 
 ## Building the executable
 
@@ -50,7 +53,6 @@ The source code is under the `src` directory. Building the Aquacrop executable o
 * a GNU or Intel Fortran compiler (GNU Fortran >= v6.4.0 and ifort >= v18.0.1).
   MinGW can be used to (cross)compile for Windows. In that case `make` needs
   to be called with an additional `CPPFLAGS=-D_WINDOWS` option.
-* (optional) a Free Pascal compiler (>= v3.2.0).
 
 ```bash
 cd AquaCrop/src
@@ -61,35 +63,12 @@ The main `make` targets are `bin` (producing an `aquacrop` executable),
 `lib` (producing a `libaquacrop.so` library). The default target is
 `all`, which combines the `bin` and `lib` targets.
 
-## Optional build instructions
-
-If the `FORTRAN_EXE` option is set to `0` (instead of the default `1`),
-the `aquacrop` binary is built from the original Pascal code (instead of the Fortran version), linked to
-the (Fortran-compiled) `libaquacrop.so` library. This approach can
-currently only be used together with a GNU Fortran compiler.
-
-> Note: The coupling is rather trivial since the Pascal program consists
-  of a single call to `StartTheProgram()`, but it still provides a basic
-  check of the Pascal interface.
-
-For example:
-```bash
-cd AquaCrop/src
-make
-make clean          # cleans all build artifacts (binaries, object files, ...)
-make DEBUG=1        # uses debug options for compiling
-make FORTRAN_EXE=0  # builds a Pascal-based executable (instead of Fortran-based)
-make STATIC=1       # builds a statically-linked binary for distribution
-                    # as a standalone executable (only for GNU Fortran and
-                    # with DEBUG=0 and FORTRAN_EXE=1)
-make FC=ifort       # use the Intel Fortran compiler instead of GNU Fortran
-```
-
 ## Optional contributing and support
 
 Please follow good practices. New features, enhancements or suggestions will only be considered and reviewed once a year by the core AquaCrop developers.
 
 We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) or the FAO Contact (aquacrop@fao.org) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
+
 
 ## LIS integration
 
