@@ -1,12 +1,12 @@
 Ottawa variety - Alfalfa - Louvain-La-Neuve (Belgium) -  adjusted for Ottawa - calibrated for Soil Fertility
-     7.0       : AquaCrop Version (June 2021)
+     7.1       : AquaCrop Version (August 2023)
      1         : File not protected
      4         : forage crop
      1         : Crop is sown in 1st year
      0         : Determination of crop cycle : by growing degree-days
      1         : Soil water depletion factors (p) are adjusted by ETo
-     5.0       : Base temperature (°C) below which crop development does not progress
-    30.0       : Upper temperature (°C) above which crop development no longer increases with an increase in temperature
+     5.0       : Base temperature (degC) below which crop development does not progress
+    30.0       : Upper temperature (degC) above which crop development no longer increases with an increase in temperature
   1920         : Total length of crop cycle in growing degree-days
      0.15      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold
      0.55      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold
@@ -24,9 +24,9 @@ Ottawa variety - Alfalfa - Louvain-La-Neuve (Belgium) -  adjusted for Ottawa - c
     -0.16      : Shape factor for the response of crop Water Productivity to soil fertility stress
      6.26      : Shape factor for the response of decline of canopy cover to soil fertility stress
     -9         : dummy - Parameter no Longer required
-     8         : Minimum air temperature below which pollination starts to fail (cold stress) (°C)
-    40         : Maximum air temperature above which pollination starts to fail (heat stress) (°C)
-     8.0       : Minimum growing degrees required for full crop transpiration (°C - day)
+     8         : Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+    40         : Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+     8.0       : Minimum growing degrees required for full crop transpiration (degC - day)
      2         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
     16         : Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
     -9         : Dummy - no longer applicable

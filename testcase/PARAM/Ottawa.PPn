@@ -16,8 +16,8 @@
      20         : Salt diffusion factor (capacity for salt diffusion in micro pores) [%]
     100         : Salt solubility [g/liter]
      16         : Shape factor for effect of soil water content gradient on capillary rise
-     12.0       : Default minimum temperature (°C) if no temperature file is specified
-     28.0       : Default maximum temperature (°C) if no temperature file is specified
+     12.0       : Default minimum temperature (degC) if no temperature file is specified
+     28.0       : Default maximum temperature (degC) if no temperature file is specified
       3         : Default method for the calculation of growing degree days
       1         : Daily rainfall is estimated by USDA-SCS procedure (when input is 10-day/monthly rainfall)
      70         : Percentage of effective rainfall (when input is 10-day/monthly rainfall)
