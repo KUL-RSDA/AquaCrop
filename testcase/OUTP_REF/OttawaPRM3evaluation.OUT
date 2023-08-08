@@ -1,0 +1,45 @@
+AquaCrop 7.1 (August 2023) - Output created on (date) : 08-08-2023   at (time) : 14:35:36
+Evaluation of simulation results - Statistics
+** Run number:3
+
+
+  ASSESSMENT OF CANOPY COVER --------------------------------------
+  No statistic analysis (insufficient data)
+  ----------------------------------------------------------------
+
+
+  ASSESSMENT OF BIOMASS PRODUCTION --------------------------------
+              --------- Biomass (ton/ha) ---------
+    Nr        Observed    +/- St Dev     Simulated    Date
+  ----------------------------------------------------------------
+     1           2.678        -9.000         2.247      25 May 2016
+     2           3.628        -9.000         3.358       1 June 2016
+     3           5.054        -9.000         4.306       9 June 2016
+     4           4.817        -9.000         5.045      15 June 2016
+     5           5.181        -9.000         5.119      16 June 2016
+     6           5.435        -9.000         6.350      28 June 2016
+     7           6.222        -9.000         7.153       5 July 2016
+     8           6.609        -9.000         7.953      12 July 2016
+     9           7.811        -9.000         8.832      20 July 2016
+    10           8.149        -9.000         8.897      21 July 2016
+    11           8.729        -9.000         9.799       2 August 2016
+    12           9.086        -9.000        10.280      10 August 2016
+    13           9.502        -9.000        10.570      16 August 2016
+    14          10.304        -9.000        10.777      21 August 2016
+
+  Valid observations/simulations sets (n) ....... :    14
+  Average of observed Biomass production ........ :     6.657   ton/ha
+  Average of simulated Biomass production ....... :     7.192   ton/ha
+
+  Pearson Correlation Coefficient (r) ........... :     0.98
+  Root mean square error (RMSE) ................. :     0.842   ton/ha
+  Normalized root mean square error  CV(RMSE).... :    12.6   %
+  Nash-Sutcliffe model efficiency coefficient (EF):     0.86
+  Willmotts index of agreement (d) .............. :     0.97
+  ----------------------------------------------------------------
+
+
+  ASSESSMENT OF SOIL WATER CONTENT --------------------------------
+  No statistic analysis (insufficient data)
+  ----------------------------------------------------------------
+

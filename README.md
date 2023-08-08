@@ -80,7 +80,7 @@ and will be accessible after approval of an upcoming pull request to NASA via th
 A wide range of publications is available to refer to AquaCrop in the GUI or standalone version.
 The users can refer to any publication of their choice, when using these AquaCrop assets. 
 
-In case the open source code of AquaCrop v7.0 is used, please refer to one of the following papers, covering precursory work in preparation for the open source release. Publications using AquaCrop v7.0 in NASA's LIS will be added for reference as soon as they become available.
+In case the open source code of AquaCrop (from v7.0 onwards) is used, please refer to one of the following papers, covering precursory work in preparation for the open source release. Publications using AquaCrop v7.0 and higher versions in NASA's LIS will be added for reference as soon as they become available.
 * de Roos, S., De Lannoy, G.J.M., Raes, D. (2021). Performance analysis of regional AquaCrop (v6.1) biomass and surface soil moisture simulations using satellite and in situ observations. Geoscientific Model Development, 14(12), 7309-7328, 10.5194/gmd-14-7309-2021.
 * Busschaert, L., de Roos, S., Thiery, W., Raes, D., De Lannoy, G.J.M. (2022). Net irrigation requirement under different climate scenarios using AquaCrop over Europe. Hydrology and Earth System Sciences, 26, 3731–3752, 10.5194/hess-26-3731-2022.
 
