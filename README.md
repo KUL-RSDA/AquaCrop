@@ -35,7 +35,7 @@ Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discuss
 
 ## Running the executable
 
-Download the ZIP file with the AquaCrop v7.0 executable for
+Download the ZIP file with the AquaCrop executable (v7.0 or higher) for
 Windows, Linux or MacOS from the release page. 
 Consult the reference manual (FAO website) for details about the AquaCrop stand-alone program.
 
@@ -72,7 +72,7 @@ We encourage scientific (only) exchanges via our [Discussions](https://github.co
 
 ## LIS integration
 
-The distribution of AquaCrop v.7.0 within NASA's LIS is currently being reviewed
+The distribution of AquaCrop v7.0 and higher versions within NASA's LIS is currently being reviewed
 and will be accessible after approval of an upcoming pull request to NASA via the [LIS GitHub page](https://github.com/NASA-LIS/LISF).
 
 ## Citation

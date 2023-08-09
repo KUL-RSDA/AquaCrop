@@ -4,7 +4,7 @@ The original AquaCrop source code (in Pascal) was developed by:
 * Pasquale Steduto (former FAO)
 * Theodore Hsiao (UC Davis)
 
-The AquaCrop v7.0 open source code in Fortran has been established by (listed in alphabetical order):
+The AquaCrop v7.0 and higher versions open source code in Fortran has been established by (listed in alphabetical order):
 
 **KU Leuven**
 * Michel Bechtold
@@ -20,6 +20,6 @@ The AquaCrop v7.0 open source code in Fortran has been established by (listed in
 **FAO**
 * Maher Salman
 
-For the development of the AquaCrop v7.0 open source code, funding has been received from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 773903. 
+For the development of the first open source code version in Fortran (AquaCrop version 7.0), funding has been received from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 773903. 
 
 
