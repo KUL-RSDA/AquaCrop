@@ -5728,7 +5728,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                 call SetRain(tmpRain)
             case(datatype_Decadely)
                 RainDataSet_temp = GetRainDataSet()
-                call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
+                call GetDecadeRainDataSet(FromSimDay, RainDataSet_temp)
                 call SetRainDataSet(RainDataSet_temp)
                 i = 1
                 do while (GetRainDataSet_DayNr(i) /= FromSimDay)
@@ -5737,7 +5737,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                 call SetRain(GetRainDataSet_Param(i))
             case(datatype_Monthly)
                 RainDataSet_temp = GetRainDataSet()
-                call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
+                call GetMonthlyRainDataSet(FromSimDay, RainDataSet_temp)
                 call SetRainDataSet(RainDataSet_temp)
                 i = 1
                 do while (GetRainDataSet_DayNr(i) /= FromSimDay)
@@ -5893,7 +5893,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                     if (RunningDay > GetTminDataSet_DayNr(31)) then
                         TminDataSet_temp = GetTminDataSet()
                         TmaxDataSet_temp = GetTmaxDataSet()
-                        call GetDecadeTemperatureDataSet(FromSimDay, &
+                        call GetDecadeTemperatureDataSet(RunningDay, &
                                                          TminDataSet_temp, &
                                                          TmaxDataSet_temp)
                         call SetTminDataSet(TminDataSet_temp)
@@ -5909,7 +5909,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                     if (RunningDay > GetTminDataSet_DayNr(31)) then
                         TminDataSet_temp = GetTminDataSet()
                         TmaxDataSet_temp = GetTmaxDataSet()
-                        call GetMonthlyTemperatureDataSet(FromSimDay, &
+                        call GetMonthlyTemperatureDataSet(RunningDay, &
                                                           TminDataSet_temp, &
                                                           TmaxDataSet_temp)
                         call SetTminDataSet(TminDataSet_temp)

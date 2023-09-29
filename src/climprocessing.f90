@@ -137,7 +137,7 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
         integer(int32), intent(inout) :: t1
 
         integer :: fETo
-        integer(int32) :: Mfile, Yfile, n1, n2, n3, Nri, Obsi
+        integer(int32) :: Mfile, Yfile, Nri, Obsi
         integer(int32), parameter :: ni=30
         logical :: OK3
 
@@ -165,13 +165,13 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
         if (GetEToRecord_NrObs() <= 3) then
             read(fETo, *) C1
             C1 = C1 * ni
-            X1 = n1
+            X1 = ni
             select case (GetEToRecord_NrObs())
                 case(1)
                     t1 = X1
-                    X2 = X1 + n1
+                    X2 = X1 + ni
                     C2 = C1
-                    X3 = X2 + n1
+                    X3 = X2 + ni
                     C3 = C1
                 case(2)
                     t1 = X1
@@ -183,12 +183,12 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
                     C3 = C3 * ni
                     if (Monthi == Mfile) then
                         C2 = C3
-                        X2 = X1 + n3
-                        X3 = X2 + n3
+                        X2 = X1 + ni
+                        X3 = X2 + ni
                     else
                         C2 = C1
-                        X2 = X1 + n1
-                        X3 = X2 + n3
+                        X2 = X1 + ni
+                        X3 = X2 + ni
                     end if
                 case(3)
                     if (Monthi == Mfile) then
@@ -200,7 +200,7 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
                     end if
                     read(fETo, *) C2
                     C2 = C2 * ni
-                    X2 = X1 + n2
+                    X2 = X1 + ni
                     if (Monthi == Mfile) then
                         t1 = X1
                     end if
@@ -210,7 +210,7 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
                     end if
                     read(fETo, *) C3
                     C3 = C3 * ni
-                    X3 = X2 + n3
+                    X3 = X2 + ni
                     if (Monthi == Mfile) then
                         t1 = X2
                     end if
@@ -223,21 +223,21 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
             t1 = 0
             read(fETo, *) C1
             C1 = C1 * ni
-            X1 = n1
+            X1 = ni
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             read(fETo, *) C2
             C2 = C2 * ni
-            X2 = X1 + n2
+            X2 = X1 + ni
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             read(fETo, *) C3
             C3 = C3 * ni
-            X3 = X2 + n3
+            X3 = X2 + ni
             OK3 = .true.
         end if
 
@@ -254,14 +254,14 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
                 end do
                 read(fETo, *) C1
                 C1 = C1 * ni
-                X1 = n1
+                X1 = ni
                 Mfile = Mfile + 1
                 if (Mfile > 12) then
                     call AdjustMONTHandYEAR(Mfile, Yfile)
                 end if
                 read(fETo, *) C2
                 C2 = C2 * ni
-                X2 = X1 + n2
+                X2 = X1 + ni
                 t1 = X2
                 Mfile = Mfile + 1
                 if (Mfile > 12) then
@@ -269,7 +269,7 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
                 end if
                 read(fETo, *) C3
                 C3 = C3 * ni
-                X3 = X2 + n3
+                X3 = X2 + ni
                 OK3 = .true.
             end if
         end if
@@ -299,7 +299,7 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
             end do
             read(fETo, *) C1
             C1 = C1 * ni
-            X1 = n1
+            X1 = ni
             t1 = X1
             Mfile = Mfile + 1
             if (Mfile > 12) then
@@ -307,14 +307,14 @@ subroutine GetMonthlyEToDataSet(DayNri, EToDataSet)
             end if
             read(fETo, *) C2
             C2 = C2 * ni
-            X2 = X1 + n2
+            X2 = X1 + ni
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             read(fETo, *) C3
             C3 = C3 * ni
-            X3 = X2 + n3
+            X3 = X2 + ni
         end if
 
         close(fETo)
@@ -730,7 +730,7 @@ subroutine GetMonthlyRainDataSet(DayNri, RainDataSet)
                     read(fRain, *)
                 end do
                 read(fRain, *) C1
-                read(fRain, *) C3
+                read(fRain, *) C2
                 C3 = C2
                 OK3 = .true.
             end if
