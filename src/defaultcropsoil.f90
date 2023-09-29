@@ -245,7 +245,7 @@ subroutine ResetDefaultCrop(use_default_crop_file)
     call SetCrop_WP(17.0_dp) ! (normalized) Water productivity (gram/m2)
     call SetCrop_WPy(100) ! (normalized) Water productivity during yield formation
                           ! (Percent of WP)
-    call SetCrop_AdaptedToCO2(50_int8) ! Percentage adapted to elevated atmospheric
+    call SetCrop_AdaptedToCO2(100_int8) ! Percentage adapted to elevated atmospheric
                                        ! CO2 concentration
     call SetCrop_HI(50) ! HI harvest index (percentage)
     call SetCrop_DryMatter(25_int8) ! dry matter content (%) of fresh yield
