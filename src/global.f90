@@ -5968,6 +5968,7 @@ subroutine LoadClim(FullName, ClimateDescription, ClimateRecord)
     read(fhandle, *, iostat=rc)
     read(fhandle, *, iostat=rc)
     ClimateRecord%NrObs = 0
+    read(fhandle, *, iostat=rc)
     do while (rc /= iostat_end)
         ClimateRecord%NrObs = ClimateRecord%NrObs + 1
         read(fhandle, *, iostat=rc)
