@@ -54,7 +54,7 @@ function GetAquaCropDescriptionWithTimeStamp() result(str)
     WRITE(timestr,8)d(5),d(6),d(7)
  10 FORMAT(I2.2, '-', I2.2, '-', I4.4)
  8  FORMAT(I2.2, ':', I2.2, ':', I2.2)
-    str = GetAquaCropDescription() // ' - Output created on (date) : ' // &
+    str = '# ' // GetAquaCropDescription() // ' - Output created on (date) : ' // &
           datestr // '   at (time) : ' // timestr
     
 end function GetAquaCropDescriptionWithTimeStamp

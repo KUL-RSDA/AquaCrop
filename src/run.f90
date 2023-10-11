@@ -566,6 +566,7 @@ real(dp) :: PreviousSumETo, PreviousSumGDD, PreviousBmob,PreviousBsto
 integer(int8)  :: StageCode
 integer(int32) :: PreviousDayNr
 logical :: NoYear
+logical :: debug = .FALSE. 
 
 character(len=:), allocatable :: fEval_filename
 
@@ -3964,6 +3965,9 @@ subroutine RelationshipsForFertilityAndSaltStress()
     integer(int8) :: BioTop, BioLow
     real(dp) :: StrTop, StrLow
 
+    if(debug)then
+      write(*,*)'BB0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 1. Soil fertility
     call SetFracBiomassPotSF(1._dp)
 
@@ -4028,6 +4032,9 @@ subroutine RelationshipsForFertilityAndSaltStress()
     call SetFracBiomassPotSF(GetFracBiomassPotSF()/100._dp)
     end if
 
+    if(debug)then
+      write(*,*)'BB GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if (GetSimulation_SalinityConsidered() .eqv. .true.) then
         call CCxSaltStressRelationship(GetCrop_DaysToCCini(), &
@@ -4125,7 +4132,7 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     call fDaily_write('')
     if (TheProjectType == typeproject_TypePRM) then
         write(Str1, '(i4)') TheNrRun
-        call fDaily_write('   Run:'// trim(Str1))
+        call fDaily_write('#   Run:'// trim(Str1))
     end if
 
     ! B. thickness of soil profile and root zone
@@ -4213,10 +4220,10 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     if (GetOut5CompWC()) then
         call fDaily_write(trim('       WC01'), .false.)
         do Compi = 2, (GetNrCompartments()-1)
-            write(Str1, '(i2)') Compi
+            write(Str1, '(i0.2)') Compi
             call fDaily_write('       WC'// trim(Str1), .false.)
         end do
-        write(Str1,'(i2)') GetNrCompartments()
+        write(Str1,'(i0.2)') GetNrCompartments()
         if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
             call fDaily_write('       WC'// trim(Str1), .false.)
         else
@@ -4227,10 +4234,10 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     if (GetOut6CompEC()) then
         call fDaily_write(trim('      ECe01'), .false.)
         do Compi = 2, (GetNrCompartments()-1)
-            write(Str1, '(i2)') Compi
+            write(Str1, '(i0.2)') Compi
             call fDaily_write('      ECe'// trim(Str1), .false.)
         end do
-        write(Str1, '(i2)') GetNrCompartments()
+        write(Str1, '(i0.2)') GetNrCompartments()
         if (GetOut7Clim()) then
             call fDaily_write('      ECe'// trim(Str1), .false.)
         else
@@ -4247,13 +4254,13 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     if (GetOut1Wabal()) then
         if ((GetOut2Crop()) .or. (GetOut3Prof()) .or. (GetOut4Salt()) &
             .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) .or. (GetOut7Clim())) then
-            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+            write(tempstring, '(2a)') '#        mm      mm       mm     mm' // &
                   '     mm     mm       mm       mm      m ', &
                     '       mm       mm     %        mm       mm    %' // &
                             '        mm      mm       %'
             call fDaily_write(trim(tempstring), .false.)
         else
-            write(tempstring, '(2a)') '        mm      mm       mm     mm' // &
+            write(tempstring, '(2a)') '#        mm      mm       mm     mm' // &
                   '     mm     mm       mm       mm      m ', &
                     '       mm       mm     %        mm       mm    %' // &
                         '        mm      mm       %'
@@ -4551,31 +4558,36 @@ subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
     character(len=1024) :: tempstring
 
     ! A. Run number
-    call fHarvest_write('')
-    if (TheProjectType == typeproject_TypePRM) then
+    if(TheNrRun.EQ.1) then
+      call fHarvest_write('')
+      if (TheProjectType == typeproject_TypePRM) then
         write(tempstring, '(i4)') TheNrRun
-        call fHarvest_write('   Run:' // trim(tempstring))
-    end if
+        call fHarvest_write('#   Run:' // trim(tempstring))
+      end if
 
     ! B. Title
-    call fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    ' // &
-        'Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)')
-    call fHarvest_write('                                 days     ton/ha    ' // &
-        'ton/ha    ton/ha    ton/ha    ton/ha    ton/ha')
+    !call fHarvest_write('    Nr   Day  Month Year   DAP Interval  Biomass    ' // &
+    !    'Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)')
+      call fHarvest_write('    Nr   Day  Month Year  ' // &
+        '             Biomass-Sum(B)   Dry-Yield-Sum(Y) Fresh-Yield-Sum(Y)')
+      call fHarvest_write('#                         ' // &
+        '             ton/ha           ton/ha           ton/ha')
 
     ! C. start crop cycle
-    call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
-    call SetNoYear(Yeari == 1901)
-    if (GetNoYear()) then
+      call DetermineDate(GetCrop_Day1(), Dayi, Monthi, Yeari)
+      call SetNoYear(Yeari == 1901)
+       if (GetNoYear()) then
         if (Dayi == 0) then
             Dayi = 1
         end if
         Yeari = 9999
+       end if
+       Nr = 0._dp
+    !write(tempstring, '(i6, 3i6, f34.3, 2f20.3)') 0, Dayi, Monthi, Yeari, &
+    !                                              Nr, Nr, Nr
+       !write(tempstring, '(i6, 3i6, f34.3)') 0, Dayi, Monthi, Yeari
+       !call fHarvest_write(trim(tempstring))
     end if
-    Nr = 0._dp
-    write(tempstring, '(i6, 3i6, f34.3, 2f20.3)') 0, Dayi, Monthi, Yeari, &
-                                                  Nr, Nr, Nr
-    call fHarvest_write(trim(tempstring))
 end subroutine WriteTitlePart1MultResults
 
 
@@ -4767,6 +4779,9 @@ subroutine InitializeSimulationRunPart1()
     integer(int32) :: Crop_DaysToFullCanopySF_temp
     logical :: WaterTableInProfile_temp
 
+    if(debug)then
+      write(*,*)'AA0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 1. Adjustments at start
     ! 1.1 Adjust soil water and salt content if water table IN soil profile
     WaterTableInProfile_temp = GetWaterTableInProfile()
@@ -4855,6 +4870,9 @@ subroutine InitializeSimulationRunPart1()
     call SetStressTot_Sto(0._dp)
     call SetStressTot_Weed(0._dp)
 
+    if(debug)then
+      write(*,*)'AA1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 6. Soil fertility stress
     ! Coefficients for soil fertility - biomass relationship
     ! AND for Soil salinity - CCx/KsSto relationship
@@ -4895,6 +4913,10 @@ subroutine InitializeSimulationRunPart1()
         else
             call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
         end if
+    end if
+
+    if(debug)then
+      write(*,*)'GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
 
     ! Maximum sum Kc (for reduction WP in season if soil fertility stress)
@@ -5508,13 +5530,13 @@ subroutine CreateEvalData(NrRun)
     call fEval_open(GetfEval_filename(), 'w')
     write(tempstring2, '(a)') GetAquaCropDescriptionWithTimeStamp()
     call fEval_write(trim(tempstring2))
-    call fEval_write('Evaluation of simulation results - Data')
+    call fEval_write('# Evaluation of simulation results - Data')
     write(TempString, '(f5.2)') GetZeval()
-    call fEval_write('                                             ' // &
+    call fEval_write('#                                             ' // &
     '                                        for soil depth: ' // trim(TempString) // ' m')
     call fEval_write('   Day Month  Year   DAP Stage   CCsim   CCobs   CCstd    Bsim      ' // &
     'Bobs      Bstd   SWCsim  SWCobs   SWstd')
-    call fEval_write('                                   %       %       %     ton/ha    ' // &
+    call fEval_write('#                                   %       %       %     ton/ha    ' // &
     'ton/ha    ton/ha    mm       mm      mm')
 end subroutine CreateEvalData
 
@@ -5542,7 +5564,7 @@ subroutine OpenOutputRun(TheProjectType)
         '    SaltIn   SaltOut    SaltUp  SaltProf' // &
         '     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr' // &
         '  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN')
-    call fRun_write('                                           mm       mm  degC.day    ppm' // &
+    call fRun_write('#                                           mm       mm  degC.day    ppm' // &
         '        mm       mm       mm       mm       mm       mm        %       mm       mm        %' // &
         '    ton/ha    ton/ha    ton/ha    ton/ha' // &
         '      days       %        %        %        %        %        %  ' // &
@@ -5585,7 +5607,7 @@ subroutine OpenPart1MultResults(TheProjectType)
     call fHarvest_open(GetfHarvest_filename(), 'w')
     write(tempstring, '(a)') GetAquaCropDescriptionWithTimeStamp()
     call fHarvest_write(trim(tempstring))
-    call fHarvest_write('Biomass and Yield at Multiple cuttings')
+    call fHarvest_write('# Biomass and Yield at Multiple cuttings')
 end subroutine OpenPart1MultResults
 
 
@@ -5603,6 +5625,9 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     type(rep_DayEventDbl), dimension(31) :: TminDataSet_temp, TmaxDataSet_temp
     real(dp) :: Tmin_temp, Tmax_temp
     type(rep_DayEventDbl), dimension(31) :: EToDataSet_temp, RainDataSet_temp
+    if(debug .eqv. .TRUE.)then
+       write(*,*)'RR0 FromSimDay, ToSimDay=',FromSimDay, ToSimDay
+    end if
 
     ! 1. ETo file
     if (GetEToFile() /= '(None)') then
@@ -5707,6 +5732,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     ! 2. Rain File
     if (GetRainFile() /= '(None)') then
         totalname = GetRainFilefull()
+        RunningDay = FromSimDay
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
             select case (GetRainRecord_DataType())
@@ -5736,8 +5762,14 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                 end do
                 call SetRain(GetRainDataSet_Param(i))
             case(datatype_Monthly)
+                if(debug .eqv. .TRUE.)then
+                   write(*,*)'RR1 FromSimDay, RunningDay=',FromSimDay, RunningDay
+                end if
                 RainDataSet_temp = GetRainDataSet()
                 call GetMonthlyRainDataSet(FromSimDay, RainDataSet_temp)
+                if(debug .eqv. .TRUE.)then
+                   write(*,*)'RR1b FromSimDay, RunningDay=',FromSimDay, RunningDay
+                end if
                 call SetRainDataSet(RainDataSet_temp)
                 i = 1
                 do while (GetRainDataSet_DayNr(i) /= FromSimDay)
@@ -5752,7 +5784,13 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                                                           action='write')
             write(fRainS, '(f10.4)') GetRain()
             ! next days of simulation period
+            if(debug .eqv. .TRUE.)then
+               write(*,*)'RR2 FromSimDay, ToSimDay=',FromSimDay, ToSimDay
+            end if
             do RunningDay = (FromSimDay + 1), ToSimDay
+                if(debug)then
+                   write(*,*)'RR2 RunningDay=',RunningDay
+                end if
                 select case (GetRainRecord_DataType())
                 case(datatype_daily)
                     if (rc == iostat_end) then
@@ -5791,8 +5829,18 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                     i = 1
                     do while (GetRainDataSet_DayNr(i) /= RunningDay)
                         i = i+1
+                        if(debug)then
+                          write(*,*)'RR2a RunningDay,i=',RunningDay,i
+                          write(*,*)'RR2a GRDS=',GetRainDataSet_DayNr(i)
+                        end if
                     end do
+                    if(debug)then
+                      write(*,*)'RR2b RunningDay,i=',RunningDay,i
+                    end if
                     call SetRain(GetRainDataSet_Param(i))
+                    if(debug)then
+                      write(*,*)'RR2c RunningDay,i=',RunningDay,i
+                    end if
                 end select
                 write(fRainS, '(f10.4)') GetRain()
             end do
@@ -5802,6 +5850,9 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
             end if
             close(fRainS)
         end if
+    end if
+    if(debug)then
+      write(*,*)'RR2d FromSimDay, ToSimDay=',FromSimDay, ToSimDay
     end if
 
     ! 3. Temperature file
@@ -5864,7 +5915,13 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                                                           action='write')
             write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
             ! next days of simulation period
+            if(debug)then
+               write(*,*)'RR3 FromSimDay, ToSimDay=',FromSimDay, ToSimDay
+            end if
             do RunningDay = (FromSimDay + 1), ToSimDay
+                if(debug)then
+                   write(*,*)'RR3 RunningDay=',RunningDay
+                end if
                 select case (GetTemperatureRecord_Datatype())
                 case(datatype_Daily)
                     if (rc == iostat_end) then
@@ -5919,8 +5976,17 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                     do while (GetTminDataSet_DayNr(i) /= RunningDay)
                         i = i+1
                     end do
+                    if(debug)then
+                      write(*,*)'RR3b RunningDay,i=',RunningDay,i
+                      write(*,*)'RR3a GRDS=',GetTminDataSet_DayNr(i)
+                      write(*,*)'RR3c Tmin=',GetTminDataSet_Param(i)
+                      write(*,*)'RR3c Tmax=',GetTmaxDataSet_Param(i)
+                    end if
                     call SetTmin(GetTminDataSet_Param(i))
                     call SetTmax(GetTmaxDataSet_Param(i))
+                    if(debug)then
+                      write(*,*)'RR3d'
+                    end if
                 end select
                 write(fTempS, '(2f10.4)') GetTmin(), GetTmax()
             end do
@@ -5931,6 +5997,10 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
             close(fTempS)
         end if
     end if
+    if(debug)then
+       write(*,*)'RR4 FromSimDay, ToSimDay=',FromSimDay, ToSimDay
+       write(*,*)'RR4 RunningDay=',RunningDay
+    endif
 end subroutine CreateDailyClimFiles
 
 
@@ -6601,8 +6671,14 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
         ! Do nothing
         return
     end if
+    if(debug)then
+      write(*,*)'CC0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
 
     call LoadSimulationRunProject(int(NrRun, kind=int32))
+    if(debug)then
+      write(*,*)'CC1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
 
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
@@ -6611,6 +6687,9 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     PreviousSum_temp = GetPreviousSum()
     call ResetPreviousSum(PreviousSum_temp)
     call SetPreviousSum(PreviousSum_temp)
+    if(debug)then
+      write(*,*)'CC2 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     call InitializeSimulationRunPart1()
 
     contains
@@ -6678,7 +6757,7 @@ subroutine InitializeRunPart2(NrRun, TheProjectType)
 
     call InitializeSimulationRunPart2()
 
-    if (GetOutDaily()) then
+    if (GetOutDaily().AND.(NrRun.EQ.1)) then
         call WriteTitleDailyResults(TheProjectType, NrRun)
     end if
 
@@ -6712,7 +6791,7 @@ subroutine RecordHarvest(NrCut, DayInSeason)
 
     if (NrCut == 9999) then
         ! last line at end of season
-        write(tempstring, '(4i6, f34.3)') NrCut, Dayi, Monthi, Yeari, &
+        write(tempstring, '(4i6, f20.3)') NrCut, Dayi, Monthi, Yeari, &
                                           GetSumWaBal_Biomass()
         call fHarvest_write(trim(tempstring), .false.)
         if (GetCrop_DryMatter() == undef_int) then
@@ -7781,6 +7860,9 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
     integer(int8) :: NrRun
     integer(int32) :: NrRuns
 
+    if(debug)then
+      write(*,*)'DD0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     call InitializeSimulation(TheProjectFile_, TheProjectType)
 
     select case (TheProjectType)
@@ -7791,6 +7873,9 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
     end select
 
     do NrRun = 1, NrRuns
+        if(debug)then
+          write(*,*)'DD1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+        end if
         call InitializeRunPart1(NrRun, TheProjectType)
         call InitializeClimate()
         call InitializeRunPart2(NrRun, TheProjectType)
