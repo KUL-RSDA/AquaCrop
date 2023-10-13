@@ -5605,7 +5605,7 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
         ! adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
         tMax = roundc(HImax/dHIdt_local, mold=1)
         if ((HIfinal == HImax) .and. (t <= tmax) &
-                              .and. (CCi <= (PercCCxHIfinal/100._dp)) &
+                              .and. ((CCi+epsilon(0._dp)) <= (PercCCxHIfinal/100._dp)) &
                               .and. (TheCCxWithered > epsilon(0._dp)) &
                               .and. (CCi < TheCCxWithered) &
                               .and. (GetCrop_subkind() /= subkind_Vegetative) &
