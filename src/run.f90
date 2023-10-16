@@ -6744,11 +6744,11 @@ end subroutine RecordHarvest
 !--------end duplicate--------!
 
 
-subroutine AdvanceOneTimeStep(WPi)
+subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     real(dp), intent(inout) :: WPi
+    logical, intent(inout) :: HarvestNow
 
     real(dp) :: PotValSF, KsTr, TESTVALY, PreIrri, StressStomata, FracAssim
-    logical :: HarvestNow
     integer(int32) :: VirtualTimeCC, DayInSeason
     real(dp) :: SumGDDadjCC, RatDGDD, &
                 Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, &
@@ -7761,12 +7761,14 @@ subroutine FileManagement()
 
     integer(int32) :: RepeatToDay
     real(dp) :: WPi
+    logical :: HarvestNow
 
     WPi = 0._dp
+    HarvestNow = .false.
     RepeatToDay = GetSimulation_ToDayNr()
 
     loop: do
-        call AdvanceOneTimeStep(WPi)
+        call AdvanceOneTimeStep(WPi, HarvestNow)
         call ReadClimateNextDay()
         call SetGDDVariablesNextDay()
         if ((GetDayNri()-1) == RepeatToDay) exit loop
