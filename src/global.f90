@@ -5415,8 +5415,10 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
     ! 3. Calculate Sum
     do Dayi = 1, L1234
         ! 3.1 calculate growing degrees for the day
+        !WRITE(*,*) Dayi,L1234,L123,GDDL1234
         if (GetTemperatureFile() /= '(None)') then
             read(fhandle, *) Tndayi, Txdayi
+            !WRITE(*,*) Tndayi, Txdayi 
             GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                                     GetSimulParam_GDDMethod())
         else

@@ -607,6 +607,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
     real(dp) :: aOver3Max, bOver2Max, cMax
 
     call DetermineDate(DayNri, Dayi, Monthi, Yeari)
+!        write(*,*)'TTT0,DayN,Dayi,Monthi,Yeari',DayNri,Dayi,Monthi,Yeari
     call GetSetofThreeMonths(Monthi, Yeari, &
          C1Min, C2Min, C3Min, C1Max, C2Max, C3Max, X1, X2, X3, t1)
 
@@ -683,9 +684,11 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
             Yfile = GetTemperatureRecord_FromY()
         end if
         OK3 = .false.
+!        write(*,*)'TTT1,Monthi,Yeari',Monthi,Yeari
 
         ! 2. IF 3 or less records
         if (GetTemperatureRecord_NrObs() <= 3) then
+!            write(*,*)'TTT2'
             call ReadMonth(C1Min, C1Max, fhandle, rc)
             X1 = n1
             select case (GetTemperatureRecord_NrObs())
@@ -743,20 +746,24 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
         ! 3. If first observation
         if ((.not. OK3) .and. ((Monthi == Mfile) .and. (Yeari == Yfile))) then
+!            write(*,*)'TTT3'
             t1 = 0
             call ReadMonth(C1Min, C1Max, fhandle, rc)
+!            write(*,*)'TTT3a,Mfile,Y,Obsi,TMx=',Mfile,Yfile,Obsi,C1Max/30.0
             X1 = n1
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             call ReadMonth(C2Min, C2Max, fhandle, rc)
+!            write(*,*)'TTT3a,Mfile,Y,Obsi,TMx=',Mfile,Yfile,Obsi,C2Max/30.0
             X2 = X1 + n2
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             call ReadMonth(C3Min, C3Max, fhandle, rc)
+!            write(*,*)'TTT3a,Mfile,Y,Obsi,TMx=',Mfile,Yfile,Obsi,C3Max/30.0
             X3 = X2 + n3
             OK3 = .true.
         end if
@@ -765,6 +772,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
         if ((.not. OK3) .and. (Monthi == GetTemperatureRecord_ToM())) then
             if ((GetTemperatureRecord_FromY() == 1901) &
                 .or. (Yeari == GetTemperatureRecord_ToY())) then
+!                write(*,*)'TTT4'
                 do Nri = 1, (GetTemperatureRecord_NrObs()-3)
                     read(fhandle, *, iostat=rc)
                     Mfile = Mfile + 1
@@ -793,6 +801,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
 
         ! 5. IF not previous cases
         if (.not. OK3) then
+!            write(*,*)'TTT5,Monthi,Yeari=',Monthi,Yeari
             Obsi = 1
             do while (.not. OK3)
                 if ((Monthi == Mfile) .and. (Yeari == Yfile)) then
@@ -802,7 +811,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                    if (Mfile > 12) then
                        call AdjustMONTHandYEAR(Mfile, Yfile)
                    end if
-                  Obsi = Obsi + 1
+                   Obsi = Obsi + 1
                 end if
             end do
             Mfile = GetTemperatureRecord_FromM()
@@ -814,6 +823,7 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                 end if
             end do
             call ReadMonth(C1Min, C1Max, fhandle, rc)
+!            write(*,*)'TTT5a,Mfile,Y,Obsi,TMx=',Mfile,Yfile,Obsi,C1Max/30.0
             X1 = n1
             t1 = X1
             Mfile = Mfile + 1
@@ -821,15 +831,18 @@ subroutine GetMonthlyTemperatureDataSet(DayNri, TminDataSet, TmaxDataSet)
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             call ReadMonth(C2Min, C2Max, fhandle, rc)
+!            write(*,*)'TTT5b,Mfile,Y,Obsi,Tmx=',Mfile,Yfile,Obsi,C2Max/30.0
             X2 = X1 + n2
             Mfile = Mfile + 1
             if (Mfile > 12) then
                 call AdjustMONTHandYEAR(Mfile, Yfile)
             end if
             call ReadMonth(C3Min, C3Max, fhandle, rc)
+!            write(*,*)'TTT5c,Mfile,Y,Obsi,Tmx=',Mfile,Yfile,Obsi,C3Max/30.0
             X3 = X2 + n3
         end if
 
+!        write(*,*)'TTT6'
         close(fhandle)
     end subroutine GetSetofThreeMonths
 
@@ -1048,12 +1061,16 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
     type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
     logical :: AdjustDayNri
     real(dp) :: TDayMin_loc, TDayMax_loc
+    logical :: debug = .FALSE.
 
     TDayMin_loc = TDayMin
     TDayMax_loc = TDayMax
 
 
     NrCdays = 0
+    if(debug)then
+          write(*,*)'SCD DtoH()=',NrCDays
+    end if
     if (ValGDDays > 0) then
         if (GetTemperatureFile() == '(None)') then
             ! given average Tmin and Tmax
@@ -1082,6 +1099,9 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
 
                 select case (GetTemperatureRecord_DataType())
                 case (datatype_daily)
+                    if(debug)then
+                         write(*,*)'SCD0 DtoH()=',NrCDays
+                    end if
                     ! Tmin and Tmax arrays contain the TemperatureFilefull data
                     i = DayNri - GetTemperatureRecord_FromDayNr() + 1
                     TDayMin_loc = Tmin(i)
@@ -1155,6 +1175,9 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                     end if
 
                 case(datatype_monthly)
+                    if(debug)then
+                         write(*,*)'SCD1 DtoH()=',NrCDays
+                    end if
                     call GetMonthlyTemperatureDataSet(DayNri, &
                            TminDataSet, TmaxDataSet)
                     i = 1
@@ -1168,6 +1191,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                     NrCDays = NrCDays + 1
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
+                    if(debug)then
+                         write(*,*)'SCD2 DtoH()=',NrCDays
+                         write(*,*)'SCD2b ',RemainingGDDays,DayNri,GetTemperatureRecord_ToDayNr(),AdjustDayNri
+                    end if
                     do while ((RemainingGDDays > 0) &
                         .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
                          .or. AdjustDayNri))
@@ -1186,9 +1213,18 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                         NrCDays = NrCDays + 1
                         RemainingGDDays = RemainingGDDays - DayGDD
                         DayNri = DayNri + 1
+                        if(debug)then
+                           write(*,*)'SCD2c ',RemainingGDDays,DayGDD,DayNri,Tbase,Tupper,TdayMin_loc,TDayMax_loc
+                        end if
                     end do
+                    if(debug)then
+                         write(*,*)'SCD3 DtoH()=',NrCDays
+                    end if
                     if (RemainingGDDays > 0) then
                         NrCDays = undef_int
+                    end if
+                    if(debug)then
+                         write(*,*)'SCD4 DtoH()=',NrCDays
                     end if
                 end select
             else
@@ -1196,6 +1232,9 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
             endif
         endif
     endif
+    if(debug)then
+          write(*,*)'SCD5 DtoH()=',NrCDays
+    end if
     SumCalendarDays = NrCDays
 end function SumCalendarDays
 
@@ -1371,6 +1410,7 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
 
     real(dp) :: tmp_NoTempFileTMin, tmp_NoTempFileTMax
     integer :: ExtraDays, ExtraGDDays
+    logical :: debug = .FALSE.
 
     tmp_NoTempFileTMin = NoTempFileTMin
     tmp_NoTempFileTMax = NoTempFileTMax
@@ -1398,6 +1438,9 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
                  Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
         DHarvest = SumCalendarDays(GDDHarvest, PlantDayNr,&
                      Tbase, Tupper, tmp_NoTempFileTMin, tmp_NoTempFileTMax)
+        if(debug)then
+          write(*,*)'ZZ0 DHarvest=',DHarvest
+        end if
     end if
 
     DLZmax = SumCalendarDays(GDDLZmax, PlantDayNr,&
@@ -1433,6 +1476,9 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
         Succes = .false.
     end if
 
+    if(debug)then
+          write(*,*)'ZZ1 DHarvest=',DHarvest
+    end if
     if (Succes) then
         CGC = (real(GDDL12, kind=dp)/real(D12, kind=dp)) * GDDCGC
         call GDDCDCToCDC(PlantDayNr, D123, GDDL123, GDDHarvest,&
@@ -1440,6 +1486,9 @@ subroutine AdjustCalendarDays(PlantDayNr, InfoCropType,&
         call DetermineLengthGrowthStages(CCo, CCx, CDC, D0, DHarvest,&
                IsCGCGiven, TheDaysToCCini, &
                ThePlanting, D123, StLength, D12, CGC)
+        if(debug)then
+          write(*,*)'ZZ2 DHarvest=',DHarvest
+        end if
         if ((InfoCropType == subkind_Grain) .or. (InfoCropType == subkind_Tuber)) then
             dHIdt = real(HIndex, kind=dp)/real(LHImax, kind=dp)
         end if
@@ -1482,6 +1531,7 @@ subroutine AdjustCalendarCrop(FirstCropDay)
     real(dp) :: Crop_CGC_temp
     real(dp) :: Crop_CDC_temp
     real(dp) :: Crop_dHIdt_temp
+    logical :: debug = .FALSE.
 
     CGCisGiven = .true.
 
@@ -1500,6 +1550,9 @@ subroutine AdjustCalendarCrop(FirstCropDay)
         Crop_DaysToFlowering_temp = GetCrop_DaysToFlowering()
         Crop_LengthFlowering_temp = GetCrop_LengthFlowering()
         Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
+        if(debug)then
+          write(*,*)'ACC0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+        end if
         Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
         Crop_DaysToMaxRooting_temp = GetCrop_DaysToMaxRooting()
         Crop_DaysToHIo_temp = GetCrop_DaysToHIo()
@@ -1956,7 +2009,11 @@ subroutine LoadSimulationRunProject(NrRun)
     integer(int32) :: ZiAqua_temp
     type(rep_clim) :: etorecord_tmp, rainrecord_tmp
     real(dp)       :: ECiAqua_temp, SurfaceStorage_temp
+    logical :: debug = .FALSE.
 
+    if(debug)then
+      write(*,*)'WW0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 0. Year of cultivation and Simulation and Cropping period
     call SetSimulation_YearSeason(ProjectInput(NrRun)%Simulation_YearSeason)
     call SetCrop_Day1(ProjectInput(NrRun)%Crop_Day1)
@@ -1975,6 +2032,9 @@ subroutine LoadSimulationRunProject(NrRun)
         read(fClim, '(a)', iostat=rc) TempString
         call SetClimateDescription(trim(TempString))
         close(fClim)
+    end if
+    if(debug)then
+      write(*,*)'WW1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
 
     ! 1.1 Temperature
@@ -2002,6 +2062,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetTemperatureRecord(temperature_record)
     end if
 
+    if(debug)then
+      write(*,*)'WW2 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 1.2 ETo
     call SetEToFile(ProjectInput(NrRun)%ETo_Filename)
     if ((GetEToFile() == '(None)') .or. &
@@ -2018,6 +2081,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetEToRecord(etorecord_tmp)
     end if
 
+    if(debug)then
+      write(*,*)'WW3 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 1.3 Rain
     call SetRainFile(ProjectInput(NrRun)%Rain_Filename)
     if ((GetRainFile() == '(None)') .or. &
@@ -2035,6 +2101,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetRainRecord(rainrecord_tmp)
     end if
 
+    if(debug)then
+      write(*,*)'WW4 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 1.4 CO2
     call SetCO2File(ProjectInput(NrRun)%CO2_Filename)
     if (GetCO2File() /= '(None)') then
@@ -2049,6 +2118,9 @@ subroutine LoadSimulationRunProject(NrRun)
     end if
     call AdjustOnsetSearchPeriod() ! Set initial StartSearch and StopSearchDayNr
 
+    if(debug)then
+      write(*,*)'WW5 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 2. Calendar
     call SetCalendarFile(trim(ProjectInput(NrRun)%Calendar_Filename))
     if (GetCalendarFile() == '(None)') then
@@ -2061,12 +2133,24 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetCalendarDescription(CalendarDescriptionLocal)
     end if
 
+    if(debug)then
+      write(*,*)'WW5d GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 3. Crop
     call SetSimulation_LinkCropToSimPeriod(.true.)
+    if(debug)then
+      write(*,*)'WW5e GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     call SetCropFile(ProjectInput(NrRun)%Crop_Filename)
     call SetCropFilefull(ProjectInput(NrRun)%Crop_Directory // GetCropFile())
+    if(debug)then
+      write(*,*)'WW5f GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     call LoadCrop(GetCropFilefull())
 
+    if(debug)then
+      write(*,*)'WW6 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! Adjust crop parameters of Perennials
     if (GetCrop_subkind() == subkind_Forage) then
         ! adjust crop characteristics to the Year (Seeding/Planting or
@@ -2096,19 +2180,37 @@ subroutine LoadSimulationRunProject(NrRun)
         Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
         Crop_GDDaysToSenescence_temp = GetCrop_GDDaysToSenescence()
         Crop_GDDaysToHarvest_temp = GetCrop_GDDaysToHarvest()
+        if(debug)then
+           write(*,*)'WW6.0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+        end if
         call AdjustCropFileParameters(GetCropFileSet(),&
               GetCrop_DaysToHarvest(), GetCrop_Day1(), &
               GetCrop_ModeCycle(), GetCrop_Tbase(), GetCrop_Tupper(),&
               Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp,&
               Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp)
         call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
+        if(debug)then
+           write(*,*)'WW6,1 Crop_DaysToHarvest_temp=',Crop_DaysToHarvest_temp
+        end if
         call SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp)
+        if(debug)then
+           write(*,*)'WW6.2 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+        end if
         call SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp)
         call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
     end if
 
+    if(debug)then
+      write(*,*)'WW6a GetCrop_DaysToHarv,GetCrop_Day1=',GetCrop_DaysToHarvest(),GetCrop_Day1()
+    end if
     call AdjustCalendarCrop(GetCrop_Day1())
+    if(debug)then
+      write(*,*)'WW6a2 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     call CompleteCropDescription
+    if(debug)then
+      write(*,*)'WW6a3 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! Onset.Off := true;
     if (GetClimFile() == '(None)') then
         Crop_Day1_temp = GetCrop_Day1()
@@ -2120,6 +2222,9 @@ subroutine LoadSimulationRunProject(NrRun)
     else
         call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
     end if
+    if(debug)then
+      write(*,*)'WW6b GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
 
     ! adjusting ClimRecord.'TO' for undefined year with 365 days
     if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
@@ -2128,6 +2233,9 @@ subroutine LoadSimulationRunProject(NrRun)
     end if
     ! adjusting simulation period
     call AdjustSimPeriod
+    if(debug)then
+      write(*,*)'WW6c GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
 
     ! 4. Irrigation
     call SetIrriFile(ProjectInput(NrRun)%Irrigation_Filename)
@@ -2139,6 +2247,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetIrriFileFull(ProjectInput(NrRun)%Irrigation_Directory &
                              // GetIrriFile())
         call LoadIrriScheduleInfo(GetIrriFileFull())
+    end if
+    if(debug)then
+      write(*,*)'WW6d GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
 
     ! 5. Field Management
@@ -2167,6 +2278,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
     end if
 
+    if(debug)then
+      write(*,*)'WW7 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 6. Soil Profile
     call SetProfFile(ProjectInput(NrRun)%Soil_Filename)
     if (GetProfFile() == '(External)') then
@@ -2191,6 +2305,9 @@ subroutine LoadSimulationRunProject(NrRun)
                                     // GetGroundWaterFile())
         ! Loading the groundwater is done after loading the soil profile (see
         ! 9.)
+    end if
+    if(debug)then
+      write(*,*)'WW8 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
 
     ! 8. Set simulation period
@@ -2318,6 +2435,9 @@ subroutine LoadSimulationRunProject(NrRun)
         call ResetSWCToFC()
     end if
 
+    if(debug)then
+      write(*,*)'WW9 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+    end if
     ! 11. Off-season conditions
     call SetOffSeasonFile(ProjectInput(NrRun)%OffSeason_Filename)
     if (GetOffSeasonFile() == '(None)') then
@@ -2340,6 +2460,9 @@ subroutine LoadSimulationRunProject(NrRun)
         observations_descr = GetObservationsDescription()
         call GetFileDescription(GetObservationsFileFull(), observations_descr)
         call SetObservationsDescription(observations_descr)
+    end if
+    if(debug)then
+      write(*,*)'WW10 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
 
 
@@ -3006,6 +3129,7 @@ real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
     real(dp) :: RatDGDD, SumBPot, SumBSF
     integer(int32) :: tSwitch, DaysYieldFormation
 
+    write(*,*)'AA tempproc GetCrop_DaysToHarvest()=',TempHarvest
     ! 1. Initialize
     ! 1 - a. Maximum sum Kc
     SumKcTop = SeasonalSumOfKcPot(TempDaysToCCini, TempGDDaysToCCini,&
@@ -3144,6 +3268,7 @@ subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     call SetSimulation_DelayedDays(0) ! required for CalculateETpot
     L12SF = L12 ! to calculate SumKcTop (no stress)
     GDDL12SF = GDDL12 ! to calculate SumKcTop (no stress)
+    write(*,*)'BB tempproc GetCrop_DaysToHarvest()=',L1234
     ! Maximum sum Kc (no stress)
     SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
         L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
@@ -3356,6 +3481,7 @@ subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
     call SetSimulation_DelayedDays(0) ! required for CalculateETpot
     GDDL12SS = GDDL12 ! to calculate SumKcTop (no stress)
     BNor100 = real(undef_int, kind=dp)
+    write(*,*)'CC tempproc GetCrop_DaysToHarvest()=',L1234
     ! Maximum sum Kc (no stress)
     SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
         L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
