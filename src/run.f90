@@ -3491,7 +3491,7 @@ subroutine CheckForPrint(TheProjectFile)
         SaltIn = GetSumWaBal_SaltIn() - GetPreviousSum_SaltIn()
         SaltOut = GetSumWaBal_SaltOut() - GetPreviousSum_SaltOut()
         CRsalt = GetSumWaBal_CRsalt() - GetPreviousSum_CRsalt()
-        call WriteTheResults(int(undef_int,kind=int8), DayN, MonthN, YearN, DayN, MonthN, &
+        call WriteTheResults(int(undef_int,kind=int32), DayN, MonthN, YearN, DayN, MonthN, &
                              YearN, GetRain(), GetETo(), GetGDDayi(), GetIrrigation(), &
                              GetInfiltrated(), GetRunoff(), GetDrain(), &
                              GetCRwater(), GetEact(), GetEpot(), GetTact(), &
@@ -4033,7 +4033,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
     end if
 
     if(debug)then
-      write(*,*)'BB GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+       write(*,*)'BB GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
     ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if (GetSimulation_SalinityConsidered() .eqv. .true.) then
@@ -4122,7 +4122,7 @@ end subroutine DetermineGrowthStage
 
 subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     integer(intenum), intent(in) :: TheProjectType
-    integer(int8), intent(in) :: TheNrRun
+    integer(int32), intent(in) :: TheNrRun
 
     character(len=1025) :: Str1, Str2, tempstring
     real(dp) :: NodeD, Zprof
@@ -4360,7 +4360,7 @@ end subroutine WriteTitleDailyResults
 
 
 subroutine FinalizeRun2(NrRun, TheProjectType)
-    integer(int8), intent(in) :: NrRun
+    integer(int32), intent(in) :: NrRun
     integer(intenum), intent(in) :: TheProjectType
 
     call CloseClimateFiles()
@@ -4376,7 +4376,7 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
 
 
     subroutine CloseEvalDataPerformEvaluation(NrRun)
-        integer(int8), intent(in) :: NrRun
+        integer(int32), intent(in) :: NrRun
 
         character(len=:), allocatable :: totalnameEvalStat
         character(len=1024) :: StrNr
@@ -4551,7 +4551,7 @@ end subroutine OpenIrrigationFile
 
 subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
     integer(intEnum), intent(in) :: TheProjectType
-    integer(int8), intent(in) :: TheNrRun
+    integer(int32), intent(in) :: TheNrRun
 
     integer(int32) :: Dayi, Monthi, Yeari
     real(dp) :: Nr
@@ -4597,7 +4597,7 @@ subroutine WriteTheResults(ANumber, Day1, Month1, Year1, DayN, MonthN, &
                            TrxPer, SalInPer, SalOutPer, &
                            SalCRPer, BiomassPer, BUnlimPer, BmobPer, BstoPer, &
                            TheProjectFile)
-    integer(int8), intent(in) :: ANumber
+    integer(int32), intent(in) :: ANumber
     integer(int32), intent(in) :: Day1
     integer(int32), intent(in) :: Month1
     integer(int32), intent(in) :: Year1
@@ -4780,8 +4780,14 @@ subroutine InitializeSimulationRunPart1()
     logical :: WaterTableInProfile_temp
 
     if(debug)then
-      write(*,*)'AA0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+       write(*,*)'AA0 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
     end if
+    if(GetCrop_DaysToHarvest().gt.364)THEN
+       write(*,*)'AA1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+       write(*,*)'growing season too short for GDD: returning'
+       return
+    end if
+       
     ! 1. Adjustments at start
     ! 1.1 Adjust soil water and salt content if water table IN soil profile
     WaterTableInProfile_temp = GetWaterTableInProfile()
@@ -5471,7 +5477,7 @@ end subroutine InitializeSimulationRunPart2
 
 
 subroutine CreateEvalData(NrRun)
-    integer(int8), intent(in) :: NrRun
+    integer(int32), intent(in) :: NrRun
 
     integer(int32) :: dayi, monthi, yeari, integer_temp
     character(len=:), allocatable :: TempString
@@ -6132,7 +6138,7 @@ end subroutine FinalizeSimulation
 
 
 subroutine WriteSimPeriod(NrRun, TheProjectFile)
-    integer(int8), intent(in) :: NrRun
+    integer(int32), intent(in) :: NrRun
     character(len=*), intent(in) :: TheProjectFile
 
     integer(int32) :: Day1, Month1, Year1, DayN, MonthN, YearN
@@ -6190,7 +6196,7 @@ subroutine WriteIntermediatePeriod(TheProjectFile)
     BstoPer = GetSimulation_Storage_Btotal() - GetPreviousBsto()
 
     ! write
-    call WriteTheResults(int(undef_int, kind=int8), Day1, Month1, Year1, DayN, &
+    call WriteTheResults(int(undef_int, kind=int32), Day1, Month1, Year1, DayN, &
                          MonthN, YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
                          ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
                          TrxPer, SalInPer, SalOutPer, SalCRPer, BiomassPer, &
@@ -6662,7 +6668,7 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     !! Loads the run input from the project file
     !! Initializes parameters and states
     !! Calls InitializeSimulationRunPart1
-    integer(int8), intent(in) :: NrRun
+    integer(int32), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
@@ -6752,7 +6758,7 @@ subroutine InitializeRunPart2(NrRun, TheProjectType)
     !! Part2 (after reading the climate) of the run initialization
     !! Calls InitializeSimulationRunPart2
     !! Initializes write out for the run
-    integer(int8), intent(in) :: NrRun
+    integer(int32), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
     call InitializeSimulationRunPart2()
@@ -7467,7 +7473,7 @@ end subroutine SetGDDVariablesNextDay
 
 
 subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
-    integer(int8), intent(in) :: NrRun
+    integer(int32), intent(in) :: NrRun
     character(len=*), intent(in) :: TheProjectFile
     integer(intEnum), intent(in) :: TheProjectType
 
@@ -7857,7 +7863,7 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
     character(len=*), intent(in) :: TheProjectFile_
     integer(intEnum), intent(in) :: TheProjectType
 
-    integer(int8) :: NrRun
+    integer(int32) :: NrRun
     integer(int32) :: NrRuns
 
     if(debug)then
@@ -7873,12 +7879,22 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
     end select
 
     do NrRun = 1, NrRuns
-        if(debug)then
-          write(*,*)'DD1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
-        end if
         call InitializeRunPart1(NrRun, TheProjectType)
         call InitializeClimate()
         call InitializeRunPart2(NrRun, TheProjectType)
+
+        if(debug)then
+          write(*,*)'DD1 GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+        end if
+        if(GetCrop_DaysToHarvest().gt.364)THEN
+          write(*,*)'DD1b GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
+          write(*,*)'growing season too short for GDD: skipping year'
+          call SetDayNri(GetSimulation_ToDayNr())
+          call RecordHarvest((9999), &
+                 (GetDayNri() - GetCrop_Day1()+1)) ! last line at end of season
+          cycle 
+        end if
+ 
         call FileManagement()
         call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
         call FinalizeRun2(NrRun, TheProjectType)

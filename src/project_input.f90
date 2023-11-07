@@ -159,6 +159,8 @@ subroutine initialize_project_input(filename, NrRuns)
 
     integer :: i, NrRuns_local
 
+!    write(*,*)'IPI',NrRuns
+
     if (present(NrRuns)) then
         NrRuns_local = NrRuns
     else
@@ -169,6 +171,7 @@ subroutine initialize_project_input(filename, NrRuns)
     do i = 1, NrRuns_local
         call ProjectInput(i)%read_project_file(filename, i)
     end do
+!    write(*,*)'IPI_local',NrRuns_local
 end subroutine initialize_project_input
 
 
@@ -237,15 +240,25 @@ subroutine read_project_file(self, filename, NrRun)
          iostat=rc)
     read(fhandle, '(a)', iostat=rc) buffer
     self%Description = trim(buffer)
+!    write(*,*)'RPF ',self%Description
     read(fhandle, *, iostat=rc) self%VersionNr ! AquaCrop version Nr
+!    write(*,*)'RPF ',self%VersionNr
+!    write(*,*)'RPF ',NrRun
 
     if (NrRun > 1) then
         ! Skip sections belonging to previous runs
         do Runi = 1, (NrRun - 1)
             do i = 1, 47
-                read(fhandle, *, iostat=rc) ! 5 + 42 lines with files
+                read(fhandle, *, iostat=rc) buffer ! 5 + 42 lines with files !buffer added
+!                if (i.eq.1) then
+!                   write(*,*)'RPFSkip ',trim(buffer)
+!                end if
             end do
         end do
+    end if
+    if (NrRun > 127) then !PCM
+         read(fhandle, *, iostat=rc) buffer ! 5 + 42 lines with files !buffer added
+!         write(*,*)'RPFSkip ',trim(buffer)
     end if
 
     ! 0. Year of cultivation and Simulation and Cropping period
@@ -258,8 +271,10 @@ subroutine read_project_file(self, filename, NrRun)
     ! 1. Climate
     read(fhandle, '(a)', iostat=rc) buffer
     self%Climate_Info = trim(buffer)
+!    write(*,*)'RPF ',self%Climate_Info
     read(fhandle, *, iostat=rc) buffer
     self%Climate_Filename = trim(buffer)
+!    write(*,*)'RPF ',self%Climate_Filename
     read(fhandle, *, iostat=rc) buffer
     self%Climate_Directory = trim(buffer)
 
@@ -268,6 +283,7 @@ subroutine read_project_file(self, filename, NrRun)
     self%Temperature_Info = trim(buffer)
     read(fhandle, *, iostat=rc) buffer
     self%Temperature_Filename = trim(buffer)
+!    write(*,*)'RPF ',self%Temperature_Filename
     read(fhandle, *, iostat=rc) buffer
     self%Temperature_Directory = trim(buffer)
 
