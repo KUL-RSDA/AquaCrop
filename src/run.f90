@@ -7851,10 +7851,13 @@ subroutine FileManagement()
     RepeatToDay = GetSimulation_ToDayNr()
 
     loop: do
+        !write(*,*)'FM1 ',GetDayNri()-1,RepeatToDay
         call AdvanceOneTimeStep(WPi)
         call ReadClimateNextDay()
         call SetGDDVariablesNextDay()
+        !write(*,*)'FM2 ',GetDayNri()-1,RepeatToDay
         if ((GetDayNri()-1) == RepeatToDay) exit loop
+        if (GetDayNri() == 364) exit loop
     end do loop
 end subroutine FileManagement
 
@@ -7889,12 +7892,13 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
         if(GetCrop_DaysToHarvest().gt.364)THEN
           write(*,*)'DD1b GetCrop_DaysToHarvest()=',GetCrop_DaysToHarvest()
           write(*,*)'growing season too short for GDD: skipping year'
-          call SetDayNri(GetSimulation_ToDayNr())
-          call RecordHarvest((9999), &
-                 (GetDayNri() - GetCrop_Day1()+1)) ! last line at end of season
-          cycle 
+          !call SetDayNri(GetSimulation_ToDayNr())
+          !call RecordHarvest((9999), &
+          !       (GetDayNri() - GetCrop_Day1()+1)) ! last line at end of season
+          !call WriteSimPeriod(NrRun, TheProjectFile)
+          !cycle 
+          call SetDayNri(GetSimulation_FromDayNr())
         end if
- 
         call FileManagement()
         call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
         call FinalizeRun2(NrRun, TheProjectType)
