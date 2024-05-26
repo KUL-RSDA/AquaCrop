@@ -16120,7 +16120,7 @@ end subroutine SetTactWeedInfested
 
 function GetTminRun() result(TminRun_out)
     !! Getter for the "TminRun" global variable.
-    real(dp), dimension(366) :: TminRun_out
+    real(dp), dimension(365) :: TminRun_out
 
     TminRun_out = TminRun
 end function GetTminRun
@@ -16137,7 +16137,7 @@ end function GetTminRun_i
 
 subroutine SetTminRun(TminRun_in)
     !! Setter for the "TminRun" global variable.
-    real(dp), dimension(366), intent(in) :: TminRun_in
+    real(dp), dimension(365), intent(in) :: TminRun_in
 
     TminRun = TminRun_in
 end subroutine SetTminRun
@@ -16154,7 +16154,7 @@ end subroutine SetTminRun_i
 
 function GetTmaxRun() result(TmaxRun_out)
     !! Getter for the "TmaxRun" global variable.
-    real(dp), dimension(366) :: TmaxRun_out
+    real(dp), dimension(365) :: TmaxRun_out
 
     TmaxRun_out = TmaxRun
 end function GetTmaxRun
@@ -16171,7 +16171,7 @@ end function GetTmaxRun_i
 
 subroutine SetTmaxRun(TmaxRun_in)
     !! Setter for the "TmaxRun" global variable.
-    real(dp), dimension(366), intent(in) :: TmaxRun_in
+    real(dp), dimension(365), intent(in) :: TmaxRun_in
 
     TmaxRun = TmaxRun_in
 end subroutine SetTmaxRun
