@@ -915,7 +915,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
             RemainingDays = RemainingDays - 1
 
             do while ((RemainingDays > 0) &
-                        .and. (i<365))
+                        .and. (i<(GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
                         i = i + 1
                         TDayMin_local = GetTminRun_i(i)
                         TDayMax_local = GetTmaxRun_i(i)
@@ -1111,7 +1111,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
             RemainingGDDays = RemainingGDDays - DayGDD
 
             do while ((RemainingGDDays > 0) &
-                           .and. (i < 365))
+                           .and. (i < (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
                   i = i + 1
                   TDayMin_loc = GetTminRun_i(i)
                   TDayMax_loc = GetTmaxRun_i(i)
@@ -1289,7 +1289,7 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
         DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                                     GetSimulParam_GDDMethod())
         MaxGDDays = MaxGDDays + DayGDD
-        do while (i < 365)
+        do while (i < (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1))
             i = i + 1
             TDayMin = GetTminRun_i(i)
             TDayMax = GetTmaxRun_i(i)
