@@ -2493,7 +2493,7 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
 
     ! 1. Open Temperature file
     if ((GetTemperatureFile() /= '(None)') .and. &
-    if (GetTemperatureFile() /= '(None)') then
+        (GetTemperatureFile() /= '(External)')) then
         open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
              status='old', action='read', iostat=rc)
     end if
