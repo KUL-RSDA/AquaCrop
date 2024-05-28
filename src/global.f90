@@ -1046,7 +1046,7 @@ real(dp) :: Tpot ! mm/day
 real(dp) :: TactWeedInfested !mm/day
 real(dp) :: Tmax ! degC
 real(dp) :: Tmin ! degC
-real(dp), dimension(366) :: TmaxRun, TminRun
+real(sp), dimension(1:366) :: TmaxRun, TminRun
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay, OutDaily
@@ -5422,8 +5422,8 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
             GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                                     GetSimulParam_GDDMethod())
         elseif (GetTemperatureFile() == '(External)') then
-            Tndayi = GetTminRun_i(Dayi)
-            Txdayi = GetTmaxRun_i(Dayi)
+            Tndayi = real(GetTminRun_i(Dayi),kind=dp)
+            Txdayi = real(GetTmaxRun_i(Dayi),kind=dp)
             GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                                     GetSimulParam_GDDMethod())
         else
@@ -16120,7 +16120,7 @@ end subroutine SetTactWeedInfested
 
 function GetTminRun() result(TminRun_out)
     !! Getter for the "TminRun" global variable.
-    real(dp), dimension(366) :: TminRun_out
+    real(sp), dimension(1:366) :: TminRun_out
 
     TminRun_out = TminRun
 end function GetTminRun
@@ -16129,7 +16129,7 @@ end function GetTminRun
 function GetTminRun_i(i) result(TminRun_i)
     !! Getter for individual elements of the "GetTminRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TminRun_i
+    real(sp) :: TminRun_i
 
     TminRun_i = TminRun(i)
 end function GetTminRun_i
@@ -16137,7 +16137,7 @@ end function GetTminRun_i
 
 subroutine SetTminRun(TminRun_in)
     !! Setter for the "TminRun" global variable.
-    real(dp), dimension(366), intent(in) :: TminRun_in
+    real(sp), dimension(1:366), intent(in) :: TminRun_in
 
     TminRun = TminRun_in
 end subroutine SetTminRun
@@ -16146,7 +16146,7 @@ end subroutine SetTminRun
 subroutine SetTminRun_i(i, TminRun_i)
     !! Setter for individual element for the "TminRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TminRun_i
+    real(sp), intent(in) :: TminRun_i
 
     TminRun(i) = TminRun_i
 end subroutine SetTminRun_i
@@ -16154,7 +16154,7 @@ end subroutine SetTminRun_i
 
 function GetTmaxRun() result(TmaxRun_out)
     !! Getter for the "TmaxRun" global variable.
-    real(dp), dimension(366) :: TmaxRun_out
+    real(sp), dimension(1:366) :: TmaxRun_out
 
     TmaxRun_out = TmaxRun
 end function GetTmaxRun
@@ -16163,7 +16163,7 @@ end function GetTmaxRun
 function GetTmaxRun_i(i) result(TmaxRun_i)
     !! Getter for individual elements of the "GetTmaxRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TmaxRun_i
+    real(sp) :: TmaxRun_i
 
     TmaxRun_i = TmaxRun(i)
 end function GetTmaxRun_i
@@ -16171,7 +16171,7 @@ end function GetTmaxRun_i
 
 subroutine SetTmaxRun(TmaxRun_in)
     !! Setter for the "TmaxRun" global variable.
-    real(dp), dimension(366), intent(in) :: TmaxRun_in
+    real(sp), dimension(1:366), intent(in) :: TmaxRun_in
 
     TmaxRun = TmaxRun_in
 end subroutine SetTmaxRun
@@ -16180,7 +16180,7 @@ end subroutine SetTmaxRun
 subroutine SetTmaxRun_i(i, TmaxRun_i)
     !! Setter for individual element for the "TmaxRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TmaxRun_i
+    real(sp), intent(in) :: TmaxRun_i
 
     TmaxRun(i) = TmaxRun_i
 end subroutine SetTmaxRun_i

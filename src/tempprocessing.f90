@@ -906,8 +906,8 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
         else if (GetTemperatureFile() == '(External)') then
             RemainingDays = ValPeriod
             i = 1 
-            TDayMin_local = GetTminRun_i(i)
-            TDayMax_local = GetTmaxRun_i(i)
+            TDayMin_local = real(GetTminRun_i(i),kind=dp)
+            TDayMax_local = real(GetTmaxRun_i(i),kind=dp)
             DayGDD = DegreesDay(Tbase, Tupper, TDayMin_local, &
                                         TDayMax_local, &
                                         GetSimulParam_GDDMethod())
@@ -917,8 +917,8 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
             do while ((RemainingDays > 0) &
                         .and. (i<(GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
                         i = i + 1
-                        TDayMin_local = GetTminRun_i(i)
-                        TDayMax_local = GetTmaxRun_i(i)
+                        TDayMin_local = real(GetTminRun_i(i),kind=dp)
+                        TDayMax_local = real(GetTmaxRun_i(i),kind=dp)
                         DayGDD = DegreesDay(Tbase, Tupper, TDayMin_local, &
                                             TDayMax_local, &
                                             GetSimulParam_GDDMethod())
@@ -1102,8 +1102,8 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
         else if (GetTemperatureFile() == '(External)') then
             RemainingGDDays = ValGDDays
             i = GetCrop_Day1()-GetSimulation_FromDayNr()+1
-            TDayMin_loc = GetTminRun_i(i)
-            TDayMax_loc = GetTmaxRun_i(i)
+            TDayMin_loc = real(GetTminRun_i(i),kind=dp)
+            TDayMax_loc = real(GetTmaxRun_i(i),kind=dp)
             DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
                                         TDayMax_loc, &
                                         GetSimulParam_GDDMethod())
@@ -1113,8 +1113,8 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
             do while ((RemainingGDDays > 0) &
                            .and. (i < (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
                   i = i + 1
-                  TDayMin_loc = GetTminRun_i(i)
-                  TDayMax_loc = GetTmaxRun_i(i)
+                  TDayMin_loc = real(GetTminRun_i(i),kind=dp)
+                  TDayMax_loc = real(GetTmaxRun_i(i),kind=dp)
 
                   DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
                                        TDayMax_loc, &
@@ -1284,15 +1284,15 @@ real(dp) function MaxAvailableGDD(FromDayNr, Tbase, Tupper, TDayMin, TDayMax)
     else if (GetTemperatureFile() == '(External)') then
         MaxGDDays = 0._dp
         i = GetCrop_Day1()-GetSimulation_FromDayNr()+1
-        TDayMin = GetTminRun_i(i)
-        TDayMax = GetTmaxRun_i(i)
+        TDayMin = real(GetTminRun_i(i),kind=dp)
+        TDayMax = real(GetTmaxRun_i(i),kind=dp)
         DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                                     GetSimulParam_GDDMethod())
         MaxGDDays = MaxGDDays + DayGDD
         do while (i < (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1))
             i = i + 1
-            TDayMin = GetTminRun_i(i)
-            TDayMax = GetTmaxRun_i(i)
+            TDayMin = real(GetTminRun_i(i),kind=dp)
+            TDayMax = real(GetTmaxRun_i(i),kind=dp)
             DayGDD = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                                 GetSimulParam_GDDMethod())
             MaxGDDays = MaxGDDays + DayGDD
@@ -2560,8 +2560,8 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
             GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                               GetSimulParam_GDDMethod())
         elseif (GetTemperatureFile() == '(External)') then 
-            Tndayi = GetTminRun_i(Dayi)
-            Txdayi = GetTmaxRun_i(Dayi)
+            Tndayi = real(GetTminRun_i(Dayi),kind=dp)
+            Txdayi = real(GetTmaxRun_i(Dayi),kind=dp)
             GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                                     GetSimulParam_GDDMethod())
         else
@@ -2845,8 +2845,8 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
              GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
                                GetSimulParam_GDDMethod())
          elseif (GetTemperatureFile() == '(External)') then 
-             Tndayi = GetTminRun_i(Dayi)
-             Txdayi = GetTmaxRun_i(Dayi)
+             Tndayi = real(GetTminRun_i(Dayi),kind=dp)
+             Txdayi = real(GetTmaxRun_i(Dayi),kind=dp)
              GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                                     GetSimulParam_GDDMethod())
          else
