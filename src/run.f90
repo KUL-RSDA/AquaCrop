@@ -5,6 +5,9 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
                                 GetMonthlyEToDataset, &
                                 GetMonthlyRainDataset
 use ac_global, only:    AdjustSizeCompartments, &
+                        GetCrop_DaysToHIo, &
+                        GetCrop_GDDaysToHIo, &
+                        GetOut8Irri, &
                         CompartmentIndividual, &
                         datatype_daily, &
                         datatype_decadely, &
@@ -406,16 +409,34 @@ use ac_rootunit, only:  AdjustedRootingDepth
 use ac_simul,    only:  Budget_module, &
                         determinepotentialbiomass, &
                         determinebiomassandyield
-use ac_tempprocessing, only:    CCxSaltStressRelationship, &
-                                GetDecadeTemperatureDataSet, &
+use ac_tempprocessing, only:    GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
                                 GrowingDegreeDays, &
                                 LoadSimulationRunProject, &
-                                StressBiomassRelationship, &
-                                temperaturefilecoveringcropperiod
+                                temperaturefilecoveringcropperiod, &
+                                GetTminDataSet, & 
+                                GetTmaxDataSet, &
+                                GetTminDataSet_i, & 
+                                GetTmaxDataSet_i, &
+                                GetTminDataSet_DayNr, &
+                                GetTminDataSet_Param, &
+                                GetTmaxDataSet_DayNr, &
+                                GetTmaxDataSet_Param, &
+                                SetTminDataSet, & 
+                                SetTmaxDataSet, &
+                                SetTminDataSet_i, & 
+                                SetTmaxDataSet_i, &
+                                SetTminDataSet_DayNr, &
+                                SetTminDataSet_Param, &
+                                SetTmaxDataSet_DayNr, &
+                                SetTmaxDataSet_Param
+use ac_preparefertilitysalinity, only:  ReferenceCCxSaltStressRelationship, &
+                                ReferenceStressBiomassRelationship
 use ac_utils, only: assert, &
                     GetAquaCropDescriptionWithTimeStamp, &
-                    roundc
+                    roundc, &
+                    write_file, &
+                    open_file
 use iso_fortran_env, only: iostat_end
 implicit none
 
@@ -515,7 +536,10 @@ integer :: fObs ! file handle
 integer :: fObs_iostat ! IO status
 integer :: fHarvest  ! file handle
 integer :: fHarvest_iostat  ! IO status
+integer :: fIrrInfo  ! file handle
+integer :: fIrrInfo_iostat  ! IO status
 character(len=:), allocatable :: fHarvest_filename  ! file name
+character(len=:), allocatable :: fIrrInfo_filename  ! file name
 
 type(rep_GwTable) :: GwTable
 type(rep_DayEventDbl), dimension(31) :: EToDataSet
@@ -532,7 +556,7 @@ integer(int32) :: DayNri
 integer(int32) :: IrriInterval
 integer(int32) :: Tadj, GDDTadj
 integer(int32) :: DayLastCut,NrCut,SumInterval
-integer(int8)  :: PreviousStressLevel, StressSFadjNEW
+integer(int32)  :: PreviousStressLevel, StressSFadjNEW
 
 real(dp) :: Bin
 real(dp) :: Bout
@@ -572,66 +596,11 @@ character(len=:), allocatable :: fEval_filename
 logical :: WaterTableInProfile, StartMode, NoMoreCrop
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of
                          ! irrigation water was not yet recorded
-
+! Version 7.2
+integer(int32) :: LastIrriDAP
 
 
 contains
-
-
-subroutine open_file(fhandle, filename, mode, iostat)
-    !! Opens a file in the given mode.
-    integer, intent(out) :: fhandle
-        !! file handle to be used for the open file
-    character(len=*), intent(in) :: filename
-        !! name of the file to assign the file handle to
-    character, intent(in) :: mode
-        !! open the file for reading ('r'), writing ('w') or appending ('a')
-    integer, intent(out) :: iostat
-        !! IO status returned by open()
-
-    logical :: file_exists
-
-    inquire(file=filename, exist=file_exists)
-
-    if (mode == 'r') then
-        open(newunit=fhandle, file=trim(filename), status='old', &
-             action='read', iostat=iostat)
-    elseif (mode == 'a') then
-        if (file_exists) then
-            open(newunit=fhandle, file=trim(filename), status='old', &
-                 position='append', action='write', iostat=iostat)
-        else
-            open(newunit=fhandle, file=trim(filename), status='new', &
-                 action='write', iostat=iostat)
-        end if
-    elseif (mode == 'w') then
-        open(newunit=fhandle, file=trim(filename), status='replace', &
-             action='write', iostat=iostat)
-    end if
-end subroutine open_file
-
-
-subroutine write_file(fhandle, line, advance, iostat)
-    !! Writes one line to a file.
-    integer, intent(in) :: fhandle
-        !! file handle of an already-opened file
-    character(len=*), intent(in) :: line
-        !! line to write to the file
-    logical, intent(in) :: advance
-        !! whether or not to append a newline character
-    integer, intent(out) :: iostat
-        !! IO status returned by write()
-
-    character(len=:), allocatable :: advance_str
-
-    if (advance) then
-        advance_str = 'yes'
-    else
-        advance_str = 'no'
-    end if
-
-    write(fhandle, '(a)', advance=advance_str, iostat=iostat) line
-end subroutine write_file
 
 
 function read_file(fhandle, iostat) result(line)
@@ -986,6 +955,66 @@ end subroutine fObs_close
 subroutine fObs_rewind()
     rewind(fObs)
 end subroutine fObs_rewind
+
+
+! fIrrInfo
+
+function GetfIrrInfo_filename() result(str)
+    !! Getter for the "fIrrInfo_filename" global variable.
+    character(len=:), allocatable :: str
+
+    str = fIrrInfo_filename
+end function GetfIrrInfo_filename
+
+
+subroutine SetfIrrInfo_filename(str)
+    !! Setter for the "fIrrInfo_filename" global variable.
+    character(len=*), intent(in) :: str
+
+    fIrrInfo_filename = str
+end subroutine SetfIrrInfo_filename
+
+
+subroutine fIrrInfo_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fIrrInfo' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fIrrInfo, filename, mode, fIrrInfo_iostat)
+end subroutine fIrrInfo_open
+
+
+subroutine fIrrInfo_write(line, advance_in)
+    !! Writes the given line to the fIrrInfo file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
+    else
+        advance = .true.
+    end if
+    call write_file(fIrrInfo, line, advance, fIrrInfo_iostat)
+
+    if (advance) then
+        ! For some reason (a compiler bug?) we need to explicitly flush
+        ! the buffer here. Otherwise, with GNU Fortran v10.2.1 and DEBUG=0,
+        ! the last line of test_defaultPROharvests.OUT in the IrrInfo test
+        ! does not get written. This does not occur when either DEBUG=1 is
+        ! applied or when using GNU Fortran v6.4.0.
+        call flush(fIrrInfo)
+    end if
+end subroutine fIrrInfo_write
+
+subroutine fIrrInfo_close()
+    close(fIrrInfo)
+end subroutine fIrrInfo_close
 
 
 ! fHarvest
@@ -2182,136 +2211,6 @@ subroutine SetTransfer_Bmobilized(Bmobilized)
 end subroutine SetTransfer_Bmobilized
 
 
-!TminDatSet
-
-function GetTminDataSet() result(TminDataSet_out)
-    !! Getter for the "TminDataSet" global variable.
-    type(rep_DayEventDbl), dimension(31) :: TminDataSet_out
-
-    TminDataSet_out = TminDataSet
-end function GetTminDataSet
-
-
-function GetTminDataSet_i(i) result(TminDataSet_i)
-    !! Getter for individual elements of the "TminDataSet" global variable.
-    integer(int32), intent(in) :: i
-    type(rep_DayEventDbl) :: TminDataSet_i
-
-    TminDataSet_i = TminDataSet(i)
-end function GetTminDataSet_i
-
-
-integer(int32) function GetTminDataSet_DayNr(i)
-    integer(int32), intent(in) :: i
-
-    GetTminDataSet_DayNr = TminDataSet(i)%DayNr
-end function GetTminDataSet_DayNr
-
-
-real(dp) function GetTminDataSet_Param(i)
-    integer(int32), intent(in) :: i
-
-    GetTminDataSet_Param = TminDataSet(i)%Param
-end function GetTminDataSet_Param
-
-
-subroutine SetTminDataSet(TminDataSet_in)
-    !! Setter for the "TminDatSet" global variable.
-    type(rep_DayEventDbl), dimension(31), intent(in) :: TminDataSet_in
-
-    TminDataSet = TminDataSet_in
-end subroutine SetTminDataSet
-
-
-subroutine SetTminDataSet_i(i, TminDataSet_i)
-    !! Setter for individual element for the "TminDataSet" global variable.
-    integer(int32), intent(in) :: i
-    type(rep_DayEventDbl), intent(in) :: TminDataSet_i
-
-    TminDataSet(i) = TminDataSet_i
-end subroutine SetTminDataSet_i
-
-
-subroutine SetTminDataSet_DayNr(i, DayNr_in)
-    integer(int32), intent(in) :: i
-    integer(int32), intent(in) :: DayNr_in
-
-    TminDataSet(i)%DayNr = DayNr_in
-end subroutine SetTminDataSet_DayNr
-
-
-subroutine SetTminDataSet_Param(i, Param_in)
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: Param_in
-
-    TminDataSet(i)%Param = Param_in
-end subroutine SetTminDataSet_Param
-
-! TmaxDataSet
-
-function GetTmaxDataSet() result(TmaxDataSet_out)
-    !! Getter for the "TmaxDataSet" global variable.
-    type(rep_DayEventDbl), dimension(31) :: TmaxDataSet_out
-
-    TmaxDataSet_out = TmaxDataSet
-end function GetTmaxDataSet
-
-
-function GetTmaxDataSet_i(i) result(TmaxDataSet_i)
-    !! Getter for individual elements of the "TmaxDataSet" global variable.
-    integer(int32), intent(in) :: i
-    type(rep_DayEventDbl) :: TmaxDataSet_i
-
-    TmaxDataSet_i = TmaxDataSet(i)
-end function GetTmaxDataSet_i
-
-
-integer(int32) function GetTmaxDataSet_DayNr(i)
-    integer(int32), intent(in) :: i
-
-    GetTmaxDataSet_DayNr = TmaxDataSet(i)%DayNr
-end function GetTmaxDataSet_DayNr
-
-
-real(dp) function GetTmaxDataSet_Param(i)
-    integer(int32), intent(in) :: i
-
-    GetTmaxDataSet_Param = TmaxDataSet(i)%Param
-end function GetTmaxDataSet_Param
-
-
-subroutine SetTmaxDataSet(TmaxDataSet_in)
-    !! Setter for the "TmaxDatSet" global variable.
-    type(rep_DayEventDbl), dimension(31), intent(in) :: TmaxDataSet_in
-
-    TmaxDataSet = TmaxDataSet_in
-end subroutine SetTmaxDataSet
-
-
-subroutine SetTmaxDataSet_i(i, TmaxDataSet_i)
-    !! Setter for individual element for the "TmaxDataSet" global variable.
-    integer(int32), intent(in) :: i
-    type(rep_DayEventDbl), intent(in) :: TmaxDataSet_i
-
-    TmaxDataSet(i) = TmaxDataSet_i
-end subroutine SetTmaxDataSet_i
-
-
-subroutine SetTmaxDataSet_DayNr(i, DayNr_in)
-    integer(int32), intent(in) :: i
-    integer(int32), intent(in) :: DayNr_in
-
-    TmaxDataSet(i)%DayNr = DayNr_in
-end subroutine SetTmaxDataSet_DayNr
-
-
-subroutine SetTmaxDataSet_Param(i, Param_in)
-    integer(int32), intent(in) :: i
-    real(dp), intent(in) :: Param_in
-
-    TmaxDataSet(i)%Param = Param_in
-end subroutine SetTmaxDataSet_Param
-
 
 integer(int32) function GetDayNri()
 
@@ -2622,7 +2521,7 @@ subroutine SetPreviousStressLevel(PreviousStressLevel_in)
 end subroutine SetPreviousStressLevel
 
 
-integer(int8) function GetStressSFadjNEW()
+integer(int32) function GetStressSFadjNEW()
     !! Getter for the "StressSFadjNEW" global variable.
 
     GetStressSFadjNEW = int(StressSFadjNEW, kind=int32)
@@ -2633,7 +2532,7 @@ subroutine SetStressSFadjNEW(StressSFadjNEW_in)
     !! Setter for the "StressSFadjNEW" global variable.
     integer(int32), intent(in) :: StressSFadjNEW_in
 
-    StressSFadjNEW = int(StressSFadjNEW_in, kind=int8)
+    StressSFadjNEW = int(StressSFadjNEW_in, kind=int32)
 end subroutine SetStressSFadjNEW
 
 
@@ -3402,6 +3301,21 @@ subroutine SetPreviousDayNr(PreviousDayNr_in)
 end subroutine SetPreviousDayNr
 
 
+integer(int32) function GetLastIrriDAP()
+    !! Getter for the "LastIrriDAP" global variable.
+
+    GetLastIrriDAP = LastIrriDAP
+end function GetLastIrriDAP
+
+
+subroutine SetLastIrriDAP(LastIrriDAP_in)
+    !! Setter for the "LastIrriDAP" global variable.
+    integer(int32), intent(in) :: LastIrriDAP_in
+
+    LastIrriDAP = LastIrriDAP_in
+end subroutine SetLastIrriDAP
+
+
 logical function GetNoYear()
     !! Getter for the NoYear global variable
 
@@ -3976,7 +3890,8 @@ subroutine RelationshipsForFertilityAndSaltStress()
 
     ! 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
     if (GetCrop_StressResponse_Calibrated()) then
-        call StressBiomassRelationship(GetCrop_DaysToCCini(), GetCrop_GDDaysToCCini(), &
+        call ReferenceStressBiomassRelationship(GetCrop_DaysToCCini(), &
+                                  GetCrop_GDDaysToCCini(), &
                                   GetCrop_DaysToGermination(), &
                                   GetCrop_DaysToFullCanopy(), &
                                   GetCrop_DaysToSenescence(), &
@@ -3996,14 +3911,19 @@ subroutine RelationshipsForFertilityAndSaltStress()
                                   GetCrop_Tbase(), &
                                   GetCrop_Tupper(), GetSimulParam_Tmin(), &
                                   GetSimulParam_Tmax(), GetCrop_GDtranspLow(), &
-                                  GetCrop_WP(), GetCrop_dHIdt(), GetCO2i(), &
+                                  GetCrop_WP(), GetCrop_dHIdt(), &
                                   GetCrop_Day1(), GetCrop_DeterminancyLinked(), &
                                   GetCrop_StressResponse(),GetCrop_subkind(), &
                                   GetCrop_ModeCycle(), Coeffb0_temp, Coeffb1_temp, &
-                                  Coeffb2_temp, X10, X20, X30, X40, X50, X60, X70)
+                                  Coeffb2_temp, X10, X20, X30, X40, X50, X60, X70, &
+                                  GetCrop_GDDaysToFlowering(), GetCrop_GDDLengthFlowering(), &
+                                  GetCrop_GDDaysToHIo(), GetCrop_Planting(), GetCrop_DaysToHIo())
         call SetCoeffb0(Coeffb0_temp)
         call SetCoeffb1(Coeffb1_temp)
         call SetCoeffb2(Coeffb2_temp)
+        WRITE(*, '(A, f10.2)') 'The value of Coeffb0_temp is:', Coeffb0_temp
+        WRITE(*, '(A, f10.2)') 'The value of Coeffb0_temp is:', Coeffb1_temp
+        WRITE(*, '(A, f10.2)') 'The value of Coeffb0_temp is:', Coeffb2_temp
     else
         call SetCoeffb0(real(undef_int, kind=dp))
         call SetCoeffb1(real(undef_int, kind=dp))
@@ -4037,7 +3957,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
 
     ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if (GetSimulation_SalinityConsidered() .eqv. .true.) then
-        call CCxSaltStressRelationship(GetCrop_DaysToCCini(), &
+        call ReferenceCCxSaltStressRelationship(GetCrop_DaysToCCini(), &
                                   GetCrop_GDDaysToCCini(), &
                                   GetCrop_DaysToGermination(), &
                                   GetCrop_DaysToFullCanopy(), &
@@ -4060,12 +3980,13 @@ subroutine RelationshipsForFertilityAndSaltStress()
                                   GetCrop_Tbase(), GetCrop_Tupper(), &
                                   GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
                                   GetCrop_GDtranspLow(), GetCrop_WP(), &
-                                  GetCrop_dHIdt(), GetCO2i(), GetCrop_Day1(), &
+                                  GetCrop_dHIdt(), GetCrop_Day1(), &
                                   GetCrop_DeterminancyLinked(), &
                                   GetCrop_subkind(), GetCrop_ModeCycle(), &
                                   GetCrop_CCsaltDistortion(),Coeffb0Salt_temp, &
                                   Coeffb1Salt_temp, Coeffb2Salt_temp, X10, X20, X30, &
-                                  X40, X50, X60, X70, X80, X90)
+                                  X40, X50, X60, X70, X80, X90, &
+                                  GetCrop_GDDaysToHIo(), GetCrop_Planting(), GetCrop_DaysToHIo())
         call SetCoeffb0Salt(Coeffb0Salt_temp)
         call SetCoeffb1Salt(Coeffb1Salt_temp)
         call SetCoeffb2Salt(Coeffb2Salt_temp)
@@ -4548,6 +4469,24 @@ subroutine OpenIrrigationFile()
 end subroutine OpenIrrigationFile
 
 
+subroutine WriteTitleIrriInfo(TheProjectType, TheNrRun)
+    integer(intEnum), intent(in) :: TheProjectType
+    integer(int8), intent(in) :: TheNrRun
+
+    character(len=1024) :: tempstring
+
+    ! A. Run number
+    call fIrrInfo_write('')
+    if (TheProjectType == typeproject_TypePRM) then
+        write(tempstring, '(i4)') TheNrRun
+        call fIrrInfo_write('   Run:' // trim(tempstring))
+    end if
+
+    ! B. Title
+    call fIrrInfo_write('   Day Month  Year   DAP Stage    Irri  IrrInt')
+    call fIrrInfo_write('                                    mm    days')
+end subroutine WriteTitleIrriInfo
+
 
 subroutine WriteTitlePart1MultResults(TheProjectType, TheNrRun)
     integer(intEnum), intent(in) :: TheProjectType
@@ -4766,7 +4705,7 @@ subroutine InitializeSimulationRunPart1()
     real(dp) :: fWeed, fi
     integer(int8) :: Cweed
     integer(int32) :: Day1, Month1, Year1
-    integer(int8) :: FertStress
+    integer(int32) :: FertStress
     type(rep_GwTable) :: GwTable_temp
     integer(int8) :: RedCGC_temp, RedCCX_temp, RCadj_temp
     type(rep_EffectStress) :: EffectStress_temp
@@ -4870,7 +4809,7 @@ subroutine InitializeSimulationRunPart1()
 
     ! No soil fertility stress
     if (GetManagement_FertilityStress() <= 0) then
-        call SetManagement_FertilityStress(0_int8)
+        call SetManagement_FertilityStress(0_int32)
     end if
 
     ! Reset soil fertility parameters to selected value in management
@@ -4895,7 +4834,7 @@ subroutine InitializeSimulationRunPart1()
     call SetStressSFadjNEW(int(GetManagement_FertilityStress(),kind=int32))
     ! soil fertility and GDDays
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-        if (GetManagement_FertilityStress() /= 0_int8) then
+        if (GetManagement_FertilityStress() /= 0_int32) then
             call SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(&
                   GetCrop_DaysToFullCanopySF(), GetCrop_Day1(), &
                   GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(),&
@@ -4916,7 +4855,7 @@ subroutine InitializeSimulationRunPart1()
             GetCrop_KcTop(), GetCrop_KcDecline(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
             GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
             GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
-            GetCrop_ModeCycle()))
+            GetCrop_ModeCycle(), .true.))
     call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
     call SetSumKci(0._dp)
 
@@ -4938,7 +4877,7 @@ subroutine InitializeSimulationRunPart1()
               GetCrop_CCx(), GetManagement_WeedShape()))
         call SetCCxCropWeedsNoSFstress( roundc(((100._dp*GetCrop_CCx() &
                   * GetfWeedNoS()) + 0.49),mold=1)/100._dp) ! reference for plot with weed
-        if (GetManagement_FertilityStress() > 0_int8) then
+        if (GetManagement_FertilityStress() > 0_int32) then
             fWeed = 1._dp
             if ((fi > 0._dp) .and. (GetCrop_subkind() == subkind_Forage)) then
                 Cweed = 1_int8
@@ -5066,6 +5005,7 @@ subroutine InitializeSimulationRunPart2()
     call SetGlobalIrriECw(.true.) ! In Versions < 3.2 - Irrigation water
                                   ! quality is not yet recorded on file
     call OpenIrrigationFile()
+    call SetLastIrriDAP(0_int32)
 
     ! 12. Adjusted time when starting as regrowth
     if (GetCrop_DaysToCCini() /= 0) then
@@ -5577,6 +5517,25 @@ subroutine OpenOutputDaily(TheProjectType)
 end subroutine OpenOutputDaily
 
 
+subroutine OpenOutputIrrInfo(TheProjectType)
+    integer(intEnum), intent(in) :: TheProjectType
+
+    character(len=:), allocatable :: totalname
+    character(len=1025) :: tempstring
+
+    select case (TheProjectType)
+    case(typeproject_TypePRO)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PROirrInfo.OUT'
+    case(typeproject_TypePRM)
+        totalname = GetPathNameOutp() // GetOutputName() // 'PRMirrInfo.OUT'
+    end select
+    call SetfIrrInfo_filename(totalname)
+    call fIrrInfo_open(GetfIrrInfo_filename(), 'w')
+    write(tempstring, '(a)') GetAquaCropDescriptionWithTimeStamp()
+    call fIrrInfo_write(trim(tempstring))
+end subroutine OpenOutputIrrInfo
+
+
 subroutine OpenPart1MultResults(TheProjectType)
     integer(intEnum), intent(in) :: TheProjectType
 
@@ -6053,6 +6012,9 @@ subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
     if (GetOutDaily()) then
         call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT
     end if
+    if (GetOut8Irri()) then
+        call OpenOutputIrrInfo(TheProjectType)  ! Open Irrigation info results .OUT
+    end if
     if (GetPart1Mult()) then
         call OpenPart1MultResults(TheProjectType) ! Open Multiple harvests in season .OUT
     end if
@@ -6064,6 +6026,9 @@ subroutine FinalizeSimulation()
     call fRun_close() ! Close Run.out
     if (GetOutDaily()) then
         call fDaily_close()  ! Close Daily.OUT
+    end if
+    if (GetOut8Irri()) then
+        call fIrrInfo_close()  ! Close Irrigation info results .OUT
     end if
     if (GetPart1Mult()) then
         call fHarvest_close()  ! Close Multiple harvests in season
@@ -6692,6 +6657,10 @@ subroutine InitializeRunPart2(NrRun, TheProjectType)
         call WriteTitleDailyResults(TheProjectType, NrRun)
     end if
 
+    if (GetOut8Irri()) then
+        call WriteTitleIrriInfo(TheProjectType, NrRun)
+    end if
+
     if (GetPart1Mult()) then
         call WriteTitlePart1MultResults(TheProjectType, NrRun)
     end if
@@ -6773,7 +6742,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     real(dp) :: ECiAqua_temp, TactWeedInfested_temp,&
                 Bin_temp, Bout_temp
     integer(int32) :: TargetTimeVal, TargetDepthVal
-    integer(int8) :: PreviousStressLevel_temp, StressSFadjNEW_temp
+    integer(int32) :: PreviousStressLevel_temp, StressSFadjNEW_temp
     real(dp) :: CCxWitheredTpotNoS_temp, &
                 StressLeaf_temp, StressSenescence_temp, TimeSenescence_temp, &
                 SumKcTopStress_temp, SumKci_temp, WeedRCi_temp, &
@@ -7051,7 +7020,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
         call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
         ! temperature stress affecting crop transpiration
-        if (GetCCiActual() <= 0.0000001_dp) then
+        if (GetCCiActual() <= 0.000001_dp) then
              KsTr = 1._dp
         else
              KsTr = KsTemperature(0._dp, GetCrop_GDtranspLow(), GetGDDayi())
@@ -7327,6 +7296,9 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         call WriteDailyResults((GetDayNri() - GetSimulation_DelayedDays() &
                                 - GetCrop_Day1()+1), WPi)
     end if
+    if (GetOut8Irri()) then
+        call WriteIrrInfo()
+    end if
     if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
         call WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop_Day1()+1))
     end if
@@ -7534,7 +7506,7 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         ! 4. Air temperature stress
-        if (GetCCiActual() <= 0.0000001_dp) then
+        if (GetCCiActual() <= 0.000001_dp) then
             KsTr = 1._dp
         else
             KsTr = KsTemperature(0._dp, GetCrop_GDtranspLow(), GetGDDayi())
@@ -7547,7 +7519,7 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         ! 5. Relative cover of weeds
-        if (GetCCiActual() <= 0.0000001_dp) then
+        if (GetCCiActual() <= 0.000001_dp) then
             StrW = undef_int
         else
             StrW = roundc(GetWeedRCi(), mold=1)
@@ -7768,6 +7740,67 @@ subroutine WriteDailyResults(DAP, WPi)
 end subroutine WriteDailyResults
 
 
+subroutine WriteIrrInfo()
+
+    integer(int32) :: i, Di, Mi, Yi
+    integer(int32) :: DAPi
+    logical        :: IrriON
+    real(dp)       :: IRRmm
+    character(len=1025) :: TempString
+
+    call DetermineDate(GetDayNri(), Di, Mi, Yi)
+    if (GetClimRecord_FromY() == 1901) then
+        Yi = Yi - 1901 + 1
+    end if
+    if ((GetDayNri() < GetCrop_Day1()) .or. &
+        (GetDayNri() > GetCrop_DayN())) then ! before and after growing period
+        write(TempString, '(5i6, i5, f8.1, i6)') &
+           Di, Mi, Yi, undef_int, undef_int, &
+           GetIrrigation(), undef_int
+        call fIrrInfo_write(trim(TempString))
+    else ! during growing period AND irrigation event or last day
+        if ((GetDayNri() == GetCrop_DayN()) .or. & 
+            ((GetIrrigation() > 0._dp) .and. (GetIrriMode() /= IrriMode_Inet))) then ! last day
+            if ((GetIrrigation() <= 0.0001) .and. (GetDayNri() == GetCrop_DayN())) then ! no irrigation on last day
+                IrriON = .false.
+            else
+                IrriON = .true.
+            end if
+            DAPi = (GetDayNri() - GetCrop_Day1() + 1)
+            do i = (GetLastIrriDAP()+1), (DAPi)
+                call DetermineDate((GetDayNri()-(DAPi-GetLastIrriDAP())+(i-GetLastIrriDAP())), Di, Mi, Yi)
+                if (GetClimRecord_FromY() == 1901) then
+                    Yi = Yi - 1901 + 1
+                end if
+                if (i == DAPi) then
+                    IRRmm = GetIrrigation()
+                else
+                    IRRmm = 0._dp
+                end if
+                if (GetIrriMode() == IrriMode_Inet) then ! for last day of growing period
+                    IRRmm = undef_int
+                    IrriON = .false.
+                end if
+                if (IrriON .eqv. .true.) then
+                    write(TempString, '(5i6, i5, f8.1, i6)') &
+                    Di, Mi, Yi, i, undef_int, &
+                    IRRmm, (DAPi - GetLastIrriDAP())
+                    call fIrrInfo_write(trim(TempString))
+                else
+                    write(TempString, '(5i6, i5, f8.1, i6)') &
+                    Di, Mi, Yi, i, undef_int, &
+                    IRRmm, undef_int
+                    call fIrrInfo_write(trim(TempString))
+                end if
+            end do
+            if (IrriON .eqv. .true.) then
+                call SetLastIrriDAP(DAPi)
+            end if
+        end if
+    end if
+end subroutine WriteIrrInfo
+
+
 subroutine FileManagement()
 
     integer(int32) :: RepeatToDay
@@ -7814,5 +7847,7 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
 
     call FinalizeSimulation()
 end subroutine RunSimulation
+
+
 
 end module ac_run

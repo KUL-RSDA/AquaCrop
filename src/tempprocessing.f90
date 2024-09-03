@@ -1,6 +1,19 @@
 module ac_tempprocessing
 
 use ac_global , only: undef_int, &
+                        GetTmaxTnxReference12MonthsRun_i,&
+                        GetTminTnxReference12MonthsRun_i,&
+                        GetTmaxTnxReference12MonthsRun,&
+                        GetTminTnxReference12MonthsRun,&
+                        SetTmaxTnxReference12MonthsRun_i,&
+                        SetTminTnxReference12MonthsRun_i,&
+                        SetTmaxTnxReference12MonthsRun,&
+                        SetTminTnxReference12MonthsRun,&
+                    fTnxReference,&
+                    fTnxReference_iostat,&
+                    fTnxReference365Days,& 
+                    fTnxReference365Days_iostat,&
+                    GetTnxReference365DaysFileFull,&
                       modeCycle_GDDays, &
                       modeCycle_CalendarDays, &
                       DaysinMonth, &
@@ -270,21 +283,51 @@ use ac_global , only: undef_int, &
                       GetTminRun_i, &
                       GetTminRun, &
                       GetTmaxRun_i, &
-                      GetTmaxRun
+                      GetTmaxRun, &
+                      SetTminCropReferenceRun_i, &
+                      SetTminCropReferenceRun, &
+                      SetTmaxCropReferenceRun_i, &
+                      SetTmaxCropReferenceRun, &
+                      GetTminCropReferenceRun_i, &
+                      GetTminCropReferenceRun, &
+                      GetTmaxCropReferenceRun_i, &
+                      GetTmaxCropReferenceRun, &
+                      SetTminTnxReference365DaysRun_i, &
+                      SetTminTnxReference365DaysRun, &
+                      SetTmaxTnxReference365DaysRun_i, &
+                      SetTmaxTnxReference365DaysRun, &
+                      GetTminTnxReference365DaysRun_i, &
+                      GetTminTnxReference365DaysRun, &
+                      GetTmaxTnxReference365DaysRun_i, &
+                      GetTmaxTnxReference365DaysRun, &
+                      GetTnxReferenceYear, &
+                      SetTnxReferenceYear, &
+                      GetTnxReferenceFile, &
+                      SetTnxReferenceFile, &
+                      GetTnxReferenceFileFull, &
+                      SetTnxReferenceFileFull, &
+                      TminTnxReference365DaysRun, &
+                      TmaxTnxReference365DaysRun, &
+                      TminCropReferenceRun, &
+                      TmaxCropReferenceRun
 
-use ac_kinds,  only: dp, &
+use ac_kinds,  only: sp,&
+                     dp, &
                      int8, &
                      int16, &
                      int32, &
                      intEnum
 use ac_project_input, only: ProjectInput
-use ac_utils, only: roundc
+use ac_utils, only: roundc, &
+                    write_file, &
+                    open_file
 use iso_fortran_env, only: iostat_end
 implicit none
 
 
 logical :: TemperatureFilefull_exists
 real(dp), dimension(:), allocatable :: Tmin, Tmax  !! (daily) temperature data
+type(rep_DayEventDbl), dimension(31) :: TminDataSet, TmaxDataSet
 
 
 contains
@@ -312,6 +355,78 @@ subroutine AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
     end if
 end subroutine AdjustDecadeMONTHandYEAR
 
+
+!subroutine ReadTnxReference365DaysFilefull()
+!    !! Reads the contents of the TnxReference365DaysFilefull file,
+!    !! storing the temperatures in the TminTnxReference365Days and TmaxTnxReference365Days arrays.
+!
+!    character(len=:), allocatable :: filename
+!    integer :: fhandle, i, nlines, nrows, rc
+!
+!    filename = trim(GetPathNameSimul()) // 'TnxReference365Days.SIM'
+!    open(newunit=fhandle, file=trim(filename), status='old', action='read')
+!
+!    ! Count the number of lines
+!    nlines = 0
+!    do
+!        read(fhandle, '(a)', iostat=rc)
+!        if (rc == iostat_end) then
+!            exit
+!        else
+!            nlines = nlines + 1
+!        end if
+!    end do
+!
+!    ! Now read in the actual content
+!    nrows = nlines - 8
+!    if (allocated(TminTnxReference365DaysRun)) deallocate(TminTnxReference365DaysRun)
+!    if (allocated(TminTnxReference365DaysRun)) deallocate(TmaxTnxReference365DaysRun)
+!    allocate(TminTnxReference365DaysRun(nrows), TmaxTnxReference365DaysRun(nrows))
+!
+!    rewind(fhandle)
+!    do i = 1, nrows
+!        read(fhandle, *) TminTnxReference365DaysRun(i), TmaxTnxReference365DaysRun(i)
+!    end do
+!
+!    close(fhandle)
+!end subroutine ReadTnxReference365DaysFilefull
+
+!
+!subroutine ReadTCropReferenceFilefull()
+!    !! Reads the contents of the TCropReferenceFilefull file,
+!    !! storing the temperatures in the TminCropReference and TmaxCropReference arrays.
+!
+!    character(len=:), allocatable :: filename
+!    integer :: fhandle, i, nlines, nrows, rc
+!
+!    filename = trim(GetPathNameSimul()) // 'TCropReference.SIM'
+!    open(newunit=fhandle, file=trim(filename), status='old', action='read')
+!
+!    ! Count the number of lines
+!    nlines = 0
+!    do
+!        read(fhandle, '(a)', iostat=rc)
+!        if (rc == iostat_end) then
+!            exit
+!        else
+!            nlines = nlines + 1
+!        end if
+!    end do
+!
+!    ! Now read in the actual content
+!    nrows = nlines - 8
+!    if (allocated(TminCropReference)) deallocate(TminCropReference)
+!    if (allocated(TminCropReference)) deallocate(TmaxCropReference)
+!    allocate(TminCropReference(nrows), TmaxCropReference(nrows))
+!
+!    rewind(fhandle)
+!    do i = 1, nrows
+!        read(fhandle, *) TminCropReference(i), TmaxCropReference(i)
+!    end do
+!
+!    close(fhandle)
+!end subroutine ReadTCropReferenceFilefull
+!
 
 subroutine ReadTemperatureFilefull()
     !! Reads the contents of the TemperatureFilefull file,
@@ -1634,8 +1749,8 @@ subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
-    real(dp), intent(inout) :: NoTempFileTMin
-    real(dp), intent(inout) :: NoTempFileTMax
+    real(dp), intent(in) :: NoTempFileTMin
+    real(dp), intent(in) :: NoTempFileTMax
     real(dp), intent(inout) :: CDC
 
     integer(int32) :: ti, GDDi
@@ -2023,7 +2138,7 @@ subroutine LoadSimulationRunProject(NrRun)
     character(len=1025) :: TemperatureDescriptionLocal
 
     real(dp) :: TotDepth
-    integer(int8)  :: FertStress
+    integer(int32)  :: FertStress
     type(rep_clim) :: temperature_record
     integer(int8)  :: RedCGC_temp, RedCCX_temp
     type(CompartmentIndividual), dimension(max_No_compartments) :: &
@@ -2086,6 +2201,10 @@ subroutine LoadSimulationRunProject(NrRun)
         call CompleteClimateDescription(temperature_record)
         call SetTemperatureRecord(temperature_record)
     end if
+
+    ! Create Temperature Reference file 
+    call CreateTnxReferenceFile(GetTemperatureFile(),GetTnxReferenceFile(),GetTnxReferenceYear());
+    call CreateTnxReference365Days();
 
     ! 1.2 ETo
     call SetEToFile(ProjectInput(NrRun)%ETo_Filename)
@@ -2684,7 +2803,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
             TDayMin, TDayMax, GDtranspLow, RatDGDD, SumKcTop, &
             StressInPercent, StrResRedCGC, StrResRedCCx, StrResRedWP, &
             StrResRedKsSto, WeedStress, DeltaWeedStress, StrResCDecline, &
-            ShapeFweed, TheModeCycle, FertilityStressOn, TestRecord)
+            ShapeFweed, TheModeCycle, FertilityStressOn, ReferenceClimate)
      integer(int32), intent(in) :: TheDaysToCCini
      integer(int32), intent(in) :: TheGDDaysToCCini
      integer(int32), intent(in) :: L0
@@ -2719,7 +2838,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
      real(dp), intent(in) :: GDtranspLow
      real(dp), intent(in) :: RatDGDD
      real(dp), intent(in) :: SumKcTop
-     integer(int8), intent(in) :: StressInPercent
+     integer(int32), intent(in) :: StressInPercent
      integer(int8), intent(in) :: StrResRedCGC
      integer(int8), intent(in) :: StrResRedCCx
      integer(int8), intent(in) :: StrResRedWP
@@ -2730,12 +2849,12 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
      real(dp), intent(in) :: ShapeFweed
      integer(intEnum), intent(in) :: TheModeCycle
      logical, intent(in) :: FertilityStressOn
-     logical, intent(in) :: TestRecord
+     logical, intent(in) :: ReferenceClimate
 
      real(dp), parameter :: EToStandard = 5._dp
      integer(int32), parameter :: k = 2
 
-     integer(int32) ::  fTemp, fOUT, rc
+     integer(int32) ::  fTemp, rc
      real(dp) :: SumGDD, Tndayi, Txdayi, GDDi, CCi,&
                  CCxWitheredForB, TpotForB, EpotTotForB, SumKCi,&
                  fSwitch, WPi, SumBnor, SumKcTopSF, fCCx
@@ -2764,27 +2883,21 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
          GDDCDCadj = GDDCDC
      end if
 
-     ! TEST
-     if (TestRecord .eqv. .true.) then
-         open(newunit=fOUT, file=trim(GetPathNameSimul()//'TestBio.SIM'), &
-              action='write', status='replace')
-     end if
-
      ! 2. Open Temperature file
      if ((GetTemperatureFile() /= '(None)') .and. &
          (GetTemperatureFile() /= '(External)')) then
-         open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
-                      status='old', action='read', iostat=rc)
+        if (ReferenceClimate .eqv. .true.) then
+            open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCropReference.SIM'), &
+                 status='old', action='read', iostat=rc)
+        else
+            open(newunit=fTemp, file=trim(GetPathNameSimul()//'TCrop.SIM'), &
+                 status='old', action='read', iostat=rc)
+        end if
      end if
 
      ! 3. Initialize
      SumKcTopSF = (1._dp - real(StressInPercent, kind=dp)/100._dp) * SumKcTop
      !! only required for soil fertility stress
-
-     ! test
-     if (TestRecord .eqv. .true.) then
-        write(fOUT, '(f10.1)') SumKcTopSF
-     end if
 
      call SetSimulation_DelayedDays(0) ! required for CalculateETpot
      SumKci = 0._dp
@@ -2853,9 +2966,13 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
              GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                                     GetSimulParam_GDDMethod())
          else
-             read(fTemp, *, iostat=rc) Tndayi, Txdayi
-             GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi,&
-                               GetSimulParam_GDDMethod())
+            read(fTemp, *, iostat=rc) Tndayi, Txdayi
+            if ((rc == iostat_end) .and. (ReferenceClimate .eqv. .true.)) then
+                rewind(fTemp)
+                read(fTemp, *, iostat=rc) Tndayi, Txdayi
+            end if
+            GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi,&
+                              GetSimulParam_GDDMethod())
          end if
          if (TheModeCycle == modeCycle_GDDays) then
              SumGDD = SumGDD + GDDi
@@ -3027,12 +3144,6 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                            (TpotForB/EToStandard) ! for salinity stress
          end if
 
-         ! test
-         if (TestRecord .eqv. .true.) then
-             write(fOUT,'(i10, 2f10.1, 3f10.2, f10.1)') &
-                     Dayi, (100._dp*CCi), (100._dp*CCw), &
-                     WeedCorrection, TpotForB, WPi, SumKci
-         end if
      enddo
 
      ! 4. Close Temperature file
@@ -3041,558 +3152,680 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
          close(fTemp)
      end if
 
-     if (TestRecord .eqv. .true.) then
-         close(fOUT)
-     end if
-
      ! 5. Export
      Bnormalized = SumBnor
 end function Bnormalized
 
 
-real(dp) function BiomassRatio(TempDaysToCCini, TempGDDaysToCCini,&
-           TempCCo, TempCGC, TempCCx, TempCDC, TempGDDCGC, &
-           TempGDDCDC, TempdHIdt, TempL0, TempL12, L12SF,&
-           TempL123, TempHarvest, TempFlower, TempGDDL0, &
-           GDDL12SF, TempGDDL12, TempGDDL123, TempGDDHarvest,&
-           TempHI, TempWPy, TempKc, TempKcDecline, TempCCeffect,&
-           TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow,&
-           TempWP, ShapeFweed, TempModeCycle, SFInfo, SFInfoStress,&
-           WeedStress, DeltaWeedStress, DeterminantCropType, FertilityStressOn)
-    integer(int32), intent(in) :: TempDaysToCCini
-    integer(int32), intent(in) :: TempGDDaysToCCini
-    real(dp), intent(in) :: TempCCo
-    real(dp), intent(in) :: TempCGC
-    real(dp), intent(in) :: TempCCx
-    real(dp), intent(in) :: TempCDC
-    real(dp), intent(in) :: TempGDDCGC
-    real(dp), intent(in) :: TempGDDCDC
-    real(dp), intent(in) :: TempdHIdt
-    integer(int32), intent(in) :: TempL0
-    integer(int32), intent(in) :: TempL12
-    integer(int32), intent(in) :: L12SF
-    integer(int32), intent(in) :: TempL123
-    integer(int32), intent(in) :: TempHarvest
-    integer(int32), intent(in) :: TempFlower
-    integer(int32), intent(in) :: TempGDDL0
-    integer(int32), intent(in) :: GDDL12SF
-    integer(int32), intent(in) :: TempGDDL12
-    integer(int32), intent(in) :: TempGDDL123
-    integer(int32), intent(in) :: TempGDDHarvest
-    integer(int32), intent(in) :: TempHI
-    integer(int32), intent(in) :: TempWPy
-    real(dp), intent(in) :: TempKc
-    real(dp), intent(in) :: TempKcDecline
-    real(dp), intent(in) :: TempCCeffect
-    real(dp), intent(in) :: TempTbase
-    real(dp), intent(in) :: TempTupper
-    real(dp), intent(in) :: TempTmin
-    real(dp), intent(in) :: TempTmax
-    real(dp), intent(in) :: TempGDtranspLow
-    real(dp), intent(in) :: TempWP
-    real(dp), intent(in) :: ShapeFweed
-    integer(intEnum), intent(in) :: TempModeCycle
-    type(rep_EffectStress), intent(in) :: SFInfo
-    integer(int8), intent(in) :: SFInfoStress
-    integer(int8), intent(in) :: WeedStress
-    integer(int32), intent(in) :: DeltaWeedStress
-    logical, intent(in) :: DeterminantCropType
-    logical, intent(in) :: FertilityStressOn
 
-    real(dp), parameter :: CO2iLocal = 369.41_dp
+subroutine CreateTnxReference365Days()
 
-    real(dp) :: SumKcTop, HIGC, HIGClinear
-    real(dp) :: RatDGDD, SumBPot, SumBSF
-    integer(int32) :: tSwitch, DaysYieldFormation
+    character(len=:), allocatable :: totalnameOUT
+    character(len=1025) :: TempString
+    integer(int32) :: DayNri
+    integer(int32) :: i, Monthi
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet_temp,TmaxDataSet_temp
+    real(dp) :: Tlow, Thigh
 
-    ! 1. Initialize
-    ! 1 - a. Maximum sum Kc
-    SumKcTop = SeasonalSumOfKcPot(TempDaysToCCini, TempGDDaysToCCini,&
-        TempL0, TempL12, TempL123, TempHarvest, TempGDDL0, TempGDDL12,&
-        TempGDDL123, TempGDDHarvest, TempCCo, TempCCx, TempCGC,&
-        TempGDDCGC, TempCDC, TempGDDCDC, TempKc, TempKcDecline, TempCCeffect,&
-        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, CO2iLocal,&
-        TempModeCycle)
-    ! 1 - b. Prepare for growing degree days
-    RatDGDD = 1._dp
-    if ((TempModeCycle == modeCycle_GDDays) .and. (SFInfoStress > 0_int8) &
-        .and. (GDDL12SF < TempGDDL123)) then
-        RatDGDD = (TempL123-L12SF)/real(TempGDDL123-GDDL12SF, kind=dp)
+    if (FileExists(GetTnxReferenceFileFull())) then
+        ! create SIM file
+        totalnameOUT = trim(GetPathNameSimul()) // 'TnxReference365Days.SIM'
+        call fTnxReference365Days_open(totalnameOUT, 'w')
+        
+        ! get data set for 1st month
+        Monthi = 1
+        call GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet_temp, TmaxDataSet_temp)
+        !WRITE(*, '(A, 2f10.2)') 'TminDataSet_temp(1)%Param: ', TminDataSet_temp(1)%Param
+        !WRITE(*, '(A, 2f10.2)') 'TmaxDataSet_temp(1)%Param: ', TmaxDataSet_temp(1)%Param
+        
+        ! Tnx for Day 1 to 365
+        do DayNri = 1, 365
+            !WRITE(*, '(A, i4)') 'TminDataSet_temp(31)%DayNr', TminDataSet_temp(31)%DayNr
+            !WRITE(*, '(A, i4)') 'DayNri', DayNri
+            if (DayNri > TminDataSet_temp(31)%DayNr) then
+                ! next month
+                Monthi = Monthi + 1
+                !WRITE(*, '(A, i4)') 'next month', Monthi
+                call GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet_temp, TmaxDataSet_temp)
+            end if
+            i = 1
+            !WRITE(*, '(A,i4)') 'DayNri', DayNri
+            do while (TminDataSet_temp(i)%DayNr /= DayNri)
+                !WRITE(*, '(i4)') i
+                !WRITE(*, '(i4)') TminDataSet_temp(i)%DayNr
+                !WRITE(*, '(i4)') DayNri
+                i = i+1
+            end do
+            Tlow = real(roundc(100*TminDataSet_temp(i)%Param, mold=int32),kind=dp)/100._dp
+            Thigh = real(roundc(100*TmaxDataSet_temp(i)%Param, mold=int32),kind=dp)/100._dp
+            write(TempString, '(2f10.2)') Tlow, Thigh
+            call SetTminTnxReference365DaysRun_i(DayNri,Tlow)
+            call SetTmaxTnxReference365DaysRun_i(DayNri,Thigh)
+            call fTnxReference365Days_write(trim(TempString))
+        end do
+        ! Close file
+        call fTnxReference365Days_close()
     end if
-    ! 1 - c. Get PercentLagPhase (for estimate WPi during yield formation)
-    DaysYieldFormation = undef_int
-    if ((GetCrop_subkind() == subkind_Tuber) .or. &
-        (GetCrop_subkind() == subkind_Grain)) then
-        ! DaysToFlowering corresponds with Tuberformation
-        DaysYieldFormation = roundc(TempHI/TempdHIdt, mold=1)
-        if (DeterminantCropType) then
-            HIGC = HarvestIndexGrowthCoefficient(real(TempHI,kind=dp), TempdHIdt)
-            call GetDaySwitchToLinear(TempHI, TempdHIdt, &
-                     HIGC, tSwitch, HIGClinear)
-        else
-            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
-        end if
+end subroutine CreateTnxReference365Days
+
+
+subroutine CreateTnxReferenceFile(TemperatureFile, TnxReferenceFile, TnxReferenceYear)
+    character(len=*), intent(in) :: TemperatureFile
+    character(len=*), intent(in) :: TnxReferenceFile
+    integer(int32), intent(in) :: TnxReferenceYear
+
+    real(dp), dimension(12) :: MonthVal1, MonthVal2
+    character(len=:), allocatable :: FullName
+    integer(int32)   :: fhandle, rc
+    integer(int32) :: i, NrYears
+    integer(int32) :: Yeari, Monthi, MonthDays, MonthDecs, Deci, Dayi
+    real(dp) :: SUM1, SUM2, Val1, Val2
+    integer(int32) :: DayNri, EndDayNr
+    logical :: EndMonth
+    integer(int32), dimension(12) :: MonthNrYears
+    character(len=:), allocatable :: TempString
+    character(len=1025) :: TempString2
+
+    ! 1a. Delete existing TnxReferenceFile and adjust TnxReferenceYear
+    FullName = trim(GetPathNameSimul()) // TnxReferenceFile
+    if (FileExists(FullName)) then
+        call unlink(FullName)
+        call SetTnxReferenceYear(2000)
     end if
-
-    ! 2. potential biomass - no soil fertiltiy stress - no weed stress
-    SumBPot = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
-        TempL0, TempL12, TempL12, TempL123, TempHarvest, TempFlower,&
-        TempGDDL0, TempGDDL12, TempGDDL12, TempGDDL123, TempGDDHarvest,&
-        TempWPy, DaysYieldFormation, tSwitch,&
-        TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
-        TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
-        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, 1._dp,&
-        SumKcTop, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8, 0_int8,&
-        0, 0._dp, -0.01_dp, &
-        TempModeCycle, FertilityStressOn, .false.)
-
-    ! 3. potential biomass - soil fertiltiy stress and weed stress
-    SumBSF = Bnormalized(TempDaysToCCini, TempGDDaysToCCini,&
-        TempL0, TempL12, L12SF, TempL123, TempHarvest, TempFlower,&
-        TempGDDL0, TempGDDL12, GDDL12SF, TempGDDL123, TempGDDHarvest, &
-        TempWPy, DaysYieldFormation, tSwitch,&
-        TempCCo, TempCCx, TempCGC, TempGDDCGC, TempCDC, TempGDDCDC,&
-        TempKc, TempKcDecline, TempCCeffect, TempWP, CO2iLocal,&
-        TempTbase, TempTupper, TempTmin, TempTmax, TempGDtranspLow, RatDGDD,&
-        SumKcTop, SFInfoStress, SFInfo%RedCGC, SFInfo%RedCCX, SFInfo%RedWP,&
-        SFInfo%RedKsSto, WeedStress, DeltaWeedStress, &
-        SFInfo%CDecline, ShapeFweed, TempModeCycle, &
-        FertilityStressOn, .false.)
-
-    BiomassRatio = SumBSF/SumBPot
-end function BiomassRatio
-
-
-subroutine StressBiomassRelationship(TheDaysToCCini, TheGDDaysToCCini,&
-            L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,&
-            GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,&
-            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,&
-            Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,&
-            CO2Given, CropDNr1, CropDeterm, CropSResp, TheCropType,&
-            TheModeCycle, b0, b1, b2, &
-            BM10, BM20, BM30, BM40, BM50, BM60, BM70)
-    integer(int32), intent(in) :: TheDaysToCCini
-    integer(int32), intent(in) :: TheGDDaysToCCini
-    integer(int32), intent(in) :: L0
-    integer(int32), intent(in) :: L12
-    integer(int32), intent(in) :: L123
-    integer(int32), intent(in) :: L1234
-    integer(int32), intent(in) :: LFlor
-    integer(int32), intent(in) :: LengthFlor
-    integer(int32), intent(in) :: GDDL0
-    integer(int32), intent(in) :: GDDL12
-    integer(int32), intent(in) :: GDDL123
-    integer(int32), intent(in) :: GDDL1234
-    integer(int32), intent(in) :: WPyield
-    integer(int32), intent(in) :: RefHI
-    real(dp), intent(in) :: CCo
-    real(dp), intent(in) :: CCx
-    real(dp), intent(in) :: CGC
-    real(dp), intent(in) :: GDDCGC
-    real(dp), intent(in) :: CDC
-    real(dp), intent(in) :: GDDCDC
-    real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
-    real(dp), intent(in) :: CCeffectProcent
-    real(dp), intent(in) :: Tbase
-    real(dp), intent(in) :: Tupper
-    real(dp), intent(in) :: TDayMin
-    real(dp), intent(in) :: TDayMax
-    real(dp), intent(in) :: GDtranspLow
-    real(dp), intent(in) :: WPveg
-    real(dp), intent(in) :: RatedHIdt
-    real(dp), intent(in) :: CO2Given
-    integer(int32), intent(in) :: CropDNr1
-    logical, intent(in) :: CropDeterm
-    type(rep_Shapes), intent(in) :: CropSResp
-    integer(intEnum), intent(in) :: TheCropType
-    integer(intEnum), intent(in) :: TheModeCycle
-    real(dp), intent(inout) :: b0
-    real(dp), intent(inout) :: b1
-    real(dp), intent(inout) :: b2
-    real(dp), intent(inout) :: BM10
-    real(dp), intent(inout) :: BM20
-    real(dp), intent(inout) :: BM30
-    real(dp), intent(inout) :: BM40
-    real(dp), intent(inout) :: BM50
-    real(dp), intent(inout) :: BM60
-    real(dp), intent(inout) :: BM70
-
-    type StressIndexes
-        integer(int8) :: StressProc
-            !! Undocumented
-        real(dp) :: BioMProc
-            !! Undocumented
-        real(dp) :: BioMSquare
-            !! Undocumented
-    end type StressIndexes
-
-    type(StressIndexes), dimension(8) :: StressMatrix
-    integer(int8) :: Si
-    integer(int32) :: L12SF, GDDL12SF
-    type(rep_EffectStress) :: StressResponse
-    real(dp) :: RatDGDD, BNor, BNor100, Yavg, X1avg, X2avg,&
-                y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2, &
-                SUMx1y, SUMx2y, SUMx1Sq, SUMx2Sq, SUMx1x2
-    integer(int8) :: SiPr
-    real(dp) :: SumKcTop, HIGC, HIGClinear
-    integer(int32) :: DaysYieldFormation, tSwitch
-    real(dp) :: TDayMax_temp, TDayMin_temp
-
-    ! 1. initialize
-    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
-    L12SF = L12 ! to calculate SumKcTop (no stress)
-    GDDL12SF = GDDL12 ! to calculate SumKcTop (no stress)
-    ! Maximum sum Kc (no stress)
-    SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
-        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
-        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing,&
-        CCeffectProcent, Tbase, Tupper, TDayMin, TDayMax, &
-        GDtranspLow, CO2Given, TheModeCycle)
-
-    ! Get PercentLagPhase (for estimate WPi during yield formation)
-    if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
-        ! DaysToFlowering corresponds with Tuberformation
-        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
-        if (CropDeterm) then
-            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
-            call GetDaySwitchToLinear(RefHI, RatedHIdt, HIGC, tSwitch,&
-                  HIGClinear)
-        else
-            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
-        end if
+    ! 1b. Delete existing TnxReference365Days.SIM
+    FullName = trim(GetPathNameSimul()) // 'TnxReference365Days.SIM'
+    if (FileExists(FullName)) then
+        call unlink(FullName)
+    end if
+    ! 1c. Delete existing TCropReference.SIM
+    FullName = trim(GetPathNameSimul()) // 'TCropReference.SIM'
+    if (FileExists(FullName)) then
+        call unlink(FullName)
     end if
 
-    ! 2. Biomass production for various stress levels
-    do Si = 1, 8
-        ! various stress levels
-        ! stress effect
-        SiPr = int(10*(Si-1), kind=int8)
-        StressMatrix(Si)%StressProc = SiPr
-        call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
-        ! adjusted length of Max canopy cover
-        RatDGDD = 1
-        if ((StressResponse%RedCCX == 0) .and. &
-            (StressResponse%RedCGC == 0))then
-            L12SF = L12
-            GDDL12SF = GDDL12
-        else
-            call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LFlor,&
-                   LengthFlor, CropDeterm, L12SF, StressResponse%RedCGC,&
-                   StressResponse%RedCCX, SiPr)
-            if (TheModeCycle == modeCycle_GDDays) then
-                TDayMin_temp = TDayMin
-                TDayMax_temp = TDayMax
-                GDDL12SF = GrowingDegreeDays(L12SF, CropDNr1, Tbase, Tupper,&
-                                 TDayMin_temp, TDayMax_temp)
+
+    ! 2. Get Mean monthly data
+    if (TemperatureFile /= '(None)') then
+        ! 2.a Preparation
+        ! Get Number of Years
+        NrYears = GetTemperatureRecord_ToY() - GetTemperatureRecord_FromY() + 1
+        !WRITE(*, '(A, i4)') 'The value of NrYears is:', NrYears
+        ! Get TnxReferenceYear
+        call SetTnxReferenceYear(roundc((GetTemperatureRecord_FromY()+GetTemperatureRecord_ToY())/2._dp,mold=1_int32))
+        if (GetTnxReferenceYear() == 1901) then
+            call SetTnxReferenceYear(2000)
+        end if
+        ! check number of years for each month
+        do Monthi = 1, 12
+            MonthNrYears(Monthi) = NrYears
+        end do
+        if (NrYears > 1) then
+            if (GetTemperatureRecord_FromM() > 1) then
+                do Monthi = 1, (GetTemperatureRecord_FromM()-1)
+                    MonthNrYears(Monthi) = MonthNrYears(Monthi) - 1
+                end do
             end if
-            if ((TheModeCycle == modeCycle_GDDays) .and. (GDDL12SF < GDDL123)) then
-                RatDGDD = (L123-L12SF)*1._dp/(GDDL123-GDDL12SF)
+            if (GetTemperatureRecord_ToM() < 12) then
+                do Monthi = 12, (GetTemperatureRecord_ToM()+1), -1
+                    MonthNrYears(Monthi) = MonthNrYears(Monthi) - 1
+                end do
             end if
         end if
-        ! biomass production
-        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-                L0, L12, L12SF, L123, L1234, LFlor,&
-                GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, WPyield, &
-                DaysYieldFormation, tSwitch, CCo, CCx, CGC, GDDCGC, CDC,&
-                GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
-                Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
-                SumKcTop, SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
-                StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
-                StressResponse%CDecline, -0.01_dp, TheModeCycle, .true.,&
-                .false.)
-        if (Si == 1) then
-            BNor100 = BNor
-            StressMatrix(1)%BioMProc = 100._dp
-        else
-            if (BNor100 > 0.00001_dp) then
-                StressMatrix(Si)%BioMProc = 100._dp * BNor/BNor100
-            else
-                StressMatrix(Si)%BioMProc = 100._dp
+                
+        ! initialize
+        do Monthi = 1, 12
+            MonthVal1(Monthi) = 0._dp ! Tmin data
+            MonthVal2(Monthi) = 0._dp ! Tmax data
+        end do
+        Yeari = GetTemperatureRecord_FromY()
+        Monthi = GetTemperatureRecord_FromM()
+        DayNri = GetTemperatureRecord_FromDayNr()
+        EndMonth = .false.
+        EndDayNr = undef_int
+        Deci = undef_int
+        SUM1 = 0._dp
+        SUM2 = 0._dp
+        MonthDays = 0
+        MonthDecs = 0
+        select case (GetTemperatureRecord_DataType())
+        case (datatype_daily)
+            ! EndDayNr = DayNr of last day in month
+            Dayi = DaysInMonth(Monthi)
+            if ((LeapYear(Yeari) .eqv. .true.) .and. (Monthi == 2)) then
+                Dayi = Dayi + 1
             end if
-        end if
-        StressMatrix(Si)%BioMSquare =&
-             StressMatrix(Si)%BioMProc *&
-             StressMatrix(Si)%BioMProc
-        ! end stress level
-    end do
+            call DetermineDayNr(Dayi, Monthi, Yeari, EndDayNr)
+        end select
+            
+        ! open temperature file
+        open(newunit=fhandle, file=trim(GetTemperatureFilefull()), &
+                     status='old', action='read', iostat=rc)
+        read(fhandle, *, iostat=rc) ! Description
+        read(fhandle, *, iostat=rc) ! Data type
+        read(fhandle, *, iostat=rc) ! Day
+        read(fhandle, *, iostat=rc) ! Month
+        read(fhandle, *, iostat=rc) ! Year
+        read(fhandle, *, iostat=rc) ! Title
+        read(fhandle, *, iostat=rc) ! Title
+        read(fhandle, *, iostat=rc) ! Title
 
-    ! 5. Stress - Biomass relationship
-    Yavg = 0._dp
-    X1avg = 0._dp
-    X2avg = 0._dp
-    do Si = 1, 8
-        ! various stress levels
-        Yavg = Yavg + StressMatrix(Si)%StressProc
-        X1avg = X1avg + StressMatrix(Si)%BioMProc
-        X2avg = X2avg + StressMatrix(Si)%BioMSquare
-    end do
-    Yavg  = Yavg/8._dp
-    X1avg = X1avg/8._dp
-    X2avg = X2avg/8._dp
-    SUMx1y  = 0._dp
-    SUMx2y  = 0._dp
-    SUMx1Sq = 0._dp
-    SUMx2Sq = 0._dp
-    SUMx1x2 = 0._dp
-    do Si = 1, 8
-        ! various stress levels
-        y     = StressMatrix(Si)%StressProc - Yavg
-        x1    = StressMatrix(Si)%BioMProc - X1avg
-        x2    = StressMatrix(Si)%BioMSquare - X2avg
-        x1y   = x1 * y
-        x2y   = x2 * y
-        x1Sq  = x1 * x1
-        x2Sq  = x2 * x2
-        x1x2  = x1 * x2
-        SUMx1y  = SUMx1y + x1y
-        SUMx2y  = SUMx2y + x2y
-        SUMx1Sq = SUMx1Sq + x1Sq
-        SUMx2Sq = SUMx2Sq + x2Sq
-        SUMx1x2 = SUMx1x2 + x1x2
-    end do
+        ! 2.b Determine mean monthly data
+        do while (rc /= iostat_end)
+            ! read data
+            read(fhandle, *, iostat=rc) Val1, Val2 ! Tmin, Tmax
+            if (rc == iostat_end) exit
+            !WRITE(*, '(A, f10.2)') 'The value of Val1 is:', Val1
+            !WRITE(*, '(A, f10.2)') 'The value of Val2 is:', Val2
+            SUM1 = SUM1 + Val1 ! minimum temperature
+            SUM2 = SUM2 + Val2 ! maximum temperature
+            ! check end of month
+            select case (GetTemperatureRecord_DataType())
+            case (datatype_daily)
+                MonthDays = MonthDays + 1
+                if (DayNri == EndDayNr) then
+                    EndMonth = .true.
+                end if
+            case (datatype_decadely)
+                MonthDecs = MonthDecs + 1
+                if (Deci == 3) then
+                    EndMonth = .true.
+                end if
+            case (datatype_monthly)
+                EndMonth = .true.
+            end select
+            if (rc == iostat_end) then
+                EndMonth = .true.
+            end if
+            ! End of Month
+            if (EndMonth .eqv. .true.) then
+                ! mean monthly values Tmin and Tmax
+                select case (GetTemperatureRecord_DataType())
+                case (datatype_daily)
+            !WRITE(*, '(A, f10.2)') 'The value of SUM1 is:', SUM1
+            !WRITE(*, '(A, f10.2)') 'The value of SUM2 is:', SUM2
+            !WRITE(*, '(A, I4)') 'The value of MonthDays is:', MonthDays
+                    SUM1 = SUM1/real(MonthDays, kind=dp)
+                    SUM2 = SUM2/real(MonthDays, kind=dp)
+                case (datatype_decadely)
+                    SUM1 = SUM1/real(MonthDecs, kind=dp)
+                    SUM2 = SUM2/real(MonthDecs, kind=dp)
+                end select
+                MonthVal1(Monthi) = MonthVal1(Monthi) + SUM1/real(MonthNrYears(Monthi),kind=dp) ! Tmin
+                MonthVal2(Monthi) = MonthVal2(Monthi) + SUM2/real(MonthNrYears(Monthi),kind=dp) ! Tmax
+                !WRITE(*, '(A, i4)') 'The value of Monthi is:', Monthi
+                !WRITE(*, '(A, f10.4)') 'The value of MonthVal1 is:', MonthVal1(Monthi)
+                !WRITE(*, '(A, f10.4)') 'The value of MonthVal2 is:', MonthVal2(Monthi)
+                ! Next month
+                SUM1 = 0._dp
+                SUM2 = 0._dp
+                if (Monthi == 12) then
+                    Monthi = 1
+                    Yeari = Yeari + 1
+                else
+                    Monthi = Monthi + 1
+                end if
+                EndMonth = .false.
+                select case (GetTemperatureRecord_DataType())
+                case (datatype_daily)
+                    ! EndDayNr = DayNr of last day in month
+                    MonthDays = 0
+                    Dayi = DaysInMonth(Monthi)
+                    if ((LeapYear(Yeari) .eqv. .true.) .and. (Monthi == 2)) then
+                        Dayi = Dayi + 1
+                    end if
+                    call DetermineDayNr(Dayi, Monthi, Yeari, EndDayNr)
+                case (datatype_decadely)
+                    MonthDecs = 0
+                    Deci = 0
+                end select
+            end if
+            ! Next day, decade, month
+            select case (GetTemperatureRecord_DataType())
+            case (datatype_daily)
+                DayNri = DayNri + 1
+            end select
+        end do
+        
+        ! close temperature file
+        close(fhandle)
+    end if
+    ! 3. Create and Save TnxReference File
+    if (TemperatureFile /= '(None)') then
+        ! Determine Name of TnxReference File
+        i = len(trim(TemperatureFile))
+        TempString = trim(TemperatureFile)
+        call SetTnxReferenceFile(TempString(:i-4) // 'Reference.Tnx')
+        FullName = trim(GetPathNameSimul()) // GetTnxReferenceFile()
+        call SetTnxReferenceFileFull(FullName)
+        ! Save mean monhtly data data
+        call fTnxReference_open(FullName, 'w')
+        call fTnxReference_write('Reference : ' // trim(GetTemperatureDescription()))
+        call fTnxReference_write('     3  : Monthly records (1=daily, 2=10-daily and 3=monthly data)')
+        call fTnxReference_write('     1  : First day of record (1, 11 or 21 for 10-day or 1 for months)')
+        call fTnxReference_write('     1  : First month of record')
+        call fTnxReference_write('  1901  : First year of record (1901 if not linked to a specific year)')
+        call fTnxReference_write('')
+        call fTnxReference_write('  Tmin (C)   TMax (C) ')
+        call fTnxReference_write('  =======================')
+        do Monthi = 1, 12
+            write(TempString2, '(2f10.2)') MonthVal1(Monthi), MonthVal2(Monthi)
+            call fTnxReference_write(trim(TempString2))
+            call SetTminTnxReference12MonthsRun_i(Monthi,real(roundc(100*MonthVal1(Monthi),mold=int32),kind=dp)/100._dp)
+            call SetTmaxTnxReference12MonthsRun_i(Monthi,real(roundc(100*MonthVal2(Monthi),mold=int32),kind=dp)/100._dp)
+        end do
+        call fTnxReference_close()
+    end if
+end subroutine CreateTnxReferenceFile
 
-    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
-        b2 = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
-             (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
-        b1 = (SUMx1y - b2 * SUMx1x2)/SUMx1Sq
-        b0 = Yavg - b1*X1avg - b2*X2avg
 
-        BM10 =  StressMatrix(2)%BioMProc
-        BM20 =  StressMatrix(3)%BioMProc
-        BM30 =  StressMatrix(4)%BioMProc
-        BM40 =  StressMatrix(5)%BioMProc
-        BM50 =  StressMatrix(6)%BioMProc
-        BM60 =  StressMatrix(7)%BioMProc
-        BM70 =  StressMatrix(8)%BioMProc
+!TminDatSet
+
+function GetTminDataSet() result(TminDataSet_out)
+    !! Getter for the "TminDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: TminDataSet_out
+
+    TminDataSet_out = TminDataSet
+end function GetTminDataSet
+
+
+function GetTminDataSet_i(i) result(TminDataSet_i)
+    !! Getter for individual elements of the "TminDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: TminDataSet_i
+
+    TminDataSet_i = TminDataSet(i)
+end function GetTminDataSet_i
+
+
+integer(int32) function GetTminDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetTminDataSet_DayNr = TminDataSet(i)%DayNr
+end function GetTminDataSet_DayNr
+
+
+real(dp) function GetTminDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetTminDataSet_Param = TminDataSet(i)%Param
+end function GetTminDataSet_Param
+
+
+subroutine SetTminDataSet(TminDataSet_in)
+    !! Setter for the "TminDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: TminDataSet_in
+
+    TminDataSet = TminDataSet_in
+end subroutine SetTminDataSet
+
+
+subroutine SetTminDataSet_i(i, TminDataSet_i)
+    !! Setter for individual element for the "TminDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: TminDataSet_i
+
+    TminDataSet(i) = TminDataSet_i
+end subroutine SetTminDataSet_i
+
+
+subroutine SetTminDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    TminDataSet(i)%DayNr = DayNr_in
+end subroutine SetTminDataSet_DayNr
+
+
+subroutine SetTminDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    TminDataSet(i)%Param = Param_in
+end subroutine SetTminDataSet_Param
+
+! TmaxDataSet
+
+function GetTmaxDataSet() result(TmaxDataSet_out)
+    !! Getter for the "TmaxDataSet" global variable.
+    type(rep_DayEventDbl), dimension(31) :: TmaxDataSet_out
+
+    TmaxDataSet_out = TmaxDataSet
+end function GetTmaxDataSet
+
+
+function GetTmaxDataSet_i(i) result(TmaxDataSet_i)
+    !! Getter for individual elements of the "TmaxDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl) :: TmaxDataSet_i
+
+    TmaxDataSet_i = TmaxDataSet(i)
+end function GetTmaxDataSet_i
+
+
+integer(int32) function GetTmaxDataSet_DayNr(i)
+    integer(int32), intent(in) :: i
+
+    GetTmaxDataSet_DayNr = TmaxDataSet(i)%DayNr
+end function GetTmaxDataSet_DayNr
+
+
+real(dp) function GetTmaxDataSet_Param(i)
+    integer(int32), intent(in) :: i
+
+    GetTmaxDataSet_Param = TmaxDataSet(i)%Param
+end function GetTmaxDataSet_Param
+
+
+subroutine SetTmaxDataSet(TmaxDataSet_in)
+    !! Setter for the "TmaxDatSet" global variable.
+    type(rep_DayEventDbl), dimension(31), intent(in) :: TmaxDataSet_in
+
+    TmaxDataSet = TmaxDataSet_in
+end subroutine SetTmaxDataSet
+
+
+subroutine SetTmaxDataSet_i(i, TmaxDataSet_i)
+    !! Setter for individual element for the "TmaxDataSet" global variable.
+    integer(int32), intent(in) :: i
+    type(rep_DayEventDbl), intent(in) :: TmaxDataSet_i
+
+    TmaxDataSet(i) = TmaxDataSet_i
+end subroutine SetTmaxDataSet_i
+
+
+subroutine SetTmaxDataSet_DayNr(i, DayNr_in)
+    integer(int32), intent(in) :: i
+    integer(int32), intent(in) :: DayNr_in
+
+    TmaxDataSet(i)%DayNr = DayNr_in
+end subroutine SetTmaxDataSet_DayNr
+
+
+subroutine SetTmaxDataSet_Param(i, Param_in)
+    integer(int32), intent(in) :: i
+    real(dp), intent(in) :: Param_in
+
+    TmaxDataSet(i)%Param = Param_in
+end subroutine SetTmaxDataSet_Param
+
+
+! fTnxReference
+
+subroutine fTnxReference_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fTnxReference' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
+
+    call open_file(fTnxReference, filename, mode, fTnxReference_iostat)
+end subroutine fTnxReference_open
+
+
+subroutine fTnxReference_write(line, advance_in)
+    !! Writes the given line to the fTnxReference file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
     else
-        b2 = real(undef_int, kind=dp)
-        b1 = real(undef_int, kind=dp)
-        b0 = real(undef_int, kind=dp)
+        advance = .true.
     end if
-end subroutine StressBiomassRelationship
+    call write_file(fTnxReference, line, advance, fTnxReference_iostat)
+end subroutine fTnxReference_write
 
 
-subroutine CCxSaltStressRelationship(TheDaysToCCini, TheGDDaysToCCini,&
-       L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&
-       GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,&
-       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,&
-       Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2Given,&
-       CropDNr1, CropDeterm, TheCropType, TheModeCycle, TheCCsaltDistortion,&
-       Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
-       Salt40, Salt50, Salt60, Salt70, Salt80, Salt90)
-    integer(int32), intent(in) :: TheDaysToCCini
-    integer(int32), intent(in) :: TheGDDaysToCCini
-    integer(int32), intent(in) :: L0
-    integer(int32), intent(in) :: L12
-    integer(int32), intent(in) :: L123
-    integer(int32), intent(in) :: L1234
-    integer(int32), intent(in) :: LFlor
-    integer(int32), intent(in) :: LengthFlor
-    integer(int32), intent(in) :: GDDFlor
-    integer(int32), intent(in) :: GDDLengthFlor
-    integer(int32), intent(in) :: GDDL0
-    integer(int32), intent(in) :: GDDL12
-    integer(int32), intent(in) :: GDDL123
-    integer(int32), intent(in) :: GDDL1234
-    integer(int32), intent(in) :: WPyield
-    integer(int32), intent(in) :: RefHI
-    real(dp), intent(in) :: CCo
-    real(dp), intent(in) :: CCx
-    real(dp), intent(in) :: CGC
-    real(dp), intent(in) :: GDDCGC
-    real(dp), intent(in) :: CDC
-    real(dp), intent(in) :: GDDCDC
-    real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
-    real(dp), intent(in) :: CCeffectProcent
-    real(dp), intent(in) :: Tbase
-    real(dp), intent(in) :: Tupper
-    real(dp), intent(in) :: TDayMin
-    real(dp), intent(in) :: TDayMax
-    real(dp), intent(in) :: GDbioLow
-    real(dp), intent(in) :: WPveg
-    real(dp), intent(in) :: RatedHIdt
-    real(dp), intent(in) :: CO2Given
-    integer(int32), intent(in) :: CropDNr1
-    logical, intent(in) :: CropDeterm
-    integer(intEnum), intent(in) :: TheCropType
-    integer(intEnum), intent(in) :: TheModeCycle
-    integer(int8), intent(in) :: TheCCsaltDistortion
-    real(dp), intent(inout) :: Coeffb0Salt
-    real(dp), intent(inout) :: Coeffb1Salt
-    real(dp), intent(inout) :: Coeffb2Salt
-    real(dp), intent(inout) :: Salt10
-    real(dp), intent(inout) :: Salt20
-    real(dp), intent(inout) :: Salt30
-    real(dp), intent(inout) :: Salt40
-    real(dp), intent(inout) :: Salt50
-    real(dp), intent(inout) :: Salt60
-    real(dp), intent(inout) :: Salt70
-    real(dp), intent(inout) :: Salt80
-    real(dp), intent(inout) :: Salt90
+subroutine fTnxReference_close()
+    close(fTnxReference)
+end subroutine fTnxReference_close
 
-    type StressIndexes
-        integer(int8) :: CCxReduction
-            !! Undocumented
-        real(dp) :: SaltProc
-            !! Undocumented
-        real(dp) :: SaltSquare
-            !! Undocumented
-    end type StressIndexes
 
-    integer(int32) :: L12SS, GDDL12SS, DaysYieldFormation, tSwitch
-    real(dp) :: SumKcTop, HIGC, HIGClinear, CCToReach
-    integer(int8) :: Si, SiPr
-    type(StressIndexes), dimension(10) :: StressMatrix
-    type(rep_EffectStress) :: StressResponse
-    real(dp) :: RatDGDD, BNor, BNor100, BioMProc
-    real(dp) :: Yavg, X1avg, X2avg, SUMx1y, SUMx2y, SUMx1Sq, &
-         SUMx2Sq, SUMx1x2, y, x1, x2, x1y, x2y, x1Sq, x2Sq, x1x2
-    real(dp) :: TDayMax_temp, TDayMin_temp
+subroutine fTnxReference_erase()
+    call unlink(GetTnxReferenceFileFull())
+end subroutine fTnxReference_erase
 
-    ! 1. initialize
-    call SetSimulation_DelayedDays(0) ! required for CalculateETpot
-    GDDL12SS = GDDL12 ! to calculate SumKcTop (no stress)
-    BNor100 = real(undef_int, kind=dp)
-    ! Maximum sum Kc (no stress)
-    SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
-        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
-        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
-        CCeffectProcent,Tbase, Tupper, TDayMin, TDayMax, GDbioLow, &
-        CO2Given, TheModeCycle)
-    ! Get PercentLagPhase (for estimate WPi during yield formation)
-    if ((TheCropType == subkind_Tuber) .or. (TheCropType == subkind_grain)) then
-        ! DaysToFlowering corresponds with Tuberformation
-        DaysYieldFormation = roundc(RefHI/RatedHIdt, mold=1)
-        if (CropDeterm) then
-            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
-            call GetDaySwitchToLinear(RefHI, RatedHIdt, &
-                    HIGC, tSwitch, HIGClinear)
-        else
-            tSwitch = roundc(DaysYieldFormation/3._dp, mold=1)
-        end if
-    end if
 
-    ! 2. Biomass production (or Salt stress) for various CCx reductions
-    do Si = 1, 10
-        ! various CCx reduction
-        ! CCx reduction
-        SiPr = int(10*(Si-1), kind=int8)
-        StressMatrix(Si)%CCxReduction = SiPr
-        ! adjustment CC
-        call CropStressParametersSoilSalinity(SiPr, TheCCsaltDistortion, &
-            CCo, CCx, CGC, GDDCGC, CropDeterm, L12, LFlor, LengthFlor, L123,&
-            GDDL12, GDDFlor, GDDLengthFlor, GDDL123, TheModeCycle,&
-            StressResponse)
-        ! adjusted length of Max canopy cover
-        RatDGDD = 1
-        if ((StressResponse%RedCCX == 0) .and.&
-            (StressResponse%RedCGC == 0)) then
-            L12SS = L12
-            GDDL12SS = GDDL12
-        else
-            CCToReach = 0.98_dp*(1._dp-StressResponse%RedCCX/100._dp)*CCx
-            L12SS = DaysToReachCCwithGivenCGC(CCToReach, CCo, &
-                 (1._dp-StressResponse%RedCCX/100._dp)*CCx,&
-                 CGC*(1._dp-StressResponse%RedCGC/100._dp), L0)
-            if (TheModeCycle == modeCycle_GDDays) then
-                TDayMax_temp = TDayMax
-                TDayMin_temp = TDayMin
-                GDDL12SS = GrowingDegreeDays(L12SS, CropDNr1, Tbase, &
-                           Tupper, TDayMin_temp, TDayMax_temp)
-            end if
-            if ((TheModeCycle == modeCycle_GDDays) .and.&
-                (GDDL12SS < GDDL123)) then
-                RatDGDD = (L123-L12SS)*1._dp/(GDDL123-GDDL12SS)
-            end if
-        end if
+! fTnxReference365Days
 
-        ! biomass production
-        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-                L0, L12, L12SS, L123, L1234, LFlor,&
-                GDDL0, GDDL12, GDDL12SS, GDDL123, GDDL1234,&
-                WPyield, DaysYieldFormation, tSwitch,&
-                CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
-                KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
-                Tbase, Tupper, TDayMin, TDayMax, GDbioLow, RatDGDD, SumKcTop,&
-                SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
-                StressResponse%RedWP, StressResponse%RedKsSto, &
-                0_int8, 0, StressResponse%CDecline, -0.01_dp,&
-                TheModeCycle, .false., .false.)
-        if (Si == 1) then
-            BNor100 = BNor
-            BioMProc = 100._dp
-            StressMatrix(1)%SaltProc = 0._dp
-        else
-            if (BNor100 > 0.00001_dp) then
-                BioMProc = 100._dp * BNor/BNor100
-                StressMatrix(Si)%SaltProc = 100._dp - BioMProc
-            else
-                StressMatrix(Si)%SaltProc = 0._dp
-            end if
-        end if
-        StressMatrix(Si)%SaltSquare = &
-             StressMatrix(Si)%SaltProc *&
-             StressMatrix(Si)%SaltProc
-        ! end stress level
-    end do
+subroutine fTnxReference365Days_open(filename, mode)
+    !! Opens the given file, assigning it to the 'fTnxReference365Days' file handle.
+    character(len=*), intent(in) :: filename
+        !! name of the file to assign the file handle to
+    character, intent(in) :: mode
+        !! open the file for reading ('r'), writing ('w') or appending ('a')
 
-    ! 3. CCx - Salt stress relationship
-    Yavg = 0._dp
-    X1avg = 0._dp
-    X2avg = 0._dp
-    do Si = 1, 10
-        ! various CCx reduction
-        Yavg = Yavg + StressMatrix(Si)%CCxReduction
-        X1avg = X1avg + StressMatrix(Si)%SaltProc
-        X2avg = X2avg + StressMatrix(Si)%SaltSquare
-    end do
-    Yavg  = Yavg/10._dp
-    X1avg = X1avg/10._dp
-    X2avg = X2avg/10._dp
-    SUMx1y  = 0._dp
-    SUMx2y  = 0._dp
-    SUMx1Sq = 0._dp
-    SUMx2Sq = 0._dp
-    SUMx1x2 = 0._dp
-    do Si = 1, 10
-        ! various CCx reduction
-        y     = StressMatrix(Si)%CCxReduction - Yavg
-        x1    = StressMatrix(Si)%SaltProc - X1avg
-        x2    = StressMatrix(Si)%SaltSquare - X2avg
-        x1y   = x1 * y
-        x2y   = x2 * y
-        x1Sq  = x1 * x1
-        x2Sq  = x2 * x2
-        x1x2  = x1 * x2
-        SUMx1y  = SUMx1y + x1y
-        SUMx2y  = SUMx2y + x2y
-        SUMx1Sq = SUMx1Sq + x1Sq
-        SUMx2Sq = SUMx2Sq + x2Sq
-        SUMx1x2 = SUMx1x2 + x1x2
-    end do
+    call open_file(fTnxReference365Days, filename, mode, fTnxReference365Days_iostat)
+end subroutine fTnxReference365Days_open
 
-    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
-        Coeffb2Salt = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
-                      (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
-        Coeffb1Salt = (SUMx1y - Coeffb2Salt * SUMx1x2)/SUMx1Sq
-        Coeffb0Salt = Yavg - Coeffb1Salt*X1avg - Coeffb2Salt*X2avg
 
-        Salt10 =  StressMatrix(2)%SaltProc
-        Salt20 =  StressMatrix(3)%SaltProc
-        Salt30 =  StressMatrix(4)%SaltProc
-        Salt40 =  StressMatrix(5)%SaltProc
-        Salt50 =  StressMatrix(5)%SaltProc
-        Salt60 =  StressMatrix(7)%SaltProc
-        Salt70 =  StressMatrix(8)%SaltProc
-        Salt80 =  StressMatrix(9)%SaltProc
-        Salt90 =  StressMatrix(10)%SaltProc
+subroutine fTnxReference365Days_write(line, advance_in)
+    !! Writes the given line to the fTnxReference365Days file.
+    character(len=*), intent(in) :: line
+        !! line to write
+    logical, intent(in), optional :: advance_in
+        !! whether or not to append a newline character
+
+    logical :: advance
+
+    if (present(advance_in)) then
+        advance = advance_in
     else
-        Coeffb2Salt = real(undef_int, kind=dp)
-        Coeffb1Salt = real(undef_int, kind=dp)
-        Coeffb0Salt = real(undef_int, kind=dp)
+        advance = .true.
     end if
-end subroutine CCxSaltStressRelationship
+    call write_file(fTnxReference365Days, line, advance, fTnxReference365Days_iostat)
+end subroutine fTnxReference365Days_write
+
+
+subroutine fTnxReference365Days_close()
+    close(fTnxReference365Days)
+end subroutine fTnxReference365Days_close
+
+
+subroutine fTnxReference365Days_erase()
+    call unlink(GetTnxReference365DaysFileFull())
+end subroutine fTnxReference365Days_erase
+
+
+subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet, TmaxDataSet)
+    integer(int32), intent(in) :: Monthi
+    type(rep_DayEventDbl), dimension(31) , intent(inout) :: TminDataSet
+    type(rep_DayEventDbl), dimension(31) , intent(inout) :: TmaxDataSet
+
+    integer(int32) :: Dayi, DayN
+    integer(int32) :: DNR
+    integer(int32) :: t1, t2, ni
+    real(dp) :: C1Min, C2Min, C3Min
+    real(dp) :: C1Max, C2Max, C3Max
+    real(dp) :: aOver3Min, bOver2Min, cMin
+    real(dp) :: aOver3Max, bOver2Max, cMax
+    character(len=:), allocatable :: FullFileName
+
+    ni=30
+
+    !call GetSetofThreeMonthsUndefYear(Monthi, &
+    !     C1Min, C2Min, C3Min, C1Max, C2Max, C3Max)
+    if (Monthi == 1) then
+        C1Min = GetTminTnxReference12MonthsRun_i(12)
+        C1Max = GetTmaxTnxReference12MonthsRun_i(12)
+    else
+        C1Min = GetTminTnxReference12MonthsRun_i(Monthi-1)
+        C1Max = GetTmaxTnxReference12MonthsRun_i(Monthi-1)
+    end if
+    C2Min = GetTminTnxReference12MonthsRun_i(Monthi)
+    C2Max = GetTmaxTnxReference12MonthsRun_i(Monthi)
+    if (Monthi == 12) then
+        C3Min = GetTminTnxReference12MonthsRun_i(1)
+        C3Max = GetTmaxTnxReference12MonthsRun_i(1)
+    else
+        C3Min = GetTminTnxReference12MonthsRun_i(Monthi+1)
+        C3Max = GetTmaxTnxReference12MonthsRun_i(Monthi+1)
+    end if
+
+    C1Min = C1Min*ni
+    C1Max = C1Max*ni
+    C2Min = C2Min*ni
+    C2Max = C2Max*ni
+    C3Min = C3Min*ni
+    C3Max = C3Max*ni
+
+    call DetermineDayNr(1, Monthi, 1901, DNR)
+    DayN = DaysInMonth(Monthi)
+
+    call GetInterpolationParameters(C1Min, C2Min, C3Min, &
+                   aOver3Min, bOver2Min, cMin)
+    call GetInterpolationParameters(C1Max, C2Max, C3Max, &
+                   aOver3Max, bOver2Max, cMax)
+        !WRITE(*, '(A, 6f10.2)') 'Int C1Min ...: ', C1Min, C2Min, C3Min, aOver3Min, bOver2Min, cMin
+
+    t1 = 30
+    do Dayi = 1, DayN
+        t2 = t1 + 1
+        TminDataSet(Dayi)%DayNr = DNR+Dayi-1
+        TmaxDataSet(Dayi)%DayNr = DNR+Dayi-1
+        TminDataSet(Dayi)%Param = aOver3Min*(t2*t2*t2-t1*t1*t1) &
+            + bOver2Min*(t2*t2-t1*t1) + cMin*(t2-t1)
+        TmaxDataSet(Dayi)%Param = aOver3Max*(t2*t2*t2-t1*t1*t1) &
+            + bOver2Max*(t2*t2-t1*t1) + cMax*(t2-t1)
+        t1 = t2
+        !WRITE(*, '(A, i4, f10.2)') 'TminDataSet(Dayi)%DayNr: ', TminDataSet(Dayi)%DayNr, TminDataSet(Dayi)%Param
+    end do
+    do Dayi = (DayN+1), 31 ! Give to remaining days (day 29,30 or 31) the DayNr of the last day of the month
+        TminDataSet(Dayi)%DayNr = DNR+DayN-1
+        TmaxDataSet(Dayi)%DayNr = DNR+DayN-1
+        TminDataSet(Dayi)%Param = 0._dp
+        TmaxDataSet(Dayi)%Param = 0._dp
+    end do
+
+    contains
+
+
+!    subroutine GetSetofThreeMonthsUndefYear(Monthi, &
+!            C1Min, C2Min, C3Min, C1Max, C2Max, C3Max)
+!        integer(int32), intent(in) :: Monthi
+!        real(dp), intent(inout) :: C1Min
+!        real(dp), intent(inout) :: C2Min
+!        real(dp), intent(inout) :: C3Min
+!        real(dp), intent(inout) :: C1Max
+!        real(dp), intent(inout) :: C2Max
+!        real(dp), intent(inout) :: C3Max
+!
+!        integer(int32) :: fhandle
+!        integer(int32) :: Mfile, Nri, Obsi, rc
+!        logical :: OK3
+!
+!        ! 1. Prepare record
+!        open(newunit=fhandle, file=trim(GetTnxReferenceFileFull()), &
+!                     status='old', action='read', iostat=rc)
+!        read(fhandle, *, iostat=rc) ! description
+!        read(fhandle, *, iostat=rc) ! time step
+!        read(fhandle, *, iostat=rc) ! day
+!        read(fhandle, *, iostat=rc) ! month
+!        read(fhandle, *, iostat=rc) ! year
+!        read(fhandle, *, iostat=rc)
+!        read(fhandle, *, iostat=rc)
+!        read(fhandle, *, iostat=rc)
+!
+!        Mfile = 1
+!        OK3 = .false.
+!
+!        ! 2. If first month
+!        if (Monthi == 1) then
+!            ! get Tnx Month 12
+!            do Monthi = 1, 11
+!                read(fhandle, *, iostat=rc)
+!            end do
+!            call ReadMonth(C1Min, C1Max, fhandle, rc)
+!            ! reset
+!            rewind(fhandle)
+!            do Monthi = 1, 8
+!                read(fhandle, *, iostat=rc)
+!            end do
+!            ! get Tnx Month 1 and 2
+!            call ReadMonth(C2Min, C2Max, fhandle, rc)  ! month 1
+!            call ReadMonth(C3Min, C3Max, fhandle, rc)  ! month 2
+!            OK3 = .true.
+!        end if
+!        
+!        ! 3. If last month
+!        if (Monthi == 12) then
+!            ! get Tnx Month 11 and 12
+!            do Monthi = 1, 10
+!                read(fhandle, *, iostat=rc)
+!            end do
+!            call ReadMonth(C1Min, C1Max, fhandle, rc)  ! month 11
+!            call ReadMonth(C2Min, C2Max, fhandle, rc)  ! month 12
+!            ! reset
+!            rewind(fhandle)
+!            ! get Tnx Month 1
+!            do Monthi = 1, 8
+!                read(fhandle, *, iostat=rc)
+!            end do
+!            call ReadMonth(C3Min, C3Max, fhandle, rc)  ! month 1
+!            OK3 = .true.
+!        end if
+!        
+!        ! 4. IF not first or last month
+!        if(.not. OK3) then
+!            ! determine Position Monthi
+!            Obsi = 1
+!            do while (.not. OK3)
+!                if (Monthi == Mfile) then
+!                   OK3 = .true.
+!                else
+!                   Mfile = Mfile + 1
+!                  Obsi = Obsi + 1
+!                end if
+!            end do
+!            ! get to Monthi-1
+!            do Nri = 1, (Obsi-2)
+!                read(fhandle, *, iostat=rc)
+!            end do
+!            ! Get Tnx (Monthi-1), Monthi, (Monthi+1)
+!            call ReadMonth(C1Min, C1Max, fhandle, rc) ! Monthi-1
+!            call ReadMonth(C2Min, C2Max, fhandle, rc) ! Monthi
+!            call ReadMonth(C3Min, C3Max, fhandle, rc) ! Monthi+1
+!        end if
+!        close(fhandle)
+!    end subroutine GetSetofThreeMonthsUndefYear
+!
+
+    subroutine ReadMonth(CiMin, CiMax, fhandle, rc)
+        real(dp), intent(inout) :: CiMin
+        real(dp), intent(inout) :: CiMax
+        integer(int32), intent(in) :: fhandle
+        integer(int32), intent(inout) :: rc
+
+        integer(int32), parameter :: ni = 30 ! simplification give better results for all cases
+        character(len=255) :: StringREAD
+
+        read(fhandle, '(a)', iostat=rc) StringREAD
+        call SplitStringInTwoParams(StringREAD, CiMin, CiMax)
+        CiMin = CiMin * ni
+        CiMax = CiMax * ni
+    end subroutine ReadMonth
+
+
+    subroutine GetInterpolationParameters(C1, C2, C3, &
+                          aOver3, bOver2, c)
+        real(dp), intent(in) :: C1
+        real(dp), intent(in) :: C2
+        real(dp), intent(in) :: C3
+        real(dp), intent(inout) :: aOver3
+        real(dp), intent(inout) :: bOver2
+        real(dp), intent(inout) :: c
+
+        ! n1=n2=n3=30 --> better parabola
+        aOver3 = (C1-2._dp*C2+C3)/(6._dp*30._dp*30._dp*30._dp)
+        bOver2 = (-6._dp*C1+9._dp*C2-3._dp*C3)/(6._dp*30._dp*30._dp)
+        c = (11._dp*C1-7._dp*C2+2._dp*C3)/(6._dp*30._dp)
+    end subroutine GetInterpolationParameters
+end subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile
+
+
 
 end module ac_tempprocessing
