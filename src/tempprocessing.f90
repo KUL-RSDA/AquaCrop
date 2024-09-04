@@ -2128,7 +2128,7 @@ subroutine LoadSimulationRunProject(NrRun)
         call CompleteClimateDescription(temperature_record)
         call SetTemperatureRecord(temperature_record)
     end if
-/
+
     ! Create Temperature Reference file 
     if (GetTemperatureFile() /= '(External)') then
         call CreateTnxReferenceFile(GetTemperatureFile(),GetTnxReferenceFile(),GetTnxReferenceYear());
