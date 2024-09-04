@@ -1060,10 +1060,10 @@ real(dp) :: TmaxCropReference ! degC
 real(dp) :: TminCropReference ! degC
 real(dp) :: TmaxTnxReference365Days ! degC
 real(dp) :: TminTnxReference365Days ! degC
-real(dp), dimension(1:366) :: TmaxRun, TminRun
-real(dp), dimension(1:12) ::  TmaxTnxReference12MonthsRun, TminTnxReference12MonthsRun
-real(dp), dimension(1:365) :: TmaxCropReferenceRun, TminCropReferenceRun
-real(dp), dimension(1:365) :: TmaxTnxReference365DaysRun, TminTnxReference365DaysRun
+real(sp), dimension(1:366) :: TmaxRun, TminRun
+real(sp), dimension(1:12) ::  TmaxTnxReference12MonthsRun, TminTnxReference12MonthsRun
+real(sp), dimension(1:365) :: TmaxCropReferenceRun, TminCropReferenceRun
+real(sp), dimension(1:365) :: TmaxTnxReference365DaysRun, TminTnxReference365DaysRun
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay, OutDaily, Out8Irri
@@ -2883,7 +2883,6 @@ subroutine LoadIrriScheduleInfo(FullName)
     real(dp) :: VersionNr
     integer(int8) :: simul_irri_in
     integer(int32) :: simul_percraw
-    character(len=1025) :: StringREAD
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, '(a)', iostat=rc) IrriDescription
@@ -16230,7 +16229,7 @@ end subroutine SetTactWeedInfested
 
 function GetTminTnxReference365DaysRun() result(TminTnxReference365DaysRun_out)
     !! Getter for the "TminTnxReference365DaysRun" global variable.
-    real(dp), dimension(1:365) :: TminTnxReference365DaysRun_out
+    real(sp), dimension(1:365) :: TminTnxReference365DaysRun_out
 
     TminTnxReference365DaysRun_out = TminTnxReference365DaysRun
 end function GetTminTnxReference365DaysRun
@@ -16239,15 +16238,16 @@ end function GetTminTnxReference365DaysRun
 function GetTminTnxReference365DaysRun_i(i) result(TminTnxReference365DaysRun_i)
     !! Getter for individual elements of the "GetTminTnxReference365DaysRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TminTnxReference365DaysRun_i
+    real(sp) :: TminTnxReference365DaysRun_i
 
     TminTnxReference365DaysRun_i = TminTnxReference365DaysRun(i)
+    !TminTnxReference365DaysRun_i = real(roundc(10000*real(TminTnxReference365DaysRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTminTnxReference365DaysRun_i
 
 
 subroutine SetTminTnxReference365DaysRun(TminTnxReference365DaysRun_in)
     !! Setter for the "TminTnxReference365DaysRun" global variable.
-    real(dp), dimension(1:365), intent(in) :: TminTnxReference365DaysRun_in
+    real(sp), dimension(1:365), intent(in) :: TminTnxReference365DaysRun_in
 
     TminTnxReference365DaysRun = TminTnxReference365DaysRun_in
 end subroutine SetTminTnxReference365DaysRun
@@ -16256,7 +16256,7 @@ end subroutine SetTminTnxReference365DaysRun
 subroutine SetTminTnxReference365DaysRun_i(i, TminTnxReference365DaysRun_i)
     !! Setter for individual element for the "TminTnxReference365DaysRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TminTnxReference365DaysRun_i
+    real(sp), intent(in) :: TminTnxReference365DaysRun_i
 
     TminTnxReference365DaysRun(i) = TminTnxReference365DaysRun_i
 end subroutine SetTminTnxReference365DaysRun_i
@@ -16265,7 +16265,7 @@ end subroutine SetTminTnxReference365DaysRun_i
 
 function GetTmaxTnxReference365DaysRun() result(TmaxTnxReference365DaysRun_out)
     !! Getter for the "TmaxTnxReference365DaysRun" global variable.
-    real(dp), dimension(1:365) :: TmaxTnxReference365DaysRun_out
+    real(sp), dimension(1:365) :: TmaxTnxReference365DaysRun_out
 
     TmaxTnxReference365DaysRun_out = TmaxTnxReference365DaysRun
 end function GetTmaxTnxReference365DaysRun
@@ -16274,15 +16274,16 @@ end function GetTmaxTnxReference365DaysRun
 function GetTmaxTnxReference365DaysRun_i(i) result(TmaxTnxReference365DaysRun_i)
     !! Getter for individual elements of the "GetTmaxTnxReference365DaysRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TmaxTnxReference365DaysRun_i
+    real(sp) :: TmaxTnxReference365DaysRun_i
 
     TmaxTnxReference365DaysRun_i = TmaxTnxReference365DaysRun(i)
+    !TmaxTnxReference365DaysRun_i = real(roundc(10000*real(TmaxTnxReference365DaysRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTmaxTnxReference365DaysRun_i
 
 
 subroutine SetTmaxTnxReference365DaysRun(TmaxTnxReference365DaysRun_in)
     !! Setter for the "TmaxTnxReference365DaysRun" global variable.
-    real(dp), dimension(1:365), intent(in) :: TmaxTnxReference365DaysRun_in
+    real(sp), dimension(1:365), intent(in) :: TmaxTnxReference365DaysRun_in
 
     TmaxTnxReference365DaysRun = TmaxTnxReference365DaysRun_in
 end subroutine SetTmaxTnxReference365DaysRun
@@ -16291,13 +16292,13 @@ end subroutine SetTmaxTnxReference365DaysRun
 subroutine SetTmaxTnxReference365DaysRun_i(i, TmaxTnxReference365DaysRun_i)
     !! Setter for individual element for the "TmaxTnxReference365DaysRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TmaxTnxReference365DaysRun_i
+    real(sp), intent(in) :: TmaxTnxReference365DaysRun_i
 
     TmaxTnxReference365DaysRun(i) = TmaxTnxReference365DaysRun_i
 end subroutine SetTmaxTnxReference365DaysRun_i
 
 
-real(dp) function GetTminTnxReference365Days()
+real(sp) function GetTminTnxReference365Days()
     !! Getter for the "TminTnxReference365Days" global variable.
 
     GetTminTnxReference365Days = TminTnxReference365Days
@@ -16306,13 +16307,13 @@ end function GetTminTnxReference365Days
 
 subroutine SetTminTnxReference365Days(TminTnxReference365Days_in)
     !! Setter for the "TminTnxReference365Days" global variable.
-    real(dp), intent(in) :: TminTnxReference365Days_in
+    real(sp), intent(in) :: TminTnxReference365Days_in
 
     TminTnxReference365Days = TminTnxReference365Days_in
 end subroutine SetTminTnxReference365Days
 
 
-real(dp) function GetTmaxTnxReference365Days()
+real(sp) function GetTmaxTnxReference365Days()
     !! Getter for the "TmaxTnxReference365Days" global variable.
 
     GetTmaxTnxReference365Days = TmaxTnxReference365Days
@@ -16321,7 +16322,7 @@ end function GetTmaxTnxReference365Days
 
 subroutine SetTmaxTnxReference365Days(TmaxTnxReference365Days_in)
     !! Setter for the "TmaxTnxReference365Days" global variable.
-    real(dp), intent(in) :: TmaxTnxReference365Days_in
+    real(sp), intent(in) :: TmaxTnxReference365Days_in
 
     TmaxTnxReference365Days = TmaxTnxReference365Days_in
 end subroutine SetTmaxTnxReference365Days
@@ -16330,7 +16331,7 @@ end subroutine SetTmaxTnxReference365Days
 
 function GetTminCropReferenceRun() result(TminCropReferenceRun_out)
     !! Getter for the "TminCropReferenceRun" global variable.
-    real(dp), dimension(1:365) :: TminCropReferenceRun_out
+    real(sp), dimension(1:365) :: TminCropReferenceRun_out
 
     TminCropReferenceRun_out = TminCropReferenceRun
 end function GetTminCropReferenceRun
@@ -16339,15 +16340,16 @@ end function GetTminCropReferenceRun
 function GetTminCropReferenceRun_i(i) result(TminCropReferenceRun_i)
     !! Getter for individual elements of the "GetTminCropReferenceRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TminCropReferenceRun_i
+    real(sp) :: TminCropReferenceRun_i
 
     TminCropReferenceRun_i = TminCropReferenceRun(i)
+    !TminCropReferenceRun_i = real(roundc(10000*real(TminCropReferenceRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTminCropReferenceRun_i
 
 
 subroutine SetTminCropReferenceRun(TminCropReferenceRun_in)
     !! Setter for the "TminCropReferenceRun" global variable.
-    real(dp), dimension(1:365), intent(in) :: TminCropReferenceRun_in
+    real(sp), dimension(1:365), intent(in) :: TminCropReferenceRun_in
 
     TminCropReferenceRun = TminCropReferenceRun_in
 end subroutine SetTminCropReferenceRun
@@ -16356,7 +16358,7 @@ end subroutine SetTminCropReferenceRun
 subroutine SetTminCropReferenceRun_i(i, TminCropReferenceRun_i)
     !! Setter for individual element for the "TminCropReferenceRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TminCropReferenceRun_i
+    real(sp), intent(in) :: TminCropReferenceRun_i
 
     TminCropReferenceRun(i) = TminCropReferenceRun_i
 end subroutine SetTminCropReferenceRun_i
@@ -16365,7 +16367,7 @@ end subroutine SetTminCropReferenceRun_i
 
 function GetTmaxCropReferenceRun() result(TmaxCropReferenceRun_out)
     !! Getter for the "TmaxCropReferenceRun" global variable.
-    real(dp), dimension(1:365) :: TmaxCropReferenceRun_out
+    real(sp), dimension(1:365) :: TmaxCropReferenceRun_out
 
     TmaxCropReferenceRun_out = TmaxCropReferenceRun
 end function GetTmaxCropReferenceRun
@@ -16374,15 +16376,16 @@ end function GetTmaxCropReferenceRun
 function GetTmaxCropReferenceRun_i(i) result(TmaxCropReferenceRun_i)
     !! Getter for individual elements of the "GetTmaxCropReferenceRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TmaxCropReferenceRun_i
+    real(sp) :: TmaxCropReferenceRun_i
 
     TmaxCropReferenceRun_i = TmaxCropReferenceRun(i)
+    !TmaxCropReferenceRun_i = real(roundc(10000*real(TmaxCropReferenceRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTmaxCropReferenceRun_i
 
 
 subroutine SetTmaxCropReferenceRun(TmaxCropReferenceRun_in)
     !! Setter for the "TmaxCropReferenceRun" global variable.
-    real(dp), dimension(1:365), intent(in) :: TmaxCropReferenceRun_in
+    real(sp), dimension(1:365), intent(in) :: TmaxCropReferenceRun_in
 
     TmaxCropReferenceRun = TmaxCropReferenceRun_in
 end subroutine SetTmaxCropReferenceRun
@@ -16391,13 +16394,13 @@ end subroutine SetTmaxCropReferenceRun
 subroutine SetTmaxCropReferenceRun_i(i, TmaxCropReferenceRun_i)
     !! Setter for individual element for the "TmaxCropReferenceRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TmaxCropReferenceRun_i
+    real(sp), intent(in) :: TmaxCropReferenceRun_i
 
     TmaxCropReferenceRun(i) = TmaxCropReferenceRun_i
 end subroutine SetTmaxCropReferenceRun_i
 
 
-real(dp) function GetTminCropReference()
+real(sp) function GetTminCropReference()
     !! Getter for the "TminCropReference" global variable.
 
     GetTminCropReference = TminCropReference
@@ -16406,13 +16409,13 @@ end function GetTminCropReference
 
 subroutine SetTminCropReference(TminCropReference_in)
     !! Setter for the "TminCropReference" global variable.
-    real(dp), intent(in) :: TminCropReference_in
+    real(sp), intent(in) :: TminCropReference_in
 
     TminCropReference = TminCropReference_in
 end subroutine SetTminCropReference
 
 
-real(dp) function GetTmaxCropReference()
+real(sp) function GetTmaxCropReference()
     !! Getter for the "TmaxCropReference" global variable.
 
     GetTmaxCropReference = TmaxCropReference
@@ -16421,7 +16424,7 @@ end function GetTmaxCropReference
 
 subroutine SetTmaxCropReference(TmaxCropReference_in)
     !! Setter for the "TmaxCropReference" global variable.
-    real(dp), intent(in) :: TmaxCropReference_in
+    real(sp), intent(in) :: TmaxCropReference_in
 
     TmaxCropReference = TmaxCropReference_in
 end subroutine SetTmaxCropReference
@@ -16430,7 +16433,7 @@ end subroutine SetTmaxCropReference
 
 function GetTminRun() result(TminRun_out)
     !! Getter for the "TminRun" global variable.
-    real(dp), dimension(1:366) :: TminRun_out
+    real(sp), dimension(1:366) :: TminRun_out
 
     TminRun_out = TminRun
 end function GetTminRun
@@ -16439,15 +16442,16 @@ end function GetTminRun
 function GetTminRun_i(i) result(TminRun_i)
     !! Getter for individual elements of the "GetTminRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TminRun_i
+    real(sp) :: TminRun_i
 
     TminRun_i = TminRun(i)
+    !TminRun_i = real(roundc(10000*real(TminRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTminRun_i
 
 
 subroutine SetTminRun(TminRun_in)
     !! Setter for the "TminRun" global variable.
-    real(dp), dimension(1:366), intent(in) :: TminRun_in
+    real(sp), dimension(1:366), intent(in) :: TminRun_in
 
     TminRun = TminRun_in
 end subroutine SetTminRun
@@ -16456,7 +16460,7 @@ end subroutine SetTminRun
 subroutine SetTminRun_i(i, TminRun_i)
     !! Setter for individual element for the "TminRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TminRun_i
+    real(sp), intent(in) :: TminRun_i
 
     TminRun(i) = TminRun_i
 end subroutine SetTminRun_i
@@ -16465,7 +16469,7 @@ end subroutine SetTminRun_i
 
 function GetTmaxRun() result(TmaxRun_out)
     !! Getter for the "TmaxRun" global variable.
-    real(dp), dimension(1:366) :: TmaxRun_out
+    real(sp), dimension(1:366) :: TmaxRun_out
 
     TmaxRun_out = TmaxRun
 end function GetTmaxRun
@@ -16474,15 +16478,16 @@ end function GetTmaxRun
 function GetTmaxRun_i(i) result(TmaxRun_i)
     !! Getter for individual elements of the "GetTmaxRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TmaxRun_i
+    real(sp) :: TmaxRun_i
 
     TmaxRun_i = TmaxRun(i)
+    !TmaxRun_i = real(roundc(10000*real(TmaxRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTmaxRun_i
 
 
 subroutine SetTmaxRun(TmaxRun_in)
     !! Setter for the "TmaxRun" global variable.
-    real(dp), dimension(1:366), intent(in) :: TmaxRun_in
+    real(sp), dimension(1:366), intent(in) :: TmaxRun_in
 
     TmaxRun = TmaxRun_in
 end subroutine SetTmaxRun
@@ -16491,7 +16496,7 @@ end subroutine SetTmaxRun
 subroutine SetTmaxRun_i(i, TmaxRun_i)
     !! Setter for individual element for the "TmaxRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TmaxRun_i
+    real(sp), intent(in) :: TmaxRun_i
 
     TmaxRun(i) = TmaxRun_i
 end subroutine SetTmaxRun_i
@@ -16531,7 +16536,7 @@ end subroutine SetTmax
 
 function GetTminTnxReference12MonthsRun() result(TminTnxReference12MonthsRun_out)
     !! Getter for the "TminTnxReference12MonthsRun" global variable.
-    real(dp), dimension(1:12) :: TminTnxReference12MonthsRun_out
+    real(sp), dimension(1:12) :: TminTnxReference12MonthsRun_out
 
     TminTnxReference12MonthsRun_out = TminTnxReference12MonthsRun
 end function GetTminTnxReference12MonthsRun
@@ -16540,7 +16545,7 @@ end function GetTminTnxReference12MonthsRun
 function GetTminTnxReference12MonthsRun_i(i) result(TminTnxReference12MonthsRun_i)
     !! Getter for individual elements of the "GetTminTnxReference12MonthsRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TminTnxReference12MonthsRun_i
+    real(sp) :: TminTnxReference12MonthsRun_i
 
     TminTnxReference12MonthsRun_i = TminTnxReference12MonthsRun(i)
 end function GetTminTnxReference12MonthsRun_i
@@ -16548,7 +16553,7 @@ end function GetTminTnxReference12MonthsRun_i
 
 subroutine SetTminTnxReference12MonthsRun(TminTnxReference12MonthsRun_in)
     !! Setter for the "TminTnxReference12MonthsRun" global variable.
-    real(dp), dimension(1:12), intent(in) :: TminTnxReference12MonthsRun_in
+    real(sp), dimension(1:12), intent(in) :: TminTnxReference12MonthsRun_in
 
     TminTnxReference12MonthsRun = TminTnxReference12MonthsRun_in
 end subroutine SetTminTnxReference12MonthsRun
@@ -16557,7 +16562,7 @@ end subroutine SetTminTnxReference12MonthsRun
 subroutine SetTminTnxReference12MonthsRun_i(i, TminTnxReference12MonthsRun_i)
     !! Setter for individual element for the "TminTnxReference12MonthsRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TminTnxReference12MonthsRun_i
+    real(sp), intent(in) :: TminTnxReference12MonthsRun_i
 
     TminTnxReference12MonthsRun(i) = TminTnxReference12MonthsRun_i
 end subroutine SetTminTnxReference12MonthsRun_i
@@ -16566,7 +16571,7 @@ end subroutine SetTminTnxReference12MonthsRun_i
 
 function GetTmaxTnxReference12MonthsRun() result(TmaxTnxReference12MonthsRun_out)
     !! Getter for the "TmaxTnxReference12MonthsRun" global variable.
-    real(dp), dimension(1:12) :: TmaxTnxReference12MonthsRun_out
+    real(sp), dimension(1:12) :: TmaxTnxReference12MonthsRun_out
 
     TmaxTnxReference12MonthsRun_out = TmaxTnxReference12MonthsRun
 end function GetTmaxTnxReference12MonthsRun
@@ -16575,7 +16580,7 @@ end function GetTmaxTnxReference12MonthsRun
 function GetTmaxTnxReference12MonthsRun_i(i) result(TmaxTnxReference12MonthsRun_i)
     !! Getter for individual elements of the "GetTmaxTnxReference12MonthsRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp) :: TmaxTnxReference12MonthsRun_i
+    real(sp) :: TmaxTnxReference12MonthsRun_i
 
     TmaxTnxReference12MonthsRun_i = TmaxTnxReference12MonthsRun(i)
 end function GetTmaxTnxReference12MonthsRun_i
@@ -16583,7 +16588,7 @@ end function GetTmaxTnxReference12MonthsRun_i
 
 subroutine SetTmaxTnxReference12MonthsRun(TmaxTnxReference12MonthsRun_in)
     !! Setter for the "TmaxTnxReference12MonthsRun" global variable.
-    real(dp), dimension(1:12), intent(in) :: TmaxTnxReference12MonthsRun_in
+    real(sp), dimension(1:12), intent(in) :: TmaxTnxReference12MonthsRun_in
 
     TmaxTnxReference12MonthsRun = TmaxTnxReference12MonthsRun_in
 end subroutine SetTmaxTnxReference12MonthsRun
@@ -16592,7 +16597,7 @@ end subroutine SetTmaxTnxReference12MonthsRun
 subroutine SetTmaxTnxReference12MonthsRun_i(i, TmaxTnxReference12MonthsRun_i)
     !! Setter for individual element for the "TmaxTnxReference12MonthsRun" global variable.
     integer(int32), intent(in) :: i
-    real(dp), intent(in) :: TmaxTnxReference12MonthsRun_i
+    real(sp), intent(in) :: TmaxTnxReference12MonthsRun_i
 
     TmaxTnxReference12MonthsRun(i) = TmaxTnxReference12MonthsRun_i
 end subroutine SetTmaxTnxReference12MonthsRun_i

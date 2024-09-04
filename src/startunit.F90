@@ -789,7 +789,7 @@ subroutine LoadProgramParametersProjectPlugIn(&
                     simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
                     simul_beta, simul_Tswc, simul_EZma, simul_GDD
     real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, &
-                simul_expFsen, simul_Tmi, simul_Tma, Tmin_temp
+                simul_expFsen, simul_Tmi, simul_Tma
 
     if (FileExists(FullFileNameProgramParameters)) then
         ! load set of program parameters

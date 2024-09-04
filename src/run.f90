@@ -3880,7 +3880,6 @@ subroutine RelationshipsForFertilityAndSaltStress()
     real(dp) :: Coeffb0Salt_temp
     real(dp) :: Coeffb1Salt_temp
     real(dp) :: Coeffb2Salt_temp
-
     real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
     integer(int8) :: BioTop, BioLow
     real(dp) :: StrTop, StrLow
@@ -3890,6 +3889,9 @@ subroutine RelationshipsForFertilityAndSaltStress()
 
     ! 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
     if (GetCrop_StressResponse_Calibrated()) then
+        Coeffb0_temp = GetCoeffb0()
+        Coeffb1_temp = GetCoeffb1()
+        Coeffb2_temp = GetCoeffb2()
         call ReferenceStressBiomassRelationship(GetCrop_DaysToCCini(), &
                                   GetCrop_GDDaysToCCini(), &
                                   GetCrop_DaysToGermination(), &
@@ -3921,9 +3923,6 @@ subroutine RelationshipsForFertilityAndSaltStress()
         call SetCoeffb0(Coeffb0_temp)
         call SetCoeffb1(Coeffb1_temp)
         call SetCoeffb2(Coeffb2_temp)
-        WRITE(*, '(A, f10.2)') 'The value of Coeffb0_temp is:', Coeffb0_temp
-        WRITE(*, '(A, f10.2)') 'The value of Coeffb0_temp is:', Coeffb1_temp
-        WRITE(*, '(A, f10.2)') 'The value of Coeffb0_temp is:', Coeffb2_temp
     else
         call SetCoeffb0(real(undef_int, kind=dp))
         call SetCoeffb1(real(undef_int, kind=dp))
@@ -3957,6 +3956,9 @@ subroutine RelationshipsForFertilityAndSaltStress()
 
     ! 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if (GetSimulation_SalinityConsidered() .eqv. .true.) then
+        Coeffb0Salt_temp = GetCoeffb0Salt()
+        Coeffb1Salt_temp = GetCoeffb1Salt()
+        Coeffb2Salt_temp = GetCoeffb2Salt()
         call ReferenceCCxSaltStressRelationship(GetCrop_DaysToCCini(), &
                                   GetCrop_GDDaysToCCini(), &
                                   GetCrop_DaysToGermination(), &
@@ -7754,7 +7756,7 @@ subroutine WriteIrrInfo()
     end if
     if ((GetDayNri() < GetCrop_Day1()) .or. &
         (GetDayNri() > GetCrop_DayN())) then ! before and after growing period
-        write(TempString, '(5i6, i5, f8.1, i6)') &
+        write(TempString, '(5i6, f8.1, i6)') &
            Di, Mi, Yi, undef_int, undef_int, &
            GetIrrigation(), undef_int
         call fIrrInfo_write(trim(TempString))
@@ -7782,12 +7784,12 @@ subroutine WriteIrrInfo()
                     IrriON = .false.
                 end if
                 if (IrriON .eqv. .true.) then
-                    write(TempString, '(5i6, i5, f8.1, i6)') &
+                    write(TempString, '(5i6, f8.1, i6)') &
                     Di, Mi, Yi, i, undef_int, &
                     IRRmm, (DAPi - GetLastIrriDAP())
                     call fIrrInfo_write(trim(TempString))
                 else
-                    write(TempString, '(5i6, i5, f8.1, i6)') &
+                    write(TempString, '(5i6, f8.1, i6)') &
                     Di, Mi, Yi, i, undef_int, &
                     IRRmm, undef_int
                     call fIrrInfo_write(trim(TempString))

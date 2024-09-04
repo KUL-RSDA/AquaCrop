@@ -374,9 +374,9 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     ! 5. Climate
     ! 5.1 Temperature
     call SetTemperatureFile('(None)')
+    call SetTemperatureFilefull(GetTemperatureFile())  ! no file
     call SetTnxReferenceFile(GetTemperatureFile()) ! no file
     call SetTnxReferenceYear(2000) ! for refernce CO2 concentration
-    call SetTemperatureFilefull(GetTemperatureFile())  ! no file
     write(TempString1, '(f8.1)') GetSimulParam_Tmin()
     write(TempString2, '(f8.1)') GetSimulParam_Tmax()
     call SetTemperatureDescription('')

@@ -5,36 +5,36 @@ use ac_global, only:    DaysInMonth, &
                         HarvestIndexGrowthCoefficient, &
                         DegreesDay, &
                         GetTnxReferenceYear,&
-                     GetTminCropReferenceRun, &
-                     SetTminCropReferenceRun, &
-                     GetTminCropReferenceRun_i, &
-                     SetTminCropReferenceRun_i, &
-                     GetTmaxCropReferenceRun, &
-                     SetTmaxCropReferenceRun, &
-                     GetTmaxCropReferenceRun_i, &
-                     SetTmaxCropReferenceRun_i, &
-                     GetTminTnxReference365DaysRun,&
-                     GetTmaxTnxReference365DaysRun,&
-                     GetTminTnxReference365DaysRun_i,&
-                     GetTmaxTnxReference365DaysRun_i,&
-                     SetTminTnxReference365DaysRun,&
-                     SetTmaxTnxReference365DaysRun,&
-                     SetTminTnxReference365DaysRun_i,&
-                     SetTmaxTnxReference365DaysRun_i,&
-                     FileExists, &
-                     undef_double, &
-                     undef_int, &
+                        GetTminCropReferenceRun, &
+                        SetTminCropReferenceRun, &
+                        GetTminCropReferenceRun_i, &
+                        SetTminCropReferenceRun_i, &
+                        GetTmaxCropReferenceRun, &
+                        SetTmaxCropReferenceRun, &
+                        GetTmaxCropReferenceRun_i, &
+                        SetTmaxCropReferenceRun_i, &
+                        GetTminTnxReference365DaysRun,&
+                        GetTmaxTnxReference365DaysRun,&
+                        GetTminTnxReference365DaysRun_i,&
+                        GetTmaxTnxReference365DaysRun_i,&
+                        SetTminTnxReference365DaysRun,&
+                        SetTmaxTnxReference365DaysRun,&
+                        SetTminTnxReference365DaysRun_i,&
+                        SetTmaxTnxReference365DaysRun_i,&
+                        FileExists, &
+                        undef_double, &
+                        undef_int, &
                         CO2ref,&
                         rep_DayEventDbl,&
                         rep_Shapes,&
                         rep_EffectStress,&
-                     Subkind_Forage, &
-                     subkind_Grain,  &
-                     subkind_Grain, &
-                     subkind_Tuber, &
-                     subkind_Vegetative, &
-                     modeCycle_CalendarDays, &
-                     modeCycle_GDDays, &
+                        Subkind_Forage, &
+                        subkind_Grain,  &
+                        subkind_Grain, &
+                        subkind_Tuber, &
+                        subkind_Vegetative, &
+                        modeCycle_CalendarDays, &
+                        modeCycle_GDDays, &
                         LeapYear, &
                         DetermineDayNr, &
                         DetermineDayNr, &
@@ -63,7 +63,6 @@ use ac_global, only:    DaysInMonth, &
                         GetCO2FileFull, &
                         SeasonalSumOfKcPot, &
                         DaysToReachCCwithGivenCGC
-
 use ac_kinds, only: dp, &
                     int8, &
                     int16, &
@@ -76,8 +75,7 @@ use ac_tempprocessing, only: GDDCDCToCDC, &
                         fTnxReference_open, &
                         fTnxReference_write, & 
                         fTnxReference_close,&
-                             CropStressParametersSoilSalinity
-
+                        CropStressParametersSoilSalinity
 use ac_project_input, only: GetNumberSimulationRuns, &
                             ProjectInput
 use ac_utils, only: roundc, &
@@ -89,8 +87,6 @@ implicit none
 
 
 contains
-
-
 
 
 integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
@@ -107,7 +103,6 @@ integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
     integer(int32) :: i
     integer(int32) :: NrCDays
     real(dp) :: RemainingGDDays, DayGDD
-    
     real(dp) :: TDayMin_loc, TDayMax_loc
     
     TDayMin_loc = TDayMin
@@ -124,35 +119,8 @@ integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
             else
                 NrCDays = roundc(ValGDDays/DayGDD, mold=1_int32)
             end if
-        !else if (GetTemperatureFile() == '(External)') then
-        !    RemainingGDDays = ValGDDays
-        !    i = GetCrop_Day1()-GetSimulation_FromDayNr()+1
-        !    TDayMin_loc = real(GetTminRun_i(i),kind=dp)
-        !    TDayMax_loc = real(GetTmaxRun_i(i),kind=dp)
-        !    DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
-        !                                TDayMax_loc, &
-        !                                GetSimulParam_GDDMethod())
-        !    NrCDays = NrCDays + 1
-        !    RemainingGDDays = RemainingGDDays - DayGDD
-        !
-        !    do while ((RemainingGDDays > 0) &
-        !                   .and. (i < (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
-        !          i = i + 1
-        !          TDayMin_loc = real(GetTminRun_i(i),kind=dp)
-        !          TDayMax_loc = real(GetTmaxRun_i(i),kind=dp)
-        ! 
-        !          DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
-        !                               TDayMax_loc, &
-        !                               GetSimulParam_GDDMethod())
-        !          NrCDays = NrCDays + 1
-        !          RemainingGDDays = RemainingGDDays - DayGDD
-        !    end do
-        !
-        !    if (RemainingGDDays > 0) then
-        !        NrCDays = undef_int
-        !    end if
         else
-            ! open TCropReference.SIM : mean daily Tnx (365 days) from RefCropDay1 onwards
+            ! Get TCropReference: mean daily Tnx (365 days) from RefCropDay1 onwards
             ! determine corresponding calendar days
             RemainingGDDays = ValGDDays
 
@@ -170,11 +138,6 @@ integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
                 DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
                                     TDayMax_loc, &
                                     GetSimulParam_GDDMethod())
-            WRITE(*, '(A, f10.6)') 'The value of RemainingGDDays is:', RemainingGDDays
-            WRITE(*, '(A, I4)') 'The value of StartDayNr is:', StartDayNr
-            WRITE(*, '(A, I4)') 'The value of RefCropDay1 is:', RefCropDay1
-            WRITE(*, '(A, f10.2)') 'TDayMin_loc:', TDayMin_loc
-            WRITE(*, '(A, f10.8)') 'The value of DayGDD is:', DayGDD
                 if (DayGDD > RemainingGDDays) then
                     if (roundc((DayGDD-RemainingGDDays)/RemainingGDDays,mold=1) >= 1) then
                         NrCDays = NrCDays + 1
@@ -182,25 +145,21 @@ integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
                 else
                     NrCDays = NrCDays + 1
                 end if
-            WRITE(*, '(A, i4)') 'The value of NrCDays is:', NrCDays
                 RemainingGDDays = RemainingGDDays - DayGDD
             end do
         end if
     end if
     SumCalendarDaysReferenceTnx = NrCDays
-    WRITE(*, *) 'End of SumCalendarDaysReference'
 end function SumCalendarDaysReferenceTnx
 
 
-
-
 subroutine AdjustCalendarDaysReferenceTnx(PlantDayNr, TheCropType, &
-        Tbase, Tupper, TDayMin, TDayMax, &
-        GDDL0, GDDL12, GDDFlor, GDDLengthFlor, GDDL123, &
-        GDDL1234, GDDHImax, GDDCGC, GDDCDC, &
-        CCo, CCx, RefHI, TheDaysToCCini, TheGDDaysToCCini, &
-        ThePlanting, L0, L12, LFlor, LengthFlor, &
-        L123, L1234, LHImax, CGC, CDC, RatedHIdt)
+                    Tbase, Tupper, TDayMin, TDayMax, &
+                    GDDL0, GDDL12, GDDFlor, GDDLengthFlor, GDDL123, &
+                    GDDL1234, GDDHImax, GDDCGC, GDDCDC, &
+                    CCo, CCx, RefHI, TheDaysToCCini, TheGDDaysToCCini, &
+                    ThePlanting, L0, L12, LFlor, LengthFlor, &
+                    L123, L1234, LHImax, CGC, CDC, RatedHIdt)
     integer(int32), intent(in) :: PlantDayNr
     integer(intEnum), intent(in) :: TheCropType
     real(dp), intent(in) :: Tbase
@@ -237,37 +196,47 @@ subroutine AdjustCalendarDaysReferenceTnx(PlantDayNr, TheCropType, &
 
     if (TheDaysToCCini == 0) then
         ! planting/sowing
-        L0 = SumCalendarDaysReferenceTnx(GDDL0, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
-        L12 = SumCalendarDaysReferenceTnx(GDDL12, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
+        L0 = SumCalendarDaysReferenceTnx(GDDL0, PlantDayNr, PlantDayNr, &
+            Tbase, Tupper, TDayMin, TDayMax)
+        L12 = SumCalendarDaysReferenceTnx(GDDL12, PlantDayNr, PlantDayNr, &
+            Tbase, Tupper, TDayMin, TDayMax)
     else
         ! regrowth
         if (TheDaysToCCini > 0) then
             ! CCini < CCx
             ExtraGDDays = GDDL12 - GDDL0 - TheGDDaysToCCini
-            ExtraDays = SumCalendarDaysReferenceTnx(ExtraGDDays, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
+            ExtraDays = SumCalendarDaysReferenceTnx(ExtraGDDays, PlantDayNr, &
+                PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
             L12 = L0 + TheDaysToCCini + ExtraDays
         end if
     end if
     if (TheCropType /= subkind_Forage) then
-        L123 = SumCalendarDaysReferenceTnx(GDDL123, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
-        L1234 = SumCalendarDaysReferenceTnx(GDDL1234, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
+        L123 = SumCalendarDaysReferenceTnx(GDDL123, PlantDayNr, PlantDayNr, &
+            Tbase, Tupper, TDayMin, TDayMax)
+        L1234 = SumCalendarDaysReferenceTnx(GDDL1234, PlantDayNr, PlantDayNr, &
+            Tbase, Tupper, TDayMin, TDayMax)
     end if
 
     select case (TheCropType)
     case (subkind_Grain, subkind_Tuber)
-        LFlor = SumCalendarDaysReferenceTnx(GDDFlor, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
+        LFlor = SumCalendarDaysReferenceTnx(GDDFlor, PlantDayNr, PlantDayNr, &
+            Tbase, Tupper, TDayMin, TDayMax)
         if (TheCropType == subkind_Grain) then
-            LengthFlor = SumCalendarDaysReferenceTnx(GDDLengthFlor, PlantDayNr, (PlantDayNr+LFlor), Tbase, Tupper, TDayMin, TDayMax)
+            LengthFlor = SumCalendarDaysReferenceTnx(GDDLengthFlor, PlantDayNr, &
+                (PlantDayNr+LFlor), Tbase, Tupper, TDayMin, TDayMax)
         else
             LengthFlor = 0
         end if
-        LHImax = SumCalendarDaysReferenceTnx(GDDHImax, PlantDayNr, (PlantDayNr+LFlor), Tbase, Tupper, TDayMin, TDayMax)
+        LHImax = SumCalendarDaysReferenceTnx(GDDHImax, PlantDayNr, &
+            (PlantDayNr+LFlor), Tbase, Tupper, TDayMin, TDayMax)
     case (subkind_Vegetative, subkind_Forage)
-        LHImax = SumCalendarDaysReferenceTnx(GDDHImax, PlantDayNr, PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
+        LHImax = SumCalendarDaysReferenceTnx(GDDHImax, PlantDayNr, &
+            PlantDayNr, Tbase, Tupper, TDayMin, TDayMax)
     end select
 
     CGC = (real(GDDL12, kind=dp)/real(L12, kind=dp)) * GDDCGC
-    call GDDCDCToCDC(PlantDayNr, L123, GDDL123, GDDL1234, CCx, GDDCDC, Tbase, Tupper, TDayMin, TDayMax, CDC)
+    call GDDCDCToCDC(PlantDayNr, L123, GDDL123, GDDL1234, CCx, GDDCDC, &
+        Tbase, Tupper, TDayMin, TDayMax, CDC)
     if ((TheCropType == subkind_Grain) .or. (TheCropType == subkind_Tuber)) then
         RatedHIdt = real(RefHI, kind=dp)/real(LHImax, kind=dp)
     end if
@@ -290,15 +259,12 @@ subroutine AdjustCalendarDaysReferenceTnx(PlantDayNr, TheCropType, &
 end subroutine AdjustCalendarDaysReferenceTnx
 
 
-
-
-
 subroutine DailyTnxReferenceFileCoveringCropPeriod(CropFirstDay)
     integer(int32), intent(in) :: CropFirstDay
 
     integer(int32) :: DayNr1
     integer(int32) :: Dayi, Monthi, Yeari, i
-    real(dp) :: Tlow, Thigh
+    real(sp) :: Tlow, Thigh
     character(len=1025) :: TempString
 
     if (FileExists(GetTnxReferenceFileFull())) then
@@ -306,38 +272,41 @@ subroutine DailyTnxReferenceFileCoveringCropPeriod(CropFirstDay)
         call DetermineDate(CropFirstDay, Dayi, Monthi, Yeari)
         call DetermineDayNr(Dayi, Monthi, (1901), DayNr1)
         
-        ! create SIM file and record first day
-
-        call fTnxReference_open(trim(GetPathNameSimul()) // 'TCropReference.SIM','w')
+        if (GetTnxReferenceFile() /= '(External)') then
+            ! create SIM file
+            call fTnxReference_open(trim(GetPathNameSimul()) // 'TCropReference.SIM','w')
+        end if
         
-        !WRITE(*, '(A, i4)') 'DayNr1:', DayNr1
-        !WRITE(*, '(A, f10.2)') 'Tlow:', GetTminTnxReference365DaysRun_i(DayNr1)
-
         i = 0
         do Dayi = DayNr1, 365
             i=i+1
             Tlow = GetTminTnxReference365DaysRun_i(Dayi)
             Thigh = GetTmaxTnxReference365DaysRun_i(Dayi)
-            write(TempString, '(f10.2, f10.2)') Tlow,Thigh
             call SetTminCropReferenceRun_i(i,Tlow)
             call SetTmaxCropReferenceRun_i(i,Thigh)
-            call fTnxReference_write(trim(TempString))
+            if (GetTnxReferenceFile() /= '(External)') then
+                write(TempString, '(f10.2, f10.2)') Tlow,Thigh
+                call fTnxReference_write(trim(TempString))
+            end if
         end do
         do Dayi = 1, (DayNr1-1)
             i=i+1
             Tlow = GetTminTnxReference365DaysRun_i(Dayi)
             Thigh = GetTmaxTnxReference365DaysRun_i(Dayi)
-            write(TempString, '(f10.2, f10.2)') Tlow,Thigh
             call SetTminCropReferenceRun_i(i,Tlow)
             call SetTmaxCropReferenceRun_i(i,Thigh)
-            call fTnxReference_write(trim(TempString))
+            if (GetTnxReferenceFile() /= '(External)') then
+                write(TempString, '(f10.2, f10.2)') Tlow,Thigh
+                call fTnxReference_write(trim(TempString))
+            end if
         end do
         
-        ! Close files
-        call fTnxReference_close()
+        if (GetTnxReferenceFile() /= '(External)') then
+            ! Close files
+            call fTnxReference_close()
+        end if
     end if
 end subroutine DailyTnxReferenceFileCoveringCropPeriod
-
 
 
 real(dp) function CO2ForTnxReferenceYear(TnxReferenceYear)
@@ -358,8 +327,6 @@ real(dp) function CO2ForTnxReferenceYear(TnxReferenceYear)
         end do
         ! from year
         read(fhandle, '(a)', iostat=rc) TempString
-            !WRITE(*, *) 'TempString'
-            !WRITE(*, *) TempString
         call SplitStringInTwoParams(trim(TempString), YearB, CO2b)
         if (roundc(YearB, mold=1) >= TnxReferenceYear) then
             TheCO2 = CO2b
@@ -879,8 +846,6 @@ subroutine ReferenceStressBiomassRelationship(TheDaysToCCini, &
     integer(intEnum), intent(in) :: ThePlanting
     integer(int32), intent(in) :: LHImax
 
-
-
     integer(int32) :: RefCropDay1
     integer(int32) :: Dayi, Monthi, Yeari
     real(dp) :: CO2TnxReferenceYear
@@ -895,70 +860,16 @@ subroutine ReferenceStressBiomassRelationship(TheDaysToCCini, &
     real(dp) :: CDC_loc
     real(dp) :: RatedHIdt_loc
 
-
-
-    WRITE(*, '(I4)') TheDaysToCCini
-    WRITE(*, '(I4)') TheGDDaysToCCini
-    WRITE(*, '(I4)') L0
-    WRITE(*, '(I4)') L12
-    WRITE(*, '(I4)') L123
-    WRITE(*, '(I4)') L1234
-    WRITE(*, '(I4)') LFlor
-    WRITE(*, '(I4)') LengthFlor
-    WRITE(*, '(I4)') GDDL0
-    WRITE(*, '(I4)') GDDL12
-    WRITE(*, '(I4)') GDDL123
-    WRITE(*, '(I4)') GDDL1234
-    WRITE(*, '(I4)') WPyield
-    WRITE(*, '(I4)') RefHI
-    WRITE(*, '(f10.2)') CCo
-    WRITE(*, '(f10.2)') CCx
-    WRITE(*, '(f10.2)') CGC
-    WRITE(*, '(f10.2)') GDDCGC
-    WRITE(*, '(f10.2)') CDC
-    WRITE(*, '(f10.2)') GDDCDC
-    WRITE(*, '(f10.2)') KcTop
-    WRITE(*, '(f10.2)') KcDeclAgeing
-    WRITE(*, '(f10.2)') CCeffectProcent
-    WRITE(*, '(f10.2)') Tbase
-    WRITE(*, '(f10.2)') Tupper
-    WRITE(*, '(f10.2)') TDayMin
-    WRITE(*, '(f10.2)') TDayMax
-    WRITE(*, '(f10.2)') GDtranspLow
-    WRITE(*, '(f10.2)') WPveg
-    WRITE(*, '(f10.2)') RatedHIdt
-    WRITE(*, '(I6)') CropDNr1
-    !logical, intent(in) :: CropDeterm
-    !type(rep_Shapes), intent(in) :: CropSResp
-    WRITE(*, '(I4)') TheCropType
-    WRITE(*, '(I4)') TheModeCycle
-    WRITE(*, '(f10.2)') b0
-    WRITE(*, '(f10.2)') b1
-    WRITE(*, '(f10.2)') b2
-    WRITE(*, '(f10.2)') BM10
-    WRITE(*, '(f10.2)') BM20
-    WRITE(*, '(f10.2)') BM30
-    WRITE(*, '(f10.2)') BM40
-    WRITE(*, '(f10.2)') BM50
-    WRITE(*, '(f10.2)') BM60
-    WRITE(*, '(f10.2)') BM70
-    WRITE(*, '(I4)') GDDFlor
-    WRITE(*, '(I4)') GDDLengthFlor
-    WRITE(*, '(I4)') GDDHImax
-    WRITE(*, '(I4)') ThePlanting
-    WRITE(*, '(I4)') LHImax
-        L0_loc = L0
-        L12_loc = L12
-        LFlor_loc = LFlor
-        LengthFlor_loc = LengthFlor
-        L123_loc = L123
-        L1234_loc = L1234
-        LHImax_loc = LHImax
-        CGC_loc = CGC
-        CDC_loc =  CDC 
-        RatedHIdt_loc = RatedHIdt
-    
-
+    L0_loc = L0
+    L12_loc = L12
+    LFlor_loc = LFlor
+    LengthFlor_loc = LengthFlor
+    L123_loc = L123
+    L1234_loc = L1234
+    LHImax_loc = LHImax
+    CGC_loc = CGC
+    CDC_loc =  CDC 
+    RatedHIdt_loc = RatedHIdt
 
     ! 1. Day 1 of the GrowingCycle
     call DetermineDate(CropDNr1, Dayi, Monthi, Yeari)

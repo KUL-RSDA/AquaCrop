@@ -1525,7 +1525,7 @@ subroutine surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
     real(dp), intent(in) :: Coeffb1Salt
     real(dp), intent(in) :: Coeffb2Salt
 
-    real(dp) :: Textra, Part
+    real(dp) :: Part
     integer(int32) :: compi
     real(dp) :: KsReduction, SaltSurface
     real(dp) :: Tact_temp
@@ -5031,10 +5031,10 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                     else
                         ! CDC is adjusted to degree of stress
                         ! time required to reach CCiprev with CDCadjusted
-                        if (GetCCiTopEarlySen()== 0._dp) then
+                        if (abs(GetCCiTopEarlySen()) < epsilon(0._dp)) then
                             call SetCCiTopEarlySen(epsilon(1._dp))
                         end if
-                        if (CDCadjusted == 0._dp) then
+                        if (abs(CDCadjusted) < epsilon(0._dp)) then
                             CDCadjusted = epsilon(1._dp)
                         end if
                         tTemp = (log(1._dp &
@@ -5466,12 +5466,11 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
         !! EC of the infiltrated water (surface storage)
     logical :: WaterTableInProfile
     real(dp) :: HorizontalWaterFlow, HorizontalSaltFlow
-    type(rep_EffectStress) :: EffectStress_temp
     logical :: SWCtopSoilConsidered_temp
     real(dp) :: EvapWCsurf_temp, CRwater_temp, Tpot_temp, Epot_temp
     type(CompartmentIndividual), dimension(max_No_compartments) :: Comp_temp
     real(dp) :: Crop_pActStom_temp
-    real(dp) :: CRsalt_temp, ECdrain_temp, Tact_temp, Surf0_temp
+    real(dp) :: CRsalt_temp, ECdrain_temp, Surf0_temp
     integer(int32) :: TargetTimeVal_loc
     integer(int32) :: StressSFadjNEW_loc
 

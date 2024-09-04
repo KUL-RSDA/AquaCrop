@@ -1,19 +1,19 @@
 module ac_tempprocessing
 
 use ac_global , only: undef_int, &
-                        GetTmaxTnxReference12MonthsRun_i,&
-                        GetTminTnxReference12MonthsRun_i,&
-                        GetTmaxTnxReference12MonthsRun,&
-                        GetTminTnxReference12MonthsRun,&
-                        SetTmaxTnxReference12MonthsRun_i,&
-                        SetTminTnxReference12MonthsRun_i,&
-                        SetTmaxTnxReference12MonthsRun,&
-                        SetTminTnxReference12MonthsRun,&
-                    fTnxReference,&
-                    fTnxReference_iostat,&
-                    fTnxReference365Days,& 
-                    fTnxReference365Days_iostat,&
-                    GetTnxReference365DaysFileFull,&
+                      GetTmaxTnxReference12MonthsRun_i,&
+                      GetTminTnxReference12MonthsRun_i,&
+                      GetTmaxTnxReference12MonthsRun,&
+                      GetTminTnxReference12MonthsRun,&
+                      SetTmaxTnxReference12MonthsRun_i,&
+                      SetTminTnxReference12MonthsRun_i,&
+                      SetTmaxTnxReference12MonthsRun,&
+                      SetTminTnxReference12MonthsRun,&
+                      fTnxReference,&
+                      fTnxReference_iostat,&
+                      fTnxReference365Days,& 
+                      fTnxReference365Days_iostat,&
+                      GetTnxReference365DaysFileFull,&
                       modeCycle_GDDays, &
                       modeCycle_CalendarDays, &
                       DaysinMonth, &
@@ -310,7 +310,6 @@ use ac_global , only: undef_int, &
                       TmaxTnxReference365DaysRun, &
                       TminCropReferenceRun, &
                       TmaxCropReferenceRun
-
 use ac_kinds,  only: sp,&
                      dp, &
                      int8, &
@@ -355,78 +354,6 @@ subroutine AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
     end if
 end subroutine AdjustDecadeMONTHandYEAR
 
-
-!subroutine ReadTnxReference365DaysFilefull()
-!    !! Reads the contents of the TnxReference365DaysFilefull file,
-!    !! storing the temperatures in the TminTnxReference365Days and TmaxTnxReference365Days arrays.
-!
-!    character(len=:), allocatable :: filename
-!    integer :: fhandle, i, nlines, nrows, rc
-!
-!    filename = trim(GetPathNameSimul()) // 'TnxReference365Days.SIM'
-!    open(newunit=fhandle, file=trim(filename), status='old', action='read')
-!
-!    ! Count the number of lines
-!    nlines = 0
-!    do
-!        read(fhandle, '(a)', iostat=rc)
-!        if (rc == iostat_end) then
-!            exit
-!        else
-!            nlines = nlines + 1
-!        end if
-!    end do
-!
-!    ! Now read in the actual content
-!    nrows = nlines - 8
-!    if (allocated(TminTnxReference365DaysRun)) deallocate(TminTnxReference365DaysRun)
-!    if (allocated(TminTnxReference365DaysRun)) deallocate(TmaxTnxReference365DaysRun)
-!    allocate(TminTnxReference365DaysRun(nrows), TmaxTnxReference365DaysRun(nrows))
-!
-!    rewind(fhandle)
-!    do i = 1, nrows
-!        read(fhandle, *) TminTnxReference365DaysRun(i), TmaxTnxReference365DaysRun(i)
-!    end do
-!
-!    close(fhandle)
-!end subroutine ReadTnxReference365DaysFilefull
-
-!
-!subroutine ReadTCropReferenceFilefull()
-!    !! Reads the contents of the TCropReferenceFilefull file,
-!    !! storing the temperatures in the TminCropReference and TmaxCropReference arrays.
-!
-!    character(len=:), allocatable :: filename
-!    integer :: fhandle, i, nlines, nrows, rc
-!
-!    filename = trim(GetPathNameSimul()) // 'TCropReference.SIM'
-!    open(newunit=fhandle, file=trim(filename), status='old', action='read')
-!
-!    ! Count the number of lines
-!    nlines = 0
-!    do
-!        read(fhandle, '(a)', iostat=rc)
-!        if (rc == iostat_end) then
-!            exit
-!        else
-!            nlines = nlines + 1
-!        end if
-!    end do
-!
-!    ! Now read in the actual content
-!    nrows = nlines - 8
-!    if (allocated(TminCropReference)) deallocate(TminCropReference)
-!    if (allocated(TminCropReference)) deallocate(TmaxCropReference)
-!    allocate(TminCropReference(nrows), TmaxCropReference(nrows))
-!
-!    rewind(fhandle)
-!    do i = 1, nrows
-!        read(fhandle, *) TminCropReference(i), TmaxCropReference(i)
-!    end do
-!
-!    close(fhandle)
-!end subroutine ReadTCropReferenceFilefull
-!
 
 subroutine ReadTemperatureFilefull()
     !! Reads the contents of the TemperatureFilefull file,
@@ -2201,9 +2128,11 @@ subroutine LoadSimulationRunProject(NrRun)
         call CompleteClimateDescription(temperature_record)
         call SetTemperatureRecord(temperature_record)
     end if
-
+/
     ! Create Temperature Reference file 
-    call CreateTnxReferenceFile(GetTemperatureFile(),GetTnxReferenceFile(),GetTnxReferenceYear());
+    if (GetTemperatureFile() /= '(External)') then
+        call CreateTnxReferenceFile(GetTemperatureFile(),GetTnxReferenceFile(),GetTnxReferenceYear());
+    end if
     call CreateTnxReference365Days();
 
     ! 1.2 ETo
@@ -3157,7 +3086,6 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
 end function Bnormalized
 
 
-
 subroutine CreateTnxReference365Days()
 
     character(len=:), allocatable :: totalnameOUT
@@ -3165,46 +3093,43 @@ subroutine CreateTnxReference365Days()
     integer(int32) :: DayNri
     integer(int32) :: i, Monthi
     type(rep_DayEventDbl), dimension(31) :: TminDataSet_temp,TmaxDataSet_temp
-    real(dp) :: Tlow, Thigh
+    real(sp) :: Tlow, Thigh
 
-    if (FileExists(GetTnxReferenceFileFull())) then
+    if ((FileExists(GetTnxReferenceFileFull())) .OR. (GetTnxReferenceFile() == '(External)')) then
         ! create SIM file
-        totalnameOUT = trim(GetPathNameSimul()) // 'TnxReference365Days.SIM'
-        call fTnxReference365Days_open(totalnameOUT, 'w')
+        if (GetTnxReferenceFile() /= '(External)') then
+            totalnameOUT = trim(GetPathNameSimul()) // 'TnxReference365Days.SIM'
+            call fTnxReference365Days_open(totalnameOUT, 'w')
+        end if
         
         ! get data set for 1st month
         Monthi = 1
         call GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet_temp, TmaxDataSet_temp)
-        !WRITE(*, '(A, 2f10.2)') 'TminDataSet_temp(1)%Param: ', TminDataSet_temp(1)%Param
-        !WRITE(*, '(A, 2f10.2)') 'TmaxDataSet_temp(1)%Param: ', TmaxDataSet_temp(1)%Param
         
         ! Tnx for Day 1 to 365
         do DayNri = 1, 365
-            !WRITE(*, '(A, i4)') 'TminDataSet_temp(31)%DayNr', TminDataSet_temp(31)%DayNr
-            !WRITE(*, '(A, i4)') 'DayNri', DayNri
             if (DayNri > TminDataSet_temp(31)%DayNr) then
                 ! next month
                 Monthi = Monthi + 1
-                !WRITE(*, '(A, i4)') 'next month', Monthi
                 call GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet_temp, TmaxDataSet_temp)
             end if
             i = 1
-            !WRITE(*, '(A,i4)') 'DayNri', DayNri
             do while (TminDataSet_temp(i)%DayNr /= DayNri)
-                !WRITE(*, '(i4)') i
-                !WRITE(*, '(i4)') TminDataSet_temp(i)%DayNr
-                !WRITE(*, '(i4)') DayNri
                 i = i+1
             end do
-            Tlow = real(roundc(100*TminDataSet_temp(i)%Param, mold=int32),kind=dp)/100._dp
-            Thigh = real(roundc(100*TmaxDataSet_temp(i)%Param, mold=int32),kind=dp)/100._dp
-            write(TempString, '(2f10.2)') Tlow, Thigh
+            Tlow = real(roundc(100*TminDataSet_temp(i)%Param, mold=int32),kind=sp)/100._sp
+            Thigh = real(roundc(100*TmaxDataSet_temp(i)%Param, mold=int32),kind=sp)/100._sp
             call SetTminTnxReference365DaysRun_i(DayNri,Tlow)
             call SetTmaxTnxReference365DaysRun_i(DayNri,Thigh)
-            call fTnxReference365Days_write(trim(TempString))
+            if (GetTnxReferenceFile() /= '(External)') then
+                write(TempString, '(2f10.2)') Tlow, Thigh
+                call fTnxReference365Days_write(trim(TempString))
+            end if
         end do
-        ! Close file
-        call fTnxReference365Days_close()
+        if (GetTnxReferenceFile() /= '(External)') then
+            ! Close file
+            call fTnxReference365Days_close()
+        end if
     end if
 end subroutine CreateTnxReference365Days
 
@@ -3249,7 +3174,6 @@ subroutine CreateTnxReferenceFile(TemperatureFile, TnxReferenceFile, TnxReferenc
         ! 2.a Preparation
         ! Get Number of Years
         NrYears = GetTemperatureRecord_ToY() - GetTemperatureRecord_FromY() + 1
-        !WRITE(*, '(A, i4)') 'The value of NrYears is:', NrYears
         ! Get TnxReferenceYear
         call SetTnxReferenceYear(roundc((GetTemperatureRecord_FromY()+GetTemperatureRecord_ToY())/2._dp,mold=1_int32))
         if (GetTnxReferenceYear() == 1901) then
@@ -3314,8 +3238,6 @@ subroutine CreateTnxReferenceFile(TemperatureFile, TnxReferenceFile, TnxReferenc
             ! read data
             read(fhandle, *, iostat=rc) Val1, Val2 ! Tmin, Tmax
             if (rc == iostat_end) exit
-            !WRITE(*, '(A, f10.2)') 'The value of Val1 is:', Val1
-            !WRITE(*, '(A, f10.2)') 'The value of Val2 is:', Val2
             SUM1 = SUM1 + Val1 ! minimum temperature
             SUM2 = SUM2 + Val2 ! maximum temperature
             ! check end of month
@@ -3341,9 +3263,6 @@ subroutine CreateTnxReferenceFile(TemperatureFile, TnxReferenceFile, TnxReferenc
                 ! mean monthly values Tmin and Tmax
                 select case (GetTemperatureRecord_DataType())
                 case (datatype_daily)
-            !WRITE(*, '(A, f10.2)') 'The value of SUM1 is:', SUM1
-            !WRITE(*, '(A, f10.2)') 'The value of SUM2 is:', SUM2
-            !WRITE(*, '(A, I4)') 'The value of MonthDays is:', MonthDays
                     SUM1 = SUM1/real(MonthDays, kind=dp)
                     SUM2 = SUM2/real(MonthDays, kind=dp)
                 case (datatype_decadely)
@@ -3352,9 +3271,6 @@ subroutine CreateTnxReferenceFile(TemperatureFile, TnxReferenceFile, TnxReferenc
                 end select
                 MonthVal1(Monthi) = MonthVal1(Monthi) + SUM1/real(MonthNrYears(Monthi),kind=dp) ! Tmin
                 MonthVal2(Monthi) = MonthVal2(Monthi) + SUM2/real(MonthNrYears(Monthi),kind=dp) ! Tmax
-                !WRITE(*, '(A, i4)') 'The value of Monthi is:', Monthi
-                !WRITE(*, '(A, f10.4)') 'The value of MonthVal1 is:', MonthVal1(Monthi)
-                !WRITE(*, '(A, f10.4)') 'The value of MonthVal2 is:', MonthVal2(Monthi)
                 ! Next month
                 SUM1 = 0._dp
                 SUM2 = 0._dp
@@ -3410,13 +3326,12 @@ subroutine CreateTnxReferenceFile(TemperatureFile, TnxReferenceFile, TnxReferenc
         do Monthi = 1, 12
             write(TempString2, '(2f10.2)') MonthVal1(Monthi), MonthVal2(Monthi)
             call fTnxReference_write(trim(TempString2))
-            call SetTminTnxReference12MonthsRun_i(Monthi,real(roundc(100*MonthVal1(Monthi),mold=int32),kind=dp)/100._dp)
-            call SetTmaxTnxReference12MonthsRun_i(Monthi,real(roundc(100*MonthVal2(Monthi),mold=int32),kind=dp)/100._dp)
+            call SetTminTnxReference12MonthsRun_i(Monthi,real(roundc(100*MonthVal1(Monthi),mold=int32),kind=sp)/100._sp)
+            call SetTmaxTnxReference12MonthsRun_i(Monthi,real(roundc(100*MonthVal2(Monthi),mold=int32),kind=sp)/100._sp)
         end do
         call fTnxReference_close()
     end if
 end subroutine CreateTnxReferenceFile
-
 
 !TminDatSet
 
@@ -3643,12 +3558,9 @@ subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet,
     real(dp) :: C1Max, C2Max, C3Max
     real(dp) :: aOver3Min, bOver2Min, cMin
     real(dp) :: aOver3Max, bOver2Max, cMax
-    character(len=:), allocatable :: FullFileName
 
     ni=30
 
-    !call GetSetofThreeMonthsUndefYear(Monthi, &
-    !     C1Min, C2Min, C3Min, C1Max, C2Max, C3Max)
     if (Monthi == 1) then
         C1Min = GetTminTnxReference12MonthsRun_i(12)
         C1Max = GetTmaxTnxReference12MonthsRun_i(12)
@@ -3680,7 +3592,6 @@ subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet,
                    aOver3Min, bOver2Min, cMin)
     call GetInterpolationParameters(C1Max, C2Max, C3Max, &
                    aOver3Max, bOver2Max, cMax)
-        !WRITE(*, '(A, 6f10.2)') 'Int C1Min ...: ', C1Min, C2Min, C3Min, aOver3Min, bOver2Min, cMin
 
     t1 = 30
     do Dayi = 1, DayN
@@ -3692,7 +3603,6 @@ subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet,
         TmaxDataSet(Dayi)%Param = aOver3Max*(t2*t2*t2-t1*t1*t1) &
             + bOver2Max*(t2*t2-t1*t1) + cMax*(t2-t1)
         t1 = t2
-        !WRITE(*, '(A, i4, f10.2)') 'TminDataSet(Dayi)%DayNr: ', TminDataSet(Dayi)%DayNr, TminDataSet(Dayi)%Param
     end do
     do Dayi = (DayN+1), 31 ! Give to remaining days (day 29,30 or 31) the DayNr of the last day of the month
         TminDataSet(Dayi)%DayNr = DNR+DayN-1
@@ -3702,112 +3612,6 @@ subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet,
     end do
 
     contains
-
-
-!    subroutine GetSetofThreeMonthsUndefYear(Monthi, &
-!            C1Min, C2Min, C3Min, C1Max, C2Max, C3Max)
-!        integer(int32), intent(in) :: Monthi
-!        real(dp), intent(inout) :: C1Min
-!        real(dp), intent(inout) :: C2Min
-!        real(dp), intent(inout) :: C3Min
-!        real(dp), intent(inout) :: C1Max
-!        real(dp), intent(inout) :: C2Max
-!        real(dp), intent(inout) :: C3Max
-!
-!        integer(int32) :: fhandle
-!        integer(int32) :: Mfile, Nri, Obsi, rc
-!        logical :: OK3
-!
-!        ! 1. Prepare record
-!        open(newunit=fhandle, file=trim(GetTnxReferenceFileFull()), &
-!                     status='old', action='read', iostat=rc)
-!        read(fhandle, *, iostat=rc) ! description
-!        read(fhandle, *, iostat=rc) ! time step
-!        read(fhandle, *, iostat=rc) ! day
-!        read(fhandle, *, iostat=rc) ! month
-!        read(fhandle, *, iostat=rc) ! year
-!        read(fhandle, *, iostat=rc)
-!        read(fhandle, *, iostat=rc)
-!        read(fhandle, *, iostat=rc)
-!
-!        Mfile = 1
-!        OK3 = .false.
-!
-!        ! 2. If first month
-!        if (Monthi == 1) then
-!            ! get Tnx Month 12
-!            do Monthi = 1, 11
-!                read(fhandle, *, iostat=rc)
-!            end do
-!            call ReadMonth(C1Min, C1Max, fhandle, rc)
-!            ! reset
-!            rewind(fhandle)
-!            do Monthi = 1, 8
-!                read(fhandle, *, iostat=rc)
-!            end do
-!            ! get Tnx Month 1 and 2
-!            call ReadMonth(C2Min, C2Max, fhandle, rc)  ! month 1
-!            call ReadMonth(C3Min, C3Max, fhandle, rc)  ! month 2
-!            OK3 = .true.
-!        end if
-!        
-!        ! 3. If last month
-!        if (Monthi == 12) then
-!            ! get Tnx Month 11 and 12
-!            do Monthi = 1, 10
-!                read(fhandle, *, iostat=rc)
-!            end do
-!            call ReadMonth(C1Min, C1Max, fhandle, rc)  ! month 11
-!            call ReadMonth(C2Min, C2Max, fhandle, rc)  ! month 12
-!            ! reset
-!            rewind(fhandle)
-!            ! get Tnx Month 1
-!            do Monthi = 1, 8
-!                read(fhandle, *, iostat=rc)
-!            end do
-!            call ReadMonth(C3Min, C3Max, fhandle, rc)  ! month 1
-!            OK3 = .true.
-!        end if
-!        
-!        ! 4. IF not first or last month
-!        if(.not. OK3) then
-!            ! determine Position Monthi
-!            Obsi = 1
-!            do while (.not. OK3)
-!                if (Monthi == Mfile) then
-!                   OK3 = .true.
-!                else
-!                   Mfile = Mfile + 1
-!                  Obsi = Obsi + 1
-!                end if
-!            end do
-!            ! get to Monthi-1
-!            do Nri = 1, (Obsi-2)
-!                read(fhandle, *, iostat=rc)
-!            end do
-!            ! Get Tnx (Monthi-1), Monthi, (Monthi+1)
-!            call ReadMonth(C1Min, C1Max, fhandle, rc) ! Monthi-1
-!            call ReadMonth(C2Min, C2Max, fhandle, rc) ! Monthi
-!            call ReadMonth(C3Min, C3Max, fhandle, rc) ! Monthi+1
-!        end if
-!        close(fhandle)
-!    end subroutine GetSetofThreeMonthsUndefYear
-!
-
-    subroutine ReadMonth(CiMin, CiMax, fhandle, rc)
-        real(dp), intent(inout) :: CiMin
-        real(dp), intent(inout) :: CiMax
-        integer(int32), intent(in) :: fhandle
-        integer(int32), intent(inout) :: rc
-
-        integer(int32), parameter :: ni = 30 ! simplification give better results for all cases
-        character(len=255) :: StringREAD
-
-        read(fhandle, '(a)', iostat=rc) StringREAD
-        call SplitStringInTwoParams(StringREAD, CiMin, CiMax)
-        CiMin = CiMin * ni
-        CiMax = CiMax * ni
-    end subroutine ReadMonth
 
 
     subroutine GetInterpolationParameters(C1, C2, C3, &
@@ -3825,7 +3629,5 @@ subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile(Monthi, TminDataSet,
         c = (11._dp*C1-7._dp*C2+2._dp*C3)/(6._dp*30._dp)
     end subroutine GetInterpolationParameters
 end subroutine GetMonthlyTemperatureDataSetFromTnxReferenceFile
-
-
 
 end module ac_tempprocessing
