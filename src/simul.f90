@@ -3532,14 +3532,18 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                     ! calculate CC in late season
                     ! CCibis = CC which canopy declines
                     ! (soil fertility/salinity stress) further in late season
-                    CCibis = CCxSF &
-                            - (RatDGDD*GetSimulation_EffectStress_CDecline() &
-                                                                   /100._dp) &
-                            * (exp(2._dp &
-                                  * log(SumGDDadjCC &
-                                        - GetCrop_GDDaysToFullCanopySF())) &
-                                /(GetCrop_GDDaysToSenescence() &
-                                    - GetCrop_GDDaysToFullCanopySF()))
+                    if (GetCrop_GDDaysToSenescence() <= GetCrop_GDDaysToFullCanopySF()) then
+                        CCibis = GetCCiActual()
+                    else:
+                        CCibis = CCxSF &
+                                - (RatDGDD*GetSimulation_EffectStress_CDecline() &
+                                                                       /100._dp) &
+                                * (exp(2._dp &
+                                      * log(SumGDDadjCC &
+                                            - GetCrop_GDDaysToFullCanopySF())) &
+                                    /(GetCrop_GDDaysToSenescence() &
+                                        - GetCrop_GDDaysToFullCanopySF()))
+                    end if
                     if (CCibis < 0._dp) then
                         call SetCCiActual(0._dp)
                     else
