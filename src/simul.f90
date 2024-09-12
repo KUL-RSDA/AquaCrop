@@ -3534,7 +3534,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                     ! (soil fertility/salinity stress) further in late season
                     if (GetCrop_GDDaysToSenescence() <= GetCrop_GDDaysToFullCanopySF()) then
                         CCibis = GetCCiActual()
-                    else:
+                    else
                         CCibis = CCxSF &
                                 - (RatDGDD*GetSimulation_EffectStress_CDecline() &
                                                                        /100._dp) &
