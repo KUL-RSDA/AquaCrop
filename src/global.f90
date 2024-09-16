@@ -1020,7 +1020,6 @@ integer(int32) :: IrriFirstDayNr
 integer(int32) :: ZiAqua ! Depth of Groundwater table below
                          ! soil surface in centimeter
 
-
 integer(int8) :: IniPercTAW ! Default Value for Percentage TAW for Initial
                             ! Soil Water Content Menu
 integer(int8) :: MaxPlotTr
@@ -16241,7 +16240,6 @@ function GetTminTnxReference365DaysRun_i(i) result(TminTnxReference365DaysRun_i)
     real(sp) :: TminTnxReference365DaysRun_i
 
     TminTnxReference365DaysRun_i = TminTnxReference365DaysRun(i)
-    !TminTnxReference365DaysRun_i = real(roundc(10000*real(TminTnxReference365DaysRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTminTnxReference365DaysRun_i
 
 
@@ -16277,7 +16275,6 @@ function GetTmaxTnxReference365DaysRun_i(i) result(TmaxTnxReference365DaysRun_i)
     real(sp) :: TmaxTnxReference365DaysRun_i
 
     TmaxTnxReference365DaysRun_i = TmaxTnxReference365DaysRun(i)
-    !TmaxTnxReference365DaysRun_i = real(roundc(10000*real(TmaxTnxReference365DaysRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTmaxTnxReference365DaysRun_i
 
 
@@ -16343,7 +16340,6 @@ function GetTminCropReferenceRun_i(i) result(TminCropReferenceRun_i)
     real(sp) :: TminCropReferenceRun_i
 
     TminCropReferenceRun_i = TminCropReferenceRun(i)
-    !TminCropReferenceRun_i = real(roundc(10000*real(TminCropReferenceRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTminCropReferenceRun_i
 
 
@@ -16379,7 +16375,6 @@ function GetTmaxCropReferenceRun_i(i) result(TmaxCropReferenceRun_i)
     real(sp) :: TmaxCropReferenceRun_i
 
     TmaxCropReferenceRun_i = TmaxCropReferenceRun(i)
-    !TmaxCropReferenceRun_i = real(roundc(10000*real(TmaxCropReferenceRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTmaxCropReferenceRun_i
 
 
@@ -16429,7 +16424,7 @@ subroutine SetTmaxCropReference(TmaxCropReference_in)
     TmaxCropReference = TmaxCropReference_in
 end subroutine SetTmaxCropReference
 
-! Tmin
+! TminRun
 
 function GetTminRun() result(TminRun_out)
     !! Getter for the "TminRun" global variable.
@@ -16465,7 +16460,7 @@ subroutine SetTminRun_i(i, TminRun_i)
     TminRun(i) = TminRun_i
 end subroutine SetTminRun_i
 
-! Tmax
+! TmaxRun
 
 function GetTmaxRun() result(TmaxRun_out)
     !! Getter for the "TmaxRun" global variable.
@@ -16481,7 +16476,6 @@ function GetTmaxRun_i(i) result(TmaxRun_i)
     real(sp) :: TmaxRun_i
 
     TmaxRun_i = TmaxRun(i)
-    !TmaxRun_i = real(roundc(10000*real(TmaxRun(i),kind=dp),mold=int32)/10000._sp,kind=sp)
 end function GetTmaxRun_i
 
 

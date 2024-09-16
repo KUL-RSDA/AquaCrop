@@ -1,86 +1,86 @@
 module ac_preparefertilitysalinity
 
-use ac_global, only:    DaysInMonth, & 
-                        DetermineDate,&
-                        HarvestIndexGrowthCoefficient, &
-                        DegreesDay, &
-                        GetTnxReferenceYear,&
-                        GetTminCropReferenceRun, &
-                        SetTminCropReferenceRun, &
-                        GetTminCropReferenceRun_i, &
-                        SetTminCropReferenceRun_i, &
-                        GetTmaxCropReferenceRun, &
-                        SetTmaxCropReferenceRun, &
-                        GetTmaxCropReferenceRun_i, &
-                        SetTmaxCropReferenceRun_i, &
-                        GetTminTnxReference365DaysRun,&
-                        GetTmaxTnxReference365DaysRun,&
-                        GetTminTnxReference365DaysRun_i,&
-                        GetTmaxTnxReference365DaysRun_i,&
-                        SetTminTnxReference365DaysRun,&
-                        SetTmaxTnxReference365DaysRun,&
-                        SetTminTnxReference365DaysRun_i,&
-                        SetTmaxTnxReference365DaysRun_i,&
-                        FileExists, &
-                        undef_double, &
-                        undef_int, &
-                        CO2ref,&
-                        rep_DayEventDbl,&
-                        rep_Shapes,&
-                        rep_EffectStress,&
-                        Subkind_Forage, &
-                        subkind_Grain,  &
-                        subkind_Grain, &
-                        subkind_Tuber, &
-                        subkind_Vegetative, &
-                        modeCycle_CalendarDays, &
-                        modeCycle_GDDays, &
-                        LeapYear, &
-                        DetermineDayNr, &
-                        DetermineDayNr, &
-                        SplitStringInTwoParams, &
-                        SetSimulation_DelayedDays, &
-                        GetDaySwitchToLinear, &
-                        CropStressParametersSoilFertility, &
-                        TimeToMaxCanopySF, &
-                        GetPathNameSimul, &
-                        GetTemperatureRecord_ToY, &
-                        GetTemperatureRecord_FromY, &
-                        GetTemperatureRecord_ToM, &
-                        GetTemperatureRecord_FromM, &
-                        GetTemperatureRecord_ToDayNr, &
-                        GetTemperatureRecord_FromDayNr, &
-                        GetTemperatureRecord_DataType, &
-                        GetTemperatureFile, &
-                        GetTemperatureFilefull, &
-                        datatype_daily, &
-                        datatype_decadely, &
-                        SetTnxReferenceFile, &
-                        GetTnxReferenceFile, &
-                        SetTnxReferenceFileFull, &
-                        GetTnxReferenceFileFull, &
-                        GetSimulParam_GDDMethod, &
-                        GetCO2FileFull, &
-                        SeasonalSumOfKcPot, &
-                        DaysToReachCCwithGivenCGC
+use ac_global, only: CO2ref,& 
+                     CropStressParametersSoilFertility, & 
+                     datatype_daily, & 
+                     datatype_decadely, & 
+                     DaysInMonth, &  
+                     DaysToReachCCwithGivenCGC, & 
+                     DegreesDay, & 
+                     DetermineDate,& 
+                     DetermineDayNr, & 
+                     DetermineDayNr, & 
+                     FileExists, & 
+                     GetCO2FileFull, & 
+                     GetDaySwitchToLinear, & 
+                     GetPathNameSimul, & 
+                     GetSimulParam_GDDMethod, & 
+                     GetTemperatureFile, & 
+                     GetTemperatureFilefull, & 
+                     GetTemperatureRecord_DataType, & 
+                     GetTemperatureRecord_FromDayNr, & 
+                     GetTemperatureRecord_FromM, & 
+                     GetTemperatureRecord_FromY, & 
+                     GetTemperatureRecord_ToDayNr, & 
+                     GetTemperatureRecord_ToM, & 
+                     GetTemperatureRecord_ToY, & 
+                     GetTmaxCropReferenceRun, & 
+                     GetTmaxCropReferenceRun_i, & 
+                     GetTmaxTnxReference365DaysRun,& 
+                     GetTmaxTnxReference365DaysRun_i,& 
+                     GetTminCropReferenceRun, & 
+                     GetTminCropReferenceRun_i, & 
+                     GetTminTnxReference365DaysRun,& 
+                     GetTminTnxReference365DaysRun_i,& 
+                     GetTnxReferenceFile, & 
+                     GetTnxReferenceFileFull, & 
+                     GetTnxReferenceYear,& 
+                     HarvestIndexGrowthCoefficient, & 
+                     LeapYear, & 
+                     modeCycle_CalendarDays, & 
+                     modeCycle_GDDays, & 
+                     rep_DayEventDbl,& 
+                     rep_EffectStress,& 
+                     rep_Shapes,& 
+                     SeasonalSumOfKcPot, & 
+                     SetSimulation_DelayedDays, & 
+                     SetTmaxCropReferenceRun, & 
+                     SetTmaxCropReferenceRun_i, & 
+                     SetTmaxTnxReference365DaysRun,& 
+                     SetTmaxTnxReference365DaysRun_i,& 
+                     SetTminCropReferenceRun, & 
+                     SetTminCropReferenceRun_i, & 
+                     SetTminTnxReference365DaysRun,& 
+                     SetTminTnxReference365DaysRun_i,& 
+                     SetTnxReferenceFile, & 
+                     SetTnxReferenceFileFull, & 
+                     SplitStringInTwoParams, & 
+                     Subkind_Forage, & 
+                     subkind_Grain,  & 
+                     subkind_Grain, & 
+                     subkind_Tuber, & 
+                     subkind_Vegetative, & 
+                     TimeToMaxCanopySF, & 
+                     undef_double, & 
+                     undef_int
 use ac_kinds, only: dp, &
                     int8, &
                     int16, &
                     int32, &
                     intEnum, &
                     sp
-use ac_tempprocessing, only: GDDCDCToCDC, &
-                        GrowingDegreeDays, &
-                        Bnormalized, &
+use ac_tempprocessing, only: Bnormalized, &
+                        CropStressParametersSoilSalinity, &
                         fTnxReference_open, &
                         fTnxReference_write, & 
                         fTnxReference_close,&
-                        CropStressParametersSoilSalinity
+                        GDDCDCToCDC, &
+                        GrowingDegreeDays
 use ac_project_input, only: GetNumberSimulationRuns, &
                             ProjectInput
-use ac_utils, only: roundc, &
-                    GetReleaseDate, &
+use ac_utils, only: GetReleaseDate, &
                     GetVersionString, &
+                    roundc, &
                     trunc
 use iso_fortran_env, only: iostat_end
 implicit none
