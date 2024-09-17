@@ -376,7 +376,7 @@ subroutine PrepareReport()
         call fProjects_write('None created')
     end select
     call fProjects_write('')
-    if (GetOutDaily() .and. GetOut8Irri()) then
+    if (GetOutDaily() .or. GetOut8Irri()) then
         call fProjects_write('Daily output results:')
         if (GetOut1Wabal()) then
             call fProjects_write('1. - soil water balance')
