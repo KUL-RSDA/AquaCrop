@@ -31,6 +31,7 @@ real(dp), parameter :: CO2Ref = 369.41_dp;
 real(dp), parameter :: EvapZmin = 15._dp
     !! cm  minimum soil depth for water extraction by evaporation
 real(dp), parameter :: eps =10E-08
+real(dp), parameter :: ac_zero_threshold = 0.000001_dp
 real(dp), dimension(12), parameter :: ElapsedDays = [0._dp, 31._dp, 59.25_dp, &
                                                     90.25_dp, 120.25_dp, 151.25_dp, &
                                                     181.25_dp, 212.25_dp, 243.25_dp, &
@@ -1440,8 +1441,7 @@ real(dp) function CCiNoWaterStressSF(Dayi, L0, L12SF, L123, L1234, GDDL0,&
                                 SFRedCCX)
 
     ! Consider CDecline for limited soil fertiltiy
-    ! IF ((Dayi > L12SF) AND (SFCDecline > 0.000001))
-    if ((Dayi > L12SF) .and. (SFCDecline > 0.000001_dp) .and. (L12SF < L123)) then
+    if ((Dayi > L12SF) .and. (SFCDecline > ac_zero_threshold) .and. (L12SF < L123)) then
         if (Dayi < L123) then
             if (TheModeCycle == modeCycle_CalendarDays) then
                 CCi = CCi - (SFCDecline/100.0_dp)&
@@ -7981,7 +7981,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         end if
 
         ! Correction for Air temperature stress
-        if ((CCiAdjusted <= 0.000001_dp) &
+        if ((CCiAdjusted <= ac_zero_threshold) &
             .or. (roundc(GDDayi, mold=1) < 0)) then
             KsTrCold = 1._dp
         else

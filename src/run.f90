@@ -5,6 +5,7 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
                                 GetMonthlyEToDataset, &
                                 GetMonthlyRainDataset
 use ac_global, only:    AdjustSizeCompartments, &
+                        ac_zero_threshold, &
                         GetCrop_DaysToHIo, &
                         GetCrop_GDDaysToHIo, &
                         GetOut8Irri, &
@@ -7022,7 +7023,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
         call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
         ! temperature stress affecting crop transpiration
-        if (GetCCiActual() <= 0.000001_dp) then
+        if (GetCCiActual() <= ac_zero_threshold) then
              KsTr = 1._dp
         else
              KsTr = KsTemperature(0._dp, GetCrop_GDtranspLow(), GetGDDayi())
@@ -7236,14 +7237,14 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     ! 14.b Stress totals
     if (GetCCiActual() > 0._dp) then
         ! leaf expansion growth
-        if (GetStressLeaf() > - 0.000001_dp) then
+        if (GetStressLeaf() > - ac_zero_threshold) then
             call SetStressTot_Exp(((GetStressTot_NrD() - 1._dp)*GetStressTot_Exp() &
                      + GetStressLeaf())/real(GetStressTot_NrD(), kind=dp))
         end if
         ! stomatal closure
         if (GetTpot() > 0._dp) then
             StressStomata = 100._dp *(1._dp - GetTact()/GetTpot())
-            if (StressStomata > - 0.000001_dp) then
+            if (StressStomata > - ac_zero_threshold) then
                 call SetStressTot_Sto(((GetStressTot_NrD() - 1._dp) &
                     * GetStressTot_Sto() + StressStomata) / &
                     real(GetStressTot_NrD(), kind=dp))
@@ -7251,7 +7252,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         end if
     end if
     ! weed stress
-    if (GetWeedRCi() > - 0.000001_dp) then
+    if (GetWeedRCi() > - ac_zero_threshold) then
         call SetStressTot_Weed(((GetStressTot_NrD() - 1._dp)*GetStressTot_Weed() &
              + GetWeedRCi())/real(GetStressTot_NrD(), kind=dp))
     end if
@@ -7508,7 +7509,7 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         ! 4. Air temperature stress
-        if (GetCCiActual() <= 0.000001_dp) then
+        if (GetCCiActual() <= ac_zero_threshold) then
             KsTr = 1._dp
         else
             KsTr = KsTemperature(0._dp, GetCrop_GDtranspLow(), GetGDDayi())
@@ -7521,14 +7522,14 @@ subroutine WriteDailyResults(DAP, WPi)
         end if
 
         ! 5. Relative cover of weeds
-        if (GetCCiActual() <= 0.000001_dp) then
+        if (GetCCiActual() <= ac_zero_threshold) then
             StrW = undef_int
         else
             StrW = roundc(GetWeedRCi(), mold=1)
         end if
 
         ! 6. WPi adjustemnt
-        if (GetSumWaBal_Biomass() <= 0.000001_dp) then
+        if (GetSumWaBal_Biomass() <= ac_zero_threshold) then
             WPi_loc = 0._dp
         end if
 

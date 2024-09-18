@@ -1,6 +1,7 @@
 module ac_simul
 
 use ac_global, only: ActiveCells, &
+                     ac_zero_threshold, &
                      adjustedksstotoecsw, &
                      BMRange, &
                      CalculateAdjustedFC, &
@@ -1037,7 +1038,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
           DiFlor = (dayi-1) - (GetSimulation_DelayedDays() + &
                             GetCrop_Day1() + GetCrop_DaysToFlowering())
           f1 = FractionPeriod(DiFlor)
-          if (abs(f1-f2) < 0.000001_dp) then
+          if (abs(f1-f2) < ac_zero_threshold) then
               F = 0._dp
           else
               F = (100._dp * ((f1+f2)/2._dp)/GetCrop_LengthFlowering())
@@ -3401,7 +3402,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
             else
                 if (GetCCiPrev() < (0.97999_dp*CCxSF)) then
                     call DetermineGDDCGCadjusted(GDDCGCadjusted)
-                    if (GDDCGCadjusted > 0.000001_dp) then
+                    if (GDDCGCadjusted > ac_zero_threshold) then
                         ! Crop.GDDCGC or GDDCGCadjusted > 0
                         Crop_CCxAdjusted_temp = GetCrop_CCxAdjusted()
                         call DetermineCCxAdjusted(Crop_CCxAdjusted_temp)
@@ -3955,7 +3956,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         else
             KsSen = KsAny(Wrelative, pSenAct, pSenLL, &
                           GetCrop_KsShapeFactorSenescence())
-            if (KsSen > 0.000001_dp) then
+            if (KsSen > ac_zero_threshold) then
                 GDDCDCadjusted = GDDCDCTotal &
                                  * ((CCxSFCD+2.29_dp)/(CCxTotal+2.29_dp)) &
                                  * (1._dp - exp(8._dp*log(KsSen)))
@@ -4146,7 +4147,7 @@ subroutine PrepareStage1()
 
     Soil_temp = GetSoil()
 
-    if (GetSurfaceStorage() > 0.000001_dp) then
+    if (GetSurfaceStorage() > ac_zero_threshold) then
         call SetSimulation_EvapWCsurf(Soil_temp%REW*1._dp)
     else
         call SetSimulation_EvapWCsurf(GetRain() + GetIrrigation() - GetRunOff())
@@ -4270,7 +4271,7 @@ subroutine AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot, EvapWCsurface)
     real(dp) :: EpotIrri
 
     ! 1. Mulches (reduction of EpotTot to Epot)
-    if (GetSurfaceStorage() <= 0.000001_dp) then
+    if (GetSurfaceStorage() <= ac_zero_threshold) then
         if (dayi < GetCrop_Day1()) then ! before season
             Epot = EpotTot &
                     * (1._dp - (GetManagement_EffectMulchOffS()/100._dp) &
@@ -4427,7 +4428,7 @@ subroutine ExtractWaterFromEvapLayer(EvapToLose, Zact, Stg1)
         end if
         Ztot = Ztot + fracZ * (GetCompartment_Thickness(compi))
         if ((Compi >= GetNrCompartments()) &
-            .or. (abs(StillToExtract) < 0.000001_dp) &
+            .or. (abs(StillToExtract) < ac_zero_threshold) &
             .or. (Ztot >= 0.999999_dp*Zact)) exit loop
     end do loop
     if (Stg1) then
@@ -4453,7 +4454,7 @@ subroutine CalculateSoilEvaporationStage1()
         call ExtractWaterFromEvapLayer(GetSimulation_EvapWCsurf(), EvapZmin, &
                                                                        Stg1)
     end if
-    if (GetSimulation_EvapWCsurf() < 0.000001_dp) then
+    if (GetSimulation_EvapWCsurf() < ac_zero_threshold) then
         call PrepareStage2()
     end if
 end subroutine CalculateSoilEvaporationStage1
@@ -4774,7 +4775,7 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
             else
                 if (GetCCiPrev() < 0.97999_dp*CCxSF) then
                     call DetermineCGCadjusted(CGCadjusted)
-                    if (CGCadjusted > 0.000001_dp) then
+                    if (CGCadjusted > ac_zero_threshold) then
                         ! CGCSF or CGCadjusted > 0
                         Crop_CCxAdjusted_temp = GetCrop_CCxAdjusted()
                         call DetermineCCxAdjusted(Crop_CCxAdjusted_temp)
@@ -5258,7 +5259,7 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
         else
             KsSen = KsAny(Wrelative, pSenAct, pSenLL, &
                           GetCrop_KsShapeFactorSenescence())
-            if (KsSen > 0.000001_dp) then
+            if (KsSen > ac_zero_threshold) then
                 CDCadjusted = CDCTotal &
                               * ((CCxSFCD+2.29_dp)/(CCxTotal+2.29_dp)) &
                                     * (1._dp - exp(8._dp*log(KsSen)))
@@ -5642,12 +5643,12 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
             call CalculateEvaporationSurfaceWater
         end if
         ! stage 1 evaporation
-        if ((abs(GetEpot() - GetEact()) > 0.000001_dp) &
+        if ((abs(GetEpot() - GetEact()) > ac_zero_threshold) &
             .and. (GetSimulation_EvapWCsurf() > 0._dp)) then
             call CalculateSoilEvaporationStage1()
         end if
         ! stage 2 evaporation
-        if (abs(GetEpot() - GetEact()) > 0.000001_dp) then
+        if (abs(GetEpot() - GetEact()) > ac_zero_threshold) then
             call CalculateSoilEvaporationStage2()
         end if
     end if
