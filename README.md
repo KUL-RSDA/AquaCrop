@@ -2,13 +2,12 @@
 
 <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSEmcLG0zbWXIaLClg09v77ZccbFH_zuDVRbH-eBLxAdmcZ4nZ7" align="right" width="200px">
 
-AquaCrop v7.0 and higher versions are released as open-source Fortran code, 
-developed at KU Leuven and the Food and Agriculture Organization (FAO) 
-of the United Nations (FAO and KU Leuven copyright),
-and based on the original AquaCrop v6.0 (FAO copyright). 
+AquaCrop v7.0 and higher versions are released as open-source Fortran code,
+developed at KU Leuven and endorsed by the Food and Agriculture Organization (FAO)
+of the United Nations (FAO and KU Leuven copyright).
 Compared to AquaCrop v6.0, the AquaCrop v7.0 and higher versions
 feature bug fixes, performance improvements and internal restructuring,
-a translation from Pascal to Fortran, and a range of new and/or updated 
+a translation from Pascal to Fortran, and a range of new and/or updated
 scientific features.
 
 The following applications are publicly distributed:
