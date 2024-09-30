@@ -1,4 +1,4 @@
-AquaCrop 7.2 (August 2024) - Output created on (date) : 30-09-2024   at (time) : 15:47:17
+AquaCrop 7.2 (August 2024) - Output created on (date) : 30-09-2024   at (time) : 15:56:02
 Evaluation of simulation results - Statistics
 ** Run number:1
 
@@ -15,9 +15,9 @@ Evaluation of simulation results - Statistics
      1           0.045        -9.000         0.075      24 May 2014
      2           0.386        -9.000         0.856       9 June 2014
      3           1.039        -9.000         1.804      18 June 2014
-     4           1.217        -9.000         2.631      25 June 2014
+     4           1.217        -9.000         2.632      25 June 2014
      5           2.390        -9.000         3.602       3 July 2014
-     6           3.191        -9.000         4.437      10 July 2014
+     6           3.191        -9.000         4.438      10 July 2014
      7           3.606        -9.000         4.787      13 July 2014
      8           3.947        -9.000         4.928      15 July 2014
      9           4.407        -9.000         5.740      24 July 2014
@@ -26,7 +26,7 @@ Evaluation of simulation results - Statistics
     12           6.263        -9.000         7.230      14 August 2014
     13           6.901        -9.000         7.413      18 August 2014
     14           7.168        -9.000         7.647      24 August 2014
-    15           7.242        -9.000         7.868      31 August 2014
+    15           7.242        -9.000         7.869      31 August 2014
 
   Valid observations/simulations sets (n) ....... :    15
   Average of observed Biomass production ........ :     3.923   ton/ha
