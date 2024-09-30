@@ -75,6 +75,7 @@ all: bin lib
 OBJ = climprocessing.o \
     defaultcropsoil.o \
     global.o  \
+    preparefertilitysalinity.o  \
     inforesults.o \
     initialsettings.o \
     kinds.o \
@@ -144,17 +145,6 @@ rootunit.o: rootunit.f90 \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
-run.o: run.f90 \
-    global.o \
-    inforesults.o \
-    kinds.o \
-    rootunit.o \
-    simul.o \
-    tempprocessing.o \
-    climprocessing.o \
-    utils.o
-	$(FC) $(FCFLAGS) -c $< -o $@
-
 simul.o: simul.f90 \
     global.o \
     tempprocessing.o \
@@ -169,10 +159,30 @@ startunit.o: startunit.F90 \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
+preparefertilitysalinity.o: preparefertilitysalinity.f90 \
+    global.o \
+    kinds.o \
+    tempprocessing.o \
+    project_input.o \
+    utils.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
 tempprocessing.o: tempprocessing.f90 \
     global.o \
     kinds.o \
     project_input.o \
+    utils.o
+	$(FC) $(FCFLAGS) -c $< -o $@
+
+run.o: run.f90 \
+    global.o \
+    inforesults.o \
+    kinds.o \
+    rootunit.o \
+    simul.o \
+    tempprocessing.o \
+    climprocessing.o \
+    preparefertilitysalinity.o \
     utils.o
 	$(FC) $(FCFLAGS) -c $< -o $@
 
