@@ -66,7 +66,7 @@ The main `make` targets are `bin` (producing an `aquacrop` executable),
 
 Please follow good practices. New features, enhancements or suggestions will only be considered and reviewed once a year by the core AquaCrop developers.
 
-We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
+We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
 
 
 ## LIS integration
