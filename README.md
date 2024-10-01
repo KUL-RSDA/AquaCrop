@@ -1,10 +1,10 @@
-# FAO AquaCrop
+# AquaCrop
 
 <img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSEmcLG0zbWXIaLClg09v77ZccbFH_zuDVRbH-eBLxAdmcZ4nZ7" align="right" width="200px">
 
 AquaCrop v7.0 and higher versions are released as open-source Fortran code,
-developed at KU Leuven and endorsed by the Food and Agriculture Organization (FAO)
-of the United Nations (FAO and KU Leuven copyright).
+developed by KU Leuven and endorsed by the Food and Agriculture Organization (FAO)
+of the United Nations.
 Compared to AquaCrop v6.0, the AquaCrop v7.0 and higher versions
 feature bug fixes, performance improvements and internal restructuring,
 a translation from Pascal to Fortran, and a range of new and/or updated
@@ -66,7 +66,7 @@ The main `make` targets are `bin` (producing an `aquacrop` executable),
 
 Please follow good practices. New features, enhancements or suggestions will only be considered and reviewed once a year by the core AquaCrop developers.
 
-We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) or the FAO Contact (aquacrop@fao.org) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the FAO Contact or documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
+We encourage scientific (only) exchanges via our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum. Only if the wealth of [documentation](https://www.fao.org/aquacrop/en/) did not provide sufficient help, or if you have a good suggestion, then start a new "Discussion" with the information you already gathered from the documentation. Please do not open an "Issue" to ask your question and do not offer a "Pull Request" without any prior "Discussion" with the AquaCrop core team.
 
 
 ## LIS integration
