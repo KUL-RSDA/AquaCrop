@@ -4,7 +4,7 @@ This folder contains an AquaCrop testcase that you may use
 to verify the correct execution of the precompiled static AquaCrop 
 executable on your hardware. Note that only x86_64 CPU architectures 
 are supported. The reference output (./OUTP_REF) was generated with 
-AquaCropV7.1.
+AquaCropV7.2.
 
 ## Running the testcase
 To run the test, copy the executable to the present directory and
