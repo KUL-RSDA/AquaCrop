@@ -4647,9 +4647,6 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
     real(dp) :: Crop_CCxAdjusted_temp
 
     ! DetermineCCi
-    if ((VirtualTimeCC.eq.180)) then
-        KsSen = KsSen
-    endif
     if ((VirtualTimeCC < GetCrop_DaysToGermination()) &
         .or. (VirtualTimeCC > (GetCrop_DayN()-GetCrop_Day1()))) then
         call SetCCiActual(0._dp)
