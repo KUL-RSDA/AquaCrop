@@ -2645,7 +2645,7 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
 
     pRelativeLLUL = (Wrel - pULActual_local)/(pLLActual - pULActual_local)
 
-    if (pRelativeLLUL <= 0._dp) then
+    if (pRelativeLLUL <= epsilon(0._dp)) then
         KsVal = 1._dp
     elseif (pRelativeLLUL >= 1._dp) then
         KsVal = 0._dp
@@ -8375,6 +8375,11 @@ integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
 
             ! TminCropReference and TmaxCropReference arrays contain the TemperatureFilefull data
             i = StartDayNr - RefCropDay1
+
+            ! For crops with very long cycles (unrealistic but avoid crashing)
+            if (i >= 365) then
+                i = i - 365
+            end if
 
             do while (RemainingGDDays > 0.1_dp)
                 i = i + 1
