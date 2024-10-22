@@ -205,7 +205,8 @@ subroutine DailyTnxReferenceFileCoveringCropPeriod(CropFirstDay)
     real(sp) :: Tlow, Thigh
     character(len=1025) :: TempString
 
-    if (FileExists(GetTnxReferenceFileFull())) then
+    if (FileExists(GetTnxReferenceFileFull()) &
+        .or.(GetTnxReferenceFile() == '(External)')) then
         ! CropFirstDay = DayNr1 in undefined year
         call DetermineDate(CropFirstDay, Dayi, Monthi, Yeari)
         call DetermineDayNr(Dayi, Monthi, (1901), DayNr1)
