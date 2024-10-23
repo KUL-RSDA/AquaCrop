@@ -6658,7 +6658,7 @@ subroutine AdjustSizeCompartments(CropZx)
         do i = 1, GetNrCompartments()
             TotDepthC = TotDepthC + GetCompartment_Thickness(i)
         end do
-        if (TotDepthC < CropZx) then
+        if (CropZx - TotDepthC > ac_zero_threshold) then
             loop2: do
                 call SetCompartment_Thickness(12, &
                                         GetCompartment_Thickness(12) &
