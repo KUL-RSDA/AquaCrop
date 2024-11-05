@@ -83,7 +83,7 @@ This branch LIS_AC includes the source code coupled to LIS-AC (https://github.co
      * `global.f90:6661`
      * `simul.f90:4605`
 
-The first three points are outline and discusses in the open PR #352. The output of the Ottawa test case remains fundamentally identical, except for writing rounding differences. This output has been upated.
+The first three points are outlined and discussed in the open PR https://github.com/KUL-RSDA/AquaCrop/pull/352. The output of the Ottawa test case remains fundamentally identical, except for writing rounding differences. This output has been upated.
 
 ## Citation
 
