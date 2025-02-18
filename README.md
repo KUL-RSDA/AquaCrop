@@ -74,6 +74,17 @@ We encourage scientific (only) exchanges via our [Discussions](https://github.co
 The distribution of AquaCrop v7.0 and higher versions within NASA's LIS is currently being reviewed
 and will be accessible after approval of an upcoming pull request to NASA via the [LIS GitHub page](https://github.com/NASA-LIS/LISF).
 
+This branch LIS_AC includes the source code coupled to LIS-AC (https://github.com/KUL-RSDA/LISF/tree/ac.7.2_integration). Compared to the AquaCrop main branch, this version includes:
+1. BUG fix: a modification of a SumCalendarDays call to SumCalendarDaysReferenceTnx (in `preparefertilityandsalinity.f90`).
+2. BUG fix: switch if statements with equality (`<=0`, `>=0`) to epsilons (`<= espilon(0._dp)`, `>= epsilon(0._dp)`)
+3. BUG fix: implementation of floating point overflow checks in the `roundc`functions in `utils.f90`.
+4. ***Switch all double precision floats to single precision*** for consistency with LISF routines.
+5. Related to 4: increased tolerance of two if statements:
+     * `global.f90:6661`
+     * `simul.f90:4605`
+
+The first three points are outlined and discussed in the open PR https://github.com/KUL-RSDA/AquaCrop/pull/352. The output of the Ottawa test case remains fundamentally identical, except for writing rounding differences. This output has been upated.
+
 ## Citation
 
 A wide range of publications is available to refer to AquaCrop in the GUI or standalone version.
