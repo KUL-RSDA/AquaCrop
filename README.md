@@ -82,6 +82,7 @@ This branch LIS_AC includes the source code coupled to LIS-AC (https://github.co
 5. Related to 4: increased tolerance of two if statements:
      * `global.f90:6661`
      * `simul.f90:4605`
+6. Addition of new global strings introduced in v7.2 in the function _InitializeGlobalStrings_
 
 The first three points are outlined and discussed in the open PR https://github.com/KUL-RSDA/AquaCrop/pull/352. The output of the Ottawa test case remains fundamentally identical, except for writing rounding differences. This output has been upated.
 
