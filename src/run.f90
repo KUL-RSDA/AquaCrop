@@ -4336,19 +4336,6 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
     end subroutine CloseEvalDataPerformEvaluation
 
 
-    subroutine CloseClimateFiles()
-        if (GetEToFile() /= '(None)') then
-            call fEToSIM_close()
-        end if
-        if (GetRainFile() /= '(None)') then
-            call fRainSIM_close()
-        end if
-        if (GetTemperatureFile() /= '(None)') then
-            call fTempSIM_close()
-        end if
-    end subroutine CloseClimateFiles
-
-
     subroutine CloseIrrigationFile()
         if ((GetIrriMode() == IrriMode_Manual) .or. (GetIrriMode() == IrriMode_Generate)) then
             call fIrri_close()
@@ -4362,6 +4349,19 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
         end if
     end subroutine CloseManagementFile
 end subroutine FinalizeRun2
+
+
+subroutine CloseClimateFiles()
+    if (GetEToFile() /= '(None)') then
+        call fEToSIM_close()
+    end if
+    if (GetRainFile() /= '(None)') then
+        call fRainSIM_close()
+    end if
+    if (GetTemperatureFile() /= '(None)') then
+        call fTempSIM_close()
+    end if
+end subroutine CloseClimateFiles
 
 
 subroutine OpenIrrigationFile()
@@ -4848,18 +4848,24 @@ subroutine InitializeSimulationRunPart1()
     end if
 
     ! Maximum sum Kc (for reduction WP in season if soil fertility stress)
-    call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
-            GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
-            GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
-            GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
-            GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
-            GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
-            GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &
-            GetCrop_KcTop(), GetCrop_KcDecline(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
-            GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
-            GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
-            GetCrop_ModeCycle(), .true.))
-    call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
+    if ((GetCrop_StressResponse_Calibrated() .eqv. .true.) .and. & 
+        (GetManagement_FertilityStress() > 0_int32)) then
+        call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
+                GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
+                GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
+                GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
+                GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
+                GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &
+                GetCrop_KcTop(), GetCrop_KcDecline(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
+                GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
+                GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
+                GetCrop_ModeCycle(), .true.))
+        call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
+    else
+        call SetSumKcTop(undef_int)
+        call SetSumKcTopStress(undef_int)
+    endif
     call SetSumKci(0._dp)
 
     ! 7. weed infestation and self-thinning of herbaceous perennial forage crops
