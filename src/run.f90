@@ -14,6 +14,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCrop_GDDaysToHIo, &
                         GetCropFileSet, &
                         GetOut8Irri, &
+                        GetSimulation_Germinate, &
                         CompartmentIndividual, &
                         CompleteCropDescription, &
                         datatype_daily, &
@@ -577,6 +578,7 @@ integer(int32) :: IrriInterval
 integer(int32) :: Tadj, GDDTadj
 integer(int32) :: DayLastCut,NrCut,SumInterval
 integer(int32)  :: PreviousStressLevel, StressSFadjNEW
+integer(int32) :: RepeatToDay
 
 real(dp) :: Bin
 real(dp) :: Bout
@@ -2244,6 +2246,18 @@ subroutine SetDayNri(DayNri_in)
     DayNri = DayNri_in
 end subroutine SetDayNri
 
+
+integer(int32) function GetRepeatToDay()
+
+    GetRepeatToDay = RepeatToDay
+end function GetRepeatToDay
+
+
+subroutine SetRepeatToDay(RepeatToDay_in)
+    integer(int32), intent(in) :: RepeatToDay_in
+
+    RepeatToDay = RepeatToDay_in
+end subroutine SetRepeatToDay
 
 ! EToDataSet
 
@@ -7316,6 +7330,12 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         call GetPotValSF((VirtualTimeCC+GetSimulation_DelayedDays() + 1), &
                SumGDDAdjCC, PotValSF)
     end if
+    ! Adjust crop cycle and simulation period to delayed days after germination
+    if ((GetSimulation_DelayedDays() > 0) .and. (GetSimulation_Germinate() .eqv. .true.)) then
+        call ResetCropAndSimulationPeriod(GetDayNri());
+        call SetRepeatToDay(GetSimulation_ToDayNr());
+    end if
+
     ! 14.d Print ---------------------------------------
     if (GetOutputAggregate() > 0) then
         call CheckForPrint(GetTheProjectFile())
@@ -7831,7 +7851,6 @@ end subroutine WriteIrrInfo
 
 subroutine FileManagement()
 
-    integer(int32) :: RepeatToDay
     real(dp) :: WPi
     logical :: HarvestNow
 
