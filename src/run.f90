@@ -5,11 +5,17 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
                                 GetMonthlyEToDataset, &
                                 GetMonthlyRainDataset
 use ac_global, only:    AdjustSizeCompartments, &
+                        AdjustClimRecordTo, &
                         ac_zero_threshold, &
+                        GetClimateFile, &
+                        GetClimFile, &
+                        GetClimRecord_NrObs, &
                         GetCrop_DaysToHIo, &
                         GetCrop_GDDaysToHIo, &
+                        GetCropFileSet, &
                         GetOut8Irri, &
                         CompartmentIndividual, &
+                        CompleteCropDescription, &
                         datatype_daily, &
                         datatype_decadely, &
                         datatype_monthly, &
@@ -212,6 +218,14 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetSimulation_NrRuns, &
                         SetTmax, &
                         SetTmin, &
+                        SetCrop_DayN, &
+                        SetCrop_DaysToSenescence, &
+                        SetCrop_DaysToHarvest, &
+                        SetCrop_GDDaysToSenescence, &
+                        SetCrop_GDDaysToHarvest, &
+                        SetSimulation_ToDayNr, & 
+                        SetSimulParam_Tmin, &
+                        SetSimulParam_Tmax, &
                         SplitStringInThreeParams, &
                         SplitStringInTwoParams, &
                         subkind_Grain, &
@@ -232,6 +246,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         SetCrop_pSenAct, &
                         GetCrop_pSenescence, &
                         SetCrop_pLeafAct, &
+                        SetCrop_Day1, &
                         GetCrop_pLeafDefUL, &
                         CO2ForSimulationPeriod, &
                         GetCrop_ECemax, &
@@ -410,10 +425,14 @@ use ac_rootunit, only:  AdjustedRootingDepth
 use ac_simul,    only:  Budget_module, &
                         determinepotentialbiomass, &
                         determinebiomassandyield
-use ac_tempprocessing, only:    GetDecadeTemperatureDataSet, &
+use ac_tempprocessing, only:    AdjustCalendarCrop, &
+                                AdjustCropFileParameters, &
+                                GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
                                 GrowingDegreeDays, &
                                 LoadSimulationRunProject, &
+                                MaxAvailableGDD, &
+                                ResetCropDay1, &
                                 temperaturefilecoveringcropperiod, &
                                 GetTminDataSet, & 
                                 GetTmaxDataSet, &
@@ -4863,8 +4882,8 @@ subroutine InitializeSimulationRunPart1()
                 GetCrop_ModeCycle(), .true.))
         call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
     else
-        call SetSumKcTop(undef_int)
-        call SetSumKcTopStress(undef_int)
+        call SetSumKcTop(real(undef_int, kind=dp))
+        call SetSumKcTopStress(real(undef_int, kind=dp))
     endif
     call SetSumKci(0._dp)
 
@@ -7836,6 +7855,7 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
     integer(int8) :: NrRun
     integer(int32) :: NrRuns
 
+    call SetNextSimFromDayNr(undef_int)
     call InitializeSimulation(TheProjectFile_, TheProjectType)
 
     select case (TheProjectType)
@@ -7858,5 +7878,103 @@ subroutine RunSimulation(TheProjectFile_, TheProjectType)
 end subroutine RunSimulation
 
 
+subroutine ResetCropAndSimulationPeriod(NewCropDay1)
+    integer(int32), intent(in) :: NewCropDay1
+
+    integer(int32) :: ResettedCropDay1
+    real(dp)       :: GDDAvailable
+    integer(int32) :: LseasonDays
+    integer(int32) :: Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp
+    integer(int32) :: Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp
+    integer(int32) :: FertStress
+    integer(int8)  :: RedCGC_temp, RedCCX_temp
+    integer(int32) :: Crop_DaysToFullCanopySF_temp
+    integer(int32) :: FromDayNr_temp
+    real(dp)       :: TDayMin_temp
+    real(dp)       :: TDayMax_temp
+
+    ! 1. Reset Day1 of Crop cycle
+    call SetCrop_Day1(NewCropDay1)
+    ! 2. Adjust crop calendar
+    if (GetCrop_subkind() == subkind_Forage) then
+        LseasonDays = GetCrop_DayN() - GetCrop_Day1() + 1
+        Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
+        Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
+        Crop_GDDaysToSenescence_temp = GetCrop_GDDaysToSenescence()
+        Crop_GDDaysToHarvest_temp = GetCrop_GDDaysToHarvest()
+        call AdjustCropFileParameters(GetCropFileSet(),&
+              LseasonDays, GetCrop_Day1(), &
+              GetCrop_ModeCycle(), GetCrop_Tbase(), GetCrop_Tupper(),&
+              Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp,&
+              Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp)
+        call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
+        call SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp)
+        call SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp)
+        call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
+        call CompleteCropDescription()
+    else
+        ! 2. Adjust crop calendar (in days) to thermal regime when running in GDDays
+        if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. (GetClimateFile() /= '(None)')) then
+            ! GDDays 1.1 Check available GDDays
+            ResettedCropDay1 = ResetCropDay1(NewCropDay1, (.false.))
+            TDayMin_temp = GetSimulParam_Tmin()
+            TDayMax_temp = GetSimulParam_Tmax()
+            GDDAvailable = MaxAvailableGDD(ResettedCropDay1, GetCrop_Tbase(), GetCrop_Tupper(), TDayMin_temp, &
+                           TDayMax_temp)
+            call SetSimulParam_Tmin(TDayMin_temp)
+            call SetSimulParam_Tmax(TDayMax_temp)
+            ! GDDays 1.2. Adjust crop calendar to thermal regime if sufficient GDDays
+            if (GDDAvailable >= GetCrop_GDDaysToHarvest()) then
+                call AdjustCalendarCrop(GetCrop_Day1())
+            end if
+        end if
+    end if
+    ! 3. Reset DayN of Crop
+    call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
+    ! 4. Adjust end of Simulation period
+    if (GetCrop_DayN() > GetSimulation_ToDayNr()) then
+        call SetSimulation_ToDayNr(GetCrop_DayN())
+        ! adjusting ClimRecord.'TO' for undefined year with 365 days
+        if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) .and. (GetClimRecord_NrObs() == 365)) then
+            call AdjustClimRecordTo(GetCrop_DayN())
+        end if
+        call SetNextSimFromDayNr(GetCrop_DayN() + 1) ! The Simulation.FromDayNr for next run if KeepSWC
+    else
+        call SetNextSimFromDayNr(undef_int)
+    end if
+    ! 5. reset canopy development to soil fertility
+    FertStress = GetManagement_FertilityStress()
+    RedCGC_temp = GetSimulation_EffectStress_RedCGC()
+    RedCCX_temp = GetSimulation_EffectStress_RedCCX()
+    Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
+    call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
+           GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
+           GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(), &
+           GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(), &
+           Crop_DaysToFullCanopySF_temp, RedCGC_temp, RedCCX_temp, FertStress)
+    call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+    call SetManagement_FertilityStress(FertStress)
+    call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
+    call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+    ! 6. Renew Tcrop.SIM (Temperature file covering crop cycle, used for display crop development in environment)
+    if (GetTemperatureFile() /= '(None)') then
+        call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), GetCrop_DayN())
+    end if
+    ! 7. Renew daily climate files (EToData.SIM; RainData.SIM and TempData.SIM) if required
+    if (GetNextSimFromDayNr() /= undef_int) then
+        ! If Simulation period was adjusted as well
+        ! rewrite ETo, Rain and Temperture file for the whole simulation period
+        ! Close files
+        call CloseClimateFiles()
+        ! Create files
+        call CreateDailyClimFiles(GetSimulation_FromDayNr(), &
+               GetSimulation_ToDayNr())
+        ! Open files and Find current day
+        call OpenClimFilesAndGetDataFirstDay(GetCrop_Day1())
+    end if
+    ! 8. reset delayed days
+    call SetSimulation_DelayedDays(0)
+    ! ResetCropAndSimulationPeriod
+end subroutine ResetCropAndSimulationPeriod
 
 end module ac_run
