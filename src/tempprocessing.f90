@@ -959,18 +959,19 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
             RemainingDays = RemainingDays - 1
 
             do while ((RemainingDays > 0) &
-                        .and. (i<(GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
-                        i = i + 1
-                        if (i == size(GetTminRun())) then
-                            i = 1
-                        endif
-                        TDayMin_local = real(GetTminRun_i(i),kind=dp)
-                        TDayMax_local = real(GetTmaxRun_i(i),kind=dp)
-                        DayGDD = DegreesDay(Tbase, Tupper, TDayMin_local, &
-                                            TDayMax_local, &
-                                            GetSimulParam_GDDMethod())
-                        GDDays = GDDays + DayGDD
-                        RemainingDays = RemainingDays - 1
+                .and. (i<=(GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
+                i = i + 1
+                ! LIS in for now run with a sim period of 365 days
+                if (i == 366) then
+                    i = 1
+                endif
+                TDayMin_local = real(GetTminRun_i(i),kind=dp)
+                TDayMax_local = real(GetTmaxRun_i(i),kind=dp)
+                DayGDD = DegreesDay(Tbase, Tupper, TDayMin_local, &
+                                    TDayMax_local, &
+                                    GetSimulParam_GDDMethod())
+                GDDays = GDDays + DayGDD
+                RemainingDays = RemainingDays - 1
             end do
 
            if (RemainingDays > 0) then
@@ -1159,9 +1160,10 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
             RemainingGDDays = RemainingGDDays - DayGDD
 
             do while ((RemainingGDDays > 0) &
-                           .and. (i < (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
+                           .and. (i <= (GetSimulation_ToDayNr()-GetSimulation_FromDayNr()+1)))
                   i = i + 1
-                  if (i == size(GetTminRun())) then
+                  ! LIS runs for a period of a calendar year
+                  if (i == 366) then
                       i = 1
                   endif
                   TDayMin_loc = real(GetTminRun_i(i),kind=dp)

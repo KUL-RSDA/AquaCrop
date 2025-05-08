@@ -2645,7 +2645,7 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
 
     pRelativeLLUL = (Wrel - pULActual_local)/(pLLActual - pULActual_local)
 
-    if (pRelativeLLUL <= 0._dp) then
+    if (pRelativeLLUL <= epsilon(0._dp)) then
         KsVal = 1._dp
     elseif (pRelativeLLUL >= 1._dp) then
         KsVal = 0._dp
