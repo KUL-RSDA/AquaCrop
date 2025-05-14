@@ -702,11 +702,11 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                 write(tempstring, '(4a)') '               Field Management (MAN), '
                 call fProjects_write(trim(tempstring))
             end if
-            if (.not. FileOK%GroundWater_Filename) then
+            if (.not. FileOK%Soil_Filename) then
                 write(tempstring, '(4a)') '               Soil profile (SOL), '
                 call fProjects_write(trim(tempstring))
             end if
-            if (.not. FileOK%Soil_Filename) then
+            if (.not. FileOK%GroundWater_Filename) then
                 write(tempstring, '(4a)') '               Groundwater (GWT), '
                 call fProjects_write(trim(tempstring))
             end if
