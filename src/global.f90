@@ -2645,7 +2645,7 @@ real(dp) function KsAny(Wrel, pULActual, pLLActual, ShapeFactor)
 
     pRelativeLLUL = (Wrel - pULActual_local)/(pLLActual - pULActual_local)
 
-    if (pRelativeLLUL <= 0._dp) then
+    if (pRelativeLLUL <= epsilon(0._dp)) then
         KsVal = 1._dp
     elseif (pRelativeLLUL >= 1._dp) then
         KsVal = 0._dp
@@ -5372,6 +5372,7 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
     integer(int32) :: Dayi
     integer(int32) :: rc
     logical :: GrowthON
+    integer :: i
 
     ! 1. Open Temperature file
     if ((GetTemperatureFile() /= '(None)') .and. &
@@ -5438,14 +5439,19 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
     end if
 
     ! 3. Calculate Sum
+    i = 0
     do Dayi = 1, L1234
         ! 3.1 calculate growing degrees for the day
         if (GetTemperatureFile() == '(None)') then
             GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
                                     GetSimulParam_GDDMethod())
         elseif (GetTemperatureFile() == '(External)') then
-            Tndayi = real(GetTminRun_i(GetCrop_Day1()-GetSimulation_FromDayNr()+Dayi),kind=dp)
-            Txdayi = real(GetTmaxRun_i(GetCrop_Day1()-GetSimulation_FromDayNr()+Dayi),kind=dp)
+            i = i + 1
+            if (i == size(GetTminCropReferenceRun())) then
+                i = 1
+            endif
+            Tndayi = real(GetTminCropReferenceRun_i(i),kind=dp)
+            Txdayi = real(GetTmaxCropReferenceRun_i(i),kind=dp)
             GDDi = DegreesDay(Tbase, Tupper, Tndayi, Txdayi, &
                                     GetSimulParam_GDDMethod())
         else
@@ -6790,73 +6796,76 @@ subroutine InitializeGlobalStrings()
     !! Initializes all allocatable strings which are global variables
     !! themselves or attributes of derived type global variables.
 
-    call SetRainFile('')
-    call SetRainFileFull('')
-    call SetRainDescription('')
-    call SetEToFile('')
-    call SetEToFileFull('')
-    call SetEToDescription('')
+    call SetCalendarDescription('')
     call SetCalendarFile('')
     call SetCalendarFileFull('')
-    call SetCalendarDescription('')
+    call SetClimateDescription('')
+    call SetClimateFile('')
+    call SetClimateFileFull('')
+    call SetClimDescription('')
+    call SetClimFile('')
+    call SetClimRecord_FromString('')
+    call SetClimRecord_ToString('')
+    call SetCO2Description('')
     call SetCO2File('')
     call SetCO2FileFull('')
-    call SetCO2Description('')
-    call SetIrriFile('')
-    call SetIrriFileFull('')
+    call SetCropDescription('')
     call SetCropFile('')
     call SetCropFileFull('')
-    call SetCropDescription('')
-    call SetPathNameProg('')
-    call SetPathNameOutp('')
-    call SetPathNameSimul('')
-    call SetProfFile('')
-    call SetProfFilefull('')
-    call SetProfDescription('')
+    call SetEToDescription('')
+    call SetEToFile('')
+    call SetEToFileFull('')
+    call SetEToRecord_FromString('')
+    call SetEToRecord_ToString('')
+    call SetFullFileNameProgramParameters('')
+    call SetGroundwaterDescription('')
+    call SetGroundWaterFile('')
+    call SetGroundWaterFilefull('')
+    call SetIrriDescription('')
+    call SetIrriFile('')
+    call SetIrriFileFull('')
+    call SetManDescription('')
     call SetManFile('')
     call SetManFilefull('')
+    call SetMultipleProjectDescription('')
+    call SetMultipleProjectFile('')
+    call SetMultipleProjectFileFull('')
+    call SetObservationsDescription('')
     call SetObservationsFile('')
     call SetObservationsFilefull('')
-    call SetObservationsDescription('')
+    call SetOffSeasonDescription('')
     call SetOffSeasonFile('')
     call SetOffSeasonFilefull('')
     call SetOutputName('')
-    call SetGroundWaterFile('')
-    call SetGroundWaterFilefull('')
-    call SetClimateFile('')
-    call SetClimateFileFull('')
-    call SetClimateDescription('')
-    call SetIrriDescription('')
-    call SetClimFile('')
-    call SetSWCiniFile('')
-    call SetSWCiniFileFull('')
-    call SetSWCiniDescription('')
+    call SetPathNameList('')
+    call SetPathNameOutp('')
+    call SetPathNameParam('')
+    call SetPathNameProg('')
+    call SetPathNameSimul('')
+    call SetProfDescription('')
+    call SetProfFile('')
+    call SetProfFilefull('')
     call SetProjectDescription('')
     call SetProjectFile('')
     call SetProjectFileFull('')
-    call SetMultipleProjectDescription('')
-    call SetMultipleProjectFile('')
-    call SetTemperatureFile('')
-    call SetTemperatureFileFull('')
-    call SetTemperatureDescription('')
-    call SetMultipleProjectFileFull('')
-    call SetFullFileNameProgramParameters('')
-    call SetManDescription('')
-    call SetClimDescription('')
-    call SetOffSeasonDescription('')
-    call SetGroundwaterDescription('')
-    call SetPathNameList('')
-    call SetPathNameParam('')
-
-    call SetTemperatureRecord_FromString('')
-    call SetTemperatureRecord_ToString('')
-    call SetClimRecord_FromString('')
-    call SetClimRecord_ToString('')
+    call SetRainDescription('')
+    call SetRainFile('')
+    call SetRainFileFull('')
     call SetRainRecord_FromString('')
     call SetRainRecord_ToString('')
-    call SetEToRecord_FromString('')
-    call SetEToRecord_ToString('')
     call SetSimulation_Storage_CropString('')
+    call SetSWCiniDescription('')
+    call SetSWCiniFile('')
+    call SetSWCiniFileFull('')
+    call SetTemperatureDescription('')
+    call SetTemperatureFile('')
+    call SetTemperatureFileFull('')
+    call SetTemperatureRecord_FromString('')
+    call SetTemperatureRecord_ToString('')
+    call SetTnxReference365DaysFile('')
+    call SetTnxReference365DaysFileFull('')
+    call SetTnxReferenceFile('')
+    call SetTnxReferenceFileFull('')
 end subroutine InitializeGlobalStrings
 
 
@@ -8332,6 +8341,68 @@ subroutine CompleteClimateDescription(ClimateRecord)
                              ' ' // yearStr
 end subroutine CompleteClimateDescription
 
+integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
+                                        StartDayNr, Tbase, Tupper,&
+                                        TDayMin, TDayMax)
+    integer(int32), intent(in) :: ValGDDays
+    integer(int32), intent(in) :: RefCropDay1
+    integer(int32), intent(in) :: StartDayNr
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+
+    integer(int32) :: i
+    integer(int32) :: NrCDays
+    real(dp) :: RemainingGDDays, DayGDD
+    real(dp) :: TDayMin_loc, TDayMax_loc
+
+    TDayMin_loc = TDayMin
+    TDayMax_loc = TDayMax
+
+    NrCdays = 0
+    if (ValGDDays > 0) then
+        if (GetTnxReferenceFile() == '(None)') then
+            ! given average Tmin and Tmax
+            DayGDD = DegreesDay(Tbase, Tupper, &
+                       TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
+            if (abs(DayGDD) < epsilon(1._dp)) then
+                NrCDays = 0
+            else
+                NrCDays = roundc(ValGDDays/DayGDD, mold=1_int32)
+            end if
+        else
+            ! Get TCropReference: mean daily Tnx (365 days) from RefCropDay1 onwards
+            ! determine corresponding calendar days
+            RemainingGDDays = ValGDDays
+
+            ! TminCropReference and TmaxCropReference arrays contain the TemperatureFilefull data
+            i = StartDayNr - RefCropDay1
+
+            do while (RemainingGDDays > 0.1_dp)
+                i = i + 1
+                if (i == size(GetTminCropReferenceRun())) then
+                    i = 1
+                end if
+                TDayMin_loc = GetTminCropReferenceRun_i(i)
+                TDayMax_loc = GetTmaxCropReferenceRun_i(i)
+
+                DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
+                                    TDayMax_loc, &
+                                    GetSimulParam_GDDMethod())
+                if (DayGDD > RemainingGDDays) then
+                    if (roundc((DayGDD-RemainingGDDays)/RemainingGDDays,mold=1) >= 1) then
+                        NrCDays = NrCDays + 1
+                    end if
+                else
+                    NrCDays = NrCDays + 1
+                end if
+                RemainingGDDays = RemainingGDDays - DayGDD
+            end do
+        end if
+    end if
+    SumCalendarDaysReferenceTnx = NrCDays
+end function SumCalendarDaysReferenceTnx
 
 
 !! Global variables section !!
