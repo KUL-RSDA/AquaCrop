@@ -303,6 +303,9 @@ use ac_global, only:    AdjustSizeCompartments, &
                         setecstorage, &
                         setsumwabal_biomassunlim, &
                         setsimulation_hifinal, &
+                        setcrop_ccx, &
+                        setcrop_gddcgc, &
+                        setcrop_gddcdc, &
                         setcrop_ccxwithered, &
                         timetomaxcanopysf, &
                         setsimulation_fromdaynr, &
@@ -438,6 +441,7 @@ use ac_utils, only: assert, &
                     roundc, &
                     write_file, &
                     open_file
+use LIS_coreMod, only: LIS_rc
 use iso_fortran_env, only: iostat_end
 implicit none
 
@@ -6565,13 +6569,21 @@ subroutine WriteEvaluationData(DAP)
 end subroutine WriteEvaluationData
 
 
-subroutine InitializeRunPart1(NrRun, TheProjectType)
+subroutine InitializeRunPart1(NrRun, TheProjectType,variable_CCx,CCx_config,CCx_range,ens_n_local,n_local)
     !! Part1 (before reading the climate) of the run initialization
     !! Loads the run input from the project file
     !! Initializes parameters and states
     !! Calls InitializeSimulationRunPart1
-    integer(int8), intent(in) :: NrRun
-    integer(intEnum), intent(in) :: TheProjectType
+    integer(int8), intent(in)     :: NrRun
+    integer(intEnum), intent(in)  :: TheProjectType
+    logical, intent(in), optional :: variable_CCx
+    real, intent(in), optional    :: CCx_config
+    real, intent(in), optional    :: CCx_range
+    integer, intent(in), optional :: ens_n_local
+    integer, intent(in), optional :: n_local
+    real                          :: CCx_temp
+    real                          :: GDD_endgrowth_temp
+    real                          :: CCi_final_temp
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
 
@@ -6581,6 +6593,31 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     end if
 
     call LoadSimulationRunProject(int(NrRun, kind=int32))
+
+    ! Variable CCx
+    if (variable_CCx) then
+        if (LIS_rc%nensem(n_local) .gt. 2) then
+            ! GDD setup only!
+            CCx_temp = CCx_config
+            GDD_endgrowth_temp = log(GetCrop_CCx()/(0.08*GetCrop_CCo()))/GetCrop_GDDCGC()
+            ! Determinate crop only!
+            if (GDD_endgrowth_temp .gt. (GetCrop_GDDaysToFlowering()&
+                    + GetCrop_GDDLengthFlowering() / 2)) then
+                GDD_endgrowth_temp = GetCrop_GDDaysToFlowering() + GetCrop_GDDLengthFlowering() / 2
+            endif
+            CCi_final_temp = GetCrop_CCx() * (1 - 0.05 * (exp(3.33 * GetCrop_GDDCDC() / &
+                (GetCrop_CCx() + 2.29) * (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) - 1))
+            if (ens_n_local .lt. LIS_rc%nensem(n_local)) then
+                call SetCrop_CCx(GetCrop_CCx() - CCx_range + &
+                    (ens_n_local - 1) * 2 * CCx_range / (LIS_rc%nensem(n_local) - 2))
+                call SetCrop_GDDCGC(log(GetCrop_CCx()/(0.08 * GetCrop_CCo())) / GDD_endgrowth_temp)
+                call SetCrop_GDDCDC((GetCrop_CCx() + 2.29) / (3.33 *&
+                    (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) *&
+                    log((1-CCi_final_temp/GetCrop_CCx())/0.05 + 1))
+            endif
+        endif
+    endif
+    ! End variable CCx
 
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
