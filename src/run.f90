@@ -441,7 +441,6 @@ use ac_utils, only: assert, &
                     roundc, &
                     write_file, &
                     open_file
-use LIS_coreMod, only: LIS_rc
 use iso_fortran_env, only: iostat_end
 implicit none
 
@@ -6569,7 +6568,7 @@ subroutine WriteEvaluationData(DAP)
 end subroutine WriteEvaluationData
 
 
-subroutine InitializeRunPart1(NrRun, TheProjectType,variable_CCx,CCx_config,CCx_range,ens_n_local,n_local)
+subroutine InitializeRunPart1(NrRun, TheProjectType,variable_CCx,CCx_config,CCx_range,ens_n_local,nensem)
     !! Part1 (before reading the climate) of the run initialization
     !! Loads the run input from the project file
     !! Initializes parameters and states
@@ -6580,11 +6579,12 @@ subroutine InitializeRunPart1(NrRun, TheProjectType,variable_CCx,CCx_config,CCx_
     real, intent(in), optional    :: CCx_config
     real, intent(in), optional    :: CCx_range
     integer, intent(in), optional :: ens_n_local
-    integer, intent(in), optional :: n_local
+    integer, intent(in), optional :: nensem
+
     real                          :: CCx_temp
+    logical                       :: CCx_pert_flag
     real                          :: GDD_endgrowth_temp
     real                          :: CCi_final_temp
-
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
 
     if (TheProjectType == typeproject_typenone) then
@@ -6594,9 +6594,15 @@ subroutine InitializeRunPart1(NrRun, TheProjectType,variable_CCx,CCx_config,CCx_
 
     call LoadSimulationRunProject(int(NrRun, kind=int32))
 
-    ! Variable CCx
-    if (variable_CCx) then
-        if (LIS_rc%nensem(n_local) .gt. 2) then
+    ! Variable CCx ! needed for perturbation of CCx
+    ! NL and LB July 2025
+    CCx_pert_flag = .false.
+    if (present(variable_CCx)) then
+        CCx_pert_flag = variable_CCx
+    end if ! if false, other variables are not needed 
+
+    if (CCx_pert_flag) then
+        if (nensem .gt. 2) then
             ! GDD setup only!
             CCx_temp = CCx_config
             GDD_endgrowth_temp = log(GetCrop_CCx()/(0.08*GetCrop_CCo()))/GetCrop_GDDCGC()
@@ -6607,9 +6613,9 @@ subroutine InitializeRunPart1(NrRun, TheProjectType,variable_CCx,CCx_config,CCx_
             endif
             CCi_final_temp = GetCrop_CCx() * (1 - 0.05 * (exp(3.33 * GetCrop_GDDCDC() / &
                 (GetCrop_CCx() + 2.29) * (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) - 1))
-            if (ens_n_local .lt. LIS_rc%nensem(n_local)) then
+            if (ens_n_local .lt. nensem) then
                 call SetCrop_CCx(GetCrop_CCx() - CCx_range + &
-                    (ens_n_local - 1) * 2 * CCx_range / (LIS_rc%nensem(n_local) - 2))
+                    (ens_n_local - 1) * 2 * CCx_range / (nensem - 2))
                 call SetCrop_GDDCGC(log(GetCrop_CCx()/(0.08 * GetCrop_CCo())) / GDD_endgrowth_temp)
                 call SetCrop_GDDCDC((GetCrop_CCx() + 2.29) / (3.33 *&
                     (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) *&
