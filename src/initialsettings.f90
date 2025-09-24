@@ -257,7 +257,7 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     call SetSimulParam_EvapDeclineFactor(4_int8) ! evaporation decline
                                                  ! factor in stage 2
     call SetSimulParam_KcWetBare(1.10_sp) ! Kc wet bare soil [-]
-    call SetSimulParam_PercCCxHIfinal(5_int8) ! CC threshold below which HI no
+    call SetSimulParam_PercCCxHIfinal(7_int8) ! CC threshold below which HI no
                                               ! longer increase(% of 100)
     call SetSimulParam_RootPercentZmin(70) ! Starting depth of root sine
                                            ! function (% of Zmin)
