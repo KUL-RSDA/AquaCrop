@@ -1,6 +1,6 @@
 # AquaCrop
 
-<img src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSEmcLG0zbWXIaLClg09v77ZccbFH_zuDVRbH-eBLxAdmcZ4nZ7" align="right" width="200px">
+<img alt="AquaCrop_OS" src="https://github.com/user-attachments/assets/f1a1147e-3cbe-4f7a-8ec8-bd77500b052c" align="right" width="200px">
 
 AquaCrop v7.0 and higher versions are released as open-source Fortran code,
 developed by KU Leuven and endorsed by the Food and Agriculture Organization (FAO)
