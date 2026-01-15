@@ -668,17 +668,22 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         WPunlim = WPi       ! no water stress, no fertiltiy stress
         if (GetSimulation_EffectStress_RedWP() > 0._sp) then ! Reductions are zero if no fertility stress
             ! water stress and fertility stress
-            if ((SumKci/real(SumKcTopStress, sp)) < 1._sp) then
-                if (ETo > 0._sp) then
-                    SumKci = SumKci + Tact/ETo
-                end if
-                if (SumKci > 0._sp) then
-                    WPi = WPi * (1._sp - (GetSimulation_EffectStress_RedWP()/100._sp) &
-                                            * exp(k*log(SumKci/SumKcTopStress)) )
+            ! LB 24 OCT 2026: avoid division by 0
+            if (SumKcTopStress > epsilon(1.0_sp)) then
+                if ((SumKci/real(SumKcTopStress, sp)) < 1._sp) then
+                    if (ETo > 0._sp) then
+                        SumKci = SumKci + Tact/ETo
+                    end if
+                    if (SumKci > 0._sp) then
+                        WPi = WPi * (1._sp - (GetSimulation_EffectStress_RedWP()/100._sp) &
+                                                * exp(k*log(SumKci/SumKcTopStress)) )
+                    end if
+                else
+                    WPi = WPi * (1._sp - GetSimulation_EffectStress_RedWP()/100._sp)
                 end if
             else
                 WPi = WPi * (1._sp - GetSimulation_EffectStress_RedWP()/100._sp)
-            end if
+            endif
         elseif (ETo > 0._sp) then
             SumKci = SumKci + Tact/ETo
         end if
