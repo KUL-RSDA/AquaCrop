@@ -670,7 +670,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             ! water stress and fertility stress
             ! LB 24 OCT 2026: avoid division by 0
             if (SumKcTopStress > epsilon(1.0_sp)) then
-                if ((SumKci/real(SumKcTopStress, sp)) < 1._sp) then
+                if ((SumKci/real(SumKcTopStress, sp)) < (1._sp-epsilon(0._sp))) then
                     if (ETo > 0._sp) then
                         SumKci = SumKci + Tact/ETo
                     end if
