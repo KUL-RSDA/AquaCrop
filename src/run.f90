@@ -7022,7 +7022,8 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         else
            ! In GDD mode, SumGDD needs to be higher than GDDaysToHarvest to prevent reset to zero before harvest
             if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
-                (GetSimulation_SumGDD() < GetCrop_GDDaysToHarvest())) then
+                (GetSimulation_SumGDD() < GetCrop_GDDaysToHarvest()) .and. &
+                (GetSimulation_SumGDD() >= GetCrop_GDDaysToSenescence())) then
                 call SetRootingDepth(GetZiprev())
             else
                 call SetRootingDepth(0._sp)
