@@ -668,7 +668,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
         WPunlim = WPi       ! no water stress, no fertiltiy stress
         if (GetSimulation_EffectStress_RedWP() > 0._sp) then ! Reductions are zero if no fertility stress
             ! water stress and fertility stress
-            ! LB 24 OCT 2026: avoid division by 0
+            ! LB 24 OCT 2025: avoid division by 0
             if (SumKcTopStress > epsilon(1.0_sp)) then
                 if ((SumKci/real(SumKcTopStress, sp)) < (1._sp-epsilon(0._sp))) then
                     if (ETo > 0._sp) then
