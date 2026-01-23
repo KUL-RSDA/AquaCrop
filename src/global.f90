@@ -736,8 +736,9 @@ type rep_Crop
         !! Smax Bottom root zone HOOGLAND
     real(dp) :: KcTop
         !! Undocumented
-    real(dp) :: KcDecline
-        !! Reduction Kc (%CCx/day) as result of ageing effects, nitrogen defficiency, etc.
+    real(dp) :: KcDeclineCumul
+        !! Cumulative decrease (%) at maturity of crop coefficient as result of 
+        !! ageing effects, nitrogen defficiency, etc.
     integer(int32) :: CCEffectEvapLate
         !! %
     integer(int32) :: Day1
@@ -3708,8 +3709,8 @@ subroutine SaveCrop(totalname)
     ! evapotranspiration
     write(fhandle, '(f9.2,a)') GetCrop_KcTop(),  &
     '      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)'
-    write(fhandle, '(f10.3,a)') GetCrop_KcDecline(), &
-    '     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.'
+    write(fhandle, '(f6.0,a)') GetCrop_KcDeclineCumul(), &
+    '     : Cumulative decrease (%) at maturity of crop coefficient as a result of ageing, nitrogen deficiency, etc.'
     write(fhandle, '(f9.2,a)') GetCrop_RootMin(), &
     '      : Minimum effective rooting depth (m)'
     write(fhandle, '(f9.2,a)') GetCrop_RootMax(), &
@@ -5047,8 +5048,14 @@ subroutine LoadCrop(FullName)
     ! evapotranspiration
     read(fhandle, *) TempDouble
     call SetCrop_KcTop(TempDouble)
-    read(fhandle, *) TempDouble
-    call SetCrop_KcDecline(TempDouble)
+    read(fhandle, *) TempDouble 
+    if (roundc(VersionNr*10, mold=1) < 72) then
+        ! skip line with KcDecline (%/day)
+        ! specify default value for cumulative decrease (%) at maturity of crop coefficient due to ageing
+        call SetCrop_KcDeclineCumul(11._dp) 
+    else
+        call SetCrop_KcDeclineCumul(TempDouble) 
+    end if 
     read(fhandle, *) TempDouble
     call SetCrop_RootMin(TempDouble)
     read(fhandle, *) TempDouble
@@ -7986,7 +7993,7 @@ end subroutine DetermineRootZoneWC
 
 
 subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
-                          EToVal, KcVal, KcDeclineVal, CCx, CCxWithered, &
+                          EToVal, KcVal, KcDeclineCumulVal, CCx, CCxWithered, &
                           CCeffectProcent, CO2i, GDDayi, TempGDtranspLow, &
                           TpotVal, EpotVal)
     integer(int32), intent(in) :: DAP
@@ -7998,7 +8005,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
     real(dp), intent(in) :: CCi
     real(dp), intent(in) :: EToVal
     real(dp), intent(in) :: KcVal
-    real(dp), intent(in) :: KcDeclineVal
+    real(dp), intent(in) :: KcDeclineCumulVal
     real(dp), intent(in) :: CCx
     real(dp), intent(in) :: CCxWithered
     real(dp), intent(in) :: CCeffectProcent
@@ -8010,7 +8017,10 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
 
     real(dp) :: KcVal_local
     real(dp) :: EpotMin, EpotMax, CCiAdjusted, Multiplier, KsTrCold
-    integer(int32) :: VirtualDay
+    real(dp) :: tRel
+    real(dp), parameter :: fShape = 1._dp
+    integer(int32) :: VirtualDay 
+    
 
     ! CalculateETpot
     VirtualDay = DAP - GetSimulation_DelayedDays()
@@ -8030,9 +8040,10 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         end if
 
         ! Correction for ageing effects - is a function of calendar days
-        if ((VirtualDay-DayLastCut) > (L12+5)) then
-            KcVal_local = KcVal - (VirtualDay-DayLastCut-(L12+5._dp)) &
-                        * (KcDeclineVal/100._dp)*CCxWithered
+        if ((VirtualDay-DayLastCut) > (L12)) then
+            tRel = (VirtualDay-DayLastCut-L12)/(LHarvest-L12)
+            KcVal_local = KcVal - ((exp(fShape*tRel)-1)/(exp(fShape)-1)) &
+                *(KcDeclineCumulVal/100)*CCxWithered
         else
             KcVal_local = KcVal
         end if
@@ -10881,12 +10892,12 @@ function GetCrop_KcTop() result(KcTop)
 end function GetCrop_KcTop
 
 
-function GetCrop_KcDecline() result(KcDecline)
-    !! Getter for the "KcDecline" attribute of the "crop" global variable.
-    real(dp) :: KcDecline
+function GetCrop_KcDeclineCumul() result(KcDeclineCumul)
+    !! Getter for the "KcDeclineCumul" attribute of the "crop" global variable.
+    real(dp) :: KcDeclineCumul
 
-    KcDecline = crop%KcDecline
-end function GetCrop_KcDecline
+    KcDeclineCumul = crop%KcDeclineCumul
+end function GetCrop_KcDeclineCumul
 
 
 function GetCrop_CCEffectEvapLate() result(CCEffectEvapLate)
@@ -11609,12 +11620,12 @@ subroutine SetCrop_KcTop(KcTop)
 end subroutine SetCrop_KcTop
 
 
-subroutine SetCrop_KcDecline(KcDecline)
-    !! Setter for the "KcDecline" attribute of the "crop" global variable.
-    real(dp), intent(in) :: KcDecline
+subroutine SetCrop_KcDeclineCumul(KcDeclineCumul)
+    !! Setter for the "KcDeclineCumul" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KcDeclineCumul
 
-    crop%KcDecline = KcDecline
-end subroutine SetCrop_KcDecline
+    crop%KcDeclineCumul = KcDeclineCumul
+end subroutine SetCrop_KcDeclineCumul
 
 
 subroutine SetCrop_CCEffectEvapLate(CCEffectEvapLate)

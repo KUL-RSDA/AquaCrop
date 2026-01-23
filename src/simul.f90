@@ -88,7 +88,7 @@ use ac_global, only: ActiveCells, &
                      GetCrop_GDtranspLow, &
                      GetCrop_HI, &
                      getcrop_hiincrease, &
-                     GetCrop_KcDecline, &
+                     GetCrop_KcDeclineCumul, &
                      GetCrop_KcTop, &
                      GetCrop_KsShapeFactorLeaf, &
                      GetCrop_KsShapeFactorSenescence, &
@@ -495,7 +495,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     end if
     call CalculateETpot(DAP, GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
                    GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), 0, CCiPot, &
-                   GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), GetCrop_CCx(), &
+                   GetETo(), GetCrop_KcTop(), GetCrop_KcDeclineCumul(), GetCrop_CCx(), &
                    CCxWitheredTpotNoS, real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, GDDayi, &
                    GetCrop_GDtranspLow(), TpotForB, EpotTotForB)
 
@@ -5609,7 +5609,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     call CalculateETpot(DAP, GetCrop_DaysToGermination(), &
                         GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
                         GetCrop_DaysToHarvest(), DayLastCut, GetCCiActual(), &
-                        GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), &
+                        GetETo(), GetCrop_KcTop(), GetCrop_KcDeclineCumul(), &
                         GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), &
                         real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, &
                         GDDayi, GetCrop_GDtranspLow(), Tpot_temp, EpotTot)
