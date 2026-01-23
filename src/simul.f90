@@ -4938,7 +4938,7 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                         > GetCrop_SumEToDelaySenescence()) &
                         .or. (abs(GetCrop_SumEToDelaySenescence()) &
                               < epsilon(0._dp)) &
-                        .or. (GetVirtualTimeCC() >= tFinalCCx )) then
+                        .or. (VirtualTimeCC >= tFinalCCx )) then
                         CCiSen = 0._dp ! no crop anymore
                     else
                         if (CCdormant > GetCrop_CCo()) then
