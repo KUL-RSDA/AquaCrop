@@ -4886,7 +4886,8 @@ subroutine InitializeSimulationRunPart1()
         call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
                 GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
                 GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
-                GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
+                GetCrop_DaysToHarvest(), GetCrop_DaysToHarvest(), &
+                GetCrop_GDDaysToGermination(), &
                 GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
                 GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
                 GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &

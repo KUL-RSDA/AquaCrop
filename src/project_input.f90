@@ -22,8 +22,11 @@ type ProjectInput_type
         !! Last day of simulation period
     integer(int32) :: Crop_Day1
         !! First day of cropping period
-    integer(int32) :: Crop_DayN
-        !! Last day of cropping period
+    !integer(int32) :: Crop_DayN
+    !    !! Last day of cropping period
+    integer(int32) :: Crop_LastDayNr
+        !! Last day of cropping period 
+        !! (maturity or premature end when too cold to reach maturity
     character(len=:), allocatable :: Climate_Info
         !! Climate info
     character(len=:), allocatable :: Climate_Filename
@@ -253,7 +256,7 @@ subroutine read_project_file(self, filename, NrRun)
     read(fhandle, *, iostat=rc) self%Simulation_DayNr1
     read(fhandle, *, iostat=rc) self%Simulation_DayNrN
     read(fhandle, *, iostat=rc) self%Crop_Day1
-    read(fhandle, *, iostat=rc) self%Crop_DayN
+    read(fhandle, *, iostat=rc) self%Crop_LastDayNr
 
     ! 1. Climate
     read(fhandle, '(a)', iostat=rc) buffer
@@ -448,8 +451,8 @@ function get_project_input_int32(index, key, mold) result(value)
         value = ProjectInput(index)%Simulation_DayNrN
     elseif (key == 'Crop_Day1') then
         value = ProjectInput(index)%Crop_Day1
-    elseif (key == 'Crop_DayN') then
-        value = ProjectInput(index)%Crop_DayN
+    elseif (key == 'Crop_LastDayNr') then
+        value = ProjectInput(index)%Crop_LastDayNr
     else
         call assert(.false., 'Unknown int32 key: ' // key)
     end if
@@ -469,8 +472,8 @@ subroutine set_project_input_int32(index, key, value)
         ProjectInput(index)%Simulation_DayNrN = value
     elseif (key == 'Crop_Day1') then
         ProjectInput(index)%Crop_Day1 = value
-    elseif (key == 'Crop_DayN') then
-        ProjectInput(index)%Crop_DayN = value
+    elseif (key == 'Crop_LastDayNr') then
+        ProjectInput(index)%Crop_LastDayNr = value
     else
         call assert(.false., 'Unknown int32 key: ' // key)
     end if

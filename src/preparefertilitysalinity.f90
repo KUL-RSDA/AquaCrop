@@ -294,7 +294,7 @@ end function CO2ForTnxReferenceYear
 subroutine StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToCCini,&
             L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12,&
             GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC,&
-            CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent,&
+            CDC, GDDCDC, KcTop, KcDeclAgeingCumul, CCeffectProcent,&
             Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt,&
             CO2TnxReferenceYear, RefCropDay1, CropDeterm, CropSResp, TheCropType,&
             TheModeCycle, b0, b1, b2, &
@@ -320,7 +320,7 @@ subroutine StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
     real(dp), intent(in) :: CDC
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: KcDeclAgeingCumul
     real(dp), intent(in) :: CCeffectProcent
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
@@ -373,8 +373,8 @@ subroutine StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
     GDDL12SF = GDDL12 ! to calculate SumKcTop (no stress)
     ! Maximum sum Kc (no stress)
     SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
-        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
-        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing,&
+        L0, L12, L123, L1234, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeingCumul,&
         CCeffectProcent, Tbase, Tupper, TDayMin, TDayMax, &
         GDtranspLow, CO2TnxReferenceYear, TheModeCycle, .true.)
 
@@ -420,10 +420,10 @@ subroutine StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
         end if
         ! biomass production
         BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-                L0, L12, L12SF, L123, L1234, LFlor,&
+                L0, L12, L12SF, L123, L1234, L1234, LFlor,&
                 GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, WPyield, &
                 DaysYieldFormation, tSwitch, CCo, CCx, CGC, GDDCGC, CDC,&
-                GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2TnxReferenceYear,&
+                GDDCDC, KcTop, KcDeclAgeingCumul, CCeffectProcent, WPveg, CO2TnxReferenceYear,&
                 Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
                 SumKcTop, SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
                 StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
@@ -504,7 +504,7 @@ end subroutine StressBiomassRelationshipForTnxReference
 subroutine CCxSaltStressRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToCCini,&
        L0, L12, L123, L1234, LFlor, LengthFlor, GDDFlor, GDDLengthFlor,&
        GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC,&
-       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, Tbase,&
+       GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeingCumul, CCeffectProcent, Tbase,&
        Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt, CO2TnxReferenceYear,&
        CropDNr1, CropDeterm, TheCropType, TheModeCycle, TheCCsaltDistortion,&
        Coeffb0Salt, Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30,&
@@ -532,7 +532,7 @@ subroutine CCxSaltStressRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
     real(dp), intent(in) :: CDC
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: KcDeclAgeingCumul
     real(dp), intent(in) :: CCeffectProcent
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
@@ -585,8 +585,8 @@ subroutine CCxSaltStressRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
     BNor100 = real(undef_int, kind=dp)
     ! Maximum sum Kc (no stress)
     SumKcTop = SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini,&
-        L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
-        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
+        L0, L12, L123, L1234, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
+        CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeingCumul, &
         CCeffectProcent,Tbase, Tupper, TDayMin, TDayMax, GDbioLow, &
         CO2TnxReferenceYear, TheModeCycle, .true.)
     ! Get PercentLagPhase (for estimate WPi during yield formation)
@@ -638,11 +638,11 @@ subroutine CCxSaltStressRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
 
         ! biomass production
         BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-                L0, L12, L12SS, L123, L1234, LFlor,&
+                L0, L12, L12SS, L123, L1234, L1234, LFlor,&
                 GDDL0, GDDL12, GDDL12SS, GDDL123, GDDL1234,&
                 WPyield, DaysYieldFormation, tSwitch,&
                 CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
-                KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2TnxReferenceYear,&
+                KcTop, KcDeclAgeingCumul, CCeffectProcent, WPveg, CO2TnxReferenceYear,&
                 Tbase, Tupper, TDayMin, TDayMax, GDbioLow, RatDGDD, SumKcTop,&
                 SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
                 StressResponse%RedWP, StressResponse%RedKsSto, &
@@ -728,7 +728,7 @@ subroutine ReferenceStressBiomassRelationship(TheDaysToCCini, &
         TheGDDaysToCCini, &
         L0, L12, L123, L1234, LFlor, LengthFlor, GDDL0, GDDL12, &
         GDDL123, GDDL1234, WPyield, RefHI, CCo, CCx, CGC, GDDCGC, &
-        CDC, GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, &
+        CDC, GDDCDC, KcTop, KcDeclAgeingCumul, CCeffectProcent, &
         Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, WPveg, RatedHIdt, &
         CropDNr1, CropDeterm, CropSResp, TheCropType, &
         TheModeCycle, b0, b1, b2, &
@@ -755,7 +755,7 @@ subroutine ReferenceStressBiomassRelationship(TheDaysToCCini, &
     real(dp), intent(in) :: CDC
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: KcDeclAgeingCumul
     real(dp), intent(in) :: CCeffectProcent
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
@@ -848,7 +848,7 @@ subroutine ReferenceStressBiomassRelationship(TheDaysToCCini, &
     LFlor_loc, LengthFlor_loc,&
     GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI,&
     CCo, CCx, CGC_loc, GDDCGC, CDC_loc, GDDCDC,&
-    KcTop, KcDeclAgeing, CCeffectProcent,&
+    KcTop, KcDeclAgeingCumul, CCeffectProcent,&
     Tbase, Tupper, TDayMin, TDayMax, GDtranspLow,&
     WPveg, RatedHIdt_loc, CO2TnxReferenceYear,&
     RefCropDay1,&
@@ -865,7 +865,7 @@ subroutine ReferenceCCxSaltStressRelationship(TheDaysToCCini, &
         TheGDDaysToCCini, L0, L12, L123, L1234, LFlor, LengthFlor, &
         GDDFlor, GDDLengthFlor, GDDL0, GDDL12, GDDL123, GDDL1234, &
         WPyield, RefHI, CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, &
-        KcDeclAgeing, CCeffectProcent, Tbase, Tupper, TDayMin, &
+        KcDeclAgeingCumul, CCeffectProcent, Tbase, Tupper, TDayMin, &
         TDayMax, GDbioLow, WPveg, RatedHIdt, CropDNr1, CropDeterm, &
         TheCropType, TheModeCycle, TheCCsaltDistortion, Coeffb0Salt, &
         Coeffb1Salt, Coeffb2Salt, Salt10, Salt20, Salt30, Salt40, &
@@ -894,7 +894,7 @@ subroutine ReferenceCCxSaltStressRelationship(TheDaysToCCini, &
     real(dp), intent(in) :: CDC
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: KcDeclAgeingCumul
     real(dp), intent(in) :: CCeffectProcent
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
@@ -987,7 +987,7 @@ subroutine ReferenceCCxSaltStressRelationship(TheDaysToCCini, &
     LFlor_loc, LengthFlor_loc, GDDFlor, GDDLengthFlor,&
     GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI,&
     CCo, CCx, CGC_loc, GDDCGC, CDC_loc, GDDCDC,&
-    KcTop, KcDeclAgeing, CCeffectProcent,&
+    KcTop, KcDeclAgeingCumul, CCeffectProcent,&
     Tbase, Tupper, TDayMin, TDayMax, GDbioLow, WPveg, RatedHIdt_loc, CO2TnxReferenceYear,&
     CropDNr1,&
     CropDeterm,&

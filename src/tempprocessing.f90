@@ -133,6 +133,7 @@ use ac_global , only: undef_int, &
                       SetCrop_CDC, &
                       SetCrop_DaysToHIo, &
                       SetCrop_DaysToGermination, &
+                      SetCrop_LastDayNr, &
                       SetCrop_LengthFlowering, &
                       SetCrop_Length, &
                       SetCrop_DaysToFullCanopy, &
@@ -157,6 +158,7 @@ use ac_global , only: undef_int, &
                       GetCrop_SizeSeedling, &
                       GetCrop_DaysToFullCanopySF, &
                       GetCrop_DayN,GetCrop_Day1, &
+                      GetCrop_LastDayNr, &
                       SetSimulation_DelayedDays, &
                       SetSimulation_DelayedDays, &
                       GetCrop_GDDaysToGermination, &
@@ -2100,10 +2102,12 @@ subroutine LoadSimulationRunProject(NrRun)
 
     ! 0. Year of cultivation and Simulation and Cropping period
     call SetSimulation_YearSeason(ProjectInput(NrRun)%Simulation_YearSeason)
-    call SetCrop_Day1(ProjectInput(NrRun)%Crop_Day1)
-    call SetCrop_DayN(ProjectInput(NrRun)%Crop_DayN)
     call SetSimulation_FromDayNr(ProjectInput(NrRun)%Simulation_DayNr1)
     call SetSimulation_ToDayNr(ProjectInput(NrRun)%Simulation_DayNrN)
+    call SetCrop_Day1(ProjectInput(NrRun)%Crop_Day1)
+    ! call SetCrop_DayN(ProjectInput(NrRun)%Crop_DayN)
+    ! Last day of cropping period (maturity or premature end when too cold to reach maturity
+    call SetCrop_LastDayNr(ProjectInput(NrRun)%Crop_LastDayNr)
 
     ! 1. Climate
     call SetClimateFile(ProjectInput(NrRun)%Climate_Filename)
@@ -2218,6 +2222,8 @@ subroutine LoadSimulationRunProject(NrRun)
 
     ! Adjust crop parameters of Perennials
     if (GetCrop_subkind() == subkind_Forage) then
+        ! Valid since Perennials have their own end of season based on Temperature - added Version 7.1
+        call SetCrop_DayN(GetCrop_LastDayNr())
         ! adjust crop characteristics to the Year (Seeding/Planting or
         ! Non-seesing/Planting year)
         Crop_Planting_temp = GetCrop_Planting()
@@ -2257,6 +2263,8 @@ subroutine LoadSimulationRunProject(NrRun)
     end if
 
     call AdjustCalendarCrop(GetCrop_Day1())
+    ! added Version 7.1 since Crop.DayN is no longer READ for annuals
+    call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
     call CompleteCropDescription
     ! Onset.Off := true;
     if (GetClimFile() == '(None)') then
@@ -2266,8 +2274,6 @@ subroutine LoadSimulationRunProject(NrRun)
         ! adjusting Crop.Day1 and Crop.DayN to ClimFile
         call SetCrop_Day1(Crop_Day1_temp)
         call SetCrop_DayN(Crop_DayN_temp)
-    else
-        call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
     end if
 
     ! adjusting ClimRecord.'TO' for undefined year with 365 days
@@ -2512,7 +2518,7 @@ end subroutine LoadSimulationRunProject
 subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
               L0, L12, L123, L1234, GDDL0, GDDL12, GDDL123, GDDL1234,&
               CCo, CCx, CGC, GDDCGC, CDC, GDDCDC, KcTop, &
-              KcDeclAgeing, CCeffectProcent, WPbio, TheCO2,&
+              KcDeclAgeingCumul, CCeffectProcent, WPbio, TheCO2,&
               Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
               TheModeCycle, TempAssimPeriod, TempAssimStored,&
               SumBtot, SumBstored)
@@ -2533,7 +2539,7 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
     real(dp), intent(in) :: CDC
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: KcDeclAgeingCumul
     real(dp), intent(in) :: CCeffectProcent
     real(dp), intent(in) :: WPbio
     real(dp), intent(in) :: TheCO2
@@ -2711,7 +2717,7 @@ subroutine BTransferPeriod(TheDaysToCCini, TheGDDaysToCCini,&
                 if (CCi > 0.0001_dp) then
                     ! 5.3 potential transpiration of total canopy cover
                     call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi,&
-                         EToStandard, KcTop, KcDeclAgeing,&
+                         EToStandard, KcTop, KcDeclAgeingCumul,&
                          CCx, CCxWitheredForB, CCeffectProcent, TheCO2, GDDi, &
                          GDtranspLow, TpotForB, EpotTotForB)
                 else
@@ -2740,10 +2746,10 @@ end subroutine BTransferPeriod
 
 
 real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-            L0, L12, L12SF, L123, L1234, LFlor, &
+            L0, L12, L12SF, L123, L1234, Lend, LFlor, &
             GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, &
             WPyield, DaysYieldFormation, tSwitch, CCo, CCx, &
-            CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeing, &
+            CGC, GDDCGC, CDC, GDDCDC, KcTop, KcDeclAgeingCumul, &
             CCeffectProcent, WPbio, TheCO2, Tbase, Tupper, &
             TDayMin, TDayMax, GDtranspLow, RatDGDD, SumKcTop, &
             StressInPercent, StrResRedCGC, StrResRedCCx, StrResRedWP, &
@@ -2756,6 +2762,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
      integer(int32), intent(in) :: L12SF
      integer(int32), intent(in) :: L123
      integer(int32), intent(in) :: L1234
+     integer(int32), intent(in) :: Lend
      integer(int32), intent(in) :: LFlor
      integer(int32), intent(in) :: GDDL0
      integer(int32), intent(in) :: GDDL12
@@ -2772,7 +2779,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
      real(dp), intent(in) :: CDC
      real(dp), intent(in) :: GDDCDC
      real(dp), intent(in) :: KcTop
-     real(dp), intent(in) :: KcDeclAgeing
+     real(dp), intent(in) :: KcDeclAgeingCumul
      real(dp), intent(in) :: CCeffectProcent
      real(dp), intent(in) :: WPbio
      real(dp), intent(in) :: TheCO2
@@ -2901,7 +2908,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
 
      ! 5. Calculate Bnormalized
      i = 0
-     do Dayi = 1, L1234
+     do Dayi = 1, Lend
          ! 5.1 growing degrees for dayi
          if (GetTemperatureFile() == '(None)') then
              GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax,&
@@ -3009,7 +3016,7 @@ real(dp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
          if (CCi > 0.0001_dp) then
              ! 5.3 potential transpiration of total canopy cover (crop and weed)
              call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
-                            EToStandard, KcTop, KcDeclAgeing,&
+                            EToStandard, KcTop, KcDeclAgeingCumul,&
                             CCxadj, CCxWitheredForB, CCeffectProcent, TheCO2,&
                             GDDi, GDtranspLow, TpotForB, EpotTotForB)
 

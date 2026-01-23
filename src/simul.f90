@@ -171,6 +171,7 @@ use ac_global, only: ActiveCells, &
                      GetRootZoneWC_ZtopWP, &
                      GetRunoff, &
                      getsimulation_dayanaero, &
+                     GetSimulation_DayNrPrematureEnd, &
                      GetSimulation_DelayedDays, &
                      GetSimulation_EffectStress, &
                      GetSimulation_EffectStress_CDecline, &
@@ -380,6 +381,7 @@ use ac_global, only: ActiveCells, &
                      TimeToMaxCanopySF, &
                      undef_double, &
                      undef_int
+use ac_run, only:  SetNoMoreCrop
 use ac_kinds, only:  dp, &
                      int8, &
                      int32, &
@@ -5581,6 +5583,12 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                               CDCTotal, &
                               DayFraction, GDDCDCTotal, TESTVAL)
         end select
+        ! added 7.3 - premature end
+        if (dayi == GetSimulation_DayNrPrematureEnd()) then
+            call SetCCiActual(0._dp)
+        else
+            call SetNoMoreCrop(.true.)
+        end if
     end if
 
     ! 11. Determine Tpot and Epot
