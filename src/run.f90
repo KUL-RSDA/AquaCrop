@@ -15,6 +15,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCropFileSet, &
                         GetOut8Irri, &
                         GetSimulation_Germinate, &
+                        GetNoMoreCrop, &
                         CompartmentIndividual, &
                         CompleteCropDescription, &
                         datatype_daily, &
@@ -67,7 +68,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCrop_GDtranspLow, &
                         GetCrop_GDtranspLow, &
                         GetCrop_HI, &
-                        GetCrop_KcDecline, &
+                        GetCrop_KcDeclineCumul, &
                         GetCrop_KcTop, &
                         GetCrop_Length_i, &
                         GetCrop_LengthFlowering, &
@@ -200,6 +201,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         SetCompartment_i, &
                         SetCompartment_Theta, &
                         SetETo, &
+                        SetNoMoreCrop, &
                         SetRain, &
                         SetRootZoneSalt_ECe, &
                         SetRootZoneSalt_ECsw, &
@@ -615,7 +617,7 @@ logical :: NoYear
 
 character(len=:), allocatable :: fEval_filename
 
-logical :: WaterTableInProfile, StartMode, NoMoreCrop
+logical :: WaterTableInProfile, StartMode
 logical :: GlobalIrriECw ! for versions before 3.2 where EC of
                          ! irrigation water was not yet recorded
 ! Version 7.2
@@ -2433,21 +2435,6 @@ subroutine SetStartMode(StartMode_in)
 
     StartMode = StartMode_in
 end subroutine SetStartMode
-
-
-logical function GetNoMoreCrop()
-    !! Getter for the "NoMoreCrop" global variable.
-
-    GetNoMoreCrop = NoMoreCrop
-end function GetNoMoreCrop
-
-
-subroutine SetNoMoreCrop(NoMoreCrop_in)
-    !! Setter for the "NoMoreCrop" global variable.
-    logical, intent(in) :: NoMoreCrop_in
-
-    NoMoreCrop = NoMoreCrop_in
-end subroutine SetNoMoreCrop
 
 
 integer(int32) function GetIrriInterval()

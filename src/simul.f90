@@ -380,8 +380,8 @@ use ac_global, only: ActiveCells, &
                      subkind_Vegetative, &
                      TimeToMaxCanopySF, &
                      undef_double, &
-                     undef_int
-use ac_run, only:  SetNoMoreCrop
+                     undef_int, &
+                     SetNoMoreCrop
 use ac_kinds, only:  dp, &
                      int8, &
                      int32, &

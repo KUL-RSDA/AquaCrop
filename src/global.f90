@@ -1082,6 +1082,7 @@ logical :: Out5CompWC
 logical :: Out6CompEC
 logical :: Out7Clim
 logical :: Part1Mult,Part2Eval
+logical :: NoMoreCrop
 
 character(len=:), allocatable :: PathNameList,PathNameParam
 
@@ -16888,5 +16889,20 @@ subroutine SetPart2Eval(Part2Eval_in)
 
     Part2Eval = Part2Eval_in
 end subroutine SetPart2Eval
+
+
+logical function GetNoMoreCrop()
+    !! Getter for the "NoMoreCrop" global variable.
+
+    GetNoMoreCrop = NoMoreCrop
+end function GetNoMoreCrop
+
+
+subroutine SetNoMoreCrop(NoMoreCrop_in)
+    !! Setter for the "NoMoreCrop" global variable.
+    logical, intent(in) :: NoMoreCrop_in
+
+    NoMoreCrop = NoMoreCrop_in
+end subroutine SetNoMoreCrop
 
 end module ac_global
