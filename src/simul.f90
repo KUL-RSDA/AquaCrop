@@ -5007,7 +5007,8 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
                     end if
                     if ((GetCrop_SumEToDelaySenescence() > 0._dp) &
                         .and. (GetSimulation_SumEToStress() &
-                                <= GetCrop_SumEToDelaySenescence())) then
+                                <= GetCrop_SumEToDelaySenescence()) &
+                        .and. (VirtualTimeCC < tFinalCCx)) then
                         if ((CCiSen < GetCrop_CCo()) &
                             .or. (CCiSen < CCdormant)) then
                             if (CCdormant > GetCrop_CCo()) then
