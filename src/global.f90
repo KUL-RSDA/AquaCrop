@@ -5050,7 +5050,7 @@ subroutine LoadCrop(FullName)
     read(fhandle, *) TempDouble
     call SetCrop_KcTop(TempDouble)
     read(fhandle, *) TempDouble 
-    if (roundc(VersionNr*10, mold=1) < 72) then
+    if (roundc(VersionNr*10, mold=1) <= 72) then
         ! skip line with KcDecline (%/day)
         ! specify default value for cumulative decrease (%) at maturity of crop coefficient due to ageing
         call SetCrop_KcDeclineCumul(11._dp) 
