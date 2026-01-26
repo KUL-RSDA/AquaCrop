@@ -6545,11 +6545,11 @@ subroutine CalculateTimeToReachZmin(ZMin, ZMax, RootShape, L0, LZmax, GGDL0, GDD
         select case (TheModeCycle)
         case (modeCycle_GDDays)
             if (GDDLZmax > (GGDL0/2._dp)) then
-                tGDDZmin = Zfunction * real((GDDLZmax - (GGDL0/2)), kind=dp) + &
+                tGDDZmin = Zfunction * real((GDDLZmax - (GGDL0/2._dp)), kind=dp) + &
                           real((GGDL0/2._dp), kind=dp)
             end if
         case default
-            if (LZmax > (L0/2)) then
+            if (LZmax > (L0/2._dp)) then
                 tDaysZmin = Zfunction * real((LZmax - (L0/2._dp)), kind=dp) + &
                            real((L0/2._dp), kind=dp)
             end if
@@ -6591,8 +6591,8 @@ subroutine CalculateRootingDepth(tDaysZmin, tGDDZmin, ZiPrev, GDDayi, RootingDep
                 ! root zone expansion can exceed Zmin
                 ! time to simulate root zone expansion is given by Zr of previous day (ZiPrev)
                 CalSumGDDPrev = Zfunction * &
-                    real((GetCrop_GDDaysToMaxRooting() - (GetCrop_GDDaysToGermination()/2)), kind=dp) + &
-                    real((GetCrop_GDDaysToGermination()/2), kind=dp)
+                    real((GetCrop_GDDaysToMaxRooting() - (GetCrop_GDDaysToGermination()/2._dp)), kind=dp) + &
+                    real((GetCrop_GDDaysToGermination()/2._dp), kind=dp)
 
                 tCalGDD = CalSumGDDPrev + GDDayi   ! add GDD of today to get adjusted sum GDD
                 if (tCalGDD > GetSimulation_SumGDD()) then
