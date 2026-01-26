@@ -1365,8 +1365,8 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                 end if
 
                 call SetCompartment_theta(compi, GetCompartment_theta(compi) - &
-                     sinkMM / (1000.0 * GetCompartment_Thickness(compi) * &
-                     (1.0 - GetSoilLayer_GravelVol(layeri) / 100.0)))
+                     sinkMM / (1000._dp * GetCompartment_Thickness(compi) * &
+                     (1.0 - GetSoilLayer_GravelVol(layeri) / 100._dp)))
 
                 WtoExtract = WtoExtract - sinkMM
                 call SetTact(GetTact() + sinkMM)
