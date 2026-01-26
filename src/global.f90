@@ -8042,9 +8042,9 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
 
         ! Correction for ageing effects - is a function of calendar days
         if ((VirtualDay-DayLastCut) > (L12)) then
-            tRel = (VirtualDay-DayLastCut-L12)/(LHarvest-L12)
+            tRel = (VirtualDay-DayLastCut-L12)/real(LHarvest-L12, kind=dp)
             KcVal_local = KcVal - ((exp(fShape*tRel)-1)/(exp(fShape)-1)) &
-                *(KcDeclineCumulVal/100)*CCxWithered
+                *(KcDeclineCumulVal/100._dp)*CCxWithered
         else
             KcVal_local = KcVal
         end if
