@@ -1,4 +1,4 @@
-AquaCrop 7.2 (August 2024) - Output created on (date) : 30-09-2024   at (time) : 15:56:02
+AquaCrop 7.3 (January 2026) - Output created on (date) : 27-01-2026   at (time) : 13:17:50
 Evaluation of simulation results - Statistics
 ** Run number:1
 
@@ -13,28 +13,28 @@ Evaluation of simulation results - Statistics
     Nr        Observed    +/- St Dev     Simulated    Date
   ----------------------------------------------------------------
      1           0.045        -9.000         0.075      24 May 2014
-     2           0.386        -9.000         0.856       9 June 2014
-     3           1.039        -9.000         1.804      18 June 2014
-     4           1.217        -9.000         2.632      25 June 2014
-     5           2.390        -9.000         3.602       3 July 2014
-     6           3.191        -9.000         4.438      10 July 2014
-     7           3.606        -9.000         4.787      13 July 2014
-     8           3.947        -9.000         4.928      15 July 2014
-     9           4.407        -9.000         5.740      24 July 2014
-    10           4.853        -9.000         6.272      30 July 2014
-    11           6.189        -9.000         6.844       7 August 2014
-    12           6.263        -9.000         7.230      14 August 2014
-    13           6.901        -9.000         7.413      18 August 2014
-    14           7.168        -9.000         7.647      24 August 2014
-    15           7.242        -9.000         7.869      31 August 2014
+     2           0.386        -9.000         0.855       9 June 2014
+     3           1.039        -9.000         1.803      18 June 2014
+     4           1.217        -9.000         2.630      25 June 2014
+     5           2.390        -9.000         3.599       3 July 2014
+     6           3.191        -9.000         4.432      10 July 2014
+     7           3.606        -9.000         4.780      13 July 2014
+     8           3.947        -9.000         4.921      15 July 2014
+     9           4.407        -9.000         5.731      24 July 2014
+    10           4.853        -9.000         6.262      30 July 2014
+    11           6.189        -9.000         6.832       7 August 2014
+    12           6.263        -9.000         7.215      14 August 2014
+    13           6.901        -9.000         7.397      18 August 2014
+    14           7.168        -9.000         7.628      24 August 2014
+    15           7.242        -9.000         7.846      31 August 2014
 
   Valid observations/simulations sets (n) ....... :    15
   Average of observed Biomass production ........ :     3.923   ton/ha
-  Average of simulated Biomass production ....... :     4.809   ton/ha
+  Average of simulated Biomass production ....... :     4.800   ton/ha
 
   Pearson Correlation Coefficient (r) ........... :     0.99
-  Root mean square error (RMSE) ................. :     0.974   ton/ha
-  Normalized root mean square error  CV(RMSE).... :    24.8   %
+  Root mean square error (RMSE) ................. :     0.966   ton/ha
+  Normalized root mean square error  CV(RMSE).... :    24.6   %
   Nash-Sutcliffe model efficiency coefficient (EF):     0.84
   Willmotts index of agreement (d) .............. :     0.96
   ----------------------------------------------------------------
