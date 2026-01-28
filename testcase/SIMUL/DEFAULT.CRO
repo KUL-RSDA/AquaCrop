@@ -1,5 +1,5 @@
 a generic crop
-     7.2       : AquaCrop Version (August 2024)
+     7.3       : AquaCrop Version (January 2026)
      1         : File not protected
      2         : fruit/grain producing crop
      1         : Crop is sown
@@ -23,7 +23,7 @@ a generic crop
      0.79      : Shape factor for the response of maximum canopy cover to soil fertility stress
      1.67      : Shape factor for the response of crop Water Productivity to soil fertility stress
      1.67      : Shape factor for the response of decline of canopy cover to soil fertility stress
-    -9         : dummy - Parameter no Longer required
+    -9         : DayNr Premature end (counting from 1 January of planting year) - only applicable for annual crops
      8         : Minimum air temperature below which pollination starts to fail (cold stress) (degC)
     40         : Maximum air temperature above which pollination starts to fail (heat stress) (degC)
     11.1       : Minimum growing degrees required for full crop transpiration (degC - day)
@@ -33,7 +33,7 @@ a generic crop
     25         : Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))
    100         : Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))
      1.10      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
-     0.150     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
+   11.     : Cumulative decrease (%) at maturity of crop coefficient as a result of ageing, nitrogen deficiency, etc.
      0.30      : Minimum effective rooting depth (m)
      1.00      : Maximum effective rooting depth (m)
     15         : Shape factor describing root zone expansion
@@ -60,7 +60,7 @@ a generic crop
     50         : Building up of Harvest Index starting at flowering (days)
     17.0       : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
    100         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
-    50         : Crop performance under elevated atmospheric CO2 concentration (%)
+   100         : Crop performance under elevated atmospheric CO2 concentration (%)
     50         : Reference Harvest Index (HIo) (%)
      5         : Possible increase (%) of HI due to water stress before flowering
     10.0       : Coefficient describing positive impact on HI of restricted vegetative growth during yield formation

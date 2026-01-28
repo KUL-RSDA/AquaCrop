@@ -1,4 +1,4 @@
-Default atmospheric CO2 concentration from 1902 to 2099 (updated 01/08/2022)
+Default atmospheric CO2 concentration from 1902 to 2099 (updated 01/01/2026)
 Year     CO2 (ppm by volume)
 ============================
   1902  297.4
@@ -84,5 +84,6 @@ Year     CO2 (ppm by volume)
   2021	416.41
   2022  418.53
   2023  421.08  
-  2025  425.08
-  2099  573.08
+  2024  424.61
+  2030  437.11
+  2099  607.11
