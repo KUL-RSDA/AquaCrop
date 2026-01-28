@@ -6615,7 +6615,7 @@ subroutine AdjustSizeCompartments(CropZx)
                                                 PrevECdSComp
 
     ! esnures consistency for adjusted compartment sizes between Pascal and Fortran
-    CropZx_eff = CropZx + ac_zero_threshold 
+    CropZx_eff = CropZx + 0.000001_dp
     ! 1. Save intial soil water profile (required when initial soil
     ! water profile is NOT reset at start simulation - see 7.)
     PrevNrComp = int(GetNrCompartments(), kind=int8)
