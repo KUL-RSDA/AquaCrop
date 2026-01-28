@@ -7077,18 +7077,6 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
             call CalculateRootingDepth(tDaysZmin,tGDDZmin,&
               GetZiPrev(),GetGDDayi(),RootingDepth_temp)
             call SetRootingDepth(RootingDepth_temp)
-            !call SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop_ActVal(), &
-            !       GetPlotVarCrop_PotVal(), GetTpot(), GetTact(), &
-            !       GetStressLeaf(), GetStressSenescence(), &
-            !       (GetDayNri()-GetCrop_Day1()+1), &
-            !       GetCrop_DaysToGermination(), &
-            !       GetCrop_DaysToMaxRooting(), GetCrop_DaysToHarvest(), &
-            !       GetCrop_GDDaysToGermination(), &
-            !       GetCrop_GDDaysToMaxRooting(), &
-            !       GetCrop_GDDaysToHarvest(), GetSumGDDPrev(), &
-            !       (GetSimulation_SumGDD()), GetCrop_RootMin(), &
-            !       GetCrop_RootMax(), GetZiprev(), GetCrop_RootShape(), &
-            !       GetCrop_ModeCycle()))
             call SetZiprev(GetRootingDepth())
             ! IN CASE rootzone drops below groundwate table
             if ((GetZiAqua() >= 0._dp) .and. (GetRootingDepth() > &
