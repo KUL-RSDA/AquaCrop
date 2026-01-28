@@ -1,5 +1,5 @@
 Ottawa, Canada
-     7.3  : AquaCrop Version (January 2026)
+     7.3       : AquaCrop Version (January 2026)
      0         : percentage (%) of ground surface covered by mulches IN growing period
     50         : effect (%) of mulches on reduction of soil evaporation
     50         : Degree of soil fertility stress (%) - Effect is crop specific
