@@ -2105,7 +2105,6 @@ subroutine LoadSimulationRunProject(NrRun)
     call SetSimulation_FromDayNr(ProjectInput(NrRun)%Simulation_DayNr1)
     call SetSimulation_ToDayNr(ProjectInput(NrRun)%Simulation_DayNrN)
     call SetCrop_Day1(ProjectInput(NrRun)%Crop_Day1)
-    ! call SetCrop_DayN(ProjectInput(NrRun)%Crop_DayN)
     ! Last day of cropping period (maturity or premature end when too cold to reach maturity
     call SetCrop_LastDayNr(ProjectInput(NrRun)%Crop_LastDayNr)
 
@@ -2222,7 +2221,7 @@ subroutine LoadSimulationRunProject(NrRun)
 
     ! Adjust crop parameters of Perennials
     if (GetCrop_subkind() == subkind_Forage) then
-        ! Valid since Perennials have their own end of season based on Temperature - added Version 7.1
+        ! Valid since Perennials have their own end of season based on Temperature - added Version 7.3
         call SetCrop_DayN(GetCrop_LastDayNr())
         ! adjust crop characteristics to the Year (Seeding/Planting or
         ! Non-seesing/Planting year)
@@ -2263,7 +2262,7 @@ subroutine LoadSimulationRunProject(NrRun)
     end if
 
     call AdjustCalendarCrop(GetCrop_Day1())
-    ! added Version 7.1 since Crop.DayN is no longer READ for annuals
+    ! added Version 7.3 since Crop.DayN is no longer READ for annuals
     call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
     call CompleteCropDescription
     ! Onset.Off := true;
