@@ -670,6 +670,8 @@ type rep_sim
         !! calendar year in which crop cycle starts
     integer(int32) :: CropDay1Previous
         !! previous daynumber at the start of teh crop cycle
+    integer(int32) :: DayNrPrematureEnd
+        !! day on which crop development will stop (too cold to reach maturity)
 end type rep_sim
 
 type rep_DayEventDbl
@@ -734,8 +736,9 @@ type rep_Crop
         !! Smax Bottom root zone HOOGLAND
     real(dp) :: KcTop
         !! Undocumented
-    real(dp) :: KcDecline
-        !! Reduction Kc (%CCx/day) as result of ageing effects, nitrogen defficiency, etc.
+    real(dp) :: KcDeclineCumul
+        !! Cumulative decrease (%) at maturity of crop coefficient as result of 
+        !! ageing effects, nitrogen defficiency, etc.
     integer(int32) :: CCEffectEvapLate
         !! %
     integer(int32) :: Day1
@@ -860,6 +863,10 @@ type rep_Crop
         !! shape factor of the decline of CCx over the years due to self-thinning - Perennials
     type(rep_Assimilates) :: Assimilates
         !! Undocumented
+    integer(int32) :: PrematureEnd 
+        !! day at which annual crops cannot survive (daynumber counting from 1 January of planting year)
+    integer(int32) :: LastDayNr      
+        !! Daynummer (maturity or Premature End when too cold to reach maturity
 end type rep_Crop
 
 type rep_PerennialPeriod
@@ -1075,6 +1082,7 @@ logical :: Out5CompWC
 logical :: Out6CompEC
 logical :: Out7Clim
 logical :: Part1Mult,Part2Eval
+logical :: NoMoreCrop
 
 character(len=:), allocatable :: PathNameList,PathNameParam
 
@@ -3656,7 +3664,14 @@ subroutine SaveCrop(totalname)
         write(fhandle, '(f9.2,a)') GetCrop_StressResponse_ShapeCDecline(), &
         '      : Shape factor for the response of decline of canopy cover to soil fertility stress'
     end if
-    write(fhandle, '(a)') '    -9         : dummy - Parameter no Longer required'
+
+    !  New 7.3 Premature end of growth of annual crops when too cold to reach maturity (existing dummy replaced)
+    ! write(fhandle, '(a)') '    -9         : dummy - Parameter no Longer required'
+    if (GetCrop_subkind() == subkind_Forage) then
+        call SetCrop_PrematureEnd(undef_int)
+    end if
+    write(fhandle, '(i6,a)') GetCrop_PrematureEnd(), &
+        '         : DayNr Premature end (counting from 1 January of planting year) - only applicable for annual crops'
 
     ! temperature stress
     if (int(GetCrop_Tcold(), int32) == undef_int) then
@@ -3695,8 +3710,8 @@ subroutine SaveCrop(totalname)
     ! evapotranspiration
     write(fhandle, '(f9.2,a)') GetCrop_KcTop(),  &
     '      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)'
-    write(fhandle, '(f10.3,a)') GetCrop_KcDecline(), &
-    '     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.'
+    write(fhandle, '(f6.0,a)') GetCrop_KcDeclineCumul(), &
+    '     : Cumulative decrease (%) at maturity of crop coefficient as a result of ageing, nitrogen deficiency, etc.'
     write(fhandle, '(f9.2,a)') GetCrop_RootMin(), &
     '      : Minimum effective rooting depth (m)'
     write(fhandle, '(f9.2,a)') GetCrop_RootMax(), &
@@ -4706,9 +4721,32 @@ subroutine DetermineLinkedSimDay1(CropDay1, SimDay1)
 end subroutine DetermineLinkedSimDay1
 
 
+function TheDayNrPrematureEnd(TheDayCropPrematureEnd, ThePlantingYear) result(TheDayNr)
+    integer(int32), intent(in) :: TheDayCropPrematureEnd
+    integer(int32), intent(in) :: ThePlantingYear
+    integer(int32) :: TheDayNr
+    integer(int32) :: DayMax, MonthMax, yeari, YearMax
+
+    if (TheDayCropPrematureEnd /= undef_int) then
+        call DetermineDate(TheDayCropPrematureEnd, DayMax, MonthMax, yeari)
+
+        if (TheDayCropPrematureEnd > 365) then
+            YearMax = ThePlantingYear + 1
+        else
+            YearMax = ThePlantingYear
+        end if
+
+        call DetermineDayNr(DayMax, MonthMax, YearMax, TheDayNr)
+    else
+        TheDayNr = undef_int
+    end if
+end function TheDayNrPrematureEnd
+
+
 subroutine AdjustSimPeriod()
     integer(int32) :: IniSimFromDayNr
     character(len=:), allocatable :: FullFileName
+    integer(int32) :: dayi, monthi, ThePlantingYear
     integer(int32) :: FromDayNr_temp
     type(CompartmentIndividual), dimension(max_No_compartments) :: Compartment_temp
 
@@ -4746,6 +4784,18 @@ subroutine AdjustSimPeriod()
             call SetSimulation_ToDayNr(GetSimulation_FromDayNr() + 30) ! 30 days
        end if
     end select
+
+    ! Simulation period cannot exceed Premature End of crop growth  - Version 7.3
+    call DetermineDate(GetCrop_Day1(), dayi, monthi, ThePlantingYear)  ! planting year
+    call SetSimulation_DayNrPrematureEnd( &
+            TheDayNrPrematureEnd(GetCrop_PrematureEnd(), ThePlantingYear) )
+    if ((GetCrop_PrematureEnd() /= undef_int) .and. &
+        (GetSimulation_ToDayNr() > (GetSimulation_DayNrPrematureEnd() - 1))) then
+        call SetSimulation_ToDayNr(GetSimulation_DayNrPrematureEnd() - 1)
+        call SetCrop_LastDayNr(GetSimulation_DayNrPrematureEnd() - 1)
+    else
+        call SetCrop_LastDayNr(GetCrop_DayN())
+    end if
 
     ! adjust initial depth and quality of the groundwater when required
     if ((.not. GetSimulParam_ConstGwt()) .and. &
@@ -4933,10 +4983,15 @@ subroutine LoadCrop(FullName)
                                     ! fertility/salinity stress
     call SetCrop_StressResponse_ShapeCDecline(TempDouble)
 
-    if (roundc(VersionNr*10, mold=1) >= 40) then
-    ! UPDATE required for Version 4.0 and next
-        read(fhandle, *)  ! Shape factor for the response of Stomatal Closure
-                          ! to soil salinity stress NO LONGER VALID
+    ! ----- Version 7.3 Replacement of dummy by Premature end of annual 
+    ! crops when too cold to reach maturity (Version 7.3)
+    if (roundc(VersionNr*10, mold=1) <= 72) then ! day at which annual crops cannot survive
+       call SetCrop_PrematureEnd(undef_int) ! not implemented for earlier versions
+       read(fhandle, *) TempInt ! just for skipping this line
+    else
+       ! PrematureEnd: daynumber counting from 1 January of planting year
+       read(fhandle, *) TempInt
+       call SetCrop_PrematureEnd(TempInt) 
     end if
 
     ! continue with soil fertility/salinity stress
@@ -4994,8 +5049,14 @@ subroutine LoadCrop(FullName)
     ! evapotranspiration
     read(fhandle, *) TempDouble
     call SetCrop_KcTop(TempDouble)
-    read(fhandle, *) TempDouble
-    call SetCrop_KcDecline(TempDouble)
+    read(fhandle, *) TempDouble 
+    if (roundc(VersionNr*10, mold=1) <= 72) then
+        ! skip line with KcDecline (%/day)
+        ! specify default value for cumulative decrease (%) at maturity of crop coefficient due to ageing
+        call SetCrop_KcDeclineCumul(11._dp) 
+    else
+        call SetCrop_KcDeclineCumul(TempDouble) 
+    end if 
     read(fhandle, *) TempDouble
     call SetCrop_RootMin(TempDouble)
     read(fhandle, *) TempDouble
@@ -5330,9 +5391,9 @@ end subroutine LoadCrop
 
 
 real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, &
-                                     L123, L1234, GDDL0, GDDL12, GDDL123, &
+                                     L123, L1234, Lend, GDDL0, GDDL12, GDDL123, &
                                      GDDL1234, CCo, CCx, CGC, GDDCGC, CDC, &
-                                     GDDCDC, KcTop, KcDeclAgeing, &
+                                     GDDCDC, KcTop, KcDeclAgeingCumul, &
                                      CCeffectProcent, Tbase, Tupper, TDayMin, &
                                      TDayMax, GDtranspLow, CO2i, TheModeCycle, ReferenceClimate)
     integer(int32), intent(in) :: TheDaysToCCini
@@ -5341,6 +5402,7 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
     integer(int32), intent(in) :: L12
     integer(int32), intent(in) :: L123
     integer(int32), intent(in) :: L1234
+    integer(int32), intent(in) :: Lend
     integer(int32), intent(in) :: GDDL0
     integer(int32), intent(in) :: GDDL12
     integer(int32), intent(in) :: GDDL123
@@ -5352,7 +5414,7 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
     real(dp), intent(in) :: CDC
     real(dp), intent(in) :: GDDCDC
     real(dp), intent(in) :: KcTop
-    real(dp), intent(in) :: KcDeclAgeing
+    real(dp), intent(in) :: KcDeclAgeingCumul
     real(dp), intent(in) :: CCeffectProcent
     real(dp), intent(in) :: Tbase
     real(dp), intent(in) :: Tupper
@@ -5440,7 +5502,7 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
 
     ! 3. Calculate Sum
     i = 0
-    do Dayi = 1, L1234
+    do Dayi = 1, Lend
         ! 3.1 calculate growing degrees for the day
         if (GetTemperatureFile() == '(None)') then
             GDDi = DegreesDay(Tbase, Tupper, TDayMin, TDayMax, &
@@ -5548,7 +5610,7 @@ real(dp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
         if (CCi > 0.0001_dp) then
             call CalculateETpot(DayCC, L0, L12, L123, L1234, (0), CCi, &
                            real(EToStandard, kind=dp), KcTop, &
-                           KcDeclAgeing, CCx, CCxWitheredForB, &
+                           KcDeclAgeingCumul, CCx, CCxWitheredForB, &
                            CCeffectProcent, CO2i, &
                            GDDi, GDtranspLow, TpotForB, EpotTotForB)
         else
@@ -7932,7 +7994,7 @@ end subroutine DetermineRootZoneWC
 
 
 subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
-                          EToVal, KcVal, KcDeclineVal, CCx, CCxWithered, &
+                          EToVal, KcVal, KcDeclineCumulVal, CCx, CCxWithered, &
                           CCeffectProcent, CO2i, GDDayi, TempGDtranspLow, &
                           TpotVal, EpotVal)
     integer(int32), intent(in) :: DAP
@@ -7944,7 +8006,7 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
     real(dp), intent(in) :: CCi
     real(dp), intent(in) :: EToVal
     real(dp), intent(in) :: KcVal
-    real(dp), intent(in) :: KcDeclineVal
+    real(dp), intent(in) :: KcDeclineCumulVal
     real(dp), intent(in) :: CCx
     real(dp), intent(in) :: CCxWithered
     real(dp), intent(in) :: CCeffectProcent
@@ -7956,7 +8018,10 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
 
     real(dp) :: KcVal_local
     real(dp) :: EpotMin, EpotMax, CCiAdjusted, Multiplier, KsTrCold
-    integer(int32) :: VirtualDay
+    real(dp) :: tRel
+    real(dp), parameter :: fShape = 1._dp
+    integer(int32) :: VirtualDay 
+    
 
     ! CalculateETpot
     VirtualDay = DAP - GetSimulation_DelayedDays()
@@ -7976,9 +8041,10 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
         end if
 
         ! Correction for ageing effects - is a function of calendar days
-        if ((VirtualDay-DayLastCut) > (L12+5)) then
-            KcVal_local = KcVal - (VirtualDay-DayLastCut-(L12+5._dp)) &
-                        * (KcDeclineVal/100._dp)*CCxWithered
+        if ((VirtualDay-DayLastCut) > (L12)) then
+            tRel = (VirtualDay-DayLastCut-L12)/real(LHarvest-L12, kind=dp)
+            KcVal_local = KcVal - ((exp(fShape*tRel)-1)/(exp(fShape)-1)) &
+                *(KcDeclineCumulVal/100._dp)*CCxWithered
         else
             KcVal_local = KcVal
         end if
@@ -10827,12 +10893,12 @@ function GetCrop_KcTop() result(KcTop)
 end function GetCrop_KcTop
 
 
-function GetCrop_KcDecline() result(KcDecline)
-    !! Getter for the "KcDecline" attribute of the "crop" global variable.
-    real(dp) :: KcDecline
+function GetCrop_KcDeclineCumul() result(KcDeclineCumul)
+    !! Getter for the "KcDeclineCumul" attribute of the "crop" global variable.
+    real(dp) :: KcDeclineCumul
 
-    KcDecline = crop%KcDecline
-end function GetCrop_KcDecline
+    KcDeclineCumul = crop%KcDeclineCumul
+end function GetCrop_KcDeclineCumul
 
 
 function GetCrop_CCEffectEvapLate() result(CCEffectEvapLate)
@@ -11323,6 +11389,22 @@ function GetCrop_CCxRoot() result(CCxRoot)
 end function GetCrop_CCxRoot
 
 
+function GetCrop_PrematureEnd() result(PrematureEnd)
+    !! Getter for the "PrematureEnd" attribute of the "crop" global variable.
+    integer(int32) :: PrematureEnd
+
+    PrematureEnd = crop%PrematureEnd
+end function GetCrop_PrematureEnd
+
+
+function GetCrop_LastDayNr() result(LastDayNr)
+    !! Getter for the "LastDayNr" attribute of the "crop" global variable.
+    integer(int32) :: LastDayNr
+
+    LastDayNr = crop%LastDayNr
+end function GetCrop_LastDayNr
+
+
 subroutine SetCrop(Crop_in)
     !! Setter for the "crop" global variable.
     type(rep_Crop), intent(in) :: Crop_in
@@ -11539,12 +11621,12 @@ subroutine SetCrop_KcTop(KcTop)
 end subroutine SetCrop_KcTop
 
 
-subroutine SetCrop_KcDecline(KcDecline)
-    !! Setter for the "KcDecline" attribute of the "crop" global variable.
-    real(dp), intent(in) :: KcDecline
+subroutine SetCrop_KcDeclineCumul(KcDeclineCumul)
+    !! Setter for the "KcDeclineCumul" attribute of the "crop" global variable.
+    real(dp), intent(in) :: KcDeclineCumul
 
-    crop%KcDecline = KcDecline
-end subroutine SetCrop_KcDecline
+    crop%KcDeclineCumul = KcDeclineCumul
+end subroutine SetCrop_KcDeclineCumul
 
 
 subroutine SetCrop_CCEffectEvapLate(CCEffectEvapLate)
@@ -12033,6 +12115,22 @@ subroutine SetCrop_CCxRoot(CCxRoot)
 
     crop%CCxRoot = CCxRoot
 end subroutine SetCrop_CCxRoot
+
+
+subroutine SetCrop_PrematureEnd(PrematureEnd)
+    !! Setter for the "PrematureEnd" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: PrematureEnd
+
+    crop%PrematureEnd = PrematureEnd
+end subroutine SetCrop_PrematureEnd
+
+
+subroutine SetCrop_LastDayNr(LastDayNr)
+    !! Setter for the "LastDayNr" attribute of the "crop" global variable.
+    integer(int32), intent(in) :: LastDayNr
+
+    crop%LastDayNr = LastDayNr
+end subroutine SetCrop_LastDayNr
 
 
 function GetCrop_Assimilates() result(Assimilates)
@@ -14389,6 +14487,14 @@ function GetSimulation_CropDay1Previous() result(CropDay1Previous)
 end function GetSimulation_CropDay1Previous
 
 
+function GetSimulation_DayNrPrematureEnd() result(DayNrPrematureEnd)
+    !! Getter for the "DayNrPrematureEnd" attribute of the "simulation" global variable.
+    integer(int32) :: DayNrPrematureEnd
+
+    DayNrPrematureEnd = simulation%DayNrPrematureEnd
+end function GetSimulation_DayNrPrematureEnd
+
+
 subroutine SetSimulation(Simulation_in)
     !! Setter for the "simulation" global variable.
     type(rep_sim), intent(in) :: Simulation_in
@@ -14693,6 +14799,14 @@ subroutine SetSimulation_CropDay1Previous(CropDay1Previous)
 
     simulation%CropDay1Previous = CropDay1Previous
 end subroutine SetSimulation_CropDay1Previous
+
+
+subroutine SetSimulation_DayNrPrematureEnd(DayNrPrematureEnd)
+    !! Setter for the "DayNrPrematureEnd" attribute of the "simulation" global variable.
+    integer(int32), intent(in) :: DayNrPrematureEnd
+
+    simulation%DayNrPrematureEnd = DayNrPrematureEnd
+end subroutine SetSimulation_DayNrPrematureEnd
 
 
 function GetSimulation_IniSWC() result(IniSWC)
@@ -16775,5 +16889,20 @@ subroutine SetPart2Eval(Part2Eval_in)
 
     Part2Eval = Part2Eval_in
 end subroutine SetPart2Eval
+
+
+logical function GetNoMoreCrop()
+    !! Getter for the "NoMoreCrop" global variable.
+
+    GetNoMoreCrop = NoMoreCrop
+end function GetNoMoreCrop
+
+
+subroutine SetNoMoreCrop(NoMoreCrop_in)
+    !! Setter for the "NoMoreCrop" global variable.
+    logical, intent(in) :: NoMoreCrop_in
+
+    NoMoreCrop = NoMoreCrop_in
+end subroutine SetNoMoreCrop
 
 end module ac_global
