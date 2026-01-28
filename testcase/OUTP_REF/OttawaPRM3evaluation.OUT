@@ -1,4 +1,4 @@
-AquaCrop 7.3 (January 2026) - Output created on (date) : 27-01-2026   at (time) : 14:34:45
+AquaCrop 7.3 (January 2026) - Output created on (date) : 28-01-2026   at (time) : 13:50:05
 Evaluation of simulation results - Statistics
 ** Run number:3
 
@@ -12,29 +12,29 @@ Evaluation of simulation results - Statistics
               --------- Biomass (ton/ha) ---------
     Nr        Observed    +/- St Dev     Simulated    Date
   ----------------------------------------------------------------
-     1           2.678        -9.000         2.248      25 May 2016
-     2           3.628        -9.000         3.362       1 June 2016
-     3           5.054        -9.000         4.311       9 June 2016
-     4           4.817        -9.000         5.049      15 June 2016
-     5           5.181        -9.000         5.124      16 June 2016
-     6           5.435        -9.000         6.359      28 June 2016
-     7           6.222        -9.000         7.164       5 July 2016
-     8           6.609        -9.000         7.969      12 July 2016
-     9           7.811        -9.000         8.856      20 July 2016
-    10           8.149        -9.000         8.921      21 July 2016
-    11           8.729        -9.000         9.832       2 August 2016
-    12           9.086        -9.000        10.323      10 August 2016
-    13           9.502        -9.000        10.620      16 August 2016
-    14          10.304        -9.000        10.833      21 August 2016
+     1           2.678        -9.000         2.256      25 May 2016
+     2           3.628        -9.000         3.373       1 June 2016
+     3           5.054        -9.000         4.325       9 June 2016
+     4           4.817        -9.000         5.066      15 June 2016
+     5           5.181        -9.000         5.141      16 June 2016
+     6           5.435        -9.000         6.380      28 June 2016
+     7           6.222        -9.000         7.188       5 July 2016
+     8           6.609        -9.000         7.996      12 July 2016
+     9           7.811        -9.000         8.886      20 July 2016
+    10           8.149        -9.000         8.951      21 July 2016
+    11           8.729        -9.000         9.865       2 August 2016
+    12           9.086        -9.000        10.358      10 August 2016
+    13           9.502        -9.000        10.656      16 August 2016
+    14          10.304        -9.000        10.869      21 August 2016
 
   Valid observations/simulations sets (n) ....... :    14
   Average of observed Biomass production ........ :     6.657   ton/ha
-  Average of simulated Biomass production ....... :     7.212   ton/ha
+  Average of simulated Biomass production ....... :     7.236   ton/ha
 
   Pearson Correlation Coefficient (r) ........... :     0.99
-  Root mean square error (RMSE) ................. :     0.863   ton/ha
-  Normalized root mean square error  CV(RMSE).... :    13.0   %
-  Nash-Sutcliffe model efficiency coefficient (EF):     0.85
+  Root mean square error (RMSE) ................. :     0.884   ton/ha
+  Normalized root mean square error  CV(RMSE).... :    13.3   %
+  Nash-Sutcliffe model efficiency coefficient (EF):     0.84
   Willmotts index of agreement (d) .............. :     0.97
   ----------------------------------------------------------------
 

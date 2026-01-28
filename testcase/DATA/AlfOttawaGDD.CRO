@@ -60,7 +60,7 @@ Ottawa variety - Alfalfa - Louvain-La-Neuve (Belgium) -  adjusted for Ottawa - c
     17         : Building up of Harvest Index starting at sowing/transplanting (days)
     15.0       : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
    100         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
-    50         : Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration
+   100         : Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration
    100         : Reference Harvest Index (HIo) (%)
     -9         : Possible increase (%) of HI due to water stress before flowering
     -9.0       : No impact on HI of restricted vegetative growth during yield formation 
