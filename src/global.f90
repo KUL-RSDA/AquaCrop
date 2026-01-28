@@ -4785,7 +4785,7 @@ subroutine AdjustSimPeriod()
        end if
     end select
 
-    ! Simulation period cannot exceed Premature End of crop growth  - Version 7.1
+    ! Simulation period cannot exceed Premature End of crop growth  - Version 7.3
     call DetermineDate(GetCrop_Day1(), dayi, monthi, ThePlantingYear)  ! planting year
     call SetSimulation_DayNrPrematureEnd( &
             TheDayNrPrematureEnd(GetCrop_PrematureEnd(), ThePlantingYear) )
