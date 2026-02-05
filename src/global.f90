@@ -5651,8 +5651,8 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
         if ((GetCrop_subkind() /= subkind_Vegetative) &
             .and. (GetCrop_subkind() /= subkind_Forage)) then
             CCthreshold = PercCCxHIfinal
-            if ((100* GetCrop_CCo()) > PercCCxHIfinal) then
-                CCthreshold = (100* (1.1*GetCrop_CCo()))
+            if ((100._dp* GetCrop_CCo()) > PercCCxHIfinal) then
+                CCthreshold = (100._dp* (1.1*GetCrop_CCo()))
             end if
             if ((HIfinal == HImax) .and. (t <= tmax) &
                               .and. ((CCi+epsilon(0._dp)) <= (CCthreshold/100._dp)) &
