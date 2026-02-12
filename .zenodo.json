@@ -1,0 +1,77 @@
+{
+  "title": "AquaCrop v7.3",
+  "upload_type": "software",
+  "version": "v7.3",
+  "description": "Open-source code and stand-alone executables of AquaCrop v7.3",
+  "access_right": "open",
+  "license": "bsd-3-clause",
+  "creators": [
+    {
+      "name": "Busschaert, Louise",
+      "orcid": "0000-0002-8805-7305",
+      "affiliation": "KU Leuven"
+    },
+    {
+      "name": "Bechtold, Michel",
+      "orcid": "0000-0002-8042-9792"
+    },
+    {
+      "name": "De Lannoy, Gabrielle",
+      "orcid": "0000-0002-6743-7122",
+      "affiliation": "KU Leuven"
+    },
+    {
+      "name": "de Roos, Shannon",
+      "orcid": "0000-0002-1782-444X",
+      "affiliation": "Vrije Universiteit Brussel"
+    },
+    {
+      "name": "Heyvaert, Zdenko",
+      "orcid": "0000-0002-9748-1124",
+      "affiliation": "KU Leuven"
+    },
+    {
+      "name": "Mortelmans, Jonas",
+      "orcid": "0000-0003-1523-2851",
+      "affiliation": "KU Leuven"
+    },
+    {
+      "name": "Scherrer, Samuel",
+      "orcid": "0000-0002-2486-0107"
+    },
+    {
+      "name": "Van den Bossche, Maxime",
+      "orcid": "0000-0002-0938-0156"
+    },
+    {
+      "name": "Fereres Castiel, Elías",
+      "orcid": "0000-0002-3767-2041",
+      "affiliation": "Universidad de Córdoba"
+    },
+    {
+      "name": "Heng, Lee",
+      "orcid": "0000-0001-7927-444X",
+      "affiliation": "retired ex-IAEA"
+    },
+    {
+      "name": "STEDUTO, Pasquale",
+      "orcid": "0009-0000-9001-3304"
+    },
+    {
+      "name": "RAES, Dirk",
+      "orcid": "0000-0002-6628-403X",
+      "affiliation": "KU Leuven"
+    }
+  ],
+  "grants": [
+    { "id": "00k4n6c32::773903" },
+    { "id": "05f950310::C14/21/057" },
+    { "id": "01fapfv42::SR/00/412" },
+    { "id": "03qtxy027::1158423N" }
+  ],
+  "custom_fields": {
+    "code:codeRepository": "https://github.com/KUL-RSDA/AquaCrop",
+    "code:developmentStatus": "active",
+    "code:programmingLanguage": ["Fortran"]
+  }
+}
