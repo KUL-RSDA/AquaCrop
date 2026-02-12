@@ -88,7 +88,7 @@ use ac_global, only: ActiveCells, &
                      GetCrop_GDtranspLow, &
                      GetCrop_HI, &
                      getcrop_hiincrease, &
-                     GetCrop_KcDecline, &
+                     GetCrop_KcDeclineCumul, &
                      GetCrop_KcTop, &
                      GetCrop_KsShapeFactorLeaf, &
                      GetCrop_KsShapeFactorSenescence, &
@@ -171,6 +171,7 @@ use ac_global, only: ActiveCells, &
                      GetRootZoneWC_ZtopWP, &
                      GetRunoff, &
                      getsimulation_dayanaero, &
+                     GetSimulation_DayNrPrematureEnd, &
                      GetSimulation_DelayedDays, &
                      GetSimulation_EffectStress, &
                      GetSimulation_EffectStress_CDecline, &
@@ -264,7 +265,6 @@ use ac_global, only: ActiveCells, &
                      HImultiplier, &
                      IrriMode_Generate, &
                      IrriMode_Inet, &
-                     KsAny, &
                      KsAny, &
                      KsSalinity, &
                      KsTemperature, &
@@ -380,7 +380,8 @@ use ac_global, only: ActiveCells, &
                      subkind_Vegetative, &
                      TimeToMaxCanopySF, &
                      undef_double, &
-                     undef_int
+                     undef_int, &
+                     SetNoMoreCrop
 use ac_kinds, only:  dp, &
                      int8, &
                      int32, &
@@ -494,7 +495,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
     end if
     call CalculateETpot(DAP, GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
                    GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), 0, CCiPot, &
-                   GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), GetCrop_CCx(), &
+                   GetETo(), GetCrop_KcTop(), GetCrop_KcDeclineCumul(), GetCrop_CCx(), &
                    CCxWitheredTpotNoS, real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, GDDayi, &
                    GetCrop_GDtranspLow(), TpotForB, EpotTotForB)
 
@@ -5531,6 +5532,11 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
                               CDCTotal, &
                               DayFraction, GDDCDCTotal, TESTVAL)
         end select
+        ! added 7.3 - premature end
+        if (dayi == GetSimulation_DayNrPrematureEnd()) then
+            call SetCCiActual(0._dp)
+            call SetNoMoreCrop(.true.)
+        end if
     end if
 
     ! 11. Determine Tpot and Epot
@@ -5551,7 +5557,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     call CalculateETpot(DAP, GetCrop_DaysToGermination(), &
                         GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
                         GetCrop_DaysToHarvest(), DayLastCut, GetCCiActual(), &
-                        GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), &
+                        GetETo(), GetCrop_KcTop(), GetCrop_KcDeclineCumul(), &
                         GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), &
                         real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, &
                         GDDayi, GetCrop_GDtranspLow(), Tpot_temp, EpotTot)

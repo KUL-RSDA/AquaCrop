@@ -67,7 +67,7 @@ use ac_global , only:   DetermineParametersCR, &
                         SetCrop_GDtranspLow, &
                         SetCrop_HI, &
                         SetCrop_HIincrease, &
-                        SetCrop_KcDecline, &
+                        SetCrop_KcDeclineCumul, &
                         SetCrop_KcTop, &
                         SetCrop_KsShapeFactorLeaf, &
                         SetCrop_KsSHapeFactorSenescence, &
@@ -81,6 +81,7 @@ use ac_global , only:   DetermineParametersCR, &
                         SetCrop_pLeafDefUL, &
                         SetCrop_pMethod, &
                         SetCrop_pPollination, &
+                        SetCrop_PrematureEnd, &
                         SetCrop_pSenescence, &
                         SetCrop_ResponseECsw, &
                         SetCrop_RootMax, &
@@ -183,6 +184,8 @@ subroutine ResetDefaultCrop(use_default_crop_file)
                               ! Crop water productivity to soil fertility stress
     call SetCrop_StressResponse_ShapeCDecline(1.67_dp) ! Shape factor for response
                               ! of Canopy cover decline to soil fertility stress
+    call SetCrop_PrematureEnd(undef_int) ! day at which annual crops cannot survive 
+                              !(daynumber counting from 1 January of planting year)
     call SetCrop_StressResponse_Calibrated(.true.)
 
     call SetCrop_ECemin(2_int8) ! Electrical Conductivity of soil saturation
@@ -203,8 +206,9 @@ subroutine ResetDefaultCrop(use_default_crop_file)
                                       ! crop transpiration (degC - day)
     call SetCrop_KcTop(1.10_dp) ! Crop coefficient when complete cover and prior to
                                 ! senescence (Kc,top)
-    call SetCrop_KcDecline(0.150_dp) ! Decline crop coefficient (%/day) as a result
-                                     ! of ageing, nitrogen defficiency, etc.
+    call SetCrop_KcDeclineCumul(11._dp) ! Cumulative decrease (%) at maturity of 
+                                ! crop coefficient as a result of ageing, nitrogen 
+                                ! defficiency, etc.
     call SetCrop_RootMin(0.30_dp) ! Minimum rooting depth (m)
     call SetCrop_RootMax(1.00_dp) ! Maximum rooting depth (m)
     call SetCrop_RootMinYear1(GetCrop_RootMin()) ! Minimum rooting depth in first
