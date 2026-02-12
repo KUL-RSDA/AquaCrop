@@ -5601,6 +5601,7 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
     integer(int32), parameter :: HIo = 1
     real(dp) :: HIGC, HIday, HIGClinear, dHIdt_local
     integer(int32) :: t, tMax, tSwitch
+    real(dp) :: CCthreshold
 
     dHIdt_local = dHIdt
     t = DAP - GetSimulation_DelayedDays() - DaysToFlower
@@ -5658,13 +5659,18 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, CCi, &
 
         ! adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
         tMax = roundc(HImax/dHIdt_local, mold=1)
-        if ((HIfinal == HImax) .and. (t <= tmax) &
-                              .and. ((CCi+epsilon(0._dp)) <= (PercCCxHIfinal/100._dp)) &
+        if ((GetCrop_subkind() /= subkind_Vegetative) &
+            .and. (GetCrop_subkind() /= subkind_Forage)) then
+            CCthreshold = PercCCxHIfinal
+            if ((100._dp* GetCrop_CCo()) > PercCCxHIfinal) then
+                CCthreshold = (100._dp* (1.1*GetCrop_CCo()))
+            end if
+            if ((HIfinal == HImax) .and. (t <= tmax) &
+                              .and. ((CCi+epsilon(0._dp)) <= (CCthreshold/100._dp)) &
                               .and. (TheCCxWithered > epsilon(0._dp)) &
-                              .and. (CCi < TheCCxWithered) &
-                              .and. (GetCrop_subkind() /= subkind_Vegetative) &
-                              .and. (GetCrop_subkind() /= subkind_Forage)) then
-            HIfinal = roundc(HIday, mold=1)
+                              .and. (CCi < TheCCxWithered)) then
+                HIfinal = roundc(HIday, mold=1)
+            end if
         end if
         if (HIday > HIfinal) then
             HIday = HIfinal
