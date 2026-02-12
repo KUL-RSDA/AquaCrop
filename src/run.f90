@@ -140,6 +140,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetSaltInfiltr, &
                         GetSimulation_FromDayNr, &
                         GetSimulation_IrriECw, &
+                        GetSimulParam_RootPercentZmin, &
                         GetSimulation_SalinityConsidered, &
                         GetSimulation_Storage_Btotal, &
                         GetSimulation_SumGDD, &
@@ -600,6 +601,8 @@ real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
 real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
 real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
 real(dp) :: alfaHI, alfaHIAdj
+real(dp) :: tDaysZmin ! time to reach Zmin (Days)
+real(dp) :: tGDDZmin ! time to reach Zmin (GDDays)
 
 !! DelayedGermination
 integer(int32) :: NextSimFromDayNr !! the Simulation.FromDayNr for next run if delayed germination and KeepSWC
@@ -5337,6 +5340,11 @@ subroutine InitializeSimulationRunPart2()
               GetCrop_RootShape(),&
               GetCrop_ModeCycle()))
     end if
+    ! 16.3 Time to reach Zmin
+    call CalculateTimeToReachZmin(GetCrop_RootMin(),GetCrop_RootMax(),GetCrop_RootShape(), &
+       GetCrop_DaysToGermination(),GetCrop_DaysToMaxRooting(), &
+       GetCrop_GDDaysToGermination(),GetCrop_GDDaysToMaxRooting(), &
+       GetCrop_ModeCycle(),tDaysZmin,tGDDZmin)
 
     ! 17. Multiple cuttings
     call SetNrCut(0)
@@ -6518,6 +6526,116 @@ subroutine GetPotValSF(DAP, SumGDDAdjCC, PotValSF)
     PotValSF = 100._dp * (1._dp/GetCCxCropWeedsNoSFstress()) * PotValSF
 end subroutine GetPotValSF
 
+
+subroutine CalculateTimeToReachZmin(ZMin, ZMax, RootShape, L0, LZmax, GGDL0, GDDLZmax, &
+                              TheModeCycle, tDaysZmin, tGDDZmin)
+    real(dp), intent(in) :: ZMin
+    real(dp), intent(in) :: ZMax
+    integer(int8), intent(in) :: RootShape
+    integer(int32), intent(in) :: L0
+    integer(int32), intent(in) :: LZmax
+    integer(int32), intent(in) :: GGDL0
+    integer(int32), intent(in) :: GDDLZmax
+    integer(intEnum), intent(in) :: TheModeCycle
+    real(dp), intent(inout) :: tDaysZmin
+    real(dp), intent(inout) :: tGDDZmin
+
+    real(dp) :: Zini, Zfunction
+
+    tDaysZmin = real(L0, kind=dp)
+    tGDDZmin  = real(GGDL0, kind=dp)
+
+    if ((GetSimulParam_RootPercentZmin() < 100) .and. (ZMin < ZMax)) then
+        Zini = ZMin * (real(GetSimulParam_RootPercentZmin(), kind=dp)/100._dp)
+
+        Zfunction = exp( (real(RootShape, kind=dp)/10._dp) * &
+                         log( (ZMin - Zini) / (ZMax - Zini) ) )
+
+        select case (TheModeCycle)
+        case (modeCycle_GDDays)
+            if (GDDLZmax > (GGDL0/2._dp)) then
+                tGDDZmin = Zfunction * real((GDDLZmax - (GGDL0/2._dp)), kind=dp) + &
+                          real((GGDL0/2._dp), kind=dp)
+            end if
+        case default
+            if (LZmax > (L0/2._dp)) then
+                tDaysZmin = Zfunction * real((LZmax - (L0/2._dp)), kind=dp) + &
+                           real((L0/2._dp), kind=dp)
+            end if
+        end select
+    end if
+end subroutine CalculateTimeToReachZmin
+
+
+subroutine CalculateRootingDepth(tDaysZmin, tGDDZmin, ZiPrev, GDDayi, RootingDepth)
+    real(dp), intent(in) :: tDaysZmin
+    real(dp), intent(in) :: tGDDZmin
+    real(dp), intent(in) :: ZiPrev
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(inout) :: RootingDepth
+
+    real(dp) :: tCalDayReal, tCalGDD, CalSumGDDPrev
+    real(dp) :: Zini, Zfunction
+    integer(int32) :: tCalDay
+    integer(int32) :: tCalDayNow
+
+    ! initialize
+    tCalDayNow = GetDayNri() - GetCrop_Day1() + 1            ! actual time (calendar day)
+    tCalDay    = tCalDayNow
+    tCalGDD    = GetSimulation_SumGDD()                      ! actual time (sum of GDD)
+    CalSumGDDPrev = GetSumGDDPrev()                          ! sum of GDD at previous day
+
+    ! Adjust time after planting (tCalDay OR tCalGDD) to simulate root zone expansion
+    Zini = GetCrop_RootMin() * (real(GetSimulParam_RootPercentZmin(), kind=dp)/100._dp)
+
+    if ((GetCrop_RootMin() < GetCrop_RootMax()) .and. (ZiPrev > Zini)) then
+        ! valid for calendar and GDD time
+        Zfunction = exp( (real(GetCrop_RootShape(), kind=dp)/10._dp) * &
+                         log( (ZiPrev - Zini) / (GetCrop_RootMax() - Zini) ) )
+
+        select case (GetCrop_ModeCycle())
+        case (modeCycle_GDDays)
+            ! growing degree days
+            if (GetSimulation_SumGDD() > tGDDZmin) then
+                ! root zone expansion can exceed Zmin
+                ! time to simulate root zone expansion is given by Zr of previous day (ZiPrev)
+                CalSumGDDPrev = Zfunction * &
+                    real((GetCrop_GDDaysToMaxRooting() - (GetCrop_GDDaysToGermination()/2._dp)), kind=dp) + &
+                    real((GetCrop_GDDaysToGermination()/2._dp), kind=dp)
+
+                tCalGDD = CalSumGDDPrev + GDDayi   ! add GDD of today to get adjusted sum GDD
+                if (tCalGDD > GetSimulation_SumGDD()) then
+                    tCalGDD = GetSimulation_SumGDD()
+                end if
+            end if
+
+        case default
+            ! calendar days
+            if (real(tCalDayNow, kind=dp) > tDaysZmin) then
+                ! root zone expansion can exceed Zmin
+                ! time to simulate root zone expansion is given by Zr of previous day (ZiPrev)
+                tCalDayReal = Zfunction * &
+                    real((GetCrop_DaysToMaxRooting() - (GetCrop_DaysToGermination()/2._dp)), kind=dp) + &
+                    real((GetCrop_DaysToGermination()/2._dp), kind=dp)
+
+                tCalDay = roundc(tCalDayReal, mold=1_int32) + 1  ! integer value + 1 day
+                if (tCalDay > tCalDayNow) tCalDay = tCalDayNow
+            end if
+        end select
+    end if
+    ! calculate root zone expansion with time after planting given by Zr of previous day (ZiPrev)
+    RootingDepth = AdjustedRootingDepth( &
+        GetPlotVarCrop_ActVal(), GetPlotVarCrop_PotVal(), GetTpot(), GetTact(), GetStressLeaf(), &
+        GetStressSenescence(), tCalDay, GetCrop_DaysToGermination(), GetCrop_DaysToMaxRooting(), GetCrop_DaysToHarvest(), &
+        GetCrop_GDDaysToGermination(), GetCrop_GDDaysToMaxRooting(), GetCrop_GDDaysToHarvest(), &
+        CalSumGDDPrev, tCalGDD, &
+        GetCrop_RootMin(), GetCrop_RootMax(), ZiPrev, GetCrop_RootShape(), &
+        GetCrop_ModeCycle() )
+
+    if (RootingDepth < ZiPrev) RootingDepth = ZiPrev
+end subroutine CalculateRootingDepth
+
+
 !! ===END Subroutines and functions for AdvanceOneTimeStep ===
 
 
@@ -6801,6 +6919,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
                 ScorAT1_temp, ScorAT2_temp, HItimesAT1_temp, &
                 HItimesAT2_temp, HItimesAT_temp, alfaHI_temp, &
                 alfaHIAdj_temp, TESTVAL
+    real(dp) :: RootingDepth_temp
     logical :: WaterTableInProfile_temp, NoMoreCrop_temp
 
     ! 1. Get ETo
@@ -6964,18 +7083,9 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         if (((GetDayNri()-GetSimulation_DelayedDays()) >= GetCrop_Day1()) .and. &
             ((GetDayNri()-GetSimulation_DelayedDays()) <= GetCrop_DayN())) then
             ! rooting depth at DAP (at Crop.Day1, DAP = 1)
-            call SetRootingDepth(AdjustedRootingDepth(GetPlotVarCrop_ActVal(), &
-                   GetPlotVarCrop_PotVal(), GetTpot(), GetTact(), &
-                   GetStressLeaf(), GetStressSenescence(), &
-                   (GetDayNri()-GetCrop_Day1()+1), &
-                   GetCrop_DaysToGermination(), &
-                   GetCrop_DaysToMaxRooting(), GetCrop_DaysToHarvest(), &
-                   GetCrop_GDDaysToGermination(), &
-                   GetCrop_GDDaysToMaxRooting(), &
-                   GetCrop_GDDaysToHarvest(), GetSumGDDPrev(), &
-                   (GetSimulation_SumGDD()), GetCrop_RootMin(), &
-                   GetCrop_RootMax(), GetZiprev(), GetCrop_RootShape(), &
-                   GetCrop_ModeCycle()))
+            call CalculateRootingDepth(tDaysZmin,tGDDZmin,&
+              GetZiPrev(),GetGDDayi(),RootingDepth_temp)
+            call SetRootingDepth(RootingDepth_temp)
             call SetZiprev(GetRootingDepth())
             ! IN CASE rootzone drops below groundwate table
             if ((GetZiAqua() >= 0._dp) .and. (GetRootingDepth() > &
