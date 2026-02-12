@@ -316,6 +316,7 @@ use ac_global, only: ActiveCells, &
                      SetEvapoEntireSoilSurface, &
                      SetInfiltrated, &
                      SetIrrigation, &
+                     GetIrriInfoLastDay, &
                      SetManagement_WeedDeltaRC, &
                      SetRootingdepth, &
                      SetRootZoneSalt_ECe, &
@@ -5517,10 +5518,16 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
             .or. (GetRainRecord_DataType() == datatype_monthly)) then
         call CalculateEffectiveRainfall(SubDrain)
     end if
-    if (((GetIrriMode() == IrriMode_Generate) &
-        .and. (GetIrrigation() < epsilon(0._dp))) &
-            .and. (TargetTimeVal_loc /= -999)) then
-        call Calculate_irrigation(SubDrain, TargetTimeVal_loc, TargetDepthVal)
+    if ((GetIrriMode() == IrriMode_Generate) &
+        .and. (GetIrriInfoLastDay() /= undef_int) &
+            .and. (dayi >= (GetCrop_DayN() - GetIrriInfoLastDay() + 1))) then
+        call SetIrrigation(0._dp)
+    else
+        if (((GetIrriMode() == IrriMode_Generate) &
+            .and. (GetIrrigation() < epsilon(0._dp))) &
+                .and. (TargetTimeVal_loc /= -999)) then
+            call Calculate_irrigation(SubDrain, TargetTimeVal_loc, TargetDepthVal)
+        end if
     end if
     if (GetManagement_Bundheight() >= 0.01_dp) then
         call calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &

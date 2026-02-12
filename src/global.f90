@@ -1018,6 +1018,7 @@ integer(int32) :: DaySubmerged
 integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
+integer(int32) :: IrriInfoLastDay
 integer(int32) :: ZiAqua ! Depth of Groundwater table below
                          ! soil surface in centimeter
 
@@ -2863,6 +2864,7 @@ subroutine NoIrrigation()
     call SetGenerateTimeMode(GenerateTimeMode_AllRAW)
     call SetGenerateDepthMode(GenerateDepthMode_ToFC)
     IrriFirstDayNr = undef_int
+    IrriInfoLastDay = undef_int
     do Nri = 1, 5
         call SetIrriBeforeSeason_DayNr(Nri, 0)
         call SetIrriBeforeSeason_Param(Nri, 0)
@@ -2886,6 +2888,8 @@ subroutine LoadIrriScheduleInfo(FullName)
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
     read(fhandle, '(a)', iostat=rc) IrriDescription
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
+    
+    IrriInfoLastDay = undef_int
 
     ! irrigation method
     read(fhandle, *, iostat=rc) i
@@ -2948,6 +2952,13 @@ subroutine LoadIrriScheduleInfo(FullName)
         case default
             call SetGenerateDepthMode(GenerateDepthMode_FixDepth)
         end select
+
+        if (roundc(VersionNr*10,mold=1) >= 73) then
+            read(fhandle, *, iostat=rc) IrriInfoLastDay
+        else
+            IrriInfoLastDay = undef_int
+        end if
+
         IrriFirstDayNr = undef_int ! start of growing period
     end if
 
@@ -13490,6 +13501,21 @@ subroutine SetIrriFirstDayNr(IrriFirstDayNr_in)
 
     IrriFirstDayNr = IrriFirstDayNr_in
 end subroutine SetIrriFirstDayNr
+
+
+integer(int32) function GetIrriInfoLastDay()
+    !! Getter for the "IrriInfoLastDay" global variable.
+
+    GetIrriInfoLastDay = IrriInfoLastDay
+end function GetIrriInfoLastDay
+
+
+subroutine SetIrriInfoLastDay(IrriInfoLastDay_in)
+    !! Setter for the "IrriInfoLastDay" global variable.
+    integer(int32), intent(in) :: IrriInfoLastDay_in
+
+    IrriInfoLastDay = IrriInfoLastDay_in
+end subroutine SetIrriInfoLastDay
 
 
 type(rep_clim) function GetClimRecord()
