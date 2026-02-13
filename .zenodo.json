@@ -66,12 +66,6 @@
       "affiliation": "KU Leuven"
     }
   ],
-  "grants": [
-    { "id": "00k4n6c32::773903" },
-    { "id": "05f950310::C14/21/057" },
-    { "id": "01fapfv42::SR/00/412" },
-    { "id": "03qtxy027::1158423N" }
-  ],
   "custom_fields": {
     "code:codeRepository": "https://github.com/KUL-RSDA/AquaCrop",
     "code:developmentStatus": "active",
