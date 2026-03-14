@@ -407,11 +407,9 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     call SetRainRecord_FromY(1901)
 
     ! 5.4 CO2
-    call SetCO2File('MaunaLoa.CO2')
-    call SetCO2FileFull(GetPathNameSimul() // GetCO2File())
-    CO2descr = GetCO2Description()
-    call GenerateCO2Description(GetCO2FileFull(), CO2descr)
-    call SetCO2Description(CO2descr)
+    call SetCO2File('(None)')
+    call SetCO2FileFull(GetCO2File())
+    call SetCO2Description('')
 
     ! 5.5 Climate file
     call SetClimateFile('(None)')

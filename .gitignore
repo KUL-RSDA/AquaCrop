@@ -8,3 +8,10 @@ __pycache__
 tests/tmp*
 tests/log*.txt
 *.swp
+.Rproj.user
+*.Rproj
+.DS_Store
+.Rhistory
+.RData
+.httr-oauth
+.quarto
