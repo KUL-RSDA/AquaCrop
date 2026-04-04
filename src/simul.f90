@@ -3862,6 +3862,11 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
 
         ! Only when SumGDDadj > GDDayi
         ! and CCx < CCiToFind
+        ! Guard against division by zero when CCx <= CCiToFind (LB 03/04/2026)
+        if (CCiToFind >= CCx) then
+            RequiredGDD = 0._sp
+            return
+        end if
         ! 1. GDDCGCx to reach CCiToFind on previous day (= SumGDDadj - GDDayi )
         if (CCiToFind <= CCx/2._sp) then
             GDDCGCx = (log(CCiToFind/CCo))/(SumGDDadjCC-GDDayi)
