@@ -3980,6 +3980,10 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
                 StressSenescence = 0._sp
             end if
         end if
+        ! Floor to avoid subsequent divisions by 0
+        if (GDDCDCadjusted < 0.0001_sp) then
+            GDDCDCadjusted = 0.0001_sp
+        end if
     end subroutine DetermineGDDCDCadjustedWaterStress
 
 
