@@ -122,6 +122,7 @@ use ac_global , only: undef_int, &
                       SetIrriFileFull,&
                       FullUndefinedRecord, &
                       SetEToFile, SetEToFilefull, &
+                      SetExternalRun, &
                       SetObservationsFileFull, &
                       SetProfFilefull,&
                       SetGroundWaterFilefull,&
@@ -1871,6 +1872,11 @@ subroutine LoadSimulationRunProject(NrRun)
     if (GetClimateFile() /= '(External)') then
         call SetClimData()
     end if
+    ! Another program (e.g. LIS) is driving this run and supplying its weather. Derived here, where
+    ! the project's climate is settled, rather than asked of the driver: everything that
+    ! depends on it - above all, that such a run writes no output of its own - then follows
+    ! from the project itself.
+    call SetExternalRun(GetTemperatureFile() == '(External)')
     call AdjustOnsetSearchPeriod() ! Set initial StartSearch and StopSearchDayNr
 
     ! 2. Calendar

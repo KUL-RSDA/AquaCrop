@@ -1100,6 +1100,9 @@ real(sp), dimension(1:365) :: TmaxTnxReference365DaysRun, TminTnxReference365Day
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay, OutDaily, Out8Irri
+! ExternalRun is true for LIS run. It is based on the climate coming
+! from an external source and not from AquaCrop's own climate files.
+logical :: ExternalRun = .false.
 logical :: Out1Wabal
 logical :: Out2Crop
 logical :: Out3Prof
@@ -17386,6 +17389,21 @@ subroutine SetSurf0(Surf0_in)
 
     Surf0 = Surf0_in
 end subroutine SetSurf0
+
+
+logical function GetExternalRun()
+    !! Getter for the ExternalRun global variable
+
+    GetExternalRun = ExternalRun
+end function GetExternalRun
+
+
+subroutine SetExternalRun(ExternalRun_in)
+    !! Setter for the ExternalRun global variable
+    logical, intent(in) :: ExternalRun_in
+
+    ExternalRun = ExternalRun_in
+end subroutine SetExternalRun
 
 
 logical function GetOutDaily()

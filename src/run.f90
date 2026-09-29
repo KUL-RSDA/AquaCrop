@@ -252,6 +252,10 @@ use ac_global, only:    AdjustSizeCompartments, &
                         IrriMode_Inet, &
                         modeCycle_GDDays, &
                         GetOutDaily, &
+                        GetExternalRun, &
+                        SetOutDaily, &
+                        SetOut8Irri, &
+                        SetPart1Mult, &
                         plant_Seed, &
                         subkind_Forage, &
                         GetCompartment, &
@@ -5261,7 +5265,7 @@ subroutine InitializeSimulationRunPart2()
     call SetScorAT1(0._dp)
     call SetScorAT2(0._dp)
 
-    if (GetOutDaily()) then
+    if (GetOutDaily() .or. GetExternalRun()) then
         call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
     end if
 
@@ -5854,7 +5858,17 @@ subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
     integer(intenum), intent(in) :: TheProjectType
 
     call SetTheProjectFile(trim(TheProjectFileStr))
-    call OpenOutputRun(TheProjectType) ! open seasonal results .out
+    ! A run driven by another program writes no output of its own: the driver reads the
+    ! state it wants through this module. Switching the selections off here is all it takes,
+    ! because every write already hangs on one of them - and what the daily output computes
+    ! on the way is kept by UpdateDailyDiagnostics.
+    if (GetExternalRun()) then
+        call SetOutDaily(.false.)
+        call SetOut8Irri(.false.)
+        call SetPart1Mult(.false.)
+    else
+        call OpenOutputRun(TheProjectType) ! open seasonal results .out
+    end if
     if (GetOutDaily()) then
         call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT
     end if
@@ -5869,7 +5883,9 @@ end subroutine InitializeSimulation
 
 subroutine FinalizeSimulation()
 
-    call fRun_close() ! Close Run.out
+    if (.not. GetExternalRun()) then
+        call fRun_close() ! Close Run.out
+    end if
     if (GetOutDaily()) then
         call fDaily_close()  ! Close Daily.OUT
     end if
@@ -7249,6 +7265,8 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     if (GetOutDaily()) then
         call WriteDailyResults((GetDayNri() - GetSimulation_DelayedDays() &
                                 - GetCrop_Day1()+1), WPi)
+    else if (GetExternalRun()) then
+        call UpdateDailyDiagnostics()
     end if
     if (GetOut8Irri()) then
         call WriteIrrInfo()
@@ -7277,7 +7295,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
 
     ! 15.c Rooting depth
     ! 15.bis extra line for standalone
-    if (GetOutDaily()) then
+    if (GetOutDaily() .or. GetExternalRun()) then
         call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
     end if
     ! 15.extra - reset ageing of Kc at recovery after full senescence
@@ -7362,6 +7380,63 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
 end subroutine FinalizeRun1
 
 
+subroutine UpdateRootZoneWCToMaxDepth()
+    !! Root zone water over the profile's maximum rooting depth, as the daily output
+    !! reports it. Kept apart from the writing so a run that writes nothing - one driven
+    !! externally - still has the value.
+
+    logical :: SWCtopSoilConsidered_temp
+
+    if (GetRootingDepth() < epsilon(0._dp)) then
+        call SetRootZoneWC_Actual(undef_double)
+    else
+        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+            == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+            call DetermineRootZoneWC(GetCrop_RootMax(), &
+                                     SWCtopSoilConsidered_temp)
+            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        else
+            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+            call DetermineRootZoneWC(real(GetSoil_RootMax(), kind=dp), SWCtopSoilConsidered_temp)
+            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        end if
+    end if
+end subroutine UpdateRootZoneWCToMaxDepth
+
+
+subroutine UpdateRootZoneWCToRootingDepth()
+    !! Root zone water over today's rooting depth. This is the state the rest of the model
+    !! and an external driver read, so it is the last of the two updates, as before.
+
+    logical :: SWCtopSoilConsidered_temp
+
+    if (GetRootingDepth() < epsilon(0._dp)) then
+        call SetRootZoneWC_Actual(undef_double)
+        call SetRootZoneWC_FC(undef_double)
+        call SetRootZoneWC_WP(undef_double)
+        call SetRootZoneWC_SAT(undef_double)
+        call SetRootZoneWC_Thresh(undef_double)
+        call SetRootZoneWC_Leaf(undef_double)
+        call SetRootZoneWC_Sen(undef_double)
+    else
+        SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+        call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
+        call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+    end if
+end subroutine UpdateRootZoneWCToRootingDepth
+
+
+subroutine UpdateDailyDiagnostics()
+    !! What the daily output computes on its way to the file: the root zone water content.
+    !! A run driven externally writes no file, but its driver reads those values, so they are
+    !! computed here instead - at the same point in the day, in the same order.
+
+    call UpdateRootZoneWCToMaxDepth()
+    call UpdateRootZoneWCToRootingDepth()
+end subroutine UpdateDailyDiagnostics
+
+
 subroutine WriteDailyResults(DAP, WPi)
     integer(int32), intent(in) :: DAP
     real(dp), intent(in) :: WPi
@@ -7372,7 +7447,6 @@ subroutine WriteDailyResults(DAP, WPi)
                       StrTr, StrW, Brel, Nr, DAP_loc
     integer(int32) :: Ratio1, Ratio2, Ratio3
     real(dp) :: KsTr, HI, KcVal, WPy, SaltVal, WPi_loc, tempreal
-    logical :: SWCtopSoilConsidered_temp
     character(len=1025) :: tempstring
 
     DAP_loc = DAP
@@ -7574,38 +7648,12 @@ subroutine WriteDailyResults(DAP, WPi)
         if (GetTemperatureFile() /= '(External)') then
             call fDaily_write(trim(tempstring), .false.)
         endif
-        if (GetRootingDepth() < epsilon(0._dp)) then
-            call SetRootZoneWC_Actual(undef_double)
-        else
-            if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
-                == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
-                SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-                call DetermineRootZoneWC(GetCrop_RootMax(), &
-                                         SWCtopSoilConsidered_temp)
-                call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
-            else
-                SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-                call DetermineRootZoneWC(real(GetSoil_RootMax(), kind=dp), SWCtopSoilConsidered_temp)
-                call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
-            end if
-        end if
+        call UpdateRootZoneWCToMaxDepth()
         write(tempstring, '(f9.1, f8.2)') GetRootZoneWC_actual(), GetRootingDepth()
         if (GetTemperatureFile() /= '(External)') then
             call fDaily_write(trim(tempstring), .false.)
         endif
-        if (GetRootingDepth() < epsilon(0._dp)) then
-            call SetRootZoneWC_Actual(undef_double)
-            call SetRootZoneWC_FC(undef_double)
-            call SetRootZoneWC_WP(undef_double)
-            call SetRootZoneWC_SAT(undef_double)
-            call SetRootZoneWC_Thresh(undef_double)
-            call SetRootZoneWC_Leaf(undef_double)
-            call SetRootZoneWC_Sen(undef_double)
-        else
-            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-            call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
-            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
-        end if
+        call UpdateRootZoneWCToRootingDepth()
 
         write(tempstring, '(f8.1, 5f10.1)') GetRootZoneWC_actual(), &
                 GetRootZoneWC_SAT(), GetRootZoneWC_FC(), GetRootZoneWC_Leaf(), &
