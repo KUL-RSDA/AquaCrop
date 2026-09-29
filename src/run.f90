@@ -253,9 +253,6 @@ use ac_global, only:    AdjustSizeCompartments, &
                         modeCycle_GDDays, &
                         GetOutDaily, &
                         GetExternalRun, &
-                        SetOutDaily, &
-                        SetOut8Irri, &
-                        SetPart1Mult, &
                         plant_Seed, &
                         subkind_Forage, &
                         GetCompartment, &
@@ -5859,14 +5856,10 @@ subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
 
     call SetTheProjectFile(trim(TheProjectFileStr))
     ! A run driven by another program writes no output of its own: the driver reads the
-    ! state it wants through this module. Switching the selections off here is all it takes,
-    ! because every write already hangs on one of them - and what the daily output computes
-    ! on the way is kept by UpdateDailyDiagnostics.
-    if (GetExternalRun()) then
-        call SetOutDaily(.false.)
-        call SetOut8Irri(.false.)
-        call SetPart1Mult(.false.)
-    else
+    ! state it wants through this module. Its output selections are already off
+    ! (SetExternalRun), so only the seasonal file, which hangs on no selection, is left to
+    ! skip here.
+    if (.not. GetExternalRun()) then
         call OpenOutputRun(TheProjectType) ! open seasonal results .out
     end if
     if (GetOutDaily()) then
@@ -7259,20 +7252,27 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     end if
 
     ! 14.d Print ---------------------------------------
-    if (GetOutputAggregate() > 0) then
-        call CheckForPrint(GetTheProjectFile())
-    end if
-    if (GetOutDaily()) then
-        call WriteDailyResults((GetDayNri() - GetSimulation_DelayedDays() &
-                                - GetCrop_Day1()+1), WPi)
-    else if (GetExternalRun()) then
+    ! An external run takes the diagnostics path instead: it writes nothing, because the
+    ! output selections are held off for it (SetExternalRun), but what the daily output
+    ! computes on the way is still needed. The period totals CheckForPrint keeps are output
+    ! only, so they are not missed.
+    if (GetExternalRun()) then
         call UpdateDailyDiagnostics()
-    end if
-    if (GetOut8Irri()) then
-        call WriteIrrInfo()
-    end if
-    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-        call WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop_Day1()+1))
+    else
+        if (GetOutputAggregate() > 0) then
+            call CheckForPrint(GetTheProjectFile())
+        end if
+        if (GetOutDaily()) then
+            call WriteDailyResults((GetDayNri() - GetSimulation_DelayedDays() &
+                                    - GetCrop_Day1()+1), WPi)
+        end if
+        if (GetOut8Irri()) then
+            call WriteIrrInfo()
+        end if
+        if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+            call WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays() &
+                                      -GetCrop_Day1()+1))
+        end if
     end if
 
     ! 15. Prepare Next day

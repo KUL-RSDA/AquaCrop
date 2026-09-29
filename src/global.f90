@@ -16573,10 +16573,15 @@ end function GetOutputAggregate
 
 
 subroutine SetOutputAggregate(OutputAggregate_in)
-    !! Setter for the "OutputAggregate" global variable.
+    !! Setter for the "OutputAggregate" global variable. An externally driven run keeps it
+    !! at 0, no aggregation (see SetExternalRun).
     integer(int8), intent(in) :: OutputAggregate_in
 
-    OutputAggregate = OutputAggregate_in
+    if (ExternalRun) then
+        OutputAggregate = 0_int8
+    else
+        OutputAggregate = OutputAggregate_in
+    end if
 end subroutine SetOutputAggregate
 
 
@@ -17403,6 +17408,21 @@ subroutine SetExternalRun(ExternalRun_in)
     logical, intent(in) :: ExternalRun_in
 
     ExternalRun = ExternalRun_in
+    if (ExternalRun) then
+        ! A run driven from outside writes no output of its own: the driver reads the state
+        ! it wants through this module. The output selections go off here, and their setters
+        ! keep them off, so a driver that asks for output again - LIS restores its selections
+        ! at every time step - writes nothing to files that were never opened.
+        !
+        ! It does not switch back: a project with one externally driven run writes no output
+        ! for any of its runs, which is what a driver wants and what no project file can ask
+        ! for by accident.
+        OutDaily = .false.
+        Out8Irri = .false.
+        Part1Mult = .false.
+        Part2Eval = .false.
+        OutputAggregate = 0_int8
+    end if
 end subroutine SetExternalRun
 
 
@@ -17414,10 +17434,11 @@ end function GetOutDaily
 
 
 subroutine SetOutDaily(OutDaily_in)
-    !! Setter for the OutDaily global variable
+    !! Setter for the OutDaily global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: OutDaily_in
 
-    OutDaily = OutDaily_in
+    OutDaily = OutDaily_in .and. (.not. ExternalRun)
 end subroutine SetOutDaily
 
 
@@ -17429,10 +17450,11 @@ end function GetOut8Irri
 
 
 subroutine SetOut8Irri(Out8Irri_in)
-    !! Setter for the Out8Irri global variable
+    !! Setter for the Out8Irri global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: Out8Irri_in
 
-    Out8Irri = Out8Irri_in
+    Out8Irri = Out8Irri_in .and. (.not. ExternalRun)
 end subroutine SetOut8Irri
 
 
@@ -17476,10 +17498,11 @@ end function GetPart1Mult
 
 
 subroutine SetPart1Mult(Part1Mult_in)
-    !! Setter for the Part1Mult global variable
+    !! Setter for the Part1Mult global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: Part1Mult_in
 
-    Part1Mult = Part1Mult_in
+    Part1Mult = Part1Mult_in .and. (.not. ExternalRun)
 end subroutine SetPart1Mult
 
 
@@ -17491,10 +17514,11 @@ end function GetPart2Eval
 
 
 subroutine SetPart2Eval(Part2Eval_in)
-    !! Setter for the Part2Eval global variable
+    !! Setter for the Part2Eval global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: Part2Eval_in
 
-    Part2Eval = Part2Eval_in
+    Part2Eval = Part2Eval_in .and. (.not. ExternalRun)
 end subroutine SetPart2Eval
 
 
