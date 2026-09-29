@@ -2190,12 +2190,16 @@ subroutine LoadSimulationRunProject(NrRun)
     ! 1.4 CO2
     call SetCO2File(ProjectInput(NrRun)%CO2_Filename)
     if (GetCO2File() /= '(None)') then
-        call SetCO2FileFull(ProjectInput(NrRun)%CO2_Directory &
-                            // GetCO2File())
-        CO2descr =  GetCO2Description()
-        call GenerateCO2Description(GetCO2FileFull(), CO2descr)
-        call SetCO2Description(CO2descr)
+        ! Use custom CO2 file
+        call SetCO2FileFull(ProjectInput(NrRun)%CO2_Directory // GetCO2File())
+    else
+        ! Fallback to SIMUL/MaunaLoa.CO2
+        call SetCO2File('MaunaLoa.CO2')
+        call SetCO2FileFull(GetPathNameSimul() // 'MaunaLoa.CO2')
     end if
+    CO2descr = GetCO2Description()
+    call GenerateCO2Description(GetCO2FileFull(), CO2descr)
+    call SetCO2Description(CO2descr)
     if (GetClimateFile() /= '(External)') then
         call SetClimData()
     end if
