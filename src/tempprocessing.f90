@@ -122,6 +122,7 @@ use ac_global , only: undef_int, &
                       SetIrriFileFull,&
                       FullUndefinedRecord, &
                       SetEToFile, SetEToFilefull, &
+                      GetExternalRun, &
                       SetExternalRun, &
                       SetObservationsFileFull, &
                       SetProfFilefull,&
@@ -1914,6 +1915,17 @@ subroutine LoadSimulationRunProject(NrRun)
                        // 'for ' // trim(GetCropFile()) // ' to accumulate any ' &
                        // 'growing degree-days.')
         end if
+    end if
+
+    ! A perennial cannot be driven from outside. Its season is bounded in days by the
+    ! project's last day, and the degree-days it banks over that season are then walked
+    ! over the temperature record of the whole run (SumCalendarDays) - days a driver
+    ! coupled to AquaCrop has not simulated yet. Stop here and say so, rather than walk
+    ! over temperatures that nobody has supplied.
+    if (GetExternalRun() .and. (GetCrop_subkind() == subkind_Forage)) then
+        call fatal(trim(GetCropFile()) // ': a perennial crop cannot be run from an ' &
+                   // 'external driver, because its season needs the temperatures of ' &
+                   // 'the whole run in advance.')
     end if
 
     ! Adjust crop parameters of Perennials
