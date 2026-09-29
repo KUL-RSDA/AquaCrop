@@ -416,6 +416,23 @@ integer(intEnum), parameter :: control_end_day = 1
 contains
 
 
+real(dp) function RelativeDepletion(WCatFC, WCactual, WCatWP)
+    !! Depletion of a soil zone: 0 at field capacity, 1 at wilting point.
+    !! A zone without water at all (no root zone yet, so field capacity and
+    !! wilting point are both zero) counts as not depleted, as in
+    !! DetermineRootZoneWC. Without this, the division is 0/0.
+    real(dp), intent(in) :: WCatFC
+    real(dp), intent(in) :: WCactual
+    real(dp), intent(in) :: WCatWP
+
+    if (roundc(1000._dp*(WCatFC - WCatWP), mold=1_int32) > 0) then
+        RelativeDepletion = (WCatFC - WCactual)/(WCatFC - WCatWP)
+    else
+        RelativeDepletion = 0._dp
+    end if
+end function RelativeDepletion
+
+
 real(dp) function GetCDCadjustedNoStressNew(CCx, CDC, CCxAdjusted)
     real(dp), intent(in) :: CCx
     real(dp), intent(in) :: CDC
@@ -2432,7 +2449,9 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                                                                   /100._dp))
         Theta = GetCompartment_theta(compi) - DeltaTheta &
                 + GetCompartment_fluxout(compi) &
-                        /(1000._dp*GetCompartment_Thickness(compi))
+                        /(1000._dp*GetCompartment_Thickness(compi) &
+                            *(1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp))
 
         ! 2. Determine active SaltCels and Add IN
         Theta = Theta + DeltaTheta
@@ -2496,7 +2515,9 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                             * (1._dp &
                           - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
                                                                      /100._dp))
-            do while (DeltaTheta > 0._dp)
+            ! stop once the first salt cell is emptied (celi = 0): there is
+            ! no cell left, and cell 0 would be outside the Salt/Depo arrays
+            do while ((DeltaTheta > 0._dp) .and. (celi > 0))
                 if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
                     limit = (celi-1._dp)*Dx
                 else
@@ -3823,17 +3844,16 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         if (GetSimulation_SWCtopSoilConsidered()) then
             ! top soil is relative wetter than total root zone
             SWCeffectiveRootZone = GetRootZoneWC_ZtopAct()
-            Wrelative = (GetRootZoneWC_ZtopFC() &
-                            - GetRootZoneWC_ZtopAct()) &
-                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
-                                                                ! top soil
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP()) ! top soil
             FCeffectiveRootZone = GetRootZoneWC_ZtopFC()
             WPeffectiveRootZone = GetRootZoneWC_ZtopWP()
         else
             SWCeffectiveRootZone = GetRootZoneWC_Actual()
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                            /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
-                                                        ! total root zone
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP()) ! total root zone
             FCeffectiveRootZone = GetRootZoneWC_FC()
             WPeffectiveRootZone = GetRootZoneWC_WP()
         end if
@@ -3952,13 +3972,13 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         pSenLL = 0.999_dp ! WP
         if (GetSimulation_SWCtopSoilConsidered()) then
         ! top soil is relative wetter than total root zone
-            Wrelative = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct()) &
-                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
-                                                                ! top soil
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP()) ! top soil
         else
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                        /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
-                                                ! total root zone
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP()) ! total root zone
         end if
 
         WithBeta = .false.
@@ -4494,13 +4514,23 @@ subroutine CalculateSoilEvaporationStage2()
     integer(int32), dimension(11) :: SCellIniEvap
 
     ! Step 1. Conditions before soil evaporation
+    ! Every slot holds the state before evaporation, also for the
+    ! compartments the loop below does not reach: step 3 compares against
+    ! them, and would otherwise read a value that was never set.
+    do i = 1, size(ThetaIniEvap)
+        if ((i+1) <= GetNrCompartments()) then
+            ThetaIniEvap(i) = GetCompartment_Theta(i+1)
+            SCellIniEvap(i) = ActiveCells(GetCompartment_i(i+1))
+        else
+            ThetaIniEvap(i) = 0._dp
+            SCellIniEvap(i) = 0
+        end if
+    end do
     compi = 1
     MaxSaltExDepth = GetCompartment_Thickness(1)
     do while ((MaxSaltExDepth < GetSimulParam_EvapZmax()) &
                 .and. (compi < GetNrCompartments()))
         compi = compi + 1
-        ThetaIniEvap(compi-1) = GetCompartment_Theta(compi)
-        SCellIniEvap(compi-1) = ActiveCells(GetCompartment_i(compi))
         MaxSaltExDepth = MaxSaltExDepth + GetCompartment_Thickness(compi)
     end do
 
@@ -4528,9 +4558,11 @@ subroutine CalculateSoilEvaporationStage2()
                 Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
                 Wrel = (Wact-Wlower)/(Wupper-Wlower)
             end do
-            Kr = SoilEvaporationReductionCoefficient(Wrel, &
-                               real(GetSimulParam_EvapDeclineFactor(), kind=dp))
         end if
+        ! also needed when the evaporation layer cannot deepen
+        ! (EvapZmax = EvapZmin), where Kr was left without a value
+        Kr = SoilEvaporationReductionCoefficient(Wrel, &
+                           real(GetSimulParam_EvapDeclineFactor(), kind=dp))
         if (abs(GetETo() - 5._dp) > 0.01_dp) then
             ! correction for evaporative demand
             ! adjustment of Kr (not considered yet)
@@ -5179,16 +5211,17 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
         if (GetSimulation_SWCtopSoilConsidered()) then
             ! top soil is relative wetter than total root zone
             SWCeffectiveRootZone = GetRootZoneWC_ZtopAct()
-            Wrelative = (GetRootZoneWC_ZtopFC() &
-                         - GetRootZoneWC_ZtopAct()) &
-                            /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP())
             FCeffectiveRootZone = GetRootZoneWC_ZtopFC()
             WPeffectiveRootZone = GetRootZoneWC_ZtopWP()
         else
             ! total rootzone is wetter than top soil
             SWCeffectiveRootZone = GetRootZoneWC_Actual()
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                            /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP())
             FCeffectiveRootZone = GetRootZoneWC_FC()
             WPeffectiveRootZone = GetRootZoneWC_WP()
         end if
@@ -5230,13 +5263,13 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
         pSenLL = 0.999_dp ! WP
         if (GetSimulation_SWCtopSoilConsidered()) then
         ! top soil is relative wetter than total root zone
-            Wrelative = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct()) &
-                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
-                                                                ! top soil
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP()) ! top soil
         else
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                        /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
-                                                 ! total root zone
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP()) ! total root zone
         end if
         WithBeta = .false.
         call AdjustpSenescenceToETo(GetETo(), TimeSenescence, &

@@ -9,9 +9,12 @@ use ac_kinds, only: dp, &
 use ac_project_input, only: GetNumberSimulationRuns, &
                             ProjectInput
 use ac_utils, only: roundc, &
+                    fatal, &
                     GetReleaseDate, &
                     GetVersionString, &
-                    trunc
+                    int2str, &
+                    trunc, &
+                    warn
 use iso_fortran_env, only: iostat_end
 implicit none
 
@@ -534,7 +537,7 @@ type rep_param
     !! Salinity
     integer(int8) :: SaltDiff
         !! salt diffusion factor (capacity for salt diffusion in micro pores) [%]
-    integer(int8) :: SaltSolub
+    integer(int32) :: SaltSolub
         !! salt solubility [g/liter]
     !! Groundwater table
     logical :: ConstGwt
@@ -1051,8 +1054,11 @@ real(dp) :: CRwater ! mm/day
 real(dp) :: ECdrain ! EC drain water dS/m
 real(dp) :: ECiAqua ! EC of the groundwater table in dS/m
 real(dp) :: ECstorage !EC surface storage dS/m
-real(dp) :: Eact ! mm/day
-real(dp) :: Epot ! mm/day
+! The daily fluxes below are read before the day that sets them (the water
+! balance of a day before the crop, the generation of an irrigation event),
+! so they start at zero rather than at whatever the compiler leaves behind.
+real(dp) :: Eact = 0._dp ! mm/day
+real(dp) :: Epot = 0._dp ! mm/day
 real(dp) :: ETo ! mm/day
 real(dp) :: Drain  ! mm/day
 real(dp) :: Infiltrated ! mm/day
@@ -1063,9 +1069,9 @@ real(dp) :: Runoff  ! mm/day
 real(dp) :: SaltInfiltr ! salt infiltrated in soil profile Mg/ha
 real(dp) :: Surf0 ! surface water [mm] begin day
 real(dp) :: SurfaceStorage !mm/day
-real(dp) :: Tact ! mm/day
-real(dp) :: Tpot ! mm/day
-real(dp) :: TactWeedInfested !mm/day
+real(dp) :: Tact = 0._dp ! mm/day
+real(dp) :: Tpot = 0._dp ! mm/day
+real(dp) :: TactWeedInfested = 0._dp !mm/day
 real(dp) :: Tmax ! degC
 real(dp) :: Tmin ! degC
 real(dp) :: TmaxCropReference ! degC
@@ -2424,6 +2430,44 @@ subroutine DetermineDayNr(Dayi, Monthi, Yeari, DayNr)
 end subroutine DetermineDayNr
 
 
+logical function DayInDataSet(DayNr, DataSet)
+    !! Whether a 31-slot data set (the days of one ten-day period or month of a
+    !! climate record) holds the given day.
+    integer(int32), intent(in) :: DayNr
+    type(rep_DayEventDbl), dimension(31), intent(in) :: DataSet
+
+    DayInDataSet = any(DataSet(:)%DayNr == DayNr)
+end function DayInDataSet
+
+
+integer(int32) function DayIndexInDataSet(DayNr, DataSet, what)
+    !! The slot of the given day in a 31-slot data set.
+    !! The day must be there. If it is not, the climate data cannot provide
+    !! it (a record that is too short, or does not cover the simulation
+    !! period), and the program stops with a message instead of searching on
+    !! past the end of the data set.
+    integer(int32), intent(in) :: DayNr
+    type(rep_DayEventDbl), dimension(31), intent(in) :: DataSet
+    character(len=*), intent(in) :: what
+        !! the data, for the message: e.g. 'ten-daily temperature'
+
+    integer(int32) :: i, Dayi, Monthi, Yeari
+
+    do i = 1, 31
+        if (DataSet(i)%DayNr == DayNr) then
+            DayIndexInDataSet = i
+            return
+        end if
+    end do
+    call DetermineDate(DayNr, Dayi, Monthi, Yeari)
+    call fatal('day ' // int2str(Dayi) // '/' // int2str(Monthi) // '/' &
+               // int2str(Yeari) // ' is not in the ' // what // ' data. ' &
+               // 'Check that the climate file covers the whole simulation ' &
+               // 'period with enough records.')
+    DayIndexInDataSet = 1  ! not reached
+end function DayIndexInDataSet
+
+
 subroutine DetermineDate(DayNr, Dayi, Monthi, Yeari)
     integer(int32), intent(in) :: DayNr
     integer(int32), intent(inout) :: Dayi
@@ -2896,9 +2940,12 @@ subroutine LoadIrriScheduleInfo(FullName)
     real(dp) :: VersionNr
     integer(int8) :: simul_irri_in
     integer(int32) :: simul_percraw
+    character(len=1024) :: DescriptionRead
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, '(a)', iostat=rc) IrriDescription
+    ! read into a fixed-length string: read() does not allocate IrriDescription
+    read(fhandle, '(a)', iostat=rc) DescriptionRead
+    IrriDescription = trim(DescriptionRead)
     read(fhandle, *, iostat=rc) VersionNr  ! AquaCrop version
     
     IrriInfoLastDay = undef_int
@@ -3254,7 +3301,8 @@ subroutine ReadSoilSettings()
 
     integer :: fhandle
     character(len=:), allocatable :: fullName
-    integer(int8) :: i, simul_saltdiff, simul_saltsolub, simul_root, simul_iniab
+    integer(int8) :: i, simul_saltdiff, simul_root, simul_iniab
+    integer(int32) :: simul_saltsolub
     real(dp) :: simul_rod
 
     fullName = trim(GetPathNameSimul()) // 'Soil.PAR'
@@ -3315,11 +3363,14 @@ subroutine LoadCropCalendar(FullName, GetOnset, GetOnsetTemp, DayNrStart, YearSt
     integer(int8) :: Onseti
     integer(int32) :: Dayi, Monthi, Yeari, CriterionNr
     integer(int32) :: DayNr
+    character(len=1024) :: DescriptionRead
     GetOnset = .false.
     GetOnsetTemp = .false.
 
     open(newunit=fhandle, file=trim(FullName), status='old', action='read')
-    read(fhandle, '(a)') CalendarDescription
+    ! read into a fixed-length string: read() does not allocate CalendarDescription
+    read(fhandle, '(a)') DescriptionRead
+    CalendarDescription = trim(DescriptionRead)
     read(fhandle, *) ! AquaCrop Version
 
     ! Specification of Onset and End growing season
@@ -4149,7 +4200,9 @@ subroutine DetermineRootZoneSaltContent(RootingDepth, ZrECe, ZrECsw, ZrECswFC, Z
     ZrECsw = 0._dp
     ZrECswFC = 0._dp
     ZrKsSalt = 1._dp
-    if (RootingDepth >= GetCrop_RootMin()) then
+    ! A restrictive soil layer can keep the roots above the minimum rooting
+    ! depth (Crop%RootMin), so any root zone counts, not only one below RootMin
+    if (RootingDepth > 0._dp) then
         loop: do
             compi = compi + 1
             CumDepth = CumDepth + GetCompartment_Thickness(compi)
@@ -4835,6 +4888,67 @@ subroutine AdjustSimPeriod()
         end if
     end if
 end subroutine AdjustSimPeriod
+
+
+subroutine CheckClimateRecordsCoverSimPeriod()
+    !! Stops the program when the simulation or the cropping period reaches past
+    !! either end of a climate file linked to real years. Such a file has no data
+    !! outside its own days: past the end the run used values it does not have,
+    !! and before the start it read the record from its first day, which silently
+    !! shifted the whole climate by the number of days it was short.
+    !! (A record not linked to a year, 1901, is meant to be reused.)
+
+    call check_file(GetEToFile(), GetEToRecord_FromY(), &
+                    GetEToRecord_FromDayNr(), GetEToRecord_ToDayNr())
+    call check_file(GetRainFile(), GetRainRecord_FromY(), &
+                    GetRainRecord_FromDayNr(), GetRainRecord_ToDayNr())
+    call check_file(GetTemperatureFile(), GetTemperatureRecord_FromY(), &
+                    GetTemperatureRecord_FromDayNr(), &
+                    GetTemperatureRecord_ToDayNr())
+
+
+    contains
+
+
+    subroutine check_file(FileName, RecordFromY, RecordFromDayNr, RecordToDayNr)
+        character(len=*), intent(in) :: FileName
+        integer(int32), intent(in) :: RecordFromY, RecordFromDayNr, RecordToDayNr
+
+        integer(int32) :: DayEnd, MonthEnd, YearEnd, DaySim, MonthSim, YearSim
+        integer(int32) :: LastDayNeeded, FirstDayNeeded
+
+        if ((FileName == '(None)') .or. (FileName == '(External)')) return
+        if (RecordFromY == 1901) return
+
+        ! the leading edge: the run would start reading at the record's first day,
+        ! putting every day of the run out by the days it is short
+        FirstDayNeeded = min(GetSimulation_FromDayNr(), GetCrop_Day1())
+        if (FirstDayNeeded < RecordFromDayNr) then
+            call DetermineDate(RecordFromDayNr, DayEnd, MonthEnd, YearEnd)
+            call DetermineDate(FirstDayNeeded, DaySim, MonthSim, YearSim)
+            call fatal('the simulation or cropping period starts on ' &
+                       // int2str(DaySim) // '/' // int2str(MonthSim) // '/' &
+                       // int2str(YearSim) // ', before the start of the climate ' &
+                       // 'file ' // trim(FileName) // ' (' // int2str(DayEnd) &
+                       // '/' // int2str(MonthEnd) // '/' // int2str(YearEnd) &
+                       // '). Shorten the period or extend the climate file.')
+        end if
+
+        ! the cropping period can reach further than the simulation period,
+        ! which AdjustSimPeriod has already cut back to the record
+        LastDayNeeded = max(GetSimulation_ToDayNr(), GetCrop_DayN())
+        if (LastDayNeeded <= RecordToDayNr) return
+
+        call DetermineDate(RecordToDayNr, DayEnd, MonthEnd, YearEnd)
+        call DetermineDate(LastDayNeeded, DaySim, MonthSim, YearSim)
+        call fatal('the simulation or cropping period ends on ' &
+                   // int2str(DaySim) // '/' // int2str(MonthSim) // '/' &
+                   // int2str(YearSim) // ', after the end of the climate ' &
+                   // 'file ' // trim(FileName) // ' (' // int2str(DayEnd) &
+                   // '/' // int2str(MonthEnd) // '/' // int2str(YearEnd) &
+                   // '). Shorten the period or extend the climate file.')
+    end subroutine check_file
+end subroutine CheckClimateRecordsCoverSimPeriod
 
 
 subroutine ResetSWCToFC()
@@ -5897,7 +6011,9 @@ subroutine LoadOffSeason(FullName)
 
     integer :: fhandle
     integer(int32) :: Nri, NrEvents1, NrEvents2
-    character(len=:), allocatable :: ParamString
+    ! A fixed length: read() does not allocate a deferred-length string, so an
+    ! allocatable one stayed empty and every irrigation event was lost.
+    character(len=255) :: ParamString
     real(dp) :: Par1, Par2
     real(dp) :: VersionNr
     real(dp) :: PreSeason_in
@@ -6222,11 +6338,15 @@ subroutine LoadGroundWater(FullName, AtDayNr, Zcm, ECdSm)
             if (AtDayNr_local <= DayNr2) then
                 DayNr2 = DayNr2 + 365
                 AtDayNr_local = AtDayNr_local + 365
+                ! read on to the last observation, to interpolate from it
+                ! across the year boundary to the first one
                 do while (rc /= iostat_end)
-                    read(fhandle, '(a)') StringREAD
-                    call SplitStringInThreeParams(StringREAD, DayDouble, &
-                                                                Z1, EC1)
-                    DayNr1 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
+                    read(fhandle, '(a)', iostat=rc) StringREAD
+                    if (rc == 0) then
+                        call SplitStringInThreeParams(StringREAD, DayDouble, &
+                                                                    Z1, EC1)
+                        DayNr1 = DayNr1Gwt + roundc(DayDouble, mold=1) - 1
+                    end if
                 end do
                 call FindValues(AtDayNr_local, DayNr1, DayNr2, Z1, EC1, Z2, EC2, &
                                                                Zcm, ECdSm)
@@ -7346,7 +7466,10 @@ subroutine CheckFilesInProject(Runi, AllOK, FileOK)
     FileOK%Rain_Filename = FileOK_tmp
     call check_file(input%CO2_Directory, input%CO2_Filename)
     FileOK%CO2_Filename = FileOK_tmp
-    call check_file(input%Calendar_Directory, input%Calendar_Filename)
+    ! the calendar file is only read for its description: a missing one
+    ! gives a warning, but the project can still run
+    call check_file(input%Calendar_Directory, input%Calendar_Filename, &
+                    needed=.false.)
     FileOK%Calendar_Filename = FileOK_tmp
     call check_file(input%Crop_Directory, input%Crop_Filename)
     FileOK%Crop_Filename = FileOK_tmp
@@ -7362,6 +7485,9 @@ subroutine CheckFilesInProject(Runi, AllOK, FileOK)
     if (ProjectInput(Runi)%SWCIni_Filename /= 'KeepSWC') then
         call check_file(input%SWCIni_Directory, input%SWCIni_Filename)
         FileOK%SWCIni_Filename = FileOK_tmp
+    else
+        ! nothing to check: the profile comes from the previous run
+        FileOK%SWCIni_Filename = .true.
     end if
 
     call check_file(input%OffSeason_Directory, input%OffSeason_Filename)
@@ -7374,17 +7500,34 @@ subroutine CheckFilesInProject(Runi, AllOK, FileOK)
     contains
 
 
-    subroutine check_file(directory, filename)
+    subroutine check_file(directory, filename, needed)
         ! Sets AllOK to false if expected file does not exist.
         character(len=*), intent(in) :: directory
         character(len=*), intent(in) :: filename
+        logical, intent(in), optional :: needed
+            !! false for a file the run does not need (default true)
 
+        logical :: is_needed
+
+        is_needed = .true.
+        if (present(needed)) is_needed = needed
+
+        ! A file that is not used ('(None)') is fine. Without this, the result
+        ! of the previous file carried over, and an unused file was reported as
+        ! missing whenever the file before it was.
+        FileOK_tmp = .true.
         if (filename /= '(None)') then
             if (.not. FileExists(directory // filename)) then
-                AllOK = .false.
-                FileOK_tmp = .false.
-            else
-                FileOK_tmp = .true.
+                if (is_needed) then
+                    AllOK = .false.
+                    FileOK_tmp = .false.
+                    call warn('run ' // int2str(Runi) // ' of the project names ' &
+                              // directory // filename // ', which does not exist.')
+                else
+                    call warn('run ' // int2str(Runi) // ' of the project names ' &
+                              // directory // filename // ', which does not ' &
+                              // 'exist. It is not needed, so the run continues.')
+                end if
             end if
         end if
     end subroutine check_file
@@ -7726,10 +7869,9 @@ subroutine LoadProfile(FullName)
 
     integer :: fhandle
     integer(int32) :: i
-    character(len=3) :: blank
     real(dp) :: VersionNr
     integer(int8) :: TempShortInt
-    character(len=1024) :: ProfDescriptionLocal
+    character(len=1024) :: ProfDescriptionLocal, LayerLine
     real(dp) :: thickness_temp, SAT_temp, FC_temp, WP_temp, infrate_temp
     real(dp) :: cra_temp, crb_temp
     character(len=25) :: description_temp
@@ -7745,6 +7887,12 @@ subroutine LoadProfile(FullName)
     call SetSoil_REW(TempShortInt)
     read(fhandle, *) TempShortInt
     call SetSoil_NrSoilLayers(TempShortInt)
+    if (TempShortInt > max_SoilLayers) then
+        ! the layers below are stored in an array of max_SoilLayers elements
+        call warn(trim(FullName) // ' has ' // int2str(int(TempShortInt)) &
+                  // ' soil horizons, but AquaCrop can handle at most ' &
+                  // int2str(max_SoilLayers) // '. It will stop: merge horizons.')
+    end if
     read(fhandle, *) ! depth of restrictive soil layer which is no longer applicable
     read(fhandle, *)
     read(fhandle, *)
@@ -7753,8 +7901,11 @@ subroutine LoadProfile(FullName)
     do i = 1, GetSoil_NrSoilLayers()
         ! Parameters for capillary rise missing in Versions 3.0 and 3.1
         if (roundc(VersionNr*10, mold=1) < 40) then
-            read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
-                             WP_temp, infrate_temp, blank, description_temp
+            ! the description is whatever follows the 5 values
+            read(fhandle, '(a)') LayerLine
+            read(LayerLine, *) thickness_temp, SAT_temp, FC_temp, &
+                               WP_temp, infrate_temp
+            description_temp = TextAfterValues(LayerLine, 5)
             call SetSoilLayer_Thickness(i, thickness_temp)
             call SetSoilLayer_SAT(i, SAT_temp)
             call SetSoilLayer_FC(i, FC_temp)
@@ -7769,9 +7920,11 @@ subroutine LoadProfile(FullName)
         else
             if (roundc(VersionNr*10, mold=1) < 60) then
                             ! UPDATE required for Version 6.0
-                read(fhandle, *) thickness_temp, SAT_temp, FC_temp, &
-                                 WP_temp, infrate_temp, cra_temp, &
-                                 crb_temp, blank, description_temp
+                ! the description is whatever follows the 7 values
+                read(fhandle, '(a)') LayerLine
+                read(LayerLine, *) thickness_temp, SAT_temp, FC_temp, &
+                                   WP_temp, infrate_temp, cra_temp, crb_temp
+                description_temp = TextAfterValues(LayerLine, 7)
                 call SetSoilLayer_Thickness(i, thickness_temp)
                 call SetSoilLayer_SAT(i, SAT_temp)
                 call SetSoilLayer_FC(i, FC_temp)
@@ -7811,6 +7964,44 @@ subroutine LoadProfile(FullName)
     close(fhandle)
     call LoadProfileProcessing(VersionNr)
 end subroutine LoadProfile
+
+
+function TextAfterValues(line, NrValues) result(text)
+    !! Returns the text on a line after its first NrValues values
+    !! (values are separated by blanks, tabs or commas), without the
+    !! surrounding blanks. Used for the description at the end of a line.
+    character(len=*), intent(in) :: line
+    integer, intent(in) :: NrValues
+    character(len=:), allocatable :: text
+
+    character(len=len(line)) :: work
+    integer :: i, n
+    logical :: in_value
+
+    ! a file with Windows line endings leaves a carriage return at the end
+    work = line
+    do i = 1, len(work)
+        if (work(i:i) == achar(13)) work(i:i) = ' '
+    end do
+
+    text = ''
+    n = 0
+    in_value = .false.
+    do i = 1, len_trim(work)
+        if (index(' ,' // achar(9), work(i:i)) > 0) then
+            if (in_value) then
+                in_value = .false.
+                if (n == NrValues) then
+                    text = trim(adjustl(work(i:)))
+                    return
+                end if
+            end if
+        elseif (.not. in_value) then
+            in_value = .true.
+            n = n + 1
+        end if
+    end do
+end function TextAfterValues
 
 
 subroutine LoadProfileProcessing(VersionNr)
@@ -8146,9 +8337,9 @@ subroutine LoadProgramParametersProject(FullFileNameProgramParameters)
     character(len=*), intent(in) :: FullFileNameProgramParameters
 
     integer :: fhandle
-    integer(int32) :: i, simul_RpZmi, simul_lowox
+    integer(int32) :: i, simul_RpZmi, simul_lowox, simul_saltsolub
     integer(int8) :: simul_ed, effrainperc, effrainshow, effrainrootE, &
-                     simul_saltdiff, simul_saltsolub, simul_root, simul_pCCHIf, &
+                     simul_saltdiff, simul_root, simul_pCCHIf, &
                      simul_SFR, simul_TAWg, simul_beta, simul_Tswc, simul_GDD, &
                      simul_EZma
     real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, simul_expFsen, &
@@ -9853,7 +10044,7 @@ end function GetSimulParam_SaltDiff
 
 function GetSimulParam_SaltSolub() result(SaltSolub)
     !! Getter for the "SaltSolub" attribute of the "simulparam" global variable.
-    integer(int8) :: SaltSolub
+    integer(int32) :: SaltSolub
 
     SaltSolub = simulparam%SaltSolub
 end function GetSimulParam_SaltSolub
@@ -10109,7 +10300,7 @@ end subroutine SetSimulParam_SaltDiff
 
 subroutine SetSimulParam_SaltSolub(SaltSolub)
     !! Setter for the "SaltSolub" attribute of the "simulparam" global variable.
-    integer(int8), intent(in) :: SaltSolub
+    integer(int32), intent(in) :: SaltSolub
 
     simulparam%SaltSolub = SaltSolub
 end subroutine SetSimulParam_SaltSolub

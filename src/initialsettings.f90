@@ -239,7 +239,7 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
               ! soil profile for calculation of mean soil water content
     call SetSimulParam_CNcorrection(.true.)
     call SetSimulParam_SaltDiff(20_int8) ! salt diffusion factor (%)
-    call SetSimulParam_SaltSolub(100_int8) ! salt solubility (g/liter)
+    call SetSimulParam_SaltSolub(100_int32) ! salt solubility (g/liter)
     call SetSimulParam_RootNrDF(16_int8) ! shape factor capillary rise factor
     call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be
         ! changed since linked with equations for CN AMCII and CN converions

@@ -23,6 +23,8 @@ use ac_global, only:    AdjustSizeCompartments, &
                         datatype_monthly, &
                         DaysInMonth, &
                         DegreesDay, &
+                        DayIndexInDataSet, &
+                        DayInDataSet, &
                         DetermineDate, &
                         DetermineDayNr, &
                         DetermineRootZoneWC, &
@@ -90,6 +92,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetECdrain, &
                         GetECiAqua, &
                         GetEpot, &
+                        CheckClimateRecordsCoverSimPeriod, &
                         GetETo, &
                         GetEToFile, &
                         GetEToFilefull, &
@@ -458,8 +461,11 @@ use ac_tempprocessing, only:    AdjustCalendarCrop, &
 use ac_preparefertilitysalinity, only:  ReferenceCCxSaltStressRelationship, &
                                 ReferenceStressBiomassRelationship
 use ac_utils, only: assert, &
+                    fatal, &
                     GetAquaCropDescriptionWithTimeStamp, &
+                    int2str, &
                     roundc, &
+                    warn, &
                     write_file, &
                     open_file
 use iso_fortran_env, only: iostat_end
@@ -3793,10 +3799,7 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
                                                  TmaxDataSet_temp)
                 call SetTminDataSet(TminDataSet_temp)
                 call SetTmaxDataSet(TmaxDataSet_temp)
-                i = 1
-                do while (GetTminDataSet_DayNr(i) /= DayX)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(DayX, GetTminDataSet(), 'ten-daily temperature')
                 call SetTmin(GetTminDataSet_Param(i))
                 call SetTmax(GetTmaxDataSet_Param(i))
                 call SetSimulation_SumGDD(DegreesDay(GetCrop_Tbase(), &
@@ -3805,16 +3808,15 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
                 ! next days
                 do while (DayX < DayNri)
                     DayX = DayX + 1
-                    if (DayX > GetTminDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(DayX, GetTminDataSet())) then
                         TminDataSet_temp = GetTminDataSet()
                         TmaxDataSet_temp = GetTmaxDataSet()
                         call GetDecadeTemperatureDataSet(DayX, &
                                 TminDataSet_temp, TmaxDataSet_temp)
                         call SetTminDataSet(TminDataSet_temp)
                         call SetTmaxDataSet(TmaxDataSet_temp)
-                        i = 0
                     end if
-                    i = i+1
+                    i = DayIndexInDataSet(DayX, GetTminDataSet(), 'ten-daily temperature')
                     call SetTmin(GetTminDataSet_Param(i))
                     call SetTmax(GetTmaxDataSet_Param(i))
                     call SetSimulation_SumGDD(GetSimulation_SumGDD() &
@@ -3831,10 +3833,7 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
                                                   TmaxDataSet_temp)
                 call SetTminDataSet(TminDataSet_temp)
                 call SetTmaxDataSet(TmaxDataSet_temp)
-                i = 1
-                do while (GetTminDataSet_DayNr(i) /= DayX)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(DayX, GetTminDataSet(), 'monthly temperature')
                 call SetTmin(GetTminDataSet_Param(i))
                 call SetTmax(GetTmaxDataSet_Param(i))
                 call SetSimulation_SumGDD(&
@@ -3844,16 +3843,15 @@ subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
                 ! next days
                 do while (DayX < DayNri)
                     DayX = DayX + 1
-                    if (DayX > GetTminDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(DayX, GetTminDataSet())) then
                         TminDataSet_temp = GetTminDataSet()
                         TmaxDataSet_temp = GetTmaxDataSet()
                         call GetMonthlyTemperatureDataSet(&
                                 DayX, TminDataSet_temp, TmaxDataSet_temp)
                         call SetTminDataSet(TminDataSet_temp)
                         call SetTmaxDataSet(TmaxDataSet_temp)
-                        i = 0
                     end if
-                    i = i+1
+                    i = DayIndexInDataSet(DayX, GetTminDataSet(), 'monthly temperature')
                     call SetTmin(GetTminDataSet_Param(i))
                     call SetTmax(GetTmaxDataSet_Param(i))
                     call SetSimulation_SumGDD(GetSimulation_SumGDD() &
@@ -4166,31 +4164,30 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
     ! C5. Compartments - Soil water content  --!removed tempstring
     if (GetOut5CompWC()) then
-        call fDaily_write(trim('       WC01'), .false.)
-        do Compi = 2, (GetNrCompartments()-1)
-            write(Str1, '(i2)') Compi
-            call fDaily_write('       WC'// trim(Str1), .false.)
+        ! one column per compartment (also when there is only one)
+        do Compi = 1, GetNrCompartments()
+            if (Compi == 1) then
+                Str1 = '01'
+            else
+                write(Str1, '(i2)') Compi
+            end if
+            call fDaily_write('       WC'// trim(Str1), &
+                              (Compi == GetNrCompartments()) .and. &
+                              .not. ((GetOut6CompEC()) .or. (GetOut7Clim())))
         end do
-        write(Str1,'(i2)') GetNrCompartments()
-        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
-            call fDaily_write('       WC'// trim(Str1), .false.)
-        else
-            call fDaily_write('       WC'// trim(Str1))
-        end if
     end if
     ! C6. Compartmens - Electrical conductivity of the saturated soil-paste extract
     if (GetOut6CompEC()) then
-        call fDaily_write(trim('      ECe01'), .false.)
-        do Compi = 2, (GetNrCompartments()-1)
-            write(Str1, '(i2)') Compi
-            call fDaily_write('      ECe'// trim(Str1), .false.)
+        do Compi = 1, GetNrCompartments()
+            if (Compi == 1) then
+                Str1 = '01'
+            else
+                write(Str1, '(i2)') Compi
+            end if
+            call fDaily_write('      ECe'// trim(Str1), &
+                              (Compi == GetNrCompartments()) .and. &
+                              .not. GetOut7Clim())
         end do
-        write(Str1, '(i2)') GetNrCompartments()
-        if (GetOut7Clim()) then
-            call fDaily_write('      ECe'// trim(Str1), .false.)
-        else
-            call fDaily_write('      ECe'// trim(Str1))
-        end if
     end if
     ! C7. Climate input parameters
     if (GetOut7Clim()) then
@@ -4260,45 +4257,32 @@ subroutine WriteTitleDailyResults(TheProjectType, TheNrRun)
     end if
     ! D5. Compartments - Soil water content
     if (GetOut5CompWC()) then
+        ! mid-depth of each compartment
         NodeD = GetCompartment_Thickness(1)/2._dp
-        write(tempstring,'(f11.2)') NodeD
-        call fDaily_write(trim(tempstring), .false.)
-        do Compi = 2, (GetNrCompartments()-1)
-            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
-                    + GetCompartment_Thickness(Compi)/2._dp
+        do Compi = 1, GetNrCompartments()
+            if (Compi > 1) then
+                NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                        + GetCompartment_Thickness(Compi)/2._dp
+            end if
             write(tempstring,'(f11.2)') NodeD
-            call fDaily_write(trim(tempstring), .false.)
+            call fDaily_write(trim(tempstring), &
+                              (Compi == GetNrCompartments()) .and. &
+                              .not. ((GetOut6CompEC()) .or. (GetOut7Clim())))
         end do
-        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
-                + GetCompartment_Thickness(GetNrCompartments())/2._dp
-        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
-            write(tempstring,'(f11.2)') NodeD
-            call fDaily_write(trim(tempstring), .false.)
-        else
-            write(tempstring,'(f11.2)') NodeD
-            call fDaily_write(trim(tempstring))
-        end if
     end if
     ! D6. Compartmens - Electrical conductivity of the saturated soil-paste extract
     if (GetOut6CompEC()) then
         NodeD = GetCompartment_Thickness(1)/2._dp
-        write(tempstring,'(f11.2)') NodeD
-        call fDaily_write(trim(tempstring), .false.)
-        do Compi = 2, (GetNrCompartments()-1)
-            NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
-                    + GetCompartment_Thickness(compi)/2._dp
+        do Compi = 1, GetNrCompartments()
+            if (Compi > 1) then
+                NodeD = NodeD + GetCompartment_Thickness(Compi-1)/2._dp &
+                        + GetCompartment_Thickness(Compi)/2._dp
+            end if
             write(tempstring,'(f11.2)') NodeD
-            call fDaily_write(trim(tempstring), .false.)
+            call fDaily_write(trim(tempstring), &
+                              (Compi == GetNrCompartments()) .and. &
+                              .not. GetOut7Clim())
         end do
-        NodeD = NodeD + GetCompartment_Thickness(GetNrCompartments()-1)/2._dp &
-                + GetCompartment_Thickness(GetNrCompartments())/2._dp
-        if (GetOut7Clim()) then
-            write(tempstring,'(f11.2)') NodeD
-            call fDaily_write(trim(tempstring), .false.)
-        else
-            write(tempstring, '(f11.2)') NodeD
-            call fDaily_write(trim(tempstring))
-        end if
     end if
     ! D7. Climate input parameters
     if (GetOut7Clim()) then
@@ -4327,7 +4311,7 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
         integer(int8), intent(in) :: NrRun
 
         character(len=:), allocatable :: totalnameEvalStat
-        character(len=1024) :: StrNr
+        character(len=1024) :: StrNr, RunNr
 
         ! 1. Close Evaluation data file  and file with observations
         call fEval_close()
@@ -4336,6 +4320,8 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
         end if
 
         ! 2. Specify File name Evaluation of simulation results - Statistics
+        ! StrNr must match the name CreateEvalData gave SIMUL/EvalData.OUT,
+        ! which has no run number for a project with a single run
         StrNr = ''
         if (GetSimulation_MultipleRun() .and. (GetSimulation_NrRuns() > 1)) then
             write(StrNr, '(i0)') NrRun
@@ -4345,8 +4331,8 @@ subroutine FinalizeRun2(NrRun, TheProjectType)
         case(typeproject_typepro)
             totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PROevaluation.OUT'
         case(typeproject_typeprm)
-            write(StrNr, '(i0)') NrRun
-            totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PRM' // trim(StrNr) // 'evaluation.OUT'
+            write(RunNr, '(i0)') NrRun
+            totalnameEvalStat = GetPathNameOutp() // GetOutputName() // 'PRM' // trim(RunNr) // 'evaluation.OUT'
         end select
 
         ! 3. Create Evaluation statistics file
@@ -5013,6 +4999,7 @@ subroutine InitializeSimulationRunPart2()
     real(dp) :: CCiniMin, CCiniMax, RatDGDD
     real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
     real(dp) :: SumGDD_temp, SumGDDFromDay1_temp
+    character(len=32) :: TempString
 
     ! Sum of GDD before start of simulation
     call SetSimulation_SumGDD(0._dp)
@@ -5355,6 +5342,13 @@ subroutine InitializeSimulationRunPart2()
 
     ! 19. Labels, Plots and displays
     if (GetManagement_BundHeight() < 0.01_dp) then
+        ! water can only stay on the surface between soil bunds
+        if (GetSurfaceStorage() > 0._dp) then
+            write(TempString, '(f10.1)') GetSurfaceStorage()
+            call warn('the initial conditions put ' // trim(adjustl(TempString)) &
+                      // ' mm of water on the soil surface, but the field ' &
+                      // 'has no soil bunds. This water is not used.')
+        end if
         call SetSurfaceStorage(0._dp)
         call SetECStorage(0._dp)
     end if
@@ -5618,6 +5612,11 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     real(dp) :: Tmin_temp, Tmax_temp
     type(rep_DayEventDbl), dimension(31) :: EToDataSet_temp, RainDataSet_temp
 
+    ! The climate files must cover the simulation period. This is checked when
+    ! the project is loaded, and again here, because the period can have been
+    ! extended in the meantime (a crop needing more days than expected).
+    call CheckClimateRecordsCoverSimPeriod
+
     ! 1. ETo file
     if (GetEToFile() /= '(None)') then
         totalname = GetEToFilefull()
@@ -5644,19 +5643,13 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                 EToDataSet_temp = GetEToDataSet()
                 call GetDecadeEToDataSet(FromSimDay, EToDataSet_temp)
                 call SetEToDataSet(EToDataSet_temp)
-                i = 1
-                do while (GetEToDataSet_DayNr(i) /= FromSimDay)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(FromSimDay, GetEToDataSet(), 'ten-daily ETo')
                 call SetETo(GetEToDataSet_Param(i))
             case(datatype_Monthly)
                 EToDataSet_temp = GetEToDataSet()
                 call GetMonthlyEToDataSet(FromSimDay, EToDataSet_temp)
                 call SetEToDataSet(EToDataSet_temp)
-                i = 1
-                do while (GetEToDataSet_DayNr(i) /= FromSimDay)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(FromSimDay, GetEToDataSet(), 'monthly ETo')
                 call SetETo(GetEToDataSet_Param(i))
             end select
 
@@ -5686,26 +5679,20 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                         call SetETo(ETo_temp)
                     end if
                 case(datatype_Decadely)
-                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(RunningDay, GetEToDataSet())) then
                         EToDataSet_temp = GetEToDataSet()
                         call GetDecadeEToDataSet(RunningDay, EToDataSet_temp)
                         call SetEToDataSet(EToDataSet_temp)
                     end if
-                    i = 1
-                    do while (GetEToDataSet_DayNr(i) /= RunningDay)
-                        i = i+1
-                    end do
+                    i = DayIndexInDataSet(RunningDay, GetEToDataSet(), 'ten-daily ETo')
                     call SetETo(GetEToDataSet_Param(i))
                 case(datatype_Monthly)
-                    if (RunningDay > GetEToDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(RunningDay, GetEToDataSet())) then
                         EToDataSet_temp = GetEToDataSet()
                         call GetMonthlyEToDataSet(RunningDay, EToDataSet_temp)
                         call SetEToDataSet(EToDataSet_temp)
                     end if
-                    i = 1
-                    do while (GetEToDataSet_DayNr(i) /= RunningDay)
-                        i = i+1
-                    end do
+                    i = DayIndexInDataSet(RunningDay, GetEToDataSet(), 'monthly ETo')
                     call SetETo(GetEToDataSet_Param(i))
                 end select
                 write(fEToS, '(f10.4)') GetETo()
@@ -5744,19 +5731,13 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                 RainDataSet_temp = GetRainDataSet()
                 call GetDecadeRainDataSet(FromSimDay, RainDataSet_temp)
                 call SetRainDataSet(RainDataSet_temp)
-                i = 1
-                do while (GetRainDataSet_DayNr(i) /= FromSimDay)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(FromSimDay, GetRainDataSet(), 'ten-daily rainfall')
                 call SetRain(GetRainDataSet_Param(i))
             case(datatype_Monthly)
                 RainDataSet_temp = GetRainDataSet()
                 call GetMonthlyRainDataSet(FromSimDay, RainDataSet_temp)
                 call SetRainDataSet(RainDataSet_temp)
-                i = 1
-                do while (GetRainDataSet_DayNr(i) /= FromSimDay)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(FromSimDay, GetRainDataSet(), 'monthly rainfall')
                 call SetRain(GetRainDataSet_Param(i))
             end select
 
@@ -5786,26 +5767,20 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                         call SetRain(tmpRain)
                     end if
                 case(datatype_Decadely)
-                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(RunningDay, GetRainDataSet())) then
                         RainDataSet_temp = GetRainDataSet()
                         call GetDecadeRainDataSet(RunningDay, RainDataSet_temp)
                         call SetRainDataSet(RainDataSet_temp)
                     end if
-                    i = 1
-                    do while (GetRainDataSet_DayNr(i) /= RunningDay)
-                        i = i+1
-                    end do
+                    i = DayIndexInDataSet(RunningDay, GetRainDataSet(), 'ten-daily rainfall')
                     call SetRain(GetRainDataSet_Param(i))
                 case(datatype_monthly)
-                    if (RunningDay > GetRainDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(RunningDay, GetRainDataSet())) then
                         RainDataSet_temp = GetRainDataSet()
                         call GetMonthlyRainDataSet(RunningDay, RainDataSet_temp)
                         call SetRainDataSet(RainDataSet_temp)
                     end if
-                    i = 1
-                    do while (GetRainDataSet_DayNr(i) /= RunningDay)
-                        i = i+1
-                    end do
+                    i = DayIndexInDataSet(RunningDay, GetRainDataSet(), 'monthly rainfall')
                     call SetRain(GetRainDataSet_Param(i))
                 end select
                 write(fRainS, '(f10.4)') GetRain()
@@ -5852,10 +5827,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                                                               TmaxDataSet_temp)
                 call SetTminDataSet(TminDataSet_temp)
                 call SetTmaxDataSet(TmaxDataSet_temp)
-                i = 1
-                do while (GetTminDataSet_DayNr(i) /= FromSimDay)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(FromSimDay, GetTminDataSet(), 'ten-daily temperature')
                 call SetTmin(GetTminDataSet_Param(i))
                 call SetTmax(GetTmaxDataSet_Param(i))
             case(datatype_Monthly)
@@ -5865,10 +5837,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                                                               TmaxDataSet_temp)
                 call SetTminDataSet(TminDataSet_temp)
                 call SetTmaxDataSet(TmaxDataSet_temp)
-                i = 1
-                do while (GetTminDataSet_DayNr(i) /= FromSimDay)
-                    i = i+1
-                end do
+                i = DayIndexInDataSet(FromSimDay, GetTminDataSet(), 'monthly temperature')
                 call SetTmin(GetTminDataSet_Param(i))
                 call SetTmax(GetTmaxDataSet_Param(i))
             end select
@@ -5905,7 +5874,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                         call SetTmax(Tmax_temp)
                     end if
                 case(datatype_Decadely)
-                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(RunningDay, GetTminDataSet())) then
                         TminDataSet_temp = GetTminDataSet()
                         TmaxDataSet_temp = GetTmaxDataSet()
                         call GetDecadeTemperatureDataSet(RunningDay, &
@@ -5914,14 +5883,11 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                         call SetTminDataSet(TminDataSet_temp)
                         call SetTmaxDataSet(TmaxDataSet_temp)
                     end if
-                    i = 1
-                    do while (GetTminDataSet_DayNr(i) /= RunningDay)
-                        i = i+1
-                    end do
+                    i = DayIndexInDataSet(RunningDay, GetTminDataSet(), 'ten-daily temperature')
                     call SetTmin(GetTminDataSet_Param(i))
                     call SetTmax(GetTmaxDataSet_Param(i))
                 case(datatype_Monthly)
-                    if (RunningDay > GetTminDataSet_DayNr(31)) then
+                    if (.not. DayInDataSet(RunningDay, GetTminDataSet())) then
                         TminDataSet_temp = GetTminDataSet()
                         TmaxDataSet_temp = GetTmaxDataSet()
                         call GetMonthlyTemperatureDataSet(RunningDay, &
@@ -5930,10 +5896,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
                         call SetTminDataSet(TminDataSet_temp)
                         call SetTmaxDataSet(TmaxDataSet_temp)
                     end if
-                    i = 1
-                    do while (GetTminDataSet_DayNr(i) /= RunningDay)
-                        i = i+1
-                    end do
+                    i = DayIndexInDataSet(RunningDay, GetTminDataSet(), 'monthly temperature')
                     call SetTmin(GetTminDataSet_Param(i))
                     call SetTmax(GetTmaxDataSet_Param(i))
                 end select
@@ -5946,6 +5909,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
             close(fTempS)
         end if
     end if
+
 end subroutine CreateDailyClimFiles
 
 
@@ -7863,42 +7827,26 @@ subroutine WriteDailyResults(DAP, WPi)
 
     ! 5. Compartments - Soil water content
     if (GetOut5CompWC()) then
-        write(tempstring, '(f11.1)') (GetCompartment_Theta(1)*100._dp)
-        call fDaily_write(trim(tempstring), .false.)
-        do Nr = 2, (GetNrCompartments()-1)
-            write(tempstring, '(f11.1)') &
-                    (GetCompartment_Theta(Nr)*100._dp)
-            call fDaily_write(trim(tempstring), .false.)
+        do Nr = 1, GetNrCompartments()
+            write(tempstring, '(f11.1)') (GetCompartment_Theta(Nr)*100._dp)
+            if ((Nr == GetNrCompartments()) .and. &
+                .not. ((GetOut6CompEC()) .or. (GetOut7Clim()))) then
+                call fDaily_write(tempstring)
+            else
+                call fDaily_write(trim(tempstring), .false.)
+            end if
         end do
-        if ((GetOut6CompEC()) .or. (GetOut7Clim())) then
-            write(tempstring, '(f11.1)') &
-                    (GetCompartment_Theta(GetNrCompartments())*100._dp)
-            call fDaily_write(trim(tempstring), .false.)
-        else
-            write(tempstring, '(f11.1)') &
-                    (GetCompartment_Theta(GetNrCompartments())*100._dp)
-            call fDaily_write(tempstring)
-        end if
     end if
 
     ! 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
     if (GetOut6CompEC()) then
-        SaltVal = ECeComp(GetCompartment_i(1))
-        write(tempstring, '(f11.1)') SaltVal
-        call fDaily_write(trim(tempstring), .false.)
-        do Nr = 2, (GetNrCompartments()-1)
+        do Nr = 1, GetNrCompartments()
             SaltVal = ECeComp(GetCompartment_i(Nr))
             write(tempstring, '(f11.1)') SaltVal
-            call fDaily_write(trim(tempstring), .false.)
+            call fDaily_write(trim(tempstring), &
+                              (Nr == GetNrCompartments()) .and. &
+                              .not. GetOut7Clim())
         end do
-        SaltVal = ECeComp(GetCompartment_i(GetNrCompartments()))
-        if (GetOut7Clim()) then
-            write(tempstring, '(f11.1)') SaltVal
-            call fDaily_write(trim(tempstring), .false.)
-        else
-            write(tempstring, '(f11.1)') SaltVal
-            call fDaily_write(trim(tempstring))
-        end if
     end if
 
     ! 7. Climate input parameters
