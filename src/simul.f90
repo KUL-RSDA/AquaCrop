@@ -658,6 +658,10 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
 
     real(dp), parameter :: TempRange = 5._dp
     real(dp), parameter :: k = 2._dp
+    integer(int32), parameter :: SFadj_max = 99
+        !! the highest soil fertility stress the daily adjustment will move to. Not 100: at
+        !! 100 % the canopy is reduced away altogether, which is a state a crop growing today
+        !! cannot be adjusted into.
 
     real(dp) :: RatioBM, RBM, HItimesTotal, pLeafULAct, pLeafLLAct, &
                 pStomatULAct, pLL, Ksleaf, Ksstomatal, KsPolWS, KsPolCs, &
@@ -1105,15 +1109,15 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             StressSFadjNEW = 0
         else
             if (BioAdj <= epsilon(1._dp)) then
-                StressSFadjNEW = 80
+                StressSFadjNEW = SFadj_max
             else
                 StressSFadjNEW = roundc(Coeffb0 + Coeffb1*BioAdj + Coeffb2*BioAdj*BioAdj, &
                                         mold=1_int8)
                 if (StressSFadjNEW < 0) then
                     StressSFadjNEW = GetManagement_FertilityStress()
                 end if
-                if (StressSFadjNEW > 80) then
-                    StressSFadjNEW = 80
+                if (StressSFadjNEW > SFadj_max) then
+                    StressSFadjNEW = SFadj_max
                 end if
             end if
             if (StressSFadjNEW > GetManagement_FertilityStress()) then
