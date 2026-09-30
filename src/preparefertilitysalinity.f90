@@ -174,7 +174,7 @@ subroutine AdjustCalendarDaysReferenceTnx(PlantDayNr, TheCropType, &
 
     CGC = (real(GDDL12, kind=dp)/real(L12, kind=dp)) * GDDCGC
     call GDDCDCToCDC(PlantDayNr, L123, GDDL123, GDDL1234, CCx, GDDCDC, &
-        Tbase, Tupper, TDayMin, TDayMax, CDC, .true.)
+        Tbase, Tupper, TDayMin, TDayMax, CDC)
     if ((TheCropType == subkind_Grain) .or. (TheCropType == subkind_Tuber)) then
         RatedHIdt = real(RefHI, kind=dp)/real(LHImax, kind=dp)
     end if
@@ -399,6 +399,8 @@ subroutine StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
         StressMatrix(Si)%StressProc = SiPr
         call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
         ! adjusted length of Max canopy cover
+        ! RatDGDD restates this stress level's per-DAY canopy decline as a per-GDD rate over
+        ! its own decline window, preserving the total.
         RatDGDD = 1
         if ((StressResponse%RedCCX == 0) .and. &
             (StressResponse%RedCGC == 0))then
@@ -411,20 +413,21 @@ subroutine StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
             if (TheModeCycle == modeCycle_GDDays) then
                 TDayMin_temp = TDayMin
                 TDayMax_temp = TDayMax
-                GDDL12SF = SumCalendarDaysReferenceTnx(L12SF, RefCropDay1, RefCropDay1, Tbase, Tupper,&
-                                 TDayMin_temp, TDayMax_temp)
+                GDDL12SF = GrowingDegreeDays(L12SF, RefCropDay1, Tbase, Tupper,&
+                                 TDayMin_temp, TDayMax_temp, .true.)
             end if
             if ((TheModeCycle == modeCycle_GDDays) .and. (GDDL12SF < GDDL123)) then
                 RatDGDD = (L123-L12SF)*1._dp/(GDDL123-GDDL12SF)
             end if
         end if
+        StressResponse%CDecline = RatDGDD * StressResponse%CDecline
         ! biomass production
         BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                 L0, L12, L12SF, L123, L1234, L1234, LFlor,&
                 GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, WPyield, &
                 DaysYieldFormation, tSwitch, CCo, CCx, CGC, GDDCGC, CDC,&
                 GDDCDC, KcTop, KcDeclAgeingCumul, CCeffectProcent, WPveg, CO2TnxReferenceYear,&
-                Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
+                Tbase, Tupper, TDayMin, TDayMax, GDtranspLow,&
                 SumKcTop, SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
                 StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
                 StressResponse%CDecline, -0.01_dp, TheModeCycle, .true.,&
@@ -628,13 +631,15 @@ subroutine CCxSaltStressRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
                 TDayMax_temp = TDayMax
                 TDayMin_temp = TDayMin
                 GDDL12SS = GrowingDegreeDays(L12SS, CropDNr1, Tbase, &
-                           Tupper, TDayMin_temp, TDayMax_temp)
+                           Tupper, TDayMin_temp, TDayMax_temp, .true.)
             end if
             if ((TheModeCycle == modeCycle_GDDays) .and.&
                 (GDDL12SS < GDDL123)) then
                 RatDGDD = (L123-L12SS)*1._dp/(GDDL123-GDDL12SS)
             end if
         end if
+        ! per-GDD over this stress level's own decline window
+        StressResponse%CDecline = RatDGDD * StressResponse%CDecline
 
         ! biomass production
         BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
@@ -643,7 +648,7 @@ subroutine CCxSaltStressRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToC
                 WPyield, DaysYieldFormation, tSwitch,&
                 CCo, CCx, CGC, GDDCGC, CDC, GDDCDC,&
                 KcTop, KcDeclAgeingCumul, CCeffectProcent, WPveg, CO2TnxReferenceYear,&
-                Tbase, Tupper, TDayMin, TDayMax, GDbioLow, RatDGDD, SumKcTop,&
+                Tbase, Tupper, TDayMin, TDayMax, GDbioLow, SumKcTop,&
                 SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
                 StressResponse%RedWP, StressResponse%RedKsSto, &
                 0_int8, 0, StressResponse%CDecline, -0.01_dp,&

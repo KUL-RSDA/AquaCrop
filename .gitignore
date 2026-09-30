@@ -8,3 +8,10 @@ __pycache__
 tests/tmp*
 tests/log*.txt
 *.swp
+
+# testcase run artifacts
+testcase/aquacrop
+testcase/OUTP/*.OUT
+# written by the program during a run (see preparefertilitysalinity.f90 / global.f90)
+testcase/SIMUL/*Reference*.SIM
+testcase/SIMUL/*Reference*.Tnx
