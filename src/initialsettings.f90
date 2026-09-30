@@ -168,6 +168,7 @@ use ac_global, only:    SetSimulParam_PercRAW, &
                         SetSurfaceStorage, &
                         SetECstorage, &
                         SetDaySubmerged, &
+                        SetTactWeedInfested, &
                         GetSumWabal, &
                         GlobalZero, &
                         SetSumWaBal, &
@@ -484,6 +485,7 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     call SetInfiltrated(0.0_dp) ! added 4.0
     call SetCRwater(0._dp) ! added 4.0
     call SetCRsalt(0._dp) ! added 4.0
+    call SetTactWeedInfested(0._dp)
     call SetSimulation_ResetIniSWC(.true.)
     call SetSimulation_EvapLimitON(.false.)
     call SetMaxPlotNew(50)
