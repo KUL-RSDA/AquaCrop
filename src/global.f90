@@ -1103,6 +1103,11 @@ logical :: PreDay, OutDaily, Out8Irri
 ! ExternalRun is true for LIS run. It is based on the climate coming
 ! from an external source and not from AquaCrop's own climate files.
 logical :: ExternalRun = .false.
+real(dp) :: Management_Brel = undef_double
+    !! relative biomass of the season: the crop's biomass as a fraction of its potential,
+    !! 0 to 1, handed over by the program driving AquaCrop in place of a degree of soil
+    !! fertility stress. Negative - the default - means none was supplied, and the stress in
+    !! the management file is used instead. No project or management file can set it.
 logical :: Out1Wabal
 logical :: Out2Crop
 logical :: Out3Prof
@@ -5198,6 +5203,58 @@ subroutine ResetSWCToFC()
 end subroutine ResetSWCToFC
 
 
+logical function GDDFieldIsExternal(TheLine)
+    !! .true. when this line of a crop file carries the word 'External' where a
+    !! growing-degree-day parameter would be.
+    !!
+    !! A crop file written for an externally driven run says so field by field: the program
+    !! driving AquaCrop sets those parameters itself, through the setters, once the file is
+    !! read. Both spellings the rest of AquaCrop uses for an external source are accepted.
+    character(len=*), intent(in) :: TheLine
+
+    character(len=32) :: TheField
+    integer :: rc
+
+    read(TheLine, *, iostat=rc) TheField
+    GDDFieldIsExternal = (rc == 0) .and. ((trim(TheField) == 'External') &
+                                     .or. (trim(TheField) == '(External)'))
+end function GDDFieldIsExternal
+
+
+logical function ReadCropGDDInt(fhandle, TheValue)
+    !! Reads one whole-number growing-degree-day parameter from an open crop file, and
+    !! reports whether the field was left to a driver instead (see GDDFieldIsExternal), in
+    !! which case TheValue is not touched and the crop keeps the parameter it already has.
+    !!
+    !! A field that is neither a number nor the sentinel fails the read, as it always has.
+    integer, intent(in) :: fhandle
+    integer(int32), intent(inout) :: TheValue
+
+    character(len=255) :: TheLine
+
+    read(fhandle, '(A)') TheLine
+    ReadCropGDDInt = GDDFieldIsExternal(TheLine)
+    if (.not. ReadCropGDDInt) then
+        read(TheLine, *) TheValue
+    end if
+end function ReadCropGDDInt
+
+
+logical function ReadCropGDDReal(fhandle, TheValue)
+    !! As ReadCropGDDInt, for a growing-degree-day rate.
+    integer, intent(in) :: fhandle
+    real(dp), intent(inout) :: TheValue
+
+    character(len=255) :: TheLine
+
+    read(fhandle, '(A)') TheLine
+    ReadCropGDDReal = GDDFieldIsExternal(TheLine)
+    if (.not. ReadCropGDDReal) then
+        read(TheLine, *) TheValue
+    end if
+end function ReadCropGDDReal
+
+
 subroutine LoadCrop(FullName)
     character(len=*), intent(in) :: FullName
 
@@ -5273,8 +5330,9 @@ subroutine LoadCrop(FullName)
 
     ! required growing degree days to complete the crop cycle
     ! (is identical as to maturity)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToHarvest(TempInt)
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToHarvest(TempInt)
+    end if
 
     ! water stress
     read(fhandle, *) TempDouble
@@ -5529,24 +5587,35 @@ subroutine LoadCrop(FullName)
     end if
 
     ! growing degree days
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToGermination(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToMaxRooting(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToSenescence(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToHarvest(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToFlowering(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDLengthFlowering(TempInt)
-    read(fhandle, *) TempDouble
-    call SetCrop_GDDCGC(TempDouble)
-    read(fhandle, *) TempDouble
-    call SetCrop_GDDCDC(TempDouble)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToHIo(TempInt)
+    ! Any of these may read 'External' instead of a number: the program driving AquaCrop
+    ! supplies that parameter itself, and the crop file leaves it alone.
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToGermination(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToMaxRooting(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToSenescence(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToHarvest(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToFlowering(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDLengthFlowering(TempInt)
+    end if
+    if (.not. ReadCropGDDReal(fhandle, TempDouble)) then
+        call SetCrop_GDDCGC(TempDouble)
+    end if
+    if (.not. ReadCropGDDReal(fhandle, TempDouble)) then
+        call SetCrop_GDDCDC(TempDouble)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToHIo(TempInt)
+    end if
 
     ! -----  UPDATE yield response to water for Version 3.1
     ! leafy vegetable crop has an Harvest Index which builds up
@@ -17413,6 +17482,34 @@ logical function GetExternalRun()
 
     GetExternalRun = ExternalRun
 end function GetExternalRun
+
+
+real(dp) function GetManagement_Brel()
+    !! Getter for the Management_Brel global variable
+
+    GetManagement_Brel = Management_Brel
+end function GetManagement_Brel
+
+
+subroutine SetManagement_Brel(Brel)
+    !! Setter for the Management_Brel global variable, for a driver to call before the run
+    !! is initialised. A fraction, not a percentage.
+    real(dp), intent(in) :: Brel
+
+    Management_Brel = Brel
+end subroutine SetManagement_Brel
+
+
+logical function ManagementBrelSupplied()
+    !! .true. when a driver has handed this run a relative biomass to work from, instead of
+    !! the degree of soil fertility stress a management file carries.
+    !!
+    !! Only an externally driven run can have one: the value reaches AquaCrop through
+    !! SetManagement_Brel alone, and it is honoured only where the driver is also supplying
+    !! the weather, so a standalone run cannot reach any of this.
+
+    ManagementBrelSupplied = ExternalRun .and. (Management_Brel >= 0._dp)
+end function ManagementBrelSupplied
 
 
 subroutine SetExternalRun(ExternalRun_in)
