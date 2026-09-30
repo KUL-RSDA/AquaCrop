@@ -5086,6 +5086,18 @@ subroutine AdjustSimPeriod()
 end subroutine AdjustSimPeriod
 
 
+logical function ClimateComesFromFile(FileName)
+    !! .true. when the daily values of this climate variable are read from a file of its own.
+    !!
+    !! '(None)' means the program parameters supply them instead. '(External)' means another
+    !! program driving AquaCrop supplies them, day by day: no file of that variable is written,
+    !! opened or read, and the driver's values are the ones the run uses.
+    character(len=*), intent(in) :: FileName
+
+    ClimateComesFromFile = (FileName /= '(None)') .and. (FileName /= '(External)')
+end function ClimateComesFromFile
+
+
 subroutine CheckClimateRecordsCoverSimPeriod()
     !! Stops the program when the climate files do not cover the entire 
     !! simulation period.

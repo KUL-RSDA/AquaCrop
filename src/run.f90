@@ -253,6 +253,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         modeCycle_GDDays, &
                         GetOutDaily, &
                         GetExternalRun, &
+                        ClimateComesFromFile, &
                         plant_Seed, &
                         subkind_Forage, &
                         GetCompartment, &
@@ -4265,13 +4266,13 @@ end subroutine FinalizeRun2
 
 
 subroutine CloseClimateFiles()
-    if (GetEToFile() /= '(None)') then
+    if (ClimateComesFromFile(GetEToFile())) then
         call fEToSIM_close()
     end if
-    if (GetRainFile() /= '(None)') then
+    if (ClimateComesFromFile(GetRainFile())) then
         call fRainSIM_close()
     end if
-    if (GetTemperatureFile() /= '(None)') then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         call fTempSIM_close()
     end if
 end subroutine CloseClimateFiles
@@ -4691,8 +4692,7 @@ subroutine InitializeSimulationRunPart1()
     call SetSimulation_DelayedDays(0)
 
     ! 3. create temperature file covering crop cycle
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         if (GetSimulation_ToDayNr() < GetCrop_DayN()) then
             call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), &
                        GetSimulation_TodayNr())
@@ -5454,7 +5454,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     call CheckClimateRecordsCoverSimPeriod
 
     ! 1. ETo file
-    if (GetEToFile() /= '(None)') then
+    if (ClimateComesFromFile(GetEToFile())) then
         totalname = GetEToFilefull()
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
@@ -5542,7 +5542,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     end if
 
     ! 2. Rain File
-    if (GetRainFile() /= '(None)') then
+    if (ClimateComesFromFile(GetRainFile())) then
         totalname = GetRainFilefull()
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
@@ -5630,8 +5630,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     end if
 
     ! 3. Temperature file
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         totalname = GetTemperatureFilefull()
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
@@ -5784,7 +5783,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
     character(len=1025) :: TempString
 
     ! ETo file
-    if (GetEToFile() /= '(None)') then
+    if (ClimateComesFromFile(GetEToFile())) then
         totalname = trim(GetPathNameSimul())//'EToData.SIM'
         call fEToSIM_open(totalname, 'r')
         if (FirstDayNr == GetSimulation_FromDayNr()) then
@@ -5803,7 +5802,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         end if
     end if
     ! Rain file
-    if (GetRainFile() /= '(None)') then
+    if (ClimateComesFromFile(GetRainFile())) then
         totalname = trim(GetPathNameSimul())//'RainData.SIM'
         call fRainSIM_open(totalname, 'r')
         if (FirstDayNr == GetSimulation_FromDayNr()) then
@@ -5822,8 +5821,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         end if
     end if
     ! Temperature file
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         totalname = trim(GetPathNameSimul())//'TempData.SIM'
         call fTempSIM_open(totalname, 'r')
         if (FirstDayNr == GetSimulation_FromDayNr()) then
@@ -7313,25 +7311,26 @@ subroutine ReadClimateNextDay()
 
     ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
-        if (GetEToFile() /= '(None)') then
+        ! An externally driven run reads none of these: the driver sets ETo, rain and the
+        ! temperatures itself, before each time step, and no .SIM file of them was written.
+        if (ClimateComesFromFile(GetEToFile())) then
             TempString = fEToSIM_read()
             read(TempString,*) ETo_tmp
             call SetETo(ETo_tmp)
         end if
-        if (GetRainFile() /= '(None)') then
+        if (ClimateComesFromFile(GetRainFile())) then
             TempString = fRainSIM_read()
             read(TempString, *) tmpRain
             call SetRain(tmpRain)
         end if
-        if ((GetTemperatureFile() == '(None)') .or.&
-            (GetTemperatureFile() == '(External)')) then
-            call SetTmin(GetSimulParam_Tmin())
-            call SetTmax(GetSimulParam_Tmax())
-        else
+        if (ClimateComesFromFile(GetTemperatureFile())) then
             TempString = fTempSIM_read()
             read(TempString, *) Tmin_temp, Tmax_temp
             call SetTmin(Tmin_temp)
             call SetTmax(Tmax_temp)
+        else if (GetTemperatureFile() == '(None)') then
+            call SetTmin(GetSimulParam_Tmin())
+            call SetTmax(GetSimulParam_Tmax())
         end if
     end if
 end subroutine ReadClimateNextDay
