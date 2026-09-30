@@ -254,6 +254,8 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetOutDaily, &
                         GetExternalRun, &
                         ClimateComesFromFile, &
+                        GetManagement_Brel, &
+                        ManagementBrelSupplied, &
                         plant_Seed, &
                         subkind_Forage, &
                         GetCompartment, &
@@ -300,6 +302,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCCiPrev, &
                         GetCrop_GDDaysToMaxRooting, &
                         GetSoil_RootMax, &
+                        GetCropFile, &
                         GetCropFileFull, &
                         GetCrop_Assimilates_Mobilized, &
                         GetSimulation_Storage_Season, &
@@ -3783,6 +3786,9 @@ subroutine RelationshipsForFertilityAndSaltStress()
     real(dp) :: Coeffb1Salt_temp
     real(dp) :: Coeffb2Salt_temp
     real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
+    real(dp) :: BM80, BM90, BM100
+    real(dp) :: BrelPercent
+    integer(int32) :: FertStressFromBrel
     integer(int8) :: BioTop, BioLow
     real(dp) :: StrTop, StrLow
 
@@ -3820,6 +3826,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
                                   GetCrop_StressResponse(),GetCrop_subkind(), &
                                   GetCrop_ModeCycle(), Coeffb0_temp, Coeffb1_temp, &
                                   Coeffb2_temp, X10, X20, X30, X40, X50, X60, X70, &
+                                  BM80, BM90, BM100, &
                                   GetCrop_GDDaysToFlowering(), GetCrop_GDDLengthFlowering(), &
                                   GetCrop_GDDaysToHIo(), GetCrop_Planting(), GetCrop_DaysToHIo())
         call SetCoeffb0(Coeffb0_temp)
@@ -3831,8 +3838,32 @@ subroutine RelationshipsForFertilityAndSaltStress()
         call SetCoeffb2(real(undef_int, kind=dp))
     end if
 
+    ! 1.a bis Soil fertility stress read off the curve, when a driver gives the Brel
+    !
+    ! A driver that gives a Brel hands that over instead of a degree of soil
+    ! fertility stress, and the stress that goes with it is what the curve fitted just above
+    ! answers - it is read off there rather than assumed. The fraction of potential biomass the
+    ! run then works with is the value itself: no need to search it back out of a stress that
+    ! has been rounded to whole percent.
+    if (ManagementBrelSupplied()) then
+        if (.not. GetCrop_StressResponse_Calibrated()) then
+            call fatal(trim(GetCropFile()) // ': a relative biomass was supplied for this ' &
+                       // 'run, but the soil fertility response of this crop is not ' &
+                       // 'calibrated, so there is no curve to read the stress off.')
+        end if
+        BrelPercent = 100._dp * min(max(GetManagement_Brel(), 0._dp), 1._dp)
+        FertStressFromBrel = roundc(GetCoeffb0() + GetCoeffb1()*BrelPercent &
+                              + GetCoeffb2()*BrelPercent*BrelPercent, mold=1_int32)
+        if (FertStressFromBrel < 0) then
+            FertStressFromBrel = 0
+        elseif (FertStressFromBrel > 100) then
+            FertStressFromBrel = 100
+        end if
+        call SetManagement_FertilityStress(FertStressFromBrel)
+        call SetFracBiomassPotSF(BrelPercent/100._dp)
+
     ! 1.b Soil fertility : FracBiomassPotSF
-    if ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
+    elseif ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
         BioLow = 100_int8
         StrLow = 0._dp
