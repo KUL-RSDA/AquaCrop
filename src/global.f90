@@ -1108,6 +1108,16 @@ real(dp) :: Management_Brel = undef_double
     !! 0 to 1, handed over by the program driving AquaCrop in place of a degree of soil
     !! fertility stress. Negative - the default - means none was supplied, and the stress in
     !! the management file is used instead. No project or management file can set it.
+! Three stress coefficients of the day that the daily output does not carry and that the
+! routines computing them keep to themselves. A program driving AquaCrop asks for them by
+! name; they are reset to 1 - no stress - at the start of every time step, so a day whose
+! run never reaches the crop state that computes one reports no stress rather than yesterday's.
+real(dp) :: KsPolCold = 1._dp
+    !! Ks for cold stress on pollination
+real(dp) :: KsPolHeat = 1._dp
+    !! Ks for heat stress on pollination
+real(dp) :: KsAeration = 1._dp
+    !! reduction of potential transpiration by anaerobic conditions in the root zone
 logical :: Out1Wabal
 logical :: Out2Crop
 logical :: Out3Prof
@@ -17482,6 +17492,51 @@ logical function GetExternalRun()
 
     GetExternalRun = ExternalRun
 end function GetExternalRun
+
+
+real(dp) function GetKsPolCold()
+    !! Getter for the KsPolCold global variable
+
+    GetKsPolCold = KsPolCold
+end function GetKsPolCold
+
+
+subroutine SetKsPolCold(Ksi)
+    !! Setter for the KsPolCold global variable
+    real(dp), intent(in) :: Ksi
+
+    KsPolCold = Ksi
+end subroutine SetKsPolCold
+
+
+real(dp) function GetKsPolHeat()
+    !! Getter for the KsPolHeat global variable
+
+    GetKsPolHeat = KsPolHeat
+end function GetKsPolHeat
+
+
+subroutine SetKsPolHeat(Ksi)
+    !! Setter for the KsPolHeat global variable
+    real(dp), intent(in) :: Ksi
+
+    KsPolHeat = Ksi
+end subroutine SetKsPolHeat
+
+
+real(dp) function GetKsAeration()
+    !! Getter for the KsAeration global variable
+
+    GetKsAeration = KsAeration
+end function GetKsAeration
+
+
+subroutine SetKsAeration(Ksi)
+    !! Setter for the KsAeration global variable
+    real(dp), intent(in) :: Ksi
+
+    KsAeration = Ksi
+end subroutine SetKsAeration
 
 
 real(dp) function GetManagement_Brel()

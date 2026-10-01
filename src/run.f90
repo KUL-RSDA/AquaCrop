@@ -256,6 +256,9 @@ use ac_global, only:    AdjustSizeCompartments, &
                         ClimateComesFromFile, &
                         GetManagement_Brel, &
                         ManagementBrelSupplied, &
+                        SetKsPolCold, &
+                        SetKsPolHeat, &
+                        SetKsAeration, &
                         plant_Seed, &
                         subkind_Forage, &
                         GetCompartment, &
@@ -6738,6 +6741,13 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
                 alfaHIAdj_temp, TESTVAL
     real(dp) :: RootingDepth_temp
     logical :: WaterTableInProfile_temp, NoMoreCrop_temp
+
+    ! The three stress coefficients a driver asks for by name start the day at 1, no stress:
+    ! each is written only where the crop state that computes it is reached, so without this
+    ! a day that never reaches one would report the last day that did.
+    call SetKsPolCold(1._dp)
+    call SetKsPolHeat(1._dp)
+    call SetKsAeration(1._dp)
 
     ! 1. Get ETo
     if (GetEToFile() == '(None)') then

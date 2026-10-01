@@ -1,6 +1,9 @@
 module ac_simul
 
 use ac_global, only: ActiveCells, &
+                     SetKsPolCold, &
+                     SetKsPolHeat, &
+                     SetKsAeration, &
                      ac_zero_threshold, &
                      adjustedksstotoecsw, &
                      AfterCropCycle, &
@@ -945,8 +948,10 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
                     KsPolWS = KsAny(Wrel, croppol_temp, pLL, 0._dp)
                     ! 2.4c - Ks(pollination) cold stress
                     KsPolCS = KsTemperature((GetCrop_Tcold()-TempRange), real(GetCrop_Tcold(), kind=dp), TminOnDay)
+                    call SetKsPolCold(KsPolCS)
                     ! 2.4d - Ks(pollination) heat stress
                     KsPolHS = KsTemperature((GetCrop_Theat()+TempRange), real(GetCrop_Theat(), kind=dp), TmaxOnDay)
+                    call SetKsPolHeat(KsPolHS)
                     ! 2.4e - Adjust alfa
                     KsPol = KsPolWS
                     if (KsPol > KsPolCS) then
@@ -1390,6 +1395,7 @@ subroutine calculate_transpiration(Tpot, Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
                                               GetRootZoneWC_Actual(), &
                                               real(GetCrop_AnaeroPoint(), kind=dp), &
                                               GetRootingDepth(), RedFact)
+            call SetKsAeration(RedFact)
             TpotMAX = RedFact * TpotMAX
         end if
 
