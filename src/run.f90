@@ -239,6 +239,9 @@ use ac_global, only:    AdjustSizeCompartments, &
                         SetCrop_DaysToHarvest, &
                         SetCrop_GDDaysToSenescence, &
                         SetCrop_GDDaysToHarvest, &
+                        SetCrop_CCx, &
+                        SetCrop_GDDCGC, &
+                        SetCrop_GDDCDC, &
                         SetSimulation_ToDayNr, & 
                         SetSimulParam_Tmin, &
                         SetSimulParam_Tmax, &
@@ -6550,15 +6553,29 @@ subroutine WriteEvaluationData(DAP)
 end subroutine WriteEvaluationData
 
 
-subroutine InitializeRunPart1(NrRun, TheProjectType)
+subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
+                              CCx_range, ens_n_local, nensem)
     !! Part1 (before reading the climate) of the run initialization
     !! Loads the run input from the project file
     !! Initializes parameters and states
     !! Calls InitializeSimulationRunPart1
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
+    logical, intent(in), optional :: variable_CCx
+        !! spread CCx over the members of an ensemble (NL and LB, July 2025). Only a driver
+        !! running an ensemble passes this; without it the crop file's CCx is used as it is.
+    real(dp), intent(in), optional :: CCx_config
+        !! accepted but not used: the spread is centred on the crop file's CCx
+    real(dp), intent(in), optional :: CCx_range
+        !! half-width of the spread, in the same units as CCx
+    integer(int32), intent(in), optional :: ens_n_local
+        !! number of this ensemble member
+    integer(int32), intent(in), optional :: nensem
+        !! number of members. The last member keeps the crop file's CCx, as a control.
 
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+    logical :: CCx_pert_flag
+    real(dp) :: GDD_endgrowth, CCi_final, CCx_spread
 
     if (TheProjectType == typeproject_typenone) then
         ! Do nothing
@@ -6566,6 +6583,14 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     end if
 
     call LoadSimulationRunProject(int(NrRun, kind=int32))
+
+    CCx_pert_flag = .false.
+    if (present(variable_CCx)) then
+        CCx_pert_flag = variable_CCx
+    end if
+    if (CCx_pert_flag) then
+        call PerturbCCxForEnsembleMember()
+    end if
 
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
@@ -6577,6 +6602,58 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     call InitializeSimulationRunPart1()
 
     contains
+
+
+    subroutine PerturbCCxForEnsembleMember()
+        !! Gives this ensemble member its own CCx, evenly spread over CCx_range either side
+        !! of the crop file's CCx, and recalculates GDDCGC and GDDCDC so that the canopy
+        !! still reaches its maximum at the same growing degree-day and still ends the season
+        !! at the same cover. The last member keeps the crop file's CCx.
+        !!
+        !! Growing degree-day mode only, and written for a determinate crop: the canopy is
+        !! taken to stop expanding at flowering plus half the flowering period.
+
+        if (.not. (present(CCx_range) .and. present(ens_n_local) &
+                   .and. present(nensem))) then
+            call fatal('the run asks for CCx to be spread over an ensemble, but the ' &
+                       // 'spread, the member or the number of members is missing.')
+        end if
+        if (GetCrop_ModeCycle() /= modeCycle_GDDays) then
+            call fatal('CCx can only be spread over an ensemble for a crop that develops ' &
+                       // 'by growing degree-days.')
+        end if
+        if (nensem <= 2) then
+            return
+        end if
+
+        GDD_endgrowth = log(GetCrop_CCx()/(0.08_dp*GetCrop_CCo()))/GetCrop_GDDCGC()
+        if (GDD_endgrowth > (GetCrop_GDDaysToFlowering() &
+                             + GetCrop_GDDLengthFlowering()/2._dp)) then
+            GDD_endgrowth = GetCrop_GDDaysToFlowering() &
+                            + GetCrop_GDDLengthFlowering()/2._dp
+        end if
+        CCi_final = GetCrop_CCx() * (1._dp - 0.05_dp &
+                    * (exp(3.33_dp * GetCrop_GDDCDC()/(GetCrop_CCx() + 2.29_dp) &
+                       * (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) - 1._dp))
+
+        ! Keep every member between the crop's own CCo and a full canopy. Without this a
+        ! member can be given a CCx above 1, or one at or below CCo, which makes the
+        ! growth coefficient below the logarithm of zero or of a negative number.
+        CCx_spread = CCx_range
+        if (((GetCrop_CCx() + CCx_spread) > 1._dp) &
+            .or. ((GetCrop_CCx() - CCx_spread) < GetCrop_CCo())) then
+            CCx_spread = min(1._dp - GetCrop_CCx(), GetCrop_CCx() - GetCrop_CCo())
+        end if
+
+        if (ens_n_local < nensem) then
+            call SetCrop_CCx(GetCrop_CCx() - CCx_spread &
+                             + (ens_n_local - 1) * 2._dp * CCx_spread/(nensem - 2))
+            call SetCrop_GDDCGC(log(GetCrop_CCx()/(0.08_dp*GetCrop_CCo()))/GDD_endgrowth)
+            call SetCrop_GDDCDC((GetCrop_CCx() + 2.29_dp) &
+                 / (3.33_dp * (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) &
+                 * log((1._dp - CCi_final/GetCrop_CCx())/0.05_dp + 1._dp))
+        end if
+    end subroutine PerturbCCxForEnsembleMember
 
 
     subroutine AdjustCompartments()
