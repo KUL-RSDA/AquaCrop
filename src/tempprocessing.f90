@@ -934,7 +934,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
     real(dp), intent(in) :: TDayMin
     real(dp), intent(in) :: TDayMax
     logical, intent(in) :: ReferenceClimate
-        !! when .true. the mean daily Tnx of the reference year is used, always
+        !! when .true. the daily ReferenceTnx is used, always
         !! starting at day 1 of the crop cycle; FirstDayPeriod is then not used
 
     integer(int32) :: i, RemainingDays
@@ -1159,7 +1159,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
     !! Do not move this onto the reference climatology - it has been tried and it breaks the
     !! perennial. A perennial's season is bounded in DAYS by Crop_LastDayNr from the project
     !! file and its GDD budget is derived from that, so "how much GDD will this crop bank over
-    !! its fixed season this year" is climate-dependent and only the actual record answers it.
+    !! its fixed season this year" is climate-dependent and only the actual record can be used.
     integer(int32), intent(in) :: ValGDDays
     integer(int32), intent(in) :: FirstDayCrop
     real(dp), intent(in) :: Tbase
@@ -1363,7 +1363,7 @@ subroutine AdjustCalendarCrop(FirstCropDay)
     !! inverse of the CC curve), so it needs no temperature record and gives the same answer
     !! every year.
     !!
-    !! FirstCropDay is an unused argument, kept so the caller signature stays stable.
+    !! FirstCropDay is an unused argument, kept for simplicity.
     integer(int32), intent(in) :: FirstCropDay
 
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
@@ -1715,10 +1715,7 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
     !
     ! Do not move them onto the reference climatology - it has been tried and it breaks the
     ! perennial. Here the DAYS are given (the season is bounded by Crop_LastDayNr from the
-    ! project file) and the GDD budget is DERIVED from them, which is a genuinely
-    ! weather-dependent question. GDD1234 and L1234 are twin descriptions of the same season,
-    ! and the simulation banks GDD off the actual record, so a GDD1234 measured on any other
-    ! climate would describe a different season.
+    ! project file) and the GDD budget is DERIVED from them.
     !
     ! They cannot simply go: the crop file declares senescence as a span counted BACK from the
     ! end (GDDaysFromSenescenceToEnd), and the end is a calendar date the user declares. Locating
@@ -1747,7 +1744,7 @@ subroutine AdjustCropFileParameters(TheCropFileSet, LseasonDays,&
         else
             Tmin_tmp = GetSimulParam_Tmin()
             Tmax_tmp = GetSimulParam_Tmax()
-            ! On the record too, so L123 stays the exact inverse of the GDD123 above
+            ! Uses the actual temperature record.
             L123 = SumCalendarDays(GDD123, TheCropDay1, TheTbase, TheTupper, &
                                    Tmin_tmp, Tmax_tmp)
         end if

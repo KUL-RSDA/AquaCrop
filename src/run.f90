@@ -640,7 +640,7 @@ integer(int32) :: LastIrriDAP
 ! Crop_DayN is the declared end of the cropping period (the run's horizon); on the GDD clock
 ! the crop can finish before it, and everything that means "the season is over" - the
 ! off-season irrigation events, the generated schedule, the irrigation report - has to hang
-! off the crop's own end, as it did when Crop_DayN still was that end.
+! off the crop's own end, as it did when Crop_DayN was defined beforehand.
 integer(int32) :: DayNrCropEnded = undef_int
 
 
@@ -3909,7 +3909,7 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev)
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
         StageNow = GetSimulation_SumGDD()
         if (.not. GetSimulation_Germinate()) then
-            ! a seed still waiting for a wet enough soil: today's GDD may not count yet
+            ! a seed still waiting for a wet enough soil: today's GDD do not count yet
             StageNow = 0._dp
         end if
         StageGerm = real(GetCrop_GDDaysToGermination(), kind=dp)
@@ -4684,9 +4684,6 @@ subroutine InitializeSimulationRunPart1()
     call SetSimulation_DayAnaero(0_int8) ! days of anaerobic conditions in
                                     ! global root zone
     ! germination
-    ! The FromDayNr <= Crop_Day1 clause that used to sit here was the mid-season-start test
-    ! ("the run begins with the crop already up"); that path is no longer supported, so a sown
-    ! crop always still has to germinate.
     if (GetCrop_Planting() == plant_Seed) then
         call SetSimulation_Germinate(.false.)
     else
@@ -4757,7 +4754,7 @@ subroutine InitializeSimulationRunPart1()
     call SetManagement_FertilityStress(FertStress)
     call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
     call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
-    ! Store the decline on the clock it will be read on: per GDD in GDD mode, over the window. 
+    ! Store the decline on the clock it will be read on.
     ! Call above defines the RatDGDDReference. Returns 1 in calendar mode.
     call SetSimulation_EffectStress_CDecline(GetSimulation_EffectStress_CDecline() &
                                              * RatDGDDReference())
@@ -4766,7 +4763,7 @@ subroutine InitializeSimulationRunPart1()
 
     ! Day spans for the fertility AND salinity stress calibration, on the REFERENCE climatology.
     !
-    ! Everything in this family uses the reference climatology, so the day thresholds it is handed must
+    ! Everything here uses the reference climatology, so the day thresholds it is handed must
     ! be measured on that same climatology. The two related callers
     ! (ReferenceStressBiomassRelationship, ReferenceCCxSaltStressRelationship) do the same.
     !
@@ -4940,9 +4937,6 @@ subroutine InitializeSimulationRunPart2()
     real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
 
     ! Sum of GDD before start of simulation
-    ! A run starts at or before planting - starting inside the growing period is not
-    ! supported - so there is never any GDD banked before day 1. DayNri <= Crop_Day1 is the
-    ! invariant the rest of this routine relies on.
     call SetSimulation_SumGDD(0._dp)
     call SetSimulation_SumGDDfromDay1(0._dp)
     call SetSimulation_DayNrFlowering(undef_int)
@@ -5063,8 +5057,7 @@ subroutine InitializeSimulationRunPart2()
     end if
     ! 13.1d CCi at start of day (is CCi at end of previous day)
     ! The run starts at or before planting, so the crop is never already standing on day 1
-    ! except for a regrowth cycle. The mid-season-start arm (rebuilding CCiPrev from the
-    ! canopy curve at an arbitrary point in the cycle) is gone with that path.
+    ! except for a regrowth cycle.
     if (GetCrop_DaysToCCini() /= 0) then
         ! regrowth which starts on 1st day
         if (GetDayNri() == GetCrop_Day1()) then
@@ -5171,7 +5164,6 @@ subroutine InitializeSimulationRunPart2()
 
     ! 16. Initial rooting depth
     ! 16.1 default value
-    ! No roots yet on day 1: the run starts at or before planting.
     call SetZiprev(real(undef_int, kind=dp))
     ! 16.2 specified or default Zrini (m)
     if ((GetSimulation_Zrini() > 0._dp) .and. &
@@ -5262,9 +5254,7 @@ subroutine InitializeSimulationRunPart2()
     call SetHItimesAT(1._dp)
     call SetalfaHI(real(undef_int, kind=dp))
     call SetalfaHIAdj(0._dp)
-    ! ScorAT1/ScorAT2 are the post-flowering water-stress accumulators. A run always starts at
-    ! or before planting, so the crop is never past flowering on day 1: both start empty and are
-    ! built up day by day in DetermineBiomassAndYield.
+    ! ScorAT1/ScorAT2 are the post-flowering water-stress accumulators. Initialiaze them to zero.
     call SetScorAT1(0._dp)
     call SetScorAT2(0._dp)
 
@@ -6878,9 +6868,6 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         end if
         ! CC initial (at the end of previous day) when simulation starts
         ! before sowing/transplanting,
-        ! DayNri > FromDayNr keeps this off the run's first day, which
-        ! InitializeSimulationRunPart2 has already handled - a run-bounds
-        ! question, no look-ahead in it.
         if (GetDayNri() > GetSimulation_FromDayNr()) then
             if (GerminationDay(GetDayNri(), SumGDDadjCC, GetGDDayi())) then
                 call SetCCiPrev(GetCCoTotal())
@@ -6895,7 +6882,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
           .and. (GetSimulation_SumGDD() < GetCrop_GDDaysToHarvest()))) then
         if (((GetDayNri()-GetSimulation_DelayedDays()) >= GetCrop_Day1()) .and. &
             (.not. AfterCropCycle(GetDayNri() - GetSimulation_DelayedDays() &
-                                  - GetCrop_Day1(), SumGDDadjCC, GetGDDayi()))) then
+                                  - GetCrop_Day1(), SumGDDadjCC))) then
             ! rooting depth at DAP (at Crop.Day1, DAP = 1)
             call CalculateRootingDepth(tDaysZmin,tGDDZmin,&
               GetZiPrev(),GetGDDayi(),RootingDepth_temp)

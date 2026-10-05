@@ -496,7 +496,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
         DAP = VirtualTimeCC
     else
         ! GDD mode: CalculateETpot drives its stage clock off the GDDs passed, 
-        ! so noSumCalendarDays day conversion is needed here.
+        ! so DAP needed. 
         DAP = undef_int
     end if
     call CalculateETpot(DAP, GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
@@ -541,7 +541,7 @@ subroutine DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, CO2i, GDDayi, &
         call SetSimulation_SumGDDatFlowering(SumGDDadjCC)
     end if
     ! reproductive-stage WP decline applies only when there is an HI build-up phase.
-    ! Gate on the build-up length: GDDaysToHIo in GDD mode, dHIdt in calendar mode
+    ! Fork for GDD/calendar clock:
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
         HasBuildUp = (GetCrop_GDDaysToHIo() > 0)
     else
@@ -707,8 +707,8 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             alfa = GetCrop_HI()
         else
             HIfinal_temp = GetSimulation_HIfinal()
-            ! DaysToFlowerLoc feeds the calendar HI clock only; in GDD mode
-            ! HarvestIndexDay ignores it and builds HI from GDD-since-flowering-onset
+            ! DaysToFlowerLoc feeds the calendar HI clock only
+            ! in GDD mode: HarvestIndexDay ignores it and builds HI from GDD-since-flowering-onset
             DaysToFlowerLoc = GetCrop_DaysToFlowering()
             alfa = HarvestIndexDay((dayi-GetCrop_Day1()), DaysToFlowerLoc, &
                                    GetCrop_HI(), GetCrop_dHIdt(), SumGDDadjCC, GetCCiactual(), &
@@ -866,10 +866,10 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
     ! 2. yield
     tmax1 = real(undef_int, kind=dp)
     if ((GetCrop_subkind() == subkind_Tuber) .or. (GetCrop_Subkind() == subkind_Grain)) then
-        ! the flowering stage corresponds with Tuberformation
+        ! the flowering stage corresponds with tuber formation
         ! Note this opens the day AFTER flowering starts, whereas the WP block in
         ! DeterminePotentialBiomass opens ON that day - two different conventions
-        ! in the original, both kept.
+        ! in the original code (7.3), both kept for now.
         if (HasFlowered .and. (dayi > FloweringDayNr)) then
             ! calculation starts when flowering has started
 
@@ -913,9 +913,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
 
             ! 2.4 Failure of Pollination during flowering (alfaMax in percentage)
             if (GetCrop_Subkind() == Subkind_grain) then ! - only valid for fruit/grain crops (flowers)
-                ! the day that straddles the end of the flowering period still carries the
-                ! flowers of the slice that is left; FractionFlowering clamps that slice
-                if (((StageAfterFlor - StageStep) < StageLenFlor) & ! limited to flowering period
+                if (((StageAfterFlor - StageStep) < StageLenFlor) & ! calculation limited to flowering period
                     .and. ((GetCCiactual()*100._dp) > GetSimulParam_PercCCxHIfinal())) then
                     ! sufficient green canopy remains
                     ! 2.4a - Fraction of flowers which are flowering on day  (fFlor)
@@ -946,10 +944,7 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             end if
 
             ! 2.5-2.7 post-flowering stress clock. Position (YPos) and step (YStep) are read
-            ! off the stage clock: GDD in GDD mode, days in calendar mode. These sections are
-            ! not scale-free, so the two clocks give slightly different HItimesAT; that is an
-            ! accepted GDD-native divergence. In calendar mode YPos/YStep reduce to
-            ! days-since-flowering and a 1-day step.
+            ! off the stage clock: GDD in GDD mode, days in calendar mode.
             YPos  = StageAfterFlor
             YStep = StageStep
             if (GetCrop_ModeCycle() == modeCycle_GDDays) then
@@ -996,8 +991,8 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
 
             ! 2.6 determine effect of water stress affecting stomatal closure after flowering
             ! during yield formation
-            ! tmax2 is the yield formation span, on the stage clock: GDDaysToHIo in GDD
-            ! mode, roundc(HI/dHIdt) in calendar mode (both carried by StageYieldForm).
+            ! tmax2 is the yield formation duration, on the stage clock: GDDaysToHIo in GDD
+            ! mode, roundc(HI/dHIdt) in calendar mode (=StageYieldForm here).
             tmax2 = StageYieldForm
             if ((HItimesBEF > 0.99_dp) & ! there is green canopy cover at start of flowering;
                 .and. (YPos <= tmax2) & ! and not yet end period
@@ -1024,8 +1019,8 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
             end if
 
             ! 2.7 total multiplier after flowering
-            ! the blend below is scale-free in tmax1/tmax2, so it reads the same
-            ! whether the spans are in GDD or in days
+            ! scale-free in tmax1/tmax2, so it reads the same
+            ! whether the durations are in GDD or in days
             if ((tmax2 <= 0._dp) .and. (tmax1 <= 0._dp)) then
                 HItimesAT = 1._dp
             else
@@ -1151,18 +1146,17 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
       ! that clock. The result is the fraction of flowers opening TODAY, and the
       ! caller sums it over the window, so the flower density has to be weighted
       ! by the step actually taken: over the whole period the StageStep sum to
-      ! StageLenFlor and the fractions to 1. In calendar mode StageStep is 1 and
-      ! this is the original expression; in GDD mode a day covers GDDayi of the
-      ! period, not 1, and omitting that makes alfaMax (and so the yield) collapse.
+      ! StageLenFlor and the fractions to 1.
       if (StageLenFlor <= 1._dp) then
           F = 1._dp
       else
-          ! Today's slice of the flowering period, clamped to its end: the last day of a
-          ! thermal window almost never lands on it, and the flowers due in what is left
-          ! of the window open on that day. Past the end FractionPeriod saturates at 1,
-          ! some seventy times the density inside the window, so the slice - not the day -
-          ! is what may be counted. In calendar mode the window is whole days and the
-          ! clamp never bites.
+          ! Today's slice of the flowering period runs from DiFlorFrom to DiFlorTo.
+          ! In GDD mode the period usually ends partway through a day. On that day we
+          ! count only the part up to the end of the period (DiFlorTo is clamped), so
+          ! the flowers still due open on that day and none are counted past the end.
+          ! Without the clamp, FractionPeriod is 1 past the end, which would count far
+          ! too many flowers. In calendar mode the period ends on a whole day, so the
+          ! clamp has no effect.
           DiFlorTo = min(StageAfterFlor, StageLenFlor)
           DiFlorFrom = StageAfterFlor - StageStep
           f2 = FractionPeriod(DiFlorTo)
@@ -2367,7 +2361,7 @@ subroutine calculate_CapillaryRise(CRwater, CRsalt)
 end subroutine calculate_CapillaryRise
 
 
-subroutine CheckWaterSaltBalance(dayi, SumGDDadjCC_in, GDDayi,&
+subroutine CheckWaterSaltBalance(dayi, SumGDDadjCC_in, &
               InfiltratedRain,  &
               control, InfiltratedIrrigation,&
               InfiltratedStorage, Surf0, ECInfilt, ECdrain, &
@@ -2375,8 +2369,6 @@ subroutine CheckWaterSaltBalance(dayi, SumGDDadjCC_in, GDDayi,&
     integer(int32), intent(in) :: dayi
     real(dp), intent(in) :: SumGDDadjCC_in
         !! crop's GDD position today, for AfterCropCycle; ignored in calendar mode
-    real(dp), intent(in) :: GDDayi
-        !! today's GDD, banks the AfterCropCycle position; ignored in calendar mode
     real(dp), intent(in) :: InfiltratedRain
     integer(intEnum), intent(in) :: control
     real(dp), intent(in) :: InfiltratedIrrigation
@@ -2438,7 +2430,7 @@ subroutine CheckWaterSaltBalance(dayi, SumGDDadjCC_in, GDDayi,&
             ECw = GetIrriECw_PreSeason()
         else
             ECw = GetSimulation_IrriECw()
-            if (AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in, GDDayi)) then
+            if (AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in)) then
                 ECw = GetIrriECw_PostSeason()
             end if
         end if
@@ -2487,7 +2479,7 @@ subroutine CheckWaterSaltBalance(dayi, SumGDDadjCC_in, GDDayi,&
 
         if (((dayi-GetSimulation_DelayedDays()) >= GetCrop_Day1() ) &
             .and. (.not. AfterCropCycle(dayi - GetSimulation_DelayedDays() &
-                             - GetCrop_Day1(), SumGDDadjCC_in, GDDayi))) then
+                             - GetCrop_Day1(), SumGDDadjCC_in))) then
             ! in growing cycle
             if (GetSumWaBal_Biomass() > 0._dp) then
                 ! biomass was already produced (i.e. CC present)
@@ -2512,15 +2504,13 @@ end subroutine CheckWaterSaltBalance
 
 subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                                  InfiltratedStorage, SubDrain, dayi, &
-                                 SumGDDadjCC_in, GDDayi)
+                                 SumGDDadjCC_in)
     real(dp), intent(in) :: InfiltratedRain
     real(dp), intent(in) :: InfiltratedIrrigation
     real(dp), intent(in) :: InfiltratedStorage
     integer(int32), intent(in) :: dayi
     real(dp), intent(in) :: SumGDDadjCC_in
         !! crop's GDD position today, for AfterCropCycle; ignored in calendar mode
-    real(dp), intent(in) :: GDDayi
-        !! today's GDD, banks the AfterCropCycle position; ignored in calendar mode
     real(dp), intent(in) :: SubDrain
 
     real(dp) ::   SaltIN, SaltOUT, mmIN, DeltaTheta, Theta, SAT, &
@@ -2541,7 +2531,7 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
         ECw = GetIrriECw_PreSeason()
     else
         ECw = GetSimulation_IrriECw()
-        if (AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in, GDDayi)) then
+        if (AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in)) then
             ECw = GetIrriECw_PostSeason()
         end if
     end if
@@ -2944,7 +2934,7 @@ end subroutine calculate_Extra_runoff
 
 subroutine calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
                                     InfiltratedStorage, ECinfilt, SubDrain, &
-                                    dayi, SumGDDadjCC_in, GDDayi)
+                                    dayi, SumGDDadjCC_in)
     real(dp), intent(inout) :: InfiltratedRain
     real(dp), intent(inout) :: InfiltratedIrrigation
     real(dp), intent(inout) :: InfiltratedStorage
@@ -2953,8 +2943,6 @@ subroutine calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
     integer(int32), intent(in) :: dayi
     real(dp), intent(in) :: SumGDDadjCC_in
         !! crop's GDD position today, for AfterCropCycle; ignored in calendar mode
-    real(dp), intent(in) :: GDDayi
-        !! today's GDD, banks the AfterCropCycle position; ignored in calendar mode
 
     real(dp) :: Sum
     real(dp) :: ECw
@@ -2973,7 +2961,7 @@ subroutine calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
             ECw = GetIrriECw_PreSeason()
         else
             ECw = GetSimulation_IrriECw()
-            if (AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in, GDDayi)) then
+            if (AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in)) then
                 ECw = GetIrriECw_PostSeason()
             end if
         end if
@@ -3936,11 +3924,7 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         ! 7. no crop as a result of fertiltiy and/or water stress
         if (roundc(1000._dp*GetCCiActual(), mold=1) <= 0) then
             NoMoreCrop = .true.
-            ! The test rounds: a canopy below 0.05 % is no crop. On the calendar clock the
-            ! decline curve crossed zero and the canopy was already 0 by the time this fired;
-            ! on the GDD clock it lands on a tiny positive value, which the skipped canopy
-            ! block then freezes for the rest of the run - leaving ETpot, the stress columns,
-            ! the growth stage and the season's day count all still seeing a crop.
+            ! To avoid having a remaining CCiActual value when NoMoeCrop is true
             call SetCCiActual(0._dp)
         end if
     end if
@@ -4149,8 +4133,7 @@ end subroutine DetermineCCiGDD
 subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
                                              Coeffb1Salt, Coeffb2Salt, &
                                              NrDayGrow, StressTotSaltPrev, &
-                                             VirtualTimeCC, SumGDDadjCC_in, &
-                                             GDDayi)
+                                             VirtualTimeCC, SumGDDadjCC_in)
     integer(int32), intent(inout) :: StressSFadjNEW
     real(dp), intent(in) :: Coeffb0Salt, Coeffb1Salt, Coeffb2Salt
     integer(int32), intent(in) :: NrDayGrow
@@ -4158,8 +4141,6 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
     integer(int32), intent(in) :: VirtualTimeCC
     real(dp), intent(in) :: SumGDDadjCC_in
         !! crop's GDD position today, for AfterCropCycle; ignored in calendar mode
-    real(dp), intent(in) :: GDDayi
-        !! today's GDD, banks the AfterCropCycle position; ignored in calendar mode
 
     type(rep_EffectStress) :: FertilityEffectStress, SalinityEffectStress
     real(dp) :: SaltStress, CCxRedD
@@ -4194,7 +4175,7 @@ subroutine EffectSoilFertilitySalinityStress(StressSFadjNEW, Coeffb0Salt, &
         NotYetGerminated = (VirtualTimeCC < GetCrop_DaysToGermination())
     end if
     if (NotYetGerminated &
-            .or. AfterCropCycle(VirtualTimeCC, SumGDDadjCC_in, GDDayi) &
+            .or. AfterCropCycle(VirtualTimeCC, SumGDDadjCC_in) &
             .or. (GetSimulation_Germinate() .eqv. .false.) &
             .or. ((StressSFAdjNEW == 0) .and. (SaltStress <= 0.1_dp))) then
         ! no soil fertility and salinity stress
@@ -4415,13 +4396,11 @@ subroutine CalculateEvaporationSurfaceWater()
 end subroutine CalculateEvaporationSurfaceWater
 
 
-subroutine AdjustEpotMulchWettedSurface(dayi, SumGDDadjCC_in, GDDayi, &
+subroutine AdjustEpotMulchWettedSurface(dayi, SumGDDadjCC_in, &
                                         EpotTot, Epot, EvapWCsurface)
     integer(int32), intent(in) :: dayi
     real(dp), intent(in) :: SumGDDadjCC_in
         !! crop's GDD position today, for AfterCropCycle; ignored in calendar mode
-    real(dp), intent(in) :: GDDayi
-        !! today's GDD, banks the AfterCropCycle position; ignored in calendar mode
     real(dp), intent(in) :: EpotTot
     real(dp), intent(inout) :: Epot
     real(dp), intent(inout) :: EvapWCsurface
@@ -4429,7 +4408,7 @@ subroutine AdjustEpotMulchWettedSurface(dayi, SumGDDadjCC_in, GDDayi, &
     real(dp) :: EpotIrri
     logical :: AfterCycle
 
-    AfterCycle = AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in, GDDayi)
+    AfterCycle = AfterCropCycle(dayi - GetCrop_Day1(), SumGDDadjCC_in)
 
     ! 1. Mulches (reduction of EpotTot to Epot)
     if (GetSurfaceStorage() <= ac_zero_threshold) then
@@ -5620,7 +5599,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     control = control_begin_day
     ECdrain_temp = GetECdrain()
     Surf0_temp = GetSurf0()
-    call CheckWaterSaltBalance(dayi, SumGDDadjCC, GDDayi, InfiltratedRain, &
+    call CheckWaterSaltBalance(dayi, SumGDDadjCC, InfiltratedRain, &
                                control, &
                                InfiltratedIrrigation, InfiltratedStorage, &
                                Surf0_temp, ECInfilt, ECdrain_temp, &
@@ -5666,7 +5645,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     if (GetManagement_Bundheight() >= 0.01_dp) then
         call calculate_surfacestorage(InfiltratedRain, InfiltratedIrrigation, &
                                       InfiltratedStorage, ECinfilt, SubDrain, &
-                                      dayi, SumGDDadjCC, GDDayi)
+                                      dayi, SumGDDadjCC)
     else
         call calculate_Extra_runoff(InfiltratedRain, InfiltratedIrrigation, &
                                     InfiltratedStorage, SubDrain)
@@ -5684,7 +5663,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     ! 7. Salt balance
     call calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                                InfiltratedStorage, SubDrain, dayi, &
-                               SumGDDadjCC, GDDayi)
+                               SumGDDadjCC)
 
 
     ! 8. Check Germination
@@ -5697,8 +5676,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
         call EffectSoilFertilitySalinityStress(StressSFadjNEW_loc, Coeffb0Salt, &
                                                Coeffb1Salt, Coeffb2Salt, &
                                                NrDayGrow, StressTotSaltPrev, &
-                                               VirtualTimeCC, SumGDDadjCC, &
-                                               GDDayi)
+                                               VirtualTimeCC, SumGDDadjCC)
     end if
 
 
@@ -5778,7 +5756,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     end if
     EvapWCsurf_temp = GetSimulation_EvapWCsurf()
     Epot_temp = GetEpot()
-    call AdjustEpotMulchWettedSurface(dayi, SumGDDadjCC, GDDayi, EpotTot, &
+    call AdjustEpotMulchWettedSurface(dayi, SumGDDadjCC, EpotTot, &
                                       Epot_temp, EvapWCsurf_temp)
     call SetEpot(Epot_temp)
     call SetSimulation_EvapWCsurf(EvapWCsurf_temp)
@@ -5846,7 +5824,7 @@ subroutine BUDGET_module(dayi, TargetTimeVal, TargetDepthVal, VirtualTimeCC, &
     control = control_end_day
     ECdrain_temp = GetECdrain()
     Surf0_temp = GetSurf0()
-    call CheckWaterSaltBalance(dayi, SumGDDadjCC, GDDayi, InfiltratedRain, &
+    call CheckWaterSaltBalance(dayi, SumGDDadjCC, InfiltratedRain, &
                                control, &
                                InfiltratedIrrigation, InfiltratedStorage, &
                                Surf0_temp, ECInfilt, ECdrain_temp, &

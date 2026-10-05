@@ -633,16 +633,16 @@ type rep_sim
     integer(int32) :: DelayedDays
         !! delayed days since sowing/planting due to water stress (crop cannot germinate)
     integer(int32) :: DayNrFlowering
-        !! day number on which flowering started (detected from accumulated GDD in
+        !! day number on which flowering started (calculated in accumulated GDD in
         !! GDD mode); undef_int until flowering is reached
     real(dp) :: SumGDDatFlowering
-        !! accumulated GDD (SumGDDadjCC) on the day flowering started; lets the
-        !! post-flowering HI stress correction normalize by GDD-since-onset in GDD mode
-        !! (exact step-weighted mean); 0 until flowering is reached
+        !! accumulated GDD (SumGDDadjCC) on the day flowering started
+        !! 0 until flowering is reached
     integer(int32) :: RefDaysToFullCanopy
         !! days from Crop.Day1 to full canopy, for the fertility/salinity stress calibration.
-        !! In GDD mode measured on the REFERENCE climatology, so it is weather-independent;
-        !! in calendar mode simply Crop.DaysToFullCanopy.
+        !! In GDD mode measured on the REFERENCE climatology, so it is independent of the actual
+        !! temperature record.
+        !! in calendar mode = Crop.DaysToFullCanopy.
     integer(int32) :: RefDaysToHarvest
         !! days from Crop.Day1 to maturity, same treatment and purpose as RefDaysToFullCanopy
     logical :: Germinate
@@ -1043,8 +1043,7 @@ integer(int32) :: MaxPlotNew
 integer(int32) :: NrCompartments
 integer(int32) :: IrriFirstDayNr
 integer(int32) :: IrriInfoLastDay
-! growing degrees since the last cutting; its accessors are real(dp), and a
-! whole-number type here truncated it by up to a degree a day
+! growing degrees since the last cutting
 real(dp) :: SumGDDCuts
 integer(int32) :: ZiAqua ! Depth of Groundwater table below
                          ! soil surface in centimeter
@@ -1437,22 +1436,17 @@ end function CanopyCoverNoStressSF
 
 real(dp) function RatDGDDReference()
     !! Days-per-GDD factor for the soil-fertility canopy decline. The decline rate is
-    !! calibrated per DAY, so on the GDD clock it has to be restated per GDD. Returns 1
-    !! outside GDD mode and when the decline window is empty.
+    !! calibrated per DAY [%/day], so on the GDD clock it has to be [%/GDD]. Returns 1
+    !! in calendar mode.
     !!
     !! Applied once, where the stress level is set: every writer of
-    !! Simulation%EffectStress%CDecline multiplies by this straight after deriving the rate,
-    !! so the field holds %/day in calendar mode and %/GDD in GDD mode. What is conserved is
-    !! the total decline over the window, which is the calibrated quantity.
+    !! Simulation%EffectStress%CDecline gets multiplied by this straight after deriving the rate. 
+    !! What is conserved is the total decline over the window, which is the calibrated quantity.
     !!
-    !! Apply it only AFTER TimeToMaxCanopySFOnCycleClock has settled GDDaysToFullCanopySF -
-    !! the factor is measured over that window.
+    !! Apply it only AFTER TimeToMaxCanopySFOnCycleClock has calculated the GDDaysToFullCanopySF 
+    !! because the reduction is applied over the window [GDDaysToFullCanopySF, GDDaysToSenescence].
     !!
-    !! Zero-GDD days are excluded from the day count. A dormant day advances SumGDD, and so
-    !! the decline, by ~0, so it is not a day of decline.
-    !!
-    !! Recomputed on demand, never stored: GDDaysToFullCanopySF is re-set daily from the
-    !! current fertility stress, so a value computed once at initialisation goes stale.
+    !! Zero-GDD days are excluded from the day count, because a dormant day does not advance the decline.
 
     real(dp) :: RatDGDD, GDDspan, GDDsum, DayGDD
     integer(int32) :: RefCropDay1, RefDayi, RefMonthi, RefYeari
@@ -1476,17 +1470,16 @@ real(dp) function RatDGDDReference()
                     RatDGDD = 1._dp/DayGDD
                 end if
             else
-                ! position the walk at the start of the decline window. That endpoint is small
-                ! (well under the annual GDD total) so this walk never wraps.
+                ! walk the reference climate temperature. Position the start of the walk at the first day cropping.
                 call DetermineDate(GetCrop_Day1(), RefDayi, RefMonthi, RefYeari)
                 call DetermineDayNr(RefDayi, RefMonthi, 1901, RefCropDay1) ! reference year
                 MaxCdays = size(GetTminCropReferenceRun())
                 i = mod(SumCalendarDaysReferenceTnx(GetCrop_GDDaysToFullCanopySF(), &
                             RefCropDay1, RefCropDay1, GetCrop_Tbase(), GetCrop_Tupper(), &
                             GetSimulParam_Tmin(), GetSimulParam_Tmax()), MaxCdays)
-                ! NrCdays counts only days that carry GDD - a dormant day advances the decline
-                ! by ~0, so it is not a day of decline. NrWalked bounds the walk at one reference
-                ! year and counts every day, GDD-carrying or not.
+                ! NrCdays counts only days that carry GDD - a dormant day does not advance the decline,
+                ! so it is not a day of decline. NrWalked bounds the walk at one reference
+                ! year because re-looping over the same year does not change the ratio. 
                 GDDsum = 0._dp
                 NrCdays = 0
                 NrWalked = 0
@@ -2308,7 +2301,7 @@ subroutine TimeToMaxCanopySFOnCycleClock(RedCGC, RedCCX, ClassSF)
 end subroutine TimeToMaxCanopySFOnCycleClock
 
 
-logical function AfterCropCycle(VirtualDay, SumGDDpos, GDDayi)
+logical function AfterCropCycle(VirtualDay, SumGDDpos)
     !! True when the crop's cycle is over, decided on the clock the crop runs on.
     !!
     !! Replaces `dayi > Crop_DayN`.
@@ -2319,14 +2312,10 @@ logical function AfterCropCycle(VirtualDay, SumGDDpos, GDDayi)
     !! Simulation%SumGDD: for regrowth the two differ.
     !!
     !! PERENNIALS STAY ON THE CALENDAR. A forage crop takes its end from the project file's
-    !! Crop_LastDayNr, by design. It is also necessary: SumGDDadjCC is clamped at
-    !! GDDaysToHarvest, so a `>=` test is trivially true once GDDayi reaches 0 and would fire on
-    !! winter dormancy, which is not the end of a cycle.
+    !! Crop_LastDayNr, by design.
     integer(int32), intent(in) :: VirtualDay
     real(dp), intent(in) :: SumGDDpos
         !! the crop's GDD position today (SumGDDadjCC); ignored in calendar mode
-    real(dp), intent(in) :: GDDayi
-        !! unused; ignored in calendar mode
 
     logical :: OnOwnClock
 
@@ -2348,9 +2337,6 @@ logical function GerminationDay(DayNri, SumGDDpos, GDDayi)
     !! canopy functions as CCiPrev.
     !!
     !! Replaces `DayNri == (Crop_Day1 + Crop_DaysToGermination)`.
-    !!
-    !! No Forage fallback, unlike AfterCropCycle: both call sites sit in the `DaysToCCini == 0`
-    !! (sown or transplanted) arm, which a regrowth cycle never reaches.
     integer(int32), intent(in) :: DayNri
         !! today's date, as a day number
     real(dp), intent(in) :: SumGDDpos
@@ -5882,8 +5868,7 @@ real(dp) function HarvestIndexDay(DAP, DaysToFlower, HImax, dHIdt, SumGDDadjCC, 
     dHIdt_local = dHIdt
     ! Time since flowering that drives the HI build-up. Calendar mode: days after
     ! flowering. GDD mode: GDD banked since flowering onset (SumGDDadjCC minus the GDD
-    ! recorded at onset), with the per-GDD rate HImax/GDDaysToHIo extracted from the crop file,
-    ! so no temperature look-ahead.
+    ! recorded at onset), with the per-GDD rate HImax/GDDaysToHIo extracted from the crop file.
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
         if (GetSimulation_DayNrFlowering() == undef_int) then
             t = -1._dp
@@ -8296,18 +8281,17 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
     ! Calendar mode keeps the exact day expressions (real() of the same integers, so
     ! the comparisons below are bit-identical to the previous integer comparisons).
     if (ModeCycleVal == modeCycle_GDDays) then
-        ! today's GDD counts, so a crossing fires on the day the target is reached
         Pos       = SumGDDpos
         P0        = real(GDDL0, kind=dp)
         P12       = real(GDDL12, kind=dp)
         P123      = real(GDDL123, kind=dp)
         PHarvest  = real(GDDLHarvest, kind=dp)
         PsinceCut = real(SumGDDsinceCut, kind=dp)
-        if (Pos < 0._dp) then   ! defensive: the position cannot go negative
+        if (Pos < 0._dp) then   ! defensive statement: shouldn't go negative
             Pos = 0._dp
         end if
         if (.not. GetManagement_Cuttings_Considered()) then
-            ! no cuts: "since cut" degenerates to "since planting" = the full position
+            ! no cuts: "since cut" becomes "since planting" = the full position
             PsinceCut = Pos
         end if
     else
@@ -8366,7 +8350,6 @@ subroutine CalculateETpot(DAP, L0, L12, L123, LHarvest, DayLastCut, CCi, &
                         (1._dp - CCxWithered * CCEffectProcent/100._dp)
 
         ! Correction Epot for dying crop in late-season stage
-        ! if ((VirtualDay > L123) .and. (CCx > epsilon(1._dp))) then
         if ((Pos > P123) .and. (CCx > epsilon(1._dp))) then
             if (CCi > (CCx/2._dp)) then
                 ! not yet full effect
