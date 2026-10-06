@@ -7,6 +7,8 @@ use ac_climprocessing, only:    GetDecadeEToDataset, &
 use ac_global, only:    AdjustSizeCompartments, &
                         AdjustClimRecordTo, &
                         ac_zero_threshold, &
+                        AfterCropCycle, &
+                        GerminationDay, &
                         GetClimateFile, &
                         GetClimFile, &
                         GetClimRecord_NrObs, &
@@ -45,6 +47,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         getcrop_ccsaltdistortion, &
                         GetCrop_CCx, &
                         GetCrop_CDC, &
+                        RatDGDDReference, &
                         GetCrop_CGC, &
                         GetCrop_CGC, &
                         GetCrop_Day1, &
@@ -72,6 +75,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCrop_HI, &
                         GetCrop_KcDeclineCumul, &
                         GetCrop_KcTop, &
+                        GetCrop_LastDayNr, &
                         GetCrop_Length_i, &
                         GetCrop_LengthFlowering, &
                         GetCrop_ModeCycle, &
@@ -124,6 +128,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetPathNameProg, &
                         GetPathNameSimul, &
                         GetSimulation_DelayedDays, &
+                        GetSumGDDCuts, &
                         GetRain, &
                         GetRainFile, &
                         GetRainFilefull, &
@@ -218,6 +223,10 @@ use ac_global, only:    AdjustSizeCompartments, &
                         SetRootZoneWC_Thresh, &
                         SetRootZoneWC_WP, &
                         SetSimulation_IrriECw, &
+                        SetSimulation_DayNrFlowering, &
+                        SetSimulation_SumGDDatFlowering, &
+                        SetSimulation_RefDaysToFullCanopy, &
+                        SetSimulation_RefDaysToHarvest, &
                         SetSimulation_SumGDD, &
                         SetSimulation_SWCtopSoilConsidered, &
                         GetSimulation_DelayedDays, &
@@ -303,6 +312,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         CCmultiplierWeed, &
                         CCmultiplierWeedAdjusted, &
                         GetSimulation_EffectStress_CDecline, &
+                        SetSimulation_EffectStress_CDecline, &
                         GetCrop_SizeSeedling, &
                         GetSimulation_Storage_CropString, &
                         GetSimulation_Storage_Btotal, &
@@ -326,7 +336,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         setsumwabal_biomassunlim, &
                         setsimulation_hifinal, &
                         setcrop_ccxwithered, &
-                        timetomaxcanopysf, &
+                        timetomaxcanopysfoncycleclock, &
                         setsimulation_fromdaynr, &
                         setsimulation_salinityconsidered, &
                         setsurfacestorage, &
@@ -415,6 +425,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         modeCycle_CalendarDays, &
                         GetCrop_AnaeroPoint, &
                         KsTemperature, &
+                        SetSumGDDCuts, &
                         GetSumWaBal_BiomassTot, &
                         setsumwabal_irrigation, &
                         setsumwabal_yieldpart, &
@@ -437,10 +448,7 @@ use ac_tempprocessing, only:    AdjustCalendarCrop, &
                                 AdjustCropFileParameters, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
-                                GrowingDegreeDays, &
                                 LoadSimulationRunProject, &
-                                MaxAvailableGDD, &
-                                ResetCropDay1, &
                                 temperaturefilecoveringcropperiod, &
                                 GetTminDataSet, & 
                                 GetTmaxDataSet, &
@@ -458,7 +466,8 @@ use ac_tempprocessing, only:    AdjustCalendarCrop, &
                                 SetTminDataSet_Param, &
                                 SetTmaxDataSet_DayNr, &
                                 SetTmaxDataSet_Param
-use ac_preparefertilitysalinity, only:  ReferenceCCxSaltStressRelationship, &
+use ac_preparefertilitysalinity, only:  AdjustCalendarDaysReferenceTnx, &
+                                ReferenceCCxSaltStressRelationship, &
                                 ReferenceStressBiomassRelationship
 use ac_utils, only: assert, &
                     fatal, &
@@ -606,7 +615,7 @@ real(dp) :: TimeSenescence !! calendar days or GDDays
 real(dp) :: SumKcTop, SumKcTopStress, SumKci
 real(dp) :: CCoTotal, CCxTotal, CDCTotal, GDDCDCTotal, CCxCropWeedsNoSFstress
 real(dp) :: WeedRCi, CCiActualWeedInfested, fWeedNoS, Zeval
-real(dp) :: BprevSum, YprevSum, SumGDDcuts, HItimesBEF
+real(dp) :: BprevSum, YprevSum, HItimesBEF
 real(dp) :: ScorAT1, ScorAT2, HItimesAT1, HItimesAT2, HItimesAT
 real(dp) :: alfaHI, alfaHIAdj
 real(dp) :: tDaysZmin ! time to reach Zmin (Days)
@@ -632,6 +641,13 @@ logical :: GlobalIrriECw ! for versions before 3.2 where EC of
                          ! irrigation water was not yet recorded
 ! Version 7.2
 integer(int32) :: LastIrriDAP
+
+! The day the crop cycle actually ended, recorded on the day it happens - never predicted.
+! Crop_DayN is the declared end of the cropping period (the run's horizon); on the GDD clock
+! the crop can finish before it, and everything that means "the season is over" - the
+! off-season irrigation events, the generated schedule, the irrigation report - has to hang
+! off the crop's own end, as it did when Crop_DayN was defined beforehand.
+integer(int32) :: DayNrCropEnded = undef_int
 
 
 contains
@@ -3032,21 +3048,6 @@ subroutine SetYprevSum(YprevSum_in)
 end subroutine SetYprevSum
 
 
-real(dp) function GetSumGDDcuts()
-    !! Getter for the "SumGDDcuts" global variable.
-
-    GetSumGDDcuts = SumGDDcuts
-end function GetSumGDDcuts
-
-
-subroutine SetSumGDDcuts(SumGDDcuts_in)
-    !! Setter for the "SumGDDcuts" global variable.
-    real(dp), intent(in) :: SumGDDcuts_in
-
-    SumGDDcuts = SumGDDcuts_in
-end subroutine SetSumGDDcuts
-
-
 real(dp) function GetHItimesBEF()
     !! Getter for the "HItimesBEF" global variable.
 
@@ -3345,6 +3346,36 @@ subroutine SetLastIrriDAP(LastIrriDAP_in)
 
     LastIrriDAP = LastIrriDAP_in
 end subroutine SetLastIrriDAP
+
+
+integer(int32) function GetDayNrCropEnded()
+    !! Getter for the "DayNrCropEnded" global variable.
+
+    GetDayNrCropEnded = DayNrCropEnded
+end function GetDayNrCropEnded
+
+
+subroutine SetDayNrCropEnded(DayNrCropEnded_in)
+    !! Setter for the "DayNrCropEnded" global variable.
+    integer(int32), intent(in) :: DayNrCropEnded_in
+
+    DayNrCropEnded = DayNrCropEnded_in
+end subroutine SetDayNrCropEnded
+
+
+integer(int32) function SeasonEndDayNr()
+    !! The last day of the season for everything that happens "after the season".
+    !!
+    !! The crop's own end once it is known, the declared end of the cropping period until then
+    !! (and for a crop that never finishes, such as a season too cold to reach maturity).
+    !! Calendar mode is untouched: there Crop_DayN already is the crop's end.
+
+    SeasonEndDayNr = GetCrop_DayN()
+    if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
+        (DayNrCropEnded /= undef_int)) then
+        SeasonEndDayNr = DayNrCropEnded
+    end if
+end function SeasonEndDayNr
 
 
 logical function GetNoYear()
@@ -3740,161 +3771,6 @@ subroutine GetNextHarvest()
 end subroutine GetNextHarvest
 
 
-subroutine GetSumGDDBeforeSimulation(SumGDDtillDay, SumGDDtillDayM1)
-    real(dp), intent(inout) :: SumGDDtillDay
-    real(dp), intent(inout) :: SumGDDtillDayM1
-
-    character(len=:), allocatable :: totalname
-    integer :: fTemp
-    integer(int32) :: i
-    character(len=255) :: StringREAD
-    integer(int32) :: DayX
-    real(dp) :: Tmin_temp, Tmax_temp
-    type(rep_DayEventDbl), dimension(31) :: TmaxDataSet_temp, &
-                                            TminDataSet_temp
-
-    call SetSimulation_SumGDD(0._dp)
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
-        totalname = GetTemperatureFilefull()
-
-        if (FileExists(totalname)) then
-            select case (GetTemperatureRecord_DataType())
-            case (datatype_daily)
-                open(newunit=fTemp, file=trim(totalname), status='old', &
-                                                          action='read')
-                read(fTemp, *) ! description
-                read(fTemp, *) ! time step
-                read(fTemp, *) ! day
-                read(fTemp, *) ! month
-                read(fTemp, *) ! year
-                read(fTemp, *)
-                read(fTemp, *)
-                read(fTemp, *)
-                ! days before first day of simulation (= DayNri)
-                do i = GetTemperatureRecord_FromDayNr(), (DayNri - 1)
-                    if (i < GetCrop_Day1()) then
-                        read(fTemp, *)
-                    else
-                        read(fTemp, '(a)') StringREAD
-                        Tmin_temp = GetTmin()
-                        Tmax_temp = GetTmax()
-                        call SplitStringInTwoParams(StringREAD, Tmin_temp, Tmax_temp)
-                        call SetTmin(Tmin_temp)
-                        call SetTmax(Tmax_temp)
-                        call SetSimulation_SumGDD(GetSimulation_SumGDD() &
-                                + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                             GetTmin(), GetTmax(), &
-                                             GetSimulParam_GDDMethod()))
-                    end if
-                end do
-                close(fTemp)
-
-            case (datatype_decadely)
-                DayX = GetCrop_Day1()
-                ! first day of cropping
-                TminDataSet_temp = GetTminDataSet()
-                TmaxDataSet_temp = GetTmaxDataSet()
-                call GetDecadeTemperatureDataSet(DayX, TminDataSet_temp, &
-                                                 TmaxDataSet_temp)
-                call SetTminDataSet(TminDataSet_temp)
-                call SetTmaxDataSet(TmaxDataSet_temp)
-                i = DayIndexInDataSet(DayX, GetTminDataSet(), 'ten-daily temperature')
-                call SetTmin(GetTminDataSet_Param(i))
-                call SetTmax(GetTmaxDataSet_Param(i))
-                call SetSimulation_SumGDD(DegreesDay(GetCrop_Tbase(), &
-                                GetCrop_Tupper(), GetTmin(), GetTmax(), &
-                                GetSimulParam_GDDMethod()))
-                ! next days
-                do while (DayX < DayNri)
-                    DayX = DayX + 1
-                    if (.not. DayInDataSet(DayX, GetTminDataSet())) then
-                        TminDataSet_temp = GetTminDataSet()
-                        TmaxDataSet_temp = GetTmaxDataSet()
-                        call GetDecadeTemperatureDataSet(DayX, &
-                                TminDataSet_temp, TmaxDataSet_temp)
-                        call SetTminDataSet(TminDataSet_temp)
-                        call SetTmaxDataSet(TmaxDataSet_temp)
-                    end if
-                    i = DayIndexInDataSet(DayX, GetTminDataSet(), 'ten-daily temperature')
-                    call SetTmin(GetTminDataSet_Param(i))
-                    call SetTmax(GetTmaxDataSet_Param(i))
-                    call SetSimulation_SumGDD(GetSimulation_SumGDD() &
-                                + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                             GetTmin(), GetTmax(), &
-                                             GetSimulParam_GDDMethod()))
-                end do
-            case (datatype_monthly)
-                DayX = GetCrop_Day1()
-                ! first day of cropping
-                TminDataSet_temp = GetTminDataSet()
-                TmaxDataSet_temp = GetTmaxDataSet()
-                call GetMonthlyTemperatureDataSet(DayX, TminDataSet_temp, &
-                                                  TmaxDataSet_temp)
-                call SetTminDataSet(TminDataSet_temp)
-                call SetTmaxDataSet(TmaxDataSet_temp)
-                i = DayIndexInDataSet(DayX, GetTminDataSet(), 'monthly temperature')
-                call SetTmin(GetTminDataSet_Param(i))
-                call SetTmax(GetTmaxDataSet_Param(i))
-                call SetSimulation_SumGDD(&
-                        DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                   GetTmin(), GetTmax(), &
-                                   GetSimulParam_GDDMethod()))
-                ! next days
-                do while (DayX < DayNri)
-                    DayX = DayX + 1
-                    if (.not. DayInDataSet(DayX, GetTminDataSet())) then
-                        TminDataSet_temp = GetTminDataSet()
-                        TmaxDataSet_temp = GetTmaxDataSet()
-                        call GetMonthlyTemperatureDataSet(&
-                                DayX, TminDataSet_temp, TmaxDataSet_temp)
-                        call SetTminDataSet(TminDataSet_temp)
-                        call SetTmaxDataSet(TmaxDataSet_temp)
-                    end if
-                    i = DayIndexInDataSet(DayX, GetTminDataSet(), 'monthly temperature')
-                    call SetTmin(GetTminDataSet_Param(i))
-                    call SetTmax(GetTmaxDataSet_Param(i))
-                    call SetSimulation_SumGDD(GetSimulation_SumGDD() &
-                            + DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                         GetTmin(), GetTmax(), &
-                                         GetSimulParam_GDDMethod()))
-                end do
-            end select
-        end if
-    end if
-    if (GetTemperatureFile() == '(None)') then
-        call SetSimulation_SumGDD(DegreesDay(&
-                                 GetCrop_Tbase(), GetCrop_Tupper(), &
-                                 GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
-                                 GetSimulParam_GDDMethod()) &
-                                 * (DayNri - GetCrop_Day1() + 1))
-        if (GetSimulation_SumGDD() < 0._dp) then
-            call SetSimulation_SumGDD(0._dp)
-        end if
-        SumGDDtillDay = GetSimulation_SumGDD()
-        SumGDDtillDayM1 = DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                     GetSimulParam_Tmin(), GetSimulParam_Tmax(), &
-                                     GetSimulParam_GDDMethod()) &
-                          * (DayNri - GetCrop_Day1())
-        if (SumGDDtillDayM1 < 0._dp) then
-            SumGDDtillDayM1 = 0._dp
-        end if
-    else if (GetTemperatureFile() == '(External)') then
-        SumGDDtillDay = GetSimulation_SumGDD()
-        SumGDDtillDayM1 = SumGDDtillDay &
-                         - DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                      GetTmin(), GetTmax(), &
-                                      GetSimulParam_GDDMethod())
-    else
-        SumGDDtillDay = GetSimulation_SumGDD()
-        SumGDDtillDayM1 = SumGDDtillDay &
-                         - DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), &
-                                      GetTmin(), GetTmax(), &
-                                      GetSimulParam_GDDMethod())
-    end if
-end subroutine GetSumGDDBeforeSimulation
-
-
 subroutine RelationshipsForFertilityAndSaltStress()
 
     real(dp) :: Coeffb0_temp
@@ -4030,35 +3906,60 @@ subroutine DetermineGrowthStage(Dayi, CCiPrev)
     real(dp), intent(in) :: CCiPrev
 
     integer(int32) :: VirtualDay
+    real(dp) :: StageNow, StageGerm, StageFlor, StageLenFlor
+    logical :: CycleDone
 
     VirtualDay = Dayi - GetSimulation_DelayedDays() - GetCrop_Day1()
+
+    ! Position and stage boundaries on the clock the crop actually runs on.
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        StageNow = GetSimulation_SumGDD()
+        if (.not. GetSimulation_Germinate()) then
+            ! a seed still waiting for a wet enough soil: today's GDD do not count yet
+            StageNow = 0._dp
+        end if
+        StageGerm = real(GetCrop_GDDaysToGermination(), kind=dp)
+        StageFlor = real(GetCrop_GDDaysToFlowering(), kind=dp)
+        StageLenFlor = real(GetCrop_GDDLengthFlowering(), kind=dp)
+    else
+        StageNow = real(VirtualDay, kind=dp)
+        StageGerm = real(GetCrop_DaysToGermination(), kind=dp)
+        StageFlor = real(GetCrop_DaysToFlowering(), kind=dp)
+        StageLenFlor = real(GetCrop_LengthFlowering(), kind=dp)
+    end if
+
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        CycleDone = (GetSimulation_SumGDD() >= &
+                     real(GetCrop_GDDaysToHarvest(), kind=dp))
+    else
+        CycleDone = (VirtualDay >= (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
+                                    GetCrop_Length_i(3)+GetCrop_Length_i(4)))
+    end if
+
     if (VirtualDay < 0) then
         call SetStageCode(0_int8) ! before cropping period
     else
-        if (VirtualDay < GetCrop_DaysToGermination()) then
+        if (StageNow < StageGerm) then
             call SetStageCode(1_int8) ! sown --> emergence OR transplant recovering
         else
             call SetStageCode(2_int8) ! vegetative development
             if ((GetCrop_subkind() == subkind_Grain) .and. &
-                (VirtualDay >= GetCrop_DaysToFlowering())) then
-                if (VirtualDay < (GetCrop_DaysToFlowering() + &
-                                  GetCrop_LengthFlowering())) then
+                (StageNow >= StageFlor)) then
+                if (StageNow < (StageFlor + StageLenFlor)) then
                     call SetStageCode(3_int8) ! flowering
                 else
                     call SetStageCode(4_int8) ! yield formation
                 end if
             end if
             if ((GetCrop_subkind() == subkind_Tuber) .and. &
-                (VirtualDay >= GetCrop_DaysToFlowering())) then
+                (StageNow >= StageFlor)) then
                 call SetStageCode(4_int8) ! yield formation
             end if
-            if ((VirtualDay > GetCrop_DaysToGermination()) .and.&
+            if ((StageNow > StageGerm) .and.&
                 (CCiPrev < epsilon(0._dp))) then
                 call SetStageCode(int(undef_int, kind=int8))  ! no growth stage
             end if
-            if (VirtualDay >= &
-                (GetCrop_Length_i(1)+GetCrop_Length_i(2)+ &
-                 GetCrop_Length_i(3)+GetCrop_Length_i(4))) then
+            if (CycleDone) then
                 call SetStageCode(0_int8) ! after cropping period
             end if
         end if
@@ -4731,8 +4632,11 @@ subroutine InitializeSimulationRunPart1()
     integer(int8) :: RedCGC_temp, RedCCX_temp, RCadj_temp
     type(rep_EffectStress) :: EffectStress_temp
     logical :: bool_temp
-    integer(int32) :: Crop_DaysToFullCanopySF_temp
     logical :: WaterTableInProfile_temp
+    integer(int32) :: RefCropDay1, RefDayi, RefMonthi, RefYeari
+    integer(int32) :: L0Ref, L12Ref, LFlorRef, LengthFlorRef
+    integer(int32) :: L123Ref, L1234Ref, LHImaxRef
+    real(dp) :: CGCRefTnx, CDCRefTnx, dHIdtRef
 
     ! 1. Adjustments at start
     ! 1.1 Adjust soil water and salt content if water table IN soil profile
@@ -4774,8 +4678,7 @@ subroutine InitializeSimulationRunPart1()
     call SetSimulation_DayAnaero(0_int8) ! days of anaerobic conditions in
                                     ! global root zone
     ! germination
-    if ((GetCrop_Planting() == plant_Seed) .and. &
-        (GetSimulation_FromDayNr() <= GetCrop_Day1())) then
+    if (GetCrop_Planting() == plant_Seed) then
         call SetSimulation_Germinate(.false.)
     else
         call SetSimulation_Germinate(.true.)
@@ -4841,41 +4744,69 @@ subroutine InitializeSimulationRunPart1()
     FertStress = GetManagement_FertilityStress()
     RedCGC_temp = GetSimulation_EffectStress_RedCGC()
     RedCCX_temp = GetSimulation_EffectStress_RedCCX()
-    Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
-    call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
-           GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
-           GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(), &
-           GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(), &
-           Crop_DaysToFullCanopySF_temp, RedCGC_temp, RedCCX_temp, FertStress)
-    call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+    call TimeToMaxCanopySFOnCycleClock(RedCGC_temp, RedCCX_temp, FertStress)
     call SetManagement_FertilityStress(FertStress)
     call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
     call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
+    ! Store the decline on the clock it will be read on.
+    ! Call above defines the RatDGDDReference. Returns 1 in calendar mode.
+    call SetSimulation_EffectStress_CDecline(GetSimulation_EffectStress_CDecline() &
+                                             * RatDGDDReference())
     call SetPreviousStressLevel(int(GetManagement_FertilityStress(),kind=int32))
     call SetStressSFadjNEW(int(GetManagement_FertilityStress(),kind=int32))
-    ! soil fertility and GDDays
-    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-        if (GetManagement_FertilityStress() /= 0_int32) then
-            call SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(&
-                  GetCrop_DaysToFullCanopySF(), GetCrop_Day1(), &
-                  GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(),&
-                  GetSimulParam_Tmax()))
-        else
-            call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
-        end if
+
+    ! Day spans for the fertility AND salinity stress calibration, on the REFERENCE climatology.
+    !
+    ! Everything here uses the reference climatology, so the day thresholds it is handed must
+    ! be measured on that same climatology. The two related callers
+    ! (ReferenceStressBiomassRelationship, ReferenceCCxSaltStressRelationship) do the same.
+    !
+    ! In calendar mode the locals stay at the crop values, so the Simulation%Ref* pair below equals
+    ! Crop.DaysTo* and so when the variable is needed, it is read in the right clock (calendar, GDD).
+    L0Ref = GetCrop_DaysToGermination()
+    L12Ref = GetCrop_DaysToFullCanopy()
+    LFlorRef = GetCrop_DaysToFlowering()
+    LengthFlorRef = GetCrop_LengthFlowering()
+    L123Ref = GetCrop_DaysToSenescence()
+    L1234Ref = GetCrop_DaysToHarvest()
+    LHImaxRef = GetCrop_DaysToHIo()
+    CGCRefTnx = GetCrop_CGC()
+    CDCRefTnx = GetCrop_CDC()
+    dHIdtRef = GetCrop_dHIdt()
+    if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
+        (GetCrop_StressResponse_Calibrated() .or. &
+         GetSimulation_SalinityConsidered())) then
+        call DetermineDate(GetCrop_Day1(), RefDayi, RefMonthi, RefYeari)
+        call DetermineDayNr(RefDayi, RefMonthi, (1901), RefCropDay1)
+        ! not linked to a specific year
+        call AdjustCalendarDaysReferenceTnx(RefCropDay1, GetCrop_subkind(), &
+                GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
+                GetSimulParam_Tmax(), GetCrop_GDDaysToGermination(), &
+                GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToFlowering(), &
+                GetCrop_GDDLengthFlowering(), GetCrop_GDDaysToSenescence(), &
+                GetCrop_GDDaysToHarvest(), GetCrop_GDDaysToHIo(), &
+                GetCrop_GDDCGC(), GetCrop_GDDCDC(), GetCrop_CCo(), &
+                GetCrop_CCx(), GetCrop_HI(), GetCrop_DaysToCCini(), &
+                GetCrop_GDDaysToCCini(), GetCrop_Planting(), &
+                L0Ref, L12Ref, LFlorRef, LengthFlorRef, L123Ref, L1234Ref, &
+                LHImaxRef, CGCRefTnx, CDCRefTnx, dHIdtRef)
     end if
+    ! Published for the runtime salinity stress call in EffectSoilFertilitySalinityStress, which
+    ! sits in ac_simul and cannot reach these locals. Only these two of the set are consumed there.
+    call SetSimulation_RefDaysToFullCanopy(L12Ref)
+    call SetSimulation_RefDaysToHarvest(L1234Ref)
 
     ! Maximum sum Kc (for reduction WP in season if soil fertility stress)
-    if ((GetCrop_StressResponse_Calibrated() .eqv. .true.) .and. & 
+    if ((GetCrop_StressResponse_Calibrated() .eqv. .true.) .and. &
         (GetManagement_FertilityStress() > 0_int32)) then
         call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
-                GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
-                GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
-                GetCrop_DaysToHarvest(), GetCrop_DaysToHarvest(), &
+                GetCrop_GDDaysToCCini(), L0Ref, &
+                L12Ref, L123Ref, &
+                L1234Ref, L1234Ref, &
                 GetCrop_GDDaysToGermination(), &
                 GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
                 GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
-                GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &
+                CGCRefTnx, GetCrop_GDDCGC(), CDCRefTnx, GetCrop_GDDCDC(), &
                 GetCrop_KcTop(), GetCrop_KcDeclineCumul(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
                 GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
                 GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
@@ -4994,34 +4925,25 @@ subroutine InitializeSimulationRunPart2()
     !! Part2 (after reading the climate) of the initialization of a run
     !! Initializes parameters and states
 
-    integer(int32) :: tHImax, Dayi, DayCC
+    integer(int32) :: Dayi, DayCC
     real(dp) :: SumGDDforDayCC
-    real(dp) :: CCiniMin, CCiniMax, RatDGDD
+    real(dp) :: CCiniMin, CCiniMax
     real(dp) :: ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
-    real(dp) :: SumGDD_temp, SumGDDFromDay1_temp
     character(len=32) :: TempString
 
     ! Sum of GDD before start of simulation
     call SetSimulation_SumGDD(0._dp)
     call SetSimulation_SumGDDfromDay1(0._dp)
-    if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
-        (GetCrop_Day1() < GetDayNri())) then
-        SumGDD_temp = GetSimulation_SumGDD()
-        SumGDDfromDay1_temp = GetSimulation_SumGDDfromDay1()
-        call GetSumGDDBeforeSimulation(SumGDD_temp, SumGDDfromDay1_temp)
-         ! GDDays before start of simulation
-        call SetSimulation_SumGDD(SumGDD_temp)
-        call SetSimulation_SumGDDFromDay1(SumGDDFromDay1_temp)
-    end if
+    call SetSimulation_DayNrFlowering(undef_int)
+    call SetSimulation_SumGDDatFlowering(0._dp)
     call SetSumGDDPrev( GetSimulation_SumGDDfromDay1())
 
     ! Sum of GDD at end of first day
     call SetGDDayi(DegreesDay(GetCrop_Tbase(), GetCrop_Tupper(), GetTmin(), &
                    GetTmax(), GetSimulParam_GDDMethod()))
-    if (GetDayNri() >= GetCrop_Day1()) then
-        if (GetDayNri() == GetCrop_Day1()) then
-            call SetSimulation_SumGDD(GetSimulation_SumGDD() + GetGDDayi())
-        end if
+    if (GetDayNri() == GetCrop_Day1()) then
+        ! the two sums only ever differed for a mid-season start
+        call SetSimulation_SumGDD(GetSimulation_SumGDD() + GetGDDayi())
         call SetSimulation_SumGDDfromDay1(GetSimulation_SumGDDfromDay1() + &
                  GetGDDayi())
     end if
@@ -5035,6 +4957,7 @@ subroutine InitializeSimulationRunPart2()
                                   ! quality is not yet recorded on file
     call OpenIrrigationFile()
     call SetLastIrriDAP(0_int32)
+    call SetDayNrCropEnded(undef_int)
 
     ! 12. Adjusted time when starting as regrowth
     if (GetCrop_DaysToCCini() /= 0) then
@@ -5074,16 +4997,6 @@ subroutine InitializeSimulationRunPart2()
 
     ! 13. Initial canopy cover
     ! 13.1 default value
-    ! 13.1a RatDGDD for simulation of CanopyCoverNoStressSF (CCi with decline)
-    RatDGDD = 1._dp
-    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-        if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
-            RatDGDD = (GetCrop_DaysToSenescence() - &
-                       GetCrop_DaysToFullCanopySF()) / &
-                      real(GetCrop_GDDaysToSenescence() -&
-                           GetCrop_GDDaysToFullCanopySF(), kind=dp)
-        end if
-    end if
     ! 13.1b DayCC for initial canopy cover
     Dayi = GetDayNri() - GetCrop_Day1()
     if (GetCrop_DaysToCCini() == 0) then
@@ -5138,48 +5051,33 @@ subroutine InitializeSimulationRunPart2()
         end if
     end if
     ! 13.1d CCi at start of day (is CCi at end of previous day)
-    if (GetDayNri() <= GetCrop_Day1()) then
-        if (GetCrop_DaysToCCini() /= 0) then
-            ! regrowth which starts on 1st day
-            if (GetDayNri() == GetCrop_Day1()) then
-                call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
-                   GetCrop_DaysToGermination(), &
-                   GetCrop_DaysToFullCanopySF(), &
-                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), &
-                   GetCrop_GDDaysToGermination(), &
-                   GetCrop_GDDaysToFullCanopySF(), &
-                   GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
-                   GetCCoTotal(), GetCCxTotal(), GetCrop_CGC(), &
-                   GetCrop_GDDCGC(), GetCDCTotal(), GetGDDCDCTotal(), &
-                   SumGDDforDayCC, RatDGDD, &
-                   GetSimulation_EffectStress_RedCGC(), &
-                   GetSimulation_EffectStress_RedCCX(), &
-                   GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
-            else
-                call SetCCiPrev(0._dp)
-            end if
+    ! The run starts at or before planting, so the crop is never already standing on day 1
+    ! except for a regrowth cycle.
+    if (GetCrop_DaysToCCini() /= 0) then
+        ! regrowth which starts on 1st day
+        if (GetDayNri() == GetCrop_Day1()) then
+            call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
+               GetCrop_DaysToGermination(), &
+               GetCrop_DaysToFullCanopySF(), &
+               GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), &
+               GetCrop_GDDaysToGermination(), &
+               GetCrop_GDDaysToFullCanopySF(), &
+               GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
+               GetCCoTotal(), GetCCxTotal(), GetCrop_CGC(), &
+               GetCrop_GDDCGC(), GetCDCTotal(), GetGDDCDCTotal(), &
+               SumGDDforDayCC, &
+               GetSimulation_EffectStress_RedCGC(), &
+               GetSimulation_EffectStress_RedCCX(), &
+               GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
         else
-            ! sowing or transplanting
             call SetCCiPrev(0._dp)
-            if (GetDayNri() == (GetCrop_Day1()+GetCrop_DaysToGermination())) then
-                call SetCCiPrev(GetCCoTotal())
-            end if
         end if
     else
-        if (GetDayNri() > GetCrop_DayN()) then
-            call SetCCiPrev(0._dp)  ! after cropping period
-        else
-            call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
-                GetCrop_DaysToGermination(), &
-                GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
-                GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
-                GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
-                GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
-                GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(),&
-                GetGDDCDCTotal(), SumGDDforDayCC, RatDGDD, &
-                GetSimulation_EffectStress_RedCGC(), &
-                GetSimulation_EffectStress_RedCCX(), &
-                GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
+        ! sowing or transplanting
+        call SetCCiPrev(0._dp)
+        if (GerminationDay(GetDayNri(), GetSimulation_SumGDD(), &
+                           GetGDDayi())) then
+            call SetCCiPrev(GetCCoTotal())
         end if
     end if
     ! 13.2 specified CCini (%)
@@ -5261,25 +5159,7 @@ subroutine InitializeSimulationRunPart2()
 
     ! 16. Initial rooting depth
     ! 16.1 default value
-    if (GetDayNri() <= GetCrop_Day1()) then
-        call SetZiprev(real(undef_int, kind=dp))
-    else
-        if (GetDayNri() > GetCrop_DayN()) then
-            call SetZiprev(real(undef_int, kind=dp))
-        else
-            call SetZiprev( ActualRootingDepth(GetDayNri()-GetCrop_Day1(),&
-                  GetCrop_DaysToGermination(),&
-                  GetCrop_DaysToMaxRooting(),&
-                  GetCrop_DaysToHarvest(),&
-                  GetCrop_GDDaysToGermination(),&
-                  GetCrop_GDDaysToMaxRooting(),&
-                  GetSumGDDPrev(),&
-                  GetCrop_RootMin(),&
-                  GetCrop_RootMax(),&
-                  GetCrop_RootShape(),&
-                  GetCrop_ModeCycle()) )
-        end if
-    end if
+    call SetZiprev(real(undef_int, kind=dp))
     ! 16.2 specified or default Zrini (m)
     if ((GetSimulation_Zrini() > 0._dp) .and. &
         (GetZiprev() > 0._dp) .and. &
@@ -5309,6 +5189,7 @@ subroutine InitializeSimulationRunPart2()
               GetCrop_DaysToHarvest(),&
               GetCrop_GDDaysToGermination(),&
               GetCrop_GDDaysToMaxRooting(),&
+              GetCrop_GDDaysToHarvest(),&
               GetSumGDDPrev(),&
               GetCrop_RootMin(),&
               GetCrop_RootMax(),&
@@ -5375,56 +5256,9 @@ subroutine InitializeSimulationRunPart2()
     call SetHItimesAT(1._dp)
     call SetalfaHI(real(undef_int, kind=dp))
     call SetalfaHIAdj(0._dp)
-    if (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
-        GetCrop_Day1() + GetCrop_DaysToFlowering())) then
-        ! not yet flowering
-        call SetScorAT1(0._dp)
-        call SetScorAT2(0._dp)
-    else
-        ! water stress affecting leaf expansion
-        ! NOTE: time to reach end determinancy  is tHImax (i.e. flowering/2 or
-        ! senescence)
-        if (GetCrop_DeterminancyLinked()) then
-            tHImax = roundc(GetCrop_LengthFlowering()/2._dp, mold=1)
-        else
-            tHImax = (GetCrop_DaysToSenescence() - GetCrop_DaysToFlowering())
-        end if
-        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
-            GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & ! not yet end period
-            .and. (tHImax > 0)) then
-            ! not yet end determinancy
-            call SetScorAT1(1._dp/tHImax)
-            call SetScorAT1(GetScorAT1() * (GetSimulation_FromDayNr() - &
-                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
-                   GetCrop_DaysToFlowering())))
-            if (GetScorAT1() > 1._dp) then
-                call SetScorAT1(1._dp)
-            end if
-        else
-            call SetScorAT1(1._dp)  ! after period of effect
-        end if
-        ! water stress affecting stomatal closure
-        ! period of effect is yield formation
-        if (GetCrop_dHIdt() > 99._dp) then
-            tHImax = 0
-        else
-            tHImax = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
-        end if
-        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
-             GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & ! not yet end period
-             .and. (tHImax > 0)) then
-            ! not yet end yield formation
-            call SetScorAT2(1._dp/real(tHImax, kind=dp))
-            call SetScorAT2(GetScorAT2() * (GetSimulation_FromDayNr() - &
-                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
-                   GetCrop_DaysToFlowering())))
-            if (GetScorAT2() > 1._dp) then
-                call SetScorAT2(1._dp)
-            end if
-        else
-            call SetScorAT2(1._dp)  ! after period of effect
-        end if
-    end if
+    ! ScorAT1/ScorAT2 are the post-flowering water-stress accumulators. Initialiaze them to zero.
+    call SetScorAT1(0._dp)
+    call SetScorAT2(0._dp)
 
     if (GetOutDaily()) then
         call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
@@ -6180,8 +6014,8 @@ integer(int32) function IrriOutSeason()
     do i = 1, 5
         IrriEvents(i) = GetIrriBeforeSeason_i(i)
     end do
-    if (GetDayNri() > GetCrop_DayN()) then
-        DNr = GetDayNri() - GetCrop_DayN()
+    if (GetDayNri() > SeasonEndDayNr()) then
+        DNr = GetDayNri() - SeasonEndDayNr()
         do i = 1, 5
             IrriEvents(i) = GetIrriAfterSeason_i(i)
         end do
@@ -6257,14 +6091,14 @@ subroutine GetIrriParam(TargetTimeVal, TargetDepthVal)
     TargetTimeVal = -999
     TargetDepthVal = -999
     if ((GetDayNri() < GetCrop_Day1()) .or. &
-        (GetDayNri() > GetCrop_DayN())) then
+        (GetDayNri() > SeasonEndDayNr())) then
         call SetIrrigation(real(IrriOutSeason(), kind=dp))
     elseif (GetIrriMode() == IrriMode_Manual) then
         call SetIrrigation(real(IrriManual(), kind=dp))
     end if
     if ((GetIrriMode() == IrriMode_Generate) .and. &
         ((GetDayNri() >= GetCrop_Day1()) .and. &
-         (GetDayNri() <= GetCrop_DayN()))) then
+         (GetDayNri() <= SeasonEndDayNr()))) then
         ! read next line if required
         DayInSeason = GetDayNri() - GetCrop_Day1() + 1
         if (DayInSeason > GetIrriInfoRecord1_ToDay()) then
@@ -6456,22 +6290,13 @@ subroutine GetPotValSF(DAP, SumGDDAdjCC, PotValSF)
     real(dp), intent(in) :: SumGDDAdjCC
     real(dp), intent(inout) :: PotValSF
 
-    real(dp) :: RatDGDD
-
-    RatDGDD = 1._dp
-    if ((GetCrop_ModeCycle() == modecycle_GDDays) &
-        .and. (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence())) then
-        RatDGDD = (GetCrop_DaysToSenescence()-GetCrop_DaysToFullCanopySF()) &
-                    /(GetCrop_GDDaysToSenescence()-GetCrop_GDDaysToFullCanopySF())
-    end if
-
     PotValSF = CCiNoWaterStressSF(DAP, GetCrop_DaysToGermination(), &
                     GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
                     GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
                     GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
                     GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
                     GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(), &
-                    GetGDDCDCTotal(), SumGDDadjCC, RatDGDD, &
+                    GetGDDCDCTotal(), SumGDDadjCC, &
                     GetSimulation_EffectStress_RedCGC(), &
                     GetSimulation_EffectStress_RedCCX(), &
                     GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle())
@@ -6850,7 +6675,8 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
 
     real(dp) :: PotValSF, KsTr, TESTVALY, PreIrri, StressStomata, FracAssim
     integer(int32) :: VirtualTimeCC, DayInSeason
-    real(dp) :: SumGDDadjCC, RatDGDD, &
+    logical :: NotYetSFDecline
+    real(dp) :: SumGDDadjCC, &
                 Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, &
                 BiomassTot_temp, YieldPart_temp, &
                 ECe_temp, ECsw_temp, ECswFC_temp, KsSalt_temp
@@ -6967,20 +6793,14 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
             ! before regrowth,
             if ((GetDayNri() == GetCrop_Day1()) .and. &
                 (GetDayNri() > GetSimulation_FromDayNr())) then
-                RatDGDD = 1._dp
-                if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. &
-                    (GetCrop_GDDaysToFullCanopySF() < &
-                     GetCrop_GDDaysToSenescence())) then
-                    RatDGDD = (GetCrop_DaysToSenescence() - &
-                      GetCrop_DaysToFullCanopySF())/ &
-                      real((GetCrop_GDDaysToSenescence() - &
-                      GetCrop_GDDaysToFullCanopySF()), kind=dp)
-                end if
                 EffectStress_temp = GetSimulation_EffectStress()
                 call CropStressParametersSoilFertility(&
                         GetCrop_StressResponse(), &
                         GetStressSFadjNEW(), EffectStress_temp)
                 call SetSimulation_EffectStress(EffectStress_temp)
+                ! store the decline on the clock it will be read on; the window is unchanged here
+                call SetSimulation_EffectStress_CDecline( &
+                        GetSimulation_EffectStress_CDecline() * RatDGDDReference())
                 call SetCCiPrev(CCiniTotalFromTimeToCCini(&
                         GetCrop_DaysToCCini(), &
                         GetCrop_GDDaysToCCini(), &
@@ -6996,7 +6816,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
                         GetCrop_GDDaysToHarvest(), GetCrop_CCo(), &
                         GetCrop_CCx(), GetCrop_CGC(), &
                         GetCrop_GDDCGC(), GetCrop_CDC(), &
-                        GetCrop_GDDCDC(), RatDGDD, &
+                        GetCrop_GDDCDC(), &
                         GetSimulation_EffectStress_RedCGC(), &
                         GetSimulation_EffectStress_RedCCX(), &
                         GetSimulation_EffectStress_CDecline(), &
@@ -7020,10 +6840,10 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         end if
         ! CC initial (at the end of previous day) when simulation starts
         ! before sowing/transplanting,
-        if ((GetDayNri() == (GetCrop_Day1() + &
-                             GetCrop_DaysToGermination())) &
-            .and. (GetDayNri() > GetSimulation_FromDayNr())) then
-            call SetCCiPrev(GetCCoTotal())
+        if (GetDayNri() > GetSimulation_FromDayNr()) then
+            if (GerminationDay(GetDayNri(), SumGDDadjCC, GetGDDayi())) then
+                call SetCCiPrev(GetCCoTotal())
+            end if
         end if
     end if
 
@@ -7033,7 +6853,8 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
         .or. ((GetCrop_ModeCycle() == modeCycle_GDDays) &
           .and. (GetSimulation_SumGDD() < GetCrop_GDDaysToHarvest()))) then
         if (((GetDayNri()-GetSimulation_DelayedDays()) >= GetCrop_Day1()) .and. &
-            ((GetDayNri()-GetSimulation_DelayedDays()) <= GetCrop_DayN())) then
+            (.not. AfterCropCycle(GetDayNri() - GetSimulation_DelayedDays() &
+                                  - GetCrop_Day1(), SumGDDadjCC))) then
             ! rooting depth at DAP (at Crop.Day1, DAP = 1)
             call CalculateRootingDepth(tDaysZmin,tGDDZmin,&
               GetZiPrev(),GetGDDayi(),RootingDepth_temp)
@@ -7388,8 +7209,15 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
              (GetCrop_GDDCDC()*(GetfWeedNoS()*GetCrop_CCx() + 2.29_dp)/&
              (GetCrop_CCx() + 2.29_dp)), &
              SumGDDadjCC, GetCrop_ModeCycle(), 0_int8, 0_int8))
-    if ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= &
-         GetCrop_DaysToFullCanopySF()) then
+    ! Has the soil-fertility canopy decline started? Test on the crop's own clock.
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        NotYetSFDecline = (SumGDDadjCC <= &
+                           real(GetCrop_GDDaysToFullCanopySF(), kind=dp))
+    else
+        NotYetSFDecline = ((VirtualTimeCC+GetSimulation_DelayedDays() + 1) <= &
+                           GetCrop_DaysToFullCanopySF())
+    end if
+    if (NotYetSFDecline) then
         ! not yet canopy decline with soil fertility stress
         PotValSF = 100._dp * (1._dp/GetCCxCropWeedsNoSFstress()) * &
            CanopyCoverNoStressSF((VirtualTimeCC + &
@@ -7437,6 +7265,15 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     else
         call SetIrriInterval(GetIrriInterval() + 1)
     end if
+    ! 15.b.bis The crop cycle's own end, the day it happens: the GDD total has reached the
+    ! cycle's requirement, so today is past the crop, and yesterday was its last day.
+    if ((GetDayNrCropEnded() == undef_int) &
+        .and. (GetCrop_ModeCycle() == modeCycle_GDDays) &
+        .and. (GetDayNri() > GetCrop_Day1()) &
+        .and. (GetSimulation_SumGDD() >= real(GetCrop_GDDaysToHarvest(), kind=dp))) then
+        call SetDayNrCropEnded(GetDayNri() - 1)
+    end if
+
     ! 15.c Rooting depth
     ! 15.bis extra line for standalone
     if (GetOutDaily()) then
@@ -7872,15 +7709,15 @@ subroutine WriteIrrInfo()
         Yi = Yi - 1901 + 1
     end if
     if ((GetDayNri() < GetCrop_Day1()) .or. &
-        (GetDayNri() > GetCrop_DayN())) then ! before and after growing period
+        (GetDayNri() > SeasonEndDayNr())) then ! before and after growing period
         write(TempString, '(5i6, f8.1, i6)') &
            Di, Mi, Yi, undef_int, undef_int, &
            GetIrrigation(), undef_int
         call fIrrInfo_write(trim(TempString))
     else ! during growing period AND irrigation event or last day
-        if ((GetDayNri() == GetCrop_DayN()) .or. & 
+        if ((GetDayNri() == SeasonEndDayNr()) .or. & 
             ((GetIrrigation() > 0._dp) .and. (GetIrriMode() /= IrriMode_Inet))) then ! last day
-            if ((GetIrrigation() <= 0.0001) .and. (GetDayNri() == GetCrop_DayN())) then ! no irrigation on last day
+            if ((GetIrrigation() <= 0.0001) .and. (GetDayNri() == SeasonEndDayNr())) then ! no irrigation on last day
                 IrriON = .false.
             else
                 IrriON = .true.
@@ -7971,17 +7808,12 @@ end subroutine RunSimulation
 subroutine ResetCropAndSimulationPeriod(NewCropDay1)
     integer(int32), intent(in) :: NewCropDay1
 
-    integer(int32) :: ResettedCropDay1
-    real(dp)       :: GDDAvailable
     integer(int32) :: LseasonDays
     integer(int32) :: Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp
     integer(int32) :: Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp
     integer(int32) :: FertStress
     integer(int8)  :: RedCGC_temp, RedCCX_temp
-    integer(int32) :: Crop_DaysToFullCanopySF_temp
     integer(int32) :: FromDayNr_temp
-    real(dp)       :: TDayMin_temp
-    real(dp)       :: TDayMax_temp
 
     ! 1. Reset Day1 of Crop cycle
     call SetCrop_Day1(NewCropDay1)
@@ -8003,24 +7835,23 @@ subroutine ResetCropAndSimulationPeriod(NewCropDay1)
         call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
         call CompleteCropDescription()
     else
-        ! 2. Adjust crop calendar (in days) to thermal regime when running in GDDays
-        if ((GetCrop_ModeCycle() == modeCycle_GDDays) .and. (GetClimateFile() /= '(None)')) then
-            ! GDDays 1.1 Check available GDDays
-            ResettedCropDay1 = ResetCropDay1(NewCropDay1, (.false.))
-            TDayMin_temp = GetSimulParam_Tmin()
-            TDayMax_temp = GetSimulParam_Tmax()
-            GDDAvailable = MaxAvailableGDD(ResettedCropDay1, GetCrop_Tbase(), GetCrop_Tupper(), TDayMin_temp, &
-                           TDayMax_temp)
-            call SetSimulParam_Tmin(TDayMin_temp)
-            call SetSimulParam_Tmax(TDayMax_temp)
-            ! GDDays 1.2. Adjust crop calendar to thermal regime if sufficient GDDays
-            if (GDDAvailable >= GetCrop_GDDaysToHarvest()) then
-                call AdjustCalendarCrop(GetCrop_Day1())
-            end if
+        ! 2. Recompute the GDD canopy geometry after the shifted Crop_Day1.
+        ! AdjustCalendarCrop only recomputes GDDaysToFullCanopy - pure canopy geometry on the
+        ! GDD clock, requires no climate data.
+        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+            call AdjustCalendarCrop(GetCrop_Day1())
         end if
     end if
     ! 3. Reset DayN of Crop
-    call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
+    ! Same split as the load path: in GDD mode the end of the cropping period is the declared
+    ! horizon. This matters here because the routine runs after a delayed germination has shifted
+    ! Crop_Day1 forward, and the declared end must not move just because the seed sat in dry soil.
+    ! Crop_LastDayNr holds either that horizon or, where a premature-end date applies, that date.
+    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
+        call SetCrop_DayN(GetCrop_LastDayNr())
+    else
+        call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
+    end if
     ! 4. Adjust end of Simulation period
     if (GetCrop_DayN() > GetSimulation_ToDayNr()) then
         call SetSimulation_ToDayNr(GetCrop_DayN())
@@ -8036,13 +7867,7 @@ subroutine ResetCropAndSimulationPeriod(NewCropDay1)
     FertStress = GetManagement_FertilityStress()
     RedCGC_temp = GetSimulation_EffectStress_RedCGC()
     RedCCX_temp = GetSimulation_EffectStress_RedCCX()
-    Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
-    call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
-           GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
-           GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(), &
-           GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(), &
-           Crop_DaysToFullCanopySF_temp, RedCGC_temp, RedCCX_temp, FertStress)
-    call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
+    call TimeToMaxCanopySFOnCycleClock(RedCGC_temp, RedCCX_temp, FertStress)
     call SetManagement_FertilityStress(FertStress)
     call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
     call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
