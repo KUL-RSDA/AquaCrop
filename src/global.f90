@@ -4891,11 +4891,9 @@ end subroutine AdjustSimPeriod
 
 
 subroutine CheckClimateRecordsCoverSimPeriod()
-    !! Stops the program when the simulation or the cropping period reaches past
-    !! either end of a climate file linked to real years. Such a file has no data
-    !! outside its own days: past the end the run used values it does not have,
-    !! and before the start it read the record from its first day, which silently
-    !! shifted the whole climate by the number of days it was short.
+    !! Stops the program when the climate files do not cover the entire 
+    !! simulation period.
+    !! Only for a climate file linked to real years. 
     !! (A record not linked to a year, 1901, is meant to be reused.)
 
     call check_file(GetEToFile(), GetEToRecord_FromY(), &
@@ -4920,8 +4918,8 @@ subroutine CheckClimateRecordsCoverSimPeriod()
         if ((FileName == '(None)') .or. (FileName == '(External)')) return
         if (RecordFromY == 1901) return
 
-        ! the leading edge: the run would start reading at the record's first day,
-        ! putting every day of the run out by the days it is short
+        ! the simulation and cropping period cannot start before the start 
+        ! of the climate file
         FirstDayNeeded = min(GetSimulation_FromDayNr(), GetCrop_Day1())
         if (FirstDayNeeded < RecordFromDayNr) then
             call DetermineDate(RecordFromDayNr, DayEnd, MonthEnd, YearEnd)
@@ -4934,8 +4932,8 @@ subroutine CheckClimateRecordsCoverSimPeriod()
                        // '). Shorten the period or extend the climate file.')
         end if
 
-        ! the cropping period can reach further than the simulation period,
-        ! which AdjustSimPeriod has already cut back to the record
+        ! the simulation and cropping period cannot go beyond the end 
+        ! of the climate file
         LastDayNeeded = max(GetSimulation_ToDayNr(), GetCrop_DayN())
         if (LastDayNeeded <= RecordToDayNr) return
 
@@ -7512,9 +7510,7 @@ subroutine CheckFilesInProject(Runi, AllOK, FileOK)
         is_needed = .true.
         if (present(needed)) is_needed = needed
 
-        ! A file that is not used ('(None)') is fine. Without this, the result
-        ! of the previous file carried over, and an unused file was reported as
-        ! missing whenever the file before it was.
+        ! A file that is not used ('(None)') is fine.
         FileOK_tmp = .true.
         if (filename /= '(None)') then
             if (.not. FileExists(directory // filename)) then
