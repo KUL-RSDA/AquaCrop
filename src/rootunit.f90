@@ -155,9 +155,12 @@ real(dp) function AdjustedRootingDepth(&
 
         ! 5. Correction for root density if root deepening is restricted
         !    (dry soil and/or restricitive layers)
-        if (roundc(Zi*1000, mold=1) < roundc(ZiMax*1000, mold=1)) then
+        if ((roundc(Zi*1000, mold=1) < roundc(ZiMax*1000, mold=1)) &
+                .and. (Zi > 0.0_dp)) then
             ! Total extraction in restricted root zone (Zi) and max root
             ! zone (ZiMax) should be identical
+            ! (with Zi = 0 there is no root zone to extract from, and the
+            !  correction below would divide by zero)
             call SetSimulation_SCor(real((2*(ZiMax/Zi)&
                           *((GetCrop_SmaxTop()+GetCrop_SmaxBot())/2.0_dp)&
                           - GetCrop_SmaxTop())/GetCrop_SmaxBot(), kind=sp))
