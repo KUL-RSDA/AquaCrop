@@ -1,4 +1,4 @@
-AquaCrop 7.3 (January 2026) - Output created on (date) : 31-08-2026   at (time) : 10:27:24
+AquaCrop 7.3 (September 2026) - Output created on (date) : 06-10-2026   at (time) : 15:18:09
 Evaluation of simulation results - Statistics
 ** Run number:2
 
@@ -20,17 +20,17 @@ Evaluation of simulation results - Statistics
      6           5.234        -9.000         4.382       9 June 2015
      7           5.219        -9.000         4.998      14 June 2015
      8           5.220        -9.000         5.727      20 June 2015
-     9           5.242        -9.000         5.798      21 June 2015
+     9           5.242        -9.000         5.797      21 June 2015
     10           7.043        -9.000         7.148       5 July 2015
-    11           7.830        -9.000         7.901      12 July 2015
-    12           8.796        -9.000         9.205      26 July 2015
-    13           9.122        -9.000         9.265      27 July 2015
+    11           7.830        -9.000         7.900      12 July 2015
+    12           8.796        -9.000         9.204      26 July 2015
+    13           9.122        -9.000         9.264      27 July 2015
     14          10.400        -9.000        10.106      10 August 2015
-    15          11.010        -9.000        10.421      17 August 2015
+    15          11.010        -9.000        10.420      17 August 2015
 
   Valid observations/simulations sets (n) ....... :    15
   Average of observed Biomass production ........ :     5.713   ton/ha
-  Average of simulated Biomass production ....... :     5.500   ton/ha
+  Average of simulated Biomass production ....... :     5.499   ton/ha
 
   Pearson Correlation Coefficient (r) ........... :     0.99
   Root mean square error (RMSE) ................. :     0.512   ton/ha

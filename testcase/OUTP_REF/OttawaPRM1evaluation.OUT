@@ -1,4 +1,4 @@
-AquaCrop 7.3 (January 2026) - Output created on (date) : 31-08-2026   at (time) : 10:27:24
+AquaCrop 7.3 (September 2026) - Output created on (date) : 06-10-2026   at (time) : 15:18:09
 Evaluation of simulation results - Statistics
 ** Run number:1
 
@@ -18,22 +18,22 @@ Evaluation of simulation results - Statistics
      4           1.217        -9.000         2.637      25 June 2014
      5           2.390        -9.000         3.611       3 July 2014
      6           3.191        -9.000         4.449      10 July 2014
-     7           3.606        -9.000         4.800      13 July 2014
-     8           3.947        -9.000         4.942      15 July 2014
-     9           4.407        -9.000         5.760      24 July 2014
-    10           4.853        -9.000         6.297      30 July 2014
-    11           6.189        -9.000         6.877       7 August 2014
-    12           6.263        -9.000         7.269      14 August 2014
-    13           6.901        -9.000         7.455      18 August 2014
+     7           3.606        -9.000         4.799      13 July 2014
+     8           3.947        -9.000         4.941      15 July 2014
+     9           4.407        -9.000         5.759      24 July 2014
+    10           4.853        -9.000         6.296      30 July 2014
+    11           6.189        -9.000         6.876       7 August 2014
+    12           6.263        -9.000         7.268      14 August 2014
+    13           6.901        -9.000         7.454      18 August 2014
     14           7.168        -9.000         7.693      24 August 2014
-    15           7.242        -9.000         7.920      31 August 2014
+    15           7.242        -9.000         7.919      31 August 2014
 
   Valid observations/simulations sets (n) ....... :    15
   Average of observed Biomass production ........ :     3.923   ton/ha
-  Average of simulated Biomass production ....... :     4.830   ton/ha
+  Average of simulated Biomass production ....... :     4.829   ton/ha
 
   Pearson Correlation Coefficient (r) ........... :     0.99
-  Root mean square error (RMSE) ................. :     0.992   ton/ha
+  Root mean square error (RMSE) ................. :     0.991   ton/ha
   Normalized root mean square error  CV(RMSE).... :    25.3   %
   Nash-Sutcliffe model efficiency coefficient (EF):     0.83
   Willmotts index of agreement (d) .............. :     0.96

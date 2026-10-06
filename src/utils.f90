@@ -8,7 +8,14 @@ use, intrinsic :: iso_c_binding, only: c_f_pointer, &
                                        c_loc, &
                                        c_null_char, &
                                        c_ptr
+use, intrinsic :: iso_fortran_env, only: error_unit
 implicit none
+
+
+logical :: warning_log_open = .false.
+    !! whether warnings are also written to a report file
+integer :: warning_log_unit
+    !! unit of that file (open(newunit=...) units are negative, hence the flag)
 
 
 interface roundc
@@ -30,6 +37,50 @@ subroutine assert(condition, message)
         stop 1
     end if
 end subroutine assert
+
+
+subroutine warn(message)
+    !! Prints a warning on the terminal (standard error) and carries on.
+    !! Standard error is not buffered, so the warning is shown even when the
+    !! program stops right after it. If a report file is registered with
+    !! set_warning_log (ListProjectsLoaded.OUT in the standalone program), the
+    !! warning is written there too, so every warning leaves a trace.
+    character(len=*), intent(in) :: message
+
+    write(error_unit, '(2a)') 'WARNING: ', message
+    if (warning_log_open) then
+        write(warning_log_unit, '(2a)') 'WARNING: ', message
+    end if
+end subroutine warn
+
+
+subroutine fatal(message)
+    !! Reports an error that AquaCrop cannot carry on from, on the terminal and
+    !! in the report file (see warn), and stops the program with exit code 1.
+    !! Use it where the program would otherwise hang or crash without saying why.
+    character(len=*), intent(in) :: message
+
+    write(error_unit, '(2a)') 'ERROR: ', message
+    if (warning_log_open) then
+        write(warning_log_unit, '(2a)') 'ERROR: ', message
+    end if
+    stop 1
+end subroutine fatal
+
+
+subroutine set_warning_log(unit)
+    !! From now on, also write warnings to the file opened on this unit.
+    integer, intent(in) :: unit
+
+    warning_log_unit = unit
+    warning_log_open = .true.
+end subroutine set_warning_log
+
+
+subroutine unset_warning_log()
+    !! Stop writing warnings to a file (call before closing it).
+    warning_log_open = .false.
+end subroutine unset_warning_log
 
 
 function GetAquaCropDescription() result(str)

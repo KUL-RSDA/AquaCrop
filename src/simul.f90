@@ -420,6 +420,23 @@ integer(intEnum), parameter :: control_end_day = 1
 contains
 
 
+real(dp) function RelativeDepletion(WCatFC, WCactual, WCatWP)
+    !! Depletion of a soil zone: 0 at field capacity, 1 at wilting point.
+    !! A zone without water at all (no root zone yet, so field capacity and
+    !! wilting point are both zero) counts as not depleted, as in
+    !! DetermineRootZoneWC. Without this, the division is 0/0.
+    real(dp), intent(in) :: WCatFC
+    real(dp), intent(in) :: WCactual
+    real(dp), intent(in) :: WCatWP
+
+    if (roundc(1000._dp*(WCatFC - WCatWP), mold=1_int32) > 0) then
+        RelativeDepletion = (WCatFC - WCactual)/(WCatFC - WCatWP)
+    else
+        RelativeDepletion = 0._dp
+    end if
+end function RelativeDepletion
+
+
 real(dp) function GetCDCadjustedNoStressNew(CCx, CDC, CCxAdjusted)
     real(dp), intent(in) :: CCx
     real(dp), intent(in) :: CDC
@@ -1797,21 +1814,120 @@ real(dp) function calculate_theta(delta_theta, thetaAdjFC, NrLayer)
 end function calculate_theta
 
 
+real(dp) function calculate_delta_theta_adjusted_fc(theta_in, thetaAdjFC, NrLayer)
+    !! As calculate_delta_theta, but with the drainage curve anchored on the
+    !! adjusted field capacity instead of the field capacity of the soil layer.
+    !! Only meaningful in the capillary fringe, where FCadj exceeds FC.
+    real(dp), intent(in) :: theta_in
+    real(dp), intent(in) :: thetaAdjFC
+    integer(int32), intent(in) :: NrLayer
+
+    real(dp) :: DeltaX, theta, theta_sat, theta_fc
+
+    theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
+    theta = min(theta_in, theta_sat)
+    theta_fc = thetaAdjFC
+    if ((theta <= thetaAdjFC) &
+        .or. (abs(theta_sat - theta_fc) <= epsilon(0.0_dp))) then
+        calculate_delta_theta_adjusted_fc = 0.0_dp
+    else
+        DeltaX = GetSoilLayer_tau(NrLayer)&
+                 * (theta_sat - theta_fc)&
+                 * (exp(theta - theta_fc) - 1.0_dp)&
+                 / (exp(theta_sat - theta_fc) - 1.0_dp)
+        if ((theta - DeltaX) < thetaAdjFC) then
+            DeltaX = theta - thetaAdjFC
+        end if
+        calculate_delta_theta_adjusted_fc = DeltaX
+    end if
+end function calculate_delta_theta_adjusted_fc
+
+
+real(dp) function calculate_theta_adjusted_fc(delta_theta, thetaAdjFC, NrLayer)
+    !! Inverse of calculate_delta_theta_adjusted_fc.
+    real(dp), intent(in) :: delta_theta
+    real(dp), intent(in) :: thetaAdjFC
+    integer(int32), intent(in) :: NrLayer
+
+    real(dp) :: ThetaX, theta_sat, theta_fc, tau
+
+    theta_sat = GetSoilLayer_SAT(NrLayer) / 100.0_dp
+    theta_fc = thetaAdjFC
+    tau = GetSoilLayer_tau(NrLayer)
+    if (delta_theta <= 0.0_dp) then
+        calculate_theta_adjusted_fc = thetaAdjFC
+    elseif ((tau > 0.0_dp) &
+            .and. (abs(theta_sat - theta_fc) > epsilon(0.0_dp))) then
+        ThetaX = theta_fc&
+            + log(1.0_dp&
+                  + delta_theta&
+                  * (exp(theta_sat - theta_fc) - 1.0_dp)&
+                  / (tau * (theta_sat - theta_fc)))
+        if (ThetaX < thetaAdjFC) then
+            ThetaX = thetaAdjFC
+        end if
+        calculate_theta_adjusted_fc = ThetaX
+    else
+        ! to stop draining
+        calculate_theta_adjusted_fc = theta_sat + 0.1_dp
+    end if
+end function calculate_theta_adjusted_fc
+
+
+logical function receiving_compartment_below_fcadj(compi)
+    !! True when any compartment below compi still has room below its adjusted
+    !! field capacity, i.e. when there is somewhere for drainage water to go.
+    integer(int32), intent(in) :: compi
+
+    integer(int32) :: receiving_comp
+
+    receiving_compartment_below_fcadj = .false.
+    do receiving_comp = compi + 1, GetNrCompartments()
+        if (GetCompartment_theta(receiving_comp) &
+                < (GetCompartment_FCadj(receiving_comp)/100.0_dp &
+                   - epsilon(0.0_dp))) then
+            receiving_compartment_below_fcadj = .true.
+            return
+        end if
+    end do
+end function receiving_compartment_below_fcadj
+
+
 subroutine calculate_drainage()
     integer(int32) ::  i, compi, layeri, pre_nr
     real(dp) :: drainsum, delta_theta, drain_comp, drainmax, theta_x, excess
     real(dp) :: pre_thick
     logical :: drainability
+    logical :: UseAdjustedFCCurve
 
     drainsum = 0.0_dp
     do compi=1, GetNrCompartments()
         ! 1. Calculate drainage of compartment
         ! ====================================
         layeri = GetCompartment_Layer(compi)
+        ! In the capillary fringe of a non-saline water table, a compartment
+        ! that already sits at its (raised) adjusted field capacity and has
+        ! nowhere below to drain to must follow the drainage curve of FCadj:
+        ! the curve of the soil layer FC would keep draining it.
+        UseAdjustedFCCurve = &
+            (abs(GetECiAqua()) <= epsilon(0.0_dp)) &
+            .and. ((GetCompartment_FCadj(compi) &
+                    - GetSoilLayer_FC(layeri)) > 1.0_dp) &
+            .and. (GetCompartment_theta(compi) &
+                   >= (GetCompartment_FCadj(compi)/100.0_dp &
+                       - epsilon(0.0_dp))) &
+            .and. (.not. receiving_compartment_below_fcadj(compi))
         if (GetCompartment_theta(compi) &
                  > GetCompartment_FCadj(compi)/100.0_dp) then
-            delta_theta = calculate_delta_theta(GetCompartment_theta(compi), &
-                (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+            if (UseAdjustedFCCurve) then
+                delta_theta = calculate_delta_theta_adjusted_fc(&
+                    GetCompartment_theta(compi), &
+                    (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+            else
+                delta_theta = calculate_delta_theta(&
+                    GetCompartment_theta(compi), &
+                    (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+            end if
         else
             delta_theta = 0.0_dp
         end if
@@ -1844,8 +1960,13 @@ subroutine calculate_drainage()
         else  ! drainability == .false.
             delta_theta = drainsum/(1000.0_dp * pre_thick&
                                     *(1-GetSoilLayer_GravelVol(layeri)/100.0_dp))
-            theta_x = calculate_theta(delta_theta, &
-                (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+            if (UseAdjustedFCCurve) then
+                theta_x = calculate_theta_adjusted_fc(delta_theta, &
+                    (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+            else
+                theta_x = calculate_theta(delta_theta, &
+                    (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+            end if
 
             if (theta_x <= GetSoilLayer_SAT(layeri)/100.0_dp) then
                 call SetCompartment_theta(compi, &
@@ -1856,8 +1977,14 @@ subroutine calculate_drainage()
                     drainsum = (GetCompartment_theta(compi) - theta_x) &
                                * 1000.0_dp * GetCompartment_Thickness(compi) &
                                * (1 - GetSoilLayer_GravelVol(layeri)/100.0_dp)
-                    delta_theta = calculate_delta_theta(theta_x, &
-                        (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+                    if (UseAdjustedFCCurve) then
+                        delta_theta = calculate_delta_theta_adjusted_fc(&
+                            theta_x, &
+                            (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+                    else
+                        delta_theta = calculate_delta_theta(theta_x, &
+                            (GetCompartment_FCadj(compi)/100.0_dp), layeri)
+                    end if
                     drainsum = drainsum +  delta_theta * 1000.0_dp &
                                            * GetCompartment_Thickness(compi) &
                                            * (1 - GetSoilLayer_GravelVol(layeri)&
@@ -1866,10 +1993,17 @@ subroutine calculate_drainage()
                     call SetCompartment_theta(compi, theta_x - delta_theta)
                 elseif (GetCompartment_theta(compi) &
                          > GetCompartment_FCadj(compi)/100.0_dp) then
-                    delta_theta = calculate_delta_theta(&
-                        GetCompartment_theta(compi), &
-                        (GetCompartment_FCadj(compi)/100.0_dp), &
-                        layeri)
+                    if (UseAdjustedFCCurve) then
+                        delta_theta = calculate_delta_theta_adjusted_fc(&
+                            GetCompartment_theta(compi), &
+                            (GetCompartment_FCadj(compi)/100.0_dp), &
+                            layeri)
+                    else
+                        delta_theta = calculate_delta_theta(&
+                            GetCompartment_theta(compi), &
+                            (GetCompartment_FCadj(compi)/100.0_dp), &
+                            layeri)
+                    end if
                     call SetCompartment_theta(compi, &
                              GetCompartment_theta(compi) - delta_theta)
                     drainsum = delta_theta * 1000.0_dp &
@@ -1890,10 +2024,17 @@ subroutine calculate_drainage()
                          <= GetSoilLayer_SAT(layeri)/100.0_dp) then
                     if (GetCompartment_theta(compi) &
                             > GetCompartment_FCadj(compi)/100.0_dp) then
-                        delta_theta = calculate_delta_theta(&
-                            GetCompartment_theta(compi), &
-                            (GetCompartment_FCadj(compi)/100.0_dp),&
-                            layeri)
+                        if (UseAdjustedFCCurve) then
+                            delta_theta = calculate_delta_theta_adjusted_fc(&
+                                GetCompartment_theta(compi), &
+                                (GetCompartment_FCadj(compi)/100.0_dp),&
+                                layeri)
+                        else
+                            delta_theta = calculate_delta_theta(&
+                                GetCompartment_theta(compi), &
+                                (GetCompartment_FCadj(compi)/100.0_dp),&
+                                layeri)
+                        end if
                         call SetCompartment_theta(compi, &
                                  GetCompartment_theta(compi) - delta_theta)
                         drainsum = delta_theta * 1000.0_dp &
@@ -1910,10 +2051,17 @@ subroutine calculate_drainage()
                                - (GetSoilLayer_SAT(layeri)/100.0_dp)) &
                              * 1000.0_dp * GetCompartment_Thickness(compi) &
                              * (1 - GetSoilLayer_GravelVol(layeri)/100.0_dp)
-                    delta_theta = calculate_delta_theta(&
-                         GetCompartment_theta(compi), &
-                         (GetCompartment_FCadj(compi)/100),&
-                         layeri)
+                    if (UseAdjustedFCCurve) then
+                        delta_theta = calculate_delta_theta_adjusted_fc(&
+                             GetCompartment_theta(compi), &
+                             (GetCompartment_FCadj(compi)/100),&
+                             layeri)
+                    else
+                        delta_theta = calculate_delta_theta(&
+                             GetCompartment_theta(compi), &
+                             (GetCompartment_FCadj(compi)/100),&
+                             layeri)
+                    end if
                     call SetCompartment_theta(compi, &
                              GetSoilLayer_SAT(layeri)/100.0_dp - delta_theta)
                     drain_comp = delta_theta * 1000.0_dp&
@@ -2236,8 +2384,9 @@ subroutine calculate_CapillaryRise(CRwater, CRsalt)
 
     real(dp) :: Zbottom, MaxMM, DThetaMax, DTheta, LimitMM, &
                 CRcomp, SaltCRi, DrivingForce, ZtopNextLayer, &
-                Krel, ThetaThreshold
+                Krel, ThetaThreshold, ThetaWP, ThetaMinusWP, FCadjMinusWP
     integer(int32) :: compi, SCellAct, layeri
+    logical :: DThetaIsNumericalLayerTop
 
     Zbottom = 0._dp
     do compi = 1, GetNrCompartments()
@@ -2274,36 +2423,39 @@ subroutine calculate_CapillaryRise(CRwater, CRsalt)
     loop: do while ((roundc(MaxMM*1000._dp, mold=1) > 0) &
             .and. (compi > 0) &
             .and. (roundc(GetCompartment_fluxout(compi)*1000._dp, mold=1) == 0))
+        DThetaMax = 0._dp
+        CRcomp = 0._dp
+        ThetaWP = GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp
+        ThetaMinusWP = GetCompartment_Theta(compi) - ThetaWP
+        FCadjMinusWP = GetCompartment_FCadj(compi)/100._dp - ThetaWP
+
         ! Driving force
-        if ((GetCompartment_theta(compi) &
-                >= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
+        if ((GetCompartment_theta(compi) >= ThetaWP) &
             .and. (GetSimulParam_RootNrDF() > 0_int8)) then
-            DrivingForce = 1._dp &
-                          - (exp(GetSimulParam_RootNrDF() &
-                            * log(GetCompartment_theta(compi) &
-                                - GetSoilLayer_WP(GetCompartment_Layer(compi)) &
-                                                                    /100._dp)) &
-                          /exp(GetSimulParam_RootNrDF() &
-                            *log(GetCompartment_FCadj(compi)/100._dp &
-                      - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)))
+            if (ThetaMinusWP <= 0._dp) then
+                ! log(0) at theta exactly equal to WP
+                DrivingForce = 1._dp
+            else
+                DrivingForce = 1._dp &
+                              - (exp(GetSimulParam_RootNrDF() &
+                                * log(ThetaMinusWP)) &
+                              /exp(GetSimulParam_RootNrDF() &
+                                * log(FCadjMinusWP)))
+            end if
         else
             DrivingForce = 1._dp
         end if
         ! relative hydraulic conductivity
-        ThetaThreshold = (GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp &
+        ThetaThreshold = (ThetaWP &
                           + GetSoilLayer_FC(GetCompartment_Layer(compi)) &
                                                                 /100._dp)/2._dp
         if (GetCompartment_Theta(compi) < ThetaThreshold) then
-            if ((GetCompartment_Theta(compi) &
-                <= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
-              .or. (ThetaThreshold &
-                <= GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)) then
+            if ((GetCompartment_Theta(compi) <= ThetaWP) &
+              .or. (ThetaThreshold <= ThetaWP)) then
                 Krel = 0._dp
             else
-                Krel = (GetCompartment_Theta(compi) &
-                        - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp) &
-                      /(ThetaThreshold &
-                        - GetSoilLayer_WP(GetCompartment_Layer(compi))/100._dp)
+                Krel = (GetCompartment_Theta(compi) - ThetaWP) &
+                      /(ThetaThreshold - ThetaWP)
             end if
         else
             Krel = 1._dp
@@ -2312,7 +2464,40 @@ subroutine calculate_CapillaryRise(CRwater, CRsalt)
         ! room available to store water
         DTheta = GetCompartment_FCadj(compi)/100._dp &
                 - GetCompartment_Theta(compi)
+
+        ! A compartment sitting exactly at WP gets Krel = 0, which yields a zero
+        ! transfer that exhausts MaxMM and stops capillary rise from ever
+        ! starting in an initially dry profile.  Give it a minimal conductivity
+        ! instead, but only for a non-saline water table within reach.
+        if ((Krel <= 0._dp) &
+            .and. (DTheta > 0._dp) &
+            .and. (abs(GetECiAqua()) <= epsilon(0._dp)) &
+            .and. (abs(GetCompartment_Theta(compi) - ThetaWP) &
+                    <= epsilon(0._dp)) &
+            .and. ((Zbottom - GetCompartment_Thickness(compi)/2._dp) &
+                    < (GetZiAqua()/100._dp))) then
+            Krel = 1.0e-16_dp
+        end if
+
+        ! At the top compartment of a soil layer, DTheta can be a rounding
+        ! residual left over from setting theta equal to FCadj.  Treating that
+        ! as storage room stops the upward flow on a meaningless transfer,
+        ! before it reaches the compartments above.
+        ! the compartments above and below are only looked at once compi is
+        ! known to have them: Fortran may evaluate every part of a condition,
+        ! also the ones after a test that is already false
+        DThetaIsNumericalLayerTop = .false.
         if ((DTheta > 0._dp) &
+            .and. (DTheta <= (epsilon(0._dp)/4._dp)) &
+            .and. (compi > 1) &
+            .and. (compi < GetNrCompartments())) then
+            DThetaIsNumericalLayerTop = &
+                (GetCompartment_Layer(compi+1) == GetCompartment_Layer(compi)) &
+                .and. (GetCompartment_Layer(compi-1) /= GetCompartment_Layer(compi))
+        end if
+
+        if ((DTheta > 0._dp) &
+            .and. (.not. DThetaIsNumericalLayerTop) &
             .and. ((Zbottom - GetCompartment_Thickness(compi)/2._dp) &
                     < (GetZiAqua()/100._dp))) then
             ! water stored
@@ -2559,7 +2744,9 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                                                                   /100._dp))
         Theta = GetCompartment_theta(compi) - DeltaTheta &
                 + GetCompartment_fluxout(compi) &
-                        /(1000._dp*GetCompartment_Thickness(compi))
+                        /(1000._dp*GetCompartment_Thickness(compi) &
+                            *(1._dp - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
+                                                                  /100._dp))
 
         ! 2. Determine active SaltCels and Add IN
         Theta = Theta + DeltaTheta
@@ -2623,7 +2810,9 @@ subroutine calculate_saltcontent(InfiltratedRain, InfiltratedIrrigation, &
                             * (1._dp &
                           - GetSoilLayer_GravelVol(GetCompartment_Layer(compi)) &
                                                                      /100._dp))
-            do while (DeltaTheta > 0._dp)
+            ! stop once the first salt cell is emptied (celi = 0): there is
+            ! no cell left, and cell 0 would be outside the Salt/Depo arrays
+            do while ((DeltaTheta > 0._dp) .and. (celi > 0))
                 if (celi < GetSoilLayer_SCP1(GetCompartment_Layer(compi))) then
                     limit = (celi-1._dp)*Dx
                 else
@@ -3945,17 +4134,16 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         if (GetSimulation_SWCtopSoilConsidered()) then
             ! top soil is relative wetter than total root zone
             SWCeffectiveRootZone = GetRootZoneWC_ZtopAct()
-            Wrelative = (GetRootZoneWC_ZtopFC() &
-                            - GetRootZoneWC_ZtopAct()) &
-                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
-                                                                ! top soil
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP()) ! top soil
             FCeffectiveRootZone = GetRootZoneWC_ZtopFC()
             WPeffectiveRootZone = GetRootZoneWC_ZtopWP()
         else
             SWCeffectiveRootZone = GetRootZoneWC_Actual()
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                            /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
-                                                        ! total root zone
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP()) ! total root zone
             FCeffectiveRootZone = GetRootZoneWC_FC()
             WPeffectiveRootZone = GetRootZoneWC_WP()
         end if
@@ -4074,13 +4262,13 @@ subroutine DetermineCCiGDD(CCxTotal, CCoTotal, &
         pSenLL = 0.999_dp ! WP
         if (GetSimulation_SWCtopSoilConsidered()) then
         ! top soil is relative wetter than total root zone
-            Wrelative = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct()) &
-                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
-                                                                ! top soil
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP()) ! top soil
         else
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                        /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
-                                                ! total root zone
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP()) ! total root zone
         end if
 
         WithBeta = .false.
@@ -4613,13 +4801,23 @@ subroutine CalculateSoilEvaporationStage2()
     integer(int32), dimension(11) :: SCellIniEvap
 
     ! Step 1. Conditions before soil evaporation
+    ! Every slot holds the state before evaporation, also for the
+    ! compartments the loop below does not reach: step 3 compares against
+    ! them, and would otherwise read a value that was never set.
+    do i = 1, size(ThetaIniEvap)
+        if ((i+1) <= GetNrCompartments()) then
+            ThetaIniEvap(i) = GetCompartment_Theta(i+1)
+            SCellIniEvap(i) = ActiveCells(GetCompartment_i(i+1))
+        else
+            ThetaIniEvap(i) = 0._dp
+            SCellIniEvap(i) = 0
+        end if
+    end do
     compi = 1
     MaxSaltExDepth = GetCompartment_Thickness(1)
     do while ((MaxSaltExDepth < GetSimulParam_EvapZmax()) &
                 .and. (compi < GetNrCompartments()))
         compi = compi + 1
-        ThetaIniEvap(compi-1) = GetCompartment_Theta(compi)
-        SCellIniEvap(compi-1) = ActiveCells(GetCompartment_i(compi))
         MaxSaltExDepth = MaxSaltExDepth + GetCompartment_Thickness(compi)
     end do
 
@@ -4647,9 +4845,11 @@ subroutine CalculateSoilEvaporationStage2()
                 Wact = WCEvapLayer(GetSimulation_EvapZ(), AtTheta)
                 Wrel = (Wact-Wlower)/(Wupper-Wlower)
             end do
-            Kr = SoilEvaporationReductionCoefficient(Wrel, &
-                               real(GetSimulParam_EvapDeclineFactor(), kind=dp))
         end if
+        ! also needed when the evaporation layer cannot deepen
+        ! (EvapZmax = EvapZmin), where Kr was left without a value
+        Kr = SoilEvaporationReductionCoefficient(Wrel, &
+                           real(GetSimulParam_EvapDeclineFactor(), kind=dp))
         if (abs(GetETo() - 5._dp) > 0.01_dp) then
             ! correction for evaporative demand
             ! adjustment of Kr (not considered yet)
@@ -5298,16 +5498,17 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
         if (GetSimulation_SWCtopSoilConsidered()) then
             ! top soil is relative wetter than total root zone
             SWCeffectiveRootZone = GetRootZoneWC_ZtopAct()
-            Wrelative = (GetRootZoneWC_ZtopFC() &
-                         - GetRootZoneWC_ZtopAct()) &
-                            /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP())
             FCeffectiveRootZone = GetRootZoneWC_ZtopFC()
             WPeffectiveRootZone = GetRootZoneWC_ZtopWP()
         else
             ! total rootzone is wetter than top soil
             SWCeffectiveRootZone = GetRootZoneWC_Actual()
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                            /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP())
             FCeffectiveRootZone = GetRootZoneWC_FC()
             WPeffectiveRootZone = GetRootZoneWC_WP()
         end if
@@ -5349,13 +5550,13 @@ subroutine DetermineCCi(CCxTotal, CCoTotal, StressLeaf, FracAssim, &
         pSenLL = 0.999_dp ! WP
         if (GetSimulation_SWCtopSoilConsidered()) then
         ! top soil is relative wetter than total root zone
-            Wrelative = (GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopAct()) &
-                        /(GetRootZoneWC_ZtopFC() - GetRootZoneWC_ZtopWP())
-                                                                ! top soil
+            Wrelative = RelativeDepletion(GetRootZoneWC_ZtopFC(), &
+                                          GetRootZoneWC_ZtopAct(), &
+                                          GetRootZoneWC_ZtopWP()) ! top soil
         else
-            Wrelative = (GetRootZoneWC_FC() - GetRootZoneWC_Actual()) &
-                        /(GetRootZoneWC_FC() - GetRootZoneWC_WP())
-                                                 ! total root zone
+            Wrelative = RelativeDepletion(GetRootZoneWC_FC(), &
+                                          GetRootZoneWC_Actual(), &
+                                          GetRootZoneWC_WP()) ! total root zone
         end if
         WithBeta = .false.
         call AdjustpSenescenceToETo(GetETo(), TimeSenescence, &

@@ -168,6 +168,7 @@ use ac_global, only:    SetSimulParam_PercRAW, &
                         SetSurfaceStorage, &
                         SetECstorage, &
                         SetDaySubmerged, &
+                        SetTactWeedInfested, &
                         GetSumWabal, &
                         GlobalZero, &
                         SetSumWaBal, &
@@ -239,7 +240,7 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
               ! soil profile for calculation of mean soil water content
     call SetSimulParam_CNcorrection(.true.)
     call SetSimulParam_SaltDiff(20_int8) ! salt diffusion factor (%)
-    call SetSimulParam_SaltSolub(100_int8) ! salt solubility (g/liter)
+    call SetSimulParam_SaltSolub(100_int32) ! salt solubility (g/liter)
     call SetSimulParam_RootNrDF(16_int8) ! shape factor capillary rise factor
     call SetSimulParam_IniAbstract(5_int8) ! fixed in Version 5.0 cannot be
         ! changed since linked with equations for CN AMCII and CN converions
@@ -407,11 +408,9 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     call SetRainRecord_FromY(1901)
 
     ! 5.4 CO2
-    call SetCO2File('MaunaLoa.CO2')
-    call SetCO2FileFull(GetPathNameSimul() // GetCO2File())
-    CO2descr = GetCO2Description()
-    call GenerateCO2Description(GetCO2FileFull(), CO2descr)
-    call SetCO2Description(CO2descr)
+    call SetCO2File('(None)')
+    call SetCO2FileFull(GetCO2File())
+    call SetCO2Description('')
 
     ! 5.5 Climate file
     call SetClimateFile('(None)')
@@ -486,6 +485,7 @@ subroutine InitializeSettings(use_default_soil_file,use_default_crop_file)
     call SetInfiltrated(0.0_dp) ! added 4.0
     call SetCRwater(0._dp) ! added 4.0
     call SetCRsalt(0._dp) ! added 4.0
+    call SetTactWeedInfested(0._dp)
     call SetSimulation_ResetIniSWC(.true.)
     call SetSimulation_EvapLimitON(.false.)
     call SetMaxPlotNew(50)

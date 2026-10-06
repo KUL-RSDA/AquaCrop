@@ -136,6 +136,9 @@ use ac_project_input, only: GetNumberSimulationRuns, &
                             initialize_project_input
 use ac_run, only:   RunSimulation
 use ac_utils, only: assert, &
+                    warn, &
+                    set_warning_log, &
+                    unset_warning_log, &
                     upper_case, &
                     write_file, &
                     int2str, &
@@ -164,6 +167,8 @@ subroutine fProjects_open(filename, mode)
         !! open the file for reading ('r'), writing ('w') or appending ('a')
 
     call open_file(fProjects, filename, mode, fProjects_iostat)
+    ! every warning from here on is also written to this file
+    if (fProjects_iostat == 0) call set_warning_log(fProjects)
 end subroutine fProjects_open
 
 
@@ -186,6 +191,7 @@ end subroutine fProjects_write
 
 
 subroutine fProjects_close()
+    call unset_warning_log()
     close(fProjects)
 end subroutine fProjects_close
 
@@ -493,12 +499,20 @@ subroutine InitializeProjectFileNames()
              status='old', action='read', iostat=rc)
     end if
 
-    ! First pass to get the number of projects
+    ! First pass to get the number of projects.
+    ! An empty line is counted as a project too, and the second pass below then
+    ! runs past the end of the file and stops the program. The count is left as
+    ! it is; the warning says which line to remove.
     NrProjects = 0
-    read(fhandle, *, iostat=rc)
+    read(fhandle, '(a)', iostat=rc) buffer
     do while (rc /= iostat_end)
         NrProjects = NrProjects + 1
-        read(fhandle, *, iostat=rc)
+        if ((rc == 0) .and. (len_trim(buffer) == 0)) then
+            call warn('line ' // int2str(NrProjects) // ' of ' &
+                // ListProjectsFile // ' is empty. AquaCrop cannot read a ' &
+                // 'project list with empty lines and will stop: remove it.')
+        end if
+        read(fhandle, '(a)', iostat=rc) buffer
     end do
     allocate(ProjectFileNames(NrProjects))
 
@@ -544,10 +558,13 @@ function GetProjectFileName(iproject) result(ProjectFileName_out)
 end function GetProjectFileName
 
 
-subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
+subroutine InitializeProject(iproject, TheProjectFile, TheProjectType, &
+                             ProjectLoaded)
     integer(int32), intent(in) :: iproject
     character(len=*), intent(in) :: TheProjectFile
     integer(intEnum), intent(in) :: TheProjectType
+    logical, intent(out) :: ProjectLoaded
+        !! whether the project could be loaded; if not, it must not be run
 
     character(len=1025) :: NrString, TestFile, tempstring
     logical :: CanSelect, ProgramParametersAvailable
@@ -727,6 +744,7 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
             call fProjects_write(trim(tempstring))
             write(*,*) 'Missing Environment and/or Simulation file(s):'
             write(*,*) 'Check OUTP/ListProjectsLoaded.OUT for information.'
+            call warn(trim(TheProjectFile) // ' is not loaded and is skipped.')
         end if
     else
         ! not a project file or missing in the LIST  dirtectory
@@ -740,8 +758,11 @@ subroutine InitializeProject(iproject, TheProjectFile, TheProjectType)
                                 ' : project file NOT available in LIST directory'
             call fProjects_write(trim(tempstring))
         end if
+        call warn(trim(TheProjectFile) // ' is not a project file in the ' &
+                  // 'LIST directory and is skipped.')
     end if
 
+    ProjectLoaded = (TheProjectType /= typeproject_TypeNone) .and. CanSelect
 
 end subroutine InitializeProject
 
@@ -782,10 +803,12 @@ subroutine LoadProgramParametersProjectPlugIn(&
     character(len=*), intent(in) :: FullFileNameProgramParameters
     logical, intent(inout) :: ProgramParametersAvailable
 
-    integer :: f0
-    integer(int32) :: i, simul_RpZmi, simul_lowox
+    integer, parameter :: NrProgramParameters = 25  ! values read below
+    integer :: f0, rc, NrValues
+    character(len=1025) :: line
+    integer(int32) :: i, simul_RpZmi, simul_lowox, simul_saltsolub
     integer(int8) :: effrainperc, effrainshow, effrainrootE, &
-                     simul_saltdiff, simul_saltsolub, simul_root, &
+                     simul_saltdiff, simul_root, &
                     simul_ed, simul_pCCHIf, simul_SFR, simul_TAWg, &
                     simul_beta, simul_Tswc, simul_EZma, simul_GDD
     real(dp) :: simul_rod, simul_kcWB, simul_RZEma, simul_pfao, &
@@ -796,6 +819,25 @@ subroutine LoadProgramParametersProjectPlugIn(&
         ProgramParametersAvailable = .true.
         open(newunit=f0, file=trim(FullFileNameProgramParameters), &
              status='old', action='read')
+
+        ! The reads below expect one value on each of 25 lines. A shorter file
+        ! makes them run past its end and stop the program. The reads are left
+        ! as they are; the warning says what is wrong first. Empty lines are not
+        ! counted, because the reads skip them.
+        NrValues = 0
+        do
+            read(f0, '(a)', iostat=rc) line
+            if (rc /= 0) exit
+            if (len_trim(line) > 0) NrValues = NrValues + 1
+        end do
+        if (NrValues < NrProgramParameters) then
+            call warn(trim(FullFileNameProgramParameters) // ' holds ' &
+                // int2str(NrValues) // ' program parameters instead of ' &
+                // int2str(NrProgramParameters) // '. AquaCrop will stop: ' &
+                // 'complete the file.')
+        end if
+        rewind(f0)
+
         ! crop
         read(f0, *) simul_ed ! evaporation decline factor in stage 2
         call SetSimulParam_EvapDeclineFactor(simul_ed)
@@ -936,7 +978,7 @@ end subroutine FinalizeTheProgram
 subroutine WriteProjectsInfo(line)
     character(len=*), intent(in) :: line
 
-    call fProjects_write('')
+    call fProjects_write(line)
 end subroutine WriteProjectsInfo
 
 
@@ -944,7 +986,7 @@ subroutine StartTheProgram()
 
     integer(int32) :: iproject, nprojects
     character(len=1025) :: ListProjectsFile, TheProjectFile
-    logical :: ListProjectFileExist
+    logical :: ListProjectFileExist, ProjectLoaded
     integer(int8) :: TheProjectType
 
     call InitializeGlobalStrings()
@@ -962,8 +1004,13 @@ subroutine StartTheProgram()
     do iproject = 1, nprojects
         TheProjectFile = GetProjectFileName(iproject)
         call GetProjectType(trim(TheProjectFile), TheProjectType)
-        call InitializeProject(iproject, trim(TheProjectFile), TheProjectType)
-        call RunSimulation(TheProjectFile, TheProjectType)
+        call InitializeProject(iproject, trim(TheProjectFile), TheProjectType, &
+                               ProjectLoaded)
+        ! a project that could not be loaded (missing file, not a project
+        ! file) is skipped, so the other projects in the list still run
+        if (ProjectLoaded) then
+            call RunSimulation(TheProjectFile, TheProjectType)
+        end if
     end do
 
     if (nprojects == 0) then
