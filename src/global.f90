@@ -6697,8 +6697,6 @@ subroutine AdjustSizeCompartments(CropZx)
                                                 PrevVolPrComp, &
                                                 PrevECdSComp
 
-    ! esnures consistency for adjusted compartment sizes between Pascal and Fortran
-    CropZx_eff = CropZx + 0.000001_dp
     ! 1. Save intial soil water profile (required when initial soil
     ! water profile is NOT reset at start simulation - see 7.)
     PrevNrComp = int(GetNrCompartments(), kind=int8)
@@ -6714,6 +6712,9 @@ subroutine AdjustSizeCompartments(CropZx)
     end do
 
     ! 3. Increase number of compartments (if less than 12)
+    ! ensures consistency for adjusted compartment sizes between Pascal and Fortran
+    ! CropZx_eff avoids a last compartment of e.g. 0.0999999 m instead of 0.1 m
+    CropZx_eff = CropZx + 0.000001_dp
     if (GetNrCompartments() < 12) then
         loop: do
             call SetNrCompartments(GetNrCompartments() + 1)
@@ -6732,12 +6733,20 @@ subroutine AdjustSizeCompartments(CropZx)
     end if
 
     ! 4. Adjust size of compartments (if total depth of compartments < rooting depth)
-    if ((TotDepthC + 0.00001_dp) < CropZx_eff) then
+    ! CropZx_eff is deliberately not used here: the compartment thicknesses are
+    ! rounded to multiples of 0.05 m, so their sum lands exactly on CropZx for
+    ! most rooting depths.  Inflating CropZx then turns that exact match into
+    ! "still too shallow" and adds a spurious 0.05 m to the last compartment.
+    if ((TotDepthC + 0.00001_dp) < CropZx) then
         call SetNrCompartments(12)
-        fAdd = (CropZx_eff/0.1_dp - 12._dp)/78._dp
+        fAdd = (CropZx/0.1_dp - 12._dp)/78._dp
         do i = 1, 12
-            call SetCompartment_Thickness(i, 0.1 * (1._dp + i*fAdd))
-            call SetCompartment_Thickness(i, 0.05 &
+            ! the literals must be double precision: as default reals they make
+            ! every compartment about 1.5E-9 m too thick, which is enough to
+            ! push a compartment whose midpoint coincides with a soil layer
+            ! boundary into the layer below (see DesignateSoilLayerToCompartments)
+            call SetCompartment_Thickness(i, 0.1_dp * (1._dp + i*fAdd))
+            call SetCompartment_Thickness(i, 0.05_dp &
                     * real(roundc(GetCompartment_Thickness(i) &
                                     * 20._dp, mold=1), kind=dp))
         end do
@@ -6745,16 +6754,16 @@ subroutine AdjustSizeCompartments(CropZx)
         do i = 1, GetNrCompartments()
             TotDepthC = TotDepthC + GetCompartment_Thickness(i)
         end do
-        if (TotDepthC < CropZx_eff) then
+        if ((TotDepthC + 0.00001_dp) < CropZx) then
             loop2: do
                 call SetCompartment_Thickness(12, &
                                         GetCompartment_Thickness(12) &
                                                           + 0.05_dp)
                 TotDepthC = TotDepthC + 0.05_dp
-                if (TotDepthC >= CropZx_eff) exit loop2
+                if ((TotDepthC + 0.00001_dp) >= CropZx) exit loop2
             end do loop2
         else
-            do while ((TotDepthC - 0.04999999_dp) >= CropZx_eff)
+            do while ((TotDepthC - 0.04999999_dp) >= CropZx)
                 call SetCompartment_Thickness(12, &
                                         GetCompartment_Thickness(12) &
                                                           - 0.05_dp)

@@ -936,7 +936,7 @@ end subroutine FinalizeTheProgram
 subroutine WriteProjectsInfo(line)
     character(len=*), intent(in) :: line
 
-    call fProjects_write('')
+    call fProjects_write(line)
 end subroutine WriteProjectsInfo
 
 
