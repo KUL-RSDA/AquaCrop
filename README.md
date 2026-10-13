@@ -28,15 +28,17 @@ the LIS section below.
 
 ## Documentation
 
-Online documentation and contact information are available at the [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos provided by FAO.
+Online documentation and contact information are available at the [KU Leuven website (for the most recent updates)](https://ees.kuleuven.be/en/aquacrop) or [FAO website](https://www.fao.org/aquacrop/en/). The AquaCrop core team is small and answers will be found fastest in the release notes, training handbooks and youtube videos.
 
 Please also visit our [Discussions](https://github.com/KUL-RSDA/AquaCrop/discussions) forum for FAQ, or to contribute.
+
+Multiple code versions of AquaCrop exist. The [history](https://ees.kuleuven.be/en/aquacrop/resources#history) of the official model started with Delphi code, which was converted to Fortran code and made open source by KU Leuven (distributed by FAO through v7.2). The current repository tracks the latest science updates to the original code and invites community input with active version control.
 
 ## Running the executable
 
 Download the ZIP file with the AquaCrop executable (v7.0 or higher) for
 Windows, Linux or MacOS from the release page. 
-Consult the reference manual (FAO website) for details about the AquaCrop stand-alone program.
+Consult the [reference manual](https://ees.kuleuven.be/en/aquacrop/resources) for details about the AquaCrop stand-alone program.
 
 Optionally, it can be verified if the executable produces the expected output on the user's system, by running a self-contained testcase for which reference output is provided (zip-file under [Releases](
   https://github.com/KUL-RSDA/AquaCrop/releases)). Please carefully read the README file to run the testcase.
@@ -83,6 +85,6 @@ In case the open source code of AquaCrop (from v7.0 onwards) is used, please ref
 * Busschaert, L., de Roos, S., Thiery, W., Raes, D., De Lannoy, G.J.M. (2022). Net irrigation requirement under different climate scenarios using AquaCrop over Europe. Hydrology and Earth System Sciences, 26, 3731–3752, 10.5194/hess-26-3731-2022.
   
 When using AquaCrop v7.2 and higher versions in NASA's LIS, please refer to:
-* Busschaert, L., Bechtold, M., Modanesi, S., Massari, C., Raes, D., Kumar, S., De Lannoy, G.J.M. (2025). On the gap between crop and land surface models: comparing irrigation and other land surface estimates from AquaCrop and Noah-MP over the Po Valley, Hydrology and Earth System Sciences, https://egusphere.copernicus.org/preprints/2025/egusphere-2025-2550/, in review.
-* De Lannoy, G., Busschaert, L., Bechtold, M., Lanfranco, N., de Roos, S., Heyvaert, Z., Mortelmans, J., Scherrer, S., Van den Bossche, M., Kumar, S., Mocko, D., Kemp, E., Heng, L., Steduto, P., Raes, D. (2025). Advancing Crop Modeling and Data Assimilation Using AquaCrop v7.2 in NASA’s Land Information System Framework v7.5. Geoscientific Model Development, https://egusphere.copernicus.org/preprints/2025/egusphere-2025-4417/, in review.
+* Busschaert, L., Bechtold, M., Modanesi, S., Massari, C., Raes, D., Kumar, S., De Lannoy, G.J.M. (2025). On the gap between crop and land surface models: comparing irrigation and other land surface estimates from AquaCrop and Noah-MP over the Po Valley, Hydrology and Earth System Sciences, 30(9), 2579-2611, 10.5194/hess-30-2579-2026.
+* De Lannoy, G., Busschaert, L., Bechtold, M., Lanfranco, N., de Roos, S., Heyvaert, Z., Mortelmans, J., Scherrer, S., Van den Bossche, M., Kumar, S., Mocko, D., Kemp, E., Heng, L., Steduto, P., Raes, D. (2025). Advancing Crop Modeling and Data Assimilation Using AquaCrop v7.2 in NASA’s Land Information System Framework v7.5. Geoscientific Model Development, 19(6), 2551-2575, 10.5194/gmd-19-2551-2026.
 
