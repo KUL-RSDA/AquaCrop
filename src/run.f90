@@ -444,7 +444,7 @@ use ac_rootunit, only:  AdjustedRootingDepth
 use ac_simul,    only:  Budget_module, &
                         determinepotentialbiomass, &
                         determinebiomassandyield
-use ac_tempprocessing, only:    AdjustCalendarCrop, &
+use ac_tempprocessing, only:    AdjustGDDaysToFullCanopy, &
                                 AdjustCropFileParameters, &
                                 GetDecadeTemperatureDataSet, &
                                 GetMonthlyTemperaturedataset, &
@@ -642,11 +642,12 @@ logical :: GlobalIrriECw ! for versions before 3.2 where EC of
 ! Version 7.2
 integer(int32) :: LastIrriDAP
 
-! The day the crop cycle actually ended, recorded on the day it happens - never predicted.
+! V7.4
+! The day the crop cycle actually ended, recorded on the day it happens, never predicted.
 ! Crop_DayN is the declared end of the cropping period (the run's horizon); on the GDD clock
-! the crop can finish before it, and everything that means "the season is over" - the
-! off-season irrigation events, the generated schedule, the irrigation report - has to hang
-! off the crop's own end, as it did when Crop_DayN was defined beforehand.
+! the crop can finish before it. All routines happening after the cropping period (the
+! off-season irrigation events, the generated schedule, the irrigation report) can then be activated
+! to keep the same qeuence of events as in v7.3.
 integer(int32) :: DayNrCropEnded = undef_int
 
 
@@ -7836,11 +7837,9 @@ subroutine ResetCropAndSimulationPeriod(NewCropDay1)
         call CompleteCropDescription()
     else
         ! 2. Recompute the GDD canopy geometry after the shifted Crop_Day1.
-        ! AdjustCalendarCrop only recomputes GDDaysToFullCanopy - pure canopy geometry on the
-        ! GDD clock, requires no climate data.
-        if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-            call AdjustCalendarCrop(GetCrop_Day1())
-        end if
+        ! Pure canopy geometry on the GDD clock, requires no climate data.
+        ! Does nothing in calendar mode.
+        call AdjustGDDaysToFullCanopy()
     end if
     ! 3. Reset DayN of Crop
     ! Same split as the load path: in GDD mode the end of the cropping period is the declared

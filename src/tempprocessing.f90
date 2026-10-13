@@ -1358,13 +1358,11 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
 end function SumCalendarDays
 
 
-subroutine AdjustCalendarCrop(FirstCropDay)
-    !! Recomputes GDDaysToFullCanopy: pure canopy geometry on the GDD clock (the analytic
-    !! inverse of the CC curve), so it needs no temperature record and gives the same answer
-    !! every year.
-    !!
-    !! FirstCropDay is an unused argument, kept for simplicity.
-    integer(int32), intent(in) :: FirstCropDay
+subroutine AdjustGDDaysToFullCanopy()
+    !! GDD mode only: recomputes Crop%GDDaysToFullCanopy from the canopy parameters
+    !! (CCo, CCx, GDDCGC) and GDDaysToGermination, capped at GDDaysToHarvest.
+    !! It is the analytic inverse of the CC curve, so it needs no temperature record
+    !! and gives the same answer every year. Does nothing in calendar mode.
 
     if (GetCrop_ModeCycle() == modeCycle_GDDays) then
         call SetCrop_GDDaysToFullCanopy(GetCrop_GDDaysToGermination() &
@@ -1374,10 +1372,8 @@ subroutine AdjustCalendarCrop(FirstCropDay)
         if (GetCrop_GDDaysToFullCanopy() > GetCrop_GDDaysToHarvest()) then
             call SetCrop_GDDaysToFullCanopy(GetCrop_GDDaysToHarvest())
         end if
-
-
     end if
-end subroutine AdjustCalendarCrop
+end subroutine AdjustGDDaysToFullCanopy
 
 
 subroutine GDDCDCToCDC(PlantDayNr, D123, GDDL123, &
@@ -1956,7 +1952,7 @@ subroutine LoadSimulationRunProject(NrRun)
         call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
     end if
 
-    call AdjustCalendarCrop(GetCrop_Day1())
+    call AdjustGDDaysToFullCanopy()
     ! Crop.DayN = end of the CROPPING PERIOD (the run horizon), not the day the crop matures.
     !
     ! Calendar mode keeps the v7.3 derivation `Day1 + DaysToHarvest - 1`. In GDD mode DayN comes
