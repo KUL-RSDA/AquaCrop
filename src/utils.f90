@@ -115,7 +115,7 @@ function GetReleaseDate() result(str)
     !! Returns a string containing the month and year of the release.
     character(len=:), allocatable :: str
 
-    str = 'January 2026'
+    str = 'September 2026'
 end function GetReleaseDate
 
 

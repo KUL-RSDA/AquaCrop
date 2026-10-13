@@ -258,6 +258,17 @@ subroutine read_project_file(self, filename, NrRun)
     read(fhandle, *, iostat=rc) self%Crop_Day1
     read(fhandle, *, iostat=rc) self%Crop_LastDayNr
 
+    ! LB: Outdated option now flagged as an error (discussed with Dirk Raes)
+    ! Starting a run INSIDE the growing period is no longer supported: the routines that
+    ! reconstructed the crop's state on such a run's first day (GDD banked before day 1,
+    ! standing canopy, existing roots, post-flowering stress accumulators) were removed.
+    ! Without this check such a project would still run, silently treating the crop as
+    ! planted on the run's first day. Reject it instead.
+    call assert(self%Simulation_DayNr1 <= self%Crop_Day1, &
+                'project file declares a simulation period starting after the ' // &
+                'cropping period; starting a run inside the growing period is ' // &
+                'not supported: ' // trim(filename))
+
     ! 1. Climate
     read(fhandle, '(a)', iostat=rc) buffer
     self%Climate_Info = trim(buffer)
