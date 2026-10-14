@@ -1101,17 +1101,20 @@ real(sp), dimension(1:365) :: TmaxTnxReference365DaysRun, TminTnxReference365Day
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay, OutDaily, Out8Irri
 ! ExternalRun is true for LIS run. It is based on the climate coming
-! from an external source and not from AquaCrop's own climate files.
+! from an external source (LIS) and not from AquaCrop's own climate files.
 logical :: ExternalRun = .false.
 real(dp) :: Management_Brel = undef_double
-    !! relative biomass of the season: the crop's biomass as a fraction of its potential,
-    !! 0 to 1, handed over by the program driving AquaCrop in place of a degree of soil
-    !! fertility stress. Negative - the default - means none was supplied, and the stress in
-    !! the management file is used instead. No project or management file can set it.
-! Three stress coefficients of the day that the daily output does not carry and that the
-! routines computing them keep to themselves. A program driving AquaCrop asks for them by
-! name; they are reset to 1 - no stress - at the start of every time step, so a day whose
-! run never reaches the crop state that computes one reports no stress rather than yesterday's.
+    !! EXTERNAL ONLY
+    !! AquaCrop can now take as input directly Brel (Set in LIS) instead of the degree
+    !! of soil fertility stress (SFS; defined in the management file).
+    !! Brel = relative biomass [0-1]. This is linked to a degree of SFS via
+    !! the stress response function defined by the shape factors in the crop files.
+    !! By default, Brel is set to undef_double, which means that the degree of SFS is used to compute Brel.
+
+! EXTERNAL ONLY
+! For the output of ALL daily stress coefficients. 
+! They are reset to 1 (no stress) at the start of every time step.
+! Other stresses (e.g. StSto, StLeaf, StSen) are already provided in standard standalone output.
 real(dp) :: KsPolCold = 1._dp
     !! Ks for cold stress on pollination
 real(dp) :: KsPolHeat = 1._dp
@@ -5102,11 +5105,11 @@ end subroutine AdjustSimPeriod
 
 
 logical function ClimateComesFromFile(FileName)
-    !! .true. when the daily values of this climate variable are read from a file of its own.
-    !!
-    !! '(None)' means the program parameters supply them instead. '(External)' means another
-    !! program driving AquaCrop supplies them, day by day: no file of that variable is written,
-    !! opened or read, and the driver's values are the ones the run uses.
+    !! .true. when the climate files are read. 
+    !! .false. for '(None)' or '(External)'.
+    !! '(None)' means the program parameters supply them instead. 
+    !! '(External)' means an external program supplies them, 
+    !! day by day: no file of that variable is written, opened or read.
     character(len=*), intent(in) :: FileName
 
     ClimateComesFromFile = (FileName /= '(None)') .and. (FileName /= '(External)')
@@ -5214,12 +5217,9 @@ end subroutine ResetSWCToFC
 
 
 logical function GDDFieldIsExternal(TheLine)
-    !! .true. when this line of a crop file carries the word 'External' where a
-    !! growing-degree-day parameter would be.
-    !!
-    !! A crop file written for an externally driven run says so field by field: the program
-    !! driving AquaCrop sets those parameters itself, through the setters, once the file is
-    !! read. Both spellings the rest of AquaCrop uses for an external source are accepted.
+    !! Checks if the crop file line contains the word 'External' (or '(External)').
+    !! .true. means that GDD parameters are provided by an external program, not a crop file.
+
     character(len=*), intent(in) :: TheLine
 
     character(len=32) :: TheField
@@ -5232,11 +5232,10 @@ end function GDDFieldIsExternal
 
 
 logical function ReadCropGDDInt(fhandle, TheValue)
-    !! Reads one whole-number growing-degree-day parameter from an open crop file, and
-    !! reports whether the field was left to a driver instead (see GDDFieldIsExternal), in
-    !! which case TheValue is not touched and the crop keeps the parameter it already has.
+    !! Reads the crop file line and checks if an integer is provided or if the word 'External' is used instead.
+    !! Uses GDDFieldIsExternal to determine if the field is external. If it is not external, it reads the integer value into TheValue.
     !!
-    !! A field that is neither a number nor the sentinel fails the read, as it always has.
+    !! Safety: a field that is neither a number nor 'External' fails the read, as in v7.3.
     integer, intent(in) :: fhandle
     integer(int32), intent(inout) :: TheValue
 
@@ -5251,7 +5250,7 @@ end function ReadCropGDDInt
 
 
 logical function ReadCropGDDReal(fhandle, TheValue)
-    !! As ReadCropGDDInt, for a growing-degree-day rate.
+    !! As ReadCropGDDInt but for a real. Used for a GDD rate (CGC).
     integer, intent(in) :: fhandle
     real(dp), intent(inout) :: TheValue
 
@@ -5340,6 +5339,8 @@ subroutine LoadCrop(FullName)
 
     ! required growing degree days to complete the crop cycle
     ! (is identical as to maturity)
+    ! Checks if external is provided. If .false., use the crop file value.
+    ! If .true., the value is provided by an external program and the crop file value is ignored.
     if (.not. ReadCropGDDInt(fhandle, TempInt)) then
         call SetCrop_GDDaysToHarvest(TempInt)
     end if
@@ -5597,8 +5598,9 @@ subroutine LoadCrop(FullName)
     end if
 
     ! growing degree days
-    ! Any of these may read 'External' instead of a number: the program driving AquaCrop
-    ! supplies that parameter itself, and the crop file leaves it alone.
+    ! Any of these may driven externally. If not, crop file is used.
+    ! If yes, the crop file value is ignored and the external program has already
+    ! set the value.
     if (.not. ReadCropGDDInt(fhandle, TempInt)) then
         call SetCrop_GDDaysToGermination(TempInt)
     end if
@@ -17556,12 +17558,11 @@ end subroutine SetManagement_Brel
 
 
 logical function ManagementBrelSupplied()
-    !! .true. when a driver has handed this run a relative biomass to work from, instead of
-    !! the degree of soil fertility stress a management file carries.
+    !! EXTERNAL ONLY
+    !! .true. when an external program provides the Brel.
     !!
-    !! Only an externally driven run can have one: the value reaches AquaCrop through
-    !! SetManagement_Brel alone, and it is honoured only where the driver is also supplying
-    !! the weather, so a standalone run cannot reach any of this.
+    !! Only an externally driven run can provide this (ExternalRun).
+    !! So never set to .true. in the standalone.
 
     ManagementBrelSupplied = ExternalRun .and. (Management_Brel >= 0._dp)
 end function ManagementBrelSupplied
@@ -17573,14 +17574,8 @@ subroutine SetExternalRun(ExternalRun_in)
 
     ExternalRun = ExternalRun_in
     if (ExternalRun) then
-        ! A run driven from outside writes no output of its own: the driver reads the state
-        ! it wants through this module. The output selections go off here, and their setters
-        ! keep them off, so a driver that asks for output again - LIS restores its selections
-        ! at every time step - writes nothing to files that were never opened.
-        !
-        ! It does not switch back: a project with one externally driven run writes no output
-        ! for any of its runs, which is what a driver wants and what no project file can ask
-        ! for by accident.
+        ! Default settings for output writing for External (no output needed).
+        ! Global variables are extracted in the external program.
         OutDaily = .false.
         Out8Irri = .false.
         Part1Mult = .false.

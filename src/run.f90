@@ -3791,8 +3791,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
     real(dp) :: Coeffb0Salt_temp
     real(dp) :: Coeffb1Salt_temp
     real(dp) :: Coeffb2Salt_temp
-    real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
-    real(dp) :: BM80, BM90, BM100
+    real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90, X100
     real(dp) :: BrelPercent
     integer(int32) :: FertStressFromBrel
     integer(int8) :: BioTop, BioLow
@@ -3832,7 +3831,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
                                   GetCrop_StressResponse(),GetCrop_subkind(), &
                                   GetCrop_ModeCycle(), Coeffb0_temp, Coeffb1_temp, &
                                   Coeffb2_temp, X10, X20, X30, X40, X50, X60, X70, &
-                                  BM80, BM90, BM100, &
+                                  X80, X90, X100, &
                                   GetCrop_GDDaysToFlowering(), GetCrop_GDDLengthFlowering(), &
                                   GetCrop_GDDaysToHIo(), GetCrop_Planting(), GetCrop_DaysToHIo())
         call SetCoeffb0(Coeffb0_temp)
@@ -3844,15 +3843,14 @@ subroutine RelationshipsForFertilityAndSaltStress()
         call SetCoeffb2(real(undef_int, kind=dp))
     end if
 
-    ! 1.a bis Soil fertility stress read off the curve, when a driver gives the Brel
-    !
-    ! A driver that gives a Brel hands that over instead of a degree of soil
-    ! fertility stress, and the stress that goes with it is what the curve fitted just above
-    ! answers - it is read off there rather than assumed. The fraction of potential biomass the
-    ! run then works with is the value itself: no need to search it back out of a stress that
-    ! has been rounded to whole percent.
+    ! 1.b - 1 From Brel to SFS
+    ! EXTERNAL ONLY
+    ! Soil fertility stress read off the curve, when an external program provides Brel
+    ! An external program that gives a Brel instead of a degree of soil fertility stress. The degree of SFS 
+    ! is then derived from the curve directly. 
     if (ManagementBrelSupplied()) then
         if (.not. GetCrop_StressResponse_Calibrated()) then
+            ! Safety for LIS users to avoid running a crop not calibrated for SF response. 
             call fatal(trim(GetCropFile()) // ': a relative biomass was supplied for this ' &
                        // 'run, but the soil fertility response of this crop is not ' &
                        // 'calibrated, so there is no curve to read the stress off.')
@@ -3868,7 +3866,8 @@ subroutine RelationshipsForFertilityAndSaltStress()
         call SetManagement_FertilityStress(FertStressFromBrel)
         call SetFracBiomassPotSF(BrelPercent/100._dp)
 
-    ! 1.b Soil fertility : FracBiomassPotSF
+    ! 1.b - 2 From SFS to Brel
+    ! Soil fertility : FracBiomassPotSF
     elseif ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
         BioLow = 100_int8
@@ -5300,6 +5299,7 @@ subroutine InitializeSimulationRunPart2()
     call SetScorAT2(0._dp)
 
     if (GetOutDaily() .or. GetExternalRun()) then
+        ! or ExternalRun() to get the stages as output for the external program.
         call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
     end if
 
@@ -5890,12 +5890,11 @@ subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
     integer(intenum), intent(in) :: TheProjectType
 
     call SetTheProjectFile(trim(TheProjectFileStr))
-    ! A run driven by another program writes no output of its own: the driver reads the
+    ! A run driven by another program writes no output of its own: the external program reads the
     ! state it wants through this module. Its output selections are already off
-    ! (SetExternalRun), so only the seasonal file, which hangs on no selection, is left to
-    ! skip here.
+    ! (SetExternalRun), so only the seasonal file (which is provided by default) must be skipped here.
     if (.not. GetExternalRun()) then
-        call OpenOutputRun(TheProjectType) ! open seasonal results .out
+        call OpenOutputRun(TheProjectType) ! open seasonal results .OUT
     end if
     if (GetOutDaily()) then
         call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT
@@ -5912,7 +5911,7 @@ end subroutine InitializeSimulation
 subroutine FinalizeSimulation()
 
     if (.not. GetExternalRun()) then
-        call fRun_close() ! Close Run.out
+        call fRun_close() ! Close Run.OUT
     end if
     if (GetOutDaily()) then
         call fDaily_close()  ! Close Daily.OUT
@@ -6561,15 +6560,19 @@ subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
     !! Calls InitializeSimulationRunPart1
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
+
+    ! From 7.4 (increased compatibility with LIS): arguments are added for variable CCx in 
+    ! ensemble runs. Inert in the standalone.
     logical, intent(in), optional :: variable_CCx
-        !! spread CCx over the members of an ensemble (NL and LB, July 2025). Only a driver
-        !! running an ensemble passes this; without it the crop file's CCx is used as it is.
+        !! spread CCx over the members of an ensemble (NL and LB, July 2025). 
+        !! Without it the crop file CCx is used.
     real(dp), intent(in), optional :: CCx_config
-        !! accepted but not used: the spread is centred on the crop file's CCx
+        !! the spread is centred on the crop file's CCx. In the current implementation it is not used, 
+        !! but it is kept for compatibility with LIS. Might be cleaned up when coupling v7.4 to LIS.
     real(dp), intent(in), optional :: CCx_range
         !! half-width of the spread, in the same units as CCx
     integer(int32), intent(in), optional :: ens_n_local
-        !! number of this ensemble member
+        !! ensemble member number [1 ... nensem].
     integer(int32), intent(in), optional :: nensem
         !! number of members. The last member keeps the crop file's CCx, as a control.
 
@@ -6605,6 +6608,7 @@ subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
 
 
     subroutine PerturbCCxForEnsembleMember()
+        !! NL and LB, July 2025: Perturb CCx for ensemble member.
         !! Gives this ensemble member its own CCx, evenly spread over CCx_range either side
         !! of the crop file's CCx, and recalculates GDDCGC and GDDCDC so that the canopy
         !! still reaches its maximum at the same growing degree-day and still ends the season
@@ -6621,6 +6625,12 @@ subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
         if (GetCrop_ModeCycle() /= modeCycle_GDDays) then
             call fatal('CCx can only be spread over an ensemble for a crop that develops ' &
                        // 'by growing degree-days.')
+        end if
+        if ((.not. GetCrop_DeterminancyLinked()) &
+            .or. ((GetCrop_subkind() /= subkind_Grain) &
+                  .and. (GetCrop_subkind() /= subkind_Tuber))) then
+            call fatal('CCx can only be perturbed for a determinate crop ' &
+                       // 'that flowers (grain or tuber).')
         end if
         if (nensem <= 2) then
             return
@@ -6819,9 +6829,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     real(dp) :: RootingDepth_temp
     logical :: WaterTableInProfile_temp, NoMoreCrop_temp
 
-    ! The three stress coefficients a driver asks for by name start the day at 1, no stress:
-    ! each is written only where the crop state that computes it is reached, so without this
-    ! a day that never reaches one would report the last day that did.
+    ! Reset the stress factors each day, to be calculated in the daily loop.
     call SetKsPolCold(1._dp)
     call SetKsPolHeat(1._dp)
     call SetKsAeration(1._dp)
@@ -7368,10 +7376,8 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     end if
 
     ! 14.d Print ---------------------------------------
-    ! An external run takes the diagnostics path instead: it writes nothing, because the
-    ! output selections are held off for it (SetExternalRun), but what the daily output
-    ! computes on the way is still needed. The period totals CheckForPrint keeps are output
-    ! only, so they are not missed.
+    ! An external run takes the diagnostics path instead, to make sure values are computed
+    ! and can be extracted in the external program. But it does not write any output file.
     if (GetExternalRun()) then
         call UpdateDailyDiagnostics()
     else
@@ -7429,8 +7435,8 @@ subroutine ReadClimateNextDay()
 
     ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
-        ! An externally driven run reads none of these: the driver sets ETo, rain and the
-        ! temperatures itself, before each time step, and no .SIM file of them was written.
+        ! An externally driven run reads none of these: ETo, rain and T are set before each time step, 
+        ! and no .SIM file are written.
         if (ClimateComesFromFile(GetEToFile())) then
             TempString = fEToSIM_read()
             read(TempString,*) ETo_tmp
@@ -7498,9 +7504,8 @@ end subroutine FinalizeRun1
 
 
 subroutine UpdateRootZoneWCToMaxDepth()
-    !! Root zone water over the profile's maximum rooting depth, as the daily output
-    !! reports it. Kept apart from the writing so a run that writes nothing - one driven
-    !! externally - still has the value.
+    !! Root zone water over the profile maximum rooting depth (WCx.xx as in daily standalone output).
+    !! Kept apart from the writing so an external run still computes the value.
 
     logical :: SWCtopSoilConsidered_temp
 
@@ -7523,8 +7528,7 @@ end subroutine UpdateRootZoneWCToMaxDepth
 
 
 subroutine UpdateRootZoneWCToRootingDepth()
-    !! Root zone water over today's rooting depth. This is the state the rest of the model
-    !! and an external driver read, so it is the last of the two updates, as before.
+    !! Same as UpdateRootZoneWCToMaxDepth, but for the actual rooting depth (Wr as in daily standalone output).
 
     logical :: SWCtopSoilConsidered_temp
 
@@ -7545,9 +7549,7 @@ end subroutine UpdateRootZoneWCToRootingDepth
 
 
 subroutine UpdateDailyDiagnostics()
-    !! What the daily output computes on its way to the file: the root zone water content.
-    !! A run driven externally writes no file, but its driver reads those values, so they are
-    !! computed here instead - at the same point in the day, in the same order.
+    !! Computes daily diagnostic for an external run.
 
     call UpdateRootZoneWCToMaxDepth()
     call UpdateRootZoneWCToRootingDepth()

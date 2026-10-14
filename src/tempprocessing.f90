@@ -1873,10 +1873,8 @@ subroutine LoadSimulationRunProject(NrRun)
     if (GetClimateFile() /= '(External)') then
         call SetClimData()
     end if
-    ! Another program (e.g. LIS) is driving this run and supplying its weather. Derived here, where
-    ! the project's climate is settled, rather than asked of the driver: everything that
-    ! depends on it - above all, that such a run writes no output of its own - then follows
-    ! from the project itself.
+    ! Checking if an external program is driving this run and setting the meteo forcings. 
+    ! ExternalRun true/false derived here, where the project climate is set.
     call SetExternalRun(GetTemperatureFile() == '(External)')
     call AdjustOnsetSearchPeriod() ! Set initial StartSearch and StopSearchDayNr
 
@@ -1917,15 +1915,12 @@ subroutine LoadSimulationRunProject(NrRun)
         end if
     end if
 
-    ! A perennial cannot be driven from outside. Its season is bounded in days by the
-    ! project's last day, and the degree-days it banks over that season are then walked
-    ! over the temperature record of the whole run (SumCalendarDays) - days a driver
-    ! coupled to AquaCrop has not simulated yet. Stop here and say so, rather than walk
-    ! over temperatures that nobody has supplied.
+    ! A perennial CANNOT BE RUN EXTERNALLY, because its season needs 
+    ! the temperatures of the whole simulation period in advance.
     if (GetExternalRun() .and. (GetCrop_subkind() == subkind_Forage)) then
         call fatal(trim(GetCropFile()) // ': a perennial crop cannot be run from an ' &
                    // 'external driver, because its season needs the temperatures of ' &
-                   // 'the whole run in advance.')
+                   // 'the whole simulation period in advance.')
     end if
 
     ! Adjust crop parameters of Perennials

@@ -662,9 +662,9 @@ subroutine DetermineBiomassAndYield(dayi, ETo, TminOnDay, TmaxOnDay, CO2i, &
     real(dp), parameter :: TempRange = 5._dp
     real(dp), parameter :: k = 2._dp
     integer(int32), parameter :: SFadj_max = 99
-        !! the highest soil fertility stress the daily adjustment will move to. Not 100: at
-        !! 100 % the canopy is reduced away altogether, which is a state a crop growing today
-        !! cannot be adjusted into.
+        !! the highest soil fertility stress the daily adjustment can move to. Not 100: at
+        !! 100 % Ks is 0, so CCx, CGC and WP are all reduced to zero. The canopy a growing crop
+        !! already has then has no curve to follow and this would break the code.
 
     real(dp) :: RatioBM, RBM, HItimesTotal, pLeafULAct, pLeafLLAct, &
                 pStomatULAct, pLL, Ksleaf, Ksstomatal, KsPolWS, KsPolCs, &

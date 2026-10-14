@@ -88,8 +88,10 @@ implicit none
 
 integer(int8), parameter :: NrStressLevels = 11
     !! soil fertility stress levels the biomass relationship is calibrated on: 0, 10, ... 100 %.
-    !! The stress a run is given is then read off that curve, so the levels have to span the
-    !! range a run can ask for - the salinity relationship next door spans 0 to 90 % the same way.
+    !! Extended by 3 points compared to v7.3 (previously: 20 to 100% of Brel = 8 points).
+    !! Note that adding points to the curve can slightly change output values. Because
+    !! the curve is fitted to the points, and the fit can be slightly different with more points.
+    !! Same for salinity for consistency. 
 
 
 contains
