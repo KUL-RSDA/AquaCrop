@@ -6570,7 +6570,9 @@ subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
         !! the spread is centred on the crop file's CCx. In the current implementation it is not used, 
         !! but it is kept for compatibility with LIS. Might be cleaned up when coupling v7.4 to LIS.
     real(sp), intent(in), optional :: CCx_range
-        !! half-width of the spread, in the same units as CCx
+        !! largest deviation from CCx given to a member, in the same units as CCx. Members
+        !! are spread evenly over CCx - CCx_range ... CCx + CCx_range, or over a smaller
+        !! deviation if that would leave CCo ... 1.
     integer(int32), intent(in), optional :: ens_n_local
         !! ensemble member number [1 ... nensem].
     integer(int32), intent(in), optional :: nensem
@@ -6609,10 +6611,10 @@ subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
 
     subroutine PerturbCCxForEnsembleMember()
         !! NL and LB, July 2025: Perturb CCx for ensemble member.
-        !! Gives this ensemble member its own CCx, evenly spread over CCx_range either side
-        !! of the crop file's CCx, and recalculates GDDCGC and GDDCDC so that the canopy
-        !! still reaches its maximum at the same growing degree-day and still ends the season
-        !! at the same cover. The last member keeps the crop file's CCx.
+        !! Gives this ensemble member its own CCx, evenly spread with deviations of at most
+        !! CCx_range from the crop file's CCx, and recalculates GDDCGC and GDDCDC so that
+        !! the canopy still reaches its maximum at the same growing degree-day and still
+        !! ends the season at the same cover. The last member keeps the crop file's CCx.
         !!
         !! Growing degree-day mode only, and written for a determinate crop: the canopy is
         !! taken to stop expanding at flowering plus half the flowering period.
