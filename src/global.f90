@@ -1100,6 +1100,27 @@ real(sp), dimension(1:365) :: TmaxTnxReference365DaysRun, TminTnxReference365Day
 
 logical :: EvapoEntireSoilSurface ! True of soil wetted by RAIN (false = IRRIGATION and fw < 1)
 logical :: PreDay, OutDaily, Out8Irri
+! ExternalRun is true for LIS run. It is based on the climate coming
+! from an external source (LIS) and not from AquaCrop's own climate files.
+logical :: ExternalRun = .false.
+real(dp) :: Management_Brel = undef_double
+    !! EXTERNAL ONLY
+    !! AquaCrop can now take as input directly Brel (Set in LIS) instead of the degree
+    !! of soil fertility stress (SFS; defined in the management file).
+    !! Brel = relative biomass [0-1]. This is linked to a degree of SFS via
+    !! the stress response function defined by the shape factors in the crop files.
+    !! By default, Brel is set to undef_double, which means that the degree of SFS is used to compute Brel.
+
+! EXTERNAL ONLY
+! For the output of ALL daily stress coefficients. 
+! They are reset to 1 (no stress) at the start of every time step.
+! Other stresses (e.g. StSto, StLeaf, StSen) are already provided in standard standalone output.
+real(dp) :: KsPolCold = 1._dp
+    !! Ks for cold stress on pollination
+real(dp) :: KsPolHeat = 1._dp
+    !! Ks for heat stress on pollination
+real(dp) :: KsAeration = 1._dp
+    !! reduction of potential transpiration by anaerobic conditions in the root zone
 logical :: Out1Wabal
 logical :: Out2Crop
 logical :: Out3Prof
@@ -5083,6 +5104,18 @@ subroutine AdjustSimPeriod()
 end subroutine AdjustSimPeriod
 
 
+logical function ClimateComesFromFile(FileName)
+    !! .true. when the climate files are read. 
+    !! .false. for '(None)' or '(External)'.
+    !! '(None)' means the program parameters supply them instead. 
+    !! '(External)' means an external program supplies them, 
+    !! day by day: no file of that variable is written, opened or read.
+    character(len=*), intent(in) :: FileName
+
+    ClimateComesFromFile = (FileName /= '(None)') .and. (FileName /= '(External)')
+end function ClimateComesFromFile
+
+
 subroutine CheckClimateRecordsCoverSimPeriod()
     !! Stops the program when the climate files do not cover the entire 
     !! simulation period.
@@ -5183,6 +5216,54 @@ subroutine ResetSWCToFC()
 end subroutine ResetSWCToFC
 
 
+logical function GDDFieldIsExternal(TheLine)
+    !! Checks if the crop file line contains the word 'External' (or '(External)').
+    !! .true. means that GDD parameters are provided by an external program, not a crop file.
+
+    character(len=*), intent(in) :: TheLine
+
+    character(len=32) :: TheField
+    integer :: rc
+
+    read(TheLine, *, iostat=rc) TheField
+    GDDFieldIsExternal = (rc == 0) .and. ((trim(TheField) == 'External') &
+                                     .or. (trim(TheField) == '(External)'))
+end function GDDFieldIsExternal
+
+
+logical function ReadCropGDDInt(fhandle, TheValue)
+    !! Reads the crop file line and checks if an integer is provided or if the word 'External' is used instead.
+    !! Uses GDDFieldIsExternal to determine if the field is external. If it is not external, it reads the integer value into TheValue.
+    !!
+    !! Safety: a field that is neither a number nor 'External' fails the read, as in v7.3.
+    integer, intent(in) :: fhandle
+    integer(int32), intent(inout) :: TheValue
+
+    character(len=255) :: TheLine
+
+    read(fhandle, '(A)') TheLine
+    ReadCropGDDInt = GDDFieldIsExternal(TheLine)
+    if (.not. ReadCropGDDInt) then
+        read(TheLine, *) TheValue
+    end if
+end function ReadCropGDDInt
+
+
+logical function ReadCropGDDReal(fhandle, TheValue)
+    !! As ReadCropGDDInt but for a real. Used for a GDD rate (CGC).
+    integer, intent(in) :: fhandle
+    real(dp), intent(inout) :: TheValue
+
+    character(len=255) :: TheLine
+
+    read(fhandle, '(A)') TheLine
+    ReadCropGDDReal = GDDFieldIsExternal(TheLine)
+    if (.not. ReadCropGDDReal) then
+        read(TheLine, *) TheValue
+    end if
+end function ReadCropGDDReal
+
+
 subroutine LoadCrop(FullName)
     character(len=*), intent(in) :: FullName
 
@@ -5258,8 +5339,11 @@ subroutine LoadCrop(FullName)
 
     ! required growing degree days to complete the crop cycle
     ! (is identical as to maturity)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToHarvest(TempInt)
+    ! Checks if external is provided. If .false., use the crop file value.
+    ! If .true., the value is provided by an external program and the crop file value is ignored.
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToHarvest(TempInt)
+    end if
 
     ! water stress
     read(fhandle, *) TempDouble
@@ -5514,24 +5598,36 @@ subroutine LoadCrop(FullName)
     end if
 
     ! growing degree days
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToGermination(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToMaxRooting(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToSenescence(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToHarvest(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToFlowering(TempInt)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDLengthFlowering(TempInt)
-    read(fhandle, *) TempDouble
-    call SetCrop_GDDCGC(TempDouble)
-    read(fhandle, *) TempDouble
-    call SetCrop_GDDCDC(TempDouble)
-    read(fhandle, *) TempInt
-    call SetCrop_GDDaysToHIo(TempInt)
+    ! Any of these may driven externally. If not, crop file is used.
+    ! If yes, the crop file value is ignored and the external program has already
+    ! set the value.
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToGermination(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToMaxRooting(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToSenescence(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToHarvest(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToFlowering(TempInt)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDLengthFlowering(TempInt)
+    end if
+    if (.not. ReadCropGDDReal(fhandle, TempDouble)) then
+        call SetCrop_GDDCGC(TempDouble)
+    end if
+    if (.not. ReadCropGDDReal(fhandle, TempDouble)) then
+        call SetCrop_GDDCDC(TempDouble)
+    end if
+    if (.not. ReadCropGDDInt(fhandle, TempInt)) then
+        call SetCrop_GDDaysToHIo(TempInt)
+    end if
 
     ! -----  UPDATE yield response to water for Version 3.1
     ! leafy vegetable crop has an Harvest Index which builds up
@@ -16570,10 +16666,15 @@ end function GetOutputAggregate
 
 
 subroutine SetOutputAggregate(OutputAggregate_in)
-    !! Setter for the "OutputAggregate" global variable.
+    !! Setter for the "OutputAggregate" global variable. An externally driven run keeps it
+    !! at 0, no aggregation (see SetExternalRun).
     integer(int8), intent(in) :: OutputAggregate_in
 
-    OutputAggregate = OutputAggregate_in
+    if (ExternalRun) then
+        OutputAggregate = 0_int8
+    else
+        OutputAggregate = OutputAggregate_in
+    end if
 end subroutine SetOutputAggregate
 
 
@@ -17388,6 +17489,102 @@ subroutine SetSurf0(Surf0_in)
 end subroutine SetSurf0
 
 
+logical function GetExternalRun()
+    !! Getter for the ExternalRun global variable
+
+    GetExternalRun = ExternalRun
+end function GetExternalRun
+
+
+real(dp) function GetKsPolCold()
+    !! Getter for the KsPolCold global variable
+
+    GetKsPolCold = KsPolCold
+end function GetKsPolCold
+
+
+subroutine SetKsPolCold(Ksi)
+    !! Setter for the KsPolCold global variable
+    real(dp), intent(in) :: Ksi
+
+    KsPolCold = Ksi
+end subroutine SetKsPolCold
+
+
+real(dp) function GetKsPolHeat()
+    !! Getter for the KsPolHeat global variable
+
+    GetKsPolHeat = KsPolHeat
+end function GetKsPolHeat
+
+
+subroutine SetKsPolHeat(Ksi)
+    !! Setter for the KsPolHeat global variable
+    real(dp), intent(in) :: Ksi
+
+    KsPolHeat = Ksi
+end subroutine SetKsPolHeat
+
+
+real(dp) function GetKsAeration()
+    !! Getter for the KsAeration global variable
+
+    GetKsAeration = KsAeration
+end function GetKsAeration
+
+
+subroutine SetKsAeration(Ksi)
+    !! Setter for the KsAeration global variable
+    real(dp), intent(in) :: Ksi
+
+    KsAeration = Ksi
+end subroutine SetKsAeration
+
+
+real(dp) function GetManagement_Brel()
+    !! Getter for the Management_Brel global variable
+
+    GetManagement_Brel = Management_Brel
+end function GetManagement_Brel
+
+
+subroutine SetManagement_Brel(Brel)
+    !! Setter for the Management_Brel global variable, for a driver to call before the run
+    !! is initialised. A fraction, not a percentage.
+    real(dp), intent(in) :: Brel
+
+    Management_Brel = Brel
+end subroutine SetManagement_Brel
+
+
+logical function ManagementBrelSupplied()
+    !! EXTERNAL ONLY
+    !! .true. when an external program provides the Brel.
+    !!
+    !! Only an externally driven run can provide this (ExternalRun).
+    !! So never set to .true. in the standalone.
+
+    ManagementBrelSupplied = ExternalRun .and. (Management_Brel >= 0._dp)
+end function ManagementBrelSupplied
+
+
+subroutine SetExternalRun(ExternalRun_in)
+    !! Setter for the ExternalRun global variable
+    logical, intent(in) :: ExternalRun_in
+
+    ExternalRun = ExternalRun_in
+    if (ExternalRun) then
+        ! Default settings for output writing for External (no output needed).
+        ! Global variables are extracted in the external program.
+        OutDaily = .false.
+        Out8Irri = .false.
+        Part1Mult = .false.
+        Part2Eval = .false.
+        OutputAggregate = 0_int8
+    end if
+end subroutine SetExternalRun
+
+
 logical function GetOutDaily()
     !! Getter for the OutDaily global variable
 
@@ -17396,10 +17593,11 @@ end function GetOutDaily
 
 
 subroutine SetOutDaily(OutDaily_in)
-    !! Setter for the OutDaily global variable
+    !! Setter for the OutDaily global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: OutDaily_in
 
-    OutDaily = OutDaily_in
+    OutDaily = OutDaily_in .and. (.not. ExternalRun)
 end subroutine SetOutDaily
 
 
@@ -17411,10 +17609,11 @@ end function GetOut8Irri
 
 
 subroutine SetOut8Irri(Out8Irri_in)
-    !! Setter for the Out8Irri global variable
+    !! Setter for the Out8Irri global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: Out8Irri_in
 
-    Out8Irri = Out8Irri_in
+    Out8Irri = Out8Irri_in .and. (.not. ExternalRun)
 end subroutine SetOut8Irri
 
 
@@ -17458,10 +17657,11 @@ end function GetPart1Mult
 
 
 subroutine SetPart1Mult(Part1Mult_in)
-    !! Setter for the Part1Mult global variable
+    !! Setter for the Part1Mult global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: Part1Mult_in
 
-    Part1Mult = Part1Mult_in
+    Part1Mult = Part1Mult_in .and. (.not. ExternalRun)
 end subroutine SetPart1Mult
 
 
@@ -17473,10 +17673,11 @@ end function GetPart2Eval
 
 
 subroutine SetPart2Eval(Part2Eval_in)
-    !! Setter for the Part2Eval global variable
+    !! Setter for the Part2Eval global variable. An externally driven run keeps it off
+    !! (see SetExternalRun).
     logical, intent(in) :: Part2Eval_in
 
-    Part2Eval = Part2Eval_in
+    Part2Eval = Part2Eval_in .and. (.not. ExternalRun)
 end subroutine SetPart2Eval
 
 

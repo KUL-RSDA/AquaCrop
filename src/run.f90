@@ -239,6 +239,9 @@ use ac_global, only:    AdjustSizeCompartments, &
                         SetCrop_DaysToHarvest, &
                         SetCrop_GDDaysToSenescence, &
                         SetCrop_GDDaysToHarvest, &
+                        SetCrop_CCx, &
+                        SetCrop_GDDCGC, &
+                        SetCrop_GDDCDC, &
                         SetSimulation_ToDayNr, & 
                         SetSimulParam_Tmin, &
                         SetSimulParam_Tmax, &
@@ -252,6 +255,13 @@ use ac_global, only:    AdjustSizeCompartments, &
                         IrriMode_Inet, &
                         modeCycle_GDDays, &
                         GetOutDaily, &
+                        GetExternalRun, &
+                        ClimateComesFromFile, &
+                        GetManagement_Brel, &
+                        ManagementBrelSupplied, &
+                        SetKsPolCold, &
+                        SetKsPolHeat, &
+                        SetKsAeration, &
                         plant_Seed, &
                         subkind_Forage, &
                         GetCompartment, &
@@ -298,6 +308,7 @@ use ac_global, only:    AdjustSizeCompartments, &
                         GetCCiPrev, &
                         GetCrop_GDDaysToMaxRooting, &
                         GetSoil_RootMax, &
+                        GetCropFile, &
                         GetCropFileFull, &
                         GetCrop_Assimilates_Mobilized, &
                         GetSimulation_Storage_Season, &
@@ -3780,7 +3791,9 @@ subroutine RelationshipsForFertilityAndSaltStress()
     real(dp) :: Coeffb0Salt_temp
     real(dp) :: Coeffb1Salt_temp
     real(dp) :: Coeffb2Salt_temp
-    real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90
+    real(dp) :: X10, X20, X30, X40, X50, X60, X70, X80, X90, X100
+    real(dp) :: BrelPercent
+    integer(int32) :: FertStressFromBrel
     integer(int8) :: BioTop, BioLow
     real(dp) :: StrTop, StrLow
 
@@ -3818,6 +3831,7 @@ subroutine RelationshipsForFertilityAndSaltStress()
                                   GetCrop_StressResponse(),GetCrop_subkind(), &
                                   GetCrop_ModeCycle(), Coeffb0_temp, Coeffb1_temp, &
                                   Coeffb2_temp, X10, X20, X30, X40, X50, X60, X70, &
+                                  X80, X90, X100, &
                                   GetCrop_GDDaysToFlowering(), GetCrop_GDDLengthFlowering(), &
                                   GetCrop_GDDaysToHIo(), GetCrop_Planting(), GetCrop_DaysToHIo())
         call SetCoeffb0(Coeffb0_temp)
@@ -3829,8 +3843,32 @@ subroutine RelationshipsForFertilityAndSaltStress()
         call SetCoeffb2(real(undef_int, kind=dp))
     end if
 
-    ! 1.b Soil fertility : FracBiomassPotSF
-    if ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
+    ! 1.b - 1 From Brel to SFS
+    ! EXTERNAL ONLY
+    ! Soil fertility stress read off the curve, when an external program provides Brel
+    ! An external program that gives a Brel instead of a degree of soil fertility stress. The degree of SFS 
+    ! is then derived from the curve directly. 
+    if (ManagementBrelSupplied()) then
+        if (.not. GetCrop_StressResponse_Calibrated()) then
+            ! Safety for LIS users to avoid running a crop not calibrated for SF response. 
+            call fatal(trim(GetCropFile()) // ': a relative biomass was supplied for this ' &
+                       // 'run, but the soil fertility response of this crop is not ' &
+                       // 'calibrated, so there is no curve to read the stress off.')
+        end if
+        BrelPercent = 100._dp * min(max(GetManagement_Brel(), 0._dp), 1._dp)
+        FertStressFromBrel = roundc(GetCoeffb0() + GetCoeffb1()*BrelPercent &
+                              + GetCoeffb2()*BrelPercent*BrelPercent, mold=1_int32)
+        if (FertStressFromBrel < 0) then
+            FertStressFromBrel = 0
+        elseif (FertStressFromBrel > 100) then
+            FertStressFromBrel = 100
+        end if
+        call SetManagement_FertilityStress(FertStressFromBrel)
+        call SetFracBiomassPotSF(BrelPercent/100._dp)
+
+    ! 1.b - 2 From SFS to Brel
+    ! Soil fertility : FracBiomassPotSF
+    elseif ((abs(GetManagement_FertilityStress()) > epsilon(0._dp)) .and. &
                                      GetCrop_StressResponse_Calibrated()) then
         BioLow = 100_int8
         StrLow = 0._dp
@@ -4264,13 +4302,13 @@ end subroutine FinalizeRun2
 
 
 subroutine CloseClimateFiles()
-    if (GetEToFile() /= '(None)') then
+    if (ClimateComesFromFile(GetEToFile())) then
         call fEToSIM_close()
     end if
-    if (GetRainFile() /= '(None)') then
+    if (ClimateComesFromFile(GetRainFile())) then
         call fRainSIM_close()
     end if
-    if (GetTemperatureFile() /= '(None)') then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         call fTempSIM_close()
     end if
 end subroutine CloseClimateFiles
@@ -4690,8 +4728,7 @@ subroutine InitializeSimulationRunPart1()
     call SetSimulation_DelayedDays(0)
 
     ! 3. create temperature file covering crop cycle
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         if (GetSimulation_ToDayNr() < GetCrop_DayN()) then
             call TemperatureFileCoveringCropPeriod(GetCrop_Day1(), &
                        GetSimulation_TodayNr())
@@ -5261,7 +5298,8 @@ subroutine InitializeSimulationRunPart2()
     call SetScorAT1(0._dp)
     call SetScorAT2(0._dp)
 
-    if (GetOutDaily()) then
+    if (GetOutDaily() .or. GetExternalRun()) then
+        ! or ExternalRun() to get the stages as output for the external program.
         call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
     end if
 
@@ -5453,7 +5491,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     call CheckClimateRecordsCoverSimPeriod
 
     ! 1. ETo file
-    if (GetEToFile() /= '(None)') then
+    if (ClimateComesFromFile(GetEToFile())) then
         totalname = GetEToFilefull()
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
@@ -5541,7 +5579,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     end if
 
     ! 2. Rain File
-    if (GetRainFile() /= '(None)') then
+    if (ClimateComesFromFile(GetRainFile())) then
         totalname = GetRainFilefull()
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
@@ -5629,8 +5667,7 @@ subroutine CreateDailyClimFiles(FromSimDay, ToSimDay)
     end if
 
     ! 3. Temperature file
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         totalname = GetTemperatureFilefull()
         if (FileExists(totalname)) then
             ! open file and find first day of simulation period
@@ -5783,7 +5820,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
     character(len=1025) :: TempString
 
     ! ETo file
-    if (GetEToFile() /= '(None)') then
+    if (ClimateComesFromFile(GetEToFile())) then
         totalname = trim(GetPathNameSimul())//'EToData.SIM'
         call fEToSIM_open(totalname, 'r')
         if (FirstDayNr == GetSimulation_FromDayNr()) then
@@ -5802,7 +5839,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         end if
     end if
     ! Rain file
-    if (GetRainFile() /= '(None)') then
+    if (ClimateComesFromFile(GetRainFile())) then
         totalname = trim(GetPathNameSimul())//'RainData.SIM'
         call fRainSIM_open(totalname, 'r')
         if (FirstDayNr == GetSimulation_FromDayNr()) then
@@ -5821,8 +5858,7 @@ subroutine OpenClimFilesAndGetDataFirstDay(FirstDayNr)
         end if
     end if
     ! Temperature file
-    if ((GetTemperatureFile() /= '(None)') .and.&
-        (GetTemperatureFile() /= '(External)')) then
+    if (ClimateComesFromFile(GetTemperatureFile())) then
         totalname = trim(GetPathNameSimul())//'TempData.SIM'
         call fTempSIM_open(totalname, 'r')
         if (FirstDayNr == GetSimulation_FromDayNr()) then
@@ -5854,7 +5890,12 @@ subroutine InitializeSimulation(TheProjectFileStr, TheProjectType)
     integer(intenum), intent(in) :: TheProjectType
 
     call SetTheProjectFile(trim(TheProjectFileStr))
-    call OpenOutputRun(TheProjectType) ! open seasonal results .out
+    ! A run driven by another program writes no output of its own: the external program reads the
+    ! state it wants through this module. Its output selections are already off
+    ! (SetExternalRun), so only the seasonal file (which is provided by default) must be skipped here.
+    if (.not. GetExternalRun()) then
+        call OpenOutputRun(TheProjectType) ! open seasonal results .OUT
+    end if
     if (GetOutDaily()) then
         call OpenOutputDaily(TheProjectType)  ! Open Daily results .OUT
     end if
@@ -5869,7 +5910,9 @@ end subroutine InitializeSimulation
 
 subroutine FinalizeSimulation()
 
-    call fRun_close() ! Close Run.out
+    if (.not. GetExternalRun()) then
+        call fRun_close() ! Close Run.OUT
+    end if
     if (GetOutDaily()) then
         call fDaily_close()  ! Close Daily.OUT
     end if
@@ -6509,7 +6552,8 @@ subroutine WriteEvaluationData(DAP)
 end subroutine WriteEvaluationData
 
 
-subroutine InitializeRunPart1(NrRun, TheProjectType)
+subroutine InitializeRunPart1(NrRun, TheProjectType, variable_CCx, CCx_config, &
+                              CCx_range, ens_n_local, nensem)
     !! Part1 (before reading the climate) of the run initialization
     !! Loads the run input from the project file
     !! Initializes parameters and states
@@ -6517,7 +6561,24 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     integer(int8), intent(in) :: NrRun
     integer(intEnum), intent(in) :: TheProjectType
 
+    ! From 7.4 (increased compatibility with LIS): arguments are added for variable CCx in 
+    ! ensemble runs. Inert in the standalone.
+    logical, intent(in), optional :: variable_CCx
+        !! spread CCx over the members of an ensemble (NL and LB, July 2025). 
+        !! Without it the crop file CCx is used.
+    real(dp), intent(in), optional :: CCx_config
+        !! the spread is centred on the crop file's CCx. In the current implementation it is not used, 
+        !! but it is kept for compatibility with LIS. Might be cleaned up when coupling v7.4 to LIS.
+    real(dp), intent(in), optional :: CCx_range
+        !! half-width of the spread, in the same units as CCx
+    integer(int32), intent(in), optional :: ens_n_local
+        !! ensemble member number [1 ... nensem].
+    integer(int32), intent(in), optional :: nensem
+        !! number of members. The last member keeps the crop file's CCx, as a control.
+
     type(rep_sum) :: SumWaBal_temp, PreviousSum_temp
+    logical :: CCx_pert_flag
+    real(dp) :: GDD_endgrowth, CCi_final, CCx_spread
 
     if (TheProjectType == typeproject_typenone) then
         ! Do nothing
@@ -6525,6 +6586,14 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     end if
 
     call LoadSimulationRunProject(int(NrRun, kind=int32))
+
+    CCx_pert_flag = .false.
+    if (present(variable_CCx)) then
+        CCx_pert_flag = variable_CCx
+    end if
+    if (CCx_pert_flag) then
+        call PerturbCCxForEnsembleMember()
+    end if
 
     call AdjustCompartments()
     SumWaBal_temp = GetSumWaBal()
@@ -6536,6 +6605,65 @@ subroutine InitializeRunPart1(NrRun, TheProjectType)
     call InitializeSimulationRunPart1()
 
     contains
+
+
+    subroutine PerturbCCxForEnsembleMember()
+        !! NL and LB, July 2025: Perturb CCx for ensemble member.
+        !! Gives this ensemble member its own CCx, evenly spread over CCx_range either side
+        !! of the crop file's CCx, and recalculates GDDCGC and GDDCDC so that the canopy
+        !! still reaches its maximum at the same growing degree-day and still ends the season
+        !! at the same cover. The last member keeps the crop file's CCx.
+        !!
+        !! Growing degree-day mode only, and written for a determinate crop: the canopy is
+        !! taken to stop expanding at flowering plus half the flowering period.
+
+        if (.not. (present(CCx_range) .and. present(ens_n_local) &
+                   .and. present(nensem))) then
+            call fatal('the run asks for CCx to be spread over an ensemble, but the ' &
+                       // 'spread, the member or the number of members is missing.')
+        end if
+        if (GetCrop_ModeCycle() /= modeCycle_GDDays) then
+            call fatal('CCx can only be spread over an ensemble for a crop that develops ' &
+                       // 'by growing degree-days.')
+        end if
+        if ((.not. GetCrop_DeterminancyLinked()) &
+            .or. ((GetCrop_subkind() /= subkind_Grain) &
+                  .and. (GetCrop_subkind() /= subkind_Tuber))) then
+            call fatal('CCx can only be perturbed for a determinate crop ' &
+                       // 'that flowers (grain or tuber).')
+        end if
+        if (nensem <= 2) then
+            return
+        end if
+
+        GDD_endgrowth = log(GetCrop_CCx()/(0.08_dp*GetCrop_CCo()))/GetCrop_GDDCGC()
+        if (GDD_endgrowth > (GetCrop_GDDaysToFlowering() &
+                             + GetCrop_GDDLengthFlowering()/2._dp)) then
+            GDD_endgrowth = GetCrop_GDDaysToFlowering() &
+                            + GetCrop_GDDLengthFlowering()/2._dp
+        end if
+        CCi_final = GetCrop_CCx() * (1._dp - 0.05_dp &
+                    * (exp(3.33_dp * GetCrop_GDDCDC()/(GetCrop_CCx() + 2.29_dp) &
+                       * (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) - 1._dp))
+
+        ! Keep every member between the crop's own CCo and a full canopy. Without this a
+        ! member can be given a CCx above 1, or one at or below CCo, which makes the
+        ! growth coefficient below the logarithm of zero or of a negative number.
+        CCx_spread = CCx_range
+        if (((GetCrop_CCx() + CCx_spread) > 1._dp) &
+            .or. ((GetCrop_CCx() - CCx_spread) < GetCrop_CCo())) then
+            CCx_spread = min(1._dp - GetCrop_CCx(), GetCrop_CCx() - GetCrop_CCo())
+        end if
+
+        if (ens_n_local < nensem) then
+            call SetCrop_CCx(GetCrop_CCx() - CCx_spread &
+                             + (ens_n_local - 1) * 2._dp * CCx_spread/(nensem - 2))
+            call SetCrop_GDDCGC(log(GetCrop_CCx()/(0.08_dp*GetCrop_CCo()))/GDD_endgrowth)
+            call SetCrop_GDDCDC((GetCrop_CCx() + 2.29_dp) &
+                 / (3.33_dp * (GetCrop_GDDaysToHarvest() - GetCrop_GDDaysToSenescence())) &
+                 * log((1._dp - CCi_final/GetCrop_CCx())/0.05_dp + 1._dp))
+        end if
+    end subroutine PerturbCCxForEnsembleMember
 
 
     subroutine AdjustCompartments()
@@ -6700,6 +6828,11 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
                 alfaHIAdj_temp, TESTVAL
     real(dp) :: RootingDepth_temp
     logical :: WaterTableInProfile_temp, NoMoreCrop_temp
+
+    ! Reset the stress factors each day, to be calculated in the daily loop.
+    call SetKsPolCold(1._dp)
+    call SetKsPolHeat(1._dp)
+    call SetKsAeration(1._dp)
 
     ! 1. Get ETo
     if (GetEToFile() == '(None)') then
@@ -7243,18 +7376,25 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
     end if
 
     ! 14.d Print ---------------------------------------
-    if (GetOutputAggregate() > 0) then
-        call CheckForPrint(GetTheProjectFile())
-    end if
-    if (GetOutDaily()) then
-        call WriteDailyResults((GetDayNri() - GetSimulation_DelayedDays() &
-                                - GetCrop_Day1()+1), WPi)
-    end if
-    if (GetOut8Irri()) then
-        call WriteIrrInfo()
-    end if
-    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-        call WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays()-GetCrop_Day1()+1))
+    ! An external run takes the diagnostics path instead, to make sure values are computed
+    ! and can be extracted in the external program. But it does not write any output file.
+    if (GetExternalRun()) then
+        call UpdateDailyDiagnostics()
+    else
+        if (GetOutputAggregate() > 0) then
+            call CheckForPrint(GetTheProjectFile())
+        end if
+        if (GetOutDaily()) then
+            call WriteDailyResults((GetDayNri() - GetSimulation_DelayedDays() &
+                                    - GetCrop_Day1()+1), WPi)
+        end if
+        if (GetOut8Irri()) then
+            call WriteIrrInfo()
+        end if
+        if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+            call WriteEvaluationData((GetDayNri()-GetSimulation_DelayedDays() &
+                                      -GetCrop_Day1()+1))
+        end if
     end if
 
     ! 15. Prepare Next day
@@ -7277,7 +7417,7 @@ subroutine AdvanceOneTimeStep(WPi, HarvestNow)
 
     ! 15.c Rooting depth
     ! 15.bis extra line for standalone
-    if (GetOutDaily()) then
+    if (GetOutDaily() .or. GetExternalRun()) then
         call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
     end if
     ! 15.extra - reset ageing of Kc at recovery after full senescence
@@ -7295,25 +7435,26 @@ subroutine ReadClimateNextDay()
 
     ! Read Climate next day, Get GDDays and update SumGDDays
     if (GetDayNri() <= GetSimulation_ToDayNr()) then
-        if (GetEToFile() /= '(None)') then
+        ! An externally driven run reads none of these: ETo, rain and T are set before each time step, 
+        ! and no .SIM file are written.
+        if (ClimateComesFromFile(GetEToFile())) then
             TempString = fEToSIM_read()
             read(TempString,*) ETo_tmp
             call SetETo(ETo_tmp)
         end if
-        if (GetRainFile() /= '(None)') then
+        if (ClimateComesFromFile(GetRainFile())) then
             TempString = fRainSIM_read()
             read(TempString, *) tmpRain
             call SetRain(tmpRain)
         end if
-        if ((GetTemperatureFile() == '(None)') .or.&
-            (GetTemperatureFile() == '(External)')) then
-            call SetTmin(GetSimulParam_Tmin())
-            call SetTmax(GetSimulParam_Tmax())
-        else
+        if (ClimateComesFromFile(GetTemperatureFile())) then
             TempString = fTempSIM_read()
             read(TempString, *) Tmin_temp, Tmax_temp
             call SetTmin(Tmin_temp)
             call SetTmax(Tmax_temp)
+        else if (GetTemperatureFile() == '(None)') then
+            call SetTmin(GetSimulParam_Tmin())
+            call SetTmax(GetSimulParam_Tmax())
         end if
     end if
 end subroutine ReadClimateNextDay
@@ -7362,6 +7503,59 @@ subroutine FinalizeRun1(NrRun, TheProjectFile, TheProjectType)
 end subroutine FinalizeRun1
 
 
+subroutine UpdateRootZoneWCToMaxDepth()
+    !! Root zone water over the profile maximum rooting depth (WCx.xx as in daily standalone output).
+    !! Kept apart from the writing so an external run still computes the value.
+
+    logical :: SWCtopSoilConsidered_temp
+
+    if (GetRootingDepth() < epsilon(0._dp)) then
+        call SetRootZoneWC_Actual(undef_double)
+    else
+        if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
+            == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
+            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+            call DetermineRootZoneWC(GetCrop_RootMax(), &
+                                     SWCtopSoilConsidered_temp)
+            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        else
+            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+            call DetermineRootZoneWC(real(GetSoil_RootMax(), kind=dp), SWCtopSoilConsidered_temp)
+            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        end if
+    end if
+end subroutine UpdateRootZoneWCToMaxDepth
+
+
+subroutine UpdateRootZoneWCToRootingDepth()
+    !! Same as UpdateRootZoneWCToMaxDepth, but for the actual rooting depth (Wr as in daily standalone output).
+
+    logical :: SWCtopSoilConsidered_temp
+
+    if (GetRootingDepth() < epsilon(0._dp)) then
+        call SetRootZoneWC_Actual(undef_double)
+        call SetRootZoneWC_FC(undef_double)
+        call SetRootZoneWC_WP(undef_double)
+        call SetRootZoneWC_SAT(undef_double)
+        call SetRootZoneWC_Thresh(undef_double)
+        call SetRootZoneWC_Leaf(undef_double)
+        call SetRootZoneWC_Sen(undef_double)
+    else
+        SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
+        call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
+        call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+    end if
+end subroutine UpdateRootZoneWCToRootingDepth
+
+
+subroutine UpdateDailyDiagnostics()
+    !! Computes daily diagnostic for an external run.
+
+    call UpdateRootZoneWCToMaxDepth()
+    call UpdateRootZoneWCToRootingDepth()
+end subroutine UpdateDailyDiagnostics
+
+
 subroutine WriteDailyResults(DAP, WPi)
     integer(int32), intent(in) :: DAP
     real(dp), intent(in) :: WPi
@@ -7372,7 +7566,6 @@ subroutine WriteDailyResults(DAP, WPi)
                       StrTr, StrW, Brel, Nr, DAP_loc
     integer(int32) :: Ratio1, Ratio2, Ratio3
     real(dp) :: KsTr, HI, KcVal, WPy, SaltVal, WPi_loc, tempreal
-    logical :: SWCtopSoilConsidered_temp
     character(len=1025) :: tempstring
 
     DAP_loc = DAP
@@ -7388,9 +7581,7 @@ subroutine WriteDailyResults(DAP, WPi)
 
     ! 0. info day
     write(tempstring, '(5i6)') Di, Mi, Yi, DAP_loc, GetStageCode()
-    if (GetTemperatureFile() /= '(External)') then
-        call fDaily_write(trim(tempstring), .false.)
-    endif
+    call fDaily_write(trim(tempstring), .false.)
 
 
     ! 1. Water balance
@@ -7571,57 +7762,23 @@ subroutine WriteDailyResults(DAP, WPi)
     ! 3. Profile/Root zone - Soil water content
     if (GetOut3Prof()) then
         write(tempstring, '(f10.1)') GetTotalWaterContent_EndDay()
-        if (GetTemperatureFile() /= '(External)') then
-            call fDaily_write(trim(tempstring), .false.)
-        endif
-        if (GetRootingDepth() < epsilon(0._dp)) then
-            call SetRootZoneWC_Actual(undef_double)
-        else
-            if (roundc(GetSoil_RootMax()*1000._dp, mold=1) &
-                == roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
-                SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-                call DetermineRootZoneWC(GetCrop_RootMax(), &
-                                         SWCtopSoilConsidered_temp)
-                call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
-            else
-                SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-                call DetermineRootZoneWC(real(GetSoil_RootMax(), kind=dp), SWCtopSoilConsidered_temp)
-                call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
-            end if
-        end if
+        call fDaily_write(trim(tempstring), .false.)
+        call UpdateRootZoneWCToMaxDepth()
         write(tempstring, '(f9.1, f8.2)') GetRootZoneWC_actual(), GetRootingDepth()
-        if (GetTemperatureFile() /= '(External)') then
-            call fDaily_write(trim(tempstring), .false.)
-        endif
-        if (GetRootingDepth() < epsilon(0._dp)) then
-            call SetRootZoneWC_Actual(undef_double)
-            call SetRootZoneWC_FC(undef_double)
-            call SetRootZoneWC_WP(undef_double)
-            call SetRootZoneWC_SAT(undef_double)
-            call SetRootZoneWC_Thresh(undef_double)
-            call SetRootZoneWC_Leaf(undef_double)
-            call SetRootZoneWC_Sen(undef_double)
-        else
-            SWCtopSoilConsidered_temp = GetSimulation_SWCtopSoilConsidered()
-            call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
-            call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
-        end if
+        call fDaily_write(trim(tempstring), .false.)
+        call UpdateRootZoneWCToRootingDepth()
 
         write(tempstring, '(f8.1, 5f10.1)') GetRootZoneWC_actual(), &
                 GetRootZoneWC_SAT(), GetRootZoneWC_FC(), GetRootZoneWC_Leaf(), &
                 GetRootZoneWC_Thresh(), GetRootZoneWC_Sen()
-        if (GetTemperatureFile() /= '(External)') then
-            call fDaily_write(trim(tempstring), .false.)
-        endif
+        call fDaily_write(trim(tempstring), .false.)
         if ((GetOut4Salt()) .or. (GetOut5CompWC()) .or. (GetOut6CompEC()) &
             .or. (GetOut7Clim())) then
             write(tempstring, '(f10.1)') GetRootZoneWC_WP()
             call fDaily_write(trim(tempstring), .false.)
         else
             write(tempstring, '(f10.1)') GetRootZoneWC_WP()
-            if (GetTemperatureFile() /= '(External)') then
-                call fDaily_write(tempstring)
-            end if
+            call fDaily_write(tempstring)
         end if
     end if
 

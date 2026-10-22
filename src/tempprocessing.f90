@@ -122,6 +122,8 @@ use ac_global , only: undef_int, &
                       SetIrriFileFull,&
                       FullUndefinedRecord, &
                       SetEToFile, SetEToFilefull, &
+                      GetExternalRun, &
+                      SetExternalRun, &
                       SetObservationsFileFull, &
                       SetProfFilefull,&
                       SetGroundWaterFilefull,&
@@ -1871,6 +1873,9 @@ subroutine LoadSimulationRunProject(NrRun)
     if (GetClimateFile() /= '(External)') then
         call SetClimData()
     end if
+    ! Checking if an external program is driving this run and setting the meteo forcings. 
+    ! ExternalRun true/false derived here, where the project climate is set.
+    call SetExternalRun(GetTemperatureFile() == '(External)')
     call AdjustOnsetSearchPeriod() ! Set initial StartSearch and StopSearchDayNr
 
     ! 2. Calendar
@@ -1908,6 +1913,14 @@ subroutine LoadSimulationRunProject(NrRun)
                        // 'for ' // trim(GetCropFile()) // ' to accumulate any ' &
                        // 'growing degree-days.')
         end if
+    end if
+
+    ! A perennial CANNOT BE RUN EXTERNALLY, because its season needs 
+    ! the temperatures of the whole simulation period in advance.
+    if (GetExternalRun() .and. (GetCrop_subkind() == subkind_Forage)) then
+        call fatal(trim(GetCropFile()) // ': a perennial crop cannot be run from an ' &
+                   // 'external driver, because its season needs the temperatures of ' &
+                   // 'the whole simulation period in advance.')
     end if
 
     ! Adjust crop parameters of Perennials
