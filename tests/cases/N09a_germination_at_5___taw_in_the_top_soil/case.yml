@@ -1,0 +1,40 @@
+id: N09a_germination_at_5___taw_in_the_top_soil
+desc: >
+  germination at 5 % TAW in the top soil.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: N09a
+  desc: "N09a - germination at 5 % TAW in the top soil"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    7: "     5      : Required soil water content in top soil for germination (% TAW)"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,39 @@
+id: W04_emergence_delayed_by_a_dry_seedbed
+desc: >
+  emergence delayed by a dry seedbed.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dry, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - DryTopSoil.SW0
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: W04
+  desc: "W04 - emergence delayed by a dry seedbed"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: DryTopSoil.SW0
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

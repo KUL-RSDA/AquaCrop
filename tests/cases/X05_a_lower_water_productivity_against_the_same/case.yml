@@ -1,0 +1,41 @@
+id: X05_a_lower_water_productivity_against_the_same
+desc: >
+  a lower water productivity against the same CO2 record.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: X05
+  desc: "X05 - a lower water productivity against the same CO2 record"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    61: "      20.0      : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

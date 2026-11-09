@@ -1,0 +1,40 @@
+id: J36_cuttings_generated_on_accumulated_fresh_yiel
+desc: >
+  cuttings generated on accumulated fresh yield.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_cut_freshy_full.MAN
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: J36
+  type: PRM
+  desc: "J36 - cuttings generated on accumulated fresh yield"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_cut_freshy_full.MAN
+
+daily: [2]
+particular: [1]
+aggregate: 0
+rtol: 1.0e-3

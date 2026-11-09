@@ -1,0 +1,41 @@
+id: S07_a_shallow_0_15_m_evaporation_layer
+desc: >
+  a shallow 0.15 m evaporation layer.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: S07
+  desc: "S07 - a shallow 0.15 m evaporation layer"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    13: "    15      : Depth [cm] of soil profile affected by water extraction by soil evaporation"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

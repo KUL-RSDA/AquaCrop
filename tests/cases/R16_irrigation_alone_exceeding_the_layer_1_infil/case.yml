@@ -1,0 +1,39 @@
+id: R16_irrigation_alone_exceeding_the_layer_1_infil
+desc: >
+  irrigation alone exceeding the layer-1 infiltration rate.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Dry, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - IRR_manual_dense.IRR
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+
+project:
+  name: R16
+  desc: "R16 - irrigation alone exceeding the layer-1 infiltration rate"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      irr: IRR_manual_dense.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

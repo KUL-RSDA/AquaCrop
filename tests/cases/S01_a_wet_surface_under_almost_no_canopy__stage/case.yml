@@ -1,0 +1,41 @@
+id: S01_a_wet_surface_under_almost_no_canopy__stage
+desc: >
+  a wet surface under almost no canopy: stage-I evaporation.
+  MaizeGDD.CRO on Ottawa.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: S01
+  desc: "S01 - a wet surface under almost no canopy: stage-I evaporation"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    50: "      0.10      : Maximum canopy cover (CCx) in fraction soil cover"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,38 @@
+id: A16_a_simulation_period_one_day_longer_at_each_e
+desc: >
+  a simulation period one day longer at each end.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: A16
+  type: PRM
+  desc: "A16 - a simulation period one day longer at each end"
+  runs:
+    - year: 1
+      sim: [2014-05-20, 2014-11-01]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+expect_exit: 0
+rtol: 1.0e-3

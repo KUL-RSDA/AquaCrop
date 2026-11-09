@@ -1,0 +1,41 @@
+id: W26_slow_canopy_expansion__cgc_0_05
+desc: >
+  slow canopy expansion: CGC 0.05.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: W26
+  desc: "W26 - slow canopy expansion: CGC 0.05"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    46: "   0.05000      : Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)"
+
+# output 2 carries CC, CCw, the stress factors, biomass, HI and yield
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

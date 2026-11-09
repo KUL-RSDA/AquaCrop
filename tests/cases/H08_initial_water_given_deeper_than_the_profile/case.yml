@@ -1,0 +1,39 @@
+id: H08_initial_water_given_deeper_than_the_profile
+desc: >
+  initial water given deeper than the profile.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_deep.SW0
+
+project:
+  name: H08
+  desc: "H08 - initial water given deeper than the profile"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_deep.SW0
+
+daily: [3, 5]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

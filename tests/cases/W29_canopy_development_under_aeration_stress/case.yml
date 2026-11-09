@@ -1,0 +1,39 @@
+id: W29_canopy_development_under_aeration_stress
+desc: >
+  canopy development under aeration stress.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - SW0_atSAT.SW0
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: W29
+  desc: "W29 - canopy development under aeration stress"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      sw0: SW0_atSAT.SW0
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

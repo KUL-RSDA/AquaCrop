@@ -1,0 +1,37 @@
+id: B15_a_premature_end_dated_after_the_run_already
+desc: >
+  a premature end dated after the run already stopped.
+  MaizePremEndLate.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizePremEndLate.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: B15
+  desc: "B15 - a premature end dated after the run already stopped"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizePremEndLate.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

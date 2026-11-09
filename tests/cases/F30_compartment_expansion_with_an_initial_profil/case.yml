@@ -1,0 +1,39 @@
+id: F30_compartment_expansion_with_an_initial_profil
+desc: >
+  compartment expansion with an initial profile supplied.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_atWP.SW0
+
+project:
+  name: F30
+  desc: "F30 - compartment expansion with an initial profile supplied"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_atWP.SW0
+
+daily: [3, 5]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

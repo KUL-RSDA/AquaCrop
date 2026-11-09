@@ -1,0 +1,7 @@
+constant water table at 1.0 m, EC 5 dS/m
+     7.3   : AquaCrop Version
+     1     : constant groundwater table
+
+   Day    Depth (m)    ECw (dS/m)
+====================================
+      1      1.00          5.0

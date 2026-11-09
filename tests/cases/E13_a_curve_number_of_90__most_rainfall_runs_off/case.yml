@@ -1,0 +1,37 @@
+id: E13_a_curve_number_of_90__most_rainfall_runs_off
+desc: >
+  a curve number of 90: most rainfall runs off.
+  MaizeGDD.CRO on CN90.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - CN90.SOL
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: E13
+  desc: "E13 - a curve number of 90: most rainfall runs off"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: CN90.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

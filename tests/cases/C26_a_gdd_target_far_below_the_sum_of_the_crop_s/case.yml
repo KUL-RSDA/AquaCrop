@@ -1,0 +1,41 @@
+id: C26_a_gdd_target_far_below_the_sum_of_the_crop_s
+desc: >
+  a GDD target far below the sum of the crop stages.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: C26
+  desc: "C26 - a GDD target far below the sum of the crop stages"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    10: "       400      : Total length of crop cycle in growing degree-days"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

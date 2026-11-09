@@ -1,0 +1,53 @@
+id: F35_b6__impermeable_at_0_30_m__no_adjustment_des
+desc: >
+  B6: impermeable at 0.30 m, no adjustment despite a 3 m crop.
+  Soil PEN_zero_at_0p30.SOL (2 horizon(s), 1.50 m),
+  maize Zrmax 3.00 m, Ottawa 2014 season.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - PEN_zero_at_0p30.SOL
+
+project:
+  name: F35
+  desc: "F35 - B6: impermeable at 0.30 m, no adjustment despite a 3 m crop"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: PEN_zero_at_0p30.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     3.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B6 restrictive, Soil_RootMax <= TotDepth: no adjustment"
+  total_depth: 1.2
+  soil_rootmax: 0.3
+  salt_cells: [2]
+  thicknesses: [0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+
+rtol: 1.0e-3

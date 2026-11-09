@@ -1,0 +1,53 @@
+id: F39_b5__half_penetrable__adjust_to_soil_rootmax
+desc: >
+  B5: half-penetrable, adjust to Soil_RootMax.
+  Soil PEN_50.SOL (2 horizon(s), 1.50 m),
+  maize Zrmax 3.00 m, Ottawa 2014 season.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - PEN_50.SOL
+
+project:
+  name: F39
+  desc: "F39 - B5: half-penetrable, adjust to Soil_RootMax"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: PEN_50.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     3.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B5 restrictive: adjust to Soil_RootMax | step4-regrade+grow1"
+  total_depth: 1.65
+  soil_rootmax: 1.65
+  salt_cells: [2]
+  thicknesses: [0.10, 0.10, 0.10, 0.10, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.20]
+
+rtol: 1.0e-3

@@ -1,0 +1,39 @@
+id: I19_a_refill_to_field_capacity_on_an_already_wet
+desc: >
+  a refill to field capacity on an already wet profile.
+  MaizeGDD.CRO on Ottawa.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - IRR_gen_allraw.IRR
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: I19
+  desc: "I19 - a refill to field capacity on an already wet profile"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_gen_allraw.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

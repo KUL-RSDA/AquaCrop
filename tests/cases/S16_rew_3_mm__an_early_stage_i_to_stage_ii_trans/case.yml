@@ -1,0 +1,37 @@
+id: S16_rew_3_mm__an_early_stage_i_to_stage_ii_trans
+desc: >
+  REW 3 mm: an early stage-I to stage-II transition.
+  MaizeGDD.CRO on REW_3.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - REW_3.SOL
+
+project:
+  name: S16
+  desc: "S16 - REW 3 mm: an early stage-I to stage-II transition"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: REW_3.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

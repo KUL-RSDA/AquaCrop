@@ -1,0 +1,36 @@
+id: A01_ottawa_prm_baseline
+desc: >
+  The shipped Ottawa testcase: a 3-run PRM, perennial alfalfa in GDD mode with
+  multiple cuttings, KeepSWC between runs, and field observations. This is the
+  suite's anchor — its OUTP_REF is the reference committed on main, produced
+  independently of this harness, so a pass here proves the staging is faithful.
+tier: T0
+
+# Everything is resolved from tests/assets/ by name; the .PRM comes from
+# LIST/ in this directory.
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - 21May.CAL
+  - AlfOttawaGDD.CRO
+  - Ottawa.MAN
+  - Ottawa.SOL
+  - Ottawa.OBS
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - EToData.SIM
+  - RainData.SIM
+  - TempData.SIM
+
+# Matches testcase/SIMUL/DailyResults.SIM (1-7) and ParticularResults.SIM (1,2).
+daily: [1, 2, 3, 4, 5, 6, 7]
+particular: [1, 2]
+aggregate: 0
+
+rtol: 1.0e-3
+skip_lines: 1        # "Output created on <date>" banner
+expect_exit: 0

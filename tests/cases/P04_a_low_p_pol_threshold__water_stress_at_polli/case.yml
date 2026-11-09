@@ -1,0 +1,41 @@
+id: P04_a_low_p_pol_threshold__water_stress_at_polli
+desc: >
+  a low p-pol threshold: water stress at pollination.
+  MaizeGDD.CRO on Ottawa.SOL, climate Sparse, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Sparse.CLI
+  - Sparse.PLU
+
+project:
+  name: P04
+  desc: "P04 - a low p-pol threshold: water stress at pollination"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Sparse.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Sparse.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    19: "      0.30      : Soil water depletion factor for pollination (p - pol) - Upper threshold"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

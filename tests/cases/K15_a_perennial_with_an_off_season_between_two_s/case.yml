@@ -1,0 +1,39 @@
+id: K15_a_perennial_with_an_off_season_between_two_s
+desc: >
+  a perennial with an off-season between two seasons.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2015-10-24.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaunaLoa.CO2
+  - OFF_cover_both.OFF
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: K15
+  desc: "K15 - a perennial with an off-season between two seasons"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2015-10-24]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+      offseason: OFF_cover_both.OFF
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

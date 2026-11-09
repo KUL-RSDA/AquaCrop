@@ -1,0 +1,5 @@
+AquaCrop 7.3 (September 2026) - Output created on (date) : 19-10-2026   at (time) : 13:14:32
+
+    RunNr     Day1   Month1    Year1     Rain      ETo       GD     CO2      Irri   Infilt   Runoff    Drain   Upflow        E     E/Ex       Tr      TrW   Tr/Trx    SaltIn   SaltOut    SaltUp  SaltProf     Cycle   SaltStr  FertStr  WeedStr  TempStr   ExpStr   StoStr  BioMass  Brelative   HI    Y(dry)  Y(fresh)    WPet      Bin     Bout     DayN   MonthN    YearN
+                                           mm       mm  degC.day    ppm        mm       mm       mm       mm       mm       mm        %       mm       mm        %    ton/ha    ton/ha    ton/ha    ton/ha      days       %        %        %        %        %        %    ton/ha        %       %    ton/ha   ton/ha    kg/m3   ton/ha   ton/ha
+   Tot(1)       21        5     2014   1269.6   1048.6   3921.2   398.82      0.0   1250.5     19.1    325.5      0.0    541.2       73    381.1    381.1       97     0.000    12.781     0.000    13.714      167        1        0        0        2        0        3    15.151       93     98.9   14.988   74.939     3.46    0.000    6.597       24       10     2015  H23.PRM

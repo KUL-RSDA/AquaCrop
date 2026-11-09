@@ -1,0 +1,37 @@
+id: D22_a_cropping_year_shifted_onto_a_later_year_of
+desc: >
+  a cropping year shifted onto a later year of the record.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2015-05-21 to 2015-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D22
+  desc: "D22 - a cropping year shifted onto a later year of the record"
+  runs:
+    - year: 1
+      sim: [2015-05-21, 2015-10-31]
+      crop: [2015-05-21, 2015-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

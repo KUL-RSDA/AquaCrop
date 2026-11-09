@@ -1,0 +1,42 @@
+id: P09_cold_and_heat_pollination_thresholds_both_bi
+desc: >
+  cold and heat pollination thresholds both binding in one season.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: P09
+  desc: "P09 - cold and heat pollination thresholds both binding in one season"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    27: "        18      : Minimum air temperature below which pollination starts to fail (cold stress) (degC)"
+    28: "        26      : Maximum air temperature above which pollination starts to fail (heat stress) (degC)"
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

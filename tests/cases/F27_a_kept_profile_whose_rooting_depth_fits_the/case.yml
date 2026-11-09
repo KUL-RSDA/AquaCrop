@@ -1,0 +1,49 @@
+id: F27_a_kept_profile_whose_rooting_depth_fits_the
+desc: >
+  a kept profile whose rooting depth fits the soil.
+  Two runs over Ottawa 2014 and 2015; the second keeps the profile the first
+  left behind.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: F27
+  desc: "F27 - a kept profile whose rooting depth fits the soil"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+    - year: 2
+      sim: [2015-05-21, 2015-10-31]
+      crop: [2015-05-21, 2015-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: KeepSWC
+
+daily: [3, 5]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

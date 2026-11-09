@@ -1,0 +1,43 @@
+id: N10_a_germination_threshold_that_can_never_be_me
+desc: >
+  a germination threshold that can never be met.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dry, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_atWP.SW0
+
+project:
+  name: N10
+  desc: "N10 - a germination threshold that can never be met"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_atWP.SW0
+
+patch:
+  Ottawa.PPn:
+    7: "    95      : Required soil water content in top soil for germination (% TAW)"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

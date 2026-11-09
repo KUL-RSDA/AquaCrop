@@ -1,0 +1,44 @@
+id: P01_a_narrow_p_exp_band__canopy_expansion_stress
+desc: >
+  a narrow p-exp band: canopy expansion stressed early.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_atWP.SW0
+
+project:
+  name: P01
+  desc: "P01 - a narrow p-exp band: canopy expansion stressed early"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_atWP.SW0
+
+patch:
+  MaizeGDD.CRO:
+    11: "      0.05      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold"
+    12: "      0.15      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

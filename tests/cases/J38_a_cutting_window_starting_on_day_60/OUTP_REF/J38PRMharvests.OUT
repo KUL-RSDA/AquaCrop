@@ -1,0 +1,11 @@
+AquaCrop 7.3 (September 2026) - Output created on (date) : 19-10-2026   at (time) : 13:14:33
+Biomass and Yield at Multiple cuttings
+
+   Run:   1
+    Nr   Day  Month Year   DAP Interval  Biomass    Sum(B)   Dry-Yield  Sum(Y) Fresh-Yield  Sum(Y)
+                                 days     ton/ha    ton/ha    ton/ha    ton/ha    ton/ha    ton/ha
+     0    21     5  2014                             0.000               0.000               0.000
+     1    19     7  2014    60    60       5.480     5.480     5.331     5.331    26.653    26.653
+     2    28     8  2014   100    40       2.421     7.900     2.421     7.751    12.104    38.757
+     3     7    10  2014   140    40       1.110     9.011     1.110     8.862     5.551    44.308
+  9999     1    11  2014                             9.402               9.253              46.263

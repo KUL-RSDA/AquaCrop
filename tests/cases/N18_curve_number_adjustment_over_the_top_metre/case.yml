@@ -1,0 +1,41 @@
+id: N18_curve_number_adjustment_over_the_top_metre
+desc: >
+  curve-number adjustment over the top metre.
+  MaizeGDD.CRO on Ottawa.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: N18
+  desc: "N18 - curve-number adjustment over the top metre"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    14: "  1.00      : Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

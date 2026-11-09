@@ -1,0 +1,41 @@
+id: C12_tmin_below_tbase_below_tmax__where_methods_2
+desc: >
+  Tmin below Tbase below Tmax, where methods 2 and 3 diverge.
+  MaizeGDD.CRO on Ottawa.SOL, climate Cold, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - Cold.CLI
+  - Cold.Tnx
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: C12
+  desc: "C12 - Tmin below Tbase below Tmax, where methods 2 and 3 diverge"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Cold.CLI
+      tnx: Cold.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    21: "     2      : Default method for the calculation of growing degree days"
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

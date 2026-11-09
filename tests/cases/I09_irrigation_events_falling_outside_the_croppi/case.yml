@@ -1,0 +1,39 @@
+id: I09_irrigation_events_falling_outside_the_croppi
+desc: >
+  irrigation events falling outside the cropping period.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dry, 2014-04-01 to 2014-11-30.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - IRR_manual_dense.IRR
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: I09
+  desc: "I09 - irrigation events falling outside the cropping period"
+  runs:
+    - year: 1
+      sim: [2014-04-01, 2014-11-30]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_manual_dense.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

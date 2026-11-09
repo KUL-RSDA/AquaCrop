@@ -1,0 +1,40 @@
+id: N11a_p_adjusted_by_eto_with_factor_0_5
+desc: >
+  p adjusted by ETo with factor 0.5.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: N11a
+  desc: "N11a - p adjusted by ETo with factor 0.5"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    8: "   0.5      : Adjustment factor for FAO-adjustment soil water depletion (p) by ETo"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

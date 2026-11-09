@@ -1,0 +1,14 @@
+canopy cover, biomass and soil water together
+     7.3  : AquaCrop Version (January 2026)
+     1.00  : depth of sampled soil profile
+     1     : first day of observations
+     1     : first month of observations
+  2014     : first year of observations (1901 if not linked to a specific year)
+
+   Day    Canopy cover (%)    dry Biomass (ton/ha)    Soil water content (mm)
+            Mean     Std         Mean       Std           Mean      Std
+=============================================================================
+    150      12.0     2.0         0.300     0.1          290.0    12.0
+    180      62.0     6.0         3.900     0.4          245.0    15.0
+    210      91.0     4.0         9.800     0.9          268.0    11.0
+    240      74.0     7.0        14.200     1.3          302.0    14.0

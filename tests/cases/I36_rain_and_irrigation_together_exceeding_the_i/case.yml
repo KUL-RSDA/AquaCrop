@@ -1,0 +1,39 @@
+id: I36_rain_and_irrigation_together_exceeding_the_i
+desc: >
+  rain and irrigation together exceeding the infiltration rate.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - IRR_manual_dense.IRR
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: I36
+  desc: "I36 - rain and irrigation together exceeding the infiltration rate"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      irr: IRR_manual_dense.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

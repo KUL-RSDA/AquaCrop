@@ -1,0 +1,43 @@
+id: L17b_an_extreme_stomatal_response_to_the_salinity
+desc: >
+  an extreme stomatal response to the salinity of the soil water.
+  MaizeSalinity.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeSalinity.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece8.SW0
+
+project:
+  name: L17b
+  desc: "L17b - an extreme stomatal response to the salinity of the soil water"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeSalinity.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece8.SW0
+
+patch:
+  MaizeSalinity.CRO:
+    34: "       200      : Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))"
+
+daily: [2, 4]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

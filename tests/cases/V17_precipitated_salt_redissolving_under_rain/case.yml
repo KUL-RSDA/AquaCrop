@@ -1,0 +1,43 @@
+id: V17_precipitated_salt_redissolving_under_rain
+desc: >
+  precipitated salt redissolving under rain.
+  MaizeGDD.CRO on Ottawa.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece16.SW0
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: V17
+  desc: "V17 - precipitated salt redissolving under rain"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece16.SW0
+
+patch:
+  Ottawa.PPn:
+    17: "    50      : Salt solubility [g/liter]"
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

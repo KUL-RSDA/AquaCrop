@@ -1,0 +1,41 @@
+id: E06_daily_rainfall_estimated_from_a_ten_daily_re
+desc: >
+  daily rainfall estimated from a ten-daily record.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dec11, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dec11.CLI
+  - Dec11.ETo
+  - Dec11.PLU
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: E06
+  desc: "E06 - daily rainfall estimated from a ten-daily record"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dec11.CLI
+      tnx: Ottawa.Tnx
+      eto: Dec11.ETo
+      plu: Dec11.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    24: "     5      : Number of showers in a decade for run-off estimate"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

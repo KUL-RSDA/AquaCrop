@@ -1,0 +1,46 @@
+id: U16_horizontal_inflow_carrying_salt_from_the_wat
+desc: >
+  horizontal inflow carrying salt from the water table.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dry, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - GWT_const_saline.GWT
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_atWP.SW0
+
+project:
+  name: U16
+  desc: "U16 - horizontal inflow carrying salt from the water table"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: GWT_const_saline.GWT
+      sw0: SW0_atWP.SW0
+
+daily: [1, 4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+
+# Salt precipitates here, and precipitated salt (Compartment%Depo) is
+# reported by no output column, so the reported salt balance cannot
+# close. See O9; the run itself is correct and its reference is exact.
+skip_invariants: [salt_balance]

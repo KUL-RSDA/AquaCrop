@@ -1,0 +1,40 @@
+id: G15_the_donated_v4_0_variable_table__year_agnost
+desc: >
+  the donated v4.0 variable table, year-agnostic.
+  Maize on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is Var4.GWT.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - Var4.GWT
+
+project:
+  name: G15
+  desc: "G15 - the donated v4.0 variable table, year-agnostic"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: Var4.GWT
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

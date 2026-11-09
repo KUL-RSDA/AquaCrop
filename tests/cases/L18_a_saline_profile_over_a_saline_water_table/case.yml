@@ -1,0 +1,46 @@
+id: L18_a_saline_profile_over_a_saline_water_table
+desc: >
+  a saline profile over a saline water table.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - GWT_const_saline.GWT
+  - SW0_ece4.SW0
+
+project:
+  name: L18
+  desc: "L18 - a saline profile over a saline water table"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: GWT_const_saline.GWT
+      sw0: SW0_ece4.SW0
+
+# outputs 4 and 6: root-zone salinity and per-compartment ECe
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+
+# Salt precipitates here, and precipitated salt (Compartment%Depo) is
+# reported by no output column, so the reported salt balance cannot
+# close. See O9; the run itself is correct and its reference is exact.
+skip_invariants: [salt_balance]

@@ -1,0 +1,39 @@
+id: R06_a_profile_drier_than_wilting_point_within_th
+desc: >
+  a profile drier than wilting point within the runoff depth.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dry, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_atWP.SW0
+
+project:
+  name: R06
+  desc: "R06 - a profile drier than wilting point within the runoff depth"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_atWP.SW0
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

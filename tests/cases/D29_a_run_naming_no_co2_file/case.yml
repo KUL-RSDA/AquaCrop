@@ -1,0 +1,37 @@
+id: D29_a_run_naming_no_co2_file
+desc: >
+  a run naming no CO2 file.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014 onwards.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D29
+  type: PRM
+  desc: "D29 - a run naming no CO2 file"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

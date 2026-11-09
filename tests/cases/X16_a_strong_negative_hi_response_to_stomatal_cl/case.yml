@@ -1,0 +1,41 @@
+id: X16_a_strong_negative_hi_response_to_stomatal_cl
+desc: >
+  a strong negative HI response to stomatal closure.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: X16
+  desc: "X16 - a strong negative HI response to stomatal closure"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    67: "      15.0      : Coefficient describing negative impact on HI of stomatal closure during yield formation"
+
+# output 2 carries CC, CCw, the stress factors, biomass, HI and yield
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

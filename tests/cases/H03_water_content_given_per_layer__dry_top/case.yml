@@ -1,0 +1,40 @@
+id: H03_water_content_given_per_layer__dry_top
+desc: >
+  water content given per layer, dry top.
+  Maize on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is SW0_dry_top.SW0.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - SW0_dry_top.SW0
+
+project:
+  name: H03
+  desc: "H03 - water content given per layer, dry top"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_dry_top.SW0
+
+daily: [3]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

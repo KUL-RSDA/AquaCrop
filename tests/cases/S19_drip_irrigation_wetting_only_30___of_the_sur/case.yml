@@ -1,0 +1,38 @@
+id: S19_drip_irrigation_wetting_only_30___of_the_sur
+desc: >
+  drip irrigation wetting only 30 % of the surface.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - IRR_fw30.IRR
+
+project:
+  name: S19
+  desc: "S19 - drip irrigation wetting only 30 % of the surface"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_fw30.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

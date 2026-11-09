@@ -1,0 +1,39 @@
+id: Y01_the_stress_engine_with_fertility_stress_at_z
+desc: >
+  the stress engine with fertility stress at zero.
+  Maize_EUirr_GDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_fert0.MAN
+  - Maize_EUirr_GDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: Y01
+  desc: "Y01 - the stress engine with fertility stress at zero"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: Maize_EUirr_GDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_fert0.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

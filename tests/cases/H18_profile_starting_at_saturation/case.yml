@@ -1,0 +1,40 @@
+id: H18_profile_starting_at_saturation
+desc: >
+  profile starting at saturation.
+  Maize on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is SW0_atSAT.SW0.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - SW0_atSAT.SW0
+
+project:
+  name: H18
+  desc: "H18 - profile starting at saturation"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_atSAT.SW0
+
+daily: [3]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

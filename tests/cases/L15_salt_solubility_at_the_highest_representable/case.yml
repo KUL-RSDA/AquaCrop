@@ -1,0 +1,43 @@
+id: L15_salt_solubility_at_the_highest_representable
+desc: >
+  salt solubility at the highest representable value.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - SW0_ece8.SW0
+
+project:
+  name: L15
+  desc: "L15 - salt solubility at the highest representable value"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece8.SW0
+
+patch:
+  Ottawa.PPn:
+    17: "   127      : Salt solubility [g/liter]"
+
+# outputs 4 and 6: root-zone salinity and per-compartment ECe
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

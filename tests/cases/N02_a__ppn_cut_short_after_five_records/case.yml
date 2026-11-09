@@ -1,0 +1,38 @@
+id: N02_a__ppn_cut_short_after_five_records
+desc: >
+  a .PPn cut short after five records.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Truncated.PPn
+
+project:
+  name: N02
+  desc: "N02 - a .PPn cut short after five records"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "program parameters instead of"

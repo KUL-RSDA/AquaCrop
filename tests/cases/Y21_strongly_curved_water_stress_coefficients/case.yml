@@ -1,0 +1,45 @@
+id: Y21_strongly_curved_water_stress_coefficients
+desc: >
+  strongly curved water-stress coefficients.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - SW0_atWP.SW0
+
+project:
+  name: Y21
+  desc: "Y21 - strongly curved water-stress coefficients"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_atWP.SW0
+
+patch:
+  MaizeGDD.CRO:
+    13: "       6.0      : Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)"
+    15: "       6.0      : Shape factor for water stress coefficient for stomatal control (0.0 = straight line)"
+    17: "       6.0      : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)"
+
+# output 2 carries CC, CCw, the stress factors, biomass, HI and yield
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

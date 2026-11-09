@@ -1,0 +1,26 @@
+id: A06_a_project_list_naming_a_pro_and_a_prm_togeth
+desc: >
+  a project list naming a PRO and a PRM together.
+  Both projects run MaizeGDD.CRO on Ottawa.SOL over 2014-05-21 to 2014-10-31; the case
+  pins that AquaCrop loads a .PRO and a .PRM from one list in a single pass.
+  Both project files are carried in this case's own LIST/ directory.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+list_projects: "A06PRO.PRO\nA06PRM.PRM\n"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

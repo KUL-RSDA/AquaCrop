@@ -1,0 +1,41 @@
+id: I37_irrigation_applied_to_a_bunded_field
+desc: >
+  irrigation applied to a bunded field.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - IRR_manual_dense.IRR
+  - MAN_bund30.MAN
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: I37
+  desc: "I37 - irrigation applied to a bunded field"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_manual_dense.IRR
+      man: MAN_bund30.MAN
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

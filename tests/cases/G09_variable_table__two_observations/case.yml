@@ -1,0 +1,40 @@
+id: G09_variable_table__two_observations
+desc: >
+  variable table, two observations.
+  Maize on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is GWT_var_2obs.GWT.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - GWT_var_2obs.GWT
+
+project:
+  name: G09
+  desc: "G09 - variable table, two observations"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: GWT_var_2obs.GWT
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

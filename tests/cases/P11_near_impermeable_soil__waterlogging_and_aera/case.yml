@@ -1,0 +1,39 @@
+id: P11_near_impermeable_soil__waterlogging_and_aera
+desc: >
+  near-impermeable soil: waterlogging and aeration stress.
+  MaizeGDD.CRO on the Ottawa record, Ottawa.SOL.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - KSAT_5.SOL
+
+project:
+  name: P11
+  type: PRM
+  desc: "P11 - near-impermeable soil: waterlogging and aeration stress"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

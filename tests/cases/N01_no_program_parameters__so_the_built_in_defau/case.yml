@@ -1,0 +1,36 @@
+id: N01_no_program_parameters__so_the_built_in_defau
+desc: >
+  no program parameters, so the built-in defaults are used.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: N01
+  desc: "N01 - no program parameters, so the built-in defaults are used"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

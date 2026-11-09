@@ -1,0 +1,43 @@
+id: V15_full_salt_diffusion_between_cells
+desc: >
+  full salt diffusion between cells.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece4.SW0
+
+project:
+  name: V15
+  desc: "V15 - full salt diffusion between cells"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece4.SW0
+
+patch:
+  Ottawa.PPn:
+    16: "   100      : Salt diffusion factor (capacity for salt diffusion in micro pores) [%]"
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

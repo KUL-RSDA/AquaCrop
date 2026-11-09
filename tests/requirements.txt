@@ -1,0 +1,16 @@
+# Python packages for the AquaCrop test suite and its notebook.
+# Needs Python 3.9 or newer (check: python3 --version). With a conda environment
+# active, python3 may be conda's own, older Python: run `conda deactivate` first.
+#
+#   python3 -m venv $VSC_DATA/venvs/aquacrop-tests      # on VSC; any folder elsewhere
+#   source $VSC_DATA/venvs/aquacrop-tests/bin/activate
+#   pip install -r tests/requirements.txt
+#   python -m ipykernel install --user --name aquacrop-tests --display-name "AquaCrop tests"
+#
+# The runner alone only needs pyyaml. The rest is for tests/compare_suite.ipynb.
+pyyaml
+numpy
+pandas>=2
+matplotlib>=3.8
+ipykernel
+ipywidgets

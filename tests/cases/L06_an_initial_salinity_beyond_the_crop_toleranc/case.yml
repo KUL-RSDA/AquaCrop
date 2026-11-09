@@ -1,0 +1,39 @@
+id: L06_an_initial_salinity_beyond_the_crop_toleranc
+desc: >
+  an initial salinity beyond the crop tolerance range.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece25.SW0
+
+project:
+  name: L06
+  desc: "L06 - an initial salinity beyond the crop tolerance range"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece25.SW0
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

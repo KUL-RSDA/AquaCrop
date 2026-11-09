@@ -1,0 +1,37 @@
+id: SW07_day_Mon_Dec
+desc: >
+  Sweep SW07: temperature daily, ETo Mon, rain Dec.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - OttawaMon.ETo
+  - OttawaDec.PLU
+
+project:
+  name: SW07_day_Mon_Dec
+  desc: "SW07 - temperature daily, ETo Mon, rain Dec"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: OttawaMon.ETo
+      plu: OttawaDec.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+# sweeps take season output only; the invariants still run on every one
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

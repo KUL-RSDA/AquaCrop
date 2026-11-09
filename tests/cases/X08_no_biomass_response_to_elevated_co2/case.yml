@@ -1,0 +1,41 @@
+id: X08_no_biomass_response_to_elevated_co2
+desc: >
+  no biomass response to elevated CO2.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: X08
+  desc: "X08 - no biomass response to elevated CO2"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    63: "         0      : Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration"
+
+# output 2 carries CC, CCw, the stress factors, biomass, HI and yield
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

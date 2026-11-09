@@ -1,0 +1,39 @@
+id: L16_a_strongly_distorted_canopy_response_to_sali
+desc: >
+  a strongly distorted canopy response to salinity.
+  MaizeSalinity.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeSalinity.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece8.SW0
+
+project:
+  name: L16
+  desc: "L16 - a strongly distorted canopy response to salinity"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeSalinity.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece8.SW0
+
+daily: [2, 4]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

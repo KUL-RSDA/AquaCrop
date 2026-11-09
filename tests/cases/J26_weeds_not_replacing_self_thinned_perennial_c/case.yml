@@ -1,0 +1,40 @@
+id: J26_weeds_not_replacing_self_thinned_perennial_c
+desc: >
+  weeds not replacing self-thinned perennial canopy.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_weedadj0.MAN
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: J26
+  type: PRM
+  desc: "J26 - weeds not replacing self-thinned perennial canopy"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_weedadj0.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

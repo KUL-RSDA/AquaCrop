@@ -1,0 +1,56 @@
+id: C03_perennial_forage_by_gdd__single_run
+desc: >
+  perennial forage by GDD, single run.
+  Crop AlfOttawaGDD.CRO (GDD mode, Tbase 5.0 / Tupper 30.0 degC),
+  climate Ottawa.Tnx, 2014-05-21 to 2014-10-31, GDD method 3.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - AlfOttawaGDD.CRO
+  - Ottawa.Tnx
+
+project:
+  name: C03
+  desc: "C03 - perennial forage by GDD, single run"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    21: "      3         : Default method for the calculation of growing degree days"
+
+# Daily output 2 carries the GD column (run.f90:4124).
+daily: [2]
+particular: []
+aggregate: 0
+
+# Checked against runner/gdd_check.py, independently of the frozen reference.
+expect_gdd:
+  tnx: Ottawa.Tnx
+  tbase: 5.0
+  tupper: 30.0
+  method: 3
+
+predict:
+  cycle_mode: GDD
+  gdd_target: 1920.0
+  season_gdd_total: 1802.6
+  matures_on: never within the window
+
+rtol: 1.0e-3

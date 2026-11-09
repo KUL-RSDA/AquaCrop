@@ -1,0 +1,36 @@
+id: O17_intermediate_results_aggregated_per_decade
+desc: >
+  intermediate results aggregated per decade.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: O17
+  desc: "O17 - intermediate results aggregated per decade"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1]
+particular: []
+aggregate: 2
+rtol: 1.0e-3

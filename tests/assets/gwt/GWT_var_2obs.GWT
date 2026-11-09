@@ -1,0 +1,11 @@
+variable water table, two observations
+     7.3   : AquaCrop Version
+     2     : variable groundwater table
+     1     : first day of observations
+     1     : first month of observations
+  1901     : first year of observations (1901 if not linked to a specific year)
+
+   Day    Depth (m)    ECw (dS/m)
+====================================
+      1      2.00          0.0
+    300      1.00          0.0

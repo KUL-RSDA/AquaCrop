@@ -1,0 +1,43 @@
+id: I24_net_irrigation_requirement_at_100___raw
+desc: >
+  net irrigation requirement at 100 % RAW.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is IRR_inet_100.IRR.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - IRR_inet_100.IRR
+
+project:
+  name: I24
+  desc: "I24 - net irrigation requirement at 100 % RAW"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_inet_100.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+
+# Inet reports a requirement, not applied water -- see O2.
+skip_invariants: [surface_balance, daily_soil_balance,
+                  daily_surface_balance]

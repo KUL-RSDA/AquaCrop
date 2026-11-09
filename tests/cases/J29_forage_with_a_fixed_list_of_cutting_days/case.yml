@@ -1,0 +1,39 @@
+id: J29_forage_with_a_fixed_list_of_cutting_days
+desc: >
+  forage with a fixed list of cutting days.
+  AlfOttawaGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is MAN_cuts_list.MAN.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - AlfOttawaGDD.CRO
+  - MAN_cuts_list.MAN
+
+project:
+  name: J29
+  desc: "J29 - forage with a fixed list of cutting days"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_cuts_list.MAN
+
+daily: [2]
+particular: [1]
+aggregate: 0
+rtol: 1.0e-3

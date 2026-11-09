@@ -1,0 +1,38 @@
+id: S18_full_mulch_cover_suppressing_evaporation
+desc: >
+  full mulch cover suppressing evaporation.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - MAN_mulch100.MAN
+
+project:
+  name: S18
+  desc: "S18 - full mulch cover suppressing evaporation"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_mulch100.MAN
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

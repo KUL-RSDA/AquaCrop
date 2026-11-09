@@ -1,0 +1,53 @@
+id: F38_impermeable_last_horizon__the_layi____nrsoil
+desc: >
+  impermeable last horizon: the layi == NrSoilLayers exit.
+  Soil PEN_zero_last.SOL (2 horizon(s), 1.50 m),
+  maize Zrmax 3.00 m, Ottawa 2014 season.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - PEN_zero_last.SOL
+
+project:
+  name: F38
+  desc: "F38 - impermeable last horizon: the layi == NrSoilLayers exit"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: PEN_zero_last.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     3.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B6 restrictive, Soil_RootMax <= TotDepth: no adjustment"
+  total_depth: 1.2
+  soil_rootmax: 0.6
+  salt_cells: [2]
+  thicknesses: [0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+
+rtol: 1.0e-3

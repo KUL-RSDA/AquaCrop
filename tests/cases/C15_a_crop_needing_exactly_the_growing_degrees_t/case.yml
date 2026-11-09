@@ -1,0 +1,42 @@
+id: C15_a_crop_needing_exactly_the_growing_degrees_t
+desc: >
+  a crop needing exactly the growing degrees the season provides.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: C15
+  desc: "C15 - a crop needing exactly the growing degrees the season provides"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    10: "      1332      : Total length of crop cycle in growing degree-days"
+    72: "      1332      : GDDays: from sowing to maturity (length of crop cycle)"
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

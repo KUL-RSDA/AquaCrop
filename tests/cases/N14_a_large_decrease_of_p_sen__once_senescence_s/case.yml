@@ -1,0 +1,41 @@
+id: N14_a_large_decrease_of_p_sen__once_senescence_s
+desc: >
+  a large decrease of p(sen) once senescence starts.
+  MaizeGDD.CRO on Ottawa.SOL, climate Sparse, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Sparse.CLI
+  - Sparse.PLU
+
+project:
+  name: N14
+  desc: "N14 - a large decrease of p(sen) once senescence starts"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Sparse.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Sparse.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    11: "    30      : Decrease of p(sen) once early canopy senescence is triggered (% of p(sen))"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

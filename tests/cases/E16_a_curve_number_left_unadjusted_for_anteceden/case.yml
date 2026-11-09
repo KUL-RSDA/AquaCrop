@@ -1,0 +1,41 @@
+id: E16_a_curve_number_left_unadjusted_for_anteceden
+desc: >
+  a curve number left unadjusted for antecedent moisture.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: E16
+  desc: "E16 - a curve number left unadjusted for antecedent moisture"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+
+patch:
+  Ottawa.PPn:
+    15: "     0      : CN is adjusted to Antecedent Moisture Class"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

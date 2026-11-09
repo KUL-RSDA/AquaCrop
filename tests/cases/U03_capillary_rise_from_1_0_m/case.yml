@@ -1,0 +1,40 @@
+id: U03_capillary_rise_from_1_0_m
+desc: >
+  capillary rise from 1.0 m.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - GWT_const_1p0.GWT
+  - SW0_atWP.SW0
+
+project:
+  name: U03
+  desc: "U03 - capillary rise from 1.0 m"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: GWT_const_1p0.GWT
+      sw0: SW0_atWP.SW0
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

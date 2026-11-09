@@ -1,0 +1,40 @@
+id: N18a_cn_adjustment_over_the_top_0_10_m
+desc: >
+  CN adjustment over the top 0.10 m.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: N18a
+  desc: "N18a - CN adjustment over the top 0.10 m"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    14: "   0.1      : Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

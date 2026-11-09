@@ -1,0 +1,45 @@
+id: P12_aeration_stress_reaching_full_effect
+desc: >
+  aeration stress reaching full effect.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - SW0_atSAT.SW0
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: P12
+  desc: "P12 - aeration stress reaching full effect"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      sw0: SW0_atSAT.SW0
+
+patch:
+  MaizeGDD.CRO:
+    20: "         1      : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)"
+  Ottawa.PPn:
+    9: "     1      : Number of days after which deficient aeration is fully effective"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

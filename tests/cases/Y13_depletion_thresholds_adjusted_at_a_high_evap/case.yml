@@ -1,0 +1,37 @@
+id: Y13_depletion_thresholds_adjusted_at_a_high_evap
+desc: >
+  depletion thresholds adjusted at a high evaporative demand.
+  MaizeGDD.CRO on Ottawa.SOL, climate EtoHigh, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - EtoHigh.CLI
+  - EtoHigh.ETo
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: Y13
+  desc: "Y13 - depletion thresholds adjusted at a high evaporative demand"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: EtoHigh.CLI
+      tnx: Ottawa.Tnx
+      eto: EtoHigh.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

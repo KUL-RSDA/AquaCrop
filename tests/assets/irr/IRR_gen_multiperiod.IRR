@@ -1,0 +1,13 @@
+generate with the threshold changing mid-season
+   7.2   : AquaCrop Version
+   1     : Sprinkler irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   2     : Generate irrigation schedule
+   3     : Time criterion
+   1     : Depth criterion
+
+  From day    Depleted RAW (%)   Back to FC (+/- mm)       ECw (dS/m)
+=========================================================================
+          1             20                   0                0.0
+         45             60                   0                0.0
+         90             40                   0                0.0

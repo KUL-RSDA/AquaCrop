@@ -1,0 +1,39 @@
+id: V08_salt_washed_down_the_profile_by_heavy_rain
+desc: >
+  salt washed down the profile by heavy rain.
+  MaizeGDD.CRO on Ottawa.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece8.SW0
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: V08
+  desc: "V08 - salt washed down the profile by heavy rain"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece8.SW0
+
+daily: [1, 4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

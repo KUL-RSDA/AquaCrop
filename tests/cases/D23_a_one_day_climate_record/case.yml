@@ -1,0 +1,38 @@
+id: D23_a_one_day_climate_record
+desc: >
+  a one-day climate record.
+  MaizeCalwpy.CRO on Ottawa.SOL, climate OneDay, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeCalwpy.CRO
+  - MaunaLoa.CO2
+  - OneDay.CLI
+  - OneDay.ETo
+  - OneDay.PLU
+  - OneDay.Tnx
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: D23
+  desc: "D23 - a one-day climate record"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: OneDay.CLI
+      tnx: OneDay.Tnx
+      eto: OneDay.ETo
+      plu: OneDay.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeCalwpy.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "after the end of the climate file"

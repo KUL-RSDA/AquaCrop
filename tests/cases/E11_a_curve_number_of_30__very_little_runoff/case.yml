@@ -1,0 +1,37 @@
+id: E11_a_curve_number_of_30__very_little_runoff
+desc: >
+  a curve number of 30: very little runoff.
+  MaizeGDD.CRO on CN30.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - CN30.SOL
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: E11
+  desc: "E11 - a curve number of 30: very little runoff"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: CN30.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,37 @@
+id: P08_air_above_40_degc__heat_stress_on_pollinatio
+desc: >
+  air above 40 degC: heat stress on pollination.
+  MaizeGDD.CRO on Ottawa.SOL, climate Hot, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Hot.CLI
+  - Hot.Tnx
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: P08
+  desc: "P08 - air above 40 degC: heat stress on pollination"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Hot.CLI
+      tnx: Hot.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

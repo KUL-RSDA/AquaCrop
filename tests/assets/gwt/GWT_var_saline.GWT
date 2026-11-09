@@ -1,0 +1,12 @@
+variable water table with varying salinity
+     7.3   : AquaCrop Version
+     2     : variable groundwater table
+     1     : first day of observations
+     1     : first month of observations
+  1901     : first year of observations (1901 if not linked to a specific year)
+
+   Day    Depth (m)    ECw (dS/m)
+====================================
+      1      1.50          1.0
+    120      0.90          3.0
+    300      1.80          1.0

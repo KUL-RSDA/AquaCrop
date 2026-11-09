@@ -1,0 +1,38 @@
+id: O09_daily_output_8_only__irrigation_events
+desc: >
+  daily output 8 only: irrigation events.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - IRR_manual_dense.IRR
+
+project:
+  name: O09
+  desc: "O09 - daily output 8 only: irrigation events"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_manual_dense.IRR
+
+daily: [8]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

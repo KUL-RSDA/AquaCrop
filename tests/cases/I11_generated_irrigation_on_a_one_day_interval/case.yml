@@ -1,0 +1,39 @@
+id: I11_generated_irrigation_on_a_one_day_interval
+desc: >
+  generated irrigation on a one-day interval.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dry, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - IRR_gen_fixint1.IRR
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: I11
+  desc: "I11 - generated irrigation on a one-day interval"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_gen_fixint1.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,41 @@
+id: W28_a_transplanted_crop_whose_seedlings_already
+desc: >
+  a transplanted crop whose seedlings already cover the ground.
+  TuberLongLag.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - TuberLongLag.CRO
+
+project:
+  name: W28
+  desc: "W28 - a transplanted crop whose seedlings already cover the ground"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: TuberLongLag.CRO
+      sol: Ottawa.SOL
+
+patch:
+  TuberLongLag.CRO:
+    43: "     25.00      : Soil surface covered by an individual seedling at 90 % emergence (cm2)"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,37 @@
+id: SW12_veg_0610
+desc: >
+  Sweep SW12: veg sown 2014-06-10.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - veg.CRO
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+
+project:
+  name: SW12_veg_0610
+  desc: "SW12 - veg sown 2014-06-10"
+  runs:
+    - year: 1
+      sim: [2014-06-10, 2014-10-31]
+      crop: [2014-06-10, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: veg.CRO
+      sol: Ottawa.SOL
+
+# sweeps take season output only; the invariants still run on every one
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

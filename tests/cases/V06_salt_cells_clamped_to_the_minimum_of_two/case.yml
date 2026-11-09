@@ -1,0 +1,39 @@
+id: V06_salt_cells_clamped_to_the_minimum_of_two
+desc: >
+  salt cells clamped to the minimum of two.
+  MaizeGDD.CRO on KSAT_3000.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_3000.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - SalineSoil.SW0
+
+project:
+  name: V06
+  desc: "V06 - salt cells clamped to the minimum of two"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_3000.SOL
+      sw0: SalineSoil.SW0
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

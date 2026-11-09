@@ -1,0 +1,38 @@
+id: D19_a_simulation_period_starting_before_the_reco
+desc: >
+  a simulation period starting before the record.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2013-11-01 to 2014-08-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D19
+  desc: "D19 - a simulation period starting before the record"
+  runs:
+    - year: 1
+      sim: [2013-11-01, 2014-08-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "before the start of the climate"

@@ -1,0 +1,39 @@
+id: D27_a_simulation_year_past_the_end_of_the_co2_re
+desc: >
+  a simulation year past the end of the CO2 record.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - ShortCO2.CO2
+
+project:
+  name: D27
+  type: PRM
+  desc: "D27 - a simulation year past the end of the CO2 record"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: ShortCO2.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

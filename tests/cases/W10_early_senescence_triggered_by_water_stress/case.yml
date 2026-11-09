@@ -1,0 +1,42 @@
+id: W10_early_senescence_triggered_by_water_stress
+desc: >
+  early senescence triggered by water stress.
+  MaizeGDD.CRO on Ottawa.SOL, climate Sparse, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Sparse.CLI
+  - Sparse.PLU
+
+project:
+  name: W10
+  desc: "W10 - early senescence triggered by water stress"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Sparse.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Sparse.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    11: "      0.10      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold"
+    12: "      0.20      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

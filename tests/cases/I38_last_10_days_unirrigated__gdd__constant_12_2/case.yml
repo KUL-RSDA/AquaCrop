@@ -1,0 +1,39 @@
+id: I38_last_10_days_unirrigated__gdd__constant_12_2
+desc: >
+  last 10 days unirrigated, GDD, constant 12/28 degC.
+  MaizeGDD.CRO on Ottawa.SOL, climate DryConst, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.PLU
+  - DryConst.CLI
+  - Eto5.ETo
+  - IRR_gen_lastday10.IRR
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - OttawaConst.Tnx
+
+project:
+  name: I38
+  desc: "I38 - last 10 days unirrigated, GDD, constant 12/28 degC"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: DryConst.CLI
+      tnx: OttawaConst.Tnx
+      eto: Eto5.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_gen_lastday10.IRR
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

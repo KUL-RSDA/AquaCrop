@@ -1,0 +1,41 @@
+id: U07_no_rise_into_compartments_already_above_the
+desc: >
+  no rise into compartments already above the threshold.
+  MaizeGDD.CRO on Ottawa.SOL, climate Wet, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - GWT_const_0p4.GWT
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_atFC.SW0
+  - Wet.CLI
+  - Wet.PLU
+
+project:
+  name: U07
+  desc: "U07 - no rise into compartments already above the threshold"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Wet.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Wet.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: GWT_const_0p4.GWT
+      sw0: SW0_atFC.SW0
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

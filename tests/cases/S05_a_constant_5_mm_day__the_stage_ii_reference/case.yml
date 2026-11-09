@@ -1,0 +1,37 @@
+id: S05_a_constant_5_mm_day__the_stage_ii_reference
+desc: >
+  a constant 5 mm/day, the stage-II reference demand.
+  MaizeGDD.CRO on Ottawa.SOL, climate Eto5, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Eto5.CLI
+  - Eto5.ETo
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: S05
+  desc: "S05 - a constant 5 mm/day, the stage-II reference demand"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Eto5.CLI
+      tnx: Ottawa.Tnx
+      eto: Eto5.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

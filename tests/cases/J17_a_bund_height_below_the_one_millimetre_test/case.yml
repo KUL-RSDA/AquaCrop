@@ -1,0 +1,39 @@
+id: J17_a_bund_height_below_the_one_millimetre_test
+desc: >
+  a bund height below the one-millimetre test.
+  MaizeGDD.CRO on Ottawa.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_bund_tiny.MAN
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: J17
+  desc: "J17 - a bund height below the one-millimetre test"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_bund_tiny.MAN
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

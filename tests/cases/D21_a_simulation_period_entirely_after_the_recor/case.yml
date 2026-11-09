@@ -1,0 +1,38 @@
+id: D21_a_simulation_period_entirely_after_the_recor
+desc: >
+  a simulation period entirely after the record.
+  MaizeCalwpy.CRO on Ottawa.SOL, climate Ottawa, 2018-05-21 to 2018-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeCalwpy.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D21
+  desc: "D21 - a simulation period entirely after the record"
+  runs:
+    - year: 1
+      sim: [2018-05-21, 2018-10-31]
+      crop: [2018-05-21, 2018-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeCalwpy.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "after the end of the climate file"

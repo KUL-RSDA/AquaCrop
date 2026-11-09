@@ -1,0 +1,36 @@
+id: R15_rainfall_exceeding_the_layer_1_infiltration
+desc: >
+  rainfall exceeding the layer-1 infiltration rate.
+  MaizeGDD.CRO on KSAT_5.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: R15
+  desc: "R15 - rainfall exceeding the layer-1 infiltration rate"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

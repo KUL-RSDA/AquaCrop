@@ -1,0 +1,39 @@
+id: SW06_ece2_rainfed
+desc: >
+  Sweep SW06: ece2 with rainfed.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - SW0_ece2.SW0
+
+project:
+  name: SW06_ece2_rainfed
+  desc: "SW06 - ece2 with rainfed"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece2.SW0
+
+# sweeps take season output only; the invariants still run on every one
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

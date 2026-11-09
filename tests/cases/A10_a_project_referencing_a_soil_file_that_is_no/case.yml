@@ -1,0 +1,38 @@
+id: A10_a_project_referencing_a_soil_file_that_is_no
+desc: >
+  a project referencing a soil file that is not there.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: A10
+  type: PRM
+  desc: "A10 - a project referencing a soil file that is not there"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ghost.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+expect_exit: 0
+rtol: 1.0e-3

@@ -1,0 +1,44 @@
+id: U12_capillary_rise_with_a_doubled_gradient_shape
+desc: >
+  capillary rise with a doubled gradient shape factor.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - GWT_const_1p0.GWT
+  - SW0_atWP.SW0
+
+project:
+  name: U12
+  desc: "U12 - capillary rise with a doubled gradient shape factor"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      gwt: GWT_const_1p0.GWT
+      sw0: SW0_atWP.SW0
+
+patch:
+  Ottawa.PPn:
+    18: "    32      : Shape factor for effect of soil water content gradient on capillary rise"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

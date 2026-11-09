@@ -1,0 +1,41 @@
+id: SW05_plain_IRR_gen_fixint
+desc: >
+  Sweep SW05: plain with IRR_gen_fixint.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Maize_EUirr_GDD.CRO
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - IRR_gen_fixint.IRR
+  - MAN_plain.MAN
+
+project:
+  name: SW05_plain_IRR_gen_fixint
+  desc: "SW05 - plain with IRR_gen_fixint"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: Maize_EUirr_GDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_gen_fixint.IRR
+      man: MAN_plain.MAN
+
+# sweeps take season output only; the invariants still run on every one
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

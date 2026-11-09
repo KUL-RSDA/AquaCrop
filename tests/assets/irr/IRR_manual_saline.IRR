@@ -1,0 +1,15 @@
+manual schedule with saline water, ECw 4 dS/m
+   7.2   : AquaCrop Version
+   1     : Sprinkler irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   1     : Irrigation schedule
+      -9 : Day 1 is first day of growing period
+   Day    Depth (mm)   ECw (dS/m)
+====================================
+      30        25         4.0
+      45        25         4.0
+      60        25         4.0
+      75        25         4.0
+      90        25         4.0
+     105        25         4.0
+     120        25         4.0

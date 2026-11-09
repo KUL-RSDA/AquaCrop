@@ -1,0 +1,40 @@
+id: E10_cn_not_adjusted_to_antecedent_moisture_class
+desc: >
+  CN not adjusted to antecedent moisture class.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: E10
+  desc: "E10 - CN not adjusted to antecedent moisture class"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    15: "     0      : CN is adjusted to Antecedent Moisture Class"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,38 @@
+id: O20_monthly_aggregation_across_a_calendar_year_b
+desc: >
+  monthly aggregation across a calendar-year boundary.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-11-01 to 2015-03-31.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: O20
+  type: PRM
+  desc: "O20 - monthly aggregation across a calendar-year boundary"
+  runs:
+    - year: 1
+      sim: [2014-11-01, 2015-03-31]
+      crop: [2014-11-01, 2015-03-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1]
+particular: []
+aggregate: 3
+rtol: 1.0e-3

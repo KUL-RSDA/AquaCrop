@@ -1,0 +1,39 @@
+id: J27_mulch_and_fertility_stress_together
+desc: >
+  mulch and fertility stress together.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is MAN_mulch_fert.MAN.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - MAN_mulch_fert.MAN
+
+project:
+  name: J27
+  desc: "J27 - mulch and fertility stress together"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_mulch_fert.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

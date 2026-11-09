@@ -1,0 +1,43 @@
+id: S25_salt_concentrated_past_its_solubility_limit
+desc: >
+  salt concentrated past its solubility limit.
+  MaizeGDD.CRO on Ottawa.SOL, climate EtoHigh, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - EtoHigh.CLI
+  - EtoHigh.ETo
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece16.SW0
+
+project:
+  name: S25
+  desc: "S25 - salt concentrated past its solubility limit"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: EtoHigh.CLI
+      tnx: Ottawa.Tnx
+      eto: EtoHigh.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece16.SW0
+
+patch:
+  Ottawa.PPn:
+    17: "    50      : Salt solubility [g/liter]"
+
+daily: [1, 4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,14 @@
+Intermediate results: None created
+
+Daily output results:
+1. - soil water balance
+2. - crop development and production
+
+Particular results: None created
+
+Projects handled:
+WARNING: run 1 of the project names ./DATA/Ghost.CRO, which does not exist.
+       1. - A09.PRM : Project NOT loaded - Missing Environment and/or Simulation file(s) in Run number 1:
+               Crop (CRO),
+          - Check file Name(s), Path(s) or Structure of project file.
+WARNING: A09.PRM is not loaded and is skipped.

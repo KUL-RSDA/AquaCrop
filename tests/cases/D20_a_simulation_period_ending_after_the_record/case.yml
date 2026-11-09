@@ -1,0 +1,38 @@
+id: D20_a_simulation_period_ending_after_the_record
+desc: >
+  a simulation period ending after the record.
+  MaizeCalwpy.CRO on Ottawa.SOL, climate Ottawa, 2016-10-01 to 2017-02-15.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeCalwpy.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D20
+  desc: "D20 - a simulation period ending after the record"
+  runs:
+    - year: 1
+      sim: [2016-10-01, 2017-02-15]
+      crop: [2016-10-01, 2017-02-15]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeCalwpy.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "after the end of the climate file"

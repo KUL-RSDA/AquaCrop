@@ -1,0 +1,41 @@
+id: P03_a_low_p_sen_threshold__senescence_triggered
+desc: >
+  a low p-sen threshold: senescence triggered early.
+  MaizeGDD.CRO on Ottawa.SOL, climate Sparse, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Sparse.CLI
+  - Sparse.PLU
+
+project:
+  name: P03
+  desc: "P03 - a low p-sen threshold: senescence triggered early"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Sparse.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Sparse.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    16: "      0.30      : Soil water depletion factor for canopy senescence (p - sen) - Upper threshold"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

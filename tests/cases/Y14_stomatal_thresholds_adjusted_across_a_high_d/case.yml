@@ -1,0 +1,42 @@
+id: Y14_stomatal_thresholds_adjusted_across_a_high_d
+desc: >
+  stomatal thresholds adjusted across a high demand season.
+  MaizeGDD.CRO on Ottawa.SOL, climate EtoHigh, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - EtoHigh.CLI
+  - EtoHigh.ETo
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: Y14
+  desc: "Y14 - stomatal thresholds adjusted across a high demand season"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: EtoHigh.CLI
+      tnx: Ottawa.Tnx
+      eto: EtoHigh.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    11: "      0.15      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold"
+    12: "      0.65      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,37 @@
+id: X12_the_harvest_index_of_a_tuber_crop
+desc: >
+  the harvest index of a tuber crop.
+  tuber.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - tuber.CRO
+
+project:
+  name: X12
+  desc: "X12 - the harvest index of a tuber crop"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: tuber.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

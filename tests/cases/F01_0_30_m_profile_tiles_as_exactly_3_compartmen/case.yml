@@ -1,0 +1,53 @@
+id: F01_0_30_m_profile_tiles_as_exactly_3_compartmen
+desc: >
+  0.30 m profile tiles as exactly 3 compartments.
+  Soil GEOM_0p30m.SOL (1 horizon(s), 0.30 m),
+  maize Zrmax 0.30 m, Ottawa 2014 season.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - GEOM_0p30m.SOL
+
+project:
+  name: F01
+  desc: "F01 - 0.30 m profile tiles as exactly 3 compartments"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: GEOM_0p30m.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     0.30      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 3
+predict:
+  branch: "B3 Zrx <= TotDepth: no adjustment"
+  total_depth: 0.3
+  soil_rootmax: 0.3
+  salt_cells: [2]
+  thicknesses: [0.10, 0.10, 0.10]
+
+rtol: 1.0e-3

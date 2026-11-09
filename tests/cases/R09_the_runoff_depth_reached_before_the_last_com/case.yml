@@ -1,0 +1,41 @@
+id: R09_the_runoff_depth_reached_before_the_last_com
+desc: >
+  the runoff depth reached before the last compartment.
+  MaizeGDD.CRO on Ottawa.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: R09
+  desc: "R09 - the runoff depth reached before the last compartment"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    14: "  0.10      : Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,39 @@
+id: P14_water_and_salinity_stress_together
+desc: >
+  water and salinity stress together.
+  MaizeSalinity.CRO on Ottawa.SOL, climate Sparse, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeSalinity.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - SW0_ece8.SW0
+  - Sparse.CLI
+  - Sparse.PLU
+
+project:
+  name: P14
+  desc: "P14 - water and salinity stress together"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Sparse.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Sparse.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeSalinity.CRO
+      sol: Ottawa.SOL
+      sw0: SW0_ece8.SW0
+
+daily: [2, 4]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

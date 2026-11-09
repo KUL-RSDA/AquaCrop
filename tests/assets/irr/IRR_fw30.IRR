@@ -1,0 +1,9 @@
+manual schedule wetting 30 % of the surface
+   7.2   : AquaCrop Version
+   1     : Sprinkler irrigation
+  30     : Percentage of soil surface wetted by irrigation
+   1     : Irrigation schedule
+      -9 : Day 1 is first day of growing period
+   Day    Depth (mm)   ECw (dS/m)
+====================================
+      30        20         0.0

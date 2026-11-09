@@ -1,0 +1,15 @@
+manual schedule, 7 events of 25 mm
+   7.2   : AquaCrop Version
+   1     : Sprinkler irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   1     : Irrigation schedule
+      -9 : Day 1 is first day of growing period
+   Day    Depth (mm)   ECw (dS/m)
+====================================
+      30        25         0.0
+      45        25         0.0
+      60        25         0.0
+      75        25         0.0
+      90        25         0.0
+     105        25         0.0
+     120        25         0.0

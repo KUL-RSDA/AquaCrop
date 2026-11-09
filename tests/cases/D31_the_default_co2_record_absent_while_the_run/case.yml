@@ -1,0 +1,38 @@
+id: D31_the_default_co2_record_absent_while_the_run
+desc: >
+  the default CO2 record absent while the run names its own.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014 onwards.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - FlatCO2.CO2
+  - MaizeGDD.CRO
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D31
+  type: PRM
+  desc: "D31 - the default CO2 record absent while the run names its own"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: FlatCO2.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

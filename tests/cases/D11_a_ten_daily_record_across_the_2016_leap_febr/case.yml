@@ -1,0 +1,37 @@
+id: D11_a_ten_daily_record_across_the_2016_leap_febr
+desc: >
+  a ten-daily record across the 2016 leap February.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate LeapDec, 2016-01-15 to 2016-10-31.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - LeapDec.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - OttawaDec.ETo
+  - OttawaDec.PLU
+
+project:
+  name: D11
+  desc: "D11 - a ten-daily record across the 2016 leap February"
+  runs:
+    - year: 1
+      sim: [2016-01-15, 2016-10-31]
+      crop: [2016-05-21, 2016-10-31]
+      cli: LeapDec.CLI
+      tnx: Ottawa.Tnx
+      eto: OttawaDec.ETo
+      plu: OttawaDec.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

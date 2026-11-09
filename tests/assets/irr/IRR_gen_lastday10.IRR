@@ -1,0 +1,12 @@
+generate 6 mm every day, none in the last 10 days
+   7.3   : AquaCrop Version
+   1     : Sprinkler irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   2     : Generate irrigation schedule
+   1     : Time criterion
+   0     : Depth criterion
+  10     : Last irrigation event 10 days before the end of the crop cycle
+
+  From day    Depleted RAW (%)   Back to FC (+/- mm)       ECw (dS/m)
+=========================================================================
+          1              1                   6                0.0

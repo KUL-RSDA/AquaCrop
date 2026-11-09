@@ -1,0 +1,9 @@
+silty clay loam - soil class 4, Ksat 150 mm/day
+        7.3                 : AquaCrop Version (January 2026)
+       61                   : CN (Curve Number)
+        9                   : Readily evaporable water from top layer (mm)
+        1                   : number of soil horizons
+       -9                   : variable no longer applicable
+  Thickness  Sat   FC    WP     Ksat   Penetrability  Gravel  CRa       CRb           description
+  ---(m)-   ----(vol %)-----  (mm/day)      (%)        (%)    -----------------------------------------
+    3.00    52.0  44.0  23.0   150.0        100          0     -0.516600  1.622512   silty_clay_loam

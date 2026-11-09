@@ -1,0 +1,13 @@
+Ottawa - mildly saline profile (ECe 1.0 dS/m) at field capacity
+    7.2   : AquaCrop Version (August 2024)
+   -9.00  : initial canopy cover that can be reached without water stress will be used as default
+    0.000 : biomass (ton/ha) produced before the start of the simulation period
+   -9.00  : initial effective rooting depth that can be reached without water stress will be used as default
+    0.0   : water layer (mm) stored between soil bunds (if present)
+    0.00  : electrical conductivity (dS/m) of water layer stored between soil bunds (if present)
+    0     : soil water content specified for soil layers
+    1     : number of soil layers considered
+
+     Thickness (m)      Water content (vol%)     ECe (dS/m)
+==============================================================
+         1.50                29.00                  1.00

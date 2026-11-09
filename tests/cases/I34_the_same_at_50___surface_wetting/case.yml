@@ -1,0 +1,39 @@
+id: I34_the_same_at_50___surface_wetting
+desc: >
+  the same at 50 % surface wetting.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is IrriGenFw.IRR.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - IrriGenFw.IRR
+
+project:
+  name: I34
+  desc: "I34 - the same at 50 % surface wetting"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IrriGenFw.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

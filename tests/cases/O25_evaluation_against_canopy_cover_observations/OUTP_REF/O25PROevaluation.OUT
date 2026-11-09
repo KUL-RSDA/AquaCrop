@@ -1,0 +1,35 @@
+AquaCrop 7.3 (September 2026) - Output created on (date) : 19-10-2026   at (time) : 13:14:35
+Evaluation of simulation results - Statistics
+
+
+  ASSESSMENT OF CANOPY COVER --------------------------------------
+              --------- Canopy Cover (%) ---------
+    Nr        Observed    +/- St Dev     Simulated    Date
+  ----------------------------------------------------------------
+     1          12.0           2.0           1.9      30 May 2014
+     2          48.0           5.0          83.5      19 June 2014
+     3          88.0           4.0          92.2       9 July 2014
+     4          92.0           3.0          92.2       8 August 2014
+     5          61.0           8.0          54.8       7 September 2014
+
+  Valid observations/simulations sets (n) ....... :     5
+  Average of observed Canopy Cover .............. :    60.2   %
+  Average of simulated Canopy Cover ............. :    64.9   %
+
+  Pearson Correlation Coefficient (r) ........... :     0.88
+  Root mean square error (RMSE) ................. :    16.8   % CC
+  Normalized root mean square error  CV(RMSE).... :    28.0   %
+  Nash-Sutcliffe model efficiency coefficient (EF):     0.67
+  Willmotts index of agreement (d) .............. :     0.93
+  ----------------------------------------------------------------
+
+
+  ASSESSMENT OF BIOMASS PRODUCTION --------------------------------
+  No statistic analysis (insufficient data)
+  ----------------------------------------------------------------
+
+
+  ASSESSMENT OF SOIL WATER CONTENT --------------------------------
+  No statistic analysis (insufficient data)
+  ----------------------------------------------------------------
+

@@ -1,0 +1,38 @@
+id: V07_a_different_salt_cell_count_in_each_horizon
+desc: >
+  a different salt-cell count in each horizon.
+  MaizeGDD.CRO on KSAT_mixed.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_mixed.SOL
+  - MaizeGDD.CRO
+  - SalineSoil.SW0
+
+project:
+  name: V07
+  desc: "V07 - a different salt-cell count in each horizon"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_mixed.SOL
+      sw0: SalineSoil.SW0
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

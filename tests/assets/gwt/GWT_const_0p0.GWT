@@ -1,0 +1,7 @@
+water table exactly at the soil surface
+     7.3   : AquaCrop Version
+     1     : constant groundwater table
+
+   Day    Depth (m)    ECw (dS/m)
+====================================
+      1      0.00          0.0

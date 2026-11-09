@@ -1,0 +1,38 @@
+id: D17_a_year_agnostic_record_with_a_project_dated
+desc: >
+  a year-agnostic record with a project dated in 1901 to match.
+  MaizeGDD.CRO on Ottawa.SOL, climate Agnostic1y, 1901-05-21 to 1901-10-31.
+tier: T2
+
+stage:
+  - Agnostic1y.CLI
+  - Agnostic1y.ETo
+  - Agnostic1y.PLU
+  - Agnostic1y.Tnx
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: D17
+  type: PRM
+  desc: "D17 - a year-agnostic record with a project dated in 1901 to match"
+  runs:
+    - year: 1
+      sim: [1901-05-21, 1901-10-31]
+      crop: [1901-05-21, 1901-10-31]
+      cli: Agnostic1y.CLI
+      tnx: Agnostic1y.Tnx
+      eto: Agnostic1y.ETo
+      plu: Agnostic1y.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,36 @@
+id: S02_a_short_stage_i__rew_3_mm
+desc: >
+  a short stage I: REW 3 mm.
+  MaizeGDD.CRO on REW_3.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - REW_3.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: S02
+  desc: "S02 - a short stage I: REW 3 mm"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: REW_3.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,38 @@
+id: Y04_fertility_stress_above_the_crop_calibration
+desc: >
+  fertility stress above the crop calibration point.
+  Maize_EUirr_GDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - Maize_EUirr_GDD.CRO
+  - MAN_fert75.MAN
+
+project:
+  name: Y04
+  desc: "Y04 - fertility stress above the crop calibration point"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: Maize_EUirr_GDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_fert75.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

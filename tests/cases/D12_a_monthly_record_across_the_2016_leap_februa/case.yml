@@ -1,0 +1,37 @@
+id: D12_a_monthly_record_across_the_2016_leap_februa
+desc: >
+  a monthly record across the 2016 leap February.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate LeapMon, 2016-01-15 to 2016-10-31.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - LeapMon.CLI
+  - LeapMon.ETo
+  - LeapMon.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D12
+  desc: "D12 - a monthly record across the 2016 leap February"
+  runs:
+    - year: 1
+      sim: [2016-01-15, 2016-10-31]
+      crop: [2016-05-21, 2016-10-31]
+      cli: LeapMon.CLI
+      tnx: Ottawa.Tnx
+      eto: LeapMon.ETo
+      plu: LeapMon.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,41 @@
+id: SW02_soil4p00_zr0p6
+desc: >
+  Sweep SW02: soil 4.00 m with Zrmax 0.60 m.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - GEOM_4p00m.SOL
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+
+project:
+  name: SW02_soil4p00_zr0p6
+  desc: "SW02 - soil 4.00 m with Zrmax 0.60 m"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: GEOM_4p00m.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     0.60      : Maximum effective rooting depth (m)"
+
+# sweeps take season output only; the invariants still run on every one
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

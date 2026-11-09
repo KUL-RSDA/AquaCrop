@@ -1,0 +1,40 @@
+id: J06_full_mulch_cover_with_no_effect_on_evaporati
+desc: >
+  full mulch cover with no effect on evaporation.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_mulch_no_effect.MAN
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: J06
+  type: PRM
+  desc: "J06 - full mulch cover with no effect on evaporation"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_mulch_no_effect.MAN
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

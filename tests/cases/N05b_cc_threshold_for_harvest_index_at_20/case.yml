@@ -1,0 +1,40 @@
+id: N05b_cc_threshold_for_harvest_index_at_20
+desc: >
+  CC threshold for harvest index at 20 %.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: N05b
+  desc: "N05b - CC threshold for harvest index at 20 %"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    3: "    20      : Threshold for green CC below which HI can no longer increase (% cover)"
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

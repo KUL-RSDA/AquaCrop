@@ -1,0 +1,53 @@
+id: F44_restrictive_horizon_inside_the_evaporation_l
+desc: >
+  restrictive horizon inside the evaporation layer.
+  Soil PEN_in_evap_layer.SOL (2 horizon(s), 1.50 m),
+  maize Zrmax 3.00 m, Ottawa 2014 season.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - PEN_in_evap_layer.SOL
+
+project:
+  name: F44
+  desc: "F44 - restrictive horizon inside the evaporation layer"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: PEN_in_evap_layer.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     3.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B5 restrictive: adjust to Soil_RootMax | step4-regrade"
+  total_depth: 1.55
+  soil_rootmax: 1.55
+  salt_cells: [2]
+  thicknesses: [0.10, 0.10, 0.10, 0.10, 0.10, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
+
+rtol: 1.0e-3

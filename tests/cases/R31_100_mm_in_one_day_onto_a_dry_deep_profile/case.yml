@@ -1,0 +1,38 @@
+id: R31_100_mm_in_one_day_onto_a_dry_deep_profile
+desc: >
+  100 mm in one day onto a dry deep profile.
+  MaizeGDD.CRO on DEFAULT.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - SW0_atWP.SW0
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: R31
+  desc: "R31 - 100 mm in one day onto a dry deep profile"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: DEFAULT.SOL
+      sw0: SW0_atWP.SW0
+
+daily: [1, 3, 5]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

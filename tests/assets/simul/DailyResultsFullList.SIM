@@ -1,0 +1,14 @@
+In the absence of the 'DailyResults.SIM' file in the 'SIMUL' subdirectory, no daily results will be provided.
+IF daily output is required, copy one or more of the lines below in a text file 'DailyResults.SIM'.
+(note that recording all daily outputs, might slow donw significantly the speed of the Plug-In program)
+
+ 1 : Various parameters of the soil water balance
+ 2 : Crop development and production
+ 3 : Soil water content in the soil profile and root zone
+ 4 : Soil salinity in the soil profile and root zone
+ 5 : Soil water content at various depths of the soil profile
+ 6 : Soil salinity at various depths of the soil profile
+ 7 : Climate input parameters
+ 8 : Irrigation events and intervals
+
+

@@ -1,0 +1,53 @@
+id: F26_deep_profile_regraded_to_3_05_m
+desc: >
+  deep profile regraded to 3.05 m.
+  Soil GEOM_4p00m.SOL (1 horizon(s), 4.00 m),
+  maize Zrmax 3.00 m, Ottawa 2014 season.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - GEOM_4p00m.SOL
+
+project:
+  name: F26
+  desc: "F26 - deep profile regraded to 3.05 m"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: GEOM_4p00m.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     3.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B4 no restrictive layer: adjust to Crop_RootMax | step4-regrade"
+  total_depth: 3.0
+  soil_rootmax: 3.0
+  salt_cells: [2]
+  thicknesses: [0.10, 0.15, 0.15, 0.20, 0.20, 0.25, 0.25, 0.30, 0.30, 0.35, 0.35, 0.40]
+
+rtol: 1.0e-3

@@ -1,0 +1,37 @@
+id: D10_ten_daily_records_starting_on_day_21_of_a_mo
+desc: >
+  ten-daily records starting on day 21 of a month.
+  MaizeGDD.CRO on Ottawa.SOL, climate Dec21, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dec21.CLI
+  - Dec21.ETo
+  - Dec21.PLU
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D10
+  desc: "D10 - ten-daily records starting on day 21 of a month"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dec21.CLI
+      tnx: Ottawa.Tnx
+      eto: Dec21.ETo
+      plu: Dec21.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

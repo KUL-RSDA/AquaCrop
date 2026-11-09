@@ -1,0 +1,43 @@
+id: Y07_a_positive_fertility_response_of_water_produ
+desc: >
+  a positive fertility response of water productivity.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - MAN_fert50.MAN
+
+project:
+  name: Y07
+  desc: "Y07 - a positive fertility response of water productivity"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_fert50.MAN
+
+patch:
+  MaizeGDD.CRO:
+    24: "      2.00      : Shape factor for the response of crop Water Productivity to soil fertility stress"
+
+# output 2 carries CC, CCw, the stress factors, biomass, HI and yield
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

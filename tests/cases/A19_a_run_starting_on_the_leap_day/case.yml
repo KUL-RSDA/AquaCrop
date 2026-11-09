@@ -1,0 +1,38 @@
+id: A19_a_run_starting_on_the_leap_day
+desc: >
+  a run starting on the leap day.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: A19
+  type: PRM
+  desc: "A19 - a run starting on the leap day"
+  runs:
+    - year: 1
+      sim: [2016-02-29, 2016-08-31]
+      crop: [2016-02-29, 2016-08-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+expect_exit: 0
+rtol: 1.0e-3

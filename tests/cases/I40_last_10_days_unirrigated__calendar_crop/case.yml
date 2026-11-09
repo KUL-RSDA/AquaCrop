@@ -1,0 +1,39 @@
+id: I40_last_10_days_unirrigated__calendar_crop
+desc: >
+  last 10 days unirrigated, calendar crop.
+  MaizeCalwpy.CRO on Ottawa.SOL, climate DryEto5, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.PLU
+  - DryEto5.CLI
+  - Eto5.ETo
+  - IRR_gen_lastday10.IRR
+  - MaizeCalwpy.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: I40
+  desc: "I40 - last 10 days unirrigated, calendar crop"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: DryEto5.CLI
+      tnx: Ottawa.Tnx
+      eto: Eto5.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeCalwpy.CRO
+      sol: Ottawa.SOL
+      irr: IRR_gen_lastday10.IRR
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,37 @@
+id: T23_a_root_zone_spanning_two_horizons
+desc: >
+  a root zone spanning two horizons.
+  MaizeGDD.CRO on ROOTZONE_BOUNDARY.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - ROOTZONE_BOUNDARY.SOL
+
+project:
+  name: T23
+  desc: "T23 - a root zone spanning two horizons"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: ROOTZONE_BOUNDARY.SOL
+
+daily: [1, 3]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

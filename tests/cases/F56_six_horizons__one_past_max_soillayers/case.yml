@@ -1,0 +1,54 @@
+id: F56_six_horizons__one_past_max_soillayers
+desc: >
+  six horizons: one past max_SoilLayers.
+  Soil LAYERS_6.SOL (6 horizon(s), 1.50 m),
+  maize Zrmax 1.00 m, Ottawa 2014 season.
+tier: T3
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - LAYERS_6.SOL
+
+project:
+  name: F56
+  desc: "F56 - six horizons: one past max_SoilLayers"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: LAYERS_6.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     1.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B3 Zrx <= TotDepth: no adjustment"
+  total_depth: 1.2
+  soil_rootmax: 1.0
+  salt_cells: [2, 4, 6, 8]
+  thicknesses: [0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+
+rtol: 1.0e-3
+expect_error: "soil horizons, but AquaCrop can handle at most"

@@ -1,0 +1,41 @@
+id: L19_leaching_a_saline_profile_with_fresh_irrigat
+desc: >
+  leaching a saline profile with fresh irrigation.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - IRR_gen_allraw.IRR
+  - SW0_ece8.SW0
+
+project:
+  name: L19
+  desc: "L19 - leaching a saline profile with fresh irrigation"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      irr: IRR_gen_allraw.IRR
+      sw0: SW0_ece8.SW0
+
+# outputs 4 and 6: root-zone salinity and per-compartment ECe
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

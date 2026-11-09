@@ -9,6 +9,14 @@ tests/tmp*
 tests/log*.txt
 *.swp
 
+# test suite
+tests/work/
+tests/DATA/
+
+# notebook scratch
+.ipynb_checkpoints/
+tests/export/
+
 # testcase run artifacts
 testcase/aquacrop
 testcase/OUTP/*.OUT

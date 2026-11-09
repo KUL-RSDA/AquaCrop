@@ -1,0 +1,53 @@
+id: F54_three_horizons__a_coarse_lens_between_two_fi
+desc: >
+  three horizons, a coarse lens between two fine ones.
+  Soil YOLO_3L_v73.SOL (3 horizon(s), 3.00 m),
+  maize Zrmax 1.00 m, Ottawa 2014 season.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - YOLO_3L_v73.SOL
+
+project:
+  name: F54
+  desc: "F54 - three horizons, a coarse lens between two fine ones"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: YOLO_3L_v73.SOL
+
+patch:
+  MaizeGDD.CRO:
+    38: "     1.00      : Maximum effective rooting depth (m)"
+
+# Out5CompWC writes one WC column per compartment, so the daily output is what
+# makes the compartment arithmetic observable.
+daily: [3, 5]
+particular: []
+aggregate: 0
+
+# Predicted independently by tests/runner/soil_check.py, asserted by the runner.
+expect_compartments: 12
+predict:
+  branch: "B3 Zrx <= TotDepth: no adjustment"
+  total_depth: 1.2
+  soil_rootmax: 1.0
+  salt_cells: [8, 11]
+  thicknesses: [0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+
+rtol: 1.0e-3

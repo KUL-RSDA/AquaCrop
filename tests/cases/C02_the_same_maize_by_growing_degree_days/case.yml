@@ -1,0 +1,56 @@
+id: C02_the_same_maize_by_growing_degree_days
+desc: >
+  the same maize by growing degree days.
+  Crop MaizeGDDwpy.CRO (GDD mode, Tbase 8.0 / Tupper 30.0 degC),
+  climate Ottawa.Tnx, 2014-05-21 to 2014-10-31, GDD method 3.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDDwpy.CRO
+  - Ottawa.Tnx
+
+project:
+  name: C02
+  desc: "C02 - the same maize by growing degree days"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDDwpy.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    21: "      3         : Default method for the calculation of growing degree days"
+
+# Daily output 2 carries the GD column (run.f90:4124).
+daily: [2]
+particular: []
+aggregate: 0
+
+# Checked against runner/gdd_check.py, independently of the frozen reference.
+expect_gdd:
+  tnx: Ottawa.Tnx
+  tbase: 8.0
+  tupper: 30.0
+  method: 3
+
+predict:
+  cycle_mode: GDD
+  gdd_target: 1210.0
+  season_gdd_total: 1332.2
+  matures_on: 2014-09-26
+
+rtol: 1.0e-3

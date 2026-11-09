@@ -1,0 +1,41 @@
+id: SW11_ppn04
+desc: >
+  Sweep SW11: .PPn record 4 set to 60.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+
+project:
+  name: SW11_ppn04
+  desc: "SW11 - .PPn record 4 set to 60"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    4: "    60      : Starting depth of root zone expansion curve (% of Zmin)"
+
+# sweeps take season output only; the invariants still run on every one
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

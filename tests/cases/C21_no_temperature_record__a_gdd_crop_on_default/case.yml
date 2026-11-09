@@ -1,0 +1,36 @@
+id: C21_no_temperature_record__a_gdd_crop_on_default
+desc: >
+  no temperature record: a GDD crop on default air temperatures.
+  MaizeGDD.CRO on Ottawa.SOL, climate NoTnx, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - NoTnx.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: C21
+  desc: "C21 - no temperature record: a GDD crop on default air temperatures"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: NoTnx.CLI
+      tnx: (None)
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,37 @@
+id: C05_the_calendar_twin_of_the_gdd_maize__same_sea
+desc: >
+  the calendar twin of the GDD maize, same season.
+  MaizeCalwpy.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeCalwpy.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: C05
+  desc: "C05 - the calendar twin of the GDD maize, same season"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeCalwpy.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

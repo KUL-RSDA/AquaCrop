@@ -1,0 +1,39 @@
+id: J28_the_donated_21___fertility_file
+desc: >
+  the donated 21 % fertility file.
+  MaizeGDD.CRO on the Ottawa 2014 record, Ottawa.SOL, sown 2014-05-21;
+  the only variable is Ottawa2.MAN.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - Ottawa2.MAN
+
+project:
+  name: J28
+  desc: "J28 - the donated 21 % fertility file"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: Ottawa2.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

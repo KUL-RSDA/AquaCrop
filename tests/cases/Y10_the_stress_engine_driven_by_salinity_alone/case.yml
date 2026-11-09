@@ -1,0 +1,38 @@
+id: Y10_the_stress_engine_driven_by_salinity_alone
+desc: >
+  the stress engine driven by salinity alone.
+  MaizeSalinity.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeSalinity.CRO
+  - SalineSoil.SW0
+
+project:
+  name: Y10
+  desc: "Y10 - the stress engine driven by salinity alone"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeSalinity.CRO
+      sol: Ottawa.SOL
+      sw0: SalineSoil.SW0
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

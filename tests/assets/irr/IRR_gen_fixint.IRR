@@ -1,0 +1,11 @@
+generate on a fixed 7-day interval
+   7.2   : AquaCrop Version
+   1     : Sprinkler irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   2     : Generate irrigation schedule
+   1     : Time criterion
+   1     : Depth criterion
+
+  From day    Depleted RAW (%)   Back to FC (+/- mm)       ECw (dS/m)
+=========================================================================
+          1              7                   0                0.0

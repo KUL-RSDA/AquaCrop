@@ -1,0 +1,42 @@
+id: N22_default_air_temperatures_below_tbase
+desc: >
+  default air temperatures below Tbase.
+  MaizeGDD.CRO on Ottawa.SOL, climate NoTnx, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - NoTnx.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: N22
+  desc: "N22 - default air temperatures below Tbase"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: NoTnx.CLI
+      tnx: (None)
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  Ottawa.PPn:
+    19: "   2.0      : Default minimum temperature (degC) if no temperature file is specified"
+    20: "   6.0      : Default maximum temperature (degC) if no temperature file is specified"
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "temperatures in the program parameters are too low"

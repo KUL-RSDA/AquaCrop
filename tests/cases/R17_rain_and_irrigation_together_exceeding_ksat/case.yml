@@ -1,0 +1,38 @@
+id: R17_rain_and_irrigation_together_exceeding_ksat
+desc: >
+  rain and irrigation together exceeding Ksat.
+  MaizeGDD.CRO on KSAT_5.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - IRR_manual_dense.IRR
+
+project:
+  name: R17
+  desc: "R17 - rain and irrigation together exceeding Ksat"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      irr: IRR_manual_dense.IRR
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

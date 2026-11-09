@@ -1,0 +1,5 @@
+rainfed, but with an irrigation file present
+   7.2   : AquaCrop Version
+   1     : Sprinkler irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   0     : Rainfed cropping

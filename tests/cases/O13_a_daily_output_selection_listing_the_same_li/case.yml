@@ -1,0 +1,42 @@
+id: O13_a_daily_output_selection_listing_the_same_li
+desc: >
+  a daily-output selection listing the same line twice.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: O13
+  type: PRM
+  desc: "O13 - a daily-output selection listing the same line twice"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily_raw: |
+   1 : Various parameters of the soil water balance
+   1 : Various parameters of the soil water balance
+   2 : Crop development and production
+daily: []
+particular: []
+aggregate: 0
+rtol: 1.0e-3

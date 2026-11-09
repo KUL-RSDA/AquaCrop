@@ -1,0 +1,37 @@
+id: R39_sub_drainage_above_the_maximum__with_no_bund
+desc: >
+  sub-drainage above the maximum, with no bunds.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: R39
+  desc: "R39 - sub-drainage above the maximum, with no bunds"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

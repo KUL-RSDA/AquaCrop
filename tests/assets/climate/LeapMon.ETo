@@ -1,0 +1,44 @@
+Ottawa, Canada
+     3  : Monthly records (1=daily, 2=10-daily and 3=monthly data)
+     1  : First day of record (1, 11 or 21 for 10-day or 1 for months)
+     1  : First month of record
+  2014  : First year of record (1901 if not linked to a specific year)
+
+  Average ETo (mm/day)
+=======================
+    0.17
+    0.31
+    0.65
+    1.80
+    2.89
+    3.60
+    3.38
+    3.06
+    1.98
+    0.91
+    0.35
+    0.19
+    0.18
+    0.23
+    0.79
+    2.05
+    3.13
+    3.34
+    3.81
+    3.05
+    2.30
+    0.93
+    0.40
+    0.25
+    0.17
+    0.40
+    0.91
+    1.88
+    3.06
+    3.79
+    3.80
+    3.35
+    2.33
+    0.95
+    0.37
+    0.19

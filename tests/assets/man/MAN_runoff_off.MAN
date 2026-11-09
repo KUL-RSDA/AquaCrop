@@ -1,0 +1,21 @@
+surface runoff prevented by field practices
+     7.3       : AquaCrop Version (January 2026)
+     0         : percentage (%) of ground surface covered by mulches IN growing period
+    50         : effect (%) of mulches on reduction of soil evaporation
+     0         : Degree of soil fertility stress (%) - Effect is crop specific
+     0.00      : height (m) of soil bunds
+     1         : surface runoff affected by field surface practices
+    -10         : effect on CN of field surface practices
+     0         : relative cover of weeds at canopy closure (%)
+     0         : increase of relative cover of weeds in mid-season (+%)
+    -0.01      : shape factor of the CC expansion function in a weed infested field
+   100         : replacement (%) by weeds of the self-thinned part of the CC
+     0         : Multiple cuttings are not considered
+    30         : Canopy cover (%) after cutting - not considered
+    -9         : parameter no longer considered
+     1         : First day of window for multiple cuttings
+    -9         : Number of days in window for multiple cuttings
+    -9         : Timing of multiple cuttings: Not Applicable
+     0         : Time criterion: Not Applicable
+     0         : final harvest at crop maturity is not considered
+    -9         : Start of the growing cycle is Day 1 in list of cuttings

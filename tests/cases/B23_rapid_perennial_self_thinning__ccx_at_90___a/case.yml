@@ -1,0 +1,43 @@
+id: B23_rapid_perennial_self_thinning__ccx_at_90___a
+desc: >
+  rapid perennial self-thinning: CCx at 90 % after 3 years.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: B23
+  type: PRM
+  desc: "B23 - rapid perennial self-thinning: CCx at 90 % after 3 years"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  AlfOttawaGDD.CRO:
+    47: "         3      : Number of years at which CCx declines to 90 % of its value due to self-thinning"
+    48: "      1.00      : Shape factor of the decline of CCx over the years due to self-thinning"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

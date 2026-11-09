@@ -1,0 +1,39 @@
+id: D25_a_flat_co2_record_at_the_369_41_ppm_referenc
+desc: >
+  a flat CO2 record at the 369.41 ppm reference.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - FlatCO2.CO2
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D25
+  type: PRM
+  desc: "D25 - a flat CO2 record at the 369.41 ppm reference"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: FlatCO2.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

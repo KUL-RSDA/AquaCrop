@@ -1,0 +1,39 @@
+id: A08_a_project_list_naming_a_file_that_is_not_the
+desc: >
+  a project list naming a file that is not there.
+tier: T3
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: A08
+  type: PRM
+  desc: "A08 - a project list naming a file that is not there"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+list_projects: "Ghost.PRM\nA08.PRM\n"
+daily: [1]
+particular: []
+aggregate: 0
+expect_exit: 0
+rtol: 1.0e-3

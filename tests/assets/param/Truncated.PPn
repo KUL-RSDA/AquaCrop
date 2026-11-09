@@ -1,0 +1,5 @@
+      4         : Evaporation decline factor for stage II
+      1.10      : Ke(x) Soil evaporation coefficient for fully wet and non-shaded soil surface
+      5         : Threshold for green CC below which HI can no longer increase (% cover)
+     70         : Starting depth of root zone expansion curve (% of Zmin)
+      5.00      : Maximum allowable root zone expansion (fixed at 5 cm/day)

@@ -1,0 +1,48 @@
+id: D30_a_run_naming_no_co2_file_after_one_that_did
+desc: >
+  a run naming no CO2 file after one that did.
+  MaizeGDD.CRO on Ottawa.SOL, climate Ottawa, 2014 onwards.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - FlatCO2.CO2
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D30
+  type: PRM
+  desc: "D30 - a run naming no CO2 file after one that did"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: FlatCO2.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+    - year: 2
+      sim: [2015-05-21, 2015-10-31]
+      crop: [2015-05-21, 2015-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

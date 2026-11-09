@@ -1,0 +1,41 @@
+id: P10_too_few_growing_degrees_for_full_transpirati
+desc: >
+  too few growing degrees for full transpiration.
+  MaizeGDD.CRO on Ottawa.SOL, climate Cold, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - Cold.CLI
+  - Cold.Tnx
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: P10
+  desc: "P10 - too few growing degrees for full transpiration"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Cold.CLI
+      tnx: Cold.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    29: "      20.0      : Minimum growing degrees required for full crop transpiration (degC - day)"
+
+daily: [2, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

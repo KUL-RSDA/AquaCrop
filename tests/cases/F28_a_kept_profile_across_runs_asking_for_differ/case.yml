@@ -1,0 +1,50 @@
+id: F28_a_kept_profile_across_runs_asking_for_differ
+desc: >
+  a kept profile across runs asking for different depths.
+  Two runs over Ottawa 2014 and 2015; the second keeps the profile the first
+  left behind.
+tier: T1
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - GEOM_1p20m.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.Tnx
+
+project:
+  name: F28
+  desc: "F28 - a kept profile across runs asking for different depths"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: GEOM_1p20m.SOL
+    - year: 2
+      sim: [2015-05-21, 2015-10-31]
+      crop: [2015-05-21, 2015-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: GEOM_1p20m.SOL
+      sw0: KeepSWC
+
+daily: [3, 5]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

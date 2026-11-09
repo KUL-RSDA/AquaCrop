@@ -1,0 +1,14 @@
+dry top, wet subsoil - specified per layer
+    7.3   : AquaCrop Version
+    -9.00 : initial canopy cover
+    0.000 : biomass (ton/ha) produced before the simulation period
+    -9.00 : initial effective rooting depth (m)
+      0.0 : water layer (mm) stored between soil bunds
+     0.00 : electrical conductivity (dS/m) of that water layer
+    0     : soil water content specified for soil layers
+    2     : number of soil layers considered
+
+     Thickness (m)      Water content (vol%)     ECe (dS/m)
+==============================================================
+         0.30                15.00                  0.00
+         1.20                29.00                  0.00

@@ -1,0 +1,41 @@
+id: R10_the_runoff_depth_deeper_than_the_profile
+desc: >
+  the runoff depth deeper than the profile.
+  MaizeGDD.CRO on GEOM_0p30m.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - GEOM_0p30m.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: R10
+  desc: "R10 - the runoff depth deeper than the profile"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: GEOM_0p30m.SOL
+
+patch:
+  Ottawa.PPn:
+    14: "  1.00      : Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment"
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

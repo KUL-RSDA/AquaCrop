@@ -1,0 +1,40 @@
+id: J08_soil_fertility_stress_explicitly_set_to_zero
+desc: >
+  soil fertility stress explicitly set to zero.
+  Maize_EUirr_GDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_fert0.MAN
+  - Maize_EUirr_GDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: J08
+  type: PRM
+  desc: "J08 - soil fertility stress explicitly set to zero"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: Maize_EUirr_GDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_fert0.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

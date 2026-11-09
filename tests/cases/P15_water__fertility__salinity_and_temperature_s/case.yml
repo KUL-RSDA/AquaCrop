@@ -1,0 +1,41 @@
+id: P15_water__fertility__salinity_and_temperature_s
+desc: >
+  water, fertility, salinity and temperature stress at once.
+  MaizeSalinity.CRO on Ottawa.SOL, climate HotDry, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.PLU
+  - EtoHigh.ETo
+  - Hot.Tnx
+  - HotDry.CLI
+  - MAN_fert75.MAN
+  - MaizeSalinity.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - SW0_ece8.SW0
+
+project:
+  name: P15
+  desc: "P15 - water, fertility, salinity and temperature stress at once"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: HotDry.CLI
+      tnx: Hot.Tnx
+      eto: EtoHigh.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeSalinity.CRO
+      sol: Ottawa.SOL
+      man: MAN_fert75.MAN
+      sw0: SW0_ece8.SW0
+
+daily: [2, 4]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

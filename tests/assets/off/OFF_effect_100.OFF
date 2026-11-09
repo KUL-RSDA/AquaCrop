@@ -1,0 +1,10 @@
+50/50 cover with full evaporation suppression
+     7.3       : AquaCrop Version
+    50         : percentage (%) of ground surface covered by mulches BEFORE growing period
+    50         : percentage (%) of ground surface covered by mulches AFTER growing period
+    100         : effect (%) of mulches on reduction of soil evaporation
+     0         : number of irrigation events BEFORE growing period
+     0.0       : quality of irrigation water BEFORE growing period (dS/m)
+     0         : number of irrigation events AFTER growing period
+     0.0       : quality of irrigation water AFTER growing period (dS/m)
+    100         : percentage (%) of soil surface wetted by off-season irrigation

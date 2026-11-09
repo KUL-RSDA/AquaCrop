@@ -1,0 +1,41 @@
+id: W14_a_canopy_declining_to_nothing_before_maturit
+desc: >
+  a canopy declining to nothing before maturity.
+  MaizeGDD.CRO on Ottawa.SOL, climate Sparse, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+  - Sparse.CLI
+  - Sparse.PLU
+
+project:
+  name: W14
+  desc: "W14 - a canopy declining to nothing before maturity"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Sparse.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Sparse.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+patch:
+  MaizeGDD.CRO:
+    51: "   0.30000      : Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)"
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

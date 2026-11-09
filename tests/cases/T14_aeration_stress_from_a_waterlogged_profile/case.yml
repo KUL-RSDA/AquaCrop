@@ -1,0 +1,38 @@
+id: T14_aeration_stress_from_a_waterlogged_profile
+desc: >
+  aeration stress from a waterlogged profile.
+  MaizeGDD.CRO on KSAT_5.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - SW0_atSAT.SW0
+
+project:
+  name: T14
+  desc: "T14 - aeration stress from a waterlogged profile"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      sw0: SW0_atSAT.SW0
+
+daily: [1, 2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

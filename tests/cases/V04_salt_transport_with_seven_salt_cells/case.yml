@@ -1,0 +1,39 @@
+id: V04_salt_transport_with_seven_salt_cells
+desc: >
+  salt transport with seven salt cells.
+  MaizeGDD.CRO on KSAT_200.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_200.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - SalineSoil.SW0
+
+project:
+  name: V04
+  desc: "V04 - salt transport with seven salt cells"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_200.SOL
+      sw0: SalineSoil.SW0
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

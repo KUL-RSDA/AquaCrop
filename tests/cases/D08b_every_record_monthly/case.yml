@@ -1,0 +1,41 @@
+id: D08b_every_record_monthly
+desc: >
+  every record monthly.
+  MaizeGDD.CRO on the Ottawa record, Ottawa.SOL.
+tier: T2
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - OttawaMon.Tnx
+  - OttawaMon.ETo
+  - OttawaMon.PLU
+
+project:
+  name: D08b
+  type: PRM
+  desc: "D08b - every record monthly"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: OttawaMon.Tnx
+      eto: OttawaMon.ETo
+      plu: OttawaMon.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

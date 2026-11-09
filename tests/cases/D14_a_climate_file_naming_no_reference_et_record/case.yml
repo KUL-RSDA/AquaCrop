@@ -1,0 +1,37 @@
+id: D14_a_climate_file_naming_no_reference_et_record
+desc: >
+  a climate file naming no reference-ET record.
+  MaizeGDD.CRO on Ottawa.SOL, climate NoEto, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - NoEto.CLI
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: D14
+  type: PRM
+  desc: "D14 - a climate file naming no reference-ET record"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: NoEto.CLI
+      tnx: Ottawa.Tnx
+      eto: (None)
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [1, 7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

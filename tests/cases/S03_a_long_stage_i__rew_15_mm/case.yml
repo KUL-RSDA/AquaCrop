@@ -1,0 +1,36 @@
+id: S03_a_long_stage_i__rew_15_mm
+desc: >
+  a long stage I: REW 15 mm.
+  MaizeGDD.CRO on REW_15.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - REW_15.SOL
+  - MaizeGDD.CRO
+
+project:
+  name: S03
+  desc: "S03 - a long stage I: REW 15 mm"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: REW_15.SOL
+
+daily: [1]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

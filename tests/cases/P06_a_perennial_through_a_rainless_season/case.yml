@@ -1,0 +1,37 @@
+id: P06_a_perennial_through_a_rainless_season
+desc: >
+  a perennial through a rainless season.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Dry, 2014-04-01 to 2014-11-30.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Dry.CLI
+  - Dry.PLU
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: P06
+  desc: "P06 - a perennial through a rainless season"
+  runs:
+    - year: 1
+      sim: [2014-04-01, 2014-11-30]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Dry.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Dry.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

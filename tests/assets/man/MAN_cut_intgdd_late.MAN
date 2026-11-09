@@ -1,0 +1,25 @@
+generated cuttings on criterion 2 (intgdd), late window
+     7.3       : AquaCrop Version (January 2026)
+     0         : percentage (%) of ground surface covered by mulches IN growing period
+    50         : effect (%) of mulches on reduction of soil evaporation
+    50         : Degree of soil fertility stress (%) - Effect is crop specific
+     0.00      : height (m) of soil bunds
+     0         : surface runoff NOT affected by field surface practices
+     0         : effect on CN of field surface practices
+     0         : relative cover of weeds at canopy closure (%)
+     0         : increase of relative cover of weeds in mid-season (+%)
+    -0.01      : shape factor of the CC expansion function in a weed infested field
+   100         : replacement (%) by weeds of the self-thinned part of the CC
+     1         : Multiple cuttings are considered
+    25         : Canopy cover (%) after cutting
+    20         : Increase (%) of Canopy Growth Coefficient (CGC) after cutting
+    60         : First day of window for multiple cuttings
+    -9         : Number of days in window for multiple cuttings
+     1         : Multiple cuttings schedule is generated
+     2         : Time criterion for generating cuttings
+     0         : final harvest at crop maturity is not considered
+ 41414         : dayNr for Day 1 of list of cuttings
+
+ From day   Criterion value
+=============================
+     1     500

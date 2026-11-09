@@ -1,0 +1,38 @@
+id: W18_crop_canopy_against_total_canopy_under_heavy
+desc: >
+  crop canopy against total canopy under heavy weeds.
+  MaizeGDD.CRO on Ottawa.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - Ottawa.SOL
+  - MaizeGDD.CRO
+  - MAN_weeds75.MAN
+
+project:
+  name: W18
+  desc: "W18 - crop canopy against total canopy under heavy weeds"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_weeds75.MAN
+
+daily: [2]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

@@ -1,0 +1,9 @@
+manual schedule, border irrigation
+   7.2   : AquaCrop Version
+   3     : Border irrigation
+ 100     : Percentage of soil surface wetted by irrigation
+   1     : Irrigation schedule
+      -9 : Day 1 is first day of growing period
+   Day    Depth (mm)   ECw (dS/m)
+====================================
+      30        20         0.0

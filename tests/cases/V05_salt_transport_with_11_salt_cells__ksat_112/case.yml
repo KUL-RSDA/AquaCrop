@@ -1,0 +1,38 @@
+id: V05_salt_transport_with_11_salt_cells__ksat_112
+desc: >
+  salt transport with 11 salt cells (Ksat 112).
+  MaizeGDD.CRO on KSAT_112.SOL, Ottawa 2014, sown 2014-05-21.
+tier: T1
+
+stage:
+  - Ottawa.CLI
+  - Ottawa.Tnx
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_112.SOL
+  - MaizeGDD.CRO
+  - SalineSoil.SW0
+
+project:
+  name: V05
+  desc: "V05 - salt transport with 11 salt cells (Ksat 112)"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_112.SOL
+      sw0: SalineSoil.SW0
+
+daily: [4, 6]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

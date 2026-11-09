@@ -1,0 +1,39 @@
+id: Q07_excess_propagating_up_several_compartments
+desc: >
+  excess propagating up several compartments.
+  MaizeGDD.CRO on KSAT_5.SOL, climate Storm, 2014-05-21 to 2014-10-31.
+tier: T1
+
+stage:
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - KSAT_5.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.ETo
+  - Ottawa.PPn
+  - Ottawa.Tnx
+  - SW0_atSAT.SW0
+  - Storm.CLI
+  - Storm.PLU
+
+project:
+  name: Q07
+  desc: "Q07 - excess propagating up several compartments"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Storm.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Storm.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: KSAT_5.SOL
+      sw0: SW0_atSAT.SW0
+
+daily: [1, 3, 5]
+particular: []
+aggregate: 0
+rtol: 1.0e-3

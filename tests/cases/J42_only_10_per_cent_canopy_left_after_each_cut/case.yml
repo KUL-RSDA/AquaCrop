@@ -1,0 +1,40 @@
+id: J42_only_10_per_cent_canopy_left_after_each_cut
+desc: >
+  only 10 per cent canopy left after each cut.
+  AlfOttawaGDD.CRO on Ottawa.SOL, climate Ottawa, 2014-05-21 to 2014-10-31.
+tier: T2
+
+stage:
+  - AlfOttawaGDD.CRO
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MAN_cut_cc10.MAN
+  - MaunaLoa.CO2
+  - Ottawa.CLI
+  - Ottawa.ETo
+  - Ottawa.PLU
+  - Ottawa.PPn
+  - Ottawa.SOL
+  - Ottawa.Tnx
+
+project:
+  name: J42
+  type: PRM
+  desc: "J42 - only 10 per cent canopy left after each cut"
+  runs:
+    - year: 1
+      sim: [2014-05-21, 2014-10-31]
+      crop: [2014-05-21, 2014-10-31]
+      cli: Ottawa.CLI
+      tnx: Ottawa.Tnx
+      eto: Ottawa.ETo
+      plu: Ottawa.PLU
+      co2: MaunaLoa.CO2
+      cro: AlfOttawaGDD.CRO
+      sol: Ottawa.SOL
+      man: MAN_cut_cc10.MAN
+
+daily: [2]
+particular: [1]
+aggregate: 0
+rtol: 1.0e-3

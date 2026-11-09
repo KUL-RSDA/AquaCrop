@@ -1,0 +1,39 @@
+id: D18_a_year_agnostic_record_used_in_a_2016_run
+desc: >
+  a year-agnostic record used in a 2016 run.
+  MaizeGDD.CRO on Ottawa.SOL, climate Agnostic1y, 2016-05-21 to 2016-10-31.
+tier: T2
+
+stage:
+  - Agnostic1y.CLI
+  - Agnostic1y.ETo
+  - Agnostic1y.PLU
+  - Agnostic1y.Tnx
+  - DEFAULT.CRO
+  - DEFAULT.SOL
+  - MaizeGDD.CRO
+  - MaunaLoa.CO2
+  - Ottawa.PPn
+  - Ottawa.SOL
+
+project:
+  name: D18
+  type: PRM
+  desc: "D18 - a year-agnostic record used in a 2016 run"
+  runs:
+    - year: 1
+      sim: [2016-05-21, 2016-10-31]
+      crop: [2016-05-21, 2016-10-31]
+      cli: Agnostic1y.CLI
+      tnx: Agnostic1y.Tnx
+      eto: Agnostic1y.ETo
+      plu: Agnostic1y.PLU
+      co2: MaunaLoa.CO2
+      cro: MaizeGDD.CRO
+      sol: Ottawa.SOL
+
+daily: [7]
+particular: []
+aggregate: 0
+rtol: 1.0e-3
+expect_error: "the climate data are not linked to a specific year"
