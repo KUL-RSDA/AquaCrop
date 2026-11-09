@@ -1,9 +1,9 @@
 AquaCrop test suite reference
-frozen   2026-10-19 13:14:44
-binary   /vsc-hard-mounts/leuven-data/336/vsc33669/src/AquaCrop/src/aquacrop
-sha256   fe75683b7fd71932
-code     /vsc-hard-mounts/leuven-data/336/vsc33669/src/AquaCrop/src
-branch   fix/lis_coupling_fixes
-commit   3929c91669d4ed80fb9545d989c98da479c5a59f
-src dirty at freeze time: True
-binary mtime: 2026-10-19 13:13:11
+frozen   2026-11-09 17:43:19
+binary   /vsc-hard-mounts/leuven-data/336/vsc33669/src/AquaCrop_test_suite/src/aquacrop
+sha256   abd99ea52ef47c23
+code     /vsc-hard-mounts/leuven-data/336/vsc33669/src/AquaCrop_test_suite/src
+branch   test/test_suite
+commit   18b6ea063c1ea6585669ffc6bf4b872da0de3306
+src dirty at freeze time: False
+binary mtime: 2026-11-09 17:41:47

@@ -1,6 +1,6 @@
 # AquaCrop test suite
 
-A set of 850 small AquaCrop simulations with their expected output. Run them
+A set of 856 small AquaCrop simulations with their expected output. Run them
 after you change the code, and they tell you what your change did to the
 results.
 
@@ -138,7 +138,7 @@ passing cases are useful to compare against.
 At the end you get a summary like
 
 ```
-pass 848   within-tol 0   known-defect 0   FAIL 3   ERROR 0
+pass 853   within-tol 0   known-defect 0   FAIL 3   ERROR 0
 ```
 
 and a report is written to `tests/work/results.json`. The exit status is 0

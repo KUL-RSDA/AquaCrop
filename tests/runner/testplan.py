@@ -35,7 +35,7 @@ SEV_ORDER = ('crit', 'high', 'med', 'low', 'harness', 'fixed')
 SEV_NAME = {'crit': 'Stops the run', 'high': 'Undefined behaviour',
             'med': 'Wrong or missing output', 'low': 'Minor',
             'harness': 'Test code (already fixed)',
-            'fixed': 'Fixed on fix/7.4_fixes_testsuite'}
+            'fixed': 'Fixed'}
 
 
 def md(s: str) -> str:
@@ -131,7 +131,7 @@ def load_plan(tests: pathlib.Path) -> dict:
     retired = re.findall(r'^\| (\S.*?) \| (.*?) \| (BUG-\d+) \| (.*?) \|$',
                          ret.group(1) if ret else '', re.M)
     blocked = _blocked(retired)
-    fix = re.search(r'^## Fixed on the fix branch$(.+?)(?=^## )', src, re.M | re.S)
+    fix = re.search(r'^## Fixed defects$(.+?)(?=^#{1,2} |\Z)', src, re.M | re.S)
     fixed = dict(re.findall(r'^\| (BUG-\d+) \| (.+?) \|$', fix.group(1) if fix else '', re.M))
 
     def live_status(cid: str, planned: str) -> str:
@@ -166,7 +166,7 @@ def load_plan(tests: pathlib.Path) -> dict:
             continue
         if re.match(r'^\| ID \| Family \|', line):        # the sweep table
             cur = {'letter': 'SW', 'name': 'Generated sweep families',
-                   'anchor': 'runner/make_inputs.py', 'part': 'IV', 'rows': []}
+                   'anchor': 'assets/gen_sweeps.py', 'part': 'IV', 'rows': []}
             groups.append(cur)
             continue
         m = re.match(r'^\|\s*(SW\d{2})\s*\|(.+?)\|(.+?)\|\s*(\d+)\s*\|\s*(T[0-3])\s*\|\s*\[([x~ ])\]\s*\|\s*$', line)
