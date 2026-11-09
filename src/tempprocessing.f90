@@ -1048,7 +1048,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
             end if
 
             if (TemperatureFilefull_exists .and. &
-                (GetTemperatureRecord_ToDayNr() > DayNri) .and. &
+                (GetTemperatureRecord_ToDayNr() >= DayNri) .and. &
                 (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingDays = ValPeriod
 
@@ -1067,11 +1067,11 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
                     DayNri = DayNri + 1
 
                     do while ((RemainingDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .and. ((DayNri <= GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
 
                         i = i + 1
-                        if (i == size(Tmin)) then
+                        if (i > size(Tmin)) then
                             i = 1
                         end if
                         TDayMin_local = Tmin(i)
@@ -1101,7 +1101,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
                     do while ((RemainingDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .and. ((DayNri <= GetTemperatureRecord_ToDayNr()) &
                                .or. AdjustDayNri))
                         if (.not. DayInDataSet(DayNri, TminDataSet)) then
                             call GetDecadeTemperatureDataSet(DayNri, &
@@ -1133,7 +1133,7 @@ integer(int32) function GrowingDegreeDays(ValPeriod, FirstDayPeriod, Tbase, &
                     RemainingDays = RemainingDays - 1
                     DayNri = DayNri + 1
                     do while((RemainingDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .and. ((DayNri <= GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
                         if (.not. DayInDataSet(DayNri, TminDataSet)) then
                             call GetMonthlyTemperatureDataSet(DayNri, &
@@ -1247,7 +1247,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
             end if
 
             if (TemperatureFilefull_exists .and. &
-                (GetTemperatureRecord_ToDayNr() > DayNri) .and. &
+                (GetTemperatureRecord_ToDayNr() >= DayNri) .and. &
                 (GetTemperatureRecord_FromDayNr() <= DayNri)) then
                 RemainingGDDays = ValGDDays
 
@@ -1266,11 +1266,11 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                     DayNri = DayNri + 1
 
                     do while ((RemainingGDDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .and. ((DayNri <= GetTemperatureRecord_ToDayNr()) &
                         .or. AdjustDayNri))
 
                         i = i + 1
-                        if (i == size(Tmin)) then
+                        if (i > size(Tmin)) then
                             i = 1
                         end if
                         TDayMin_loc = Tmin(i)
@@ -1300,7 +1300,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
                     do while ((RemainingGDDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .and. ((DayNri <= GetTemperatureRecord_ToDayNr()) &
                          .or. AdjustDayNri))
                         if (.not. DayInDataSet(DayNri, TminDataSet)) then
                             call GetDecadeTemperatureDataSet(DayNri, &
@@ -1331,7 +1331,7 @@ integer(int32) function SumCalendarDays(ValGDDays, FirstDayCrop, Tbase, Tupper,&
                     RemainingGDDays = RemainingGDDays - DayGDD
                     DayNri = DayNri + 1
                     do while ((RemainingGDDays > 0) &
-                        .and. ((DayNri < GetTemperatureRecord_ToDayNr()) &
+                        .and. ((DayNri <= GetTemperatureRecord_ToDayNr()) &
                          .or. AdjustDayNri))
                         if (.not. DayInDataSet(DayNri, TminDataSet)) then
                             call GetMonthlyTemperatureDataSet(DayNri, &
@@ -1634,7 +1634,7 @@ subroutine TemperatureFileCoveringCropPeriod(CropFirstDay, CropLastDay)
             select case (GetTemperatureRecord_DataType())
             case (datatype_daily)
                 i = i + 1
-                if (i == size(Tmin)) then
+                if (i > size(Tmin)) then
                     i = 1
                 end if
                 Tlow = Tmin(i)
