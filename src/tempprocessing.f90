@@ -2409,7 +2409,7 @@ real(sp) function Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
                                GetSimulParam_GDDMethod())
          elseif (GetTemperatureFile() == '(External)') then 
              i = i + 1
-             if (i == size(GetTminCropReferenceRun())) then
+             if (i > size(GetTminCropReferenceRun())) then
                  i = 1
              end if
              Tndayi = real(GetTminCropReferenceRun_i(i),kind=sp)
