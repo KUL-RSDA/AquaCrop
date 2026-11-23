@@ -5925,7 +5925,7 @@ real(sp) function SeasonalSumOfKcPot(TheDaysToCCini, TheGDDaysToCCini, L0, L12, 
                                     GetSimulParam_GDDMethod())
         elseif (GetTemperatureFile() == '(External)') then
             i = i + 1
-            if (i == size(GetTminCropReferenceRun())) then
+            if (i > size(GetTminCropReferenceRun())) then
                 i = 1
             endif
             Tndayi = real(GetTminCropReferenceRun_i(i),kind=sp)
